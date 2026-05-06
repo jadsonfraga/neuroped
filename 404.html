@@ -1,0 +1,20 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>NeuroPed</title>
+<script>
+(function () {
+  var path = window.location.pathname;
+  var basePath = path.split('/').slice(0, 2).join('/') + '/';
+  if (path !== basePath) {
+    var rest = path.substring(basePath.length);
+    window.location.replace(basePath + 'index.html#/' + rest + window.location.search);
+  } else {
+    window.location.replace(basePath);
+  }
+})();
+</script>
+</head>
+<body>Redirecionando...</body>
+</html>

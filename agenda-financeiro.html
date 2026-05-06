@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#1565C0">
+<title>NeuroPed — Agenda & Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#1565C0;--blue-light:#BBDEFB;--blue-bg:#E3F2FD;--purple:#7B1FA2;--green:#2E7D32;--green-bg:#E8F5E9;--yellow-bg:#FFF8E1;--red-bg:#FFEBEE;--gray:#EEEEEE;--gray-text:#757575;--border:#E0E0E0;--white:#FFFFFF;--dark:#212121;--shadow:0 2px 8px rgba(0,0,0,.12)}
+body{font-family:'Inter',system-ui,sans-serif;background:#F5F5F5;color:var(--dark);font-size:14px;overflow-x:hidden}
+/* Header */
+.header{background:var(--blue);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.header select{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:6px 10px;font-size:13px;font-family:inherit;cursor:pointer}
+.header select option{color:#333;background:#fff}
+.header .spacer{flex:1}
+.btn-create{background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:transform .15s}
+.btn-create:hover{transform:scale(1.04);filter:brightness(1.1)}
+/* Tabs */
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:12px;text-align:center;font-weight:600;font-size:14px;cursor:pointer;border-bottom:3px solid transparent;color:var(--gray-text);transition:all .2s}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab:hover:not(.active){background:#FAFAFA}
+/* Agenda Layout */
+.agenda-wrap{display:flex;height:calc(100vh - 100px);overflow:hidden}
+.sidebar{width:260px;min-width:260px;background:#fff;border-right:1px solid var(--border);padding:12px;overflow-y:auto}
+.main-grid{flex:1;overflow:auto;background:#fff}
+/* Mini Calendar */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-header button{background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;color:var(--blue)}
+.cal-header button:hover{background:var(--blue-bg)}
+.cal-header span{font-weight:600;font-size:13px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:11px}
+.cal-grid .day-label{font-weight:600;color:var(--gray-text);padding:4px 0}
+.cal-grid .day{padding:6px 2px;border-radius:50%;cursor:pointer;transition:background .15s}
+.cal-grid .day:hover{background:var(--blue-bg)}
+.cal-grid .day.today{background:var(--blue);color:#fff;font-weight:700}
+.cal-grid .day.selected{background:#E8EAF6;font-weight:600}
+.cal-grid .day.other{color:#ccc}
+/* Config btn */
+.config-btn{margin-top:16px;width:100%;padding:10px;border:1px dashed var(--border);border-radius:8px;background:none;cursor:pointer;font-size:13px;color:var(--gray-text);display:flex;align-items:center;justify-content:center;gap:6px}
+.config-btn:hover{background:#FAFAFA;border-color:var(--blue)}
+/* Week Grid */
+.week-header{display:grid;grid-template-columns:60px repeat(7,1fr);position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border)}
+.week-header .wh-cell{padding:10px 4px;text-align:center;font-size:11px;border-right:1px solid var(--border)}
+.week-header .wh-cell.today-col{background:var(--blue);color:#fff;font-weight:700;border-radius:0}
+.week-header .wh-cell .day-num{font-size:18px;font-weight:700}
+.week-header .wh-cell .day-name{font-size:10px;text-transform:uppercase;letter-spacing:1px}
+.time-grid{display:grid;grid-template-columns:60px repeat(7,1fr)}
+.time-label{padding:2px 6px;font-size:10px;color:var(--gray-text);text-align:right;border-right:1px solid var(--border);height:40px;display:flex;align-items:flex-start;justify-content:flex-end}
+.slot{border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;height:40px;cursor:pointer;position:relative;transition:background .1s;padding:2px 4px;font-size:10px;overflow:hidden}
+.slot.available{background:var(--green-bg);border:1px dashed #A5D6A7}
+.slot.available:hover{background:#C8E6C9}
+.slot.occupied{background:var(--blue-light);border-left:3px solid var(--blue);cursor:pointer}
+.slot.occupied:hover{filter:brightness(.95)}
+.slot.blocked{background:var(--gray);cursor:not-allowed;opacity:.5}
+.slot .occ-name{font-weight:600;font-size:10px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .occ-time{font-size:9px;color:#555}
+.slot .occ-icon{position:absolute;top:2px;right:4px;font-size:11px}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s}
+.modal{background:#fff;border-radius:12px;padding:24px;width:90%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{font-size:16px;margin-bottom:16px;color:var(--blue)}
+.modal label{display:block;font-size:12px;font-weight:600;color:var(--gray-text);margin:10px 0 4px}
+.modal input,.modal select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit}
+.modal input:focus,.modal select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.15)}
+.modal-btns{display:flex;gap:8px;margin-top:20px}
+.modal-btns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer}
+.btn-save{background:var(--blue);color:#fff}
+.btn-save:hover{filter:brightness(1.1)}
+.btn-cancel{background:#eee;color:#555}
+.btn-cancel:hover{background:#ddd}
+.btn-delete{background:#E53935;color:#fff}
+.btn-delete:hover{filter:brightness(1.1)}
+/* Config modal */
+.config-row{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:12px}
+.config-row input[type=time]{width:110px;padding:4px 6px}
+.config-row select{width:80px;padding:4px 6px}
+.config-row input[type=number]{width:60px;padding:4px 6px}
+.config-day{display:flex;align-items:center;gap:8px;padding:8px;background:#FAFAFA;border-radius:8px;margin:6px 0}
+.config-day label{margin:0;min-width:40px}
+.toggle{appearance:none;width:36px;height:20px;background:#ccc;border-radius:10px;cursor:pointer;position:relative;transition:background .2s}
+.toggle:checked{background:var(--blue)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle:checked::after{transform:translateX(16px)}
+/* Financeiro */
+.fin-wrap{padding:16px;max-width:1200px;margin:0 auto}
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.card .card-label{font-size:11px;color:var(--gray-text);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.card .card-value{font-size:24px;font-weight:700;margin-top:4px}
+.card .card-value.green{color:var(--green)}
+.card .card-value.yellow{color:#F57F17}
+.card .card-value.blue{color:var(--blue)}
+.card .card-value.purple{color:var(--purple)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;background:#fff;padding:12px;border-radius:10px;box-shadow:var(--shadow)}
+.filters input,.filters select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit}
+.btn-export{background:var(--green);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer}
+.btn-export:hover{filter:brightness(1.1)}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--shadow);font-size:12px}
+th{background:var(--blue);color:#fff;padding:10px 8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:8px;border-bottom:1px solid #f0f0f0}
+tr.pago{background:var(--green-bg)}
+tr.pendente{background:var(--yellow-bg)}
+tr.cancelado{background:var(--red-bg)}
+tr.cancelado td{text-decoration:line-through;color:#999}
+.btn-sm{padding:4px 10px;border:none;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600}
+.btn-pago{background:var(--green);color:#fff}
+.btn-excluir{background:#E53935;color:#fff;margin-left:4px}
+canvas{width:100%;height:200px;margin-top:16px;background:#fff;border-radius:10px;box-shadow:var(--shadow)}
+.chart-legend{display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:11px}
+.chart-legend span::before{content:'';display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.legend-blue::before{background:var(--blue)}
+.legend-yellow::before{background:#F9A825}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media(max-width:768px){
+  .agenda-wrap{flex-direction:column;height:auto}
+  .sidebar{width:100%;min-width:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .week-header .wh-cell{padding:6px 2px;font-size:9px}
+  .week-header .wh-cell .day-num{font-size:14px}
+  .time-label{font-size:9px;padding:2px 3px}
+  .slot{height:36px;font-size:9px}
+  .cards-row{grid-template-columns:repeat(2,1fr)}
+  .filters{flex-direction:column}
+  th,td{padding:6px 4px;font-size:10px}
+  .header select{font-size:11px;padding:4px 6px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="btn-create" id="btnCreate" onclick="openNewAppt()">+ Criar</button>
+  <div class="spacer"></div>
+  <select id="selClinica">
+    <option>Consultório Dr. Jadson Fraga</option>
+    <option>NeuroPed Petrolina</option>
+  </select>
+  <select id="selProfissional">
+    <option>Dr. Jadson Fraga</option>
+    <option>Dra. Auxiliar</option>
+  </select>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="agenda" onclick="switchTab('agenda')">📅 Agenda</div>
+  <div class="tab" data-tab="financeiro" onclick="switchTab('financeiro')">💰 Financeiro</div>
+</div>
+
+<div id="app-root"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════
+
+const DAYS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+// ═══════════════════════════════════════════════
+// CLOUD STORAGE (npoint.io) — persistência real
+// ═══════════════════════════════════════════════
+const NEUROPED_BIN = 'a796112908591afcf02f';
+const CLOUD_URL = `https://api.npoint.io/${NEUROPED_BIN}`;
+let _cloudCache = null;
+let _agendamentos = [];
+let _configAgenda = null;
+
+async function loadCloudData() {
+  try {
+    const res = await fetch(CLOUD_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    _cloudCache = data || { patients: [], appointments: [], reminders: [], scale_results: [], portal_documents: [], app: 'neuroped-dr-jadson' };
+    if (!_cloudCache.appointments) _cloudCache.appointments = [];
+    // Converte CloudAppointment -> formato local da agenda financeira
+    _agendamentos = _cloudCache.appointments.map(a => ({
+      id: a.id,
+      data: a.date,
+      horaInicio: a.time,
+      horaFim: addMinutesToTime(a.time, a.duration || 30),
+      paciente: a.patientName,
+      tipo: a.type === 'retorno' ? 'Retorno' : (a.type === 'exame' ? 'Exame' : 'Consulta'),
+      valor: a.valor || 0,
+      formaPagamento: 'PIX',
+      statusPagamento: a.pago ? 'Pago' : 'Pendente',
+      profissional: 'Dr. Jadson Fraga',
+      telefone: a.patientPhone || ''
+    }));
+  } catch (e) {
+    console.error('[agenda-financeiro] load cloud:', e);
+    _cloudCache = { patients: [], appointments: [], reminders: [], scale_results: [], portal_documents: [], app: 'neuroped-dr-jadson' };
+  }
+}
+
+async function saveCloudData() {
+  if (!_cloudCache) return;
+  // Sincroniza _agendamentos -> _cloudCache.appointments
+  _cloudCache.appointments = _agendamentos.map(a => ({
+    id: a.id,
+    patientName: a.paciente,
+    patientPhone: a.telefone || '',
+    date: a.data,
+    time: a.horaInicio,
+    duration: minutesBetween(a.horaInicio, a.horaFim),
+    type: (a.tipo || '').toLowerCase().includes('retorno') ? 'retorno' : ((a.tipo || '').toLowerCase().includes('exame') ? 'exame' : 'consulta'),
+    notes: '',
+    status: 'agendado',
+    valor: Number(a.valor) || 0,
+    pago: a.statusPagamento === 'Pago',
+    criadoEm: a.criadoEm || new Date().toISOString()
+  }));
+  try {
+    await fetch(CLOUD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_cloudCache)
+    });
+  } catch (e) {
+    console.error('[agenda-financeiro] save cloud:', e);
+  }
+}
+
+function addMinutesToTime(hhmm, min) {
+  const [h, m] = (hhmm || '08:00').split(':').map(Number);
+  const total = h * 60 + m + (min || 30);
+  const nh = Math.floor(total / 60) % 24;
+  const nm = total % 60;
+  return String(nh).padStart(2, '0') + ':' + String(nm).padStart(2, '0');
+}
+function minutesBetween(a, b) {
+  const [ha, ma] = (a || '08:00').split(':').map(Number);
+  const [hb, mb] = (b || '08:30').split(':').map(Number);
+  return Math.max(15, (hb * 60 + mb) - (ha * 60 + ma));
+}
+
+function getAgendamentos() { return _agendamentos; }
+function setAgendamentos(arr) {
+  _agendamentos = arr;
+  // Persiste na nuvem em background
+  saveCloudData();
+}
+
+const DEFAULT_CONFIG = {
+  duracao: 30, intervalo: 10, limiteDia: 20,
+  dias: {
+    0:{ativo:false,t1i:'',t1f:'',t2i:'',t2f:''},
+    1:{ativo:true,t1i:'08:00',t1f:'12:00',t2i:'14:00',t2f:'18:00'},
+    2:{ativo:true,t1i:'08:00',t1f:'12:00',t2i:'14:00',t2f:'18:00'},
+    3:{ativo:true,t1i:'08:00',t1f:'12:00',t2i:'14:00',t2f:'18:00'},
+    4:{ativo:true,t1i:'08:00',t1f:'12:00',t2i:'14:00',t2f:'18:00'},
+    5:{ativo:true,t1i:'08:00',t1f:'12:00',t2i:'',t2f:''},
+    6:{ativo:false,t1i:'',t1f:'',t2i:'',t2f:''}
+  }
+};
+
+function getConfig() {
+  if (!_configAgenda) _configAgenda = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  return _configAgenda;
+}
+function setConfig(c) { _configAgenda = c; }
+
+// Carrega da nuvem ao iniciar (antes da UI renderizar)
+loadCloudData().then(() => {
+  // Re-renderiza UI se já estiver pronta
+  if (typeof render === 'function') { try { render(); } catch {} }
+});
+
+// Auto-refresh a cada 30s para sincronizar com outras abas/dispositivos
+setInterval(() => {
+  loadCloudData().then(() => {
+    if (typeof render === 'function') { try { render(); } catch {} }
+  });
+}, 30000);
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+
+let currentTab = 'agenda';
+let viewDate = new Date();
+let selectedDate = new Date();
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  render();
+}
+
+function render() {
+  const root = document.getElementById('app-root');
+  if (currentTab === 'agenda') renderAgenda(root);
+  else renderFinanceiro(root);
+}
+
+// ═══════════════════════════════════════════════
+// AGENDA MODULE
+// ═══════════════════════════════════════════════
+
+function renderAgenda(root) {
+  const weekStart = getWeekStart(selectedDate);
+  root.innerHTML = `
+    <div class="agenda-wrap">
+      <div class="sidebar">
+        ${renderMiniCalendar()}
+        <button class="config-btn" onclick="openConfig()">⚙️ Configurar Agenda</button>
+      </div>
+      <div class="main-grid">
+        ${renderWeekHeader(weekStart)}
+        <div style="overflow-y:auto;height:calc(100vh - 150px)">
+          ${renderTimeGrid(weekStart)}
+        </div>
+      </div>
+    </div>`;
+}
+
+function getWeekStart(d) {
+  const r = new Date(d);
+  r.setDate(r.getDate() - r.getDay());
+  return r;
+}
+
+function renderMiniCalendar() {
+  const y = viewDate.getFullYear(), m = viewDate.getMonth();
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0);
+  const startDay = first.getDay();
+  const today = new Date();
+  let html = `<div class="cal-header">
+    <button onclick="navMonth(-1)">&lt;</button>
+    <span>${MONTHS[m]} ${y}</span>
+    <button onclick="navMonth(1)">&gt;</button>
+  </div><div class="cal-grid">`;
+  DAYS.forEach(d => html += `<div class="day-label">${d.slice(0,1)}</div>`);
+  // Previous month padding
+  for (let i = 0; i < startDay; i++) {
+    const pd = new Date(y, m, -startDay + i + 1);
+    html += `<div class="day other" onclick="selectDay('${pd.toISOString().split('T')[0]}')">${pd.getDate()}</div>`;
+  }
+  for (let d = 1; d <= last.getDate(); d++) {
+    const dt = new Date(y, m, d);
+    const isToday = dt.toDateString() === today.toDateString();
+    const isSel = dt.toDateString() === selectedDate.toDateString();
+    html += `<div class="day${isToday ? ' today' : ''}${isSel && !isToday ? ' selected' : ''}" onclick="selectDay('${dt.toISOString().split('T')[0]}')">${d}</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function navMonth(dir) {
+  viewDate.setMonth(viewDate.getMonth() + dir);
+  render();
+}
+
+function selectDay(dateStr) {
+  selectedDate = new Date(dateStr + 'T12:00:00');
+  viewDate = new Date(selectedDate);
+  render();
+}
+
+function renderWeekHeader(weekStart) {
+  const today = new Date();
+  let html = '<div class="week-header"><div class="wh-cell" style="font-size:10px;color:var(--gray-text)">Hora</div>';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const isToday = d.toDateString() === today.toDateString();
+    html += `<div class="wh-cell${isToday ? ' today-col' : ''}">
+      <div class="day-name">${DAYS[i]}</div>
+      <div class="day-num">${d.getDate()}</div>
+    </div>`;
+  }
+  return html + '</div>';
+}
+
+function renderTimeGrid(weekStart) {
+  const config = getConfig();
+  const appts = getAgendamentos();
+  let html = '<div class="time-grid">';
+  for (let h = 6; h <= 21; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      html += `<div class="time-label">${m === 0 ? timeStr : ''}</div>`;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        const dayConfig = config.dias[i];
+        const isInSchedule = dayConfig && dayConfig.ativo && isTimeInSchedule(timeStr, dayConfig);
+        const appt = appts.find(a => a.data === dateStr && a.horaInicio === timeStr);
+        if (appt) {
+          html += `<div class="slot occupied" onclick="openEditAppt('${appt.id}')">
+            <div class="occ-name">${appt.paciente}</div>
+            <div class="occ-time">${appt.horaInicio}</div>
+            <div class="occ-icon">${appt.statusPagamento === 'Pago' ? '💰' : '⏳'}</div>
+          </div>`;
+        } else if (isInSchedule) {
+          html += `<div class="slot available" onclick="openNewAppt('${dateStr}','${timeStr}')"></div>`;
+        } else {
+          html += `<div class="slot blocked"></div>`;
+        }
+      }
+    }
+  }
+  return html + '</div>';
+}
+
+function isTimeInSchedule(time, dayConfig) {
+  if (!dayConfig.ativo) return false;
+  const t = timeToMin(time);
+  const inT1 = dayConfig.t1i && dayConfig.t1f && t >= timeToMin(dayConfig.t1i) && t < timeToMin(dayConfig.t1f);
+  const inT2 = dayConfig.t2i && dayConfig.t2f && t >= timeToMin(dayConfig.t2i) && t < timeToMin(dayConfig.t2f);
+  return inT1 || inT2;
+}
+
+function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
+function minToTime(m) { return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+
+function openNewAppt(date, time) {
+  const config = getConfig();
+  const dur = config.duracao || 30;
+  const d = date || new Date().toISOString().split('T')[0];
+  const t = time || '08:00';
+  const endMin = timeToMin(t) + dur;
+  const endTime = minToTime(endMin);
+
+  showModal(`
+    <h3>Novo Agendamento</h3>
+    <label>Data</label><input type="date" id="mData" value="${d}">
+    <label>Hora Início</label><input type="time" id="mHoraI" value="${t}">
+    <label>Hora Fim</label><input type="time" id="mHoraF" value="${endTime}">
+    <label>Paciente</label><input type="text" id="mPaciente" placeholder="Nome do paciente">
+    <label>Tipo de Consulta</label><input type="text" id="mTipo" value="Consulta" placeholder="Ex: Retorno, Primeira consulta">
+    <label>Valor (R$)</label><input type="number" id="mValor" value="150" step="10">
+    <label>Forma de Pagamento</label>
+    <select id="mForma"><option>PIX</option><option>Dinheiro</option><option>Crédito</option><option>Débito</option><option>Convênio</option></select>
+    <label>Status</label>
+    <select id="mStatus"><option>Pendente</option><option>Pago</option></select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveNewAppt()">Salvar</button>
+    </div>
+  `);
+}
+
+function saveNewAppt() {
+  const data = document.getElementById('mData').value;
+  const horaInicio = document.getElementById('mHoraI').value;
+  const paciente = document.getElementById('mPaciente').value.trim();
+  if (!paciente) { alert('Informe o nome do paciente!'); return; }
+
+  const config = getConfig();
+  const dt = new Date(data + 'T12:00:00');
+  const dow = dt.getDay();
+  const dayConfig = config.dias[dow];
+  if (!dayConfig || !dayConfig.ativo || !isTimeInSchedule(horaInicio, dayConfig)) {
+    alert('Horário fora do expediente configurado!'); return;
+  }
+
+  const appts = getAgendamentos();
+  const dayAppts = appts.filter(a => a.data === data);
+  if (dayAppts.length >= (config.limiteDia || 20)) {
+    alert(`Limite de ${config.limiteDia} pacientes por dia atingido!`); return;
+  }
+
+  appts.push({
+    id: uid(), data, horaInicio,
+    horaFim: document.getElementById('mHoraF').value,
+    paciente,
+    tipo: document.getElementById('mTipo').value,
+    valor: parseFloat(document.getElementById('mValor').value) || 0,
+    formaPagamento: document.getElementById('mForma').value,
+    statusPagamento: document.getElementById('mStatus').value,
+    profissional: document.getElementById('selProfissional').value
+  });
+  setAgendamentos(appts);
+  closeModal();
+  render();
+}
+
+function openEditAppt(id) {
+  const appt = getAgendamentos().find(a => a.id === id);
+  if (!appt) return;
+  showModal(`
+    <h3>Editar Agendamento</h3>
+    <label>Paciente</label><input type="text" id="mPaciente" value="${appt.paciente}">
+    <label>Data</label><input type="date" id="mData" value="${appt.data}">
+    <label>Hora</label><input type="time" id="mHoraI" value="${appt.horaInicio}">
+    <label>Tipo</label><input type="text" id="mTipo" value="${appt.tipo}">
+    <label>Valor (R$)</label><input type="number" id="mValor" value="${appt.valor}" step="10">
+    <label>Forma de Pagamento</label>
+    <select id="mForma">${['PIX','Dinheiro','Crédito','Débito','Convênio'].map(f => `<option${f===appt.formaPagamento?' selected':''}>${f}</option>`).join('')}</select>
+    <label>Status</label>
+    <select id="mStatus">${['Pendente','Pago','Cancelado'].map(s => `<option${s===appt.statusPagamento?' selected':''}>${s}</option>`).join('')}</select>
+    <div class="modal-btns">
+      <button class="btn-delete" onclick="deleteAppt('${id}')">🗑 Excluir</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="updateAppt('${id}')">Salvar</button>
+    </div>
+  `);
+}
+
+function updateAppt(id) {
+  const appts = getAgendamentos();
+  const idx = appts.findIndex(a => a.id === id);
+  if (idx < 0) return;
+  appts[idx] = { ...appts[idx],
+    paciente: document.getElementById('mPaciente').value.trim(),
+    data: document.getElementById('mData').value,
+    horaInicio: document.getElementById('mHoraI').value,
+    tipo: document.getElementById('mTipo').value,
+    valor: parseFloat(document.getElementById('mValor').value) || 0,
+    formaPagamento: document.getElementById('mForma').value,
+    statusPagamento: document.getElementById('mStatus').value,
+  };
+  setAgendamentos(appts);
+  closeModal(); render();
+}
+
+function deleteAppt(id) {
+  if (!confirm('Excluir este agendamento?')) return;
+  setAgendamentos(getAgendamentos().filter(a => a.id !== id));
+  closeModal(); render();
+}
+
+function showModal(html) {
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.id = 'modalBg';
+  bg.onclick = e => { if (e.target === bg) closeModal(); };
+  bg.innerHTML = `<div class="modal">${html}</div>`;
+  document.body.appendChild(bg);
+}
+
+function closeModal() {
+  const m = document.getElementById('modalBg');
+  if (m) m.remove();
+}
+
+// ═══════════════════════════════════════════════
+// CONFIG MODAL
+// ═══════════════════════════════════════════════
+
+function openConfig() {
+  const c = getConfig();
+  const dayNames = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  let daysHtml = '';
+  for (let i = 0; i < 7; i++) {
+    const d = c.dias[i] || {ativo:false,t1i:'',t1f:'',t2i:'',t2f:''};
+    daysHtml += `<div class="config-day">
+      <input type="checkbox" class="toggle" id="cfgAtivo${i}" ${d.ativo?'checked':''}>
+      <label style="min-width:65px;font-weight:600">${dayNames[i]}</label>
+      <input type="time" id="cfgT1i${i}" value="${d.t1i}" placeholder="Início T1" style="width:90px">
+      <span>-</span>
+      <input type="time" id="cfgT1f${i}" value="${d.t1f}" style="width:90px">
+      <span style="margin:0 4px;font-size:10px;color:#999">T2:</span>
+      <input type="time" id="cfgT2i${i}" value="${d.t2i}" style="width:90px">
+      <span>-</span>
+      <input type="time" id="cfgT2f${i}" value="${d.t2f}" style="width:90px">
+    </div>`;
+  }
+  showModal(`
+    <h3>⚙️ Configuração da Agenda</h3>
+    <div class="config-row">
+      <label>Duração da consulta:</label>
+      <select id="cfgDur">${[15,20,30,45,60].map(v => `<option value="${v}"${v===c.duracao?' selected':''}>${v} min</option>`).join('')}</select>
+    </div>
+    <div class="config-row">
+      <label>Intervalo entre pacientes:</label>
+      <select id="cfgInt">${[0,5,10,15].map(v => `<option value="${v}"${v===c.intervalo?' selected':''}>${v} min</option>`).join('')}</select>
+    </div>
+    <div class="config-row">
+      <label>Limite por dia:</label>
+      <input type="number" id="cfgLim" value="${c.limiteDia}" min="1" max="50">
+    </div>
+    <div style="margin-top:12px">
+      <label style="font-weight:600;font-size:13px">Expediente por Dia</label>
+      ${daysHtml}
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveConfig()">Salvar</button>
+    </div>
+  `);
+}
+
+function saveConfig() {
+  const c = getConfig();
+  c.duracao = parseInt(document.getElementById('cfgDur').value);
+  c.intervalo = parseInt(document.getElementById('cfgInt').value);
+  c.limiteDia = parseInt(document.getElementById('cfgLim').value) || 20;
+  for (let i = 0; i < 7; i++) {
+    c.dias[i] = {
+      ativo: document.getElementById(`cfgAtivo${i}`).checked,
+      t1i: document.getElementById(`cfgT1i${i}`).value,
+      t1f: document.getElementById(`cfgT1f${i}`).value,
+      t2i: document.getElementById(`cfgT2i${i}`).value,
+      t2f: document.getElementById(`cfgT2f${i}`).value,
+    };
+  }
+  setConfig(c);
+  closeModal(); render();
+}
+
+// ═══════════════════════════════════════════════
+// FINANCEIRO MODULE
+// ═══════════════════════════════════════════════
+
+function renderFinanceiro(root) {
+  const appts = getAgendamentos();
+  const now = new Date();
+  const mesAtual = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const hoje = now.toISOString().split('T')[0];
+
+  const mesPago = appts.filter(a => a.data.startsWith(mesAtual) && a.statusPagamento === 'Pago').reduce((s,a) => s + a.valor, 0);
+  const mesPend = appts.filter(a => a.data.startsWith(mesAtual) && a.statusPagamento === 'Pendente').reduce((s,a) => s + a.valor, 0);
+  const diaPago = appts.filter(a => a.data === hoje && a.statusPagamento === 'Pago').reduce((s,a) => s + a.valor, 0);
+  const qtdPago = appts.filter(a => a.data.startsWith(mesAtual) && a.statusPagamento === 'Pago').length;
+  const ticket = qtdPago > 0 ? mesPago / qtdPago : 0;
+
+  const fmt = v => `R$ ${v.toFixed(2).replace('.',',')}`;
+
+  root.innerHTML = `<div class="fin-wrap">
+    <div class="cards-row">
+      <div class="card"><div class="card-label">Recebido no Mês</div><div class="card-value green">${fmt(mesPago)}</div></div>
+      <div class="card"><div class="card-label">Pendente no Mês</div><div class="card-value yellow">${fmt(mesPend)}</div></div>
+      <div class="card"><div class="card-label">Receita de Hoje</div><div class="card-value blue">${fmt(diaPago)}</div></div>
+      <div class="card"><div class="card-label">Ticket Médio</div><div class="card-value purple">${fmt(ticket)}</div></div>
+    </div>
+    <div class="filters">
+      <input type="date" id="fDi" value="${mesAtual}-01">
+      <input type="date" id="fDf" value="${hoje}">
+      <select id="fProf"><option value="">Todos</option><option>Dr. Jadson Fraga</option><option>Dra. Auxiliar</option></select>
+      <select id="fStatus"><option value="">Todos</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select>
+      <button class="btn-export" onclick="exportCSV()">📥 Exportar CSV</button>
+      <button class="btn-sm btn-pago" onclick="applyFilters()" style="margin-left:auto">🔍 Filtrar</button>
+    </div>
+    <table><thead><tr><th>Data</th><th>Hora</th><th>Paciente</th><th>Procedimento</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody id="finTable"></tbody></table>
+    <canvas id="finChart" width="800" height="200"></canvas>
+    <div class="chart-legend"><span class="legend-blue">Recebido</span><span class="legend-yellow">Pendente</span></div>
+  </div>`;
+  applyFilters();
+}
+
+function getFiltered() {
+  const di = document.getElementById('fDi')?.value || '';
+  const df = document.getElementById('fDf')?.value || '';
+  const prof = document.getElementById('fProf')?.value || '';
+  const status = document.getElementById('fStatus')?.value || '';
+  return getAgendamentos().filter(a => {
+    if (di && a.data < di) return false;
+    if (df && a.data > df) return false;
+    if (prof && a.profissional !== prof) return false;
+    if (status && a.statusPagamento !== status) return false;
+    return true;
+  }).sort((a,b) => a.data < b.data ? 1 : -1);
+}
+
+function applyFilters() {
+  const filtered = getFiltered();
+  const tbody = document.getElementById('finTable');
+  if (!tbody) return;
+  const fmt = v => `R$ ${v.toFixed(2).replace('.',',')}`;
+  tbody.innerHTML = filtered.map(a => `
+    <tr class="${a.statusPagamento.toLowerCase()}">
+      <td>${a.data.split('-').reverse().join('/')}</td>
+      <td>${a.horaInicio}</td>
+      <td>${a.paciente}</td>
+      <td>${a.tipo}</td>
+      <td>${fmt(a.valor)}</td>
+      <td>${a.formaPagamento}</td>
+      <td>${a.statusPagamento}</td>
+      <td>
+        ${a.statusPagamento === 'Pendente' ? `<button class="btn-sm btn-pago" onclick="markPago('${a.id}')">✓ Pago</button>` : ''}
+        <button class="btn-sm btn-excluir" onclick="deleteApptFin('${a.id}')">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+  drawChart(filtered);
+}
+
+function markPago(id) {
+  const appts = getAgendamentos();
+  const a = appts.find(x => x.id === id);
+  if (a) a.statusPagamento = 'Pago';
+  setAgendamentos(appts);
+  renderFinanceiro(document.getElementById('app-root'));
+}
+
+function deleteApptFin(id) {
+  if (!confirm('Excluir este lançamento?')) return;
+  setAgendamentos(getAgendamentos().filter(a => a.id !== id));
+  renderFinanceiro(document.getElementById('app-root'));
+}
+
+function exportCSV() {
+  const filtered = getFiltered();
+  const header = 'Data,Hora,Paciente,Procedimento,Valor,Pagamento,Status\n';
+  const rows = filtered.map(a => `${a.data},${a.horaInicio},"${a.paciente}","${a.tipo}",${a.valor},${a.formaPagamento},${a.statusPagamento}`).join('\n');
+  const blob = new Blob(['\ufeff' + header + rows], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `financeiro-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════
+// CANVAS CHART
+// ═══════════════════════════════════════════════
+
+function drawChart(data) {
+  const canvas = document.getElementById('finChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = 200 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = canvas.offsetWidth, H = 200;
+  ctx.clearRect(0, 0, W, H);
+
+  // Group by day
+  const byDay = {};
+  data.forEach(a => {
+    const day = parseInt(a.data.split('-')[2]);
+    if (!byDay[day]) byDay[day] = { pago: 0, pendente: 0 };
+    if (a.statusPagamento === 'Pago') byDay[day].pago += a.valor;
+    else if (a.statusPagamento === 'Pendente') byDay[day].pendente += a.valor;
+  });
+
+  const days = Object.keys(byDay).map(Number).sort((a,b) => a - b);
+  if (days.length === 0) {
+    ctx.fillStyle = '#999'; ctx.font = '13px Inter'; ctx.textAlign = 'center';
+    ctx.fillText('Sem dados no período', W/2, H/2);
+    return;
+  }
+
+  const maxVal = Math.max(...days.map(d => Math.max(byDay[d].pago, byDay[d].pendente)), 1);
+  const pad = { top: 20, bottom: 30, left: 50, right: 20 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+  const barW = Math.min(20, chartW / days.length / 3);
+  const gap = chartW / days.length;
+
+  // Y axis
+  ctx.strokeStyle = '#E0E0E0'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + chartH - (chartH * i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#999'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(`R$${Math.round(maxVal * i / 4)}`, pad.left - 4, y + 3);
+  }
+
+  // Bars
+  days.forEach((day, idx) => {
+    const x = pad.left + idx * gap + gap / 2;
+    const hPago = (byDay[day].pago / maxVal) * chartH;
+    const hPend = (byDay[day].pendente / maxVal) * chartH;
+
+    ctx.fillStyle = '#1565C0';
+    ctx.fillRect(x - barW - 1, pad.top + chartH - hPago, barW, hPago);
+
+    ctx.fillStyle = '#F9A825';
+    ctx.fillRect(x + 1, pad.top + chartH - hPend, barW, hPend);
+
+    ctx.fillStyle = '#666'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+    ctx.fillText(day, x, H - 8);
+  });
+}
+
+// Init
+render();
+</script>
+<script data-pplx-inline-edit>
+(function(){
+  if(window===window.top)return;
+  function inlineAll(orig,clone){
+    if(orig.nodeType!==1)return;
+    try{
+      var cs=getComputedStyle(orig);
+      var t='';
+      for(var i=0;i<cs.length;i++){t+=cs[i]+':'+cs.getPropertyValue(cs[i])+';';}
+      clone.style.cssText=t;
+    }catch(e){}
+    var oc=orig.children,cc=clone.children;
+    for(var j=0;j<oc.length&&j<cc.length;j++){inlineAll(oc[j],cc[j]);}
+  }
+  function stripExternal(clone){
+    var imgs=clone.querySelectorAll('img');
+    for(var i=0;i<imgs.length;i++){
+      var s=imgs[i].getAttribute('src');
+      if(s&&!s.startsWith('data:'))imgs[i].removeAttribute('src');
+    }
+    var all=clone.querySelectorAll('*');
+    for(var i=0;i<all.length;i++){
+      var st=all[i].style.cssText;
+      if(st&&st.indexOf('url(')>=0){
+        all[i].style.cssText=st.replace(/url\(["']?(?!data:)[^)"']*["']?\)/gi,'none');
+      }
+    }
+  }
+  var scrollRaf=0;
+  function emitScroll(){
+    scrollRaf=0;
+    var x=window.scrollX||window.pageXOffset||0;
+    var y=window.scrollY||window.pageYOffset||0;
+    window.parent.postMessage({type:'INLINE_EDIT_SCROLL',scrollX:x,scrollY:y},'*');
+  }
+  window.addEventListener('scroll',function(){
+    if(scrollRaf)return;
+    scrollRaf=requestAnimationFrame(emitScroll);
+  },{passive:true,capture:true});
+  emitScroll();
+  window.addEventListener('message',function(e){
+    if(!e.data||e.data.type!=='INLINE_EDIT_CAPTURE_REQUEST')return;
+    var scrollX=window.scrollX||window.pageXOffset||0;
+    var scrollY=window.scrollY||window.pageYOffset||0;
+    var w=window.innerWidth,h=window.innerHeight;
+    try{
+      var clone=document.documentElement.cloneNode(true);
+      var rm=clone.querySelectorAll('script,link[rel="stylesheet"],style');
+      for(var i=0;i<rm.length;i++){rm[i].remove();}
+      inlineAll(document.documentElement,clone);
+      stripExternal(clone);
+      var html=new XMLSerializer().serializeToString(clone);
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'
+        +'<foreignObject width="100%" height="100%">'
+        +'<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+w+'px;height:'+h+'px;overflow:hidden">'
+        +'<div style="transform:translate(-'+scrollX+'px,-'+scrollY+'px);transform-origin:top left">'
+        +html+'</div></div></foreignObject></svg>';
+      var svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+      var img=new Image();
+      img.onload=function(){
+        var c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0);
+        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:c.toDataURL('image/png'),scrollX:scrollX,scrollY:scrollY},'*');
+      };
+      img.onerror=function(){
+        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
+      };
+      img.src=svgUrl;
+    }catch(err){
+      window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
+    }
+  });
+})();
+</script></body>
+</html>
