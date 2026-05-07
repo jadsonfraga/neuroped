@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <rect width="180" height="180" rx="40" fill="#faf8f4"/>
+  <rect x="10" y="10" width="160" height="160" rx="32" fill="none" stroke="#b8963e" stroke-width="8"/>
+  <rect x="22" y="22" width="136" height="136" rx="24" fill="none" stroke="#1a6b65" stroke-width="4"/>
+  <path d="M60 62c-15 6-24 20-18 36 4 11 13 19 25 21 8 15 38 15 46 0 12-2 21-10 25-21 6-16-3-30-18-36-8-20-52-20-60 0z" fill="#1a6b65"/>
+  <circle cx="73" cy="89" r="6" fill="#faf8f4"/>
+  <circle cx="107" cy="89" r="6" fill="#faf8f4"/>
+  <path d="M74 110c10 8 22 8 32 0" stroke="#faf8f4" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <text x="90" y="148" text-anchor="middle" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#8b2e3b">EDJ</text>
+</svg>
