@@ -1,0 +1,1 @@
+{"app":"NeuroPed EDJ","version":"LGPD-NEUROPED-2026-05-07","mode":"soft_compatibility","controls":["audit_events","lgpd_metadata","lgpd_terms_version","data_mode","portal_access_mode"],"deferred":["backend_auth","encryption_at_rest","role_based_access_control"]}
