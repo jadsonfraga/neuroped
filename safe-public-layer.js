@@ -1,15 +1,28 @@
 /* ======================================================
-   NeuroPed EDJ — Safe Public Layer v1
-   Interceptor de rotas sensíveis no roteamento por hash.
-   Redireciona acessos diretos a /pacientes, /prontuario,
-   /prescricao, /calculadora-dose, /farmacologia, /laudos
-   e similares para a página estática de área restrita.
+   NeuroPed EDJ — Safe Public Layer v2
+   Regra:
+   - PIN master libera todas as rotas no navegador atual.
+   - Portal da família educativo é livre.
+   - Dados pessoais armazenados seguem protegidos.
    ====================================================== */
-
 (function () {
   "use strict";
-
-  // Padrões de rota considerados sensíveis na camada pública.
+  var FAMILY_PUBLIC_PATTERNS = [
+    /^\/portal-familias?(\/|$|\?)/i,
+    /^\/portal-biblioteca(\/|$|\?)/i,
+    /^\/portal-novidades(\/|$|\?)/i,
+    /^\/portal-psicoeducacao(\/|$|\?)/i,
+    /^\/portal-faq(\/|$|\?)/i,
+    /^\/portal-recursos(\/|$|\?)/i,
+    /^\/orientacao-parental(\/|$|\?)/i,
+    /^\/guia-terapias(\/|$|\?)/i,
+    /^\/marcos-desenvolvimento(\/|$|\?)/i,
+    /^\/gerador-rotinas(\/|$|\?)/i,
+    /^\/testes-cognitivos(\/|$|\?)/i,
+    /^\/testes-conhecimentos-gerais(\/|$|\?)/i,
+    /^\/teste-conhecimento(\/|$|\?)/i,
+    /^\/teste-escrita(\/|$|\?)/i
+  ];
   var SENSITIVE_PATTERNS = [
     /^\/pacientes(\/|$|\?)/i,
     /^\/paciente\//i,
@@ -26,7 +39,6 @@
     /^\/lembretes/i,
     /^\/secretaria/i,
     /^\/gerador-laudo/i,
-    /^\/gerador-rotinas/i,
     /^\/prescritor-terapias/i,
     /^\/plano-terapeutico/i,
     /^\/plano-intervencao/i,
@@ -34,51 +46,42 @@
     /^\/equivalencia-medicamentos/i,
     /^\/portal-documentos/i,
     /^\/portal-chat/i,
+    /^\/portal-acompanhamento/i,
+    /^\/diario-conquistas/i,
+    /^\/linha-do-tempo/i,
     /^\/diario-epilepsia/i
   ];
-
   function getCurrentPath() {
     var hash = window.location.hash || "";
     if (hash.charAt(0) === "#") hash = hash.slice(1);
     return hash || "/";
   }
-
-  function isSensitive(path) {
+  function matches(path, patterns) {
     if (!path) return false;
-    for (var i = 0; i < SENSITIVE_PATTERNS.length; i++) {
-      if (SENSITIVE_PATTERNS[i].test(path)) return true;
-    }
+    for (var i = 0; i < patterns.length; i++) if (patterns[i].test(path)) return true;
     return false;
   }
-
+  function masterUnlocked() {
+    try {
+      return !!(window.NeuroPedMasterAccess && window.NeuroPedMasterAccess.isUnlocked && window.NeuroPedMasterAccess.isUnlocked());
+    } catch (e) { return false; }
+  }
   function redirectToRestricted(reason) {
     try {
       var basePath = window.location.pathname;
-      // Manter dentro do escopo /neuroped/ (subpath do GitHub Pages).
       var target = basePath.replace(/[^/]*$/, "") + "restricted.html";
       var qs = reason ? ("?from=" + encodeURIComponent(reason)) : "";
       window.location.replace(target + qs);
-    } catch (e) {
-      // Fallback inerte: apenas limpa o hash.
-      window.location.hash = "";
-    }
+    } catch (e) { window.location.hash = ""; }
   }
-
   function check() {
     var path = getCurrentPath();
-    if (isSensitive(path)) {
-      redirectToRestricted(path);
-    }
+    if (masterUnlocked()) return;
+    if (matches(path, FAMILY_PUBLIC_PATTERNS)) return;
+    if (matches(path, SENSITIVE_PATTERNS)) redirectToRestricted(path);
   }
-
-  // Verificação inicial após o bundle carregar.
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    setTimeout(check, 0);
-  } else {
-    window.addEventListener("DOMContentLoaded", check);
-  }
-
-  // Verificação contínua em mudanças de rota.
+  if (document.readyState === "complete" || document.readyState === "interactive") setTimeout(check, 0);
+  else window.addEventListener("DOMContentLoaded", check);
   window.addEventListener("hashchange", check);
   window.addEventListener("popstate", check);
 })();
