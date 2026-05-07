@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v10-hotfix";
+const CACHE_NAME = "neuroped-v11-caa-premium";
 const PRECACHE_URLS = [
   "./",
   "./index.html",

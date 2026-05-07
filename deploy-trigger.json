@@ -3,12 +3,12 @@
   "action": "deploy-trigger",
   "target_branch": "main",
   "status": "ready_for_static_host_deploy",
-  "deploy_requested_at": "2026-05-07T05:35:00-03:00",
+  "deploy_requested_at": "2026-05-07T05:55:00-03:00",
   "entrypoint": "index.html",
   "scale_entrypoint": "escalas.html",
   "sensitive_filter": "filtro-escalas.html",
   "communication_aac": "comunicacao-alternativa.html",
-  "communication_aac_version": "v3-safe-mobile",
+  "communication_aac_version": "v4-premium-kids",
   "diary_school_therapies": "diario-escola-terapias-v2.html",
   "diary_version": "v2-local-date-hotfix",
   "static_pages": [
@@ -27,5 +27,5 @@
     "banco-escalas-lote5-90.html"
   ],
   "backend_note": "GitHub Pages publica apenas arquivos estaticos; endpoints /api funcionam somente em ambiente Cloudflare Pages Functions configurado.",
-  "note": "Hotfix: Diario v2 com datas locais, CAA sem structuredClone e sem innerHTML para cartoes, service worker tolerante a falhas e scales-index em cache."
+  "note": "Deploy CAA Premium: aba destacada Novo CAA, cartoes grandes, categorias intuitivas, audio PT-BR ao toque, animacao curta, frases rapidas e cache v11."
 }
