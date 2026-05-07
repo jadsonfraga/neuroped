@@ -1,12 +1,14 @@
-const CACHE_NAME = "neuroped-v14-stable-95";
+const CACHE_NAME = "neuroped-v15-escalas-editoriais";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
   "./escalas.html",
+  "./mapa-escalas.html",
   "./filtro-escalas.html",
   "./scales-index.json",
+  "./scales-editorial.js",
   "./comunicacao-alternativa.html",
   "./diario-escola-terapias-v2.html",
   "./banco-escalas.html",
@@ -21,6 +23,6 @@ const PRECACHE_URLS = [
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>Promise.allSettled(PRECACHE_URLS.map(url=>cache.add(url)))).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("message",event=>{if(event.data&&event.data.type==="SKIP_WAITING")self.skipWaiting()});
-self.addEventListener("fetch",event=>{const url=new URL(event.request.url);if(event.request.method!=="GET")return;if(url.pathname.includes("/api/"))return;if(url.pathname.match(/\/assets\/.*\.(js|css)$/)){event.respondWith(cacheFirst(event.request));return}if(url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/)){event.respondWith(cacheFirst(event.request));return}if(url.pathname.match(/\.(woff2?|ttf|eot|json)$/)){event.respondWith(cacheFirst(event.request));return}event.respondWith(staleWhileRevalidate(event.request))});
+self.addEventListener("fetch",event=>{const url=new URL(event.request.url);if(event.request.method!=="GET")return;if(url.pathname.includes("/api/"))return;if(url.pathname.match(/\/assets\/.*\.(js|css)$/)){event.respondWith(cacheFirst(event.request));return}if(url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/)){event.respondWith(cacheFirst(event.request));return}if(url.pathname.match(/\.(woff2?|ttf|eot|json|js)$/)){event.respondWith(cacheFirst(event.request));return}event.respondWith(staleWhileRevalidate(event.request))});
 async function cacheFirst(request){const cached=await caches.match(request);if(cached)return cached;try{const response=await fetch(request);if(response.ok){const cache=await caches.open(CACHE_NAME);cache.put(request,response.clone())}return response}catch{return new Response("",{status:408})}}
 async function staleWhileRevalidate(request){const cache=await caches.open(CACHE_NAME);const cached=await cache.match(request);const networkFetch=fetch(request).then(response=>{if(response.ok)cache.put(request,response.clone());return response}).catch(()=>null);if(cached){networkFetch;return cached}const response=await networkFetch;if(response)return response;const fallback=await cache.match("./index.html");return fallback||new Response("NeuroPed offline. Conecte-se e recarregue.",{status:503,headers:{"Content-Type":"text/html; charset=utf-8"}})}
