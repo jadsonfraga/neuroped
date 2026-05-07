@@ -1,9 +1,13 @@
-const CACHE_NAME = "neuroped-v17-operacional-99";
+const CACHE_NAME = "neuroped-v18-master-family-access";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
+  "./master-access-policy.js",
+  "./safe-public-layer.js",
+  "./safe-public-layer.css",
+  "./caa-sidebar.js",
   "./escalas.html",
   "./mapa-escalas.html",
   "./filtro-escalas.html",
@@ -44,9 +48,6 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET") return;
   if (url.pathname.includes("/api/")) return;
-
-  // Fallback conservador: mantém os hotfixes mesmo se a página ainda não tiver script explícito.
-  // Os scripts têm proteção contra duplicação de botões.
   if (url.pathname.endsWith("/comunicacao-alternativa.html")) {
     event.respondWith(htmlWithHotfix(event.request, "./caa-hotfix.js"));
     return;
@@ -55,7 +56,6 @@ self.addEventListener("fetch", event => {
     event.respondWith(htmlWithHotfix(event.request, "./diario-hotfix.js"));
     return;
   }
-
   if (url.pathname.match(/\/assets\/.*\.(js|css)$/)) { event.respondWith(cacheFirst(event.request)); return; }
   if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/)) { event.respondWith(cacheFirst(event.request)); return; }
   if (url.pathname.match(/\.(woff2?|ttf|eot|json|js)$/)) { event.respondWith(cacheFirst(event.request)); return; }
