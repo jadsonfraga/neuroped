@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AuthPanel } from './components/AuthPanel';
 import { canUseClinicalData, doctorIdentity, hasConfiguredBackend, isProductionMode } from './config';
 
 async function makeHash(text: string) {
@@ -65,6 +66,16 @@ export default function App() {
           <p>
             Em modo demo, não informe dados identificáveis. Para produção, configure Supabase com autenticação, permissões, auditoria e políticas RLS.
           </p>
+        </article>
+      </section>
+
+      <section className="grid two-columns">
+        <AuthPanel />
+        <article className="panel">
+          <span className="small-label">Serviços preparados</span>
+          <h2>Supabase pronto para conexão</h2>
+          <p>Foram preparados serviços para autenticação, perfis, pacientes, documentos, convites familiares e auditoria.</p>
+          <p>Esses serviços permanecem inativos no modo demo e só operam quando o backend estiver configurado.</p>
         </article>
       </section>
 
