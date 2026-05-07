@@ -1,47 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NeuroPed EDJ — Índice de Escalas</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a6b65">
+<title>NeuroPed EDJ — Índice</title>
 <style>
-:root{--bg:#f7f2e8;--card:#fffaf1;--ink:#241b1b;--muted:#675b56;--teal:#0f766e;--wine:#7f1d1d;--gold:#d9a441;--line:#eadcc7}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#f7f2e8,#fffaf1);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:1180px;margin:0 auto;padding:28px 18px}.hero{background:linear-gradient(135deg,#fffaf1,#f4e7d3);border:1px solid var(--line);border-radius:28px;padding:28px;box-shadow:0 18px 50px rgba(80,38,20,.10)}.kicker{text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--teal);font-weight:800}h1{font-size:clamp(30px,5vw,48px);line-height:1.05;margin:6px 0 8px;color:var(--wine)}p{color:var(--muted);line-height:1.6}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:18px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:14px}.stat strong{display:block;font-size:26px;color:var(--wine)}.stat span{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:20px}.card{background:white;border:1px solid var(--line);border-radius:22px;padding:20px;text-decoration:none;color:var(--ink);box-shadow:0 10px 30px rgba(80,38,20,.06)}.card h2{margin:0 0 6px;color:var(--wine);font-size:22px}.card.featured{grid-column:1/-1;border:2px solid var(--teal);background:linear-gradient(135deg,#ffffff,#eefaf7);box-shadow:0 18px 44px rgba(15,118,110,.12)}.card.caa{grid-column:1/-1;border:2px solid var(--gold);background:linear-gradient(135deg,#fffdf9,#fff4d9)}.card.diario{grid-column:1/-1;border:2px solid var(--wine);background:linear-gradient(135deg,#fffdf9,#f3dede)}.badge{display:inline-block;border-radius:999px;background:#dcfce7;color:#166534;font-weight:800;font-size:12px;padding:4px 9px;margin-bottom:10px}.blue{background:#dbeafe;color:#1e40af}.purple{background:#ede9fe;color:#5b21b6}.gold{background:#fef3c7;color:#92400e}.red{background:#fee2e2;color:#991b1b}.dark{background:#1f2937;color:#f9fafb}.warn{background:#fff7ed;color:#9a3412}.teal{background:#ccfbf1;color:#115e59}.btn{display:inline-block;margin-top:16px;padding:12px 14px;border-radius:14px;background:var(--teal);color:white;text-decoration:none;font-weight:800}.footer{font-size:12px;color:var(--muted);margin-top:24px}
-</style>
+:root{--cream:#faf8f4;--paper:#fffdf9;--teal:#1a6b65;--wine:#8b2e3b;--gold:#b8963e;--ink:#241b1b;--muted:#675b56;--line:#eadcc7}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#f7f2e8,#fffaf1);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:1160px;margin:auto;padding:28px 18px}.hero{background:linear-gradient(135deg,#fffaf1,#f4e7d3);border:1px solid var(--line);border-radius:28px;padding:28px;box-shadow:0 18px 50px rgba(80,38,20,.10)}.kicker{text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--teal);font-weight:900}h1{font-size:clamp(30px,5vw,48px);line-height:1.05;margin:6px 0 8px;color:var(--wine);font-family:Georgia,serif}p{color:var(--muted);line-height:1.6}.btn{display:inline-block;margin:10px 8px 0 0;padding:12px 14px;border-radius:14px;background:var(--teal);color:white;text-decoration:none;font-weight:800}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:20px}.card{background:white;border:1px solid var(--line);border-radius:22px;padding:20px;text-decoration:none;color:var(--ink);box-shadow:0 10px 30px rgba(80,38,20,.06)}.card h2{margin:0 0 6px;color:var(--wine);font-size:22px;font-family:Georgia,serif}.wide{grid-column:1/-1}.diario{border:2px solid var(--wine);background:linear-gradient(135deg,#fffdf9,#f3dede)}.caa{border:2px solid var(--gold);background:linear-gradient(135deg,#fffdf9,#fff4d9)}.filtro{border:2px solid var(--teal);background:linear-gradient(135deg,#ffffff,#eefaf7)}.badge{display:inline-block;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:800;font-size:12px;padding:4px 9px;margin-bottom:10px}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:18px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:14px}.stat strong{display:block;font-size:26px;color:var(--wine)}.footer{font-size:12px;color:var(--muted);margin-top:24px}</style>
 </head>
 <body>
 <main class="wrap">
 <section class="hero">
 <div class="kicker">NeuroPed EDJ</div>
-<h1>Índice de escalas, diário e ferramentas</h1>
-<p>Acesso rápido aos bancos estáticos, filtro sensível por idade e queixa, Comunicação Alternativa e Diário de Escola e Terapias.</p>
-<a class="btn" href="./index.html">Voltar ao app principal</a>
-<a class="btn" href="./diario-escola-terapias.html">Diário escola/terapias</a>
+<h1>Índice de ferramentas</h1>
+<p>Acesso rápido ao app principal, diário corrigido, comunicação alternativa, filtro sensível e bancos estáticos de instrumentos.</p>
+<a class="btn" href="./index.html">App principal</a>
+<a class="btn" href="./diario-escola-terapias-v2.html">Diário v2</a>
 <a class="btn" href="./comunicacao-alternativa.html">Comunicação alternativa</a>
-<a class="btn" href="./filtro-escalas.html">Abrir filtro sensível</a>
-<div class="summary">
-<div class="stat"><strong>17</strong><span>base inicial segura</span></div>
-<div class="stat"><strong>20</strong><span>lote 1</span></div>
-<div class="stat"><strong>80</strong><span>lote 2</span></div>
-<div class="stat"><strong>100</strong><span>lote 3</span></div>
-<div class="stat"><strong>200</strong><span>lote 4</span></div>
-<div class="stat"><strong>90</strong><span>lote 5</span></div>
-<div class="stat"><strong>507</strong><span>total geral preenchível</span></div>
-<div class="stat"><strong>Diário</strong><span>escola e terapias</span></div>
-</div>
+<a class="btn" href="./filtro-escalas.html">Filtro sensível</a>
+<div class="summary"><div class="stat"><strong>507</strong><span>instrumentos preenchíveis</span></div><div class="stat"><strong>CAA</strong><span>cartões com áudio</span></div><div class="stat"><strong>v2</strong><span>diário com data local</span></div></div>
 </section>
 <section class="grid">
-<a class="card diario" href="./diario-escola-terapias.html"><span class="badge red">novo · diário</span><h2>Diário · Escola e Terapias</h2><p>Registro diário local para família, escola e terapeutas: escola, ABA, fono, TO, psicopedagogia, psicologia, evolução de habilidades, relatório por período, backup e compartilhamento.</p></a>
-<a class="card caa" href="./comunicacao-alternativa.html"><span class="badge gold">CAA</span><h2>Comunicação Alternativa</h2><p>Prancha visual “Vou Falar!” com cartões, frase acumulada, áudio local e frases rápidas.</p></a>
-<a class="card featured" href="./filtro-escalas.html"><span class="badge teal">filtro sensível</span><h2>Filtro de Escalas por Queixa e Idade</h2><p>Motor com idade em meses/anos, sinônimos clínicos, tolerância a erro de digitação e ranking de prioridade por instrumento.</p></a>
-<a class="card" href="./banco-escalas.html"><span class="badge">base inicial · 17</span><h2>Banco de Escalas Integrais</h2><p>Banco inicial com inventários autoaplicáveis, escola, EMDI, risco autolesivo, agressividade e AH/SD × TEA.</p></a>
-<a class="card" href="./banco-escalas-lote1.html"><span class="badge">lote 1 · 20</span><h2>Escalas Faltantes — Lote 1</h2><p>20 protocolos autorais por extenso: TEA, TDAH, comportamento, seletividade alimentar, cefaleia, epilepsia, autonomia e função executiva.</p></a>
-<a class="card" href="./banco-escalas-lote2-80.html"><span class="badge blue">lote 2 · 80</span><h2>80 Escalas Autorais Brasileiras</h2><p>Instrumentos brasileiros inspirados em domínios consagrados: TEA, TDAH, ansiedade, humor, escola, linguagem, comportamento, funcionalidade, neurologia e família.</p></a>
-<a class="card" href="./banco-escalas-lote3-100.html"><span class="badge purple">lote 3 · 100</span><h2>100 Novas Escalas Autorais</h2><p>Terceiro lote com primeira infância, desenvolvimento, motor, sensorial, cognição, escola, emoção, comportamento, sono/alimentação, neurologia, medicação e família.</p></a>
-<a class="card" href="./banco-escalas-lote4-200.html"><span class="badge gold">lote 4 · 200</span><h2>200 Escalas Complementares</h2><p>Quarto lote: prematuridade, genética, metabolismo, síndromes, paralisia cerebral, terapias, adolescência, segurança, telas, perícia, CAA, dor, meninas neurodivergentes, contexto brasileiro e longitudinalidade.</p></a>
-<a class="card" href="./banco-escalas-lote5-90.html"><span class="badge dark">lote 5 · 90</span><h2>90 Escalas Inspiradas em Rastreios Livres</h2><p>Lote finalizador: rastreio global, humor/depressão, ansiedade, substâncias, marcos, dor/sono/qualidade de vida, TEA/TDAH abertos e funcionalidade/direitos.</p></a>
-<a class="card" href="./docs/INTEGRACAO_ESCALAS_INTEGRAIS.md"><span class="badge warn">documentação</span><h2>Plano de Integração</h2><p>Critérios para transformar o catálogo 507+ em banco real de escalas preenchíveis, com segurança jurídica.</p></a>
+<a class="card wide diario" href="./diario-escola-terapias-v2.html"><span class="badge">corrigido</span><h2>Diário · Escola e Terapias v2</h2><p>Registro local para família, escola e terapeutas, com correção de data por horário local, evolução por habilidades, relatório, backup e compartilhamento.</p></a>
+<a class="card wide caa" href="./comunicacao-alternativa.html"><span class="badge">CAA</span><h2>Comunicação Alternativa</h2><p>Prancha visual “Vou Falar!” com cartões, frase acumulada, áudio local e frases rápidas, com compatibilidade móvel reforçada.</p></a>
+<a class="card wide filtro" href="./filtro-escalas.html"><span class="badge">filtro</span><h2>Filtro de Escalas por Queixa e Idade</h2><p>Busca por idade, queixa livre, sinônimos clínicos e ranking de prioridade por instrumento.</p></a>
+<a class="card" href="./banco-escalas.html"><h2>Base inicial</h2><p>17 instrumentos iniciais.</p></a>
+<a class="card" href="./banco-escalas-lote1.html"><h2>Lote 1</h2><p>20 instrumentos adicionais.</p></a>
+<a class="card" href="./banco-escalas-lote2-80.html"><h2>Lote 2</h2><p>80 instrumentos adicionais.</p></a>
+<a class="card" href="./banco-escalas-lote3-100.html"><h2>Lote 3</h2><p>100 instrumentos adicionais.</p></a>
+<a class="card" href="./banco-escalas-lote4-200.html"><h2>Lote 4</h2><p>200 instrumentos adicionais.</p></a>
+<a class="card" href="./banco-escalas-lote5-90.html"><h2>Lote 5</h2><p>90 instrumentos adicionais.</p></a>
 </section>
-<p class="footer">Total atual: 507 instrumentos preenchíveis no banco estático. Escalas comerciais/proprietárias permanecem travadas até licença ou autorização formal. Os lotes autorais são triagens clínicas estruturadas, não instrumentos normatizados.</p>
+<p class="footer">Ferramenta educacional de apoio clínico. Dados das páginas locais permanecem no dispositivo.</p>
 </main>
 </body>
 </html>
