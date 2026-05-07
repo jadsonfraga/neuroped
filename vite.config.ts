@@ -6,7 +6,7 @@ export default defineConfig({
   base: process.env.VITE_APP_BASE_PATH ?? '/neuroped/',
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: process.env.VITE_SOURCEMAP === 'true',
     emptyOutDir: true
   }
 });
