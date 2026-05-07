@@ -3,6 +3,9 @@ import type { User } from '@supabase/supabase-js';
 import { appEnvironment, hasConfiguredBackend } from '../config';
 import { getCurrentUser, getMyProfile, signOut } from '../services/auth';
 import type { Profile } from '../types/database';
+import { AccessControlPanel } from './AccessControlPanel';
+import { AuditPanel } from './AuditPanel';
+import { PatientsPanel } from './PatientsPanel';
 
 type State = { user: User | null; profile: Profile | null; loading: boolean; error: string };
 
@@ -48,6 +51,15 @@ export function ProductionDashboard({ refreshToken }: { refreshToken: number }) 
           <div><strong>Usuario</strong><span>{state.user.email ?? state.user.id}</span></div>
         </div>
       </article>
+      <div className="module-grid">
+        <article className="module-card"><h3>Pacientes</h3><p>Somente iniciais e ano.</p></article>
+        <article className="module-card"><h3>Documentos</h3><p>Preparado para fluxo validado.</p></article>
+        <article className="module-card"><h3>Auditoria</h3><p>Eventos rastreaveis.</p></article>
+        <article className="module-card"><h3>Acessos</h3><p>Controle temporario.</p></article>
+      </div>
+      <PatientsPanel actorId={state.user.id} />
+      <AccessControlPanel />
+      <AuditPanel role={state.profile.role} />
     </section>
   );
 }
