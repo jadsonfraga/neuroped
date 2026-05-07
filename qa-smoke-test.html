@@ -1,46 +1,29 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1a6b65">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1a6b65">
 <title>NeuroPed EDJ — Smoke Test Operacional</title>
-<style>
-:root{--cream:#faf8f4;--paper:#fffdf9;--teal:#1a6b65;--gold:#b8963e;--wine:#8b2e3b;--dark:#2d2926;--muted:#6f6963;--line:#eadcc7}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#faf8f4,#fffaf1);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--dark);line-height:1.55}.wrap{max-width:1120px;margin:auto;padding:24px 18px}.hero{background:linear-gradient(135deg,#fffdf9,#f4e7d3);border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:0 16px 44px rgba(80,38,20,.09)}h1{font:700 clamp(30px,5vw,54px)/1.04 Georgia,serif;color:var(--wine);margin:0 0 8px}.btn,button{border:0;border-radius:14px;background:var(--teal);color:white;padding:12px 14px;font-weight:900;cursor:pointer;text-decoration:none}.ghost{background:white;color:var(--wine);border:1px solid var(--line)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:18px}.card{background:white;border:1px solid var(--line);border-radius:20px;padding:14px}.ok{border-left:6px solid #15803d}.fail{border-left:6px solid #b91c1c}.warn{border-left:6px solid var(--gold)}pre{white-space:pre-wrap;background:#2d2926;color:#faf8f4;border-radius:18px;padding:14px;overflow:auto}.muted{color:var(--muted)}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}</style>
+<style>:root{--cream:#faf8f4;--teal:#1a6b65;--gold:#b8963e;--wine:#8b2e3b;--dark:#2d2926;--muted:#6f6963;--line:#eadcc7}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#faf8f4,#fffaf1);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--dark);line-height:1.55}.wrap{max-width:1120px;margin:auto;padding:24px 18px}.hero{background:linear-gradient(135deg,#fffdf9,#f4e7d3);border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:0 16px 44px rgba(80,38,20,.09)}h1{font:700 clamp(30px,5vw,54px)/1.04 Georgia,serif;color:var(--wine);margin:0 0 8px}.btn,button{border:0;border-radius:14px;background:var(--teal);color:white;padding:12px 14px;font-weight:900;cursor:pointer;text-decoration:none}.ghost{background:white;color:var(--wine);border:1px solid var(--line)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:18px}.card{background:white;border:1px solid var(--line);border-radius:20px;padding:14px}.ok{border-left:6px solid #15803d}.fail{border-left:6px solid #b91c1c}.warn{border-left:6px solid var(--gold)}pre{white-space:pre-wrap;background:#2d2926;color:#faf8f4;border-radius:18px;padding:14px;overflow:auto}.muted{color:var(--muted)}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}</style>
 </head>
-<body>
-<main class="wrap">
-<section class="hero">
-<h1>Smoke Test Operacional</h1>
-<p class="muted">Teste local de rotas, manifest, cache e textos essenciais. Não substitui teste humano em iPhone/Android, mas revela falhas básicas antes da validação final.</p>
-<div class="row"><button onclick="runTests()">Executar testes</button><button class="ghost" onclick="copyResults()">Copiar resultado</button><a class="btn ghost" href="./escalas.html">Voltar ao índice</a></div>
-</section>
-<section id="summary" class="card warn" style="margin-top:16px">Aguardando execução.</section>
-<section id="results" class="grid"></section>
-<h2>Relatório copiável</h2>
-<pre id="log">Sem resultados.</pre>
-</main>
+<body><main class="wrap"><section class="hero"><h1>Smoke Test Operacional</h1><p class="muted">Teste de rotas, manifest, cache, PIN master e portal da família livre.</p><div class="row"><button onclick="runTests()">Executar testes</button><button class="ghost" onclick="copyResults()">Copiar resultado</button><a class="btn ghost" href="./escalas.html">Voltar ao índice</a></div></section><section id="summary" class="card warn" style="margin-top:16px">Aguardando execução.</section><section id="results" class="grid"></section><h2>Relatório copiável</h2><pre id="log">Sem resultados.</pre></main>
 <script>
-const tests=[];
-function add(name,fn){tests.push({name,fn})}
-async function getText(url){const r=await fetch(url,{cache:'no-store'});const text=await r.text();return{ok:r.ok,status:r.status,text}}
-function expect(text,needle){return String(text).includes(needle)}
-add('Rota index.html carrega',async()=>{const r=await getText('./index.html');return r.ok});
+const tests=[];function add(name,fn){tests.push({name,fn})}async function getText(url){const r=await fetch(url,{cache:'no-store'});const text=await r.text();return{ok:r.ok,status:r.status,text}}function expect(text,needle){return String(text).includes(needle)}
+add('Rota index.html carrega',async()=>{const r=await getText('./index.html');return r.ok&&expect(r.text,'master-access-policy.js')});
 add('Rota escalas.html carrega',async()=>{const r=await getText('./escalas.html');return r.ok&&expect(r.text,'mapa-escalas.html')});
 add('Rota mapa-escalas.html carrega',async()=>{const r=await getText('./mapa-escalas.html');return r.ok&&expect(r.text,'Mapa de Instrumentos')});
-add('Rota filtro-escalas.html carrega',async()=>{const r=await getText('./filtro-escalas.html');return r.ok&&expect(r.text,'Perguntas')||expect(r.text,'questions')});
+add('Rota filtro-escalas.html carrega',async()=>{const r=await getText('./filtro-escalas.html');return r.ok&&(expect(r.text,'Perguntas')||expect(r.text,'questions'))});
 add('Rota CAA carrega',async()=>{const r=await getText('./comunicacao-alternativa.html');return r.ok&&expect(r.text,'CAA Gratuita')});
 add('Rota Diário v2 carrega',async()=>{const r=await getText('./diario-escola-terapias-v2.html');return r.ok&&expect(r.text,'Diário')});
 add('Manifest contém CAA Gratuita',async()=>{const r=await getText('./manifest.json');return r.ok&&expect(r.text,'CAA Gratuita')});
 add('Manifest não contém CAA Premium',async()=>{const r=await getText('./manifest.json');return r.ok&&!expect(r.text,'CAA Premium')&&!expect(r.text,'caa-premium')});
-add('Service worker v17 existe',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'neuroped-v17-operacional-99')});
+add('Service worker v18 existe',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'neuroped-v18-master-family-access')});
+add('SW cacheia política master',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'master-access-policy.js')&&expect(r.text,'safe-public-layer.js')});
+add('Política de PIN master carrega',async()=>{const r=await getText('./master-access-policy.js');return r.ok&&expect(r.text,'NeuroPedMasterAccess')&&expect(r.text,'Portal da família')});
+add('Safe layer libera portal família educativo',async()=>{const r=await getText('./safe-public-layer.js');return r.ok&&expect(r.text,'FAMILY_PUBLIC_PATTERNS')&&expect(r.text,'portal-biblioteca')&&expect(r.text,'portal-documentos')});
 add('SW cacheia hotfixes',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'caa-hotfix.js')&&expect(r.text,'diario-hotfix.js')});
 add('Catálogo editorial carrega',async()=>{const r=await getText('./scales-editorial.js');return r.ok&&expect(r.text,'NEUROPED_EDITORIAL_SCALES')});
 add('CAA hotfix carrega',async()=>{const r=await getText('./caa-hotfix.js');return r.ok&&expect(r.text,'copyPhraseBtn')&&expect(r.text,'saveQuickPhraseBtn')});
 add('Diário hotfix carrega',async()=>{const r=await getText('./diario-hotfix.js');return r.ok&&expect(r.text,'prepConsultaBtn')});
 async function runTests(){const res=[];document.getElementById('results').innerHTML='';for(const t of tests){let ok=false,err='';try{ok=await t.fn()}catch(e){err=e.message||String(e)}res.push({name:t.name,ok,err});const div=document.createElement('article');div.className='card '+(ok?'ok':'fail');div.innerHTML='<strong>'+ (ok?'✅ ':'❌ ') + t.name + '</strong>'+(err?'<p>'+err+'</p>':'');document.getElementById('results').appendChild(div)}const passed=res.filter(x=>x.ok).length;document.getElementById('summary').className='card '+(passed===res.length?'ok':'warn');document.getElementById('summary').textContent=passed+' de '+res.length+' testes aprovados.';document.getElementById('log').textContent=res.map(x=>(x.ok?'OK  ':'FAIL')+' — '+x.name+(x.err?' — '+x.err:'')).join('\n')}
-function copyResults(){navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('log').textContent)}
-runTests();
-</script>
-</body>
-</html>
+function copyResults(){navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('log').textContent)}runTests();
+</script></body></html>
