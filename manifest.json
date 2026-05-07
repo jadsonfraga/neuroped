@@ -1,7 +1,7 @@
 {
   "name": "Dr. Jadson Fraga NeuroPed",
   "short_name": "NeuroPed",
-  "description": "Escalas, questionários, comunicação alternativa, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
+  "description": "Escalas, diário de escola e terapias, comunicação alternativa, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
@@ -19,6 +19,12 @@
   ],
   "shortcuts": [
     {
+      "name": "Diário Escola e Terapias",
+      "short_name": "Diário",
+      "url": "./diario-escola-terapias.html",
+      "description": "Registro diário de escola, terapias e evolução"
+    },
+    {
       "name": "Comunicação Alternativa",
       "short_name": "CAA",
       "url": "./comunicacao-alternativa.html",
@@ -35,12 +41,6 @@
       "short_name": "Prontuário",
       "url": "./index.html#/prontuario",
       "description": "Prontuário com anamnese e marcos"
-    },
-    {
-      "name": "Farmacologia",
-      "short_name": "Fármacos",
-      "url": "./index.html#/farmacologia",
-      "description": "142 medicações com doses"
     }
   ]
 }
