@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v15-escalas-editoriais";
+const CACHE_NAME = "neuroped-v16-operacional-hotfix";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -10,7 +10,9 @@ const PRECACHE_URLS = [
   "./scales-index.json",
   "./scales-editorial.js",
   "./comunicacao-alternativa.html",
+  "./caa-hotfix.js",
   "./diario-escola-terapias-v2.html",
+  "./diario-hotfix.js",
   "./banco-escalas.html",
   "./banco-escalas-lote1.html",
   "./banco-escalas-lote2-80.html",
