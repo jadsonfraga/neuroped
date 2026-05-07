@@ -1,0 +1,37 @@
+{
+  "app": "NeuroPed EDJ",
+  "version": "LGPD-NEUROPED-2026-05-07",
+  "controller": {
+    "name": "Dr. Jadson Fraga Araujo Junior",
+    "crm": "CRM-PE 25227",
+    "rqe": "RQE 17756",
+    "specialty": "Neuropediatria"
+  },
+  "categories": [
+    {
+      "name": "identificacao_paciente",
+      "risk": "alto",
+      "controls": ["minimizacao", "pseudonimizacao_de_documentos", "consentimento_responsavel"]
+    },
+    {
+      "name": "dados_de_saude",
+      "risk": "muito_alto",
+      "controls": ["finalidade_assistencial", "acesso_restrito", "trilha_de_auditoria"]
+    },
+    {
+      "name": "escalas_e_resultados",
+      "risk": "alto",
+      "controls": ["aviso_de_apoio_clinico", "nao_diagnostico_isolado", "registro_de_finalidade"]
+    },
+    {
+      "name": "documentos_portal",
+      "risk": "muito_alto",
+      "controls": ["revogacao_de_acesso", "pseudonimizacao", "evitar_credencial_baseada_em_documento"]
+    }
+  ],
+  "retention_policy": {
+    "operational_data": "manter apenas enquanto necessario para finalidade assistencial ou documental",
+    "demo_data": "pode ser apagado a qualquer momento",
+    "portal_access": "revogavel pelo controlador"
+  }
+}
