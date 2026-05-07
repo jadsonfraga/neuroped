@@ -1,47 +1,33 @@
 {
   "name": "Dr. Jadson Fraga NeuroPed",
   "short_name": "NeuroPed",
-  "description": "Escalas, questionários, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
+  "description": "Escalas, questionários, comunicação alternativa, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#0f0a1e",
-  "theme_color": "#7c3aed",
+  "background_color": "#faf8f4",
+  "theme_color": "#1a6b65",
   "orientation": "any",
   "lang": "pt-BR",
   "categories": ["medical", "education", "health"],
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
     {
+      "name": "Comunicação Alternativa",
+      "short_name": "CAA",
+      "url": "./comunicacao-alternativa.html",
+      "description": "Prancha CAA com cartões visuais e áudio local"
+    },
+    {
       "name": "Filtro Inteligente",
       "short_name": "Filtro",
-      "url": "./index.html#/filtro",
+      "url": "./filtro-escalas.html",
       "description": "Buscar escalas por queixa e idade"
     },
     {
