@@ -1,0 +1,15 @@
+{
+  "name": "neuroped-edj",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NeuroPed EDJ - Frontend estatico com backend Cloudflare Pages Functions e D1",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "db:schema": "wrangler d1 execute neuroped-db --file=./schema.sql --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "wrangler": "latest",
+    "typescript": "latest"
+  }
+}
