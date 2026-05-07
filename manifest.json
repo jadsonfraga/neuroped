@@ -2,7 +2,7 @@
   "id": "./index.html#/",
   "name": "Dr. Jadson Fraga NeuroPed",
   "short_name": "NeuroPed",
-  "description": "Escalas, diário de escola e terapias, CAA Premium, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
+  "description": "Escalas, diario, CAA gratuita e ferramentas NeuroPed EDJ",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
@@ -19,29 +19,9 @@
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "CAA Premium",
-      "short_name": "CAA",
-      "url": "./comunicacao-alternativa.html",
-      "description": "Figuras grandes, voz em português e frase visual"
-    },
-    {
-      "name": "Diário Escola e Terapias",
-      "short_name": "Diário",
-      "url": "./diario-escola-terapias-v2.html",
-      "description": "Registro diário de escola, terapias e evolução com datas locais"
-    },
-    {
-      "name": "Filtro Inteligente",
-      "short_name": "Filtro",
-      "url": "./filtro-escalas.html",
-      "description": "Buscar escalas por queixa e idade"
-    },
-    {
-      "name": "Prontuário Clínico",
-      "short_name": "Prontuário",
-      "url": "./index.html#/prontuario",
-      "description": "Prontuário com anamnese e marcos"
-    }
+    {"name": "CAA Gratuita", "short_name": "CAA", "url": "./comunicacao-alternativa.html", "description": "Figurinhas grandes, voz e frases"},
+    {"name": "Diario", "short_name": "Diario", "url": "./diario-escola-terapias-v2.html", "description": "Registro de escola e terapias"},
+    {"name": "Filtro", "short_name": "Filtro", "url": "./filtro-escalas.html", "description": "Buscar escalas por queixa e idade"},
+    {"name": "Prontuario", "short_name": "Prontuario", "url": "./index.html#/prontuario", "description": "Prontuario e marcos"}
   ]
 }
