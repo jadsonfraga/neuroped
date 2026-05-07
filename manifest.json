@@ -1,4 +1,5 @@
 {
+  "id": "./index.html#/",
   "name": "Dr. Jadson Fraga NeuroPed",
   "short_name": "NeuroPed",
   "description": "Escalas, diário de escola e terapias, comunicação alternativa, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
@@ -21,8 +22,8 @@
     {
       "name": "Diário Escola e Terapias",
       "short_name": "Diário",
-      "url": "./diario-escola-terapias.html",
-      "description": "Registro diário de escola, terapias e evolução"
+      "url": "./diario-escola-terapias-v2.html",
+      "description": "Registro diário de escola, terapias e evolução com datas locais"
     },
     {
       "name": "Comunicação Alternativa",
