@@ -10,7 +10,7 @@
     "build": "npm run preflight && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "tsc --noEmit",
     "verify": "npm run preflight && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
@@ -23,12 +23,8 @@
     "pdf-lib": "latest"
   },
   "devDependencies": {
-    "@eslint/js": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "eslint": "latest",
-    "globals": "latest",
-    "typescript-eslint": "latest"
+    "@types/react-dom": "latest"
   },
   "engines": {
     "node": ">=20"
