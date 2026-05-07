@@ -1,13 +1,13 @@
-const CACHE_NAME = "neuroped-v13-caa-gratuita-editorial";
+const CACHE_NAME = "neuroped-v14-stable-95";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./sw.js",
   "./escalas.html",
   "./filtro-escalas.html",
   "./scales-index.json",
   "./comunicacao-alternativa.html",
-  "./diario-escola-terapias.html",
   "./diario-escola-terapias-v2.html",
   "./banco-escalas.html",
   "./banco-escalas-lote1.html",
