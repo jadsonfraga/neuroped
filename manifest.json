@@ -2,7 +2,7 @@
   "id": "./index.html#/",
   "name": "Dr. Jadson Fraga NeuroPed",
   "short_name": "NeuroPed",
-  "description": "Escalas, diário de escola e terapias, comunicação alternativa, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
+  "description": "Escalas, diário de escola e terapias, CAA Premium, farmacologia e testes de neuropediatria — Dr. Jadson Fraga",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
@@ -20,16 +20,16 @@
   ],
   "shortcuts": [
     {
+      "name": "CAA Premium",
+      "short_name": "CAA",
+      "url": "./comunicacao-alternativa.html",
+      "description": "Figuras grandes, voz em português e frase visual"
+    },
+    {
       "name": "Diário Escola e Terapias",
       "short_name": "Diário",
       "url": "./diario-escola-terapias-v2.html",
       "description": "Registro diário de escola, terapias e evolução com datas locais"
-    },
-    {
-      "name": "Comunicação Alternativa",
-      "short_name": "CAA",
-      "url": "./comunicacao-alternativa.html",
-      "description": "Prancha CAA com cartões visuais e áudio local"
     },
     {
       "name": "Filtro Inteligente",
