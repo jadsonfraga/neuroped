@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = process.cwd();
+
 const requiredFiles = [
   'package.json',
   'vite.config.ts',
@@ -14,14 +15,28 @@ const requiredFiles = [
 
 const forbiddenRuntimePatterns = [
   'api.npoint.io',
+  'npoint.io',
+  'SUPABASE_SERVICE_ROLE',
+  'service_role',
   'CPF como senha',
   'cpf como senha',
+  'senha CPF',
   'ASSINADO DIGITALMENTE - ICP-Brasil',
   'ASSINATURA DIGITAL ICP-BRASIL',
+  'Certificado válido',
+  'Validade jurídica garantida',
   'Perplexity Computer'
 ];
 
+const forbiddenFiles = [
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.development'
+];
+
 function walk(directory, files = []) {
+  if (!existsSync(directory)) return files;
   for (const entry of readdirSync(directory)) {
     if (['node_modules', 'dist', '.git'].includes(entry)) continue;
     const absolute = join(directory, entry);
@@ -39,7 +54,15 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-const scannedFiles = walk(join(root, 'src')).concat([
+const sensitiveFilesFound = forbiddenFiles.filter((file) => existsSync(join(root, file)));
+if (sensitiveFilesFound.length > 0) {
+  console.error('Arquivos sensiveis nao devem ser commitados:');
+  for (const file of sensitiveFilesFound) console.error(`- ${file}`);
+  process.exit(1);
+}
+
+const runtimeRoots = ['src', 'public'];
+const scannedFiles = runtimeRoots.flatMap((directory) => walk(join(root, directory))).concat([
   join(root, 'index.html'),
   join(root, 'sw.js'),
   join(root, 'manifest.json')
