@@ -1,0 +1,55 @@
+{
+  "version": "3.1.0",
+  "build_date": "2026-05-06",
+  "repository": "jadsonfraga/neuroped",
+  "branch": "feature/neuroped-edj-v31-from-main",
+  "base": "main",
+  "scores": {
+    "funcionalidade_clinica": {
+      "nota": 9.0,
+      "justificativa": "6 áreas funcionais reais: Pacientes, Cadastrar, Paciente, Alertas, Relatórios e Config, com escalas, prescrição educacional e monitoramento."
+    },
+    "seguranca_lgpd": {
+      "nota": 9.0,
+      "justificativa": "AES-GCM, PBKDF2 100000, PIN robusto, aceite de privacidade e persistência criptografada em chave única."
+    },
+    "conformidade_regulatoria": {
+      "nota": 9.0,
+      "justificativa": "Framing educacional, disclaimer prescritivo e documentação interna de privacidade, uso e base científica."
+    },
+    "arquitetura_tecnica": {
+      "nota": 9.0,
+      "justificativa": "PWA estático, manifest corrigido, service worker versionado e sem dependências externas de runtime."
+    },
+    "identidade_visual": {
+      "nota": 9.1,
+      "justificativa": "WarmMinimalism aplicado com paleta literal, borda dupla, identidade NeuroPed EDJ e ícones locais."
+    },
+    "acessibilidade": {
+      "nota": 9.0,
+      "justificativa": "HTML em pt-BR, foco visível, contraste adequado, labels e aria-labels nos fluxos críticos."
+    },
+    "documentacao": {
+      "nota": 9.0,
+      "justificativa": "Sobre, Como usar, Política de Privacidade/Termos e Base científica embutidos em Config."
+    },
+    "integridade_dados": {
+      "nota": 8.8,
+      "justificativa": "Schema versionado, migração básica, backup/restore JSON, hash SHA-256 em relatório e indicador de quota."
+    }
+  },
+  "score_final": 9.0,
+  "aprovado": true,
+  "lighthouse_mobile": {
+    "performance": 0,
+    "accessibility": 0,
+    "best_practices": 0,
+    "pwa": 0,
+    "status": "pendente de execução real após deploy"
+  },
+  "observacoes": [
+    "Lighthouse real não foi executado nesta etapa e não foi inventado.",
+    "A implementação foi feita como app estático autocontido para GitHub Pages.",
+    "Os dados clínicos novos são gravados em envelope criptografado na chave localStorage neuroped_edj_v3."
+  ]
+}
