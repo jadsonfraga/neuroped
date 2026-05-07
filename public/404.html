@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NeuroPed EDJ</title>
+    <script>
+      (function () {
+        var base = '/neuroped/';
+        var path = window.location.pathname;
+        var rest = path.indexOf(base) === 0 ? path.substring(base.length) : '';
+        window.location.replace(base + '#/' + rest + window.location.search + window.location.hash);
+      })();
+    </script>
+  </head>
+  <body>Redirecionando...</body>
+</html>
