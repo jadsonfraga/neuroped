@@ -14,9 +14,8 @@
 <link rel="icon" href="./icon-192.png">
 <style>
 body{margin:0;background:#faf8f4;color:#2d2926;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-.edj-caa-sidebar-item{display:flex!important;align-items:center;gap:10px;width:100%;margin:4px 0;padding:10px 12px;border-radius:12px;text-decoration:none!important;color:#1a6b65!important;background:rgba(26,107,101,.08)!important;border:1px solid rgba(26,107,101,.22)!important;font-weight:700!important}
-.edj-caa-sidebar-item:hover{background:rgba(26,107,101,.14)!important}
-.edj-caa-sidebar-item .edj-caa-icon{font-size:18px;line-height:1}.edj-caa-sidebar-item .edj-caa-label{display:flex;align-items:center;gap:6px;min-width:0}.edj-caa-sidebar-item .edj-caa-new{font-size:9px;text-transform:uppercase;letter-spacing:.05em;background:#ccfbf1;color:#115e59;border-radius:999px;padding:2px 6px;font-weight:900}
+.edj-caa-sidebar-item{display:flex!important;align-items:center;gap:10px;width:100%;box-sizing:border-box;margin:4px 0;padding:10px 12px;border-radius:12px;text-decoration:none!important;color:#1a6b65!important;background:rgba(26,107,101,.075)!important;border:1px solid rgba(26,107,101,.20)!important;font-weight:700!important;line-height:1.2}
+.edj-caa-sidebar-item:hover{background:rgba(26,107,101,.13)!important}.edj-caa-sidebar-item .edj-caa-icon{font-size:18px;line-height:1}.edj-caa-sidebar-item .edj-caa-label{display:flex;align-items:center;gap:6px;min-width:0}.edj-caa-sidebar-item .edj-caa-new{font-size:9px;text-transform:uppercase;letter-spacing:.05em;background:#ccfbf1;color:#115e59;border-radius:999px;padding:2px 6px;font-weight:900}
 </style>
 <script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
 <link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css">
@@ -27,31 +26,43 @@ body{margin:0;background:#faf8f4;color:#2d2926;font-family:system-ui,-apple-syst
 <script>
 (function(){
   const CAA_URL='./comunicacao-alternativa.html';
-  function normalize(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
-  function makeItem(){
-    const a=document.createElement('a');
-    a.href=CAA_URL;
-    a.className='edj-caa-sidebar-item';
-    a.setAttribute('aria-label','Abrir CAA Premium');
-    a.innerHTML='<span class="edj-caa-icon">💬</span><span class="edj-caa-label">CAA Premium <span class="edj-caa-new">novo</span></span>';
-    return a;
-  }
-  function findSecretaria(){
-    const nodes=Array.from(document.querySelectorAll('a,button,[role="button"],li,div,span'));
-    return nodes.find(el=>normalize(el.textContent)==='secretaria')||nodes.find(el=>normalize(el.textContent).includes('secretaria'));
+  const ITEM_CLASS='edj-caa-sidebar-item';
+  function normalize(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
+  function isVisible(el){const r=el.getBoundingClientRect();const cs=getComputedStyle(el);return r.width>20&&r.height>10&&cs.display!=='none'&&cs.visibility!=='hidden'}
+  function isLeftNav(el){const r=el.getBoundingClientRect();return r.left<420&&r.top>=0&&r.width>=80&&r.height<=90}
+  function makeItem(){const a=document.createElement('a');a.href=CAA_URL;a.className=ITEM_CLASS;a.setAttribute('aria-label','Abrir CAA Premium');a.innerHTML='<span class="edj-caa-icon">💬</span><span class="edj-caa-label">CAA Premium <span class="edj-caa-new">novo</span></span>';return a}
+  function rowFor(el){return el.closest('a,button,[role="button"],li')||el}
+  function findSecretariaRow(){
+    const nodes=Array.from(document.querySelectorAll('a,button,[role="button"],li,span,div'));
+    const exact=[];const loose=[];
+    for(const el of nodes){
+      if(!isVisible(el))continue;
+      const text=normalize(el.textContent);
+      if(!text||!text.includes('secretaria'))continue;
+      const row=rowFor(el);
+      if(!row||!isVisible(row)||!isLeftNav(row))continue;
+      const area=row.getBoundingClientRect().width*row.getBoundingClientRect().height;
+      const item={row,area};
+      if(text==='secretaria')exact.push(item);else loose.push(item);
+    }
+    const pool=(exact.length?exact:loose).sort((a,b)=>a.area-b.area);
+    return pool[0]?.row||null;
   }
   function place(){
-    if(document.querySelector('.edj-caa-sidebar-item'))return true;
-    const sec=findSecretaria();
-    if(!sec)return false;
-    const row=sec.closest('a,button,li,[role="button"],div')||sec;
+    const old=document.querySelector('.'+ITEM_CLASS);
+    const row=findSecretariaRow();
+    if(!row)return false;
+    if(old){
+      if(old.previousElementSibling===row)return true;
+      old.remove();
+    }
     const item=makeItem();
-    if(row.parentElement){row.parentElement.insertBefore(item,row.nextSibling);return true}
-    return false;
+    row.insertAdjacentElement('afterend',item);
+    return true;
   }
   let tries=0;
-  const timer=setInterval(()=>{tries++;if(place()||tries>60)clearInterval(timer)},250);
-  new MutationObserver(()=>place()).observe(document.documentElement,{childList:true,subtree:true});
+  const timer=setInterval(()=>{tries++;if(place()||tries>100)clearInterval(timer)},200);
+  new MutationObserver(()=>{if(!document.querySelector('.'+ITEM_CLASS))place()}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});}
 </script>
