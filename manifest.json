@@ -1,8 +1,8 @@
 {
   "id": "./index.html#/",
-  "name": "Dr. Jadson Fraga NeuroPed",
-  "short_name": "NeuroPed",
-  "description": "Escalas, diario, CAA gratuita e ferramentas NeuroPed EDJ",
+  "name": "NeuroPed EDJ — Dr. Jadson Fraga",
+  "short_name": "NeuroPed EDJ",
+  "description": "Plataforma educativa de neuropediatria com comunicação alternativa, biblioteca, guias e orientação. Conteúdo educativo, não substitui consulta médica.",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
@@ -11,6 +11,7 @@
   "theme_color": "#1a6b65",
   "orientation": "any",
   "lang": "pt-BR",
+  "dir": "ltr",
   "categories": ["medical", "education", "health"],
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
@@ -19,9 +20,29 @@
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {"name": "CAA Gratuita", "short_name": "CAA", "url": "./comunicacao-alternativa.html", "description": "Figurinhas grandes, voz e frases"},
-    {"name": "Diario", "short_name": "Diario", "url": "./diario-escola-terapias-v2.html", "description": "Registro de escola e terapias"},
-    {"name": "Filtro", "short_name": "Filtro", "url": "./filtro-escalas.html", "description": "Buscar escalas por queixa e idade"},
-    {"name": "Prontuario", "short_name": "Prontuario", "url": "./index.html#/prontuario", "description": "Prontuario e marcos"}
+    {
+      "name": "CAA Premium — Comunicação Alternativa",
+      "short_name": "CAA",
+      "url": "./comunicacao-alternativa.html",
+      "description": "Figuras grandes, voz em português e frase visual"
+    },
+    {
+      "name": "Diário Escolar e de Terapias",
+      "short_name": "Diário",
+      "url": "./diario-escola-terapias-v2.html",
+      "description": "Registro educativo local de escola, terapias e evolução"
+    },
+    {
+      "name": "Filtro Orientativo de Escalas",
+      "short_name": "Filtro",
+      "url": "./filtro-escalas.html",
+      "description": "Orientação sobre instrumentos clínicos por queixa e idade"
+    },
+    {
+      "name": "Biblioteca Educativa",
+      "short_name": "Biblioteca",
+      "url": "./index.html#/biblioteca",
+      "description": "Materiais e referências educativas em neuropediatria"
+    }
   ]
 }

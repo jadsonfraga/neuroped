@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área Profissional Restrita — NeuroPed EDJ</title>
+  <meta name="description" content="Área profissional restrita do NeuroPed EDJ. Módulos clínicos não disponíveis na camada pública." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#1a6b65" />
+  <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/restricted.html" />
+  <style>
+    :root {
+      --pant-cream: #faf8f4;
+      --pant-cream-elevated: #ffffff;
+      --pant-cream-sunken: #f0ece4;
+      --pant-gold: #b8963e;
+      --pant-teal: #1a6b65;
+      --pant-teal-hover: #155752;
+      --pant-burgundy: #8b2e3b;
+      --pant-dark: #2d2926;
+      --pant-text-primary: #2d2926;
+      --pant-text-secondary: #57514a;
+      --pant-border: rgba(45, 41, 38, 0.12);
+      --pant-shadow-soft: 0 4px 12px rgba(45, 41, 38, 0.08);
+      --pant-shadow-card: 0 8px 24px rgba(45, 41, 38, 0.10);
+      --pant-radius-md: 8px;
+      --pant-radius-lg: 16px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--pant-cream);
+      color: var(--pant-text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      max-width: 540px;
+      width: 100%;
+      background: var(--pant-cream-elevated);
+      border: 1px solid var(--pant-border);
+      border-radius: var(--pant-radius-lg);
+      padding: 2.75rem 2.25rem;
+      box-shadow: var(--pant-shadow-card);
+      text-align: center;
+    }
+    .lock {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      background: var(--pant-cream-sunken);
+      border: 2px solid var(--pant-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lock svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--pant-teal);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--pant-teal);
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+    p {
+      color: var(--pant-text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+    }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.75rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.4rem;
+      border: 1px solid transparent;
+      border-radius: var(--pant-radius-md);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--pant-teal);
+      color: var(--pant-cream);
+    }
+    .btn-primary:hover {
+      background: var(--pant-teal-hover);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--pant-teal);
+      border-color: var(--pant-teal);
+    }
+    .btn-secondary:hover {
+      background: var(--pant-cream-sunken);
+    }
+    .footer-note {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--pant-border);
+      font-size: 0.78rem;
+      color: var(--pant-text-secondary);
+    }
+    .credentials {
+      font-family: "DM Mono", "SF Mono", Menlo, monospace;
+      font-size: 0.75rem;
+      color: var(--pant-text-secondary);
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 480px) {
+      .card { padding: 2rem 1.5rem; }
+      h1 { font-size: 1.4rem; }
+      .actions { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <div class="lock" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <h1>Área Profissional Restrita</h1>
+    <p>
+      Este módulo envolve dados clínicos, documentos médicos, prescrição, prontuário ou informações identificáveis. Por segurança, ele não fica disponível na camada pública do NeuroPed EDJ.
+    </p>
+    <p>
+      Para acesso profissional, entre em contato direto com a clínica.
+    </p>
+    <div class="actions">
+      <a href="./" class="btn btn-primary">Voltar ao início</a>
+      <a href="./#/biblioteca" class="btn btn-secondary">Conteúdos educativos</a>
+    </div>
+    <div class="footer-note">
+      Conteúdo educativo. Não substitui consulta médica, avaliação individualizada, diagnóstico clínico, prescrição ou acompanhamento com profissional habilitado.
+      <div class="credentials">
+        Dr. Jadson Fraga Araújo Júnior — Neuropediatria — CRM-PE 25227 — RQE 17756
+      </div>
+    </div>
+  </main>
+</body>
+</html>
