@@ -2,11 +2,12 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T16:10:00-03:00",
-  "version": "v20-portal-familia-livre",
+  "deploy_requested_at": "2026-05-07T16:35:00-03:00",
+  "version": "v21-politica-acesso-familiar",
   "entrypoint": "index.html",
   "portal_familia_livre": "portal-familia-livre.html",
+  "politica_acesso_familiar": "politica-acesso-familiar.html",
   "consulta": "consulta.html",
   "service_worker": "neuroped-v20-portal-familia-livre",
-  "note": "Portal da Familia abre livre sem CPF/senha; dados pessoais seguem protegidos."
+  "note": "Modelo definido: publico livre, area familiar leve sem CPF, dados sensiveis protegidos por acesso profissional."
 }
