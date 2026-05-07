@@ -21,10 +21,16 @@
   ],
   "shortcuts": [
     {
-      "name": "CAA Premium — Comunicação Alternativa",
+      "name": "CAA Gratuita — Comunicação Alternativa",
       "short_name": "CAA",
       "url": "./comunicacao-alternativa.html",
-      "description": "Figuras grandes, voz em português e frase visual"
+      "description": "Figurinhas grandes, voz em português e frase visual"
+    },
+    {
+      "name": "Mapa de Instrumentos NeuroPed",
+      "short_name": "Mapa",
+      "url": "./mapa-escalas.html",
+      "description": "Instrumentos por idade, sintoma e respondente"
     },
     {
       "name": "Diário Escolar e de Terapias",
