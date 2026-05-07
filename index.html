@@ -1,70 +1,137 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>Dr. Jadson Fraga NeuroPed</title>
-<meta name="description" content="NeuroPed EDJ: app educacional de apoio clínico em neuropediatria.">
-<meta name="theme-color" content="#1a6b65">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="NeuroPed EDJ">
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
-<link rel="icon" href="./icon-192.png">
-<style>
-body{margin:0;background:#faf8f4;color:#2d2926;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-.edj-caa-sidebar-item{display:flex!important;align-items:center;gap:10px;width:100%;box-sizing:border-box;margin:4px 0;padding:10px 12px;border-radius:12px;text-decoration:none!important;color:#1a6b65!important;background:rgba(26,107,101,.075)!important;border:1px solid rgba(26,107,101,.20)!important;font-weight:700!important;line-height:1.2}
-.edj-caa-sidebar-item:hover{background:rgba(26,107,101,.13)!important}.edj-caa-sidebar-item .edj-caa-icon{font-size:18px;line-height:1}.edj-caa-sidebar-item .edj-caa-label{display:flex;align-items:center;gap:6px;min-width:0}.edj-caa-sidebar-item .edj-caa-new{font-size:9px;text-transform:uppercase;letter-spacing:.05em;background:#ccfbf1;color:#115e59;border-radius:999px;padding:2px 6px;font-weight:900}
-</style>
-<script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css">
-</head>
-<body>
-<div id="root"></div>
-<noscript>Ative o JavaScript para usar o NeuroPed EDJ.</noscript>
-<script>
-(function(){
-  const CAA_URL='./comunicacao-alternativa.html';
-  const ITEM_CLASS='edj-caa-sidebar-item';
-  function normalize(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
-  function isVisible(el){const r=el.getBoundingClientRect();const cs=getComputedStyle(el);return r.width>20&&r.height>10&&cs.display!=='none'&&cs.visibility!=='hidden'}
-  function isLeftNav(el){const r=el.getBoundingClientRect();return r.left<420&&r.top>=0&&r.width>=80&&r.height<=90}
-  function makeItem(){const a=document.createElement('a');a.href=CAA_URL;a.className=ITEM_CLASS;a.setAttribute('aria-label','Abrir CAA Premium');a.innerHTML='<span class="edj-caa-icon">💬</span><span class="edj-caa-label">CAA Premium <span class="edj-caa-new">novo</span></span>';return a}
-  function rowFor(el){return el.closest('a,button,[role="button"],li')||el}
-  function findSecretariaRow(){
-    const nodes=Array.from(document.querySelectorAll('a,button,[role="button"],li,span,div'));
-    const exact=[];const loose=[];
-    for(const el of nodes){
-      if(!isVisible(el))continue;
-      const text=normalize(el.textContent);
-      if(!text||!text.includes('secretaria'))continue;
-      const row=rowFor(el);
-      if(!row||!isVisible(row)||!isLeftNav(row))continue;
-      const area=row.getBoundingClientRect().width*row.getBoundingClientRect().height;
-      const item={row,area};
-      if(text==='secretaria')exact.push(item);else loose.push(item);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <title>NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria CRM-PE 25227</title>
+    <meta name="description" content="Aplicativo clínico de neuropediatria do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756). Escalas validadas, prontuário, calculadora de doses, marcos do desenvolvimento e ferramentas de avaliação para uso profissional." />
+    <meta name="keywords" content="neuropediatria, escalas clínicas, M-CHAT, CARS, SNAP-IV, Denver II, Vineland, Conners, prontuário pediátrico, Dr. Jadson Fraga, Petrolina-PE, Juazeiro-BA" />
+
+    <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="googlebot" content="index, follow" />
+
+    <!-- Identidade visual PANT WarmMinimalism -->
+    <meta name="theme-color" content="#1a6b65" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f3d3a" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- PWA -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NeuroPed EDJ" />
+    <meta name="application-name" content="NeuroPed EDJ" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6b65'/%3E%3Cpath d='M16 6c-4.4 0-8 3.6-8 8 0 2.7 1.3 5 3.4 6.4L10 26h12l-1.4-5.6C22.7 19 24 16.7 24 14c0-4.4-3.6-8-8-8zm0 3a2 2 0 110 4 2 2 0 010-4zm-3 6h6c0 1.7-1.3 3-3 3s-3-1.3-3-3z' fill='%23faf8f4'/%3E%3C/svg%3E" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="NeuroPed EDJ" />
+    <meta property="og:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
+    <meta property="og:description" content="Aplicativo clínico de neuropediatria com escalas validadas, prontuário e ferramentas profissionais. Dr. Jadson Fraga, CRM-PE 25227, RQE 17756." />
+    <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/" />
+    <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="NeuroPed EDJ — Aplicativo clínico do Dr. Jadson Fraga" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
+    <meta name="twitter:description" content="Aplicativo clínico de neuropediatria com escalas validadas e ferramentas profissionais." />
+    <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/og-image.png" />
+
+    <!-- Segurança via meta (complementada por _headers em hospedagem com headers HTTP reais) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wa.me https://api.github.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta name="permissions-policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" />
+
+    <!-- JSON-LD Schema.org: MedicalBusiness + Physician -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalBusiness",
+      "name": "NeuroPed EDJ — Dr. Jadson Fraga",
+      "description": "Consultório de neuropediatria do Dr. Jadson Fraga Araújo Júnior em Petrolina-PE, atendendo crianças e adolescentes com transtornos do neurodesenvolvimento.",
+      "url": "https://jadsonfraga.github.io/neuroped/",
+      "image": "https://jadsonfraga.github.io/neuroped/og-image.png",
+      "telephone": "+55-87-99109-7371",
+      "medicalSpecialty": ["Pediatrics", "PsychiatricUnit"],
+      "priceRange": "R$$$",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Rua Raimundo Lacerda, 001 — São José",
+        "addressLocality": "Petrolina",
+        "addressRegion": "PE",
+        "postalCode": "56302-470",
+        "addressCountry": "BR"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "-9.4011",
+        "longitude": "-40.4961"
+      },
+      "openingHours": "Mo-Fr 08:00-18:00",
+      "physician": {
+        "@type": "Physician",
+        "name": "Dr. Jadson Fraga Araújo Júnior",
+        "jobTitle": "Neuropediatra",
+        "medicalSpecialty": "Pediatrics",
+        "url": "https://jadsonfraga.github.io/neuroped/",
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "CRM-PE",
+            "value": "25227"
+          },
+          {
+            "@type": "PropertyValue",
+            "propertyID": "RQE",
+            "value": "17756"
+          }
+        ],
+        "worksFor": {
+          "@type": "MedicalBusiness",
+          "name": "NeuroPed EDJ"
+        }
+      },
+      "sameAs": [
+        "https://wa.me/5587991097371"
+      ]
     }
-    const pool=(exact.length?exact:loose).sort((a,b)=>a.area-b.area);
-    return pool[0]?.row||null;
-  }
-  function place(){
-    const old=document.querySelector('.'+ITEM_CLASS);
-    const row=findSecretariaRow();
-    if(!row)return false;
-    if(old){
-      if(old.previousElementSibling===row)return true;
-      old.remove();
-    }
-    const item=makeItem();
-    row.insertAdjacentElement('afterend',item);
-    return true;
-  }
-  let tries=0;
-  const timer=setInterval(()=>{tries++;if(place()||tries>100)clearInterval(timer)},200);
-  new MutationObserver(()=>{if(!document.querySelector('.'+ITEM_CLASS))place()}).observe(document.documentElement,{childList:true,subtree:true});
-})();
-if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});}
-</script>
-</body>
+    </script>
+
+    <!-- Fontes (Google Fonts mantido por dependência do build atual; substituição por @fontsource requer rebuild do bundle) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Inter:wght@400..700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+
+    <script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css" />
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:600px;margin:4rem auto;padding:2rem;background:#faf8f4;color:#2d2926;font-family:Georgia,serif;text-align:center;border:1px solid #b8963e;border-radius:8px;">
+        <h1 style="color:#1a6b65;font-size:1.5rem;margin-bottom:1rem;">NeuroPed EDJ</h1>
+        <p style="font-size:1rem;line-height:1.6;">Este aplicativo requer JavaScript habilitado para funcionar. Por favor, ative o JavaScript nas configurações do seu navegador para utilizar as ferramentas clínicas do Dr. Jadson Fraga.</p>
+        <p style="margin-top:1rem;font-size:0.875rem;color:#57514a;">Dr. Jadson Fraga Araújo Júnior — Neuropediatria — CRM-PE 25227 — RQE 17756</p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
 </html>

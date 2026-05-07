@@ -1,0 +1,21 @@
+# CODEOWNERS — NeuroPed EDJ
+# Documentação: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Owner padrão para todo o repositório
+* @jadsonfraga
+
+# Política e segurança
+/SECURITY.md @jadsonfraga
+/LICENSE @jadsonfraga
+/privacidade.html @jadsonfraga
+/acessibilidade.html @jadsonfraga
+/terms-of-use.html @jadsonfraga
+
+# Workflows e configurações sensíveis
+/.github/ @jadsonfraga
+/_headers @jadsonfraga
+/_redirects @jadsonfraga
+
+# Manifesto e service worker (mudanças impactam usuários instalados)
+/manifest.json @jadsonfraga
+/sw.js @jadsonfraga
