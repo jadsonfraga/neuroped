@@ -1,9 +1,10 @@
-const CACHE_NAME = "neuroped-v19-consulta-protegida";
+const CACHE_NAME = "neuroped-v20-portal-familia-livre";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
+  "./portal-familia-livre.html",
   "./consulta.html",
   "./assets/pre-consulta-CiPJ7HHP.js",
   "./master-access-policy.js",
@@ -40,6 +41,7 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET") return;
   if (url.pathname.includes("/api/")) return;
+  if (url.pathname.endsWith("/index.html") || url.pathname.endsWith("/neuroped/") || url.pathname === "/neuroped") { event.respondWith(indexWithPortalFix(event.request)); return; }
   if (url.pathname.endsWith("/comunicacao-alternativa.html")) { event.respondWith(htmlWithHotfix(event.request, "./caa-hotfix.js")); return; }
   if (url.pathname.endsWith("/diario-escola-terapias-v2.html")) { event.respondWith(htmlWithHotfix(event.request, "./diario-hotfix.js")); return; }
   if (url.pathname.match(/\/assets\/.*\.(js|css)$/)) { event.respondWith(cacheFirst(event.request)); return; }
@@ -52,6 +54,16 @@ async function cacheFirst(request) {
   if (cached) return cached;
   try { const response = await fetch(request); if (response.ok) { const cache = await caches.open(CACHE_NAME); cache.put(request, response.clone()); } return response; }
   catch { return new Response("", { status: 408 }); }
+}
+async function indexWithPortalFix(request) {
+  const response = await staleWhileRevalidate(request);
+  try {
+    const html = await response.clone().text();
+    const script = `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>`;
+    if (html.includes("portal-familia-livre.html")) return response;
+    const patched = html.includes("</body>") ? html.replace("</body>", script + "\n</body>") : html + script;
+    return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } });
+  } catch { return response; }
 }
 async function htmlWithHotfix(request, scriptSrc) {
   const response = await staleWhileRevalidate(request);
