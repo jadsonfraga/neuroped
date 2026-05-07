@@ -1,0 +1,18 @@
+{
+  "project": "NeuroPed EDJ",
+  "action": "deploy-trigger",
+  "target_branch": "main",
+  "status": "ready_for_static_host_deploy",
+  "current_total_instruments": 507,
+  "entrypoint": "escalas.html",
+  "static_pages": [
+    "escalas.html",
+    "banco-escalas.html",
+    "banco-escalas-lote1.html",
+    "banco-escalas-lote2-80.html",
+    "banco-escalas-lote3-100.html",
+    "banco-escalas-lote4-200.html",
+    "banco-escalas-lote5-90.html"
+  ],
+  "note": "Commit leve criado para acionar deploy automatico em host conectado a main, como Cloudflare Pages ou GitHub Pages."
+}
