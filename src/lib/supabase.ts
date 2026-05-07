@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { hasConfiguredBackend, supabaseAnonKey, supabaseUrl } from '../config';
+import type { Database } from '../types/database';
 
 export const supabase = hasConfiguredBackend
-  ? createClient(supabaseUrl, supabaseAnonKey, {
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
