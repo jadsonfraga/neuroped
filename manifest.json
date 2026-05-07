@@ -1,25 +1,13 @@
 {
-  "name": "Dr. Jadson Fraga NeuroPed EDJ",
+  "name": "NeuroPed EDJ — Modo Seguro",
   "short_name": "NeuroPed EDJ",
-  "description": "Aplicativo educacional e demonstrativo de apoio em neuropediatria.",
-  "start_url": "./index.html#/",
+  "description": "PWA educacional de apoio neuropediátrico em modo seguro, sem armazenamento clínico público.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#0f1f22",
-  "theme_color": "#00696f",
+  "background_color": "#f7f4ec",
+  "theme_color": "#0f766e",
   "orientation": "any",
   "lang": "pt-BR",
-  "categories": ["medical", "education", "health"],
-  "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ],
-  "shortcuts": [
-    { "name": "Filtro Inteligente", "short_name": "Filtro", "url": "./index.html#/filtro", "description": "Buscar escalas por queixa e idade" },
-    { "name": "Registros Locais Demo", "short_name": "Demo", "url": "./index.html#/pacientes", "description": "Área demonstrativa local" },
-    { "name": "Farmacologia", "short_name": "Fármacos", "url": "./index.html#/farmacologia", "description": "Medicações e doses para estudo" }
-  ]
+  "categories": ["medical", "education", "health"]
 }
