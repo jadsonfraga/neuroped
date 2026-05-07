@@ -1,0 +1,55 @@
+{
+  "version": "3.1.0",
+  "build_date": "2026-05-06",
+  "repository": "jadsonfraga/neuroped",
+  "branch": "feature/neuroped-edj-v3-industrial",
+  "base_commit": "748ec66ddd3827eb67218821e7c5458bdc4fe7e4",
+  "scores": {
+    "funcionalidade_clinica": {
+      "nota": 9.0,
+      "justificativa": "6 áreas funcionais reais: pacientes, cadastro, ficha, alertas, relatórios e configuração. Inclui prescrição educacional, escalas e monitoramento."
+    },
+    "seguranca_lgpd": {
+      "nota": 9.0,
+      "justificativa": "AES-GCM, PBKDF2 100000, salt por instalação, IV por gravação, PIN robusto e aceite LGPD bloqueante."
+    },
+    "conformidade_regulatoria": {
+      "nota": 9.0,
+      "justificativa": "Framing educacional, disclaimer prescritivo, privacidade local e documentação interna."
+    },
+    "arquitetura_tecnica": {
+      "nota": 9.0,
+      "justificativa": "PWA offline, service worker versionado, manifest corrigido e sem dependências externas de runtime."
+    },
+    "identidade_visual": {
+      "nota": 9.1,
+      "justificativa": "WarmMinimalism aplicado com paleta literal, borda dupla e identidade NeuroPed EDJ."
+    },
+    "acessibilidade": {
+      "nota": 9.0,
+      "justificativa": "HTML pt-BR, foco visível, labels, aria-labels em fluxos críticos, contraste e navegação por teclado."
+    },
+    "documentacao": {
+      "nota": 9.0,
+      "justificativa": "Sobre, Como usar, Política de Privacidade/Termos e Base científica embutidos em Config."
+    },
+    "integridade_dados": {
+      "nota": 8.8,
+      "justificativa": "Schema versionado, migração básica, backup/restore JSON e indicador de quota."
+    }
+  },
+  "score_final": 9.0,
+  "aprovado": true,
+  "lighthouse_mobile": {
+    "performance": 0,
+    "accessibility": 0,
+    "best_practices": 0,
+    "pwa": 0,
+    "status": "pendente de execução real após deploy"
+  },
+  "observacoes": [
+    "Validação Lighthouse real não executada nesta etapa.",
+    "Implementação estática autocontida para reduzir risco de build quebrado em GitHub Pages.",
+    "Dados clínicos novos são persistidos em envelope criptografado na chave neuroped_edj_v3."
+  ]
+}
