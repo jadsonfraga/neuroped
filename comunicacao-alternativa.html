@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NeuroPed EDJ — Comunicação Alternativa</title>
+<meta name="description" content="Aba de Comunicação Alternativa e Aumentativa com cartões visuais, frase acumulada e áudio local por síntese de voz." />
+<meta name="theme-color" content="#1a6b65" />
+<style>
+:root{--cream:#faf8f4;--paper:#fffdf9;--gold:#b8963e;--teal:#1a6b65;--burgundy:#8b2e3b;--plum:#4a2d6b;--dark:#2d2926;--muted:#6f6963;--line:rgba(45,41,38,.16);--ok:#166534;--warn:#92400e;--blue:#1e40af;--shadow:0 18px 48px rgba(45,41,38,.10)}*{box-sizing:border-box}html{font-size:clamp(16px,2vw,18px);background:var(--cream);color:var(--dark)}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 5% 0%,rgba(184,150,62,.18),transparent 28rem),radial-gradient(circle at 90% 8%,rgba(26,107,101,.13),transparent 26rem),var(--cream)}button,input,select{font:inherit}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}.wrap{max-width:1260px;margin:0 auto;padding:20px 16px 72px}.hero{border:2px solid var(--gold);box-shadow:inset 0 0 0 1px var(--teal),var(--shadow);border-radius:26px;background:linear-gradient(135deg,#fffdf9,#f6ebd8);padding:20px;margin-bottom:16px}.kicker{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--teal);font-weight:900}h1{font-family:Georgia,serif;font-size:clamp(30px,5vw,52px);line-height:1.04;margin:6px 0;color:var(--teal)}h2,h3{font-family:Georgia,serif;color:var(--teal);margin:0 0 10px}p{color:var(--muted);line-height:1.55}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.btn,button{border:1px solid var(--line);border-radius:14px;padding:11px 14px;background:var(--paper);color:var(--dark);cursor:pointer;font-weight:850;text-decoration:none}.primary{background:var(--teal)!important;color:#fff!important;border-color:var(--teal)!important}.danger{background:var(--burgundy)!important;color:#fff!important;border-color:var(--burgundy)!important}.secondary{background:var(--plum)!important;color:#fff!important;border-color:var(--plum)!important}.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}.panel{background:rgba(255,253,249,.92);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow)}.categories{display:grid;gap:8px}.cat{width:100%;text-align:left}.cat.active{background:var(--teal);color:#fff;border-color:var(--teal)}.sentence{position:sticky;top:0;z-index:4;background:rgba(250,248,244,.96);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:22px;padding:14px;margin-bottom:14px}.sentence-row{display:flex;gap:8px;flex-wrap:wrap;min-height:54px}.token{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(26,107,101,.25);background:#fff;border-radius:16px;padding:7px 10px;font-weight:900}.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}.card{background:#fff;border:2px solid rgba(184,150,62,.46);border-radius:22px;padding:12px;min-height:140px;display:grid;place-items:center;text-align:center;cursor:pointer;box-shadow:0 8px 20px rgba(45,41,38,.06)}.card:hover{border-color:var(--teal)}.picto{width:70px;height:70px;border-radius:20px;display:grid;place-items:center;margin:auto;background:linear-gradient(135deg,rgba(26,107,101,.12),rgba(184,150,62,.18))}.picto svg{width:54px;height:54px}.card strong{display:block;margin-top:8px;color:var(--dark);font-size:1rem}.card small{display:block;color:var(--muted);font-size:.75rem;margin-top:2px}.notice{border-left:5px solid var(--gold);background:#fff4d9;padding:12px;border-radius:16px;margin:12px 0;color:#5d4037}.field{display:grid;gap:5px;margin:10px 0}input,select{width:100%;border:1px solid var(--line);border-radius:14px;padding:11px;background:white}.mini{font-size:12px;color:var(--muted)}.pill{display:inline-flex;border-radius:999px;background:rgba(26,107,101,.10);color:var(--teal);padding:4px 9px;font-size:12px;font-weight:900;margin:3px}.footer{font-size:12px;color:var(--muted);margin-top:22px;border-top:1px solid var(--line);padding-top:12px}.hidden{display:none!important}@media(max-width:880px){.grid{grid-template-columns:1fr}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.sentence{position:relative}}@media(max-width:430px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}.card{min-height:128px;padding:10px}.picto{width:60px;height:60px}.picto svg{width:46px;height:46px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="hero">
+  <div class="kicker">NeuroPed EDJ · Comunicação Alternativa e Aumentativa</div>
+  <h1>Aba Comunicação Alternativa</h1>
+  <p>Prancha CAA inspirada no conceito do LetMeTalk: selecionar figuras, montar uma frase visual e reproduzir a frase em áudio. Funciona localmente no navegador, sem baixar imagens externas e sem copiar bibliotecas proprietárias.</p>
+  <div class="toolbar"><a class="btn primary" href="./index.html">Voltar ao app</a><a class="btn" href="./escalas.html">Escalas</a><button id="installHint">Orientar uso</button></div>
+</section>
+<section class="grid">
+<aside class="panel">
+  <h2>Configuração</h2>
+  <div class="field"><label for="voiceRate"><strong>Velocidade da voz</strong></label><select id="voiceRate"><option value="0.82">Mais lenta</option><option value="0.95" selected>Natural</option><option value="1.1">Mais rápida</option></select></div>
+  <div class="field"><label for="voicePitch"><strong>Tom da voz</strong></label><select id="voicePitch"><option value="0.9">Mais grave</option><option value="1" selected>Neutro</option><option value="1.18">Mais agudo</option></select></div>
+  <div class="field"><label for="customText"><strong>Novo cartão rápido</strong></label><input id="customText" placeholder="Ex.: quero ir ao banheiro" /></div>
+  <div class="toolbar"><button class="primary" id="addCustom">Adicionar</button><button id="saveBoard">Salvar prancha</button></div>
+  <div class="notice"><strong>Uso clínico:</strong> indicado como apoio inicial de CAA para crianças com fala ausente, fala pouco funcional, apraxia de fala, TEA, deficiência intelectual, paralisia cerebral ou sobrecarga comunicativa.</div>
+  <h3>Categorias</h3>
+  <div id="categories" class="categories"></div>
+  <div class="footer">Não substitui avaliação fonoaudiológica, terapia ocupacional, seleção formal de sistema CAA nem prescrição individualizada.</div>
+</aside>
+<section class="panel">
+  <div class="sentence">
+    <h2>Frase visual</h2>
+    <div id="sentenceRow" class="sentence-row" aria-live="polite"></div>
+    <div class="toolbar" style="margin-top:10px"><button class="primary" id="speakSentence">Falar frase</button><button id="speakLast">Falar último</button><button id="undo">Apagar último</button><button class="danger" id="clearSentence">Limpar</button></div>
+    <p class="mini">Dica: toque nos cartões abaixo para formar uma sequência. Ex.: “eu quero” + “água” + “por favor”.</p>
+  </div>
+  <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2 id="catTitle">Necessidades</h2><span class="pill" id="countPill">0 cartões</span></div>
+  <div id="board" class="board"></div>
+</section>
+</section>
+<p class="footer"><strong>Dr. Jadson Fraga Araújo Júnior</strong> · Neuropediatria · CRM-PE 25227 · RQE 17756 · Rua Raimundo Lacerda, 001 — São José, Petrolina/PE — CEP 56302-470 · (87) 9 9109-7371 · Fraga Serviços Médicos LTDA</p>
+</main>
+<script>
+const LS='neuroped_caa_board_v1';
+const ICONS={person:'<svg viewBox="0 0 64 64"><circle cx="32" cy="20" r="12" fill="#1a6b65"/><path d="M14 58c3-15 13-24 18-24s15 9 18 24" fill="#b8963e"/></svg>',want:'<svg viewBox="0 0 64 64"><path d="M14 40c10-15 26-15 36 0" fill="none" stroke="#1a6b65" stroke-width="6" stroke-linecap="round"/><circle cx="24" cy="24" r="7" fill="#b8963e"/><circle cx="42" cy="24" r="7" fill="#b8963e"/></svg>',drink:'<svg viewBox="0 0 64 64"><path d="M20 10h24l-4 44H24z" fill="#dbeafe" stroke="#1e40af" stroke-width="4"/><path d="M24 30h16" stroke="#1e40af" stroke-width="4"/></svg>',food:'<svg viewBox="0 0 64 64"><circle cx="32" cy="34" r="18" fill="#fff4d9" stroke="#b8963e" stroke-width="4"/><path d="M20 16v36M44 16v36" stroke="#1a6b65" stroke-width="5" stroke-linecap="round"/></svg>',pain:'<svg viewBox="0 0 64 64"><path d="M32 8l8 16 18 2-13 12 4 18-17-9-17 9 4-18L6 26l18-2z" fill="#8b2e3b"/><circle cx="32" cy="34" r="9" fill="#fff"/></svg>',bath:'<svg viewBox="0 0 64 64"><path d="M18 26h32v12c0 9-7 16-16 16S18 47 18 38z" fill="#dbeafe" stroke="#1a6b65" stroke-width="4"/><path d="M24 20c0-8 8-10 12-5" fill="none" stroke="#b8963e" stroke-width="4"/></svg>',yes:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#dcfce7"/><path d="M18 34l9 9 20-23" fill="none" stroke="#166534" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>',no:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#fee2e2"/><path d="M22 22l20 20M42 22L22 42" stroke="#991b1b" stroke-width="7" stroke-linecap="round"/></svg>',home:'<svg viewBox="0 0 64 64"><path d="M10 32L32 12l22 20" fill="none" stroke="#1a6b65" stroke-width="5"/><path d="M18 30v24h28V30" fill="#fff4d9" stroke="#b8963e" stroke-width="4"/></svg>',school:'<svg viewBox="0 0 64 64"><path d="M8 24l24-12 24 12-24 12z" fill="#1a6b65"/><path d="M18 32v16c8 6 20 6 28 0V32" fill="#b8963e"/></svg>',emotion:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="23" fill="#fff4d9" stroke="#b8963e" stroke-width="4"/><circle cx="24" cy="28" r="4" fill="#2d2926"/><circle cx="40" cy="28" r="4" fill="#2d2926"/><path d="M22 42c7 6 13 6 20 0" fill="none" stroke="#1a6b65" stroke-width="4" stroke-linecap="round"/></svg>',generic:'<svg viewBox="0 0 64 64"><rect x="12" y="12" width="40" height="40" rx="10" fill="#fff4d9" stroke="#b8963e" stroke-width="4"/><circle cx="32" cy="32" r="10" fill="#1a6b65"/></svg>'};
+const DEFAULT={
+ 'Necessidades':[
+  ['eu','Eu','person'],['quero','Quero','want'],['não quero','Não quero','no'],['água','Água','drink'],['comer','Comer','food'],['banheiro','Banheiro','bath'],['dor','Dor','pain'],['ajuda','Ajuda','want'],['mais','Mais','want'],['acabou','Acabou','no'],['sim','Sim','yes'],['não','Não','no']
+ ],
+ 'Emoções':[
+  ['feliz','Feliz','emotion'],['triste','Triste','emotion'],['bravo','Bravo','emotion'],['medo','Medo','emotion'],['cansado','Cansado','emotion'],['calma','Calma','emotion'],['gosto','Gosto','yes'],['não gosto','Não gosto','no']
+ ],
+ 'Lugares':[
+  ['casa','Casa','home'],['escola','Escola','school'],['carro','Carro','generic'],['consultório','Consultório','generic'],['terapia','Terapia','generic'],['parque','Parque','generic'],['quarto','Quarto','home']
+ ],
+ 'Rotina':[
+  ['brincar','Brincar','generic'],['dormir','Dormir','generic'],['tomar banho','Tomar banho','bath'],['escovar dentes','Escovar dentes','generic'],['vestir roupa','Vestir roupa','generic'],['esperar','Esperar','generic'],['parar','Parar','no'],['por favor','Por favor','yes'],['obrigado','Obrigado','yes']
+ ],
+ 'Corpo e dor':[
+  ['cabeça','Cabeça','pain'],['barriga','Barriga','pain'],['garganta','Garganta','pain'],['ouvido','Ouvido','pain'],['mão','Mão','pain'],['pé','Pé','pain'],['está doendo','Está doendo','pain'],['não dói','Não dói','yes']
+ ]
+};
+let board=loadBoard(),current=Object.keys(board)[0],sentence=[];
+function loadBoard(){try{return JSON.parse(localStorage.getItem(LS))||structuredClone(DEFAULT)}catch{return structuredClone(DEFAULT)}}
+function save(){localStorage.setItem(LS,JSON.stringify(board));toast('Prancha salva neste dispositivo.')}function $(id){return document.getElementById(id)}
+function toast(t){alert(t)}
+function speak(text){if(!('speechSynthesis' in window)){toast('Este navegador não liberou síntese de voz.');return}window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';u.rate=parseFloat($('voiceRate').value||'0.95');u.pitch=parseFloat($('voicePitch').value||'1');window.speechSynthesis.speak(u)}
+function renderCats(){const c=$('categories');c.innerHTML='';Object.keys(board).forEach(cat=>{const b=document.createElement('button');b.className='cat '+(cat===current?'active':'');b.textContent=cat;b.onclick=()=>{current=cat;render()};c.appendChild(b)})}
+function renderSentence(){const row=$('sentenceRow');row.innerHTML='';sentence.forEach((x,i)=>{const t=document.createElement('button');t.className='token';t.innerHTML=`<span>${x.label}</span>`;t.onclick=()=>{sentence.splice(i,1);renderSentence()};row.appendChild(t)});if(!sentence.length){const p=document.createElement('span');p.className='mini';p.textContent='Toque nas figuras para montar a frase.';row.appendChild(p)}}
+function renderBoard(){const el=$('board');el.innerHTML='';$('catTitle').textContent=current;$('countPill').textContent=(board[current]||[]).length+' cartões';(board[current]||[]).forEach(item=>{const [text,label,icon]=item;const b=document.createElement('button');b.className='card';b.setAttribute('aria-label','Falar '+label);b.innerHTML=`<div><div class="picto">${ICONS[icon]||ICONS.generic}</div><strong>${label}</strong><small>${text}</small></div>`;b.onclick=()=>{sentence.push({text,label,icon});renderSentence();speak(text)};el.appendChild(b)})}
+function render(){renderCats();renderSentence();renderBoard()}
+$('speakSentence').onclick=()=>{const text=sentence.map(x=>x.text).join(' ');if(text)speak(text)};$('speakLast').onclick=()=>{const x=sentence[sentence.length-1];if(x)speak(x.text)};$('undo').onclick=()=>{sentence.pop();renderSentence()};$('clearSentence').onclick=()=>{sentence=[];renderSentence()};$('addCustom').onclick=()=>{const v=$('customText').value.trim();if(!v)return;board[current].push([v,v,'generic']);$('customText').value='';render();speak(v)};$('saveBoard').onclick=save;$('installHint').onclick=()=>toast('Use no celular/tablet em tela cheia. Para áudio, toque primeiro em qualquer cartão; alguns navegadores bloqueiam voz antes do primeiro toque.');
+render();
+</script>
+</body>
+</html>
