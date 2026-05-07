@@ -1,0 +1,15 @@
+$ node --version
+v24.15.0
+$ npm --version
+11.4.2
+$ git --version
+git version 2.43.0
+$ python3 --version
+Python 3.14.4
+$ df -h ~/Desktop
+$ which google-chrome || which chromium
+$ git ls-remote https://github.com/jadsonfraga/neuroped.git HEAD
+$ curl PSI
+000
+$ curl Observatory
+000
