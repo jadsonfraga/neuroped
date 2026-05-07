@@ -53,7 +53,7 @@ export default function App() {
           <h2>{status}</h2>
           <ul className="check-list">
             <li>Armazenamento público externo removido da arquitetura ativa.</li>
-            <li>Documento local não declara assinatura digital ICP-Brasil.</li>
+            <li>Documento local não declara assinatura certificada externa.</li>
             <li>Identidade médica padronizada.</li>
             <li>Workflow passa a executar build real.</li>
             <li>Projeto-fonte criado em src/.</li>
@@ -93,8 +93,8 @@ export default function App() {
       <section className="grid two-columns">
         <article className="panel">
           <span className="small-label">Integridade local</span>
-          <h2>Hash local, sem ICP-Brasil</h2>
-          <p>Este recurso apenas calcula SHA-256 local. Não equivale a assinatura digital certificada.</p>
+          <h2>Hash local, sem assinatura certificada</h2>
+          <p>Este recurso apenas calcula SHA-256 local. Não equivale a assinatura digital juridicamente válida.</p>
           <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Use somente texto fictício." rows={7} />
           <div className="button-row">
             <button type="button" onClick={handleHash}>Gerar hash</button>
