@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v8-caa";
+const CACHE_NAME = "neuroped-v9-diario";
 
 let medicationAlarms = [];
 self.addEventListener("message", (event) => {
@@ -49,6 +49,7 @@ self.addEventListener("install", (event) => {
     "./escalas.html",
     "./filtro-escalas.html",
     "./comunicacao-alternativa.html",
+    "./diario-escola-terapias.html",
     "./banco-escalas.html",
     "./banco-escalas-lote1.html",
     "./banco-escalas-lote2-80.html",
