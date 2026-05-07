@@ -6,10 +6,12 @@
   "description": "NeuroPed EDJ — PWA seguro para apoio educacional em neuropediatria.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "preflight": "node scripts/preflight.mjs",
+    "build": "npm run preflight && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\""
+    "lint": "eslint src",
+    "verify": "npm run preflight && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
