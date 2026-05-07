@@ -13,15 +13,47 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
 <style>
-:root{--teal:#1a6b65;--gold:#b8963e;--cream:#faf8f4;--dark:#2d2926;--line:#eadcc7}body{margin:0;background:var(--cream);color:var(--dark);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.edj-side-shortcut{position:fixed;left:10px;top:92px;z-index:99999;width:168px;border:2px solid var(--gold);border-radius:18px;background:linear-gradient(135deg,#fffdf9,#e4f5f3);box-shadow:0 12px 30px rgba(26,107,101,.18);padding:10px}.edj-side-shortcut a{display:block;text-decoration:none;color:var(--teal);font-weight:900}.edj-side-shortcut .new{display:inline-block;border-radius:999px;background:#ccfbf1;color:#115e59;font-size:10px;font-weight:1000;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;margin-bottom:6px}.edj-side-shortcut .title{display:block;font-size:16px;line-height:1.1}.edj-side-shortcut .sub{display:block;font-size:11px;color:#6b665f;margin-top:3px}@media(max-width:900px){.edj-side-shortcut{left:auto;right:12px;top:auto;bottom:88px;width:auto;border-radius:999px;padding:0}.edj-side-shortcut a{padding:12px 14px;color:white;background:var(--teal);border-radius:999px}.edj-side-shortcut .new,.edj-side-shortcut .sub{display:none}.edj-side-shortcut .title{font-size:14px;color:white}}
+body{margin:0;background:#faf8f4;color:#2d2926;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.edj-caa-sidebar-item{display:flex!important;align-items:center;gap:10px;width:100%;margin:4px 0;padding:10px 12px;border-radius:12px;text-decoration:none!important;color:#1a6b65!important;background:rgba(26,107,101,.08)!important;border:1px solid rgba(26,107,101,.22)!important;font-weight:700!important}
+.edj-caa-sidebar-item:hover{background:rgba(26,107,101,.14)!important}
+.edj-caa-sidebar-item .edj-caa-icon{font-size:18px;line-height:1}.edj-caa-sidebar-item .edj-caa-label{display:flex;align-items:center;gap:6px;min-width:0}.edj-caa-sidebar-item .edj-caa-new{font-size:9px;text-transform:uppercase;letter-spacing:.05em;background:#ccfbf1;color:#115e59;border-radius:999px;padding:2px 6px;font-weight:900}
 </style>
 <script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
 <link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css">
 </head>
 <body>
-<aside class="edj-side-shortcut" aria-label="Atalho CAA Premium"><a href="./comunicacao-alternativa.html"><span class="new">Novo</span><span class="title">CAA Premium</span><span class="sub">figuras grandes com voz</span></a></aside>
 <div id="root"></div>
 <noscript>Ative o JavaScript para usar o NeuroPed EDJ.</noscript>
-<script>if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});}</script>
+<script>
+(function(){
+  const CAA_URL='./comunicacao-alternativa.html';
+  function normalize(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
+  function makeItem(){
+    const a=document.createElement('a');
+    a.href=CAA_URL;
+    a.className='edj-caa-sidebar-item';
+    a.setAttribute('aria-label','Abrir CAA Premium');
+    a.innerHTML='<span class="edj-caa-icon">💬</span><span class="edj-caa-label">CAA Premium <span class="edj-caa-new">novo</span></span>';
+    return a;
+  }
+  function findSecretaria(){
+    const nodes=Array.from(document.querySelectorAll('a,button,[role="button"],li,div,span'));
+    return nodes.find(el=>normalize(el.textContent)==='secretaria')||nodes.find(el=>normalize(el.textContent).includes('secretaria'));
+  }
+  function place(){
+    if(document.querySelector('.edj-caa-sidebar-item'))return true;
+    const sec=findSecretaria();
+    if(!sec)return false;
+    const row=sec.closest('a,button,li,[role="button"],div')||sec;
+    const item=makeItem();
+    if(row.parentElement){row.parentElement.insertBefore(item,row.nextSibling);return true}
+    return false;
+  }
+  let tries=0;
+  const timer=setInterval(()=>{tries++;if(place()||tries>60)clearInterval(timer)},250);
+  new MutationObserver(()=>place()).observe(document.documentElement,{childList:true,subtree:true});
+})();
+if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});}
+</script>
 </body>
 </html>
