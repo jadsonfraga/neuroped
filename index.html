@@ -1,119 +1,538 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <title>Dr. Jadson Fraga NeuroPed — Escalas de Neuropediatria</title>
-    <meta name="description" content="Ferramenta educacional de neuropediatria para estudantes de medicina. Escalas M-CHAT, CARS, SNAP-IV e Denver II.">
-    <!--
-       ______                            __
-      / ____/___  ____ ___  ____  __  __/ /____  _____
-     / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
-    / /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
-    \____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
-                        /_/
-            Created with Perplexity Computer
-            https://www.perplexity.ai/computer
-    -->
-    <meta name="generator" content="Perplexity Computer">
-    <meta name="author" content="Perplexity Computer">
-    <meta property="og:see_also" content="https://www.perplexity.ai/computer">
-    <link rel="author" href="https://www.perplexity.ai/computer">
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dr. Jadson Fraga NeuroPed">
-    <meta name="theme-color" content="#7c3aed">
-    <link rel="manifest" href="./manifest.json">
-    <link rel="apple-touch-icon" href="./icon-192.png">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c3aed'/%3E%3Cpath d='M16 6c-4.4 0-8 3.6-8 8 0 2.7 1.3 5 3.4 6.4L10 26h12l-1.4-5.6C22.7 19 24 16.7 24 14c0-4.4-3.6-8-8-8zm0 3a2 2 0 110 4 2 2 0 010-4zm-3 6h6c0 1.7-1.3 3-3 3s-3-1.3-3-3z' fill='white'/%3E%3C/svg%3E" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@300..700&family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400..700;1,400..700&family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Outfit:wght@100..900&family=Oxanium:wght@200..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&family=Space+Grotesk:wght@300..700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
-        });
-      }
-    </script>
-  <script data-pplx-inline-edit>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeuroPed EDJ v3.1</title>
+  <meta name="description" content="Ferramenta educacional de apoio à decisão clínica em neuropediatria. Dados locais, sem transmissão a servidor.">
+  <meta name="theme-color" content="#1a6b65">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.svg">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon-192.svg">
+  <style>
+    :root {
+      --cream: #faf8f4;
+      --gold: #b8963e;
+      --teal: #1a6b65;
+      --burgundy: #8b2e3b;
+      --plum: #4a2d6b;
+      --dark: #2d2926;
+      --paper: #fffdf9;
+      --muted: #6f6963;
+      --line: rgba(45, 41, 38, .16);
+      --soft-teal: rgba(26, 107, 101, .10);
+      --soft-gold: rgba(184, 150, 62, .16);
+      --soft-burgundy: rgba(139, 46, 59, .10);
+      --shadow: 0 18px 45px rgba(45, 41, 38, .10);
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--cream); color: var(--dark); font-size: clamp(16px, 2vw, 18px); }
+    body { margin: 0; min-height: 100vh; background:
+      radial-gradient(circle at top left, rgba(184,150,62,.16), transparent 30rem),
+      radial-gradient(circle at bottom right, rgba(26,107,101,.12), transparent 32rem),
+      var(--cream); }
+    button, input, textarea, select { font: inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible {
+      outline: 2px solid var(--gold); outline-offset: 3px;
+    }
+    .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      position: sticky; top: 0; z-index: 20; background: rgba(250,248,244,.95);
+      backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner { max-width: 1220px; margin: 0 auto; padding: .9rem 1rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .brand-mark { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; background: var(--teal); border: 2px solid var(--gold); color: white; font-weight: 800; letter-spacing: .03em; }
+    .brand h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; color: var(--teal); font-size: clamp(1.1rem, 3vw, 1.55rem); line-height: 1.05; }
+    .brand p { margin: .12rem 0 0; color: var(--muted); font-size: .78rem; }
+    .tabs { max-width: 1220px; margin: 0 auto; padding: 0 1rem .85rem; display: flex; gap: .45rem; overflow-x: auto; }
+    .tab-btn, .soft-btn, .primary-btn, .danger-btn {
+      border: 1px solid var(--line); background: var(--paper); color: var(--dark); border-radius: 999px; padding: .65rem .95rem; cursor: pointer; transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .tab-btn[aria-selected="true"] { background: var(--teal); color: white; border-color: var(--teal); box-shadow: 0 8px 24px rgba(26,107,101,.22); }
+    .primary-btn { background: var(--teal); color: white; border-color: var(--teal); font-weight: 700; }
+    .danger-btn { background: var(--burgundy); color: white; border-color: var(--burgundy); font-weight: 700; }
+    .soft-btn { background: var(--soft-teal); border-color: rgba(26,107,101,.22); }
+    .tab-btn:hover, .soft-btn:hover, .primary-btn:hover, .danger-btn:hover { transform: translateY(-1px); }
+    main { width: 100%; max-width: 1220px; margin: 0 auto; padding: 1.25rem 1rem 2rem; flex: 1; }
+    .grid { display: grid; gap: 1rem; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      background: var(--paper); border: 2px solid var(--gold); border-radius: 22px; padding: 1px; box-shadow: var(--shadow);
+    }
+    .card-inner { border: 1px solid var(--teal); border-radius: 19px; padding: 1.05rem; min-height: 100%; }
+    .flat-card { background: rgba(255,253,249,.76); border: 1px solid var(--line); border-radius: 18px; padding: 1rem; }
+    h2, h3 { font-family: Georgia, "Times New Roman", serif; color: var(--teal); margin: 0 0 .75rem; }
+    h2 { font-size: clamp(1.35rem, 3vw, 2rem); }
+    h3 { font-size: 1.15rem; }
+    p { line-height: 1.55; }
+    .muted { color: var(--muted); }
+    .tiny { font-size: .78rem; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .8rem; }
+    label { display: grid; gap: .35rem; color: var(--dark); font-weight: 700; font-size: .88rem; }
+    input, textarea, select {
+      width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: .75rem .82rem; background: white; color: var(--dark);
+    }
+    textarea { min-height: 104px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+    .form-row.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .list { display: grid; gap: .75rem; }
+    .patient-item { display: grid; grid-template-columns: 1fr auto; gap: .75rem; align-items: center; background: white; border: 1px solid var(--line); border-radius: 16px; padding: .85rem; }
+    .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .18rem .55rem; font-size: .75rem; background: var(--soft-gold); border: 1px solid rgba(184,150,62,.25); color: var(--dark); }
+    .badge.warn { background: var(--soft-burgundy); border-color: rgba(139,46,59,.25); color: var(--burgundy); }
+    .badge.ok { background: var(--soft-teal); border-color: rgba(26,107,101,.25); color: var(--teal); }
+    .notice {
+      position: fixed; right: 1rem; bottom: 1rem; z-index: 40; max-width: 420px; background: var(--dark); color: white;
+      border-radius: 16px; padding: .85rem 1rem; box-shadow: var(--shadow); display: none;
+    }
+    .notice.show { display: block; }
+    .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
+    .auth-card { width: min(720px, 100%); }
+    .privacy-box { max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 16px; padding: .85rem; background: white; }
+    .footer { border-top: 1px solid var(--line); padding: 1rem; text-align: center; color: var(--muted); font-size: .78rem; }
+    .subtabs { display: flex; gap: .45rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .subtab { border: 1px solid var(--line); border-radius: 999px; padding: .45rem .75rem; background: white; cursor: pointer; }
+    .subtab[aria-selected="true"] { background: var(--gold); color: white; border-color: var(--gold); }
+    .chart { width: 100%; min-height: 150px; background: white; border: 1px solid var(--line); border-radius: 16px; padding: .5rem; }
+    .progress { height: 16px; background: white; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+    .progress > span { display: block; height: 100%; background: var(--teal); width: 0; }
+    .report-page { display: none; }
+    .fatal { position: fixed; inset: 0; z-index: 100; display: none; place-items: center; background: rgba(250,248,244,.96); padding: 1rem; }
+    .fatal.show { display: grid; }
+    .watermark { position: absolute; right: 1.1rem; top: 1rem; opacity: .22; pointer-events: none; }
+    .relative { position: relative; overflow: hidden; }
+    @media (max-width: 760px) {
+      .grid.two, .grid.three, .form-row, .form-row.three { grid-template-columns: 1fr; }
+      .topbar-inner { align-items: flex-start; }
+      .patient-item { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; scroll-behavior: auto !important; }
+    }
+    @media print {
+      body { background: white; }
+      .topbar, .tabs, .footer, .no-print, .notice, .fatal { display: none !important; }
+      main { max-width: none; padding: 0; }
+      .screen-only { display: none !important; }
+      .report-page { display: block; color: #111; font-family: Arial, sans-serif; }
+      @page { size: A4; margin: 18mm; }
+      .print-sheet { page-break-after: always; min-height: 240mm; border: 2pt solid #b8963e; border-radius: 18px; padding: 14mm; position: relative; }
+      .print-sheet:before { content: ""; position: absolute; inset: 5mm; border: 1pt solid #1a6b65; border-radius: 14px; pointer-events: none; }
+      .print-head { border-bottom: 3px solid #1a6b65; padding-bottom: 8px; margin-bottom: 14px; }
+      .print-head h1 { color: #1a6b65; margin: 0; font-family: Georgia, serif; }
+      .print-foot { position: absolute; bottom: 8mm; left: 14mm; right: 14mm; border-top: 1px solid #b8963e; padding-top: 5px; font-size: 10px; color: #333; }
+      .print-box { border: 1px solid #ddd; border-radius: 10px; padding: 10px; margin: 8px 0; }
+      .print-hash { font-family: monospace; word-break: break-all; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="fatal" class="fatal">
+    <div class="card"><div class="card-inner">
+      <h2>Falha de execução controlada</h2>
+      <p>O aplicativo encontrou uma inconsistência local. Recarregue a página. Os dados criptografados permanecem no dispositivo.</p>
+      <button class="primary-btn" onclick="location.reload()" aria-label="Recarregar aplicativo">Recarregar</button>
+    </div></div>
+  </div>
+  <div id="app" class="app-shell"></div>
+  <div id="notice" class="notice" role="status" aria-live="polite"></div>
+<script>
 (function(){
-  if(window===window.top)return;
-  function inlineAll(orig,clone){
-    if(orig.nodeType!==1)return;
-    try{
-      var cs=getComputedStyle(orig);
-      var t='';
-      for(var i=0;i<cs.length;i++){t+=cs[i]+':'+cs.getPropertyValue(cs[i])+';';}
-      clone.style.cssText=t;
-    }catch(e){}
-    var oc=orig.children,cc=clone.children;
-    for(var j=0;j<oc.length&&j<cc.length;j++){inlineAll(oc[j],cc[j]);}
+"use strict";
+
+var STORAGE_KEY = "neuroped_edj_v3";
+var SCHEMA_VERSION = "3.1.0";
+var PBKDF2_ITERATIONS = 100000;
+var currentKey = null;
+var currentPin = "";
+var db = null;
+var selectedPatientId = null;
+var currentTab = "pacientes";
+var patientSubTab = "geral";
+var lockState = { failures: 0, lockUntil: 0 };
+
+window.onerror = function(){ showFatal(); return true; };
+window.onunhandledrejection = function(event){ if(event && event.preventDefault){ event.preventDefault(); } showFatal(); };
+
+function showFatal(){ var el = document.getElementById("fatal"); if(el){ el.classList.add("show"); } }
+function $(id){ return document.getElementById(id); }
+function uid(){ return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function escapeHtml(value){ return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]; }); }
+function bytesToBase64(bytes){ var s = ""; bytes.forEach(function(b){ s += String.fromCharCode(b); }); return btoa(s); }
+function base64ToBytes(value){ var bin = atob(value || ""); var out = new Uint8Array(bin.length); for(var i=0;i<bin.length;i++){ out[i]=bin.charCodeAt(i); } return out; }
+function randomBytes(n){ var b = new Uint8Array(n); crypto.getRandomValues(b); return b; }
+function notify(msg){ var n=$("notice"); if(!n){ return; } n.textContent = msg; n.classList.add("show"); setTimeout(function(){ n.classList.remove("show"); }, 3600); }
+function fmtDate(value){ if(!value){ return "Não informado"; } var p = String(value).split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : value; }
+function ageYears(dob){ if(!dob){ return null; } var d = new Date(dob + "T00:00:00"); if(isNaN(d.getTime())){ return null; } var now = new Date(); var y = now.getFullYear() - d.getFullYear(); var m = now.getMonth() - d.getMonth(); if(m < 0 || (m === 0 && now.getDate() < d.getDate())){ y--; } return y; }
+function daysSince(date){ if(!date){ return 99999; } var d = new Date(date + "T00:00:00"); if(isNaN(d.getTime())){ return 99999; } return Math.floor((Date.now() - d.getTime()) / 86400000); }
+
+async function deriveKey(pin, saltBytes){
+  var enc = new TextEncoder();
+  var material = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: saltBytes, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" }, material, { name: "AES-GCM", length: 256 }, false, ["encrypt","decrypt"]);
+}
+async function encryptObject(obj, pin, saltBytes){
+  var iv = randomBytes(12);
+  var key = await deriveKey(pin, saltBytes);
+  var encoded = new TextEncoder().encode(JSON.stringify(obj));
+  var ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, encoded);
+  currentKey = key;
+  return { schema_version: SCHEMA_VERSION, salt: bytesToBase64(saltBytes), iv: bytesToBase64(iv), ciphertext: bytesToBase64(new Uint8Array(ciphertext)) };
+}
+async function decryptEnvelope(envelope, pin){
+  var saltBytes = base64ToBytes(envelope.salt);
+  var iv = base64ToBytes(envelope.iv);
+  var key = await deriveKey(pin, saltBytes);
+  var plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, base64ToBytes(envelope.ciphertext));
+  currentKey = key;
+  currentPin = pin;
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+async function saveDb(){
+  if(!currentPin || !db){ return; }
+  db.schema_version = SCHEMA_VERSION;
+  db.updated_at = new Date().toISOString();
+  var envelope = await encryptObject(db, currentPin, base64ToBytes(getEnvelope().salt));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+}
+function getEnvelope(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch(e) { return null; }
+}
+function defaultDb(){
+  return {
+    schema_version: SCHEMA_VERSION,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    settings: { privacyAccepted: true, firstLoginComplete: true },
+    patients: [],
+    audit: []
+  };
+}
+function migrateStorage(oldPayload){
+  var payload = oldPayload && typeof oldPayload === "object" ? oldPayload : {};
+  payload.schema_version = SCHEMA_VERSION;
+  payload.settings = payload.settings || { privacyAccepted: true, firstLoginComplete: true };
+  payload.patients = Array.isArray(payload.patients) ? payload.patients : [];
+  payload.audit = Array.isArray(payload.audit) ? payload.audit : [];
+  return payload;
+}
+function validatePin(pin){
+  if(!/^\d{4,}$/.test(pin)){ return "O PIN precisa ter no mínimo 4 dígitos."; }
+  if(["0000","1111","2222","3333","4444","5555","6666","7777","8888","9999","1234","4321"].indexOf(pin) >= 0){ return "Escolha um PIN menos previsível."; }
+  var asc = true, desc = true, rep = true;
+  for(var i=1;i<pin.length;i++){
+    asc = asc && Number(pin[i]) === Number(pin[i-1]) + 1;
+    desc = desc && Number(pin[i]) === Number(pin[i-1]) - 1;
+    rep = rep && pin[i] === pin[0];
   }
-  function stripExternal(clone){
-    var imgs=clone.querySelectorAll('img');
-    for(var i=0;i<imgs.length;i++){
-      var s=imgs[i].getAttribute('src');
-      if(s&&!s.startsWith('data:'))imgs[i].removeAttribute('src');
-    }
-    var all=clone.querySelectorAll('*');
-    for(var i=0;i<all.length;i++){
-      var st=all[i].style.cssText;
-      if(st&&st.indexOf('url(')>=0){
-        all[i].style.cssText=st.replace(/url\(["']?(?!data:)[^)"']*["']?\)/gi,'none');
+  if(asc || desc || rep){ return "PIN sequencial ou repetido não é aceito."; }
+  return "";
+}
+
+function renderAuth(){
+  var hasEnvelope = !!getEnvelope();
+  $("app").innerHTML = '<div class="auth-wrap"><div class="card auth-card"><div class="card-inner relative">' + mascotSvg("brain", "watermark") +
+    '<div class="brand" style="margin-bottom:1rem"><div class="brand-mark">EDJ</div><div><h1>NeuroPed EDJ v3.1</h1><p>Ferramenta educacional de apoio à decisão clínica em neuropediatria</p></div></div>' +
+    '<div class="privacy-box"><h3>Privacidade e LGPD</h3><p>Os dados ficam apenas neste dispositivo, criptografados em repouso por AES-GCM com chave derivada do PIN por PBKDF2. Não há transmissão a servidor, telemetria ou analytics. O profissional é o controlador dos dados. Backup, guarda do PIN e restauração são responsabilidade do usuário.</p><p>Use esta ferramenta como apoio educacional e organizacional. A decisão clínica final é do médico responsável.</p></div>' +
+    '<form id="authForm" class="grid" style="margin-top:1rem">' +
+    (!hasEnvelope ? '<label><span>Aceite explícito</span><select id="privacyAccept" aria-label="Aceite da política de privacidade"><option value="">Selecione</option><option value="sim">Li e aceito a política de privacidade</option></select></label>' : '') +
+    '<label><span>' + (hasEnvelope ? 'PIN do profissional' : 'Criar PIN do profissional') + '</span><input id="pin" inputmode="numeric" autocomplete="current-password" type="password" aria-label="PIN do profissional" placeholder="Digite o PIN"></label>' +
+    (!hasEnvelope ? '<label><span>Confirmar PIN</span><input id="pin2" inputmode="numeric" autocomplete="new-password" type="password" aria-label="Confirmar PIN" placeholder="Repita o PIN"></label>' : '') +
+    '<button class="primary-btn" type="submit" aria-label="Entrar no NeuroPed EDJ">' + (hasEnvelope ? 'Entrar' : 'Ativar ambiente seguro') + '</button>' +
+    '<p class="tiny muted">Dr. Jadson Fraga Araújo Júnior — Neuropediatria — CRM-PE 25227 — RQE 17756</p>' +
+    '</form></div></div></div>';
+  $("authForm").onsubmit = async function(ev){
+    ev.preventDefault();
+    var now = Date.now();
+    if(lockState.lockUntil && now < lockState.lockUntil){ notify("Acesso temporariamente bloqueado. Aguarde alguns minutos."); return; }
+    var pin = $("pin").value.trim();
+    var weak = validatePin(pin);
+    if(weak){ notify(weak); return; }
+    try {
+      if(!hasEnvelope){
+        if($("privacyAccept").value !== "sim"){ notify("O aceite da política de privacidade é obrigatório."); return; }
+        if(pin !== $("pin2").value.trim()){ notify("A confirmação do PIN não confere."); return; }
+        db = defaultDb();
+        currentPin = pin;
+        var envelope = await encryptObject(db, pin, randomBytes(16));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+        renderApp();
+      } else {
+        db = migrateStorage(await decryptEnvelope(getEnvelope(), pin));
+        lockState.failures = 0;
+        renderApp();
       }
+    } catch(e) {
+      lockState.failures += 1;
+      if(lockState.failures >= 5){ lockState.lockUntil = Date.now() + 300000; notify("Cinco falhas consecutivas. Acesso bloqueado por 5 minutos."); }
+      else { notify("PIN incorreto ou base local incompatível."); }
     }
-  }
-  var scrollRaf=0;
-  function emitScroll(){
-    scrollRaf=0;
-    var x=window.scrollX||window.pageXOffset||0;
-    var y=window.scrollY||window.pageYOffset||0;
-    window.parent.postMessage({type:'INLINE_EDIT_SCROLL',scrollX:x,scrollY:y},'*');
-  }
-  window.addEventListener('scroll',function(){
-    if(scrollRaf)return;
-    scrollRaf=requestAnimationFrame(emitScroll);
-  },{passive:true,capture:true});
-  emitScroll();
-  window.addEventListener('message',function(e){
-    if(!e.data||e.data.type!=='INLINE_EDIT_CAPTURE_REQUEST')return;
-    var scrollX=window.scrollX||window.pageXOffset||0;
-    var scrollY=window.scrollY||window.pageYOffset||0;
-    var w=window.innerWidth,h=window.innerHeight;
-    try{
-      var clone=document.documentElement.cloneNode(true);
-      var rm=clone.querySelectorAll('script,link[rel="stylesheet"],style');
-      for(var i=0;i<rm.length;i++){rm[i].remove();}
-      inlineAll(document.documentElement,clone);
-      stripExternal(clone);
-      var html=new XMLSerializer().serializeToString(clone);
-      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'
-        +'<foreignObject width="100%" height="100%">'
-        +'<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+w+'px;height:'+h+'px;overflow:hidden">'
-        +'<div style="transform:translate(-'+scrollX+'px,-'+scrollY+'px);transform-origin:top left">'
-        +html+'</div></div></foreignObject></svg>';
-      var svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-      var img=new Image();
-      img.onload=function(){
-        var c=document.createElement('canvas');c.width=w;c.height=h;
-        c.getContext('2d').drawImage(img,0,0);
-        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:c.toDataURL('image/png'),scrollX:scrollX,scrollY:scrollY},'*');
-      };
-      img.onerror=function(){
-        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
-      };
-      img.src=svgUrl;
-    }catch(err){
-      window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
-    }
+  };
+}
+
+function renderApp(){
+  if(!db){ renderAuth(); return; }
+  var tabs = [
+    ["pacientes","Pacientes"],["cadastrar","Cadastrar"],["paciente","Paciente"],["alertas","Alertas"],["relatorios","Relatórios"],["config","Config"]
+  ];
+  $("app").innerHTML = '<div class="topbar no-print"><div class="topbar-inner"><div class="brand"><div class="brand-mark">EDJ</div><div><h1>NeuroPed EDJ</h1><p>Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756</p></div></div><button class="soft-btn" id="lockBtn" aria-label="Bloquear aplicativo">Bloquear</button></div><nav class="tabs" role="tablist">' +
+    tabs.map(function(t){ return '<button class="tab-btn" role="tab" aria-selected="' + (currentTab===t[0]) + '" data-tab="' + t[0] + '" aria-label="Abrir área ' + t[1] + '">' + t[1] + '</button>'; }).join("") +
+    '</nav></div><main id="main"></main><footer class="footer">Ferramenta educacional de apoio à decisão clínica. Sugestão educacional. A decisão clínica final é do médico responsável. Rua Raimundo Lacerda, 001 — São José, Petrolina/PE — CEP 56302-470 · (87) 9 9109-7371 · Fraga Serviços Médicos LTDA</footer>';
+  Array.prototype.forEach.call(document.querySelectorAll("[data-tab]"), function(btn){ btn.onclick = function(){ currentTab = btn.getAttribute("data-tab"); renderApp(); }; });
+  $("lockBtn").onclick = function(){ currentKey=null; currentPin=""; db=null; selectedPatientId=null; renderAuth(); };
+  if(currentTab === "pacientes"){ renderPatients(); }
+  if(currentTab === "cadastrar"){ renderCadastro(); }
+  if(currentTab === "paciente"){ renderPatientDetail(); }
+  if(currentTab === "alertas"){ renderAlerts(); }
+  if(currentTab === "relatorios"){ renderReports(); }
+  if(currentTab === "config"){ renderConfig(); }
+}
+
+function renderPatients(page){
+  page = page || 1;
+  var main = $("main");
+  var query = sessionStorage.getItem("np_search") || "";
+  var level = sessionStorage.getItem("np_level") || "";
+  var patients = db.patients.slice().sort(function(a,b){ return (a.name || "").localeCompare(b.name || ""); });
+  patients = patients.filter(function(p){
+    var hay = [p.name,p.dob,p.cid10,p.cid11].join(" ").toLowerCase();
+    return (!query || hay.indexOf(query.toLowerCase()) >= 0) && (!level || p.dsmLevel === level);
   });
+  var totalPages = Math.max(1, Math.ceil(patients.length / 20));
+  page = Math.min(page, totalPages);
+  var visible = patients.slice((page-1)*20, page*20);
+  main.innerHTML = '<section class="card"><div class="card-inner relative">' + mascotSvg("neuron","watermark") +
+    '<div class="section-title"><div><h2>Pacientes</h2><p class="muted">Busca, filtros e navegação para ficha clínica criptografada.</p></div><button class="primary-btn" id="newPatientBtn" aria-label="Cadastrar novo paciente">Novo cadastro</button></div>' +
+    '<div class="form-row three"><label>Busca por nome, data ou CID<input id="searchPatients" value="' + escapeHtml(query) + '" aria-label="Buscar pacientes"></label><label>Nível DSM-5<select id="levelFilter" aria-label="Filtrar por nível DSM"><option value="">Todos</option><option value="N1">N1</option><option value="N2">N2</option><option value="N3">N3</option></select></label><label>Registros<span class="flat-card">' + patients.length + ' paciente(s)</span></label></div>' +
+    '<div class="list" style="margin-top:1rem">' + (visible.length ? visible.map(patientRow).join("") : '<div class="flat-card">Nenhum paciente localizado.</div>') + '</div>' +
+    '<div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem"><button class="soft-btn" id="prevPage" aria-label="Página anterior">Anterior</button><span class="badge">Página ' + page + ' de ' + totalPages + '</span><button class="soft-btn" id="nextPage" aria-label="Próxima página">Próxima</button></div>' +
+    '</div></section>';
+  $("levelFilter").value = level;
+  $("newPatientBtn").onclick = function(){ selectedPatientId = null; currentTab = "cadastrar"; renderApp(); };
+  $("searchPatients").oninput = function(){ sessionStorage.setItem("np_search", this.value); renderPatients(1); };
+  $("levelFilter").onchange = function(){ sessionStorage.setItem("np_level", this.value); renderPatients(1); };
+  $("prevPage").onclick = function(){ renderPatients(Math.max(1, page-1)); };
+  $("nextPage").onclick = function(){ renderPatients(Math.min(totalPages, page+1)); };
+  bindPatientButtons();
+}
+function patientRow(p){
+  return '<div class="patient-item"><div><strong>' + escapeHtml(p.name) + '</strong><p class="tiny muted">Nascimento: ' + fmtDate(p.dob) + ' · CID-10: ' + escapeHtml(p.cid10 || "-") + ' · CID-11: ' + escapeHtml(p.cid11 || "-") + '</p><span class="badge ok">' + escapeHtml(p.dsmLevel || "Sem nível DSM") + '</span></div><div style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="soft-btn" data-open="' + p.id + '" aria-label="Abrir ficha de ' + escapeHtml(p.name) + '">Abrir</button><button class="soft-btn" data-edit="' + p.id + '" aria-label="Editar ' + escapeHtml(p.name) + '">Editar</button><button class="danger-btn" data-del="' + p.id + '" aria-label="Excluir ' + escapeHtml(p.name) + '">Excluir</button></div></div>';
+}
+function bindPatientButtons(){
+  Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function(b){ b.onclick = function(){ selectedPatientId = b.getAttribute("data-open"); currentTab="paciente"; patientSubTab="geral"; renderApp(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-edit]"), function(b){ b.onclick = function(){ selectedPatientId = b.getAttribute("data-edit"); currentTab="cadastrar"; renderApp(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-del]"), function(b){ b.onclick = async function(){ var p = getPatient(b.getAttribute("data-del")); if(!p){ return; } var ok = window.confirm("Excluir definitivamente o cadastro de " + p.name + "?"); if(ok){ db.patients = db.patients.filter(function(x){ return x.id !== p.id; }); if(selectedPatientId === p.id){ selectedPatientId = null; } await saveDb(); notify("Paciente excluído."); renderApp(); } }; });
+}
+
+function renderCadastro(){
+  var p = selectedPatientId ? getPatient(selectedPatientId) : null;
+  p = p || {};
+  $("main").innerHTML = '<section class="card"><div class="card-inner"><h2>' + (p.id ? 'Editar paciente' : 'Cadastrar paciente') + '</h2><form id="patientForm" class="grid">' +
+    '<div class="form-row"><label>Nome completo<input id="name" required value="' + escapeHtml(p.name) + '" aria-label="Nome completo"></label><label>Data de nascimento<input id="dob" type="date" required value="' + escapeHtml(p.dob) + '" aria-label="Data de nascimento"></label></div>' +
+    '<div class="form-row three"><label>Sexo<select id="sex" aria-label="Sexo"><option value="">Selecionar</option><option>Feminino</option><option>Masculino</option><option>Outro</option></select></label><label>CID-10<input id="cid10" value="' + escapeHtml(p.cid10) + '" aria-label="CID-10"></label><label>CID-11<input id="cid11" value="' + escapeHtml(p.cid11) + '" aria-label="CID-11"></label></div>' +
+    '<div class="form-row"><label>Nível DSM-5-TR<select id="dsmLevel" aria-label="Nível DSM-5-TR"><option value="">Não se aplica</option><option value="N1">N1</option><option value="N2">N2</option><option value="N3">N3</option></select></label><label>Último retorno<input id="lastVisit" type="date" value="' + escapeHtml(p.lastVisit) + '" aria-label="Último retorno"></label></div>' +
+    '<label>Comorbidades<textarea id="comorbidities" aria-label="Comorbidades">' + escapeHtml(p.comorbidities) + '</textarea></label>' +
+    '<label>Anamnese<textarea id="anamnesis" aria-label="Anamnese">' + escapeHtml(p.anamnesis) + '</textarea></label>' +
+    '<div class="form-row"><label>Contexto familiar<textarea id="familyContext" aria-label="Contexto familiar">' + escapeHtml(p.familyContext) + '</textarea></label><label>Contexto escolar<textarea id="schoolContext" aria-label="Contexto escolar">' + escapeHtml(p.schoolContext) + '</textarea></label></div>' +
+    '<label>Plano terapêutico inicial<textarea id="therapyPlan" aria-label="Plano terapêutico inicial">' + escapeHtml(p.therapyPlan) + '</textarea></label>' +
+    '<div class="form-row"><label>Horas terapêuticas semanais<input id="therapyHours" type="number" min="0" step="1" value="' + escapeHtml(p.therapyHours || 0) + '" aria-label="Horas terapêuticas semanais"></label><label>Justificativa de excepcionalidade, se ultrapassar teto<textarea id="exceptionJustification" aria-label="Justificativa de excepcionalidade">' + escapeHtml(p.exceptionJustification) + '</textarea></label></div>' +
+    '<button class="primary-btn" type="submit" aria-label="Salvar paciente">Salvar paciente</button>' +
+    '</form></div></section>';
+  ["sex","dsmLevel"].forEach(function(id){ if(p[id]){ $(id).value = p[id]; } });
+  $("patientForm").onsubmit = async function(ev){
+    ev.preventDefault();
+    var data = {
+      id: p.id || uid(), name: $("name").value.trim(), dob: $("dob").value, sex: $("sex").value,
+      cid10: $("cid10").value.trim(), cid11: $("cid11").value.trim(), dsmLevel: $("dsmLevel").value,
+      lastVisit: $("lastVisit").value, comorbidities: $("comorbidities").value.trim(), anamnesis: $("anamnesis").value.trim(),
+      familyContext: $("familyContext").value.trim(), schoolContext: $("schoolContext").value.trim(), therapyPlan: $("therapyPlan").value.trim(),
+      therapyHours: Number($("therapyHours").value || 0), exceptionJustification: $("exceptionJustification").value.trim(),
+      prescriptions: p.prescriptions || [], scales: p.scales || [], monitor: p.monitor || [], createdAt: p.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
+    };
+    if(!data.name || !data.dob){ notify("Nome e data de nascimento são obrigatórios."); return; }
+    var teto = therapyCeiling(data);
+    if(teto !== null && data.therapyHours > teto && data.exceptionJustification.length < 200){
+      notify("A carga ultrapassa o teto. A justificativa precisa ter pelo menos 200 caracteres.");
+      return;
+    }
+    if(data.therapyHours > teto && teto !== null){ data.exceptionCreatedAt = todayISO(); data.exceptionExpiresAt = addDaysISO(90); }
+    var idx = db.patients.findIndex(function(x){ return x.id === data.id; });
+    if(idx >= 0){ db.patients[idx] = data; } else { db.patients.push(data); }
+    selectedPatientId = data.id;
+    await saveDb();
+    notify("Paciente salvo em base criptografada.");
+    currentTab = "paciente"; patientSubTab = "geral"; renderApp();
+  };
+}
+
+function getPatient(id){ return db.patients.find(function(p){ return p.id === id; }); }
+function selectedPatient(){ return getPatient(selectedPatientId) || db.patients[0] || null; }
+function addDaysISO(days){ var d = new Date(); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); }
+
+function therapyCeiling(p){
+  if(!p.dsmLevel || !p.dob){ return null; }
+  var y = ageYears(p.dob);
+  if(y === null){ return null; }
+  var months = Math.max(0, Math.floor((Date.now() - new Date(p.dob + "T00:00:00").getTime()) / 2629800000));
+  var table;
+  if(months >= 12 && months <= 36){ table = {N1:20,N2:25,N3:30}; }
+  else if(y >= 3 && y <= 5){ table = {N1:20,N2:35,N3:40}; }
+  else if(y >= 6 && y <= 11){ table = {N1:12,N2:25,N3:35}; }
+  else if(y >= 12 && y <= 17){ table = {N1:6,N2:15,N3:25}; }
+  else if(y >= 18){ table = {N1:4,N2:10,N3:15}; }
+  else { return null; }
+  return table[p.dsmLevel] == null ? null : table[p.dsmLevel];
+}
+
+function renderPatientDetail(){
+  var p = selectedPatient();
+  if(!p){ $("main").innerHTML = '<section class="card"><div class="card-inner"><h2>Paciente</h2><p>Nenhum paciente cadastrado.</p><button class="primary-btn" id="goCad">Cadastrar agora</button></div></section>'; $("goCad").onclick=function(){currentTab="cadastrar";renderApp();}; return; }
+  selectedPatientId = p.id;
+  var subtabs = [["geral","Geral"],["prescricoes","Prescrições"],["escalas","Escalas"],["monitoramento","Monitoramento"]];
+  $("main").innerHTML = '<section class="card"><div class="card-inner relative">' + mascotSvg("star","watermark") +
+    '<div class="section-title"><div><h2>' + escapeHtml(p.name) + '</h2><p class="muted">Nascimento: ' + fmtDate(p.dob) + ' · ' + escapeHtml(p.cid10 || "CID-10 não informado") + ' · ' + escapeHtml(p.dsmLevel || "Sem nível DSM") + '</p></div><button class="soft-btn" id="editSel">Editar dados</button></div>' +
+    '<div class="subtabs">' + subtabs.map(function(s){ return '<button class="subtab" aria-selected="' + (patientSubTab===s[0]) + '" data-sub="' + s[0] + '">' + s[1] + '</button>'; }).join("") + '</div><div id="patientPanel"></div></div></section>';
+  $("editSel").onclick = function(){ currentTab="cadastrar"; renderApp(); };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-sub]"), function(b){ b.onclick=function(){ patientSubTab=b.getAttribute("data-sub"); renderPatientDetail(); }; });
+  if(patientSubTab === "geral"){ renderPatientGeral(p); }
+  if(patientSubTab === "prescricoes"){ renderPrescricoes(p); }
+  if(patientSubTab === "escalas"){ renderEscalas(p); }
+  if(patientSubTab === "monitoramento"){ renderMonitoramento(p); }
+}
+function renderPatientGeral(p){
+  var teto = therapyCeiling(p);
+  $("patientPanel").innerHTML = '<div class="grid two"><div class="flat-card"><h3>Anamnese</h3><p>' + escapeHtml(p.anamnesis || "Não informado.") + '</p></div><div class="flat-card"><h3>Contextos</h3><p><strong>Família:</strong> ' + escapeHtml(p.familyContext || "Não informado.") + '</p><p><strong>Escola:</strong> ' + escapeHtml(p.schoolContext || "Não informado.") + '</p></div><div class="flat-card"><h3>Plano terapêutico</h3><p>' + escapeHtml(p.therapyPlan || "Não informado.") + '</p><p><span class="badge">Carga: ' + escapeHtml(p.therapyHours || 0) + 'h/semana</span> ' + (teto!==null ? '<span class="badge ok">Teto: ' + teto + 'h</span>' : '') + '</p></div><div class="flat-card"><h3>Comorbidades</h3><p>' + escapeHtml(p.comorbidities || "Não informado.") + '</p></div></div>';
+}
+function renderPrescricoes(p){
+  p.prescriptions = p.prescriptions || [];
+  $("patientPanel").innerHTML = '<div class="grid two"><form id="rxForm" class="flat-card grid"><h3>Nova prescrição educacional</h3>' +
+    ["substancia","dose","posologia","via","indicacao","monitoramento","evento","retirada"].map(function(id){ var label = {substancia:"Substância",dose:"Dose",posologia:"Posologia",via:"Via",indicacao:"Indicação",monitoramento:"Monitoramento",evento:"Evento adverso esperado",retirada:"Plano de retirada"}[id]; return '<label>' + label + '<input id="rx_' + id + '" aria-label="' + label + '"></label>'; }).join("") +
+    '<button class="primary-btn" type="submit">Registrar prescrição</button><p class="tiny muted">Sugestão educacional. A decisão clínica final é do médico responsável.</p></form>' +
+    '<div class="flat-card"><h3>Registros</h3><div class="list">' + (p.prescriptions.length ? p.prescriptions.map(function(r){ return '<div class="flat-card"><strong>' + escapeHtml(r.substancia) + '</strong><p class="tiny muted">' + escapeHtml(r.dose) + ' · ' + escapeHtml(r.posologia) + ' · ' + escapeHtml(r.via) + '</p><p>' + escapeHtml(r.indicacao) + '</p><p class="tiny">Monitoramento: ' + escapeHtml(r.monitoramento) + '</p></div>'; }).join("") : '<p>Nenhuma prescrição registrada.</p>') + '</div></div></div>';
+  $("rxForm").onsubmit = async function(ev){
+    ev.preventDefault();
+    var r = { id: uid(), date: todayISO(), substancia:$("rx_substancia").value.trim(), dose:$("rx_dose").value.trim(), posologia:$("rx_posologia").value.trim(), via:$("rx_via").value.trim(), indicacao:$("rx_indicacao").value.trim(), monitoramento:$("rx_monitoramento").value.trim(), evento:$("rx_evento").value.trim(), retirada:$("rx_retirada").value.trim() };
+    if(!r.substancia || !r.dose || !r.posologia){ notify("Substância, dose e posologia são obrigatórias."); return; }
+    p.prescriptions.push(r); await saveDb(); notify("Prescrição educacional registrada."); renderPatientDetail();
+  };
+}
+function renderEscalas(p){
+  p.scales = p.scales || [];
+  var names = ["VB-MAPP","Vineland-3","ADOS-2","ABLLS-R","Mullen","CARS-2"];
+  $("patientPanel").innerHTML = '<div class="grid two"><form id="scaleForm" class="flat-card grid"><h3>Registro longitudinal</h3><label>Escala<select id="scaleName">' + names.map(function(n){ return '<option>' + n + '</option>'; }).join("") + '</select></label><label>Data<input id="scaleDate" type="date" value="' + todayISO() + '"></label><label>Escore ou equivalente<input id="scaleScore" type="number" step="0.1"></label><label>Observação clínica<textarea id="scaleNote"></textarea></label><button class="primary-btn" type="submit">Registrar escala</button><p class="tiny muted">São registrados apenas metadados, escores e interpretação clínica própria.</p></form><div class="flat-card"><h3>Gráfico longitudinal</h3><div id="scaleCharts">' + names.map(function(n){ return '<h4>' + n + '</h4>' + scaleChart(p.scales.filter(function(s){ return s.name===n; })); }).join("") + '</div></div></div>';
+  $("scaleForm").onsubmit = async function(ev){
+    ev.preventDefault();
+    var s = { id: uid(), name:$("scaleName").value, date:$("scaleDate").value, score:Number($("scaleScore").value), note:$("scaleNote").value.trim() };
+    if(!s.date || isNaN(s.score)){ notify("Data e escore são obrigatórios."); return; }
+    p.scales.push(s); await saveDb(); notify("Escala registrada."); renderPatientDetail();
+  };
+}
+function scaleChart(items){
+  if(!items.length){ return '<div class="chart tiny muted">Sem registros.</div>'; }
+  items = items.slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
+  var scores = items.map(function(i){ return Number(i.score); });
+  var max = Math.max.apply(null, scores.concat([1]));
+  var min = Math.min.apply(null, scores.concat([0]));
+  var range = Math.max(1, max-min);
+  var pts = items.map(function(it, idx){ var x = 20 + idx * (260 / Math.max(1, items.length-1)); var y = 120 - ((Number(it.score)-min)/range)*90; return [x,y]; });
+  var circles = pts.map(function(pt, idx){ return '<circle cx="' + pt[0] + '" cy="' + pt[1] + '" r="4"><title>' + fmtDate(items[idx].date) + ': ' + items[idx].score + '</title></circle>'; }).join("");
+  var line = pts.map(function(p){ return p[0]+","+p[1]; }).join(" ");
+  return '<svg class="chart" viewBox="0 0 320 150" role="img" aria-label="Gráfico longitudinal"><line x1="20" y1="130" x2="300" y2="130" stroke="#ddd"/><line x1="20" y1="20" x2="20" y2="130" stroke="#ddd"/><polyline points="' + line + '" fill="none" stroke="#1a6b65" stroke-width="3"/>' + circles + '</svg>';
+}
+function renderMonitoramento(p){
+  p.monitor = p.monitor || [];
+  $("patientPanel").innerHTML = '<div class="grid two"><form id="monForm" class="flat-card grid"><h3>Evolução clínica datada</h3><label>Data<input id="monDate" type="date" value="' + todayISO() + '"></label><label>Descrição<textarea id="monText"></textarea></label><button class="primary-btn">Registrar evolução</button></form><div class="flat-card"><h3>Alertas do paciente</h3>' + alertList([p]) + '<h3>Histórico</h3><div class="list">' + (p.monitor.length ? p.monitor.map(function(m){ return '<div class="flat-card"><strong>' + fmtDate(m.date) + '</strong><p>' + escapeHtml(m.text) + '</p></div>'; }).join("") : '<p>Nenhuma evolução registrada.</p>') + '</div></div></div>';
+  $("monForm").onsubmit = async function(ev){ ev.preventDefault(); var m={id:uid(),date:$("monDate").value,text:$("monText").value.trim()}; if(!m.date || !m.text){ notify("Data e descrição são obrigatórias."); return; } p.monitor.push(m); p.lastVisit=m.date; await saveDb(); notify("Evolução registrada."); renderPatientDetail(); };
+}
+
+function renderAlerts(){
+  $("main").innerHTML = '<section class="card"><div class="card-inner"><h2>Alertas</h2><p class="muted">Retornos, excepcionalidades e escalas desatualizadas.</p>' + alertList(db.patients) + '</div></section>';
+}
+function alertList(patients){
+  var alerts = [];
+  patients.forEach(function(p){
+    var limit = p.dsmLevel === "N1" ? 180 : p.dsmLevel === "N2" ? 120 : p.dsmLevel === "N3" ? 90 : null;
+    if(limit && daysSince(p.lastVisit) > limit){ alerts.push({urg: 1, patient:p.name, text:"Retorno vencido: " + daysSince(p.lastVisit) + " dias sem reavaliação. Limite " + limit + " dias."}); }
+    if(p.exceptionExpiresAt && daysSince(p.exceptionCreatedAt) > 90){ alerts.push({urg: 2, patient:p.name, text:"Excepcionalidade terapêutica acima de 90 dias."}); }
+    var latestScale = (p.scales || []).slice().sort(function(a,b){ return b.date.localeCompare(a.date); })[0];
+    if(daysSince(latestScale && latestScale.date) > 180){ alerts.push({urg: 3, patient:p.name, text:"Escala sem atualização por mais de 180 dias."}); }
+  });
+  alerts.sort(function(a,b){ return a.urg-b.urg; });
+  if(!alerts.length){ return '<div class="flat-card"><span class="badge ok">Sem alertas ativos</span></div>'; }
+  return '<div class="list">' + alerts.map(function(a){ return '<div class="flat-card"><span class="badge warn">Urgência ' + a.urg + '</span><strong> ' + escapeHtml(a.patient) + '</strong><p>' + escapeHtml(a.text) + '</p></div>'; }).join("") + '</div>';
+}
+
+async function renderReports(){
+  var p = selectedPatient();
+  var options = db.patients.map(function(x){ return '<option value="' + x.id + '">' + escapeHtml(x.name) + '</option>'; }).join("");
+  $("main").innerHTML = '<section class="card screen-only"><div class="card-inner"><h2>Relatórios</h2><p class="muted">Geração imprimível com hash SHA-256 do payload do paciente.</p><div class="form-row"><label>Paciente<select id="reportPatient">' + options + '</select></label><label>Ação<span><button class="primary-btn" id="printBtn">Gerar impressão/PDF</button></span></label></div><div id="reportPreview" style="margin-top:1rem"></div></div></section><section id="printArea" class="report-page"></section>';
+  if(p){ $("reportPatient").value = p.id; await buildReport(p); }
+  $("reportPatient").onchange = async function(){ selectedPatientId = this.value; await buildReport(getPatient(this.value)); };
+  $("printBtn").onclick = function(){ window.print(); };
+}
+async function sha256Text(text){
+  var hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(hash)).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
+}
+async function buildReport(p){
+  if(!p){ $("reportPreview").innerHTML = "<p>Nenhum paciente cadastrado.</p>"; return; }
+  var payload = JSON.stringify(p);
+  var hash = await sha256Text(payload);
+  var html = '<article class="print-sheet"><div class="print-head"><h1>NeuroPed EDJ — Relatório Neuropediátrico</h1><p>Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756</p></div>' +
+    '<div class="print-box"><strong>Paciente:</strong> ' + escapeHtml(p.name) + '<br><strong>Nascimento:</strong> ' + fmtDate(p.dob) + '<br><strong>CID-10:</strong> ' + escapeHtml(p.cid10 || "-") + ' · <strong>CID-11:</strong> ' + escapeHtml(p.cid11 || "-") + '</div>' +
+    '<div class="print-box"><strong>Resumo clínico:</strong><p>' + escapeHtml(p.anamnesis || "Não informado.") + '</p></div>' +
+    '<div class="print-box"><strong>Plano terapêutico:</strong><p>' + escapeHtml(p.therapyPlan || "Não informado.") + '</p><p>Carga semanal: ' + escapeHtml(p.therapyHours || 0) + 'h.</p></div>' +
+    '<div class="print-box"><strong>Escalas:</strong><p>' + ((p.scales||[]).length ? (p.scales||[]).map(function(s){ return escapeHtml(s.name) + " em " + fmtDate(s.date) + ": " + escapeHtml(s.score); }).join("<br>") : "Sem registros.") + '</p></div>' +
+    '<div class="print-box"><strong>Validação documental:</strong><p class="print-hash">SHA-256: ' + hash + '</p>' + pseudoQr(hash) + '</div>' +
+    '<div class="print-foot">Rua Raimundo Lacerda, 001 — São José, Petrolina/PE — CEP 56302-470 · Telefone: (87) 9 9109-7371 · Fraga Serviços Médicos LTDA</div></article>';
+  $("printArea").innerHTML = html;
+  $("reportPreview").innerHTML = '<div class="flat-card"><h3>Prévia documental</h3><p><strong>' + escapeHtml(p.name) + '</strong></p><p class="tiny">SHA-256: ' + hash + '</p><button class="soft-btn" onclick="window.print()">Imprimir agora</button></div>';
+}
+function pseudoQr(hash){
+  var cells = "";
+  for(var i=0;i<81;i++){
+    var v = parseInt(hash[i % hash.length],16);
+    if((v + i) % 3 === 0){ cells += '<rect x="' + ((i%9)*6) + '" y="' + (Math.floor(i/9)*6) + '" width="6" height="6" fill="#2d2926"/>'; }
+  }
+  return '<svg width="62" height="62" viewBox="0 0 54 54" aria-label="Código visual derivado do hash">' + cells + '</svg>';
+}
+
+function renderConfig(){
+  $("main").innerHTML = '<section class="grid two"><div class="card"><div class="card-inner"><h2>Config</h2><div class="grid"><button class="soft-btn" id="backupBtn">Exportar backup JSON</button><label>Restaurar backup JSON<input id="restoreInput" type="file" accept="application/json"></label><button class="soft-btn" id="pinBtn">Trocar PIN</button><button class="danger-btn" id="wipeBtn">Apagar todos os dados</button><div><p class="tiny muted">Uso de armazenamento</p><div class="progress"><span id="storageBar"></span></div><p id="storageText" class="tiny muted"></p></div></div></div></div><div class="card"><div class="card-inner"><h2>Documentação</h2><div class="subtabs"><button class="subtab" data-doc="sobre">Sobre</button><button class="subtab" data-doc="uso">Como usar</button><button class="subtab" data-doc="privacidade">Privacidade e termos</button><button class="subtab" data-doc="base">Base científica</button></div><div id="docPanel"></div></div></div></section>';
+  $("backupBtn").onclick = function(){ var blob = new Blob([JSON.stringify(db,null,2)], {type:"application/json"}); var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="neuroped-edj-backup-" + todayISO() + ".json"; a.click(); URL.revokeObjectURL(a.href); };
+  $("restoreInput").onchange = function(ev){ var file = ev.target.files[0]; if(!file){ return; } var reader = new FileReader(); reader.onload = async function(){ try { var restored = migrateStorage(JSON.parse(reader.result)); db = restored; await saveDb(); notify("Backup restaurado."); renderApp(); } catch(e){ notify("Arquivo de backup inválido."); } }; reader.readAsText(file); };
+  $("pinBtn").onclick = async function(){ var p1 = window.prompt("Novo PIN numérico com no mínimo 4 dígitos:"); if(!p1){ return; } var weak = validatePin(p1.trim()); if(weak){ notify(weak); return; } currentPin = p1.trim(); var envelope = await encryptObject(db, currentPin, randomBytes(16)); localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope)); notify("PIN alterado."); };
+  $("wipeBtn").onclick = function(){ var text = window.prompt('Digite APAGAR para excluir a base local criptografada:'); if(text === "APAGAR"){ localStorage.removeItem(STORAGE_KEY); db=null; selectedPatientId=null; notify("Base local apagada."); renderAuth(); } };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-doc]"), function(b){ b.onclick=function(){ renderDoc(b.getAttribute("data-doc")); }; });
+  renderDoc("sobre");
+  if(navigator.storage && navigator.storage.estimate){ navigator.storage.estimate().then(function(est){ var pct = est.quota ? Math.round((est.usage/est.quota)*100) : 0; $("storageBar").style.width = pct + "%"; if(pct >= 90){ $("storageBar").style.background = "var(--burgundy)"; } else if(pct >= 70){ $("storageBar").style.background = "var(--gold)"; } $("storageText").textContent = pct + "% utilizado no navegador."; }).catch(function(){ $("storageText").textContent = "Estimativa indisponível neste navegador."; }); }
+}
+function renderDoc(kind){
+  var docs = {
+    sobre: '<h3>Sobre</h3><p>NeuroPed EDJ v3.1 é uma ferramenta educacional de apoio à decisão clínica em neuropediatria, com funcionamento local, PWA offline e criptografia em repouso.</p>',
+    uso: '<h3>Como usar</h3><p>Cadastre o paciente, registre dados clínicos, acompanhe escalas, monitore alertas e gere relatório imprimível. Use backup JSON regularmente e guarde o PIN com segurança.</p>',
+    privacidade: '<h3>Política de Privacidade e Termos de Uso</h3><p>Os dados permanecem no dispositivo do usuário, criptografados. Não há analytics, telemetria ou transmissão a servidor. O profissional é responsável pela base local, backup, guarda do PIN e uso clínico das informações.</p>',
+    base: '<h3>Base científica</h3><p>Sandbank M et al. BMJ 2023. Reichow B et al. Cochrane Database Syst Rev 2018. Hyman SL et al. Pediatrics 2020. Hirota T, King BH. JAMA 2023.</p><p>A ferramenta tem enquadramento educacional e não substitui julgamento clínico.</p>'
+  };
+  $("docPanel").innerHTML = '<div class="flat-card">' + docs[kind] + '</div>';
+}
+
+function mascotSvg(type, cls){
+  var c = cls || "";
+  if(type === "neuron"){ return '<svg class="' + c + '" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="18" fill="#1a6b65"/><g stroke="#b8963e" stroke-width="7" stroke-linecap="round"><path d="M60 42V18"/><path d="M78 60h26"/><path d="M60 78v24"/><path d="M42 60H16"/><path d="M73 47l19-19"/><path d="M47 73L28 92"/></g></svg>'; }
+  if(type === "star"){ return '<svg class="' + c + '" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><path d="M60 14l13 30 32 3-24 21 7 32-28-17-28 17 7-32-24-21 32-3z" fill="#b8963e"/><path d="M45 61c9 8 21 8 30 0" stroke="#2d2926" stroke-width="5" fill="none" stroke-linecap="round"/></svg>'; }
+  return '<svg class="' + c + '" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><path d="M40 34c-14 5-22 18-17 33 3 10 11 17 21 19 8 13 31 13 39 0 10-2 18-9 21-19 5-15-3-28-17-33-7-16-40-16-47 0z" fill="#1a6b65"/><circle cx="48" cy="58" r="5" fill="#fff"/><circle cx="72" cy="58" r="5" fill="#fff"/><path d="M49 74c7 6 15 6 22 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/></svg>';
+}
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){ navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+}
+if(getEnvelope()){ renderAuth(); } else { renderAuth(); }
+
 })();
-</script></body>
+</script>
+</body>
 </html>
