@@ -3,17 +3,19 @@
   "action": "deploy-trigger",
   "target_branch": "main",
   "status": "ready_for_static_host_deploy",
-  "deploy_requested_at": "2026-05-07T03:25:00-03:00",
+  "deploy_requested_at": "2026-05-07T04:15:00-03:00",
   "current_total_instruments": 507,
   "entrypoint": "index.html",
   "scale_entrypoint": "escalas.html",
   "sensitive_filter": "filtro-escalas.html",
+  "communication_aac": "comunicacao-alternativa.html",
   "instrument_index": "scales-index.json",
   "filter_version": "2.0.0",
   "static_pages": [
     "index.html",
     "escalas.html",
     "filtro-escalas.html",
+    "comunicacao-alternativa.html",
     "scales-index.json",
     "banco-escalas.html",
     "banco-escalas-lote1.html",
@@ -28,5 +30,5 @@
     "scales_endpoint": "/api/scales",
     "d1_status": "wrangler.toml ainda requer database_id real para D1 persistente"
   },
-  "note": "Commit leve criado para acionar deploy automatico em host conectado a main. Filtro v2 ranqueia instrumento especifico e nao lote generico."
+  "note": "Commit leve criado para acionar deploy automatico em host conectado a main. Modulo CAA com cartões visuais e audio local integrado ao indice e manifest."
 }
