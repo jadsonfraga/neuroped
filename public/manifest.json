@@ -2,12 +2,20 @@
   "name": "NeuroPed EDJ — Modo Seguro",
   "short_name": "NeuroPed EDJ",
   "description": "PWA educacional de apoio neuropediátrico em modo seguro, sem armazenamento clínico público.",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/neuroped/",
+  "scope": "/neuroped/",
   "display": "standalone",
   "background_color": "#f7f4ec",
   "theme_color": "#0f766e",
   "orientation": "any",
   "lang": "pt-BR",
-  "categories": ["medical", "education", "health"]
+  "categories": ["medical", "education", "health"],
+  "icons": [
+    {
+      "src": "/neuroped/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

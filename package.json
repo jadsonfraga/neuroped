@@ -1,0 +1,34 @@
+{
+  "name": "neuroped-edj",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NeuroPed EDJ — PWA seguro para apoio educacional em neuropediatria.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "latest",
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "pdf-lib": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "globals": "latest",
+    "typescript-eslint": "latest"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
