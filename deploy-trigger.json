@@ -3,10 +3,15 @@
   "action": "deploy-trigger",
   "target_branch": "main",
   "status": "ready_for_static_host_deploy",
+  "deploy_requested_at": "2026-05-07T03:10:00-03:00",
   "current_total_instruments": 507,
-  "entrypoint": "escalas.html",
+  "entrypoint": "index.html",
+  "scale_entrypoint": "escalas.html",
+  "sensitive_filter": "filtro-escalas.html",
   "static_pages": [
+    "index.html",
     "escalas.html",
+    "filtro-escalas.html",
     "banco-escalas.html",
     "banco-escalas-lote1.html",
     "banco-escalas-lote2-80.html",
@@ -14,5 +19,11 @@
     "banco-escalas-lote4-200.html",
     "banco-escalas-lote5-90.html"
   ],
+  "backend": {
+    "type": "Cloudflare Pages Functions",
+    "healthcheck": "/api/health",
+    "scales_endpoint": "/api/scales",
+    "d1_status": "wrangler.toml ainda requer database_id real para D1 persistente"
+  },
   "note": "Commit leve criado para acionar deploy automatico em host conectado a main, como Cloudflare Pages ou GitHub Pages."
 }
