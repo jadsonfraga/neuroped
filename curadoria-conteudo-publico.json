@@ -1,37 +1,39 @@
 {
   "app": "NeuroPed EDJ",
-  "versao": "curadoria-publica-2026-05-07",
-  "principio": "Abrir apenas conteudo educativo, institucional e informativo. Manter restrito qualquer conteudo que envolva paciente, prontuario, diagnostico individual, prescricao, dose, laudo ou documento protegido.",
-  "aprovado_para_publico": [
-    "pagina institucional do NeuroPed EDJ",
-    "educacao para familias em linguagem geral",
+  "version": "safe-public-layer-v1",
+  "publico_aprovado": [
+    "home institucional",
+    "CAA Premium",
+    "biblioteca educativa",
+    "guias para familias",
     "guias escolares gerais",
+    "metadados de escalas",
+    "filtro orientativo de escalas",
+    "marcos do desenvolvimento",
     "glossario neuropediatrico",
-    "metadados de escalas sem itens proprietarios",
-    "orientacoes de preparo para consulta",
-    "sinais de alerta sem fechamento diagnostico",
-    "marcos do desenvolvimento em linguagem educativa",
-    "explicacao geral de terapias",
-    "demo sem dados reais e sem laudo"
+    "preparo para consulta",
+    "testes ludicos sem diagnostico",
+    "diario local educativo"
   ],
-  "reprovado_para_publico": [
-    "pacientes cadastrados",
-    "cpf ou dados identificaveis",
+  "restrito": [
+    "pacientes",
     "prontuario",
-    "laudos medicos completos",
-    "prescricoes e receitas",
-    "calculadora de dose medicamentosa",
-    "orientacao de ajuste ou retirada de medicacao",
-    "portal familiar com documentos sem identificador minimo",
+    "prescricao",
+    "receita",
+    "calculadora de dose",
+    "farmacologia",
+    "laudos",
+    "portal com documentos reais",
+    "agenda clinica",
+    "lembretes clinicos",
     "escalas proprietarias completas",
-    "resultado diagnostico automatico",
-    "modelos judiciais ou para convenio com assinatura medica",
-    "qualquer conteudo que simule consulta individualizada"
+    "diagnostico automatico",
+    "qualquer dado identificavel"
   ],
   "aviso_padrao": "Conteudo educativo. Nao substitui consulta medica, avaliacao individualizada, diagnostico clinico, prescricao ou acompanhamento com profissional habilitado.",
-  "regra_de_revisao": [
-    "revisao 1: risco juridico e LGPD",
-    "revisao 2: risco medico-assistencial",
-    "revisao 3: risco reputacional, autoral e de interpretacao por leigos"
+  "revisao_tripla": [
+    "risco juridico e LGPD",
+    "risco medico-assistencial",
+    "risco reputacional, autoral e interpretacao por leigos"
   ]
 }
