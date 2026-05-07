@@ -19,7 +19,7 @@ export const doctorIdentity = {
   brand: 'NeuroPed EDJ',
   company: 'Fraga Serviços Médicos LTDA',
   cnpj: 'CNPJ 33.158.207/0001-48',
-  address: 'Rua Raimundo Lacerda, 001 — Bairro São José — Petrolina/PE — CEP 56302-470',
+  address: 'Av. Cardoso de Sá, 1000 — Bairro Novo Centro — Petrolina/PE',
   phone: '(87) 9 9109-7371',
-  email: 'drjadsonfraga@proton.me'
+  email: 'jadsonfraga@hotmail.com'
 };
