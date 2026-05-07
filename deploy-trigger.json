@@ -2,10 +2,11 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T15:45:00-03:00",
-  "version": "v19-consulta-protegida",
+  "deploy_requested_at": "2026-05-07T16:10:00-03:00",
+  "version": "v20-portal-familia-livre",
   "entrypoint": "index.html",
+  "portal_familia_livre": "portal-familia-livre.html",
   "consulta": "consulta.html",
-  "service_worker": "neuroped-v19-consulta-protegida",
-  "note": "Consulta protegida por PIN master publicada como pagina estatica funcional."
+  "service_worker": "neuroped-v20-portal-familia-livre",
+  "note": "Portal da Familia abre livre sem CPF/senha; dados pessoais seguem protegidos."
 }
