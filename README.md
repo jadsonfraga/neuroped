@@ -19,9 +19,9 @@ Neurologista Infantil
 CRM-PE 25.227 | RQE 17.756  
 NeuroPed EDJ  
 Fraga Serviços Médicos LTDA — CNPJ 33.158.207/0001-48  
-Rua Raimundo Lacerda, 001 — Bairro São José — Petrolina/PE — CEP 56302-470  
+Av. Cardoso de Sá, 1000 — Bairro Novo Centro — Petrolina/PE  
 Telefone: (87) 9 9109-7371  
-E-mail: drjadsonfraga@proton.me
+E-mail: jadsonfraga@hotmail.com
 
 ## Correções aplicadas
 
@@ -42,6 +42,8 @@ E-mail: drjadsonfraga@proton.me
 - Criado workflow GitHub Actions com instalação, lint, typecheck, build e deploy de `dist/`.
 - Criado `.env.example`.
 - Separado modo `demo` e modo `production` por variável de ambiente.
+- Caminhos do PWA ajustados para funcionar no GitHub Pages e no Cloudflare Pages.
+- Sourcemaps públicos desativados por padrão.
 
 ### Caminho para produção
 
@@ -56,6 +58,7 @@ E-mail: drjadsonfraga@proton.me
 - TypeScript
 - Vite
 - GitHub Pages
+- Cloudflare Pages, quando configurado
 - Supabase, quando configurado em produção
 
 ## Rodar localmente
@@ -68,9 +71,7 @@ npm run dev
 ## Build
 
 ```bash
-npm run lint
-npm run typecheck
-npm run build
+npm run verify
 ```
 
 ## Variáveis de ambiente
@@ -84,15 +85,15 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 ```
 
-Para produção:
+Para Cloudflare Pages em raiz, use:
 
 ```txt
-VITE_APP_ENV=production
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-chave-anon
+VITE_APP_BASE_PATH=/
 ```
 
-Nunca coloque `service_role` key no frontend.
+Para produção, configure URL e chave pública anônima do Supabase no provedor de deploy.
+
+Nunca coloque chaves administrativas no frontend.
 
 ## Supabase
 
