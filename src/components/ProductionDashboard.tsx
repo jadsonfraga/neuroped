@@ -34,7 +34,7 @@ export function ProductionDashboard({ refreshToken }: { refreshToken: number }) 
   }
 
   if (state.loading) return <section className="panel"><span className="small-label">Dashboard</span><h2>Carregando</h2><p>Validando sessao.</p></section>;
-  if (!state.user) return <section className="panel warning-panel"><span className="small-label">Dashboard</span><h2>Sem sessao ativa</h2><p>Faca login para continuar.</p>{state.error ? <p className="status-message">{state.error}</p> : null}</section>;
+  if (!state.user) return <section className="panel warning-panel"><span className="small-label">Dashboard</span><h2>Sem sessao ativa</h2><p>Faca login e atualize a sessao para continuar.</p><div className="button-row top-gap"><button type="button" onClick={() => void load()}>Atualizar sessao</button></div>{state.error ? <p className="status-message">{state.error}</p> : null}</section>;
   if (!state.profile) return <section className="panel warning-panel"><span className="small-label">Perfil</span><h2>Perfil ausente</h2><p>Configure o perfil deste usuario no banco.</p><code className="inline-code">{state.user.id}</code><div className="button-row top-gap"><button type="button" onClick={() => void leave()} className="ghost-button">Sair</button><button type="button" onClick={() => void load()}>Recarregar</button></div></section>;
 
   return (
