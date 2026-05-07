@@ -8,7 +8,10 @@ const requiredFiles = [
   'tsconfig.json',
   'src/main.tsx',
   'src/App.tsx',
+  'src/config.ts',
   '.env.example',
+  'public/manifest.json',
+  'public/icon.svg',
   'supabase/migrations/20260506_secure_clinical_core.sql'
 ];
 
@@ -18,10 +21,19 @@ const forbiddenRuntimePatterns = [
   'cpf como senha',
   'ASSINADO DIGITALMENTE - ICP-Brasil',
   'ASSINATURA DIGITAL ICP-BRASIL',
-  'Perplexity Computer'
+  'ICP-Brasil simulada',
+  'Perplexity Computer',
+  'data-pplx-inline-edit',
+  'INLINE_EDIT_CAPTURE_REQUEST',
+  'Psiquiatria Infantil',
+  '/neuroped/manifest.json',
+  '/neuroped/icon.svg',
+  'SUPABASE_SERVICE_ROLE_KEY'
 ];
 
 function walk(directory, files = []) {
+  if (!existsSync(directory)) return files;
+
   for (const entry of readdirSync(directory)) {
     if (['node_modules', 'dist', '.git'].includes(entry)) continue;
     const absolute = join(directory, entry);
@@ -34,16 +46,16 @@ function walk(directory, files = []) {
 
 const missing = requiredFiles.filter((file) => !existsSync(join(root, file)));
 if (missing.length > 0) {
-  console.error('Arquivos obrigatorios ausentes:');
+  console.error('Arquivos obrigatórios ausentes:');
   for (const file of missing) console.error(`- ${file}`);
   process.exit(1);
 }
 
-const scannedFiles = walk(join(root, 'src')).concat([
-  join(root, 'index.html'),
-  join(root, 'sw.js'),
-  join(root, 'manifest.json')
-]);
+const scannedFiles = [
+  ...walk(join(root, 'src')),
+  ...walk(join(root, 'public')),
+  join(root, 'index.html')
+];
 
 const findings = [];
 for (const file of scannedFiles) {
@@ -55,7 +67,7 @@ for (const file of scannedFiles) {
 }
 
 if (findings.length > 0) {
-  console.error('Padroes inseguros encontrados no runtime:');
+  console.error('Padrões inseguros encontrados no runtime:');
   for (const finding of findings) console.error(`- ${finding.file}: ${finding.pattern}`);
   process.exit(1);
 }
