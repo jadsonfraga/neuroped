@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v16-operacional-hotfix-2";
+const CACHE_NAME = "neuroped-v17-operacional-99";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const PRECACHE_URLS = [
   "./caa-hotfix.js",
   "./diario-escola-terapias-v2.html",
   "./diario-hotfix.js",
+  "./qa-smoke-test.html",
   "./banco-escalas.html",
   "./banco-escalas-lote1.html",
   "./banco-escalas-lote2-80.html",
@@ -22,29 +23,89 @@ const PRECACHE_URLS = [
   "./icon-192.png",
   "./icon-512.png"
 ];
-self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>Promise.allSettled(PRECACHE_URLS.map(url=>cache.add(url)))).then(()=>self.skipWaiting()))});
-self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener("message",event=>{if(event.data&&event.data.type==="SKIP_WAITING")self.skipWaiting()});
-self.addEventListener("fetch",event=>{
-  const url=new URL(event.request.url);
-  if(event.request.method!=="GET")return;
-  if(url.pathname.includes("/api/"))return;
-  if(url.pathname.endsWith("/comunicacao-alternativa.html")){event.respondWith(htmlWithHotfix(event.request,"./caa-hotfix.js"));return}
-  if(url.pathname.endsWith("/diario-escola-terapias-v2.html")){event.respondWith(htmlWithHotfix(event.request,"./diario-hotfix.js"));return}
-  if(url.pathname.match(/\/assets\/.*\.(js|css)$/)){event.respondWith(cacheFirst(event.request));return}
-  if(url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/)){event.respondWith(cacheFirst(event.request));return}
-  if(url.pathname.match(/\.(woff2?|ttf|eot|json|js)$/)){event.respondWith(cacheFirst(event.request));return}
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => Promise.allSettled(PRECACHE_URLS.map(url => cache.add(url))))
+      .then(() => self.skipWaiting())
+  );
+});
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+self.addEventListener("message", event => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
+self.addEventListener("fetch", event => {
+  const url = new URL(event.request.url);
+  if (event.request.method !== "GET") return;
+  if (url.pathname.includes("/api/")) return;
+
+  // Fallback conservador: mantém os hotfixes mesmo se a página ainda não tiver script explícito.
+  // Os scripts têm proteção contra duplicação de botões.
+  if (url.pathname.endsWith("/comunicacao-alternativa.html")) {
+    event.respondWith(htmlWithHotfix(event.request, "./caa-hotfix.js"));
+    return;
+  }
+  if (url.pathname.endsWith("/diario-escola-terapias-v2.html")) {
+    event.respondWith(htmlWithHotfix(event.request, "./diario-hotfix.js"));
+    return;
+  }
+
+  if (url.pathname.match(/\/assets\/.*\.(js|css)$/)) { event.respondWith(cacheFirst(event.request)); return; }
+  if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/)) { event.respondWith(cacheFirst(event.request)); return; }
+  if (url.pathname.match(/\.(woff2?|ttf|eot|json|js)$/)) { event.respondWith(cacheFirst(event.request)); return; }
   event.respondWith(staleWhileRevalidate(event.request));
 });
-async function cacheFirst(request){const cached=await caches.match(request);if(cached)return cached;try{const response=await fetch(request);if(response.ok){const cache=await caches.open(CACHE_NAME);cache.put(request,response.clone())}return response}catch{return new Response("",{status:408})}}
-async function htmlWithHotfix(request,scriptSrc){
-  const response=await staleWhileRevalidate(request);
-  try{
-    const html=await response.clone().text();
-    if(html.includes(scriptSrc))return response;
-    const tag=`<script src="${scriptSrc}" defer></script>`;
-    const patched=html.includes("</body>")?html.replace("</body>",tag+"\n</body>"):html+tag;
-    return new Response(patched,{status:response.status,statusText:response.statusText,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-cache"}});
-  }catch{return response}
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return new Response("", { status: 408 });
+  }
 }
-async function staleWhileRevalidate(request){const cache=await caches.open(CACHE_NAME);const cached=await cache.match(request);const networkFetch=fetch(request).then(response=>{if(response.ok)cache.put(request,response.clone());return response}).catch(()=>null);if(cached){networkFetch;return cached}const response=await networkFetch;if(response)return response;const fallback=await cache.match("./index.html");return fallback||new Response("NeuroPed offline. Conecte-se e recarregue.",{status:503,headers:{"Content-Type":"text/html; charset=utf-8"}})}
+async function htmlWithHotfix(request, scriptSrc) {
+  const response = await staleWhileRevalidate(request);
+  try {
+    const html = await response.clone().text();
+    if (html.includes(scriptSrc)) return response;
+    const tag = `<script src="${scriptSrc}" defer></script>`;
+    const patched = html.includes("</body>") ? html.replace("</body>", tag + "\n</body>") : html + tag;
+    return new Response(patched, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" }
+    });
+  } catch {
+    return response;
+  }
+}
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  const networkFetch = fetch(request)
+    .then(response => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => null);
+  if (cached) {
+    networkFetch;
+    return cached;
+  }
+  const response = await networkFetch;
+  if (response) return response;
+  const fallback = await cache.match("./index.html");
+  return fallback || new Response("NeuroPed offline. Conecte-se e recarregue.", { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
