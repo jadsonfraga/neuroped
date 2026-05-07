@@ -1,10 +1,12 @@
-const CACHE_NAME = "neuroped-v20-portal-familia-livre";
+const CACHE_NAME = "neuroped-v22-area-filho";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
   "./portal-familia-livre.html",
+  "./area-filho.html",
+  "./politica-acesso-familiar.html",
   "./consulta.html",
   "./assets/pre-consulta-CiPJ7HHP.js",
   "./master-access-policy.js",
@@ -30,12 +32,8 @@ const PRECACHE_URLS = [
   "./icon-192.png",
   "./icon-512.png"
 ];
-self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(PRECACHE_URLS.map(url => cache.add(url)))).then(() => self.skipWaiting()));
-});
-self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
-});
+self.addEventListener("install", event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(PRECACHE_URLS.map(url => cache.add(url)))).then(() => self.skipWaiting())); });
+self.addEventListener("activate", event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("message", event => { if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting(); });
 self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
@@ -49,34 +47,7 @@ self.addEventListener("fetch", event => {
   if (url.pathname.match(/\.(woff2?|ttf|eot|json|js)$/)) { event.respondWith(cacheFirst(event.request)); return; }
   event.respondWith(staleWhileRevalidate(event.request));
 });
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
-  try { const response = await fetch(request); if (response.ok) { const cache = await caches.open(CACHE_NAME); cache.put(request, response.clone()); } return response; }
-  catch { return new Response("", { status: 408 }); }
-}
-async function indexWithPortalFix(request) {
-  const response = await staleWhileRevalidate(request);
-  try {
-    const html = await response.clone().text();
-    const script = `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>`;
-    if (html.includes("portal-familia-livre.html")) return response;
-    const patched = html.includes("</body>") ? html.replace("</body>", script + "\n</body>") : html + script;
-    return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } });
-  } catch { return response; }
-}
-async function htmlWithHotfix(request, scriptSrc) {
-  const response = await staleWhileRevalidate(request);
-  try { const html = await response.clone().text(); if (html.includes(scriptSrc)) return response; const tag = `<script src="${scriptSrc}" defer></script>`; const patched = html.includes("</body>") ? html.replace("</body>", tag + "\n</body>") : html + tag; return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } }); }
-  catch { return response; }
-}
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
-  const networkFetch = fetch(request).then(response => { if (response.ok) cache.put(request, response.clone()); return response; }).catch(() => null);
-  if (cached) { networkFetch; return cached; }
-  const response = await networkFetch;
-  if (response) return response;
-  const fallback = await cache.match("./index.html");
-  return fallback || new Response("NeuroPed offline. Conecte-se e recarregue.", { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
-}
+async function cacheFirst(request) { const cached = await caches.match(request); if (cached) return cached; try { const response = await fetch(request); if (response.ok) { const cache = await caches.open(CACHE_NAME); cache.put(request, response.clone()); } return response; } catch { return new Response("", { status: 408 }); } }
+async function indexWithPortalFix(request) { const response = await staleWhileRevalidate(request); try { const html = await response.clone().text(); const script = `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>`; if (html.includes("portal-familia-livre.html")) return response; const patched = html.includes("</body>") ? html.replace("</body>", script + "\n</body>") : html + script; return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } }); } catch { return response; } }
+async function htmlWithHotfix(request, scriptSrc) { const response = await staleWhileRevalidate(request); try { const html = await response.clone().text(); if (html.includes(scriptSrc)) return response; const tag = `<script src="${scriptSrc}" defer></script>`; const patched = html.includes("</body>") ? html.replace("</body>", tag + "\n</body>") : html + tag; return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } }); } catch { return response; } }
+async function staleWhileRevalidate(request) { const cache = await caches.open(CACHE_NAME); const cached = await cache.match(request); const networkFetch = fetch(request).then(response => { if (response.ok) cache.put(request, response.clone()); return response; }).catch(() => null); if (cached) { networkFetch; return cached; } const response = await networkFetch; if (response) return response; const fallback = await cache.match("./index.html"); return fallback || new Response("NeuroPed offline. Conecte-se e recarregue.", { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }); }
