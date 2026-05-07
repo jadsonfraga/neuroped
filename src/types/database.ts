@@ -1,4 +1,4 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json = unknown;
 
 export type UserRole = 'doctor' | 'staff' | 'family';
 export type DocumentType = 'report' | 'prescription' | 'school_letter' | 'exam_request' | 'other';
