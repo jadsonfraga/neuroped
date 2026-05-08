@@ -1,9 +1,10 @@
 /* ======================================================
-   NeuroPed EDJ — Safe Public Layer v2
+   NeuroPed EDJ — Safe Public Layer v36
    Regra:
-   - PIN master libera todas as rotas no navegador atual.
-   - Portal da família educativo é livre.
-   - Dados pessoais armazenados seguem protegidos.
+   - Primeiro dá chance de digitar PIN master.
+   - Só após erro de PIN a Consulta mostra opção de voltar.
+   - Portal da família educativo segue livre.
+   - Dados sensíveis seguem protegidos.
    ====================================================== */
 (function () {
   "use strict";
@@ -62,23 +63,21 @@
     return false;
   }
   function masterUnlocked() {
-    try {
-      return !!(window.NeuroPedMasterAccess && window.NeuroPedMasterAccess.isUnlocked && window.NeuroPedMasterAccess.isUnlocked());
-    } catch (e) { return false; }
+    try { return !!(window.NeuroPedMasterAccess && window.NeuroPedMasterAccess.isUnlocked && window.NeuroPedMasterAccess.isUnlocked()); }
+    catch (e) { return false; }
   }
-  function redirectToRestricted(reason) {
+  function goToPin(path) {
     try {
       var basePath = window.location.pathname;
-      var target = basePath.replace(/[^/]*$/, "") + "restricted.html";
-      var qs = reason ? ("?from=" + encodeURIComponent(reason)) : "";
-      window.location.replace(target + qs);
+      var target = basePath.replace(/[^/]*$/, "") + "consulta.html?next=" + encodeURIComponent(path || "/");
+      window.location.replace(target);
     } catch (e) { window.location.hash = ""; }
   }
   function check() {
     var path = getCurrentPath();
     if (masterUnlocked()) return;
     if (matches(path, FAMILY_PUBLIC_PATTERNS)) return;
-    if (matches(path, SENSITIVE_PATTERNS)) redirectToRestricted(path);
+    if (matches(path, SENSITIVE_PATTERNS)) goToPin(path);
   }
   if (document.readyState === "complete" || document.readyState === "interactive") setTimeout(check, 0);
   else window.addEventListener("DOMContentLoaded", check);
