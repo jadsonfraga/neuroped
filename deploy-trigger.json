@@ -2,12 +2,13 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T16:35:00-03:00",
-  "version": "v21-politica-acesso-familiar",
+  "deploy_requested_at": "2026-05-07T16:55:00-03:00",
+  "version": "v22-area-filho",
   "entrypoint": "index.html",
   "portal_familia_livre": "portal-familia-livre.html",
+  "area_filho": "area-filho.html",
   "politica_acesso_familiar": "politica-acesso-familiar.html",
   "consulta": "consulta.html",
-  "service_worker": "neuroped-v20-portal-familia-livre",
-  "note": "Modelo definido: publico livre, area familiar leve sem CPF, dados sensiveis protegidos por acesso profissional."
+  "service_worker": "neuroped-v22-area-filho",
+  "note": "Area do Filho local com nascimento e ultimo sobrenome, sem CPF, sem liberar dados clinicos sensiveis."
 }
