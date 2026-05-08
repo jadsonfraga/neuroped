@@ -2,14 +2,15 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T17:05:00-03:00",
-  "version": "v23-verificacao-rapida",
+  "deploy_requested_at": "2026-05-07T17:15:00-03:00",
+  "version": "v24-atalhos",
   "entrypoint": "index.html",
+  "central_atalhos": "central-atalhos.html",
   "portal_familia_livre": "portal-familia-livre.html",
   "area_filho": "area-filho.html",
   "politica_acesso_familiar": "politica-acesso-familiar.html",
   "consulta": "consulta.html",
   "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v22-area-filho",
-  "note": "Rodada curta: pagina de verificacao segura, rotas familiares, consulta e Area do Filho preservadas."
+  "service_worker": "neuroped-v24-atalhos",
+  "note": "Mais 4 melhorias: central de atalhos, manifest essencial, verificador ampliado e cache v24."
 }
