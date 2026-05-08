@@ -2,12 +2,13 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T01:30:00-03:00",
-  "version": "v34-consulta-safe-exit",
+  "deploy_requested_at": "2026-05-08T01:45:00-03:00",
+  "version": "v35-pin-alfanumerico",
   "entrypoint": "index.html",
   "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
   "consulta_safe_exit": "consulta-safe-exit.js",
+  "consulta_pin_fix": "consulta-pin-fix.js",
   "consulta_documentos": "consulta-documentos.js",
   "portal_familia_livre": "portal-familia-livre.html",
   "ativar_passe_familiar": "ativar-passe-familiar.html",
@@ -17,6 +18,6 @@
   "area_filho": "area-filho.html",
   "central_atalhos": "central-atalhos.html",
   "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v34-consulta-safe-exit",
-  "note": "Consulta protegida recebeu saida segura antes do PIN: voltar para conteudo educacional. Prescricao e laudos seguem protegidos pelo PIN master."
+  "service_worker": "neuroped-v35-pin-alfanumerico",
+  "note": "Consulta agora aceita PIN master alfanumerico com teclado completo e tela inicial oferece duas opcoes: voltar ao conteudo educacional ou digitar PIN master."
 }
