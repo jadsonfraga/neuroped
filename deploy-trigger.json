@@ -2,8 +2,8 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T17:50:00-03:00",
-  "version": "v26-premium-polish",
+  "deploy_requested_at": "2026-05-07T18:05:00-03:00",
+  "version": "v27-premium-final",
   "entrypoint": "index.html",
   "central_atalhos": "central-atalhos.html",
   "portal_familia_livre": "portal-familia-livre.html",
@@ -13,7 +13,10 @@
   "verificar_app": "verificar-app.html",
   "design_system": "design-system-premium.css",
   "premium_experience": "premium-experience.js",
+  "premium_polish_css": "premium-polish-overrides.css",
+  "premium_polish_js": "premium-polish.js",
   "auditoria_visual": "AUDITORIA_VISUAL_PREMIUM.md",
-  "service_worker": "neuroped-v26-premium-polish",
-  "note": "Lapidacao visual: CSS premium v2, mascotes refinados, watermark, splash com microcopy, cache v26."
+  "relatorio_final": "RELATORIO_PREMIUM_FINAL_V27.md",
+  "service_worker": "neuroped-v27-premium-final",
+  "note": "Camada final de lapidacao visual: acabamento, microcopy, chips contextuais, cache v27."
 }
