@@ -1,9 +1,10 @@
-const CACHE_NAME = "neuroped-v30-family-pass-polish";
+const CACHE_NAME = "neuroped-v31-operational-audit";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
+  "./auditoria-operacional.html",
   "./design-system-premium.css",
   "./premium-experience.js",
   "./premium-polish-overrides.css",
