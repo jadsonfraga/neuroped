@@ -2,9 +2,10 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T00:20:00-03:00",
-  "version": "v29-family-pass",
+  "deploy_requested_at": "2026-05-08T00:40:00-03:00",
+  "version": "v31-operational-audit",
   "entrypoint": "index.html",
+  "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
   "portal_familia_livre": "portal-familia-livre.html",
   "ativar_passe_familiar": "ativar-passe-familiar.html",
@@ -14,6 +15,6 @@
   "area_filho": "area-filho.html",
   "central_atalhos": "central-atalhos.html",
   "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v29-family-pass",
-  "note": "Passe familiar de 4 meses para navegacao nao sensivel, gerado na consulta e ativado pela familia. Dados sensiveis seguem bloqueados."
+  "service_worker": "neuroped-v31-operational-audit",
+  "note": "Auditoria operacional essencial adicionada. Verifica rotas, consulta, passe familiar, CAA, diario, filtro, mapa, manifest, PWA e camada visual."
 }
