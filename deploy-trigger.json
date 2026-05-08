@@ -2,13 +2,14 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T16:55:00-03:00",
-  "version": "v22-area-filho",
+  "deploy_requested_at": "2026-05-07T17:05:00-03:00",
+  "version": "v23-verificacao-rapida",
   "entrypoint": "index.html",
   "portal_familia_livre": "portal-familia-livre.html",
   "area_filho": "area-filho.html",
   "politica_acesso_familiar": "politica-acesso-familiar.html",
   "consulta": "consulta.html",
+  "verificar_app": "verificar-app.html",
   "service_worker": "neuroped-v22-area-filho",
-  "note": "Area do Filho local com nascimento e ultimo sobrenome, sem CPF, sem liberar dados clinicos sensiveis."
+  "note": "Rodada curta: pagina de verificacao segura, rotas familiares, consulta e Area do Filho preservadas."
 }
