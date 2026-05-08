@@ -2,11 +2,12 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T01:00:00-03:00",
-  "version": "v32-consulta-stable",
+  "deploy_requested_at": "2026-05-08T01:15:00-03:00",
+  "version": "v33-consulta-docs",
   "entrypoint": "index.html",
   "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
+  "consulta_documentos": "consulta-documentos.js",
   "portal_familia_livre": "portal-familia-livre.html",
   "ativar_passe_familiar": "ativar-passe-familiar.html",
   "family_pass": "family-pass.js",
@@ -15,6 +16,6 @@
   "area_filho": "area-filho.html",
   "central_atalhos": "central-atalhos.html",
   "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v32-consulta-stable",
-  "note": "Consulta estabilizada: abre automaticamente quando PIN master ja esta ativo, carrega family-pass direto, gera passe familiar e auditoria reconhece a v32."
+  "service_worker": "neuroped-v33-consulta-docs",
+  "note": "Consulta protegida recebeu editores livres para Prescricao e Laudos/Relatorios, com copiar, imprimir e salvar local. Sem sugestao automatica de medicacao ou dose."
 }
