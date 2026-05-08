@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v33-consulta-docs";
+const CACHE_NAME = "neuroped-v35-pin-alfanumerico";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -14,6 +14,8 @@ const PRECACHE_URLS = [
   "./family-pass-generator.js",
   "./family-pass-portal.js",
   "./consulta-documentos.js",
+  "./consulta-safe-exit.js",
+  "./consulta-pin-fix.js",
   "./family-voucher.js",
   "./family-voucher-ui.js",
   "./ativar-passe-familiar.html",
@@ -70,7 +72,7 @@ function injectPremium(html, path) {
   out = addHead(out,"./editorial-impact.css");
   out = addBody(out,"./premium-experience.js");
   out = addBody(out,"./premium-polish.js");
-  if (/consulta\.html/i.test(path)) { out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); out = addBody(out,"./consulta-documentos.js"); }
+  if (/consulta\.html/i.test(path)) { out = addBody(out,"./consulta-safe-exit.js"); out = addBody(out,"./consulta-pin-fix.js"); out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); out = addBody(out,"./consulta-documentos.js"); }
   if (/portal-familia-livre\.html/i.test(path)) { out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-portal.js"); }
   if (!out.includes("portal-familia-livre.html")) out = out.replace("</body>", `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>\n</body>`);
   return out;
