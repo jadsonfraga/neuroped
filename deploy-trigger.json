@@ -2,8 +2,8 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T00:40:00-03:00",
-  "version": "v31-operational-audit",
+  "deploy_requested_at": "2026-05-08T01:00:00-03:00",
+  "version": "v32-consulta-stable",
   "entrypoint": "index.html",
   "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
@@ -15,6 +15,6 @@
   "area_filho": "area-filho.html",
   "central_atalhos": "central-atalhos.html",
   "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v31-operational-audit",
-  "note": "Auditoria operacional essencial adicionada. Verifica rotas, consulta, passe familiar, CAA, diario, filtro, mapa, manifest, PWA e camada visual."
+  "service_worker": "neuroped-v32-consulta-stable",
+  "note": "Consulta estabilizada: abre automaticamente quando PIN master ja esta ativo, carrega family-pass direto, gera passe familiar e auditoria reconhece a v32."
 }
