@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v28-consulta-portal-app";
+const CACHE_NAME = "neuroped-v29-family-pass";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -9,6 +9,10 @@ const PRECACHE_URLS = [
   "./premium-polish-overrides.css",
   "./premium-polish.js",
   "./editorial-impact.css",
+  "./family-pass.js",
+  "./family-pass-generator.js",
+  "./family-pass-portal.js",
+  "./ativar-passe-familiar.html",
   "./central-atalhos.html",
   "./verificar-app.html",
   "./portal-familia-livre.html",
@@ -46,22 +50,26 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET") return;
   if (url.pathname.includes("/api/")) return;
-  if (url.pathname.endsWith(".html") || url.pathname.endsWith("/neuroped/") || url.pathname === "/neuroped") { event.respondWith(htmlPremium(event.request)); return; }
+  if (url.pathname.endsWith(".html") || url.pathname.endsWith("/neuroped/") || url.pathname === "/neuroped") { event.respondWith(htmlPremium(event.request, url.pathname)); return; }
   if (url.pathname.match(/\/assets\/.*\.(js|css)$/)) { event.respondWith(cacheFirst(event.request)); return; }
   if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/)) { event.respondWith(cacheFirst(event.request)); return; }
   if (url.pathname.match(/\.(woff2?|ttf|eot|json|js|css)$/)) { event.respondWith(cacheFirst(event.request)); return; }
   event.respondWith(staleWhileRevalidate(event.request));
 });
 async function cacheFirst(request) { const cached = await caches.match(request); if (cached) return cached; try { const response = await fetch(request); if (response.ok) { const cache = await caches.open(CACHE_NAME); cache.put(request, response.clone()); } return response; } catch { return new Response("", { status: 408 }); } }
-function injectPremium(html) {
+function addHead(out, href){ if(!out.includes(href)) out = out.replace("</head>", '<link rel="stylesheet" href="'+href+'">\n</head>'); return out; }
+function addBody(out, src){ if(!out.includes(src)) out = out.replace("</body>", '<script src="'+src+'" defer></script>\n</body>'); return out; }
+function injectPremium(html, path) {
   let out = html;
-  if (!out.includes("design-system-premium.css")) out = out.replace("</head>", '<link rel="stylesheet" href="./design-system-premium.css">\n</head>');
-  if (!out.includes("premium-polish-overrides.css")) out = out.replace("</head>", '<link rel="stylesheet" href="./premium-polish-overrides.css">\n</head>');
-  if (!out.includes("editorial-impact.css")) out = out.replace("</head>", '<link rel="stylesheet" href="./editorial-impact.css">\n</head>');
-  if (!out.includes("premium-experience.js")) out = out.replace("</body>", '<script src="./premium-experience.js" defer></script>\n</body>');
-  if (!out.includes("premium-polish.js")) out = out.replace("</body>", '<script src="./premium-polish.js" defer></script>\n</body>');
+  out = addHead(out,"./design-system-premium.css");
+  out = addHead(out,"./premium-polish-overrides.css");
+  out = addHead(out,"./editorial-impact.css");
+  out = addBody(out,"./premium-experience.js");
+  out = addBody(out,"./premium-polish.js");
+  if (/consulta\.html/i.test(path)) { out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); }
+  if (/portal-familia-livre\.html/i.test(path)) { out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-portal.js"); }
   if (!out.includes("portal-familia-livre.html")) out = out.replace("</body>", `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>\n</body>`);
   return out;
 }
-async function htmlPremium(request) { const response = await staleWhileRevalidate(request); try { const html = await response.clone().text(); const patched = injectPremium(html); return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } }); } catch { return response; } }
+async function htmlPremium(request, path) { const response = await staleWhileRevalidate(request); try { const html = await response.clone().text(); const patched = injectPremium(html, path); return new Response(patched, { status: response.status, statusText: response.statusText, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } }); } catch { return response; } }
 async function staleWhileRevalidate(request) { const cache = await caches.open(CACHE_NAME); const cached = await cache.match(request); const networkFetch = fetch(request).then(response => { if (response.ok) cache.put(request, response.clone()); return response; }).catch(() => null); if (cached) { networkFetch; return cached; } const response = await networkFetch; if (response) return response; const fallback = await cache.match("./index.html"); return fallback || new Response("NeuroPed offline. Conecte-se e recarregue.", { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }); }
