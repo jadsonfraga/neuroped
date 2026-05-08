@@ -2,8 +2,8 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-07T17:35:00-03:00",
-  "version": "v25-premium-visual",
+  "deploy_requested_at": "2026-05-07T17:50:00-03:00",
+  "version": "v26-premium-polish",
   "entrypoint": "index.html",
   "central_atalhos": "central-atalhos.html",
   "portal_familia_livre": "portal-familia-livre.html",
@@ -14,6 +14,6 @@
   "design_system": "design-system-premium.css",
   "premium_experience": "premium-experience.js",
   "auditoria_visual": "AUDITORIA_VISUAL_PREMIUM.md",
-  "service_worker": "neuroped-v25-premium-visual",
-  "note": "Camada visual premium: design system, splash, mascotes, transicoes, cache v25."
+  "service_worker": "neuroped-v26-premium-polish",
+  "note": "Lapidacao visual: CSS premium v2, mascotes refinados, watermark, splash com microcopy, cache v26."
 }
