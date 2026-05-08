@@ -20,35 +20,14 @@
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "CAA Gratuita — Comunicação Alternativa",
-      "short_name": "CAA",
-      "url": "./comunicacao-alternativa.html",
-      "description": "Figurinhas grandes, voz em português e frase visual"
-    },
-    {
-      "name": "Mapa de Instrumentos NeuroPed",
-      "short_name": "Mapa",
-      "url": "./mapa-escalas.html",
-      "description": "Instrumentos por idade, sintoma e respondente"
-    },
-    {
-      "name": "Diário Escolar e de Terapias",
-      "short_name": "Diário",
-      "url": "./diario-escola-terapias-v2.html",
-      "description": "Registro educativo local de escola, terapias e evolução"
-    },
-    {
-      "name": "Filtro Orientativo de Escalas",
-      "short_name": "Filtro",
-      "url": "./filtro-escalas.html",
-      "description": "Orientação sobre instrumentos clínicos por queixa e idade"
-    },
-    {
-      "name": "Biblioteca Educativa",
-      "short_name": "Biblioteca",
-      "url": "./index.html#/biblioteca",
-      "description": "Materiais e referências educativas em neuropediatria"
-    }
+    {"name": "Central de Atalhos", "short_name": "Atalhos", "url": "./central-atalhos.html", "description": "Rotas críticas do NeuroPed em uma página"},
+    {"name": "Portal da Família", "short_name": "Família", "url": "./portal-familia-livre.html", "description": "Conteúdos familiares públicos e orientação"},
+    {"name": "Área do Filho", "short_name": "Filho", "url": "./area-filho.html", "description": "Ferramentas locais da criança sem CPF"},
+    {"name": "Consulta Protegida", "short_name": "Consulta", "url": "./consulta.html", "description": "Organização de consulta com PIN master"},
+    {"name": "CAA Gratuita — Comunicação Alternativa", "short_name": "CAA", "url": "./comunicacao-alternativa.html", "description": "Figurinhas grandes, voz em português e frase visual"},
+    {"name": "Mapa de Instrumentos NeuroPed", "short_name": "Mapa", "url": "./mapa-escalas.html", "description": "Instrumentos por idade, sintoma e respondente"},
+    {"name": "Diário Escolar e de Terapias", "short_name": "Diário", "url": "./diario-escola-terapias-v2.html", "description": "Registro educativo local de escola, terapias e evolução"},
+    {"name": "Filtro Orientativo de Escalas", "short_name": "Filtro", "url": "./filtro-escalas.html", "description": "Orientação sobre instrumentos clínicos por queixa e idade"},
+    {"name": "Verificar App", "short_name": "Verificar", "url": "./verificar-app.html", "description": "Checar versão e rotas publicadas"}
   ]
 }
