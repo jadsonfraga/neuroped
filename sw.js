@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v26-premium-polish";
+const CACHE_NAME = "neuroped-v27-premium-final";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -6,6 +6,8 @@ const PRECACHE_URLS = [
   "./sw.js",
   "./design-system-premium.css",
   "./premium-experience.js",
+  "./premium-polish-overrides.css",
+  "./premium-polish.js",
   "./central-atalhos.html",
   "./verificar-app.html",
   "./portal-familia-livre.html",
@@ -53,7 +55,9 @@ async function cacheFirst(request) { const cached = await caches.match(request);
 function injectPremium(html) {
   let out = html;
   if (!out.includes("design-system-premium.css")) out = out.replace("</head>", '<link rel="stylesheet" href="./design-system-premium.css">\n</head>');
+  if (!out.includes("premium-polish-overrides.css")) out = out.replace("</head>", '<link rel="stylesheet" href="./premium-polish-overrides.css">\n</head>');
   if (!out.includes("premium-experience.js")) out = out.replace("</body>", '<script src="./premium-experience.js" defer></script>\n</body>');
+  if (!out.includes("premium-polish.js")) out = out.replace("</body>", '<script src="./premium-polish.js" defer></script>\n</body>');
   if (!out.includes("portal-familia-livre.html")) out = out.replace("</body>", `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>\n</body>`);
   return out;
 }
