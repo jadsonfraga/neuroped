@@ -1,0 +1,45 @@
+/* NeuroPed EDJ — Premium Polish Overrides v1
+   Camada final não destrutiva: acabamento, leitura, estados e elegância. */
+:root{
+  --np-glass:rgba(255,253,249,.82);
+  --np-hairline:rgba(184,150,62,.28);
+  --np-teal-soft:rgba(26,107,101,.10);
+  --np-wine-soft:rgba(139,46,59,.09);
+}
+::selection{background:rgba(184,150,62,.28);color:#2d2926}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(184,150,62,.55);border-radius:999px;border:2px solid #faf8f4}
+::-webkit-scrollbar-track{background:#faf8f4}
+body{background-attachment:fixed!important}
+body:not(.np-no-premium) main,body:not(.np-no-premium) .wrap{position:relative;z-index:1}
+body:not(.np-no-premium) .hero h1:first-child,body:not(.np-no-premium) .card h1:first-child,body:not(.np-no-premium) .panel h1:first-child{max-width:760px}
+body:not(.np-no-premium) .hero .muted,body:not(.np-no-premium) .panel .muted{max-width:780px}
+body:not(.np-no-premium) .hero,body:not(.np-no-premium) .panel:first-of-type{box-shadow:0 24px 70px rgba(45,41,38,.12)!important}
+body:not(.np-no-premium) .card,body:not(.np-no-premium) .tool{border-top-color:rgba(255,255,255,.88)!important}
+body:not(.np-no-premium) .card:has(h2),body:not(.np-no-premium) .tool:has(h3){isolation:isolate}
+body:not(.np-no-premium) .card h2,body:not(.np-no-premium) .tool h3{position:relative;padding-right:54px}
+body:not(.np-no-premium) .card h2:after,body:not(.np-no-premium) .tool h3:after{content:"";display:block;width:42px;height:2px;background:linear-gradient(90deg,#b8963e,rgba(184,150,62,0));margin-top:8px;border-radius:999px}
+body:not(.np-no-premium) .btn,body:not(.np-no-premium) .np-btn,body:not(.np-no-premium) button{box-shadow:0 10px 24px rgba(26,107,101,.10)}
+body:not(.np-no-premium) .btn.ghost,body:not(.np-no-premium) .ghost{background:rgba(255,253,249,.76)!important;color:#1a6b65!important;border:1px solid #eadcc7!important}
+body:not(.np-no-premium) .wine,body:not(.np-no-premium) .btn-danger{box-shadow:0 10px 24px rgba(139,46,59,.12)!important}
+body:not(.np-no-premium) .gold{box-shadow:0 10px 24px rgba(184,150,62,.14)!important}
+body:not(.np-no-premium) input::placeholder,body:not(.np-no-premium) textarea::placeholder{color:rgba(111,105,99,.72)}
+body:not(.np-no-premium) label{letter-spacing:.08em}
+body:not(.np-no-premium) .badge{box-shadow:inset 0 0 0 1px rgba(255,255,255,.55)}
+body:not(.np-no-premium) .empty{background:rgba(255,253,249,.70);border:1px dashed rgba(184,150,62,.35);border-radius:24px;padding:34px 22px!important;box-shadow:0 10px 30px rgba(45,41,38,.05)}
+body:not(.np-no-premium) .empty-title{font-family:Georgia,serif!important;color:#1a6b65!important}
+body:not(.np-no-premium) .report-preview,body:not(.np-no-premium) #reportContent{background:linear-gradient(180deg,#fffdf9,#fffaf1)!important;border:1px solid #eadcc7!important}
+body:not(.np-no-premium) .report-header{border-bottom-color:rgba(184,150,62,.55)!important}
+body:not(.np-no-premium) .detail-label,body:not(.np-no-premium) .form-label{color:#6f6963!important;font-weight:900!important}
+body:not(.np-no-premium) .chart-svg{filter:drop-shadow(0 8px 18px rgba(26,107,101,.08))}
+body:not(.np-no-premium) .bottom-nav{background:rgba(250,248,244,.92)!important;backdrop-filter:blur(16px) saturate(120%)}
+body:not(.np-no-premium) .nav-btn{border-radius:16px!important}
+body:not(.np-no-premium) .nav-btn.active{box-shadow:inset 0 0 0 1px rgba(26,107,101,.14),0 8px 22px rgba(26,107,101,.08)!important}
+body:not(.np-no-premium) .fab{box-shadow:0 18px 38px rgba(26,107,101,.32)!important}
+body:not(.np-no-premium) .modal-panel{border:1px solid #eadcc7;border-radius:28px 28px 0 0;overflow:hidden}
+.np-premium-quiet-caption{font-size:12px;color:#6f6963;letter-spacing:.05em;text-transform:uppercase;font-weight:850}
+.np-premium-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(184,150,62,.45),transparent);margin:18px 0}
+.np-premium-chipline{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.np-premium-chipline span{border-radius:999px;padding:6px 10px;background:rgba(26,107,101,.08);color:#1a6b65;font-size:12px;font-weight:850}
+@media print{body{background:#fff!important}.np-premium-mascot,.np-premium-watermark,.np-premium-splash{display:none!important}.card,.panel,.hero{box-shadow:none!important;background:#fff!important}}
+@media(max-width:560px){body:not(.np-no-premium) .card h2,body:not(.np-no-premium) .tool h3{padding-right:28px}body:not(.np-no-premium) .btn{width:auto;min-height:44px}}
