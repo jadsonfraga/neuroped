@@ -19,8 +19,10 @@
       const child=document.getElementById('fpChild').value.trim()||document.getElementById('nome')?.value.trim()||'Família';
       const responsible=document.getElementById('fpResp').value.trim()||'Responsável';
       const pass=await window.NeuroPedFamilyPass.make({child,responsible});
+      const checked=await window.NeuroPedFamilyPass.validate(pass);
+      if(!checked.ok){alert('Não foi possível validar o passe gerado. Recarregue.');return;}
       code.value=pass;
-      const expires=JSON.parse(atob(pass.split('-').slice(1,-1).join('-').replace(/-/g,'+').replace(/_/g,'/'))).expires;
+      const expires=checked.payload.expires;
       inst.textContent='PASSE FAMILIAR NEUROPED\n\nCriança: '+child+'\nResponsável: '+responsible+'\nValidade: 4 meses, até '+window.NeuroPedFamilyPass.fmtDate(expires)+'\n\nComo ativar:\n1. Abra https://jadsonfraga.github.io/neuroped/ativar-passe-familiar.html\n2. Cole o passe.\n3. Toque em Ativar passe.\n\nEste passe libera apenas navegação familiar não sensível. Não libera prontuário, documentos, mensagens, laudos ou prescrições.\n\nCódigo:\n'+pass;
     };
     document.getElementById('fpCopy').onclick=function(){const text=(inst.textContent||'')+'\n\n'+(code.value||'');if(!code.value){alert('Gere o passe primeiro.');return}navigator.clipboard.writeText(text).then(()=>alert('Passe familiar copiado.'))};
