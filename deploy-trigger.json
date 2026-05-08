@@ -2,11 +2,12 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T01:15:00-03:00",
-  "version": "v33-consulta-docs",
+  "deploy_requested_at": "2026-05-08T01:30:00-03:00",
+  "version": "v34-consulta-safe-exit",
   "entrypoint": "index.html",
   "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
+  "consulta_safe_exit": "consulta-safe-exit.js",
   "consulta_documentos": "consulta-documentos.js",
   "portal_familia_livre": "portal-familia-livre.html",
   "ativar_passe_familiar": "ativar-passe-familiar.html",
@@ -16,6 +17,6 @@
   "area_filho": "area-filho.html",
   "central_atalhos": "central-atalhos.html",
   "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v33-consulta-docs",
-  "note": "Consulta protegida recebeu editores livres para Prescricao e Laudos/Relatorios, com copiar, imprimir e salvar local. Sem sugestao automatica de medicacao ou dose."
+  "service_worker": "neuroped-v34-consulta-safe-exit",
+  "note": "Consulta protegida recebeu saida segura antes do PIN: voltar para conteudo educacional. Prescricao e laudos seguem protegidos pelo PIN master."
 }
