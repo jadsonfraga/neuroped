@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v29-family-pass";
+const CACHE_NAME = "neuroped-v30-family-pass-polish";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -12,6 +12,8 @@ const PRECACHE_URLS = [
   "./family-pass.js",
   "./family-pass-generator.js",
   "./family-pass-portal.js",
+  "./family-voucher.js",
+  "./family-voucher-ui.js",
   "./ativar-passe-familiar.html",
   "./central-atalhos.html",
   "./verificar-app.html",
