@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v31-operational-audit";
+const CACHE_NAME = "neuroped-v32-consulta-stable";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
