@@ -1,9 +1,11 @@
-const CACHE_NAME = "neuroped-v22-area-filho";
+const CACHE_NAME = "neuroped-v24-atalhos";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
+  "./central-atalhos.html",
+  "./verificar-app.html",
   "./portal-familia-livre.html",
   "./area-filho.html",
   "./politica-acesso-familiar.html",
