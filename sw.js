@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v37-quality-foundation";
+const CACHE_NAME = "neuroped-v38-quality-panel-fix";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
