@@ -102,6 +102,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       created_at: now
     });
   } catch (error) {
+    console.error("submissions POST error:", error);
     return jsonError("Erro ao salvar resposta.", 500);
   }
 };

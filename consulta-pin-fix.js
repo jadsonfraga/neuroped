@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  const MASTER_HASH='c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd';
+  const MASTER_HASH='6f0960c4849c531799b84b6755bf2211ec6c9b0f14c9a992a346ac04407c7579';
   const MASTER_KEY='neuroped_master_access_v1';
   const TTL=12*60*60*1000;
-  function normalizePin(v){return String(v||'').trim().toLowerCase()}
+  function normalizePin(v){return String(v||'').replace(/\D/g,'')}
   async function sha(v){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normalizePin(v)));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
   function setMaster(){localStorage.setItem(MASTER_KEY,JSON.stringify({ok:true,ts:Date.now()}))}
   function masterActive(){try{const v=JSON.parse(localStorage.getItem(MASTER_KEY)||'{}');return v.ok&&Date.now()-Number(v.ts||0)<TTL}catch(e){return false}}
@@ -11,7 +11,7 @@
     const pin=document.getElementById('pin');
     if(!pin)return;
     pin.type='password';
-    pin.setAttribute('inputmode','text');
+    pin.setAttribute('inputmode','numeric');
     pin.setAttribute('autocomplete','current-password');
     pin.setAttribute('autocapitalize','none');
     pin.setAttribute('autocorrect','off');
