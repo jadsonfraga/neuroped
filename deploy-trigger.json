@@ -2,8 +2,15 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T03:35:00-03:00",
-  "version": "v41-app-shell-consulta-livre-in-progress",
+  "deploy_requested_at": "2026-05-09T09:10:00-03:00",
+  "version": "v41-app-shell-consulta-livre",
   "entrypoint": "index.html",
-  "note": "Inicio do ciclo v41 solicitado: app shell, consulta livre, secretaria e identidade visual."
+  "app_shell": "premium-experience.js",
+  "consulta_livre": "consulta-documentos.js",
+  "secretaria": "secretaria.html",
+  "routes_config": "routes.config.js",
+  "service_worker": "neuroped-v41-app-shell-consulta-livre",
+  "static_test": "scripts/test-static.mjs",
+  "auditoria": "docs/AUDITORIA_CONTINUA_NEUROPED.md",
+  "note": "Ciclo v41: app shell visual unificado, Consulta com editor livre apos PIN, Secretaria operacional local, rota da Secretaria corrigida, cache v41 e teste estatico atualizados. Limites: PIN frontend segue interface; QR local nao e ICP-Brasil; dados reais exigem backend seguro."
 }
