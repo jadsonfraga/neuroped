@@ -2,9 +2,15 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T02:00:00-03:00",
-  "version": "v36-pin-first",
+  "deploy_requested_at": "2026-05-08T02:25:00-03:00",
+  "version": "v37-quality-foundation",
   "entrypoint": "index.html",
+  "routes_config": "routes.config.js",
+  "storage_policy": "storage-policy.js",
+  "app_mode": "app-mode.js",
+  "teste_ouro_pin": "teste-ouro-pin.html",
+  "qualidade_neuroped": "qualidade-neuroped.html",
+  "consulta_tabs": "consulta-tabs.js",
   "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
   "consulta_safe_exit": "consulta-safe-exit.js",
@@ -17,9 +23,13 @@
   "family_pass": "family-pass.js",
   "family_pass_generator": "family-pass-generator.js",
   "family_pass_portal": "family-pass-portal.js",
-  "area_filho": "area-filho.html",
-  "central_atalhos": "central-atalhos.html",
-  "verificar_app": "verificar-app.html",
-  "service_worker": "neuroped-v36-pin-first",
-  "note": "Fluxo corrigido: toda area sensivel primeiro abre chance de PIN; opcao de voltar so aparece depois de erro. Apos PIN correto, retorna para a aba solicitada."
+  "service_worker": "neuroped-v37-quality-foundation",
+  "docs": [
+    "docs/AUDITORIA_CONTINUA_NEUROPED.md",
+    "docs/LGPD_CHECKLIST.md",
+    "docs/PLANO_BACKEND_GRATUITO.md",
+    "docs/MEMORIA_E_EMBEDDINGS.md",
+    "docs/REGRAS_CRITICAS_ANTES_DE_ALTERAR.md"
+  ],
+  "note": "Pacote v37 implementa roteador central, painel de qualidade, teste de ouro do PIN, politica de storage, modo homologacao, atalhos modulares da consulta e documentacao LGPD/backend/memoria."
 }
