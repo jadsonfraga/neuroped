@@ -1,0 +1,83 @@
+name: Deploy NeuroPed
+
+on:
+  push:
+    branches:
+      - main
+      - feat/auditoria-total-ui-backend-memoria
+
+  # Permite rodar manualmente via GitHub Actions UI
+  workflow_dispatch:
+
+# Permissões necessárias para deploy no GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Garante que apenas um deploy rode por vez (sem race condition)
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────
+  # JOB 1 — Build + Teste
+  # ─────────────────────────────────────────────
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependências (raiz)
+        run: npm ci
+
+      - name: Compilar projeto (frontend + backend)
+        env:
+          NODE_ENV: production
+          # Hash SHA-256 do PIN profissional — configurar em Settings > Secrets > Actions
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+        run: npm run build
+
+      - name: Verificar output do build
+        run: |
+          echo "=== Conteúdo de dist/public ==="
+          ls -la dist/public/
+          echo "=== Assets gerados ==="
+          ls -la dist/public/assets/ | head -20
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Fazer upload do artefato para Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Aponta para o diretório de saída do frontend (conforme vite.config.ts)
+          path: dist/public
+
+  # ─────────────────────────────────────────────
+  # JOB 2 — Deploy para GitHub Pages
+  # ─────────────────────────────────────────────
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    # Só faz deploy a partir da branch main
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/auditoria-total-ui-backend-memoria'
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy para GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
