@@ -1,0 +1,23 @@
+(function(){
+'use strict';
+const K='np_secretaria_v2';
+function get(){try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){return[]}}
+function put(v){localStorage.setItem(K,JSON.stringify(v));render()}
+function el(id){return document.getElementById(id)}
+function esc(s){return String(s||'').replace(/[&<>]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]})}
+function current(){return{id:Date.now(),nome:el('secNome')?.value||'',fone:el('secFone')?.value||'',data:el('secData')?.value||'',hora:el('secHora')?.value||'',status:el('secStatus')?.value||'agendado',pend:el('secPend')?.value||'',obs:el('secObs')?.value||''}}
+function clearForm(){['secNome','secFone','secHora','secPend','secObs'].forEach(function(id){if(el(id))el(id).value=''});if(el('secData'))el('secData').value=new Date().toISOString().slice(0,10)}
+function save(){put([current()].concat(get()));clearForm()}
+function remove(id){if(confirm('Apagar atendimento?'))put(get().filter(function(x){return x.id!==id}))}
+function edit(id){var x=get().find(function(i){return i.id===id});if(!x)return;el('secNome').value=x.nome;el('secFone').value=x.fone;el('secData').value=x.data;el('secHora').value=x.hora;el('secStatus').value=x.status;el('secPend').value=x.pend;el('secObs').value=x.obs;put(get().filter(function(i){return i.id!==id}))}
+function copyList(){navigator.clipboard.writeText(get().map(function(x){return [x.data,x.hora,x.nome,x.status,x.pend].join(' · ')}).join('\n'))}
+function message(type){var m={confirmacao:'Olá! Confirmamos sua consulta. Por favor, chegue com antecedência e traga os documentos recentes.',lembrete:'Lembrete da consulta NeuroPed. Caso não possa comparecer, avise a secretaria.',documentos:'Para a consulta, pedimos trazer documentos, relatórios, exames e lista de itens em uso.',atraso:'Olá! Houve ajuste no fluxo da agenda. Avisaremos assim que for possível.',retorno:'Olá! Vamos organizar o retorno conforme orientação recebida.',agradecimento:'Agradecemos a presença. Ficamos à disposição para orientações administrativas.',preparo:'Antes da consulta, separe relatórios, exames, lista de itens em uso e principais dúvidas da família.'};if(el('secMensagem'))el('secMensagem').value=m[type]||''}
+function copyMsg(){navigator.clipboard.writeText(el('secMensagem')?.value||'')}
+function passText(){if(el('secMensagem'))el('secMensagem').value='Passe familiar educativo válido por 4 meses para conteúdos não sensíveis do NeuroPed. Não libera áreas protegidas.'}
+function exportJson(){var blob=new Blob([JSON.stringify(get(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='secretaria-neuroped.json';a.click()}
+function importJson(ev){var f=ev.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(Array.isArray(d))put(d);else alert('JSON inválido')}catch(e){alert('JSON inválido')}};r.readAsText(f)}
+function render(){var q=(el('secBusca')?.value||'').toLowerCase();var list=get();if(q)list=list.filter(function(x){return JSON.stringify(x).toLowerCase().includes(q)});if(el('secTotal'))el('secTotal').textContent=list.length;if(el('secConfirmados'))el('secConfirmados').textContent=list.filter(function(x){return x.status==='confirmado'}).length;if(el('secPendentes'))el('secPendentes').textContent=list.filter(function(x){return x.pend}).length;if(el('secLista'))el('secLista').innerHTML=list.map(function(x){return '<div class="secretaria-item"><b>'+esc(x.nome||'Sem nome')+'</b><br>'+esc(x.data)+' '+esc(x.hora)+' · '+esc(x.status)+'<br><span class="secretaria-muted">'+esc(x.pend||'Sem pendências')+'</span><br><button class="secretaria-btn ghost" onclick="NeuroPedSecretaria.edit('+x.id+')">Editar</button><button class="secretaria-btn ghost" onclick="NeuroPedSecretaria.remove('+x.id+')">Apagar</button></div>'}).join('')||'<p class="secretaria-muted">Sem atendimentos.</p>'}
+window.NeuroPedSecretaria={save:save,remove:remove,edit:edit,copyList:copyList,message:message,copyMsg:copyMsg,passText:passText,exportJson:exportJson,importJson:importJson,render:render,clearForm:clearForm};
+function boot(){clearForm();render();if(el('secBusca'))el('secBusca').addEventListener('input',render);if(el('secImport'))el('secImport').addEventListener('change',importJson)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
