@@ -1,0 +1,31 @@
+﻿================================================================
+NeuroPed EDJ - Credenciais geradas em 2026-05-08 09:18:11
+================================================================
+
+LEIA E GUARDE EM LOCAL SEGURO. APAGUE ESTE ARQUIVO APOS LER.
+
+URL do app local:  http://localhost:5000
+URL de login:      http://localhost:5000/#/login
+
+Email do admin:    jadsonfraga@hotmail.com
+Senha temporaria:  LNXJYNN2UdZhPHsmBWfR5RlS
+
+ACAO OBRIGATORIA APOS PRIMEIRO LOGIN:
+  1. Trocar a senha em /configuracoes
+  2. Apagar este arquivo
+  3. Editar .env e remover ADMIN_INITIAL_PASSWORD para nao recriar admin
+
+NEUROPED_MASTER_KEY (cripto AES, criptografa CPF/nome/notas):
+  x1r9xGA2nUwzUF38XTm5M1KT3ngEHDfrmKNSUE/EHub7ftuz0tRUXhl8WYjA6huc
+
+NEUROPED_JWT_SECRET (assina tokens de autenticacao):
+  X2XRUzedCvNtT0AcmWF9OPLRXFYDAnRXmsdKXt3DtySWVmgzn3pPxB0XURoJ9XNgc/+4WKRdg9v35hqS0B70EA==
+
+GUARDE essas duas chaves em gerenciador de senhas (1Password,
+Bitwarden, KeePass). Sem elas voce NAO consegue ler dados
+criptografados nem validar tokens.
+
+NUNCA TROQUE NEUROPED_MASTER_KEY apos comecar a usar com dados reais
+(invalida tudo que esta criptografado).
+
+================================================================
