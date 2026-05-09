@@ -1,0 +1,57 @@
+# Deploy NeuroPed para Cloudflare Pages
+#
+# Pre-requisitos:
+#   - Secret CLOUDFLARE_API_TOKEN com permissoes Pages: Edit + D1: Edit.
+#   - Secret CLOUDFLARE_ACCOUNT_ID.
+#   - wrangler.toml com database_id real (NAO o placeholder).
+#
+# Disparo:
+#   - Manual via "Run workflow"
+#   - Push em branch main quando ENABLE_AUTO_DEPLOY=true
+#
+# Nao remove o deploy.yml de GitHub Pages: ambos podem coexistir, mas o
+# canonico para producao deve ser apenas um. Defina via env de pages.
+
+name: Deploy NeuroPed to Cloudflare Pages
+
+on:
+  workflow_dispatch:
+  # Para ativar push automatico: descomente abaixo apos validar deploy manual.
+  # push:
+  #   branches: [main]
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test (static + typecheck)
+        run: npm test
+
+      - name: Pre-deploy check
+        run: node scripts/predeploy-check.mjs
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy . --project-name neuroped --branch ${{ github.ref_name }}
