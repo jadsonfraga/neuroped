@@ -2,8 +2,8 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T02:55:00-03:00",
-  "version": "v39-static-test-baseline",
+  "deploy_requested_at": "2026-05-08T03:20:00-03:00",
+  "version": "v40-consulta-clinical-suite",
   "entrypoint": "index.html",
   "routes_config": "routes.config.js",
   "storage_policy": "storage-policy.js",
@@ -11,6 +11,9 @@
   "teste_ouro_pin": "teste-ouro-pin.html",
   "qualidade_neuroped": "qualidade-neuroped.html",
   "consulta_tabs": "consulta-tabs.js",
+  "consulta_voz": "consulta-voz.js",
+  "consulta_docflow": "consulta-docflow.js",
+  "verificar_documento": "verificar-documento.html",
   "auditoria_operacional": "auditoria-operacional.html",
   "consulta": "consulta.html",
   "consulta_safe_exit": "consulta-safe-exit.js",
@@ -23,7 +26,7 @@
   "family_pass": "family-pass.js",
   "family_pass_generator": "family-pass-generator.js",
   "family_pass_portal": "family-pass-portal.js",
-  "service_worker": "neuroped-v38-quality-panel-fix",
+  "service_worker": "neuroped-v40-consulta-clinical-suite",
   "static_test": "scripts/test-static.mjs",
   "npm_scripts": [
     "npm run test:static",
@@ -36,5 +39,5 @@
     "docs/MEMORIA_E_EMBEDDINGS.md",
     "docs/REGRAS_CRITICAS_ANTES_DE_ALTERAR.md"
   ],
-  "note": "Ciclo v39: criado teste estatico local em Node, adicionado npm test e npm run test:static, e auditoria continua registrada. O teste valida rotas/arquivos criticos, manifest, SW, PIN, storage, app-mode e docs LGPD/memoria."
+  "note": "Ciclo v40: Consulta recebeu anamnese por voz, receituario livre/manual, solicitacao de exames, laudos/relatorios imprimiveis em PDF, QR/codigo de conferencia local e verificador. Nao e assinatura ICP-Brasil; sem sugestao automatica de medicacao, exame ou diagnostico."
 }
