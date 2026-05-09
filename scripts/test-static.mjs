@@ -53,6 +53,10 @@ assertIncludes('functions/api/submissions.ts', 'sameOrigin', 'submissions.ts val
 assertIncludes('master-access-policy.js', "addEventListener('storage'", 'master-access-policy escuta storage event para sync cross-tab');
 assertIncludes('app-shell.js', 'aria-label', 'app-shell anota acessibilidade na navegação');
 assertIncludes('app-shell.js', 'aria-current', 'app-shell marca página atual com aria-current');
+assertIncludes('family-pass-portal.js', 'safeChild', 'family-pass-portal sanitiza child antes de renderizar (XSS guard)');
+assertNotIncludes('family-pass-portal.js', "innerHTML='<strong", 'family-pass-portal não monta innerHTML com dados do passe');
+assertIncludes('family-voucher-ui.js', '&amp;', 'family-voucher-ui escapa entidades HTML ao emitir voucher');
+assertIncludes('404.html', '<noscript>', '404.html oferece fallback sem JavaScript');
 const chtml=file('consulta.html');
 if(chtml.includes('inputmode="numeric"')) pass('consulta.html declara inputmode numeric (alinhado ao PIN digit-only)'); else warn('consulta.html sem inputmode numeric', 'esperado para PIN digit-only');
 

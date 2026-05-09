@@ -13,7 +13,8 @@
     if(document.getElementById('npModeBadge'))return;
     var badge=document.createElement('button');
     badge.id='npModeBadge';badge.type='button';badge.textContent=current.label.toUpperCase();badge.title=current.message;
-    badge.style.cssText='position:fixed;left:12px;bottom:12px;z-index:999997;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:999px;padding:9px 11px;font:900 11px system-ui;box-shadow:0 10px 24px rgba(45,41,38,.14)';
+    badge.setAttribute('aria-label','Modo do aplicativo: '+current.label+'. '+current.message);
+    badge.style.cssText='position:fixed;left:12px;bottom:12px;z-index:999997;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:999px;padding:9px 11px;font:900 11px system-ui;box-shadow:0 10px 24px rgba(45,41,38,.14);cursor:pointer';
     badge.onclick=function(){alert(current.message)};document.body.appendChild(badge);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

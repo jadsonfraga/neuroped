@@ -36,11 +36,26 @@
     const listEl=document.getElementById('familyQuickList');
     if(!listEl) return;
     let list=[];try{list=JSON.parse(localStorage.getItem(QUICK_KEY)||'[]')}catch{}
-    listEl.innerHTML=list.length?list.map((t,i)=>'<button type="button" data-i="'+i+'" style="text-align:left;background:white;border:1px solid rgba(26,107,101,.18);border-radius:16px;padding:12px;font-weight:900;color:#1a6b65">💬 '+t+'</button>').join(''):'<span style="font-size:12px;color:#6f6963">Nenhuma frase salva ainda.</span>';
-    listEl.querySelectorAll('button').forEach(btn=>btn.onclick=function(){
-      const txt=list[Number(this.dataset.i)];
-      if(!txt)return;
-      if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';u.rate=0.84;speechSynthesis.speak(u);} 
+    listEl.textContent='';
+    if(!list.length){
+      const empty=document.createElement('span');
+      empty.style.cssText='font-size:12px;color:#6f6963';
+      empty.textContent='Nenhuma frase salva ainda.';
+      listEl.appendChild(empty);
+      return;
+    }
+    list.forEach((t,i)=>{
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.dataset.i=String(i);
+      btn.style.cssText='text-align:left;background:white;border:1px solid rgba(26,107,101,.18);border-radius:16px;padding:12px;font-weight:900;color:#1a6b65';
+      btn.textContent='💬 '+t;
+      btn.onclick=function(){
+        const txt=list[Number(this.dataset.i)];
+        if(!txt)return;
+        if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';u.rate=0.84;speechSynthesis.speak(u);}
+      };
+      listEl.appendChild(btn);
     });
   }
   function addButtons(){

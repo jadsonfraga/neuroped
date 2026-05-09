@@ -50,7 +50,7 @@
   }
   function announce(msg){
     var id='np-master-toast',el=document.getElementById(id);
-    if(!el){el=document.createElement('div');el.id=id;el.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:999999;background:#1a6b65;color:#fff;padding:12px 16px;border-radius:999px;font:700 13px system-ui;box-shadow:0 12px 30px rgba(0,0,0,.25)';document.body.appendChild(el)}
+    if(!el){el=document.createElement('div');el.id=id;el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:999999;background:#1a6b65;color:#fff;padding:12px 16px;border-radius:999px;font:700 13px system-ui;box-shadow:0 12px 30px rgba(0,0,0,.25)';document.body.appendChild(el)}
     el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none'},2600);
   }
   function path(){var h=location.hash||'';return h.charAt(0)==='#'?h.slice(1):h||'/'}
@@ -58,7 +58,7 @@
     document.documentElement.classList.toggle('np-master-unlocked',isUnlocked());
     var old=document.getElementById('np-master-badge');
     if(isUnlocked()){
-      if(!old){var b=document.createElement('button');b.id='np-master-badge';b.type='button';b.textContent='🔓 Master ativo';b.title='Clique para encerrar o acesso master';b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:999998;background:#1a6b65;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 12px;font:800 12px system-ui;box-shadow:0 10px 24px rgba(0,0,0,.24)';b.onclick=function(){clear();b.remove();decorate();announce('Acesso master encerrado.')};document.body.appendChild(b)}
+      if(!old){var b=document.createElement('button');b.id='np-master-badge';b.type='button';b.textContent='🔓 Master ativo';b.title='Clique para encerrar o acesso master';b.setAttribute('aria-label','PIN master ativo. Clique para encerrar o acesso protegido.');b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:999998;background:#1a6b65;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 12px;font:800 12px system-ui;box-shadow:0 10px 24px rgba(0,0,0,.24);cursor:pointer';b.onclick=function(){clear();b.remove();decorate();announce('Acesso master encerrado.')};document.body.appendChild(b)}
     }else if(old){old.remove()}
     injectFamilyPanel();
   }
