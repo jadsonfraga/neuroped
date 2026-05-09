@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v40-consulta-clinical-suite";
+const CACHE_NAME = "neuroped-v41-app-shell-consulta-livre";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -26,6 +26,7 @@ const PRECACHE_URLS = [
   "./consulta-safe-exit.js",
   "./consulta-pin-fix.js",
   "./consulta-next-redirect.js",
+  "./secretaria.html",
   "./family-voucher.js",
   "./family-voucher-ui.js",
   "./ativar-passe-familiar.html",
