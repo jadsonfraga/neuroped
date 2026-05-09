@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v38-quality-panel-fix";
+const CACHE_NAME = "neuroped-v40-consulta-clinical-suite";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -10,6 +10,9 @@ const PRECACHE_URLS = [
   "./teste-ouro-pin.html",
   "./qualidade-neuroped.html",
   "./consulta-tabs.js",
+  "./consulta-voz.js",
+  "./consulta-docflow.js",
+  "./verificar-documento.html",
   "./auditoria-operacional.html",
   "./design-system-premium.css",
   "./premium-experience.js",
@@ -87,7 +90,7 @@ function injectPremium(html, path) {
   out = addBody(out,"./app-mode.js");
   out = addBody(out,"./premium-experience.js");
   out = addBody(out,"./premium-polish.js");
-  if (/consulta\.html/i.test(path)) { out = addBody(out,"./consulta-tabs.js"); out = addBody(out,"./consulta-safe-exit.js"); out = addBody(out,"./consulta-pin-fix.js"); out = addBody(out,"./consulta-next-redirect.js"); out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); out = addBody(out,"./consulta-documentos.js"); }
+  if (/consulta\.html/i.test(path)) { out = addBody(out,"./consulta-tabs.js"); out = addBody(out,"./consulta-safe-exit.js"); out = addBody(out,"./consulta-pin-fix.js"); out = addBody(out,"./consulta-next-redirect.js"); out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); out = addBody(out,"./consulta-documentos.js"); out = addBody(out,"./consulta-voz.js"); out = addBody(out,"./consulta-docflow.js"); }
   if (/portal-familia-livre\.html/i.test(path)) { out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-portal.js"); }
   if (!out.includes("portal-familia-livre.html")) out = out.replace("</body>", `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>\n</body>`);
   return out;
