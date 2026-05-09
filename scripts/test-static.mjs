@@ -42,6 +42,9 @@ const criticalFiles = [
   'consulta-pin-fix.js',
   'consulta-next-redirect.js',
   'consulta-documentos.js',
+  'consulta-voz.js',
+  'consulta-docflow.js',
+  'verificar-documento.html',
   'portal-familia-livre.html',
   'comunicacao-alternativa.html',
   'diario-escola-terapias-v2.html',
@@ -57,7 +60,7 @@ const criticalFiles = [
 
 for (const f of criticalFiles) assertFile(f);
 
-assertIncludes('sw.js', 'neuroped-v38-quality-panel-fix', 'service worker está na versão v38');
+assertIncludes('sw.js', 'neuroped-v40-consulta-clinical-suite', 'service worker está na versão v40');
 for (const cached of [
   './routes.config.js',
   './storage-policy.js',
@@ -67,7 +70,10 @@ for (const cached of [
   './consulta-safe-exit.js',
   './consulta-pin-fix.js',
   './consulta-next-redirect.js',
-  './consulta-documentos.js'
+  './consulta-documentos.js',
+  './consulta-voz.js',
+  './consulta-docflow.js',
+  './verificar-documento.html'
 ]) {
   assertIncludes('sw.js', cached, `cache inclui ${cached}`);
 }
@@ -92,6 +98,15 @@ assertIncludes('consulta-pin-fix.js', 'toLowerCase', 'consulta-pin-fix normaliza
 assertIncludes('consulta-next-redirect.js', 'nextPath', 'consulta-next-redirect lê nextPath');
 assertIncludes('consulta-next-redirect.js', 'index.html#', 'consulta-next-redirect retorna para rota solicitada');
 assertIncludes('safe-public-layer.js', 'consulta.html?next=', 'safe-public-layer envia área sensível primeiro para PIN');
+
+assertIncludes('consulta-voz.js', 'SpeechRecognition', 'consulta tem anamnese por voz quando navegador permite');
+assertIncludes('consulta-voz.js', 'pt-BR', 'anamnese por voz usa português do Brasil');
+assertIncludes('consulta-docflow.js', 'Solicitação de exames', 'consulta tem solicitação de exames');
+assertIncludes('consulta-docflow.js', 'Receituário livre', 'consulta tem receituário livre/manual');
+assertIncludes('consulta-docflow.js', 'Laudo / relatório com PDF', 'consulta tem gerador de laudos/relatórios imprimíveis');
+assertIncludes('consulta-docflow.js', 'Não são assinatura digital ICP-Brasil', 'consulta documenta limite do QR/código');
+assertIncludes('consulta-docflow.js', 'api.qrserver.com', 'consulta gera QR code para conferência');
+assertIncludes('verificar-documento.html', 'não é assinatura digital ICP-Brasil', 'verificador documenta limite jurídico');
 
 assertIncludes('qualidade-neuroped.html', './app-mode.js', 'painel de qualidade carrega app-mode.js diretamente');
 assertIncludes('qualidade-neuroped.html', 'NEUROPED_APP_MODE.mode', 'painel valida modo do app');
