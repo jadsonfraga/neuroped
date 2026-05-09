@@ -7,8 +7,32 @@ function jsonError(message: string, status = 400) {
   return Response.json({ ok: false, error: message }, { status });
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+function sameOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const target = new URL(request.url).origin;
+  if (origin) return origin === target;
+  if (referer) {
+    try { return new URL(referer).origin === target; } catch { return false; }
+  }
+  return false;
+}
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
+    if (!sameOrigin(request)) {
+      return jsonError("Origem nao autorizada.", 403);
+    }
+
     const contentLength = Number(request.headers.get("content-length") || "0");
 
     if (contentLength > 250_000) {
@@ -108,9 +132,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
-  const token = request.headers.get("X-Clinic-Token");
+  const token = request.headers.get("X-Clinic-Token") || "";
 
-  if (!env.APP_TOKEN || token !== env.APP_TOKEN) {
+  if (!env.APP_TOKEN || !timingSafeEqual(token, env.APP_TOKEN)) {
     return jsonError("Nao autorizado.", 401);
   }
 

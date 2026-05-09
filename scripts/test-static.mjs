@@ -48,6 +48,11 @@ assertIncludes('consulta-docflow.js', 'Não são assinatura digital ICP-Brasil',
 assertIncludes('manifest.json', 'CAA Gratuita', 'manifest mantém CAA Gratuita');
 assertNotIncludes('manifest.json', 'CAA Premium', 'manifest não contém CAA Premium');
 assertIncludes('docs/LGPD_CHECKLIST.md', 'Não apto para produção com dados clínicos reais', 'LGPD deixa produção real bloqueada');
+assertIncludes('functions/api/submissions.ts', 'timingSafeEqual', 'submissions.ts usa comparação de token em tempo constante');
+assertIncludes('functions/api/submissions.ts', 'sameOrigin', 'submissions.ts valida Origin no POST (defesa CSRF)');
+assertIncludes('master-access-policy.js', "addEventListener('storage'", 'master-access-policy escuta storage event para sync cross-tab');
+assertIncludes('app-shell.js', 'aria-label', 'app-shell anota acessibilidade na navegação');
+assertIncludes('app-shell.js', 'aria-current', 'app-shell marca página atual com aria-current');
 const chtml=file('consulta.html');
 if(chtml.includes('inputmode="numeric"')) pass('consulta.html declara inputmode numeric (alinhado ao PIN digit-only)'); else warn('consulta.html sem inputmode numeric', 'esperado para PIN digit-only');
 
