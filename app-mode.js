@@ -5,7 +5,7 @@
     mode: 'HOMOLOGAÇÃO',
     label: 'Homologação estática',
     message: 'Ferramenta em evolução. Não usar com dados clínicos reais sem backend seguro, autenticação, logs e criptografia.',
-    versionHint: 'v37-quality-foundation'
+    versionHint: 'v41-app-shell-consulta-livre'
   };
   function boot(){
     if(document.getElementById('npModeBadge')) return;
