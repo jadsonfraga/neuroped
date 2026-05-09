@@ -12,7 +12,7 @@ window.NEUROPED_ROUTES = [
   { label:'Filtro de Escalas', href:'./filtro-escalas.html', type:'publico', requiresPin:false, icon:'🔎', order:80 },
   { label:'Banco de Escalas', href:'./escalas.html', type:'publico', requiresPin:false, icon:'📚', order:90 },
   { label:'Consulta', href:'./consulta.html', type:'medico', requiresPin:true, icon:'🩺', order:100 },
-  { label:'Secretaria', href:'./index.html#/secretaria', type:'protegido', requiresPin:true, icon:'🏥', order:110 },
+  { label:'Secretaria', href:'./secretaria.html', type:'protegido', requiresPin:true, icon:'🏥', order:110 },
   { label:'Prontuário', href:'./index.html#/prontuario', type:'protegido', requiresPin:true, icon:'📋', order:120 },
   { label:'Prescrições', href:'./index.html#/prescricoes', type:'medico', requiresPin:true, icon:'💊', order:130 },
   { label:'Laudos', href:'./index.html#/laudos', type:'medico', requiresPin:true, icon:'📄', order:140 },
