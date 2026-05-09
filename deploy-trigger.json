@@ -2,8 +2,8 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T02:40:00-03:00",
-  "version": "v38-quality-panel-fix",
+  "deploy_requested_at": "2026-05-08T02:55:00-03:00",
+  "version": "v39-static-test-baseline",
   "entrypoint": "index.html",
   "routes_config": "routes.config.js",
   "storage_policy": "storage-policy.js",
@@ -24,6 +24,11 @@
   "family_pass_generator": "family-pass-generator.js",
   "family_pass_portal": "family-pass-portal.js",
   "service_worker": "neuroped-v38-quality-panel-fix",
+  "static_test": "scripts/test-static.mjs",
+  "npm_scripts": [
+    "npm run test:static",
+    "npm test"
+  ],
   "docs": [
     "docs/AUDITORIA_CONTINUA_NEUROPED.md",
     "docs/LGPD_CHECKLIST.md",
@@ -31,5 +36,5 @@
     "docs/MEMORIA_E_EMBEDDINGS.md",
     "docs/REGRAS_CRITICAS_ANTES_DE_ALTERAR.md"
   ],
-  "note": "Ciclo v38: painel de qualidade agora carrega app-mode.js diretamente, evita falso alerta de modo do app e cache foi versionado. Build/lint/test inexistentes no package atual; registrado em auditoria continua."
+  "note": "Ciclo v39: criado teste estatico local em Node, adicionado npm test e npm run test:static, e auditoria continua registrada. O teste valida rotas/arquivos criticos, manifest, SW, PIN, storage, app-mode e docs LGPD/memoria."
 }
