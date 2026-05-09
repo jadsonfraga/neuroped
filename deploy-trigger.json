@@ -2,13 +2,12 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-09T09:25:00-03:00",
-  "version": "v42-consulta-pin-alfanumerico",
+  "deploy_requested_at": "2026-05-09T09:40:00-03:00",
+  "version": "v43-app-appearance",
   "entrypoint": "index.html",
+  "visual_layer": "premium-polish-overrides.css",
+  "service_worker": "neuroped-v43-app-appearance",
   "consulta": "consulta.html",
   "pin_master": "alfanumerico",
-  "pin_inputmode": "text",
-  "safe_exit": "voltar_para_conteudo_educacional",
-  "service_worker": "neuroped-v42-consulta-pin-alfanumerico",
-  "note": "Consulta corrigida na pagina-base: teclado completo, PIN alfanumerico vasco1108, botao voltar para conteudo educacional e botao digitar PIN master. Cache simplificado para limpar versoes antigas."
+  "note": "Camada visual reforcada para aparencia de app: header sticky, safe area mobile, cards/touch targets, bottom nav refinada, transicoes suaves e cache v43."
 }
