@@ -5,7 +5,9 @@
   "description": "NeuroPed EDJ - Frontend estatico com backend Cloudflare Pages Functions e D1",
   "scripts": {
     "dev": "wrangler pages dev .",
-    "db:schema": "wrangler d1 execute neuroped-db --file=./schema.sql --remote"
+    "db:schema": "wrangler d1 execute neuroped-db --file=./schema.sql --remote",
+    "test:static": "node scripts/test-static.mjs",
+    "test": "npm run test:static"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "latest",
