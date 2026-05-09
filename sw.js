@@ -1,4 +1,4 @@
-const CACHE_NAME = "neuroped-v41-app-shell-consulta-livre";
+const CACHE_NAME = "neuroped-v42-shell-split-pin-aligned";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -19,6 +19,10 @@ const PRECACHE_URLS = [
   "./premium-polish-overrides.css",
   "./premium-polish.js",
   "./editorial-impact.css",
+  "./app-shell.css",
+  "./app-shell.js",
+  "./brand-dr-jadson.css",
+  "./brand-dr-jadson.js",
   "./family-pass.js",
   "./family-pass-generator.js",
   "./family-pass-portal.js",
