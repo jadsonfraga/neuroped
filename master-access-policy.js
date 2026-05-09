@@ -81,5 +81,6 @@
   window.NeuroPedMasterAccess={isUnlocked:isUnlocked,unlockIfPin:unlockIfPin,clear:clear,decorate:decorate};
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){watchInputs();decorate()})}else{watchInputs();decorate()}
   window.addEventListener('hashchange',function(){setTimeout(decorate,120)});
+  window.addEventListener('storage',function(ev){if(ev.key===KEY)decorate()});
   setInterval(decorate,15000);
 })();
