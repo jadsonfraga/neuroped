@@ -2,8 +2,8 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-08T02:25:00-03:00",
-  "version": "v37-quality-foundation",
+  "deploy_requested_at": "2026-05-08T02:40:00-03:00",
+  "version": "v38-quality-panel-fix",
   "entrypoint": "index.html",
   "routes_config": "routes.config.js",
   "storage_policy": "storage-policy.js",
@@ -23,7 +23,7 @@
   "family_pass": "family-pass.js",
   "family_pass_generator": "family-pass-generator.js",
   "family_pass_portal": "family-pass-portal.js",
-  "service_worker": "neuroped-v37-quality-foundation",
+  "service_worker": "neuroped-v38-quality-panel-fix",
   "docs": [
     "docs/AUDITORIA_CONTINUA_NEUROPED.md",
     "docs/LGPD_CHECKLIST.md",
@@ -31,5 +31,5 @@
     "docs/MEMORIA_E_EMBEDDINGS.md",
     "docs/REGRAS_CRITICAS_ANTES_DE_ALTERAR.md"
   ],
-  "note": "Pacote v37 implementa roteador central, painel de qualidade, teste de ouro do PIN, politica de storage, modo homologacao, atalhos modulares da consulta e documentacao LGPD/backend/memoria."
+  "note": "Ciclo v38: painel de qualidade agora carrega app-mode.js diretamente, evita falso alerta de modo do app e cache foi versionado. Build/lint/test inexistentes no package atual; registrado em auditoria continua."
 }
