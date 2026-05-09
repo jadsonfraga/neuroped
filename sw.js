@@ -1,9 +1,15 @@
-const CACHE_NAME = "neuroped-v36-pin-first";
+const CACHE_NAME = "neuroped-v37-quality-foundation";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./sw.js",
+  "./routes.config.js",
+  "./storage-policy.js",
+  "./app-mode.js",
+  "./teste-ouro-pin.html",
+  "./qualidade-neuroped.html",
+  "./consulta-tabs.js",
   "./auditoria-operacional.html",
   "./design-system-premium.css",
   "./premium-experience.js",
@@ -47,6 +53,11 @@ const PRECACHE_URLS = [
   "./banco-escalas-lote3-100.html",
   "./banco-escalas-lote4-200.html",
   "./banco-escalas-lote5-90.html",
+  "./docs/REGRAS_CRITICAS_ANTES_DE_ALTERAR.md",
+  "./docs/AUDITORIA_CONTINUA_NEUROPED.md",
+  "./docs/LGPD_CHECKLIST.md",
+  "./docs/PLANO_BACKEND_GRATUITO.md",
+  "./docs/MEMORIA_E_EMBEDDINGS.md",
   "./icon-192.png",
   "./icon-512.png"
 ];
@@ -71,9 +82,12 @@ function injectPremium(html, path) {
   out = addHead(out,"./design-system-premium.css");
   out = addHead(out,"./premium-polish-overrides.css");
   out = addHead(out,"./editorial-impact.css");
+  out = addBody(out,"./routes.config.js");
+  out = addBody(out,"./storage-policy.js");
+  out = addBody(out,"./app-mode.js");
   out = addBody(out,"./premium-experience.js");
   out = addBody(out,"./premium-polish.js");
-  if (/consulta\.html/i.test(path)) { out = addBody(out,"./consulta-safe-exit.js"); out = addBody(out,"./consulta-pin-fix.js"); out = addBody(out,"./consulta-next-redirect.js"); out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); out = addBody(out,"./consulta-documentos.js"); }
+  if (/consulta\.html/i.test(path)) { out = addBody(out,"./consulta-tabs.js"); out = addBody(out,"./consulta-safe-exit.js"); out = addBody(out,"./consulta-pin-fix.js"); out = addBody(out,"./consulta-next-redirect.js"); out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-generator.js"); out = addBody(out,"./consulta-documentos.js"); }
   if (/portal-familia-livre\.html/i.test(path)) { out = addBody(out,"./family-pass.js"); out = addBody(out,"./family-pass-portal.js"); }
   if (!out.includes("portal-familia-livre.html")) out = out.replace("</body>", `<script>(function(){function p(){var h=location.hash||'';h=h.charAt(0)==='#'?h.slice(1):h;if(/^\\/portal-familias?(\\/|$|\\?)/i.test(h)){location.replace('./portal-familia-livre.html')}}p();window.addEventListener('hashchange',p);})();</script>\n</body>`);
   return out;
