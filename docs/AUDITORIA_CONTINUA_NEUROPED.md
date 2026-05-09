@@ -51,3 +51,51 @@ Data: 2026-05-08
 2. Atualizar `auditoria-operacional.html` para chamar o teste de ouro e painel de qualidade.
 3. Consolidar design system em arquivo único.
 4. Criar camada `/api/health` em Cloudflare Worker ou equivalente.
+
+---
+
+## Registro v38 — Quality Panel Fix
+
+Data: 2026-05-08
+
+### Área auditada
+
+- Painel `qualidade-neuroped.html`.
+- Carregamento de `app-mode.js`.
+- Service worker/cache.
+- Scripts disponíveis no `package.json`.
+
+### Diagnóstico
+
+O painel de qualidade verificava `window.NEUROPED_APP_MODE`, mas não carregava explicitamente `app-mode.js`. Isso podia gerar falso alerta de modo do app não carregado, mesmo com o arquivo publicado e cacheado.
+
+### Correção feita
+
+- Atualizado `qualidade-neuroped.html` para carregar diretamente `./app-mode.js`.
+- Ajustada validação do painel para considerar OK quando `window.NEUROPED_APP_MODE.mode === "HOMOLOGAÇÃO"`.
+- Atualizado `sw.js` para `neuroped-v38-quality-panel-fix`, garantindo invalidação do cache anterior.
+
+### Build/lint/test
+
+O `package.json` atual possui apenas:
+
+- `npm run dev`
+- `npm run db:schema`
+
+Não há scripts `build`, `lint` ou `test` definidos neste momento. Portanto, a validação aplicável nesta rodada foi por auditoria de arquivos, rotas e versionamento de cache.
+
+### Arquivos alterados
+
+- `qualidade-neuroped.html`
+- `sw.js`
+- `docs/AUDITORIA_CONTINUA_NEUROPED.md`
+
+### Riscos restantes
+
+- Ausência de teste automatizado formal via npm.
+- Service worker ainda injeta múltiplas camadas; consolidar em rodada futura.
+- Backend real ainda não implementado.
+
+### Próximo passo sugerido
+
+Criar scripts mínimos de qualidade em `package.json`, por exemplo `test:static`, para validar arquivos críticos sem depender de navegador manual.
