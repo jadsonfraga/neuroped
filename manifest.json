@@ -21,6 +21,8 @@
   ],
   "shortcuts": [
     {"name": "Central de Atalhos", "short_name": "Atalhos", "url": "./central-atalhos.html", "description": "Rotas críticas do NeuroPed em uma página"},
+    {"name": "Qualidade NeuroPed", "short_name": "Qualidade", "url": "./qualidade-neuroped.html", "description": "Painel de qualidade, versão e rotas críticas"},
+    {"name": "Teste de Ouro do PIN", "short_name": "PIN", "url": "./teste-ouro-pin.html", "description": "Verificar fluxo de PIN master"},
     {"name": "Portal da Família", "short_name": "Família", "url": "./portal-familia-livre.html", "description": "Conteúdos familiares públicos e orientação"},
     {"name": "Área do Filho", "short_name": "Filho", "url": "./area-filho.html", "description": "Ferramentas locais da criança sem CPF"},
     {"name": "Consulta Protegida", "short_name": "Consulta", "url": "./consulta.html", "description": "Organização de consulta com PIN master"},
