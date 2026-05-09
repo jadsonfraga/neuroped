@@ -99,3 +99,69 @@ Não há scripts `build`, `lint` ou `test` definidos neste momento. Portanto, a 
 ### Próximo passo sugerido
 
 Criar scripts mínimos de qualidade em `package.json`, por exemplo `test:static`, para validar arquivos críticos sem depender de navegador manual.
+
+---
+
+## Registro v39 — Static Test Baseline
+
+Data: 2026-05-08
+
+### Área auditada
+
+- `package.json`.
+- Ausência de teste automatizado formal.
+- Arquivos críticos do PWA, PIN, Consulta, Portal, CAA, Diário, Filtro, Mapa, LGPD e memória.
+
+### Diagnóstico
+
+O projeto não tinha script `test`, `lint` ou `build`. Isso impedia uma verificação mínima antes de alterações e deixava a validação dependente apenas de inspeção manual ou páginas de auditoria no navegador.
+
+### Correção feita
+
+- Criado `scripts/test-static.mjs`.
+- Adicionado `npm run test:static`.
+- Adicionado `npm test` apontando para `test:static`.
+
+### O que o teste valida
+
+- Existência de arquivos críticos.
+- Versão esperada do service worker.
+- Inclusão de módulos essenciais no cache.
+- Manifest sem `CAA Premium`.
+- Roteador central.
+- Política de storage.
+- Modo de homologação.
+- Fluxo de PIN alfanumérico.
+- Regra de voltar apenas após erro.
+- Redirecionamento após PIN correto.
+- Documentação LGPD, regras críticas e embeddings.
+
+### Arquivos alterados
+
+- `scripts/test-static.mjs`
+- `package.json`
+- `docs/AUDITORIA_CONTINUA_NEUROPED.md`
+
+### Teste
+
+Comando disponível:
+
+```bash
+npm test
+```
+
+ou:
+
+```bash
+npm run test:static
+```
+
+### Riscos restantes
+
+- O teste é estático; ainda não substitui teste end-to-end real no navegador.
+- O service worker continua acumulando responsabilidades além do cache.
+- Ainda não há backend real em produção.
+
+### Próximo passo sugerido
+
+Criar `test:e2e-manual.html` ou Playwright futuramente para simular cliques reais no fluxo PIN, CAA e Diário.
