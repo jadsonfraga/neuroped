@@ -165,3 +165,70 @@ npm run test:static
 ### Próximo passo sugerido
 
 Criar `test:e2e-manual.html` ou Playwright futuramente para simular cliques reais no fluxo PIN, CAA e Diário.
+
+---
+
+## Registro v40 — Consulta Clinical Suite
+
+Data: 2026-05-08
+
+### Área auditada
+
+- Ambiente Consulta.
+- Anamnese.
+- Documentos médicos.
+- Impressão/PDF.
+- QR/código de conferência.
+- Teste estático.
+- Service worker/cache.
+
+### Diagnóstico
+
+A Consulta já tinha resumo, prescrição livre e laudo livre, mas faltavam módulos operacionais para anamnese por voz, solicitação de exames, geração organizada de documentos imprimíveis/PDF e QR/código de conferência. Também havia risco de falsa promessa jurídica se o recurso fosse chamado de certificado digital válido.
+
+### Correções feitas
+
+- Criado `consulta-voz.js` para anamnese por voz com `SpeechRecognition` quando o navegador permite.
+- Criado `consulta-docflow.js` com:
+  - receituário livre/manual;
+  - solicitação de exames;
+  - laudo/relatório imprimível;
+  - impressão com opção de salvar como PDF;
+  - código/hash local de conferência;
+  - QR de conferência;
+  - histórico local de códigos.
+- Criado `verificar-documento.html` para conferir código/hash no dispositivo.
+- Atualizado `consulta-documentos.js` para carregar automaticamente os módulos avançados quando o PIN master está ativo.
+- Atualizado `consulta-tabs.js` com atalhos para Voz, Receituário, Exames e Laudos/PDF.
+- Atualizado `scripts/test-static.mjs` para validar os novos módulos.
+- Atualizado `sw.js` para `neuroped-v40-consulta-clinical-suite`.
+
+### Segurança e limite jurídico
+
+O QR/código é apenas conferência local de integridade. Não é assinatura digital ICP-Brasil, não substitui certificado A1/A3 e não valida documento em backend seguro. O sistema não sugere medicação, exame ou diagnóstico automaticamente; os campos são de preenchimento médico manual.
+
+### Arquivos alterados
+
+- `consulta-voz.js`
+- `consulta-docflow.js`
+- `verificar-documento.html`
+- `consulta-documentos.js`
+- `consulta-tabs.js`
+- `scripts/test-static.mjs`
+- `sw.js`
+- `docs/AUDITORIA_CONTINUA_NEUROPED.md`
+
+### Teste
+
+- `npm test` agora valida presença dos módulos de voz, documentos, QR, limite jurídico e cache v40.
+
+### Riscos restantes
+
+- Reconhecimento de voz depende do navegador e permissão do microfone.
+- QR usa serviço externo de geração de imagem; para uso sensível real, o ideal é gerar QR localmente ou via backend seguro.
+- Certificação jurídica real depende de infraestrutura de assinatura digital adequada.
+- Dados clínicos reais continuam proibidos nesta fase sem backend seguro.
+
+### Próximo passo sugerido
+
+Criar gerador de QR local sem serviço externo e integrar backend seguro para validação de documentos quando houver infraestrutura real.
