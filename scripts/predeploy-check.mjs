@@ -5,8 +5,13 @@ import { readFileSync, existsSync } from 'node:fs';
 const errors = [];
 const wrangler = readFileSync('wrangler.toml', 'utf8');
 
-if (wrangler.includes('COLOCAR_DATABASE_ID_AQUI')) {
+// Em CI o workflow cria/busca o D1 e patcha o wrangler.toml antes deste check;
+// localmente bloqueia ate o id real estar no arquivo.
+if (wrangler.includes('COLOCAR_DATABASE_ID_AQUI') && process.env.CI !== 'true') {
   errors.push('wrangler.toml ainda contem o placeholder COLOCAR_DATABASE_ID_AQUI. Rode `wrangler d1 create neuroped-db` e cole o id retornado.');
+}
+if (wrangler.includes('COLOCAR_DATABASE_ID_AQUI') && process.env.CI === 'true') {
+  errors.push('Em CI mas wrangler.toml nao foi patched antes deste check (deveria ter ID real). Verifique a ordem das steps.');
 }
 if (!existsSync('schema.sql')) {
   errors.push('schema.sql ausente.');

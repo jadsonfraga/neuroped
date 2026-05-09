@@ -1,24 +1,22 @@
-# Deploy NeuroPed para Cloudflare Pages
+# Deploy NeuroPed para Cloudflare Pages (autossuficiente)
 #
-# Pre-requisitos:
-#   - Secret CLOUDFLARE_API_TOKEN com permissoes Pages: Edit + D1: Edit.
-#   - Secret CLOUDFLARE_ACCOUNT_ID.
-#   - wrangler.toml com database_id real (NAO o placeholder).
+# Pre-requisitos (secrets no repo, em Settings > Secrets and variables > Actions):
+#   - CLOUDFLARE_API_TOKEN  (Pages: Edit, D1: Edit, Account: Read)
+#   - CLOUDFLARE_ACCOUNT_ID
+# Opcional (gerado/criado pelo workflow se ausente):
+#   - NEUROPED_D1_DATABASE_ID  (se nao existir, o workflow cria o D1 e usa o id retornado)
+#   - NEUROPED_APP_TOKEN       (se nao existir, o workflow gera um e configura como secret do projeto Pages)
 #
-# Disparo:
-#   - Manual via "Run workflow"
-#   - Push em branch main quando ENABLE_AUTO_DEPLOY=true
-#
-# Nao remove o deploy.yml de GitHub Pages: ambos podem coexistir, mas o
-# canonico para producao deve ser apenas um. Defina via env de pages.
+# Triggers:
+#   - push em main
+#   - workflow_dispatch (botao manual)
 
 name: Deploy NeuroPed to Cloudflare Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-  # Para ativar push automatico: descomente abaixo apos validar deploy manual.
-  # push:
-  #   branches: [main]
 
 permissions:
   contents: read
@@ -28,10 +26,14 @@ concurrency:
   group: cloudflare-pages
   cancel-in-progress: false
 
+env:
+  CF_PROJECT: neuroped
+  CF_D1_NAME: neuroped-db
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -40,18 +42,102 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
-      - name: Test (static + typecheck)
+      - name: Static checks (test + typecheck)
         run: npm test
 
+      - name: Resolve D1 database id (existente ou criar)
+        id: d1
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PRESET_ID: ${{ secrets.NEUROPED_D1_DATABASE_ID }}
+        run: |
+          set -euo pipefail
+          if [ -n "${PRESET_ID:-}" ]; then
+            echo "Usando NEUROPED_D1_DATABASE_ID do secret."
+            echo "id=${PRESET_ID}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          AUTH="Authorization: Bearer ${CF_TOKEN}"
+          API="https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database"
+          existing=$(curl -fsS -H "$AUTH" "$API?name=${CF_D1_NAME}" | jq -r '.result[]? | select(.name=="'"${CF_D1_NAME}"'") | .uuid' | head -1)
+          if [ -n "$existing" ]; then
+            echo "D1 existente: $existing"
+            echo "id=$existing" >> "$GITHUB_OUTPUT"
+          else
+            echo "Criando D1 ${CF_D1_NAME}..."
+            created=$(curl -fsS -H "$AUTH" -H "Content-Type: application/json" -X POST "$API" -d "{\"name\":\"${CF_D1_NAME}\"}" | jq -r '.result.uuid')
+            if [ -z "$created" ] || [ "$created" = "null" ]; then
+              echo "Falha ao criar D1." >&2
+              exit 1
+            fi
+            echo "D1 criado: $created"
+            echo "id=$created" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Patch wrangler.toml com database_id real
+        env:
+          DBID: ${{ steps.d1.outputs.id }}
+        run: |
+          set -euo pipefail
+          [ -n "$DBID" ] || { echo "DBID vazio"; exit 1; }
+          sed -i "s|COLOCAR_DATABASE_ID_AQUI|${DBID}|" wrangler.toml
+          grep -q "$DBID" wrangler.toml || { echo "patch falhou"; exit 1; }
+          echo "wrangler.toml patched."
+
       - name: Pre-deploy check
+        env:
+          CI: 'true'
         run: node scripts/predeploy-check.mjs
 
-      - name: Deploy to Cloudflare Pages
+      - name: Aplicar schema D1 (idempotente)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name neuroped --branch ${{ github.ref_name }}
+          command: d1 execute ${{ env.CF_D1_NAME }} --file=./schema.sql --remote
+
+      - name: Deploy para Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy . --project-name ${{ env.CF_PROJECT }} --branch ${{ github.ref_name }}
+
+      - name: Configurar APP_TOKEN como Pages secret (so primeira vez)
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PRESET_TOKEN: ${{ secrets.NEUROPED_APP_TOKEN }}
+        run: |
+          set -euo pipefail
+          AUTH="Authorization: Bearer ${CF_TOKEN}"
+          API="https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/pages/projects/${CF_PROJECT}/env"
+          # Verifica se ja existe um APP_TOKEN configurado (para nao sobrescrever em cada deploy)
+          present=$(curl -fsS -H "$AUTH" "$API" | jq -r '.result.deployment_configs.production.env_vars.APP_TOKEN // empty')
+          if [ -n "$present" ]; then
+            echo "APP_TOKEN ja configurado em producao."
+            exit 0
+          fi
+          token="${PRESET_TOKEN:-$(openssl rand -hex 32)}"
+          echo "Configurando APP_TOKEN no projeto Pages (sem expor o valor nos logs)."
+          curl -fsS -H "$AUTH" -H "Content-Type: application/json" -X PATCH "$API" \
+            -d "{\"deployment_configs\":{\"production\":{\"env_vars\":{\"APP_TOKEN\":{\"type\":\"secret_text\",\"value\":\"${token}\"}}}}}" \
+            > /dev/null
+          echo "APP_TOKEN configurado."
+
+      - name: Resumo do deploy
+        if: always()
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          AUTH="Authorization: Bearer ${CF_TOKEN}"
+          API="https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/pages/projects/${CF_PROJECT}"
+          curl -fsS -H "$AUTH" "$API" | jq -r '"Production URL: " + (.result.subdomain // "n/a") + ".pages.dev"' || true
+          curl -fsS -H "$AUTH" "$API/deployments?per_page=1" | jq -r '.result[0] | "Latest deployment: " + .url + "  status=" + .latest_stage.status' || true
