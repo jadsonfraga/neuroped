@@ -1,0 +1,1482 @@
+import { useState, useCallback } from "react";
+import {
+  User, Users, Baby, Phone, Mail, Stethoscope, FileText, PlusCircle, Trash2,
+  Activity, Brain, MessageSquare, BookOpen, Pill, Dumbbell, FlaskConical,
+  Printer, Copy, CheckCircle2, ChevronRight, AlertTriangle, Clock,
+  TrendingUp, Zap, Heart, School, Calendar, ClipboardList, MoreHorizontal
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const today = new Date().toISOString().split("T")[0];
+
+function uid() {
+  return Math.random().toString(36).slice(2, 9);
+}
+
+// ─── types ──────────────────────────────────────────────────────────────────
+
+interface Medicacao {
+  id: string;
+  nome: string;
+  dose: string;
+  posologia: string;
+  peso: string;
+  dataInicio: string;
+  objetivo: string;
+  resposta: string;
+  efeitosAdversos: string;
+}
+
+interface Terapia {
+  id: string;
+  tipo: string;
+  profissional: string;
+  frequencia: string;
+  local: string;
+  objetivo: string;
+  inicio: string;
+  evolucao: string;
+}
+
+interface Exame {
+  id: string;
+  tipo: string;
+  data: string;
+  resultado: string;
+  status: string;
+}
+
+interface Marcos {
+  sustentouCabeca: string;
+  sentouSemApoio: string;
+  engatinhou: string;
+  ficouEmPe: string;
+  andouSozinho: string;
+  balbucio: string;
+  primeiraspalavras: string;
+  frasesDuasPalavras: string;
+  linguagemFluente: string;
+  sorrisoSocial: string;
+  apontar: string;
+  esfincteriDiurno: string;
+  esfincteriNoturno: string;
+  regressao: string;
+  regressaoDesc: string;
+  crises: string;
+  crisesDesc: string;
+}
+
+interface Identificacao {
+  nomeCompleto: string;
+  dataNascimento: string;
+  sexo: string;
+  nomeResponsavel: string;
+  parentesco: string;
+  telefone: string;
+  email: string;
+  convenio: string;
+  medicoResponsavel: string;
+  cid: string;
+  hipoteseDiagnostica: string;
+  dataConsulta: string;
+}
+
+interface Anamnese {
+  queixaPrincipal: string;
+  gestacional: string;
+  perinatal: string;
+  patologicos: string;
+  familiares: string;
+  escolar: string;
+}
+
+// ─── milestone definitions ───────────────────────────────────────────────────
+
+interface MilestoneConfig {
+  key: keyof Marcos;
+  label: string;
+  domain: "Motor" | "Linguagem" | "Social/Adaptativo";
+  greenMin: number;
+  greenMax: number;
+  yellowMax: number;
+  unit?: string;
+}
+
+const milestoneConfigs: MilestoneConfig[] = [
+  { key: "sustentouCabeca",    label: "Sustentou a cabeça",           domain: "Motor",             greenMin: 2, greenMax: 4,  yellowMax: 6  },
+  { key: "sorrisoSocial",      label: "Sorriso social",               domain: "Social/Adaptativo", greenMin: 1, greenMax: 3,  yellowMax: 5  },
+  { key: "balbucio",           label: "Balbucio",                     domain: "Linguagem",         greenMin: 4, greenMax: 9,  yellowMax: 12 },
+  { key: "sentouSemApoio",     label: "Sentou sem apoio",             domain: "Motor",             greenMin: 6, greenMax: 8,  yellowMax: 10 },
+  { key: "engatinhou",         label: "Engatinhou",                   domain: "Motor",             greenMin: 7, greenMax: 10, yellowMax: 13 },
+  { key: "ficouEmPe",          label: "Ficou em pé com apoio",        domain: "Motor",             greenMin: 9, greenMax: 12, yellowMax: 15 },
+  { key: "primeiraspalavras",  label: "Primeiras palavras",           domain: "Linguagem",         greenMin: 10, greenMax: 18, yellowMax: 24 },
+  { key: "apontar",            label: "Apontar para pedir",           domain: "Social/Adaptativo", greenMin: 10, greenMax: 14, yellowMax: 18 },
+  { key: "andouSozinho",       label: "Andou sozinho",                domain: "Motor",             greenMin: 12, greenMax: 18, yellowMax: 24 },
+  { key: "frasesDuasPalavras", label: "Frases de 2 palavras",         domain: "Linguagem",         greenMin: 18, greenMax: 30, yellowMax: 36 },
+  { key: "esfincteriDiurno",   label: "Controle esfincteriano diurno",domain: "Social/Adaptativo", greenMin: 24, greenMax: 36, yellowMax: 42 },
+  { key: "linguagemFluente",   label: "Linguagem fluente",            domain: "Linguagem",         greenMin: 30, greenMax: 48, yellowMax: 60 },
+  { key: "esfincteriNoturno",  label: "Controle esfincteriano noturno",domain:"Social/Adaptativo", greenMin: 36, greenMax: 60, yellowMax: 72 },
+];
+
+type MilestoneStatus = "normal" | "borderline" | "delayed" | "missing";
+
+function getMilestoneStatus(value: string, cfg: MilestoneConfig): MilestoneStatus {
+  const v = value.trim().toLowerCase();
+  if (!v || v === "") return "missing";
+  if (v === "não engatinhou" || v === "nao engatinhou") return "borderline";
+  const n = parseInt(v, 10);
+  if (isNaN(n)) return "missing";
+  if (n <= cfg.greenMax) return "normal";
+  if (n <= cfg.yellowMax) return "borderline";
+  return "delayed";
+}
+
+const statusColors: Record<MilestoneStatus, { dot: string; bg: string; text: string; label: string }> = {
+  normal:     { dot: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-400", label: "Adequado"  },
+  borderline: { dot: "bg-amber-400",   bg: "bg-amber-50 dark:bg-amber-950/30",     text: "text-amber-700 dark:text-amber-400",     label: "Limítrofe" },
+  delayed:    { dot: "bg-red-500",      bg: "bg-red-50 dark:bg-red-950/30",         text: "text-red-700 dark:text-red-400",         label: "Atrasado"  },
+  missing:    { dot: "bg-gray-300",     bg: "bg-gray-50 dark:bg-gray-900/30",       text: "text-gray-400",                          label: "—"         },
+};
+
+const domainColors: Record<string, string> = {
+  "Motor":            "from-blue-500 to-cyan-500",
+  "Linguagem":        "from-violet-500 to-purple-500",
+  "Social/Adaptativo":"from-pink-500 to-rose-500",
+};
+const domainBg: Record<string, string> = {
+  "Motor":            "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300",
+  "Linguagem":        "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300",
+  "Social/Adaptativo":"bg-pink-100 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300",
+};
+
+// ─── Tab completion counters ─────────────────────────────────────────────────
+
+function countIdentificacao(id: Identificacao) {
+  const vals = Object.values(id).filter(v => v.trim() !== "");
+  return vals.length;
+}
+function countAnamnese(a: Anamnese) {
+  return Object.values(a).filter(v => v.trim() !== "").length;
+}
+function countMarcos(m: Marcos) {
+  const keys: (keyof Marcos)[] = [
+    "sustentouCabeca","sentouSemApoio","engatinhou","ficouEmPe","andouSozinho",
+    "balbucio","primeiraspalavras","frasesDuasPalavras","linguagemFluente",
+    "sorrisoSocial","apontar","esfincteriDiurno","esfincteriNoturno",
+  ];
+  return keys.filter(k => m[k].trim() !== "").length;
+}
+
+// ─── section header helper ────────────────────────────────────────────────────
+
+function SectionHeader({ icon: Icon, title, gradient, count }: {
+  icon: any; title: string; gradient: string; count?: string;
+}) {
+  return (
+    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gradient-to-r ${gradient} text-white shadow-sm mb-4`}>
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="font-semibold text-sm">{title}</span>
+      {count && <Badge className="ml-auto bg-white/25 text-white border-0 text-xs">{count}</Badge>}
+    </div>
+  );
+}
+
+// ─── field row ────────────────────────────────────────────────────────────────
+
+function Field({ label, children, span2 }: { label: string; children: React.ReactNode; span2?: boolean }) {
+  return (
+    <div className={span2 ? "col-span-2" : ""}>
+      <Label className="text-xs font-semibold text-muted-foreground mb-1 block">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+// ─── report generation ────────────────────────────────────────────────────────
+
+function buildReport(
+  id: Identificacao,
+  anamnese: Anamnese,
+  marcos: Marcos,
+  medicacoes: Medicacao[],
+  terapias: Terapia[],
+  exames: Exame[]
+): string {
+  const linha = "─".repeat(60);
+  const dateStr = new Date(id.dataConsulta || today).toLocaleDateString("pt-BR", {
+    day: "2-digit", month: "long", year: "numeric"
+  });
+
+  let r = "";
+  r += `RELATÓRIO MÉDICO — DR. JADSON FRAGA ARAÚJO JÚNIOR\n`;
+  r += `Neuropediatra | CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119\n`;
+  r += `NeuroPed — Escalas de Neuropediatria\n`;
+  r += `${linha}\n\n`;
+
+  r += `IDENTIFICAÇÃO DO PACIENTE\n`;
+  r += `${linha}\n`;
+  r += `Paciente:          ${id.nomeCompleto || "—"}\n`;
+  r += `Data de nasc.:     ${id.dataNascimento ? new Date(id.dataNascimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}\n`;
+  r += `Sexo:              ${id.sexo || "—"}\n`;
+  r += `Responsável:       ${id.nomeResponsavel || "—"} (${id.parentesco || "—"})\n`;
+  r += `Telefone:          ${id.telefone || "—"}\n`;
+  r += `E-mail:            ${id.email || "—"}\n`;
+  r += `Convênio/SUS:      ${id.convenio || "—"}\n`;
+  r += `Médico resp.:      ${id.medicoResponsavel || "—"}\n`;
+  r += `CID principal:     ${id.cid || "—"}\n`;
+  r += `Hipótese diagn.:   ${id.hipoteseDiagnostica || "—"}\n`;
+  r += `Data da consulta:  ${dateStr}\n\n`;
+
+  r += `ANAMNESE\n`;
+  r += `${linha}\n`;
+  if (anamnese.queixaPrincipal) r += `Queixa principal e HDA:\n${anamnese.queixaPrincipal}\n\n`;
+  if (anamnese.gestacional)    r += `Antecedentes gestacionais:\n${anamnese.gestacional}\n\n`;
+  if (anamnese.perinatal)      r += `Antecedentes perinatais:\n${anamnese.perinatal}\n\n`;
+  if (anamnese.patologicos)    r += `Antecedentes patológicos:\n${anamnese.patologicos}\n\n`;
+  if (anamnese.familiares)     r += `Antecedentes familiares:\n${anamnese.familiares}\n\n`;
+  if (anamnese.escolar)        r += `Histórico escolar:\n${anamnese.escolar}\n\n`;
+
+  r += `MARCOS DO NEURODESENVOLVIMENTO\n`;
+  r += `${linha}\n`;
+  const marcoLabels: { label: string; key: keyof Marcos }[] = [
+    { label: "Sustentou a cabeça",             key: "sustentouCabeca"    },
+    { label: "Sentou sem apoio",               key: "sentouSemApoio"     },
+    { label: "Engatinhou",                     key: "engatinhou"         },
+    { label: "Ficou em pé com apoio",          key: "ficouEmPe"          },
+    { label: "Andou sozinho",                  key: "andouSozinho"       },
+    { label: "Balbucio",                       key: "balbucio"           },
+    { label: "Primeiras palavras",             key: "primeiraspalavras"  },
+    { label: "Frases de 2 palavras",           key: "frasesDuasPalavras" },
+    { label: "Linguagem fluente",              key: "linguagemFluente"   },
+    { label: "Sorriso social",                 key: "sorrisoSocial"      },
+    { label: "Apontar para pedir",             key: "apontar"            },
+    { label: "Contr. esfinct. diurno",         key: "esfincteriDiurno"   },
+    { label: "Contr. esfinct. noturno",        key: "esfincteriNoturno"  },
+  ];
+  marcoLabels.forEach(({ label, key }) => {
+    const v = marcos[key];
+    if (v.trim()) {
+      const suffix = /^\d+$/.test(v.trim()) ? " meses" : "";
+      r += `  ${label.padEnd(38)}: ${v}${suffix}\n`;
+    }
+  });
+  if (marcos.regressao === "Sim")
+    r += `  Regressão: SIM — ${marcos.regressaoDesc || "sem descrição"}\n`;
+  if (marcos.crises === "Sim")
+    r += `  Crises convulsivas: SIM — ${marcos.crisesDesc || "sem descrição"}\n`;
+  r += "\n";
+
+  if (medicacoes.length > 0) {
+    r += `MEDICAÇÕES ATUAIS\n`;
+    r += `${linha}\n`;
+    medicacoes.forEach((m, i) => {
+      r += `\n${i + 1}. ${m.nome} ${m.dose} — ${m.posologia}\n`;
+      if (m.peso)        r += `   Peso: ${m.peso} kg${m.nome && m.dose ? ` | mg/kg: ${calcMgKg(m.dose, m.peso)}` : ""}\n`;
+      if (m.dataInicio)  r += `   Início: ${m.dataInicio}\n`;
+      if (m.objetivo)    r += `   Objetivo: ${m.objetivo}\n`;
+      if (m.resposta)    r += `   Resposta: ${m.resposta}\n`;
+      if (m.efeitosAdversos) r += `   Efeitos adversos: ${m.efeitosAdversos}\n`;
+    });
+    r += "\n";
+  }
+
+  if (terapias.length > 0) {
+    r += `TERAPIAS\n`;
+    r += `${linha}\n`;
+    terapias.forEach((t, i) => {
+      r += `\n${i + 1}. ${t.tipo} — ${t.profissional || "—"} | ${t.frequencia || "—"} | ${t.local || "—"}\n`;
+      if (t.objetivo)  r += `   Objetivo: ${t.objetivo}\n`;
+      if (t.inicio)    r += `   Início: ${t.inicio}\n`;
+      if (t.evolucao)  r += `   Evolução: ${t.evolucao}\n`;
+    });
+    r += "\n";
+  }
+
+  if (exames.length > 0) {
+    r += `EXAMES\n`;
+    r += `${linha}\n`;
+    exames.forEach((e, i) => {
+      r += `\n${i + 1}. ${e.tipo} | Data: ${e.data || "—"} | Status: ${e.status || "—"}\n`;
+      if (e.resultado) r += `   Resultado: ${e.resultado}\n`;
+    });
+    r += "\n";
+  }
+
+  r += `${linha}\n`;
+  r += `Dr. Jadson Fraga Araújo Júnior — Neuropediatra\n`;
+  r += `CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119\n`;
+  r += `NeuroPed — Escalas de Neuropediatria\n`;
+  return r;
+}
+
+function calcMgKg(dose: string, peso: string): string {
+  const d = parseFloat(dose.replace(",", "."));
+  const p = parseFloat(peso.replace(",", "."));
+  if (isNaN(d) || isNaN(p) || p === 0) return "—";
+  return (d / p).toFixed(3);
+}
+
+// ─── PRINT WINDOW ─────────────────────────────────────────────────────────────
+
+function printReport(
+  id: Identificacao,
+  anamnese: Anamnese,
+  marcos: Marcos,
+  medicacoes: Medicacao[],
+  terapias: Terapia[],
+  exames: Exame[]
+) {
+  const w = window.open("", "_blank");
+  if (!w) return false;
+
+  const dateStr = new Date(id.dataConsulta || today).toLocaleDateString("pt-BR", {
+    day: "2-digit", month: "long", year: "numeric"
+  });
+  const dn = id.dataNascimento ? new Date(id.dataNascimento + "T12:00:00").toLocaleDateString("pt-BR") : "—";
+
+  const milestoneRows = milestoneConfigs.map(cfg => {
+    const v = marcos[cfg.key];
+    if (!v.trim()) return "";
+    const status = getMilestoneStatus(v, cfg);
+    const col = status === "normal" ? "#059669" : status === "borderline" ? "#d97706" : status === "delayed" ? "#dc2626" : "#9ca3af";
+    const suffix = /^\d+$/.test(v.trim()) ? " m" : "";
+    return `<tr>
+      <td>${cfg.label}</td>
+      <td>${cfg.domain}</td>
+      <td style="font-weight:bold;color:${col}">${v}${suffix}</td>
+      <td style="color:${col}">${statusColors[status].label}</td>
+    </tr>`;
+  }).filter(Boolean).join("");
+
+  const medRows = medicacoes.map((m, i) => `
+    <div class="med-card">
+      <b>${i + 1}. ${m.nome} ${m.dose}</b> &nbsp;—&nbsp; ${m.posologia}<br>
+      ${m.peso ? `<span class="sub">Peso: ${m.peso} kg | mg/kg: ${calcMgKg(m.dose, m.peso)}</span><br>` : ""}
+      ${m.dataInicio ? `<span class="sub">Início: ${m.dataInicio}</span><br>` : ""}
+      ${m.objetivo ? `<span class="sub">Objetivo: ${m.objetivo}</span><br>` : ""}
+      ${m.resposta ? `<span class="sub">Resposta: ${m.resposta}</span><br>` : ""}
+      ${m.efeitosAdversos ? `<span class="sub">Efeitos adversos: ${m.efeitosAdversos}</span>` : ""}
+    </div>
+  `).join("");
+
+  const terRows = terapias.map((t, i) => `
+    <div class="med-card">
+      <b>${i + 1}. ${t.tipo}</b>${t.profissional ? ` — ${t.profissional}` : ""}<br>
+      ${t.frequencia ? `<span class="sub">${t.frequencia}${t.local ? ` | ${t.local}` : ""}</span><br>` : ""}
+      ${t.objetivo ? `<span class="sub">Objetivo: ${t.objetivo}</span><br>` : ""}
+      ${t.inicio ? `<span class="sub">Início: ${t.inicio}</span><br>` : ""}
+      ${t.evolucao ? `<span class="sub">Evolução: ${t.evolucao}</span>` : ""}
+    </div>
+  `).join("");
+
+  const examRows = exames.map((e, i) => `
+    <div class="med-card">
+      <b>${i + 1}. ${e.tipo}</b>${e.data ? ` — ${e.data}` : ""} &nbsp;
+      <span class="badge ${e.status === "Normal" ? "badge-ok" : e.status === "Alterado" ? "badge-err" : "badge-pend"}">${e.status || "Pendente"}</span><br>
+      ${e.resultado ? `<span class="sub">${e.resultado}</span>` : ""}
+    </div>
+  `).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Prontuário — ${id.nomeCompleto || "Paciente"} — ${dateStr}</title>
+<style>
+@page { margin: 2cm; size: A4; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.65; color: #111; }
+.header { border-bottom: 3px solid #7c3aed; padding-bottom: 14px; margin-bottom: 20px; }
+.header h1 { font-size: 15pt; color: #7c3aed; margin-bottom: 2px; }
+.header .sub { font-size: 9pt; color: #555; }
+.section { margin-bottom: 18px; break-inside: avoid; }
+.section h2 { font-size: 11pt; color: #7c3aed; border-bottom: 1px solid #ddd6fe; padding-bottom: 3px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .5px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 9.5pt; }
+.grid2 .row { display: flex; gap: 6px; }
+.grid2 .lbl { color: #555; min-width: 110px; font-size: 9pt; }
+.grid2 .val { font-weight: 600; color: #111; }
+.narrative { font-size: 9.5pt; color: #333; line-height: 1.7; margin-bottom: 8px; }
+.narrative b { color: #7c3aed; }
+table.milestones { width: 100%; border-collapse: collapse; font-size: 9pt; }
+table.milestones th { background: #7c3aed; color: #fff; padding: 5px 10px; text-align: left; }
+table.milestones td { padding: 4px 10px; border-bottom: 1px solid #eee; }
+table.milestones tr:nth-child(even) td { background: #faf5ff; }
+.med-card { background: #faf5ff; border-left: 3px solid #7c3aed; border-radius: 4px; padding: 8px 12px; margin-bottom: 8px; font-size: 9.5pt; }
+.med-card b { color: #4c1d95; }
+.sub { color: #555; font-size: 8.5pt; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 12px; font-size: 8pt; font-weight: bold; }
+.badge-ok { background:#d1fae5; color:#065f46; }
+.badge-err { background:#fee2e2; color:#991b1b; }
+.badge-pend { background:#fef3c7; color:#92400e; }
+.alerts-box { background:#fff7ed; border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; font-size: 9.5pt; }
+.footer { margin-top: 30px; border-top: 2px solid #7c3aed; padding-top: 12px; font-size: 8.5pt; color: #555; text-align: center; }
+.footer .name { font-size: 11pt; font-weight: bold; color: #111; }
+@media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🧠 NeuroPed — Prontuário Clínico</h1>
+  <div class="sub"><b>Dr. Jadson Fraga Araújo Júnior</b> — Neuropediatra | CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119</div>
+  <div class="sub">Data da consulta: ${dateStr}</div>
+</div>
+
+<div class="section">
+  <h2>Identificação do Paciente</h2>
+  <div class="grid2">
+    <div class="row"><span class="lbl">Paciente:</span><span class="val">${id.nomeCompleto || "—"}</span></div>
+    <div class="row"><span class="lbl">Nasc.:</span><span class="val">${dn}</span></div>
+    <div class="row"><span class="lbl">Sexo:</span><span class="val">${id.sexo || "—"}</span></div>
+    <div class="row"><span class="lbl">Responsável:</span><span class="val">${id.nomeResponsavel || "—"} (${id.parentesco || "—"})</span></div>
+    <div class="row"><span class="lbl">Telefone:</span><span class="val">${id.telefone || "—"}</span></div>
+    <div class="row"><span class="lbl">E-mail:</span><span class="val">${id.email || "—"}</span></div>
+    <div class="row"><span class="lbl">Convênio/SUS:</span><span class="val">${id.convenio || "—"}</span></div>
+    <div class="row"><span class="lbl">Médico resp.:</span><span class="val">${id.medicoResponsavel || "—"}</span></div>
+    <div class="row"><span class="lbl">CID:</span><span class="val">${id.cid || "—"}</span></div>
+    <div class="row"><span class="lbl">Hipótese diagn.:</span><span class="val">${id.hipoteseDiagnostica || "—"}</span></div>
+  </div>
+</div>
+
+${[
+  { label: "Queixa Principal e HDA", value: anamnese.queixaPrincipal },
+  { label: "Antecedentes Gestacionais", value: anamnese.gestacional },
+  { label: "Antecedentes Perinatais", value: anamnese.perinatal },
+  { label: "Antecedentes Patológicos", value: anamnese.patologicos },
+  { label: "Antecedentes Familiares", value: anamnese.familiares },
+  { label: "Histórico Escolar", value: anamnese.escolar },
+].filter(s => s.value.trim()).map(s => `
+<div class="section">
+  <h2>${s.label}</h2>
+  <p class="narrative">${s.value.replace(/\n/g, "<br>")}</p>
+</div>`).join("")}
+
+${milestoneRows ? `
+<div class="section">
+  <h2>Marcos do Neurodesenvolvimento</h2>
+  <table class="milestones">
+    <thead><tr><th>Marco</th><th>Domínio</th><th>Idade</th><th>Status</th></tr></thead>
+    <tbody>${milestoneRows}</tbody>
+  </table>
+  ${marcos.regressao === "Sim" ? `<div class="alerts-box" style="margin-top:8px"><b>⚠ Regressão:</b> ${marcos.regressaoDesc || "Sim"}</div>` : ""}
+  ${marcos.crises === "Sim" ? `<div class="alerts-box"><b>⚠ Crises convulsivas:</b> ${marcos.crisesDesc || "Sim"}</div>` : ""}
+</div>` : ""}
+
+${medRows ? `<div class="section"><h2>Medicações Atuais</h2>${medRows}</div>` : ""}
+${terRows ? `<div class="section"><h2>Terapias</h2>${terRows}</div>` : ""}
+${examRows ? `<div class="section"><h2>Exames</h2>${examRows}</div>` : ""}
+
+<div class="footer">
+  <div class="name">Dr. Jadson Fraga Araújo Júnior</div>
+  Neuropediatra<br>
+  CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119<br>
+  NeuroPed — Escalas de Neuropediatria
+</div>
+</body>
+</html>`;
+
+  w.document.write(html);
+  w.document.close();
+  w.onload = () => w.print();
+  return true;
+}
+
+// ─── DEFAULT STATE FACTORIES ──────────────────────────────────────────────────
+
+function emptyMed(): Medicacao {
+  return { id: uid(), nome: "", dose: "", posologia: "", peso: "", dataInicio: "", objetivo: "", resposta: "", efeitosAdversos: "" };
+}
+function emptyTerapia(): Terapia {
+  return { id: uid(), tipo: "", profissional: "", frequencia: "", local: "", objetivo: "", inicio: "", evolucao: "" };
+}
+function emptyExame(): Exame {
+  return { id: uid(), tipo: "", data: "", resultado: "", status: "" };
+}
+function defaultMarcos(): Marcos {
+  return {
+    sustentouCabeca: "", sentouSemApoio: "", engatinhou: "", ficouEmPe: "", andouSozinho: "",
+    balbucio: "", primeiraspalavras: "", frasesDuasPalavras: "", linguagemFluente: "",
+    sorrisoSocial: "", apontar: "", esfincteriDiurno: "", esfincteriNoturno: "",
+    regressao: "Não", regressaoDesc: "", crises: "Não", crisesDesc: "",
+  };
+}
+function defaultId(): Identificacao {
+  return {
+    nomeCompleto: "", dataNascimento: "", sexo: "", nomeResponsavel: "", parentesco: "",
+    telefone: "", email: "", convenio: "", medicoResponsavel: "Dr. Jadson Fraga",
+    cid: "", hipoteseDiagnostica: "", dataConsulta: today,
+  };
+}
+function defaultAnamnese(): Anamnese {
+  return { queixaPrincipal: "", gestacional: "", perinatal: "", patologicos: "", familiares: "", escolar: "" };
+}
+
+// ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
+
+export default function ProntuarioPage() {
+  const { toast } = useToast();
+
+  const [identificacao, setId] = useState<Identificacao>(defaultId);
+  const [anamnese, setAnamnese] = useState<Anamnese>(defaultAnamnese);
+  const [marcos, setMarcos] = useState<Marcos>(defaultMarcos);
+  const [medicacoes, setMedicacoes] = useState<Medicacao[]>([]);
+  const [terapias, setTerapias] = useState<Terapia[]>([]);
+  const [exames, setExames] = useState<Exame[]>([]);
+  const [copied, setCopied] = useState(false);
+
+  // ── updaters ──
+  const updId = useCallback((field: keyof Identificacao, val: string) =>
+    setId(p => ({ ...p, [field]: val })), []);
+  const updAn = useCallback((field: keyof Anamnese, val: string) =>
+    setAnamnese(p => ({ ...p, [field]: val })), []);
+  const updMarco = useCallback((field: keyof Marcos, val: string) =>
+    setMarcos(p => ({ ...p, [field]: val })), []);
+
+  // ── medication handlers ──
+  const addMed = () => setMedicacoes(p => [...p, emptyMed()]);
+  const updMed = (id: string, field: keyof Medicacao, val: string) =>
+    setMedicacoes(p => p.map(m => m.id === id ? { ...m, [field]: val } : m));
+  const removeMed = (id: string) => setMedicacoes(p => p.filter(m => m.id !== id));
+
+  // ── therapy handlers ──
+  const addTer = () => setTerapias(p => [...p, emptyTerapia()]);
+  const updTer = (id: string, field: keyof Terapia, val: string) =>
+    setTerapias(p => p.map(t => t.id === id ? { ...t, [field]: val } : t));
+  const removeTer = (id: string) => setTerapias(p => p.filter(t => t.id !== id));
+
+  // ── exam handlers ──
+  const addExame = () => setExames(p => [...p, emptyExame()]);
+  const updExame = (id: string, field: keyof Exame, val: string) =>
+    setExames(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
+  const removeExame = (id: string) => setExames(p => p.filter(e => e.id !== id));
+
+  // ── report ──
+  const reportText = buildReport(identificacao, anamnese, marcos, medicacoes, terapias, exames);
+
+  const handlePrint = () => {
+    const ok = printReport(identificacao, anamnese, marcos, medicacoes, terapias, exames);
+    if (!ok) toast({ title: "Erro", description: "Habilite pop-ups para esta página.", variant: "destructive" });
+    else toast({ title: "Impressão", description: "Janela de impressão aberta." });
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setCopied(true);
+      toast({ title: "Copiado!", description: "Relatório copiado para a área de transferência." });
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      toast({ title: "Erro", description: "Não foi possível copiar.", variant: "destructive" });
+    }
+  };
+
+  // ── tab badge counts ──
+  const idCount = countIdentificacao(identificacao);
+  const anCount = countAnamnese(anamnese);
+  const mkCount = countMarcos(marcos);
+
+  // ── visual timeline ──
+  const timelineItems = milestoneConfigs
+    .map(cfg => {
+      const v = marcos[cfg.key];
+      const status = getMilestoneStatus(v, cfg);
+      const numMonths = parseInt(v, 10);
+      return { cfg, v, status, numMonths: isNaN(numMonths) ? null : numMonths };
+    })
+    .filter(item => item.status !== "missing")
+    .sort((a, b) => {
+      if (a.numMonths === null && b.numMonths === null) return 0;
+      if (a.numMonths === null) return 1;
+      if (b.numMonths === null) return -1;
+      return a.numMonths - b.numMonths;
+    });
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-violet-50/60 via-purple-50/30 to-background dark:from-violet-950/20 dark:via-purple-950/10 dark:to-background pb-16">
+      {/* ── page header ── */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3 shadow-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md">
+              <ClipboardList className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-foreground leading-tight">Prontuário Clínico</h1>
+              <p className="text-xs text-muted-foreground">Neuropediatria — sessão local</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs border-violet-300 text-violet-700 dark:text-violet-300 hidden sm:flex">
+              <Clock className="w-3 h-3 mr-1" />
+              Sessão temporária
+            </Badge>
+            <Button
+              size="sm"
+              onClick={handlePrint}
+              className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-1.5 shadow-sm"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Gerar Relatório</span>
+              <span className="sm:hidden">Imprimir</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── main content ── */}
+      <div className="max-w-4xl mx-auto px-4 pt-6">
+        <Tabs defaultValue="identificacao" className="space-y-6">
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1.5 bg-muted/80 rounded-xl w-full">
+            <TabsTrigger value="identificacao" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+              <User className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden sm:inline">Identificação</span>
+              <span className="sm:hidden">ID</span>
+              {idCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{idCount}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="anamnese" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+              <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Anamnese</span>
+              {anCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{anCount}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="marcos" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+              <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden sm:inline">Marcos</span>
+              <span className="sm:hidden">Dev</span>
+              {mkCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{mkCount}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="medicacoes" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+              <Pill className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden sm:inline">Medicações</span>
+              <span className="sm:hidden">Med</span>
+              {medicacoes.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{medicacoes.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="terapias" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+              <Heart className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden sm:inline">Terapias</span>
+              <span className="sm:hidden">Ter</span>
+              {terapias.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{terapias.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="exames" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+              <FlaskConical className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Exames</span>
+              {exames.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{exames.length}</Badge>}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ══════════════════════════════════════════════
+              TAB 1: IDENTIFICAÇÃO
+          ══════════════════════════════════════════════ */}
+          <TabsContent value="identificacao" className="space-y-4">
+            <Card className="border-violet-200/60 dark:border-violet-800/40">
+              <CardContent className="p-5">
+                <SectionHeader icon={Baby} title="Dados da Criança" gradient="from-violet-600 to-purple-700" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Nome completo da criança" span2>
+                    <Input
+                      placeholder="Nome completo"
+                      value={identificacao.nomeCompleto}
+                      onChange={e => updId("nomeCompleto", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="Data de nascimento">
+                    <Input
+                      type="date"
+                      value={identificacao.dataNascimento}
+                      onChange={e => updId("dataNascimento", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="Sexo">
+                    <Select value={identificacao.sexo} onValueChange={v => updId("sexo", v)}>
+                      <SelectTrigger className="border-violet-200 dark:border-violet-800 focus:ring-violet-500">
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Masculino">Masculino</SelectItem>
+                        <SelectItem value="Feminino">Feminino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-violet-200/60 dark:border-violet-800/40">
+              <CardContent className="p-5">
+                <SectionHeader icon={User} title="Responsável" gradient="from-purple-600 to-fuchsia-600" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Nome do responsável">
+                    <Input
+                      placeholder="Nome completo"
+                      value={identificacao.nomeResponsavel}
+                      onChange={e => updId("nomeResponsavel", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="Parentesco">
+                    <Select value={identificacao.parentesco} onValueChange={v => updId("parentesco", v)}>
+                      <SelectTrigger className="border-violet-200 dark:border-violet-800">
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mãe">Mãe</SelectItem>
+                        <SelectItem value="Pai">Pai</SelectItem>
+                        <SelectItem value="Avó">Avó</SelectItem>
+                        <SelectItem value="Avô">Avô</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Telefone">
+                    <Input
+                      placeholder="(81) 99999-9999"
+                      value={identificacao.telefone}
+                      onChange={e => updId("telefone", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="E-mail">
+                    <Input
+                      type="email"
+                      placeholder="email@exemplo.com"
+                      value={identificacao.email}
+                      onChange={e => updId("email", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="Convênio / SUS">
+                    <Input
+                      placeholder="Ex: Unimed, SUS..."
+                      value={identificacao.convenio}
+                      onChange={e => updId("convenio", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-violet-200/60 dark:border-violet-800/40">
+              <CardContent className="p-5">
+                <SectionHeader icon={Stethoscope} title="Dados Clínicos" gradient="from-indigo-600 to-violet-700" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Médico responsável">
+                    <Input
+                      value={identificacao.medicoResponsavel}
+                      onChange={e => updId("medicoResponsavel", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="Data da consulta">
+                    <Input
+                      type="date"
+                      value={identificacao.dataConsulta}
+                      onChange={e => updId("dataConsulta", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="CID principal">
+                    <Input
+                      placeholder="Ex: F84.0"
+                      value={identificacao.cid}
+                      onChange={e => updId("cid", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                  <Field label="Hipótese diagnóstica" span2>
+                    <Input
+                      placeholder="Ex: TEA, TDAH, Epilepsia..."
+                      value={identificacao.hipoteseDiagnostica}
+                      onChange={e => updId("hipoteseDiagnostica", e.target.value)}
+                      className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                    />
+                  </Field>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ══════════════════════════════════════════════
+              TAB 2: ANAMNESE
+          ══════════════════════════════════════════════ */}
+          <TabsContent value="anamnese" className="space-y-4">
+            {([
+              {
+                key: "queixaPrincipal" as keyof Anamnese,
+                title: "Queixa Principal e HDA",
+                icon: MessageSquare,
+                gradient: "from-violet-600 to-purple-700",
+                placeholder: "Descreva a queixa principal e história da doença atual..."
+              },
+              {
+                key: "gestacional" as keyof Anamnese,
+                title: "Antecedentes Gestacionais",
+                icon: Baby,
+                gradient: "from-pink-500 to-rose-600",
+                placeholder: "Pré-natal, intercorrências, uso de medicações, infecções, TORCH..."
+              },
+              {
+                key: "perinatal" as keyof Anamnese,
+                title: "Antecedentes Perinatais",
+                icon: Activity,
+                gradient: "from-orange-500 to-amber-600",
+                placeholder: "Tipo de parto, IG (semanas), peso ao nascer, Apgar, UTI neonatal, icterícia..."
+              },
+              {
+                key: "patologicos" as keyof Anamnese,
+                title: "Antecedentes Patológicos",
+                icon: AlertTriangle,
+                gradient: "from-red-500 to-rose-600",
+                placeholder: "Internações, cirurgias, alergias, comorbidades..."
+              },
+              {
+                key: "familiares" as keyof Anamnese,
+                title: "Antecedentes Familiares",
+                icon: Users,
+                gradient: "from-teal-500 to-cyan-600",
+                placeholder: "TEA, TDAH, epilepsia, DI, transtornos psiquiátricos, consanguinidade..."
+              },
+              {
+                key: "escolar" as keyof Anamnese,
+                title: "Histórico Escolar",
+                icon: School,
+                gradient: "from-blue-500 to-indigo-600",
+                placeholder: "Escola atual, série, AEE, PEI, adaptações curriculares, queixas da escola..."
+              },
+            ] as { key: keyof Anamnese; title: string; icon: any; gradient: string; placeholder: string }[]).map(section => (
+              <Card key={section.key} className="border-violet-200/60 dark:border-violet-800/40">
+                <CardContent className="p-5">
+                  <SectionHeader icon={section.icon} title={section.title} gradient={section.gradient} />
+                  <Textarea
+                    placeholder={section.placeholder}
+                    value={anamnese[section.key]}
+                    onChange={e => updAn(section.key, e.target.value)}
+                    rows={4}
+                    className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500 resize-none text-sm"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          {/* ══════════════════════════════════════════════
+              TAB 3: MARCOS DO DESENVOLVIMENTO
+          ══════════════════════════════════════════════ */}
+          <TabsContent value="marcos" className="space-y-4">
+            {/* Input cards by domain */}
+            {([
+              {
+                domain: "Motor" as const,
+                icon: Dumbbell,
+                gradient: "from-blue-500 to-cyan-600",
+                fields: [
+                  { key: "sustentouCabeca" as keyof Marcos, label: "Sustentou a cabeça", ref: "esperado 3-4m" },
+                  { key: "sentouSemApoio" as keyof Marcos, label: "Sentou sem apoio", ref: "esperado 6-8m" },
+                  { key: "engatinhou" as keyof Marcos, label: "Engatinhou", ref: "esperado 8-10m" },
+                  { key: "ficouEmPe" as keyof Marcos, label: "Ficou em pé com apoio", ref: "esperado 9-12m" },
+                  { key: "andouSozinho" as keyof Marcos, label: "Andou sozinho", ref: "esperado 12-18m" },
+                ]
+              },
+              {
+                domain: "Linguagem" as const,
+                icon: MessageSquare,
+                gradient: "from-violet-500 to-purple-700",
+                fields: [
+                  { key: "balbucio" as keyof Marcos, label: "Balbucio", ref: "esperado 6-9m" },
+                  { key: "primeiraspalavras" as keyof Marcos, label: "Primeiras palavras", ref: "esperado 12-18m" },
+                  { key: "frasesDuasPalavras" as keyof Marcos, label: "Frases de 2 palavras", ref: "esperado 18-30m" },
+                  { key: "linguagemFluente" as keyof Marcos, label: "Linguagem fluente", ref: "esperado 36-48m" },
+                ]
+              },
+              {
+                domain: "Social/Adaptativo" as const,
+                icon: Heart,
+                gradient: "from-pink-500 to-rose-600",
+                fields: [
+                  { key: "sorrisoSocial" as keyof Marcos, label: "Sorriso social", ref: "esperado 1-3m" },
+                  { key: "apontar" as keyof Marcos, label: "Apontar para pedir", ref: "esperado 10-14m" },
+                  { key: "esfincteriDiurno" as keyof Marcos, label: "Controle esfincteriano diurno", ref: "esperado 24-36m" },
+                  { key: "esfincteriNoturno" as keyof Marcos, label: "Controle esfincteriano noturno", ref: "esperado 36-60m" },
+                ]
+              },
+            ] as { domain: "Motor"|"Linguagem"|"Social/Adaptativo"; icon: any; gradient: string; fields: {key: keyof Marcos; label: string; ref: string}[] }[]).map(domainSection => (
+              <Card key={domainSection.domain} className="border-violet-200/60 dark:border-violet-800/40">
+                <CardContent className="p-5">
+                  <SectionHeader icon={domainSection.icon} title={`Domínio: ${domainSection.domain}`} gradient={domainSection.gradient} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {domainSection.fields.map(f => {
+                      const cfg = milestoneConfigs.find(c => c.key === f.key);
+                      const status = cfg ? getMilestoneStatus(marcos[f.key], cfg) : "missing";
+                      const sc = statusColors[status];
+                      return (
+                        <div key={f.key} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-semibold text-muted-foreground">{f.label}</Label>
+                            {status !== "missing" && (
+                              <Badge className={`text-[10px] px-1.5 py-0 h-4 border-0 ${sc.bg} ${sc.text}`}>
+                                {sc.label}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <Input
+                              placeholder={f.ref}
+                              value={marcos[f.key]}
+                              onChange={e => updMarco(f.key, e.target.value)}
+                              className={`border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500 pr-8 text-sm ${
+                                status === "normal" ? "border-l-2 border-l-emerald-500" :
+                                status === "borderline" ? "border-l-2 border-l-amber-400" :
+                                status === "delayed" ? "border-l-2 border-l-red-500" : ""
+                              }`}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">m</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* Alertas */}
+            <Card className="border-amber-200/60 dark:border-amber-800/40">
+              <CardContent className="p-5">
+                <SectionHeader icon={AlertTriangle} title="Alertas" gradient="from-amber-500 to-orange-600" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Field label="Regressão de marcos?">
+                      <Select value={marcos.regressao} onValueChange={v => updMarco("regressao", v)}>
+                        <SelectTrigger className="border-amber-200 dark:border-amber-800">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Não">Não</SelectItem>
+                          <SelectItem value="Sim">Sim</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    {marcos.regressao === "Sim" && (
+                      <Textarea
+                        placeholder="Descreva: qual marco, com que idade, contexto..."
+                        value={marcos.regressaoDesc}
+                        onChange={e => updMarco("regressaoDesc", e.target.value)}
+                        rows={3}
+                        className="border-amber-200 dark:border-amber-800 focus-visible:ring-amber-500 resize-none text-sm"
+                      />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Field label="Crises convulsivas?">
+                      <Select value={marcos.crises} onValueChange={v => updMarco("crises", v)}>
+                        <SelectTrigger className="border-amber-200 dark:border-amber-800">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Não">Não</SelectItem>
+                          <SelectItem value="Sim">Sim</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    {marcos.crises === "Sim" && (
+                      <Textarea
+                        placeholder="Idade de início, tipo, frequência, medicação em uso..."
+                        value={marcos.crisesDesc}
+                        onChange={e => updMarco("crisesDesc", e.target.value)}
+                        rows={3}
+                        className="border-amber-200 dark:border-amber-800 focus-visible:ring-amber-500 resize-none text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Visual Timeline */}
+            {timelineItems.length > 0 && (
+              <Card className="border-violet-200/60 dark:border-violet-800/40">
+                <CardHeader className="pb-2 pt-5 px-5">
+                  <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-violet-600" />
+                    Linha do Tempo Visual
+                  </CardTitle>
+                  <div className="flex items-center gap-3 mt-2">
+                    {(["normal", "borderline", "delayed"] as MilestoneStatus[]).map(s => (
+                      <div key={s} className="flex items-center gap-1.5">
+                        <span className={`w-2.5 h-2.5 rounded-full ${statusColors[s].dot}`} />
+                        <span className="text-xs text-muted-foreground">{statusColors[s].label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardHeader>
+                <CardContent className="px-5 pb-5">
+                  <div className="relative">
+                    {/* vertical rail */}
+                    <div className="absolute left-[18px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-violet-300 via-purple-200 to-violet-100 dark:from-violet-700 dark:via-purple-800 dark:to-violet-900 rounded-full" />
+
+                    <div className="space-y-3 pl-10">
+                      {timelineItems.map(({ cfg, v, status }) => {
+                        const sc = statusColors[status];
+                        const dbg = domainBg[cfg.domain];
+                        const suffix = /^\d+$/.test(v.trim()) ? " m" : "";
+                        return (
+                          <div key={cfg.key} className="relative flex items-start gap-3">
+                            {/* dot */}
+                            <div className={`absolute -left-[28px] w-5 h-5 rounded-full ${sc.dot} border-2 border-background shadow-sm flex items-center justify-center flex-shrink-0 top-0.5`}>
+                              <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                            </div>
+                            <div className={`flex-1 rounded-lg p-2.5 ${sc.bg} border border-transparent`}>
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <span className="text-xs font-semibold text-foreground">{cfg.label}</span>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`text-[10px] px-2 py-0 h-5 border-0 ${dbg}`}>{cfg.domain}</Badge>
+                                  <span className={`text-sm font-bold ${sc.text}`}>{v}{suffix}</span>
+                                </div>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Esperado: {cfg.greenMin}–{cfg.greenMax}m &nbsp;·&nbsp; {sc.label}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* ══════════════════════════════════════════════
+              TAB 4: MEDICAÇÕES
+          ══════════════════════════════════════════════ */}
+          <TabsContent value="medicacoes" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Medicações Atuais</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{medicacoes.length} medicação(ões) registrada(s)</p>
+              </div>
+              <Button
+                onClick={addMed}
+                size="sm"
+                className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-1.5 shadow-sm"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Adicionar medicação
+              </Button>
+            </div>
+
+            {medicacoes.length === 0 && (
+              <Card className="border-dashed border-violet-200 dark:border-violet-800">
+                <CardContent className="p-8 flex flex-col items-center gap-2">
+                  <Pill className="w-8 h-8 text-violet-300 dark:text-violet-700" />
+                  <p className="text-sm text-muted-foreground text-center">Nenhuma medicação adicionada ainda.</p>
+                  <p className="text-xs text-muted-foreground text-center">Clique em "Adicionar medicação" para começar.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {medicacoes.map((med, idx) => {
+              const mgkg = calcMgKg(med.dose, med.peso);
+              return (
+                <Card key={med.id} className="border-violet-200/60 dark:border-violet-800/40">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                        {idx + 1}
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{med.nome || `Medicação ${idx + 1}`}</span>
+                      {med.resposta && (
+                        <Badge className={`ml-auto text-xs border-0 ${
+                          med.resposta === "Boa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" :
+                          med.resposta === "Parcial" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" :
+                          med.resposta === "Piora" ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
+                          "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                        }`}>{med.resposta}</Badge>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-7 h-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 ml-auto"
+                        onClick={() => removeMed(med.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Field label="Nome da medicação">
+                        <Input
+                          placeholder="Ex: Risperidona"
+                          value={med.nome}
+                          onChange={e => updMed(med.id, "nome", e.target.value)}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                        />
+                      </Field>
+                      <Field label="Dose">
+                        <Input
+                          placeholder="Ex: 0,5mg"
+                          value={med.dose}
+                          onChange={e => updMed(med.id, "dose", e.target.value)}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                        />
+                      </Field>
+                      <Field label="Posologia">
+                        <Input
+                          placeholder="Ex: 1x ao dia, noite"
+                          value={med.posologia}
+                          onChange={e => updMed(med.id, "posologia", e.target.value)}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                        />
+                      </Field>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-muted-foreground">Peso da criança (kg)</Label>
+                        <Input
+                          placeholder="Ex: 18,5"
+                          value={med.peso}
+                          onChange={e => updMed(med.id, "peso", e.target.value)}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                        />
+                        {mgkg !== "—" && (
+                          <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">mg/kg: {mgkg}</p>
+                        )}
+                      </div>
+                      <Field label="Data de início">
+                        <Input
+                          type="date"
+                          value={med.dataInicio}
+                          onChange={e => updMed(med.id, "dataInicio", e.target.value)}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                        />
+                      </Field>
+                      <Field label="Objetivo">
+                        <Input
+                          placeholder="Ex: irritabilidade"
+                          value={med.objetivo}
+                          onChange={e => updMed(med.id, "objetivo", e.target.value)}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500"
+                        />
+                      </Field>
+                      <Field label="Resposta clínica">
+                        <Select value={med.resposta} onValueChange={v => updMed(med.id, "resposta", v)}>
+                          <SelectTrigger className="border-violet-200 dark:border-violet-800">
+                            <SelectValue placeholder="Selecionar..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Boa">✅ Boa</SelectItem>
+                            <SelectItem value="Parcial">🟡 Parcial</SelectItem>
+                            <SelectItem value="Sem resposta">⚪ Sem resposta</SelectItem>
+                            <SelectItem value="Piora">🔴 Piora</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <div className="sm:col-span-2">
+                        <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Efeitos adversos</Label>
+                        <Textarea
+                          placeholder="Descreva efeitos adversos observados..."
+                          value={med.efeitosAdversos}
+                          onChange={e => updMed(med.id, "efeitosAdversos", e.target.value)}
+                          rows={2}
+                          className="border-violet-200 dark:border-violet-800 focus-visible:ring-violet-500 resize-none text-sm"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </TabsContent>
+
+          {/* ══════════════════════════════════════════════
+              TAB 5: TERAPIAS
+          ══════════════════════════════════════════════ */}
+          <TabsContent value="terapias" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Terapias em Andamento</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{terapias.length} terapia(s) registrada(s)</p>
+              </div>
+              <Button
+                onClick={addTer}
+                size="sm"
+                className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white gap-1.5 shadow-sm"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Adicionar terapia
+              </Button>
+            </div>
+
+            {terapias.length === 0 && (
+              <Card className="border-dashed border-pink-200 dark:border-pink-800">
+                <CardContent className="p-8 flex flex-col items-center gap-2">
+                  <Heart className="w-8 h-8 text-pink-300 dark:text-pink-700" />
+                  <p className="text-sm text-muted-foreground text-center">Nenhuma terapia adicionada ainda.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {terapias.map((ter, idx) => (
+              <Card key={ter.id} className="border-pink-200/60 dark:border-pink-800/40">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                      {idx + 1}
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">{ter.tipo || `Terapia ${idx + 1}`}</span>
+                    {ter.frequencia && (
+                      <Badge className="ml-2 bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-400 border-0 text-xs">
+                        {ter.frequencia}
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-7 h-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 ml-auto"
+                      onClick={() => removeTer(ter.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="Tipo de terapia">
+                      <Select value={ter.tipo} onValueChange={v => updTer(ter.id, "tipo", v)}>
+                        <SelectTrigger className="border-pink-200 dark:border-pink-800">
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["ABA","Fonoaudiologia","TO (Terapia Ocupacional)","Psicologia","Psicopedagogia","Fisioterapia","Musicoterapia","AEE","Equoterapia","Outro"].map(t => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Profissional">
+                      <Input
+                        placeholder="Nome do profissional"
+                        value={ter.profissional}
+                        onChange={e => updTer(ter.id, "profissional", e.target.value)}
+                        className="border-pink-200 dark:border-pink-800 focus-visible:ring-pink-500"
+                      />
+                    </Field>
+                    <Field label="Frequência">
+                      <Select value={ter.frequencia} onValueChange={v => updTer(ter.id, "frequencia", v)}>
+                        <SelectTrigger className="border-pink-200 dark:border-pink-800">
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["1x/sem","2x/sem","3x/sem","Semanal","Quinzenal","Mensal"].map(f => (
+                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Local / Clínica">
+                      <Input
+                        placeholder="Nome da clínica ou local"
+                        value={ter.local}
+                        onChange={e => updTer(ter.id, "local", e.target.value)}
+                        className="border-pink-200 dark:border-pink-800 focus-visible:ring-pink-500"
+                      />
+                    </Field>
+                    <Field label="Objetivo">
+                      <Input
+                        placeholder="Ex: comunicação funcional"
+                        value={ter.objetivo}
+                        onChange={e => updTer(ter.id, "objetivo", e.target.value)}
+                        className="border-pink-200 dark:border-pink-800 focus-visible:ring-pink-500"
+                      />
+                    </Field>
+                    <Field label="Início">
+                      <Input
+                        type="date"
+                        value={ter.inicio}
+                        onChange={e => updTer(ter.id, "inicio", e.target.value)}
+                        className="border-pink-200 dark:border-pink-800 focus-visible:ring-pink-500"
+                      />
+                    </Field>
+                    <div className="sm:col-span-2">
+                      <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Evolução</Label>
+                      <Textarea
+                        placeholder="Descreva a evolução clínica com esta terapia..."
+                        value={ter.evolucao}
+                        onChange={e => updTer(ter.id, "evolucao", e.target.value)}
+                        rows={3}
+                        className="border-pink-200 dark:border-pink-800 focus-visible:ring-pink-500 resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          {/* ══════════════════════════════════════════════
+              TAB 6: EXAMES
+          ══════════════════════════════════════════════ */}
+          <TabsContent value="exames" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Exames Complementares</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{exames.length} exame(s) registrado(s)</p>
+              </div>
+              <Button
+                onClick={addExame}
+                size="sm"
+                className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white gap-1.5 shadow-sm"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Adicionar exame
+              </Button>
+            </div>
+
+            {exames.length === 0 && (
+              <Card className="border-dashed border-teal-200 dark:border-teal-800">
+                <CardContent className="p-8 flex flex-col items-center gap-2">
+                  <FlaskConical className="w-8 h-8 text-teal-300 dark:text-teal-700" />
+                  <p className="text-sm text-muted-foreground text-center">Nenhum exame adicionado ainda.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {exames.map((ex, idx) => (
+              <Card key={ex.id} className="border-teal-200/60 dark:border-teal-800/40">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                      {idx + 1}
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">{ex.tipo || `Exame ${idx + 1}`}</span>
+                    {ex.status && (
+                      <Badge className={`ml-auto text-xs border-0 ${
+                        ex.status === "Normal" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" :
+                        ex.status === "Alterado" ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
+                        "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                      }`}>{ex.status}</Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`w-7 h-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 ${ex.status ? "" : "ml-auto"}`}
+                      onClick={() => removeExame(ex.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <Field label="Tipo de exame">
+                      <Select value={ex.tipo} onValueChange={v => updExame(ex.id, "tipo", v)}>
+                        <SelectTrigger className="border-teal-200 dark:border-teal-800">
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            "RM Crânio","EEG","Audiometria","BERA",
+                            "Cariótipo","Microarray","Exoma","Genético outro",
+                            "Lab sangue","Metabólico","Outro"
+                          ].map(t => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Data">
+                      <Input
+                        type="date"
+                        value={ex.data}
+                        onChange={e => updExame(ex.id, "data", e.target.value)}
+                        className="border-teal-200 dark:border-teal-800 focus-visible:ring-teal-500"
+                      />
+                    </Field>
+                    <Field label="Status">
+                      <Select value={ex.status} onValueChange={v => updExame(ex.id, "status", v)}>
+                        <SelectTrigger className="border-teal-200 dark:border-teal-800">
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Pendente">⏳ Pendente</SelectItem>
+                          <SelectItem value="Normal">✅ Normal</SelectItem>
+                          <SelectItem value="Alterado">⚠️ Alterado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <div className="sm:col-span-3">
+                      <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Resultado resumido</Label>
+                      <Textarea
+                        placeholder="Descreva o resultado do exame..."
+                        value={ex.resultado}
+                        onChange={e => updExame(ex.id, "resultado", e.target.value)}
+                        rows={3}
+                        className="border-teal-200 dark:border-teal-800 focus-visible:ring-teal-500 resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+        </Tabs>
+
+        {/* ══════════════════════════════════════════════
+            BOTTOM: GERAR RELATÓRIO
+        ══════════════════════════════════════════════ */}
+        <div className="mt-8">
+          <Card className="border-violet-200/60 dark:border-violet-800/40 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Gerar Relatório Completo</h2>
+                  <p className="text-xs text-muted-foreground">Relatório médico formal com todos os dados desta sessão</p>
+                </div>
+              </div>
+
+              {/* preview */}
+              <div className="rounded-xl bg-background/80 border border-violet-200 dark:border-violet-800 p-4 max-h-48 overflow-y-auto mb-4">
+                <pre className="text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed">
+                  {reportText}
+                </pre>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  size="lg"
+                  onClick={handlePrint}
+                  className="flex-1 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-2 shadow-md h-11"
+                >
+                  <Printer className="w-5 h-5" />
+                  Imprimir / Salvar PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleCopy}
+                  className="flex-1 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/40 gap-2 h-11"
+                >
+                  {copied ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
+                  {copied ? "Copiado!" : "Copiar Texto"}
+                </Button>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground text-center mt-3">
+                Os dados existem apenas nesta sessão. Imprima ou copie antes de fechar a aba.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

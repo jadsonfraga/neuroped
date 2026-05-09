@@ -1,0 +1,634 @@
+import { useState } from "react";
+import { GitBranch, RotateCcw, ChevronRight, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+
+interface TreeOption {
+  label: string;
+  next: string; // node id or "RESULT:type:title|bullet1|bullet2|..."
+}
+
+interface TreeNode {
+  id: string;
+  question: string;
+  info?: string;
+  options: TreeOption[];
+}
+
+interface DecisionTree {
+  id: string;
+  title: string;
+  nodes: TreeNode[];
+}
+
+// ─── TREE 1: Atraso do Desenvolvimento ─────────────────────────────────────
+const tree1: DecisionTree = {
+  id: "atraso",
+  title: "Atraso do Desenvolvimento",
+  nodes: [
+    {
+      id: "root",
+      question: "Qual a idade da criança?",
+      info: "A faixa etária orienta os instrumentos e intervenções mais adequados.",
+      options: [
+        { label: "< 18 meses", next: "lt18m" },
+        { label: "18 meses – 3 anos", next: "18m3a" },
+        { label: "3 – 6 anos", next: "3a6a" },
+        { label: "> 6 anos", next: "gt6a" },
+      ],
+    },
+    {
+      id: "lt18m",
+      question: "Há fatores de risco perinatais?",
+      info: "Ex.: prematuridade <34 sem, RCIU, asfixia neonatal, infecções congênitas, hiperbilirrubinemia grave.",
+      options: [
+        {
+          label: "Sim — fatores de risco presentes",
+          next: "RESULT:red:Encaminhar para Avaliação Especializada|Referência a neuropediatra|Avaliação GMA (General Movements Assessment)|Exame neurológico detalhado|Orientação familiar sobre estimulação|Acompanhamento mensal até 6 meses",
+        },
+        {
+          label: "Não — sem fatores de risco",
+          next: "RESULT:green:Triagem e Acompanhamento|Aplicar triagem Denver II|Orientação parental sobre estimulação|Retorno em 3 meses para reavaliação|Rastrear marcos motores, linguagem e social",
+        },
+      ],
+    },
+    {
+      id: "18m3a",
+      question: "M-CHAT-R/F positivo (≥3 pontos)?",
+      info: "O M-CHAT-R/F é a triagem de referência para TEA entre 16-30 meses. Escores ≥3 indicam risco elevado.",
+      options: [
+        {
+          label: "Sim — M-CHAT-R/F positivo",
+          next: "RESULT:red:Avaliação Multidisciplinar Urgente|Aplicar CARS-2 para caracterizar TEA|Avaliação multidisciplinar (neuro + fono + psico + TO)|Encaminhar para serviço especializado em TEA|Orientar família sobre intervenção precoce|Avaliação auditiva (PEATE/OAE)|Não aguardar — intervenção precoce muda prognóstico",
+        },
+        { label: "Não — M-CHAT-R/F negativo", next: "18m3a_motor" },
+      ],
+    },
+    {
+      id: "18m3a_motor",
+      question: "Há atraso motor (não anda com 18m, não corre com 2a)?",
+      options: [
+        {
+          label: "Sim — atraso motor",
+          next: "RESULT:amber:Investigação Motor e Encaminhamento|Encaminhar para fisioterapia (avaliação AIMS/GMFM)|Aplicar GMFCS para classificar função motora|Considerar RM de crânio|Investigar causas: miopatia, PC, displasia do desenvolvimento|Retorno com fisioterapia em 30 dias",
+        },
+        { label: "Não — sem atraso motor", next: "18m3a_fala" },
+      ],
+    },
+    {
+      id: "18m3a_fala",
+      question: "Há atraso de linguagem (< 10 palavras com 18m, sem frases com 2a)?",
+      options: [
+        {
+          label: "Sim — atraso de linguagem",
+          next: "RESULT:amber:Investigação da Linguagem|Encaminhar para fonoaudiologia|Avaliação auditiva (audiometria / PEATE)|Avaliar compreensão e pragmática|Investigar causas: hipoacusia, TEA, déficit cognitivo|Retorno com fono em 30 dias",
+        },
+        {
+          label: "Não — sem atraso de linguagem",
+          next: "RESULT:green:Reavaliação Programada|Desenvolvimento adequado para a faixa etária|Orientação parental sobre estimulação|Reavaliação em 6 meses|Orientar sobre sinais de alerta para reavaliação antecipada",
+        },
+      ],
+    },
+    {
+      id: "3a6a",
+      question: "Qual a principal queixa clínica?",
+      info: "Identifique a área de maior comprometimento funcional relatada pelos cuidadores e pela escola.",
+      options: [
+        { label: "Comportamento / Emocional", next: "RESULT:amber:Avaliação Comportamental|Aplicar SDQ (Strengths and Difficulties Questionnaire)|Avaliação psicológica completa|Investigar TDAH (SNAP-IV), ansiedade (SCARED), oposição (TOD)|Avaliação de aprendizagem se necessário|Orientação parental e escolar" },
+        { label: "Linguagem / Comunicação", next: "RESULT:amber:Avaliação Fono e Neuro|Encaminhar para fonoaudiologia urgente|Avaliação com neuropediatra|Exame auditivo (audiometria tonal)|Investigar: TEA, apraxia, déficit cognitivo|Retorno coordenado fono + neuro" },
+        { label: "Motor / Coordenação", next: "RESULT:amber:Avaliação Motora|Encaminhar para fisioterapia|Aplicar GMFCS para classificar função motora|Investigar dispraxia do desenvolvimento (TDC)|Avaliação de terapia ocupacional|RM crânio se déficit progressivo" },
+        { label: "Cognitivo / Aprendizagem", next: "RESULT:amber:Avaliação Neuropsicológica|Avaliação neuropsicológica completa (WPPSI / Raven)|Investigar déficit intelectual (DI)|Avaliação pedagógica especializada|Exame auditivo e visual|Encaminhar APAE/serviço especializado se DI confirmado" },
+      ],
+    },
+    {
+      id: "gt6a",
+      question: "Há dificuldade escolar significativa?",
+      info: "Dificuldades em leitura, escrita, matemática ou atenção relatadas pela escola ou família.",
+      options: [
+        {
+          label: "Sim — dificuldade escolar",
+          next: "RESULT:amber:Investigação da Dificuldade Escolar|Aplicar TDE-II (Teste de Desempenho Escolar)|Avaliação psicopedagógica especializada|Investigar: dislexia, discalculia, disgrafia|Avaliação neuropsicológica se necessário|Articulação com escola (relatório e adaptações)",
+        },
+        { label: "Não — sem dificuldade escolar", next: "gt6a_comp" },
+      ],
+    },
+    {
+      id: "gt6a_comp",
+      question: "Há problema de comportamento significativo?",
+      info: "Ex.: agressividade, oposição, agitação, isolamento social, choros frequentes.",
+      options: [
+        {
+          label: "Sim — problema de comportamento",
+          next: "RESULT:amber:Avaliação Comportamental Completa|Aplicar SNAP-IV (TDAH e TOD)|Aplicar SDQ (domínios emocional e comportamental)|Avaliação psicológica|Investigar comorbidades: ansiedade (SCARED), depressão (CDI-2)|Orientação parental e escolar",
+        },
+        {
+          label: "Não — sem problema de comportamento",
+          next: "RESULT:amber:Avaliação Neuropsicológica Completa|Avaliação neuropsicológica completa (WISC-V / Raven)|Investigar déficits sutis de memória, atenção, funções executivas|Avaliação das funções adaptativas (Vineland-3)|Verificar acuidade visual e auditiva|Acompanhamento longitudinal",
+        },
+      ],
+    },
+  ],
+};
+
+// ─── TREE 2: Suspeita de TDAH ───────────────────────────────────────────────
+const tree2: DecisionTree = {
+  id: "tdah",
+  title: "Suspeita de TDAH",
+  nodes: [
+    {
+      id: "root",
+      question: "A criança tem idade ≥ 6 anos?",
+      info: "O diagnóstico de TDAH requer critérios do DSM-5. Antes dos 6 anos, o diagnóstico é mais difícil e exige cautela.",
+      options: [
+        { label: "Sim — ≥ 6 anos", next: "tdah_2ambientes" },
+        {
+          label: "Não — < 6 anos",
+          next: "RESULT:green:Monitoramento e Orientação Comportamental|Não diagnosticar TDAH antes dos 6 anos (risco de superdiagnóstico)|Aplicar M-CHAT e avaliação comportamental|Orientação parental: rotina, limites, estimulação|Reavaliação com 6 anos com instrumentos padronizados|Investigar outras causas: TEA, atraso desenvolvimento, ansiedade",
+        },
+      ],
+    },
+    {
+      id: "tdah_2ambientes",
+      question: "A queixa ocorre em ≥ 2 ambientes (casa E escola)?",
+      info: "O DSM-5 exige sintomas em pelo menos 2 contextos. Queixa apenas da escola ou apenas de casa exige investigação diferencial.",
+      options: [
+        { label: "Sim — queixa em casa e escola", next: "tdah_snap" },
+        {
+          label: "Não — queixa em apenas 1 ambiente",
+          next: "RESULT:green:Orientação e Reavaliação|Investigar contexto situacional (estresse, bullying, problema familiar)|Orientação à família e escola|Reavaliação em 3 meses com escala SNAP-IV em ambos os ambientes|Considerar: ansiedade situacional, dificuldade de aprendizagem, conflito familiar",
+        },
+      ],
+    },
+    {
+      id: "tdah_snap",
+      question: "SNAP-IV: escore médio ≥ 1.5 em Desatenção OU Hiperatividade/Impulsividade?",
+      info: "Aplicar SNAP-IV com pais E professores. Escore ≥1.5 na subescala indica sintomas clinicamente significativos.",
+      options: [
+        { label: "Sim — SNAP-IV positivo", next: "tdah_comorbidades" },
+        {
+          label: "Não — SNAP-IV negativo",
+          next: "RESULT:amber:Diagnóstico Diferencial|SNAP-IV negativo — considerar outros diagnósticos|Investigar: ansiedade (SCARED), transtorno de aprendizagem (TDE-II), DI|Avaliar sono (CSHQ) — privação de sono mimetiza TDAH|Avaliação neuropsicológica se dúvida persistir|Reavaliação em 6 meses",
+        },
+      ],
+    },
+    {
+      id: "tdah_comorbidades",
+      question: "Identifique as comorbidades presentes:",
+      info: "TDAH raramente ocorre isolado — 50-70% têm pelo menos uma comorbidade. Identifique para plano de tratamento completo.",
+      options: [
+        { label: "Ansiedade (SCARED positivo)", next: "RESULT:amber:TDAH + Ansiedade|Diagnóstico provável de TDAH com comorbidade ansiosa|Aplicar SCARED completo para caracterizar ansiedade|Psicoterapia TCC como 1ª linha para ansiedade|Considerar medicação: tratar TDAH primeiro (metilfenidato)|Se ansiedade grave: avaliar fluoxetina ou atomoxetina|Reavaliação em 30 dias" },
+        { label: "Depressão (CDI-2 positivo)", next: "RESULT:red:TDAH + Depressão — Atenção|Diagnóstico provável de TDAH com comorbidade depressiva|Aplicar CDI-2 e C-SSRS (risco de suicídio)|Encaminhar para avaliação psiquiátrica|TCC como intervenção primária|Monitorar humor e ideação suicida|Reavaliação em 15-30 dias" },
+        { label: "TOD / Oposição (SDQ positivo)", next: "RESULT:amber:TDAH + TOD|Diagnóstico provável de TDAH com TOD|SDQ subescala Problemas de Comportamento|Orientação parental baseada em evidências (PMT)|Treinamento de habilidades sociais|Articulação com escola|Considerar metilfenidato para TDAH — melhora também TOD|Reavaliação em 30 dias" },
+        { label: "Dificuldade de Aprendizagem (TDE-II)", next: "RESULT:amber:TDAH + Transtorno de Aprendizagem|Diagnóstico provável de TDAH com TA|Avaliação psicopedagógica completa|Orientar adaptações escolares (tempo estendido, sala de recurso)|Acompanhamento pedagógico especializado|Considerar metilfenidato — melhora atenção e aprendizagem|Articulação família-escola-equipe" },
+        { label: "Nenhuma comorbidade identificada", next: "RESULT:amber:TDAH sem Comorbidades — Iniciar Plano|Diagnóstico provável de TDAH — confirmar com neuropediatra|Orientação parental: rotina, limites, ambiente estruturado|Considerar metilfenidato (dose inicial 0.3 mg/kg/dia)|Acompanhamento escolar: relatório para escola|Monitorar FC, PA e peso a cada consulta|Reavaliação em 30 dias" },
+      ],
+    },
+  ],
+};
+
+// ─── TREE 3: Primeira Crise Epiléptica ─────────────────────────────────────
+const tree3: DecisionTree = {
+  id: "epilepsia",
+  title: "Primeira Crise Epiléptica",
+  nodes: [
+    {
+      id: "root",
+      question: "A crise foi acompanhada de febre (temperatura ≥ 38°C)?",
+      info: "Crise febril é a causa mais comum de crise na infância (3-5%). Distinguir de epilepsia é fundamental.",
+      options: [
+        { label: "Sim — crise febril", next: "ep_febril" },
+        { label: "Não — crise afebril", next: "ep_provocada" },
+      ],
+    },
+    {
+      id: "ep_febril",
+      question: "A crise febril foi simples ou complexa?",
+      info: "Simples: generalizada, < 15 min, uma única crise em 24h. Complexa: focal, > 15 min, ou ≥ 2 crises em 24h.",
+      options: [
+        {
+          label: "Simples — < 15 min, generalizada, única",
+          next: "RESULT:green:Crise Febril Simples — Conduta|Prognóstico excelente — não é epilepsia|Orientação parental: o que fazer na próxima crise|Não iniciar anticonvulsivante profilático|Investigar e tratar foco infeccioso causador|Retorno se nova crise ou mudança de padrão|Risco de recorrência: ~30%",
+        },
+        {
+          label: "Complexa — > 15 min, focal ou ≥ 2 crises",
+          next: "RESULT:amber:Crise Febril Complexa — Investigar|EEG nas primeiras 24-48h após crise|Considerar RM de crânio (após estabilização)|Avaliação pelo neuropediatra|Considerar profilaxia (diazepam retal nas crises prolongadas)|Risco aumentado de epilepsia futura|Seguimento obrigatório",
+        },
+      ],
+    },
+    {
+      id: "ep_provocada",
+      question: "A crise tem causa aguda identificável (crise provocada)?",
+      info: "Ex.: hipoglicemia (<60 mg/dL), distúrbio hidroeletrolítico, TCE agudo, meningite, intoxicação exógena.",
+      options: [
+        {
+          label: "Sim — causa aguda identificada",
+          next: "RESULT:amber:Crise Sintomática Aguda — Tratar Causa|Tratar a causa base com prioridade|Hipoglicemia: glicose EV 0.5-1g/kg|Hiponatremia: correção cautelosa com SF 3%|TCE: neuroimagem urgente|Meningite: antibioticoterapia empírica urgente|Não iniciar DAE se causa tratável corrigida|Reavaliação após resolução da causa aguda",
+        },
+        { label: "Não — sem causa aguda identificável", next: "ep_primeira" },
+      ],
+    },
+    {
+      id: "ep_primeira",
+      question: "É a primeira crise não provocada?",
+      options: [
+        { label: "Sim — primeira crise não provocada", next: "ep_exame" },
+        { label: "Não — segunda crise não provocada", next: "RESULT:red:Epilepsia Definida — Iniciar DAE|Duas crises não provocadas = epilepsia (ILAE 2014)|Iniciar DAE conforme tipo de crise:|• Focal: Oxcarbazepina 10-20 mg/kg/dia ou Carbamazepina|• Generalizada: Valproato 20-40 mg/kg/dia ou Lamotrigina|• Ausência: Etossuximida 20-40 mg/kg/dia ou Valproato|EEG e RM antes de iniciar se possível|Orientação familiar: restrições (natação, altura)|Retorno em 30 dias com EEG de controle" },
+      ],
+    },
+    {
+      id: "ep_exame",
+      question: "O exame neurológico está normal?",
+      info: "Avalie: consciência, reflexos, força, nervos cranianos, marcha, sinais meníngeos.",
+      options: [
+        {
+          label: "Sim — exame neurológico normal",
+          next: "RESULT:green:Primeira Crise — Investigar sem Medicar|EEG (preferencialmente com privação de sono + 24h após crise)|RM de crânio com protocolo epilepsia|Exames laboratoriais: glicemia, eletrólitos, hemograma|Não iniciar DAE após primeira crise isolada (risco-benefício)|Orientação familiar detalhada|Retorno em 30 dias com resultados|Risco de segunda crise: 30-50%",
+        },
+        {
+          label: "Não — exame neurológico anormal",
+          next: "RESULT:red:Primeira Crise com Déficit Neurológico — Urgente|EEG urgente (nas primeiras 24h)|RM de crânio urgente|Considerar internação para investigação|Exames laboratoriais completos|Considerar DAE precoce (risco alto de recorrência)|Avaliação pelo neuropediatra urgente|Investigar: lesão estrutural, encefalite, síndrome epiléptica",
+        },
+      ],
+    },
+  ],
+};
+
+// ─── TREE 4: Cefaleia ───────────────────────────────────────────────────────
+const tree4: DecisionTree = {
+  id: "cefaleia",
+  title: "Cefaleia na Criança",
+  nodes: [
+    {
+      id: "root",
+      question: "A cefaleia é aguda (início súbito) ou crônica (≥ 3 meses)?",
+      info: "A distinção aguda vs. crônica orienta a urgência e o tipo de investigação necessária.",
+      options: [
+        { label: "Aguda — início súbito / recente", next: "cef_alarme" },
+        { label: "Crônica — ≥ 3 meses de duração", next: "cef_frequencia" },
+      ],
+    },
+    {
+      id: "cef_alarme",
+      question: "Há algum sinal de alarme ('red flags')?",
+      info: "Sinais de alarme: vômitos em jato, papiledema, alteração de consciência, rigidez de nuca, febre alta, cefaleia 'em trovão', déficit focal, postural.",
+      options: [
+        {
+          label: "Sim — sinais de alarme presentes",
+          next: "RESULT:red:Cefaleia com Alarme — Neuroimagem Urgente|NEUROIMAGEM URGENTE (TC sem contraste como triagem)|Se meningismo: PL após exclusão de HTIC|Avisos: Internação para observação|TC crânio: excluir hemorragia, tumor, hidrocefalia|RM crânio se TC normal e suspeita de lesão posterior|Avaliação do fundo de olho (papiledema)|Tratamento conforme etiologia identificada",
+        },
+        {
+          label: "Não — sem sinais de alarme",
+          next: "RESULT:green:Cefaleia Aguda sem Alarme — Manejo Ambulatorial|Analgesia: paracetamol 15 mg/kg ou ibuprofeno 10 mg/kg|Orientação sobre gatilhos (privação de sono, desidratação)|Diário de cefaleia para próximas ocorrências|Retorno se ≥ 3 episódios/mês ou mudança de padrão|Verificar: acuidade visual, pressão arterial",
+        },
+      ],
+    },
+    {
+      id: "cef_frequencia",
+      question: "Quantos dias de cefaleia por mês?",
+      info: "Cefaleia episódica: < 15 dias/mês. Cefaleia crônica diária: ≥ 15 dias/mês por > 3 meses.",
+      options: [
+        { label: "< 15 dias/mês — episódica", next: "cef_migrânea" },
+        { label: "≥ 15 dias/mês — crônica diária", next: "cef_excessoanal" },
+      ],
+    },
+    {
+      id: "cef_migrânea",
+      question: "A cefaleia tem características migranosas?",
+      info: "Migrânea pediátrica: bilateral ou frontal (diferente do adulto), pulsátil, intensidade moderada-grave, náusea/vômito, fono/fotofobia, melhora com sono. Duração 2-72h.",
+      options: [
+        {
+          label: "Sim — características migranosas",
+          next: "RESULT:amber:Migrânea Episódica — Manejo|Diário de cefaleia (identificar gatilhos)|Abortivo: ibuprofeno 10 mg/kg (1ª linha) ou triptan nasal (>12a)|Orientação de higiene do sono e hidratação|Se ≥ 4 crises/mês: considerar profilaxia (Flunarizina 5 mg/dia ou Amitriptilina)|Retorno em 30 dias com diário preenchido",
+        },
+        {
+          label: "Não — cefaleia tensional",
+          next: "RESULT:green:Cefaleia Tensional Episódica|Avaliação oftalmológica (excluir erro refrativo)|Avaliação da postura e tensão cervical|Orientação sobre higiene do sono e estresse|Paracetamol/ibuprofeno nos episódios|Técnicas de relaxamento e psicoterapia se frequente|Retorno se piora ou aumento de frequência",
+        },
+      ],
+    },
+    {
+      id: "cef_excessoanal",
+      question: "Há uso excessivo de analgésicos (≥ 10 dias/mês)?",
+      info: "O uso excessivo de analgésicos causa cefaleia por abuso de medicação (CAM) — diagnóstico frequentemente subestimado.",
+      options: [
+        {
+          label: "Sim — uso excessivo de analgésicos",
+          next: "RESULT:amber:Cefaleia por Abuso de Medicação|Desmame do analgésico abusado (explicar a síndrome ao paciente e família)|Plano de desmame gradual em 2-3 semanas|Iniciar profilaxia APÓS o desmame|Profilaxia: Amitriptilina 0.5-1 mg/kg/noite ou Flunarizina|RM crânio se dúvida diagnóstica|Apoio psicológico para adesão ao desmame|Retorno em 3 semanas",
+        },
+        {
+          label: "Não — sem abuso de medicação",
+          next: "RESULT:amber:Cefaleia Crônica Diária — Investigação e Profilaxia|RM de crânio com contraste (excluir causa secundária)|Avaliação de humor (CDI-2) e ansiedade (SCARED)|Iniciar profilaxia: Amitriptilina 0.5 mg/kg/noite ou Flunarizina 5 mg/dia|Psicoterapia TCC para dor crônica|Diário de cefaleia|Retorno mensal durante início da profilaxia",
+        },
+      ],
+    },
+  ],
+};
+
+// ─── TREE 5: Criança que não fala ───────────────────────────────────────────
+const tree5: DecisionTree = {
+  id: "nao-fala",
+  title: "Criança que Não Fala",
+  nodes: [
+    {
+      id: "root",
+      question: "Qual a faixa etária da criança?",
+      info: "O desenvolvimento da linguagem segue marcos bem estabelecidos. A faixa etária determina o que é esperado.",
+      options: [
+        { label: "< 12 meses", next: "nf_12m" },
+        { label: "12 – 24 meses", next: "nf_12_24m" },
+        { label: "> 24 meses", next: "nf_gt24m" },
+      ],
+    },
+    {
+      id: "nf_12m",
+      question: "A criança apresenta balbucio (ba-ba, ma-ma, da-da)?",
+      info: "O balbucio canônico aparece entre 6-9 meses. Ausência de balbucio aos 9-12m é sinal de alerta.",
+      options: [
+        {
+          label: "Sim — balbucia normalmente",
+          next: "RESULT:green:Desenvolvimento Normal — Orientar e Aguardar|Desenvolvimento de linguagem adequado para < 12 meses|Orientação parental: falar com a criança, nomear objetos, cantar|Retorno de rotina com 12 meses|Monitorar surgimento de primeiras palavras até 12-14 meses",
+        },
+        {
+          label: "Não — sem balbucio",
+          next: "RESULT:amber:Ausência de Balbucio — Investigação|Ausência de balbucio é sinal de alerta significativo|Encaminhar para avaliação auditiva URGENTE (PEATE/OAE)|Avaliação com fonoaudióloga|Investigar: hipoacusia, TEA, déficit motor oral|Acompanhamento mensal com equipe|Não aguardar — cada mês sem intervenção compromete prognóstico",
+        },
+      ],
+    },
+    {
+      id: "nf_12_24m",
+      question: "A criança fala pelo menos 10 palavras com sentido?",
+      info: "Marco esperado: 10 palavras aos 15 meses, 50+ palavras aos 24 meses. 'Com sentido' = usa a palavra para se referir a algo específico.",
+      options: [
+        { label: "Sim — fala ≥ 10 palavras", next: "nf_compreensao" },
+        { label: "Não — fala < 10 palavras", next: "nf_late_talker" },
+      ],
+    },
+    {
+      id: "nf_compreensao",
+      question: "A criança compreende comandos simples ('pega o copo', 'vem aqui')?",
+      info: "A compreensão precede a produção. Boa compreensão com fala reduzida tem melhor prognóstico.",
+      options: [
+        {
+          label: "Sim — compreende bem",
+          next: "RESULT:green:Late Talker com Boa Compreensão|Perfil de late talker com prognóstico favorável|Estimulação da linguagem expressiva em casa|Retorno em 3 meses para reavaliação|Se sem melhora: encaminhar para fonoaudiologia|Orientar: livros, músicas, nomear objetos cotidianos",
+        },
+        {
+          label: "Não — compreensão também reduzida",
+          next: "RESULT:amber:Atraso Global de Linguagem — Investigar|Atraso expressivo E receptivo — maior preocupação|Avaliação auditiva (audiometria/PEATE) urgente|Avaliação fonoaudiológica especializada|Aplicar M-CHAT-R/F (rastrear TEA)|Avaliação cognitiva se necessário|Intervenção precoce em fonoaudiologia",
+        },
+      ],
+    },
+    {
+      id: "nf_late_talker",
+      question: "Há outros sinais de alerta presentes?",
+      info: "Sinais de alerta: não aponta com 12m, não imita, não responde ao nome, não olha quando chamado, perda de habilidades adquiridas.",
+      options: [
+        {
+          label: "Sim — sinais de alerta adicionais",
+          next: "RESULT:red:Investigar TEA e Causas Associadas|Múltiplos sinais de alerta — investigação urgente|Aplicar M-CHAT-R/F imediatamente|Avaliação auditiva urgente (PEATE/OAE)|Encaminhar para avaliação multidisciplinar (fono + neuro + psico)|Não aguardar resolução espontânea|Registrar data do encaminhamento",
+        },
+        {
+          label: "Não — apenas atraso de vocabulário",
+          next: "RESULT:amber:Late Talker — Monitorar|Possível late talker — ~50% resolvem espontaneamente|Avaliação auditiva para excluir hipoacusia|Encaminhar para fonoaudiologia|Aplicar M-CHAT-R/F para rastrear TEA|Orientação parental intensiva|Retorno em 30 dias — não aguardar 24 meses para agir",
+        },
+      ],
+    },
+    {
+      id: "nf_gt24m",
+      question: "A criança combina 2 palavras (ex: 'mama água', 'papai não')?",
+      info: "Marco esperado: combinação de 2 palavras entre 18-24 meses. Ausência com 24m é atraso definido.",
+      options: [
+        {
+          label: "Sim — combina 2 palavras",
+          next: "RESULT:amber:Atraso Expressivo Moderado|Combina palavras mas abaixo do esperado para a idade|Avaliar inteligibilidade da fala (entendida por estranhos?)|Encaminhar para fonoaudiologia|Verificar audição se ainda não avaliado|Monitorar evolução da linguagem mensalmente",
+        },
+        { label: "Não — não combina 2 palavras", next: "nf_social" },
+      ],
+    },
+    {
+      id: "nf_social",
+      question: "A criança interage socialmente? (brinca, aponta, imita, contato visual)",
+      options: [
+        {
+          label: "Sim — interação social presente",
+          next: "RESULT:amber:Atraso de Linguagem Isolado|Interação social preservada — melhor prognóstico|Atraso de linguagem expressiva isolado|Fonoaudiologia intensiva (2-3x/semana)|Avaliação cognitiva para excluir DI|Avaliação auditiva se não realizada|Revisão em 3 meses com fonoaudióloga",
+        },
+        {
+          label: "Não — dificuldade de interação social",
+          next: "RESULT:red:Investigar TEA — Encaminhamento Urgente|Atraso de linguagem + isolamento social = investigar TEA urgente|Aplicar M-CHAT-R/F e CARS-2|Encaminhar para avaliação multidisciplinar especializada em TEA|Avaliação auditiva urgente (PEATE)|Não aguardar — intervenção antes dos 3 anos muda prognóstico|Fonoaudiologia e TO imediatamente enquanto aguarda especialista",
+        },
+      ],
+    },
+  ],
+};
+
+const TREES: DecisionTree[] = [tree1, tree2, tree3, tree4, tree5];
+
+// ─── Decision Tree Component ─────────────────────────────────────────────────
+function parseResult(resultStr: string) {
+  // Format: "RESULT:type:title|bullet1|bullet2"
+  const withoutPrefix = resultStr.replace("RESULT:", "");
+  const [type, rest] = withoutPrefix.split(":");
+  const [title, ...bullets] = rest.split("|");
+  return { type, title, bullets };
+}
+
+type Breadcrumb = { question: string; answer: string };
+
+function DecisionTreePlayer({ tree }: { tree: DecisionTree }) {
+  const [currentNodeId, setCurrentNodeId] = useState<string>("root");
+  const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
+  const [result, setResult] = useState<{ type: string; title: string; bullets: string[] } | null>(null);
+
+  const currentNode = tree.nodes.find((n) => n.id === currentNodeId);
+
+  function handleOption(option: TreeOption, questionText: string) {
+    if (option.next.startsWith("RESULT:")) {
+      setBreadcrumbs((prev) => [...prev, { question: questionText, answer: option.label }]);
+      setResult(parseResult(option.next));
+    } else {
+      setBreadcrumbs((prev) => [...prev, { question: questionText, answer: option.label }]);
+      setCurrentNodeId(option.next);
+    }
+  }
+
+  function handleReset() {
+    setCurrentNodeId("root");
+    setBreadcrumbs([]);
+    setResult(null);
+  }
+
+  const resultColors = {
+    green: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700",
+    amber: "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700",
+    red: "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-700",
+  };
+  const resultIconColors = {
+    green: "text-emerald-600 dark:text-emerald-400",
+    amber: "text-amber-600 dark:text-amber-400",
+    red: "text-red-600 dark:text-red-400",
+  };
+  const resultTitleColors = {
+    green: "text-emerald-800 dark:text-emerald-300",
+    amber: "text-amber-800 dark:text-amber-300",
+    red: "text-red-800 dark:text-red-300",
+  };
+  const resultLabels = {
+    green: "Orientação",
+    amber: "Investigar",
+    red: "Urgente",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Breadcrumb trail */}
+      {breadcrumbs.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Percurso</p>
+          <div className="flex flex-col gap-1">
+            {breadcrumbs.map((bc, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
+                <span className="font-medium text-foreground">{bc.answer}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Question card */}
+      {!result && currentNode && (
+        <Card className="border-primary/20">
+          <CardContent className="pt-5 pb-4">
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-primary text-xs font-bold">{breadcrumbs.length + 1}</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground leading-snug">{currentNode.question}</h3>
+                </div>
+                {currentNode.info && (
+                  <div className="ml-8 flex items-start gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                    <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>{currentNode.info}</span>
+                  </div>
+                )}
+              </div>
+              <div className="ml-8 flex flex-col gap-2">
+                {currentNode.options.map((opt, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    className="justify-start h-auto py-2.5 px-4 text-left text-sm hover:bg-primary/5 hover:border-primary/40"
+                    onClick={() => handleOption(opt, currentNode.question)}
+                    data-testid={`btn-option-${tree.id}-${i}`}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Result card */}
+      {result && (
+        <div
+          className={`rounded-xl border-2 p-5 ${resultColors[result.type as keyof typeof resultColors] || resultColors.amber}`}
+          data-testid={`result-${tree.id}`}
+        >
+          <div className="flex items-start gap-3 mb-3">
+            {result.type === "green" && <CheckCircle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${resultIconColors.green}`} />}
+            {result.type === "amber" && <AlertTriangle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${resultIconColors.amber}`} />}
+            {result.type === "red" && <AlertTriangle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${resultIconColors.red}`} />}
+            <div>
+              <Badge
+                variant="outline"
+                className={`text-xs mb-1 ${
+                  result.type === "green"
+                    ? "border-emerald-400 text-emerald-700 dark:text-emerald-300"
+                    : result.type === "red"
+                    ? "border-red-400 text-red-700 dark:text-red-300"
+                    : "border-amber-400 text-amber-700 dark:text-amber-300"
+                }`}
+              >
+                {resultLabels[result.type as keyof typeof resultLabels] || "Resultado"}
+              </Badge>
+              <h3
+                className={`text-sm font-bold ${resultTitleColors[result.type as keyof typeof resultTitleColors] || resultTitleColors.amber}`}
+              >
+                {result.title}
+              </h3>
+            </div>
+          </div>
+          <ul className="space-y-1.5 ml-8">
+            {result.bullets.map((b, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-current mt-2 flex-shrink-0 opacity-60" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Reset */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground hover:text-foreground"
+        onClick={handleReset}
+        data-testid={`btn-reset-${tree.id}`}
+      >
+        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+        Recomeçar
+      </Button>
+    </div>
+  );
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+export default function FluxogramasPage() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <GitBranch className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Fluxogramas de Decisão Clínica</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Guia interativo passo a passo. Responda as perguntas para chegar à conduta recomendada.
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="atraso" className="w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1 p-1 mb-2">
+          {TREES.map((t) => (
+            <TabsTrigger key={t.id} value={t.id} className="text-xs py-1.5 px-3" data-testid={`tab-tree-${t.id}`}>
+              {t.title}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {TREES.map((t) => (
+          <TabsContent key={t.id} value={t.id} className="mt-4">
+            <div className="mb-3">
+              <h2 className="text-base font-semibold text-foreground">{t.title}</h2>
+            </div>
+            <DecisionTreePlayer tree={t} />
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      <p className="text-xs text-muted-foreground border-t pt-4">
+        Este fluxograma é um auxílio à decisão clínica baseado em diretrizes (AAP, ILAE, SBN, SBP). Não substitui julgamento clínico.
+      </p>
+    </div>
+  );
+}

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidade — NeuroPed Escalas</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #14b8a6;
+      --gold: #d4a853;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .logo-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--accent);
+    }
+    .logo-header h1 {
+      font-size: 1.75rem;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .logo-header p {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    h2 {
+      color: var(--gold);
+      font-size: 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid rgba(212, 168, 83, 0.2);
+    }
+    h3 {
+      color: var(--accent);
+      font-size: 1.05rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    p, li {
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+    }
+    ul {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    li { margin-bottom: 0.4rem; }
+    .highlight {
+      background: var(--surface);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1rem 0;
+    }
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .date { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-header">
+      <h1>NeuroPed Escalas</h1>
+      <p>Política de Privacidade</p>
+    </div>
+
+    <p class="date">Última atualização: 27 de março de 2026</p>
+
+    <h2>1. Introdução</h2>
+    <p>O aplicativo <strong>NeuroPed Escalas</strong> ("App") é desenvolvido e mantido pelo <strong>Dr. Jadson Fraga Araújo Júnior</strong>, médico neuropediatra inscrito no CRM-PE, com consultório em Petrolina-PE, Brasil.</p>
+    <p>Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e protegemos as informações dos usuários que utilizam o App. Ao utilizar o NeuroPed Escalas, você concorda com as práticas descritas nesta política.</p>
+
+    <h2>2. Dados Coletados</h2>
+    
+    <h3>2.1 Dados Fornecidos pelo Usuário</h3>
+    <ul>
+      <li><strong>Dados de autenticação:</strong> senha de acesso ao aplicativo (armazenada localmente, não transmitida a servidores externos)</li>
+      <li><strong>Dados clínicos inseridos:</strong> respostas a escalas, questionários e inventários preenchidos durante o uso do App</li>
+      <li><strong>Dados de pacientes:</strong> informações inseridas no prontuário clínico (nome, idade, dados de anamnese, medicações, evolução)</li>
+    </ul>
+
+    <h3>2.2 Dados Coletados Automaticamente</h3>
+    <ul>
+      <li><strong>Informações do dispositivo:</strong> tipo de dispositivo, sistema operacional e versão do navegador (para otimização de desempenho)</li>
+      <li><strong>Dados de uso:</strong> funcionalidades acessadas e tempo de sessão (dados agregados, não identificáveis)</li>
+    </ul>
+
+    <div class="highlight">
+      <strong>Importante:</strong> O NeuroPed Escalas NÃO coleta dados biométricos, localização GPS, contatos do dispositivo, fotos, microfone ou qualquer dado pessoal sensível além dos explicitamente inseridos pelo profissional durante o uso clínico do App.
+    </div>
+
+    <h2>3. Uso dos Dados</h2>
+    <p>Os dados coletados são utilizados exclusivamente para:</p>
+    <ul>
+      <li>Gerar relatórios clínicos detalhados com interpretação por extenso</li>
+      <li>Enviar relatórios por e-mail ao profissional responsável pela avaliação</li>
+      <li>Gerar documentos em formato PDF para impressão</li>
+      <li>Armazenar prontuários clínicos para consulta posterior</li>
+      <li>Melhorar a experiência do usuário e o funcionamento do App</li>
+    </ul>
+
+    <h2>4. Envio de E-mails</h2>
+    <p>Ao finalizar uma escala ou avaliação, o App envia automaticamente um relatório detalhado para o e-mail configurado pelo desenvolvedor (<strong>jadsonfraga@hotmail.com</strong>). Este envio é realizado via API segura (HTTPS) e contém apenas os dados da avaliação realizada.</p>
+
+    <h2>5. Armazenamento e Segurança</h2>
+    <ul>
+      <li>Os dados clínicos são armazenados em banco de dados SQLite no servidor da aplicação, protegido por criptografia em trânsito (HTTPS/TLS)</li>
+      <li>O acesso ao App é protegido por senha</li>
+      <li>Não compartilhamos, vendemos ou transferimos dados pessoais a terceiros</li>
+      <li>Dados de pacientes são tratados de acordo com a ética médica e sigilo profissional previstos no Código de Ética Médica (CFM)</li>
+    </ul>
+
+    <h2>6. Retenção de Dados</h2>
+    <p>Os dados clínicos inseridos no App são retidos enquanto o profissional mantiver o uso do aplicativo. O usuário pode solicitar a exclusão de seus dados a qualquer momento entrando em contato com o desenvolvedor.</p>
+
+    <h2>7. Direitos do Usuário</h2>
+    <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018), você tem direito a:</p>
+    <ul>
+      <li>Acessar seus dados pessoais</li>
+      <li>Solicitar correção de dados incompletos ou desatualizados</li>
+      <li>Solicitar exclusão de dados</li>
+      <li>Revogar o consentimento para uso dos dados</li>
+      <li>Obter informações sobre o compartilhamento de dados</li>
+    </ul>
+
+    <h2>8. Cookies e Tecnologias de Rastreamento</h2>
+    <p>O NeuroPed Escalas NÃO utiliza cookies de rastreamento, pixels de monitoramento ou tecnologias de publicidade. Não há integração com redes de anúncios ou plataformas de analytics de terceiros.</p>
+
+    <h2>9. Menores de Idade</h2>
+    <p>O App é uma ferramenta profissional destinada a médicos e profissionais de saúde. Não é destinado ao uso direto por menores de idade. Os dados de pacientes pediátricos são inseridos e gerenciados exclusivamente pelo profissional de saúde responsável.</p>
+
+    <h2>10. Alterações nesta Política</h2>
+    <p>Podemos atualizar esta Política de Privacidade periodicamente. Notificaremos os usuários sobre alterações significativas por meio do App. A data de última atualização estará sempre visível no topo deste documento.</p>
+
+    <h2>11. Contato</h2>
+    <div class="highlight">
+      <p><strong>Dr. Jadson Fraga Araújo Júnior</strong></p>
+      <p>Neuropediatra — CRM-PE</p>
+      <p>Petrolina — PE, Brasil</p>
+      <p>E-mail: <a href="mailto:jadsonfraga@hotmail.com">jadsonfraga@hotmail.com</a></p>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 NeuroPed Escalas. Todos os direitos reservados.</p>
+      <p>Desenvolvido por Dr. Jadson Fraga Araújo Júnior</p>
+    </div>
+  </div>
+</body>
+</html>
