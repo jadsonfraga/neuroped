@@ -45,60 +45,22 @@ Data: 2026-05-08
 - Embeddings reais ainda não configurados.
 - Dados clínicos reais continuam proibidos nesta fase.
 
-### Próximo passo sugerido
-
-1. Incluir os novos arquivos no service worker.
-2. Atualizar `auditoria-operacional.html` para chamar o teste de ouro e painel de qualidade.
-3. Consolidar design system em arquivo único.
-4. Criar camada `/api/health` em Cloudflare Worker ou equivalente.
-
 ---
 
 ## Registro v38 — Quality Panel Fix
 
 Data: 2026-05-08
 
-### Área auditada
-
-- Painel `qualidade-neuroped.html`.
-- Carregamento de `app-mode.js`.
-- Service worker/cache.
-- Scripts disponíveis no `package.json`.
-
-### Diagnóstico
-
-O painel de qualidade verificava `window.NEUROPED_APP_MODE`, mas não carregava explicitamente `app-mode.js`. Isso podia gerar falso alerta de modo do app não carregado, mesmo com o arquivo publicado e cacheado.
-
 ### Correção feita
 
 - Atualizado `qualidade-neuroped.html` para carregar diretamente `./app-mode.js`.
 - Ajustada validação do painel para considerar OK quando `window.NEUROPED_APP_MODE.mode === "HOMOLOGAÇÃO"`.
-- Atualizado `sw.js` para `neuroped-v38-quality-panel-fix`, garantindo invalidação do cache anterior.
-
-### Build/lint/test
-
-O `package.json` atual possui apenas:
-
-- `npm run dev`
-- `npm run db:schema`
-
-Não há scripts `build`, `lint` ou `test` definidos neste momento. Portanto, a validação aplicável nesta rodada foi por auditoria de arquivos, rotas e versionamento de cache.
-
-### Arquivos alterados
-
-- `qualidade-neuroped.html`
-- `sw.js`
-- `docs/AUDITORIA_CONTINUA_NEUROPED.md`
+- Atualizado `sw.js` para `neuroped-v38-quality-panel-fix`.
 
 ### Riscos restantes
 
-- Ausência de teste automatizado formal via npm.
+- Ausência de teste automatizado formal via npm naquela etapa.
 - Service worker ainda injeta múltiplas camadas; consolidar em rodada futura.
-- Backend real ainda não implementado.
-
-### Próximo passo sugerido
-
-Criar scripts mínimos de qualidade em `package.json`, por exemplo `test:static`, para validar arquivos críticos sem depender de navegador manual.
 
 ---
 
@@ -106,65 +68,22 @@ Criar scripts mínimos de qualidade em `package.json`, por exemplo `test:static`
 
 Data: 2026-05-08
 
-### Área auditada
-
-- `package.json`.
-- Ausência de teste automatizado formal.
-- Arquivos críticos do PWA, PIN, Consulta, Portal, CAA, Diário, Filtro, Mapa, LGPD e memória.
-
-### Diagnóstico
-
-O projeto não tinha script `test`, `lint` ou `build`. Isso impedia uma verificação mínima antes de alterações e deixava a validação dependente apenas de inspeção manual ou páginas de auditoria no navegador.
-
 ### Correção feita
 
 - Criado `scripts/test-static.mjs`.
 - Adicionado `npm run test:static`.
 - Adicionado `npm test` apontando para `test:static`.
 
-### O que o teste valida
-
-- Existência de arquivos críticos.
-- Versão esperada do service worker.
-- Inclusão de módulos essenciais no cache.
-- Manifest sem `CAA Premium`.
-- Roteador central.
-- Política de storage.
-- Modo de homologação.
-- Fluxo de PIN alfanumérico.
-- Regra de voltar apenas após erro.
-- Redirecionamento após PIN correto.
-- Documentação LGPD, regras críticas e embeddings.
-
-### Arquivos alterados
-
-- `scripts/test-static.mjs`
-- `package.json`
-- `docs/AUDITORIA_CONTINUA_NEUROPED.md`
-
 ### Teste
-
-Comando disponível:
 
 ```bash
 npm test
-```
-
-ou:
-
-```bash
-npm run test:static
 ```
 
 ### Riscos restantes
 
 - O teste é estático; ainda não substitui teste end-to-end real no navegador.
 - O service worker continua acumulando responsabilidades além do cache.
-- Ainda não há backend real em produção.
-
-### Próximo passo sugerido
-
-Criar `test:e2e-manual.html` ou Playwright futuramente para simular cliques reais no fluxo PIN, CAA e Diário.
 
 ---
 
@@ -172,63 +91,80 @@ Criar `test:e2e-manual.html` ou Playwright futuramente para simular cliques reai
 
 Data: 2026-05-08
 
-### Área auditada
-
-- Ambiente Consulta.
-- Anamnese.
-- Documentos médicos.
-- Impressão/PDF.
-- QR/código de conferência.
-- Teste estático.
-- Service worker/cache.
-
-### Diagnóstico
-
-A Consulta já tinha resumo, prescrição livre e laudo livre, mas faltavam módulos operacionais para anamnese por voz, solicitação de exames, geração organizada de documentos imprimíveis/PDF e QR/código de conferência. Também havia risco de falsa promessa jurídica se o recurso fosse chamado de certificado digital válido.
-
 ### Correções feitas
 
-- Criado `consulta-voz.js` para anamnese por voz com `SpeechRecognition` quando o navegador permite.
-- Criado `consulta-docflow.js` com:
-  - receituário livre/manual;
-  - solicitação de exames;
-  - laudo/relatório imprimível;
-  - impressão com opção de salvar como PDF;
-  - código/hash local de conferência;
-  - QR de conferência;
-  - histórico local de códigos.
-- Criado `verificar-documento.html` para conferir código/hash no dispositivo.
-- Atualizado `consulta-documentos.js` para carregar automaticamente os módulos avançados quando o PIN master está ativo.
-- Atualizado `consulta-tabs.js` com atalhos para Voz, Receituário, Exames e Laudos/PDF.
-- Atualizado `scripts/test-static.mjs` para validar os novos módulos.
+- Criado `consulta-voz.js` para anamnese por voz.
+- Criado `consulta-docflow.js` com receituário livre, exames, laudo/PDF, QR e histórico local.
+- Criado `verificar-documento.html`.
+- Atualizado `consulta-documentos.js` para carregar módulos avançados.
+- Atualizado `consulta-tabs.js`.
+- Atualizado `scripts/test-static.mjs`.
 - Atualizado `sw.js` para `neuroped-v40-consulta-clinical-suite`.
 
 ### Segurança e limite jurídico
 
-O QR/código é apenas conferência local de integridade. Não é assinatura digital ICP-Brasil, não substitui certificado A1/A3 e não valida documento em backend seguro. O sistema não sugere medicação, exame ou diagnóstico automaticamente; os campos são de preenchimento médico manual.
+QR/código é apenas conferência local de integridade. Não é assinatura digital ICP-Brasil.
+
+---
+
+## Registro v41 — App Shell, Consulta Livre e Secretaria
+
+Data: 2026-05-09
+
+### Área auditada
+
+- Experiência global de navegação.
+- Consulta após PIN master.
+- Secretaria.
+- App shell visual.
+- Rotas centrais.
+- Teste estático.
+- Cache/PWA.
+
+### Diagnóstico
+
+O app já tinha módulos úteis, mas ainda parecia conjunto de páginas soltas. A Consulta continuava excessivamente estruturada como formulário e a Secretaria aparecia como rota simbólica, não como módulo operacional. O nome Dr. Jadson Fraga também precisava ganhar mais presença visual como marca institucional pediátrica.
+
+### Correções feitas
+
+- Atualizado `premium-experience.js` para adicionar app shell visual único, com marca Dr. Jadson Fraga, navegação principal e rodapé coeso.
+- Atualizado `consulta-documentos.js` para inserir primeiro um editor de Consulta médica livre após PIN master.
+- O editor livre permite colar/redigir texto completo, copiar, imprimir/PDF, salvar, limpar, inserir cabeçalho e inserir data/hora.
+- Modelos opcionais foram adicionados como aceleradores editáveis, sem obrigar preenchimento por formulário.
+- Criado `secretaria.html` com agenda local, status, pendências, mensagens copiáveis, passe familiar, impressão, exportação e importação JSON.
+- Atualizado `routes.config.js` para apontar Secretaria para `./secretaria.html`.
+- Atualizado `sw.js` para `neuroped-v41-app-shell-consulta-livre`, incluindo `secretaria.html` no cache.
+- Atualizado `scripts/test-static.mjs` para validar app shell, consulta livre, secretaria, cache v41 e limites do QR.
 
 ### Arquivos alterados
 
-- `consulta-voz.js`
-- `consulta-docflow.js`
-- `verificar-documento.html`
+- `premium-experience.js`
 - `consulta-documentos.js`
-- `consulta-tabs.js`
-- `scripts/test-static.mjs`
+- `secretaria.html`
+- `routes.config.js`
 - `sw.js`
+- `scripts/test-static.mjs`
+- `deploy-trigger.json`
 - `docs/AUDITORIA_CONTINUA_NEUROPED.md`
+
+### Limites mantidos
+
+- PIN frontend continua sendo controle de interface, não segurança real de produção.
+- Dados clínicos reais continuam proibidos sem backend seguro.
+- QR/código local não é assinatura digital ICP-Brasil.
+- Modelos não sugerem medicação, dose, exame ou diagnóstico automaticamente.
 
 ### Teste
 
-- `npm test` agora valida presença dos módulos de voz, documentos, QR, limite jurídico e cache v40.
+`npm test` foi atualizado para validar os arquivos e padrões críticos do v41.
 
 ### Riscos restantes
 
-- Reconhecimento de voz depende do navegador e permissão do microfone.
-- QR usa serviço externo de geração de imagem; para uso sensível real, o ideal é gerar QR localmente ou via backend seguro.
-- Certificação jurídica real depende de infraestrutura de assinatura digital adequada.
-- Dados clínicos reais continuam proibidos nesta fase sem backend seguro.
+- `consulta.html` ainda contém marcação antiga do PIN na origem; o fallback `consulta-pin-fix.js` corrige em runtime.
+- App shell está implementado via `premium-experience.js`, não em arquivos separados `app-shell.js/css`, por limitação operacional do conector nesta rodada.
+- Secretaria é local/homologação, sem backend.
+- O service worker ainda concentra múltiplas responsabilidades.
 
 ### Próximo passo sugerido
 
-Criar gerador de QR local sem serviço externo e integrar backend seguro para validação de documentos quando houver infraestrutura real.
+Separar formalmente o shell em `app-shell.js/css`, criar `secretaria.js` separado e corrigir `consulta.html` na origem quando o conector permitir substituição segura do arquivo completo.
