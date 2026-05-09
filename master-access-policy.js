@@ -41,8 +41,9 @@
   function clear(){try{localStorage.removeItem(KEY)}catch(e){}}
   function isUnlocked(){var v=read();return !!(v&&v.ok&&Date.now()-Number(v.ts||0)<TTL)}
   async function unlockIfPin(value){
+    if(isUnlocked())return false;
     var c=clean(value);
-    if(c.length<4 || !crypto.subtle)return false;
+    if(c.length<4 || c.length>16 || !crypto.subtle)return false;
     var h=await sha256(c);
     if(h===MASTER_HASH){write();announce('PIN master ativo. Acesso médico liberado neste navegador.');decorate();return true}
     return false;
@@ -72,13 +73,13 @@
     function link(txt,href,priv){var a=document.createElement('a');a.textContent=(priv?'🔒 ':'✨ ')+txt;a.href=href;a.style.cssText='display:block;text-decoration:none;background:#fff;border:1px solid #eadcc7;border-radius:14px;padding:10px 12px;color:'+(priv?'#8b2e3b':'#1a6b65')+';font-weight:800';if(priv)a.onclick=function(ev){if(!isUnlocked()){ev.preventDefault();announce('Área protegida. Use o PIN master ou credencial familiar.')}};return a}
     var pub=panel.querySelector('#np-public-links'),pri=panel.querySelector('#np-private-links');PUBLIC_FAMILY_LINKS.forEach(function(x){pub.appendChild(link(x[0],x[1],false))});PRIVATE_LINKS.forEach(function(x){pri.appendChild(link(x[0],x[1],true))});
   }
+  function eligible(el){return el&&el.tagName==='INPUT'&&el.type!=='checkbox'&&el.type!=='radio'&&el.type!=='file'&&el.type!=='button'&&el.type!=='submit'&&el.type!=='hidden'}
   function watchInputs(){
-    document.addEventListener('input',function(ev){var el=ev.target;if(!el||!('value'in el))return;unlockIfPin(el.value)},true);
-    document.addEventListener('submit',function(){document.querySelectorAll('input').forEach(function(i){unlockIfPin(i.value)})},true);
-    document.addEventListener('click',function(){setTimeout(function(){document.querySelectorAll('input').forEach(function(i){unlockIfPin(i.value)})},30)},true);
+    document.addEventListener('input',function(ev){if(isUnlocked())return;var el=ev.target;if(!eligible(el))return;unlockIfPin(el.value)},true);
+    document.addEventListener('submit',function(){if(isUnlocked())return;document.querySelectorAll('input').forEach(function(i){if(eligible(i))unlockIfPin(i.value)})},true);
   }
   window.NeuroPedMasterAccess={isUnlocked:isUnlocked,unlockIfPin:unlockIfPin,clear:clear,decorate:decorate};
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){watchInputs();decorate()})}else{watchInputs();decorate()}
   window.addEventListener('hashchange',function(){setTimeout(decorate,120)});
-  setInterval(decorate,2500);
+  setInterval(decorate,15000);
 })();

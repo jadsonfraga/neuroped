@@ -31,9 +31,10 @@
     return true;
   }
   function boot(){
-    inject();
+    if(inject())return;
     const timer=setInterval(function(){attempts++; if(inject()||attempts>180)clearInterval(timer)},750);
-    document.addEventListener('click',function(){setTimeout(inject,150)},true);
+    const onClick=function(){setTimeout(function(){if(inject())document.removeEventListener('click',onClick,true)},150)};
+    document.addEventListener('click',onClick,true);
     window.addEventListener('storage',inject);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
