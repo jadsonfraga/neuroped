@@ -1,0 +1,14 @@
+# ============================================================
+# NeuroPed EDJ — Configuração Railway
+# ============================================================
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10

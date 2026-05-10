@@ -13,16 +13,7 @@ pages_build_output_dir = "dist/public"
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"
 
-# ── Banco de dados D1 (SQLite edge — plano gratuito) ──────
-# PASSO 1: Crie o banco executando:
-#   npx wrangler d1 create neuroped-db
-# PASSO 2: Substitua o database_id abaixo pelo ID gerado
-[[d1_databases]]
-binding = "DB"
-database_name = "neuroped-db"
-database_id = "SUBSTITUIR_APOS_npx_wrangler_d1_create_neuroped-db"
-
-# ── Ambiente de produção ───────────────────────────────────
+#── Ambiente de produção ───────────────────────────────────
 [env.production]
 name = "neuroped-production"
 
