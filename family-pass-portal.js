@@ -1,5 +1,6 @@
 (function(){
   'use strict';
+  function safeChild(s){return String(s||'família').replace(/[^a-zA-Z0-9À-ſ\s]/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'família'}
   function render(){
     if(!/portal-familia-livre\.html/i.test(location.pathname))return;
     if(document.getElementById('familyPassStatusPanel'))return;
@@ -8,11 +9,20 @@
     panel.id='familyPassStatusPanel';
     panel.style.cssText='margin-top:14px;border:1px solid #eadcc7;background:rgba(255,253,249,.92);border-radius:22px;padding:14px;box-shadow:0 10px 28px rgba(45,41,38,.08)';
     var pass=window.NeuroPedFamilyPass&&window.NeuroPedFamilyPass.current&&window.NeuroPedFamilyPass.current();
+    var title=document.createElement('strong');
+    var copy=document.createElement('p');
+    copy.className='muted';copy.style.cssText='margin:6px 0 10px';
+    var link=document.createElement('a');link.className='btn gold';link.href='./ativar-passe-familiar.html';
     if(pass){
-      panel.innerHTML='<strong style="color:#1a6b65">✅ Passe familiar ativo</strong><p class="muted" style="margin:6px 0 10px">Acesso familiar não sensível liberado para '+(pass.child||'família')+' até '+window.NeuroPedFamilyPass.fmtDate(pass.expires)+'.</p><a class="btn gold" href="./ativar-passe-familiar.html">Gerenciar passe</a>';
+      title.style.color='#1a6b65';title.textContent='✅ Passe familiar ativo';
+      copy.textContent='Acesso familiar não sensível liberado para '+safeChild(pass.child)+' até '+window.NeuroPedFamilyPass.fmtDate(pass.expires)+'.';
+      link.textContent='Gerenciar passe';
     } else {
-      panel.innerHTML='<strong style="color:#8b2e3b">🔐 Passe familiar não ativado</strong><p class="muted" style="margin:6px 0 10px">Se a clínica entregou um passe de 4 meses, ative aqui para organizar a navegação familiar neste aparelho.</p><a class="btn gold" href="./ativar-passe-familiar.html">Ativar passe familiar</a>';
+      title.style.color='#8b2e3b';title.textContent='🔐 Passe familiar não ativado';
+      copy.textContent='Se a clínica entregou um passe de 4 meses, ative aqui para organizar a navegação familiar neste aparelho.';
+      link.textContent='Ativar passe familiar';
     }
+    panel.appendChild(title);panel.appendChild(copy);panel.appendChild(link);
     host.appendChild(panel);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(render,120)});else setTimeout(render,120);

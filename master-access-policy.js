@@ -41,15 +41,16 @@
   function clear(){try{localStorage.removeItem(KEY)}catch(e){}}
   function isUnlocked(){var v=read();return !!(v&&v.ok&&Date.now()-Number(v.ts||0)<TTL)}
   async function unlockIfPin(value){
+    if(isUnlocked())return false;
     var c=clean(value);
-    if(c.length<4 || !crypto.subtle)return false;
+    if(c.length<4 || c.length>16 || !crypto.subtle)return false;
     var h=await sha256(c);
     if(h===MASTER_HASH){write();announce('PIN master ativo. Acesso médico liberado neste navegador.');decorate();return true}
     return false;
   }
   function announce(msg){
     var id='np-master-toast',el=document.getElementById(id);
-    if(!el){el=document.createElement('div');el.id=id;el.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:999999;background:#1a6b65;color:#fff;padding:12px 16px;border-radius:999px;font:700 13px system-ui;box-shadow:0 12px 30px rgba(0,0,0,.25)';document.body.appendChild(el)}
+    if(!el){el=document.createElement('div');el.id=id;el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:999999;background:#1a6b65;color:#fff;padding:12px 16px;border-radius:999px;font:700 13px system-ui;box-shadow:0 12px 30px rgba(0,0,0,.25)';document.body.appendChild(el)}
     el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none'},2600);
   }
   function path(){var h=location.hash||'';return h.charAt(0)==='#'?h.slice(1):h||'/'}
@@ -57,7 +58,7 @@
     document.documentElement.classList.toggle('np-master-unlocked',isUnlocked());
     var old=document.getElementById('np-master-badge');
     if(isUnlocked()){
-      if(!old){var b=document.createElement('button');b.id='np-master-badge';b.type='button';b.textContent='🔓 Master ativo';b.title='Clique para encerrar o acesso master';b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:999998;background:#1a6b65;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 12px;font:800 12px system-ui;box-shadow:0 10px 24px rgba(0,0,0,.24)';b.onclick=function(){clear();b.remove();decorate();announce('Acesso master encerrado.')};document.body.appendChild(b)}
+      if(!old){var b=document.createElement('button');b.id='np-master-badge';b.type='button';b.textContent='🔓 Master ativo';b.title='Clique para encerrar o acesso master';b.setAttribute('aria-label','PIN master ativo. Clique para encerrar o acesso protegido.');b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:999998;background:#1a6b65;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 12px;font:800 12px system-ui;box-shadow:0 10px 24px rgba(0,0,0,.24);cursor:pointer';b.onclick=function(){clear();b.remove();decorate();announce('Acesso master encerrado.')};document.body.appendChild(b)}
     }else if(old){old.remove()}
     injectFamilyPanel();
   }
@@ -72,13 +73,14 @@
     function link(txt,href,priv){var a=document.createElement('a');a.textContent=(priv?'🔒 ':'✨ ')+txt;a.href=href;a.style.cssText='display:block;text-decoration:none;background:#fff;border:1px solid #eadcc7;border-radius:14px;padding:10px 12px;color:'+(priv?'#8b2e3b':'#1a6b65')+';font-weight:800';if(priv)a.onclick=function(ev){if(!isUnlocked()){ev.preventDefault();announce('Área protegida. Use o PIN master ou credencial familiar.')}};return a}
     var pub=panel.querySelector('#np-public-links'),pri=panel.querySelector('#np-private-links');PUBLIC_FAMILY_LINKS.forEach(function(x){pub.appendChild(link(x[0],x[1],false))});PRIVATE_LINKS.forEach(function(x){pri.appendChild(link(x[0],x[1],true))});
   }
+  function eligible(el){return el&&el.tagName==='INPUT'&&el.type!=='checkbox'&&el.type!=='radio'&&el.type!=='file'&&el.type!=='button'&&el.type!=='submit'&&el.type!=='hidden'}
   function watchInputs(){
-    document.addEventListener('input',function(ev){var el=ev.target;if(!el||!('value'in el))return;unlockIfPin(el.value)},true);
-    document.addEventListener('submit',function(){document.querySelectorAll('input').forEach(function(i){unlockIfPin(i.value)})},true);
-    document.addEventListener('click',function(){setTimeout(function(){document.querySelectorAll('input').forEach(function(i){unlockIfPin(i.value)})},30)},true);
+    document.addEventListener('input',function(ev){if(isUnlocked())return;var el=ev.target;if(!eligible(el))return;unlockIfPin(el.value)},true);
+    document.addEventListener('submit',function(){if(isUnlocked())return;document.querySelectorAll('input').forEach(function(i){if(eligible(i))unlockIfPin(i.value)})},true);
   }
   window.NeuroPedMasterAccess={isUnlocked:isUnlocked,unlockIfPin:unlockIfPin,clear:clear,decorate:decorate};
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){watchInputs();decorate()})}else{watchInputs();decorate()}
   window.addEventListener('hashchange',function(){setTimeout(decorate,120)});
-  setInterval(decorate,2500);
+  window.addEventListener('storage',function(ev){if(ev.key===KEY)decorate()});
+  setInterval(decorate,15000);
 })();
