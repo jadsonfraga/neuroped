@@ -1,0 +1,22 @@
+﻿=== Connect Branch + Final Deploy 05/12/2026 13:59:40 ===
+QUERY: {"query":"query{__type(name:\"ServiceConnectInput\"){inputFields{name type{name kind}}}}"}
+RESP: {"data":{"__type":{"inputFields":[{"name":"branch","type":{"name":"String","kind":"SCALAR"}},{"name":"image","type":{"name":"String","kind":"SCALAR"}},{"name":"repo","type":{"name":"String","kind":"SCALAR"}}]}}}
+ServiceConnectInput: 
+QUERY: {"query":"mutation{serviceConnect(id:\"9724306d-35ba-4364-b520-83b3f84bcf82\" input:{repo:\"jadsonfraga/neuroped\" branch:\"feat/auditoria-total-ui-backend-memoria\"}){id name}}"}
+RESP: {"data":{"serviceConnect":{"id":"9724306d-35ba-4364-b520-83b3f84bcf82","name":"neuroped-api"}}}
+serviceConnect: {
+    "data":  {
+                 "serviceConnect":  {
+                                        "id":  "9724306d-35ba-4364-b520-83b3f84bcf82",
+                                        "name":  "neuroped-api"
+                                    }
+             }
+}
+QUERY: {"query":"mutation{serviceInstanceDeploy(serviceId:\"9724306d-35ba-4364-b520-83b3f84bcf82\" environmentId:\"0e82b70b-9668-4395-9e36-3487fda39fa0\" latestCommit:true)}"}
+RESP: {"data":{"serviceInstanceDeploy":true}}
+final deploy: {
+    "data":  {
+                 "serviceInstanceDeploy":  true
+             }
+}
+FINAL: https://neuroped-api-production.up.railway.app
