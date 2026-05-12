@@ -5,4 +5,4 @@
 # ============================================================
 
 [phases.install]
-cmds = ["npm ci --include=dev"]
+cmds = ["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --include=dev"]

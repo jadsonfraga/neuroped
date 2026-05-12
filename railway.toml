@@ -4,7 +4,7 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --include=dev && npm run build"
+buildCommand = "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --include=dev && npm run build"
 
 [deploy]
 startCommand = "npm start"
