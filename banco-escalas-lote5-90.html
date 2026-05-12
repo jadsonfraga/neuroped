@@ -44,5 +44,6 @@ function renderDetail(){const s=catalog.find(x=>x.id===activeId)||catalog[0];con
 function mark(id,key,val){answers[id]=answers[id]||{};answers[id][key]=val;renderDetail()}
 document.getElementById('q').addEventListener('input',renderList);document.getElementById('filter').addEventListener('change',renderList);renderList();renderDetail();
 </script>
+<script src="./scales-enhance.js" defer></script>
 </body>
 </html>
