@@ -1,0 +1,117 @@
+ 
+============================================= 
+NeuroPed Deploy Script - 11/05/2026 17:35:19,76 
+============================================= 
+[DIR] Working in: C:\Users\User\OneDrive\Desktop\neuroped-comparacao\NeuroPed Escalas de Neuropedia 
+ 
+=== STEP 1: GH CLI auth === 
+github.com
+  ✓ Logged in to github.com account jadsonfraga (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'read:org', 'repo', 'workflow'
+GH_CLI_OK 
+ 
+=== STEP 2: Windows Credential Manager (GitHub) === 
+    Destino: LegacyGeneric:target=git:https://github.com
+    Destino: LegacyGeneric:target=gh:github.com:
+    Destino: LegacyGeneric:target=gh:github.com:jadsonfraga
+ 
+=== STEP 3: Wrangler auth === 
+
+ ⛅️ wrangler 4.90.0
+───────────────────
+Getting User settings...
+👋 You are logged in with an OAuth Token, associated with the email jadsonfraga@hotmail.com.
+┌───────────────────────────────────┬──────────────────────────────────┐
+│ Account Name                      │ Account ID                       │
+├───────────────────────────────────┼──────────────────────────────────┤
+│ Jadsonfraga@hotmail.com's Account │ bebec59ba795c73c81f7c02365ac3c2d │
+└───────────────────────────────────┴──────────────────────────────────┘
+🔓 Token Permissions:
+Scope (Access)
+- account (read)
+- user (read)
+- workers (write)
+- workers_kv (write)
+- workers_routes (write)
+- workers_scripts (write)
+- workers_tail (read)
+- d1 (write)
+- pages (write)
+- zone (read)
+- ssl_certs (write)
+- ai (write)
+- ai-search (write)
+- ai-search (run)
+- queues (write)
+- pipelines (write)
+- secrets_store (write)
+- artifacts (write)
+- flagship (write)
+- containers (write)
+- cloudchamber (write)
+- connectivity (admin)
+- email_routing (write)
+- email_sending (write)
+- browser (write)
+- offline_access 
+ 
+=== STEP 4: dist/public status === 
+BUILD_OK - dist\public\index.html EXISTS 
+assets
+icon-192.png
+icon-512.png
+icon.svg
+index.html
+manifest.json
+privacy-policy.html
+sw.js
+terms-of-use.html
+ 
+=== STEP 5: Git status e credenciais === 
+origin	https://github.com/jadsonfraga/neuroped.git (fetch)
+origin	https://github.com/jadsonfraga/neuroped.git (push)
+ m .claude/worktrees/friendly-goldberg-32f573
+?? PUSH-PARA-RENDER.bat
+?? deploy_log.txt
+?? neuroped_deploy.bat
+[Testando git push --dry-run] 
+Everything up-to-date
+ 
+=== STEP 6: Deploy Cloudflare Pages === 
+Tentando wrangler pages deploy... 
+
+ ⛅️ wrangler 4.90.0
+───────────────────
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mWarning: Your working directory is a git repo and has uncommitted changes[0m
+
+  To silence this warning, pass in --commit-dirty=true
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mProcessing wrangler.toml configuration:[0m
+
+  
+    - "env.preview" environment configuration
+      - "vars.APP_NAME" exists at the top level, but not on "env.preview.vars".
+        This is not what you probably want, since "vars" configuration is not inherited by environments.
+        Please add "vars.APP_NAME" to "env.preview".
+
+
+✨ Compiled Worker successfully
+Uploading... (137/142)
+Uploading... (139/142)
+Uploading... (141/142)
+Uploading... (142/142)
+✨ Success! Uploaded 5 files (137 already uploaded) (1.57 sec)
+
+✨ Uploading Functions bundle
+🌎 Deploying...
+✨ Deployment complete! Take a peek over at https://4cd8473e.neuroped.pages.dev
+✨ Deployment alias URL: https://feat-auditoria-total-ui-back.neuroped.pages.dev
+DEPLOY_SUCCESS 
+ 
+============================================= 
+CONCLUIDO em 17:36:14,19 
+============================================= 
