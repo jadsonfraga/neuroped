@@ -8,7 +8,7 @@
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
     "build:client": "vite build",
-    "build:server": "esbuild server/index.ts --platform=node --bundle --format=cjs --outfile=dist/index.cjs --define:process.env.NODE_ENV='\"production\"' --minify",
+    "build:server": "esbuild server/index.ts --platform=node --bundle --format=cjs --outfile=dist/index.cjs --define:process.env.NODE_ENV='\"production\"' --packages=external",
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc --noEmit",
     "db:push": "drizzle-kit push",
