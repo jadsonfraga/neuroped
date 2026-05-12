@@ -53,5 +53,6 @@ function renderDetail(){const inst=scales.find(s=>s.id===activeId)||scales[0];co
 function mark(id,key,val){answers[id]=answers[id]||{};answers[id][key]=val;renderDetail()}
 document.getElementById('q').addEventListener('input',renderList);document.getElementById('filter').addEventListener('change',renderList);renderList();renderDetail();
 </script>
+<script src="./scales-enhance.js" defer></script>
 </body>
 </html>

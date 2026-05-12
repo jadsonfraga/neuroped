@@ -18,7 +18,6 @@ function assertFile(path) { existsSync(join(root, path)) ? pass(`arquivo existe:
 function assertIncludes(path, needle, name) { const content = file(path); if (!content) return fail(name, `${path} ausente`); content.includes(needle) ? pass(name) : fail(name, `não encontrou ${needle}`); }
 function assertNotIncludes(path, needle, name) { const content = file(path); if (!content) return fail(name, `${path} ausente`); !content.includes(needle) ? pass(name) : fail(name, `encontrou ${needle}`); }
 
-// Arquivos críticos
 const criticalFiles = [
   'index.html','manifest.json','sw.js','routes.config.js','storage-policy.js','app-mode.js',
   'app-shell.js','app-shell.css','brand-dr-jadson.js','brand-dr-jadson.css',
@@ -36,57 +35,43 @@ const criticalFiles = [
 ];
 for (const f of criticalFiles) assertFile(f);
 
-// SW (versão atual em main)
 assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
-
-// PIN: fluxos alfanumérico em main
 assertIncludes('consulta-pin-fix.js', 'toLowerCase', 'consulta-pin-fix normaliza para lowercase (PIN alfanumérico)');
 assertIncludes('consulta.html', 'MASTER_HASH', 'consulta.html define MASTER_HASH inline');
-
-// Roteamento sensível
 assertIncludes('safe-public-layer.js', 'consulta.html?next=', 'área sensível envia para PIN');
-
-// Documentos não prometem ICP-Brasil
 assertIncludes('consulta-docflow.js', 'Não são assinatura digital ICP-Brasil', 'QR avisa que não substitui ICP-Brasil');
-
-// Manifesto e mensagens
 assertIncludes('manifest.json', 'CAA Gratuita', 'manifest mantém CAA Gratuita');
 assertNotIncludes('manifest.json', 'CAA Premium', 'manifest não contém CAA Premium');
 assertIncludes('docs/LGPD_CHECKLIST.md', 'Não apto para produção com dados clínicos reais', 'LGPD deixa produção real bloqueada');
-
-// Permissões
 assertIncludes('_headers', 'microphone=(self)', '_headers libera microfone para SpeechRecognition');
 assertIncludes('index.html', 'microphone=(self)', 'index.html libera microfone para SpeechRecognition');
 assertNotIncludes('index.html', 'og-image.png', 'index.html não cita og-image.png ausente');
-
-// 404
 assertIncludes('404.html', '<noscript>', '404.html oferece fallback sem JavaScript');
-
-// Backend hardening (PR #33)
 assertIncludes('functions/api/submissions.ts', 'timingSafeEqual', 'submissions.ts usa comparação de token em tempo constante');
 assertIncludes('functions/api/submissions.ts', 'sameOrigin', 'submissions.ts valida Origin no POST (defesa CSRF)');
-
-// XSS fixes (PR #34)
 assertIncludes('family-pass-portal.js', 'safeChild', 'family-pass-portal sanitiza child antes de renderizar');
 assertNotIncludes('family-pass-portal.js', "innerHTML='<strong", 'family-pass-portal não monta innerHTML com dados do passe');
 assertIncludes('family-voucher-ui.js', '&amp;', 'family-voucher-ui escapa entidades HTML ao emitir voucher');
 assertNotIncludes('caa-hotfix.js', "+t+'</button>'", 'caa-hotfix não concatena texto em innerHTML do botão');
-
-// Performance + a11y master-access
 assertIncludes('master-access-policy.js', 'eligible', 'master-access filtra inputs elegíveis (sem textareas)');
 assertIncludes('master-access-policy.js', "addEventListener('storage'", 'master-access escuta storage event (sync cross-tab)');
 assertIncludes('master-access-policy.js', 'aria-live', 'toast master tem aria-live para leitores de tela');
-
-// A11y nav
 assertIncludes('app-shell.js', 'aria-label', 'app-shell anota acessibilidade na navegação');
 assertIncludes('app-shell.js', 'aria-current', 'app-shell marca página atual com aria-current');
 assertIncludes('app-shell.css', 'aria-current="page"', 'app-shell.css destaca página atual visualmente');
 assertIncludes('app-shell.css', 'focus-visible', 'app-shell.css oferece foco visível para teclado');
-
-// A11y app-mode
 assertIncludes('app-mode.js', 'aria-label', 'badge de modo tem aria-label descritivo');
 
-// package.json
+assertFile('scales-enhance.js');
+assertIncludes('scales-enhance.js', 'NeuroPedScales', 'scales-enhance expoe API global NeuroPedScales');
+assertIncludes('scales-enhance.js', 'laudoText', 'scales-enhance gera texto pra laudo');
+assertIncludes('scales-enhance.js', 'domainScores', 'scales-enhance calcula score por dominio');
+assertIncludes('scales-enhance.js', 'historyFor', 'scales-enhance mantem historico por paciente+instrumento');
+assertIncludes('scales-enhance.js', 'tipFor', 'scales-enhance interpreta faixa orientativa');
+for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+  assertIncludes(b, 'scales-enhance.js', b + ' carrega scales-enhance.js');
+}
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
 
