@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, Home, ClipboardCheck, Baby, Activity,
   Moon, Sun, ChevronLeft, ChevronRight, BookOpen,
@@ -13,7 +14,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
-import { playPipe } from "@/lib/sounds";
+import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
 
@@ -158,37 +161,55 @@ const navSections: NavSection[] = [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const [dark, setDark] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    // Respeita preferência salva ou system
+    const saved = localStorage.getItem("neuroped:theme");
+    if (saved === "dark") return true;
+    if (saved === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
+    try {
+      localStorage.setItem("neuroped:theme", dark ? "dark" : "light");
+    } catch {}
   }, [dark]);
 
-  // Close mobile menu on navigation + scroll to top + sound
-  const prevLocation = useState(location)[0];
+  // Close mobile menu on navigation + scroll to top + som sutil
   useEffect(() => {
     setMobileOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (location !== "/") playPipe();
+    if (location !== "/") softWhoosh();
   }, [location]);
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Acessibilidade: skip nav e banner offline */}
       <SkipNav />
       <OfflineBanner />
 
       {/* Mobile top header bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar md:hidden">
+      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md md:hidden">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
-            <Brain className="w-4 h-4 text-primary-foreground" />
-          </div>
-          <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: duration.normal, ease: easing.spring }}
+            className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
+              boxShadow: "0 4px 14px hsl(var(--primary) / 0.3)",
+            }}
+          >
+            <Brain className="w-4 h-4 text-white" strokeWidth={1.75} />
+          </motion.div>
+          <span
+            className="text-base tracking-tight text-sidebar-foreground"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
             NeuroPed
           </span>
         </div>
@@ -197,7 +218,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="sm"
             className="px-2"
-            onClick={() => setDark(!dark)}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              setDark(!dark);
+            }}
             data-testid="button-theme-toggle-mobile"
             aria-label={dark ? "Ativar modo claro" : "Ativar modo escuro"}
           >
@@ -207,7 +232,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="sm"
             className="px-2"
-            onClick={() => setMobileOpen(true)}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              setMobileOpen(true);
+            }}
             data-testid="button-mobile-menu"
             aria-label="Abrir menu de navegação"
             aria-expanded={mobileOpen}
@@ -218,41 +247,59 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Mobile backdrop */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setMobileOpen(false)}
-          data-testid="mobile-backdrop"
-        />
-      )}
+      {/* Mobile backdrop com fade */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            variants={fadeIn}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            onClick={() => {
+              softTap();
+              setMobileOpen(false);
+            }}
+            data-testid="mobile-backdrop"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside
         className={[
           "fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
-          // Mobile: slide in/out
           "transition-transform duration-300 md:transition-all md:duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
-          // Desktop: always visible, collapsible width
           "md:translate-x-0",
           collapsed ? "md:w-16" : "md:w-64",
-          // Mobile always full width sidebar (w-64)
           "w-64",
         ].join(" ")}
+        style={{
+          boxShadow: mobileOpen ? "0 0 60px hsl(260 30% 15% / 0.25)" : undefined,
+        }}
       >
         {/* Logo + close button on mobile */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-          <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-            <Brain className="w-5 h-5 text-primary-foreground" />
+          <div
+            className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
+              boxShadow: "0 4px 14px hsl(var(--primary) / 0.35)",
+            }}
+          >
+            <Brain className="w-5 h-5 text-white" strokeWidth={1.75} />
           </div>
           {!collapsed && (
             <div className="overflow-hidden flex-1">
-              <h1 className="text-sm font-bold tracking-tight text-sidebar-foreground leading-tight">
+              <h1
+                className="text-base tracking-tight text-sidebar-foreground leading-tight"
+                style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              >
                 NeuroPed
               </h1>
-              <p className="text-xs text-muted-foreground leading-tight">
-                Escalas e Questionários
+              <p className="text-[11px] text-muted-foreground leading-tight italic">
+                Escalas de Neuropediatria
               </p>
             </div>
           )}
@@ -261,7 +308,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="sm"
             className="px-2 md:hidden ml-auto"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              setMobileOpen(false);
+            }}
             data-testid="button-mobile-close"
             aria-label="Fechar menu de navegação"
           >
@@ -274,7 +325,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {navSections.map((section, si) => (
             <div key={si}>
               {section.title && !collapsed && (
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 pt-3 pb-1">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.12em] px-3 pt-3 pb-1">
                   {section.title}
                 </p>
               )}
@@ -287,19 +338,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link key={item.href} href={item.href}>
                     <div
                       data-testid={`nav-${item.label}`}
-                      className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-colors ${
+                      onMouseEnter={() => softHover()}
+                      onClick={() => {
+                        softTap();
+                        haptic.select();
+                      }}
+                      className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
                         active
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          ? "bg-primary/10 text-primary font-semibold shadow-sm"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
                       } ${collapsed ? "md:justify-center" : ""}`}
                     >
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-primary" : ""}`} />
+                      <item.icon
+                        className={`w-4 h-4 flex-shrink-0 transition-transform ${
+                          active ? "text-primary scale-110" : ""
+                        }`}
+                        strokeWidth={active ? 2 : 1.75}
+                      />
                       {!collapsed && (
                         <span className="text-xs truncate">{item.label}</span>
                       )}
-                      {/* On mobile, always show label even when desktop is collapsed */}
                       {collapsed && (
                         <span className="text-xs truncate md:hidden">{item.label}</span>
+                      )}
+                      {active && !collapsed && (
+                        <motion.div
+                          layoutId="nav-active-dot"
+                          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                          transition={{ duration: 0.2, ease: easing.smooth }}
+                        />
                       )}
                     </div>
                   </Link>
@@ -315,7 +382,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="sm"
             className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
-            onClick={() => setDark(!dark)}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              setDark(!dark);
+            }}
             data-testid="button-theme-toggle"
             aria-label={dark ? "Ativar modo claro" : "Ativar modo escuro"}
           >
@@ -327,12 +398,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="ml-2 text-sm md:hidden">{dark ? "Modo Claro" : "Modo Escuro"}</span>
             )}
           </Button>
-          {/* Collapse button only on desktop */}
           <Button
             variant="ghost"
             size="sm"
             className={`w-full hidden md:flex ${collapsed ? "justify-center px-0" : "justify-start"}`}
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              setCollapsed(!collapsed);
+            }}
             data-testid="button-collapse-sidebar"
             aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
             aria-expanded={!collapsed}
@@ -354,7 +428,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 page-enter">
           {location !== "/" && (
             <button
-              onClick={() => window.history.back()}
+              onClick={() => {
+                softTap();
+                haptic.tap();
+                window.history.back();
+              }}
+              onMouseEnter={() => softHover()}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4 transition-colors group"
               data-testid="button-breadcrumb-back"
             >

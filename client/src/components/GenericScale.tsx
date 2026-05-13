@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,9 @@ import { RotateCcw, AlertTriangle, CheckCircle2, Info, type LucideIcon } from "l
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import { softTick, softSuccess, softTap } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { easing, duration } from "@/lib/motion";
 
 interface DomainConfig {
   name: string;
@@ -56,10 +60,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const allAnswered = answered === total;
 
   function handleSubmit() {
+    softSuccess();
+    haptic.success();
     setShowResult(true);
   }
 
   function handleReset() {
+    softTap();
+    haptic.tap();
     setAnswers({});
     setShowResult(false);
   }
@@ -67,14 +75,29 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   if (showResult) {
     const result = config.onCalculate(answers);
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="space-y-6"
+      >
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-sm`}>
-            <config.icon className="w-5 h-5 text-white" />
-          </div>
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: duration.normal, ease: easing.spring }}
+            className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-md`}
+          >
+            <config.icon className="w-5 h-5 text-white" strokeWidth={1.75} />
+          </motion.div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — {config.title}</h1>
-            <p className="text-xs text-muted-foreground">Avaliação concluída</p>
+            <h1
+              className="text-xl text-foreground leading-tight"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+            >
+              Resultado — {config.title}
+            </h1>
+            <p className="text-xs text-muted-foreground italic">Avaliação concluída</p>
           </div>
         </div>
 
@@ -168,21 +191,31 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         </Button>
 
         {config.scaleId && <ScaleReference scaleId={config.scaleId} />}
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-sm`}>
-          <config.icon className="w-5 h-5 text-white" />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex items-center gap-3"
+      >
+        <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-md`}>
+          <config.icon className="w-5 h-5 text-white" strokeWidth={1.75} />
         </div>
         <div>
-          <h1 className="text-lg font-bold">{config.title}</h1>
-          <p className="text-xs text-muted-foreground">{config.subtitle}</p>
+          <h1
+            className="text-xl text-foreground leading-tight"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            {config.title}
+          </h1>
+          <p className="text-xs text-muted-foreground italic">{config.subtitle}</p>
         </div>
-      </div>
+      </motion.div>
 
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
@@ -229,7 +262,11 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                   </div>
                   <RadioGroup
                     value={answers[key]?.toString()}
-                    onValueChange={(val) => setAnswers({ ...answers, [key]: parseInt(val) })}
+                    onValueChange={(val) => {
+                      softTick();
+                      haptic.select();
+                      setAnswers({ ...answers, [key]: parseInt(val) });
+                    }}
                     className="flex flex-wrap gap-2"
                   >
                     {config.labels.map((label, j) => {

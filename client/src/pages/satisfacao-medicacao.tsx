@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
+import { motion } from "framer-motion";
+import { softTap, softTick, softSuccess } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { easing, duration } from "@/lib/motion";
 
 // ══════════════════════════════════════════════════════════
 // DADOS DA ESCALA
@@ -119,7 +123,12 @@ export default function SatisfacaoMedicacaoPage() {
   const progress = (respondidos / totalItens) * 100;
   const canSubmit = eficaciaGeral !== null && satisfacaoGeral !== null && respondidosEfeitos >= 5;
 
-  function handleSubmit() { setShowResult(true); window.scrollTo(0, 0); }
+  function handleSubmit() {
+    softSuccess();
+    haptic.success();
+    setShowResult(true);
+    window.scrollTo(0, 0);
+  }
   function handleReset() {
     setEficaciaGeral(null); setSatisfacaoGeral(null); setContinuaria(null);
     setEfeitosResp({}); setEficaciaAreas({}); setFormaResp({});
@@ -181,14 +190,29 @@ export default function SatisfacaoMedicacaoPage() {
     const totalScore = compostoScore;
 
     return (
-      <div className="space-y-5">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="space-y-5"
+      >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-            <Pill className="w-5 h-5 text-white" />
-          </div>
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: duration.normal, ease: easing.spring }}
+            className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md"
+          >
+            <Pill className="w-5 h-5 text-white" strokeWidth={1.75} />
+          </motion.div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — Satisfação com Medicação</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1
+              className="text-xl text-foreground leading-tight"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+            >
+              Resultado — Satisfação com Medicação
+            </h1>
+            <p className="text-xs text-muted-foreground italic">
               {nomeCrianca && <>{nomeCrianca} · </>}{nomeMedicacao && <>{nomeMedicacao} {doseMedicacao && `${doseMedicacao}mg`} · </>}
               {mgKg && <>{mgKg} mg/kg · </>}Score: {compostoScore}/100
             </p>
@@ -369,15 +393,25 @@ export default function SatisfacaoMedicacaoPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-          <Pill className="w-5 h-5 text-white" />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex items-center gap-3"
+      >
+        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+          <Pill className="w-5 h-5 text-white" strokeWidth={1.75} />
         </div>
         <div>
-          <h1 className="text-lg font-bold">Satisfação com Medicação</h1>
-          <p className="text-xs text-muted-foreground">Resposta dos pais — Efeitos, eficácia e forma de administrar</p>
+          <h1
+            className="text-xl text-foreground leading-tight"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            Satisfação com Medicação
+          </h1>
+          <p className="text-xs text-muted-foreground italic">Resposta dos pais — Efeitos, eficácia e forma de administrar</p>
         </div>
-      </div>
+      </motion.div>
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-3">

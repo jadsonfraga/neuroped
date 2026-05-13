@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import {
   Baby, ClipboardCheck, Activity, BookOpen, ArrowRight, Brain, Stethoscope,
   BarChart3, ShieldAlert, ClipboardList, Users, FileText, CloudRain, HeartPulse,
@@ -18,6 +19,9 @@ import neuralAbstractImg from "@assets/images/neural-abstract.png";
 import childDevImg from "@assets/images/child-development.png";
 import heroBrainImg from "@assets/images/hero-brain.png";
 import mentalHealthImg from "@assets/images/mental-health-child.png";
+import { softHover, softTap } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { easing, duration } from "@/lib/motion";
 
 interface ScaleCard {
   href: string;
@@ -326,9 +330,13 @@ function ScaleCardItem({ scale }: { scale: ScaleCard }) {
   const Icon = scale.icon;
   return (
     <Link href={scale.href}>
-      <div className="card-hover group cursor-pointer flex items-start gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors">
-        <div className={`shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br ${scale.gradient} flex items-center justify-center shadow-sm`}>
-          <Icon className="w-3.5 h-3.5 text-white" />
+      <div
+        onMouseEnter={() => softHover()}
+        onClick={() => { softTap(); haptic.select(); }}
+        className="card-premium group cursor-pointer flex items-start gap-3 p-3"
+      >
+        <div className={`shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br ${scale.gradient} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
+          <Icon className="w-3.5 h-3.5 text-white" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -338,7 +346,7 @@ function ScaleCardItem({ scale }: { scale: ScaleCard }) {
           <p className={`text-[11px] font-medium mt-0.5 ${scale.iconColor} leading-tight`}>{scale.subtitle}</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{scale.description}</p>
         </div>
-        <ArrowRight className="shrink-0 w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
+        <ArrowRight className="shrink-0 w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all mt-0.5" />
       </div>
     </Link>
   );
@@ -451,12 +459,19 @@ function SectionAccent({ color, Icon, title, count, open }: { color: string; Ico
 function QuickLink({ href, label, Icon, color }: { href: string; label: string; Icon: any; color: string }) {
   return (
     <Link href={href}>
-      <div className="card-hover shimmer flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border border-border bg-card cursor-pointer hover:border-primary/30 transition-colors shrink-0">
-        <div className={`w-9 h-9 rounded-lg ${color} flex items-center justify-center shadow-sm`}>
-          <Icon className="w-4 h-4 text-white" />
+      <motion.div
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ duration: 0.18, ease: easing.smooth }}
+        onMouseEnter={() => softHover()}
+        onClick={() => { softTap(); haptic.tap(); }}
+        className="card-premium shimmer flex flex-col items-center gap-1.5 px-4 py-3 cursor-pointer shrink-0 min-w-[88px]"
+      >
+        <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center shadow-sm`}>
+          <Icon className="w-4 h-4 text-white" strokeWidth={1.75} />
         </div>
         <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">{label}</span>
-      </div>
+      </motion.div>
     </Link>
   );
 }
@@ -537,25 +552,39 @@ export default function HomePage() {
     <div className="page-enter space-y-6 pb-8">
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="relative overflow-hidden rounded-3xl mb-6"
+      >
         <div className="absolute inset-0">
-          <img src={neuralAbstractImg} alt="" className="w-full h-full object-cover opacity-20 dark:opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+          <img src={neuralAbstractImg} alt="" className="w-full h-full object-cover opacity-15 dark:opacity-25" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
         </div>
-        <div className="relative text-center space-y-4 pt-8 pb-6 px-4">
-          <div className="flex justify-center">
+        <div className="relative text-center space-y-4 pt-9 pb-7 px-4">
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: duration.normal, ease: easing.spring }}
+            className="flex justify-center"
+          >
             <img
               src={drJadsonLogo}
               alt="Dr. Jadson Fraga"
               className="w-16 h-16 object-cover rounded-2xl shadow-md ring-2 ring-primary/20"
               data-testid="img-dr-jadson-logo"
             />
-          </div>
+          </motion.div>
           <div>
-            <h1 className="text-3xl font-black text-gradient tracking-tight" data-testid="text-page-title">
+            <h1
+              className="text-4xl text-gradient tracking-tight"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              data-testid="text-page-title"
+            >
               NeuroPed
             </h1>
-            <p className="text-sm font-semibold text-muted-foreground mt-0.5">Escalas de Neuropediatria</p>
+            <p className="text-sm text-muted-foreground mt-1 italic">Escalas de Neuropediatria</p>
           </div>
 
           {/* Stat counters */}
@@ -594,7 +623,7 @@ export default function HomePage() {
             Ferramenta educacional — Para estudantes, médicos e profissionais terapeutas
           </p>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── SEARCH RESULTS ───────────────────────────────────── */}
       {isSearching ? (

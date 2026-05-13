@@ -13,6 +13,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { RouteGuard } from "@/components/RouteGuard";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
+import { ToastProvider } from "@/components/Toast";
+import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 
 // ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
@@ -99,13 +101,8 @@ const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
 
 function LoadingSpinner() {
   return (
-    <div className="flex items-center justify-center py-20">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center animate-pulse">
-          <Brain className="w-5 h-5 text-white" />
-        </div>
-        <p className="text-xs text-muted-foreground">Carregando...</p>
-      </div>
+    <div className="py-2">
+      <SkeletonShimmer variant="page" />
     </div>
   );
 }
@@ -295,19 +292,21 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
-          <SplashScreen
-            awaiting={!appReady}
-            onComplete={() => setSplashComplete(true)}
-          />
-          {splashComplete && showOnboarding && (
-            <Onboarding onComplete={dismissOnboarding} />
-          )}
-          <Router hook={useHashLocation}>
-            <AppRouter />
-          </Router>
-          <InstallPrompt />
-          <PreferencesPanel />
+          <ToastProvider>
+            <Toaster />
+            <SplashScreen
+              awaiting={!appReady}
+              onComplete={() => setSplashComplete(true)}
+            />
+            {splashComplete && showOnboarding && (
+              <Onboarding onComplete={dismissOnboarding} />
+            )}
+            <Router hook={useHashLocation}>
+              <AppRouter />
+            </Router>
+            <InstallPrompt />
+            <PreferencesPanel />
+          </ToastProvider>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -46,9 +46,10 @@
   --chart-3: 170 55% 42%;
   --chart-4: 42 80% 55%;
   --chart-5: 15 80% 55%;
-  --font-sans: 'Plus Jakarta Sans', 'Nunito', sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
+  --font-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', Menlo, monospace;
   --radius: .625rem;
   --shadow-2xs: 0px 1px 0px 0px hsl(260 30% 15% / 0.02);
   --shadow-xs: 0px 1px 2px 0px hsl(260 30% 15% / 0.04);
@@ -317,6 +318,78 @@
   ::selection {
     background: hsl(260 60% 55% / 0.2);
     color: hsl(var(--foreground));
+  }
+
+  /* Tipografia editorial — para títulos premium e elementos de destaque */
+  .font-display {
+    font-family: var(--font-display);
+    font-feature-settings: "lnum", "ss01";
+    letter-spacing: -0.01em;
+  }
+
+  .font-serif-editorial {
+    font-family: var(--font-serif);
+    font-feature-settings: "lnum";
+  }
+
+  /* Texto fofo: leve, arejado, com altura confortável para leitura */
+  .text-cozy {
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+  }
+
+  /* Sublinhado decorativo elegante (após títulos editoriais) */
+  .underline-deco {
+    background-image: linear-gradient(90deg, hsl(var(--primary) / 0.6), hsl(var(--chart-2) / 0.6));
+    background-size: 100% 2px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    padding-bottom: 2px;
+  }
+
+  /* Card premium com borda sutil e glow no hover */
+  .card-premium {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--card-border));
+    border-radius: 14px;
+    transition: transform .22s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow .22s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color .22s ease;
+  }
+  .card-premium:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.18);
+  }
+
+  /* Botão com leve glow ambient */
+  .btn-glow {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    transition: box-shadow .25s ease, transform .15s ease;
+  }
+  .btn-glow:hover {
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12);
+  }
+  .btn-glow:active {
+    transform: scale(0.98);
+  }
+
+  /* Reduced motion: desliga animações decorativas */
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter,
+    .stagger-in > *,
+    .glow-pulse,
+    .float-gentle,
+    .shimmer::after,
+    .reveal-up,
+    .celebrate,
+    .count-up {
+      animation: none !important;
+    }
+    .card-hover:hover,
+    .card-premium:hover {
+      transform: none;
+    }
   }
 }
 

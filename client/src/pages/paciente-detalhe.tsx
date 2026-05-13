@@ -15,10 +15,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 import {
   ArrowLeft, Pencil, Trash2, Calendar, TrendingUp, TrendingDown,
   Minus, FileText, Copy, Download, ClipboardList, Users, Lock,
 } from "lucide-react";
+import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { easing, duration } from "@/lib/motion";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -64,11 +68,17 @@ export default function PacienteDetalhePage() {
   async function handlePinSubmit() {
     if (!pin) return;
     setPinChecking(true);
+    softTap();
+    haptic.tap();
     const ok = await verifyPin(pin);
     setPinChecking(false);
     if (ok) {
+      softSuccess();
+      haptic.success();
       setInternalAuth(true);
     } else {
+      softError();
+      haptic.error();
       setPinError(true);
       setTimeout(() => setPinError(false), 3000);
     }
@@ -76,13 +86,28 @@ export default function PacienteDetalhePage() {
 
   if (!internalAuth) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-          <Lock className="w-8 h-8 text-white" />
-        </div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex flex-col items-center justify-center py-20 space-y-6"
+      >
+        <motion.div
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: duration.normal, ease: easing.spring }}
+          className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg"
+        >
+          <Lock className="w-8 h-8 text-white" strokeWidth={1.75} />
+        </motion.div>
         <div className="text-center space-y-1">
-          <h2 className="text-lg font-bold text-foreground">Área Restrita</h2>
-          <p className="text-xs text-muted-foreground">Acesso exclusivo do Dr. Jadson</p>
+          <h2
+            className="text-2xl text-foreground"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            Área Restrita
+          </h2>
+          <p className="text-xs text-muted-foreground italic">Acesso exclusivo do Dr. Jadson</p>
         </div>
         <div className="w-full max-w-xs space-y-3">
           <Input
@@ -109,7 +134,7 @@ export default function PacienteDetalhePage() {
         <p className="text-xs text-muted-foreground text-center max-w-xs">
           Dados protegidos localmente. Modo demonstração — não inserir dados reais de pacientes.
         </p>
-      </div>
+      </motion.div>
     );
   }
 

@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { allScales, filterScales, type ScaleEntry } from "@/data/scaleFilter";
 import { pharmCategories, type PharmCategory, type Drug } from "@/data/farmacologia";
+import { motion } from "framer-motion";
+import { softTap, softTick, softHover } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { easing, duration } from "@/lib/motion";
 
 const iconMap: Record<string, any> = {
   baby: Baby, puzzle: Puzzle, zap: Zap, flame: Flame,
@@ -338,15 +342,25 @@ export default function FiltroPage() {
   return (
     <div className="space-y-4 page-enter">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-lg shadow-primary/20">
-          <Filter className="w-5 h-5 text-white" />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex items-center gap-3"
+      >
+        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-md">
+          <Filter className="w-5 h-5 text-white" strokeWidth={1.75} />
         </div>
         <div>
-          <h1 className="text-lg font-bold">Filtro Inteligente</h1>
-          <p className="text-xs text-muted-foreground">Escalas, testes, medicações e ferramentas</p>
+          <h1
+            className="text-xl text-foreground leading-tight"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            Filtro Inteligente
+          </h1>
+          <p className="text-xs text-muted-foreground italic">Escalas, testes, medicações e ferramentas</p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Busca */}
       <div className="relative">
@@ -373,9 +387,14 @@ export default function FiltroPage() {
           {idades.map(f => (
             <button
               key={f.id}
-              onClick={() => setSelIdade(selIdade === f.id ? null : f.id)}
+              onMouseEnter={() => softHover()}
+              onClick={() => {
+                softTick();
+                haptic.select();
+                setSelIdade(selIdade === f.id ? null : f.id);
+              }}
               className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all ${
-                selIdade === f.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted"
+                selIdade === f.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"
               }`}
             >
               {f.label}
@@ -400,9 +419,14 @@ export default function FiltroPage() {
             return (
               <button
                 key={q.id}
-                onClick={() => toggleQ(q.id)}
+                onMouseEnter={() => softHover()}
+                onClick={() => {
+                  softTick();
+                  haptic.select();
+                  toggleQ(q.id);
+                }}
                 className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-xl text-[10px] font-medium border transition-all ${
-                  sel ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted"
+                  sel ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"
                 }`}
               >
                 <span className="text-base leading-none">{q.emoji}</span>
@@ -419,7 +443,19 @@ export default function FiltroPage() {
           <p className="text-xs">
             <strong className="text-primary text-sm">{total}</strong> resultado{total !== 1 ? "s" : ""}
           </p>
-          <Button variant="ghost" size="sm" onClick={() => { setSelQueixas([]); setSelIdade(null); setSearch(""); setTab("tudo"); }} className="text-xs h-7 gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              setSelQueixas([]);
+              setSelIdade(null);
+              setSearch("");
+              setTab("tudo");
+            }}
+            className="text-xs h-7 gap-1"
+          >
             <X className="w-3 h-3" /> Limpar
           </Button>
         </div>

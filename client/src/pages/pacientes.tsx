@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { verifyPin } from "@/lib/pinAuth";
@@ -13,9 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, Lock,
+  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, Lock, UserPlus,
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
+import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState, LoadingState } from "@/components/ui/VisualStates";
+import { easing, duration } from "@/lib/motion";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -36,11 +42,17 @@ export default function PacientesPage() {
   async function handlePinSubmit() {
     if (!pin) return;
     setPinChecking(true);
+    softTap();
+    haptic.tap();
     const ok = await verifyPin(pin);
     setPinChecking(false);
     if (ok) {
+      softSuccess();
+      haptic.success();
       setInternalAuth(true);
     } else {
+      softError();
+      haptic.error();
       setPinError(true);
       setTimeout(() => setPinError(false), 3000);
     }
@@ -48,13 +60,28 @@ export default function PacientesPage() {
 
   if (!internalAuth) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-          <Lock className="w-8 h-8 text-white" />
-        </div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex flex-col items-center justify-center py-20 space-y-6"
+      >
+        <motion.div
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: duration.normal, ease: easing.spring }}
+          className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg"
+        >
+          <Lock className="w-8 h-8 text-white" strokeWidth={1.75} />
+        </motion.div>
         <div className="text-center space-y-1">
-          <h2 className="text-lg font-bold text-foreground">Área Restrita</h2>
-          <p className="text-xs text-muted-foreground">Acesso exclusivo do Dr. Jadson</p>
+          <h2
+            className="text-2xl text-foreground"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            Área Restrita
+          </h2>
+          <p className="text-xs text-muted-foreground italic">Acesso exclusivo do Dr. Jadson</p>
         </div>
         <div className="w-full max-w-xs space-y-3">
           <Input
@@ -70,7 +97,7 @@ export default function PacientesPage() {
             <p className="text-xs text-red-500 text-center">PIN incorreto. Tente novamente.</p>
           )}
           <Button
-            className="w-full"
+            className="w-full btn-glow"
             onClick={handlePinSubmit}
             disabled={!pin || pinChecking}
             data-testid="button-acessar-prontuarios"
@@ -81,7 +108,7 @@ export default function PacientesPage() {
         <p className="text-xs text-muted-foreground text-center max-w-xs">
           Dados protegidos localmente. Modo demonstração — não inserir dados reais de pacientes.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -92,8 +119,9 @@ export default function PacientesPage() {
   const [formName, setFormName] = useState("");
   const [formBirth, setFormBirth] = useState("");
   const [formNotes, setFormNotes] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: patients = [] } = useQuery<any[]>({
+  const { data: patients = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/patients"],
   });
 
@@ -105,7 +133,14 @@ export default function PacientesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       resetForm();
+      softSuccess();
+      haptic.success();
       toast({ title: "Paciente criado!" });
+    },
+    onError: () => {
+      softError();
+      haptic.error();
+      toast({ title: "Erro ao criar paciente.", variant: "destructive" });
     },
   });
 
@@ -117,7 +152,14 @@ export default function PacientesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       resetForm();
+      softSuccess();
+      haptic.success();
       toast({ title: "Paciente atualizado!" });
+    },
+    onError: () => {
+      softError();
+      haptic.error();
+      toast({ title: "Erro ao atualizar paciente.", variant: "destructive" });
     },
   });
 
@@ -127,7 +169,15 @@ export default function PacientesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      softSuccess();
+      haptic.success();
       toast({ title: "Paciente removido." });
+      setConfirmingDelete(null);
+    },
+    onError: () => {
+      softError();
+      haptic.error();
+      toast({ title: "Erro ao remover paciente.", variant: "destructive" });
     },
   });
 
@@ -169,17 +219,32 @@ export default function PacientesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-sm">
-          <Users className="w-5 h-5 text-white" />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex items-center gap-3"
+      >
+        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-md">
+          <Users className="w-5 h-5 text-white" strokeWidth={1.75} />
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-bold">Meus Pacientes</h1>
-          <p className="text-xs text-muted-foreground">Cadastre e acompanhe seus pacientes</p>
+          <h1
+            className="text-xl text-foreground leading-tight"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            Meus Pacientes
+          </h1>
+          <p className="text-xs text-muted-foreground italic">Cadastre e acompanhe seus pacientes</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5" data-testid="button-new-patient">
+            <Button
+              size="sm"
+              onClick={() => { softTap(); haptic.tap(); }}
+              className="gap-1.5 btn-glow"
+              data-testid="button-new-patient"
+            >
               <Plus className="w-3.5 h-3.5" /> Novo
             </Button>
           </DialogTrigger>
@@ -216,7 +281,7 @@ export default function PacientesPage() {
             </div>
             <DialogFooter>
               <Button
-                onClick={handleSubmit}
+                onClick={() => { softTap(); haptic.tap(); handleSubmit(); }}
                 disabled={!formName.trim() || createMutation.isPending || updateMutation.isPending}
                 className="w-full"
                 data-testid="button-save-patient"
@@ -226,7 +291,7 @@ export default function PacientesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Search */}
       <div className="relative">
@@ -246,60 +311,120 @@ export default function PacientesPage() {
       </div>
 
       {/* Patient list */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-12 space-y-3">
-          <Users className="w-10 h-10 mx-auto text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">
-            {patients.length === 0 ? "Nenhum paciente cadastrado." : "Nenhum resultado encontrado."}
-          </p>
-        </div>
+      {isLoading ? (
+        <LoadingState rows={4} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<Users className="w-7 h-7 text-muted-foreground" />}
+          title={patients.length === 0 ? "Nenhum paciente cadastrado" : "Nenhum resultado encontrado"}
+          description={
+            patients.length === 0
+              ? "Cadastre o primeiro paciente para começar o acompanhamento."
+              : "Tente outro termo de busca."
+          }
+          action={
+            patients.length === 0
+              ? {
+                  label: "Cadastrar paciente",
+                  onClick: () => {
+                    softTap();
+                    haptic.tap();
+                    setDialogOpen(true);
+                  },
+                }
+              : undefined
+          }
+        />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+          }}
+          className="grid gap-3 sm:grid-cols-2"
+        >
           {filtered.map((p: any) => {
             const age = calcAge(p.birthDate);
             return (
-              <Card key={p.id} className="border-card-border group hover:shadow-md transition-shadow">
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <Link href={`/paciente/${p.id}`}>
-                      <div className="cursor-pointer flex-1">
-                        <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {age && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Calendar className="w-3 h-3" /> {age}
-                            </span>
-                          )}
+              <motion.div
+                key={p.id}
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: { opacity: 1, y: 0, transition: { duration: duration.normal, ease: easing.smooth } },
+                }}
+              >
+                <Card className="card-premium group">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <Link href={`/paciente/${p.id}`}>
+                        <div className="cursor-pointer flex-1" onClick={() => { softTap(); haptic.tap(); }}>
+                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</h3>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {age && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Calendar className="w-3 h-3" /> {age}
+                              </span>
+                            )}
+                          </div>
+                          {p.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.notes}</p>}
                         </div>
-                        {p.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.notes}</p>}
+                      </Link>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => { softTick(); haptic.tap(); openEdit(p); }}
+                          data-testid={`button-edit-${p.id}`}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            softTap();
+                            haptic.warning();
+                            setConfirmingDelete({ id: p.id, name: p.name });
+                          }}
+                          data-testid={`button-delete-${p.id}`}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
-                    </Link>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(p)} data-testid={`button-edit-${p.id}`}>
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                        onClick={() => deleteMutation.mutate(p.id)}
-                        data-testid={`button-delete-${p.id}`}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
                     </div>
-                  </div>
-                  <Link href={`/paciente/${p.id}`}>
-                    <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs mt-1">
-                      Ver detalhes <ArrowRight className="w-3 h-3" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                    <Link href={`/paciente/${p.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { softTap(); haptic.tap(); }}
+                        className="w-full gap-1.5 text-xs mt-1"
+                      >
+                        Ver detalhes <ArrowRight className="w-3 h-3" />
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
+
+      {/* Confirm delete dialog */}
+      <ConfirmDialog
+        open={!!confirmingDelete}
+        onClose={() => setConfirmingDelete(null)}
+        onConfirm={() => confirmingDelete && deleteMutation.mutate(confirmingDelete.id)}
+        title={`Remover ${confirmingDelete?.name ?? "paciente"}?`}
+        description="Esta ação remove o paciente e todos os resultados associados. Não pode ser desfeita."
+        confirmLabel="Remover"
+        variant="destructive"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }

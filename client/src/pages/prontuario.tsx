@@ -16,6 +16,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -566,17 +568,28 @@ export default function ProntuarioPage() {
 
   const handlePrint = () => {
     const ok = printReport(identificacao, anamnese, marcos, medicacoes, terapias, exames);
-    if (!ok) toast({ title: "Erro", description: "Habilite pop-ups para esta página.", variant: "destructive" });
-    else toast({ title: "Impressão", description: "Janela de impressão aberta." });
+    if (!ok) {
+      softError();
+      haptic.error();
+      toast({ title: "Erro", description: "Habilite pop-ups para esta página.", variant: "destructive" });
+    } else {
+      softBell();
+      haptic.notify();
+      toast({ title: "Impressão", description: "Janela de impressão aberta." });
+    }
   };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(reportText);
       setCopied(true);
+      softSuccess();
+      haptic.success();
       toast({ title: "Copiado!", description: "Relatório copiado para a área de transferência." });
       setTimeout(() => setCopied(false), 3000);
     } catch {
+      softError();
+      haptic.error();
       toast({ title: "Erro", description: "Não foi possível copiar.", variant: "destructive" });
     }
   };
@@ -608,12 +621,17 @@ export default function ProntuarioPage() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3 shadow-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md">
-              <ClipboardList className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md">
+              <ClipboardList className="w-5 h-5 text-white" strokeWidth={1.75} />
             </div>
             <div>
-              <h1 className="text-base font-bold text-foreground leading-tight">Prontuário Clínico</h1>
-              <p className="text-xs text-muted-foreground">Neuropediatria — sessão local</p>
+              <h1
+                className="text-lg text-foreground leading-tight"
+                style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              >
+                Prontuário Clínico
+              </h1>
+              <p className="text-xs text-muted-foreground italic">Neuropediatria — sessão local</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -623,8 +641,8 @@ export default function ProntuarioPage() {
             </Badge>
             <Button
               size="sm"
-              onClick={handlePrint}
-              className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-1.5 shadow-sm"
+              onClick={() => { softTap(); haptic.tap(); handlePrint(); }}
+              className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-1.5 shadow-sm btn-glow"
             >
               <Printer className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Gerar Relatório</span>

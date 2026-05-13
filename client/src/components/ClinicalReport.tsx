@@ -7,7 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { play1Up, playFireball, playCoin, playPowerUp } from "@/lib/sounds";
+import { softSuccess, softTap, softBell } from "@/lib/softSounds";
+import { haptic } from "@/lib/haptic";
 import { RadarChart } from "@/components/RadarChart";
+import { motion } from "framer-motion";
+import { easing, duration } from "@/lib/motion";
 
 const EMAIL_TO = "jadsonfraga@hotmail.com";
 
@@ -181,7 +185,8 @@ export function ClinicalReport(props: ClinicalReportProps) {
     try {
       await navigator.clipboard.writeText(reportText);
       setCopied(true);
-      playCoin();
+      softSuccess();
+      haptic.success();
       toast({ title: "Copiado!", description: "Relatório copiado para a área de transferência." });
       setTimeout(() => setCopied(false), 3000);
     } catch {
@@ -352,7 +357,8 @@ export function ClinicalReport(props: ClinicalReportProps) {
     printWindow.onload = () => {
       printWindow.print();
     };
-    playFireball();
+    softBell();
+    haptic.notify();
     toast({ title: "Impressão", description: "Janela de impressão aberta." });
   }
 
@@ -363,11 +369,22 @@ export function ClinicalReport(props: ClinicalReportProps) {
   }
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-chart-2/5 dark:from-primary/10 dark:to-chart-2/10">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: duration.normal, ease: easing.smooth, delay: 0.1 }}
+    >
+    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-chart-2/5 dark:from-primary/10 dark:to-chart-2/10 overflow-hidden">
+      <div className="h-1 w-full bg-gradient-to-r from-primary via-chart-2 to-chart-3" />
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">Relatório Clínico Completo</h3>
+          <FileText className="w-5 h-5 text-primary" strokeWidth={1.75} />
+          <h3
+            className="text-base text-foreground"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            Relatório Clínico Completo
+          </h3>
           {sent && <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Enviado</Badge>}
         </div>
 
@@ -464,6 +481,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
           <Link href="/filtro">
             <Button
               size="sm"
+              onClick={() => { softTap(); haptic.tap(); }}
               className="flex-1 gap-2 h-9 bg-gradient-to-r from-primary to-chart-2 text-white"
               data-testid="button-goto-filter"
             >
@@ -473,6 +491,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
 
