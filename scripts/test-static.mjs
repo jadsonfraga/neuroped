@@ -72,6 +72,17 @@ for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-
   assertIncludes(b, 'scales-enhance.js', b + ' carrega scales-enhance.js');
 }
 
+// Filtro de escalas — utilidade clínica
+assertIncludes('safe-public-layer.js', '/filtro', 'safe-public-layer reconhece /filtro como rota familiar');
+assertIncludes('safe-public-layer.js', '/escalas', 'safe-public-layer reconhece /escalas como rota familiar');
+assertIncludes('consulta-bridge.js', 'filtro-escalas.html', 'consulta-bridge redireciona hash /filtro para filtro-escalas.html');
+assertIncludes('index.html', './consulta-bridge.js', 'index.html carrega o bridge de roteamento');
+assertIncludes('filtro-escalas.html', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
+assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
+assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
+assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
+assertIncludes('filtro-escalas.html', 'exportTop', 'filtro tem função export do Top 5');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
 

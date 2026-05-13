@@ -22,7 +22,12 @@
     /^\/testes-cognitivos(\/|$|\?)/i,
     /^\/testes-conhecimentos-gerais(\/|$|\?)/i,
     /^\/teste-conhecimento(\/|$|\?)/i,
-    /^\/teste-escrita(\/|$|\?)/i
+    /^\/teste-escrita(\/|$|\?)/i,
+    /^\/filtro(\/|$|\?)/i,
+    /^\/filtro-escalas(\/|$|\?)/i,
+    /^\/escalas(\/|$|\?)/i,
+    /^\/mapa-escalas(\/|$|\?)/i,
+    /^\/banco-escalas(\/|$|\?)/i
   ];
   var SENSITIVE_PATTERNS = [
     /^\/pacientes(\/|$|\?)/i,
