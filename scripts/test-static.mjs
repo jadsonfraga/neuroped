@@ -83,6 +83,26 @@ assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
 assertIncludes('filtro-escalas.html', 'exportTop', 'filtro tem função export do Top 5');
 
+// Backend Supabase opcional (coexiste com D1)
+assertFile('db/supabase-schema.sql');
+assertFile('np-cloud.js');
+assertFile('cloud-config.js');
+assertFile('cloud-config.example.js');
+assertFile('SUPABASE.md');
+assertIncludes('db/supabase-schema.sql', 'enable row level security', 'schema Supabase ativa RLS');
+assertIncludes('db/supabase-schema.sql', 'anon can insert submissions', 'schema permite INSERT anon em submissions');
+assertIncludes('db/supabase-schema.sql', 'anon cannot select submissions', 'schema BLOQUEIA SELECT anon em submissions');
+assertIncludes('np-cloud.js', 'NeuroPedCloud', 'np-cloud expoe API global NeuroPedCloud');
+assertIncludes('np-cloud.js', 'saveSubmission', 'np-cloud tem saveSubmission');
+assertIncludes('np-cloud.js', '/rest/v1/submissions', 'np-cloud usa endpoint REST do Supabase');
+assertIncludes('cloud-config.js', 'enabled: false', 'cloud-config padrao vem desabilitado');
+assertNotIncludes('cloud-config.js', 'eyJh', 'cloud-config nao contem JWT real');
+assertIncludes('_headers', 'https://*.supabase.co', '_headers permite Supabase em connect-src');
+assertIncludes('index.html', 'https://*.supabase.co', 'index.html permite Supabase em connect-src');
+assertIncludes('index.html', './np-cloud.js', 'index.html carrega np-cloud.js');
+assertIncludes('index.html', './cloud-config.js', 'index.html carrega cloud-config.js');
+assertIncludes('scales-enhance.js', 'NeuroPedCloud', 'scales-enhance roteia para Supabase quando disponivel');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
 
