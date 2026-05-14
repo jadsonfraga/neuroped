@@ -2,12 +2,13 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-09T10:05:00-03:00",
-  "version": "v44-assinatura-digital",
+  "deploy_requested_at": "2026-05-09T10:35:00-03:00",
+  "version": "v45-filtro-robusto-instrumentos",
   "entrypoint": "index.html",
-  "consulta": "consulta.html",
-  "assinatura_digital": "assinatura-digital.html",
-  "assinatura_digital_js": "assinatura-digital.js",
-  "assinatura_link": "assinatura-link.js",
-  "note": "Central segura criada para preparar documento, gerar hash SHA-256, registrar localmente e conferir PDF assinado. Nao armazena certificado A1/A3 no GitHub Pages."
+  "filtro": "filtro-escalas.html",
+  "ranking": "filtro-rank-pro.js",
+  "instrumento_universal": "instrumento.html",
+  "mapa_fix": "mapa-open-fix.js",
+  "service_worker": "neuroped-v45-filtro-robusto-instrumentos",
+  "note": "Filtro aprimorado com ranking Ouro Prata Bronze mais criterioso; todos os instrumentos podem abrir via instrumento.html com perguntas por extenso, tarefas diretas, leitura, ditado, interpretação e resumo copiavel."
 }
