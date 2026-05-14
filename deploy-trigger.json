@@ -2,13 +2,12 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-09T10:35:00-03:00",
-  "version": "v45-filtro-robusto-instrumentos",
+  "deploy_requested_at": "2026-05-09T10:55:00-03:00",
+  "version": "v46-cloud-foundation",
   "entrypoint": "index.html",
-  "filtro": "filtro-escalas.html",
-  "ranking": "filtro-rank-pro.js",
-  "instrumento_universal": "instrumento.html",
-  "mapa_fix": "mapa-open-fix.js",
-  "service_worker": "neuroped-v45-filtro-robusto-instrumentos",
-  "note": "Filtro aprimorado com ranking Ouro Prata Bronze mais criterioso; todos os instrumentos podem abrir via instrumento.html com perguntas por extenso, tarefas diretas, leitura, ditado, interpretação e resumo copiavel."
+  "cloud_status": "cloud-status.html",
+  "cloud_config_example": "cloud-config.example.js",
+  "supabase_schema": "supabase/schema.sql",
+  "service_worker": "neuroped-v46-cloud-foundation",
+  "note": "Servico de fundacao backend/nuvem finalizado: schema Supabase, exemplo de configuracao, painel de status cloud, fallback local preservado e cache v46 publicado. Regras sensiveis devem ser configuradas diretamente no provedor cloud."
 }
