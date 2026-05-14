@@ -36,7 +36,7 @@
     <meta name="twitter:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
     <meta name="twitter:description" content="Aplicativo clínico de neuropediatria com escalas validadas e ferramentas profissionais." />
     <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wa.me https://api.github.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wa.me https://api.github.com https://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
     <meta name="permissions-policy" content="camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()" />
@@ -70,5 +70,7 @@
     </script>
     <script src="./safe-public-layer.js" defer></script>
     <script src="./consulta-bridge.js" defer></script>
+    <script src="./cloud-config.js" defer></script>
+    <script src="./np-cloud.js" defer></script>
   </body>
 </html>

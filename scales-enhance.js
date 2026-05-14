@@ -135,24 +135,38 @@
     setTimeout(function(){ w.focus(); w.print(); }, 250);
   }
 
-  function submitToBackend(inst, answers, patient){
+  function buildPayload(inst, answers, patient){
     var t = totalScore(inst, answers);
     var ds = domainScores(inst, answers);
+    return {
+      instrument_id: inst.id,
+      instrument_title: inst.title,
+      instrument_group: inst.cat || null,
+      case_code: patient.code || null,
+      patient_code: patient.name || null,
+      answers_json: { answers: answers || {}, domains: ds, total: t },
+      raw_score: t.score,
+      total_items: ds.reduce(function(a, d){ return a + (d.max ? d.max / (inst.labels.length - 1) : 0); }, 0),
+      source_page: location.pathname,
+      notes: 'submitted from ' + location.pathname
+    };
+  }
+  function submitToBackend(inst, answers, patient){
+    var payload = buildPayload(inst, answers, patient);
+    // Se Supabase opt-in estiver ativo, usar np-cloud.js (write-only via RLS).
+    if (window.NeuroPedCloud && window.NeuroPedCloud.enabled && window.NeuroPedCloud.enabled()) {
+      return window.NeuroPedCloud.saveSubmission(payload).then(function(r){
+        return new Response(JSON.stringify(r.ok ? { ok: true, id: r.id, route: 'supabase' } : { ok: false, error: r.error || 'falhou', route: 'supabase' }), {
+          status: r.ok ? 200 : (r.status || 500),
+          headers: { 'Content-Type': 'application/json' }
+        });
+      });
+    }
+    // Fallback: Cloudflare Pages Function (D1) - rota canonica atual.
     return fetch('/api/submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        instrument_id: inst.id,
-        instrument_title: inst.title,
-        instrument_group: inst.cat || null,
-        case_code: patient.code || null,
-        patient_code: patient.name || null,
-        answers_json: { answers: answers || {}, domains: ds, total: t },
-        raw_score: t.score,
-        total_items: ds.reduce(function(a, d){ return a + (d.max ? d.max / (inst.labels.length - 1) : 0); }, 0),
-        source_page: location.pathname,
-        notes: 'submitted from ' + location.pathname
-      })
+      body: JSON.stringify(payload)
     });
   }
 
