@@ -2,12 +2,12 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-09T09:40:00-03:00",
-  "version": "v43-app-appearance",
+  "deploy_requested_at": "2026-05-09T10:05:00-03:00",
+  "version": "v44-assinatura-digital",
   "entrypoint": "index.html",
-  "visual_layer": "premium-polish-overrides.css",
-  "service_worker": "neuroped-v43-app-appearance",
   "consulta": "consulta.html",
-  "pin_master": "alfanumerico",
-  "note": "Camada visual reforcada para aparencia de app: header sticky, safe area mobile, cards/touch targets, bottom nav refinada, transicoes suaves e cache v43."
+  "assinatura_digital": "assinatura-digital.html",
+  "assinatura_digital_js": "assinatura-digital.js",
+  "assinatura_link": "assinatura-link.js",
+  "note": "Central segura criada para preparar documento, gerar hash SHA-256, registrar localmente e conferir PDF assinado. Nao armazena certificado A1/A3 no GitHub Pages."
 }
