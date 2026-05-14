@@ -382,7 +382,7 @@ export default function SatisfacaoMedicacaoPage() {
         <Button onClick={handleReset} variant="outline" className="w-full gap-2">
           <RotateCcw className="w-4 h-4" /> Nova Avaliação
         </Button>
-      </div>
+      </motion.div>
     );
   }
 

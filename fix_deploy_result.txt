@@ -1,0 +1,15 @@
+=== NeuroPed Fix Deploy - 13/05/2026 18:29:12 ===
+warning: in the working copy of '.github/workflows/deploy.yml', LF will be replaced by CRLF the next time Git touches it
+=== STATUS === 
+ m .claude/worktrees/friendly-goldberg-32f573
+M  .github/workflows/deploy.yml
+?? FIX_DEPLOY.vbs
+?? fix_deploy_result.txt
+[feat/auditoria-total-ui-backend-memoria b187a83] fix: skip playwright download + use vite build only for GitHub Pages CI
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+=== LOG === 
+b187a83 fix: skip playwright download + use vite build only for GitHub Pages CI
+6a3db18 feat: add CI/CD pipeline for autonomous GitHub Pages and Render.com deploy
+ae8e7fb feat: Cloudflare Pages proxy /api/* para Railway
+To https://github.com/jadsonfraga/neuroped.git
+   6a3db18..b187a83  feat/auditoria-total-ui-backend-memoria -> feat/auditoria-total-ui-backend-memoria
