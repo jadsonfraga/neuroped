@@ -2,12 +2,14 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-09T10:55:00-03:00",
-  "version": "v46-cloud-foundation",
+  "deploy_requested_at": "2026-05-15T13:05:00-03:00",
+  "version": "v49-featured-10-escalas",
   "entrypoint": "index.html",
-  "cloud_status": "cloud-status.html",
-  "cloud_config_example": "cloud-config.example.js",
-  "supabase_schema": "supabase/schema.sql",
-  "service_worker": "neuroped-v46-cloud-foundation",
-  "note": "Servico de fundacao backend/nuvem finalizado: schema Supabase, exemplo de configuracao, painel de status cloud, fallback local preservado e cache v46 publicado. Regras sensiveis devem ser configuradas diretamente no provedor cloud."
+  "featured_10_panel": "featured-10-panel.js",
+  "featured_10_scales": "scales-featured-10.js",
+  "filtro": "filtro-escalas.html",
+  "mapa": "mapa-escalas.html",
+  "instrumento": "instrumento.html",
+  "service_worker": "neuroped-v49-featured-10-escalas",
+  "note": "Adicionadas e destacadas 10 escalas prioritarias enviadas em PDF: PC Funcional, TDL/Aprendizagem, EINP TDAH/TOD, Protocolo Exames, TEA Check, TDE Nordeste, Columbia Triagem, ICAD, Denver Nordestino e Columbia Seguimento. Todas entram no filtro/mapa/instrumento com abertura funcional, perguntas e tarefas."
 }
