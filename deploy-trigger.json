@@ -2,14 +2,11 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-15T13:05:00-03:00",
-  "version": "v49-featured-10-escalas",
+  "deploy_requested_at": "2026-05-15T13:20:00-03:00",
+  "version": "v50-featured-extra-escalas",
   "entrypoint": "index.html",
-  "featured_10_panel": "featured-10-panel.js",
-  "featured_10_scales": "scales-featured-10.js",
-  "filtro": "filtro-escalas.html",
-  "mapa": "mapa-escalas.html",
-  "instrumento": "instrumento.html",
-  "service_worker": "neuroped-v49-featured-10-escalas",
-  "note": "Adicionadas e destacadas 10 escalas prioritarias enviadas em PDF: PC Funcional, TDL/Aprendizagem, EINP TDAH/TOD, Protocolo Exames, TEA Check, TDE Nordeste, Columbia Triagem, ICAD, Denver Nordestino e Columbia Seguimento. Todas entram no filtro/mapa/instrumento com abertura funcional, perguntas e tarefas."
+  "featured_panel": "featured-10-panel.js",
+  "featured_extra": "scales-featured-extra.js",
+  "service_worker": "neuroped-v50-featured-extra-escalas",
+  "note": "Camada extra de escalas destacadas publicada no cache v50."
 }
