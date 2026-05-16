@@ -103,6 +103,22 @@ assertIncludes('index.html', './np-cloud.js', 'index.html carrega np-cloud.js');
 assertIncludes('index.html', './cloud-config.js', 'index.html carrega cloud-config.js');
 assertIncludes('scales-enhance.js', 'NeuroPedCloud', 'scales-enhance roteia para Supabase quando disponivel');
 
+// Filtro rank pro - sem polling perpetuo, debounced
+assertFile('filtro-rank-pro.js');
+assertNotIncludes('filtro-rank-pro.js', 'setInterval(run', 'filtro-rank-pro nao roda setInterval(run, ...) ocioso');
+assertIncludes('filtro-rank-pro.js', 'debounce', 'filtro-rank-pro usa debounce');
+assertIncludes('filtro-rank-pro.js', 'lastSignature', 'filtro-rank-pro evita re-render quando inputs nao mudaram');
+
+// Instrumento enhance
+assertFile('instrumento-enhance.js');
+assertFile('instrumento.html');
+assertIncludes('instrumento.html', './instrumento-enhance.js', 'instrumento.html carrega instrumento-enhance.js');
+assertIncludes('instrumento-enhance.js', 'NeuroPedScales', 'instrumento-enhance integra com NeuroPedScales');
+assertIncludes('instrumento-enhance.js', 'NeuroPedCloud', 'instrumento-enhance roteia Submeter ao Supabase opt-in');
+assertIncludes('instrumento-enhance.js', 'data-v="na"', 'instrumento-enhance adiciona botao Nao Aplicavel');
+assertIncludes('instrumento-enhance.js', 'renderDiff', 'instrumento-enhance compara com avaliacao anterior');
+assertIncludes('instrumento-enhance.js', 'bindKeyboard', 'instrumento-enhance liga atalhos 1..5 e 0 para n/a');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
 
