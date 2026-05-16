@@ -1,12 +1,11 @@
 {
   "project": "NeuroPed EDJ",
-  "action": "force-deploy-trigger",
+  "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-16T12:05:00-03:00",
-  "version": "v52-force-actions-check",
+  "deploy_requested_at": "2026-05-16T12:25:00-03:00",
+  "version": "v53-app-shell",
   "entrypoint": "index.html",
-  "github_pages_workflow": ".github/workflows/deploy.yml",
-  "cloudflare_workflow": ".github/workflows/deploy-cloudflare.yml",
-  "previous_version": "v51-priority-uploaded-escalas",
-  "note": "Commit criado para forcar push em main e testar se GitHub Actions dispara automaticamente. Se nao houver workflow run apos este commit, Actions esta desabilitado/restrito no repo ou faltam configuracoes administrativas."
+  "consulta_app": "consulta-livre.html",
+  "app_shell": "app-shell-open.js",
+  "note": "Criada rota de consulta em formato app e shell visual com dock inferior para navegacao principal."
 }
