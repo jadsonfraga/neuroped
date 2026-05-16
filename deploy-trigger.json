@@ -1,12 +1,12 @@
 {
   "project": "NeuroPed EDJ",
-  "action": "deploy-trigger",
+  "action": "force-deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-16T08:05:00-03:00",
-  "version": "v51-priority-uploaded-escalas",
+  "deploy_requested_at": "2026-05-16T12:05:00-03:00",
+  "version": "v52-force-actions-check",
   "entrypoint": "index.html",
-  "priority_uploaded": "scales-priority-uploaded.js",
-  "featured_panel": "featured-10-panel.js",
-  "service_worker": "neuroped-v51-priority-uploaded-escalas",
-  "note": "Inseridas escalas prioritarias dos PDFs enviados e publicadas no filtro, mapa, hub e instrumento funcional."
+  "github_pages_workflow": ".github/workflows/deploy.yml",
+  "cloudflare_workflow": ".github/workflows/deploy-cloudflare.yml",
+  "previous_version": "v51-priority-uploaded-escalas",
+  "note": "Commit criado para forcar push em main e testar se GitHub Actions dispara automaticamente. Se nao houver workflow run apos este commit, Actions esta desabilitado/restrito no repo ou faltam configuracoes administrativas."
 }
