@@ -83,6 +83,21 @@ assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
 assertIncludes('filtro-escalas.html', 'exportTop', 'filtro tem função export do Top 5');
 
+// App polish mobile (cara de app: bottom nav, toast, safe-area, splash)
+assertFile('app-polish-mobile.css');
+assertFile('app-polish-mobile.js');
+assertIncludes('app-polish-mobile.css', 'safe-area-inset', 'polish CSS respeita safe-area (notch/home indicator)');
+assertIncludes('app-polish-mobile.css', '.np-bottom-nav', 'polish CSS define bottom nav mobile');
+assertIncludes('app-polish-mobile.css', '.np-toast', 'polish CSS define toast unificado');
+assertIncludes('app-polish-mobile.css', '.np-sheet', 'polish CSS define bottom sheet');
+assertIncludes('app-polish-mobile.css', 'prefers-reduced-motion', 'polish CSS respeita prefers-reduced-motion');
+assertIncludes('app-polish-mobile.js', 'npToast', 'polish JS expoe window.npToast');
+assertIncludes('app-polish-mobile.js', 'npConfirm', 'polish JS expoe window.npConfirm');
+for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','escalas.html','banco-escalas.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
+  assertIncludes(p, 'app-polish-mobile.css', p + ' carrega app-polish-mobile.css');
+  assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
+}
+
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
 assertFile('np-cloud.js');
