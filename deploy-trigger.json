@@ -2,11 +2,11 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-15T13:20:00-03:00",
-  "version": "v50-featured-extra-escalas",
+  "deploy_requested_at": "2026-05-16T08:05:00-03:00",
+  "version": "v51-priority-uploaded-escalas",
   "entrypoint": "index.html",
+  "priority_uploaded": "scales-priority-uploaded.js",
   "featured_panel": "featured-10-panel.js",
-  "featured_extra": "scales-featured-extra.js",
-  "service_worker": "neuroped-v50-featured-extra-escalas",
-  "note": "Camada extra de escalas destacadas publicada no cache v50."
+  "service_worker": "neuroped-v51-priority-uploaded-escalas",
+  "note": "Inseridas escalas prioritarias dos PDFs enviados e publicadas no filtro, mapa, hub e instrumento funcional."
 }
