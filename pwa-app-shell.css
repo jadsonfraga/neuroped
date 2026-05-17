@@ -1,61 +1,13 @@
-/* NeuroPed EDJ — PWA App Shell Visual Layer */
-:root{
-  --np-cream:#faf8f4;
-  --np-paper:#fffdf9;
-  --np-teal:#1a6b65;
-  --np-gold:#b8963e;
-  --np-wine:#8b2e3b;
-  --np-dark:#2d2926;
-  --np-muted:#6f6963;
-  --np-line:#eadcc7;
-  --np-soft:#fff4df;
-  --np-shadow:0 18px 54px rgba(45,41,38,.12);
-  --np-shadow-sm:0 10px 28px rgba(45,41,38,.08);
-  --np-safe-top:env(safe-area-inset-top,0px);
-  --np-safe-bottom:env(safe-area-inset-bottom,0px);
-}
+/* NeuroPed EDJ — PWA App Shell v2 · inspiração mobile premium estilo iFood sem copiar marca */
+:root{--np-cream:#faf8f4;--np-paper:#fffdf9;--np-red:#df2f3a;--np-coral:#ff6b5f;--np-teal:#1a6b65;--np-gold:#b8963e;--np-wine:#8b2e3b;--np-dark:#211f1d;--np-muted:#706a64;--np-line:#eadcc7;--np-soft:#fff4df;--np-shadow:0 18px 54px rgba(45,41,38,.12);--np-shadow-sm:0 10px 28px rgba(45,41,38,.08);--np-safe-top:env(safe-area-inset-top,0px);--np-safe-bottom:env(safe-area-inset-bottom,0px)}
 html{background:var(--np-cream);scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body.np-pwa-app{
-  background:radial-gradient(circle at 10% -10%,rgba(184,150,62,.18),transparent 34%),linear-gradient(135deg,var(--np-cream),#fffaf1 72%);
-  color:var(--np-dark);
-  min-height:100dvh;
-  padding-bottom:calc(84px + var(--np-safe-bottom));
-  overscroll-behavior-y:none;
-}
-body.np-pwa-app::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 22%,rgba(184,150,62,.05));
-  z-index:-1;
-}
-.np-pwa-topbar{
-  position:sticky;
-  top:0;
-  z-index:9998;
-  margin:0;
-  padding:calc(10px + var(--np-safe-top)) 14px 10px;
-  background:rgba(250,248,244,.92);
-  backdrop-filter:blur(18px) saturate(145%);
-  -webkit-backdrop-filter:blur(18px) saturate(145%);
-  border-bottom:1px solid rgba(234,220,199,.9);
-  box-shadow:0 8px 24px rgba(45,41,38,.05);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-.np-pwa-brand{display:flex;align-items:center;gap:11px;min-width:0}.np-pwa-logo{width:46px;height:46px;border-radius:17px;background:linear-gradient(135deg,var(--np-teal),#103f3c);color:white;display:grid;place-items:center;font-size:23px;box-shadow:0 12px 28px rgba(26,107,101,.22)}.np-pwa-title{font-family:Georgia,serif;font-weight:780;font-size:clamp(23px,5vw,38px);line-height:.98;color:var(--np-wine);letter-spacing:-.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np-pwa-sub{font-size:11px;color:var(--np-muted);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np-pwa-chip{border:1px solid var(--np-line);background:rgba(255,253,249,.9);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:950;color:var(--np-teal);text-decoration:none;white-space:nowrap}
-.np-pwa-dock{
-  position:fixed;left:50%;bottom:calc(10px + var(--np-safe-bottom));transform:translateX(-50%);z-index:9999;
-  background:rgba(250,248,244,.94);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
-  border:1px solid var(--np-line);border-radius:26px;padding:8px;display:flex;gap:6px;box-shadow:0 18px 52px rgba(45,41,38,.16);max-width:calc(100vw - 18px);
-  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-.np-pwa-dock a{min-width:72px;min-height:54px;border-radius:18px;text-decoration:none;color:var(--np-muted);font-size:11px;font-weight:950;display:grid;place-items:center;text-align:center;line-height:1.1;-webkit-tap-highlight-color:transparent}.np-pwa-dock a span{font-size:20px;line-height:1}.np-pwa-dock a.active{background:rgba(26,107,101,.10);color:var(--np-teal)}.np-pwa-dock a:active{transform:scale(.98)}
-body.np-pwa-app main,body.np-pwa-app .app,body.np-pwa-app .wrap,body.np-pwa-app .container{max-width:1180px;margin-left:auto;margin-right:auto}.np-pwa-app .card,.np-pwa-app .hero,.np-pwa-app section.card,.np-pwa-app article.card{border-radius:26px!important;border:1px solid var(--np-line)!important;background:linear-gradient(180deg,rgba(255,253,249,.98),rgba(255,250,241,.96))!important;box-shadow:var(--np-shadow-sm)!important}.np-pwa-app button,.np-pwa-app .btn,.np-pwa-app a.btn{border-radius:15px!important;min-height:44px;font-weight:900;-webkit-tap-highlight-color:transparent}.np-pwa-app input,.np-pwa-app textarea,.np-pwa-app select{border-radius:15px!important;min-height:44px;background:#fffdf9!important}.np-pwa-app input:focus,.np-pwa-app textarea:focus,.np-pwa-app select:focus{outline:none!important;border-color:var(--np-teal)!important;box-shadow:0 0 0 4px rgba(26,107,101,.10)!important}.np-pwa-app a{touch-action:manipulation}.np-pwa-fade{animation:npFade .28s ease both}@keyframes npFade{from{opacity:.001;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media(max-width:760px){.np-pwa-topbar{align-items:flex-start}.np-pwa-chip{display:none}.np-pwa-dock{width:calc(100vw - 18px);justify-content:space-around}.np-pwa-dock a{min-width:0;flex:1}.np-pwa-app .card,.np-pwa-app .hero{border-radius:24px!important}.np-pwa-title{max-width:70vw}}
+body.np-pwa-app{background:radial-gradient(circle at 16% -8%,rgba(223,47,58,.14),transparent 32%),radial-gradient(circle at 88% 5%,rgba(184,150,62,.16),transparent 30%),linear-gradient(180deg,#fffdf9 0,#faf8f4 48%,#fff7ea 100%);color:var(--np-dark);min-height:100dvh;padding-bottom:calc(92px + var(--np-safe-bottom));overscroll-behavior-y:none;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body.np-pwa-app::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.38),transparent 24%,rgba(223,47,58,.03));z-index:-1}.np-pwa-app *{-webkit-tap-highlight-color:transparent}
+.np-pwa-topbar{position:sticky;top:0;z-index:9998;margin:0;padding:calc(10px + var(--np-safe-top)) 14px 10px;background:rgba(255,253,249,.88);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-bottom:1px solid rgba(234,220,199,.72);box-shadow:0 10px 28px rgba(45,41,38,.06);display:flex;align-items:center;justify-content:space-between;gap:10px}.np-pwa-brand{display:flex;align-items:center;gap:11px;min-width:0}.np-pwa-logo{width:48px;height:48px;border-radius:19px;background:linear-gradient(135deg,var(--np-red),var(--np-wine));color:white;display:grid;place-items:center;font-size:23px;box-shadow:0 14px 34px rgba(223,47,58,.24)}.np-pwa-title{font-family:Georgia,serif;font-weight:820;font-size:clamp(23px,5vw,38px);line-height:.98;color:var(--np-dark);letter-spacing:-.045em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np-pwa-sub{font-size:11px;color:var(--np-muted);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np-pwa-chip{border:1px solid rgba(223,47,58,.12);background:rgba(255,255,255,.86);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:950;color:var(--np-red);text-decoration:none;white-space:nowrap;box-shadow:0 8px 18px rgba(45,41,38,.04)}
+.np-pwa-dock{position:fixed;left:50%;bottom:calc(10px + var(--np-safe-bottom));transform:translateX(-50%);z-index:9999;background:rgba(255,253,249,.96);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);border:1px solid rgba(234,220,199,.90);border-radius:30px;padding:8px;display:flex;gap:6px;box-shadow:0 20px 58px rgba(45,41,38,.17);max-width:calc(100vw - 16px);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.np-pwa-dock a{min-width:74px;min-height:58px;border-radius:22px;text-decoration:none;color:var(--np-muted);font-size:11px;font-weight:950;display:grid;place-items:center;text-align:center;line-height:1.08;transition:transform .16s ease,background .16s ease,color .16s ease}.np-pwa-dock a span{font-size:21px;line-height:1}.np-pwa-dock a.active{background:linear-gradient(135deg,rgba(223,47,58,.13),rgba(184,150,62,.10));color:var(--np-red);box-shadow:inset 0 0 0 1px rgba(223,47,58,.08)}.np-pwa-dock a:active{transform:scale(.96)}
+body.np-pwa-app main,body.np-pwa-app .app,body.np-pwa-app .wrap,body.np-pwa-app .container{max-width:1180px;margin-left:auto;margin-right:auto}.np-pwa-app .hero{border-radius:32px!important;border:1px solid rgba(234,220,199,.94)!important;background:linear-gradient(135deg,#fffdf9,#fff4df 70%,rgba(223,47,58,.06))!important;box-shadow:0 22px 68px rgba(45,41,38,.13)!important;overflow:hidden}.np-pwa-app .card,.np-pwa-app section.card,.np-pwa-app article.card{border-radius:28px!important;border:1px solid rgba(234,220,199,.96)!important;background:rgba(255,253,249,.96)!important;box-shadow:var(--np-shadow-sm)!important;transition:transform .16s ease,box-shadow .16s ease}.np-pwa-app .card:active{transform:scale(.992)}@media(hover:hover){.np-pwa-app .card:hover{transform:translateY(-2px);box-shadow:0 16px 42px rgba(45,41,38,.12)!important}}
+.np-pwa-app button,.np-pwa-app .btn,.np-pwa-app a.btn{border-radius:18px!important;min-height:48px;font-weight:950;box-shadow:0 10px 24px rgba(26,107,101,.10);transition:transform .14s ease,filter .14s ease}.np-pwa-app button:active,.np-pwa-app .btn:active{transform:scale(.98)}.np-pwa-app .btn:not(.ghost),.np-pwa-app button:not(.ghost){background:linear-gradient(135deg,var(--np-teal),#124b47)}.np-pwa-app .btn.gold{background:linear-gradient(135deg,var(--np-gold),#d4ad49)!important;color:#2d2926!important}.np-pwa-app .btn.wine{background:linear-gradient(135deg,var(--np-red),var(--np-wine))!important}.np-pwa-app .ghost,.np-pwa-app .btn.ghost{background:#fff!important;color:var(--np-teal)!important;border:1px solid var(--np-line)!important}
+.np-pwa-app input,.np-pwa-app textarea,.np-pwa-app select{border-radius:18px!important;min-height:48px;background:#fffdf9!important;border:1px solid var(--np-line)!important}.np-pwa-app input:focus,.np-pwa-app textarea:focus,.np-pwa-app select:focus{outline:none!important;border-color:var(--np-red)!important;box-shadow:0 0 0 4px rgba(223,47,58,.10)!important}.np-pwa-app label{letter-spacing:.08em;font-weight:950}.np-pwa-fade{animation:npFade .28s ease both}@keyframes npFade{from{opacity:.001;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media(max-width:760px){.np-pwa-topbar{align-items:flex-start}.np-pwa-chip{display:none}.np-pwa-dock{width:calc(100vw - 16px);justify-content:space-around}.np-pwa-dock a{min-width:0;flex:1}.np-pwa-app .card,.np-pwa-app .hero{border-radius:25px!important}.np-pwa-title{max-width:70vw}.np-pwa-app .actions .btn,.np-pwa-app .actions button{width:100%;justify-content:center}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 @media(print){.np-pwa-topbar,.np-pwa-dock{display:none!important}body.np-pwa-app{background:white!important;padding-bottom:0}.np-pwa-app .card,.np-pwa-app .hero{box-shadow:none!important;border-color:#ddd!important}}
