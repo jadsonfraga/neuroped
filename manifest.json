@@ -1,18 +1,18 @@
 {
-  "id": "./index.html#/",
-  "name": "NeuroPed EDJ — Dr. Jadson Fraga",
-  "short_name": "NeuroPed EDJ",
-  "description": "Plataforma educativa de neuropediatria com comunicação alternativa, biblioteca, guias e orientação. Conteúdo educativo, não substitui consulta médica.",
-  "start_url": "./index.html#/",
+  "id": "./escalas.html",
+  "name": "NeuroPed EDJ",
+  "short_name": "NeuroPed",
+  "description": "PWA clínico educativo NeuroPed EDJ com consulta livre, escalas, CAA, diário, mapa de instrumentos e assinatura digital.",
+  "start_url": "./escalas.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": ["standalone", "window-controls-overlay"],
   "background_color": "#faf8f4",
-  "theme_color": "#1a6b65",
-  "orientation": "any",
+  "theme_color": "#df2f3a",
+  "orientation": "portrait",
   "lang": "pt-BR",
   "dir": "ltr",
-  "categories": ["medical", "education", "health"],
+  "categories": ["medical", "education", "health", "productivity"],
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
@@ -20,16 +20,11 @@
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {"name": "Central de Atalhos", "short_name": "Atalhos", "url": "./central-atalhos.html", "description": "Rotas críticas do NeuroPed em uma página"},
-    {"name": "Qualidade NeuroPed", "short_name": "Qualidade", "url": "./qualidade-neuroped.html", "description": "Painel de qualidade, versão e rotas críticas"},
-    {"name": "Teste de Ouro do PIN", "short_name": "PIN", "url": "./teste-ouro-pin.html", "description": "Verificar fluxo de PIN master"},
-    {"name": "Portal da Família", "short_name": "Família", "url": "./portal-familia-livre.html", "description": "Conteúdos familiares públicos e orientação"},
-    {"name": "Área do Filho", "short_name": "Filho", "url": "./area-filho.html", "description": "Ferramentas locais da criança sem CPF"},
-    {"name": "Consulta Protegida", "short_name": "Consulta", "url": "./consulta.html", "description": "Organização de consulta com PIN master"},
-    {"name": "CAA Gratuita — Comunicação Alternativa", "short_name": "CAA", "url": "./comunicacao-alternativa.html", "description": "Figurinhas grandes, voz em português e frase visual"},
-    {"name": "Mapa de Instrumentos NeuroPed", "short_name": "Mapa", "url": "./mapa-escalas.html", "description": "Instrumentos por idade, sintoma e respondente"},
-    {"name": "Diário Escolar e de Terapias", "short_name": "Diário", "url": "./diario-escola-terapias-v2.html", "description": "Registro educativo local de escola, terapias e evolução"},
-    {"name": "Filtro Orientativo de Escalas", "short_name": "Filtro", "url": "./filtro-escalas.html", "description": "Orientação sobre instrumentos clínicos por queixa e idade"},
-    {"name": "Verificar App", "short_name": "Verificar", "url": "./verificar-app.html", "description": "Checar versão e rotas publicadas"}
+    {"name": "Consulta Livre", "short_name": "Consulta", "url": "./consulta-livre.html", "description": "Ambiente aberto de consulta, documentos e resumo clínico"},
+    {"name": "Filtro de Escalas", "short_name": "Filtro", "url": "./filtro-escalas.html", "description": "Escolha de instrumentos por idade, queixa e prioridade"},
+    {"name": "Mapa de Instrumentos", "short_name": "Mapa", "url": "./mapa-escalas.html", "description": "Instrumentos por idade, sintoma e respondente"},
+    {"name": "CAA Gratuita", "short_name": "CAA", "url": "./comunicacao-alternativa.html", "description": "Figurinhas, voz em português e montagem de frases"},
+    {"name": "Diário Escola e Terapias", "short_name": "Diário", "url": "./diario-escola-terapias-v2.html", "description": "Registro local de escola, terapias e evolução"},
+    {"name": "Assinatura Digital", "short_name": "Assinatura", "url": "./assinatura-digital.html", "description": "Conferência, hash e apoio documental"}
   ]
 }
