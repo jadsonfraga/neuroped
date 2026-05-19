@@ -2,10 +2,16 @@
   "project": "NeuroPed EDJ",
   "action": "deploy-trigger",
   "status": "ready",
-  "deploy_requested_at": "2026-05-16T12:25:00-03:00",
-  "version": "v53-app-shell",
-  "entrypoint": "index.html",
+  "deploy_requested_at": "2026-05-16T13:35:00-03:00",
+  "version": "v56-pwa-95-final-plus",
+  "entrypoint": "escalas.html",
   "consulta_app": "consulta-livre.html",
   "app_shell": "app-shell-open.js",
-  "note": "Criada rota de consulta em formato app e shell visual com dock inferior para navegacao principal."
+  "pwa_95": "pwa-95-experience.js",
+  "home_feed": "pwa-home-feed.js",
+  "bottom_sheet": "pwa-bottom-sheet.js",
+  "service_worker": "neuroped-v56-pwa-95-final-plus",
+  "qa": "QA_VISUAL_PWA_95.md",
+  "report": "RELATORIO_PWA_95_FINAL.md",
+  "note": "PWA 95 final aplicado: manifest revisado, service worker v56, home feed premium, busca universal, quick actions, bottom sheet, dock, topbar e relatorio final."
 }
