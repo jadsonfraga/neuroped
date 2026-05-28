@@ -1,21 +1,11 @@
-# NeuroPed EDJ — Cloudflare Pages config
-#
-# IMPORTANTE: o database_id abaixo eh um placeholder. Antes de rodar
-# `wrangler pages deploy`, substitua-o pelo id real retornado por:
-#   wrangler d1 create neuroped-db
-#
-# Apos preencher, rode:
-#   npm run db:schema   # aplica ./schema.sql ao D1 remoto
-#
-# Secrets sensiveis (APP_TOKEN) NAO ficam aqui. Use:
-#   wrangler pages secret put APP_TOKEN --project-name neuroped
-# ou o painel: Pages > Settings > Environment variables > Encrypt.
-
 name = "neuroped"
-compatibility_date = "2026-05-06"
+compatibility_date = "2025-12-01"
 pages_build_output_dir = "."
 
 [[d1_databases]]
 binding = "DB"
 database_name = "neuroped-db"
-database_id = "COLOCAR_DATABASE_ID_AQUI"
+database_id = "COLOQUE_O_DATABASE_ID_AQUI"
+
+# Secrets (criar via: npx wrangler pages secret put APP_TOKEN)
+# [vars] ficam em produção via dashboard

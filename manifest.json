@@ -1,30 +1,30 @@
 {
-  "id": "./escalas.html",
-  "name": "NeuroPed EDJ",
+  "id": "/?source=pwa",
+  "name": "NeuroPed EDJ — Dr. Jadson Fraga",
   "short_name": "NeuroPed",
-  "description": "PWA clínico educativo NeuroPed EDJ com consulta livre, escalas, CAA, diário, mapa de instrumentos e assinatura digital.",
-  "start_url": "./escalas.html",
+  "description": "Plataforma clínica integrada de neuropediatria: escalas, consulta, agenda, diário, CAA e nuvem.",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "window-controls-overlay"],
-  "background_color": "#faf8f4",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#0b1020",
   "theme_color": "#df2f3a",
-  "orientation": "portrait",
+  "orientation": "any",
   "lang": "pt-BR",
   "dir": "ltr",
-  "categories": ["medical", "education", "health", "productivity"],
+  "categories": ["medical", "health", "productivity", "education"],
+  "prefer_related_applications": false,
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    { "src": "icon.svg",     "sizes": "any",     "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png",     "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png",     "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "maskable" }
   ],
   "shortcuts": [
-    {"name": "Consulta Livre", "short_name": "Consulta", "url": "./consulta-livre.html", "description": "Ambiente aberto de consulta, documentos e resumo clínico"},
-    {"name": "Filtro de Escalas", "short_name": "Filtro", "url": "./filtro-escalas.html", "description": "Escolha de instrumentos por idade, queixa e prioridade"},
-    {"name": "Mapa de Instrumentos", "short_name": "Mapa", "url": "./mapa-escalas.html", "description": "Instrumentos por idade, sintoma e respondente"},
-    {"name": "CAA Gratuita", "short_name": "CAA", "url": "./comunicacao-alternativa.html", "description": "Figurinhas, voz em português e montagem de frases"},
-    {"name": "Diário Escola e Terapias", "short_name": "Diário", "url": "./diario-escola-terapias-v2.html", "description": "Registro local de escola, terapias e evolução"},
-    {"name": "Assinatura Digital", "short_name": "Assinatura", "url": "./assinatura-digital.html", "description": "Conferência, hash e apoio documental"}
+    { "name": "Nova consulta", "short_name": "Consulta", "url": "./index.html#/consulta", "description": "Iniciar nova consulta" },
+    { "name": "Escalas", "short_name": "Escalas", "url": "./index.html#/escalas", "description": "Banco de instrumentos clínicos" },
+    { "name": "Agenda", "short_name": "Agenda", "url": "./index.html#/agenda", "description": "Calendário e financeiro" },
+    { "name": "CAA", "short_name": "CAA", "url": "./index.html#/caa", "description": "Comunicação alternativa" }
   ]
 }

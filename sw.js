@@ -1,13 +1,61 @@
-const CACHE_NAME='neuroped-v56-pwa-95-final-plus';
-const PRECACHE_URLS=['./','./index.html','./consulta-livre.html','./consulta.html','./portal-familia-livre.html','./central-atalhos.html','./verificar-app.html','./cloud-status.html','./cloud-config.example.js','./supabase/schema.sql','./manifest.json','./sw.js','./pwa-app-shell.css','./app-shell-open.js','./pwa-95-experience.js','./pwa-95-loader.js','./pwa-home-feed.js','./pwa-bottom-sheet.js','./design-system-premium.css','./premium-polish-overrides.css','./editorial-impact.css','./premium-experience.js','./premium-polish.js','./assinatura-digital.html','./assinatura-digital.js','./comunicacao-alternativa.html','./diario-escola-terapias-v2.html','./filtro-escalas.html','./filtro-rank-pro.js','./mapa-escalas.html','./mapa-open-fix.js','./instrumento.html','./instrumento-453-loader.js','./featured-10-panel.js','./scales-featured-10.js','./scales-featured-extra.js','./scales-priority-uploaded.js','./scales-453-authorial.js','./scales-global-max.js','./scales-editorial.js','./scales-enhance.js','./scales-index.json','./escalas.html','./banco-escalas.html','./banco-escalas-lote1.html','./banco-escalas-lote2-80.html','./banco-escalas-lote3-100.html','./banco-escalas-lote4-200.html','./banco-escalas-lote5-90.html'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>Promise.allSettled(PRECACHE_URLS.map(u=>c.add(u)))).then(()=>self.skipWaiting()))});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting()});
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.pathname.includes('/api/'))return;if(u.pathname.endsWith('.html')||u.pathname.endsWith('/neuroped/')||u.pathname==='/neuroped')e.respondWith(htmlFirst(e.request,u.pathname));else e.respondWith(cacheFirst(e.request))});
-async function cacheFirst(req){const cached=await caches.match(req);if(cached)return cached;try{const res=await fetch(req);if(res&&res.ok){const c=await caches.open(CACHE_NAME);c.put(req,res.clone())}return res}catch{return new Response('',{status:408})}}
-function addScript(html,src){return html.includes(src)?html:html.replace('</body>','<script src="'+src+'" defer></script></body>')}
-function addStyle(html,href){return html.includes(href)?html:html.replace('</head>','<link rel="stylesheet" href="'+href+'"></head>')}
-function addScaleLayers(out){out=addScript(out,'./scales-featured-10.js');out=addScript(out,'./scales-featured-extra.js');out=addScript(out,'./scales-priority-uploaded.js');out=addScript(out,'./scales-453-authorial.js');out=addScript(out,'./scales-global-max.js');return out}
-function addPwa(out){out=addStyle(out,'./pwa-app-shell.css');out=addScript(out,'./app-shell-open.js');out=addScript(out,'./pwa-95-experience.js');out=addScript(out,'./pwa-home-feed.js');out=addScript(out,'./pwa-bottom-sheet.js');return out}
-function patch(html,path){let out=html;if(/(escalas|filtro-escalas|mapa-escalas|instrumento|consulta-livre|comunicacao-alternativa|diario-escola-terapias-v2|assinatura-digital|portal-familia-livre|central-atalhos)\.html/i.test(path))out=addPwa(out);if(/(filtro-escalas|mapa-escalas|instrumento|escalas)\.html/i.test(path))out=addScaleLayers(out);if(/(filtro-escalas|mapa-escalas|escalas)\.html/i.test(path))out=addScript(out,'./featured-10-panel.js');if(/filtro-escalas\.html/i.test(path))out=addScript(out,'./filtro-rank-pro.js');if(/mapa-escalas\.html/i.test(path))out=addScript(out,'./mapa-open-fix.js');if(/instrumento\.html/i.test(path))out=addScript(out,'./instrumento-453-loader.js');return out}
-async function htmlFirst(req,path){const c=await caches.open(CACHE_NAME);try{const res=await fetch(req,{cache:'no-store'});if(res&&res.ok){let html=await res.clone().text();html=patch(html,path);const patched=new Response(html,{status:res.status,statusText:res.statusText,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}});c.put(req,patched.clone());return patched}return res}catch{const cached=await c.match(req);return cached||c.match('./index.html')||new Response('NeuroPed offline',{status:503})}}
+/* ===========================================================
+   NeuroPed EDJ — Service Worker
+   Estratégia: cache-first para shell, network-first para API
+   =========================================================== */
+
+const CACHE_NAME = 'neuroped-edj-v3.0.0';
+const SHELL = [
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './data.js',
+  './api.js',
+  './manifest.json',
+  './icon.svg'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  const url = new URL(req.url);
+
+  // API: network-first
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase.co')) {
+    e.respondWith(
+      fetch(req).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Static shell: cache-first
+  e.respondWith(
+    caches.match(req).then(hit => hit || fetch(req).then(res => {
+      if (res && res.ok && res.type === 'basic') {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, clone));
+      }
+      return res;
+    }).catch(() => caches.match('./index.html')))
+  );
+});
+
+// Background sync (when supported)
+self.addEventListener('sync', e => {
+  if (e.tag === 'neuroped-sync') {
+    e.waitUntil(self.clients.matchAll().then(cs => cs.forEach(c => c.postMessage({ type: 'sync-now' }))));
+  }
+});

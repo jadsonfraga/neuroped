@@ -1,78 +1,322 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria CRM-PE 25227</title>
-    <meta name="description" content="Aplicativo clínico de neuropediatria do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756). Escalas validadas, prontuário, calculadora de doses, marcos do desenvolvimento e ferramentas de avaliação para uso profissional." />
-    <meta name="keywords" content="neuropediatria, escalas clínicas, M-CHAT, CARS, SNAP-IV, Denver II, Vineland, Conners, prontuário pediátrico, Dr. Jadson Fraga, Petrolina-PE, Juazeiro-BA" />
-    <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-    <meta name="googlebot" content="index, follow" />
-    <meta name="theme-color" content="#1a6b65" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f3d3a" media="(prefers-color-scheme: dark)" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="NeuroPed EDJ" />
-    <meta name="application-name" content="NeuroPed EDJ" />
-    <meta name="format-detection" content="telephone=no" />
-    <link rel="manifest" href="./manifest.json" />
-    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6b65'/%3E%3Cpath d='M16 6c-4.4 0-8 3.6-8 8 0 2.7 1.3 5 3.4 6.4L10 26h12l-1.4-5.6C22.7 19 24 16.7 24 14c0-4.4-3.6-8-8-8zm0 3a2 2 0 110 4 2 2 0 010-4zm-3 6h6c0 1.7-1.3 3-3 3s-3-1.3-3-3z' fill='%23faf8f4'/%3E%3C/svg%3E" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:site_name" content="NeuroPed EDJ" />
-    <meta property="og:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
-    <meta property="og:description" content="Aplicativo clínico de neuropediatria com escalas validadas, prontuário e ferramentas profissionais. Dr. Jadson Fraga, CRM-PE 25227, RQE 17756." />
-    <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/" />
-    <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:image:alt" content="NeuroPed EDJ — Aplicativo clínico do Dr. Jadson Fraga" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
-    <meta name="twitter:description" content="Aplicativo clínico de neuropediatria com escalas validadas e ferramentas profissionais." />
-    <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wa.me https://api.github.com https://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-    <meta name="permissions-policy" content="camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()" />
-    <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"MedicalBusiness","name":"NeuroPed EDJ — Dr. Jadson Fraga","description":"Consultório de neuropediatria do Dr. Jadson Fraga Araújo Júnior em Petrolina-PE, atendendo crianças e adolescentes com transtornos do neurodesenvolvimento.","url":"https://jadsonfraga.github.io/neuroped/","image":"https://jadsonfraga.github.io/neuroped/icon-512.png","telephone":"+55-87-99109-7371","medicalSpecialty":["Pediatrics","Neurology"],"priceRange":"R$$$","address":{"@type":"PostalAddress","streetAddress":"Rua Raimundo Lacerda, 1","addressLocality":"Petrolina","addressRegion":"PE","postalCode":"56302-470","addressCountry":"BR","address":"Rua Raimundo Lacerda, 1 — São José, Petrolina/PE — CEP 56302-470"},"geo":{"@type":"GeoCoordinates","latitude":"-9.4011","longitude":"-40.4961"},"openingHours":"Mo-Fr 08:00-18:00","physician":{"@type":"Physician","name":"Dr. Jadson Fraga Araújo Júnior","jobTitle":"Neuropediatra","medicalSpecialty":"Pediatrics","url":"https://jadsonfraga.github.io/neuroped/","identifier":[{"@type":"PropertyValue","propertyID":"CRM-PE","value":"25227"},{"@type":"PropertyValue","propertyID":"RQE","value":"17756"}],"worksFor":{"@type":"MedicalBusiness","name":"NeuroPed EDJ"}},"sameAs":["https://wa.me/5587991097371"]}
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Inter:wght@400..700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css" />
-    <link rel="stylesheet" href="./safe-public-layer.css" />
-  <link rel="stylesheet" href="./app-polish-mobile.css">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#df2f3a" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="NeuroPed EDJ — plataforma clínica integrada de neuropediatria do Dr. Jadson Fraga. Pacientes, escalas, laudos, agenda, CAA, telemedicina e nuvem." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NeuroPed" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>NeuroPed EDJ — Plataforma Clínica · Dr. Jadson Fraga</title>
 </head>
-  <body>
-    <noscript>
-      <div style="max-width:600px;margin:4rem auto;padding:2rem;background:#faf8f4;color:#2d2926;font-family:Georgia,serif;text-align:center;border:1px solid #b8963e;border-radius:8px;">
-        <h1 style="color:#1a6b65;font-size:1.5rem;margin-bottom:1rem;">NeuroPed EDJ</h1>
-        <p style="font-size:1rem;line-height:1.6;">Este aplicativo requer JavaScript habilitado para funcionar. Por favor, ative o JavaScript nas configurações do seu navegador para utilizar as ferramentas clínicas do Dr. Jadson Fraga.</p>
-        <p style="margin-top:1rem;font-size:0.875rem;color:#57514a;">Dr. Jadson Fraga Araújo Júnior — Neuropediatria — CRM-PE 25227 — RQE 17756</p>
+<body>
+
+  <!-- ====== SPLASH ====== -->
+  <div id="splash" class="splash" aria-hidden="false">
+    <div class="splash-logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" width="92" height="92">
+        <defs>
+          <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ff8a96"/>
+            <stop offset="100%" stop-color="#df2f3a"/>
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="18" fill="url(#sg)"/>
+        <path d="M22 18 C16 26, 16 40, 22 46 C30 54, 44 50, 46 38 C48 26, 38 16, 28 18 C26 17, 24 17, 22 18 Z" fill="#fff"/>
+        <g fill="#df2f3a">
+          <circle cx="27" cy="28" r="2.4"/>
+          <circle cx="36" cy="32" r="2.4"/>
+          <circle cx="30" cy="40" r="2.4"/>
+        </g>
+        <g stroke="#df2f3a" stroke-width="1.4" fill="none">
+          <path d="M27 28 L30 40"/>
+          <path d="M36 32 L30 40"/>
+        </g>
+      </svg>
+    </div>
+    <div class="splash-text">
+      <h1>NeuroPed EDJ</h1>
+      <p>Plataforma Clínica · Dr. Jadson Fraga</p>
+    </div>
+    <div class="splash-bar"><span></span></div>
+    <div class="splash-version">v4.0 · Edição Comercial</div>
+  </div>
+
+  <!-- ====== ONBOARDING ====== -->
+  <div id="onboarding" class="onboarding" hidden>
+    <div class="onb-progress"><span data-step="1" class="active"></span><span data-step="2"></span><span data-step="3"></span></div>
+
+    <div class="onb-slides">
+      <section class="onb-slide" data-step="1">
+        <div class="onb-art">
+          <svg viewBox="0 0 200 200" width="180" height="180" aria-hidden="true">
+            <defs><linearGradient id="o1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b7a"/><stop offset="1" stop-color="#df2f3a"/></linearGradient></defs>
+            <circle cx="100" cy="100" r="80" fill="url(#o1)" opacity="0.18"/>
+            <circle cx="100" cy="100" r="56" fill="url(#o1)" opacity="0.32"/>
+            <g transform="translate(70 60)" fill="#fff" stroke="#df2f3a" stroke-width="2.5">
+              <rect x="0" y="0" width="60" height="80" rx="10"/>
+              <line x1="10" y1="20" x2="50" y2="20"/>
+              <line x1="10" y1="32" x2="50" y2="32"/>
+              <line x1="10" y1="44" x2="36" y2="44"/>
+              <circle cx="44" cy="60" r="9" fill="#df2f3a" stroke="none"/>
+              <path d="M40 60 L43 63 L48 57" stroke="#fff" stroke-width="2.2" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <h2>507 instrumentos clínicos</h2>
+        <p>Triagem, organização e acompanhamento em neuropediatria, do bebê ao pré-adolescente. Filtros inteligentes por idade, queixa e perfil do respondente.</p>
+      </section>
+
+      <section class="onb-slide" data-step="2" hidden>
+        <div class="onb-art">
+          <svg viewBox="0 0 200 200" width="180" height="180" aria-hidden="true">
+            <defs><linearGradient id="o2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+            <circle cx="100" cy="100" r="80" fill="url(#o2)" opacity="0.18"/>
+            <g transform="translate(50 60)" fill="none" stroke="url(#o2)" stroke-width="3" stroke-linecap="round">
+              <path d="M0 60 L20 40 L40 50 L60 25 L80 30 L100 10"/>
+              <path d="M0 80 L100 80"/>
+            </g>
+            <g transform="translate(50 60)" fill="#6366f1">
+              <circle cx="0"   cy="60" r="4"/><circle cx="20"  cy="40" r="4"/><circle cx="40"  cy="50" r="4"/>
+              <circle cx="60"  cy="25" r="4"/><circle cx="80"  cy="30" r="4"/><circle cx="100" cy="10" r="4"/>
+            </g>
+          </svg>
+        </div>
+        <h2>Evolução clínica em tempo real</h2>
+        <p>Acompanhe pacientes ao longo do tempo. Score, tendências, marcos terapêuticos e comparativos automáticos por escala.</p>
+      </section>
+
+      <section class="onb-slide" data-step="3" hidden>
+        <div class="onb-art">
+          <svg viewBox="0 0 200 200" width="180" height="180" aria-hidden="true">
+            <defs><linearGradient id="o3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+            <circle cx="100" cy="100" r="80" fill="url(#o3)" opacity="0.18"/>
+            <g transform="translate(60 70)" fill="#fff" stroke="#10b981" stroke-width="2.5">
+              <path d="M40 0 C20 0, 0 14, 0 36 C0 56, 20 70, 40 70 C45 70, 55 72, 60 74 C57 68, 55 64, 56 60 C72 56, 80 44, 80 32 C80 12, 60 0, 40 0 Z"/>
+              <line x1="20" y1="30" x2="60" y2="30"/>
+              <line x1="20" y1="42" x2="46" y2="42"/>
+            </g>
+          </svg>
+        </div>
+        <h2>Família + Equipe conectadas</h2>
+        <p>Pais respondem escalas familiares pelo passe; equipe terapêutica registra evolução no diário. Tudo sincronizado com a nuvem segura.</p>
+      </section>
+    </div>
+
+    <div class="onb-actions">
+      <button class="link" id="onbSkip">Pular</button>
+      <button class="btn btn-primary" id="onbNext">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ====== LOGIN ====== -->
+  <div id="auth" class="auth" hidden>
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 32 32" width="32" height="32"><defs><linearGradient id="ab" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b7a"/><stop offset="1" stop-color="#df2f3a"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#ab)"/><path d="M11 10 C9 14, 9 19, 12 22 C15 25, 20 24, 22 20 C24 16, 22 11, 18 10 C15 9, 13 10, 11 10 Z" fill="#fff"/></svg>
+        </div>
+        <div>
+          <strong>NeuroPed EDJ</strong>
+          <span>Acesse sua conta</span>
+        </div>
       </div>
-    </noscript>
-    <div id="root"></div>
-    <script src="./master-access-policy.js"></script>
-    <script src="./caa-sidebar.js"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
-        });
-      }
-    </script>
-    <script src="./safe-public-layer.js" defer></script>
-    <script src="./consulta-bridge.js" defer></script>
-    <script src="./cloud-config.js" defer></script>
-    <script src="./np-cloud.js" defer></script>
-  <script src="./app-polish-mobile.js" defer></script>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login">Entrar</button>
+        <button class="auth-tab" data-mode="signup">Criar conta</button>
+      </div>
+
+      <div class="auth-roles" role="tablist" aria-label="Tipo de perfil">
+        <button class="role-pill active" data-role="medico" type="button">
+          <span class="role-emoji">🩺</span>
+          <span class="role-label">Médico</span>
+        </button>
+        <button class="role-pill" data-role="secretaria" type="button">
+          <span class="role-emoji">💼</span>
+          <span class="role-label">Secretária</span>
+        </button>
+        <button class="role-pill" data-role="familia" type="button">
+          <span class="role-emoji">♥</span>
+          <span class="role-label">Família</span>
+        </button>
+      </div>
+
+      <form class="auth-form" id="authForm" autocomplete="off">
+        <div class="field" data-signup-only hidden>
+          <label>Nome completo</label>
+          <input class="input" id="authName" type="text" placeholder="Como gostaria de ser chamado" />
+        </div>
+        <div class="field">
+          <label>E-mail</label>
+          <input class="input" id="authEmail" type="email" placeholder="seu@email.com" required />
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <input class="input" id="authPass" type="password" placeholder="••••••••" required />
+        </div>
+        <div class="field" data-role-family hidden>
+          <label>Código do passe familiar</label>
+          <input class="input" id="authFamily" type="text" placeholder="FAM-XXXX" />
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="authSubmit">Entrar →</button>
+        <button type="button" class="btn btn-ghost btn-block" id="authDemo">Entrar em modo demo</button>
+      </form>
+
+      <p class="auth-foot">Ao entrar, você concorda com a <a href="#">Política de Privacidade</a> e os <a href="#">Termos de uso</a>. Conformidade LGPD.</p>
+    </div>
+
+    <aside class="auth-side">
+      <div class="auth-side-content">
+        <h3>A neuropediatria do seu jeito.</h3>
+        <p>Diagnóstico orientado por dados, fluxo de consulta otimizado e relacionamento contínuo com famílias.</p>
+        <ul>
+          <li>✓ 507 instrumentos clínicos</li>
+          <li>✓ Agenda + financeiro + cobrança</li>
+          <li>✓ Laudos em PDF assinados</li>
+          <li>✓ Telemedicina e família</li>
+          <li>✓ Nuvem segura · LGPD</li>
+        </ul>
+        <div class="auth-trust">
+          <span class="pill success">✓ HTTPS</span>
+          <span class="pill accent">✓ LGPD</span>
+          <span class="pill brand">✓ Offline</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ====== APP ====== -->
+  <div id="app" class="app" hidden>
+    <!-- Sidebar (desktop) -->
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 32 32" width="28" height="28"><defs><linearGradient id="sb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b7a"/><stop offset="1" stop-color="#df2f3a"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#sb)"/><path d="M11 10 C9 14, 9 19, 12 22 C15 25, 20 24, 22 20 C24 16, 22 11, 18 10 C15 9, 13 10, 11 10 Z" fill="#fff"/></svg>
+        </div>
+        <div class="brand-text">
+          <strong>NeuroPed</strong>
+          <span>EDJ · v4.0</span>
+        </div>
+      </div>
+
+      <div class="quick-search" id="quickSearch">
+        <span>⌕</span>
+        <span class="qs-text">Buscar tudo…</span>
+        <kbd>⌘K</kbd>
+      </div>
+
+      <nav class="nav" id="nav" aria-label="Módulos"></nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card" id="userCard">
+          <div class="avatar" id="userAvatar">JF</div>
+          <div class="user-meta">
+            <strong id="userName">Dr. Jadson</strong>
+            <span id="userRole">Médico · Premium</span>
+          </div>
+          <button class="icon-btn icon-btn-sm" id="userMenuBtn" aria-label="Menu de usuário">⋯</button>
+        </div>
+        <div class="sidebar-chips">
+          <button class="chip" id="themeToggle" type="button" aria-label="Alternar tema">
+            <span class="chip-dot"></span><span id="themeLabel">Tema</span>
+          </button>
+          <button class="chip" id="installBtn" type="button" hidden>
+            <span>⤓</span><span>Instalar</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn back-btn" id="backBtn" aria-label="Voltar" hidden>‹</button>
+        <div class="topbar-title">
+          <h2 id="pageTitle">Início</h2>
+          <p id="pageSubtitle">Painel clínico</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="searchBtn" aria-label="Buscar (⌘K)">⌕</button>
+          <button class="icon-btn dot" id="notifBtn" aria-label="Notificações">
+            <span>◔</span>
+            <span class="notif-dot" id="notifDot" hidden></span>
+          </button>
+          <button class="icon-btn" id="syncBtn" aria-label="Sincronizar">↻</button>
+          <div class="avatar avatar-sm" id="userAvatarSm" title="Perfil">JF</div>
+        </div>
+      </header>
+
+      <section class="view-stack" id="viewStack" aria-live="polite"></section>
+    </main>
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav" id="bottomNav" aria-label="Navegação rápida"></nav>
+
+    <!-- Global Search modal -->
+    <div class="modal" id="searchModal" hidden>
+      <div class="modal-card modal-card-search">
+        <div class="search-bar">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Buscar escala, paciente, consulta, módulo…" autocomplete="off" />
+          <kbd>ESC</kbd>
+          <button class="icon-btn" id="closeSearch" aria-label="Fechar">✕</button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+        <div class="search-foot">
+          <span>↵ abrir · ↑↓ navegar</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications drawer -->
+    <div class="modal" id="notifModal" hidden>
+      <div class="modal-card modal-drawer">
+        <div class="drawer-head">
+          <h3>Notificações</h3>
+          <button class="icon-btn" id="closeNotif" aria-label="Fechar">✕</button>
+        </div>
+        <div class="drawer-body" id="notifList"></div>
+      </div>
+    </div>
+
+    <!-- Bottom sheet (mobile actions) -->
+    <div class="modal" id="sheetModal" hidden>
+      <div class="modal-card modal-sheet" id="sheetCard"></div>
+    </div>
+
+    <!-- Confirm dialog -->
+    <div class="modal" id="confirmModal" hidden>
+      <div class="modal-card modal-card-sm">
+        <h3 id="confirmTitle">Confirmar ação</h3>
+        <p id="confirmText" class="muted">Tem certeza?</p>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="confirmCancel">Cancelar</button>
+          <button class="btn btn-primary" id="confirmOk">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" hidden></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script src="pdf.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+    }
+  </script>
 </body>
 </html>
