@@ -16,7 +16,7 @@
 
 ### Limitações conhecidas
 
-- **Sem autenticação real**: o PIN local "vasco1108" é gate cosmético, não previne acesso por inspeção do bundle
+- **Sem autenticação real**: o PIN local estático é gate cosmético, não previne acesso por inspeção do bundle
 - **Sem criptografia em repouso**: dados em `localStorage` são leitura plena
 - **Sem auditoria**: não há log de quem acessou o quê
 - **Sem backup**: dados ficam atrelados ao dispositivo
