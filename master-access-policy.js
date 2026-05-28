@@ -3,7 +3,7 @@
    Nota: em app estático, isto é controle de acesso de interface, não segurança criptográfica de servidor. */
 (function(){
   'use strict';
-  var MASTER_HASH='6f0960c4849c531799b84b6755bf2211ec6c9b0f14c9a992a346ac04407c7579';
+  var MASTER_HASH='a327d31357810ae7bf2cc4f7c0bc7b332fd2a66a4afd2ab5a8ade69865b829cd';
   var KEY='neuroped_master_access_v1';
   var TTL=12*60*60*1000;
   var PUBLIC_FAMILY_LINKS=[
@@ -30,7 +30,7 @@
     ['Pacientes','#/pacientes'],
     ['Secretaria','#/secretaria']
   ];
-  function clean(v){return String(v||'').replace(/\D/g,'');}
+  function clean(v){return String(v||'').trim().toLowerCase();}
   async function sha256(str){
     var data=new TextEncoder().encode(str);
     var hash=await crypto.subtle.digest('SHA-256',data);
@@ -43,7 +43,7 @@
   async function unlockIfPin(value){
     if(isUnlocked())return false;
     var c=clean(value);
-    if(c.length<4 || c.length>16 || !crypto.subtle)return false;
+    if(c.length<4 || c.length>32 || !crypto.subtle)return false;
     var h=await sha256(c);
     if(h===MASTER_HASH){write();announce('PIN master ativo. Acesso médico liberado neste navegador.');decorate();return true}
     return false;
