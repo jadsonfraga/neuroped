@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const MASTER_HASH='c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd';
+  const MASTER_HASH='a327d31357810ae7bf2cc4f7c0bc7b332fd2a66a4afd2ab5a8ade69865b829cd';
   const MASTER_KEY='neuroped_master_access_v1';
   const TTL=12*60*60*1000;
   function normalizePin(v){return String(v||'').trim().toLowerCase()}
