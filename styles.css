@@ -715,6 +715,7 @@ kbd {
   padding: 6vh 16px;
   animation: fadeIn var(--dur) var(--ease);
 }
+.modal[hidden], [hidden] { display: none !important; }
 .modal-card {
   width: 100%; max-width: 640px;
   background: var(--surface);
