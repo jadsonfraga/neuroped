@@ -63,7 +63,7 @@ curl -i -s -X POST https://<URL>/api/submissions \
 - O bundle SPA em `assets/` chama `/api/patients`, `/api/portal/diary`, `/api/portal/messages`, `/api/results`, `/api/certificado`, `/api/laudo/salvar` — esses endpoints **nao existem** em `functions/api/`. Telas dependentes recebem 404. Implementar antes de exigir.
 - `agenda-financeiro.html` chama `https://api.npoint.io/...` (3rd-party, bloqueado pelo CSP). Migrar para D1 antes de uso real.
 - `.github/workflows/deploy.yml` deploya para GitHub Pages; coexiste com Cloudflare. Decidir destino canonico.
-- O PIN master `vasco1108` foi exposto em commit message publico em `main` (commit 598272e). Trocar PIN antes de uso real e considerar reescrita do historico.
+- O PIN master antigo foi exposto previamente em histórico público. Usar apenas hash atualizado, evitar registrar PIN em texto claro e considerar reescrita do historico antes de uso real.
 
 ## Rollback
 
