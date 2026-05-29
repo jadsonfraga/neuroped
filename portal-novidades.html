@@ -4,26 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portal das Famílias — Novidades</title>
+<meta name="theme-color" content="#0e0e22">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f8f7f4;
-  --surface: #ffffff;
+  --bg: #0a0a16;
+  --surface: #14132a;
   --surface-2: #f3f1ed;
-  --border: #e8e5df;
-  --text: #2c2a25;
-  --text-muted: #7a7770;
-  --text-faint: #b0ada6;
-  --primary: #2a7d6e;
-  --primary-light: #e8f5f1;
-  --primary-hover: #1f5f53;
+  --border: rgba(169,164,255,.16);
+  --text: #ECEAFF;
+  --text-muted: #b6b2e6;
+  --text-faint: #928ec6;
+  --primary: #6d6af5;
+  --primary-light: rgba(124,118,210,.14);
+  --primary-hover: #4f46e5;
   --accent-orange: #e8853a;
   --accent-blue: #4a8ec2;
   --accent-purple: #8b6cc1;
   --accent-rose: #c96b8b;
-  --accent-teal: #3a9e8f;
+  --accent-teal: #6d6af5;
   --shadow-sm: 0 1px 3px rgba(44,42,37,0.06);
   --shadow-md: 0 4px 16px rgba(44,42,37,0.08);
   --shadow-lg: 0 8px 32px rgba(44,42,37,0.12);
@@ -124,7 +125,7 @@ body {
 .featured-card {
   flex: 0 0 min(85%, 360px);
   scroll-snap-align: start;
-  background: linear-gradient(135deg, var(--primary) 0%, #1a6b5e 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
   border-radius: var(--radius-lg);
   padding: 24px;
   color: #fff;
@@ -260,14 +261,14 @@ body {
   justify-content: center;
   font-size: 22px;
 }
-.article-icon.tea { background: #e8f5f1; }
-.article-icon.tdah { background: #fef3e2; }
-.article-icon.sono { background: #e8eef8; }
-.article-icon.dev { background: #f3e8f8; }
-.article-icon.comp { background: #fce8ef; }
-.article-icon.nutri { background: #e8f8ee; }
-.article-icon.escola { background: #fff8e1; }
-.article-icon.fala { background: #e1f5fe; }
+.article-icon.tea { background: rgba(34,160,120,.18); }
+.article-icon.tdah { background: rgba(231,201,139,.18); }
+.article-icon.sono { background: rgba(109,106,245,.18); }
+.article-icon.dev { background: rgba(167,139,250,.18); }
+.article-icon.comp { background: rgba(220,80,110,.18); }
+.article-icon.nutri { background: rgba(34,160,120,.18); }
+.article-icon.escola { background: rgba(231,201,139,.18); }
+.article-icon.fala { background: rgba(109,106,245,.18); }
 
 .article-body { flex: 1; min-width: 0; }
 .article-body .cat-label {
@@ -496,6 +497,7 @@ body {
   .modal.open { transform: translate(-50%, 0); }
 }
 </style>
+<link rel="stylesheet" href="./app-polish-mobile.css">
 </head>
 <body>
 
@@ -1096,5 +1098,6 @@ renderFeed('todos');
     }
   });
 })();
-</script></body>
+</script><script src="./app-polish-mobile.js" defer></script>
+</body>
 </html>

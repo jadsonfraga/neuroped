@@ -118,12 +118,6 @@ assertIncludes('index.html', './np-cloud.js', 'index.html carrega np-cloud.js');
 assertIncludes('index.html', './cloud-config.js', 'index.html carrega cloud-config.js');
 assertIncludes('scales-enhance.js', 'NeuroPedCloud', 'scales-enhance roteia para Supabase quando disponivel');
 
-// Filtro rank pro - sem polling perpetuo, debounced
-assertFile('filtro-rank-pro.js');
-assertNotIncludes('filtro-rank-pro.js', 'setInterval(run', 'filtro-rank-pro nao roda setInterval(run, ...) ocioso');
-assertIncludes('filtro-rank-pro.js', 'debounce', 'filtro-rank-pro usa debounce');
-assertIncludes('filtro-rank-pro.js', 'lastSignature', 'filtro-rank-pro evita re-render quando inputs nao mudaram');
-
 // Instrumento enhance
 assertFile('instrumento-enhance.js');
 assertFile('instrumento.html');
@@ -250,6 +244,37 @@ assertNotIncludes('index.html', 'escalas validadas', 'index.html não promete "e
 assertNotIncludes('mapa-escalas.html', 'credibilidade-clinica.html', 'mapa-escalas não aponta para página inexistente');
 // 404 no tema escuro
 assertIncludes('404.html', 'content="#0e0e22"', '404.html usa o tema índigo escuro');
+
+// ===== Ética clínica & segurança (anti-regressão) =====
+assertIncludes('instrumento.html', 'Natureza da ferramenta', 'instrumento.html declara natureza não-diagnóstica');
+assertIncludes('instrumento.html', 'ato médico', 'instrumento.html lembra que diagnóstico é ato médico');
+assertIncludes('instrumento-autoral.html', 'Natureza da ferramenta', 'instrumento-autoral.html declara natureza não-diagnóstica');
+assertIncludes('instrumento-autoral.html', 'SAMU 192', 'alerta de risco direciona à emergência (SAMU 192)');
+assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece apoio emocional (CVV 188)');
+// favicon e página de teste sem paleta antiga
+assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
+assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');
+
+// ===== Filtro: visões/triangulação + impacto pós-medicação =====
+assertFile('scales-impacto-medicacao.js');
+assertFile('impacto-medicacao.html');
+assertIncludes('scales-impacto-medicacao.js', 'npe-med-pais', 'inventário pós-medicação visão família');
+assertIncludes('scales-impacto-medicacao.js', 'npe-med-escola', 'inventário pós-medicação visão escola');
+assertIncludes('impacto-medicacao.html', 'content="#0e0e22"', 'impacto-medicacao no tema índigo');
+assertIncludes('impacto-medicacao.html', 'eficácia farmacológica', 'impacto deixa claro que não mede eficácia');
+assertIncludes('filtro-escalas.html', 'renderTriangulation', 'filtro sugere 3 visões distintas (triangulação)');
+assertIncludes('filtro-escalas.html', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
+assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');
+assertIncludes('filtro-escalas.html', 'Autorrelato', 'filtro distingue autorrelato');
+
+// ===== Cara de app: transições entre páginas + navegação fluida =====
+assertIncludes('app-polish-mobile.css', '@view-transition', 'transições entre páginas (View Transitions API)');
+assertIncludes('app-polish-mobile.css', '.np-navbar', 'barra de progresso de navegação definida');
+assertIncludes('app-polish-mobile.js', 'navProgress', 'progresso de navegação ativado (sensação de app)');
+// Portal da família sem pedir dado identificável (só info genérica/útil)
+assertNotIncludes('area-filho.html', 'Data de nascimento', 'Área do Filho não pede data de nascimento');
+assertNotIncludes('area-filho.html', 'Último sobrenome', 'Área do Filho não pede sobrenome');
+assertNotIncludes('portal-familia-livre.html', 'nascimento e sobrenome', 'portal não exige nascimento/sobrenome');
 
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');

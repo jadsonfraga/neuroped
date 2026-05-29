@@ -174,12 +174,12 @@
     if (document.getElementById('npScalesPatientBar')) return;
     var bar = document.createElement('section');
     bar.id = 'npScalesPatientBar';
-    bar.style.cssText = 'position:sticky;top:54px;z-index:18;background:rgba(247,242,232,.97);border:1px solid #eadcc7;border-radius:14px;padding:10px 12px;margin:8px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+    bar.style.cssText = 'position:sticky;top:54px;z-index:18;background:rgba(14,14,34,.92);backdrop-filter:blur(10px);border:1px solid rgba(169,164,255,.16);border-radius:14px;padding:10px 12px;margin:8px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
     bar.innerHTML =
-      '<strong style="color:#7f1d1d;font-size:13px">Paciente</strong>' +
-      '<input id="npScalesPatientCode" placeholder="código local (ex.: P-001)" style="flex:0 0 180px;border:1px solid #eadcc7;border-radius:10px;padding:8px 10px;font-size:13px">' +
-      '<input id="npScalesPatientName" placeholder="iniciais ou nome curto" style="flex:1;min-width:180px;border:1px solid #eadcc7;border-radius:10px;padding:8px 10px;font-size:13px">' +
-      '<span style="font-size:11px;color:#675b56;flex:1 1 100%">Sem CPF. Identificação local apenas. Use somente dados não-sensíveis enquanto o backend não estiver homologado.</span>';
+      '<strong style="color:#f2dca6;font-size:13px">Paciente</strong>' +
+      '<input id="npScalesPatientCode" placeholder="código local (ex.: P-001)" style="flex:0 0 180px;background:rgba(20,18,46,.6);color:#ECEAFF;border:1px solid rgba(169,164,255,.16);border-radius:10px;padding:8px 10px;font-size:13px">' +
+      '<input id="npScalesPatientName" placeholder="iniciais ou nome curto" style="flex:1;min-width:180px;background:rgba(20,18,46,.6);color:#ECEAFF;border:1px solid rgba(169,164,255,.16);border-radius:10px;padding:8px 10px;font-size:13px">' +
+      '<span style="font-size:11px;color:#b6b2e6;flex:1 1 100%">Sem CPF. Identificação local apenas. Use somente dados não-sensíveis enquanto o backend não estiver homologado.</span>';
     var toolbar = document.querySelector('.toolbar');
     if (toolbar && toolbar.parentNode) toolbar.parentNode.insertBefore(bar, toolbar.nextSibling);
     else document.body.insertBefore(bar, document.body.firstChild);
