@@ -164,10 +164,10 @@
   /* =====================================================
      Boot
      ===================================================== */
+  var EMBEDDED = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
   function boot(){
     themeColor();
-    splash();
-    bottomNav();
+    if (!EMBEDDED) { splash(); bottomNav(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

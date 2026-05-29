@@ -2,6 +2,7 @@
    Fonte única para rotas públicas, familiares, protegidas e médicas.
    Não contém dados clínicos. */
 window.NEUROPED_ROUTES = [
+  { label:'App (hub dinâmico)', href:'./app-shell.html', type:'publico', requiresPin:false, icon:'📱', order:5 },
   { label:'Início', href:'./index.html#/', type:'publico', requiresPin:false, icon:'🏠', order:10 },
   { label:'Central de Atalhos', href:'./central-atalhos.html', type:'publico', requiresPin:false, icon:'🧭', order:20 },
   { label:'NeuroPed Master', href:'./neuroped-master-vitrine.html', type:'publico', requiresPin:false, icon:'📖', order:25 },

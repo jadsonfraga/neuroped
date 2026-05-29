@@ -8,6 +8,7 @@
 (function () {
   "use strict";
   if (window.__npSplash) return; window.__npSplash = true;
+  try { if (window.self !== window.top) return; } catch (e) { return; }   // sem splash dentro da casca (app-shell)
 
   var css = ''
     + '#np-splash{position:fixed;inset:0;z-index:2147483600;display:flex;flex-direction:column;align-items:center;justify-content:center;'
