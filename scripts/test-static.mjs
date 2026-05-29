@@ -134,6 +134,23 @@ assertIncludes('instrumento-enhance.js', 'data-v="na"', 'instrumento-enhance adi
 assertIncludes('instrumento-enhance.js', 'renderDiff', 'instrumento-enhance compara com avaliacao anterior');
 assertIncludes('instrumento-enhance.js', 'bindKeyboard', 'instrumento-enhance liga atalhos 1..5 e 0 para n/a');
 
+// NeuroPed Master — vitrine pública (TEST_STATIC_ACRESCENTAR)
+const NPM_FILES = ['neuroped-master-vitrine.html','neuroped-master-vitrine.css','neuroped-master-vitrine.js','neuroped-master-vitrine-data.js','solicitar-neuroped-master.html'];
+for (const f of NPM_FILES) assertFile(f);
+for (const f of NPM_FILES) {
+  assertNotIncludes(f, 'localStorage', `${f} não usa localStorage`);
+  assertNotIncludes(f, 'sessionStorage', `${f} não usa sessionStorage`);
+  assertNotIncludes(f, 'indexedDB', `${f} não usa IndexedDB`);
+  assertNotIncludes(f, '.pdf', `${f} não expõe link público a PDF`);
+}
+assertIncludes('neuroped-master-vitrine.html', './neuroped-master-vitrine-data.js', 'vitrine carrega o catálogo (data.js)');
+assertIncludes('neuroped-master-vitrine.html', 'Direitos reservados', 'vitrine declara direitos reservados');
+assertIncludes('neuroped-master-vitrine-data.js', 'NEUROPED_MASTER', 'data.js expõe catálogo NEUROPED_MASTER');
+assertIncludes('central-atalhos.html', './neuroped-master-vitrine.html', 'central-atalhos tem card da vitrine NeuroPed Master');
+assertIncludes('central-atalhos.html', './solicitar-neuroped-master.html', 'central-atalhos tem card de solicitação');
+assertIncludes('routes.config.js', 'neuroped-master-vitrine.html', 'routes.config registra a vitrine');
+assertIncludes('routes.config.js', 'solicitar-neuroped-master.html', 'routes.config registra a solicitação');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
 

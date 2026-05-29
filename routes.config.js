@@ -4,6 +4,8 @@
 window.NEUROPED_ROUTES = [
   { label:'Início', href:'./index.html#/', type:'publico', requiresPin:false, icon:'🏠', order:10 },
   { label:'Central de Atalhos', href:'./central-atalhos.html', type:'publico', requiresPin:false, icon:'🧭', order:20 },
+  { label:'NeuroPed Master', href:'./neuroped-master-vitrine.html', type:'publico', requiresPin:false, icon:'📖', order:25 },
+  { label:'Solicitar E-book', href:'./solicitar-neuroped-master.html', type:'publico', requiresPin:false, icon:'✉️', order:26 },
   { label:'Portal da Família', href:'./portal-familia-livre.html', type:'familiar', requiresPin:false, icon:'🌿', order:30 },
   { label:'Área do Filho', href:'./area-filho.html', type:'familiar', requiresPin:false, icon:'👶', order:40 },
   { label:'CAA Gratuita', href:'./comunicacao-alternativa.html', type:'familiar', requiresPin:false, icon:'💬', order:50 },
