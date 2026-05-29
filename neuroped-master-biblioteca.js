@@ -208,21 +208,13 @@
 
   function renderFarmaco(){
     var el = $('sec-farmaco'); if (!el) return;
-    if (!unlocked()){
-      el.innerHTML =
-        '<div class="gate"><div class="lock-ico">'+svg('lock')+'</div><h3>Farmacoterapia · acesso restrito</h3>'
-        + '<p>Posologia de medicação por classe é conteúdo prescritivo sensível. Informe o <strong>PIN master</strong> para liberar neste navegador.</p>'
-        + '<div class="pinrow"><input id="npm-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN master" aria-label="PIN master"><button class="btn" id="npm-pin-go" type="button">Liberar</button></div>'
-        + '<div class="hint">Acesso ativo apenas neste dispositivo, por tempo limitado. Sem PIN? <a href="./solicitar-neuroped-master.html" style="color:#e7c98b">Solicite ao autor</a>.</div></div>';
-      var pin = $('npm-pin'), go = $('npm-pin-go');
-      function tryPin(){ if (!window.NeuroPedMasterAccess) return;
-        window.NeuroPedMasterAccess.unlockIfPin(pin.value).then(function(ok){ if (ok || unlocked()){ skeleton(el); setTimeout(renderFarmaco, 350); } }).catch(function(){}); }
-      if (go) go.addEventListener('click', tryPin);
-      if (pin) pin.addEventListener('keydown', function(e){ if (e.key==='Enter') tryPin(); });
-      return;
-    }
     if (!PRO){ el.innerHTML = '<div class="panel"><p style="margin:0">Conteúdo indisponível.</p></div>'; return; }
-    el.innerHTML = renderFarmacoBody();
+    var disc = '<div class="notice" style="border-left:5px solid #e7c98b;background:rgba(231,201,139,.12);color:#e8dcc2">'
+      + '<strong>⚠️ Farmacologia — material educativo. Leia antes.</strong> Esta seção é <strong>psicoeducação</strong> de autoria do Dr. Jadson Fraga Araújo Júnior, para estudo de classes, faixas posológicas de referência e princípios de titulação. '
+      + '<strong>Não é prescrição, não é orientação individual e não autoriza qualquer uso.</strong> Doses pediátricas dependem de peso, idade, função de órgãos, comorbidades e interações, e só podem ser definidas pelo médico assistente em consulta presencial. '
+      + '<strong>Nunca inicie, ajuste ou suspenda medicação por conta própria</strong> — automedicar uma criança pode causar dano grave ou morte. '
+      + 'Ao ler este conteúdo você reconhece seu caráter exclusivamente educativo e <strong>isenta o autor de qualquer responsabilidade</strong> pelo uso que terceiros fizerem destas informações.</div>';
+    el.innerHTML = disc + renderFarmacoBody();
   }
 
   function skeleton(el){
