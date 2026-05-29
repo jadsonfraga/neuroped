@@ -211,6 +211,17 @@ assertNotIncludes('scales-oficiais.js', 'plain_questions:[\'', 'catálogo oficia
 assertIncludes('filtro-escalas.html', './scales-oficiais.js', 'filtro liga o catálogo oficial');
 assertIncludes('filtro-escalas.html', 'Abrir fonte oficial', 'filtro abre a fonte oficial dos instrumentos de terceiros');
 assertIncludes('scales-curate.js', 'oficiais', 'curadoria separa fontes oficiais da contagem aplicável');
+// Instrumentos autorais NPE-BR (itens próprios + lógica clínica)
+assertFile('scales-autorais-npe.js'); assertFile('instrumento-autoral.html');
+assertIncludes('scales-autorais-npe.js', 'NPE-BR-001', 'série NPE-BR cadastrada');
+assertIncludes('scales-autorais-npe.js', 'NPE-BR-012', 'NPE-BR inclui diferencial DI leve (012)');
+assertIncludes('scales-autorais-npe.js', 'ponto de atenção operacional', 'NPE-BR usa ponto de atenção operacional (não corte diagnóstico)');
+assertIncludes('instrumento-autoral.html', 'Uso profissional restrito', 'autoral marca instrumentos restritos');
+assertIncludes('instrumento-autoral.html', 'level005', 'autoral classifica risco S0–S3 (NPE-BR-005)');
+assertIncludes('instrumento-autoral.html', 'sentinel', 'autoral trata pergunta-sentinela (004→005)');
+assertIncludes('instrumento-autoral.html', 'differential', 'autoral trata diferencial dislexia×global (011)');
+assertIncludes('filtro-escalas.html', './scales-autorais-npe.js', 'filtro liga os autorais NPE-BR');
+assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
 assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
 
 const packageJson=file('package.json');
