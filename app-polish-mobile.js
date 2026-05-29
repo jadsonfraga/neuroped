@@ -245,3 +245,50 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
   else render();
 })();
+
+/* ============================================================
+   Navegação fluida — faz o ecossistema parecer UM app único.
+   Crossfade entre páginas estáticas (fade-out → navega → fade-in),
+   chrome persistente (bottom nav). Respeita prefers-reduced-motion,
+   bfcache e não intercepta links externos, hash, _blank ou download.
+   ============================================================ */
+(function () {
+  "use strict";
+  if (window.__npFluid) return; window.__npFluid = true;
+  var reduce = false;
+  try { reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+
+  var st = document.createElement('style');
+  st.textContent =
+      'html.np-fluid body{animation:npFadeIn .30s cubic-bezier(.22,.8,.2,1) both}'
+    + 'html.np-fluid.np-leaving body{opacity:0;transform:translateY(-6px);transition:opacity .2s ease,transform .2s ease}'
+    + '@keyframes npFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}'
+    + '@media(prefers-reduced-motion:reduce){html.np-fluid body,html.np-fluid.np-leaving body{animation:none!important;transition:none!important;transform:none!important}}';
+  (document.head || document.documentElement).appendChild(st);
+  if (!reduce) document.documentElement.classList.add('np-fluid');
+
+  function internal(a){
+    if (!a || a.target === '_blank' || a.hasAttribute('download')) return false;
+    var raw = a.getAttribute('href') || '';
+    if (!raw || raw.charAt(0) === '#') return false;
+    if (/^(javascript:|mailto:|tel:|data:)/i.test(raw)) return false;
+    if (a.origin && a.origin !== location.origin) return false;            // externo
+    if (a.pathname === location.pathname && a.hash) return false;          // âncora interna
+    return /\.html(\?|#|$)/.test(raw) || raw === './' || raw === '/' || raw === './index.html';
+  }
+
+  document.addEventListener('click', function (e) {
+    if (reduce || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!internal(a)) return;
+    e.preventDefault();
+    var href = a.href;
+    document.documentElement.classList.add('np-leaving');
+    setTimeout(function () { location.href = href; }, 195);
+    setTimeout(function () { document.documentElement.classList.remove('np-leaving'); }, 1200); // segurança se a navegação falhar
+  }, true);
+
+  // bfcache: ao voltar, garante a página visível
+  window.addEventListener('pageshow', function (ev) { if (ev.persisted) document.documentElement.classList.remove('np-leaving'); });
+  window.addEventListener('pagehide', function () { document.documentElement.classList.remove('np-leaving'); });
+})();
