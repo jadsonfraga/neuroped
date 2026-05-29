@@ -193,6 +193,16 @@ assertFile('instrumento.html');
 assertIncludes('instrumento.html', 'nunca/ausente', 'instrumento tem respostas clicáveis (escala 0–4)');
 assertIncludes('instrumento.html', 'Faixa orientativa', 'instrumento gera resultado/faixa ao final');
 assertIncludes('filtro-escalas.html', '${r.page}', 'filtro tem botão Abrir para o instrumento');
+// Validados + curadoria honesta
+assertFile('scales-validados.js'); assertFile('scales-curate.js'); assertFile('instrumento-validado.html');
+assertIncludes('scales-validados.js', 'M-CHAT', 'inclui M-CHAT-R/F validado');
+assertIncludes('scales-validados.js', 'citation', 'validados trazem citação');
+assertIncludes('instrumento-validado.html', 'cutoffs', 'página validada usa pontos de corte');
+assertIncludes('instrumento-validado.html', 'count_threshold', 'página validada cobre Vanderbilt (contagem)');
+assertIncludes('filtro-escalas.html', './scales-validados.js', 'filtro liga os validados');
+assertIncludes('filtro-escalas.html', './scales-curate.js', 'filtro liga a curadoria (enxuga + rótulos)');
+assertIncludes('scales-curate.js', 'NEUROPED_CATALOG_STATS', 'curadoria publica estatística honesta');
+assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
 
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
