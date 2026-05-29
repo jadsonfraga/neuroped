@@ -229,6 +229,28 @@ for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','are
 }
 assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
 
+// ===== Caça às bruxas — coesão e honestidade (anti-regressão) =====
+// Contagem inflada "507" não pode voltar nas páginas de lote
+for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+  assertNotIncludes(b, '507', b + ' não exibe a contagem inflada 507');
+  assertIncludes(b, 'content="#0e0e22"', b + ' usa o tema índigo escuro (coesão)');
+  assertNotIncludes(b, '--bg:#f7f2e8', b + ' não usa mais o tema creme antigo');
+}
+// app-polish-mobile não pode reescrever o theme-color para teal
+assertNotIncludes('app-polish-mobile.js', "content = '#1a6b65'", 'app-polish-mobile não força theme-color teal');
+assertIncludes('app-polish-mobile.js', "content = '#0e0e22'", 'app-polish-mobile usa theme-color índigo');
+assertNotIncludes('app-polish-mobile.css', 'rgba(250, 248, 244', 'bottom-nav global não usa fundo creme');
+// camadas editoriais/branding no índigo
+assertNotIncludes('editorial-impact.css', '#faf8f4 0%', 'editorial-impact não força fundo creme no body');
+assertNotIncludes('app-shell.css', 'background:#faf8f4', 'app-shell.css não usa barra creme');
+assertNotIncludes('master-access-policy.js', 'rgba(250,248,244', 'painel da família injetado não é creme');
+// honestidade SEO: sem overclaim "escalas validadas"
+assertNotIncludes('index.html', 'escalas validadas', 'index.html não promete "escalas validadas" (autoral ≠ validado)');
+// sem link quebrado de credibilidade
+assertNotIncludes('mapa-escalas.html', 'credibilidade-clinica.html', 'mapa-escalas não aponta para página inexistente');
+// 404 no tema escuro
+assertIncludes('404.html', 'content="#0e0e22"', '404.html usa o tema índigo escuro');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
   // versão única: cache do service worker e verificador alinhados ao package.json

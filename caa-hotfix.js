@@ -27,8 +27,8 @@
     if(!quick || document.getElementById('familyQuickBox')) return;
     const box=document.createElement('div');
     box.id='familyQuickBox';
-    box.style.cssText='grid-column:1/-1;background:#fffdf9;border:1px dashed rgba(184,150,62,.75);border-radius:24px;padding:14px';
-    box.innerHTML='<strong style="display:block;color:#1a6b65;margin-bottom:8px">⭐ Frases salvas da família</strong><div id="familyQuickList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>';
+    box.style.cssText='grid-column:1/-1;background:#14132a;border:1px dashed rgba(184,150,62,.75);border-radius:24px;padding:14px';
+    box.innerHTML='<strong style="display:block;color:#6d6af5;margin-bottom:8px">⭐ Frases salvas da família</strong><div id="familyQuickList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>';
     quick.prepend(box);
     updateSavedList();
   }
@@ -39,7 +39,7 @@
     listEl.textContent='';
     if(!list.length){
       const empty=document.createElement('span');
-      empty.style.cssText='font-size:12px;color:#6f6963';
+      empty.style.cssText='font-size:12px;color:#b6b2e6';
       empty.textContent='Nenhuma frase salva ainda.';
       listEl.appendChild(empty);
       return;
@@ -48,7 +48,7 @@
       const btn=document.createElement('button');
       btn.type='button';
       btn.dataset.i=String(i);
-      btn.style.cssText='text-align:left;background:white;border:1px solid rgba(26,107,101,.18);border-radius:16px;padding:12px;font-weight:900;color:#1a6b65';
+      btn.style.cssText='text-align:left;background:rgba(124,118,210,.10);border:1px solid rgba(26,107,101,.18);border-radius:16px;padding:12px;font-weight:900;color:#6d6af5';
       btn.textContent='💬 '+t;
       btn.onclick=function(){
         const txt=list[Number(this.dataset.i)];

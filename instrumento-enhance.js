@@ -122,11 +122,11 @@
     var top = document.querySelector('header.top');
     var bar = document.createElement('div');
     bar.id = 'npInstrumentoPatient';
-    bar.style.cssText = 'margin:6px 14px 0;padding:8px 10px;border:1px solid #eadcc7;border-radius:14px;background:rgba(255,253,249,.85);font-size:12px;color:#6f6963;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+    bar.style.cssText = 'margin:6px 14px 0;padding:8px 10px;border:1px solid rgba(169,164,255,.16);border-radius:14px;background:rgba(124,118,210,.10);font-size:12px;color:#b6b2e6;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
     var p = patient();
-    bar.innerHTML = '<strong style="color:#7f1d1d">Paciente:</strong> ' +
-      '<input id="npInstPatientCode" placeholder="codigo local (P-001)" style="border:1px solid #eadcc7;border-radius:10px;padding:6px 8px;font-size:12px;width:160px" value="' + (p.code || '') + '">' +
-      '<input id="npInstPatientName" placeholder="iniciais ou nome curto" style="border:1px solid #eadcc7;border-radius:10px;padding:6px 8px;font-size:12px;width:200px" value="' + (p.name || '') + '">' +
+    bar.innerHTML = '<strong style="color:#f2dca6">Paciente:</strong> ' +
+      '<input id="npInstPatientCode" placeholder="codigo local (P-001)" style="border:1px solid rgba(169,164,255,.16);background:rgba(20,18,46,.6);color:#ECEAFF;border-radius:10px;padding:6px 8px;font-size:12px;width:160px" value="' + (p.code || '') + '">' +
+      '<input id="npInstPatientName" placeholder="iniciais ou nome curto" style="border:1px solid rgba(169,164,255,.16);background:rgba(20,18,46,.6);color:#ECEAFF;border-radius:10px;padding:6px 8px;font-size:12px;width:200px" value="' + (p.name || '') + '">' +
       '<span style="font-size:11px;opacity:.8">Sem CPF. Identificacao local.</span>';
     if (top && top.parentNode) top.parentNode.insertBefore(bar, top.nextSibling);
     else document.body.insertBefore(bar, document.body.firstChild);
@@ -150,9 +150,9 @@
     bar.id = 'npInstrumentoProgress';
     bar.setAttribute('role','progressbar');
     bar.setAttribute('aria-label','Progresso da aplicacao');
-    bar.style.cssText = 'margin-top:8px;border:1px solid #eadcc7;border-radius:14px;overflow:hidden;background:#faf8f4';
-    bar.innerHTML = '<div class="fill" style="height:8px;background:linear-gradient(135deg,#1a6b65,#124b47);width:0%;transition:width .25s ease"></div>' +
-      '<div class="label" style="padding:6px 10px;font-size:12px;color:#6f6963">0 de 0 itens respondidos</div>';
+    bar.style.cssText = 'margin-top:8px;border:1px solid rgba(169,164,255,.16);border-radius:14px;overflow:hidden;background:rgba(124,118,210,.10)';
+    bar.innerHTML = '<div class="fill" style="height:8px;background:linear-gradient(135deg,#6d6af5,#4f46e5);width:0%;transition:width .25s ease"></div>' +
+      '<div class="label" style="padding:6px 10px;font-size:12px;color:#b6b2e6">0 de 0 itens respondidos</div>';
     if (hero) hero.appendChild(bar);
   }
 
