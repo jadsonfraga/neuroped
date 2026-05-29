@@ -5,7 +5,7 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "neuroped-db"
-database_id = "COLOQUE_O_DATABASE_ID_AQUI"
+database_id = "COLOCAR_DATABASE_ID_AQUI"
 
 # Secrets (criar via: npx wrangler pages secret put APP_TOKEN)
 # [vars] ficam em produção via dashboard
