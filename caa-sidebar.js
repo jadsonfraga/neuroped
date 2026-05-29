@@ -5,7 +5,7 @@
     a.href='./comunicacao-alternativa.html';
     a.textContent='💬 CAA';
     a.setAttribute('aria-label','CAA');
-    a.style.cssText='display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin:4px 0;padding:10px 12px;border-radius:12px;text-decoration:none;color:#1a6b65;background:rgba(26,107,101,.08);border:1px solid rgba(26,107,101,.22);font-weight:800';
+    a.style.cssText='display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin:4px 0;padding:10px 12px;border-radius:12px;text-decoration:none;color:#a9a4ff;background:rgba(26,107,101,.08);border:1px solid rgba(26,107,101,.22);font-weight:800';
     return a;
   }
   function run(){

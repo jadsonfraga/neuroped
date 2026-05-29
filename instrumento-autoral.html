@@ -62,7 +62,8 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
   <section class="hero" id="hero"><div class="miss">Carregando instrumento…</div></section>
   <section id="body"></section>
   <div class="result" id="result" hidden><div class="scorebox"><div class="big" id="score">—</div><div class="band warn" id="band">Responda os itens.</div></div><div class="subscores" id="subscores"></div><div class="alerts" id="alerts"></div><div class="disclaim" id="disc2"></div></div>
-  <p class="disclaim" style="border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.08);padding:11px 14px;margin-top:14px;line-height:1.5">🔒 <strong>Privacidade (LGPD):</strong> as respostas <strong>não são enviadas nem armazenadas em servidor</strong> — ficam apenas neste dispositivo durante o uso e são descartadas ao fechar a página. Nenhum dado pessoal é coletado.</p>
+  <p class="disclaim" style="border:1px solid rgba(231,201,139,.3);border-left:4px solid var(--gold);border-radius:12px;background:rgba(231,201,139,.10);padding:12px 14px;margin-top:14px;line-height:1.6;color:#e8dcc2">⚕️ <strong>Natureza da ferramenta.</strong> Os instrumentos autorais NeuroPed são <strong>roteiros de triagem e de organização do raciocínio clínico</strong>, de autoria do Dr. Jadson Fraga Araújo Júnior, construídos a partir de sua experiência em neurologia infantil. <strong>Não são escalas psicometricamente validadas nem normatizadas</strong> e não possuem ponto de corte diagnóstico — os limiares são <em>pontos de atenção operacional</em>. Nenhum resultado aqui confirma, exclui ou estabelece diagnóstico; ele apenas organiza observações e orienta a decisão de aprofundar a investigação. <strong>O diagnóstico é sempre um ato médico individual, presencial e contextualizado.</strong></p>
+  <p class="disclaim" style="border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.08);padding:11px 14px;margin-top:10px;line-height:1.5">🔒 <strong>Privacidade (LGPD):</strong> as respostas <strong>não são enviadas nem armazenadas em servidor</strong> — ficam apenas neste dispositivo durante o uso e são descartadas ao fechar a página. Nenhum dado pessoal é coletado.</p>
 </main>
 <script src="./scales-editorial.js"></script>
 <script src="./scales-autorais-npe.js"></script>
@@ -150,7 +151,7 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
       var L=(inst.levels||[]).filter(function(x){return x.k===lvl;})[0];
       bandEl.className='band '+((L&&L.cls)||'warn');
       bandEl.innerHTML=L?('<b>'+L.k+' — '+esc(L.label)+'</b>'+(n<total?' (entrevista incompleta)':'')+'<small>'+esc(L.conduct)+'</small>'):'<b>Responda a entrevista.</b>';
-      subEl.innerHTML=''; alEl.innerHTML= lvl && (lvl==='S2'||lvl==='S3') ? '<div class="alert prio">⚠ Risco identificado: avaliação profissional de segurança AGORA. Não deixar desacompanhado em risco iminente.</div>':'';
+      subEl.innerHTML=''; alEl.innerHTML= lvl && (lvl==='S2'||lvl==='S3') ? '<div class="alert prio">⚠ <strong>Risco identificado.</strong> Avaliação profissional de segurança <strong>agora</strong>. Não deixar a criança/adolescente desacompanhado(a) em risco iminente.<br><br>📞 <strong>Emergência:</strong> <a href="tel:192" style="color:#ffd0db;font-weight:800">SAMU 192</a> · <a href="tel:188" style="color:#ffd0db;font-weight:800">CVV 188</a> (apoio emocional 24h) · pronto-socorro ou CAPS mais próximo.<br><span style="font-size:11.5px;opacity:.85">Esta tela é triagem orientativa e não substitui o atendimento de emergência.</span></div>':'';
       return;
     }
 

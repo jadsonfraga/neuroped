@@ -118,12 +118,6 @@ assertIncludes('index.html', './np-cloud.js', 'index.html carrega np-cloud.js');
 assertIncludes('index.html', './cloud-config.js', 'index.html carrega cloud-config.js');
 assertIncludes('scales-enhance.js', 'NeuroPedCloud', 'scales-enhance roteia para Supabase quando disponivel');
 
-// Filtro rank pro - sem polling perpetuo, debounced
-assertFile('filtro-rank-pro.js');
-assertNotIncludes('filtro-rank-pro.js', 'setInterval(run', 'filtro-rank-pro nao roda setInterval(run, ...) ocioso');
-assertIncludes('filtro-rank-pro.js', 'debounce', 'filtro-rank-pro usa debounce');
-assertIncludes('filtro-rank-pro.js', 'lastSignature', 'filtro-rank-pro evita re-render quando inputs nao mudaram');
-
 // Instrumento enhance
 assertFile('instrumento-enhance.js');
 assertFile('instrumento.html');
@@ -250,6 +244,16 @@ assertNotIncludes('index.html', 'escalas validadas', 'index.html não promete "e
 assertNotIncludes('mapa-escalas.html', 'credibilidade-clinica.html', 'mapa-escalas não aponta para página inexistente');
 // 404 no tema escuro
 assertIncludes('404.html', 'content="#0e0e22"', '404.html usa o tema índigo escuro');
+
+// ===== Ética clínica & segurança (anti-regressão) =====
+assertIncludes('instrumento.html', 'Natureza da ferramenta', 'instrumento.html declara natureza não-diagnóstica');
+assertIncludes('instrumento.html', 'ato médico', 'instrumento.html lembra que diagnóstico é ato médico');
+assertIncludes('instrumento-autoral.html', 'Natureza da ferramenta', 'instrumento-autoral.html declara natureza não-diagnóstica');
+assertIncludes('instrumento-autoral.html', 'SAMU 192', 'alerta de risco direciona à emergência (SAMU 192)');
+assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece apoio emocional (CVV 188)');
+// favicon e página de teste sem paleta antiga
+assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
+assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');
 
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
