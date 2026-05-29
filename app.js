@@ -1,5 +1,5 @@
 /* ===========================================================
-   NeuroPed EDJ v6.0 — SPA Controller (modo único + PIN gate)
+   NeuroPed EDJ v6.1 — SPA Controller (modo único + PIN gate)
    Conteúdo público livre · Módulos profissionais protegidos
    =========================================================== */
 
