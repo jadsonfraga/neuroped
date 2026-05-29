@@ -13,6 +13,24 @@
   --np-radius:      16px;
 }
 
+/* ============================================================
+   Unidade de marca ÍNDIGO nas páginas estáticas (editoriais)
+   Carrega depois do <style> inline → re-tinge os acentos.
+   Mantém o gold como acento quente secundário (índigo + dourado).
+   ============================================================ */
+:root{
+  --teal:  #4f46e5;
+  --teal2: #6366f1;
+  --wine:  #4338ca;
+  --accent:    #6366f1;
+  --accent-2:  #6d6af5;
+  --accent-3:  #8b5cf6;
+  --brand:     #4f46e5;
+  --brand-2:   #6d6af5;
+  --brand-soft:#ecebfe;
+  --accent-grad: linear-gradient(135deg, #4f46e5 0%, #6d6af5 100%);
+}
+
 /* Touch target minimo - botoes e links de UI nao podem ser menores */
 .btn, button.btn, a.btn, .chip, .pill, .scale-card, .app-action {
   min-height: var(--np-tap);
