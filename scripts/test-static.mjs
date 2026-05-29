@@ -168,7 +168,12 @@ assertIncludes('central-atalhos.html', './neuroped-master-biblioteca.html', 'cen
 assertIncludes('routes.config.js', 'neuroped-master-biblioteca.html', 'routes.config registra a Biblioteca');
 
 const packageJson=file('package.json');
-if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
+if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
+  // versão única: cache do service worker e verificador alinhados ao package.json
+  const ver=parsed.version;const swc=file('sw.js')||'';const expected=`neuroped-edj-v${ver}`;
+  swc.includes(expected)?pass(`sw.js usa cache alinhado ao package.json (${expected})`):fail('sw.js com cache desalinhado da versão',`esperava ${expected}`);
+  (file('verificar-app.html')||'').includes(`'${ver}'`)?pass(`verificar-app.html referencia a versão canônica ${ver}`):fail('verificar-app.html não referencia a versão canônica',ver);
+}catch(e){fail('package.json inválido',e.message)}}
 
 console.log('\nNeuroPed static quality check');
 console.log('============================');
