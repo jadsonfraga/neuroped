@@ -22,12 +22,11 @@
     + '#np-splash .nps-ring{position:absolute;top:-14px;left:50%;width:160px;height:160px;margin-left:-80px;border-radius:50%;border:2px solid hsl(243 85% 70% / .5);box-shadow:0 0 40px hsl(243 85% 66% / .5);animation:npsRing 2.4s ease-in-out infinite;pointer-events:none}'
     + '#np-splash .nps-name{font:800 30px/1 "DM Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;background:linear-gradient(110deg,#a9a4ff,#d9b3ff 50%,#a9a4ff);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;animation:npsShine 3s linear infinite,npsRise .9s .15s both}'
     + '#np-splash .nps-sub{font:600 13px "DM Sans",Inter,sans-serif;color:#b9b9e6;letter-spacing:.02em;margin-top:-8px;animation:npsRise .9s .25s both}'
-    + '#np-splash .nps-mascots{display:flex;gap:14px;font-size:26px;margin-top:4px}'
-    + '#np-splash .nps-mascots span{display:inline-block;animation:npsBounce 1.8s ease-in-out infinite}'
-    + '#np-splash .nps-mascots span:nth-child(2){animation-delay:.2s}'
-    + '#np-splash .nps-mascots span:nth-child(3){animation-delay:.4s}'
-    + '#np-splash .nps-mascots span:nth-child(4){animation-delay:.6s}'
-    + '#np-splash .nps-mascots span:nth-child(5){animation-delay:.8s}'
+    + '#np-splash .nps-seal{display:flex;align-items:center;gap:10px;margin-top:6px;animation:npsRise .9s .35s both}'
+    + '#np-splash .nps-seal .ln{height:1px;width:46px;background:linear-gradient(90deg,transparent,hsl(43 60% 70% / .8))}'
+    + '#np-splash .nps-seal .ln.r{background:linear-gradient(90deg,hsl(43 60% 70% / .8),transparent)}'
+    + '#np-splash .nps-seal .mk{font:700 11px/1 "DM Sans",Inter,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:#e7cf9b;text-indent:.32em}'
+    + '#np-splash .nps-seal .dot{width:5px;height:5px;border-radius:50%;background:hsl(43 70% 66%);box-shadow:0 0 10px hsl(43 80% 66% / .8)}'
     + '#np-splash .nps-bar{width:170px;height:5px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:6px}'
     + '#np-splash .nps-bar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,transparent,hsl(243 90% 72%),transparent);animation:npsBar 1.3s ease-in-out infinite}'
     + '#np-splash .nps-p{position:absolute;pointer-events:none;opacity:0;animation:npsParticle linear infinite}'
@@ -50,22 +49,21 @@
   s.id = 'np-splash';
   s.setAttribute('role', 'status');
   s.setAttribute('aria-label', 'Carregando NeuroPed EDJ');
-  var mascots = ['🧠','🌟','🧩','🌈','⭐'];
   s.innerHTML =
       '<div class="nps-stage">'
     +   '<div style="position:relative"><div class="nps-ring"></div>'
     +   '<img class="nps-logo" src="./icon-512.png" alt="" onerror="this.style.display=\'none\'"></div>'
     +   '<div class="nps-name">NeuroPed EDJ</div>'
     +   '<div class="nps-sub">Dr. Jadson Fraga · Neuropediatria</div>'
-    +   '<div class="nps-mascots">' + mascots.map(function(m){return '<span>'+m+'</span>';}).join('') + '</div>'
+    +   '<div class="nps-seal"><span class="ln"></span><span class="dot"></span><span class="mk">Neuropediatria de precisão</span><span class="dot"></span><span class="ln r"></span></div>'
     +   '<div class="nps-bar"><i></i></div>'
     + '</div>';
   (document.body || document.documentElement).appendChild(s);
 
   // partículas fofas flutuando
   try {
-    var glyphs = ['✨','⭐','🌟','💫','🫧'];
-    for (var i = 0; i < 14; i++) {
+    var glyphs = ['✦','·','✦','·'];
+    for (var i = 0; i < 8; i++) {
       var p = document.createElement('div');
       p.className = 'nps-p';
       p.textContent = glyphs[i % glyphs.length];

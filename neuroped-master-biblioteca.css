@@ -195,4 +195,70 @@ body{
   .matrix th,.matrix td{padding:9px 8px;font-size:12.5px}
   .cover{padding:26px 20px 24px}
 }
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===================== ÍCONES VETORIAIS ===================== */
+.ico{width:20px;height:20px;flex:0 0 auto;display:inline-block;vertical-align:middle}
+.tab-ico{width:16px;height:16px;margin-right:7px;margin-top:-2px}
+.s-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--soft);pointer-events:none}
+.t-ico{width:13px;height:13px;margin-right:3px}
+.card-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(180deg,var(--teal),var(--teal-d))}
+.card-ic .ico{width:22px;height:22px}
+.flow .step .ico-box{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(180deg,var(--teal),var(--teal-d))}
+.flow .step .ico-box .ico{width:21px;height:21px}
+.btn .ico{width:18px;height:18px}
+.search{position:relative}
+.search input{padding-left:42px}
+
+/* ===================== SUB-ABAS DA ÁREA RESERVADA ===================== */
+.subtabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.subtab{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--paper);color:var(--muted);
+  border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px;cursor:pointer;transition:transform .2s,background .2s,color .2s,border-color .2s}
+.subtab .ico{width:17px;height:17px}
+.subtab:hover{transform:translateY(-1px);color:var(--wine)}
+.subtab.on{background:var(--wine);color:#fff;border-color:var(--wine);box-shadow:0 12px 26px -12px rgba(139,46,59,.5)}
+.subpane{animation:secIn .4s cubic-bezier(.22,.8,.2,1) both}
+.h-min{font:700 18px Georgia,serif;color:var(--wine);margin:20px 0 8px}
+
+/* ===================== ESCALAS — GRUPOS E CARDS ===================== */
+.md-group{margin-bottom:18px}
+.md-head{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.md-head h3{flex:1;font:700 17px Georgia,serif;color:var(--wine);margin:0}
+.md-count{font:800 12px ui-monospace,monospace;color:var(--teal);background:rgba(26,107,101,.08);border:1px solid rgba(26,107,101,.2);border-radius:999px;padding:3px 9px}
+.chap.scale > summary .t{font-size:15.5px;font-family:system-ui,sans-serif;font-weight:800;color:var(--ink)}
+.chap.scale > summary .c.comp{color:var(--teal);background:rgba(26,107,101,.08);border:1px solid rgba(26,107,101,.2)}
+.chap.scale > summary .c.alert{color:var(--wine);background:rgba(139,46,59,.08);border:1px solid rgba(139,46,59,.22)}
+.sub-block{margin:11px 0}
+.sub-block h5{margin:0 0 3px;font:800 11px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--teal)}
+.chap.scale .sub-block:nth-of-type(3) h5,.chap.scale .body > .sub-block h5{color:var(--teal)}
+.sub-block p{margin:0;color:var(--muted);line-height:1.56;font-size:13.5px}
+.legend{font-size:12px;font-weight:700;color:var(--gold-d);background:#fff8e9;border:1px solid rgba(184,150,62,.3);border-radius:10px;padding:8px 11px;margin:12px 0 6px;line-height:1.45}
+.lvl .fala{display:block;margin-top:4px;font:italic 12.5px Georgia,serif;color:var(--teal-d)}
+
+/* ===================== FARMACOTERAPIA — CARDS DE FÁRMACO ===================== */
+.drug h4{flex-wrap:wrap}
+.drug h4 .brand{font:600 12.5px system-ui,sans-serif;color:var(--muted);font-style:italic}
+.drug p .dk{display:inline-block;min-width:96px;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.05em;color:var(--teal);vertical-align:top;margin-right:6px}
+.drug p{display:flex;gap:0;align-items:baseline}
+.drug p .dk + *{flex:1}
+
+/* ===================== DIRETRIZ — MODULAÇÃO E ESTUDOS ===================== */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px;margin-bottom:6px}
+.mod.up{border-left:4px solid var(--teal)}
+.mod.down{border-left:4px solid var(--gold)}
+.study{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow-soft)}
+.study h4{margin:0 0 5px;font:700 15px Georgia,serif;color:var(--wine)}
+.study p{margin:0 0 8px;color:var(--muted);font-size:13.5px;line-height:1.5}
+.study .doi{font:700 11px ui-monospace,monospace;color:var(--teal);background:rgba(26,107,101,.07);border-radius:7px;padding:3px 8px}
+
+/* ===================== SKELETON LOADER ===================== */
+.sk-wrap{display:grid;gap:12px}
+.sk{position:relative;overflow:hidden;background:#efe7d8;border-radius:12px}
+.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:shimmer 1.3s infinite}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+.sk-line{height:14px}
+.sk-line.w60{width:60%}.sk-line.w80{width:80%}.sk-line.w90{width:90%}
+.sk-card{height:84px;border-radius:18px}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.sk::after{display:none}}
