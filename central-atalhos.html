@@ -16,129 +16,22 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
   background:radial-gradient(900px 520px at 8% -8%,rgba(26,107,101,.05),transparent 55%),
              radial-gradient(820px 540px at 100% 0%,rgba(184,150,62,.06),transparent 52%),
              linear-gradient(160deg,#faf8f4,#fffaf1 58%,#f6efe2)}
-.wrap{max-width:1020px;margin:auto;padding:18px 16px 72px}
-.ico{width:20px;height:20px;flex:0 0 auto}
-
-/* capa editorial */
-.cover{position:relative;overflow:hidden;border-radius:26px;padding:32px 28px;color:#f3ede0;
-  background:linear-gradient(155deg,#15302e,#1a4a44 55%,#123f3a);box-shadow:0 30px 70px -28px rgba(20,40,38,.7);
-  border:1px solid rgba(184,150,62,.32)}
-.cover::before{content:"";position:absolute;inset:12px;border:1px solid rgba(184,150,62,.4);border-radius:18px;pointer-events:none}
-.cover::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background:radial-gradient(620px 320px at 84% -10%,rgba(184,150,62,.16),transparent 60%)}
-.cover>*{position:relative;z-index:1}
-.imprint{display:flex;align-items:center;gap:11px}
-.imprint img{width:42px;height:42px;border-radius:11px;object-fit:cover;box-shadow:0 0 0 1px rgba(184,150,62,.5)}
-.imprint span{font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:11px;color:#cdbf9a}
-.eyebrow{display:inline-block;text-transform:uppercase;letter-spacing:.2em;font-weight:800;font-size:10.5px;
-  color:#1a4a44;background:rgba(184,150,62,.92);padding:6px 12px;border-radius:4px;margin-top:18px}
-h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6ea}
-.cover p{color:#cfd6cf;line-height:1.6;margin:0;max-width:58ch}
-
-/* grupos editoriais */
-.group{margin-top:28px}
-.group-head{display:flex;align-items:center;gap:11px;margin:0 0 13px;padding-bottom:9px;border-bottom:1px solid var(--line)}
-.group-head .gi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;
-  background:linear-gradient(180deg,var(--teal),var(--teal-d))}
-.group-head .gi .ico{width:19px;height:19px}
-.group-head h2{flex:1;font:700 20px Georgia,serif;color:var(--wine);margin:0}
-.group-head .gn{font:800 11px ui-monospace,monospace;color:var(--muted);background:#f3efe6;border:1px solid var(--line);border-radius:999px;padding:3px 9px}
-
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px}
-.card{display:flex;gap:13px;align-items:flex-start;text-decoration:none;background:var(--paper);border:1px solid var(--line);
-  border-radius:18px;padding:15px;box-shadow:var(--shadow-soft);color:var(--ink);
-  transition:transform .28s cubic-bezier(.22,.8,.2,1),box-shadow .28s,border-color .28s}
-.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(26,107,101,.3)}
-.card .ci{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:0 0 auto;
-  background:linear-gradient(180deg,var(--teal),var(--teal-d))}
-.card .ci .ico{width:20px;height:20px}
-.card.wine .ci{background:linear-gradient(180deg,var(--wine),#6f2531)}
-.card.gold .ci{background:linear-gradient(180deg,var(--gold),var(--gold-d))}
-.card h3{margin:0 0 3px;font:700 16px Georgia,serif;color:var(--wine)}
-.card.wine h3{color:var(--wine)}
-.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.48}
-.lockbadge{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--wine);
-  background:rgba(139,46,59,.08);border:1px solid rgba(139,46,59,.2);border-radius:999px;padding:2px 7px;margin-top:6px;display:inline-block}
-.footer{text-align:center;font-size:12px;color:var(--muted);margin:32px 0 0;line-height:1.7}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.wrap{max-width:1020px;margin:auto;padding:18px 16px 72px}.ico{width:20px;height:20px;flex:0 0 auto}
+.cover{position:relative;overflow:hidden;border-radius:26px;padding:32px 28px;color:#f3ede0;background:linear-gradient(155deg,#15302e,#1a4a44 55%,#123f3a);box-shadow:0 30px 70px -28px rgba(20,40,38,.7);border:1px solid rgba(184,150,62,.32)}
+.cover::before{content:"";position:absolute;inset:12px;border:1px solid rgba(184,150,62,.4);border-radius:18px;pointer-events:none}.cover::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;background:radial-gradient(620px 320px at 84% -10%,rgba(184,150,62,.16),transparent 60%)}.cover>*{position:relative;z-index:1}
+.imprint{display:flex;align-items:center;gap:11px}.imprint img{width:42px;height:42px;border-radius:11px;object-fit:cover;box-shadow:0 0 0 1px rgba(184,150,62,.5)}.imprint span{font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:11px;color:#cdbf9a}.eyebrow{display:inline-block;text-transform:uppercase;letter-spacing:.2em;font-weight:800;font-size:10.5px;color:#1a4a44;background:rgba(184,150,62,.92);padding:6px 12px;border-radius:4px;margin-top:18px}h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6ea}.cover p{color:#cfd6cf;line-height:1.6;margin:0;max-width:58ch}
+.group{margin-top:28px}.group-head{display:flex;align-items:center;gap:11px;margin:0 0 13px;padding-bottom:9px;border-bottom:1px solid var(--line)}.group-head .gi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(180deg,var(--teal),var(--teal-d))}.group-head .gi .ico{width:19px;height:19px}.group-head h2{flex:1;font:700 20px Georgia,serif;color:var(--wine);margin:0}.group-head .gn{font:800 11px ui-monospace,monospace;color:var(--muted);background:#f3efe6;border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px}.card{display:flex;gap:13px;align-items:flex-start;text-decoration:none;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow-soft);color:var(--ink);transition:transform .28s cubic-bezier(.22,.8,.2,1),box-shadow .28s,border-color .28s}.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(26,107,101,.3)}.card .ci{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:0 0 auto;background:linear-gradient(180deg,var(--teal),var(--teal-d))}.card .ci .ico{width:20px;height:20px}.card.wine .ci{background:linear-gradient(180deg,var(--wine),#6f2531)}.card.gold .ci{background:linear-gradient(180deg,var(--gold),var(--gold-d))}.card h3{margin:0 0 3px;font:700 16px Georgia,serif;color:var(--wine)}.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.48}.lockbadge{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--wine);background:rgba(139,46,59,.08);border:1px solid rgba(139,46,59,.2);border-radius:999px;padding:2px 7px;margin-top:6px;display:inline-block}.footer{text-align:center;font-size:12px;color:var(--muted);margin:32px 0 0;line-height:1.7}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
 </head>
 <body>
 <main class="wrap">
-
-  <section class="cover">
-    <div class="imprint"><img src="./icon-512.png" alt="" onerror="this.style.display='none'"><span>NeuroPed EDJ · Hub Clínico</span></div>
-    <span class="eyebrow">Acesso rápido</span>
-    <h1>Central de Atalhos</h1>
-    <p>Rotas críticas do NeuroPed EDJ organizadas por área. Use quando a navegação do app principal estiver confusa — cada destino abre direto, sem depender da sidebar.</p>
-  </section>
-
-  <!-- OBRA AUTORAL -->
-  <section class="group">
-    <div class="group-head">
-      <span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span>
-      <h2>NeuroPed Master · obra autoral</h2><span class="gn">03</span>
-    </div>
-    <div class="grid">
-      <a class="card gold" href="./neuroped-master-vitrine.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span><div><h3>NeuroPed Master</h3><p>Vitrine pública — estrutura da obra e amostra catalogada.</p></div></a>
-      <a class="card" href="./neuroped-master-biblioteca.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><div><h3>Biblioteca Master</h3><p>Catálogo completo: 210 protocolos J26 + área reservada por PIN.</p></div></a>
-      <a class="card gold" href="./solicitar-neuroped-master.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div><h3>Solicitar e-book</h3><p>Pedir acesso ao material integral mediante autorização do autor.</p></div></a>
-    </div>
-  </section>
-
-  <!-- FAMÍLIA -->
-  <section class="group">
-    <div class="group-head">
-      <span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9"/></svg></span>
-      <h2>Família e desenvolvimento</h2><span class="gn">04</span>
-    </div>
-    <div class="grid">
-      <a class="card" href="./portal-familia-livre.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/></svg></span><div><h3>Portal da Família</h3><p>Conteúdos públicos e orientação familiar.</p></div></a>
-      <a class="card" href="./area-filho.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><div><h3>Área do Filho</h3><p>Ferramentas locais com nascimento e sobrenome.</p></div></a>
-      <a class="card" href="./comunicacao-alternativa.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/></svg></span><div><h3>CAA Gratuita</h3><p>Figurinhas, voz e frases.</p></div></a>
-      <a class="card" href="./diario-escola-terapias-v2.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><div><h3>Diário</h3><p>Escola, terapias e relatório.</p></div></a>
-    </div>
-  </section>
-
-  <!-- INSTRUMENTOS -->
-  <section class="group">
-    <div class="group-head">
-      <span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <h2>Instrumentos clínicos</h2><span class="gn">02</span>
-    </div>
-    <div class="grid">
-      <a class="card" href="./filtro-escalas.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span><div><h3>Filtro de Escalas</h3><p>Instrumentos por idade e queixa.</p></div></a>
-      <a class="card" href="./mapa-escalas.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 6-4 0 2-6z"/></svg></span><div><h3>Mapa de Instrumentos</h3><p>Busca por público, idade e sintoma.</p></div></a>
-    </div>
-  </section>
-
-  <!-- ÁREA MÉDICA -->
-  <section class="group">
-    <div class="group-head">
-      <span class="gi" style="background:linear-gradient(180deg,var(--wine),#6f2531)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-      <h2>Área médica protegida</h2><span class="gn">PIN</span>
-    </div>
-    <div class="grid">
-      <a class="card wine" href="./consulta.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M9 5h6"/><path d="M6 9v5a6 6 0 0 0 12 0V9"/><circle cx="12" cy="20" r="2"/></svg></span><div><h3>Consulta</h3><p>Painel de consulta operacional.</p><span class="lockbadge">PIN master</span></div></a>
-      <a class="card wine" href="./politica-acesso-familiar.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/></svg></span><div><h3>Política de acesso</h3><p>Regras de família, médico e dados sensíveis.</p></div></a>
-    </div>
-  </section>
-
-  <!-- SISTEMA -->
-  <section class="group">
-    <div class="group-head">
-      <span class="gi" style="background:linear-gradient(180deg,var(--gold),var(--gold-d))"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></span>
-      <h2>App e sistema</h2><span class="gn">02</span>
-    </div>
-    <div class="grid">
-      <a class="card gold" href="./"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/></svg></span><div><h3>App principal</h3><p>Voltar ao NeuroPed EDJ.</p></div></a>
-      <a class="card gold" href="./verificar-app.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span><div><h3>Verificar app</h3><p>Confere rotas e versão publicada.</p></div></a>
-    </div>
-  </section>
-
-  <p class="footer">Ferramenta educacional de apoio à organização clínica. Não substitui avaliação profissional.<br>Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · CRM-PE 25227 | RQE 17756</p>
-</main>
-<script src="./app-polish-mobile.js" defer></script>
-</body>
-</html>
+<section class="cover"><div class="imprint"><img src="./icon-512.png" alt="" onerror="this.style.display='none'"><span>NeuroPed EDJ · Hub Clínico</span></div><span class="eyebrow">Acesso rápido</span><h1>Central de Atalhos</h1><p>Rotas críticas do NeuroPed EDJ organizadas por área. Use quando a navegação do app principal estiver confusa — cada destino abre direto, sem depender da sidebar.</p></section>
+<section class="group"><div class="group-head"><span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span><h2>NeuroPed Master · obra autoral</h2><span class="gn">03</span></div><div class="grid"><a class="card gold" href="./neuroped-master-vitrine.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span><div><h3>NeuroPed Master</h3><p>Vitrine pública — estrutura da obra e amostra catalogada.</p></div></a><a class="card" href="./neuroped-master-biblioteca.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><div><h3>Biblioteca Master</h3><p>Catálogo completo: 210 protocolos J26 + área reservada por PIN.</p></div></a><a class="card gold" href="./solicitar-neuroped-master.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div><h3>Solicitar e-book</h3><p>Pedir acesso ao material integral mediante autorização do autor.</p></div></a></div></section>
+<section class="group"><div class="group-head"><span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9"/></svg></span><h2>Família e desenvolvimento</h2><span class="gn">04</span></div><div class="grid"><a class="card" href="./portal-familia-livre.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/></svg></span><div><h3>Portal da Família</h3><p>Conteúdos públicos e orientação familiar.</p></div></a><a class="card" href="./area-filho.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><div><h3>Área do Filho</h3><p>Ferramentas locais com nascimento e sobrenome.</p></div></a><a class="card" href="./comunicacao-alternativa.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/></svg></span><div><h3>CAA Gratuita</h3><p>Figurinhas, voz e frases.</p></div></a><a class="card" href="./diario-escola-terapias-v2.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><div><h3>Diário</h3><p>Escola, terapias e relatório.</p></div></a></div></section>
+<section class="group"><div class="group-head"><span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><h2>Instrumentos clínicos</h2><span class="gn">03</span></div><div class="grid"><a class="card" href="./filtro-escalas.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span><div><h3>Filtro de Escalas</h3><p>Instrumentos por idade e queixa.</p></div></a><a class="card" href="./mapa-escalas.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 6-4 0 2-6z"/></svg></span><div><h3>Mapa de Instrumentos</h3><p>Busca por público, idade e sintoma.</p></div></a><a class="card gold" href="./escalas-oficiais-gratuitas.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"/><path d="M8 12h8M12 8v8"/></svg></span><div><h3>Fontes Oficiais Gratuitas</h3><p>PSC, CRAFFT, ASQ, C-SSRS, TEA, TDAH e desenvolvimento com status jurídico claro.</p></div></a></div></section>
+<section class="group"><div class="group-head"><span class="gi" style="background:linear-gradient(180deg,var(--wine),#6f2531)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h2>Área médica protegida</h2><span class="gn">PIN</span></div><div class="grid"><a class="card wine" href="./consulta.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M9 5h6"/><path d="M6 9v5a6 6 0 0 0 12 0V9"/><circle cx="12" cy="20" r="2"/></svg></span><div><h3>Consulta</h3><p>Painel de consulta operacional.</p><span class="lockbadge">PIN master</span></div></a><a class="card wine" href="./politica-acesso-familiar.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/></svg></span><div><h3>Política de acesso</h3><p>Regras de família, médico e dados sensíveis.</p></div></a></div></section>
+<section class="group"><div class="group-head"><span class="gi" style="background:linear-gradient(180deg,var(--gold),var(--gold-d))"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></span><h2>App e sistema</h2><span class="gn">02</span></div><div class="grid"><a class="card gold" href="./"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/></svg></span><div><h3>App principal</h3><p>Voltar ao NeuroPed EDJ.</p></div></a><a class="card gold" href="./verificar-app.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span><div><h3>Verificar app</h3><p>Confere rotas e versão publicada.</p></div></a></div></section>
+<p class="footer">Ferramenta educacional de apoio à organização clínica. Não substitui avaliação profissional.<br>Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · CRM-PE 25227 | RQE 17756</p>
+</main><script src="./app-polish-mobile.js" defer></script></body></html>
