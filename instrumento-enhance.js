@@ -165,7 +165,7 @@
       btn.textContent = 'n/a';
       btn.title = 'Nao aplicavel (nao conta na soma)';
       btn.setAttribute('aria-label', 'Marcar como nao aplicavel');
-      btn.style.cssText = 'background:#fff;color:#6f6963;border:1px dashed #c8b88e;font-style:italic';
+      btn.style.cssText = 'background:rgba(124,118,210,.10);color:#b6b2e6;border:1px dashed rgba(169,164,255,.28);font-style:italic';
       // copia data-i do irmao
       var sib = scale.querySelector('[data-i]');
       if (sib) btn.dataset.i = sib.dataset.i;

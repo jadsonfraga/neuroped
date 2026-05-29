@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const root = process.cwd();
 const failures = [];
@@ -289,6 +290,22 @@ assertNotIncludes('scales-enhance.js', 'background:#fffaf1', 'rodapé do scales-
 assertIncludes('consulta-livre.html', "location.replace('./consulta.html", 'consulta-livre (legada) redireciona para consulta.html');
 assertIncludes('diario-escola-terapias.html', "location.replace('./diario-escola-terapias-v2.html", 'diário v1 (legado) redireciona para v2');
 assertNotIncludes('consulta-livre.html', 'nada é salvo', 'consulta-livre não contradiz a persistência (é redirect)');
+
+// ===== Sintaxe de TODOS os .js da raiz (impede arquivo quebrado/corrompido no deploy) =====
+{
+  const jsFiles = readdirSync(root).filter(f => f.endsWith('.js'));
+  let broken = 0;
+  for (const f of jsFiles) {
+    try { execSync(`node --check ${JSON.stringify(join(root, f))}`, { stdio: 'pipe' }); }
+    catch (e) { fail(`${f} com erro de sintaxe JS`, String(e.stderr || e).split('\n')[0]); broken++; }
+  }
+  if (!broken) pass(`todos os ${jsFiles.length} arquivos .js da raiz têm sintaxe válida`);
+  for (const f of ['instrumento-enhance.js','scales-enhance.js','app-mode.js']) {
+    const c = file(f); if (!c) continue;
+    const dup = (c.match(/Não se aplica/g) || []).length;
+    dup <= 3 ? pass(`${f} sem duplicação em massa`) : fail(`${f} corrompido (linhas duplicadas)`, `${dup}x`);
+  }
+}
 
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
