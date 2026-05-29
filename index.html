@@ -1,176 +1,78 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#df2f3a" media="(prefers-color-scheme: light)" />
-  <meta name="description" content="NeuroPed EDJ — plataforma educacional e clínica de neuropediatria do Dr. Jadson Fraga Araújo Júnior (CRM-PE 25227 / RQE 17756). Conteúdo livre para famílias e profissionais." />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="NeuroPed" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg" />
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <link rel="stylesheet" href="styles.css" />
-  <title>NeuroPed EDJ — Dr. Jadson Fraga · Neuropediatria</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria CRM-PE 25227</title>
+    <meta name="description" content="Aplicativo clínico de neuropediatria do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756). Escalas validadas, prontuário, calculadora de doses, marcos do desenvolvimento e ferramentas de avaliação para uso profissional." />
+    <meta name="keywords" content="neuropediatria, escalas clínicas, M-CHAT, CARS, SNAP-IV, Denver II, Vineland, Conners, prontuário pediátrico, Dr. Jadson Fraga, Petrolina-PE, Juazeiro-BA" />
+    <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="theme-color" content="#1a6b65" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f3d3a" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NeuroPed EDJ" />
+    <meta name="application-name" content="NeuroPed EDJ" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6b65'/%3E%3Cpath d='M16 6c-4.4 0-8 3.6-8 8 0 2.7 1.3 5 3.4 6.4L10 26h12l-1.4-5.6C22.7 19 24 16.7 24 14c0-4.4-3.6-8-8-8zm0 3a2 2 0 110 4 2 2 0 010-4zm-3 6h6c0 1.7-1.3 3-3 3s-3-1.3-3-3z' fill='%23faf8f4'/%3E%3C/svg%3E" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="NeuroPed EDJ" />
+    <meta property="og:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
+    <meta property="og:description" content="Aplicativo clínico de neuropediatria com escalas validadas, prontuário e ferramentas profissionais. Dr. Jadson Fraga, CRM-PE 25227, RQE 17756." />
+    <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/" />
+    <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="NeuroPed EDJ — Aplicativo clínico do Dr. Jadson Fraga" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="NeuroPed EDJ — Dr. Jadson Fraga | Neuropediatria" />
+    <meta name="twitter:description" content="Aplicativo clínico de neuropediatria com escalas validadas e ferramentas profissionais." />
+    <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wa.me https://api.github.com https://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta name="permissions-policy" content="camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()" />
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"MedicalBusiness","name":"NeuroPed EDJ — Dr. Jadson Fraga","description":"Consultório de neuropediatria do Dr. Jadson Fraga Araújo Júnior em Petrolina-PE, atendendo crianças e adolescentes com transtornos do neurodesenvolvimento.","url":"https://jadsonfraga.github.io/neuroped/","image":"https://jadsonfraga.github.io/neuroped/icon-512.png","telephone":"+55-87-99109-7371","medicalSpecialty":["Pediatrics","Neurology"],"priceRange":"R$$$","address":{"@type":"PostalAddress","streetAddress":"Rua Raimundo Lacerda, 1","addressLocality":"Petrolina","addressRegion":"PE","postalCode":"56302-470","addressCountry":"BR","address":"Rua Raimundo Lacerda, 1 — São José, Petrolina/PE — CEP 56302-470"},"geo":{"@type":"GeoCoordinates","latitude":"-9.4011","longitude":"-40.4961"},"openingHours":"Mo-Fr 08:00-18:00","physician":{"@type":"Physician","name":"Dr. Jadson Fraga Araújo Júnior","jobTitle":"Neuropediatra","medicalSpecialty":"Pediatrics","url":"https://jadsonfraga.github.io/neuroped/","identifier":[{"@type":"PropertyValue","propertyID":"CRM-PE","value":"25227"},{"@type":"PropertyValue","propertyID":"RQE","value":"17756"}],"worksFor":{"@type":"MedicalBusiness","name":"NeuroPed EDJ"}},"sameAs":["https://wa.me/5587991097371"]}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Inter:wght@400..700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="./assets/index-CCN60Z39.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CYKyYC_X.css" />
+    <link rel="stylesheet" href="./safe-public-layer.css" />
+  <link rel="stylesheet" href="./app-polish-mobile.css">
 </head>
-<body>
-
-  <!-- ====== SPLASH ====== -->
-  <div id="splash" class="splash" aria-hidden="false">
-    <div class="splash-logo" aria-hidden="true">
-      <svg viewBox="0 0 64 64" width="92" height="92">
-        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff8a96"/><stop offset="100%" stop-color="#df2f3a"/></linearGradient></defs>
-        <rect width="64" height="64" rx="18" fill="url(#sg)"/>
-        <path d="M22 18 C16 26, 16 40, 22 46 C30 54, 44 50, 46 38 C48 26, 38 16, 28 18 C26 17, 24 17, 22 18 Z" fill="#fff"/>
-        <g fill="#df2f3a">
-          <circle cx="27" cy="28" r="2.4"/>
-          <circle cx="36" cy="32" r="2.4"/>
-          <circle cx="30" cy="40" r="2.4"/>
-        </g>
-        <g stroke="#df2f3a" stroke-width="1.4" fill="none">
-          <path d="M27 28 L30 40"/><path d="M36 32 L30 40"/>
-        </g>
-      </svg>
-    </div>
-    <div class="splash-text">
-      <h1>NeuroPed EDJ</h1>
-      <p>Dr. Jadson Fraga · Neuropediatria</p>
-    </div>
-    <div class="splash-bar"><span></span></div>
-    <div class="splash-version">v5.2 · CRM-PE 25227 · RQE 17756</div>
-  </div>
-
-  <!-- ====== DEMO BANNER ====== -->
-  <div id="demoBanner" class="demo-banner" hidden>
-    <span class="demo-dot"></span>
-    <strong>AMBIENTE DEMONSTRATIVO</strong> · Não utilizar com dados reais de pacientes. Banco local sem criptografia profissional ou autenticação clínica. Apenas conteúdo educacional aberto é considerado em produção.
-    <button class="demo-close" id="demoBannerClose" aria-label="Fechar aviso">✕</button>
-  </div>
-
-  <!-- ====== APP ====== -->
-  <div id="app" class="app" hidden>
-    <aside class="sidebar" aria-label="Navegação principal">
-      <div class="brand">
-        <div class="brand-mark">
-          <svg viewBox="0 0 32 32" width="28" height="28"><defs><linearGradient id="sb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b7a"/><stop offset="1" stop-color="#df2f3a"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#sb)"/><path d="M11 10 C9 14, 9 19, 12 22 C15 25, 20 24, 22 20 C24 16, 22 11, 18 10 C15 9, 13 10, 11 10 Z" fill="#fff"/></svg>
-        </div>
-        <div class="brand-text">
-          <strong>NeuroPed</strong>
-          <span>Dr. Jadson Fraga</span>
-        </div>
+  <body>
+    <noscript>
+      <div style="max-width:600px;margin:4rem auto;padding:2rem;background:#faf8f4;color:#2d2926;font-family:Georgia,serif;text-align:center;border:1px solid #b8963e;border-radius:8px;">
+        <h1 style="color:#1a6b65;font-size:1.5rem;margin-bottom:1rem;">NeuroPed EDJ</h1>
+        <p style="font-size:1rem;line-height:1.6;">Este aplicativo requer JavaScript habilitado para funcionar. Por favor, ative o JavaScript nas configurações do seu navegador para utilizar as ferramentas clínicas do Dr. Jadson Fraga.</p>
+        <p style="margin-top:1rem;font-size:0.875rem;color:#57514a;">Dr. Jadson Fraga Araújo Júnior — Neuropediatria — CRM-PE 25227 — RQE 17756</p>
       </div>
-
-      <div class="quick-search" id="quickSearch">
-        <span>⌕</span>
-        <span class="qs-text">Buscar tudo…</span>
-        <kbd>⌘K</kbd>
-      </div>
-
-      <nav class="nav" id="nav" aria-label="Módulos"></nav>
-
-      <div class="sidebar-footer">
-        <div class="sidebar-chips">
-          <button class="chip" id="themeToggle" type="button" aria-label="Alternar tema">
-            <span class="chip-dot"></span><span id="themeLabel">Tema</span>
-          </button>
-          <button class="chip" id="installBtn" type="button" hidden>
-            <span>⤓</span><span>Instalar</span>
-          </button>
-          <button class="chip" id="proLockBtn" type="button">
-            <span id="proLockIcon">🔒</span><span id="proLockLabel">Profissional</span>
-          </button>
-        </div>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <button class="icon-btn back-btn" id="backBtn" aria-label="Voltar" hidden>‹</button>
-        <div class="topbar-title">
-          <h2 id="pageTitle">Início</h2>
-          <p id="pageSubtitle">Conteúdo educacional aberto</p>
-        </div>
-        <div class="topbar-actions">
-          <button class="icon-btn" id="searchBtn" aria-label="Buscar">⌕</button>
-          <button class="icon-btn" id="syncBtn" aria-label="Sincronizar">↻</button>
-          <button class="icon-btn" id="proLockBtnTop" aria-label="Modo profissional"><span id="proLockIconTop">🔒</span></button>
-        </div>
-      </header>
-
-      <section class="view-stack" id="viewStack" aria-live="polite"></section>
-    </main>
-
-    <nav class="bottom-nav" id="bottomNav" aria-label="Navegação rápida"></nav>
-
-    <!-- Global Search modal -->
-    <div class="modal" id="searchModal" hidden>
-      <div class="modal-card modal-card-search">
-        <div class="search-bar">
-          <span>⌕</span>
-          <input id="searchInput" type="search" placeholder="Buscar escala, conteúdo, módulo…" autocomplete="off" />
-          <kbd>ESC</kbd>
-          <button class="icon-btn" id="closeSearch" aria-label="Fechar">✕</button>
-        </div>
-        <div class="search-results" id="searchResults"></div>
-        <div class="search-foot"><span>↵ abrir · ↑↓ navegar</span></div>
-      </div>
-    </div>
-
-    <!-- PIN modal -->
-    <div class="modal" id="pinModal" hidden>
-      <div class="modal-card modal-card-sm">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-          <div class="avatar" style="width:48px;height:48px;border-radius:14px;font-size:22px;">🔒</div>
-          <div>
-            <h3 style="margin:0; font-size:18px;">Conteúdo profissional</h3>
-            <p class="muted" style="margin:4px 0 0;">Este módulo contém dados clínicos sensíveis. Acesso restrito ao Dr. Jadson Fraga.</p>
-          </div>
-        </div>
-        <div class="field" style="margin: 8px 0 16px;">
-          <label>PIN MASTER</label>
-          <input class="input" id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••••" />
-          <div id="pinError" class="muted" style="color: var(--danger); display: none; margin-top: 6px;">PIN incorreto. Tente novamente.</div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-ghost" id="pinCancel">Cancelar</button>
-          <button class="btn btn-primary" id="pinOk">Desbloquear →</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom sheet -->
-    <div class="modal" id="sheetModal" hidden>
-      <div class="modal-card modal-sheet" id="sheetCard"></div>
-    </div>
-
-    <!-- Confirm dialog -->
-    <div class="modal" id="confirmModal" hidden>
-      <div class="modal-card modal-card-sm">
-        <h3 id="confirmTitle">Confirmar ação</h3>
-        <p id="confirmText" class="muted">Tem certeza?</p>
-        <div class="modal-actions">
-          <button class="btn btn-ghost" id="confirmCancel">Cancelar</button>
-          <button class="btn btn-primary" id="confirmOk">Confirmar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toast -->
-    <div class="toast" id="toast" hidden></div>
-  </div>
-
-  <script src="data.js"></script>
-  <script src="api.js"></script>
-  <script src="pdf.js"></script>
-  <script src="charts.js"></script>
-  <script src="app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
-    }
-  </script>
+    </noscript>
+    <div id="root"></div>
+    <script src="./master-access-policy.js"></script>
+    <script src="./caa-sidebar.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
+    <script src="./safe-public-layer.js" defer></script>
+    <script src="./consulta-bridge.js" defer></script>
+    <script src="./cloud-config.js" defer></script>
+    <script src="./np-cloud.js" defer></script>
+  <script src="./app-polish-mobile.js" defer></script>
 </body>
 </html>
