@@ -181,13 +181,13 @@
   function build(){
     if (document.querySelector('.np-mascot-layer')) return;
     var layer = document.createElement('div'); layer.className = 'np-mascot-layer'; layer.setAttribute('aria-hidden','true');
-    var set = [['🦊',.13],['🧸',.13],['🐻',.12],['🦄',.13],['🐥',.14],['🌈',.13],['🌟',.34],['✨',.4],['⭐',.34],['🧩',.13]];
-    var spots = [[6,15],[89,11],[3,45],[93,36],[11,70],[49,7],[73,58],[28,86]];
+    var set = [['🦊',.34],['🧸',.34],['🐻',.3],['🦄',.36],['🐥',.36],['🌈',.34],['🌟',.62],['✨',.68],['⭐',.6],['🧩',.32]];
+    var spots = [[6,14],[90,10],[3,40],[94,33],[10,66],[48,6],[74,54],[26,84],[60,26],[18,33],[84,73],[40,60]];
     for (var i=0;i<spots.length;i++){
       var g = set[Math.floor(Math.random()*set.length)];
       var m = document.createElement('div'); m.className = 'np-mascot'; m.textContent = g[0];
       m.style.left = spots[i][0]+'%'; m.style.top = spots[i][1]+'%';
-      m.style.fontSize = (18 + Math.random()*16) + 'px';
+      m.style.fontSize = (26 + Math.random()*24) + 'px';
       m.style.opacity = g[1];
       m.style.setProperty('--d', (7 + Math.random()*6) + 's');
       m.style.setProperty('--dl', (Math.random()*4) + 's');
