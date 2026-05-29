@@ -183,6 +183,16 @@ assertIncludes('app-shell.html', 'neuroped-master-biblioteca.html', 'app-shell r
 assertIncludes('manifest.json', './app-shell.html', 'manifest aponta o PWA para a casca dinâmica');
 assertIncludes('sw.js', './app-shell.html', 'sw precache inclui a casca');
 assertIncludes('app-polish-mobile.js', 'EMBEDDED', 'app-polish suprime chrome próprio quando embutido na casca');
+// Catálogo de escalas: ligação dos geradores + abertura interativa real
+assertFile('scales-diarios-uteis.js');
+assertIncludes('filtro-escalas.html', './scales-453-authorial.js', 'filtro liga os geradores (453+)');
+assertIncludes('filtro-escalas.html', './scales-diarios-uteis.js', 'filtro liga diários/testes/ferramentas');
+assertIncludes('mapa-escalas.html', './scales-global-max.js', 'mapa liga o global-max');
+assertIncludes('instrumento.html', './scales-diarios-uteis.js', 'instrumento liga o catálogo completo');
+assertFile('instrumento.html');
+assertIncludes('instrumento.html', 'nunca/ausente', 'instrumento tem respostas clicáveis (escala 0–4)');
+assertIncludes('instrumento.html', 'Faixa orientativa', 'instrumento gera resultado/faixa ao final');
+assertIncludes('filtro-escalas.html', '${r.page}', 'filtro tem botão Abrir para o instrumento');
 
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
