@@ -25,9 +25,12 @@
 
   var seen = {}, keep = [];
   all.forEach(function (s) {
-    if (!s.nature) s.nature = s.validated ? 'validado' : 'triagem autoral';
+    if (s.official_catalog) {                               // catálogo oficial: mantém todos, não aplicável
+      s.nature = 'oficial'; s.kind = 'fonte oficial'; s.applicable = false; keep.push(s); return;
+    }
+    if (!s.nature) s.nature = 'triagem autoral';
     if (!s.kind) s.kind = kindOf(s);
-    if (!isGen(s)) { keep.push(s); return; }               // curados, novos e validados: mantém todos
+    if (!isGen(s)) { keep.push(s); return; }               // curados e novos: mantém todos
     if (!KEEP_AUD[s.audience]) return;                      // remove respondentes excedentes
     var k = s.domain + '|' + band(s.age_min_months) + '|' + s.audience;
     if (seen[k]) return; seen[k] = 1;                       // 1 por (domínio × faixa × respondente)
@@ -36,21 +39,21 @@
 
   window.NEUROPED_EDITORIAL_SCALES = keep;
 
-  var doms = {}, validados = 0, curados = 0, variacoes = 0, byKind = {};
+  var doms = {}, oficiais = 0, curados = 0, variacoes = 0, byKind = {};
   keep.forEach(function (s) {
-    doms[s.domain] = 1;
     byKind[s.kind] = (byKind[s.kind] || 0) + 1;
-    if (s.nature === 'validado') validados++;
-    else if (isGen(s)) variacoes++;
-    else curados++;
+    if (s.official_catalog) { oficiais++; return; }         // não conta no total aplicável
+    doms[s.domain] = 1;
+    if (isGen(s)) variacoes++; else curados++;
   });
   window.NEUROPED_CATALOG_STATS = {
-    total: keep.length,
-    validados: validados,
-    curados: curados,          // instrumentos individualmente redigidos (distintos)
-    variacoes: variacoes,      // coberturas por faixa/respondente dos núcleos gerados
+    total: curados + variacoes,   // instrumentos AUTORAIS aplicáveis (sem o catálogo oficial)
+    aplicaveis: curados + variacoes,
+    curados: curados,             // individualmente redigidos (distintos)
+    variacoes: variacoes,         // coberturas por faixa/respondente
+    oficiais: oficiais,           // fontes oficiais catalogadas (não aplicáveis no app público)
     dominios: Object.keys(doms).length,
-    distintos: validados + curados,
+    distintos: curados,
     porTipo: byKind
   };
 })();

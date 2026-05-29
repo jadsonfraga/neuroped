@@ -32,8 +32,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
 /* palco / conteúdo */
 .sh-stage{position:relative;flex:1 1 auto;overflow:hidden;background:var(--bg)}
 #sh-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);
-  opacity:1;transition:opacity .26s ease}
-#sh.loading #sh-frame{opacity:.25}
+  opacity:1;transform:none;transition:opacity .28s ease,transform .28s cubic-bezier(.22,.8,.2,1)}
+#sh.loading #sh-frame{opacity:.2;transform:translateY(10px) scale(.992)}
+/* splash de entrada da casca */
+#sh-splash{position:fixed;inset:0;z-index:60;display:grid;place-items:center;align-content:center;gap:16px;
+  background:radial-gradient(700px 380px at 50% 32%,hsl(243 85% 56% / .28),transparent 60%),linear-gradient(160deg,#0a0a16,#15143a 60%,#0a0a16);
+  transition:opacity .55s ease,visibility .55s}
+#sh-splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+#sh-splash .seal{width:86px;height:86px;border-radius:22px;border:2px solid rgba(231,201,139,.85);display:grid;place-items:center;
+  font:700 36px Georgia,serif;color:#f2dca6;box-shadow:0 0 0 1px rgba(231,201,139,.25),0 18px 50px -12px rgba(0,0,0,.6);animation:shpop .7s cubic-bezier(.16,1,.3,1) both}
+#sh-splash .wm{font:700 24px Georgia,serif;color:#fbf6ea;animation:shrise .8s .12s both}
+#sh-splash .sub{font:600 11px system-ui;letter-spacing:.22em;text-transform:uppercase;color:#cdbf9a;margin-top:-8px;animation:shrise .8s .2s both}
+#sh-splash .bar{width:120px;height:4px;border-radius:9px;background:rgba(169,164,255,.18);overflow:hidden;margin-top:4px}
+#sh-splash .bar i{display:block;height:100%;width:42%;border-radius:9px;background:linear-gradient(90deg,transparent,#a9a4ff,transparent);animation:shbar 1.1s ease-in-out infinite}
+@keyframes shpop{from{opacity:0;transform:scale(.7) rotate(-6deg)}to{opacity:1;transform:none}}
+@keyframes shrise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes shbar{0%{transform:translateX(-120%)}100%{transform:translateX(360%)}}
+@media(prefers-reduced-motion:reduce){#sh-splash .seal,#sh-splash .wm,#sh-splash .sub,#sh-splash .bar i{animation:none}}
 .sh-load{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
   background:radial-gradient(700px 380px at 50% 30%,rgba(109,106,245,.18),transparent 60%),var(--bg);z-index:2}
 #sh.loading .sh-load{display:flex}
@@ -58,6 +73,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
 </style>
 </head>
 <body>
+<div id="sh-splash"><div class="seal">NP</div><div class="wm">NeuroPed EDJ</div><div class="sub">Neuropediatria de precisão</div><div class="bar"><i></i></div></div>
 <div id="sh">
   <header class="sh-top">
     <span class="seal">NP</span>
@@ -142,8 +158,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
   }
 
   // sincroniza a aba quando o usuário navega DENTRO do quadro (mesma origem)
+  function hideSplash(){ var sp=document.getElementById('sh-splash'); if(sp) sp.classList.add('hide'); }
   frame.addEventListener('load', function(){
-    hideLoader();
+    hideLoader(); hideSplash();
     try {
       var file = frame.contentWindow.location.pathname.split('/').pop().toLowerCase();
       var k = FILE2KEY[file];
@@ -160,6 +177,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
 
   var initial = location.hash.slice(1);
   go(ROUTES[initial] ? initial : 'inicio', false);
+  setTimeout(hideSplash, 2600); // segurança: nunca trava no splash
 
   // registra o service worker (mesma origem)
   if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('./sw.js'); } catch(e){} }
