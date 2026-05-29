@@ -350,3 +350,47 @@ a.bg-primary,
     0 0 0 1px hsl(0 0% 100% / .12) inset,
     0 8px 26px -8px hsl(243 90% 58% / .6) !important;
 }
+
+/* ============================================================
+   12. REFINO EDITORIAL — sofisticação, hairlines, tipografia
+   Eleva de "premium chamativo" para "editorial profissional".
+   ============================================================ */
+
+/* 12a. Tipografia mais editorial */
+body{ letter-spacing: .003em; }
+h1, h2, h3, h4,
+.text-2xl, .text-3xl, .text-4xl, .text-5xl, .text-6xl{ letter-spacing: -.026em; }
+p, li, .text-sm, .text-base{ line-height: 1.62; }
+/* eyebrows / labels em caixa alta com tracking editorial */
+.uppercase,
+[class*="uppercase"]{ letter-spacing: .14em !important; font-weight: 700; }
+
+/* 12b. Elevação refinada (menos neon, mais sofisticada) */
+:root{
+  --np-shadow-brand: 0 6px 22px -10px hsl(243 55% 42% / .28);
+  --np-shadow-lg: 0 20px 50px -20px rgba(18,16,52,.5), 0 6px 16px -10px rgba(18,16,52,.32);
+}
+.card-premium{
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / .06) inset,
+    0 16px 44px -22px rgba(16,14,55,.7) !important;
+}
+@media (hover: hover) and (pointer: fine){
+  .card-premium:hover{
+    box-shadow:
+      0 0 0 1px hsl(0 0% 100% / .10) inset,
+      0 26px 60px -22px rgba(16,14,55,.8) !important;
+  }
+}
+button.bg-primary, a.bg-primary, [role="button"].bg-primary{
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / .14) inset,
+    0 8px 22px -10px hsl(243 70% 50% / .45) !important;
+}
+
+/* 12c. Hairlines refinadas (linhas de 1px discretas e elegantes) */
+hr{ border:0; height:1px; background: hsl(243 20% 55% / .18); }
+.dark hr{ background: hsl(243 25% 70% / .12); }
+
+/* 12d. Imagens e cantos com acabamento mais fino */
+.card-premium{ border-radius: 1.15rem !important; }
