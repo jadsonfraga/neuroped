@@ -1,0 +1,54 @@
+/* NeuroPed Master — Vitrine pública (editorial premium, warm + índigo).
+   Sem dados sensíveis, sem PDF. */
+:root{
+  --cream:#faf8f4; --paper:#fffdf9; --ink:#2d2926; --muted:#6f6963;
+  --line:#eadcc7; --indigo:#4f46e5; --indigo-2:#6d6af5; --gold:#b8963e; --wine:#8b2e3b;
+  --shadow:0 18px 54px rgba(45,41,38,.10);
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:radial-gradient(circle at 10% -8%,rgba(79,70,229,.10),transparent 34%),
+             radial-gradient(circle at 96% 0%,rgba(184,150,62,.12),transparent 32%),
+             linear-gradient(135deg,#faf8f4,#fffaf1 60%,#f5ead6);min-height:100vh}
+.wrap{max-width:1020px;margin:auto;padding:22px 18px 60px}
+.hero,.card,.panel{background:linear-gradient(180deg,rgba(255,253,249,.98),rgba(255,250,241,.96));
+  border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow)}
+.hero{padding:26px 24px;overflow:hidden;position:relative}
+.eyebrow{display:inline-block;text-transform:uppercase;letter-spacing:.16em;font-weight:800;font-size:11px;
+  color:var(--indigo);background:rgba(79,70,229,.08);border:1px solid rgba(79,70,229,.18);
+  padding:6px 11px;border-radius:999px}
+h1{font-family:Georgia,"Times New Roman",serif;color:var(--wine);font-size:clamp(40px,8vw,68px);line-height:.96;margin:14px 0 6px;letter-spacing:-.01em}
+.sub{font:italic 20px/1.3 Georgia,serif;color:var(--gold);margin:0 0 12px}
+p{color:var(--muted);line-height:1.62}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0}
+.stat{background:#f4f1ff;border:1px solid rgba(79,70,229,.14);border-radius:16px;padding:14px}
+.stat b{display:block;font:700 34px/1 Georgia,serif;color:var(--indigo)}
+.stat span{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#fff;background:var(--indigo);
+  padding:12px 16px;border-radius:14px;font-weight:800;box-shadow:0 12px 28px -8px rgba(79,70,229,.5);border:0;cursor:pointer}
+.btn.gold{background:var(--gold);box-shadow:0 12px 28px -8px rgba(184,150,62,.45)}
+.btn.ghost{background:#fff;color:var(--indigo);border:1px solid var(--line);box-shadow:none}
+.notice{margin-top:16px;padding:13px 15px;border-left:4px solid var(--gold);background:#fff8e9;border-radius:12px;color:#5d4a2d;font-size:14px;line-height:1.55}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 14px}
+.tab{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:9px 15px;font-weight:800;font-size:13px;cursor:pointer}
+.tab.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.section{display:none}
+.section.on{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{padding:16px}
+.code{display:inline-block;font:800 12px ui-monospace,monospace;color:var(--indigo);background:rgba(79,70,229,.08);border-radius:8px;padding:3px 8px}
+.card h3{font-family:Georgia,serif;color:var(--wine);margin:10px 0 4px;font-size:19px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{font-size:11px;font-weight:800;color:var(--muted);background:#f3efe6;border:1px solid var(--line);border-radius:999px;padding:4px 9px}
+.block{display:flex;gap:14px;align-items:flex-start;padding:14px;border-bottom:1px solid var(--line)}
+.block:last-child{border-bottom:0}
+.block .num{font:800 13px ui-monospace,monospace;color:#fff;background:var(--indigo);border-radius:10px;padding:8px 10px;white-space:nowrap}
+.block h3{font-family:Georgia,serif;color:var(--ink);margin:0 0 4px;font-size:17px}
+.flow{counter-reset:s;display:grid;gap:10px}
+.flow .step{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px}
+.flow .step::before{counter-increment:s;content:counter(s);flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(180deg,var(--indigo),var(--indigo-2))}
+.flow .step h3{font-family:Georgia,serif;margin:0 0 2px;font-size:16px;color:var(--ink)}
+.footer{text-align:center;font-size:12px;color:var(--muted);margin:30px 0 0;line-height:1.7}
+@media(max-width:560px){.actions .btn{width:100%;justify-content:center}}
