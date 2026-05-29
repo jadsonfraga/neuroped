@@ -716,6 +716,45 @@ kbd {
   animation: fadeIn var(--dur) var(--ease);
 }
 .modal[hidden], [hidden] { display: none !important; }
+
+/* ====== DEMO BANNER ====== */
+.demo-banner {
+  position: sticky; top: 0; z-index: 80;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: #f59e0b; color: #0f1223;
+  font-size: 12px; font-weight: 500;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+.demo-banner strong { font-weight: 700; letter-spacing: 0.02em; }
+.demo-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #0f1223;
+  flex: 0 0 auto;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.demo-close {
+  margin-left: auto;
+  background: rgba(0,0,0,0.10); color: inherit;
+  border: none; border-radius: 6px;
+  width: 24px; height: 24px;
+  cursor: pointer; font-weight: 700;
+}
+.demo-close:hover { background: rgba(0,0,0,0.18); }
+
+/* ====== STATUS BADGES por instrumento ====== */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.status-badge.live      { background: rgba(16,185,129,0.14); color: var(--success); }
+.status-badge.preview   { background: rgba(245,158,11,0.14); color: var(--warn); }
+.status-badge.gated     { background: rgba(239,68,68,0.14); color: var(--danger); }
+.status-badge.catalog   { background: rgba(99,102,241,0.14); color: var(--accent); }
+.status-badge.licensed  { background: rgba(15,18,35,0.06); color: var(--text-mute); }
 .modal-card {
   width: 100%; max-width: 640px;
   background: var(--surface);

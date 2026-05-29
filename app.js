@@ -151,15 +151,12 @@
     'calculadoras': { title: 'Calculadoras',            sub: 'Doses, IMC, percentis',             render: viewCalculadoras, locked: false },
     'contato':      { title: 'Agendar consulta',        sub: 'Contato direto',                    render: viewContato,      locked: false },
     // Locked
-    'pacientes':    { title: 'Pacientes',               sub: 'CRM e prontuário',                  render: viewPacientes,    locked: true },
-    'paciente':     { title: 'Paciente',                sub: 'Prontuário individual',             render: viewPaciente,     locked: true, hidden: true },
-    'consultas':    { title: 'Consultas',               sub: 'Atendimentos',                      render: viewConsultas,    locked: true },
-    'laudos':       { title: 'Laudos',                  sub: 'Geração PDF',                       render: viewLaudos,       locked: true },
-    'agenda':       { title: 'Agenda clínica',          sub: 'Calendário e lembretes',            render: viewAgenda,       locked: true },
-    'financeiro':   { title: 'Financeiro',              sub: 'Receita e cobrança',                render: viewFinanceiro,   locked: true },
-    'mensagens':    { title: 'Mensagens',               sub: 'Equipe e família',                  render: viewMensagens,    locked: true },
-    'escalas-pro':  { title: 'Escalas clínicas',        sub: 'Instrumentos profissionais',        render: viewEscalasPro,   locked: true },
-    'escala-pro':   { title: 'Aplicar escala clínica',  sub: 'Profissional',                      render: viewEscala,       locked: true, hidden: true },
+    'pacientes':    { title: 'Pacientes · DEMO',        sub: 'CRM em demo isolada',               render: viewPacientes,    locked: true },
+    'paciente':     { title: 'Paciente · DEMO',         sub: 'Prontuário demo',                   render: viewPaciente,     locked: true, hidden: true },
+    'consultas':    { title: 'Consultas · DEMO',        sub: 'Sem persistência segura',           render: viewConsultas,    locked: true },
+    'laudos':       { title: 'Laudos · DEMO',           sub: 'PDF sem assinatura digital',        render: viewLaudos,       locked: true },
+    'agenda':       { title: 'Agenda · DEMO',           sub: 'Calendário visual',                 render: viewAgenda,       locked: true },
+    'escalas-pro':  { title: 'Instrumentos clínicos',   sub: 'Catálogo · não aplicável',          render: viewEscalasPro,   locked: true },
     'config':       { title: 'Configurações',           sub: 'Conta, nuvem, LGPD',                render: viewConfig,       locked: true }
   };
 
@@ -231,17 +228,27 @@
 
   function viewInicio(root) {
     const d = NEUROPED.doutor;
+    const t = NEUROPED.totals;
     root.appendChild(
       h('section', { class: 'card-hero' },
         h('h2', {}, 'Bem-vindo ao NeuroPed EDJ'),
         h('p', {}, d.nome + ' · ' + d.titulo + ' · ' + d.crm + ' · ' + d.rqe + '. Conteúdo educacional aberto para famílias, escolas e equipes terapêuticas em ' + d.cidades.join(' e ') + '.'),
         h('div', { class: 'row' },
           h('a', { class: 'btn solid', href: '#/contato' }, '📞 Agendar consulta'),
-          h('a', { class: 'btn', href: '#/escalas' }, '≡ Escalas familiares'),
+          h('a', { class: 'btn', href: '#/escalas' }, '≡ Instrumentos abertos'),
           h('a', { class: 'btn', href: '#/materiais' }, '📘 Materiais')
         )
       )
     );
+
+    // Painel de TRANSPARÊNCIA — números honestos
+    root.appendChild(h('div', { class: 'section-title' }, h('h3', {}, 'Transparência sobre esta versão')));
+    root.appendChild(h('div', { class: 'grid cols-4' },
+      kpi('Aplicáveis', t.instrumentosAplicaveis, 'instrumentos autorais abertos', '✓'),
+      kpi('Catalogados', t.instrumentosCatalogados, 'referência · sem aplicar', '📋'),
+      kpi('Bloqueados', t.instrumentosBloqueadosPorLicenca, 'requerem licença formal', '🔒'),
+      kpi('Módulos live', t.modulosLive + ' de ' + (t.modulosLive + t.modulosPreview), 'demais em preview/demo', '⚙')
+    ));
 
     root.appendChild(h('div', { class: 'section-title' }, h('h3', {}, 'Áreas de atuação')));
     const areas = h('div', { class: 'module-grid' });
@@ -382,30 +389,43 @@
   }
 
   function viewEscalasPro(root) {
-    root.appendChild(h('div', { class: 'card', style: 'margin-bottom:16px;' },
-      h('div', { class: 'row' },
-        h('div', {},
-          h('div', { style: 'font-weight:700; font-size:18px;' }, NEUROPED.proScales.length + ' instrumentos clínicos'),
-          h('div', { class: 'tile-sub' }, 'Escalas profissionais — uso restrito ao Dr. Jadson Fraga.')
-        ),
-        h('div', { class: 'spacer' }),
-        h('span', { class: 'pill brand' }, 'Profissional')
+    root.appendChild(h('div', { class: 'card', style: 'margin-bottom:16px; background: var(--brand-soft); border-color: var(--brand);' },
+      h('div', { style: 'font-weight:700; color: var(--brand); margin-bottom:6px;' }, '⚠️ Catálogo apenas — instrumentos não aplicáveis nesta build'),
+      h('p', { class: 'tile-sub', style: 'margin: 4px 0 0;' },
+        'Os instrumentos profissionais clássicos (M-CHAT-R, SNAP-IV, SRS-2, CBCL, GMFCS, ASQ-3, Vineland-3, Conners-3) exigem licença formal dos autores/editoras, tradução validada e treinamento. Esta versão lista apenas como referência catalogada, sem botão de aplicar. Nenhuma resposta clínica é capturada por instrumento normatizado sem autorização legal.'
       )
     ));
 
     const list = h('div', { class: 'list' });
-    NEUROPED.proScales.forEach(s => {
-      list.appendChild(h('a', { class: 'list-item', href: '#/escala-pro/' + s.id },
-        h('div', { class: 'li-emoji' }, s.emoji),
+    NEUROPED.proScalesCatalog.forEach(s => {
+      const isLicensed = /licença comercial/i.test(s.license_status);
+      list.appendChild(h('div', { class: 'list-item', style: 'cursor: default; opacity: 0.92;' },
+        h('div', { class: 'li-emoji' }, isLicensed ? '🔒' : '📋'),
         h('div', { class: 'li-body' },
-          h('div', { class: 'li-title' }, s.title),
-          h('div', { class: 'li-sub' }, s.age + ' · ' + s.domain),
-          h('div', { class: 'li-meta' }, h('span', { class: 'pill accent' }, 'Clínica'), h('span', { class: 'pill' }, s.questions.length + ' itens'))
-        ),
-        h('div', { class: 'li-arrow' }, '›')
+          h('div', { class: 'li-title' }, s.sigla + ' — ' + s.title),
+          h('div', { class: 'li-sub' }, s.age + ' · ' + s.domain + ' · respondente: ' + s.respondent + ' · ' + s.n_items + ' itens'),
+          h('div', { class: 'li-meta' },
+            h('span', { class: 'status-badge ' + (isLicensed ? 'licensed' : 'catalog') }, isLicensed ? 'Licença obrigatória' : 'Catalogado'),
+            h('span', { class: 'pill' }, s.language),
+            h('span', { class: 'pill' }, s.validation_status),
+            h('span', { class: 'pill', style: 'font-size:10px;' }, s.source)
+          )
+        )
       ));
     });
     root.appendChild(list);
+
+    root.appendChild(h('div', { class: 'card', style: 'margin-top: 16px;' },
+      h('div', { style: 'font-weight:600; margin-bottom:6px;' }, '📖 Como liberar instrumentos clínicos clássicos'),
+      h('ol', { style: 'margin:0; padding-left:18px; font-size:13px; color:var(--text-soft); line-height:1.8;' },
+        h('li', {}, 'Obter licença formal do autor/editora (WPS, Pearson, MHS, Brookes, ASEBA, conforme caso)'),
+        h('li', {}, 'Validar a tradução pt-BR e equivalência cultural'),
+        h('li', {}, 'Realizar treinamento específico quando aplicável (ex.: GMFCS, Vineland)'),
+        h('li', {}, 'Documentar contratos e armazenar comprovantes em INSTRUMENT_REGISTRY.md'),
+        h('li', {}, 'Implementar o instrumento com itens reais, scoring documentado e tabela de interpretação'),
+        h('li', {}, 'Submeter a revisão clínica antes de marcar como aplicável')
+      )
+    ));
   }
 
   function viewEscala(root, params) {
@@ -777,8 +797,8 @@
   }
   function viewLaudos(root) {
     root.appendChild(h('div', { class: 'card-hero' },
-      h('h2', {}, 'Laudos clínicos'),
-      h('p', {}, 'Geração de laudos PDF profissionais com assinatura digital.')
+      h('h2', {}, 'Modelos de laudo · DEMO'),
+      h('p', {}, 'Geração de PDF a partir de modelos. Esta build NÃO emite documento com assinatura digital ICP-Brasil. Cada PDF gerado leva carimbo visível de DEMONSTRAÇÃO. Para uso clínico real, integrar provedora de assinatura qualificada (Vault ID, Bry, ITI) antes de tratar o documento como laudo formal.')
     ));
     const tpl = [
       { e: '🧩', t: 'Triagem TEA' }, { e: '🎯', t: 'Avaliação TDAH' },
@@ -896,11 +916,21 @@
     setTimeout(() => {
       $('#splash').style.display = 'none';
       $('#app').hidden = false;
+      // Demo banner — sempre visível até gates de segurança serem cumpridos
+      if (sessionStorage.getItem('neuroped:demo:dismissed') !== '1') {
+        $('#demoBanner').hidden = false;
+      }
       try { const saved = JSON.parse(localStorage.getItem('neuroped:cfg') || 'null'); if (saved) Object.assign(window.NEUROPED_CONFIG, saved); } catch {}
       updateProLockUI();
       if (!location.hash) location.hash = '#/inicio';
       navigate();
     }, 1400);
+
+    const demoClose = $('#demoBannerClose');
+    if (demoClose) demoClose.addEventListener('click', () => {
+      $('#demoBanner').hidden = true;
+      sessionStorage.setItem('neuroped:demo:dismissed', '1');
+    });
 
     window.addEventListener('hashchange', navigate);
     document.addEventListener('click', e => { if (e.target.closest('#quickSearch')) openSearch(); });

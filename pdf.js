@@ -119,10 +119,19 @@ const PDF = {
   }
   .verif {
     display: inline-flex; align-items: center; gap: 6px;
-    background: #ecfdf5; color: #047857;
+    background: #fff7ed; color: #92400e;
     padding: 4px 10px; border-radius: 999px;
     font-size: 9pt; font-weight: 600;
     margin-top: 4px;
+  }
+  .demo-stamp {
+    position: fixed; top: 40%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-18deg);
+    font-size: 84pt; font-weight: 900;
+    color: rgba(245, 158, 11, 0.18);
+    letter-spacing: 14px;
+    pointer-events: none;
+    z-index: 0;
   }
   @media print {
     body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
@@ -177,15 +186,17 @@ const PDF = {
     <strong>Aviso clínico:</strong> Instrumentos autorais utilizados são recursos operacionais de triagem, organização e acompanhamento clínico. Não substituem avaliação médica completa, exame clínico ou instrumentos normatizados quando formalmente indicados.
   </div>
 
+  <div class="demo-stamp">DEMONSTRAÇÃO</div>
+
   <div class="signature">
     <div class="signature-line"></div>
-    <strong>Dr. Jadson Fraga</strong><br/>
-    <small>Neuropediatra · CRM-XX 00000</small><br/>
-    <span class="verif">✓ Documento assinado digitalmente · ${e(L.hash || ('SHA-' + Date.now().toString(16).slice(-8).toUpperCase()))}</span>
+    <strong>Dr. Jadson Fraga Araújo Júnior</strong><br/>
+    <small>Neuropediatra · CRM-PE 25227 · RQE 17756</small><br/>
+    <span class="verif">⚠ Documento sem assinatura digital qualificada — identificador interno: ${e(L.hash || ('SHA-' + Date.now().toString(16).slice(-8).toUpperCase()))}</span>
   </div>
 
   <footer>
-    NeuroPed EDJ v4.0 · Gerado em ${now} · Verificável em /verificar-documento
+    NeuroPed EDJ v5.1 (truth-pass) · Gerado em ${now} · Esta build NÃO emite documentos com assinatura digital ICP-Brasil. Para uso clínico real, integre provedora de assinatura qualificada antes de utilizar este modelo como laudo formal.
   </footer>
 
 </body>

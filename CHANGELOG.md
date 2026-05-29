@@ -1,77 +1,120 @@
-# Changelog
+# Changelog — NeuroPed EDJ
 
-Todas as alterações relevantes deste projeto serão documentadas aqui.
+## v5.1 — 2026-05-28 — Truth-Pass
 
-O formato segue [Keep a Changelog 1.1.0](https://keepachangelog.com/pt-BR/1.1.0/).
-Este projeto adere a [Semantic Versioning](https://semver.org/lang/pt-BR/).
-
-## [9.9.0] - 2026-05-07
+### Removido (correção da verdade pública)
+- 487 instrumentos sintéticos com perguntas-placeholder
+- Botões e textos de cobrança ("Pro R$197/mês", "Clínica R$497/mês")
+- Módulo "Financeiro" (KPIs falsos, cobrança fake)
+- Módulo "Mensagens" (sem persistência segura, risco LGPD)
+- Módulo "Planos" (assinaturas fake)
+- Menções a "Telemedicina integrada" em todos os textos
+- Claim "Laudos PDF com assinatura digital" (substituído por aviso correto)
+- Claim "Tudo sincronizado com nuvem segura"
+- Auth multi-perfil simulado (não havia segurança real)
 
 ### Adicionado
-- Identidade visual WarmMinimalism PANT (paleta creme/teal/ouro/bordô/plum/dark)
-- Schema.org JSON-LD MedicalBusiness + Physician completo no `<head>`
-- Open Graph e Twitter Cards completos
-- Canonical URL e meta robots
-- Bloco `<noscript>` institucional
-- Política de Segurança (`SECURITY.md`) com canal privado de divulgação responsável
-- Guia de Contribuição (`CONTRIBUTING.md`) com critérios clínicos e técnicos
-- Licença proprietária explícita (`LICENSE`) com escopo, restrições e foro
-- Página estática de Política de Privacidade (`privacidade.html`) com base legal LGPD
-- Página estática de Declaração de Acessibilidade (`acessibilidade.html`)
-- Arquivos `_headers` e `_redirects` para futura migração a Cloudflare Pages
-- CSP via meta tag (camada complementar; CSP via header HTTP requer migração)
-- Web Vitals telemetria preparada para integração
+- Banner persistente "AMBIENTE DEMONSTRATIVO" no topo
+- Painel de transparência no Início (números honestos)
+- Status badges por instrumento (`live`, `preview`, `gated`, `catalog`, `licensed`)
+- Carimbo "DEMONSTRAÇÃO" em PDFs gerados
+- Marcação `[DEMO]` em todos os pacientes fictícios
+- Registry estruturado de instrumentos com 15 campos obrigatórios
+- Catálogo de 8 instrumentos clássicos como REFERÊNCIA (sem botão aplicar)
+- Aviso de "licença comercial obrigatória" para SRS-2, CBCL, ASQ-3, Vineland-3, Conners-3
 
-### Alterado
-- `theme-color` migrado de `#7c3aed` (purple Perplexity) para `#1a6b65` (PANT teal)
-- Variantes de `theme-color` para `prefers-color-scheme` light/dark
-- Ícone SVG inline migrado de purple para teal/cream PANT
-- Manifest enriquecido: descrição institucional, categorias `medical/health/education`, shortcuts ampliados
-- README institucional com responsável clínico, CRM, RQE, endereço e badges
-- `<title>` e `<meta description>` reformulados para tom institucional clínico (eliminada descrição "estudantes de medicina")
+### Documentação criada
+- `AUDIT_REMEDIATION_REPORT.md`
+- `INSTRUMENT_REGISTRY.md`
+- `ARCHITECTURE.md`
+- `SECURITY.md`
+- `PRIVACY_AND_LGPD.md`
+- `KNOWN_LIMITATIONS.md`
+- `GO_LIVE_CHECKLIST.md`
+- `CHANGELOG.md` (este arquivo)
+
+### Corrigido
+- Bug do modal "Confirmar ação" aparecendo na tela inicial (`.modal[hidden]` agora respeitado pelo CSS)
+
+### Preservado
+- Design system completo (tokens, dark/light, glassmorphism, animações)
+- 15 instrumentos autorais do Dr. Jadson Fraga
+- 8 materiais educativos
+- 9 marcos do desenvolvimento
+- 2 calculadoras (IMC, dose pediátrica)
+- CAA com 72 pictogramas + voz pt-BR
+- Página institucional do Dr. Jadson
+- Página de contato com WhatsApp direto
+- Service Worker para conteúdo público offline
+- PIN MASTER `FRAGA1108` (documentado como NÃO sendo mecanismo de segurança)
+
+### Nota honesta sobre o status
+Esta versão tem propositalmente menor "perfeição comercial aparente" que a v5.0. Isso é correto: a v5.0 enganava. A v5.1 é honesta.
+
+---
+
+## v5.0 — 2026-05-28 — Modo único + PIN
+
+### Adicionado
+- Modo único de acesso (removidas telas multi-perfil)
+- PIN MASTER para módulos clínicos
+- 12 módulos públicos vs clínicos
+- Página "Sobre o Dr. Jadson"
+- Página "Materiais educativos"
+- Página "Marcos do desenvolvimento"
+- Página "Calculadoras"
+- Página "Agendar consulta" com WhatsApp
 
 ### Removido
-- Comentário ASCII art "Created with Perplexity Computer" (`<!-- ... -->`)
-- `<meta name="generator" content="Perplexity Computer">`
-- `<meta name="author" content="Perplexity Computer">`
-- `<meta property="og:see_also" content="https://www.perplexity.ai/computer">`
-- `<link rel="author" href="https://www.perplexity.ai/computer">`
-- `<script data-pplx-inline-edit>` (script de inline-edit do Perplexity Computer)
-- Rastros remanescentes de identidade Perplexity em metatags
+- Onboarding em 3 telas
+- Tela de login multi-perfil
+- Multi-profile (médico/secretária/família)
 
-### Segurança
-- `Content-Security-Policy` via meta tag (frame-ancestors none, default-src self)
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy` restritiva (bloqueando câmera, microfone, geolocalização, pagamento, USB, FLoC)
-- Service Worker registrado com path relativo (corrigindo regressão em deploys com base path)
-
-### Conhecidas limitações que requerem rebuild do bundle
-- Migração para history routing (atualmente hash routing `#/`) — bloqueado: assume `vite.config.js`
-- Substituição de fontes Google Fonts por `@fontsource` local — bloqueado: bundle compilado referencia fontes via CSS
-- Tokens CSS PANT em `src/styles/tokens.css` — bloqueado: bundle compilado, sem source acessível
-- Implementação de `secureStore` (AES-GCM 256 + PBKDF2 600k) — bloqueado: requer alteração de código React
-- Cobertura de testes Vitest ≥ 90% — bloqueado: sem source, sem suíte
-- ESLint, Husky, lint-staged — bloqueado: sem source, sem `package.json`
-- Lighthouse CI 99+ multi-rota multi-browser — bloqueado: requer reduções de bundle e CSP via header HTTP
-
-Estas estão documentadas no `BLOQUEIOS.md` para destrava em iteração futura, quando o código-fonte equivalente ao build atual for recuperado do Perplexity Computer.
-
-### Conformidade
-- LGPD — Lei 13.709/2018: política de privacidade com base legal art. 7º e art. 11
-- WCAG 2.2 AA — declaração de acessibilidade publicada
-- CFM — Resolução 2.314/2022 referenciada na licença
+### Limitações (corrigidas em v5.1)
+- Claims falsos ainda presentes
+- Placeholders de instrumentos ainda contados como aplicáveis
 
 ---
 
-## [8.0.0] - 2026-05-07 (anterior — substituída)
+## v4.0 — 2026-05-28 — Edição "Comercial"
 
-### Histórico
-- Deploy inicial do NeuroPed via GitHub Pages com URL pública
-- Workflow de deploy automático configurado
-- Trava de domínio do Perplexity neutralizada para permitir uso em qualquer host
+### Adicionado
+- Sistema de autenticação multi-perfil (simulado)
+- 12 módulos comerciais
+- Telas de planos (Starter, Pro, Clínica)
+- Cobrança simulada
+- Mensagens simuladas
+- Telemedicina visual
+
+### Auditado em v5.1
+Esta versão recebeu auditoria honesta concluindo que múltiplos módulos eram demonstrações sem implementação real.
 
 ---
 
-[9.9.0]: https://github.com/jadsonfraga/neuroped/releases/tag/v9.9.0
-[8.0.0]: https://github.com/jadsonfraga/neuroped/releases/tag/v8.0.0
+## v3.0 — 2026-05-28 — Migração para PWA modular
+
+### Adicionado
+- SPA com hash router
+- Service Worker
+- Manifest com shortcuts
+- Cliente Cloud opcional (Supabase + Cloudflare)
+
+---
+
+## v1.x–v2.x — Anterior a 2026-05
+
+Múltiplas iterações estáticas com HTML separado por escala.
+
+---
+
+## Princípios de mudança a partir de v5.1
+
+A cada mudança, perguntar:
+1. Esta funcionalidade existe de fato ou é apenas demonstração visual?
+2. Esta funcionalidade pode ser usada com dados reais com segurança?
+3. Esta documentação descreve a realidade, ou aspiração?
+4. Algum claim público fica desatualizado por esta mudança?
+
+Se a resposta a (1) ou (2) for "não", a funcionalidade DEVE estar marcada como demo/preview/gated.
+Se a resposta a (3) for "aspiração", DEVE ser corrigido para realidade.
+Se a resposta a (4) for "sim", DEVE ser corrigido no app antes do merge.
