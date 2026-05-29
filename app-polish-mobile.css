@@ -287,6 +287,34 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   }
 }
 
+/* ============================================================
+   Transições entre páginas (View Transitions API)
+   Faz a navegação entre páginas parecer um app único (sem flash de
+   recarregamento). Progressive enhancement: navegadores sem suporte
+   simplesmente ignoram. Desligado por prefers-reduced-motion.
+   ============================================================ */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: np-vt-out .26s cubic-bezier(.4,0,.2,1) both;
+  }
+  ::view-transition-new(root) {
+    animation: np-vt-in .34s cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes np-vt-out { to { opacity: 0; transform: translateY(-8px) scale(.992); } }
+  @keyframes np-vt-in { from { opacity: 0; transform: translateY(10px) scale(.994); } }
+}
+
+/* Barra de progresso de navegação (sensação de app, não de site) */
+.np-navbar {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  z-index: 100000;
+  background: linear-gradient(90deg, #6d6af5, #a9a4ff, #e7c98b);
+  box-shadow: 0 0 12px rgba(109,106,245,.6);
+  transition: width .25s ease, opacity .3s ease;
+  pointer-events: none;
+}
+
 /* prefers-reduced-motion: desliga animacoes */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -294,5 +322,5 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* Print: esconde nav e toast/sheet/splash */
 @media print {
-  .np-bottom-nav, .np-toast-stack, .np-sheet-backdrop, .np-splash { display: none !important; }
+  .np-bottom-nav, .np-toast-stack, .np-sheet-backdrop, .np-splash, .np-navbar { display: none !important; }
 }

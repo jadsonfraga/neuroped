@@ -165,9 +165,47 @@
      Boot
      ===================================================== */
   var EMBEDDED = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
+
+  /* Barra de progresso de navegação — dá sensação de app (não de site
+     estático) ao clicar em qualquer link interno. Funciona junto com a
+     View Transitions API do CSS. */
+  function navProgress(){
+    var bar = document.createElement('div');
+    bar.className = 'np-navbar';
+    document.body.appendChild(bar);
+    var timer = null;
+    function start(){
+      clearTimeout(timer);
+      bar.style.opacity = '1';
+      bar.style.width = '0';
+      // força reflow para reiniciar a animação
+      void bar.offsetWidth;
+      bar.style.width = '82%';
+      timer = setTimeout(function(){ bar.style.width = '92%'; }, 450);
+    }
+    function done(){
+      clearTimeout(timer);
+      bar.style.width = '100%';
+      setTimeout(function(){ bar.style.opacity = '0'; bar.style.width = '0'; }, 250);
+    }
+    document.addEventListener('click', function(e){
+      var a = e.target && e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (a.target === '_blank' || a.hasAttribute('download')) return;
+      if (/^(#|mailto:|tel:|javascript:)/i.test(href)) return;
+      if (a.origin && a.origin !== location.origin) return;     // externo
+      if (a.pathname === location.pathname && a.hash) return;    // âncora interna
+      start();
+    }, true);
+    window.addEventListener('pageshow', done);          // volta do bfcache
+    window.addEventListener('pagehide', function(){ bar.style.opacity = '0'; });
+    window.addEventListener('beforeunload', function(){ clearTimeout(timer); });
+  }
+
   function boot(){
     themeColor();
-    if (!EMBEDDED) { splash(); bottomNav(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

@@ -267,6 +267,15 @@ assertIncludes('filtro-escalas.html', 'scales-impacto-medicacao.js', 'filtro car
 assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');
 assertIncludes('filtro-escalas.html', 'Autorrelato', 'filtro distingue autorrelato');
 
+// ===== Cara de app: transições entre páginas + navegação fluida =====
+assertIncludes('app-polish-mobile.css', '@view-transition', 'transições entre páginas (View Transitions API)');
+assertIncludes('app-polish-mobile.css', '.np-navbar', 'barra de progresso de navegação definida');
+assertIncludes('app-polish-mobile.js', 'navProgress', 'progresso de navegação ativado (sensação de app)');
+// Portal da família sem pedir dado identificável (só info genérica/útil)
+assertNotIncludes('area-filho.html', 'Data de nascimento', 'Área do Filho não pede data de nascimento');
+assertNotIncludes('area-filho.html', 'Último sobrenome', 'Área do Filho não pede sobrenome');
+assertNotIncludes('portal-familia-livre.html', 'nascimento e sobrenome', 'portal não exige nascimento/sobrenome');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
   // versão única: cache do service worker e verificador alinhados ao package.json
