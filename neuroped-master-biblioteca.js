@@ -191,6 +191,7 @@
       if (b.drogas){
         body = b.drogas.map(function(d){
           return '<div class="drug"><h4><span class="bn">'+esc(d[0])+'</span><span class="brand">'+esc(d[1])+'</span></h4>'
+            + '<p style="margin:0 0 4px;font-size:11px;color:#caa56a;font-weight:700">Faixa de referência — orientativa, não é prescrição.</p>'
             + drugRow('Indicações', d[2]) + drugRow('Efeitos', d[3]) + drugRow('Faixa etária', d[4]) + drugRow('Posologia', d[5]) + '</div>';
         }).join('');
       } else { body = '<div class="agents">'+(b.agentes||[]).map(function(a){ return '<span>'+esc(a)+'</span>'; }).join('')+'</div>'; }
