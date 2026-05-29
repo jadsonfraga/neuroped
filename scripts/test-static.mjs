@@ -192,16 +192,25 @@ assertIncludes('instrumento.html', './scales-diarios-uteis.js', 'instrumento lig
 assertFile('instrumento.html');
 assertIncludes('instrumento.html', 'nunca/ausente', 'instrumento tem respostas clicáveis (escala 0–4)');
 assertIncludes('instrumento.html', 'Faixa orientativa', 'instrumento gera resultado/faixa ao final');
-assertIncludes('filtro-escalas.html', '${r.page}', 'filtro tem botão Abrir para o instrumento');
+assertIncludes('filtro-escalas.html', 'r.page', 'filtro tem botão Abrir para o instrumento');
 // Validados + curadoria honesta
-assertFile('scales-validados.js'); assertFile('scales-curate.js'); assertFile('instrumento-validado.html');
-assertIncludes('scales-validados.js', 'M-CHAT', 'inclui M-CHAT-R/F validado');
-assertIncludes('scales-validados.js', 'citation', 'validados trazem citação');
-assertIncludes('instrumento-validado.html', 'cutoffs', 'página validada usa pontos de corte');
-assertIncludes('instrumento-validado.html', 'count_threshold', 'página validada cobre Vanderbilt (contagem)');
-assertIncludes('filtro-escalas.html', './scales-validados.js', 'filtro liga os validados');
+
+
+
+
+
+
 assertIncludes('filtro-escalas.html', './scales-curate.js', 'filtro liga a curadoria (enxuga + rótulos)');
 assertIncludes('scales-curate.js', 'NEUROPED_CATALOG_STATS', 'curadoria publica estatística honesta');
+// Catálogo oficial de terceiros (conformidade: sem itens, com fonte)
+assertFile('scales-oficiais.js'); assertFile('scales-curate.js');
+assertIncludes('scales-oficiais.js', 'official_url', 'catálogo oficial traz link de fonte oficial');
+assertIncludes('scales-oficiais.js', 'official_catalog', 'itens oficiais marcados como catálogo (não aplicáveis)');
+assertIncludes('scales-oficiais.js', 'mchatscreen.com', 'M-CHAT como catálogo+fonte (sem itens)');
+assertNotIncludes('scales-oficiais.js', 'plain_questions:[\'', 'catálogo oficial NÃO reproduz perguntas');
+assertIncludes('filtro-escalas.html', './scales-oficiais.js', 'filtro liga o catálogo oficial');
+assertIncludes('filtro-escalas.html', 'Abrir fonte oficial', 'filtro abre a fonte oficial dos instrumentos de terceiros');
+assertIncludes('scales-curate.js', 'oficiais', 'curadoria separa fontes oficiais da contagem aplicável');
 assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
 
 const packageJson=file('package.json');

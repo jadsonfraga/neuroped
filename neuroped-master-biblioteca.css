@@ -53,8 +53,10 @@ body{
 .stat span{font-size:10px;color:#bcb9e6;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-top:3px;display:block}
 
 /* ---------- TABS ---------- */
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 16px;position:sticky;top:8px;z-index:20}
-.tab{border:1px solid var(--line);background:rgba(20,18,46,.78);backdrop-filter:blur(8px);
+.tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+  margin:22px 0 16px;position:sticky;top:8px;z-index:20;padding:2px 2px 6px;scrollbar-width:none;-ms-overflow-style:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap;border:1px solid var(--line);background:rgba(20,18,46,.78);backdrop-filter:blur(8px);
   color:var(--muted);border-radius:999px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer;
   transition:transform .22s cubic-bezier(.22,.8,.2,1),box-shadow .22s,background .22s,color .22s,border-color .22s}
 .tab:hover{transform:translateY(-1px);color:var(--indigo-l);border-color:rgba(169,164,255,.4)}
