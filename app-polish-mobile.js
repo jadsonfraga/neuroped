@@ -150,7 +150,7 @@
     if (!meta) {
       meta = document.createElement('meta');
       meta.name = 'theme-color';
-      meta.content = '#1a6b65';
+      meta.content = '#0e0e22';
       document.head.appendChild(meta);
     }
   }

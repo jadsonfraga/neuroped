@@ -34,7 +34,7 @@
 /* Touch target minimo - botoes e links de UI nao podem ser menores */
 .btn, button.btn, a.btn, .chip, .pill, .scale-card, .app-action {
   min-height: var(--np-tap);
-  -webkit-tap-highlight-color: rgba(26, 107, 101, 0.18);
+  -webkit-tap-highlight-color: rgba(109, 106, 245, 0.22);
   touch-action: manipulation;
 }
 
@@ -52,10 +52,10 @@
   position: fixed;
   left: 0; right: 0;
   bottom: 0;
-  background: rgba(250, 248, 244, 0.96);
+  background: rgba(14, 14, 34, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid #eadcc7;
+  border-top: 1px solid rgba(169,164,255,.16);
   padding: 6px calc(var(--np-safe-right) + 6px) calc(var(--np-safe-bottom) + 6px) calc(var(--np-safe-left) + 6px);
   z-index: 9990;
   display: none;
@@ -78,21 +78,21 @@
   padding: 6px 4px;
   text-decoration: none;
   border-radius: 14px;
-  color: #6f6963;
+  color: #b6b2e6;
   font: 800 10px system-ui, -apple-system, sans-serif;
   letter-spacing: 0.02em;
   min-height: var(--np-tap);
   transition: background 0.15s ease, color 0.15s ease;
 }
 .np-bottom-nav a[aria-current="page"] {
-  background: rgba(26, 107, 101, 0.12);
-  color: #1a6b65;
+  background: rgba(109, 106, 245, 0.16);
+  color: #a9a4ff;
 }
-.np-bottom-nav a:active { background: rgba(26, 107, 101, 0.2); }
+.np-bottom-nav a:active { background: rgba(109, 106, 245, 0.24); }
 .np-bottom-nav .ic { font-size: 20px; line-height: 1; }
 .np-bottom-nav .lbl { font-size: 10px; }
 .np-bottom-nav a:focus-visible {
-  outline: 2px solid #1a6b65;
+  outline: 2px solid #6d6af5;
   outline-offset: -2px;
 }
 
@@ -127,7 +127,7 @@
   transition: opacity .18s ease, transform .18s ease;
 }
 .np-toast.show { opacity: 1; transform: translateY(0); }
-.np-toast.ok    { background: #1a6b65; }
+.np-toast.ok    { background: #4f46e5; }
 .np-toast.warn  { background: #9a3412; }
 .np-toast.error { background: #7f1d1d; }
 
@@ -149,7 +149,7 @@
   .np-sheet-backdrop { align-items: center; }
 }
 .np-sheet {
-  background: #fffdf9;
+  background: #14132a;
   border-radius: 24px 24px 0 0;
   padding: 18px 18px calc(var(--np-safe-bottom) + 18px);
   width: 100%;
@@ -162,8 +162,8 @@
 @media (min-width: 761px) {
   .np-sheet { border-radius: 24px; padding-bottom: 18px; }
 }
-.np-sheet h3 { margin: 0 0 6px; color: #8b2e3b; font: 760 18px Georgia, serif; }
-.np-sheet p { margin: 0 0 14px; color: #6f6963; line-height: 1.5; font-size: 14px; }
+.np-sheet h3 { margin: 0 0 6px; color: #f2dca6; font: 760 18px Georgia, serif; }
+.np-sheet p { margin: 0 0 14px; color: #b6b2e6; line-height: 1.5; font-size: 14px; }
 .np-sheet .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .np-sheet button {
   flex: 1;
@@ -174,8 +174,8 @@
   cursor: pointer;
   min-height: var(--np-tap);
 }
-.np-sheet button.ok    { background: #1a6b65; color: #fff; }
-.np-sheet button.cancel { background: #fff; color: #8b2e3b; border: 1px solid #eadcc7; }
+.np-sheet button.ok    { background: linear-gradient(180deg,#6d6af5,#4f46e5); color: #fff; }
+.np-sheet button.cancel { background: rgba(124,118,210,.10); color: #a9a4ff; border: 1px solid rgba(169,164,255,.16); }
 .np-sheet button.danger { background: #7f1d1d; color: #fff; }
 
 /* ============================================================
@@ -183,7 +183,7 @@
    ============================================================ */
 .np-splash {
   position: fixed; inset: 0;
-  background: linear-gradient(135deg, #1a6b65, #124b47);
+  background: linear-gradient(135deg, #4f46e5, #3730a3);
   z-index: 99999;
   display: flex;
   flex-direction: column;
@@ -226,7 +226,7 @@
 /* Focus visivel uniforme para teclado */
 .btn:focus-visible, button:focus-visible, a:focus-visible,
 input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 2px solid #1a6b65;
+  outline: 2px solid #6d6af5;
   outline-offset: 2px;
   border-radius: 8px;
 }
