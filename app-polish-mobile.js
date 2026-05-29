@@ -82,17 +82,25 @@
      3) Bottom nav (so no mobile)
      ===================================================== */
   var NAV_ITEMS = [
-    { label: 'Inicio',   href: './index.html',                  ic: '🏠' },
-    { label: 'Consulta', href: './consulta.html',               ic: '🩺' },
-    { label: 'Escalas',  href: './filtro-escalas.html',         ic: '📋' },
-    { label: 'CAA',      href: './comunicacao-alternativa.html', ic: '💬' },
-    { label: 'Familia',  href: './portal-familia-livre.html',   ic: '🌿' }
+    { label: 'Início',   href: './index.html',                  svg: '<path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/>' },
+    { label: 'Consulta', href: './consulta.html',               svg: '<path d="M6 3v6a6 6 0 0 0 12 0V3"/><path d="M6 3H4M18 3h2"/><circle cx="18" cy="16" r="3"/><path d="M18 11v2"/>' },
+    { label: 'Escalas',  href: './filtro-escalas.html',         svg: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>' },
+    { label: 'CAA',      href: './comunicacao-alternativa.html', svg: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/>' },
+    { label: 'Família',  href: './portal-familia-livre.html',   svg: '<path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/>' }
   ];
+  function navStyle(){
+    if (document.getElementById('np-nav-ico-style')) return;
+    var s = document.createElement('style'); s.id = 'np-nav-ico-style';
+    s.textContent = '.np-bottom-nav .ic{display:inline-flex;align-items:center;justify-content:center}'
+      + '.np-bottom-nav .ic svg{width:23px;height:23px;display:block}';
+    document.head.appendChild(s);
+  }
   function bottomNav(){
     if (document.querySelector('.np-bottom-nav')) return;
+    navStyle();
     var nav = document.createElement('nav');
     nav.className = 'np-bottom-nav';
-    nav.setAttribute('aria-label', 'Navegacao principal');
+    nav.setAttribute('aria-label', 'Navegação principal');
     var here = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
     NAV_ITEMS.forEach(function(it){
       var hrefName = it.href.split('/').pop().toLowerCase();
@@ -100,7 +108,8 @@
       a.href = it.href;
       a.setAttribute('aria-label', it.label);
       if (hrefName === here) a.setAttribute('aria-current', 'page');
-      var ic = document.createElement('span'); ic.className = 'ic'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = it.ic;
+      var ic = document.createElement('span'); ic.className = 'ic'; ic.setAttribute('aria-hidden', 'true');
+      ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + it.svg + '</svg>';
       var lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = it.label;
       a.appendChild(ic); a.appendChild(lbl);
       nav.appendChild(a);
@@ -120,9 +129,11 @@
     el.className = 'np-splash';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML =
-      '<div class="logo">🧠</div>' +
+      '<div class="logo" style="font:700 32px/1 Georgia,serif;letter-spacing:.04em;color:#f2dca6;' +
+        'width:84px;height:84px;border:2px solid rgba(184,150,62,.85);border-radius:20px;' +
+        'display:grid;place-items:center;box-shadow:0 0 0 1px rgba(184,150,62,.25),0 14px 40px -12px rgba(0,0,0,.5)">NP</div>' +
       '<div class="name">NeuroPed EDJ</div>' +
-      '<div class="tag">Dr. Jadson Fraga</div>' +
+      '<div class="tag">Dr. Jadson Fraga · Neuropediatria</div>' +
       '<div class="spinner"></div>';
     document.body.appendChild(el);
     setTimeout(function(){
@@ -163,39 +174,74 @@
 })();
 
 /* ============================================================
-   Mascotes fofinhos ambiente — em TODAS as telas (SPA + estáticas)
-   Camada flutuante discreta, pointer-events:none, respeita movimento.
+   Mascotes ambiente POR CONTEXTO — inteligência visual de rota.
+   Lúdico onde fala com a criança (CAA, família, área do filho, home);
+   AUSENTE em todas as áreas profissionais e editoriais (Consulta,
+   Secretaria, Laudos, NeuroPed Master, etc.). Sombra neutra, discreto,
+   respeita prefers-reduced-motion. window.NeuroPedVisual expõe o contexto.
    ============================================================ */
 (function () {
   "use strict";
   if (window.__npMascots) return; window.__npMascots = true;
-  try { if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  var reduce = false;
+  try { reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+
+  /* rotas profissionais/editoriais da SPA (hash) onde a ludicidade não entra */
+  var PRO_HASH = /prontuario|laudo|prescric|secretaria|pacientes|portal-documentos|portal-chat|portal-acompanhamento|relatorio|consulta/;
+
+  /* configuração lúdica por página (estática). Ausência = sem mascotes. */
+  var PLAYFUL = {
+    'comunicacao-alternativa.html': { count: 4, op: 0.30, min: 24, max: 40, set: ['🦊','🧸','🐻','🐥','🦄','🌈'] },
+    'area-filho.html':              { count: 3, op: 0.24, min: 22, max: 36, set: ['🧸','🐻','🐥','⭐','🌈'] },
+    'portal-familia-livre.html':    { count: 2, op: 0.18, min: 22, max: 32, set: ['🌿','✨','🌈'] },
+    'index.html':                   { count: 2, op: 0.14, min: 20, max: 30, set: ['✨','⭐'], homeOnly: true },
+    '':                             { count: 2, op: 0.14, min: 20, max: 30, set: ['✨','⭐'], homeOnly: true }
+  };
+
+  function visualContext(){
+    var page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    var cfg = PLAYFUL[page];
+    if (!cfg) return null;
+    if (cfg.homeOnly && PRO_HASH.test((location.hash || '').toLowerCase())) return null;
+    return cfg;
+  }
+  window.NeuroPedVisual = { context: visualContext, isPlayful: function(){ return !!visualContext(); } };
+
   var css = ''
     + '.np-mascot-layer{position:fixed;inset:0;z-index:9990;pointer-events:none;overflow:hidden}'
-    + '.np-mascot{position:absolute;will-change:transform;filter:drop-shadow(0 6px 14px rgba(80,70,200,.22));'
-    +   'animation:npMascFloat var(--d,9s) ease-in-out var(--dl,0s) infinite}'
+    + '.np-mascot{position:absolute;will-change:transform;filter:drop-shadow(0 4px 10px rgba(45,41,38,.12));'
+    +   'animation:npMascFloat var(--d,10s) ease-in-out var(--dl,0s) infinite}'
     + '@keyframes npMascFloat{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}'
-    +   '50%{transform:translateY(-22px) rotate(calc(var(--r,0deg) * -1))}}';
+    +   '50%{transform:translateY(-16px) rotate(calc(var(--r,0deg) * -1))}}';
   var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
 
-  function build(){
-    if (document.querySelector('.np-mascot-layer')) return;
+  var SPOTS = [[6,16],[91,12],[5,62],[93,58],[14,82],[80,80],[48,8],[24,40]];
+
+  function clear(){
+    var l = document.querySelector('.np-mascot-layer');
+    if (l && l.parentNode) l.parentNode.removeChild(l);
+  }
+  function render(){
+    clear();
+    if (reduce) return;
+    var cfg = visualContext(); if (!cfg) return;
     var layer = document.createElement('div'); layer.className = 'np-mascot-layer'; layer.setAttribute('aria-hidden','true');
-    var set = [['🦊',.34],['🧸',.34],['🐻',.3],['🦄',.36],['🐥',.36],['🌈',.34],['🌟',.62],['✨',.68],['⭐',.6],['🧩',.32]];
-    var spots = [[6,14],[90,10],[3,40],[94,33],[10,66],[48,6],[74,54],[26,84],[60,26],[18,33],[84,73],[40,60]];
-    for (var i=0;i<spots.length;i++){
-      var g = set[Math.floor(Math.random()*set.length)];
-      var m = document.createElement('div'); m.className = 'np-mascot'; m.textContent = g[0];
-      m.style.left = spots[i][0]+'%'; m.style.top = spots[i][1]+'%';
-      m.style.fontSize = (26 + Math.random()*24) + 'px';
-      m.style.opacity = g[1];
-      m.style.setProperty('--d', (7 + Math.random()*6) + 's');
-      m.style.setProperty('--dl', (Math.random()*4) + 's');
-      m.style.setProperty('--r', ((Math.random()*16)-8) + 'deg');
+    for (var i = 0; i < cfg.count; i++){
+      var g = cfg.set[i % cfg.set.length];
+      var m = document.createElement('div'); m.className = 'np-mascot'; m.textContent = g;
+      m.style.left = SPOTS[i % SPOTS.length][0] + '%';
+      m.style.top  = SPOTS[i % SPOTS.length][1] + '%';
+      m.style.fontSize = (cfg.min + Math.random() * (cfg.max - cfg.min)) + 'px';
+      m.style.opacity = cfg.op;
+      m.style.setProperty('--d', (9 + Math.random() * 5) + 's');
+      m.style.setProperty('--dl', (Math.random() * 4) + 's');
+      m.style.setProperty('--r', ((Math.random() * 12) - 6) + 'deg');
       layer.appendChild(m);
     }
     (document.body || document.documentElement).appendChild(layer);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
-  else build();
+  /* re-avalia ao navegar na SPA (mantém telas clínicas limpas) */
+  window.addEventListener('hashchange', render);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+  else render();
 })();

@@ -396,49 +396,48 @@ hr{ border:0; height:1px; background: hsl(243 20% 55% / .18); }
 .card-premium{ border-radius: 1.15rem !important; }
 
 /* ============================================================
-   13. MODO VIBRANTE — cores e brilho mais presentes (vence as anteriores)
+   13. EDITORIAL CLÍNICO DINÂMICO — dinamismo discreto (vence as anteriores)
+   Substitui o antigo "modo vibrante": menos saturação, sem glow neon
+   permanente, aurora contida (~45% mais suave) restrita ao dashboard.
    ============================================================ */
-/* primária mais viva */
-:root{ --primary: 244 92% 62%; --ring: 244 92% 62%; }
-.dark{ --primary: 246 94% 68%; --ring: 246 94% 68%; }
+/* primária funcional (índigo como acento, não dominante) */
+:root{ --primary: 244 78% 60%; --ring: 244 78% 60%; }
+.dark{ --primary: 246 80% 66%; --ring: 246 80% 66%; }
 
-/* aurora mais intensa (+ um 4º glow violeta) */
+/* aurora ambiente contida — apenas no shell/dashboard da SPA */
 .min-h-screen.bg-background{
   background-image:
-    radial-gradient(1100px 640px at 8% -8%,  hsl(243 92% 60% / .42), transparent 60%),
-    radial-gradient(1000px 660px at 102% 2%, hsl(266 88% 60% / .40), transparent 56%),
-    radial-gradient(1200px 820px at 50% 118%, hsl(200 95% 58% / .26), transparent 60%),
-    radial-gradient(820px 600px at 80% 82%,  hsl(288 85% 62% / .22), transparent 60%) !important;
+    radial-gradient(1100px 640px at 8% -8%,  hsl(243 80% 58% / .22), transparent 60%),
+    radial-gradient(1000px 660px at 102% 2%, hsl(266 74% 58% / .18), transparent 56%),
+    radial-gradient(1200px 820px at 50% 118%, hsl(206 86% 56% / .12), transparent 62%) !important;
 }
 
-/* cards com gradiente mais vivo + glow de volta */
+/* cards: profundidade elegante em camadas, sem glow colorido */
 .card-premium{
-  filter: saturate(1.14);
+  filter: none;
   box-shadow:
-    0 0 0 1px hsl(0 0% 100% / .10) inset,
-    0 18px 50px -16px hsl(243 92% 56% / .62),
-    0 0 38px -6px hsl(266 88% 62% / .38) !important;
+    0 0 0 1px hsl(0 0% 100% / .07) inset,
+    0 16px 44px -22px rgba(16,14,55,.7) !important;
 }
 @media (hover: hover) and (pointer: fine){
   .card-premium:hover{
-    filter: saturate(1.22);
+    filter: none;
     box-shadow:
-      0 0 0 1px hsl(0 0% 100% / .15) inset,
-      0 28px 66px -16px hsl(243 96% 58% / .78),
-      0 0 54px -4px hsl(266 92% 64% / .55) !important;
+      0 0 0 1px hsl(0 0% 100% / .11) inset,
+      0 26px 60px -22px rgba(16,14,55,.82) !important;
   }
 }
 
-/* herói e selo com brilho mais forte */
+/* herói e selo: brilho discreto, sem halo neon */
 h1.font-black.tracking-wider,
-.text-gradient-animated{ filter: drop-shadow(0 2px 26px hsl(250 92% 64% / .7)) saturate(1.16); }
+.text-gradient-animated{ filter: drop-shadow(0 2px 14px hsl(245 60% 55% / .28)); }
 
-/* botões primários: brilho de marca mais presente */
+/* botões primários: halo de marca sóbrio */
 button.bg-primary, a.bg-primary, [role="button"].bg-primary{
   box-shadow:
-    0 0 0 1px hsl(0 0% 100% / .16) inset,
-    0 10px 30px -8px hsl(244 95% 60% / .7) !important;
+    0 0 0 1px hsl(0 0% 100% / .12) inset,
+    0 8px 22px -10px hsl(244 70% 52% / .42) !important;
 }
 
-/* mascotes mais luminosos */
-.np-mascot{ filter: drop-shadow(0 6px 16px rgba(120,90,255,.42)) saturate(1.25) !important; }
+/* mascotes (só nas áreas lúdicas): sombra neutra e discreta */
+.np-mascot{ filter: drop-shadow(0 4px 10px rgba(45,41,38,.12)) !important; }
