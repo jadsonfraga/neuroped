@@ -222,6 +222,11 @@ assertIncludes('instrumento-autoral.html', 'sentinel', 'autoral trata pergunta-s
 assertIncludes('instrumento-autoral.html', 'differential', 'autoral trata diferencial dislexia×global (011)');
 assertIncludes('filtro-escalas.html', './scales-autorais-npe.js', 'filtro liga os autorais NPE-BR');
 assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
+// Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
+for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
+  assertIncludes(p, 'content="#0e0e22"', p + ' usa o tema índigo escuro (coesão visual)');
+  assertNotIncludes(p, 'content="#1a6b65"', p + ' não usa mais o tema teal claro');
+}
 assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
 
 const packageJson=file('package.json');
