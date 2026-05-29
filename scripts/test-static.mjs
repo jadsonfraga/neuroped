@@ -276,6 +276,14 @@ assertNotIncludes('area-filho.html', 'Data de nascimento', 'Área do Filho não 
 assertNotIncludes('area-filho.html', 'Último sobrenome', 'Área do Filho não pede sobrenome');
 assertNotIncludes('portal-familia-livre.html', 'nascimento e sobrenome', 'portal não exige nascimento/sobrenome');
 
+// ===== Pragmatismo: ferramentas úteis salvam local + doses liberadas com blindagem =====
+assertIncludes('diario-escola-terapias-v2.html', 'localStorage.setItem(KEY', 'diário salva localmente (não é mais demo vazio)');
+assertNotIncludes('diario-escola-terapias-v2.html', 'Exportação desativada', 'diário tem exportação real');
+assertIncludes('secretaria.html', 'localStorage.setItem(K', 'secretaria salva localmente (PIN, no aparelho)');
+assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
+assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
+assertIncludes('neuroped-master-biblioteca.js', 'Nunca inicie, ajuste ou suspenda medicação', 'doses trazem alerta contra automedicação');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
   // versão única: cache do service worker e verificador alinhados ao package.json
