@@ -255,6 +255,18 @@ assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece a
 assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
 assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');
 
+// ===== Filtro: visões/triangulação + impacto pós-medicação =====
+assertFile('scales-impacto-medicacao.js');
+assertFile('impacto-medicacao.html');
+assertIncludes('scales-impacto-medicacao.js', 'npe-med-pais', 'inventário pós-medicação visão família');
+assertIncludes('scales-impacto-medicacao.js', 'npe-med-escola', 'inventário pós-medicação visão escola');
+assertIncludes('impacto-medicacao.html', 'content="#0e0e22"', 'impacto-medicacao no tema índigo');
+assertIncludes('impacto-medicacao.html', 'eficácia farmacológica', 'impacto deixa claro que não mede eficácia');
+assertIncludes('filtro-escalas.html', 'renderTriangulation', 'filtro sugere 3 visões distintas (triangulação)');
+assertIncludes('filtro-escalas.html', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
+assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');
+assertIncludes('filtro-escalas.html', 'Autorrelato', 'filtro distingue autorrelato');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
   // versão única: cache do service worker e verificador alinhados ao package.json
