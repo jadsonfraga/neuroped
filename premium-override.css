@@ -291,6 +291,14 @@ h1.font-black.tracking-wider{
     radial-gradient(1000px 640px at 102% 2%, hsl(266 80% 56% / .22), transparent 56%),
     radial-gradient(1200px 800px at 50% 116%, hsl(206 92% 56% / .14), transparent 60%) !important;
   background-attachment: fixed !important;
+  background-size: 160% 160% !important;
+  animation: npAuroraDrift 26s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: no-preference){
+  @keyframes npAuroraDrift{
+    0%,100%{ background-position: 0% 0%; }
+    50%{ background-position: 100% 100%; }
+  }
 }
 
 /* 11b. CARDS premium com glow colorido + elevação dramática no hover */
