@@ -3,25 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1a4a44">
+<meta name="theme-color" content="#0e0e22">
 <title>Central de Atalhos — NeuroPed EDJ</title>
 <style>
 :root{
-  --cream:#faf8f4;--paper:#fffdf9;--ink:#2d2926;--muted:#6f6963;--soft:#8a847c;
-  --line:#eadcc7;--teal:#1a6b65;--teal-d:#155a55;--wine:#8b2e3b;--gold:#b8963e;--gold-d:#9a7c2e;--indigo:#4f46e5;
-  --shadow:0 18px 48px -22px rgba(45,41,38,.4);--shadow-soft:0 10px 28px -18px rgba(45,41,38,.3);
+  --bg:#0a0a16;--bg-2:#0e0e22;--paper:rgba(124,118,210,.07);--ink:#ECEAFF;--muted:#b6b2e6;--soft:#928ec6;
+  --line:rgba(169,164,255,.16);--teal:#6d6af5;--teal-d:#4f46e5;--wine:#f2dca6;--gold:#e7c98b;--gold-d:#caa56a;--indigo:#a9a4ff;
+  --shadow:0 24px 64px -22px rgba(4,3,18,.75);--shadow-soft:0 14px 34px -18px rgba(4,3,18,.6);
 }
 *{box-sizing:border-box}html,body{margin:0}
 body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;
-  background:radial-gradient(900px 520px at 8% -8%,rgba(26,107,101,.05),transparent 55%),
-             radial-gradient(820px 540px at 100% 0%,rgba(184,150,62,.06),transparent 52%),
-             linear-gradient(160deg,#faf8f4,#fffaf1 58%,#f6efe2)}
+  background:radial-gradient(1100px 620px at 8% -8%,hsl(243 85% 56% / .26),transparent 60%),
+             radial-gradient(1000px 640px at 102% 2%,hsl(266 80% 56% / .22),transparent 56%),
+             radial-gradient(1200px 800px at 50% 116%,hsl(206 92% 56% / .12),transparent 60%),
+             linear-gradient(160deg,var(--bg),var(--bg-2) 60%,var(--bg));background-attachment:fixed}
 .wrap{max-width:1020px;margin:auto;padding:18px 16px 72px}
 .ico{width:20px;height:20px;flex:0 0 auto}
 
 /* capa editorial */
 .cover{position:relative;overflow:hidden;border-radius:26px;padding:32px 28px;color:#f3ede0;
-  background:linear-gradient(155deg,#15302e,#1a4a44 55%,#123f3a);box-shadow:0 30px 70px -28px rgba(20,40,38,.7);
+  background:linear-gradient(155deg,#15143a,#221c52 55%,#15143a);box-shadow:0 30px 70px -28px rgba(20,40,38,.7);
   border:1px solid rgba(184,150,62,.32)}
 .cover::before{content:"";position:absolute;inset:12px;border:1px solid rgba(184,150,62,.4);border-radius:18px;pointer-events:none}
 .cover::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
@@ -31,7 +32,7 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
 .imprint img{width:42px;height:42px;border-radius:11px;object-fit:cover;box-shadow:0 0 0 1px rgba(184,150,62,.5)}
 .imprint span{font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:11px;color:#cdbf9a}
 .eyebrow{display:inline-block;text-transform:uppercase;letter-spacing:.2em;font-weight:800;font-size:10.5px;
-  color:#1a4a44;background:rgba(184,150,62,.92);padding:6px 12px;border-radius:4px;margin-top:18px}
+  color:#15143a;background:rgba(231,201,139,.95);padding:6px 12px;border-radius:4px;margin-top:18px}
 h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6ea}
 .cover p{color:#cfd6cf;line-height:1.6;margin:0;max-width:58ch}
 
@@ -42,13 +43,13 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
   background:linear-gradient(180deg,var(--teal),var(--teal-d))}
 .group-head .gi .ico{width:19px;height:19px}
 .group-head h2{flex:1;font:700 20px Georgia,serif;color:var(--wine);margin:0}
-.group-head .gn{font:800 11px ui-monospace,monospace;color:var(--muted);background:#f3efe6;border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.group-head .gn{font:800 11px ui-monospace,monospace;color:var(--soft);background:rgba(169,164,255,.1);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px}
 .card{display:flex;gap:13px;align-items:flex-start;text-decoration:none;background:var(--paper);border:1px solid var(--line);
   border-radius:18px;padding:15px;box-shadow:var(--shadow-soft);color:var(--ink);
   transition:transform .28s cubic-bezier(.22,.8,.2,1),box-shadow .28s,border-color .28s}
-.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(26,107,101,.3)}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(169,164,255,.32)}
 .card .ci{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:0 0 auto;
   background:linear-gradient(180deg,var(--teal),var(--teal-d))}
 .card .ci .ico{width:20px;height:20px}
@@ -57,8 +58,8 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
 .card h3{margin:0 0 3px;font:700 16px Georgia,serif;color:var(--wine)}
 .card.wine h3{color:var(--wine)}
 .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.48}
-.lockbadge{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--wine);
-  background:rgba(139,46,59,.08);border:1px solid rgba(139,46,59,.2);border-radius:999px;padding:2px 7px;margin-top:6px;display:inline-block}
+.lockbadge{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:#f0a6bd;
+  background:rgba(240,166,189,.1);border:1px solid rgba(240,166,189,.24);border-radius:999px;padding:2px 7px;margin-top:6px;display:inline-block}
 .footer{text-align:center;font-size:12px;color:var(--muted);margin:32px 0 0;line-height:1.7}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
