@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "wrangler pages dev .",
-    "deploy": "wrangler pages deploy ."
+    "deploy": "wrangler pages deploy .",
+    "test": "node scripts/test-static.mjs",
+    "test:static": "node scripts/test-static.mjs"
   },
   "dependencies": {
     "node-forge": "^1.3.1",

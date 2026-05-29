@@ -25,6 +25,6 @@
     { "name": "Nova consulta", "short_name": "Consulta", "url": "./index.html#/consulta", "description": "Iniciar nova consulta" },
     { "name": "Escalas", "short_name": "Escalas", "url": "./index.html#/escalas", "description": "Banco de instrumentos clínicos" },
     { "name": "Agenda", "short_name": "Agenda", "url": "./index.html#/agenda", "description": "Calendário e financeiro" },
-    { "name": "CAA", "short_name": "CAA", "url": "./index.html#/caa", "description": "Comunicação alternativa" }
+    { "name": "CAA Gratuita", "short_name": "CAA", "url": "./index.html#/caa", "description": "Comunicação alternativa gratuita" }
   ]
 }
