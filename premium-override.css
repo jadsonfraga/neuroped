@@ -192,3 +192,60 @@ html{ scroll-behavior: smooth; }
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover{ background: hsl(var(--muted-foreground) / .5); background-clip: content-box; }
+
+/* ---------- 6. BOTÃO PRIMÁRIO PREMIUM (sheen + realce de marca) ---------- */
+button.bg-primary,
+a.bg-primary,
+[role="button"].bg-primary{
+  background-image: linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,0) 62%);
+  box-shadow: var(--np-shadow-brand);
+  transition: transform .2s var(--np-ease), filter .2s var(--np-ease), box-shadow .2s var(--np-ease);
+}
+@media (hover: hover) and (pointer: fine){
+  button.bg-primary:hover,
+  a.bg-primary:hover,
+  [role="button"].bg-primary:hover{
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+}
+button.bg-primary:active,
+a.bg-primary:active,
+[role="button"].bg-primary:active{ transform: translateY(0); filter: brightness(.98); }
+
+/* ---------- 7. PROFUNDIDADE REATIVA em cards (só desktop, hover real) ---------- */
+@media (hover: hover) and (pointer: fine){
+  .shadow-sm, .shadow, .shadow-md, .shadow-lg{
+    transition: box-shadow .25s var(--np-ease);
+  }
+  .shadow-sm:hover, .shadow:hover, .shadow-md:hover{
+    box-shadow: var(--np-shadow-lg);
+  }
+}
+
+/* ---------- 8. GLASS premium na navegação / sheets / toasts ---------- */
+.np-bottom-nav{
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: hsl(var(--background) / .72) !important;
+  border-top: 1px solid hsl(var(--border) / .65);
+  box-shadow: 0 -8px 30px -12px rgba(31,27,90,.22);
+}
+.np-sheet{
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--np-shadow-lg);
+}
+.np-toast{
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--np-shadow-lg);
+  border: 1px solid hsl(var(--border) / .6);
+}
+
+/* ---------- 9. BOOT fade-in + durações mais fluidas ---------- */
+@media (prefers-reduced-motion: no-preference){
+  @keyframes npBoot{ from{ opacity:0; } to{ opacity:1; } }
+  #root{ animation: npBoot .5s var(--np-ease) both; }
+  a, button, [role="button"]{ transition-duration: .2s; }
+}
