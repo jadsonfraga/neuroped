@@ -130,3 +130,10 @@
   window.NEUROPED_EDITORIAL_SCALES = base.concat(OFC.filter(function(x){ return !ids.has(x.id); }));
   window.NEUROPED_OFICIAIS_COUNT = OFC.length;
 })();
+
+/* Expansão oficial lote 2: carregada antes da curadoria nos módulos de Filtro e Mapa.
+   O uso de document.write aqui ocorre apenas durante a análise inicial das páginas estáticas,
+   garantindo que o catálogo adicional esteja disponível antes de scales-curate.js. */
+if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading') {
+  document.write('<script src="./scales-oficiais-lote2.js"><\/script>');
+}
