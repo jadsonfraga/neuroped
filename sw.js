@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v4.0.0-spa';
+const CACHE_NAME = 'neuroped-edj-v4.1.0-premium';
 const SHELL = [
   './',
   './index.html',
@@ -15,7 +15,9 @@ const SHELL = [
   './icon-192.png',
   './icon-512.png',
   './assets/index-CCN60Z39.js',
-  './assets/index-CYKyYC_X.css'
+  './assets/index-CYKyYC_X.css',
+  './premium-override.css',
+  './premium-motion.js'
 ];
 
 self.addEventListener('install', e => {

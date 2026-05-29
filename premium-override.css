@@ -1,0 +1,194 @@
+/* =====================================================================
+   NeuroPed EDJ — Premium Override Layer  ·  "Índigo Heroico"
+   Carregado DEPOIS de assets/index-CYKyYC_X.css.
+   Re-skin global via tokens shadcn (mesma hue índigo em claro e escuro).
+   100% reversível: remover este arquivo restaura o tema original do build.
+   Só mexe em COR, FONTE, SOMBRA, EASING — nada que altere o layout.
+   ===================================================================== */
+
+/* ---------- 1. MARCA UNIFICADA — tema claro ---------- */
+:root{
+  --background: 240 33% 99%;
+  --foreground: 240 28% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 240 28% 12%;
+  --card-border: 240 22% 91%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 28% 12%;
+  --popover-border: 240 22% 90%;
+
+  --primary: 243 75% 59%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 243 45% 96%;
+  --secondary-foreground: 243 55% 32%;
+
+  --muted: 240 22% 96%;
+  --muted-foreground: 240 10% 44%;
+
+  --accent: 243 55% 96%;
+  --accent-foreground: 243 55% 32%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 240 22% 90%;
+  --input: 240 22% 88%;
+  --ring: 243 75% 59%;
+
+  --radius: .75rem;
+
+  /* paleta de dados moderna e harmonizada */
+  --chart-1: 243 75% 59%;
+  --chart-2: 199 89% 48%;
+  --chart-3: 168 76% 42%;
+  --chart-4: 38 92% 55%;
+  --chart-5: 340 75% 58%;
+
+  /* elevação em camadas, com leve tom da marca */
+  --elevate-1: rgba(79,70,229,.045);
+  --elevate-2: rgba(79,70,229,.10);
+
+  /* sidebar harmonizada com a marca */
+  --sidebar-primary: 243 75% 59%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 243 75% 59%;
+  --sidebar-accent: 243 50% 96%;
+  --sidebar-accent-foreground: 243 55% 32%;
+  --sidebar-border: 240 22% 90%;
+
+  /* tipografia */
+  --font-sans: "Inter","Plus Jakarta Sans","Nunito",system-ui,sans-serif;
+  --font-display: "DM Sans","Inter",system-ui,sans-serif;
+
+  /* sistema de sombras premium (suaves, em camadas) */
+  --np-shadow-sm: 0 1px 2px rgba(20,18,60,.06), 0 1px 1px rgba(20,18,60,.04);
+  --np-shadow-md: 0 4px 14px -2px rgba(31,27,90,.10), 0 2px 6px -2px rgba(31,27,90,.07);
+  --np-shadow-lg: 0 16px 44px -10px rgba(31,27,90,.18), 0 6px 16px -8px rgba(31,27,90,.12);
+  --np-shadow-brand: 0 10px 32px -10px hsl(243 75% 59% / .38);
+
+  /* curvas de animação premium */
+  --np-ease: cubic-bezier(.22,.8,.2,1);
+  --np-spring: cubic-bezier(.16,1,.3,1);
+}
+
+/* ---------- 1b. MARCA UNIFICADA — tema escuro (MESMA hue) ---------- */
+.dark{
+  --background: 240 30% 8%;
+  --foreground: 0 0% 98%;
+
+  --card: 240 26% 11%;
+  --card-foreground: 0 0% 98%;
+  --card-border: 240 20% 18%;
+
+  --popover: 240 26% 12%;
+  --popover-foreground: 0 0% 98%;
+  --popover-border: 240 20% 18%;
+
+  --primary: 243 84% 67%;
+  --primary-foreground: 240 30% 8%;
+
+  --secondary: 240 22% 16%;
+  --secondary-foreground: 243 60% 88%;
+
+  --muted: 240 16% 17%;
+  --muted-foreground: 240 12% 66%;
+
+  --accent: 240 22% 17%;
+  --accent-foreground: 243 60% 88%;
+
+  --border: 240 18% 18%;
+  --input: 240 16% 22%;
+  --ring: 243 84% 67%;
+
+  --elevate-1: rgba(255,255,255,.045);
+  --elevate-2: rgba(255,255,255,.10);
+
+  --chart-1: 243 84% 70%;
+  --chart-2: 199 89% 60%;
+  --chart-3: 168 70% 52%;
+  --chart-4: 38 92% 62%;
+  --chart-5: 340 80% 68%;
+
+  --sidebar-primary: 243 84% 67%;
+  --sidebar-ring: 243 84% 67%;
+  --sidebar-accent: 240 22% 17%;
+  --sidebar-accent-foreground: 243 60% 88%;
+  --sidebar-border: 240 20% 18%;
+
+  --np-shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --np-shadow-md: 0 6px 18px -4px rgba(0,0,0,.5);
+  --np-shadow-lg: 0 18px 50px -10px rgba(0,0,0,.62);
+  --np-shadow-brand: 0 10px 36px -10px hsl(243 84% 67% / .48);
+}
+
+/* ---------- 2. TIPOGRAFIA EDITORIAL ---------- */
+body{
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* títulos com fonte de display + tracking refinado (sem mexer em font-size → seguro p/ layout) */
+h1,h2,h3,h4,
+.text-2xl,.text-3xl,.text-4xl,.text-5xl,.text-6xl{
+  font-family: var(--font-display);
+  letter-spacing: -0.022em;
+}
+h1,.text-4xl,.text-5xl,.text-6xl{ line-height: 1.1; }
+h2,.text-3xl{ line-height: 1.16; }
+
+/* números clínicos / métricas: alinhamento tabular */
+.tabular-nums,[class*="count"],.font-mono,
+[class*="stat"] [class*="text-"]{
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---------- 3. PROFUNDIDADE (apenas box-shadow → não afeta layout) ---------- */
+.shadow-sm{ box-shadow: var(--np-shadow-sm) !important; }
+.shadow{    box-shadow: var(--np-shadow-md) !important; }
+.shadow-md{ box-shadow: var(--np-shadow-md) !important; }
+.shadow-lg{ box-shadow: var(--np-shadow-lg) !important; }
+.shadow-xl,.shadow-2xl{ box-shadow: var(--np-shadow-lg) !important; }
+
+/* ---------- 4. MOVIMENTO PREMIUM ---------- */
+@media (prefers-reduced-motion: no-preference){
+  /* easing unificado nos elementos interativos (só muda a curva, não o efeito) */
+  a,button,[role="button"],.transition,[class*="transition-"]{
+    transition-timing-function: var(--np-ease);
+  }
+  /* mascote: entrada com leve mola + flutuação idle */
+  .mascote{
+    animation: mascoteEntrada .6s var(--np-spring) forwards;
+    will-change: transform;
+  }
+  /* animação de troca de rota (disparada por premium-motion.js) */
+  @keyframes npPageIn{
+    from{ opacity:0; transform: translateY(10px); }
+    to{   opacity:1; transform: none; }
+  }
+}
+
+/* ---------- 5. ACABAMENTOS (selection, foco, scroll, accent) ---------- */
+:root{ accent-color: hsl(var(--primary)); }
+html{ scroll-behavior: smooth; }
+::selection{ background: hsl(243 75% 59% / .22); }
+:focus-visible{
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* scrollbar discreta e premium (WebKit) */
+*{ scrollbar-width: thin; scrollbar-color: hsl(var(--muted-foreground) / .35) transparent; }
+::-webkit-scrollbar{ width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb{
+  background: hsl(var(--muted-foreground) / .3);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover{ background: hsl(var(--muted-foreground) / .5); background-clip: content-box; }
