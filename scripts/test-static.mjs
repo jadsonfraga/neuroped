@@ -167,6 +167,14 @@ assertIncludes('neuroped-master-biblioteca.js', 'NeuroPedMasterAccess', 'bibliot
 assertIncludes('central-atalhos.html', './neuroped-master-biblioteca.html', 'central-atalhos tem card da Biblioteca Master');
 assertIncludes('routes.config.js', 'neuroped-master-biblioteca.html', 'routes.config registra a Biblioteca');
 
+// Gerador de Cards (conteúdo educacional com marca)
+for (const f of ['gerador-cards.html','gerador-cards.js']) assertFile(f);
+assertNotIncludes('gerador-cards.js', 'NEUROPED_MASTER_PRO.farmaco', 'gerador NÃO usa farmacoterapia (sensível) — só conteúdo educacional');
+assertIncludes('gerador-cards.js', 'CRM-PE 25227', 'gerador imprime a marca/credenciais do autor');
+assertIncludes('gerador-cards.html', './gerador-cards.js', 'gerador-cards carrega o script');
+assertIncludes('central-atalhos.html', './gerador-cards.html', 'central-atalhos tem card do Gerador');
+assertIncludes('routes.config.js', 'gerador-cards.html', 'routes.config registra o Gerador');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
   // versão única: cache do service worker e verificador alinhados ao package.json
