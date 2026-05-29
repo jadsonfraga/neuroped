@@ -18,10 +18,10 @@ window.NEUROPED_ROUTES = [
   { label:'Banco de Escalas', href:'./escalas.html', type:'publico', requiresPin:false, icon:'📚', order:90 },
   { label:'Consulta', href:'./consulta.html', type:'medico', requiresPin:true, icon:'🩺', order:100 },
   { label:'Secretaria', href:'./secretaria.html', type:'protegido', requiresPin:true, icon:'🏥', order:110 },
-  { label:'Prontuário', href:'./index.html#/prontuario', type:'protegido', requiresPin:true, icon:'📋', order:120 },
-  { label:'Prescrições', href:'./index.html#/prescricoes', type:'medico', requiresPin:true, icon:'💊', order:130 },
-  { label:'Laudos', href:'./index.html#/laudos', type:'medico', requiresPin:true, icon:'📄', order:140 },
-  { label:'Documentos', href:'./index.html#/portal-documentos', type:'protegido', requiresPin:true, icon:'🗂️', order:150 },
+  { label:'Prontuário (demonstração)', href:'./index.html#/prontuario', type:'demo', requiresPin:true, demo:true, icon:'📋', order:120, note:'Área demonstrativa do app SPA — opera com dados fictícios, sem persistência clínica real.' },
+  { label:'Prescrições (demonstração)', href:'./index.html#/prescricoes', type:'demo', requiresPin:true, demo:true, icon:'💊', order:130, note:'Área demonstrativa do app SPA — opera com dados fictícios, sem persistência clínica real.' },
+  { label:'Laudos (demonstração)', href:'./index.html#/laudos', type:'demo', requiresPin:true, demo:true, icon:'📄', order:140, note:'Área demonstrativa do app SPA — opera com dados fictícios, sem persistência clínica real.' },
+  { label:'Documentos (demonstração)', href:'./index.html#/portal-documentos', type:'demo', requiresPin:true, demo:true, icon:'🗂️', order:150, note:'Área demonstrativa do app SPA — opera com dados fictícios, sem persistência clínica real.' },
   { label:'Verificar App', href:'./verificar-app.html', type:'publico', requiresPin:false, icon:'✅', order:900 },
   { label:'Auditoria Operacional', href:'./auditoria-operacional.html', type:'publico', requiresPin:false, icon:'🧪', order:910 },
   { label:'Qualidade NeuroPed', href:'./qualidade-neuroped.html', type:'publico', requiresPin:false, icon:'📊', order:920 }
@@ -30,5 +30,6 @@ window.NEUROPED_ROUTE_TYPES = {
   publico: 'Conteúdo público/educativo',
   familiar: 'Ferramentas familiares não sensíveis',
   protegido: 'Área protegida por PIN/interface',
-  medico: 'Área médica protegida por PIN/interface'
+  medico: 'Área médica protegida por PIN/interface',
+  demo: 'Área demonstrativa (dados fictícios, sem persistência real)'
 };
