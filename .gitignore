@@ -22,3 +22,5 @@ desktop.ini
 # Temp
 *.tmp
 *.bak
+# Render artifacts locais (screenshots de QA via Playwright)
+.shots/
