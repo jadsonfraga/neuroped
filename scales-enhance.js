@@ -208,7 +208,7 @@
     if (document.getElementById('npScalesFooter')) return;
     var foot = document.createElement('div');
     foot.id = 'npScalesFooter';
-    foot.style.cssText = 'margin-top:14px;border:1px dashed #eadcc7;background:#fffaf1;border-radius:14px;padding:12px';
+    foot.style.cssText = 'margin-top:14px;border:1px dashed rgba(169,164,255,.28);background:rgba(124,118,210,.08);border-radius:14px;padding:12px';
     foot.innerHTML =
       '<div id="npScalesInterpret" style="padding:10px;border-radius:10px;font-size:13px;margin-bottom:10px"></div>' +
       '<div id="npScalesDomains" style="font-size:12px;color:#241b1b;margin-bottom:10px"></div>' +

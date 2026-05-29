@@ -283,6 +283,12 @@ assertIncludes('secretaria.html', 'localStorage.setItem(K', 'secretaria salva lo
 assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
 assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
 assertIncludes('neuroped-master-biblioteca.js', 'Nunca inicie, ajuste ou suspenda medicação', 'doses trazem alerta contra automedicação');
+assertIncludes('neuroped-master-biblioteca.js', 'Faixa de referência — orientativa', 'cada medicamento traz selo orientativo (não prescrição)');
+assertNotIncludes('scales-enhance.js', 'background:#fffaf1', 'rodapé do scales-enhance não usa fundo claro');
+// páginas legadas viram redirecionamento (sem duplicata clara nem contradição de privacidade)
+assertIncludes('consulta-livre.html', "location.replace('./consulta.html", 'consulta-livre (legada) redireciona para consulta.html');
+assertIncludes('diario-escola-terapias.html', "location.replace('./diario-escola-terapias-v2.html", 'diário v1 (legado) redireciona para v2');
+assertNotIncludes('consulta-livre.html', 'nada é salvo', 'consulta-livre não contradiz a persistência (é redirect)');
 
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test');
