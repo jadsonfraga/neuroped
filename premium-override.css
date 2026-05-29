@@ -249,3 +249,32 @@ a.bg-primary:active,
   #root{ animation: npBoot .5s var(--np-ease) both; }
   a, button, [role="button"]{ transition-duration: .2s; }
 }
+
+/* ---------- 10. DOMAR A PALETA DOMINANTE → família índigo/violeta ---------- */
+/* Cards de ação (.card-premium): espectro coeso azul-violeta, leve variação por posição */
+.card-premium{ box-shadow: var(--np-shadow-lg) !important; }
+.card-premium.card-stagger-1{ background-image: linear-gradient(135deg, hsl(243 72% 52%), hsl(258 60% 42%)) !important; }
+.card-premium.card-stagger-2{ background-image: linear-gradient(135deg, hsl(228 70% 52%), hsl(243 64% 44%)) !important; }
+.card-premium.card-stagger-3{ background-image: linear-gradient(135deg, hsl(260 60% 50%), hsl(276 54% 44%)) !important; }
+.card-premium.card-stagger-4{ background-image: linear-gradient(135deg, hsl(218 72% 50%), hsl(243 62% 44%)) !important; }
+.card-premium.card-stagger-5{ background-image: linear-gradient(135deg, hsl(248 64% 50%), hsl(264 56% 44%)) !important; }
+
+/* Selo dourado "SUPERNEUROPED" e afins (clip-text âmbar/amarelo) → índigo */
+[class*="bg-clip-text"][class*="from-amber"],
+[class*="bg-clip-text"][class*="from-yellow"]{
+  background-image: linear-gradient(to right, hsl(243 84% 74%), hsl(264 72% 74%), hsl(243 84% 74%)) !important;
+}
+
+/* Título animado teal (.text-gradient-animated) → índigo/violeta */
+.text-gradient-animated{
+  background-image: linear-gradient(120deg, hsl(243 86% 74%), hsl(266 74% 72%) 55%, hsl(243 86% 74%)) !important;
+}
+
+/* Título do herói (h1 dourado) → índigo/violeta clip-text */
+h1.font-black.tracking-wider{
+  background-image: linear-gradient(120deg, hsl(243 86% 74%), hsl(266 74% 72%) 55%, hsl(243 86% 74%)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
