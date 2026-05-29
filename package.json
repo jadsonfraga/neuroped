@@ -1,20 +1,18 @@
 {
   "name": "neuroped-edj",
-  "version": "1.0.0",
+  "version": "6.0.0",
+  "description": "NeuroPed EDJ — plataforma clínica de neuropediatria do Dr. Jadson Fraga Araújo Júnior",
   "private": true,
-  "description": "NeuroPed EDJ - Frontend estatico com backend Cloudflare Pages Functions e D1",
   "scripts": {
     "dev": "wrangler pages dev .",
-    "db:schema": "wrangler d1 execute neuroped-db --file=./schema.sql --remote",
-    "test:static": "node scripts/test-static.mjs",
-    "typecheck": "tsc --noEmit -p .",
-    "test": "npm run test:static && npm run typecheck",
-    "predeploy": "node scripts/predeploy-check.mjs && npm test",
-    "deploy": "wrangler pages deploy . --project-name neuroped --branch main"
+    "deploy": "wrangler pages deploy ."
   },
-  "devDependencies": {
-    "@cloudflare/workers-types": "latest",
-    "wrangler": "latest",
-    "typescript": "latest"
+  "dependencies": {
+    "node-forge": "^1.3.1",
+    "pdf-lib": "^1.17.1",
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
