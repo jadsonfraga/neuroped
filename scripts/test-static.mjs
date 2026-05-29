@@ -151,6 +151,22 @@ assertIncludes('central-atalhos.html', './solicitar-neuroped-master.html', 'cent
 assertIncludes('routes.config.js', 'neuroped-master-vitrine.html', 'routes.config registra a vitrine');
 assertIncludes('routes.config.js', 'solicitar-neuroped-master.html', 'routes.config registra a solicitação');
 
+// NeuroPed Master — Biblioteca (catálogo público + área reservada por PIN)
+const NPM_BIB_FILES = ['neuroped-master-biblioteca.html','neuroped-master-biblioteca.css','neuroped-master-biblioteca.js','neuroped-master-biblioteca-data.js','neuroped-master-protegido-data.js'];
+for (const f of NPM_BIB_FILES) assertFile(f);
+for (const f of NPM_BIB_FILES) {
+  assertNotIncludes(f, '.pdf', `${f} não expõe link público a PDF`);
+}
+// catálogo público não deve gravar dados; gate é só de interface (master-access-policy)
+assertNotIncludes('neuroped-master-biblioteca-data.js', 'localStorage', 'catálogo público não usa localStorage');
+assertNotIncludes('neuroped-master-protegido-data.js', 'localStorage', 'data reservado não usa localStorage');
+assertIncludes('neuroped-master-biblioteca-data.js', 'NEUROPED_MASTER_LIB', 'data.js expõe catálogo NEUROPED_MASTER_LIB');
+assertIncludes('neuroped-master-protegido-data.js', 'NEUROPED_MASTER_PRO', 'data reservado expõe NEUROPED_MASTER_PRO');
+assertIncludes('neuroped-master-biblioteca.html', './master-access-policy.js', 'biblioteca carrega a política de PIN master');
+assertIncludes('neuroped-master-biblioteca.js', 'NeuroPedMasterAccess', 'biblioteca usa o gate de PIN master para a área reservada');
+assertIncludes('central-atalhos.html', './neuroped-master-biblioteca.html', 'central-atalhos tem card da Biblioteca Master');
+assertIncludes('routes.config.js', 'neuroped-master-biblioteca.html', 'routes.config registra a Biblioteca');
+
 const packageJson=file('package.json');
 if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:static']?pass('package.json contém script test:static'):fail('package.json sem script test:static');parsed.scripts?.test?pass('package.json contém script test'):warn('package.json sem script test')}catch(e){fail('package.json inválido',e.message)}}
 
