@@ -161,3 +161,41 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
+
+/* ============================================================
+   Mascotes fofinhos ambiente — em TODAS as telas (SPA + estáticas)
+   Camada flutuante discreta, pointer-events:none, respeita movimento.
+   ============================================================ */
+(function () {
+  "use strict";
+  if (window.__npMascots) return; window.__npMascots = true;
+  try { if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  var css = ''
+    + '.np-mascot-layer{position:fixed;inset:0;z-index:9990;pointer-events:none;overflow:hidden}'
+    + '.np-mascot{position:absolute;will-change:transform;filter:drop-shadow(0 6px 14px rgba(80,70,200,.22));'
+    +   'animation:npMascFloat var(--d,9s) ease-in-out var(--dl,0s) infinite}'
+    + '@keyframes npMascFloat{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}'
+    +   '50%{transform:translateY(-22px) rotate(calc(var(--r,0deg) * -1))}}';
+  var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
+
+  function build(){
+    if (document.querySelector('.np-mascot-layer')) return;
+    var layer = document.createElement('div'); layer.className = 'np-mascot-layer'; layer.setAttribute('aria-hidden','true');
+    var set = [['🦊',.2],['🧸',.2],['🐻',.18],['🦄',.2],['🐥',.22],['🌈',.2],['🌟',.5],['✨',.55],['⭐',.48],['🧩',.2]];
+    var spots = [[6,15],[89,11],[3,45],[93,36],[11,70],[49,7],[73,58],[28,86]];
+    for (var i=0;i<spots.length;i++){
+      var g = set[Math.floor(Math.random()*set.length)];
+      var m = document.createElement('div'); m.className = 'np-mascot'; m.textContent = g[0];
+      m.style.left = spots[i][0]+'%'; m.style.top = spots[i][1]+'%';
+      m.style.fontSize = (20 + Math.random()*22) + 'px';
+      m.style.opacity = g[1];
+      m.style.setProperty('--d', (7 + Math.random()*6) + 's');
+      m.style.setProperty('--dl', (Math.random()*4) + 's');
+      m.style.setProperty('--r', ((Math.random()*16)-8) + 'deg');
+      layer.appendChild(m);
+    }
+    (document.body || document.documentElement).appendChild(layer);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+  else build();
+})();
