@@ -326,6 +326,7 @@ for (const f of ['auditoria-operacional.html','qa-smoke-test.html','qualidade-ne
 assertFile('guia-lancamento.html');
 assertIncludes('guia-lancamento.html', 'np_launch_progress_v1', 'guia de lançamento salva progresso (checklist)');
 assertIncludes('neuroped-pro.html', 'Grátis × Pro', 'landing Pro tem comparativo Grátis × Pro (conversão)');
+assertIncludes('neuroped-pro.html', 'Como funciona', 'landing Pro tem passo a passo (reduz fricção de compra)');
 assertIncludes('neuroped-pro.html', 'acesso vitalício', 'landing Pro tem âncora de valor honesta (vitalício)');
 assertIncludes('portal-familia-livre.html', 'neuroped-pro.html', 'portal da família expõe o NeuroPed Pro (descoberta = vendas)');
 assertIncludes('central-atalhos.html', 'guia-lancamento.html', 'hub linka o guia de lançamento');

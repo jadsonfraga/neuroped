@@ -85,6 +85,16 @@ h2{font-size:25px;letter-spacing:-.01em;margin:0 0 6px;color:var(--gold)}
 .launch{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;background:rgba(231,201,139,.12);
   border:1px solid rgba(231,201,139,.32);border-radius:14px;padding:11px 16px;margin-bottom:14px;color:#e8dcc2;font-size:13.5px;font-weight:700}
 .launch b{color:var(--gold)}
+/* como funciona — 3 passos */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;counter-reset:st}
+.step{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px 18px 18px}
+.step::before{counter-increment:st;content:counter(st);position:absolute;top:-14px;left:18px;width:34px;height:34px;
+  display:grid;place-items:center;border-radius:50%;font:800 16px system-ui;color:#241a05;
+  background:linear-gradient(180deg,var(--gold),var(--gold-d));box-shadow:0 8px 20px -8px rgba(231,201,139,.7)}
+.step h3{margin:10px 0 5px;font-size:16px;color:var(--ink)}
+.step p{margin:0;color:var(--muted);font-size:13.5px}
+.step .arrow{position:absolute;right:-9px;top:50%;color:var(--soft);display:none}
+@media(min-width:640px){.steps.three .step:not(:last-child) .arrow{display:block}}
 /* FAQ */
 details{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:4px 16px;margin:8px 0}
 details summary{cursor:pointer;font-weight:700;padding:12px 0;list-style:none}
@@ -163,6 +173,17 @@ details p{color:var(--muted);font-size:14px;margin:0 0 14px}
         <tr><td>Atualizações futuras da obra</td><td class="n">—</td><td class="y">✓</td></tr>
       </tbody>
     </table>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="block">
+    <h2>Como funciona</h2>
+    <p class="lead">Simples e direto — do pagamento ao acesso vitalício em minutos.</p>
+    <div class="steps three">
+      <div class="step"><h3>Faça o pagamento</h3><p>Pix ou cartão, com segurança. Pagamento único de R$ 47 — sem mensalidade.</p></div>
+      <div class="step"><h3>Receba seu código</h3><p>Você recebe um código de ativação exclusivo (formato PRO-XXXX-XXXX) após a confirmação.</p></div>
+      <div class="step"><h3>Ative e use para sempre</h3><p>Digite o código em "Já tenho um código" e a obra integral libera — inclusive offline.</p></div>
+    </div>
   </section>
 
   <!-- PLANO / PREÇO -->
