@@ -99,6 +99,14 @@ for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
 }
 
+// Identidade premium: tipografia institucional + capa do hub
+assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
+assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');
+assertIncludes('index.html', 'fonts.googleapis.com', 'CSP permite Google Fonts (style-src)');
+assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem capa institucional (posicionamento)');
+assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
+assertNotIncludes('central-atalhos.html', 'reservada por PIN', 'hub não descreve biblioteca como reservada (já é aberta)');
+
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
 assertFile('np-cloud.js');
