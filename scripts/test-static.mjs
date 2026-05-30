@@ -138,6 +138,17 @@ assertIncludes('neuroped-master-biblioteca.html', 'pro-license.js', 'biblioteca 
 assertIncludes('gerar-licencas-pro.html', 'noindex', 'gerador de licenças é noindex (uso do autor)');
 assertIncludes('gerar-licencas-pro.html', 'unlockIfPin', 'gerador de licenças exige PIN master');
 
+// ===== Autoridade + alcance nacional (pai-para-pai), LGPD-safe =====
+assertFile('sobre-dr-jadson.html');
+assertIncludes('sobre-dr-jadson.html', '"@type":"Physician"', 'página de autoridade tem schema Physician (SEO médico)');
+assertIncludes('sobre-dr-jadson.html', 'og:title', 'página de autoridade tem Open Graph (compartilhamento)');
+assertIncludes('sobre-dr-jadson.html', 'substitui consulta', 'página de autoridade mantém aviso ético');
+assertIncludes('neuroped-pro.html', 'og:title', 'landing Pro tem Open Graph para compartilhamento profissional');
+assertIncludes('app-polish-mobile.js', 'referralWidget', 'widget de indicação pai-para-pai (crescimento)');
+assertIncludes('sitemap.xml', 'sobre-dr-jadson.html', 'sitemap inclui a página de autoridade');
+assertIncludes('sitemap.xml', 'neuroped-pro.html', 'sitemap inclui a landing Pro');
+assertIncludes('central-atalhos.html', 'sobre-dr-jadson.html', 'hub linka a página de autoridade');
+
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
 assertFile('np-cloud.js');
