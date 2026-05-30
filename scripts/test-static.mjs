@@ -335,6 +335,10 @@ assertIncludes('neuroped-pro.html', 'id="depoimentos"', 'landing Pro tem estrutu
 }
 assertIncludes('neuroped-pro.html', 'acesso vitalício', 'landing Pro tem âncora de valor honesta (vitalício)');
 assertIncludes('portal-familia-livre.html', 'neuroped-pro.html', 'portal da família expõe o NeuroPed Pro (descoberta = vendas)');
+assertIncludes('sobre-dr-jadson.html', 'neuroped-pro.html', 'página de autoridade leva ao Pro (funil tráfego→oferta)');
+assertIncludes('neuroped-pro.html', 'id="buyBar"', 'landing tem barra de compra fixa (reduz abandono no mobile)');
+assertIncludes('neuroped-pro.html', 'data-no-bottom-nav', 'landing de vendas sem nav competindo (foco em 1 ação)');
+assertIncludes('app-polish-mobile.js', 'data-no-bottom-nav', 'app-polish suporta opt-out de nav por página');
 assertIncludes('central-atalhos.html', 'guia-lancamento.html', 'hub linka o guia de lançamento');
 // telas de triagem/escala mantêm aviso ético (não substitui avaliação)
 for (const f of ['escalas.html','mapa-escalas.html']) {
