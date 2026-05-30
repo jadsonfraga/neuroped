@@ -306,9 +306,16 @@ assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece a
 assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
 assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');
 // páginas internas/admin/teste não devem ser indexadas pelo Google
-for (const f of ['auditoria-operacional.html','qa-smoke-test.html','qualidade-neuroped.html','teste-ouro-pin.html','verificar-app.html','gerar-licencas-pro.html']) {
+for (const f of ['auditoria-operacional.html','qa-smoke-test.html','qualidade-neuroped.html','teste-ouro-pin.html','verificar-app.html','gerar-licencas-pro.html','guia-lancamento.html']) {
   assertIncludes(f, 'noindex', `${f} (interna) marcada como noindex`);
 }
+// Conversão: landing Pro com comparativo + descoberta do Pro no portal
+assertFile('guia-lancamento.html');
+assertIncludes('guia-lancamento.html', 'np_launch_progress_v1', 'guia de lançamento salva progresso (checklist)');
+assertIncludes('neuroped-pro.html', 'Grátis × Pro', 'landing Pro tem comparativo Grátis × Pro (conversão)');
+assertIncludes('neuroped-pro.html', 'Preço de lançamento', 'landing Pro tem âncora de urgência honesta');
+assertIncludes('portal-familia-livre.html', 'neuroped-pro.html', 'portal da família expõe o NeuroPed Pro (descoberta = vendas)');
+assertIncludes('central-atalhos.html', 'guia-lancamento.html', 'hub linka o guia de lançamento');
 // telas de triagem/escala mantêm aviso ético (não substitui avaliação)
 for (const f of ['escalas.html','mapa-escalas.html']) {
   const c = file(f);

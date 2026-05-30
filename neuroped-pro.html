@@ -72,6 +72,19 @@ h2{font-size:25px;letter-spacing:-.01em;margin:0 0 6px;color:var(--gold)}
 .price .val small{font-size:18px;color:var(--muted);font-weight:600}
 .price .note{color:var(--soft);font-size:13px;margin-top:6px}
 .guarantee{display:inline-flex;align-items:center;gap:8px;margin-top:16px;color:#9be7c4;font-size:13px;font-weight:700}
+/* comparativo Grátis × Pro */
+.cmp{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.cmp th,.cmp td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line)}
+.cmp thead th{background:rgba(124,118,210,.10);color:var(--ink);font-size:13px}
+.cmp thead th:last-child{color:var(--gold)}
+.cmp td:not(:first-child){text-align:center;width:84px}
+.cmp .y{color:#9be7c4;font-weight:800}.cmp .n{color:var(--soft)}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{color:var(--muted)}
+/* faixa de lançamento */
+.launch{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;background:rgba(231,201,139,.12);
+  border:1px solid rgba(231,201,139,.32);border-radius:14px;padding:11px 16px;margin-bottom:14px;color:#e8dcc2;font-size:13.5px;font-weight:700}
+.launch b{color:var(--gold)}
 /* FAQ */
 details{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:4px 16px;margin:8px 0}
 details summary{cursor:pointer;font-weight:700;padding:12px 0;list-style:none}
@@ -134,9 +147,28 @@ details p{color:var(--muted);font-size:14px;margin:0 0 14px}
     </ul>
   </section>
 
+  <!-- COMPARATIVO -->
+  <section class="block">
+    <h2>Grátis × Pro</h2>
+    <p class="lead">O que já é livre continua livre. O Pro abre a obra integral.</p>
+    <table class="cmp">
+      <thead><tr><th>Recurso</th><th>Grátis</th><th>Pro</th></tr></thead>
+      <tbody>
+        <tr><td>Triagens, CAA e diário</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Biblioteca educativa aberta</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>210 protocolos J26 (integral)</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Escalas item a item</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Farmacoterapia por classe</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Diretriz dosimétrica TEA</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Atualizações futuras da obra</td><td class="n">—</td><td class="y">✓</td></tr>
+      </tbody>
+    </table>
+  </section>
+
   <!-- PLANO / PREÇO -->
   <section class="block" id="planos">
     <h2>Acesso Pro</h2>
+    <div class="launch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold)"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>Preço de lançamento</b> — valor sobe após as primeiras turmas.</span></div>
     <div class="price">
       <div class="tag">Licença vitalícia</div>
       <div class="val" id="priceVal">R$ 127<small> à vista</small></div>
