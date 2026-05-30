@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0e0e22">
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0e0e22">
 <title>NeuroPed EDJ — Smoke Test Operacional</title>
 <style>:root{--cream:#0a0a16;--teal:#6d6af5;--gold:#b8963e;--wine:#f2dca6;--dark:#ECEAFF;--muted:#b6b2e6;--line:rgba(169,164,255,.16)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#0a0a16,#0e0e22);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--dark);line-height:1.55}.wrap{max-width:1120px;margin:auto;padding:24px 18px}.hero{background:linear-gradient(135deg,#14132a,rgba(124,118,210,.08));border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:0 16px 44px rgba(80,38,20,.09)}h1{font:700 clamp(30px,5vw,54px)/1.04 Georgia,serif;color:var(--wine);margin:0 0 8px}.btn,button{border:0;border-radius:14px;background:var(--teal);color:white;padding:12px 14px;font-weight:900;cursor:pointer;text-decoration:none}.ghost{background:rgba(124,118,210,.08);color:var(--wine);border:1px solid var(--line)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:18px}.card{background:rgba(124,118,210,.08);border:1px solid var(--line);border-radius:20px;padding:14px}.ok{border-left:6px solid #15803d}.fail{border-left:6px solid #b91c1c}.warn{border-left:6px solid var(--gold)}pre{white-space:pre-wrap;background:#ECEAFF;color:#0a0a16;border-radius:18px;padding:14px;overflow:auto}.muted{color:var(--muted)}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}</style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
@@ -17,7 +18,7 @@ add('Rota CAA carrega',async()=>{const r=await getText('./comunicacao-alternativ
 add('Rota Diário v2 carrega',async()=>{const r=await getText('./diario-escola-terapias-v2.html');return r.ok&&expect(r.text,'Diário')});
 add('Manifest contém CAA Gratuita',async()=>{const r=await getText('./manifest.json');return r.ok&&expect(r.text,'CAA Gratuita')});
 add('Manifest não contém CAA Premium',async()=>{const r=await getText('./manifest.json');return r.ok&&!expect(r.text,'CAA Premium')&&!expect(r.text,'caa-premium')});
-add('Service worker v18 existe',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'neuroped-edj-v6.5.1')});
+add('Service worker v18 existe',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'neuroped-edj-v6.5.2')});
 add('SW cacheia política master',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'master-access-policy.js')&&expect(r.text,'safe-public-layer.js')});
 add('Política de PIN master carrega',async()=>{const r=await getText('./master-access-policy.js');return r.ok&&expect(r.text,'NeuroPedMasterAccess')&&expect(r.text,'Portal da família')});
 add('Safe layer libera portal família educativo',async()=>{const r=await getText('./safe-public-layer.js');return r.ok&&expect(r.text,'FAMILY_PUBLIC_PATTERNS')&&expect(r.text,'portal-biblioteca')&&expect(r.text,'portal-documentos')});
