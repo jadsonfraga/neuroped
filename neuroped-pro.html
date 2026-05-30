@@ -298,6 +298,28 @@ details p{color:var(--muted);font-size:14px;margin:0 0 14px}
     } catch(e){ msg.className='msg err'; msg.textContent='Não foi possível validar agora.'; }
   });
   byId('codeInput').addEventListener('keydown', function(e){ if(e.key==='Enter') byId('unlockBtn').click(); });
+
+  /* ============================================================
+     DEPOIMENTOS REAIS — preencha a lista abaixo quando tiver.
+     Enquanto vazia, a seção fica oculta (nunca exibimos depoimento
+     inventado). Para adicionar, copie o modelo:
+       { texto:'...', nome:'Dra. Fulana', papel:'Pediatra · Recife' }
+     ============================================================ */
+  var DEPOIMENTOS = [
+    // { texto:'', nome:'', papel:'' },
+  ];
+  (function renderDeps(){
+    var sec = byId('depoimentos'), grid = byId('depsGrid');
+    if (!sec || !grid) return;
+    var reais = DEPOIMENTOS.filter(function(d){ return d && d.texto && d.nome; });
+    if (!reais.length){ sec.hidden = true; return; }
+    var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+    grid.innerHTML = reais.map(function(d){
+      var ini = (d.nome.trim()[0] || '•').toUpperCase();
+      return '<figure class="dep"><p>'+esc(d.texto)+'</p><figcaption class="who"><span class="av">'+esc(ini)+'</span><span><b>'+esc(d.nome)+'</b><span>'+esc(d.papel||'')+'</span></span></figcaption></figure>';
+    }).join('');
+    sec.hidden = false;
+  })();
 })();
 </script>
 <script src="./app-polish-mobile.js" defer></script>
