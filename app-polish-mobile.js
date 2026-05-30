@@ -212,13 +212,41 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.4.0') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.5.0') + '</span>';
     document.body.appendChild(seal);
+  }
+
+  /* Widget de indicacao (crescimento pai-para-pai). So em paginas de familia.
+     Convida a compartilhar a plataforma — leva alcance a quem precisa, eticamente,
+     sem coletar nenhum dado. */
+  var REFERRAL_PAGES = ['portal-familia-livre.html','area-filho.html','comunicacao-alternativa.html','diario-escola-terapias-v2.html','central-atalhos.html'];
+  function referralWidget(){
+    if (document.getElementById('npReferral')) return;
+    var here = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    if (REFERRAL_PAGES.indexOf(here) < 0) return;
+    var SHARE_URL = location.origin + (location.pathname.replace(/[^/]+$/, '')) + 'sobre-dr-jadson.html';
+    var TXT = 'Conheça o NeuroPed, do Dr. Jadson Fraga — apoio à neuropediatria para famílias, escolas e terapeutas:';
+    var box = document.createElement('div');
+    box.id = 'npReferral';
+    box.style.cssText = 'max-width:1020px;margin:22px auto 0;padding:16px 18px;border:1px solid rgba(231,201,139,.28);'
+      + 'border-radius:18px;background:rgba(231,201,139,.08);display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between';
+    box.innerHTML = '<div style="flex:1;min-width:220px">'
+      + '<strong style="display:block;color:#f2dca6;font:700 15px var(--np-font-display,Georgia,serif)">Conhece outra família que precisa disso?</strong>'
+      + '<span style="color:#b6b2e6;font-size:13px">Compartilhar leva informação séria e acolhimento a quem precisa.</span></div>'
+      + '<button id="npRefBtn" type="button" style="border:0;border-radius:13px;cursor:pointer;font-weight:800;font-size:14px;'
+      + 'padding:12px 18px;background:linear-gradient(180deg,#e7c98b,#caa56a);color:#241a05;display:inline-flex;gap:8px;align-items:center">'
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg>Indicar</button>';
+    var main = document.querySelector('main') || document.body;
+    main.appendChild(box);
+    document.getElementById('npRefBtn').addEventListener('click', function(){
+      if (navigator.share) { navigator.share({ title:'NeuroPed · Dr. Jadson Fraga', text:TXT, url:SHARE_URL }).catch(function(){}); }
+      else window.open('https://wa.me/?text=' + encodeURIComponent(TXT + ' ' + SHARE_URL), '_blank', 'noopener');
+    });
   }
 
   function boot(){
     themeColor();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); referralWidget(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
