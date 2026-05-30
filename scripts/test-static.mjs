@@ -307,6 +307,14 @@ assertIncludes('index.html', 'maximum-scale=1', 'index.html trava o zoom de toqu
 assertIncludes('app-polish-mobile.css', 'touch-action: manipulation', 'polish global desativa double-tap-zoom');
 assertIncludes('tour.js', 'npt-x', 'tour tem botão × de fechar/pular em todos os passos');
 assertIncludes('tour.js', "ev.key==='Escape'", 'tour fecha com ESC');
+// Segurança: links target=_blank gerados no checklist usam rel=noopener (anti-tabnabbing)
+assertIncludes('teste-e2e-manual.html', 'rel="noopener"', 'checklist usa rel=noopener em links externos');
+// Performance: janela de impressão do filtro não injeta o chrome do app
+{
+  const c = file('filtro-escalas.html');
+  const total = (c.match(/app-polish-mobile\.js/g) || []).length;
+  total === 1 ? pass('filtro-escalas carrega o polish 1× (sem injeção no print)') : fail('filtro-escalas com app-polish duplicado', `${total}×`);
+}
 // favicon e página de teste sem paleta antiga
 assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
 assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');
