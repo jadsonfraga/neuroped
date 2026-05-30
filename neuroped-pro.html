@@ -168,10 +168,10 @@ details p{color:var(--muted);font-size:14px;margin:0 0 14px}
   <!-- PLANO / PREÇO -->
   <section class="block" id="planos">
     <h2>Acesso Pro</h2>
-    <div class="launch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold)"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>Preço de lançamento</b> — valor sobe após as primeiras turmas.</span></div>
+    <div class="launch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold)"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg><span><b>Pagamento único · acesso vitalício</b> — menos que o valor de uma consulta.</span></div>
     <div class="price">
       <div class="tag">Licença vitalícia</div>
-      <div class="val" id="priceVal">R$ 127<small> à vista</small></div>
+      <div class="val" id="priceVal">R$ 47<small> à vista</small></div>
       <div class="note">ou parcelado no cartão · acesso imediato após o pagamento</div>
       <div style="margin-top:18px">
         <a class="btn primary" id="checkoutBtn" href="#" style="font-size:16px;padding:16px 28px">Garantir meu acesso Pro</a>
@@ -217,7 +217,7 @@ details p{color:var(--muted);font-size:14px;margin:0 0 14px}
   'use strict';
   // >>> CONFIGURE AQUI o link de checkout da sua plataforma (Kiwify/Hotmart/MP) <<<
   var CHECKOUT_URL = ''; // ex.: 'https://pay.kiwify.com.br/SEU-PRODUTO'
-  var PRICE = 'R$ 127';
+  var PRICE = 'R$ 47';
 
   var byId = function(id){return document.getElementById(id);};
   byId('priceVal').innerHTML = PRICE + '<small> à vista</small>';

@@ -39,8 +39,9 @@ em `https://jadsonfraga.github.io/neuroped/`. **53 telas .html.** Funciona offli
 Apenas **2 passos**, ambos fora do código (dependem do autor):
 
 1. **Checkout não configurado.** `CHECKOUT_URL` em `neuroped-pro.html` está **vazio**
-   (`''`). Hoje o botão "Comprar" cai no WhatsApp. → Criar produto na **Kiwify/Hotmart**
-   e colar o link de pagamento.
+   (`''`). Hoje o botão "Comprar" cai no WhatsApp. → Criar link de pagamento no
+   **Mercado Pago** (R$ 47, estratégia de volume) e colar o link. Entrega do código
+   é **manual** no início (ver `docs/PROMPT_CLAUDE_CHROME.md`).
 2. **Códigos reais não gerados.** `pro-hashes.js` tem só o **lote DEMO**. → Abrir
    `gerar-licencas-pro.html` (com PIN master), gerar lote, publicar os hashes e
    cadastrar os códigos na plataforma de venda como entrega pós-pagamento.
