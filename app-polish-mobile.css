@@ -47,6 +47,27 @@ h1, h2, h3, .h-sec, .view-title, .report-title, .brand-title, .cover h1, .hero h
   letter-spacing: -0.015em;
 }
 
+/* Skeleton loaders reutilizaveis (sensacao de app, nao de site estatico) */
+.np-skel {
+  background: linear-gradient(100deg, rgba(124,118,210,.08) 40%, rgba(169,164,255,.18) 50%, rgba(124,118,210,.08) 60%);
+  background-size: 220% 100%;
+  border-radius: 12px;
+  animation: np-shimmer 1.3s ease-in-out infinite;
+}
+.np-skel.line { height: 13px; margin: 8px 0; }
+.np-skel.line.w70 { width: 70%; } .np-skel.line.w90 { width: 90%; } .np-skel.line.w50 { width: 50%; }
+.np-skel.card { height: 92px; margin: 10px 0; border-radius: 18px; }
+@keyframes np-shimmer { from { background-position: 180% 0; } to { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .np-skel { animation: none; } }
+
+/* Empty-state institucional (quando nao ha registros ainda) */
+.empty, .np-empty {
+  text-align: center; padding: 34px 18px; color: var(--muted, #b6b2e6);
+}
+.empty strong, .np-empty strong { display: block; font: 700 17px var(--np-font-display); color: #ECEAFF; margin: 10px 0 4px; }
+.empty span, .np-empty span { display: block; font-size: 13px; opacity: .9; }
+.np-empty .art { width: 64px; height: 64px; margin: 0 auto; opacity: .9; }
+
 /* Touch target minimo - botoes e links de UI nao podem ser menores */
 .btn, button.btn, a.btn, .chip, .pill, .scale-card, .app-action {
   min-height: var(--np-tap);
