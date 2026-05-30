@@ -24,6 +24,8 @@
     + '.npt-btns{display:flex;gap:8px}'
     + '.npt-btn{border:0;border-radius:11px;padding:9px 14px;font:700 13px "DM Sans",Inter,sans-serif;cursor:pointer}'
     + '.npt-skip{background:transparent;color:#9a9ac0}'
+    + '.npt-x{position:absolute;top:10px;right:10px;width:30px;height:30px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#c7c7e6;font:700 17px system-ui;line-height:1;cursor:pointer;display:grid;place-items:center;transition:.2s}'
+    + '.npt-x:hover{background:rgba(255,255,255,.16);color:#fff}'
     + '.npt-prev{background:rgba(255,255,255,.09);color:#e6e6ff}'
     + '.npt-next{background:linear-gradient(180deg,hsl(243 82% 64%),hsl(250 76% 56%));color:#fff;box-shadow:0 8px 20px -6px hsl(243 85% 55% / .7)}'
     + '.npt-help{position:fixed;z-index:99990;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(180deg,hsl(243 82% 64%),hsl(250 76% 56%));color:#fff;font:800 20px system-ui;cursor:pointer;box-shadow:0 10px 28px -6px hsl(243 85% 55% / .7);opacity:.9;transition:transform .2s}'
@@ -77,17 +79,22 @@
       document.body.appendChild(hole);
     }
     var dots=''; for (var d=0; d<STEPS.length; d++) dots += '<span class="npt-dot'+(d===idx?' on':'')+'"></span>';
-    card.innerHTML = '<div class="npt-emoji">'+s.emoji+'</div>'
+    card.innerHTML = '<button class="npt-x" aria-label="Pular e fechar o guia">&times;</button>'
+      + '<div class="npt-emoji">'+s.emoji+'</div>'
       + '<h3 class="npt-title">'+s.title+'</h3>'
       + '<p class="npt-body">'+s.body+'</p>'
       + '<div class="npt-row"><div class="npt-dots">'+dots+'</div><div class="npt-btns">'
-      + (idx>0 ? '<button class="npt-btn npt-prev">Anterior</button>' : '<button class="npt-btn npt-skip">Pular</button>')
+      + (idx>0 ? '<button class="npt-btn npt-prev">Anterior</button>' : '')
+      + '<button class="npt-btn npt-skip">'+(idx>0 ? 'Pular guia' : 'Pular')+'</button>'
       + '<button class="npt-btn npt-next">'+(idx===STEPS.length-1 ? 'Concluir' : 'Próximo')+'</button>'
       + '</div></div>';
     positionCard(target);
     card.querySelector('.npt-next').onclick = function(){ idx===STEPS.length-1 ? finish() : show(idx+1); };
     var p = card.querySelector('.npt-prev'); if (p) p.onclick = function(){ show(idx-1); };
     var sk = card.querySelector('.npt-skip'); if (sk) sk.onclick = finish;
+    var xb = card.querySelector('.npt-x'); if (xb) xb.onclick = finish;
+    // ESC também fecha/pula o guia
+    if (!card.__escBound){ card.__escBound = true; document.addEventListener('keydown', function onEsc(ev){ if(ev.key==='Escape'){ document.removeEventListener('keydown', onEsc); finish(); } }); }
   }
 
   function ensureHelp(){ if (document.querySelector('.npt-help')) return; var h = el('button','npt-help','?'); h.setAttribute('aria-label','Rever tour do app'); h.title='Rever tour'; h.onclick = function(){ show(0); }; document.body.appendChild(h); }
