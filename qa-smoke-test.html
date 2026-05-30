@@ -18,7 +18,7 @@ add('Rota CAA carrega',async()=>{const r=await getText('./comunicacao-alternativ
 add('Rota Diário v2 carrega',async()=>{const r=await getText('./diario-escola-terapias-v2.html');return r.ok&&expect(r.text,'Diário')});
 add('Manifest contém CAA Gratuita',async()=>{const r=await getText('./manifest.json');return r.ok&&expect(r.text,'CAA Gratuita')});
 add('Manifest não contém CAA Premium',async()=>{const r=await getText('./manifest.json');return r.ok&&!expect(r.text,'CAA Premium')&&!expect(r.text,'caa-premium')});
-add('Service worker v18 existe',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'neuroped-edj-v6.6.1')});
+add('Service worker v18 existe',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'neuroped-edj-v6.6.2')});
 add('SW cacheia política master',async()=>{const r=await getText('./sw.js');return r.ok&&expect(r.text,'master-access-policy.js')&&expect(r.text,'safe-public-layer.js')});
 add('Política de PIN master carrega',async()=>{const r=await getText('./master-access-policy.js');return r.ok&&expect(r.text,'NeuroPedMasterAccess')&&expect(r.text,'Portal da família')});
 add('Safe layer libera portal família educativo',async()=>{const r=await getText('./safe-public-layer.js');return r.ok&&expect(r.text,'FAMILY_PUBLIC_PATTERNS')&&expect(r.text,'portal-biblioteca')&&expect(r.text,'portal-documentos')});

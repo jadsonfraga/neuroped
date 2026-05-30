@@ -302,6 +302,11 @@ assertIncludes('instrumento.html', 'ato médico', 'instrumento.html lembra que d
 assertIncludes('instrumento-autoral.html', 'Natureza da ferramenta', 'instrumento-autoral.html declara natureza não-diagnóstica');
 assertIncludes('instrumento-autoral.html', 'SAMU 192', 'alerta de risco direciona à emergência (SAMU 192)');
 assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece apoio emocional (CVV 188)');
+// UX: anti-zoom no toque + tour com saída sempre disponível
+assertIncludes('index.html', 'maximum-scale=1', 'index.html trava o zoom de toque (viewport maximum-scale=1)');
+assertIncludes('app-polish-mobile.css', 'touch-action: manipulation', 'polish global desativa double-tap-zoom');
+assertIncludes('tour.js', 'npt-x', 'tour tem botão × de fechar/pular em todos os passos');
+assertIncludes('tour.js', "ev.key==='Escape'", 'tour fecha com ESC');
 // favicon e página de teste sem paleta antiga
 assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
 assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');

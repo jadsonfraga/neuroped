@@ -68,6 +68,14 @@ h1, h2, h3, .h-sec, .view-title, .report-title, .brand-title, .cover h1, .hero h
 .empty span, .np-empty span { display: block; font-size: 13px; opacity: .9; }
 .np-empty .art { width: 64px; height: 64px; margin: 0 auto; opacity: .9; }
 
+/* Anti-zoom no toque: impede o "pulo" de zoom a cada clique (double-tap) e o
+   auto-ajuste de fonte do iOS. Combinado com maximum-scale=1 no viewport. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+a, button, [role="button"], input, select, textarea, label,
+.card, .chip, .pill, .tab, .nav a, .scale-card, .app-action {
+  touch-action: manipulation;
+}
+
 /* Touch target minimo - botoes e links de UI nao podem ser menores */
 .btn, button.btn, a.btn, .chip, .pill, .scale-card, .app-action {
   min-height: var(--np-tap);
