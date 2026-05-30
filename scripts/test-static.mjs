@@ -305,6 +305,15 @@ assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece a
 // favicon e página de teste sem paleta antiga
 assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');
 assertIncludes('teste-e2e-manual.html', 'noindex', 'página de teste interna marcada como noindex');
+// páginas internas/admin/teste não devem ser indexadas pelo Google
+for (const f of ['auditoria-operacional.html','qa-smoke-test.html','qualidade-neuroped.html','teste-ouro-pin.html','verificar-app.html','gerar-licencas-pro.html']) {
+  assertIncludes(f, 'noindex', `${f} (interna) marcada como noindex`);
+}
+// telas de triagem/escala mantêm aviso ético (não substitui avaliação)
+for (const f of ['escalas.html','mapa-escalas.html']) {
+  const c = file(f);
+  /substitui avaliação|substituem .*avaliação|avaliação clínica/i.test(c) ? pass(`${f} mantém aviso ético`) : fail(`${f} sem aviso ético`);
+}
 
 // ===== Filtro: visões/triangulação + impacto pós-medicação =====
 assertFile('scales-impacto-medicacao.js');
