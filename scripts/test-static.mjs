@@ -107,6 +107,22 @@ assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem 
 assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
 assertNotIncludes('central-atalhos.html', 'reservada por PIN', 'hub não descreve biblioteca como reservada (já é aberta)');
 
+// Polimento: skeletons, estados vazios, selo de qualidade, acessibilidade
+assertIncludes('app-polish-mobile.css', '.np-skel', 'skeleton loaders definidos (sensação de app)');
+assertIncludes('app-polish-mobile.css', '.np-empty', 'estado vazio institucional definido');
+assertIncludes('filtro-escalas.html', 'np-skel', 'filtro mostra skeleton enquanto carrega');
+assertIncludes('app-polish-mobile.js', 'qualitySeal', 'selo de qualidade no rodapé (robustez)');
+assertIncludes('diario-escola-terapias-v2.html', 'aria-label="Novo registro"', 'diário tem aria-label nos botões só-ícone');
+assertIncludes('diario-escola-terapias-v2.html', 'np-empty', 'diário usa estado vazio institucional');
+{
+  // selo exibe a versão canônica (mantém honestidade do número)
+  const pj = file('package.json'); let v = '';
+  try { v = JSON.parse(pj).version; } catch {}
+  const js = file('app-polish-mobile.js');
+  (v && js.includes("'" + v + "'")) ? pass(`selo de qualidade referencia a versão canônica ${v}`)
+    : fail('selo de qualidade desalinhado da versão', v);
+}
+
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
 assertFile('np-cloud.js');

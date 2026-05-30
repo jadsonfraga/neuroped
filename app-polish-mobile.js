@@ -203,9 +203,22 @@
     window.addEventListener('beforeunload', function(){ clearTimeout(timer); });
   }
 
+  /* Selo de qualidade discreto no rodape (robustez/manutencao ativa).
+     Injetado uma vez por pagina; le a versao do manifest se disponivel. */
+  function qualitySeal(){
+    if (EMBEDDED || document.getElementById('npQualitySeal')) return;
+    var seal = document.createElement('div');
+    seal.id = 'npQualitySeal';
+    seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
+    seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
+      + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.3.1') + '</span>';
+    document.body.appendChild(seal);
+  }
+
   function boot(){
     themeColor();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
