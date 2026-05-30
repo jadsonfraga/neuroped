@@ -17,12 +17,16 @@
   var SESSION_KEY = 'np_pro_unlock_v1';
 
   function norm(s) {
-    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    return String(s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
   function format(s) {
     var c = norm(s);
-    // PRO + 8 chars → PRO-XXXX-XXXX
+    // Prefixo PRO fixo + 8 chars agrupados → PRO-XXXX-XXXX (display limpo)
+    if (c.indexOf('PRO') === 0) {
+      var rest = c.slice(3);
+      return 'PRO-' + rest.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+    }
     return c.replace(/(.{4})/g, '$1-').replace(/-$/, '');
   }
   async function sha256(s) {
