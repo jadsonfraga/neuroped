@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e0e22">
+<meta name="robots" content="noindex">
+<title>Gerar Licenças Pro — NeuroPed (uso do autor)</title>
+<link rel="stylesheet" href="./app-polish-mobile.css">
+<style>
+:root{--bg:#0a0a16;--bg2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--line:rgba(169,164,255,.16);--indigo:#6d6af5;--indigo-d:#4f46e5;--indigo-l:#a9a4ff;--gold:#e7c98b;--paper:rgba(124,118,210,.08)}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;min-height:100vh;background:linear-gradient(160deg,var(--bg),var(--bg2))}
+.wrap{max-width:760px;margin:auto;padding:20px 16px 80px}
+h1{font-size:26px;color:var(--gold);margin:0 0 4px}.muted{color:var(--muted)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}
+label{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+input,button{font:inherit}
+input[type=number]{width:120px;background:rgba(20,18,46,.6);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:11px}
+.btn{border:0;border-radius:13px;padding:13px 18px;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--indigo),var(--indigo-d))}
+.btn.gold{background:linear-gradient(180deg,var(--gold),#caa56a);color:#241a05}
+.gate{text-align:center;padding:34px 18px}
+.gate input{text-align:center;letter-spacing:.1em;width:min(260px,80vw)}
+pre{white-space:pre-wrap;word-break:break-all;background:rgba(20,18,46,.6);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12.5px;color:#cfccf2;max-height:280px;overflow:auto}
+.steps{counter-reset:s;list-style:none;padding:0;margin:10px 0 0}
+.steps li{position:relative;padding:8px 0 8px 30px;color:var(--muted);font-size:13.5px}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;background:var(--indigo);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Gerar Licenças Pro</h1>
+  <p class="muted">Ferramenta do autor. Gera códigos de venda e os hashes para publicar no app.</p>
+
+  <section id="gate" class="card gate">
+    <p class="muted">Área protegida. Informe o <strong>PIN master</strong>.</p>
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN master" autocomplete="off" aria-label="PIN master">
+    <div style="margin-top:12px"><button class="btn" id="pinGo">Entrar</button></div>
+  </section>
+
+  <section id="tool" class="hide">
+    <div class="card">
+      <label for="qtd">Quantos códigos gerar?</label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="number" id="qtd" value="10" min="1" max="500">
+        <button class="btn gold" id="gen">Gerar lote</button>
+      </div>
+    </div>
+
+    <div class="card" id="out" class="hide" style="display:none">
+      <label>1 · Códigos para VENDER (entregue um por comprador na plataforma)</label>
+      <pre id="codes"></pre>
+      <button class="btn" id="copyCodes" style="margin-bottom:14px">Copiar códigos</button>
+
+      <label>2 · Hashes para PUBLICAR (cole em pro-hashes.js → NEUROPED_PRO_HASHES)</label>
+      <pre id="hashes"></pre>
+      <button class="btn" id="copyHashes">Copiar hashes</button>
+
+      <ol class="steps">
+        <li>Copie os <strong>hashes</strong> e substitua/adicione na lista de <code>pro-hashes.js</code>; publique o app.</li>
+        <li>Cadastre cada <strong>código</strong> na sua plataforma (Kiwify/Hotmart) como entrega após o pagamento.</li>
+        <li>O comprador digita o código em <code>neuroped-pro.html</code> e libera o acesso.</li>
+        <li>Guarde os códigos em local seguro — eles não podem ser recuperados depois.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<script src="./master-access-policy.js"></script>
+<script src="./pro-license.js"></script>
+<script>
+(function(){
+  'use strict';
+  var byId=function(id){return document.getElementById(id);};
+  var AL='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function rnd(n){var a=new Uint32Array(n);crypto.getRandomValues(a);var s='';for(var i=0;i<n;i++)s+=AL[a[i]%AL.length];return s;}
+
+  function unlocked(){try{return !!(window.NeuroPedMasterAccess&&window.NeuroPedMasterAccess.isUnlocked());}catch(e){return false;}}
+  function reflect(){ if(unlocked()){ byId('gate').classList.add('hide'); byId('tool').classList.remove('hide'); } }
+  reflect();
+  byId('pinGo').addEventListener('click', function(){
+    if(!window.NeuroPedMasterAccess) return;
+    window.NeuroPedMasterAccess.unlockIfPin(byId('pin').value).then(function(){ reflect(); });
+  });
+  byId('pin').addEventListener('keydown',function(e){if(e.key==='Enter')byId('pinGo').click();});
+
+  byId('gen').addEventListener('click', async function(){
+    var q=Math.max(1,Math.min(500,parseInt(byId('qtd').value,10)||10));
+    var codes=[],hashes=[];
+    for(var i=0;i<q;i++){
+      var code=window.NeuroPedPro.format('PRO'+rnd(8));
+      codes.push(code);
+      hashes.push(await window.NeuroPedPro.sha256(window.NeuroPedPro.norm(code)));
+    }
+    byId('codes').textContent=codes.join('\n');
+    byId('hashes').textContent='"'+hashes.join('",\n"')+'"';
+    byId('out').style.display='block';
+  });
+  function copy(id){var t=byId(id).textContent;if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){alert('Copiado.');});}
+  byId('copyCodes').addEventListener('click',function(){copy('codes');});
+  byId('copyHashes').addEventListener('click',function(){copy('hashes');});
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+</body>
+</html>

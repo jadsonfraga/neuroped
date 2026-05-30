@@ -123,6 +123,21 @@ assertIncludes('diario-escola-terapias-v2.html', 'np-empty', 'diário usa estado
     : fail('selo de qualidade desalinhado da versão', v);
 }
 
+// ===== Monetização: NeuroPed Pro (licença por código, offline, sem backend) =====
+assertFile('neuroped-pro.html');
+assertFile('pro-license.js');
+assertFile('pro-hashes.js');
+assertFile('gerar-licencas-pro.html');
+assertIncludes('pro-license.js', 'NEUROPED_PRO_HASHES', 'pro-license valida contra lista de hashes (sem guardar códigos)');
+assertIncludes('pro-license.js', 'crypto.subtle.digest', 'pro-license usa SHA-256 (verificação offline segura)');
+assertNotIncludes('pro-hashes.js', 'PRO-', 'pro-hashes NÃO contém códigos em texto (só hashes)');
+assertIncludes('neuroped-pro.html', 'Garantia de 7 dias', 'landing Pro informa direito de arrependimento (CDC)');
+assertIncludes('neuroped-pro.html', 'não estabelece diagnóstico', 'landing Pro mantém disclaimer de natureza educativa');
+assertIncludes('neuroped-pro.html', 'CHECKOUT_URL', 'landing Pro tem ponto único de configuração do checkout');
+assertIncludes('neuroped-master-biblioteca.html', 'pro-license.js', 'biblioteca reconhece licença Pro');
+assertIncludes('gerar-licencas-pro.html', 'noindex', 'gerador de licenças é noindex (uso do autor)');
+assertIncludes('gerar-licencas-pro.html', 'unlockIfPin', 'gerador de licenças exige PIN master');
+
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
 assertFile('np-cloud.js');

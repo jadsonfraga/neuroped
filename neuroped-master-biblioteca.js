@@ -14,7 +14,11 @@
   function $(id){ return document.getElementById(id); }
   function cap(s){ s = String(s||''); return s.charAt(0).toUpperCase() + s.slice(1); }
   function low(s){ s = String(s||''); return s.charAt(0).toLowerCase() + s.slice(1); }
-  function unlocked(){ try{ return !!(window.NeuroPedMasterAccess && window.NeuroPedMasterAccess.isUnlocked()); }catch(e){ return false; } }
+  function unlocked(){ try{
+    if (window.NeuroPedMasterAccess && window.NeuroPedMasterAccess.isUnlocked()) return true;
+    if (window.NeuroPedPro && window.NeuroPedPro.isPro()) return true;   // licença Pro também libera
+    return false;
+  }catch(e){ return false; } }
 
   /* ---------- ícones vetoriais ---------- */
   var ICON = {
