@@ -327,6 +327,12 @@ assertFile('guia-lancamento.html');
 assertIncludes('guia-lancamento.html', 'np_launch_progress_v1', 'guia de lançamento salva progresso (checklist)');
 assertIncludes('neuroped-pro.html', 'Grátis × Pro', 'landing Pro tem comparativo Grátis × Pro (conversão)');
 assertIncludes('neuroped-pro.html', 'Como funciona', 'landing Pro tem passo a passo (reduz fricção de compra)');
+assertIncludes('neuroped-pro.html', 'id="depoimentos"', 'landing Pro tem estrutura de prova social (depoimentos)');
+{
+  const c = file('neuroped-pro.html');
+  // a seção de depoimentos nasce oculta (nunca exibe depoimento inventado)
+  /id="depoimentos"[^>]*\shidden/.test(c) ? pass('depoimentos ocultos por padrão (sem prova social falsa)') : fail('depoimentos deveriam nascer ocultos');
+}
 assertIncludes('neuroped-pro.html', 'acesso vitalício', 'landing Pro tem âncora de valor honesta (vitalício)');
 assertIncludes('portal-familia-livre.html', 'neuroped-pro.html', 'portal da família expõe o NeuroPed Pro (descoberta = vendas)');
 assertIncludes('central-atalhos.html', 'guia-lancamento.html', 'hub linka o guia de lançamento');
