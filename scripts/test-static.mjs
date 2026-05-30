@@ -365,6 +365,25 @@ if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:
   (file('verificar-app.html')||'').includes(`'${ver}'`)?pass(`verificar-app.html referencia a versão canônica ${ver}`):fail('verificar-app.html não referencia a versão canônica',ver);
 }catch(e){fail('package.json inválido',e.message)}}
 
+// ===== Compliance de identidade (varredura cross-file, anti-regressão) =====
+{
+  const htmlFiles = readdirSync(root).filter(f => f.endsWith('.html'));
+  let crmBad = [], addrBad = [];
+  // Registro profissional: SÓ CRM-PE 25227. Qualquer outro CRM de UF é divergente.
+  const crmRe = /CRM[-\s]?([A-Z]{2})\s?\d/g;
+  // Endereço: aceitar apenas a forma canônica padronizada.
+  const oldAddrRe = /Raimundo Lacerda,\s*(00?1|nº\s*1)\b/;
+  for (const f of htmlFiles) {
+    const c = file(f);
+    let m; while ((m = crmRe.exec(c))) { if (m[1] !== 'PE') crmBad.push(`${f}:${m[0]}`); }
+    if (oldAddrRe.test(c)) addrBad.push(f);
+  }
+  crmBad.length === 0 ? pass('compliance: nenhum CRM divergente (só CRM-PE) em todo o app')
+    : fail('compliance: CRM divergente encontrado (deve ser só CRM-PE)', crmBad.join(', '));
+  addrBad.length === 0 ? pass('compliance: endereço na forma canônica (Casa 01 — Bairro São José) em todo o app')
+    : fail('compliance: endereço em formato divergente', addrBad.join(', '));
+}
+
 console.log('\nNeuroPed static quality check');
 console.log('============================');
 console.log(oks.join('\n'));
