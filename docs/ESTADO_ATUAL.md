@@ -82,7 +82,7 @@ com compliance embutido. Use em qualquer sessão futura.
 
 ## 7. Próximos passos sugeridos (ordem de impacto)
 
-1. **[BLOQUEIO]** Configurar checkout Kiwify + gerar códigos reais (ver §3).
+1. **[BLOQUEIO]** Configurar link de pagamento Mercado Pago (R$ 47) + gerar códigos reais (ver §3).
 2. Testar a compra de ponta a ponta (comprar → código → ativar Pro).
 3. Anunciar à base regional (WhatsApp + Instagram — textos em `guia-lancamento.html`).
 4. Google Search Console (indexação nacional).
