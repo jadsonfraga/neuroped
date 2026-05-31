@@ -62,28 +62,28 @@ body{color:var(--ink);min-height:100vh;line-height:1.6;
     <p class="desc">Sem isto, não há como o dinheiro entrar. É a base de tudo.</p>
 
     <label class="step"><input type="checkbox" data-k="s1">
-      <div class="body"><h3>1. Criar conta na Kiwify (grátis)</h3>
-      <p>Plataforma que cuida de pagamento, parcelamento, nota fiscal e reembolso. Cadastro com CPF, sem CNPJ obrigatório para começar.</p>
-      <a class="go" href="https://kiwify.com.br" target="_blank" rel="noopener">Abrir Kiwify →</a></div></label>
+      <div class="body"><h3>1. Acessar o Mercado Pago</h3>
+      <p>Cuida do pagamento (Pix + cartão) com sua conta já existente. Sem mensalidade, taxa baixa por venda. Entre em "Seu negócio" → "Link de pagamento".</p>
+      <a class="go" href="https://www.mercadopago.com.br" target="_blank" rel="noopener">Abrir Mercado Pago →</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s2">
-      <div class="body"><h3>2. Criar o produto "NeuroPed Pro — Acesso Integral"</h3>
-      <p>Tipo: produto digital / acesso. Preço sugerido de partida: <strong>R$ 127</strong> (vitalício). Na entrega, configure o envio de um código por compra (área de membros ou e-mail automático).</p>
-      <div class="tip">Dica: comece com preço de lançamento (ex.: R$ 97) por tempo limitado para as primeiras vendas e provas sociais.</div></div></label>
+      <div class="body"><h3>2. Criar o link de pagamento "NeuroPed Pro — Acesso Integral"</h3>
+      <p>Tipo: produto digital, pagamento único. Valor: <strong>R$ 47</strong> (acesso vitalício). Pix + cartão com parcelamento. A entrega do código é <strong>manual</strong> no início (você envia após o pagamento).</p>
+      <div class="tip">Dica: use o prompt pronto em <code>docs/PROMPT_CLAUDE_CHROME.md</code> para o Claude no Chrome montar isso para você.</div></div></label>
 
     <label class="step"><input type="checkbox" data-k="s3">
       <div class="body"><h3>3. Gerar os códigos de licença</h3>
-      <p>Abra o gerador (pede seu PIN), gere um lote (ex.: 50 códigos), copie os <strong>hashes</strong> para o app e cadastre os <strong>códigos</strong> na Kiwify como entrega.</p>
+      <p>Abra o gerador (pede seu PIN), gere um lote (ex.: 50 códigos), copie os <strong>hashes</strong> para o app. Guarde os <strong>códigos</strong> para enviar a cada comprador.</p>
       <a class="go" href="./gerar-licencas-pro.html">Abrir gerador de licenças →</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s4">
-      <div class="body"><h3>4. Colar o link de checkout no app</h3>
-      <p>Copie o link de pagamento da Kiwify e cole na variável <code>CHECKOUT_URL</code> em <code>neuroped-pro.html</code>. (Me mande o link aqui que eu configuro e testo para você.)</p>
+      <div class="body"><h3>4. Colar o link de pagamento no app</h3>
+      <p>Copie o link do Mercado Pago e cole na variável <code>CHECKOUT_URL</code> em <code>neuroped-pro.html</code>. (Me mande o link aqui que eu configuro e testo para você.)</p>
       <a class="go alt" href="./neuroped-pro.html">Ver página de vendas →</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s5">
       <div class="body"><h3>5. Testar a compra de ponta a ponta</h3>
-      <p>Faça uma compra-teste, receba o código, digite no app e confirme que o acesso Pro libera. Só anuncie depois deste teste passar.</p></div></label>
+      <p>Faça uma compra-teste, gere um código, digite no app e confirme que o acesso Pro libera. Só anuncie depois deste teste passar.</p></div></label>
   </section>
 
   <!-- FASE 2 -->
