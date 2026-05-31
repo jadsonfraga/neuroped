@@ -347,6 +347,10 @@ assertNotIncludes('guia-lancamento.html', 'R$ 127', 'guia de lançamento sem pre
 assertIncludes('guia-lancamento.html', 'Mercado Pago', 'guia de lançamento alinhado ao Mercado Pago');
 assertIncludes('neuroped-pro.html', 'application/ld+json', 'landing Pro tem JSON-LD (rich SEO comercial)');
 assertIncludes('neuroped-pro.html', '"price": "47.00"', 'JSON-LD da landing com preço R$ 47 consistente');
+// Robustez funcional: Diário gera tendências (humor/regularidade) no relatório
+assertIncludes('diario-escola-terapias-v2.html', 'function trendInsights', 'Diário calcula tendências do período');
+assertIncludes('diario-escola-terapias-v2.html', 'trendInsights(regs,hum)', 'relatório do Diário inclui as tendências');
+assertIncludes('diario-escola-terapias-v2.html', 'apoio à observação, não diagnóstico', 'tendências do Diário mantêm disclaimer');
 assertIncludes('neuroped-pro.html', 'id="buyBar"', 'landing tem barra de compra fixa (reduz abandono no mobile)');
 assertIncludes('neuroped-pro.html', 'data-no-bottom-nav', 'landing de vendas sem nav competindo (foco em 1 ação)');
 assertIncludes('app-polish-mobile.js', 'data-no-bottom-nav', 'app-polish suporta opt-out de nav por página');
