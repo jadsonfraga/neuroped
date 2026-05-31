@@ -336,6 +336,12 @@ assertIncludes('neuroped-pro.html', 'id="depoimentos"', 'landing Pro tem estrutu
 assertIncludes('neuroped-pro.html', 'acesso vitalício', 'landing Pro tem âncora de valor honesta (vitalício)');
 assertIncludes('portal-familia-livre.html', 'neuroped-pro.html', 'portal da família expõe o NeuroPed Pro (descoberta = vendas)');
 assertIncludes('sobre-dr-jadson.html', 'neuroped-pro.html', 'página de autoridade leva ao Pro (funil tráfego→oferta)');
+// Inteligência clínica: sinais de alerta (red flags) no filtro de escalas
+assertFile('scales-red-flags.js');
+assertIncludes('scales-red-flags.js', 'NEUROPED_RED_FLAGS', 'módulo de sinais de alerta expõe a base');
+assertIncludes('filtro-escalas.html', 'scales-red-flags.js', 'filtro carrega o módulo de sinais de alerta');
+assertIncludes('filtro-escalas.html', 'renderRedFlags', 'filtro renderiza sinais de alerta por queixa');
+assertIncludes('filtro-escalas.html', 'Apoio à decisão, não diagnóstico', 'painel de alerta mantém disclaimer (não diagnóstico)');
 assertIncludes('neuroped-pro.html', 'id="buyBar"', 'landing tem barra de compra fixa (reduz abandono no mobile)');
 assertIncludes('neuroped-pro.html', 'data-no-bottom-nav', 'landing de vendas sem nav competindo (foco em 1 ação)');
 assertIncludes('app-polish-mobile.js', 'data-no-bottom-nav', 'app-polish suporta opt-out de nav por página');
