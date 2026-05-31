@@ -79,6 +79,10 @@
     document.addEventListener('submit',function(){if(isUnlocked())return;document.querySelectorAll('input').forEach(function(i){if(eligible(i))unlockIfPin(i.value)})},true);
   }
   window.NeuroPedMasterAccess={isUnlocked:isUnlocked,unlockIfPin:unlockIfPin,clear:clear,decorate:decorate};
+  /* A tela de aplicação já existente passa a reconhecer o lote autoral 2 antes de selecionar o instrumento. */
+  if (/instrumento-autoral\.html$/i.test(location.pathname) && !window.NEUROPED_NPE_LOTE2_LOADED && document.readyState==='loading') {
+    document.write('<script src="./scales-autorais-npe-lote2.js"><\/script>');
+  }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){watchInputs();decorate()})}else{watchInputs();decorate()}
   window.addEventListener('hashchange',function(){setTimeout(decorate,120)});
   window.addEventListener('storage',function(ev){if(ev.key===KEY)decorate()});
