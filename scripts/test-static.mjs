@@ -116,7 +116,8 @@ assertIncludes('filtro-escalas.html', '@keyframes npWiggle', 'carinha do chip at
 assertIncludes('filtro-escalas.html', 'class="topbar"', 'filtro tem topbar do app (integrado, não página solta)');
 assertIncludes('filtro-escalas.html', 'central-atalhos.html', 'topbar do filtro volta ao app (hub)');
 // Relevância do filtro: queixa casa por token (não substring frouxa) e sem tema derruba
-assertIncludes('filtro-escalas.html', 'sem nenhuma afinidade temática', 'scoreScale derruba escala irrelevante (filtro filtra de verdade)');
+assertIncludes('filtro-escalas.html', 'inalcançável pela não-temática', 'scoreScale usa patamar: escala temática sempre acima da irrelevante');
+assertIncludes('filtro-escalas.html', 'temBusca?500', 'com queixa/texto só escalas temáticas passam o threshold');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
