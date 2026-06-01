@@ -135,11 +135,11 @@ canvas{width:100%;height:200px;margin-top:16px;background:#fff;border-radius:10p
 <div class="header">
   <button class="btn-create" id="btnCreate" onclick="openNewAppt()">+ Criar</button>
   <div class="spacer"></div>
-  <select id="selClinica">
+  <select id="selClinica" aria-label="Selecionar clínica">
     <option>Consultório Dr. Jadson Fraga</option>
     <option>NeuroPed Petrolina</option>
   </select>
-  <select id="selProfissional">
+  <select id="selProfissional" aria-label="Selecionar profissional">
     <option>Dr. Jadson Fraga</option>
     <option>Dra. Auxiliar</option>
   </select>
@@ -435,16 +435,16 @@ function openNewAppt(date, time) {
 
   showModal(`
     <h3>Novo Agendamento</h3>
-    <label>Data</label><input type="date" id="mData" value="${d}">
-    <label>Hora Início</label><input type="time" id="mHoraI" value="${t}">
-    <label>Hora Fim</label><input type="time" id="mHoraF" value="${endTime}">
-    <label>Paciente</label><input type="text" id="mPaciente" placeholder="Nome do paciente">
-    <label>Tipo de Consulta</label><input type="text" id="mTipo" value="Consulta" placeholder="Ex: Retorno, Primeira consulta">
-    <label>Valor (R$)</label><input type="number" id="mValor" value="150" step="10">
+    <label for="mData">Data</label><input type="date" id="mData" value="${d}">
+    <label for="mHoraI">Hora Início</label><input type="time" id="mHoraI" value="${t}">
+    <label for="mHoraF">Hora Fim</label><input type="time" id="mHoraF" value="${endTime}">
+    <label for="mPaciente">Paciente</label><input type="text" id="mPaciente" placeholder="Nome do paciente">
+    <label for="mTipo">Tipo de Consulta</label><input type="text" id="mTipo" value="Consulta" placeholder="Ex: Retorno, Primeira consulta">
+    <label for="mValor">Valor (R$)</label><input type="number" id="mValor" value="150" step="10">
     <label>Forma de Pagamento</label>
-    <select id="mForma"><option>PIX</option><option>Dinheiro</option><option>Crédito</option><option>Débito</option><option>Convênio</option></select>
+    <select id="mForma" aria-label="Forma de pagamento"><option>PIX</option><option>Dinheiro</option><option>Crédito</option><option>Débito</option><option>Convênio</option></select>
     <label>Status</label>
-    <select id="mStatus"><option>Pendente</option><option>Pago</option></select>
+    <select id="mStatus" aria-label="Status do agendamento"><option>Pendente</option><option>Pago</option></select>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="saveNewAppt()">Salvar</button>
@@ -492,15 +492,15 @@ function openEditAppt(id) {
   if (!appt) return;
   showModal(`
     <h3>Editar Agendamento</h3>
-    <label>Paciente</label><input type="text" id="mPaciente" value="${appt.paciente}">
-    <label>Data</label><input type="date" id="mData" value="${appt.data}">
-    <label>Hora</label><input type="time" id="mHoraI" value="${appt.horaInicio}">
-    <label>Tipo</label><input type="text" id="mTipo" value="${appt.tipo}">
-    <label>Valor (R$)</label><input type="number" id="mValor" value="${appt.valor}" step="10">
+    <label for="mPaciente">Paciente</label><input type="text" id="mPaciente" value="${appt.paciente}">
+    <label for="mData">Data</label><input type="date" id="mData" value="${appt.data}">
+    <label for="mHoraI">Hora</label><input type="time" id="mHoraI" value="${appt.horaInicio}">
+    <label for="mTipo">Tipo</label><input type="text" id="mTipo" value="${appt.tipo}">
+    <label for="mValor">Valor (R$)</label><input type="number" id="mValor" value="${appt.valor}" step="10">
     <label>Forma de Pagamento</label>
-    <select id="mForma">${['PIX','Dinheiro','Crédito','Débito','Convênio'].map(f => `<option${f===appt.formaPagamento?' selected':''}>${f}</option>`).join('')}</select>
+    <select id="mForma" aria-label="Forma de pagamento">${['PIX','Dinheiro','Crédito','Débito','Convênio'].map(f => `<option${f===appt.formaPagamento?' selected':''}>${f}</option>`).join('')}</select>
     <label>Status</label>
-    <select id="mStatus">${['Pendente','Pago','Cancelado'].map(s => `<option${s===appt.statusPagamento?' selected':''}>${s}</option>`).join('')}</select>
+    <select id="mStatus" aria-label="Status do agendamento">${['Pendente','Pago','Cancelado'].map(s => `<option${s===appt.statusPagamento?' selected':''}>${s}</option>`).join('')}</select>
     <div class="modal-btns">
       <button class="btn-delete" onclick="deleteAppt('${id}')">🗑 Excluir</button>
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -559,28 +559,28 @@ function openConfig() {
     daysHtml += `<div class="config-day">
       <input type="checkbox" class="toggle" id="cfgAtivo${i}" ${d.ativo?'checked':''}>
       <label style="min-width:65px;font-weight:600">${dayNames[i]}</label>
-      <input type="time" id="cfgT1i${i}" value="${d.t1i}" placeholder="Início T1" style="width:90px">
+      <input type="time" id="cfgT1i${i}" aria-label="Horário de atendimento" value="${d.t1i}" placeholder="Início T1" style="width:90px">
       <span>-</span>
-      <input type="time" id="cfgT1f${i}" value="${d.t1f}" style="width:90px">
+      <input type="time" id="cfgT1f${i}" aria-label="Horário de atendimento" value="${d.t1f}" style="width:90px">
       <span style="margin:0 4px;font-size:10px;color:#999">T2:</span>
-      <input type="time" id="cfgT2i${i}" value="${d.t2i}" style="width:90px">
+      <input type="time" id="cfgT2i${i}" aria-label="Horário de atendimento" value="${d.t2i}" style="width:90px">
       <span>-</span>
-      <input type="time" id="cfgT2f${i}" value="${d.t2f}" style="width:90px">
+      <input type="time" id="cfgT2f${i}" aria-label="Horário de atendimento" value="${d.t2f}" style="width:90px">
     </div>`;
   }
   showModal(`
     <h3>⚙️ Configuração da Agenda</h3>
     <div class="config-row">
       <label>Duração da consulta:</label>
-      <select id="cfgDur">${[15,20,30,45,60].map(v => `<option value="${v}"${v===c.duracao?' selected':''}>${v} min</option>`).join('')}</select>
+      <select id="cfgDur" aria-label="Duração da consulta">${[15,20,30,45,60].map(v => `<option value="${v}"${v===c.duracao?' selected':''}>${v} min</option>`).join('')}</select>
     </div>
     <div class="config-row">
       <label>Intervalo entre pacientes:</label>
-      <select id="cfgInt">${[0,5,10,15].map(v => `<option value="${v}"${v===c.intervalo?' selected':''}>${v} min</option>`).join('')}</select>
+      <select id="cfgInt" aria-label="Intervalo entre consultas">${[0,5,10,15].map(v => `<option value="${v}"${v===c.intervalo?' selected':''}>${v} min</option>`).join('')}</select>
     </div>
     <div class="config-row">
       <label>Limite por dia:</label>
-      <input type="number" id="cfgLim" value="${c.limiteDia}" min="1" max="50">
+      <input type="number" id="cfgLim" aria-label="Limite de atendimentos por dia" value="${c.limiteDia}" min="1" max="50">
     </div>
     <div style="margin-top:12px">
       <label style="font-weight:600;font-size:13px">Expediente por Dia</label>
@@ -637,10 +637,10 @@ function renderFinanceiro(root) {
       <div class="card"><div class="card-label">Ticket Médio</div><div class="card-value purple">${fmt(ticket)}</div></div>
     </div>
     <div class="filters">
-      <input type="date" id="fDi" value="${mesAtual}-01">
-      <input type="date" id="fDf" value="${hoje}">
-      <select id="fProf"><option value="">Todos</option><option>Dr. Jadson Fraga</option><option>Dra. Auxiliar</option></select>
-      <select id="fStatus"><option value="">Todos</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select>
+      <input type="date" id="fDi" aria-label="Data inicial do filtro" value="${mesAtual}-01">
+      <input type="date" id="fDf" aria-label="Data final do filtro" value="${hoje}">
+      <select id="fProf" aria-label="Filtrar por profissional"><option value="">Todos</option><option>Dr. Jadson Fraga</option><option>Dra. Auxiliar</option></select>
+      <select id="fStatus" aria-label="Filtrar por status"><option value="">Todos</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select>
       <button class="btn-export" onclick="exportCSV()">📥 Exportar CSV</button>
       <button class="btn-sm btn-pago" onclick="applyFilters()" style="margin-left:auto">🔍 Filtrar</button>
     </div>
