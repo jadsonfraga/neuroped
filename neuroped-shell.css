@@ -27,9 +27,17 @@
 
 html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 
+/* Fundo/fonte são definidos por cada página (todas têm o seu). O shell NÃO
+   sobrescreve mais isso — só garante um fundo de segurança via .ns-bg-fallback
+   para páginas realmente sem tema próprio. Mantém apenas ajustes neutros. */
 body[data-ns-shell] {
   margin:0;
   min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+/* Fundo de segurança opt-in: páginas sem tema próprio adicionam class="ns-bg-fallback" */
+body[data-ns-shell].ns-bg-fallback {
   background:
     radial-gradient(1200px 700px at 8% -10%, hsl(243 85% 56% / 0.22), transparent 60%),
     radial-gradient(1100px 720px at 102% 2%, hsl(266 80% 56% / 0.18), transparent 56%),
@@ -38,8 +46,6 @@ body[data-ns-shell] {
   color:var(--ns-ink);
   font-family:var(--ns-font);
   line-height:1.55;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
 }
 
 ::selection { background:rgba(124,118,210,0.4); color:#fff; }
@@ -106,11 +112,9 @@ body[data-ns-shell] .ns-stagger > *:nth-child(n+7) { animation-delay:340ms; }
 .ns-btn.ns-btn-gold { background:linear-gradient(135deg, var(--ns-gold), #c9a554); color:#2a1f0a; }
 .ns-btn.ns-btn-teal { background:linear-gradient(135deg, var(--ns-teal), #059669); }
 
-/* Inputs glassmorphism */
-.ns-input,
-body[data-ns-shell] .panel input:not([type=radio]):not([type=checkbox]):not([type=range]),
-body[data-ns-shell] .panel textarea,
-body[data-ns-shell] .panel select {
+/* Input utilitário (opt-in via classe .ns-input). NÃO mexe em inputs de
+   páginas que já têm design próprio (.panel) — isso causava conflito visual. */
+.ns-input {
   width:100%; padding:12px 14px;
   border:1px solid var(--ns-border); border-radius:var(--ns-radius-md);
   background:rgba(10,9,24,0.55); color:var(--ns-ink);
@@ -119,10 +123,7 @@ body[data-ns-shell] .panel select {
               box-shadow var(--ns-dur-base) var(--ns-ease),
               background var(--ns-dur-base) var(--ns-ease);
 }
-.ns-input:focus,
-body[data-ns-shell] .panel input:focus,
-body[data-ns-shell] .panel textarea:focus,
-body[data-ns-shell] .panel select:focus {
+.ns-input:focus {
   outline:none;
   border-color:var(--ns-indigo);
   box-shadow:0 0 0 4px rgba(124,118,210,0.18);
@@ -223,19 +224,8 @@ body[data-ns-shell] .panel select:focus {
 .ns-text-soft { color:var(--ns-ink-soft); }
 .ns-text-faint { color:var(--ns-ink-faint); }
 
-/* Refinamento de links app-wide */
-body[data-ns-shell] a:not(.ns-btn):not(.jp-card):not(.jp-hero-badge):not(.btn) {
-  color:var(--ns-wine);
-  text-decoration:none;
-  transition:color var(--ns-dur-fast) var(--ns-ease);
-}
-body[data-ns-shell] a:not(.ns-btn):not(.jp-card):not(.jp-hero-badge):not(.btn):hover {
-  color:var(--ns-ink);
-  text-decoration:underline;
-  text-decoration-color:var(--ns-indigo);
-  text-decoration-thickness:2px;
-  text-underline-offset:4px;
-}
+/* (Removido) Refinamento global de links: recoloria os links das páginas que
+   já têm cores próprias, causando conflito. Links seguem o design de cada página. */
 
 /* ===========================================================
    Print / PDF — toda página com data-ns-shell imprime limpa:
