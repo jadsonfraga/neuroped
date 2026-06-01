@@ -93,6 +93,8 @@ assertIncludes('consulta-bridge.js', '/undefined', 'bridge captura #/undefined d
 assertFile('spa-route-watchdog.js');
 assertIncludes('spa-route-watchdog.js', 'forget to add the page', 'watchdog detecta a tela morta do router');
 assertIncludes('spa-route-watchdog.js', 'filtro-escalas.html', 'watchdog resgata ao filtro estático');
+assertIncludes('spa-route-watchdog.js', "addEventListener('click'", 'watchdog intercepta clique em link quebrado (proativo)');
+assertIncludes('spa-route-watchdog.js', 'unhandledrejection', 'watchdog avisa erro silencioso de PDF (toast)');
 assertIncludes('index.html', './spa-route-watchdog.js', 'index.html carrega o watchdog de rota');
 // PDF da SPA: SW sanitiza emoji do gerador (WinAnsi) p/ o PDF não travar
 assertIncludes('sw.js', 'patchPdfGenerator', 'SW corrige o gerador de PDF da SPA (emoji quebrava WinAnsi)');
