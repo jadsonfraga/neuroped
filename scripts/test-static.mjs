@@ -97,6 +97,10 @@ assertIncludes('filtro-escalas.html', 'prefers-reduced-motion', 'motion respeita
 assertIncludes('filtro-escalas.html', 'conic-gradient', 'filtro tem score como anel de progresso (premium)');
 assertIncludes('filtro-escalas.html', 'panel sticky', 'filtro tem painel de entrada fixo (UX premium)');
 assertIncludes('filtro-escalas.html', 'Fraunces', 'filtro usa tipografia premium (Fraunces/Inter)');
+// Chips de queixa com carinha (emoji) + motion fofo
+assertIncludes('filtro-escalas.html', 'class="ce"', 'chips de queixa têm carinha/emoji (não só texto)');
+assertIncludes('filtro-escalas.html', '@keyframes npBounce', 'chip faz bounce ao selecionar (motion fofo)');
+assertIncludes('filtro-escalas.html', '@keyframes npWiggle', 'carinha do chip ativo balança (vivo)');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
