@@ -151,6 +151,15 @@ assertIncludes('mapa-escalas.html', 'backdrop-filter', 'mapa-escalas usa glassmo
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
 assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
 assertIncludes('secretaria.html', 'backdrop-filter', 'secretaria usa glassmorphism (visual unificado)');
+// Estética J26 nos 6 bancos de escalas (sidebar com avatar+sigla+emoji)
+assertFile('escalas-card-premium.css');
+assertFile('escalas-card-premium.js');
+assertIncludes('escalas-card-premium.js', 'jpEmoji', 'decorator tem heurística de emoji por queixa');
+assertIncludes('escalas-card-premium.js', 'jpColor', 'decorator tem cor determinística por categoria');
+for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+  assertIncludes(b, 'escalas-card-premium.css', b+' carrega o CSS premium dos cards');
+  assertIncludes(b, 'escalas-card-premium.js', b+' carrega o decorator J26');
+}
 assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem capa institucional (posicionamento)');
 assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
 assertNotIncludes('central-atalhos.html', 'reservada por PIN', 'hub não descreve biblioteca como reservada (já é aberta)');
