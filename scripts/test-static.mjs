@@ -89,6 +89,11 @@ assertIncludes('safe-public-layer.js', '/filtro', 'safe-public-layer reconhece /
 assertIncludes('safe-public-layer.js', '/escalas', 'safe-public-layer reconhece /escalas como rota familiar');
 assertIncludes('consulta-bridge.js', 'filtro-escalas.html', 'consulta-bridge redireciona hash /filtro para filtro-escalas.html');
 assertIncludes('consulta-bridge.js', '/undefined', 'bridge captura #/undefined da SPA (hotfix) e manda ao filtro estático');
+// Watchdog: rede de segurança contra QUALQUER beco sem saída da SPA
+assertFile('spa-route-watchdog.js');
+assertIncludes('spa-route-watchdog.js', 'forget to add the page', 'watchdog detecta a tela morta do router');
+assertIncludes('spa-route-watchdog.js', 'filtro-escalas.html', 'watchdog resgata ao filtro estático');
+assertIncludes('index.html', './spa-route-watchdog.js', 'index.html carrega o watchdog de rota');
 assertIncludes('index.html', './consulta-bridge.js', 'index.html carrega o bridge de roteamento');
 assertIncludes('filtro-escalas.html', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
 // PDF do Top 5 via iframe (sem pop-up bloqueável) + dinamismo visual
