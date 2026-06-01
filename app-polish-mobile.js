@@ -158,6 +158,25 @@
   }
 
   /* =====================================================
+     6) Viewport anti-zoom (corrige "zoom foge a cada toque" no iOS)
+     Garante maximum-scale=1 em TODAS as telas, sem editar 28 HTMLs.
+     ===================================================== */
+  function fixViewport(){
+    try {
+      var vp = document.querySelector('meta[name="viewport"]');
+      if (!vp) {
+        vp = document.createElement('meta');
+        vp.name = 'viewport';
+        document.head.appendChild(vp);
+      }
+      var c = vp.getAttribute('content') || 'width=device-width, initial-scale=1';
+      if (!/maximum-scale/.test(c)) {
+        vp.setAttribute('content', c.replace(/\s*$/, '') + (/,\s*$/.test(c) ? '' : ',') + 'maximum-scale=1');
+      }
+    } catch (e) {}
+  }
+
+  /* =====================================================
      6) Bridge alert/confirm -> toast/sheet (opcional, opt-in)
      Por padrao NAO sobrescreve para nao quebrar contratos
      existentes. Codigo novo pode usar npToast / npConfirm.
@@ -214,7 +233,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.14.0') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.15.0') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -248,6 +267,7 @@
 
   function boot(){
     themeColor();
+    fixViewport();
     if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); referralWidget(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

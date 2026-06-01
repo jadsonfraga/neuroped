@@ -429,6 +429,11 @@ assertNotIncludes('portal-familia-livre.html', 'nascimento e sobrenome', 'portal
 assertIncludes('diario-escola-terapias-v2.html', 'localStorage.setItem(KEY', 'diário salva localmente (não é mais demo vazio)');
 assertNotIncludes('diario-escola-terapias-v2.html', 'Exportação desativada', 'diário tem exportação real');
 assertIncludes('secretaria.html', 'localStorage.setItem(K', 'secretaria salva localmente (PIN, no aparelho)');
+// Bugs similares varridos: print limpo, sem falha silenciosa de pop-up, anti-zoom global
+assertIncludes('secretaria.html', '@media print', 'secretaria imprime limpo (não a página do app)');
+assertIncludes('family-voucher-ui.js', 'npVoucherFrame', 'voucher imprime via iframe (sem pop-up bloqueável)');
+assertNotIncludes('family-voucher-ui.js', "if(!w)return", 'voucher não falha em silêncio no pop-up bloqueado');
+assertIncludes('app-polish-mobile.js', 'function fixViewport', 'app-polish corrige viewport (anti-zoom) em todas as telas');
 assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
 assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
 assertIncludes('neuroped-master-biblioteca.js', 'Nunca inicie, ajuste ou suspenda medicação', 'doses trazem alerta contra automedicação');
