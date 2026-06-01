@@ -179,8 +179,20 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
   go(ROUTES[initial] ? initial : 'inicio', false);
   setTimeout(hideSplash, 2600); // segurança: nunca trava no splash
 
-  // registra o service worker (mesma origem)
-  if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('./sw.js'); } catch(e){} }
+  // registra o service worker (mesma origem) + força checagem de atualização
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.register('./sw.js').then(function(reg){
+        reg.update();
+        setInterval(function(){ reg.update(); }, 60000);
+      });
+      var swReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if (swReloaded) return; swReloaded = true;
+        window.location.reload();
+      });
+    } catch(e){}
+  }
 })();
 </script>
 </body>

@@ -37,6 +37,11 @@ const criticalFiles = [
 for (const f of criticalFiles) assertFile(f);
 
 assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
+// Cache: JS/CSS internos usam stale-while-revalidate (correções chegam ao usuário)
+assertIncludes('sw.js', 'isCode', 'sw.js trata JS/CSS com stale-while-revalidate (não cache-first eterno)');
+assertIncludes('index.html', 'controllerchange', 'index recarrega quando novo SW assume (pega arquivos novos)');
+assertIncludes('index.html', 'reg.update()', 'index força checagem de atualização do SW');
+assertIncludes('app-shell.html', 'controllerchange', 'app-shell recarrega quando novo SW assume');
 assertIncludes('consulta-pin-fix.js', 'toLowerCase', 'consulta-pin-fix normaliza para lowercase (PIN alfanumérico)');
 assertIncludes('consulta.html', 'MASTER_HASH', 'consulta.html define MASTER_HASH inline');
 assertIncludes('safe-public-layer.js', 'consulta.html?next=', 'área sensível envia para PIN');
