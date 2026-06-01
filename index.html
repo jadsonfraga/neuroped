@@ -68,7 +68,17 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
+          navigator.serviceWorker.register('./sw.js').then(reg => {
+            // procura atualização do SW a cada carga e periodicamente
+            reg.update();
+            setInterval(() => reg.update(), 60000);
+          }).catch(() => {});
+          // quando um novo SW assume o controle, recarrega 1x para servir os arquivos novos
+          let reloaded = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (reloaded) return; reloaded = true;
+            window.location.reload();
+          });
         });
       }
     </script>

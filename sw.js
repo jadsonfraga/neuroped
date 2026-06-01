@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.10.0';
+const CACHE_NAME = 'neuroped-edj-v6.10.1';
 const SHELL = [
   './',
   './app-shell.html',
@@ -74,7 +74,28 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Demais recursos (assets com hash, imagens, css/js): cache-first
+  // JS e CSS internos (sem hash no nome): STALE-WHILE-REVALIDATE.
+  // Serve rápido do cache, mas SEMPRE busca a versão nova em paralelo e atualiza
+  // o cache. Sem isto, JS/CSS antigos ficavam presos para sempre (correções nunca
+  // chegavam ao usuário). Próxima abertura já pega o arquivo novo.
+  const isCode = url.origin === self.location.origin && /\.(js|css)$/i.test(url.pathname);
+  if (isCode) {
+    e.respondWith(
+      caches.match(req).then(hit => {
+        const network = fetch(req).then(res => {
+          if (res && res.ok && res.type === 'basic') {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(req, clone));
+          }
+          return res;
+        }).catch(() => hit);
+        return hit || network;
+      })
+    );
+    return;
+  }
+
+  // Demais recursos (imagens, fontes, assets com hash): cache-first
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res && res.ok && res.type === 'basic') {
