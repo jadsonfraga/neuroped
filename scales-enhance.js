@@ -100,8 +100,6 @@
   }
 
   function printResult(inst, answers, patient){
-    var w = window.open('', '_blank');
-    if (!w) return;
     var t = totalScore(inst, answers);
     var ds = domainScores(inst, answers);
     var tip = tipFor(t.max ? t.score / t.max : 0);
@@ -114,7 +112,7 @@
       }).join('');
       return '<h3>' + esc(d.name) + '</h3><table><thead><tr><th>#</th><th>Item</th><th>Resposta</th></tr></thead><tbody>' + items + '</tbody></table>';
     }).join('');
-    w.document.write(
+    var html =
       '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(inst.title || inst.id) + '</title>' +
       '<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;margin:0 0 6px;color:#7f1d1d}h2{font-size:16px;margin:14px 0 6px;color:#0f766e}h3{font-size:14px;margin:12px 0 4px;color:#7f1d1d}table{width:100%;border-collapse:collapse;margin-bottom:10px}th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;vertical-align:top;text-align:left}th{background:#f4e7d3}.box{border:1px solid #ddd;background:#fafafa;padding:10px;border-radius:8px;margin:8px 0}.tip{padding:8px;border-radius:8px}.warn{font-size:11px;color:#555;margin-top:18px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style>' +
       '</head><body>' +
@@ -129,10 +127,56 @@
       ds.map(function(d){ return '<li>' + esc(d.name) + ': ' + d.score + ' / ' + d.max + (d.max ? ' (' + fmtPct(d.pct) + ')' : '') + '</li>'; }).join('') +
       '</ul>' + rows +
       '<div class="warn">Faixa interpretativa baseada em % do score máximo bruto. Não substitui validação clínica nem cutoffs originais do instrumento. Decisão diagnóstica é do médico responsável.</div>' +
-      '</body></html>'
-    );
-    w.document.close();
-    setTimeout(function(){ w.focus(); w.print(); }, 250);
+      '</body></html>';
+
+    // Impressão via IFRAME oculto na própria página: não depende de pop-up
+    // (que iOS Safari e bloqueadores costumam barrar), eliminando a falha
+    // silenciosa em que o resultado simplesmente não aparecia.
+    try {
+      var old = document.getElementById('npScalesPrintFrame');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var f = document.createElement('iframe');
+      f.id = 'npScalesPrintFrame';
+      f.setAttribute('aria-hidden', 'true');
+      f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';
+      document.body.appendChild(f);
+      var fired = false;
+      function doPrint(){
+        if (fired) return; fired = true;
+        try { f.contentWindow.focus(); f.contentWindow.print(); }
+        catch (e) { popupFallback(html); }
+      }
+      f.onload = function(){ setTimeout(doPrint, 120); };
+      var doc = f.contentWindow.document;
+      doc.open(); doc.write(html); doc.close();
+      // Safari às vezes não dispara onload em about:blank → garante o print
+      setTimeout(doPrint, 600);
+      reportStatus('Gerando resultado para impressão/PDF…');
+    } catch (e) {
+      popupFallback(html);
+    }
+  }
+
+  // Fallback: tenta pop-up; se bloqueado, avisa o usuário em vez de falhar em silêncio.
+  function popupFallback(html){
+    var w = window.open('', '_blank');
+    if (w) {
+      w.document.open(); w.document.write(html); w.document.close();
+      setTimeout(function(){ try { w.focus(); w.print(); } catch (e) {} }, 250);
+      return;
+    }
+    reportStatus('Seu navegador bloqueou a janela de impressão. Libere os pop-ups deste site (ícone na barra de endereço) e tente de novo, ou use "Copiar texto" para gerar o resultado.', true);
+  }
+
+  // Status sempre acessível (escreve no #npScalesStatus por id; alerta se ausente).
+  function reportStatus(msg, isError){
+    var el = document.getElementById('npScalesStatus');
+    if (el) {
+      el.textContent = msg;
+      if (!isError) setTimeout(function(){ if (el.textContent === msg) el.textContent = ''; }, 5000);
+      return;
+    }
+    if (isError) try { alert(msg); } catch (e) {}
   }
 
   function buildPayload(inst, answers, patient){
