@@ -147,6 +147,10 @@ assertIncludes('escalas.html', 'backdrop-filter', 'escalas.html usa glassmorphis
 assertNotIncludes('escalas.html', 'background:linear-gradient(135deg,#ffffff', 'escalas.html sem cards de fundo branco (destoavam)');
 assertIncludes('central-atalhos.html', 'backdrop-filter', 'central-atalhos usa glassmorphism (visual unificado)');
 assertFile('np-cards.css');
+assertIncludes('mapa-escalas.html', 'backdrop-filter', 'mapa-escalas usa glassmorphism (visual unificado)');
+assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
+assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
+assertIncludes('secretaria.html', 'backdrop-filter', 'secretaria usa glassmorphism (visual unificado)');
 assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem capa institucional (posicionamento)');
 assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
 assertNotIncludes('central-atalhos.html', 'reservada por PIN', 'hub não descreve biblioteca como reservada (já é aberta)');
