@@ -177,7 +177,40 @@
   }
 
   /* =====================================================
-     6) Bridge alert/confirm -> toast/sheet (opcional, opt-in)
+     7) Navegação premium: fade-in de entrada, scroll suave,
+        tipografia harmonizada (Fraunces/Inter) — global, sem
+        editar cada HTML. Eleva a sensação de app coeso.
+     ===================================================== */
+  function premiumNav(){
+    try {
+      if (document.getElementById('np-premium-nav-style')) return;
+      // fontes premium (preconnect + stylesheet) se ainda não houver
+      if (!document.querySelector('link[href*="fonts.googleapis"]')) {
+        var pc1 = document.createElement('link'); pc1.rel = 'preconnect'; pc1.href = 'https://fonts.googleapis.com';
+        var pc2 = document.createElement('link'); pc2.rel = 'preconnect'; pc2.href = 'https://fonts.gstatic.com'; pc2.crossOrigin = '';
+        var f = document.createElement('link'); f.rel = 'stylesheet';
+        f.href = 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap';
+        document.head.appendChild(pc1); document.head.appendChild(pc2); document.head.appendChild(f);
+      }
+      var s = document.createElement('style'); s.id = 'np-premium-nav-style';
+      s.textContent =
+        'html{scroll-behavior:smooth}' +
+        // fade + leve subida ao entrar na página (respeitando reduced-motion)
+        '@keyframes npPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
+        '@media(prefers-reduced-motion:no-preference){body{animation:npPageIn .42s cubic-bezier(.22,.9,.25,1) both}}' +
+        // micro-feedback universal ao tocar links/cards/botões
+        'a,button,.card,.chip,.scale-card,.btn,.pill,.tb-pill{ -webkit-tap-highlight-color:rgba(124,118,210,.18) }' +
+        'a:active,button:active,.card:active,.scale-card:active{ transition:transform .08s }' +
+        // foco visível premium e consistente (acessibilidade)
+        'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:2px solid #7c79ff;outline-offset:2px;border-radius:10px}' +
+        // tipografia harmonizada: títulos editoriais usam Fraunces quando a página não definiu fonte própria
+        'h1,h2,h3{font-feature-settings:"ss01","liga"}';
+      document.head.appendChild(s);
+    } catch (e) {}
+  }
+
+  /* =====================================================
+     8) Bridge alert/confirm -> toast/sheet (opcional, opt-in)
      Por padrao NAO sobrescreve para nao quebrar contratos
      existentes. Codigo novo pode usar npToast / npConfirm.
      ===================================================== */
@@ -233,7 +266,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.17.0') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.18.0') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -268,6 +301,7 @@
   function boot(){
     themeColor();
     fixViewport();
+    premiumNav();
     if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); referralWidget(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

@@ -452,6 +452,10 @@ assertIncludes('secretaria.html', '@media print', 'secretaria imprime limpo (nã
 assertIncludes('family-voucher-ui.js', 'npVoucherFrame', 'voucher imprime via iframe (sem pop-up bloqueável)');
 assertNotIncludes('family-voucher-ui.js', "if(!w)return", 'voucher não falha em silêncio no pop-up bloqueado');
 assertIncludes('app-polish-mobile.js', 'function fixViewport', 'app-polish corrige viewport (anti-zoom) em todas as telas');
+assertIncludes('app-polish-mobile.js', 'function premiumNav', 'app-polish injeta navegação premium (fade/scroll/fonte) em todas as telas');
+assertIncludes('app-polish-mobile.js', 'npPageIn', 'fade-in de entrada de página');
+assertIncludes('app-polish-mobile.js', 'scroll-behavior:smooth', 'scroll suave global');
+assertIncludes('app-polish-mobile.js', 'prefers-reduced-motion:no-preference', 'navegação premium respeita reduced-motion');
 assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
 assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
 assertIncludes('neuroped-master-biblioteca.js', 'Nunca inicie, ajuste ou suspenda medicação', 'doses trazem alerta contra automedicação');
