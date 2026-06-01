@@ -465,6 +465,7 @@ for (const p of ['central-atalhos.html','portal-familia-livre.html','sobre-dr-ja
   assertIncludes(p, 'data-ns-shell', p+' ativa o shell no body');
 }
 assertNotIncludes('agenda-financeiro.html', 'data-ns-shell', 'agenda (tema claro) preservada sem shell escuro');
+assertIncludes('acessibilidade.html', 'data-ns-shell', 'acessibilidade (tema escuro) herda o shell unificado');
 assertNotIncludes('consulta.html', 'data-ns-shell', 'consulta (superfície de edição) preservada');
 assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
 assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
