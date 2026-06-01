@@ -470,6 +470,15 @@ for (const p of ['central-atalhos.html','portal-familia-livre.html','sobre-dr-ja
 }
 assertNotIncludes('agenda-financeiro.html', 'data-ns-shell', 'agenda (tema claro) preservada sem shell escuro');
 assertIncludes('acessibilidade.html', 'data-ns-shell', 'acessibilidade (tema escuro) herda o shell unificado');
+// SUPERMEGA v6.21.0: shell em mais páginas escuras + print styles
+assertIncludes('neuroped-shell.css', '@media print', 'shell imprime limpo (esconde nav, cards monocromáticos)');
+for (const p of ['filtro-escalas.html','instrumento.html','neuroped-pro.html','secretaria.html','impacto-medicacao.html','neuroped-master-biblioteca.html']) {
+  assertIncludes(p, 'data-ns-shell', p+' herda o shell unificado');
+}
+assertNotIncludes('assinatura-digital.html', 'data-ns-shell', 'assinatura-digital (superfície de documento) preservada sem shell');
+for (const p of ['filtro-escalas.html','banco-escalas.html','mapa-escalas.html','consulta.html']) {
+  assertIncludes(p, 'name="description"', p+' tem meta description (SEO)');
+}
 assertNotIncludes('consulta.html', 'data-ns-shell', 'consulta (superfície de edição) preservada');
 assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
 assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
