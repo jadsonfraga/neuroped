@@ -70,6 +70,7 @@ assertIncludes('scales-enhance.js', 'laudoText', 'scales-enhance gera texto pra 
 assertIncludes('scales-enhance.js', 'npResultOverlay', 'resultado da escala aparece em overlay na própria tela');
 assertIncludes('scales-enhance.js', 'function showResultOverlay', 'overlay de resultado é renderizado sempre');
 assertIncludes('scales-enhance.js', 'Imprimir / PDF', 'overlay tem botão de imprimir/PDF');
+assertIncludes('scales-enhance.js', 'function fixGlobalPrint', 'intercepta o botão Imprimir da página (que imprimia o app todo)');
 assertNotIncludes('scales-enhance.js', "var w = window.open('', '_blank');\n    if (!w) return;", 'sem retorno silencioso no pop-up bloqueado');
 assertIncludes('scales-enhance.js', 'domainScores', 'scales-enhance calcula score por dominio');
 assertIncludes('scales-enhance.js', 'historyFor', 'scales-enhance mantem historico por paciente+instrumento');

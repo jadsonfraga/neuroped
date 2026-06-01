@@ -396,12 +396,35 @@
     }
   }
 
+  // O botão "Imprimir" do topo da página chama window.print() = imprime a PÁGINA
+  // INTEIRA do app (fundo escuro, lista, menus) — sai quebrado e parece que "não
+  // gera resultado". Interceptamos para mostrar o resultado limpo do instrumento ativo.
+  function fixGlobalPrint(){
+    var btns = document.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++){
+      var b = btns[i];
+      var oc = b.getAttribute && b.getAttribute('onclick');
+      if (b.__npPrintFixed) continue;
+      if ((oc && /(^|\W)print\(\)/.test(oc)) || /^\s*imprimir\s*$/i.test(b.textContent || '')){
+        b.__npPrintFixed = true;
+        b.removeAttribute('onclick');
+        b.addEventListener('click', function(ev){
+          ev.preventDefault();
+          var inst = activeInstrument();
+          if (!inst){ try { window.print(); } catch (e) {} return; }
+          printResult(inst, currentAnswers(inst), getPatient());
+        });
+      }
+    }
+  }
+
   function watch(){
     var detail = document.getElementById('detail');
     if (!detail) { setTimeout(watch, 250); return; }
     var mo = new MutationObserver(function(){ rerender(); });
     mo.observe(detail, { childList: true, subtree: false });
     rerender();
+    fixGlobalPrint();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch);
   else watch();
