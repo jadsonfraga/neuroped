@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.21.1';
+const CACHE_NAME = 'neuroped-edj-v6.22.0';
 const SHELL = [
   './',
   './app-shell.html',
@@ -54,6 +54,25 @@ self.addEventListener('fetch', e => {
   // API / Supabase: network-first
   if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase.co')) {
     e.respondWith(fetch(req).catch(() => caches.match(req)));
+    return;
+  }
+
+  // Google Fonts (CSS + arquivos de fonte): cache-first com revalidação.
+  // A fonte premium (Fraunces/Inter) é injetada via app-polish; sem isto ela
+  // dependeria da rede e sumiria offline. As respostas têm CORS (cacheáveis).
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    e.respondWith(
+      caches.match(req).then(hit => {
+        const network = fetch(req).then(res => {
+          if (res && (res.ok || res.type === 'opaque')) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(req, clone));
+          }
+          return res;
+        }).catch(() => hit);
+        return hit || network;
+      })
+    );
     return;
   }
 
