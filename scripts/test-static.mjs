@@ -476,6 +476,10 @@ for (const p of ['filtro-escalas.html','instrumento.html','neuroped-pro.html','s
   assertIncludes(p, 'data-ns-shell', p+' herda o shell unificado');
 }
 assertNotIncludes('assinatura-digital.html', 'data-ns-shell', 'assinatura-digital (superfície de documento) preservada sem shell');
+// A11y: formulários com label/aria-label (leitor de tela anuncia campos)
+assertIncludes('consulta.html', 'label for=', 'consulta associa labels aos campos (a11y)');
+assertIncludes('diario-escola-terapias-v2.html', 'for="f_nome"', 'diário associa labels aos campos (a11y)');
+assertIncludes('agenda-financeiro.html', 'aria-label=', 'agenda rotula selects/datas (a11y)');
 for (const p of ['filtro-escalas.html','banco-escalas.html','mapa-escalas.html','consulta.html']) {
   assertIncludes(p, 'name="description"', p+' tem meta description (SEO)');
 }
