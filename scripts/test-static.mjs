@@ -456,6 +456,16 @@ assertIncludes('app-polish-mobile.js', 'function premiumNav', 'app-polish injeta
 assertIncludes('app-polish-mobile.js', 'npPageIn', 'fade-in de entrada de página');
 assertIncludes('app-polish-mobile.js', 'scroll-behavior:smooth', 'scroll suave global');
 assertIncludes('app-polish-mobile.js', 'prefers-reduced-motion:no-preference', 'navegação premium respeita reduced-motion');
+// Shell de design unificado (Fase 4)
+assertFile('neuroped-shell.css');
+assertIncludes('neuroped-shell.css', 'data-ns-shell', 'shell escopa estilos por data-ns-shell (não invasivo)');
+assertIncludes('neuroped-shell.css', 'ns-fade-in', 'shell tem animação de entrada');
+for (const p of ['central-atalhos.html','portal-familia-livre.html','sobre-dr-jadson.html','area-filho.html','comunicacao-alternativa.html','diario-escola-terapias-v2.html','guia-lancamento.html']) {
+  assertIncludes(p, 'neuroped-shell.css', p+' carrega o shell unificado');
+  assertIncludes(p, 'data-ns-shell', p+' ativa o shell no body');
+}
+assertNotIncludes('agenda-financeiro.html', 'data-ns-shell', 'agenda (tema claro) preservada sem shell escuro');
+assertNotIncludes('consulta.html', 'data-ns-shell', 'consulta (superfície de edição) preservada');
 assertNotIncludes('neuroped-master-biblioteca.js', 'Farmacoterapia · acesso restrito', 'farmacoterapia liberada como psicoeducação (sem PIN)');
 assertIncludes('neuroped-master-biblioteca.js', 'isenta o autor', 'farmacoterapia traz aviso educativo que blinda o autor');
 assertIncludes('neuroped-master-biblioteca.js', 'Nunca inicie, ajuste ou suspenda medicação', 'doses trazem alerta contra automedicação');
