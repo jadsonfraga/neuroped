@@ -236,3 +236,50 @@ body[data-ns-shell] a:not(.ns-btn):not(.jp-card):not(.jp-hero-badge):not(.btn):h
   text-decoration-thickness:2px;
   text-underline-offset:4px;
 }
+
+/* ===========================================================
+   Print / PDF — toda página com data-ns-shell imprime limpa:
+   esconde navegação e ações, cards monocromáticos, sem animação.
+   =========================================================== */
+@media print {
+  body[data-ns-shell] {
+    background: #fff !important;
+    color: #111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* esconde cromos de navegação/ação que não fazem sentido no papel */
+  body[data-ns-shell] .np-bottom-nav,
+  body[data-ns-shell] .ns-toolbar,
+  body[data-ns-shell] .np-toast-stack,
+  body[data-ns-shell] .np-splash,
+  body[data-ns-shell] [data-no-print],
+  body[data-ns-shell] .no-print {
+    display: none !important;
+  }
+  /* superfícies e cards: fundo branco, borda discreta, sem sombra/blur */
+  body[data-ns-shell] .ns-surface,
+  body[data-ns-shell] .ns-hero,
+  body[data-ns-shell] .card,
+  body[data-ns-shell] .jp-card {
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    break-inside: avoid;
+  }
+  body[data-ns-shell] h1,
+  body[data-ns-shell] h2,
+  body[data-ns-shell] h3 { color: #111 !important; }
+  /* links: mostra a URL ao lado (referência em papel) */
+  body[data-ns-shell] a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555;
+    word-break: break-all;
+  }
+  /* sem animações de entrada ao imprimir */
+  body[data-ns-shell] * { animation: none !important; transition: none !important; }
+}
