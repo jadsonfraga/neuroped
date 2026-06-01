@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.15.0';
+const CACHE_NAME = 'neuroped-edj-v6.16.0';
 const SHELL = [
   './',
   './app-shell.html',
@@ -24,7 +24,7 @@ const SHELL = [
   './filtro-escalas.html','./mapa-escalas.html','./escalas.html','./instrumento.html','./instrumento-autoral.html','./impacto-medicacao.html',
   './neuroped-master-biblioteca.html','./neuroped-master-biblioteca.css','./neuroped-master-biblioteca.js','./neuroped-master-biblioteca-data.js','./neuroped-master-protegido-data.js',
   './neuroped-master-vitrine.html','./neuroped-master-vitrine.css','./central-atalhos.html','./comunicacao-alternativa.html','./portal-familia-livre.html','./gerador-cards.html','./gerador-cards.js',
-  './app-polish-mobile.css','./app-polish-mobile.js','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
+  './np-cards.css','./app-polish-mobile.css','./app-polish-mobile.js','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
   './scales-editorial.js','./scales-453-authorial.js','./scales-global-max.js','./scales-featured-extra.js','./scales-featured-10.js','./scales-priority-uploaded.js','./scales-diarios-uteis.js','./scales-autorais-npe.js','./scales-impacto-medicacao.js','./neuroped-pro.html','./pro-license.js','./pro-hashes.js','./sobre-dr-jadson.html','./guia-lancamento.html','./scales-oficiais.js','./scales-oficiais-lote2.js','./scales-curate.js','./scales-red-flags.js','./scales-enhance.js','./scales-index.json'
 ];
 
