@@ -6,39 +6,146 @@
 <meta name="theme-color" content="#0e0e22">
 <title>NeuroPed EDJ — Filtro de Escalas</title>
 <style>
-:root{--bg:#0a0a16;--paper:#14132a;--ink:#ECEAFF;--muted:#b6b2e6;--teal:#6d6af5;--wine:#f2dca6;--gold:#b8963e;--line:rgba(169,164,255,.18);--soft:rgba(231,201,139,.12);--blue:#dbeafe;--green:#dcfce7}*{box-sizing:border-box}body{margin:0;background:radial-gradient(1100px 620px at 8% -8%,hsl(243 85% 56% / .26),transparent 60%),radial-gradient(1000px 640px at 102% 2%,hsl(266 80% 56% / .22),transparent 56%),linear-gradient(160deg,#0a0a16,#0e0e22 60%,#0a0a16);background-attachment:fixed;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}.wrap{max-width:1240px;margin:auto;padding:24px 18px 72px}.hero,.panel{border:1px solid var(--line);background:rgba(124,118,210,.10);border-radius:26px;padding:20px;box-shadow:0 14px 38px rgba(4,3,18,.6)}.hero{background:linear-gradient(135deg,#14132a,#1a1840)}.kicker{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--teal);font-weight:900}h1{margin:6px 0 8px;font-size:clamp(30px,5vw,52px);line-height:1.04;color:var(--wine);font-family:Georgia,serif}h2,h3{margin:0 0 8px;color:var(--wine);font-family:Georgia,serif}p{color:var(--muted)}.grid{display:grid;grid-template-columns:380px 1fr;gap:18px;margin-top:14px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat{background:rgba(124,118,210,.08);border:1px solid var(--line);border-radius:18px;padding:14px}.stat strong{display:block;font-size:25px;color:var(--wine)}.field{margin-bottom:12px}label{display:block;font-weight:900;font-size:13px;margin-bottom:6px;color:var(--wine)}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(124,118,210,.08);color:var(--ink);font-size:14px}textarea{min-height:118px;resize:vertical}button,.btn{border:0;border-radius:14px;background:var(--teal);color:white;padding:12px 14px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}.secondary{background:var(--wine)!important}.ghost{background:rgba(124,118,210,.08)!important;color:var(--wine)!important;border:1px solid var(--line)!important}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line);background:rgba(124,118,210,.08);color:var(--ink);border-radius:999px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer}.chip.active{background:var(--teal);border-color:var(--teal);color:#fff}.notice{border-left:5px solid var(--gold);background:var(--soft);padding:12px 14px;border-radius:14px;margin:12px 0;color:#e8dcc2}.result-card{background:rgba(124,118,210,.08);border:1px solid var(--line);border-radius:22px;padding:16px;margin:12px 0;display:grid;grid-template-columns:1fr auto;gap:14px}.result-card.top{border-color:var(--teal);box-shadow:0 0 0 3px rgba(109,106,245,.2)}.badge{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900;margin:0 5px 6px 0}.ok{background:var(--green);color:#166534}.info{background:var(--blue);color:#1e40af}.purple{background:#ede9fe;color:#5b21b6}.gold{background:#fef3c7;color:#92400e}.score{min-width:76px;height:76px;border-radius:18px;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(135deg,#6d6af5,#4f46e5);color:white;font-weight:900;font-size:20px}.path,.mini{font-size:12px;color:var(--muted)}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.package{background:rgba(124,118,210,.08);border:1px dashed var(--gold);border-radius:18px;padding:12px;margin:12px 0}.bank{opacity:.75}.questions{margin:10px 0 0;padding-left:20px;color:#cfccf2}.questions li{margin:4px 0}.symptoms{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.symptoms span{background:rgba(231,201,139,.12);border:1px solid rgba(231,201,139,.28);color:#f2dca6;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:800}.rf{border-radius:18px;padding:14px 16px;margin:0 0 12px;border:1px solid rgba(231,201,139,.3);background:rgba(124,118,210,.08)}.rf h3{margin:0 0 8px;font-size:16px;display:flex;align-items:center;gap:8px}.rf .grp{margin:8px 0 0}.rf .lab{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;display:inline-block;border-radius:999px;padding:3px 9px;margin-bottom:6px}.rf .lab.u{background:#fee2e2;color:#991b1b}.rf .lab.p{background:#fef3c7;color:#92400e}.rf ul{margin:4px 0 0;padding-left:20px}.rf li{margin:3px 0;color:#e6e3ff;font-size:13.5px}.rf .src{font-size:11px;color:var(--muted);margin-top:10px}.rf.has-u{border-color:rgba(220,80,80,.45);box-shadow:0 0 0 3px rgba(220,80,80,.14)}@media(max-width:920px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.result-card{grid-template-columns:1fr}.score{width:76px}}
-/* ===== Motion / dinamismo ===== */
-@keyframes npRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes npPop{0%{transform:scale(.96)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
-@keyframes npPulse{0%,100%{box-shadow:0 0 0 3px rgba(220,80,80,.14)}50%{box-shadow:0 0 0 6px rgba(220,80,80,.28)}}
-@keyframes npShimmer{0%{background-position:-360px 0}100%{background-position:360px 0}}
-@keyframes npSpin{to{transform:rotate(360deg)}}
-.result-card{animation:npRise .42s cubic-bezier(.22,.8,.2,1) both;transition:transform .2s cubic-bezier(.22,.8,.2,1),box-shadow .2s,border-color .2s}
-.result-card:nth-child(1){animation-delay:.02s}.result-card:nth-child(2){animation-delay:.08s}.result-card:nth-child(3){animation-delay:.14s}.result-card:nth-child(4){animation-delay:.20s}.result-card:nth-child(5){animation-delay:.26s}.result-card:nth-child(6){animation-delay:.32s}.result-card:nth-child(n+7){animation-delay:.38s}
-.result-card:hover{transform:translateY(-3px) scale(1.006);box-shadow:0 22px 60px rgba(4,3,18,.5);border-color:var(--teal)}
-.result-card.top .score{transition:transform .25s}.result-card.top:hover .score{transform:scale(1.08) rotate(-3deg)}
-.score{background-size:200% 200%;animation:npPop .4s ease both}
-.chip{transition:transform .15s cubic-bezier(.22,.8,.2,1),background .2s,border-color .2s,color .2s}
-.chip:hover{transform:translateY(-1px)}
-.chip.active{animation:npPop .32s ease}
-.rf.has-u{animation:npRise .42s ease both,npPulse 2.2s ease-in-out infinite .42s}
-#redFlags .rf{animation:npRise .4s ease both}
-.btn,button{transition:transform .14s cubic-bezier(.22,.8,.2,1),filter .2s,box-shadow .2s}
-.btn:hover,button:hover{transform:translateY(-1px)}
-.btn:active,button:active{transform:translateY(0) scale(.98)}
+:root{--bg:#08080f;--bg2:#0e0e1f;--ink:#F2F0FF;--muted:#a9a4d8;--soft-ink:#8b86b8;--teal:#7c79ff;--teal2:#9b7bff;--indigo:#5b54e8;--wine:#f3ddb0;--gold:#e7c98b;--gold2:#caa56a;--line:rgba(160,154,255,.14);--line2:rgba(160,154,255,.22);--glass:rgba(124,118,210,.07);--glass2:rgba(124,118,210,.11);--ok:#34d399;--okbg:rgba(52,211,153,.14);--blue:#60a5fa;--bluebg:rgba(96,165,250,.14);--purplebg:rgba(155,123,255,.16);--shadow:0 20px 60px -20px rgba(2,2,12,.85);--radius:22px}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(1200px 700px at 6% -10%,hsl(248 90% 60%/.22),transparent 55%),radial-gradient(1100px 720px at 104% 0%,hsl(270 85% 62%/.20),transparent 52%),radial-gradient(900px 900px at 50% 120%,hsl(210 90% 56%/.10),transparent 60%),linear-gradient(165deg,var(--bg),var(--bg2) 55%,var(--bg));background-attachment:fixed}
+.wrap{max-width:1200px;margin:auto;padding:22px 16px 96px}
+
+/* ── HERO ── */
+.hero{position:relative;overflow:hidden;border:1px solid var(--line2);border-radius:28px;padding:30px 26px;
+  background:linear-gradient(140deg,rgba(30,27,68,.92),rgba(18,16,42,.92));box-shadow:var(--shadow);backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%)}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(640px 320px at 88% -20%,rgba(231,201,139,.14),transparent 60%);pointer-events:none}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(124,118,210,.22),transparent 70%);pointer-events:none;animation:npFloat 9s ease-in-out infinite}
+.hero>*{position:relative;z-index:1}
+.kicker{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--teal);font-weight:800;background:rgba(124,118,210,.14);border:1px solid var(--line2);padding:6px 12px;border-radius:999px}
+.kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:npBlink 2s ease-in-out infinite}
+h1{margin:14px 0 8px;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;font-weight:800;font-family:"Fraunces","Georgia",serif;
+  background:linear-gradient(120deg,#fff 10%,var(--wine) 60%,var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);max-width:62ch;font-size:15px}
+h2,h3{margin:0 0 8px;color:var(--wine);font-family:"Fraunces","Georgia",serif;font-weight:700;letter-spacing:-.01em}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.stat{position:relative;overflow:hidden;background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:15px 16px;transition:transform .25s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}
+.stat::before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
+.stat:hover{transform:translateY(-3px);box-shadow:0 16px 40px -16px rgba(2,2,12,.8);border-color:var(--line2)}
+.stat strong{display:block;font-size:24px;font-weight:800;background:linear-gradient(120deg,var(--wine),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat span{font-size:11.5px;color:var(--soft-ink)}
+
+/* ── LAYOUT ── */
+.grid{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:14px}
+.panel{border:1px solid var(--line);background:linear-gradient(180deg,var(--glass2),var(--glass));border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.panel.sticky{position:sticky;top:14px;align-self:start}
+
+/* ── INPUTS ── */
+.field{margin-bottom:14px}
+label{display:block;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;color:var(--muted)}
+input,select,textarea{width:100%;border:1px solid var(--line2);border-radius:14px;padding:13px 14px;background:rgba(10,9,24,.55);color:var(--ink);font-size:14.5px;font-family:inherit;transition:border-color .2s,box-shadow .2s,background .2s}
+input::placeholder,textarea::placeholder{color:var(--soft-ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(124,118,210,.18);background:rgba(10,9,24,.78)}
+textarea{min-height:108px;resize:vertical}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--teal) 50%),linear-gradient(135deg,var(--teal) 50%,transparent 50%);background-position:calc(100% - 18px) 1.25em,calc(100% - 13px) 1.25em;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+
+/* ── BOTÕES ── */
+button,.btn{position:relative;overflow:hidden;border:0;border-radius:14px;padding:13px 16px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#fff;
+  background:linear-gradient(180deg,var(--teal),var(--indigo));box-shadow:0 10px 26px -10px rgba(91,84,232,.7);transition:transform .16s cubic-bezier(.22,.9,.25,1),box-shadow .2s,filter .2s}
+button:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(91,84,232,.8);filter:brightness(1.06)}
+button:active,.btn:active{transform:translateY(0) scale(.97)}
+.btn.secondary,.secondary{background:linear-gradient(180deg,var(--gold),var(--gold2))!important;color:#241a05!important;box-shadow:0 10px 26px -12px rgba(231,201,139,.6)!important}
+.btn.ghost,.ghost{background:rgba(124,118,210,.10)!important;color:var(--wine)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
+.btn.ghost:hover,.ghost:hover{background:rgba(124,118,210,.18)!important}
+
+/* ── CHIPS ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line2);background:rgba(124,118,210,.08);color:var(--muted);border-radius:999px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:transform .15s cubic-bezier(.22,.9,.25,1),background .2s,border-color .2s,color .2s,box-shadow .2s}
+.chip:hover{transform:translateY(-2px);border-color:var(--teal);color:var(--ink)}
+.chip.active{background:linear-gradient(180deg,var(--teal),var(--indigo));border-color:transparent;color:#fff;box-shadow:0 8px 20px -8px rgba(91,84,232,.7)}
+
+/* ── TOOLBAR / NOTICE ── */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.notice{border-left:3px solid var(--gold);background:rgba(231,201,139,.08);padding:12px 14px;border-radius:12px;margin:12px 0;color:#e8dcc2;font-size:13px}
+
+/* ── RESULT CARDS ── */
+.result-card{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--glass2),var(--glass));border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:14px 0;display:grid;grid-template-columns:1fr auto;gap:16px;box-shadow:0 12px 34px -18px rgba(2,2,12,.7)}
+.result-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--teal),transparent);opacity:.5;transition:opacity .25s}
+.result-card:hover::before{opacity:1}
+.result-card.top{border-color:var(--line2);box-shadow:0 0 0 1px rgba(124,118,210,.3),0 16px 44px -18px rgba(91,84,232,.5)}
+.result-card.top::before{background:linear-gradient(180deg,var(--gold),var(--teal));opacity:1;width:4px}
+.result-card h3{font-size:18px;margin-bottom:8px;color:#fff;font-family:"Fraunces","Georgia",serif}
+.badge{display:inline-flex;align-items:center;border-radius:8px;padding:4px 9px;font-size:10.5px;font-weight:800;letter-spacing:.02em;margin:0 5px 6px 0;border:1px solid transparent}
+.ok{background:var(--okbg);color:var(--ok);border-color:rgba(52,211,153,.3)}
+.info{background:var(--bluebg);color:var(--blue);border-color:rgba(96,165,250,.3)}
+.purple{background:var(--purplebg);color:var(--teal2);border-color:rgba(155,123,255,.3)}
+.gold{background:rgba(231,201,139,.16);color:var(--gold);border-color:rgba(231,201,139,.34)}
+
+/* ── SCORE RING ── */
+.score{position:relative;min-width:72px;width:72px;height:72px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:19px;color:#fff;align-self:start;
+  background:conic-gradient(var(--teal) calc(var(--p,60)*1%),rgba(124,118,210,.16) 0);box-shadow:0 8px 22px -8px rgba(91,84,232,.7)}
+.score::before{content:"";position:absolute;inset:5px;border-radius:50%;background:linear-gradient(160deg,#15132f,#0d0c1f)}
+.score>*{position:relative;z-index:1}
+.score small{font-size:9px;font-weight:700;color:var(--soft-ink);text-transform:uppercase;letter-spacing:.04em}
+
+.path,.mini{font-size:12.5px;color:var(--soft-ink)}
+.mini strong{color:var(--muted)}
+.package{background:rgba(231,201,139,.06);border:1px dashed rgba(231,201,139,.34);border-radius:18px;padding:14px 16px;margin:14px 0}
+.package h3{font-size:15px}
+.bank{opacity:.6}
+.questions{margin:10px 0 0;padding-left:18px;color:#c8c4ee}
+.questions li{margin:5px 0;font-size:13px}
+.symptoms{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.symptoms span{background:rgba(231,201,139,.10);border:1px solid rgba(231,201,139,.26);color:var(--gold);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:700}
+
+/* ── RED FLAGS ── */
+.rf{border-radius:18px;padding:16px 18px;margin:0 0 14px;border:1px solid rgba(231,201,139,.3);background:linear-gradient(180deg,rgba(124,118,210,.1),var(--glass))}
+.rf h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
+.rf .grp{margin:10px 0 0}
+.rf .lab{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;display:inline-block;border-radius:999px;padding:4px 11px;margin-bottom:7px}
+.rf .lab.u{background:rgba(248,113,113,.16);color:#fca5a5;border:1px solid rgba(248,113,113,.4)}
+.rf .lab.p{background:rgba(231,201,139,.16);color:var(--gold);border:1px solid rgba(231,201,139,.4)}
+.rf ul{margin:5px 0 0;padding-left:20px}
+.rf li{margin:4px 0;color:#e6e3ff;font-size:13.5px}
+.rf .src{font-size:11px;color:var(--soft-ink);margin-top:12px}
+.rf.has-u{border-color:rgba(248,113,113,.4)}
+
+/* ── SUMMARY / SKELETON ── */
 #summary{transition:background .3s}
+#summary strong{color:var(--wine)}
+.np-skel{background:linear-gradient(100deg,rgba(124,118,210,.06) 30%,rgba(124,118,210,.16) 50%,rgba(124,118,210,.06) 70%);background-size:300% 100%;animation:npShimmer 1.3s ease-in-out infinite;border-radius:var(--radius);min-height:120px;margin:14px 0;border:1px solid var(--line)}
+
+.footer{text-align:center;font-size:12px;color:var(--soft-ink);margin-top:30px;line-height:1.7;padding-top:18px;border-top:1px solid var(--line)}
+
+/* ── MOTION ── */
+@keyframes npRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes npPop{0%{transform:scale(.94)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes npShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes npSpin{to{transform:rotate(360deg)}}
+@keyframes npFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(16px)}}
+@keyframes npBlink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes npGlow{0%,100%{box-shadow:0 0 0 1px rgba(248,113,113,.4),0 0 22px -6px rgba(248,113,113,.5)}50%{box-shadow:0 0 0 1px rgba(248,113,113,.7),0 0 34px -4px rgba(248,113,113,.8)}}
+.result-card{animation:npRise .44s cubic-bezier(.22,.9,.25,1) both}
+.result-card:nth-child(1){animation-delay:.03s}.result-card:nth-child(2){animation-delay:.09s}.result-card:nth-child(3){animation-delay:.15s}.result-card:nth-child(4){animation-delay:.21s}.result-card:nth-child(5){animation-delay:.27s}.result-card:nth-child(6){animation-delay:.33s}.result-card:nth-child(n+7){animation-delay:.39s}
+.result-card{transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .22s,border-color .22s}
+.result-card:hover{transform:translateY(-4px);box-shadow:0 26px 60px -22px rgba(91,84,232,.6);border-color:var(--line2)}
+.chip.active{animation:npPop .3s ease}
+.rf.has-u{animation:npRise .42s ease both,npGlow 2.4s ease-in-out infinite .42s}
+#redFlags .rf{animation:npRise .4s ease both}
 .np-loading{position:relative;min-height:90px}
-.np-loading::after{content:"";position:absolute;left:50%;top:38px;width:26px;height:26px;margin-left:-13px;border:3px solid rgba(169,164,255,.25);border-top-color:var(--teal);border-radius:50%;animation:npSpin .7s linear infinite}
-.stat{transition:transform .2s,box-shadow .2s}.stat:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(4,3,18,.4)}
+.np-loading::after{content:"";position:absolute;left:50%;top:36px;width:26px;height:26px;margin-left:-13px;border:3px solid rgba(160,154,255,.22);border-top-color:var(--teal);border-radius:50%;animation:npSpin .7s linear infinite}
+
+@media(max-width:920px){.grid{grid-template-columns:1fr}.panel.sticky{position:static}.stats{grid-template-columns:repeat(2,1fr)}.result-card{grid-template-columns:1fr}.score{align-self:center;margin-top:4px}.wrap{padding:16px 13px 90px}.hero{padding:24px 20px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./app-polish-mobile.css">
 </head>
 <body>
 <main class="wrap">
 <section class="hero"><div class="kicker">NeuroPed EDJ · filtro editorial por instrumento</div><h1>Filtro de escalas por queixa e idade</h1><p>Ranqueia instrumentos específicos por idade, sintoma, respondente e palavras da queixa. Os resultados mostram nome compreensível, perguntas fáceis e limite de uso clínico.</p><div id="filtroPatientBar" class="mini" style="margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.10);display:none"></div><div class="toolbar"><a class="btn" href="./escalas.html">Voltar ao índice</a><a class="btn secondary" href="./mapa-escalas.html">Mapa de instrumentos</a><button type="button" id="printTop">Imprimir Top 5</button><button type="button" id="exportTop" class="ghost">Exportar Top 5 pra laudo</button></div></section>
 <section class="stats"><div class="stat"><strong id="statCount">0</strong><span>instrumentos indexados</span></div><div class="stat"><strong>idade</strong><span>faixa em meses</span></div><div class="stat"><strong>perguntas</strong><span>linguagem fácil</span></div><div class="stat"><strong>Top 10</strong><span>priorização final</span></div></section>
-<section class="grid"><aside class="panel"><h2>Entrada clínica</h2><div class="field"><label for="idade">Idade</label><input id="idade" placeholder="Ex.: 18 meses, 4 anos, 9a, 13 anos" autocomplete="off"></div><div class="field"><label for="queixaLivre">Queixa livre</label><textarea id="queixaLivre" placeholder="Ex.: não fala, não responde nome, barulho, seletividade alimentar, desatenção, escola, tristeza..."></textarea></div><div class="field"><label>Queixas rápidas</label><div id="chips" class="chips"></div></div><div class="field"><label for="respondente">Quem responde (visão)</label><select id="respondente"><option value="">Todas as visões</option><option value="familia">Heterorrelato — Família/cuidadores</option><option value="escola">Heterorrelato — Escola/professores</option><option value="autoteste">Autorrelato — criança/adolescente</option><option value="direto">Teste direto com a criança</option><option value="terapeuta">Terapias</option><option value="clinico">Clínico</option></select></div><div class="field"><label for="sensibilidade">Sensibilidade</label><select id="sensibilidade"><option value="alta">Alta</option><option value="muito-alta">Muito alta</option><option value="precisa">Mais precisa</option></select></div><div class="toolbar"><button id="run">Filtrar</button><button class="ghost" id="clear">Limpar</button></div><div class="notice">Os lotes ficam no fim como banco complementar. O Top 5 prioriza instrumentos específicos.</div></aside><section class="panel"><h2>Resultado priorizado</h2><div id="summary" class="notice">Carregando catálogo editorial...</div><div id="redFlags"></div><div id="package" class="package"></div><div id="triangulacao"></div><div id="results"><div class="np-skel card"></div><div class="np-skel card"></div><div class="np-skel card"></div></div></section></section>
+<section class="grid"><aside class="panel sticky"><h2>Entrada clínica</h2><div class="field"><label for="idade">Idade</label><input id="idade" placeholder="Ex.: 18 meses, 4 anos, 9a, 13 anos" autocomplete="off"></div><div class="field"><label for="queixaLivre">Queixa livre</label><textarea id="queixaLivre" placeholder="Ex.: não fala, não responde nome, barulho, seletividade alimentar, desatenção, escola, tristeza..."></textarea></div><div class="field"><label>Queixas rápidas</label><div id="chips" class="chips"></div></div><div class="field"><label for="respondente">Quem responde (visão)</label><select id="respondente"><option value="">Todas as visões</option><option value="familia">Heterorrelato — Família/cuidadores</option><option value="escola">Heterorrelato — Escola/professores</option><option value="autoteste">Autorrelato — criança/adolescente</option><option value="direto">Teste direto com a criança</option><option value="terapeuta">Terapias</option><option value="clinico">Clínico</option></select></div><div class="field"><label for="sensibilidade">Sensibilidade</label><select id="sensibilidade"><option value="alta">Alta</option><option value="muito-alta">Muito alta</option><option value="precisa">Mais precisa</option></select></div><div class="toolbar"><button id="run">Filtrar</button><button class="ghost" id="clear">Limpar</button></div><div class="notice">Os lotes ficam no fim como banco complementar. O Top 5 prioriza instrumentos específicos.</div></aside><section class="panel"><h2>Resultado priorizado</h2><div id="summary" class="notice">Carregando catálogo editorial...</div><div id="redFlags"></div><div id="package" class="package"></div><div id="triangulacao"></div><div id="results"><div class="np-skel card"></div><div class="np-skel card"></div><div class="np-skel card"></div></div></section></section>
 <p class="footer"><strong>Nota clínica:</strong> instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica, pedagógica ou terapêutica.</p>
 </main>
 <script src="./scales-enhance.js" defer></script>
@@ -78,13 +185,13 @@ function viewOf(s){const a=(s.audience||'').toLowerCase();const resp=((s.respond
   return'familia'}
 function respMatch(resp,s){if(!resp)return null;const v=viewOf(s);if(resp==='direto')return v==='direto';if(resp==='autoteste')return v==='auto';if(resp==='familia')return v==='familia';if(resp==='escola')return v==='escola';return s.audience===resp}
 function scoreScale(s,comp,age,resp,mode,text){let score=Number(s.priority||50)/4,reasons=[];const words=[...(s.complaints||[]),...(s.keywords||[]),...(s.symptoms||[]),(s.title||""),(s.domain||"")].map(norm);const hits=comp.filter(t=>words.some(w=>w.includes(t)||t.includes(w)));score+=hits.length*34;if(hits.length)reasons.push("queixa: "+hits.join(", "));const direct=words.filter(w=>w&&text.includes(w)).length;score+=Math.min(direct*10,40);if(direct)reasons.push("texto livre compatível");const as=ageScore(age,s,mode);score+=as;if(as>0)reasons.push("idade compatível/ampliada");const rm=respMatch(resp,s);if(rm===true){score+=18;reasons.push("visão compatível")}else if(rm===false&&mode==="precisa")score-=10;if(/lote|banco completo/i.test(s.title||""))score-=80;return{...s,score,reasons}}
-function renderTriangulation(rows){const el=document.getElementById('triangulacao');if(!el)return;const real=rows.filter(r=>!/lote|banco completo/i.test(r.title||''));if(real.length<2){el.innerHTML='';return}const best={};real.forEach(r=>{const v=viewOf(r);if(!best[v]||r.score>best[v].score)best[v]=r});const picks=Object.keys(best).map(v=>({v,r:best[v]})).sort((a,b)=>b.r.score-a.r.score).slice(0,3);if(picks.length<1){el.innerHTML='';return}var nota=picks.length>=3?'Um instrumento por ângulo (família × escola × criança), para cruzar olhares e reduzir o viés de um único informante.':'Para este caso há '+picks.length+' visão(ões) distinta(s) entre os instrumentos disponíveis — as demais perspectivas podem ser cobertas pela entrevista clínica.';el.innerHTML='<h3 style="margin-top:6px">🔺 Visões distintas recomendadas ('+picks.length+')</h3><p class="mini">'+nota+'</p>'+picks.map(p=>{const r=p.r,vm=VIEWS[p.v]||{icon:'📋',label:'Instrumento'};const pct=Math.max(0,Math.min(99,Math.round(r.score)));const open=r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Fonte oficial ↗</a>'):('<a class="btn" href="./'+r.page+(r.anchor?'#'+r.anchor:'')+'">Abrir</a>');return '<article class="result-card top"><div><span class="badge purple">'+vm.icon+' '+vm.label+'</span><h3>'+r.title+'</h3><p class="mini">'+(r.audience_label||'instrumento')+' · '+(r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses'))+' · '+(r.domain||'')+'</p><div class="toolbar">'+open+'<button class="ghost" onclick="copyRec(\''+r.id+'\')">Copiar</button></div></div><div class="score">'+pct+'<br><span style="font-size:10px">prior.</span></div></article>'}).join('')}
+function renderTriangulation(rows){const el=document.getElementById('triangulacao');if(!el)return;const real=rows.filter(r=>!/lote|banco completo/i.test(r.title||''));if(real.length<2){el.innerHTML='';return}const best={};real.forEach(r=>{const v=viewOf(r);if(!best[v]||r.score>best[v].score)best[v]=r});const picks=Object.keys(best).map(v=>({v,r:best[v]})).sort((a,b)=>b.r.score-a.r.score).slice(0,3);if(picks.length<1){el.innerHTML='';return}var nota=picks.length>=3?'Um instrumento por ângulo (família × escola × criança), para cruzar olhares e reduzir o viés de um único informante.':'Para este caso há '+picks.length+' visão(ões) distinta(s) entre os instrumentos disponíveis — as demais perspectivas podem ser cobertas pela entrevista clínica.';el.innerHTML='<h3 style="margin-top:6px">🔺 Visões distintas recomendadas ('+picks.length+')</h3><p class="mini">'+nota+'</p>'+picks.map(p=>{const r=p.r,vm=VIEWS[p.v]||{icon:'📋',label:'Instrumento'};const pct=Math.max(0,Math.min(99,Math.round(r.score)));const open=r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Fonte oficial ↗</a>'):('<a class="btn" href="./'+r.page+(r.anchor?'#'+r.anchor:'')+'">Abrir</a>');return '<article class="result-card top"><div><span class="badge purple">'+vm.icon+' '+vm.label+'</span><h3>'+r.title+'</h3><p class="mini">'+(r.audience_label||'instrumento')+' · '+(r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses'))+' · '+(r.domain||'')+'</p><div class="toolbar">'+open+'<button class="ghost" onclick="copyRec(\''+r.id+'\')">Copiar</button></div></div><div class="score" style="--p:'+pct+'"><span>'+pct+'</span><small>prior.</small></div></article>'}).join('')}
 function run(){if(!INDEX.length)return;const age=months(document.getElementById("idade").value);const comp=detect();const resp=document.getElementById("respondente").value;const mode=document.getElementById("sensibilidade").value;const text=norm(document.getElementById("queixaLivre").value);let rows=INDEX.map(s=>scoreScale(s,comp,age,resp,mode,text)).filter(r=>mode==="precisa"?r.score>=38:r.score>=18).sort((a,b)=>b.score-a.score);if(!rows.length&&(comp.length||age!==null))rows=INDEX.map(s=>scoreScale(s,comp,age,resp,"muito-alta",text)).sort((a,b)=>b.score-a.score).slice(0,10);const idadeTxt=age===null?"idade não informada":(age<24?age+" meses":Math.floor(age/12)+" anos e "+(age%12)+" meses");document.getElementById("summary").innerHTML=`<strong>${rows.length}</strong> instrumentos específicos · <strong>${idadeTxt}</strong> · queixas: <strong>${comp.join(", ")||"nenhuma"}</strong>.`;renderRedFlags(comp);renderPackage(rows,comp);renderTriangulation(rows);renderRows(rows)}
 function renderRedFlags(comp){const el=document.getElementById('redFlags');if(!el)return;const DB=window.NEUROPED_RED_FLAGS||{};const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const seen=new Set();const urg=[],pri=[];(comp||[]).forEach(tag=>{const d=DB[tag];if(!d)return;(d.urgente||[]).forEach(s=>{const k='u:'+s;if(!seen.has(k)){seen.add(k);urg.push(s)}});(d.prioritario||[]).forEach(s=>{const k='p:'+s;if(!seen.has(k)){seen.add(k);pri.push(s)}})});if(!urg.length&&!pri.length){el.innerHTML='';return}const grpU=urg.length?'<div class="grp"><span class="lab u">⚠️ Avaliação imediata</span><ul>'+urg.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul></div>':'';const grpP=pri.length?'<div class="grp"><span class="lab p">Prioritário — não postergar</span><ul>'+pri.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul></div>':'';el.innerHTML='<div class="rf'+(urg.length?' has-u':'')+'"><h3>🚩 Sinais de alerta para as queixas detectadas</h3>'+grpU+grpP+'<p class="src">Apoio à decisão, não diagnóstico. Diante de qualquer destes sinais, priorize avaliação profissional presencial.</p></div>'}
 function renderPackage(rows,comp){document.getElementById("package").innerHTML=`<h3>Pacote mínimo recomendado</h3><p>${rows.slice(0,5).map(r=>r.emoji+' '+r.short_title).join(' · ')||'preencher idade e queixa'}</p><p class="mini">Use o Top 5 como organização inicial, não como diagnóstico automático.</p>`}
-function renderRows(rows){const top=rows.slice(0,10).map((r,i)=>card(r,i)).join("");const banks=BANKS.map((p,i)=>`<article class="result-card bank"><div><h3>Banco complementar ${i?'- Lote '+i:'- Base inicial'}</h3><p class="mini">Consulta ampla. Não substitui os instrumentos específicos priorizados acima.</p><div class="path"><a href="./${p}">${p}</a></div></div><div class="score">base</div></article>`).join("");document.getElementById("results").innerHTML=top+banks||'<div class="notice">Sem resultados.</div>'}
+function renderRows(rows){const top=rows.slice(0,10).map((r,i)=>card(r,i)).join("");const banks=BANKS.map((p,i)=>`<article class="result-card bank"><div><h3>Banco complementar ${i?'- Lote '+i:'- Base inicial'}</h3><p class="mini">Consulta ampla. Não substitui os instrumentos específicos priorizados acima.</p><div class="path"><a href="./${p}">${p}</a></div></div><div class="score" style="--p:0"><small>base</small></div></article>`).join("");document.getElementById("results").innerHTML=top+banks||'<div class="notice">Sem resultados.</div>'}
 function copyRec(id){const r=INDEX.find(x=>x.id===id);if(!r)return;const txt=`${r.title}\n${r.audience_label} · ${r.age_band} · ${r.domain}\nSintomas: ${(r.symptoms||[]).join(', ')}\nPerguntas:\n- ${(r.plain_questions||[]).join('\n- ')}`;navigator.clipboard?.writeText(txt)}
-function card(r,i){const pct=Math.max(0,Math.min(99,Math.round(r.score)));return`<article class="result-card ${i<5?'top':''}"><div><h3>${r.title}</h3><span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${r.official_catalog?'<span class="badge gold">Fonte oficial</span>':''}${r.status?'<span class="badge info" style="background:rgba(231,201,139,.18);color:#7a5d12">'+r.status+'</span>':''}<div class="symptoms">${(r.symptoms||[]).slice(0,5).map(s=>`<span>${s}</span>`).join('')}</div><ol class="questions">${(r.plain_questions||[]).slice(0,5).map(q=>`<li>${q}</li>`).join('')}</ol><p class="mini"><strong>Por que apareceu:</strong> ${r.reasons.join(' · ')||'triagem ampla por idade e queixa'}</p><p class="mini"><strong>Limite:</strong> ${r.not_normative_disclaimer||'Instrumento de apoio; não substitui avaliação.'}</p><div class="toolbar">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte oficial ↗</a>'):('<a class="btn" href="./'+r.page+(r.anchor?'#'+r.anchor:'')+'">Abrir</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar recomendação</button></div></div><div class="score">${pct}<br><span style="font-size:10px">prior.</span></div></article>`}
+function card(r,i){const pct=Math.max(0,Math.min(99,Math.round(r.score)));return`<article class="result-card ${i<5?'top':''}"><div><h3>${r.title}</h3><span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${r.official_catalog?'<span class="badge gold">Fonte oficial</span>':''}${r.status?'<span class="badge info" style="background:rgba(231,201,139,.18);color:#7a5d12">'+r.status+'</span>':''}<div class="symptoms">${(r.symptoms||[]).slice(0,5).map(s=>`<span>${s}</span>`).join('')}</div><ol class="questions">${(r.plain_questions||[]).slice(0,5).map(q=>`<li>${q}</li>`).join('')}</ol><p class="mini"><strong>Por que apareceu:</strong> ${r.reasons.join(' · ')||'triagem ampla por idade e queixa'}</p><p class="mini"><strong>Limite:</strong> ${r.not_normative_disclaimer||'Instrumento de apoio; não substitui avaliação.'}</p><div class="toolbar">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte oficial ↗</a>'):('<a class="btn" href="./'+r.page+(r.anchor?'#'+r.anchor:'')+'">Abrir</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar recomendação</button></div></div><div class="score" style="--p:${pct}"><span>${pct}</span><small>prior.</small></div></article>`}
 </script>
 <script src="./app-polish-mobile.js" defer></script>
 </body>
