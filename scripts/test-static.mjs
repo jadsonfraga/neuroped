@@ -44,6 +44,9 @@ for (const p of ['escalas.html','central-atalhos.html','sobre-dr-jadson.html','f
   assertIncludes(p, 'name="twitter:card"', p+' tem twitter card');
 }
 assertIncludes('sitemap.xml', '<lastmod>', 'sitemap tem lastmod');
+// Consolidação P0: política de privacidade com fonte única
+assertIncludes('privacy-policy.html', 'privacidade.html', 'privacy-policy redireciona p/ fonte única de privacidade');
+assertNotIncludes('terms-of-use.html', 'privacy-policy.html', 'termos apontam para a privacidade canônica');
 // Rodada 9.0: perf + compliance + landing + a11y
 assertFile('scales-bundle.js');
 assertIncludes('index.html', 'modulepreload', 'index pré-carrega o módulo da SPA (perf)');
