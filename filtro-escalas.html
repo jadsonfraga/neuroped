@@ -144,6 +144,21 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 .np-loading{position:relative;min-height:90px}
 .np-loading::after{content:"";position:absolute;left:50%;top:36px;width:26px;height:26px;margin-left:-13px;border:3px solid rgba(160,154,255,.22);border-top-color:var(--teal);border-radius:50%;animation:npSpin .7s linear infinite}
 
+/* ── TOPBAR (integra ao app) ── */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;margin:-22px -16px 18px;padding:13px 16px calc(13px);
+  background:rgba(12,11,26,.72);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid var(--line)}
+.topbar .back{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:13px;border:1px solid var(--line2);background:rgba(124,118,210,.12);color:var(--ink);text-decoration:none;font-size:18px;transition:transform .18s cubic-bezier(.34,1.56,.64,1),background .2s}
+.topbar .back:hover{transform:translateX(-2px) scale(1.05);background:rgba(124,118,210,.22)}
+.topbar .tb-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar .tb-logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font:800 17px "Fraunces",Georgia,serif;color:#1a1530;background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 8px 20px -8px rgba(231,201,139,.6)}
+.topbar .tb-tt{font:700 15px "Fraunces",Georgia,serif;color:var(--wine);line-height:1.1}
+.topbar .tb-sub{font-size:11px;color:var(--soft-ink);letter-spacing:.02em}
+.topbar .tb-right{margin-left:auto;display:flex;gap:8px}
+.topbar .tb-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--teal);background:rgba(124,118,210,.12);border:1px solid var(--line2);border-radius:999px;padding:7px 12px;text-decoration:none;transition:transform .16s,background .2s}
+.topbar .tb-pill:hover{transform:translateY(-1px);background:rgba(124,118,210,.2)}
+@media(max-width:920px){.topbar{margin:-16px -13px 16px}}
+@media(max-width:560px){.topbar .tb-sub{display:none}.topbar .tb-pill .lbl{display:none}}
+
 @media(max-width:920px){.grid{grid-template-columns:1fr}.panel.sticky{position:static}.stats{grid-template-columns:repeat(2,1fr)}.result-card{grid-template-columns:1fr}.score{align-self:center;margin-top:4px}.wrap{padding:16px 13px 90px}.hero{padding:24px 20px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -154,7 +169,12 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 </head>
 <body>
 <main class="wrap">
-<section class="hero"><div class="kicker">NeuroPed EDJ · filtro editorial por instrumento</div><h1>Filtro de escalas por queixa e idade</h1><p>Ranqueia instrumentos específicos por idade, sintoma, respondente e palavras da queixa. Os resultados mostram nome compreensível, perguntas fáceis e limite de uso clínico.</p><div id="filtroPatientBar" class="mini" style="margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.10);display:none"></div><div class="toolbar"><a class="btn" href="./escalas.html">Voltar ao índice</a><a class="btn secondary" href="./mapa-escalas.html">Mapa de instrumentos</a><button type="button" id="printTop">Imprimir Top 5</button><button type="button" id="exportTop" class="ghost">Exportar Top 5 pra laudo</button></div></section>
+<header class="topbar">
+  <a class="back" href="./central-atalhos.html" aria-label="Voltar ao app">‹</a>
+  <div class="tb-brand"><div class="tb-logo">NP</div><div><div class="tb-tt">NeuroPed</div><div class="tb-sub">Filtro de escalas</div></div></div>
+  <div class="tb-right"><a class="tb-pill" href="./escalas.html"><span class="lbl">Índice</span> 📑</a><a class="tb-pill" href="./mapa-escalas.html"><span class="lbl">Mapa</span> 🧭</a></div>
+</header>
+<section class="hero"><div class="kicker">Triagem inteligente</div><h1>Qual o instrumento certo?</h1><p>Diga a idade e a queixa — o app prioriza as escalas e testes mais indicados, com perguntas em linguagem fácil e os sinais de alerta a observar.</p><div id="filtroPatientBar" class="mini" style="margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.10);display:none"></div><div class="toolbar"><button type="button" id="printTop">🖨️ Imprimir Top 5</button><button type="button" id="exportTop" class="ghost">📋 Exportar pra laudo</button></div></section>
 <section class="stats"><div class="stat"><strong id="statCount">0</strong><span>instrumentos indexados</span></div><div class="stat"><strong>idade</strong><span>faixa em meses</span></div><div class="stat"><strong>perguntas</strong><span>linguagem fácil</span></div><div class="stat"><strong>Top 10</strong><span>priorização final</span></div></section>
 <section class="grid"><aside class="panel sticky"><h2>Entrada clínica</h2><div class="field"><label for="idade">Idade</label><input id="idade" placeholder="Ex.: 18 meses, 4 anos, 9a, 13 anos" autocomplete="off"></div><div class="field"><label for="queixaLivre">Queixa livre</label><textarea id="queixaLivre" placeholder="Ex.: não fala, não responde nome, barulho, seletividade alimentar, desatenção, escola, tristeza..."></textarea></div><div class="field"><label>Queixas rápidas</label><div id="chips" class="chips"></div></div><div class="field"><label for="respondente">Quem responde (visão)</label><select id="respondente"><option value="">Todas as visões</option><option value="familia">Heterorrelato — Família/cuidadores</option><option value="escola">Heterorrelato — Escola/professores</option><option value="autoteste">Autorrelato — criança/adolescente</option><option value="direto">Teste direto com a criança</option><option value="terapeuta">Terapias</option><option value="clinico">Clínico</option></select></div><div class="field"><label for="sensibilidade">Sensibilidade</label><select id="sensibilidade"><option value="alta">Alta</option><option value="muito-alta">Muito alta</option><option value="precisa">Mais precisa</option></select></div><div class="toolbar"><button id="run">Filtrar</button><button class="ghost" id="clear">Limpar</button></div><div class="notice">Os lotes ficam no fim como banco complementar. O Top 5 prioriza instrumentos específicos.</div></aside><section class="panel"><h2>Resultado priorizado</h2><div id="summary" class="notice">Carregando catálogo editorial...</div><div id="redFlags"></div><div id="package" class="package"></div><div id="triangulacao"></div><div id="results"><div class="np-skel card"></div><div class="np-skel card"></div><div class="np-skel card"></div></div></section></section>
 <p class="footer"><strong>Nota clínica:</strong> instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica, pedagógica ou terapêutica.</p>

@@ -101,6 +101,9 @@ assertIncludes('filtro-escalas.html', 'Fraunces', 'filtro usa tipografia premium
 assertIncludes('filtro-escalas.html', 'class="ce"', 'chips de queixa têm carinha/emoji (não só texto)');
 assertIncludes('filtro-escalas.html', '@keyframes npBounce', 'chip faz bounce ao selecionar (motion fofo)');
 assertIncludes('filtro-escalas.html', '@keyframes npWiggle', 'carinha do chip ativo balança (vivo)');
+// Integração ao app: topbar coesa com voltar + marca (não parece página solta)
+assertIncludes('filtro-escalas.html', 'class="topbar"', 'filtro tem topbar do app (integrado, não página solta)');
+assertIncludes('filtro-escalas.html', 'central-atalhos.html', 'topbar do filtro volta ao app (hub)');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
