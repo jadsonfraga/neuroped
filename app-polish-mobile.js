@@ -270,7 +270,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.23.3') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.24.0') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -302,11 +302,47 @@
     });
   }
 
+  /* =====================================================
+     9) Aviso LGPD (1ª visita): app é 100% local, sem cookies
+        de rastreamento. Honesto e mínimo. Some ao confirmar.
+     ===================================================== */
+  function lgpdBanner(){
+    try { if (localStorage.getItem('np_lgpd_ack') === '1') return; } catch(e) { return; }
+    if (document.getElementById('np-lgpd-banner')) return;
+    if (!document.body) return;
+    var b = document.createElement('div');
+    b.id = 'np-lgpd-banner';
+    b.setAttribute('role', 'region');
+    b.setAttribute('aria-label', 'Aviso de privacidade');
+    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:60;'
+      + 'max-width:560px;margin:0 auto;background:rgba(20,19,42,.96);backdrop-filter:blur(12px);'
+      + 'border:1px solid rgba(169,164,255,.28);border-radius:16px;padding:13px 15px;'
+      + 'box-shadow:0 18px 48px -18px rgba(2,2,12,.8);color:#ECEAFF;font:500 13px/1.5 system-ui,sans-serif;'
+      + 'display:flex;gap:12px;align-items:center;flex-wrap:wrap';
+    var txt = document.createElement('div');
+    txt.style.cssText = 'flex:1;min-width:200px';
+    txt.innerHTML = '<strong style="color:#f2dca6">Privacidade</strong> — este app guarda dados '
+      + '<strong>apenas no seu dispositivo</strong> (armazenamento local). Nenhum cookie de rastreamento '
+      + 'é enviado a servidores. <a href="./privacidade.html" style="color:#a9a4ff">Saber mais</a>.';
+    var ok = document.createElement('button');
+    ok.type = 'button';
+    ok.textContent = 'Entendi';
+    ok.style.cssText = 'border:0;border-radius:11px;background:linear-gradient(135deg,#6d6af5,#5b54e8);'
+      + 'color:#fff;font-weight:800;font-size:13px;padding:10px 18px;cursor:pointer;min-height:40px';
+    ok.addEventListener('click', function(){
+      try { localStorage.setItem('np_lgpd_ack', '1'); } catch(e){}
+      b.style.opacity = '0'; b.style.transform = 'translateY(8px)'; b.style.transition = 'opacity .25s, transform .25s';
+      setTimeout(function(){ if (b.parentNode) b.parentNode.removeChild(b); }, 280);
+    });
+    b.appendChild(txt); b.appendChild(ok);
+    document.body.appendChild(b);
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); referralWidget(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

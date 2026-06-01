@@ -37,6 +37,20 @@ const criticalFiles = [
 for (const f of criticalFiles) assertFile(f);
 
 assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
+// SEO: páginas públicas têm og:image + canonical + twitter (compartilhamento/busca)
+for (const p of ['escalas.html','central-atalhos.html','sobre-dr-jadson.html','filtro-escalas.html','mapa-escalas.html','neuroped-pro.html','portal-familia-livre.html']) {
+  assertIncludes(p, 'property="og:image"', p+' tem og:image (compartilhamento)');
+  assertIncludes(p, 'rel="canonical"', p+' tem canonical (SEO)');
+  assertIncludes(p, 'name="twitter:card"', p+' tem twitter card');
+}
+assertIncludes('sitemap.xml', '<lastmod>', 'sitemap tem lastmod');
+// Rodada 9.0: perf + compliance + landing + a11y
+assertFile('scales-bundle.js');
+assertIncludes('index.html', 'modulepreload', 'index pré-carrega o módulo da SPA (perf)');
+assertIncludes('app-polish-mobile.js', 'np_lgpd_ack', 'banner LGPD (1ª visita) — só localStorage, sem cookies');
+assertIncludes('neuroped-pro.html', 'FAQPage', 'landing pro tem FAQ schema (SEO/rich result)');
+assertIncludes('neuroped-pro.html', '"Service"', 'landing pro tem Service schema com preço');
+assertIncludes('filtro-escalas.html', 'aria-live="polite"', 'filtro anuncia resultado ao leitor de tela');
 // Fonte premium offline: SW cacheia Google Fonts (PWA funciona sem rede)
 assertIncludes('sw.js', 'fonts.gstatic.com', 'SW cacheia arquivos de fonte (offline)');
 assertIncludes('sw.js', 'fonts.googleapis.com', 'SW cacheia CSS da fonte (offline)');
@@ -107,7 +121,8 @@ assertIncludes('index.html', './spa-route-watchdog.js', 'index.html carrega o wa
 assertIncludes('sw.js', 'patchPdfGenerator', 'SW corrige o gerador de PDF da SPA (emoji quebrava WinAnsi)');
 assertIncludes('sw.js', 'async function xt(n){', 'patch usa âncora exata do generatePDF (auto-validável)');
 assertIncludes('index.html', './consulta-bridge.js', 'index.html carrega o bridge de roteamento');
-assertIncludes('filtro-escalas.html', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
+assertIncludes('filtro-escalas.html', 'scales-bundle.js', 'filtro carrega o bundle de escalas (13 requests viram 1) — scales-bundle.js (perf)');
+assertIncludes('scales-bundle.js', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
 // PDF do Top 5 via iframe (sem pop-up bloqueável) + dinamismo visual
 assertIncludes('filtro-escalas.html', 'npFiltroPrintFrame', 'filtro imprime Top 5 via iframe (sem pop-up)');
 assertIncludes('filtro-escalas.html', '@keyframes npRise', 'filtro tem motion (entrada animada dos cards)');
@@ -306,8 +321,8 @@ assertIncludes('sw.js', './app-shell.html', 'sw precache inclui a casca');
 assertIncludes('app-polish-mobile.js', 'EMBEDDED', 'app-polish suprime chrome próprio quando embutido na casca');
 // Catálogo de escalas: ligação dos geradores + abertura interativa real
 assertFile('scales-diarios-uteis.js');
-assertIncludes('filtro-escalas.html', './scales-453-authorial.js', 'filtro liga os geradores (453+)');
-assertIncludes('filtro-escalas.html', './scales-diarios-uteis.js', 'filtro liga diários/testes/ferramentas');
+assertIncludes('scales-bundle.js', 'scales-453-authorial.js', 'filtro liga os geradores (453+)');
+assertIncludes('scales-bundle.js', 'scales-diarios-uteis.js', 'filtro liga diários/testes/ferramentas');
 assertIncludes('mapa-escalas.html', './scales-global-max.js', 'mapa liga o global-max');
 assertIncludes('instrumento.html', './scales-diarios-uteis.js', 'instrumento liga o catálogo completo');
 assertFile('instrumento.html');
@@ -321,7 +336,7 @@ assertIncludes('filtro-escalas.html', 'r.page', 'filtro tem botão Abrir para o 
 
 
 
-assertIncludes('filtro-escalas.html', './scales-curate.js', 'filtro liga a curadoria (enxuga + rótulos)');
+assertIncludes('scales-bundle.js', 'scales-curate.js', 'filtro liga a curadoria (enxuga + rótulos)');
 assertIncludes('scales-curate.js', 'NEUROPED_CATALOG_STATS', 'curadoria publica estatística honesta');
 // Catálogo oficial de terceiros (conformidade: sem itens, com fonte)
 assertFile('scales-oficiais.js'); assertFile('scales-curate.js');
@@ -329,7 +344,7 @@ assertIncludes('scales-oficiais.js', 'official_url', 'catálogo oficial traz lin
 assertIncludes('scales-oficiais.js', 'official_catalog', 'itens oficiais marcados como catálogo (não aplicáveis)');
 assertIncludes('scales-oficiais.js', 'mchatscreen.com', 'M-CHAT como catálogo+fonte (sem itens)');
 assertNotIncludes('scales-oficiais.js', 'plain_questions:[\'', 'catálogo oficial NÃO reproduz perguntas');
-assertIncludes('filtro-escalas.html', './scales-oficiais.js', 'filtro liga o catálogo oficial');
+assertIncludes('scales-bundle.js', 'scales-oficiais.js', 'filtro liga o catálogo oficial');
 assertIncludes('filtro-escalas.html', 'Abrir fonte oficial', 'filtro abre a fonte oficial dos instrumentos de terceiros');
 assertIncludes('scales-curate.js', 'oficiais', 'curadoria separa fontes oficiais da contagem aplicável');
 // Instrumentos autorais NPE-BR (itens próprios + lógica clínica)
@@ -341,7 +356,7 @@ assertIncludes('instrumento-autoral.html', 'Uso profissional restrito', 'autoral
 assertIncludes('instrumento-autoral.html', 'level005', 'autoral classifica risco S0–S3 (NPE-BR-005)');
 assertIncludes('instrumento-autoral.html', 'sentinel', 'autoral trata pergunta-sentinela (004→005)');
 assertIncludes('instrumento-autoral.html', 'differential', 'autoral trata diferencial dislexia×global (011)');
-assertIncludes('filtro-escalas.html', './scales-autorais-npe.js', 'filtro liga os autorais NPE-BR');
+assertIncludes('scales-bundle.js', 'scales-autorais-npe.js', 'filtro liga os autorais NPE-BR');
 assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
 // Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
 for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
@@ -418,7 +433,7 @@ assertIncludes('sobre-dr-jadson.html', 'neuroped-pro.html', 'página de autorida
 // Inteligência clínica: sinais de alerta (red flags) no filtro de escalas
 assertFile('scales-red-flags.js');
 assertIncludes('scales-red-flags.js', 'NEUROPED_RED_FLAGS', 'módulo de sinais de alerta expõe a base');
-assertIncludes('filtro-escalas.html', 'scales-red-flags.js', 'filtro carrega o módulo de sinais de alerta');
+assertIncludes('scales-bundle.js', 'scales-red-flags.js', 'filtro carrega o módulo de sinais de alerta');
 assertIncludes('filtro-escalas.html', 'renderRedFlags', 'filtro renderiza sinais de alerta por queixa');
 assertIncludes('filtro-escalas.html', 'Apoio à decisão, não diagnóstico', 'painel de alerta mantém disclaimer (não diagnóstico)');
 // Consistência da oferta: guia/gerador alinhados ao Mercado Pago R$ 47 (sem preço antigo)
@@ -448,7 +463,7 @@ assertIncludes('scales-impacto-medicacao.js', 'npe-med-escola', 'inventário pó
 assertIncludes('impacto-medicacao.html', 'content="#0e0e22"', 'impacto-medicacao no tema índigo');
 assertIncludes('impacto-medicacao.html', 'eficácia farmacológica', 'impacto deixa claro que não mede eficácia');
 assertIncludes('filtro-escalas.html', 'renderTriangulation', 'filtro sugere 3 visões distintas (triangulação)');
-assertIncludes('filtro-escalas.html', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
+assertIncludes('scales-bundle.js', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
 assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');
 assertIncludes('filtro-escalas.html', 'Autorrelato', 'filtro distingue autorrelato');
 
@@ -550,6 +565,13 @@ if(packageJson){try{const parsed=JSON.parse(packageJson);parsed.scripts?.['test:
   addrBad.length === 0 ? pass('compliance: endereço na forma canônica (Casa 01 — Bairro São José) em todo o app')
     : fail('compliance: endereço em formato divergente', addrBad.join(', '));
 }
+
+// Frescor do bundle: deve bater com a concatenação dos fontes (evita bundle defasado)
+try {
+  const { buildBundle } = await import("./build-scales-bundle.mjs");
+  const onDisk = file("scales-bundle.js");
+  buildBundle(root).trim() === onDisk.trim() ? pass("scales-bundle está fresco (= concatenação dos fontes)") : fail("scales-bundle DEFASADO — rode: node scripts/build-scales-bundle.mjs");
+} catch (e) { warn("não validou frescor do bundle", String(e)); }
 
 console.log('\nNeuroPed static quality check');
 console.log('============================');
