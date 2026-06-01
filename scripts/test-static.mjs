@@ -379,7 +379,10 @@ assertIncludes('instrumento-autoral.html', 'Natureza da ferramenta', 'instrument
 assertIncludes('instrumento-autoral.html', 'SAMU 192', 'alerta de risco direciona à emergência (SAMU 192)');
 assertIncludes('instrumento-autoral.html', 'CVV 188', 'alerta de risco oferece apoio emocional (CVV 188)');
 // UX: anti-zoom no toque + tour com saída sempre disponível
-assertIncludes('index.html', 'maximum-scale=1', 'index.html trava o zoom de toque (viewport maximum-scale=1)');
+// a11y (WCAG 1.4.4): zoom de toque DEVE ser permitido. maximum-scale=1 bloqueava ampliar.
+assertNotIncludes('index.html', 'maximum-scale=1', 'index.html NÃO bloqueia zoom de toque (a11y)');
+assertNotIncludes('app-shell.html', 'maximum-scale=1', 'app-shell NÃO bloqueia zoom de toque (a11y)');
+assertIncludes('app-polish-mobile.js', 'maximum-scale=5', 'fixViewport permite pinch-zoom até 5x (a11y)');
 assertIncludes('app-polish-mobile.css', 'touch-action: manipulation', 'polish global desativa double-tap-zoom');
 assertIncludes('tour.js', 'npt-x', 'tour tem botão × de fechar/pular em todos os passos');
 assertIncludes('tour.js', "ev.key==='Escape'", 'tour fecha com ESC');
