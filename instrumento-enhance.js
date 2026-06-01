@@ -380,6 +380,83 @@
     } catch(e){ diffBox.textContent = ''; }
   }
 
+  // O botão "Imprimir" original chamava window.print() = imprimia a PÁGINA INTEIRA
+  // do app (fundo escuro, menus) — saía quebrado e parecia "não gerar resultado".
+  // Trocamos por um documento LIMPO só com o resultado, impresso via iframe oculto
+  // (não depende de pop-up, que iOS Safari bloqueia).
+  function fixPrintButton(){
+    var btns = document.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++){
+      var b = btns[i];
+      if (/^\s*imprimir\s*$/i.test(b.textContent || '') && !b.__npFixed){
+        b.__npFixed = true;
+        b.removeAttribute('onclick');
+        b.addEventListener('click', function(ev){ ev.preventDefault(); printResultDoc(); });
+      }
+    }
+  }
+
+  function getText(id){ var el = document.getElementById(id); return el ? (el.value != null && el.tagName === 'TEXTAREA' ? el.value : el.textContent) || '' : ''; }
+
+  function printResultDoc(){
+    var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); };
+    var titleEl = document.querySelector('#hero h1, h1');
+    var title = titleEl ? titleEl.textContent : 'Instrumento';
+    var pac = '';
+    var pbar = document.getElementById('npPatientBar') || document.getElementById('instPatientBar');
+    if (pbar && pbar.textContent.trim()) pac = pbar.textContent.trim();
+    var raw = getText('raw'), pct = getText('pct'), band = getText('band'), answered = getText('answered');
+    var interp = (document.getElementById('interp') && document.getElementById('interp').textContent) || '';
+    var obs = getText('obs');
+    // tabela de perguntas/respostas a partir do DOM já renderizado
+    var rows = '';
+    var items = document.querySelectorAll('.item');
+    for (var i = 0; i < items.length; i++){
+      var qEl = items[i].querySelector('.q, .question, p, label');
+      var q = qEl ? qEl.textContent : ('Item ' + (i + 1));
+      var sel = items[i].querySelector('.opt.active, .opt[aria-pressed="true"], button.active');
+      var ans = sel ? sel.textContent.trim() : '—';
+      rows += '<tr><td>' + (i + 1) + '</td><td>' + esc(q) + '</td><td>' + esc(ans) + '</td></tr>';
+    }
+    var html =
+      '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(title) + '</title>' +
+      '<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;margin:0 0 6px;color:#7f1d1d}.box{border:1px solid #ddd;background:#fafafa;padding:10px;border-radius:8px;margin:8px 0;font-size:13px}.tip{padding:10px;border-radius:8px;background:#fef3c7;color:#92400e;margin:8px 0;font-weight:700}table{width:100%;border-collapse:collapse;margin:10px 0}th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left;vertical-align:top}th{background:#f4e7d3}.warn{font-size:11px;color:#555;margin-top:18px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style>' +
+      '</head><body><h1>' + esc(title) + '</h1>' +
+      (pac ? '<div class="box">' + esc(pac) + '</div>' : '') +
+      '<div class="box"><b>Data:</b> ' + esc(new Date().toLocaleString('pt-BR')) +
+      ' &middot; <b>Respondidos:</b> ' + esc(answered) + '</div>' +
+      '<div class="tip">Pontuação bruta: ' + esc(raw) + (pct ? ' &middot; ' + esc(pct) : '') +
+      (band ? ' &middot; Faixa orientativa: ' + esc(band) : '') + '</div>' +
+      (interp ? '<p>' + esc(interp) + '</p>' : '') +
+      (rows ? '<table><thead><tr><th>#</th><th>Item</th><th>Resposta</th></tr></thead><tbody>' + rows + '</tbody></table>' : '') +
+      (obs ? '<div class="box"><b>Observações:</b> ' + esc(obs) + '</div>' : '') +
+      '<div class="warn">Faixa interpretativa baseada em % do score máximo bruto. Não substitui validação clínica nem cutoffs originais do instrumento. Decisão diagnóstica é do médico responsável.</div>' +
+      '</body></html>';
+    printViaIframe(html);
+  }
+
+  function printViaIframe(html){
+    try {
+      var old = document.getElementById('npInstPrintFrame');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var f = document.createElement('iframe');
+      f.id = 'npInstPrintFrame';
+      f.setAttribute('aria-hidden', 'true');
+      f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';
+      document.body.appendChild(f);
+      var fired = false;
+      function doPrint(){ if (fired) return; fired = true; try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { popupPrint(html); } }
+      f.onload = function(){ setTimeout(doPrint, 120); };
+      var doc = f.contentWindow.document; doc.open(); doc.write(html); doc.close();
+      setTimeout(doPrint, 600);
+    } catch (e) { popupPrint(html); }
+  }
+  function popupPrint(html){
+    var w = window.open('', '_blank');
+    if (w){ w.document.open(); w.document.write(html); w.document.close(); setTimeout(function(){ try { w.focus(); w.print(); } catch (e) {} }, 250); return; }
+    try { alert('Impressão bloqueada pelo navegador. Libere os pop-ups deste site ou use "Copiar resumo".'); } catch (e) {}
+  }
+
   function attemptEnhance(){
     if (!document.querySelectorAll('.item').length) return false;
     renderPatientBar();
@@ -387,6 +464,7 @@
     addNAButtons();
     bindClicks();
     bindKeyboard();
+    fixPrintButton();
     renderActions();
     applyAnswers(readState());
     recompute();

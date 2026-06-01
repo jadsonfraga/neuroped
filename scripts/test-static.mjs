@@ -183,6 +183,10 @@ assertIncludes('instrumento-enhance.js', 'NeuroPedCloud', 'instrumento-enhance r
 assertIncludes('instrumento-enhance.js', 'data-v="na"', 'instrumento-enhance adiciona botao Nao Aplicavel');
 assertIncludes('instrumento-enhance.js', 'renderDiff', 'instrumento-enhance compara com avaliacao anterior');
 assertIncludes('instrumento-enhance.js', 'bindKeyboard', 'instrumento-enhance liga atalhos 1..5 e 0 para n/a');
+// Botão Imprimir gera documento LIMPO de resultado (não a página toda) via iframe
+assertIncludes('instrumento-enhance.js', 'function printResultDoc', 'instrumento gera documento de resultado limpo');
+assertIncludes('instrumento-enhance.js', 'npInstPrintFrame', 'instrumento imprime via iframe (sem pop-up bloqueável)');
+assertIncludes('instrumento-enhance.js', 'fixPrintButton', 'instrumento substitui o print() da página inteira');
 
 // NeuroPed Master — vitrine pública (TEST_STATIC_ACRESCENTAR)
 const NPM_FILES = ['neuroped-master-vitrine.html','neuroped-master-vitrine.css','neuroped-master-vitrine.js','neuroped-master-vitrine-data.js','solicitar-neuroped-master.html'];
