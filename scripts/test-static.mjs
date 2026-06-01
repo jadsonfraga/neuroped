@@ -139,7 +139,11 @@ assertIncludes('filtro-escalas.html', 'class="topbar"', 'filtro tem topbar do ap
 assertIncludes('filtro-escalas.html', 'central-atalhos.html', 'topbar do filtro volta ao app (hub)');
 // Relevância do filtro: queixa casa por token (não substring frouxa) e sem tema derruba
 assertIncludes('filtro-escalas.html', 'inalcançável pela não-temática', 'scoreScale usa patamar: escala temática sempre acima da irrelevante');
-assertIncludes('filtro-escalas.html', 'temBusca?500', 'com queixa/texto só escalas temáticas passam o threshold');
+// Filtro redesenhado: entrada 100% por clique (idade+queixa) e saída = só as 3 mais indicadas
+assertIncludes('filtro-escalas.html', 'id="ageChips"', 'idade é selecionada por clique (chips), sem digitar');
+assertNotIncludes('filtro-escalas.html', '<textarea id="queixaLivre"', 'sem campo de queixa por digitação (só clique)');
+assertIncludes('filtro-escalas.html', 'slice(0,3)', 'filtro retorna as 3 escalas mais indicadas (saída enxuta)');
+assertIncludes('filtro-escalas.html', 'r.score>=500', 'filtro só mostra escalas temáticas relevantes (patamar 500+)');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
