@@ -129,9 +129,70 @@
       '<div class="warn">Faixa interpretativa baseada em % do score máximo bruto. Não substitui validação clínica nem cutoffs originais do instrumento. Decisão diagnóstica é do médico responsável.</div>' +
       '</body></html>';
 
-    // Impressão via IFRAME oculto na própria página: não depende de pop-up
-    // (que iOS Safari e bloqueadores costumam barrar), eliminando a falha
-    // silenciosa em que o resultado simplesmente não aparecia.
+    // ===== ESTRATÉGIA À PROVA DE FALHAS =====
+    // O resultado SEMPRE aparece na própria tela (overlay embutido), sem depender
+    // de pop-up nem de impressão. Dentro dele há botões de Imprimir/PDF e Copiar.
+    // Assim, mesmo com pop-up bloqueado (iOS Safari etc.), o usuário VÊ o resultado.
+    showResultOverlay(html, inst, answers, patient);
+  }
+
+  function showResultOverlay(html, inst, answers, patient){
+    var prev = document.getElementById('npResultOverlay');
+    if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+
+    var ov = document.createElement('div');
+    ov.id = 'npResultOverlay';
+    ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-modal', 'true');
+    ov.setAttribute('aria-label', 'Resultado da escala');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(8,8,20,.66);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:20px;-webkit-overflow-scrolling:touch';
+
+    var sheet = document.createElement('div');
+    sheet.style.cssText = 'background:#fff;color:#111;max-width:760px;width:100%;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.5);overflow:hidden;margin:auto';
+
+    var bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:#0e0e22;position:sticky;top:0';
+    bar.innerHTML =
+      '<strong style="color:#f2dca6;font:700 14px system-ui;margin-right:auto">Resultado da avaliação</strong>' +
+      '<button id="npResPrint" style="border:0;border-radius:10px;padding:10px 14px;font:800 13px system-ui;cursor:pointer;background:#6d6af5;color:#fff">🖨️ Imprimir / PDF</button>' +
+      '<button id="npResCopy" style="border:0;border-radius:10px;padding:10px 14px;font:800 13px system-ui;cursor:pointer;background:#e7c98b;color:#241a05">📋 Copiar</button>' +
+      '<button id="npResClose" aria-label="Fechar" style="border:0;border-radius:10px;padding:10px 13px;font:800 15px system-ui;cursor:pointer;background:rgba(255,255,255,.14);color:#fff">✕</button>';
+
+    var body = document.createElement('div');
+    body.id = 'npResultContent';
+    body.style.cssText = 'padding:18px 20px 26px;max-height:none';
+    // injeta só o conteúdo do <body> do html (sem doctype/head)
+    var inner = html.replace(/[\s\S]*<body>/, '').replace(/<\/body>[\s\S]*/, '');
+    body.innerHTML = inner;
+
+    sheet.appendChild(bar); sheet.appendChild(body); ov.appendChild(sheet);
+    document.body.appendChild(ov);
+
+    function close(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }
+    document.getElementById('npResClose').onclick = close;
+    ov.addEventListener('click', function(ev){ if (ev.target === ov) close(); });
+    document.addEventListener('keydown', function esc(ev){ if (ev.key === 'Escape'){ document.removeEventListener('keydown', esc); close(); } });
+
+    document.getElementById('npResPrint').onclick = function(){ printViaIframe(html); };
+    document.getElementById('npResCopy').onclick = function(){
+      var txt = (typeof laudoText === 'function') ? laudoText(inst, answers, patient) : (body.innerText || '');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function(){ flash('npResCopy', '✓ Copiado'); }, function(){ selectText(body); });
+      } else { selectText(body); }
+    };
+  }
+
+  function flash(id, label){
+    var b = document.getElementById(id); if (!b) return;
+    var old = b.textContent; b.textContent = label;
+    setTimeout(function(){ if (b) b.textContent = old; }, 1600);
+  }
+  function selectText(node){
+    try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
+  }
+
+  // Impressão opcional via iframe oculto (não depende de pop-up). Só roda no clique.
+  function printViaIframe(html){
     try {
       var old = document.getElementById('npScalesPrintFrame');
       if (old && old.parentNode) old.parentNode.removeChild(old);
@@ -141,23 +202,14 @@
       f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';
       document.body.appendChild(f);
       var fired = false;
-      function doPrint(){
-        if (fired) return; fired = true;
-        try { f.contentWindow.focus(); f.contentWindow.print(); }
-        catch (e) { popupFallback(html); }
-      }
+      function doPrint(){ if (fired) return; fired = true; try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { popupFallback(html); } }
       f.onload = function(){ setTimeout(doPrint, 120); };
-      var doc = f.contentWindow.document;
-      doc.open(); doc.write(html); doc.close();
-      // Safari às vezes não dispara onload em about:blank → garante o print
+      var doc = f.contentWindow.document; doc.open(); doc.write(html); doc.close();
       setTimeout(doPrint, 600);
-      reportStatus('Gerando resultado para impressão/PDF…');
-    } catch (e) {
-      popupFallback(html);
-    }
+    } catch (e) { popupFallback(html); }
   }
 
-  // Fallback: tenta pop-up; se bloqueado, avisa o usuário em vez de falhar em silêncio.
+  // Último recurso de impressão: pop-up; se bloqueado, avisa (resultado já está na tela).
   function popupFallback(html){
     var w = window.open('', '_blank');
     if (w) {
@@ -165,7 +217,7 @@
       setTimeout(function(){ try { w.focus(); w.print(); } catch (e) {} }, 250);
       return;
     }
-    reportStatus('Seu navegador bloqueou a janela de impressão. Libere os pop-ups deste site (ícone na barra de endereço) e tente de novo, ou use "Copiar texto" para gerar o resultado.', true);
+    reportStatus('Impressão bloqueada pelo navegador — o resultado já está na tela. Use "Copiar" ou libere os pop-ups para imprimir.', true);
   }
 
   // Status sempre acessível (escreve no #npScalesStatus por id; alerta se ausente).

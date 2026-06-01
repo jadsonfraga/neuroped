@@ -66,9 +66,10 @@ assertIncludes('app-mode.js', 'aria-label', 'badge de modo tem aria-label descri
 assertFile('scales-enhance.js');
 assertIncludes('scales-enhance.js', 'NeuroPedScales', 'scales-enhance expoe API global NeuroPedScales');
 assertIncludes('scales-enhance.js', 'laudoText', 'scales-enhance gera texto pra laudo');
-// Resultado de escala imprime sem depender de pop-up (iframe) e avisa se bloqueado
-assertIncludes('scales-enhance.js', 'npScalesPrintFrame', 'resultado da escala imprime via iframe (sem pop-up bloqueável)');
-assertIncludes('scales-enhance.js', 'bloqueou a janela', 'avisa o usuário quando o pop-up de impressão é bloqueado');
+// Resultado de escala SEMPRE aparece na tela (overlay), independente de pop-up
+assertIncludes('scales-enhance.js', 'npResultOverlay', 'resultado da escala aparece em overlay na própria tela');
+assertIncludes('scales-enhance.js', 'function showResultOverlay', 'overlay de resultado é renderizado sempre');
+assertIncludes('scales-enhance.js', 'Imprimir / PDF', 'overlay tem botão de imprimir/PDF');
 assertNotIncludes('scales-enhance.js', "var w = window.open('', '_blank');\n    if (!w) return;", 'sem retorno silencioso no pop-up bloqueado');
 assertIncludes('scales-enhance.js', 'domainScores', 'scales-enhance calcula score por dominio');
 assertIncludes('scales-enhance.js', 'historyFor', 'scales-enhance mantem historico por paciente+instrumento');
