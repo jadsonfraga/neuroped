@@ -37,6 +37,9 @@ const criticalFiles = [
 for (const f of criticalFiles) assertFile(f);
 
 assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
+// Fonte premium offline: SW cacheia Google Fonts (PWA funciona sem rede)
+assertIncludes('sw.js', 'fonts.gstatic.com', 'SW cacheia arquivos de fonte (offline)');
+assertIncludes('sw.js', 'fonts.googleapis.com', 'SW cacheia CSS da fonte (offline)');
 // Offline-readiness: páginas de uso diário precisam abrir sem internet
 assertIncludes('sw.js', './diario-escola-terapias-v2.html', 'diário no precache (família usa offline)');
 assertIncludes('sw.js', './banco-escalas.html', 'banco de escalas no precache offline');
