@@ -27,8 +27,26 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
              radial-gradient(1000px 640px at 102% 2%,hsl(266 80% 56% / .22),transparent 56%),
              radial-gradient(1200px 800px at 50% 116%,hsl(206 92% 56% / .12),transparent 60%),
              linear-gradient(160deg,var(--bg),var(--bg-2) 60%,var(--bg));background-attachment:fixed}
-.wrap{max-width:1020px;margin:auto;padding:18px 16px 72px}
+.wrap{max-width:1020px;margin:auto;padding:18px 16px calc(96px + env(safe-area-inset-bottom,0px))}
 .ico{width:20px;height:20px;flex:0 0 auto}
+/* brasão SVG nítido (substitui o logo de texto pesado) */
+.brandmark{width:54px;height:54px;flex:0 0 auto;filter:drop-shadow(0 6px 14px rgba(231,201,139,.28))}
+.imprint{display:flex;align-items:center;gap:13px}
+.imprint .imp-txt{display:flex;flex-direction:column;gap:2px}
+.imprint .imp-txt b{font:800 15px/1 system-ui;color:#fbf6ea;letter-spacing:.01em}
+.imprint .imp-txt span{font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:10.5px;color:#cdbf9a}
+/* busca do hub */
+.hubsearch{position:relative;margin:18px 0 4px}
+.hubsearch input{width:100%;padding:13px 16px 13px 44px;border:1px solid var(--line);border-radius:14px;background:rgba(10,9,24,.55);color:var(--ink);font:15px system-ui;transition:border-color .2s,box-shadow .2s}
+.hubsearch input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(124,118,210,.18)}
+.hubsearch input::placeholder{color:var(--soft)}
+.hubsearch::before{content:"🔎";position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.6;font-size:15px;pointer-events:none}
+.card.is-hidden{display:none}
+.group.is-empty{display:none}
+.hub-empty{display:none;color:var(--muted);text-align:center;padding:34px 18px;font-size:15px}
+.hub-empty.show{display:block}
+.card:focus-visible{outline:none;box-shadow:var(--shadow),0 0 0 2px var(--teal)}
+.card:active{transform:scale(.992)}
 
 /* capa editorial */
 .cover{position:relative;overflow:hidden;border-radius:26px;padding:32px 28px;color:#f3ede0;
@@ -94,7 +112,18 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
 <main class="wrap">
 
   <section class="cover">
-    <div class="imprint"><img src="./icon-512.png" alt="" onerror="this.style.display='none'"><span>NeuroPed EDJ · Plataforma Clínica</span></div>
+    <div class="imprint">
+      <svg class="brandmark" viewBox="0 0 64 64" role="img" aria-label="NeuroPed">
+        <defs>
+          <linearGradient id="bmG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d68a"/><stop offset="1" stop-color="#b8963e"/></linearGradient>
+          <linearGradient id="bmR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a1d2b"/><stop offset="1" stop-color="#4a0f1a"/></linearGradient>
+        </defs>
+        <path d="M32 3 7 11v20c0 16 11 25 25 30 14-5 25-14 25-30V11z" fill="url(#bmR)" stroke="url(#bmG)" stroke-width="3"/>
+        <path d="M32 8 12 14.5V31c0 13 9 20.5 20 25 11-4.5 20-12 20-25V14.5z" fill="none" stroke="url(#bmG)" stroke-width="1.2" opacity=".55"/>
+        <path d="M35 17 24 35h7l-3 13 12-19h-7z" fill="url(#bmG)" stroke="#fff3d6" stroke-width=".6"/>
+      </svg>
+      <div class="imp-txt"><b>NeuroPed EDJ</b><span>Dr. Jadson Fraga · Plataforma Clínica</span></div>
+    </div>
     <span class="eyebrow">Da triagem ao encaminhamento</span>
     <h1>NeuroPed</h1>
     <p class="lede">Plataforma de apoio à neuropediatria do <strong>Dr. Jadson Fraga Araújo Júnior</strong> — triagens, instrumentos autorais, biblioteca clínica e ferramentas de família, escola e terapias, organizadas em um só lugar.</p>
@@ -110,6 +139,9 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
     <div class="stat"><b>Offline</b><span>funciona como app instalável</span></div>
     <div class="stat"><b>Autoral</b><span>metodologia do Dr. Jadson Fraga</span></div>
   </div>
+
+  <div class="hubsearch"><input type="search" id="hubSearch" placeholder="Buscar atalho… (ex.: filtro, diário, CAA, consulta)" aria-label="Buscar atalho" aria-describedby="hubStatus" autocomplete="off"></div>
+  <p id="hubStatus" class="hub-empty" role="status" aria-live="polite">Nenhum atalho encontrado. Tente outro termo.</p>
 
   <!-- OBRA AUTORAL -->
   <section class="group">
@@ -180,6 +212,33 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
 
   <p class="footer">Ferramenta educacional de apoio à organização clínica. Não substitui avaliação profissional.<br>Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · CRM-PE 25227 | RQE 17756</p>
 </main>
+<script>
+(function(){
+  'use strict';
+  var norm=function(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');};
+  var input=document.getElementById('hubSearch');
+  var status=document.getElementById('hubStatus');
+  if(!input)return;
+  var cards=[].slice.call(document.querySelectorAll('.grid .card'));
+  var groups=[].slice.call(document.querySelectorAll('.group'));
+  input.addEventListener('input',function(){
+    var q=norm(input.value.trim());
+    var visible=0;
+    cards.forEach(function(c){
+      var match=!q||norm(c.textContent).indexOf(q)!==-1;
+      c.classList.toggle('is-hidden',!match);
+      if(match)visible++;
+    });
+    // esconde grupos sem nenhum card visível
+    groups.forEach(function(g){
+      var any=g.querySelectorAll('.grid .card:not(.is-hidden)').length>0;
+      g.classList.toggle('is-empty',!any);
+    });
+    if(status)status.classList.toggle('show',visible===0);
+  });
+  input.addEventListener('keydown',function(e){ if(e.key==='Escape'&&input.value){input.value='';input.dispatchEvent(new Event('input'));} });
+})();
+</script>
 <script src="./app-polish-mobile.js" defer></script>
 </body>
 </html>
