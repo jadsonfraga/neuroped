@@ -154,6 +154,11 @@ assertIncludes('escalas.html', 'backdrop-filter', 'escalas.html usa glassmorphis
 assertNotIncludes('escalas.html', 'background:linear-gradient(135deg,#ffffff', 'escalas.html sem cards de fundo branco (destoavam)');
 assertIncludes('central-atalhos.html', 'backdrop-filter', 'central-atalhos usa glassmorphism (visual unificado)');
 assertFile('np-cards.css');
+// Landing UX (v6.23): busca, recentes, skip-link
+assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
+assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');
+assertIncludes('escalas.html', 'skip-link', 'landing tem skip-link (WCAG)');
+assertIncludes('escalas.html', 'Pular para o conteúdo', 'skip-link rotulado em pt-BR');
 assertIncludes('mapa-escalas.html', 'backdrop-filter', 'mapa-escalas usa glassmorphism (visual unificado)');
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
 assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
