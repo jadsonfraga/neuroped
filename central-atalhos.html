@@ -56,9 +56,14 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
 .group-head .gn{font:800 11px ui-monospace,monospace;color:var(--soft);background:rgba(169,164,255,.1);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px}
-.card{display:flex;gap:13px;align-items:flex-start;text-decoration:none;background:var(--paper);border:1px solid var(--line);
+.card{position:relative;overflow:hidden;display:flex;gap:13px;align-items:flex-start;text-decoration:none;background:linear-gradient(180deg,rgba(124,118,210,.12),rgba(124,118,210,.06));border:1px solid var(--line);
   border-radius:18px;padding:15px;box-shadow:var(--shadow-soft);color:var(--ink);
+  backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);
   transition:transform .28s cubic-bezier(.22,.8,.2,1),box-shadow .28s,border-color .28s}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--teal),transparent);opacity:.5;transition:opacity .25s}
+.card:hover::before{opacity:1}
+.card.gold::before{background:linear-gradient(180deg,var(--gold),transparent);opacity:1;width:4px}
+.card.wine::before{background:linear-gradient(180deg,var(--wine),transparent);opacity:1;width:4px}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(169,164,255,.32)}
 .card .ci{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:0 0 auto;
   background:linear-gradient(180deg,var(--teal),var(--teal-d))}

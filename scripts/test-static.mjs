@@ -142,6 +142,11 @@ for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
 assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');
 assertIncludes('index.html', 'fonts.googleapis.com', 'CSP permite Google Fonts (style-src)');
+// Unificação visual: cards glassmorphism coesos (mesmo padrão premium do filtro)
+assertIncludes('escalas.html', 'backdrop-filter', 'escalas.html usa glassmorphism (visual unificado)');
+assertNotIncludes('escalas.html', 'background:linear-gradient(135deg,#ffffff', 'escalas.html sem cards de fundo branco (destoavam)');
+assertIncludes('central-atalhos.html', 'backdrop-filter', 'central-atalhos usa glassmorphism (visual unificado)');
+assertFile('np-cards.css');
 assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem capa institucional (posicionamento)');
 assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
 assertNotIncludes('central-atalhos.html', 'reservada por PIN', 'hub não descreve biblioteca como reservada (já é aberta)');
