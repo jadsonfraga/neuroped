@@ -60,7 +60,8 @@
       var sum = 0, count = (d.items || []).length;
       (d.items || []).forEach(function(_, ii){
         var v = Number(answers && answers[di + '-' + ii]);
-        if (Number.isFinite(v)) sum += v;
+        // blindagem: resposta corrompida/fora da faixa não estoura o máximo (evita faixa >100%)
+        if (Number.isFinite(v)) sum += Math.max(0, Math.min(perItem, v));
       });
       var max = count * perItem;
       return { name: d.name, score: sum, max: max, pct: max ? sum / max : 0 };

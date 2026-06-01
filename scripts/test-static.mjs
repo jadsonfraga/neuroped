@@ -101,7 +101,8 @@ assertIncludes('scales-enhance.js', 'function showResultOverlay', 'overlay de re
 assertIncludes('scales-enhance.js', 'Imprimir / PDF', 'overlay tem botão de imprimir/PDF');
 assertIncludes('scales-enhance.js', 'function fixGlobalPrint', 'intercepta o botão Imprimir da página (que imprimia o app todo)');
 assertNotIncludes('scales-enhance.js', "var w = window.open('', '_blank');\n    if (!w) return;", 'sem retorno silencioso no pop-up bloqueado');
-assertIncludes('scales-enhance.js', 'domainScores', 'scales-enhance calcula score por dominio');
+assertIncludes('scales-enhance.js', 'Math.min(perItem', 'escore blinda resposta fora da faixa (não estoura o máximo)');
+ assertIncludes('scales-enhance.js', 'domainScores', 'scales-enhance calcula score por dominio');
 assertIncludes('scales-enhance.js', 'historyFor', 'scales-enhance mantem historico por paciente+instrumento');
 assertIncludes('scales-enhance.js', 'tipFor', 'scales-enhance interpreta faixa orientativa');
 for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
