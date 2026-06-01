@@ -170,8 +170,12 @@
         document.head.appendChild(vp);
       }
       var c = vp.getAttribute('content') || 'width=device-width, initial-scale=1';
-      if (!/maximum-scale/.test(c)) {
-        vp.setAttribute('content', c.replace(/\s*$/, '') + (/,\s*$/.test(c) ? '' : ',') + 'maximum-scale=1');
+      // a11y (WCAG 1.4.4): permite pinch-zoom. maximum-scale=1 bloqueava ampliar
+      // (e na iOS 10+ é ignorado, só prejudicava Android). 5x mantém teto sano.
+      if (/maximum-scale\s*=\s*1\b/.test(c)) {
+        vp.setAttribute('content', c.replace(/maximum-scale\s*=\s*1\b/, 'maximum-scale=5'));
+      } else if (!/maximum-scale/.test(c)) {
+        vp.setAttribute('content', c.replace(/\s*$/, '') + (/,\s*$/.test(c) ? '' : ',') + 'maximum-scale=5');
       }
     } catch (e) {}
   }
@@ -266,7 +270,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.23.2') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.23.3') + '</span>';
     document.body.appendChild(seal);
   }
 
