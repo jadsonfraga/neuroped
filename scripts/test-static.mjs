@@ -37,6 +37,10 @@ const criticalFiles = [
 for (const f of criticalFiles) assertFile(f);
 
 assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
+// Offline-readiness: páginas de uso diário precisam abrir sem internet
+assertIncludes('sw.js', './diario-escola-terapias-v2.html', 'diário no precache (família usa offline)');
+assertIncludes('sw.js', './banco-escalas.html', 'banco de escalas no precache offline');
+assertIncludes('sw.js', './consulta.html', 'consulta no precache offline');
 // Cache: JS/CSS internos usam stale-while-revalidate (correções chegam ao usuário)
 assertIncludes('sw.js', 'isCode', 'sw.js trata JS/CSS com stale-while-revalidate (não cache-first eterno)');
 assertIncludes('index.html', 'controllerchange', 'index recarrega quando novo SW assume (pega arquivos novos)');
