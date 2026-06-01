@@ -94,6 +94,9 @@ assertFile('spa-route-watchdog.js');
 assertIncludes('spa-route-watchdog.js', 'forget to add the page', 'watchdog detecta a tela morta do router');
 assertIncludes('spa-route-watchdog.js', 'filtro-escalas.html', 'watchdog resgata ao filtro estático');
 assertIncludes('index.html', './spa-route-watchdog.js', 'index.html carrega o watchdog de rota');
+// PDF da SPA: SW sanitiza emoji do gerador (WinAnsi) p/ o PDF não travar
+assertIncludes('sw.js', 'patchPdfGenerator', 'SW corrige o gerador de PDF da SPA (emoji quebrava WinAnsi)');
+assertIncludes('sw.js', 'async function xt(n){', 'patch usa âncora exata do generatePDF (auto-validável)');
 assertIncludes('index.html', './consulta-bridge.js', 'index.html carrega o bridge de roteamento');
 assertIncludes('filtro-escalas.html', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
 // PDF do Top 5 via iframe (sem pop-up bloqueável) + dinamismo visual

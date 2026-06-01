@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.12.2';
+const CACHE_NAME = 'neuroped-edj-v6.13.0';
 const SHELL = [
   './',
   './app-shell.html',
@@ -74,6 +74,15 @@ self.addEventListener('fetch', e => {
     return;
   }
 
+  // PATCH do gerador de PDF da SPA: o chunk usa fonte WinAnsi (Helvetica) e quebra
+  // ao desenhar emoji/caracteres não-Latin1 → o PDF não gerava. Aqui injetamos uma
+  // sanitização no ponto de entrada (title/content), SEM tocar a lógica. É
+  // auto-validável: se a âncora exata não existir, serve o arquivo intacto (no-op).
+  if (url.origin === self.location.origin && /\/pdf-generator-[^/]*\.js$/.test(url.pathname)) {
+    e.respondWith(patchPdfGenerator(req));
+    return;
+  }
+
   // JS e CSS internos (sem hash no nome): STALE-WHILE-REVALIDATE.
   // Serve rápido do cache, mas SEMPRE busca a versão nova em paralelo e atualiza
   // o cache. Sem isto, JS/CSS antigos ficavam presos para sempre (correções nunca
@@ -106,6 +115,33 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match('./index.html')))
   );
 });
+
+// Sanitiza title/content do gerador de PDF da SPA para não quebrar no WinAnsi.
+// Injeta no início de `async function xt(n){` (entry de generatePDF). Se a âncora
+// não existir (chunk mudou), serve o original — nunca quebra.
+async function patchPdfGenerator(req) {
+  try {
+    const res = await fetch(req);
+    if (!res || !res.ok) return res;
+    let code = await res.text();
+    const anchor = 'async function xt(n){';
+    if (code.indexOf(anchor) !== -1 && code.indexOf('__npPdfSafe') === -1) {
+      const inject = anchor +
+        'try{var __s=function(v){return (v==null?v:String(v)' +
+        // remove emojis e símbolos fora do Latin-1, normaliza acentos compostos
+        '.normalize("NFC")' +
+        '.replace(/[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{FE00}-\\u{FE0F}\\u{1F1E6}-\\u{1F1FF}\\u{2190}-\\u{21FF}\\u{2300}-\\u{23FF}\\u{25A0}-\\u{25FF}\\u{2B00}-\\u{2BFF}]/gu,"")' +
+        // qualquer resíduo fora do imprimível Latin-1 vira espaço
+        '.replace(/[^\\u0000-\\u00FF]/g," ").replace(/[ ]{2,}/g," ").trim());};' +
+        'if(n&&typeof n==="object"){n.title=__s(n.title);n.subtitle=__s(n.subtitle);n.content=__s(n.content);n.patientName=__s(n.patientName);n.extraFooter=__s(n.extraFooter);}}catch(__e){}var __npPdfSafe=1;';
+      code = code.replace(anchor, inject);
+      return new Response(code, { headers: { 'Content-Type': 'application/javascript; charset=utf-8' } });
+    }
+    return new Response(code, { headers: res.headers });
+  } catch (err) {
+    return fetch(req);
+  }
+}
 
 // Background sync (quando suportado)
 self.addEventListener('sync', e => {
