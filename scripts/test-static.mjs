@@ -159,6 +159,9 @@ assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead')
 assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');
 assertIncludes('escalas.html', 'skip-link', 'landing tem skip-link (WCAG)');
 assertIncludes('escalas.html', 'Pular para o conteúdo', 'skip-link rotulado em pt-BR');
+// Refinamento landing: busca acessível
+assertIncludes('escalas.html', 'aria-live="polite"', 'busca anuncia resultados ao leitor de tela');
+assertIncludes('escalas.html', 'sr-only', 'status de busca visualmente oculto mas lido');
 assertIncludes('mapa-escalas.html', 'backdrop-filter', 'mapa-escalas usa glassmorphism (visual unificado)');
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
 assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
