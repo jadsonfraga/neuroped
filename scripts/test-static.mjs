@@ -85,6 +85,10 @@ assertIncludes('safe-public-layer.js', '/escalas', 'safe-public-layer reconhece 
 assertIncludes('consulta-bridge.js', 'filtro-escalas.html', 'consulta-bridge redireciona hash /filtro para filtro-escalas.html');
 assertIncludes('index.html', './consulta-bridge.js', 'index.html carrega o bridge de roteamento');
 assertIncludes('filtro-escalas.html', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
+// PDF do Top 5 via iframe (sem pop-up bloqueável) + dinamismo visual
+assertIncludes('filtro-escalas.html', 'npFiltroPrintFrame', 'filtro imprime Top 5 via iframe (sem pop-up)');
+assertIncludes('filtro-escalas.html', '@keyframes npRise', 'filtro tem motion (entrada animada dos cards)');
+assertIncludes('filtro-escalas.html', 'prefers-reduced-motion', 'motion respeita prefers-reduced-motion (acessibilidade)');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
