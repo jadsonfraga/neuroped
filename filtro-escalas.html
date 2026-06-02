@@ -271,10 +271,12 @@ function run(){if(!INDEX.length)return;
   if(!rows.length) rows=INDEX.map(function(s){return scoreScale(s,comp,age,"","muito-alta","")}).filter(function(r){return r.score>=300}).sort(function(a,b){return b.score-a.score});
   rows=rows.filter(function(r){return !/lote|banco completo/i.test(r.title||"")}).slice(0,3);
   LAST_ROWS=rows;
+  // fila de recomendadas → o runner encadeia "próxima escala" (triangulação sem voltar ao menu)
+  try{localStorage.setItem('np:reco',JSON.stringify(rows.map(function(r){return {id:r.id,title:r.title}})));}catch(e){}
   // saída enxuta: SÓ as 3 escalas. Nada de summary técnico, red flags, pacote ou bancos.
   ["redFlags","package","triangulacao"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML=""});
   if(rows.length){
-    if(sum){var qz=comp.length?comp.join(", "):"caso"; var it=age===null?"":" · "+(age<24?age+" meses":Math.floor(age/12)+" anos"); sum.innerHTML="Para <strong>"+qz+"</strong>"+it+" — as 3 mais indicadas:";}
+    if(sum){var qz=comp.length?comp.join(", "):"caso"; var it=age===null?"":" · "+(age<24?age+" meses":Math.floor(age/12)+" anos"); var one=rows[0]?' <a class="btn" style="margin-left:8px;padding:9px 13px;vertical-align:middle" href="./escala.html?id='+encodeURIComponent(rows[0].id)+'">▶ Responder a 1ª agora</a>':''; sum.innerHTML="Para <strong>"+qz+"</strong>"+it+" — as 3 mais indicadas:"+one;}
     document.getElementById("results").innerHTML=rows.map(function(r,i){return card(r,i)}).join("");
   } else {
     if(sum)sum.textContent="Sem instrumento específico para esta combinação. Tente outra queixa.";

@@ -252,6 +252,10 @@ assertIncludes('app-polish-mobile.js', 'function pageExit', 'navegação guiada:
 assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacidade (não quebra sticky/fixed)');
 assertIncludes('app-polish-mobile.js', 'function journeyGuide', 'guia de jornada: etapa atual + próximo passo contextual (fluxo guiado)');
 assertIncludes('app-polish-mobile.js', 'Próximo passo', 'jornada destaca o próximo passo (navegação preditiva)');
+assertIncludes('app-polish-mobile.js', 'function predictivePrefetch', 'prefetch preditivo: próxima tela carrega antes do clique (instantâneo)');
+assertIncludes('filtro-escalas.html', 'Responder a 1ª agora', 'filtro: atalho de 1 toque para a escala mais indicada (menos cliques)');
+assertIncludes('filtro-escalas.html', "'np:reco'", 'filtro grava a fila de recomendadas (runner encadeia próxima)');
+assertIncludes('escala.html', 'Próxima recomendada', 'runner encadeia a próxima escala recomendada (triagem em sequência)');
 assertIncludes('diario-escola-terapias-v2.html', 'aria-label="Novo registro"', 'diário tem aria-label nos botões só-ícone');
 assertIncludes('diario-escola-terapias-v2.html', 'np-empty', 'diário usa estado vazio institucional');
 {
