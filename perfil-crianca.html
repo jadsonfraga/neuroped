@@ -86,6 +86,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     <div class="panel" style="padding:16px">
       <div id="tlChart"></div>
       <div id="tlList"></div>
+      <div class="actions" style="margin-top:14px"><button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">📄 Relatório consolidado (PDF)</button></div>
     </div>
   </section>
 
@@ -210,6 +211,44 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     }).join('');
   }
 
+  /* Relatório consolidado: 1 PDF com a criança + linha do tempo + TODAS as avaliações */
+  function buildReport(c, rs){
+    var pe=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]);});};
+    var age=window.NPStore.ageLabel(c);
+    var head='<h1>Relatório consolidado de acompanhamento</h1>'
+      +'<div class="box"><b>Criança:</b> '+pe(c.name||'—')+(age?' &middot; <b>Idade:</b> '+pe(age):'')+(c.sex?' &middot; '+pe(c.sex):'')
+      +(c.diagnosis?'<br><b>Diagnóstico/hipótese:</b> '+pe(c.diagnosis):'')+'<br><b>Emitido em:</b> '+new Date().toLocaleString('pt-BR')+'</div>';
+    var blocks=rs.map(function(r){
+      var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';
+      var pct=r.max?Math.round(100*r.score/r.max)+'%':'—';
+      var dom=(r.domains||[]).map(function(x){return '<li>'+pe(x.name)+': '+x.score+'/'+x.max+(x.max?' ('+Math.round(100*x.score/x.max)+'%)':'')+'</li>';}).join('');
+      return '<div class="ev"><h3>'+pe(r.instrument_title||'Instrumento')+'</h3>'
+        +'<p class="m">'+d+' &middot; pontuação '+r.score+'/'+r.max+' ('+pct+')</p>'
+        +(dom?'<ul>'+dom+'</ul>':'')+'</div>';
+    }).join('');
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+pe(c.name||'criança')+'</title>'
+      +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;color:#7f1d1d;margin:0 0 10px}h3{font-size:14px;color:#0f766e;margin:14px 0 2px}.box{border:1px solid #ddd;background:#fafafa;padding:12px;border-radius:8px;margin:8px 0}.ev{border-top:1px solid #eee;padding-top:8px;margin-top:8px}.m{color:#555;font-size:12px;margin:2px 0}ul{margin:4px 0 0 18px;font-size:12px}.warn{font-size:11px;color:#555;margin-top:20px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style></head><body>'
+      +head
+      +'<h2 style="font-size:15px;color:#7f1d1d">Avaliações ('+rs.length+')</h2>'
+      +(rs.length?blocks:'<p class="m">Nenhuma avaliação registrada.</p>')
+      +'<div class="warn">Documento de organização clínica gerado localmente no NeuroPed EDJ. Instrumentos autorais de triagem, não normatizados — não substituem avaliação nem diagnóstico. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227.</div>'
+      +'</body></html>';
+  }
+  function printReport(html){
+    try{
+      var f=document.createElement('iframe');
+      f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';
+      f.onload=function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 1000); };
+      document.body.appendChild(f);
+      var d=f.contentWindow.document; d.open(); d.write(html); d.close();
+    }catch(e){ var w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); w.print(); } }
+  }
+  function genReport(){
+    var S=window.NPStore; var c=S&&S.active(); if(!c){toast('Selecione uma criança ativa');return;}
+    var rs=S.resultsFor(c).slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
+    printReport(buildReport(c, rs));
+  }
+
   function start(){
     var S=window.NPStore; if(!S){setTimeout(start,120);return;}
     $('save').addEventListener('click',function(){
@@ -222,6 +261,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
       resetForm(); render(); renderTimeline();
     });
     $('cancel').addEventListener('click',function(){ resetForm(); });
+    var br=$('btnReport'); if(br) br.addEventListener('click', genReport);
     window.addEventListener('np-child-change',function(){ render(); renderTimeline(); });
     render(); renderTimeline();
   }
