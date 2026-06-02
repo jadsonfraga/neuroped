@@ -68,6 +68,8 @@ assertIncludes('index.html', 'reg.update()', 'index força checagem de atualiza�
 assertIncludes('app-shell.html', 'controllerchange', 'app-shell recarrega quando novo SW assume');
 assertIncludes('consulta-pin-fix.js', 'toLowerCase', 'consulta-pin-fix normaliza para lowercase (PIN alfanumérico)');
 assertIncludes('consulta.html', 'MASTER_HASH', 'consulta.html define MASTER_HASH inline');
+assertIncludes('consulta.html', 'function persist', 'consulta salva rascunho local (não some ao fechar)');
+assertIncludes('consulta.html', 'window.NPStore.active', 'consulta puxa a criança ativa do Perfil (sem ilha)');
 assertIncludes('safe-public-layer.js', 'consulta.html?next=', 'área sensível envia para PIN');
 assertIncludes('consulta-docflow.js', 'Não são assinatura digital ICP-Brasil', 'QR avisa que não substitui ICP-Brasil');
 assertIncludes('manifest.json', 'CAA Gratuita', 'manifest mantém CAA Gratuita');
