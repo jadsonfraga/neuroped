@@ -178,7 +178,7 @@ assertIncludes('app-polish-mobile.css', '.np-sheet', 'polish CSS define bottom s
 assertIncludes('app-polish-mobile.css', 'prefers-reduced-motion', 'polish CSS respeita prefers-reduced-motion');
 assertIncludes('app-polish-mobile.js', 'npToast', 'polish JS expoe window.npToast');
 assertIncludes('app-polish-mobile.js', 'npConfirm', 'polish JS expoe window.npConfirm');
-for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','escalas.html','banco-escalas.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
+for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','banco-escalas.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
   assertIncludes(p, 'app-polish-mobile.css', p + ' carrega app-polish-mobile.css');
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
 }
@@ -188,7 +188,6 @@ assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunce
 assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');
 assertIncludes('index.html', 'fonts.googleapis.com', 'CSP permite Google Fonts (style-src)');
 // Unificação visual: cards glassmorphism coesos (mesmo padrão premium do filtro)
-assertIncludes('escalas.html', 'backdrop-filter', 'escalas.html usa glassmorphism (visual unificado)');
 assertNotIncludes('escalas.html', 'background:linear-gradient(135deg,#ffffff', 'escalas.html sem cards de fundo branco (destoavam)');
 assertIncludes('central-atalhos.html', 'backdrop-filter', 'central-atalhos usa glassmorphism (visual unificado)');
 assertFile('np-cards.css');
@@ -221,13 +220,11 @@ assertIncludes('central-atalhos.html', 'np-store.js', 'hub integra a espinha de 
 assertIncludes('central-atalhos.html', 'class="fmeta"', 'destaques do hub têm indicadores de uso vivos (arquitetura de atenção)');
 assertIncludes('central-atalhos.html', 'paintMeta', 'hub popula indicadores de uso com estado real da plataforma');
 // Landing UX (v6.23): busca, recentes, skip-link
-assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
-assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');
-assertIncludes('escalas.html', 'skip-link', 'landing tem skip-link (WCAG)');
-assertIncludes('escalas.html', 'Pular para o conteúdo', 'skip-link rotulado em pt-BR');
-// Refinamento landing: busca acessível
-assertIncludes('escalas.html', 'aria-live="polite"', 'busca anuncia resultados ao leitor de tela');
-assertIncludes('escalas.html', 'sr-only', 'status de busca visualmente oculto mas lido');
+// Landing UX consolidada: o índice (escalas.html) foi absorvido pela Central (porta única)
+assertIncludes('escalas.html', "location.replace('./central-atalhos.html')", 'escalas.html redireciona para a landing única (Central)');
+assertIncludes('central-atalhos.html', 'np-skip', 'a Central (landing única) tem skip-link (WCAG)');
+assertIncludes('central-atalhos.html', 'Pular para o conteúdo', 'skip-link rotulado em pt-BR na Central');
+assertIncludes('central-atalhos.html', 'aria-live', 'Central anuncia estados dinâmicos ao leitor de tela');
 // CONSOLIDAÇÃO: mapa-escalas foi ABSORVIDO pelo Filtro (porta única) → agora redireciona
 assertIncludes('mapa-escalas.html', "location.replace('./filtro-escalas.html')", 'mapa-escalas redireciona para a porta única (filtro)');
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');

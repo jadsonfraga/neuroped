@@ -1,6 +1,6 @@
 {
   "name": "neuroped-edj",
-  "version": "6.39.9",
+  "version": "6.40.0",
   "description": "NeuroPed EDJ — plataforma clínica de neuropediatria do Dr. Jadson Fraga Araújo Júnior",
   "private": true,
   "scripts": {

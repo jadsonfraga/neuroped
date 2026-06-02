@@ -28,6 +28,8 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
              radial-gradient(1200px 800px at 50% 116%,hsl(206 92% 56% / .12),transparent 60%),
              linear-gradient(160deg,var(--bg),var(--bg-2) 60%,var(--bg));background-attachment:fixed}
 .wrap{max-width:1020px;margin:auto;padding:18px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+.np-skip{position:absolute;left:-9999px;top:8px;z-index:100;background:var(--gold);color:#241a05;font-weight:800;padding:10px 14px;border-radius:10px;text-decoration:none}
+.np-skip:focus{left:12px}
 .ico{width:20px;height:20px;flex:0 0 auto}
 /* brasão SVG nítido (substitui o logo de texto pesado) */
 .brandmark{width:54px;height:54px;flex:0 0 auto;filter:drop-shadow(0 6px 14px rgba(231,201,139,.28))}
@@ -152,7 +154,8 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 </head>
 <body data-ns-shell>
-<main class="wrap">
+<a href="#hubmain" class="np-skip">Pular para o conteúdo</a>
+<main class="wrap" id="hubmain">
 
   <section class="cover">
     <div class="imprint">
