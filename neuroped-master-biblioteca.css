@@ -44,12 +44,12 @@ body{
 .cover .imprint span{font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:11px;color:#cdbf9a}
 .eyebrow{display:inline-block;text-transform:uppercase;letter-spacing:.2em;font-weight:800;font-size:10.5px;
   color:#15143a;background:rgba(231,201,139,.95);padding:6px 12px;border-radius:4px;margin-top:18px}
-.cover h1{font:700 clamp(40px,8vw,66px)/.98 Georgia,"Times New Roman",serif;letter-spacing:-.01em;margin:14px 0 6px;color:#fbf6ea}
-.cover .sub{font:italic 19px/1.35 Georgia,serif;color:#e7c98b;margin:0 0 14px}
+.cover h1{font:700 clamp(40px,8vw,66px)/.98 "Fraunces","Fraunces",Georgia,serif;letter-spacing:-.01em;margin:14px 0 6px;color:#fbf6ea}
+.cover .sub{font:italic 19px/1.35 "Fraunces",Georgia,serif;color:#e7c98b;margin:0 0 14px}
 .cover p{color:#cfccf2;line-height:1.62;margin:0;max-width:60ch}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px;margin:20px 0 4px}
 .stat{background:rgba(255,255,255,.05);border:1px solid rgba(169,164,255,.2);border-radius:13px;padding:13px 12px}
-.stat b{display:block;font:700 30px/1 Georgia,serif;color:#f2dca6}
+.stat b{display:block;font:700 30px/1 "Fraunces",Georgia,serif;color:#f2dca6}
 .stat span{font-size:10px;color:#bcb9e6;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-top:3px;display:block}
 
 /* ---------- TABS ---------- */
@@ -68,7 +68,7 @@ body{
 .section.on{display:block;animation:secIn .42s cubic-bezier(.22,.8,.2,1) both}
 @keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .lead{color:var(--muted);line-height:1.62;margin:0 0 16px;max-width:72ch}
-.h-sec{font:700 22px Georgia,serif;color:#f2dca6;margin:0 0 4px}
+.h-sec{font:700 22px "Fraunces",Georgia,serif;color:#f2dca6;margin:0 0 4px}
 
 /* panels & cards */
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-soft);padding:18px;margin-bottom:14px;backdrop-filter:blur(6px)}
@@ -78,7 +78,7 @@ body{
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(169,164,255,.35)}
 .code{display:inline-block;font:800 12px ui-monospace,SFMono-Regular,monospace;color:var(--indigo-l);
   background:rgba(109,106,245,.16);border:1px solid rgba(169,164,255,.26);border-radius:7px;padding:3px 8px}
-.card h3{font:700 18px/1.25 Georgia,serif;color:#f2dca6;margin:10px 0 6px}
+.card h3{font:700 18px/1.25 "Fraunces",Georgia,serif;color:#f2dca6;margin:10px 0 6px}
 .card p{color:var(--muted);line-height:1.55;margin:6px 0 0;font-size:14px}
 .meta{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0 0}
 .chip{font-size:11px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
@@ -91,7 +91,7 @@ body{
 .flow .step:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
 .flow .step .ico-box{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(180deg,var(--indigo),var(--indigo-d))}
 .flow .step .ico-box .ico{width:21px;height:21px}
-.flow .step h3{font:700 17px Georgia,serif;margin:0 0 3px;color:#f2dca6}
+.flow .step h3{font:700 17px "Fraunces",Georgia,serif;margin:0 0 3px;color:#f2dca6}
 .flow .step p{margin:0;color:var(--muted);line-height:1.56;font-size:14px}
 
 /* chapter accordion */
@@ -99,7 +99,7 @@ body{
 .chap > summary{list-style:none;cursor:pointer;padding:15px 17px;display:flex;align-items:center;gap:12px}
 .chap > summary::-webkit-details-marker{display:none}
 .chap > summary .n{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font:800 14px ui-monospace,monospace;background:linear-gradient(180deg,var(--indigo),var(--indigo-d));color:#fff}
-.chap > summary .t{flex:1;color:#ece9ff;font:700 17px Georgia,serif}
+.chap > summary .t{flex:1;color:#ece9ff;font:700 17px "Fraunces",Georgia,serif}
 .chap > summary .c{font-size:11px;font-weight:800;color:var(--gold);background:rgba(231,201,139,.12);border:1px solid rgba(231,201,139,.26);border-radius:999px;padding:4px 9px}
 .chap > summary .arw{transition:transform .3s;color:var(--soft)}
 .chap[open] > summary .arw{transform:rotate(90deg)}
@@ -107,7 +107,7 @@ body{
 .chap .body .intro{color:var(--muted);line-height:1.56;font-size:14px;margin:0 0 12px;border-left:3px solid var(--indigo-l);padding-left:12px}
 .prot{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px dashed var(--line)}
 .prot .code{margin-top:2px}
-.prot h4{margin:0 0 3px;font:700 15.5px Georgia,serif;color:#ece9ff}
+.prot h4{margin:0 0 3px;font:700 15.5px "Fraunces",Georgia,serif;color:#ece9ff}
 .prot p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
 .prot .time{font-size:11px;font-weight:800;color:var(--gold);white-space:nowrap}
 
@@ -126,7 +126,7 @@ body{
 .gate > *{position:relative;z-index:1}
 .gate .lock-ico{color:#e7c98b}
 .gate .lock-ico .ico{width:40px;height:40px}
-.gate h3{font:700 23px Georgia,serif;margin:8px 0 6px;color:#fbf6ea}
+.gate h3{font:700 23px "Fraunces",Georgia,serif;margin:8px 0 6px;color:#fbf6ea}
 .gate p{color:#cfccf2;line-height:1.56;max-width:46ch;margin:0 auto 16px}
 .gate .pinrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
 .gate input{border:1px solid rgba(169,164,255,.4);background:rgba(255,255,255,.07);color:#fff;border-radius:13px;padding:13px 16px;font:700 16px system-ui;outline:none;width:min(240px,78vw);text-align:center;letter-spacing:.12em}
@@ -154,7 +154,7 @@ body{
 /* drug blocks */
 .drug{border-top:1px solid var(--line);padding:13px 0}
 .drug:first-child{border-top:0}
-.drug h4{margin:0 0 4px;font:700 16.5px Georgia,serif;color:#f2dca6;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.drug h4{margin:0 0 4px;font:700 16.5px "Fraunces",Georgia,serif;color:#f2dca6;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .drug h4 .bn{font:800 12px ui-monospace,monospace;color:#fff;background:var(--indigo-d);border-radius:7px;padding:3px 8px}
 .drug h4 .brand{font:600 12.5px system-ui,sans-serif;color:var(--muted);font-style:italic}
 .drug p{margin:6px 0 8px;color:var(--muted);font-size:14px;line-height:1.55;display:flex;gap:0;align-items:baseline}
@@ -184,10 +184,10 @@ body{
 .t-ico{width:13px;height:13px;margin-right:3px}
 .card-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(180deg,var(--indigo),var(--indigo-d))}
 .card-ic .ico{width:22px;height:22px}
-.h-min{font:700 18px Georgia,serif;color:#f2dca6;margin:20px 0 8px}
+.h-min{font:700 18px "Fraunces",Georgia,serif;color:#f2dca6;margin:20px 0 8px}
 .md-group{margin-bottom:18px}
 .md-head{display:flex;align-items:center;gap:10px;margin:0 0 10px}
-.md-head h3{flex:1;font:700 17px Georgia,serif;color:#f2dca6;margin:0}
+.md-head h3{flex:1;font:700 17px "Fraunces",Georgia,serif;color:#f2dca6;margin:0}
 .md-count{font:800 12px ui-monospace,monospace;color:var(--indigo-l);background:rgba(109,106,245,.14);border:1px solid rgba(169,164,255,.26);border-radius:999px;padding:3px 9px}
 .chap.scale > summary .t{font-size:15.5px;font-family:system-ui,sans-serif;font-weight:800;color:#ece9ff}
 .chap.scale > summary .c.comp{color:var(--indigo-l);background:rgba(109,106,245,.14);border:1px solid rgba(169,164,255,.26)}
@@ -196,12 +196,12 @@ body{
 .sub-block h5{margin:0 0 3px;font:800 11px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--indigo-l)}
 .sub-block p{margin:0;color:var(--muted);line-height:1.56;font-size:13.5px}
 .legend{font-size:12px;font-weight:700;color:var(--gold);background:rgba(231,201,139,.1);border:1px solid rgba(231,201,139,.26);border-radius:10px;padding:8px 11px;margin:12px 0 6px;line-height:1.45}
-.lvl .fala{display:block;margin-top:4px;font:italic 12.5px Georgia,serif;color:var(--indigo-l)}
+.lvl .fala{display:block;margin-top:4px;font:italic 12.5px "Fraunces",Georgia,serif;color:var(--indigo-l)}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px;margin-bottom:6px}
 .mod.up{border-left:4px solid var(--indigo)}
 .mod.down{border-left:4px solid var(--gold)}
 .study{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow-soft);backdrop-filter:blur(6px)}
-.study h4{margin:0 0 5px;font:700 15px Georgia,serif;color:#f2dca6}
+.study h4{margin:0 0 5px;font:700 15px "Fraunces",Georgia,serif;color:#f2dca6}
 .study p{margin:0 0 8px;color:var(--muted);font-size:13.5px;line-height:1.5}
 .study .doi{font:700 11px ui-monospace,monospace;color:var(--indigo-l);background:rgba(109,106,245,.12);border-radius:7px;padding:3px 8px}
 .sk-wrap{display:grid;gap:12px}
