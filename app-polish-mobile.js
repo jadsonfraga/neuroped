@@ -273,7 +273,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.0') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.1') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -468,17 +468,54 @@
         ? '<span class="lb">Próximo passo</span><a class="cta" href="'+m.next.href+'">'+esc(m.next.label)+' ›</a>'
         : '<span class="lb">Próximo passo</span><span class="hint">'+esc(m.next.hint)+'</span>';
       host.innerHTML = who + '<div class="steps">'+steps+'</div><div class="nx">'+nx+'</div>';
+      // prefetch proativo da próxima tela provável (não páginas-âncora)
+      if (m.next.href && m.next.href.charAt(0) !== '#' && window.__npPrefetchNext) window.__npPrefetchNext(m.next.href);
     }
 
     render();
     window.addEventListener('np-child-change', render);
   }
 
+  /* =====================================================
+     PREFETCH PREDITIVO — a próxima tela carrega antes do clique.
+     Ao passar o dedo/mouse/foco sobre um link interno, pré-busca a
+     página (instant.page-style). A jornada também pré-carrega
+     proativamente o próximo passo provável. Abertura ~instantânea.
+     Respeita Save-Data. Cada URL é buscada no máximo 1×.
+     ===================================================== */
+  function predictivePrefetch(){
+    if (window.__npPrefetch) return; window.__npPrefetch = true;
+    try { if (navigator.connection && navigator.connection.saveData) return; } catch (e) {}
+    var done = {};
+    function prefetch(url){
+      if (!url || done[url]) return; done[url] = 1;
+      try {
+        var l = document.createElement('link');
+        l.rel = 'prefetch'; l.href = url; l.as = 'document';
+        document.head.appendChild(l);
+      } catch (e) {}
+    }
+    window.__npPrefetchNext = prefetch;                  // a jornada usa isto
+    function fromEvent(e){
+      var a = e.target && e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      if (a.target && a.target !== '_self') return;
+      if (a.origin && a.origin !== location.origin) return;
+      var href = a.getAttribute('href') || '';
+      if (/^(#|mailto:|tel:|javascript:)/i.test(href)) return;
+      if (a.pathname === location.pathname) return;        // mesma página
+      prefetch(a.href);
+    }
+    document.addEventListener('pointerover', fromEvent, { passive: true });
+    document.addEventListener('touchstart', fromEvent, { passive: true });
+    document.addEventListener('focusin', fromEvent);
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); journeyGuide(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); predictivePrefetch(); journeyGuide(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

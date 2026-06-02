@@ -215,6 +215,21 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
       document.getElementById('prog').hidden=false;
       paintWho();
       renderDetail();
+      // encadeia "próxima escala recomendada" (fila gravada pelo filtro) → triagem
+      // em sequência (ex.: triangulação família × escola) sem voltar ao menu.
+      try{
+        var q=JSON.parse(localStorage.getItem('np:reco')||'[]');
+        if(Array.isArray(q)&&q.length){
+          var idx=-1; for(var k=0;k<q.length;k++){if(q[k]&&q[k].id===id){idx=k;break;}}
+          if(idx>-1&&q[idx+1]){
+            var nxt=q[idx+1], db=document.getElementById('doneBanner');
+            if(db){var a=document.createElement('a');a.className='dlink';a.style.display='block';
+              a.href='./escala.html?id='+encodeURIComponent(nxt.id);
+              a.textContent='▶ Próxima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
+              db.appendChild(a);}
+          }
+        }
+      }catch(e){}
     });
   }
   window.addEventListener('np-child-change',paintWho);
