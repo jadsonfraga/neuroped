@@ -111,6 +111,10 @@ assertIncludes('scales-enhance.js', 'tipFor', 'scales-enhance interpreta faixa o
 for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
   assertIncludes(b, 'scales-enhance.js', b + ' carrega scales-enhance.js');
 }
+// Banco: dados brutos JSON recolhidos (laudo é o desfecho limpo, não o JSON)
+for (const b of ['banco-escalas.html','banco-escalas-lote2-80.html','banco-escalas-lote5-90.html']) {
+  assertIncludes(b, 'class="rawx"', b + ' recolhe os dados brutos num details (foco no laudo)');
+}
 
 // Filtro de escalas — utilidade clínica
 assertIncludes('safe-public-layer.js', '/filtro', 'safe-public-layer reconhece /filtro como rota familiar');
