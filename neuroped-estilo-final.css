@@ -1,0 +1,911 @@
+/* =====================================================================
+   NeuroPed EDJ · Estilo Final (Consolidado v6.0)
+   Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
+   ---------------------------------------------------------------------
+   ÚNICO arquivo CSS que aplica a identidade visual da TELA INICIAL
+   (central-atalhos) em TODAS as páginas, com:
+
+   ▸ Tokens originais da central (índigo + dourado + creme)
+   ▸ Background aurora 3-radial + linear-gradient 160deg
+   ▸ Tipografia Fraunces (display) + system-ui (corpo)
+   ▸ Componentes: cover, imprint, statbar, cards, featured, group
+   ▸ Botões, inputs, chips coerentes
+   ▸ WCAG AA garantido em todos os elementos
+   ▸ Mobile-first responsivo
+   ▸ Print mode fiel para laudo médico
+   ▸ Reduced-motion / forced-colors respeitados
+
+   CARREGAR COMO ÚLTIMO CSS — vence inline antigo das páginas legadas.
+   Substitui: neuroped-unified.css, neuroped-polish.css, tela-padrao.css
+   ===================================================================== */
+
+/* ====================================================================
+   1 · TOKENS — IDÊNTICOS À TELA INICIAL
+   ==================================================================== */
+:root {
+  /* Cores */
+  --bg:        #0a0a16;
+  --bg-2:      #0e0e22;
+  --paper:     rgba(124, 118, 210, .07);
+  --paper-2:   rgba(124, 118, 210, .12);
+  --ink:       #ECEAFF;
+  --ink-soft:  #f3ede0;
+  --ink-warm:  #fbf6ea;
+  --muted:     #b6b2e6;
+  --soft:      #928ec6;
+  --line:      rgba(169, 164, 255, .16);
+  --line2:     rgba(169, 164, 255, .26);
+  --line3:     rgba(169, 164, 255, .42);
+
+  --teal:      #6d6af5;
+  --teal-d:    #4f46e5;
+  --wine:      #f2dca6;
+  --wine-d:    #cdbf9a;
+  --gold:      #e7c98b;
+  --gold-d:    #caa56a;
+  --indigo:    #a9a4ff;
+
+  --success:   #6ee7b7;
+  --warn:      #fbbf77;
+  --danger:    #f3a6a6;
+  --info:      #93c5fd;
+
+  /* Sombras */
+  --shadow:       0 24px 64px -22px rgba(4, 3, 18, .75);
+  --shadow-soft:  0 14px 34px -18px rgba(4, 3, 18, .60);
+  --shadow-card:  0 18px 44px -22px rgba(2, 2, 12, .85);
+  --shadow-hover: 0 30px 62px -24px rgba(91, 84, 232, .60);
+  --shadow-gold:  0 12px 26px -10px rgba(231, 201, 139, .50);
+
+  /* Raios */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --r-2xl: 26px;
+
+  /* Tipografia */
+  --font-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  /* Easings */
+  --ease:        cubic-bezier(.22, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.32, .64, 1);
+}
+
+/* ====================================================================
+   2 · RESET MÍNIMO + BACKGROUND AURORA
+   ==================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0 !important; padding: 0 !important; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--ink) !important;
+  font-family: var(--font-body) !important;
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100vh !important;
+  background:
+    radial-gradient(1100px 620px at 8% -8%,   hsl(243 85% 56% / .26), transparent 60%),
+    radial-gradient(1000px 640px at 102% 2%,  hsl(266 80% 56% / .22), transparent 56%),
+    radial-gradient(1200px 800px at 50% 116%, hsl(206 92% 56% / .12), transparent 60%),
+    linear-gradient(160deg, var(--bg), var(--bg-2) 60%, var(--bg)) !important;
+  background-attachment: fixed !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img, svg, video { max-width: 100%; height: auto; display: block; }
+
+/* ====================================================================
+   3 · CONTAINER PADRÃO
+   ==================================================================== */
+.wrap,
+.shell,
+.container-app,
+main,
+body > main {
+  max-width: 1020px !important;
+  margin: 0 auto !important;
+  padding: 18px 16px calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  width: 100%;
+}
+
+/* ====================================================================
+   4 · TIPOGRAFIA — Fraunces premium + corpo legível
+   ==================================================================== */
+h1 {
+  font: 700 clamp(34px, 7vw, 56px)/.98 var(--font-display) !important;
+  margin: 14px 0 6px !important;
+  color: var(--ink-warm) !important;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+
+h2 {
+  font: 700 clamp(18px, 3vw, 22px)/1.2 var(--font-display) !important;
+  color: var(--wine) !important;
+  margin: 0 0 10px !important;
+  letter-spacing: -.005em;
+}
+
+h3 {
+  font: 700 clamp(15px, 2vw, 17px)/1.25 var(--font-display) !important;
+  color: var(--ink-warm) !important;
+  margin: 0 0 4px !important;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-display) !important;
+  color: var(--ink-warm);
+}
+
+p { color: var(--muted); line-height: 1.6; }
+p strong { color: var(--ink-warm); font-weight: 700; }
+
+a { color: var(--ink); text-decoration: none; }
+a:hover { color: var(--ink-warm); }
+
+ul, ol { color: var(--muted); }
+
+small, .text-sm { font-size: 12.5px; color: var(--soft); }
+
+/* ====================================================================
+   5 · TOP NAV STICKY
+   ==================================================================== */
+.nav-top,
+.topbar,
+header.top {
+  background: rgba(10, 9, 24, .72) !important;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid var(--line) !important;
+  padding: 14px clamp(16px, 4vw, 32px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+
+.nav-back {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  background: rgba(124, 118, 210, .14);
+  border: 1px solid var(--line2);
+  color: var(--wine);
+  font-size: 18px;
+}
+.nav-back:hover { background: rgba(124, 118, 210, .22); }
+
+/* ====================================================================
+   6 · COVER / HERO — capa editorial premium
+   ==================================================================== */
+.cover,
+.hero,
+section.hero,
+.np-hero {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: var(--r-2xl) !important;
+  padding: 32px 28px !important;
+  color: var(--ink-soft) !important;
+  background: linear-gradient(155deg, #15143a, #221c52 55%, #15143a) !important;
+  box-shadow: 0 30px 70px -28px rgba(20, 40, 38, .7) !important;
+  border: 1px solid rgba(184, 150, 62, .32) !important;
+  margin-bottom: 24px;
+}
+
+.cover::before, .hero::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(184, 150, 62, .4);
+  border-radius: var(--r-lg);
+  pointer-events: none;
+}
+
+.cover::after, .hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .5;
+  background: radial-gradient(620px 320px at 84% -10%, rgba(184, 150, 62, .16), transparent 60%);
+}
+
+.cover > *, .hero > * { position: relative; z-index: 1; }
+
+.cover h1, .hero h1 { color: var(--ink-warm) !important; }
+.cover p, .hero p, .cover .lede {
+  color: #cfd6cf !important;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 58ch;
+}
+.cover .lede { font-size: 15.5px; color: #e7e0d2 !important; }
+
+/* ====================================================================
+   7 · IMPRINT — brasão + texto institucional
+   ==================================================================== */
+.imprint {
+  display: flex !important;
+  align-items: center !important;
+  gap: 13px !important;
+  margin-bottom: 16px;
+}
+
+.imprint .brandmark,
+.imprint > svg,
+.imprint > img {
+  width: 54px !important;
+  height: 54px !important;
+  flex: 0 0 auto !important;
+  filter: drop-shadow(0 6px 14px rgba(231, 201, 139, .28));
+  border-radius: 11px;
+}
+
+.imprint .imp-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.imprint .imp-txt b, .imprint b {
+  font: 800 15px/1 var(--font-body) !important;
+  color: var(--ink-warm) !important;
+  letter-spacing: .01em;
+}
+
+.imprint .imp-txt span, .imprint span {
+  font-weight: 700 !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  font-size: 10.5px !important;
+  color: var(--wine-d) !important;
+}
+
+/* ====================================================================
+   8 · EYEBROW / KICKER — chip dourado pequeno
+   ==================================================================== */
+.eyebrow, .kicker {
+  display: inline-block !important;
+  text-transform: uppercase !important;
+  letter-spacing: .20em !important;
+  font-weight: 800 !important;
+  font-size: 10.5px !important;
+  color: #15143a !important;
+  background: rgba(231, 201, 139, .95) !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  margin-top: 6px;
+  border: 0 !important;
+}
+
+/* ====================================================================
+   9 · STATBAR — 4 cols com b dourado Fraunces
+   ==================================================================== */
+.statbar, .stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+  margin: 18px 0 !important;
+}
+
+.stat, .stats .stat {
+  background: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-md) !important;
+  padding: 14px 15px !important;
+  text-align: left !important;
+}
+
+.stat b,
+.stat strong,
+.stats .stat strong {
+  display: block !important;
+  font: 800 22px/1 var(--font-display) !important;
+  color: var(--gold) !important;
+  letter-spacing: -.02em;
+  -webkit-text-fill-color: var(--gold) !important;
+  background: none !important;
+}
+
+.stat span, .stats .stat span {
+  display: block !important;
+  margin-top: 5px !important;
+  font-size: 11.5px !important;
+  color: var(--muted) !important;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+@media (max-width: 720px) {
+  .statbar, .stats { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ====================================================================
+   10 · BUSCA / INPUT GLASSMORPHISM
+   ==================================================================== */
+.hubsearch, .search-bar {
+  position: relative;
+  margin: 18px 0 4px;
+}
+
+.hubsearch input,
+input[type="search"],
+input[type="text"]:not(.np-skip-style):not([class*="chip"]),
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(10, 9, 24, .55);
+  color: var(--ink);
+  font: 15px var(--font-body);
+  transition: border-color .2s, box-shadow .2s, background .2s;
+  min-height: 44px;
+}
+
+input[type="search"]:not(.hubsearch input),
+input[type="text"]:not(.hubsearch input),
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+  padding-left: 14px;
+}
+
+textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--teal) !important;
+  box-shadow: 0 0 0 4px rgba(124, 118, 210, .18) !important;
+  background: rgba(10, 9, 24, .75) !important;
+}
+
+input::placeholder, textarea::placeholder { color: var(--soft); opacity: 1; }
+
+.hubsearch::before {
+  content: "🔎";
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: .6;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+label {
+  color: var(--muted) !important;
+  font: 700 11px var(--font-body) !important;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin: 12px 0 6px !important;
+  display: block;
+}
+
+/* ====================================================================
+   11 · CARDS — padrão com bordinha lateral + glassmorphism
+   ==================================================================== */
+.card,
+article.card,
+.np-card {
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  gap: 13px !important;
+  align-items: flex-start !important;
+  text-decoration: none !important;
+  background: linear-gradient(180deg, rgba(124, 118, 210, .12), rgba(124, 118, 210, .06)) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-lg) !important;
+  padding: 15px !important;
+  box-shadow: var(--shadow-soft) !important;
+  color: var(--ink) !important;
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  transition: transform .28s var(--ease),
+              box-shadow .28s var(--ease),
+              border-color .28s var(--ease);
+}
+
+.card::before, .np-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--teal), transparent);
+  opacity: .5;
+  transition: opacity .25s;
+}
+
+.card:hover::before, .np-card:hover::before { opacity: 1; }
+.card.gold::before { background: linear-gradient(180deg, var(--gold), transparent) !important; opacity: 1 !important; width: 4px !important; }
+.card.wine::before { background: linear-gradient(180deg, var(--wine), transparent) !important; opacity: 1 !important; width: 4px !important; }
+
+.card:hover, .np-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: var(--line3);
+}
+
+.card h3, .card .card-title {
+  margin: 0 0 3px !important;
+  font: 700 16px var(--font-display) !important;
+  color: var(--wine) !important;
+}
+
+.card p {
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-size: 13px !important;
+  line-height: 1.48;
+}
+
+/* ====================================================================
+   12 · FEATURED — cards destacados (idênticos à central)
+   ==================================================================== */
+.featured, .np-featured {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(216px, 1fr)) !important;
+  gap: 13px !important;
+  margin: 20px 0 4px;
+}
+
+.feat, .np-feat {
+  position: relative;
+  overflow: hidden;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 11px !important;
+  text-decoration: none !important;
+  color: var(--ink) !important;
+  background: linear-gradient(160deg, rgba(124, 118, 210, .20), rgba(124, 118, 210, .05)) !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: var(--r-xl) !important;
+  padding: 20px !important;
+  min-height: 134px !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  transition: transform .26s var(--ease),
+              box-shadow .26s var(--ease),
+              border-color .26s var(--ease);
+}
+
+.feat:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--line3);
+}
+
+.feat h3 {
+  font: 700 19px var(--font-display) !important;
+  color: var(--ink-warm) !important;
+  margin: 0 !important;
+}
+
+.feat p {
+  color: var(--muted) !important;
+  font-size: 13px !important;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.feat .fi {
+  width: 46px; height: 46px;
+  border-radius: var(--r-md);
+  display: grid; place-items: center;
+  color: #fff;
+  background: linear-gradient(180deg, var(--teal), var(--teal-d));
+  box-shadow: 0 12px 26px -10px var(--teal);
+}
+
+.feat.gold .fi {
+  background: linear-gradient(180deg, var(--gold), var(--gold-d));
+  color: #241a05;
+  box-shadow: var(--shadow-gold);
+}
+
+.feat .arrow {
+  position: absolute;
+  right: 16px; top: 20px;
+  font-size: 18px;
+  color: var(--soft);
+  opacity: .45;
+  transition: transform .2s, opacity .2s;
+}
+
+.feat:hover .arrow { opacity: 1; transform: translateX(3px); }
+
+/* ====================================================================
+   13 · GROUP HEAD + TIER — divisores de seção
+   ==================================================================== */
+.group, section.group { margin-top: 28px; }
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 13px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+
+.group-head h2 {
+  flex: 1;
+  font: 700 20px var(--font-display) !important;
+  color: var(--wine) !important;
+  margin: 0 !important;
+}
+
+.group-head .gi {
+  width: 34px; height: 34px;
+  border-radius: var(--r-sm);
+  display: grid; place-items: center;
+  color: #fff;
+  background: linear-gradient(180deg, var(--teal), var(--teal-d));
+}
+
+.group-head .gn, .group-head .count {
+  font: 800 11px var(--font-mono) !important;
+  color: var(--soft) !important;
+  background: rgba(169, 164, 255, .1);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.tier {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 34px 2px 2px;
+}
+
+.tier::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line), transparent);
+}
+
+.tier span {
+  font: 800 11px var(--font-body) !important;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  color: var(--soft) !important;
+}
+
+/* ====================================================================
+   14 · CHIPS / PILLS / BADGES
+   ==================================================================== */
+.chip, .pill, .badge, .credline span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  font: 700 11.5px var(--font-body) !important;
+  color: #e9dcbf !important;
+  background: rgba(231, 201, 139, .12) !important;
+  border: 1px solid rgba(231, 201, 139, .3) !important;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  white-space: nowrap;
+}
+
+.chip.teal, .pill.teal {
+  background: rgba(124, 118, 210, .18) !important;
+  color: #c8c4ff !important;
+  border-color: var(--line3) !important;
+}
+
+.chip.wine, .pill.wine {
+  background: rgba(242, 220, 166, .14) !important;
+  color: var(--wine) !important;
+  border-color: rgba(242, 220, 166, .32) !important;
+}
+
+.chip.success { background: rgba(110,231,183,.12) !important; color: var(--success) !important; border-color: rgba(110,231,183,.32) !important; }
+.chip.warn    { background: rgba(251,191,119,.12) !important; color: var(--warn) !important; border-color: rgba(251,191,119,.32) !important; }
+.chip.danger  { background: rgba(243,166,166,.12) !important; color: var(--danger) !important; border-color: rgba(243,166,166,.32) !important; }
+.chip.info    { background: rgba(147,197,253,.12) !important; color: var(--info) !important; border-color: rgba(147,197,253,.32) !important; }
+
+.credline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+/* ====================================================================
+   15 · BOTÕES — primário, secundário, ghost
+   ==================================================================== */
+.btn, button.btn, a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: var(--r-md);
+  border: 0;
+  background: linear-gradient(180deg, var(--teal), var(--teal-d)) !important;
+  color: #fff !important;
+  font: 700 14px/1 var(--font-body) !important;
+  letter-spacing: .005em;
+  cursor: pointer;
+  text-decoration: none;
+  min-height: 44px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14),
+              0 10px 24px -8px var(--teal);
+  transition: transform .2s var(--ease),
+              filter .2s var(--ease),
+              box-shadow .2s var(--ease);
+}
+
+.btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.btn:active { transform: translateY(0) scale(.98); filter: brightness(.96); }
+
+.btn.gold, .btn.secondary {
+  background: linear-gradient(180deg, var(--gold), var(--gold-d)) !important;
+  color: #241a05 !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.32),
+              var(--shadow-gold) !important;
+}
+
+.btn.ghost {
+  background: rgba(124, 118, 210, .14) !important;
+  color: var(--wine) !important;
+  border: 1px solid var(--line2);
+  box-shadow: none !important;
+}
+
+.btn.ghost:hover { background: rgba(124, 118, 210, .22) !important; }
+
+.btn.danger {
+  background: linear-gradient(180deg, var(--danger), #b94545) !important;
+  color: #fff !important;
+}
+
+.btn.sm { padding: 8px 14px; font-size: 13px; min-height: 36px; }
+.btn.lg { padding: 14px 22px; font-size: 16px; min-height: 52px; }
+
+/* ====================================================================
+   16 · FOOTER
+   ==================================================================== */
+.footer, footer {
+  text-align: center !important;
+  font-size: 12px !important;
+  color: var(--muted) !important;
+  margin: 32px 0 0 !important;
+  line-height: 1.7;
+}
+
+/* ====================================================================
+   17 · ALERTAS / BANNERS
+   ==================================================================== */
+.alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.alert::before {
+  content: "";
+  flex-shrink: 0;
+  width: 4px;
+  align-self: stretch;
+  background: var(--teal);
+  border-radius: 4px;
+}
+.alert.success::before { background: var(--success); }
+.alert.warn::before { background: var(--warn); }
+.alert.danger::before { background: var(--danger); }
+.alert.info::before { background: var(--info); }
+.alert strong { color: var(--ink-warm); font-weight: 700; }
+
+/* ====================================================================
+   18 · ACESSIBILIDADE
+   ==================================================================== */
+.np-skip {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 100;
+  background: var(--gold);
+  color: #241a05;
+  font-weight: 800;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+}
+.np-skip:focus { left: 12px; }
+
+:focus-visible {
+  outline: 2.5px solid var(--teal) !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(124, 118, 210, .18);
+  border-radius: 8px;
+}
+
+/* ====================================================================
+   19 · SCROLLBAR DISCRETA
+   ==================================================================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(169, 164, 255, .35) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(169, 164, 255, .3);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 118, 210, .5);
+  background-clip: content-box;
+}
+::selection {
+  background: rgba(124, 118, 210, .35);
+  color: var(--ink-warm);
+}
+
+/* ====================================================================
+   20 · ANIMAÇÕES — entrada suave + respect reduce
+   ==================================================================== */
+@keyframes hubIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body > main { animation: hubIn .5s var(--ease) both; }
+  .feat, .featured > * { animation: hubIn .5s var(--ease) both; }
+  .feat:nth-child(2) { animation-delay: .07s; }
+  .feat:nth-child(3) { animation-delay: .14s; }
+  .feat:nth-child(4) { animation-delay: .21s; }
+  .card { transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ====================================================================
+   21 · RESPONSIVO — mobile-first ajustes
+   ==================================================================== */
+@media (max-width: 640px) {
+  body { font-size: 14.5px; }
+  .cover, .hero {
+    padding: 24px 20px !important;
+    border-radius: 22px !important;
+  }
+  .cover::before, .hero::before { inset: 9px; border-radius: 16px; }
+  .feat { min-height: 120px !important; padding: 18px !important; }
+  .nav-top { padding: 12px 16px !important; }
+}
+
+@media (max-width: 380px) {
+  .statbar, .stats { grid-template-columns: 1fr 1fr !important; }
+  .cover h1, .hero h1 { font-size: clamp(28px, 8vw, 40px) !important; }
+}
+
+/* ====================================================================
+   22 · PRINT — laudo médico fiel
+   ==================================================================== */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --ink: #000000;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: var(--font-display) !important;
+    font-size: 11pt;
+  }
+  .cover, .hero, .card, .feat, .stat {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+  .cover::before, .cover::after, .hero::before, .hero::after { display: none !important; }
+  h1, h2, h3 {
+    color: #000 !important;
+    font-family: var(--font-display) !important;
+  }
+  p, .muted, .stat span, .feat p, .card p { color: #333 !important; }
+  .chip, .pill, .badge {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+  }
+  .btn, button, .nav-top, .hubsearch, .featured { display: none !important; }
+  .no-print, [class*="no-print"] { display: none !important; }
+  body::before {
+    content: "Dr. Jadson Fraga Araújo Júnior — Neuropediatria — CRM-PE 25227 — RQE 17756";
+    display: block;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 11pt;
+    color: #000 !important;
+    border-bottom: 2px solid #000;
+    padding-bottom: 6mm;
+    margin-bottom: 8mm;
+  }
+  body::after {
+    content: "NeuroPed EDJ · Plataforma de apoio clínico · Não substitui avaliação profissional";
+    display: block;
+    text-align: center;
+    font-size: 8.5pt;
+    color: #666 !important;
+    border-top: 1px solid #ccc;
+    padding-top: 4mm;
+    margin-top: 8mm;
+    font-style: italic;
+  }
+  @page { margin: 22mm 18mm; }
+}
+
+/* ====================================================================
+   23 · UTILITIES
+   ==================================================================== */
+.muted, .text-muted { color: var(--muted) !important; }
+.wine, .text-wine { color: var(--wine) !important; }
+.gold, .text-gold { color: var(--gold) !important; }
+.ink, .text-ink { color: var(--ink) !important; }
+.no-print { /* aplica em @media print acima */ }
+
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ====================================================================
+   24 · FORCED-COLORS — Windows High Contrast
+   ==================================================================== */
+@media (forced-colors: active) {
+  .btn, .chip, .card, .feat {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText !important;
+  }
+  :focus-visible { outline-color: CanvasText !important; }
+}
+
+/* Fim · neuroped-estilo-final.css */

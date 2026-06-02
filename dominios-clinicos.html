@@ -1,0 +1,471 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR" data-design="dark-editorial">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e22">
+<title>DomÃ­nios ClÃ­nicos â€” NeuroPed EDJ</title>
+<meta name="description" content="NavegaÃ§Ã£o por domÃ­nios clÃ­nicos neuropediÃ¡tricos: TEA, TDAH, Linguagem, Comportamento, Ansiedade, Humor, Sono, Aprendizagem. Cada domÃ­nio com triagens recomendadas, gold-standards e bateria sugerida.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/dominios-clinicos.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./neuroped-unified.css">
+<link rel="stylesheet" href="./neuroped-polish.css">
+<link rel="stylesheet" href="./filtro-engine-v5.css">
+<style>
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1100px 620px at 8% -8%, hsla(244, 78%, 58%, .22), transparent 60%),
+      radial-gradient(1000px 640px at 102% 2%, hsla(264, 66%, 58%, .18), transparent 56%),
+      linear-gradient(160deg, #0a0a16, #0e0e22 58%, #0a0a16);
+    color: #ECEAFF;
+    min-height: 100vh;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .nav-top {
+    background: rgba(10, 9, 24, 0.72);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(160, 154, 255, 0.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .nav-back {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: 10px;
+    background: rgba(124, 118, 210, 0.14);
+    border: 1px solid rgba(160, 154, 255, 0.22);
+    color: #f3ddb0;
+    text-decoration: none;
+    font-size: 18px;
+  }
+  .nav-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #7c79ff, #5b54e8);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    color: #fff;
+    font: 800 14px/1 "Fraunces", serif;
+  }
+  .nav-title {
+    font: 700 15px/1 "Inter", sans-serif;
+    color: #fbf6ea;
+  }
+  .nav-sub {
+    font: 600 11px/1 system-ui;
+    color: #928ec6;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px) 80px;
+  }
+
+  .hero {
+    margin-bottom: 28px;
+  }
+  .hero .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: 800 11px/1 system-ui;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #d8c69a;
+    background: rgba(231, 201, 139, 0.14);
+    border: 1px solid rgba(231, 201, 139, 0.32);
+    padding: 7px 12px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .hero .kicker::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e7c98b;
+    box-shadow: 0 0 8px #e7c98b;
+  }
+  .hero h1 {
+    margin: 0 0 10px;
+    font: 700 clamp(32px, 5vw, 48px) / 1.05 "Fraunces", Georgia, serif;
+    color: transparent;
+    background: linear-gradient(120deg, #fff 0%, #f3ddb0 60%, #e7c98b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+  }
+  .hero p {
+    max-width: 64ch;
+    margin: 0;
+    font-size: clamp(14px, 2vw, 16px);
+    color: #b6b2e6;
+    line-height: 1.65;
+  }
+
+  .domains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .domain-card {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(160deg, rgba(124, 118, 210, 0.20) 0%, rgba(124, 118, 210, 0.06) 100%);
+    border: 1px solid rgba(169, 164, 255, 0.26);
+    border-radius: 22px;
+    padding: 22px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 220px;
+    transition:
+      transform .3s cubic-bezier(.22, .8, .2, 1),
+      box-shadow .3s cubic-bezier(.22, .8, .2, 1),
+      border-color .3s ease;
+    box-shadow: 0 18px 44px -22px rgba(2, 2, 12, 0.85);
+  }
+
+  .domain-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(231, 201, 139, 0.42);
+    box-shadow: 0 30px 62px -24px rgba(231, 201, 139, 0.32);
+  }
+
+  .domain-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(420px 220px at 100% -30%, var(--np-domain-tint, rgba(231,201,139,.12)), transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .domain-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    background: linear-gradient(135deg, var(--np-domain-color, #7c79ff), var(--np-domain-color-d, #5b54e8));
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 10px 24px -8px var(--np-domain-color, #7c79ff);
+  }
+
+  .domain-name {
+    margin: 0;
+    font: 700 19px/1.2 "Fraunces", Georgia, serif;
+    color: #fbf6ea;
+    letter-spacing: -0.01em;
+  }
+
+  .domain-desc {
+    flex: 1;
+    margin: 0;
+    color: #b6b2e6;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .domain-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .tool-pill {
+    font: 600 10.5px/1 system-ui;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(124, 118, 210, 0.16);
+    color: #c8c4ff;
+    border: 1px solid rgba(160, 154, 255, 0.22);
+    letter-spacing: 0.02em;
+  }
+
+  .tool-pill.gold {
+    background: linear-gradient(135deg, #e7c98b, #caa56a);
+    color: #1f1500;
+    border-color: transparent;
+    font-weight: 800;
+  }
+
+  .arrow {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: rgba(231, 201, 139, 0.14);
+    color: #f3ddb0;
+    border-radius: 50%;
+    font-size: 16px;
+    transition: transform .25s ease;
+  }
+
+  .domain-card:hover .arrow {
+    transform: translateX(4px);
+    background: #f3ddb0;
+    color: #1f1500;
+  }
+
+  .footer-note {
+    margin-top: 40px;
+    padding: 18px;
+    background: rgba(124, 118, 210, 0.06);
+    border: 1px solid rgba(160, 154, 255, 0.18);
+    border-radius: 16px;
+    font-size: 13px;
+    color: #b6b2e6;
+    line-height: 1.65;
+  }
+  .footer-note strong { color: #f3ddb0; font-weight: 700; }
+</style>
+    <link rel="stylesheet" href="./neuroped-estilo-final.css">
+</head>
+<body>
+
+<nav class="nav-top">
+  <div class="nav-inner">
+    <a href="./central-atalhos.html" class="nav-back" aria-label="Voltar Ã  Central">â€¹</a>
+    <div class="nav-mark">N</div>
+    <div>
+      <div class="nav-title">NeuroPed</div>
+      <div class="nav-sub">DomÃ­nios clÃ­nicos</div>
+    </div>
+    <div style="flex: 1"></div>
+    <a href="./filtro-escalas.html" class="nav-back" style="background:rgba(231,201,139,.18);color:#f3ddb0;width:auto;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;">Filtro inteligente â†’</a>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <header class="hero">
+    <span class="kicker">Engine clÃ­nica v5</span>
+    <h1>Em qual domÃ­nio vocÃª precisa avaliar?</h1>
+    <p>Escolha o domÃ­nio funcional ou condiÃ§Ã£o clÃ­nica primÃ¡ria da queixa. Cada caminho leva Ã  triagem dirigida com gold-standards mundiais, instrumentos autorais do Dr. Jadson e bateria sugerida por hipÃ³tese clÃ­nica.</p>
+  </header>
+
+  <section class="domains-grid">
+
+    <a href="./filtro-escalas.html?dominio=tea" class="domain-card" style="--np-domain-color:#a78bfa; --np-domain-color-d:#7c3aed; --np-domain-tint:rgba(167,139,250,.12);">
+      <div class="domain-icon">ðŸ§©</div>
+      <h2 class="domain-name">TEA â€” Espectro Autista</h2>
+      <p class="domain-desc">Sinais de TEA precoce, TEA verbal, traÃ§os autÃ­sticos. Triagem por idade (16-30m, prÃ©-escolar, escolar, adolescente).</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">M-CHAT-R/F</span>
+        <span class="tool-pill">CARS-2</span>
+        <span class="tool-pill">SRS-2</span>
+        <span class="tool-pill">Primeiros Sinais (autoral)</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=tdah" class="domain-card" style="--np-domain-color:#fbbf77; --np-domain-color-d:#f59e0b; --np-domain-tint:rgba(251,191,119,.10);">
+      <div class="domain-icon">ðŸŽ¯</div>
+      <h2 class="domain-name">TDAH â€” AtenÃ§Ã£o e funÃ§Ã£o executiva</h2>
+      <p class="domain-desc">DesatenÃ§Ã£o, hiperatividade, funÃ§Ã£o executiva, queixa escolar. Triagem para 4 apresentaÃ§Ãµes + comorbidades.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">SNAP-IV</span>
+        <span class="tool-pill">Vanderbilt</span>
+        <span class="tool-pill">Conners-3</span>
+        <span class="tool-pill">AtenÃ§Ã£o em Casa (autoral)</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=linguagem" class="domain-card" style="--np-domain-color:#6ee7b7; --np-domain-color-d:#10b981; --np-domain-tint:rgba(110,231,183,.10);">
+      <div class="domain-icon">ðŸ—£ï¸</div>
+      <h2 class="domain-name">Linguagem & ComunicaÃ§Ã£o</h2>
+      <p class="domain-desc">Atraso de fala, TDL, comunicaÃ§Ã£o social, pragmÃ¡tica. Triagem precoce e diferencial com TEA.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">Fala Inicial (autoral)</span>
+        <span class="tool-pill">ComunicaÃ§Ã£o Funcional</span>
+        <span class="tool-pill">CDC Learn the Signs</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=aprendizagem" class="domain-card" style="--np-domain-color:#93c5fd; --np-domain-color-d:#3b82f6; --np-domain-tint:rgba(147,197,253,.10);">
+      <div class="domain-icon">ðŸ“š</div>
+      <h2 class="domain-name">Aprendizagem & escola</h2>
+      <p class="domain-desc">Dificuldade escolar, dislexia, discalculia, disgrafia. Diferencial com TDAH e linguagem.</p>
+      <div class="domain-tools">
+        <span class="tool-pill">AtenÃ§Ã£o Escolar</span>
+        <span class="tool-pill">OrganizaÃ§Ã£o e MemÃ³ria</span>
+        <span class="tool-pill">InventÃ¡rio Aprendizagem</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=comportamento" class="domain-card" style="--np-domain-color:#f3a6a6; --np-domain-color-d:#dc2626; --np-domain-tint:rgba(243,166,166,.10);">
+      <div class="domain-icon">ðŸ’¢</div>
+      <h2 class="domain-name">Comportamento & RegulaÃ§Ã£o</h2>
+      <p class="domain-desc">Birra, oposiÃ§Ã£o, TOD, agressividade, desregulaÃ§Ã£o emocional. Triagem 3-5a e escolar.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">SDQ</span>
+        <span class="tool-pill">CBCL</span>
+        <span class="tool-pill">Crises e FrustraÃ§Ã£o (autoral)</span>
+        <span class="tool-pill">Irritabilidade e OposiÃ§Ã£o</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=ansiedade" class="domain-card" style="--np-domain-color:#c4b5fd; --np-domain-color-d:#7c3aed; --np-domain-tint:rgba(196,181,253,.10);">
+      <div class="domain-icon">ðŸ˜°</div>
+      <h2 class="domain-name">Ansiedade</h2>
+      <p class="domain-desc">Transtornos ansiosos pediÃ¡tricos: separaÃ§Ã£o, social, fobia, pÃ¢nico, generalizada. Autorrelato adolescente.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">GAD-7</span>
+        <span class="tool-pill">SCARED</span>
+        <span class="tool-pill">Ansiedade Infantil (autoral)</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=humor" class="domain-card" style="--np-domain-color:#5eead4; --np-domain-color-d:#0d9488; --np-domain-tint:rgba(94,234,212,.10);">
+      <div class="domain-icon">ðŸ’§</div>
+      <h2 class="domain-name">Humor & Risco</h2>
+      <p class="domain-desc">DepressÃ£o adolescente, anedonia, ideaÃ§Ã£o suicida, risco autolesivo. Autorrelato + avaliaÃ§Ã£o de severidade.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">PHQ-A</span>
+        <span class="tool-pill gold">ASQ Suicide</span>
+        <span class="tool-pill">C-SSRS</span>
+        <span class="tool-pill">CDI 2</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=desenvolvimento" class="domain-card" style="--np-domain-color:#fde68a; --np-domain-color-d:#f59e0b; --np-domain-tint:rgba(253,230,138,.10);">
+      <div class="domain-icon">ðŸŒ±</div>
+      <h2 class="domain-name">Desenvolvimento global</h2>
+      <p class="domain-desc">Atraso global, marcos do desenvolvimento, vigilÃ¢ncia em < 6 anos. Diferencial com TEA, motor, linguagem.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">ASQ-3</span>
+        <span class="tool-pill">Bayley</span>
+        <span class="tool-pill">Denver II</span>
+        <span class="tool-pill">SWYC</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=motor" class="domain-card" style="--np-domain-color:#fb923c; --np-domain-color-d:#ea580c; --np-domain-tint:rgba(251,146,60,.10);">
+      <div class="domain-icon">ðŸ¤¸</div>
+      <h2 class="domain-name">Motor & CoordenaÃ§Ã£o</h2>
+      <p class="domain-desc">Atraso motor, paralisia cerebral, coordenaÃ§Ã£o. <strong>GMFCS exige diagnÃ³stico de PC estabelecido.</strong></p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">GMFCS-E&R</span>
+        <span class="tool-pill">MACS</span>
+        <span class="tool-pill">InventÃ¡rio Motor</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=autonomia" class="domain-card" style="--np-domain-color:#a3e635; --np-domain-color-d:#65a30d; --np-domain-tint:rgba(163,230,53,.10);">
+      <div class="domain-icon">ðŸ§·</div>
+      <h2 class="domain-name">Autonomia adaptativa</h2>
+      <p class="domain-desc">AVDs, desfralde, autonomia funcional. AvaliaÃ§Ã£o para PEI/INSS/junta mÃ©dica.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">Vineland-3</span>
+        <span class="tool-pill">Autonomia Inicial (autoral)</span>
+        <span class="tool-pill">ABAS-3</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=sensorial" class="domain-card" style="--np-domain-color:#fda4af; --np-domain-color-d:#e11d48; --np-domain-tint:rgba(253,164,175,.10);">
+      <div class="domain-icon">âœ¨</div>
+      <h2 class="domain-name">Sensorial</h2>
+      <p class="domain-desc">Perfil sensorial, hipersensibilidade, busca sensorial. Comum em TEA e alimentaÃ§Ã£o seletiva.</p>
+      <div class="domain-tools">
+        <span class="tool-pill">Sensory Profile 2</span>
+        <span class="tool-pill">Sensorial DiÃ¡rio (autoral)</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=sono" class="domain-card" style="--np-domain-color:#818cf8; --np-domain-color-d:#4f46e5; --np-domain-tint:rgba(129,140,248,.10);">
+      <div class="domain-icon">ðŸŒ™</div>
+      <h2 class="domain-name">Sono</h2>
+      <p class="domain-desc">DistÃºrbios de sono, padrÃ£o noturno, despertares. Triagem 0-3a e escolar.</p>
+      <div class="domain-tools">
+        <span class="tool-pill gold">BISQ</span>
+        <span class="tool-pill">Sono Escolar (autoral)</span>
+        <span class="tool-pill">Sono do Pequeno (autoral)</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=alimentacao" class="domain-card" style="--np-domain-color:#fbbf24; --np-domain-color-d:#d97706; --np-domain-tint:rgba(251,191,36,.10);">
+      <div class="domain-icon">ðŸ½ï¸</div>
+      <h2 class="domain-name">AlimentaÃ§Ã£o</h2>
+      <p class="domain-desc">Seletividade alimentar, ARFID, sensorial oral. Comum em TEA, desenvolvimento, sensorial.</p>
+      <div class="domain-tools">
+        <span class="tool-pill">AlimentaÃ§Ã£o Sensorial (autoral)</span>
+        <span class="tool-pill">Perfil Sensorial Oral</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=neurologico" class="domain-card" style="--np-domain-color:#ec4899; --np-domain-color-d:#be185d; --np-domain-tint:rgba(236,72,153,.10);">
+      <div class="domain-icon">âš¡</div>
+      <h2 class="domain-name">NeurolÃ³gico</h2>
+      <p class="domain-desc">Epilepsia, cefaleia, tics, regressÃ£o de marcos. AvaliaÃ§Ã£o clÃ­nica + escalas especÃ­ficas.</p>
+      <div class="domain-tools">
+        <span class="tool-pill">PedsQL Epilepsia</span>
+        <span class="tool-pill">PedMIDAS</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+    <a href="./filtro-escalas.html?dominio=acompanhamento" class="domain-card" style="--np-domain-color:#94a3b8; --np-domain-color-d:#475569; --np-domain-tint:rgba(148,163,184,.10);">
+      <div class="domain-icon">ðŸ’Š</div>
+      <h2 class="domain-name">Acompanhamento</h2>
+      <p class="domain-desc">Resposta a medicaÃ§Ã£o, evoluÃ§Ã£o clÃ­nica, reavaliaÃ§Ã£o periÃ³dica, PEI escolar.</p>
+      <div class="domain-tools">
+        <span class="tool-pill">SNAP-IV seriado</span>
+        <span class="tool-pill">Vanderbilt seriado</span>
+        <span class="tool-pill">Impacto MedicaÃ§Ã£o (autoral)</span>
+      </div>
+      <span class="arrow">â†’</span>
+    </a>
+
+  </section>
+
+  <div class="footer-note">
+    <strong>Sobre a hierarquia clÃ­nica:</strong> cada caminho aplica a Engine v5 com 5 camadas de raciocÃ­nio (lexical â†’ ontolÃ³gica â†’ inferencial â†’ assertiva â†’ explicativa). Os <strong>gold-standards mundiais</strong> (M-CHAT-R/F, SNAP-IV, ASQ-3, etc.) tÃªm tier de evidÃªncia multiplicador 1.40; os <strong>instrumentos autorais do Dr. Jadson</strong> (Primeiros Sinais TEA, Fala Inicial, Crises e FrustraÃ§Ã£o) tÃªm tier 1.20 â€” uso operacional documentado para triagem familiar. Cada recomendaÃ§Ã£o mostra <strong>sensibilidade, especificidade, contexto ideal e quando NÃƒO usar</strong>.
+  </div>
+
+</main>
+
+<script src="./neuroped-unified.js" defer></script>
+</body>
+</html>

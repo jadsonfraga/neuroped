@@ -1,0 +1,948 @@
+/* =====================================================================
+   NeuroPed EDJ · UI Clínica — Estilo Visual (Consolidado v6.0)
+   Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
+   ---------------------------------------------------------------------
+   Carregar DEPOIS de neuroped-estilo-final.css.
+   Tudo de UI clínica do filtro de escalas:
+   ▸ Cards 🥇 OURO · 🥈 PRATA · 🥉 BRONZE
+   ▸ Decomposição clínica em 6 barras
+   ▸ Tier badges visuais
+   ▸ Banco de sensibilidade/especificidade
+   ▸ "Quando NÃO usar" banner âmbar
+   ▸ Bloco de hipótese clínica premium
+   ▸ Bateria sugerida 2×2
+   ▸ Gaps avaliativos
+   ▸ Red flag urgente
+   ▸ Empty state educativo
+   ===================================================================== */
+
+/* ====================================================================
+   1 · GSB GRID — layout em coluna única
+   ==================================================================== */
+.np-gsb-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin: 16px 0 22px;
+}
+
+/* ====================================================================
+   2 · CARDS GSB — base premium
+   ==================================================================== */
+.np-card-gsb {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(124, 118, 210, .10) 0%, rgba(124, 118, 210, .04) 100%);
+  border: 1px solid var(--line2, rgba(169, 164, 255, .26));
+  border-radius: var(--r-xl, 22px);
+  padding: 22px 22px 22px 84px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .04),
+    0 16px 40px -18px rgba(4, 3, 18, .72);
+  transition: transform .28s var(--ease, cubic-bezier(.22, .8, .2, 1)),
+              box-shadow .28s,
+              border-color .28s;
+  overflow: hidden;
+}
+
+.np-card-gsb:hover {
+  transform: translateY(-3px);
+  border-color: var(--line3, rgba(169, 164, 255, .42));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .07),
+    0 26px 60px -20px rgba(91, 84, 232, .50);
+}
+
+.np-card-gsb.gold {
+  border-color: rgba(231, 201, 139, .42);
+  background:
+    linear-gradient(180deg, rgba(231, 201, 139, .10) 0%, rgba(124, 118, 210, .04) 100%);
+}
+
+.np-card-gsb.gold:hover {
+  border-color: rgba(231, 201, 139, .65);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .08),
+    0 26px 60px -20px rgba(231, 201, 139, .45);
+}
+
+/* ====================================================================
+   3 · MEDALHA — círculo lateral com mark
+   ==================================================================== */
+.np-medal {
+  position: absolute;
+  left: 18px;
+  top: 22px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 800 11px/1 var(--font-body, system-ui);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #1f1500;
+  z-index: 2;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, .32),
+    inset 0 -2px 4px rgba(0, 0, 0, .18),
+    0 10px 26px -8px rgba(0, 0, 0, .50);
+  background: linear-gradient(135deg, #c8c4ff, #9b95d4 50%, #6d6af5);
+  color: #1f1539;
+}
+
+.np-card-gsb.gold .np-medal {
+  background: linear-gradient(135deg, #f3ddb0, #e7c98b 40%, #caa56a);
+  color: #241a05;
+}
+
+.np-card-gsb.silver .np-medal {
+  background: linear-gradient(135deg, #e8e5ff, #c8c4ff 40%, #9b95d4);
+  color: #1f1539;
+}
+
+.np-card-gsb.bronze .np-medal {
+  background: linear-gradient(135deg, #d9b48e, #b58a5e 40%, #8c6543);
+  color: #2a1700;
+}
+
+/* ====================================================================
+   4 · SCORE display lateral
+   ==================================================================== */
+.np-score-display {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  text-align: right;
+}
+
+.np-score-display .num {
+  display: block;
+  font: 800 32px/1 var(--font-display, "Fraunces");
+  letter-spacing: -.02em;
+  color: var(--ink-warm, #fbf6ea);
+  font-variant-numeric: tabular-nums;
+}
+
+.np-card-gsb.gold .np-score-display .num { color: var(--wine, #f3ddb0); }
+.np-card-gsb.silver .np-score-display .num { color: #e8e5ff; }
+.np-card-gsb.bronze .np-score-display .num { color: #d9b48e; }
+
+.np-score-display .lbl {
+  display: block;
+  font: 700 9.5px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--soft, #928ec6);
+  margin-top: 4px;
+}
+
+/* ====================================================================
+   5 · RANK kicker
+   ==================================================================== */
+.np-rank {
+  font: 800 10.5px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  color: var(--wine-d, #cdbf9a);
+  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.np-card-gsb.silver .np-rank { color: #c8c4ff; }
+.np-card-gsb.bronze .np-rank { color: #c79a72; }
+
+/* ====================================================================
+   6 · Title + sub
+   ==================================================================== */
+.np-card-title {
+  font: 700 19px/1.2 var(--font-display) !important;
+  color: var(--ink-warm) !important;
+  letter-spacing: -.01em;
+  margin: 0 0 4px !important;
+}
+
+.np-card-sub {
+  font: 500 13px/1.5 var(--font-body) !important;
+  color: var(--muted) !important;
+  margin: 0 0 12px !important;
+}
+
+/* ====================================================================
+   7 · Meta row (idade, audiência, tempo, itens)
+   ==================================================================== */
+.np-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font: 600 11.5px/1 var(--font-body);
+  color: #c8c4ff;
+  margin-bottom: 12px;
+}
+
+.np-meta-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ====================================================================
+   8 · TAGS / BADGES — tier + special
+   ==================================================================== */
+.np-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.np-tag-clin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 10px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.np-tag-clin.tier-gold {
+  background: linear-gradient(135deg, #e7c98b, #caa56a);
+  color: #1f1500;
+  box-shadow: 0 4px 10px -4px rgba(231, 201, 139, .6);
+}
+.np-tag-clin.tier-screening {
+  background: rgba(110, 231, 183, .14);
+  color: #6ee7b7;
+  border: 1px solid rgba(110, 231, 183, .32);
+}
+.np-tag-clin.tier-complementary {
+  background: rgba(147, 197, 253, .14);
+  color: #93c5fd;
+  border: 1px solid rgba(147, 197, 253, .32);
+}
+.np-tag-clin.tier-authoral {
+  background: rgba(200, 196, 255, .18);
+  color: #c8c4ff;
+  border: 1px solid rgba(200, 196, 255, .32);
+}
+.np-tag-clin.tier-observational {
+  background: rgba(182, 177, 224, .12);
+  color: #b6b1e0;
+  border: 1px solid rgba(182, 177, 224, .24);
+}
+.np-tag-clin.tier-experimental {
+  background: rgba(251, 191, 119, .14);
+  color: #fbbf77;
+  border: 1px solid rgba(251, 191, 119, .32);
+}
+.np-tag-clin.first-line {
+  background: linear-gradient(135deg, #f3ddb0, #e7c98b);
+  color: #1f1500;
+  font-weight: 800;
+}
+.np-tag-clin.license-required {
+  background: rgba(243, 166, 166, .14);
+  color: #f3a6a6;
+  border: 1px solid rgba(243, 166, 166, .32);
+}
+.np-tag-clin.fast { background: rgba(255, 255, 255, .10); color: #fff; }
+.np-tag-clin.school { background: rgba(110, 231, 183, .10); color: #9be3c0; }
+.np-tag-clin.confirm { background: rgba(196, 181, 253, .12); color: #c4b5fd; }
+.np-tag-clin.pei { background: rgba(94, 234, 212, .10); color: #5eead4; }
+
+/* ====================================================================
+   9 · BREAKDOWN — barras em 6 fatores
+   ==================================================================== */
+.np-breakdown-clin {
+  margin-top: 12px;
+  padding: 14px;
+  background: rgba(10, 9, 24, .42);
+  border: 1px solid rgba(160, 154, 255, .14);
+  border-radius: 14px;
+}
+
+.np-breakdown-clin summary {
+  font: 700 11px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: #c8c4ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.np-breakdown-clin summary::-webkit-details-marker { display: none; }
+.np-breakdown-clin summary::before {
+  content: "▸";
+  color: #9b95d4;
+  transition: transform .2s ease;
+  display: inline-block;
+}
+.np-breakdown-clin[open] summary::before { transform: rotate(90deg); }
+.np-breakdown-clin summary .fit {
+  margin-left: auto;
+  font: 800 14px/1 var(--font-body);
+  color: var(--wine, #f3ddb0);
+  text-transform: none;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.np-bd-grid {
+  display: grid;
+  grid-template-columns: 86px 1fr 36px;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 12px;
+  font: 600 11.5px/1.3 var(--font-body);
+  color: #d4cffa;
+}
+.np-bd-grid .lbl {
+  font: 700 10px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #b6b2e6;
+}
+.np-bd-grid .bar {
+  position: relative;
+  height: 7px;
+  background: rgba(160, 154, 255, .12);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.np-bd-grid .bar::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--np-fill, 0%);
+  background: linear-gradient(90deg, #7c79ff, #9b7bff);
+  border-radius: inherit;
+  transition: width .5s var(--ease);
+}
+.np-bd-grid .bar.full::after {
+  background: linear-gradient(90deg, #e7c98b, #f3ddb0);
+}
+.np-bd-grid .num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: #f2f0ff;
+  text-align: right;
+}
+
+.np-mult-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(160, 154, 255, .18);
+  font: 500 11px/1.4 var(--font-body);
+  color: #b6b2e6;
+}
+.np-mult-row strong { color: #e0deff; font-weight: 700; }
+.np-mult-row b { color: #f3ddb0; font-weight: 800; }
+
+/* ====================================================================
+   10 · PSYCHOMETRICS — sensibilidade/especificidade
+   ==================================================================== */
+.np-psy {
+  margin-top: 12px;
+}
+
+.np-psy-context {
+  font: 500 12.5px/1.5 var(--font-body);
+  color: #c8c4ff;
+  padding: 8px 12px;
+  background: rgba(124, 118, 210, .10);
+  border-left: 3px solid #7c79ff;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.np-psy-context strong { color: var(--wine, #f3ddb0); }
+
+.np-psy-grid {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(10, 9, 24, .42);
+  border: 1px solid rgba(160, 154, 255, .14);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.np-psy-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+}
+
+.np-psy-row .lbl {
+  font: 700 10px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #b6b2e6;
+}
+
+.np-psy-row .bar {
+  position: relative;
+  height: 8px;
+  background: rgba(160, 154, 255, .14);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.np-psy-row .bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width .5s var(--ease);
+}
+
+.np-psy-row .val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--wine, #f3ddb0);
+  text-align: right;
+  font-size: 12px;
+}
+
+/* ====================================================================
+   11 · QUANDO NÃO USAR — banner âmbar
+   ==================================================================== */
+.np-when-not {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(251, 191, 119, .10);
+  border: 1px solid rgba(251, 191, 119, .32);
+  border-left: 3px solid #fbbf77;
+  border-radius: 10px;
+  font: 500 12.5px/1.5 var(--font-body);
+  color: #f0d9b4;
+  margin-top: 8px;
+}
+
+.np-when-not strong {
+  color: #f5e8d5;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ====================================================================
+   12 · CARD ACTIONS — botões aplicar/copiar
+   ==================================================================== */
+.np-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.np-card-actions .btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  min-height: 40px;
+}
+
+.np-card-actions .btn-primary {
+  background: linear-gradient(180deg, var(--teal), var(--teal-d)) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .14),
+    0 10px 22px -8px var(--teal);
+}
+
+.np-card-gsb.gold .np-card-actions .btn-primary {
+  background: linear-gradient(180deg, var(--gold), var(--gold-d)) !important;
+  color: #241a05 !important;
+}
+
+.np-card-actions .btn-ghost {
+  background: rgba(124, 118, 210, .14) !important;
+  color: #d4cffa !important;
+  border: 1px solid rgba(160, 154, 255, .22) !important;
+  box-shadow: none !important;
+}
+
+/* ====================================================================
+   13 · HIPÓTESE CLÍNICA — banner premium
+   ==================================================================== */
+.np-hypothesis {
+  position: relative;
+  margin: 16px 0 22px;
+  padding: 22px 24px;
+  background:
+    radial-gradient(620px 240px at 90% -20%, rgba(231, 201, 139, .12), transparent 60%),
+    linear-gradient(180deg, rgba(124, 118, 210, .12) 0%, rgba(124, 118, 210, .06) 100%);
+  border: 1px solid rgba(231, 201, 139, .32);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .05),
+    0 20px 50px -20px rgba(4, 3, 18, .72);
+  overflow: hidden;
+}
+
+.np-hyp-head {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.np-hyp-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  background: linear-gradient(135deg, rgba(231, 201, 139, .28), rgba(124, 118, 210, .32));
+  border-radius: 16px;
+  border: 1px solid rgba(231, 201, 139, .42);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+
+.np-hyp-meta { flex: 1; }
+
+.np-hyp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.np-hyp-kicker {
+  font: 800 10.5px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: var(--wine-d, #d8c69a);
+  background: rgba(231, 201, 139, .14);
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(231, 201, 139, .32);
+}
+
+.np-confidence {
+  font: 700 11.5px/1 var(--font-body);
+  letter-spacing: .05em;
+}
+.np-confidence.conf-high { color: #6ee7b7; }
+.np-confidence.conf-med  { color: #fbbf77; }
+.np-confidence.conf-low  { color: #f3a6a6; }
+
+.np-hyp-title {
+  margin: 0 0 4px !important;
+  font: 700 22px/1.2 var(--font-display) !important;
+  color: var(--ink-warm) !important;
+  letter-spacing: -.015em;
+}
+
+.np-hyp-prose {
+  margin: 14px 0 12px !important;
+  font: 500 14.5px/1.65 var(--font-body) !important;
+  color: #d4cffa !important;
+}
+
+.np-hyp-doms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.np-hyp-doms .lbl {
+  font: 700 10px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--soft, #928ec6);
+  margin-right: 4px;
+}
+
+.np-dom-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  font: 600 11px/1 var(--font-body);
+  background: rgba(124, 118, 210, .20);
+  color: #c8c4ff;
+  border-radius: 999px;
+  border: 1px solid rgba(160, 154, 255, .30);
+}
+
+/* ====================================================================
+   14 · RED FLAG BANNER
+   ==================================================================== */
+.np-red-flag {
+  position: relative;
+  margin: 16px 0;
+  padding: 16px 18px 16px 56px;
+  background: linear-gradient(135deg, rgba(231, 113, 113, .14), rgba(231, 113, 113, .04));
+  border: 1px solid rgba(231, 113, 113, .42);
+  border-left: 4px solid #e16363;
+  border-radius: 16px;
+  color: #f5dcdc;
+  box-shadow: 0 14px 32px -16px rgba(231, 113, 113, .32);
+}
+
+.np-red-flag::before {
+  content: "⚠";
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: #e16363;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: 16px;
+  animation: npRedPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes npRedPulse {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(231, 113, 113, .18); }
+  50%      { box-shadow: 0 0 0 12px rgba(231, 113, 113, 0); }
+}
+
+.np-red-flag h3 {
+  margin: 0 0 6px !important;
+  font: 700 15px/1.2 var(--font-display) !important;
+  color: #f8e8e8 !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.np-red-flag .badge {
+  font: 800 9.5px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  padding: 4px 10px;
+  background: #e16363;
+  color: #fff;
+  border-radius: 999px;
+  animation: npRedPulse 2.5s ease-in-out infinite;
+}
+
+.np-red-flag.medium {
+  background: linear-gradient(135deg, rgba(251, 191, 119, .14), rgba(251, 191, 119, .03));
+  border-color: rgba(251, 191, 119, .42);
+  border-left-color: #fbbf77;
+  color: #f5e8d5;
+}
+.np-red-flag.medium::before { background: #fbbf77; animation: none; }
+.np-red-flag.medium .badge { background: #fbbf77; color: #1f1500; animation: none; }
+
+.np-red-flag ul {
+  margin: 8px 0 6px !important;
+  padding-left: 18px;
+  font: 500 13px/1.6 var(--font-body) !important;
+  color: inherit !important;
+}
+.np-red-flag li strong { color: #fff; font-weight: 700; }
+
+.np-rf-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(231, 113, 113, .32);
+  font: 500 12px/1.55 var(--font-body);
+}
+.np-rf-actions strong { color: #f8e8e8; font-weight: 700; }
+
+/* ====================================================================
+   15 · BATERIA SUGERIDA
+   ==================================================================== */
+.np-battery {
+  margin: 18px 0;
+  padding: 16px 18px;
+  background: rgba(10, 9, 24, .45);
+  border: 1px solid rgba(160, 154, 255, .22);
+  border-radius: 18px;
+}
+
+.np-battery summary {
+  font: 800 13px/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--wine, #f3ddb0);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.np-battery summary::-webkit-details-marker { display: none; }
+.np-battery summary::after {
+  content: "▼";
+  margin-left: auto;
+  color: var(--soft);
+  font-size: 11px;
+  transition: transform .2s;
+}
+.np-battery[open] summary::after { transform: rotate(180deg); }
+
+.np-bat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.np-bat-block {
+  padding: 12px 14px;
+  background: rgba(124, 118, 210, .10);
+  border: 1px solid rgba(160, 154, 255, .22);
+  border-radius: 12px;
+}
+
+.np-bat-block.urgent {
+  background: rgba(231, 113, 113, .10);
+  border-color: rgba(231, 113, 113, .32);
+}
+
+.np-bat-block h4 {
+  margin: 0 0 8px !important;
+  font: 700 12px/1 var(--font-body) !important;
+  text-transform: uppercase;
+  letter-spacing: .10em;
+  color: #c8c4ff !important;
+}
+
+.np-bat-block.urgent h4 { color: #f3a6a6 !important; }
+
+.np-bat-block ul {
+  list-style: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.np-bat-block li {
+  font: 500 12.5px/1.6 var(--font-body) !important;
+  color: #d4cffa !important;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(160, 154, 255, .08);
+}
+
+.np-bat-block li:last-child { border-bottom: 0; }
+
+.np-bat-block li::before {
+  content: "▸";
+  color: var(--soft);
+  margin-right: 6px;
+}
+
+/* ====================================================================
+   16 · GAPS
+   ==================================================================== */
+.np-gaps {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 14px 0;
+  padding: 12px 14px;
+  background: rgba(147, 197, 253, .10);
+  border: 1px solid rgba(147, 197, 253, .30);
+  border-left: 3px solid #93c5fd;
+  border-radius: 12px;
+  font: 500 13px/1.6 var(--font-body);
+  color: #cfe1f8;
+}
+
+.np-gaps .ico { font-size: 18px; flex-shrink: 0; }
+.np-gaps strong { color: #fff; font-weight: 700; }
+
+/* ====================================================================
+   17 · EMPTY STATE
+   ==================================================================== */
+.np-empty {
+  margin: 22px 0;
+  padding: 32px 22px;
+  background:
+    radial-gradient(600px 400px at 50% 0%, rgba(124, 118, 210, .12), transparent 60%),
+    rgba(10, 9, 24, .35);
+  border: 1px dashed rgba(160, 154, 255, .32);
+  border-radius: 22px;
+  text-align: center;
+}
+
+.np-empty .ico {
+  display: inline-block;
+  font-size: 48px;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 6px 18px rgba(124, 118, 210, .4));
+}
+
+.np-empty h3 {
+  font: 700 22px/1.2 var(--font-display) !important;
+  color: var(--wine, #f3ddb0) !important;
+  margin: 0 0 8px !important;
+}
+
+.np-empty p {
+  font: 500 14.5px/1.65 var(--font-body) !important;
+  color: var(--muted) !important;
+  max-width: 520px;
+  margin: 0 auto 22px;
+}
+
+.np-empty .np-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  max-width: 440px;
+  margin: 22px auto 0;
+  text-align: left;
+}
+
+.np-empty .step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  background: rgba(124, 118, 210, .10);
+  border: 1px solid rgba(160, 154, 255, .18);
+  border-radius: 12px;
+}
+
+.np-empty .step .num {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--teal), var(--teal-d));
+  color: #fff;
+  border-radius: 50%;
+  font: 800 13px/1 var(--font-body);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18);
+}
+
+.np-empty .step span:last-child {
+  font: 500 13.5px/1.5 var(--font-body);
+  color: #d4cffa;
+}
+.np-empty .step strong { color: var(--ink-warm); font-weight: 700; }
+
+.np-tier-legend {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(160, 154, 255, .18);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+/* ====================================================================
+   18 · RESPONSIVO — mobile-first
+   ==================================================================== */
+@media (max-width: 640px) {
+  .np-card-gsb {
+    padding: 20px 18px 20px 70px;
+    border-radius: 18px;
+  }
+  .np-medal {
+    width: 44px;
+    height: 44px;
+    font-size: 9.5px;
+    left: 14px;
+    top: 18px;
+  }
+  .np-score-display {
+    position: static;
+    margin: 10px 0 0;
+    text-align: left;
+  }
+  .np-score-display .num { font-size: 26px; }
+  .np-card-title { font-size: 17px !important; }
+  .np-bd-grid {
+    grid-template-columns: 70px 1fr 30px;
+    font-size: 10.5px;
+  }
+  .np-bat-grid { grid-template-columns: 1fr; }
+  .np-psy-row { grid-template-columns: 90px 1fr 36px; }
+  .np-hypothesis { padding: 18px 16px; }
+  .np-hyp-icon { width: 44px; height: 44px; font-size: 22px; }
+  .np-hyp-title { font-size: 19px !important; }
+  .np-empty .ico { font-size: 40px; }
+  .np-empty h3 { font-size: 18px !important; }
+}
+
+/* ====================================================================
+   19 · PRINT — laudo médico fiel
+   ==================================================================== */
+@media print {
+  .np-card-gsb {
+    background: #fff !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+    padding: 18px 18px 18px 70px !important;
+    page-break-inside: avoid;
+    color: #000;
+  }
+  .np-medal {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #444;
+    box-shadow: none !important;
+    font-size: 9pt;
+  }
+  .np-card-gsb.gold .np-medal { border-color: #b58a3e; color: #b58a3e !important; }
+  .np-card-gsb.silver .np-medal { border-color: #777; color: #777 !important; }
+  .np-card-gsb.bronze .np-medal { border-color: #8c6543; color: #8c6543 !important; }
+
+  .np-card-title, .np-card-sub, .np-meta-row, .np-score-display .num,
+  .np-rank, .np-mult-row { color: #000 !important; }
+
+  .np-tag-clin {
+    background: #f3f3f3 !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+  }
+
+  .np-red-flag {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #b94545 !important;
+    page-break-inside: avoid;
+  }
+  .np-red-flag::before {
+    background: #b94545 !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+
+  .np-hypothesis {
+    background: #fff !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    page-break-inside: avoid;
+  }
+  .np-hyp-icon { background: #f3f3f3 !important; border-color: #999 !important; color: #000 !important; }
+  .np-hyp-title, .np-hyp-prose, .np-hyp-kicker, .np-confidence { color: #000 !important; }
+
+  .np-card-actions, .np-empty, .np-battery summary::after, .np-mult-row b {
+    display: none !important;
+  }
+
+  .np-battery, .np-gaps, .np-when-not, .np-psy, .np-breakdown-clin {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #999 !important;
+  }
+
+  .np-bd-grid .bar::after { background: #888 !important; }
+}
+
+/* Fim · neuroped-clinica-ui.css */
