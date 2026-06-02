@@ -393,6 +393,13 @@ assertIncludes('routes.config.js', 'gerador-cards.html', 'routes.config registra
 assertFile('app-shell.html');
 assertIncludes('app-shell.html', 'sh-frame', 'app-shell tem o quadro de conteúdo persistente');
 assertIncludes('app-shell.html', 'logo-jadson.jpg', 'casca usa a logo oficial no topo e no splash');
+// S1 (roadmap 9.9): README na versão canônica + sem vazamentos/divergências
+assertNotIncludes('README.md', 'v5.1', 'README não está mais na versão defasada (v5.1)');
+assertNotIncludes('README.md', 'FRAGA1108', 'README não expõe PIN em texto claro (S12)');
+assertNotIncludes('README.md', '9609-7028', 'README sem WhatsApp divergente');
+assertIncludes('README.md', 'CRM-PE 25227', 'README traz o registro canônico (CRM-PE 25227)');
+assertIncludes('README.md', 'wa.me/5587991097371', 'README traz o WhatsApp canônico');
+assertIncludes('README.md', 'Soli Deo Gloria', 'README traz o fechamento institucional');
 assertIncludes('app-shell.html', 'comunicacao-alternativa.html', 'app-shell roteia a CAA');
 assertIncludes('app-shell.html', 'neuroped-master-biblioteca.html', 'app-shell roteia a Biblioteca');
 assertIncludes('manifest.json', './app-shell.html', 'manifest aponta o PWA para a casca dinâmica');

@@ -1,132 +1,86 @@
-# NeuroPed EDJ — v5.1 (truth-pass)
+# NeuroPed EDJ — v6.39.2
 
-**Plataforma educacional e demonstrativa de neuropediatria**
+**Plataforma educacional e demonstrativa de neuropediatria — local-first (PWA)**
 
-Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756
-Petrolina-PE · Juazeiro-BA
+Dr. Jadson Fraga Araújo Júnior · **CRM-PE 25227 · RQE 17756** · Neuropediatria
+Rua Raimundo Lacerda, Casa 01 — Bairro São José, Petrolina-PE · CEP 56302-470
+
+---
+
+> ⚠️ **AMBIENTE DEMONSTRATIVO / EDUCACIONAL**
+> Demonstração técnica honesta. Os instrumentos autorais são de **triagem orientadora**, não diagnóstico. Não inserir dados reais de pacientes. Laudos/documentos gerados trazem carimbo de demonstração e **não** têm valor jurídico até as etapas de `GO_LIVE_CHECKLIST.md` estarem completas.
 
 ---
 
-> ⚠️ **AMBIENTE DEMONSTRATIVO**
-> Esta versão é uma demonstração técnica honesta. Não inserir dados reais de pacientes. Não tratar laudos gerados como documentos formais. Não esperar funcionalidades clínicas profissionais até as etapas P0/P1 do `GO_LIVE_CHECKLIST.md` estarem completas.
+## Arquitetura (estado real)
 
----
+PWA estática (HTML/CSS/JS), **local-first**, sem backend obrigatório. Publica via **GitHub Pages** a partir de `main` em `jadsonfraga.github.io/neuroped/`. O PWA instalado abre por `app-shell.html` (`start_url`).
+
+Camadas centrais:
+
+- **`np-store.js`** — espinha de dados local (namespace `np:*`): múltiplas crianças, criança **ativa**, `resultsFor`, `medLogFor`, `diarySummary`, `exportAll`/`importAll` (mescla por id, nunca apaga). 100% no dispositivo.
+- **`scales-enhance.js`** (`window.NeuroPedScales`) — motor de escala: pontua, gera **laudo PDF com respostas item-a-item**, salva histórico. Concatenado em `scales-bundle.js`.
+- **`escala.html?id=<id>`** — runner unificado: responde **qualquer** escala do catálogo com fluxo guiado (auto-avanço, conclusão, skeleton); laudo amarrado à criança ativa.
+- **`filtro-escalas.html`** — clique idade+queixa → 3 mais indicadas → runner; memória de queixa **por criança**.
+- **`perfil-crianca.html`** — CRUD criança, linha do tempo, comparador longitudinal, **síntese do caso** (escalas × medicação × diário) + PDF, documentos prontos, reaplicar escala.
+- **`central-atalhos.html`** — hub com faixa de destaque, indicadores de uso e "Continuar o caso".
+- **`app-polish-mobile.js`** — camada universal (toda página): transições, **guia de jornada** (próximo passo contextual), prefetch preditivo, onboarding, marca em toda tela.
+- **`app-shell.html`** — casca persistente (topo + abas + `<iframe>`) para experiência de moldura única.
+
+Qualidade: `scripts/test-static.mjs` (637+ asserções estáticas, 0 falhas como gate de commit), `scripts/build-scales-bundle.mjs` (frescor do bundle).
 
 ## O que esta versão FAZ
 
-### Para famílias e visitantes (acesso aberto)
-- 15 instrumentos autorais do Dr. Jadson — triagem orientadora para famílias
-- 8 materiais educativos sobre desenvolvimento, sono, alimentação, TDAH, TEA, CAA
-- 9 marcos do desenvolvimento por faixa etária com sinais de alerta
-- Calculadora de IMC infantil e dose pediátrica (referenciais)
-- CAA — pictogramas + síntese de voz pt-BR para comunicação alternativa
-- Página institucional do Dr. Jadson com áreas de atuação e contato
-- WhatsApp direto para agendamento
+- Filtro de escalas por idade/queixa → 3 instrumentos indicados.
+- Runner que responde a escala e gera **laudo PDF com as respostas**, salvo no histórico da criança ativa.
+- Perfil longitudinal: linha do tempo, comparador (delta entre reavaliações), síntese do caso, documentos prontos (declaração escolar, relatório a terapeuta, atestado de acompanhamento).
+- Diário de escola/terapias e inventário de **resposta à medicação** (família × escola).
+- CAA gratuita (pictogramas + voz pt-BR) e materiais educativos para famílias.
+- PWA instalável, funciona **offline** após a primeira visita.
 
-### Para o médico (área profissional demo)
-Acessada apenas após PIN MASTER. Esta área é **apenas demonstração** — pacientes e consultas listados são fictícios.
+## O que esta versão NÃO faz (limitações honestas)
 
-- CRM com pacientes fictícios marcados `[DEMO]`
-- Modelos de laudo PDF com carimbo "DEMONSTRAÇÃO"
-- Catálogo de referência de 8 instrumentos clínicos clássicos (M-CHAT-R, SNAP-IV, SRS-2, CBCL, GMFCS, ASQ-3, Vineland-3, Conners-3) — **não aplicáveis** nesta build, requerem licença formal
+- ❌ Não autentica médicos profissionalmente (PIN local **não** é autenticação).
+- ❌ Não armazena em banco seguro com RLS por padrão (dados ficam no dispositivo).
+- ❌ Não emite documentos com assinatura digital ICP-Brasil.
+- ❌ Não processa cobranças/assinaturas reais (checkout a configurar).
+- ❌ Não oferece telemedicina.
 
-## O que esta versão NÃO faz
+Detalhes em `KNOWN_LIMITATIONS.md` e `GO_LIVE_CHECKLIST.md`.
 
-- ❌ Não autentica médicos profissionalmente (PIN local não é autenticação)
-- ❌ Não armazena dados em banco seguro com RLS
-- ❌ Não emite documentos com assinatura digital ICP-Brasil
-- ❌ Não processa cobranças ou assinaturas reais
-- ❌ Não oferece telemedicina (módulo removido até conformidade CFM 2.314/2022)
-- ❌ Não envia mensagens criptografadas a famílias (módulo removido)
-- ❌ Não sincroniza com nuvem por padrão
+## Versão e disciplina de release
 
-Tudo isso está documentado em `KNOWN_LIMITATIONS.md`.
-
-## Estrutura de arquivos
-
-```
-neuroped/
-├── index.html                       Shell PWA com demo banner
-├── styles.css                       Design system completo
-├── app.js                           SPA router + views públicas e demo
-├── data.js                          Instrumentos com registry estruturado
-├── api.js                           Cliente cloud opcional (Supabase/Cloudflare)
-├── pdf.js                           Gerador de PDF com carimbo DEMO
-├── charts.js                        Charts SVG nativos
-├── sw.js                            Service Worker (cache shell)
-├── manifest.json                    PWA manifest
-├── icon.svg                         Ícone vetorial
-├── functions/api/                   Cloudflare Pages Functions (não ativas no github.io)
-│   ├── health.js
-│   └── submissions.js
-├── schema.sql                       Schema D1 (legado, descontinuado)
-├── supabase-schema.sql              Schema PostgreSQL alvo
-├── wrangler.toml                    Config Cloudflare Pages
-└── docs/
-    ├── README.md                    Este arquivo
-    ├── ARCHITECTURE.md              Arquitetura atual + alvo
-    ├── SECURITY.md                  Controles obrigatórios
-    ├── PRIVACY_AND_LGPD.md          Conformidade legal
-    ├── INSTRUMENT_REGISTRY.md       Fonte única de verdade clínica
-    ├── KNOWN_LIMITATIONS.md         Limitações honestas
-    ├── GO_LIVE_CHECKLIST.md         Checklist antes de paciente real
-    ├── AUDIT_REMEDIATION_REPORT.md  Auditoria que originou v5.1
-    └── CHANGELOG.md                 Histórico de mudanças
-```
-
-## Como executar localmente
+Versão canônica sincronizada em **4 carimbos**: `package.json`, `sw.js` (`CACHE_NAME`), `app-polish-mobile.js` (`__NP_VERSION`) e `verificar-app.html`. Antes de cada commit: `node scripts/test-static.mjs` deve retornar **0 falhas** e o nº de asserções não pode diminuir.
 
 ```bash
-cd outputs
-python -m http.server 8080
-# ou: npx serve .
+# servir localmente
+python3 -m http.server 8080   # abrir http://localhost:8080/app-shell.html
+# checagem estática (gate de commit)
+node scripts/test-static.mjs
+# refazer o bundle de escalas (se tocar módulos de escala)
+node scripts/build-scales-bundle.mjs
 ```
-
-Abrir `http://localhost:8080`. O Service Worker registra automaticamente.
-
-## Como fazer deploy
-
-### Atual: GitHub Pages (vitrine)
-- Push para `main` no repositório `jadsonfraga/neuroped`
-- GitHub Pages publica automaticamente em `jadsonfraga.github.io/neuroped/`
-- Backend Cloudflare Functions NÃO executa neste domínio
-
-### Recomendado para próxima versão: Cloudflare Pages
-Ver `ARCHITECTURE.md` seção 6 (plano de migração) e `GO_LIVE_CHECKLIST.md` para a lista completa.
 
 ## Acesso ao modo profissional (demo)
 
-PIN MASTER: `FRAGA1108`
-
-Este PIN está em texto claro no `app.js`. Sua finalidade é apenas evitar exposição acidental dos módulos demo, **não é mecanismo de segurança**.
-
-## Histórico
-
-- v5.1 (28/05/2026) — Truth-pass: remoção de 487 placeholders, demo banner, documentação obrigatória
-- v5.0 (28/05/2026) — Modo único + PIN, sem onboarding multi-perfil
-- v4.0 (28/05/2026) — Edição comercial (com claims falsos — revisado)
-- v3.0 — Migração para PWA modular
-- v2.x — Múltiplas iterações estáticas
-- v1.0 — Aplicativo estático inicial
+A área profissional (`consulta.html`) é **demonstrativa** e exige um PIN master. O PIN **não** está em texto claro no bundle: a verificação usa hash (ver `pro-license.js` / `pro-hashes.js`). É proteção de UX contra exposição acidental, **não** mecanismo de segurança. Endurecimento (sessão com expiração, rate-limit, cifragem em repouso) está mapeado no roteiro de segurança/LGPD.
 
 ## Aviso clínico
 
-Os instrumentos autorais são recursos de **triagem operacional**. Não substituem avaliação médica, exame clínico ou instrumentos normatizados quando formalmente indicados.
-
-## Licença
-
-- Código-fonte: a definir
-- Conteúdo educacional e instrumentos autorais: CC-BY-NC do Dr. Jadson Fraga
-- Pictogramas e ícones: emoji Unicode (uso livre)
+Os instrumentos autorais são recursos de **triagem operacional**. Não substituem avaliação médica, exame clínico ou instrumentos normatizados quando formalmente indicados. A decisão diagnóstica é sempre do médico responsável.
 
 ## Contato
 
-- WhatsApp: `+55 87 9609-7028`
-- Instagram: `@drjadsonfraga`
-- Site profissional: a definir
+- WhatsApp: **(87) 9 9109-7371** — `https://wa.me/5587991097371`
+- Petrolina-PE
 
-Para reportar bug de segurança: contato direto pelo WhatsApp com a palavra-chave `[security]`.
+## Licença
+
+- Conteúdo educacional e instrumentos autorais: CC-BY-NC do Dr. Jadson Fraga.
+- Pictogramas/ícones: emoji Unicode (uso livre).
 
 ---
 
-© 2026 NeuroPed EDJ · Dr. Jadson Fraga · Neuropediatria
+© 2026 NeuroPed EDJ · Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756 · Neuropediatria — Petrolina-PE
+
+**Soli Deo Gloria.**
