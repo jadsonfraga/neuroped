@@ -262,6 +262,7 @@ assertIncludes('central-atalhos.html', 'Continuar o caso', 'hub retoma o caso no
 assertIncludes('app-polish-mobile.js', '::selection', 'micro-tema premium universal (seleção/scrollbar temáticas)');
 assertIncludes('perfil-crianca.html', 'tl-redo', 'histórico permite reaplicar a mesma escala em 1 toque (reavaliação → comparador)');
 assertIncludes('perfil-crianca.html', './escala.html?id=', 'reaplicar abre o runner com o mesmo instrumento (reuso/continuidade)');
+assertIncludes('filtro-escalas.html', 'function stateKey', 'filtro lembra queixa/idade POR CRIANÇA (descoberta automática, sem herdar contexto)');
 // Camada D — consistência: tipografia de exibição (Fraunces) unificada nas telas-ramo
 assertIncludes('diario-escola-terapias-v2.html', 'Fraunces', 'diário usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('consulta.html', 'Fraunces', 'consulta usa a fonte de exibição unificada (Fraunces)');
