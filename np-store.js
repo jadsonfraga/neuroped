@@ -13,6 +13,9 @@
 
   var K_CHILDREN = 'np:children';
   var K_ACTIVE = 'np:activeChild';
+  // chave que o scales-enhance lê (NeuroPedScales.getPatient). Escrevemos DIRETO
+  // nela — sem depender do scales-enhance estar carregado (evita poll/fragilidade).
+  var PATIENT_KEY = 'neuroped_scales_patient_v1';
 
   function read(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -54,14 +57,14 @@
     return list().filter(function (c) { return c.id === id; })[0] || null;
   }
 
-  // a criança ativa É o paciente do sistema existente (fonte única de verdade)
+  // a criança ativa É o paciente do sistema existente (fonte única de verdade).
+  // Escreve DIRETO na PATIENT_KEY (que o scales-enhance lê) — funciona mesmo sem
+  // o scales-enhance carregado, e ainda chama a API quando ela existir.
   function syncPatient() {
-    try {
-      if (window.NeuroPedScales && window.NeuroPedScales.setPatient) {
-        var c = active();
-        window.NeuroPedScales.setPatient(c ? { code: c.id.slice(-5), name: c.name || '' } : { code: '', name: '' });
-      }
-    } catch (e) {}
+    var c = active();
+    var p = c ? { code: c.id.slice(-5), name: c.name || '' } : { code: '', name: '' };
+    write(PATIENT_KEY, p);
+    try { if (window.NeuroPedScales && window.NeuroPedScales.setPatient) window.NeuroPedScales.setPatient(p); } catch (e) {}
   }
   function emit() { try { window.dispatchEvent(new Event('np-child-change')); } catch (e) {} }
 
