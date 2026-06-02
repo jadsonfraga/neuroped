@@ -403,6 +403,8 @@ assertIncludes('np-frame.js', 'self !== window.top', 'np-frame só age no topo (
 assertIncludes('sw.js', './np-frame.js', 'np-frame no precache (offline)');
 // Fluxo único de escalas: runner abre DENTRO da superfície (overlay), sem trocar de página
 assertIncludes('filtro-escalas.html', './np-frame.js', 'filtro abre o runner em overlay (achar→aplicar numa tarefa só)');
+assertIncludes('filtro-escalas.html', 'id="allScales"', 'filtro é porta única: "Todas as escalas" foca a busca (sem sair do fluxo)');
+assertNotIncludes('filtro-escalas.html', 'href="./mapa-escalas.html"', 'filtro não puxa o usuário para fora do fluxo (mapa via hub)');
 assertIncludes('perfil-crianca.html', './np-frame.js', 'perfil abre runner/reaplicar em overlay (fluxo contínuo)');
 assertIncludes('central-atalhos.html', './np-frame.js', 'hub abre ferramentas em overlay (jornada contínua)');
 // S1 (roadmap 9.9): README na versão canônica + sem vazamentos/divergências
