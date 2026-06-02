@@ -133,7 +133,7 @@
     el.innerHTML =
       '<div class="logo" style="width:104px;height:104px;border-radius:24px;overflow:hidden;' +
         'box-shadow:0 0 0 1px rgba(184,150,62,.45),0 20px 54px -14px rgba(0,0,0,.65)">' +
-        '<img src="./logo-jadson.jpg" alt="Dr. Jadson Fraga" style="width:100%;height:100%;object-fit:cover;display:block"></div>' +
+        '<img src="./logo-jadson.jpg" alt="Dr. Jadson Fraga" width="104" height="104" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block"></div>' +
       '<div class="name">NeuroPed EDJ</div>' +
       '<div class="tag">Dr. Jadson Fraga · Neuropediatria</div>' +
       '<div class="spinner"></div>';
@@ -282,7 +282,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.39.0') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.39.1') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -558,7 +558,7 @@
     }
     var b = document.createElement('div');
     b.id = 'npBrandMark'; b.className = 'np-brandmark'; b.setAttribute('aria-hidden', 'true');
-    b.innerHTML = '<img src="./logo-jadson.jpg" alt="">';
+    b.innerHTML = '<img src="./logo-jadson.jpg" alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low">';
     document.body.appendChild(b);
   }
 
@@ -607,7 +607,7 @@
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Bem-vindo ao NeuroPed');
     ov.innerHTML =
       '<div class="card">' +
-        '<div class="lg"><img src="./logo-jadson.jpg" alt=""></div>' +
+        '<div class="lg"><img src="./logo-jadson.jpg" alt="" width="64" height="64" decoding="async"></div>' +
         '<h2>Bem-vindo ao NeuroPed</h2>' +
         '<p class="sub">Da triagem ao laudo, em um fluxo só. Veja como começar:</p>' +
         '<div class="stp"><span class="n">1</span><div><b>Cadastre a criança</b><span>Ela conecta filtro, escalas e histórico — fica só no seu aparelho.</span></div></div>' +
