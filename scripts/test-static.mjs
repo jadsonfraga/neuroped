@@ -257,6 +257,9 @@ assertIncludes('app-polish-mobile.js', "'diario-escola-terapias-v2.html': functi
 assertIncludes('app-polish-mobile.js', "'consulta.html': function", 'guia cobre telas-ramo (consulta)');
 assertIncludes('app-polish-mobile.js', 'function onboarding', 'onboarding de primeiro uso guiado em 3 passos (Camada I — ativação)');
 assertIncludes('app-polish-mobile.js', 'np_onboarded', 'onboarding aparece só na 1ª visita (não repete)');
+// Amadurecimento contínuo: continuidade no ponto de entrada + micro-tema premium
+assertIncludes('central-atalhos.html', 'Continuar o caso', 'hub retoma o caso no próximo passo certo (continuidade / descoberta automática)');
+assertIncludes('app-polish-mobile.js', '::selection', 'micro-tema premium universal (seleção/scrollbar temáticas)');
 // Camada D — consistência: tipografia de exibição (Fraunces) unificada nas telas-ramo
 assertIncludes('diario-escola-terapias-v2.html', 'Fraunces', 'diário usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('consulta.html', 'Fraunces', 'consulta usa a fonte de exibição unificada (Fraunces)');
