@@ -107,15 +107,37 @@
     return all.filter(function (r) { return r && r.patient_code === code; });
   }
 
+  // Resposta à medicação: stream SEPARADO do histórico de escalas (semântica
+  // distinta — é "índice de melhora percebida", NÃO escore de triagem; por isso
+  // NÃO entra na linha do tempo das escalas). Guardado por criança em np:medlog.
+  var MEDLOG_KEY = 'np:medlog';
+  function medLogAll() { var l = read(MEDLOG_KEY, []); return Array.isArray(l) ? l : []; }
+  function addMedLog(entry) {
+    if (!entry) return null;
+    var c = active();
+    var e = { id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: Date.now() };
+    e.childId = entry.childId || (c ? c.id : '');
+    e.childCode = entry.childCode || codeOf(c);
+    ['med', 'tempo', 'pais', 'escola', 'fx', 'note'].forEach(function (k) { if (entry[k] != null) e[k] = entry[k]; });
+    var l = medLogAll(); l.push(e); write(MEDLOG_KEY, l.slice(-500)); emit(); return e;
+  }
+  function medLogFor(child) {
+    var id = child && child.id, code = codeOf(child);
+    return medLogAll().filter(function (e) { return (id && e.childId === id) || (code && e.childCode === code); })
+      .sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+  }
+
   // Portabilidade (LGPD: portabilidade + backup). Exporta/importa o prontuário local
-  // (crianças + ativa + resultados). Import MESCLA por id — nunca apaga o que existe.
+  // (crianças + ativa + resultados + resposta à medicação). Import MESCLA por id —
+  // nunca apaga o que existe.
   function exportAll() {
     return {
       app: 'NeuroPed', kind: 'np-export', v: 1,
       exportedAt: new Date().toISOString(),
       children: list(),
       active: read(K_ACTIVE, ''),
-      results: read(RESULTS_KEY, [])
+      results: read(RESULTS_KEY, []),
+      medlog: medLogAll()
     };
   }
   function importAll(obj) {
@@ -130,8 +152,13 @@
     var seen = {}; rs.forEach(function (r) { if (r && r.id) seen[r.id] = 1; });
     (obj.results || []).forEach(function (r) { if (r && r.id && !seen[r.id]) { rs.push(r); seen[r.id] = 1; mergedR++; } });
     write(RESULTS_KEY, rs.slice(0, 1000));
+    // resposta à medicação: mescla por id
+    var mergedM = 0;
+    var ml = medLogAll(); var seenM = {}; ml.forEach(function (m) { if (m && m.id) seenM[m.id] = 1; });
+    (obj.medlog || []).forEach(function (m) { if (m && m.id && !seenM[m.id]) { ml.push(m); seenM[m.id] = 1; mergedM++; } });
+    write(MEDLOG_KEY, ml.slice(-500));
     if (!read(K_ACTIVE, '') && obj.active) setActive(obj.active); else { syncPatient(); emit(); }
-    return { ok: true, children: added, results: mergedR };
+    return { ok: true, children: added, results: mergedR, medlog: mergedM };
   }
 
   window.NPStore = {
@@ -139,6 +166,7 @@
     active: active, setActive: setActive,
     ageMonths: ageMonths, ageLabel: ageLabel, ageBand: ageBand,
     resultsFor: resultsFor, code: codeOf,
+    addMedLog: addMedLog, medLogFor: medLogFor,
     exportAll: exportAll, importAll: importAll
   };
 

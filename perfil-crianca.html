@@ -71,6 +71,16 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 .ins-go{border-left-color:var(--teal);background:rgba(109,106,245,.12)}
 .ins-ok{border-left-color:#34d399;background:rgba(52,211,153,.1);color:#bdebd4}
 .ins-info{border-left-color:var(--soft)}
+/* resposta à medicação (stream separado do histórico de escalas) */
+.medbox{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.medbox>b{display:block;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:9px}
+.medrow{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px dashed var(--line)}
+.medrow:first-of-type{border-top:0}
+.medrow .mpct{font:800 16px system-ui;color:#e7c98b;min-width:54px}
+.medrow .mmain{flex:1;min-width:0;font-size:13px}
+.medrow .mmain b{color:var(--ink)}
+.medrow .mmain span{display:block;color:var(--muted);font-size:11.5px}
+.medrow .mfx{font-size:11px;color:#ffb3c6}
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
 </style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
@@ -94,6 +104,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
       <div id="tlInsights"></div>
       <div id="tlChart"></div>
       <div id="tlList"></div>
+      <div id="medSection"></div>
       <div class="actions" style="margin-top:14px">
         <button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">📄 Relatório consolidado (PDF)</button>
         <button class="btn ghost" id="btnExport">⬇️ Exportar dados</button>
@@ -223,10 +234,29 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     if(!tips.length) tips.push({k:'ok',t:'Acompanhamento em dia. Continue registrando avaliações para enriquecer a linha do tempo.'});
     return tips;
   }
+  // Resposta à medicação: stream SEPARADO (índice de melhora percebida, não escore
+  // de triagem) — por isso fora do gráfico/linha do tempo das escalas.
+  function renderMed(act){
+    var box=$('medSection'); if(!box)return;
+    var S=window.NPStore;
+    var ml=(S.medLogFor?S.medLogFor(act):[]).slice().reverse();
+    if(!ml.length){ box.innerHTML=''; return; }
+    var rows=ml.slice(0,6).map(function(m){
+      var d=m.at?new Date(m.at).toLocaleDateString('pt-BR'):'';
+      var parts=[]; if(m.pais!=null)parts.push('família '+m.pais+'%'); if(m.escola!=null)parts.push('escola '+m.escola+'%');
+      var pct=(m.pais!=null||m.escola!=null)?Math.round(((m.pais||0)+(m.escola||0))/((m.pais!=null?1:0)+(m.escola!=null?1:0)))+'%':'—';
+      var fx=(m.fx&&m.fx.length)?'<span class="mfx">⚠ efeitos: '+esc(m.fx.join(', ').slice(0,60))+'</span>':'';
+      return '<div class="medrow"><span class="mpct">'+pct+'</span><div class="mmain"><b>'+esc(m.med||'Medicação')+'</b>'
+        +'<span>'+(d?d:'')+(m.tempo?' · '+esc(m.tempo):'')+(parts.length?' · '+esc(parts.join(' · ')):'')+'</span>'+fx+'</div></div>';
+    }).join('');
+    box.innerHTML='<div class="medbox"><b>💊 Resposta à medicação ('+ml.length+')</b>'+rows
+      +'<div class="ins ins-info" style="margin-top:10px">Índice de <b>melhora percebida</b> (família/escola), registrado em <a href="./impacto-medicacao.html" style="color:#a9a4ff">Impacto da medicação</a>. Acompanhamento — não mede eficácia farmacológica.</div></div>';
+  }
   function renderTimeline(){
     var S=window.NPStore; if(!S||!S.resultsFor)return;
     var sec=$('timelineSec'); var act=S.active();
     if(!act){sec.hidden=true;return;}
+    renderMed(act);
     var rs=S.resultsFor(act).slice().sort(function(a,b){return (a.created_at||'').localeCompare(b.created_at||'');});
     $('tlName').textContent=act.name||'criança ativa';
     $('tlCount').textContent=rs.length?(rs.length+(rs.length>1?' avaliações':' avaliação')):'';
