@@ -252,6 +252,9 @@ assertIncludes('app-polish-mobile.js', 'function pageExit', 'navegação guiada:
 assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacidade (não quebra sticky/fixed)');
 assertIncludes('app-polish-mobile.js', 'function journeyGuide', 'guia de jornada: etapa atual + próximo passo contextual (fluxo guiado)');
 assertIncludes('app-polish-mobile.js', 'Próximo passo', 'jornada destaca o próximo passo (navegação preditiva)');
+assertIncludes('app-polish-mobile.js', "'impacto-medicacao.html': function", 'guia cobre telas-ramo (impacto) — sem becos sem saída');
+assertIncludes('app-polish-mobile.js', "'diario-escola-terapias-v2.html': function", 'guia cobre telas-ramo (diário)');
+assertIncludes('app-polish-mobile.js', "'consulta.html': function", 'guia cobre telas-ramo (consulta)');
 assertIncludes('app-polish-mobile.js', 'function predictivePrefetch', 'prefetch preditivo: próxima tela carrega antes do clique (instantâneo)');
 assertFile('logo-jadson.jpg');
 assertIncludes('app-polish-mobile.js', 'function brandMark', 'logo do Dr. Jadson presente em toda tela (marca)');
