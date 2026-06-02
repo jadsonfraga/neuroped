@@ -358,7 +358,19 @@
     };
     document.getElementById('npScalesPrint').onclick = function(){
       var inst = activeInstrument(); if (!inst) return;
-      printResult(inst, currentAnswers(inst), getPatient());
+      var ans = currentAnswers(inst);
+      // gerar o laudo TAMBÉM registra no histórico da criança (dado não morre na tela)
+      try {
+        var tt = totalScore(inst, ans);
+        saveResult({
+          id: 'sr-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+          instrument_id: inst.id, instrument_title: inst.title, instrument_group: inst.cat || null,
+          patient_code: getPatient().code || '', patient_name: getPatient().name || '',
+          created_at: new Date().toISOString(),
+          score: tt.score, max: tt.max, domains: domainScores(inst, ans), answers: ans
+        });
+      } catch (e) {}
+      printResult(inst, ans, getPatient());
     };
     document.getElementById('npScalesText').onclick = function(){
       var inst = activeInstrument(); if (!inst) return;
