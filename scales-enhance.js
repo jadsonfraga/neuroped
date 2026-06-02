@@ -323,9 +323,9 @@
       '<div id="npScalesInterpret" style="padding:10px;border-radius:10px;font-size:13px;margin-bottom:10px"></div>' +
       '<div id="npScalesDomains" style="font-size:12px;color:#241b1b;margin-bottom:10px"></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button type="button" id="npScalesSave" class="btn">Salvar avaliação</button>' +
-        '<button type="button" id="npScalesPrint" class="btn">Imprimir só este instrumento</button>' +
-        '<button type="button" id="npScalesText" class="btn">Texto pra laudo</button>' +
+        '<button type="button" id="npScalesPrint" class="btn" style="background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;font-weight:900;box-shadow:0 10px 26px -10px rgba(231,201,139,.6)">📄 Gerar laudo (PDF)</button>' +
+        '<button type="button" id="npScalesText" class="btn">📋 Copiar laudo</button>' +
+        '<button type="button" id="npScalesSave" class="btn secondary">💾 Salvar avaliação</button>' +
         '<button type="button" id="npScalesSubmit" class="btn secondary">Submeter ao backend</button>' +
         '<button type="button" id="npScalesHist" class="btn secondary">Histórico</button>' +
       '</div>' +
