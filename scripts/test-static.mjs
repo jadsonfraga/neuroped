@@ -202,6 +202,9 @@ assertIncludes('perfil-crianca.html', 'histLine', 'Perfil mostra as últimas ava
 assertIncludes('perfil-crianca.html', 'function chartSVG', 'Perfil tem linha do tempo (evolução das avaliações em gráfico)');
 assertIncludes('perfil-crianca.html', 'function buildReport', 'Perfil gera relatório consolidado (prontuário PDF da criança)');
 assertIncludes('perfil-crianca.html', 'function insights', 'Perfil sugere próximos passos (inteligência operacional, regras não-diagnósticas)');
+assertIncludes('np-store.js', 'function exportAll', 'portabilidade: exporta o prontuário local (LGPD/backup)');
+assertIncludes('np-store.js', 'function importAll', 'portabilidade: importa mesclando (não apaga)');
+assertIncludes('perfil-crianca.html', 'id="btnExport"', 'Perfil tem exportar/importar dados da criança');
 assertIncludes('perfil-crianca.html', 'renderTimeline', 'timeline desenha o histórico da criança ativa');
 assertIncludes('np-store.js', 'PATIENT_KEY', 'np-store escreve direto na chave do paciente (sem depender do scales-enhance)');
 assertNotIncludes('perfil-crianca.html', 'scales-enhance.js', 'perfil não carrega scales-enhance (sem poll eterno de 250ms)');

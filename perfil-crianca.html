@@ -94,7 +94,11 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
       <div id="tlInsights"></div>
       <div id="tlChart"></div>
       <div id="tlList"></div>
-      <div class="actions" style="margin-top:14px"><button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">📄 Relatório consolidado (PDF)</button></div>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">📄 Relatório consolidado (PDF)</button>
+        <button class="btn ghost" id="btnExport">⬇️ Exportar dados</button>
+        <label class="btn ghost" for="impFile" style="cursor:pointer">⬆️ Importar<input type="file" id="impFile" accept="application/json,.json" style="display:none"></label>
+      </div>
     </div>
   </section>
 
@@ -271,6 +275,30 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
       var d=f.contentWindow.document; d.open(); d.write(html); d.close();
     }catch(e){ var w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); w.print(); } }
   }
+  function exportData(){
+    try{
+      var data=window.NPStore.exportAll();
+      var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');a.href=url;a.download='neuroped-prontuario-'+new Date().toISOString().slice(0,10)+'.json';
+      document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
+      toast('Backup exportado — guarde o arquivo .json');
+    }catch(e){toast('Não foi possível exportar');}
+  }
+  function importData(file){
+    if(!file)return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var obj=JSON.parse(r.result);
+        var res=window.NPStore.importAll(obj);
+        if(!res.ok){toast(res.error||'Arquivo inválido');return;}
+        toast('Importado: '+res.children+' criança(s), '+res.results+' avaliação(ões)');
+        render();renderTimeline();
+      }catch(e){toast('Arquivo inválido ou corrompido');}
+    };
+    r.readAsText(file);
+  }
   function genReport(){
     var S=window.NPStore; var c=S&&S.active(); if(!c){toast('Selecione uma criança ativa');return;}
     var rs=S.resultsFor(c).slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
@@ -290,6 +318,8 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     });
     $('cancel').addEventListener('click',function(){ resetForm(); });
     var br=$('btnReport'); if(br) br.addEventListener('click', genReport);
+    var be=$('btnExport'); if(be) be.addEventListener('click', exportData);
+    var imp=$('impFile'); if(imp) imp.addEventListener('change', function(e){ importData(e.target.files&&e.target.files[0]); e.target.value=''; });
     window.addEventListener('np-child-change',function(){ render(); renderTimeline(); });
     render(); renderTimeline();
   }
