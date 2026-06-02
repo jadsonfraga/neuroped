@@ -393,6 +393,12 @@ assertIncludes('routes.config.js', 'gerador-cards.html', 'routes.config registra
 assertFile('app-shell.html');
 assertIncludes('app-shell.html', 'sh-frame', 'app-shell tem o quadro de conteúdo persistente');
 assertIncludes('app-shell.html', 'logo-jadson.jpg', 'casca usa a logo oficial no topo e no splash');
+// Moldura única (Opção A): ferramentas abrem DENTRO da home (SPA) por overlay em iframe
+assertFile('np-frame.js');
+assertIncludes('index.html', './np-frame.js', 'home (SPA) carrega a moldura de ferramentas');
+assertIncludes('np-frame.js', 'npf-ov', 'np-frame tem overlay de moldura');
+assertIncludes('np-frame.js', 'self !== window.top', 'np-frame só age no topo (não empilha molduras)');
+assertIncludes('sw.js', './np-frame.js', 'np-frame no precache (offline)');
 // S1 (roadmap 9.9): README na versão canônica + sem vazamentos/divergências
 assertNotIncludes('README.md', 'v5.1', 'README não está mais na versão defasada (v5.1)');
 assertNotIncludes('README.md', 'FRAGA1108', 'README não expõe PIN em texto claro (S12)');
