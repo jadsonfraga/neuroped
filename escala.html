@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<title>Responder escala — NeuroPed EDJ</title>
-<meta name="description" content="Responda a escala selecionada e gere o laudo em PDF com as respostas. Acompanhamento local, não diagnóstico.">
+<title>Responder escala â€” NeuroPed EDJ</title>
+<meta name="description" content="Responda a escala selecionada e gere o laudo em PDF com as respostas. Acompanhamento local, nÃ£o diagnÃ³stico.">
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/escala.html">
 <style>
@@ -41,7 +41,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 /* skeleton de carregamento */
 .skel{border:1px solid var(--line);border-radius:18px;margin:11px 0;height:96px;background:linear-gradient(100deg,rgba(124,118,210,.06) 30%,rgba(124,118,210,.16) 50%,rgba(124,118,210,.06) 70%);background-size:300% 100%;animation:skel 1.3s ease-in-out infinite}
 @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
-/* estado de conclusão: celebra e leva ao laudo */
+/* estado de conclusÃ£o: celebra e leva ao laudo */
 .done{display:none;text-align:center;margin:18px 0;padding:20px;border-radius:20px;border:1px solid rgba(231,201,139,.4);background:linear-gradient(160deg,rgba(231,201,139,.14),rgba(124,118,210,.06))}
 .done.show{display:block;animation:donePop .42s cubic-bezier(.22,.9,.25,1)}
 @keyframes donePop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
@@ -69,35 +69,38 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .empty{text-align:center;padding:40px 18px;color:var(--muted)}
 .empty a{color:var(--teal);font-weight:700}
 .foot{text-align:center;font-size:11.5px;color:var(--soft);margin-top:24px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
-/* ── o engine (scales-enhance) injeta a barra de laudo dentro de #detail.
-   Aqui vestimos esses nós com o tema premium (sem tocar o JS do motor). ── */
+/* â”€â”€ o engine (scales-enhance) injeta a barra de laudo dentro de #detail.
+   Aqui vestimos esses nÃ³s com o tema premium (sem tocar o JS do motor). â”€â”€ */
 #npScalesFooter{margin-top:18px!important;border:1px solid var(--line2)!important;background:linear-gradient(180deg,var(--glass2),var(--glass))!important;border-radius:18px!important;padding:16px!important}
 #npScalesFooter .btn{border:0;border-radius:13px;padding:12px 15px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--teal),var(--indigo));box-shadow:0 10px 24px -12px rgba(91,84,232,.6);transition:transform .15s,filter .2s}
 #npScalesFooter .btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
 #npScalesFooter .btn.secondary{background:rgba(124,118,210,.14)!important;color:var(--wine)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
-#npScalesSubmit{display:none!important}            /* sem backend neste deploy: esconder reduz ruído */
+#npScalesSubmit{display:none!important}            /* sem backend neste deploy: esconder reduz ruÃ­do */
 #npScalesDomains{color:var(--muted)!important;line-height:2}
 #npScalesStatus{color:var(--soft)!important}
 #npScalesHistList{color:var(--muted)!important}
 #npScalesInterpret{border:1px solid rgba(0,0,0,.06)}
-#npScalesPatientBar{position:static!important;border-radius:14px!important;margin:14px 0!important}  /* não-sticky: evita colidir com a barra de progresso */
+#npScalesPatientBar{position:static!important;border-radius:14px!important;margin:14px 0!important}  /* nÃ£o-sticky: evita colidir com a barra de progresso */
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body data-ns-shell>
 <main class="wrap">
   <header class="topbar">
-    <a class="back" href="./filtro-escalas.html" aria-label="Voltar ao filtro">‹</a>
+    <a class="back" href="./filtro-escalas.html" aria-label="Voltar ao filtro">â€¹</a>
     <div><b>NeuroPed</b><div class="sub">Responder escala</div></div>
   </header>
 
   <section class="hero">
-    <div class="kick">Aplicação do instrumento</div>
-    <h1 id="title">Carregando…</h1>
+    <div class="kick">AplicaÃ§Ã£o do instrumento</div>
+    <h1 id="title">Carregandoâ€¦</h1>
     <div class="meta" id="meta"></div>
     <div class="sym" id="sym"></div>
     <a class="who" id="whoChip" href="./perfil-crianca.html" hidden></a>
@@ -105,13 +108,13 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 
   <div class="prog" id="prog" hidden><div class="bar"><i id="progBar"></i></div><div class="pc" id="progPc">0%</div></div>
 
-  <!-- #detail: o scales-enhance.js observa este nó e injeta a barra de laudo/PDF -->
+  <!-- #detail: o scales-enhance.js observa este nÃ³ e injeta a barra de laudo/PDF -->
   <section id="detail"></section>
   <p class="miss" id="miss">Responda todos os itens para um laudo completo (itens sem resposta saem marcados no PDF).</p>
-  <div class="done" id="doneBanner"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
+  <div class="done" id="doneBanner"><b>âœ“ Tudo respondido</b><p>Gere o laudo em PDF com as respostas â€” fica salvo no histÃ³rico da crianÃ§a.</p><button type="button" id="doneCta">ðŸ“„ Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil â€º</a></div>
   <div class="toolbar"></div>
 
-  <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica ou pedagógica. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756.</p>
+  <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. NÃ£o substitui avaliaÃ§Ã£o mÃ©dica, fonoaudiolÃ³gica, psicolÃ³gica ou pedagÃ³gica. A decisÃ£o Ã© do mÃ©dico responsÃ¡vel. Dr. Jadson Fraga Â· CRM-PE 25227 Â· RQE 17756.</p>
 </main>
 
 <script src="./np-store.js"></script>
@@ -119,11 +122,11 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 <script>
 (function(){
   "use strict";
-  var LIK4=['Não / nunca','Às vezes','Frequente','Quase sempre'];
+  var LIK4=['NÃ£o / nunca','Ã€s vezes','Frequente','Quase sempre'];
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
   function qs(k){return new URLSearchParams(location.search).get(k)||''}
 
-  // catálogo: editorial (bundle) + base (index json). Resolve qualquer id recomendado pelo filtro.
+  // catÃ¡logo: editorial (bundle) + base (index json). Resolve qualquer id recomendado pelo filtro.
   function catalog(cb){
     var ed=window.NEUROPED_EDITORIAL_SCALES||[];
     var map={}; ed.forEach(function(s){if(s&&s.id&&!map[s.id])map[s.id]=s;});
@@ -135,13 +138,13 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   function normalize(s){
     if(!s)return null;
     var inst={id:s.id,title:s.title||s.id,cat:s.domain||s.cat||'',
-      subtitle:[s.audience_label||'',s.age_band||''].filter(Boolean).join(' · '),
+      subtitle:[s.audience_label||'',s.age_band||''].filter(Boolean).join(' Â· '),
       not_normative_disclaimer:s.not_normative_disclaimer};
     if(Array.isArray(s.domains)&&s.domains.length&&s.domains[0]&&Array.isArray(s.domains[0].items)){
       inst.domains=s.domains; inst.labels=s.labels||LIK4;
     }else{
       var qss=(s.plain_questions||s.questions||[]).filter(Boolean);
-      if(!qss.length)qss=['O sinal aparece com frequência?','Atrapalha casa, escola ou terapias?','Houve piora recente?','Melhora com rotina/apoio?','Precisa de avaliação complementar?'];
+      if(!qss.length)qss=['O sinal aparece com frequÃªncia?','Atrapalha casa, escola ou terapias?','Houve piora recente?','Melhora com rotina/apoio?','Precisa de avaliaÃ§Ã£o complementar?'];
       inst.domains=[{name:s.domain||'Itens de triagem',items:qss}]; inst.labels=s.labels||LIK4;
     }
     inst._symptoms=s.symptoms||[]; return inst;
@@ -158,8 +161,8 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     document.getElementById('prog').classList.toggle('done',complete);
     var db=document.getElementById('doneBanner'); if(db)db.classList.toggle('show',complete);
   }
-  // guia premium: ao responder, leva suavemente ao próximo item ainda sem resposta;
-  // quando tudo respondido, leva ao laudo. (Typeform-like, reduz fricção.)
+  // guia premium: ao responder, leva suavemente ao prÃ³ximo item ainda sem resposta;
+  // quando tudo respondido, leva ao laudo. (Typeform-like, reduz fricÃ§Ã£o.)
   function advance(){
     var items=document.querySelectorAll('#detail .item'), i;
     for(i=0;i<items.length;i++){ if(!items[i].classList.contains('answered')){ items[i].scrollIntoView({behavior:'smooth',block:'center'}); return; } }
@@ -179,7 +182,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
       }).join('')+'</div>';
     }).join('');
     det.innerHTML=html;
-    // expõe ao engine (scales-enhance lê estes globais e injeta a barra de laudo)
+    // expÃµe ao engine (scales-enhance lÃª estes globais e injeta a barra de laudo)
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
@@ -189,34 +192,34 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     var el=document.getElementById('whoChip'); if(!el)return;
     var c=null; try{c=window.NPStore&&window.NPStore.active();}catch(e){}
     if(c&&c.name){var age=window.NPStore.ageLabel(c);var ini=(c.name.trim().split(/\s+/).map(function(x){return x[0]}).slice(0,2).join('')||'+').toUpperCase();
-      el.classList.remove('none');el.innerHTML='<span class="wa">'+esc(ini)+'</span><span>Para: <b>'+esc(c.name)+'</b>'+(age?' <small>· '+esc(age)+'</small>':'')+'</span>';}
-    else{el.classList.add('none');el.innerHTML='<span class="wa" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Sem criança ativa — o laudo sai sem identificação</span>';}
+      el.classList.remove('none');el.innerHTML='<span class="wa">'+esc(ini)+'</span><span>Para: <b>'+esc(c.name)+'</b>'+(age?' <small>Â· '+esc(age)+'</small>':'')+'</span>';}
+    else{el.classList.add('none');el.innerHTML='<span class="wa" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Sem crianÃ§a ativa â€” o laudo sai sem identificaÃ§Ã£o</span>';}
     el.hidden=false;
   }
 
   function showEmpty(msg){
-    document.getElementById('title').textContent='Escala não encontrada';
-    document.getElementById('detail').innerHTML='<div class="empty"><p>'+esc(msg||'Não consegui localizar este instrumento.')+'</p><p><a href="./filtro-escalas.html">‹ Voltar ao filtro de escalas</a></p></div>';
+    document.getElementById('title').textContent='Escala nÃ£o encontrada';
+    document.getElementById('detail').innerHTML='<div class="empty"><p>'+esc(msg||'NÃ£o consegui localizar este instrumento.')+'</p><p><a href="./filtro-escalas.html">â€¹ Voltar ao filtro de escalas</a></p></div>';
     document.getElementById('prog').hidden=true;
   }
 
   function boot(){
     var id=qs('id');
     if(!id){showEmpty('Nenhum instrumento informado.');return;}
-    // skeleton enquanto o catálogo carrega (sensação de app, sem tela em branco)
+    // skeleton enquanto o catÃ¡logo carrega (sensaÃ§Ã£o de app, sem tela em branco)
     document.getElementById('detail').innerHTML='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-    var dc=document.getElementById('doneCta'); if(dc)dc.onclick=function(){var b=document.getElementById('npScalesPrint'); if(b)b.click(); else alert('Role até a barra de laudo para gerar o PDF.');};
+    var dc=document.getElementById('doneCta'); if(dc)dc.onclick=function(){var b=document.getElementById('npScalesPrint'); if(b)b.click(); else alert('Role atÃ© a barra de laudo para gerar o PDF.');};
     catalog(function(map){
-      var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
+      var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" nÃ£o estÃ¡ no catÃ¡logo.');return;}
       INST=normalize(raw);
       document.getElementById('title').textContent=INST.title;
-      document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' · ');
+      document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' Â· ');
       document.getElementById('sym').innerHTML=(INST._symptoms||[]).slice(0,6).map(function(s){return '<span>'+esc(s)+'</span>'}).join('');
       document.getElementById('prog').hidden=false;
       paintWho();
       renderDetail();
-      // encadeia "próxima escala recomendada" (fila gravada pelo filtro) → triagem
-      // em sequência (ex.: triangulação família × escola) sem voltar ao menu.
+      // encadeia "prÃ³xima escala recomendada" (fila gravada pelo filtro) â†’ triagem
+      // em sequÃªncia (ex.: triangulaÃ§Ã£o famÃ­lia Ã— escola) sem voltar ao menu.
       try{
         var q=JSON.parse(localStorage.getItem('np:reco')||'[]');
         if(Array.isArray(q)&&q.length){
@@ -225,7 +228,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
             var nxt=q[idx+1], db=document.getElementById('doneBanner');
             if(db){var a=document.createElement('a');a.className='dlink';a.style.display='block';
               a.href='./escala.html?id='+encodeURIComponent(nxt.id);
-              a.textContent='▶ Próxima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
+              a.textContent='â–¶ PrÃ³xima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' â€º';
               db.appendChild(a);}
           }
         }
@@ -236,7 +239,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   boot();
 })();
 </script>
-<!-- scales-bundle.js já inclui o motor scales-enhance (laudo/score). NÃO recarregar aqui. -->
+<!-- scales-bundle.js jÃ¡ inclui o motor scales-enhance (laudo/score). NÃƒO recarregar aqui. -->
 <script src="./app-polish-mobile.js" defer></script>
 </body>
 </html>

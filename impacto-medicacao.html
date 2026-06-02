@@ -1,17 +1,17 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="theme-color" content="#0e0e22">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Impacto Pós-Medicação — NeuroPed EDJ</title>
+<title>Impacto PÃ³s-MedicaÃ§Ã£o â€” NeuroPed EDJ</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/impacto-medicacao.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Impacto Pós-Medicação — NeuroPed EDJ">
+<meta name="twitter:title" content="Impacto PÃ³s-MedicaÃ§Ã£o â€” NeuroPed EDJ">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/impacto-medicacao.html">
-<meta name="description" content="Impacto Pós-Medicação NeuroPed: acompanhe a melhora percebida pela família e pela escola após a medicação. Acompanhamento, não diagnóstico.">
+<meta name="description" content="Impacto PÃ³s-MedicaÃ§Ã£o NeuroPed: acompanhe a melhora percebida pela famÃ­lia e pela escola apÃ³s a medicaÃ§Ã£o. Acompanhamento, nÃ£o diagnÃ³stico.">
 <style>
 :root{--bg:#0a0a16;--bg-2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--soft:#928ec6;--line:rgba(169,164,255,.16);
   --indigo:#6d6af5;--indigo-d:#4f46e5;--indigo-l:#a9a4ff;--gold:#e7c98b;--paper:rgba(124,118,210,.07)}
@@ -63,27 +63,30 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
 .whochip small{color:#cdbf9a;font-weight:600}
 </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body data-ns-shell>
 <main class="app">
   <header class="top">
-    <a class="btn ghost" href="./filtro-escalas.html">← Filtro</a>
-    <a class="btn ghost" href="./escalas.html">Índice</a>
-    <button class="btn ghost" id="saveBtn" type="button" title="Salvar no perfil da criança ativa">💾 Salvar no perfil</button>
+    <a class="btn ghost" href="./filtro-escalas.html">â† Filtro</a>
+    <a class="btn ghost" href="./escalas.html">Ãndice</a>
+    <button class="btn ghost" id="saveBtn" type="button" title="Salvar no perfil da crianÃ§a ativa">ðŸ’¾ Salvar no perfil</button>
     <button class="btn gold" id="copyBtn" type="button">Copiar resumo</button>
   </header>
 
   <section class="hero">
     <div class="subhead" style="color:var(--indigo-l)">Acompanhamento da resposta ao tratamento</div>
-    <h1 id="title">Impacto Pós-Medicação</h1>
-    <p class="lead">O quanto a criança melhorou <strong>após o início/ajuste da medicação</strong>, em duas visões independentes para triangulação. Preencha cada visão separadamente e compare ao final.</p>
+    <h1 id="title">Impacto PÃ³s-MedicaÃ§Ã£o</h1>
+    <p class="lead">O quanto a crianÃ§a melhorou <strong>apÃ³s o inÃ­cio/ajuste da medicaÃ§Ã£o</strong>, em duas visÃµes independentes para triangulaÃ§Ã£o. Preencha cada visÃ£o separadamente e compare ao final.</p>
     <div class="tabs">
-      <button class="tab" data-view="pais">👪 Visão da Família</button>
-      <button class="tab" data-view="escola">🏫 Visão da Escola</button>
+      <button class="tab" data-view="pais">ðŸ‘ª VisÃ£o da FamÃ­lia</button>
+      <button class="tab" data-view="escola">ðŸ« VisÃ£o da Escola</button>
     </div>
     <div class="meta">
-      <input id="med" placeholder="Medicação em uso (ex.: metilfenidato)">
-      <input id="tempo" placeholder="Tempo de uso / dose (ex.: 6 sem · manhã)">
+      <input id="med" placeholder="MedicaÃ§Ã£o em uso (ex.: metilfenidato)">
+      <input id="tempo" placeholder="Tempo de uso / dose (ex.: 6 sem Â· manhÃ£)">
     </div>
     <a id="whoChip" class="whochip" href="./perfil-crianca.html" hidden></a>
   </section>
@@ -96,16 +99,16 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
   </section>
 
   <section class="card" id="cmpCard" style="display:none">
-    <div class="subhead">Comparação entre visões (triangulação)</div>
+    <div class="subhead">ComparaÃ§Ã£o entre visÃµes (triangulaÃ§Ã£o)</div>
     <div class="compare" id="compare" role="status" aria-live="polite"></div>
     <p class="lead" id="cmpNote" style="margin-top:8px"></p>
   </section>
 
-  <p class="disc">⚕️ <strong>Natureza da ferramenta.</strong> Inventário autoral de acompanhamento da <strong>resposta percebida</strong> ao tratamento, de autoria do Dr. Jadson Fraga Araújo Júnior. <strong>Não é escala validada/normatizada</strong>, não mede eficácia farmacológica e não estabelece conduta. Manter, ajustar ou suspender medicação é <strong>decisão exclusivamente médica</strong>, individual e presencial.</p>
-  <p class="disc lgpd">🔒 <strong>Privacidade (LGPD):</strong> as respostas <strong>não são enviadas nem armazenadas em servidor</strong> — ficam apenas neste dispositivo e podem ser apagadas ao fechar a página.</p>
+  <p class="disc">âš•ï¸ <strong>Natureza da ferramenta.</strong> InventÃ¡rio autoral de acompanhamento da <strong>resposta percebida</strong> ao tratamento, de autoria do Dr. Jadson Fraga AraÃºjo JÃºnior. <strong>NÃ£o Ã© escala validada/normatizada</strong>, nÃ£o mede eficÃ¡cia farmacolÃ³gica e nÃ£o estabelece conduta. Manter, ajustar ou suspender medicaÃ§Ã£o Ã© <strong>decisÃ£o exclusivamente mÃ©dica</strong>, individual e presencial.</p>
+  <p class="disc lgpd">ðŸ”’ <strong>Privacidade (LGPD):</strong> as respostas <strong>nÃ£o sÃ£o enviadas nem armazenadas em servidor</strong> â€” ficam apenas neste dispositivo e podem ser apagadas ao fechar a pÃ¡gina.</p>
 
   <div class="result" id="result">
-    <div class="scorebox"><div class="big" id="score">—</div><div class="band warn" id="band">Selecione uma visão e responda os itens.</div></div>
+    <div class="scorebox"><div class="big" id="score">â€”</div><div class="band warn" id="band">Selecione uma visÃ£o e responda os itens.</div></div>
     <div class="alerts" id="alerts"></div>
   </div>
 </main>
@@ -126,11 +129,11 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
   function setView(v){view=v;ans.fx=ans.fx||{};render()}
 
   function render(){
-    var s=inst();if(!s){document.getElementById('body').innerHTML='<div class="card">Inventário indisponível.</div>';return}
-    document.getElementById('title').textContent='Impacto Pós-Medicação';
+    var s=inst();if(!s){document.getElementById('body').innerHTML='<div class="card">InventÃ¡rio indisponÃ­vel.</div>';return}
+    document.getElementById('title').textContent='Impacto PÃ³s-MedicaÃ§Ã£o';
     Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){t.classList.toggle('on',t.dataset.view===view)});
-    var opts=s.options||['Piorou','Sem mudança','Melhora leve','Melhora moderada','Melhora importante'];
-    var html='<div class="subhead">'+esc(s.audience_label)+' · '+esc(s.age_band)+'</div>';
+    var opts=s.options||['Piorou','Sem mudanÃ§a','Melhora leve','Melhora moderada','Melhora importante'];
+    var html='<div class="subhead">'+esc(s.audience_label)+' Â· '+esc(s.age_band)+'</div>';
     (s.plain_questions||[]).forEach(function(q,i){
       html+='<div class="item"><h3><span class="n">'+(i+1)+'.</span>'+esc(q)+'</h3><div class="opts">'+
         opts.map(function(o,v){var on=ans[view][i]===v?' on':'';var neg=v===0?' neg':'';return '<button class="'+neg.trim()+on+'" data-i="'+i+'" data-v="'+v+'">'+esc(o)+'</button>'}).join('')+
@@ -161,20 +164,20 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
 
   function bandFor(ix){
     if(!ix)return{cls:'warn',label:'Responda os itens.',small:''};
-    if(ix.avg<0.5)return{cls:'risk',label:'Sem melhora / piora percebida',small:'Reavaliação médica recomendada — rever adesão, dose, diagnóstico e fatores do ambiente.'};
-    if(ix.avg<1.5)return{cls:'warn',label:'Melhora discreta',small:'Resposta parcial. Acompanhar de perto e discutir ajuste com o médico.'};
-    if(ix.avg<2.5)return{cls:'warn',label:'Melhora parcial',small:'Há ganho perceptível; avaliar otimização conforme objetivos clínicos.'};
-    return{cls:'ok',label:'Boa melhora percebida',small:'Resposta favorável nesta visão. Manter acompanhamento e monitorar efeitos colaterais.'};
+    if(ix.avg<0.5)return{cls:'risk',label:'Sem melhora / piora percebida',small:'ReavaliaÃ§Ã£o mÃ©dica recomendada â€” rever adesÃ£o, dose, diagnÃ³stico e fatores do ambiente.'};
+    if(ix.avg<1.5)return{cls:'warn',label:'Melhora discreta',small:'Resposta parcial. Acompanhar de perto e discutir ajuste com o mÃ©dico.'};
+    if(ix.avg<2.5)return{cls:'warn',label:'Melhora parcial',small:'HÃ¡ ganho perceptÃ­vel; avaliar otimizaÃ§Ã£o conforme objetivos clÃ­nicos.'};
+    return{cls:'ok',label:'Boa melhora percebida',small:'Resposta favorÃ¡vel nesta visÃ£o. Manter acompanhamento e monitorar efeitos colaterais.'};
   }
 
   function calc(){
     var ix=indexFor(view),b=bandFor(ix);
-    document.getElementById('score').textContent=ix?ix.pct+'%':'—';
+    document.getElementById('score').textContent=ix?ix.pct+'%':'â€”';
     var bandEl=document.getElementById('band');bandEl.className='band '+b.cls;
     bandEl.innerHTML='<b>'+b.label+'</b>'+(ix&&ix.answered<ix.total?' ('+ix.answered+'/'+ix.total+')':'')+'<small>'+b.small+'</small>';
     var al=[];
-    if(ix&&ix.worse>0)al.push('<div class="alert prio">⚠ '+ix.worse+' item(ns) marcados como <strong>"Piorou"</strong> — leve isso ao médico na reavaliação.</div>');
-    if(ix&&ix.fx>0)al.push('<div class="alert">'+ix.fx+' efeito(s) colateral(is) assinalado(s) — registrar e comunicar ao médico.</div>');
+    if(ix&&ix.worse>0)al.push('<div class="alert prio">âš  '+ix.worse+' item(ns) marcados como <strong>"Piorou"</strong> â€” leve isso ao mÃ©dico na reavaliaÃ§Ã£o.</div>');
+    if(ix&&ix.fx>0)al.push('<div class="alert">'+ix.fx+' efeito(s) colateral(is) assinalado(s) â€” registrar e comunicar ao mÃ©dico.</div>');
     document.getElementById('alerts').innerHTML=al.join('');
     renderCompare();
   }
@@ -184,48 +187,48 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
     var card=document.getElementById('cmpCard');
     if(!p&&!e){card.style.display='none';return}
     card.style.display='block';
-    function box(name,ix){return '<div><b>'+name+'</b><br>'+(ix?(ix.pct+'% · '+bandFor(ix).label):'ainda não preenchida')+'</div>'}
-    document.getElementById('compare').innerHTML=box('👪 Família',p)+box('🏫 Escola',e);
+    function box(name,ix){return '<div><b>'+name+'</b><br>'+(ix?(ix.pct+'% Â· '+bandFor(ix).label):'ainda nÃ£o preenchida')+'</div>'}
+    document.getElementById('compare').innerHTML=box('ðŸ‘ª FamÃ­lia',p)+box('ðŸ« Escola',e);
     var note='';
     if(p&&e){
       var d=Math.abs(p.pct-e.pct);
-      if(d>=30)note='Divergência relevante entre casa e escola ('+d+' pontos). Pode indicar efeito que cobre só parte do dia, demanda ambiental diferente ou adesão variável — vale investigar com o médico.';
-      else note='Visões convergentes — a percepção de casa e escola é semelhante, o que reforça a leitura do efeito.';
-    } else note='Preencha as duas visões para comparar (triangulação família × escola).';
+      if(d>=30)note='DivergÃªncia relevante entre casa e escola ('+d+' pontos). Pode indicar efeito que cobre sÃ³ parte do dia, demanda ambiental diferente ou adesÃ£o variÃ¡vel â€” vale investigar com o mÃ©dico.';
+      else note='VisÃµes convergentes â€” a percepÃ§Ã£o de casa e escola Ã© semelhante, o que reforÃ§a a leitura do efeito.';
+    } else note='Preencha as duas visÃµes para comparar (triangulaÃ§Ã£o famÃ­lia Ã— escola).';
     document.getElementById('cmpNote').textContent=note;
   }
 
   function summary(){
     var s=inst(),ix=indexFor(view),b=bandFor(ix);
-    var L=['NeuroPed EDJ — Impacto Pós-Medicação ('+(view==='pais'?'Família':'Escola')+')',
+    var L=['NeuroPed EDJ â€” Impacto PÃ³s-MedicaÃ§Ã£o ('+(view==='pais'?'FamÃ­lia':'Escola')+')',
       'Data: '+new Date().toLocaleString('pt-BR'),
-      'Medicação: '+(document.getElementById('med').value||'—')+' · '+(document.getElementById('tempo').value||'—'),
-      'Índice de melhora percebida: '+(ix?ix.pct+'% — '+b.label:'—'),''];
-    (s.plain_questions||[]).forEach(function(q,i){L.push((i+1)+'. '+q+' — '+(ans[view][i]!=null?(s.options[ans[view][i]]):'sem resposta'))});
+      'MedicaÃ§Ã£o: '+(document.getElementById('med').value||'â€”')+' Â· '+(document.getElementById('tempo').value||'â€”'),
+      'Ãndice de melhora percebida: '+(ix?ix.pct+'% â€” '+b.label:'â€”'),''];
+    (s.plain_questions||[]).forEach(function(q,i){L.push((i+1)+'. '+q+' â€” '+(ans[view][i]!=null?(s.options[ans[view][i]]):'sem resposta'))});
     var fx=ans.fx[view].map(function(i){return s.side_effects[i]});
     L.push('','Efeitos colaterais: '+(fx.length?fx.join(', '):'nenhum assinalado'));
     var p=indexFor('pais'),e=indexFor('escola');
-    if(p&&e)L.push('','Triangulação — Família: '+p.pct+'% · Escola: '+e.pct+'%');
+    if(p&&e)L.push('','TriangulaÃ§Ã£o â€” FamÃ­lia: '+p.pct+'% Â· Escola: '+e.pct+'%');
     L.push('',s.not_normative_disclaimer);
     return L.join('\n');
   }
 
-  // ── vínculo com a criança ativa (perfil) ──
+  // â”€â”€ vÃ­nculo com a crianÃ§a ativa (perfil) â”€â”€
   function ini(n){var p=(n||'').trim().split(/\s+/);return ((p[0]&&p[0][0]||'')+(p[1]&&p[1][0]||'')).toUpperCase()||'+';}
   function activeChild(){try{return window.NPStore&&window.NPStore.active&&window.NPStore.active();}catch(e){return null;}}
   function paintWho(){
     var el=document.getElementById('whoChip');if(!el)return;
     var c=activeChild();
     if(c&&c.name){var age=window.NPStore.ageLabel(c);el.classList.remove('none');
-      el.innerHTML='<span class="wa" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+esc(c.name)+'</b>'+(age?' <small>· '+esc(age)+'</small>':'')+'</span>';}
-    else {el.classList.add('none');el.innerHTML='<span class="wa" aria-hidden="true" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Cadastrar criança no Perfil para salvar aqui</span>';}
+      el.innerHTML='<span class="wa" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+esc(c.name)+'</b>'+(age?' <small>Â· '+esc(age)+'</small>':'')+'</span>';}
+    else {el.classList.add('none');el.innerHTML='<span class="wa" aria-hidden="true" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Cadastrar crianÃ§a no Perfil para salvar aqui</span>';}
     el.hidden=false;
   }
   function saveToProfile(){
     var c=activeChild();
-    if(!c){alert('Selecione uma criança ativa no Perfil para salvar a resposta à medicação.');location.href='./perfil-crianca.html';return;}
+    if(!c){alert('Selecione uma crianÃ§a ativa no Perfil para salvar a resposta Ã  medicaÃ§Ã£o.');location.href='./perfil-crianca.html';return;}
     var p=indexFor('pais'),e=indexFor('escola');
-    if(!p&&!e){alert('Responda ao menos uma visão (família ou escola) antes de salvar.');return;}
+    if(!p&&!e){alert('Responda ao menos uma visÃ£o (famÃ­lia ou escola) antes de salvar.');return;}
     var fxAll={};['pais','escola'].forEach(function(v){var s=byView[v];(ans.fx[v]||[]).forEach(function(i){if(s&&s.side_effects&&s.side_effects[i])fxAll[s.side_effects[i]]=1;});});
     window.NPStore.addMedLog({
       med:(document.getElementById('med').value||'').trim(),
@@ -233,7 +236,7 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
       pais:p?p.pct:null, escola:e?e.pct:null,
       fx:Object.keys(fxAll)
     });
-    alert('Resposta à medicação salva no perfil de '+(c.name||'criança')+'.');
+    alert('Resposta Ã  medicaÃ§Ã£o salva no perfil de '+(c.name||'crianÃ§a')+'.');
   }
 
   Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){t.onclick=function(){setView(t.dataset.view)}});

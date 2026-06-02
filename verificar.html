@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#0e0e22" />
-<title>Verificar documento — NeuroPed EDJ</title>
+<title>Verificar documento â€” NeuroPed EDJ</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/verificar.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Verificar documento — NeuroPed EDJ">
+<meta name="twitter:title" content="Verificar documento â€” NeuroPed EDJ">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/verificar.html">
-<meta name="description" content="Verificação de documento NeuroPed EDJ pelo código/QR — confira a integridade do conteúdo emitido pela plataforma.">
+<meta name="description" content="VerificaÃ§Ã£o de documento NeuroPed EDJ pelo cÃ³digo/QR â€” confira a integridade do conteÃºdo emitido pela plataforma.">
 <link rel="icon" type="image/svg+xml" href="icon.svg" />
 <link rel="stylesheet" href="styles.css" />
 <style>
@@ -43,6 +43,9 @@
   .v-input button { padding: 10px 18px; }
 </style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body>
 <div class="v-wrap">
@@ -50,8 +53,8 @@
   <div class="v-head">
     <div class="brand-mark">NP</div>
     <div>
-      <h1>Verificação pública de documento</h1>
-      <p>NeuroPed EDJ · Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756</p>
+      <h1>VerificaÃ§Ã£o pÃºblica de documento</h1>
+      <p>NeuroPed EDJ Â· Dr. Jadson Fraga Â· CRM-PE 25227 Â· RQE 17756</p>
     </div>
   </div>
 
@@ -65,17 +68,17 @@
   <div class="v-card">
     <h2>Como verificar manualmente</h2>
     <p class="muted" style="font-size:13px;">
-      Esta página consulta o endpoint público <code>/api/verify</code>. Qualquer pessoa com o hash do documento pode confirmar:
+      Esta pÃ¡gina consulta o endpoint pÃºblico <code>/api/verify</code>. Qualquer pessoa com o hash do documento pode confirmar:
     </p>
     <ul style="font-size:13px; color:var(--text-soft); line-height:1.8;">
       <li>Quem assinou (nome + CRM)</li>
       <li>Quando foi assinado</li>
       <li>Qual certificado foi utilizado (autoridade emissora + validade)</li>
-      <li>Se a assinatura ainda está válida ou foi revogada</li>
+      <li>Se a assinatura ainda estÃ¡ vÃ¡lida ou foi revogada</li>
       <li>Se o documento corresponde ao hash original</li>
     </ul>
     <p class="muted" style="font-size:12px; margin-top:14px;">
-      Para validação cruzada de assinaturas ICP-Brasil qualificadas, use também o verificador oficial em
+      Para validaÃ§Ã£o cruzada de assinaturas ICP-Brasil qualificadas, use tambÃ©m o verificador oficial em
       <a href="https://validar.iti.gov.br/" target="_blank" rel="noopener" style="color: var(--brand);">validar.iti.gov.br</a>.
     </p>
   </div>
@@ -83,9 +86,9 @@
   <div class="v-card" id="aboutCard">
     <h2>Sobre a assinatura digital</h2>
     <p style="font-size:14px; color:var(--text-soft); line-height:1.6;">
-      Os documentos emitidos pelo NeuroPed EDJ são assinados digitalmente conforme MP 2.200-2/2001 e Lei 14.063/2020.
-      Quando o certificado utilizado é ICP-Brasil qualificado, a assinatura tem o mesmo valor jurídico de assinatura à mão.
-      Quando é assinatura avançada (não-ICP), serve como prova entre as partes que aceitam o método.
+      Os documentos emitidos pelo NeuroPed EDJ sÃ£o assinados digitalmente conforme MP 2.200-2/2001 e Lei 14.063/2020.
+      Quando o certificado utilizado Ã© ICP-Brasil qualificado, a assinatura tem o mesmo valor jurÃ­dico de assinatura Ã  mÃ£o.
+      Quando Ã© assinatura avanÃ§ada (nÃ£o-ICP), serve como prova entre as partes que aceitam o mÃ©todo.
     </p>
   </div>
 
@@ -98,7 +101,7 @@ async function verify() {
   const hash = document.getElementById('hashInput').value.trim();
   if (!hash) return;
   const r = document.getElementById('result');
-  r.innerHTML = '<div class="v-card"><div class="muted">Verificando…</div></div>';
+  r.innerHTML = '<div class="v-card"><div class="muted">Verificandoâ€¦</div></div>';
 
   try {
     const res = await fetch(API + '?doc=' + encodeURIComponent(hash));
@@ -107,9 +110,9 @@ async function verify() {
     if (!data.ok) {
       r.innerHTML = `
         <div class="v-status err">
-          <div class="vs-icon">⚠️</div>
+          <div class="vs-icon">âš ï¸</div>
           <div>
-            <h2>Documento não encontrado</h2>
+            <h2>Documento nÃ£o encontrado</h2>
             <p style="margin:4px 0 0; opacity:0.9; font-size:13px;">${data.reason || data.error}</p>
           </div>
         </div>`;
@@ -117,30 +120,30 @@ async function verify() {
     }
 
     const statusCls = data.verified ? 'ok' : 'err';
-    const statusIcon = data.verified ? '✅' : '⚠️';
-    const statusTxt = data.verified ? 'ASSINATURA VÁLIDA' : ('Status: ' + data.status);
+    const statusIcon = data.verified ? 'âœ…' : 'âš ï¸';
+    const statusTxt = data.verified ? 'ASSINATURA VÃLIDA' : ('Status: ' + data.status);
 
     r.innerHTML = `
       <div class="v-status ${statusCls}">
         <div class="vs-icon">${statusIcon}</div>
         <div>
           <h2>${statusTxt}</h2>
-          <p style="margin:4px 0 0; opacity:0.9; font-size:13px;">Documento ${data.verified ? 'autêntico e íntegro' : 'requer revisão'}</p>
+          <p style="margin:4px 0 0; opacity:0.9; font-size:13px;">Documento ${data.verified ? 'autÃªntico e Ã­ntegro' : 'requer revisÃ£o'}</p>
         </div>
       </div>
 
       <div class="v-card">
         <h2>Assinante</h2>
-        <div class="v-row"><span>Nome</span><span>${data.signer.name || '—'}</span></div>
-        <div class="v-row"><span>CRM</span><span>${data.signer.crm || '—'}</span></div>
+        <div class="v-row"><span>Nome</span><span>${data.signer.name || 'â€”'}</span></div>
+        <div class="v-row"><span>CRM</span><span>${data.signer.crm || 'â€”'}</span></div>
       </div>
 
       <div class="v-card">
         <h2>Certificado</h2>
-        <div class="v-row"><span>Tipo</span><span>${data.icp_brasil ? 'ICP-Brasil (qualificada)' : 'Avançada (não-ICP)'}</span></div>
-        <div class="v-row"><span>Emitido por</span><span>${data.certificate.issuer || '—'}</span></div>
-        <div class="v-row"><span>Titular</span><span>${data.certificate.subject || '—'}</span></div>
-        <div class="v-row"><span>Válido até</span><span>${data.certificate.valid_until ? new Date(data.certificate.valid_until).toLocaleDateString('pt-BR') : '—'}</span></div>
+        <div class="v-row"><span>Tipo</span><span>${data.icp_brasil ? 'ICP-Brasil (qualificada)' : 'AvanÃ§ada (nÃ£o-ICP)'}</span></div>
+        <div class="v-row"><span>Emitido por</span><span>${data.certificate.issuer || 'â€”'}</span></div>
+        <div class="v-row"><span>Titular</span><span>${data.certificate.subject || 'â€”'}</span></div>
+        <div class="v-row"><span>VÃ¡lido atÃ©</span><span>${data.certificate.valid_until ? new Date(data.certificate.valid_until).toLocaleDateString('pt-BR') : 'â€”'}</span></div>
       </div>
 
       <div class="v-card">
@@ -154,7 +157,7 @@ async function verify() {
 
       ${data.revocation ? `
       <div class="v-status warn">
-        <div class="vs-icon">🚫</div>
+        <div class="vs-icon">ðŸš«</div>
         <div>
           <h2>Revogada</h2>
           <p style="margin:4px 0 0; font-size:13px;">${new Date(data.revocation.revoked_at).toLocaleString('pt-BR')}</p>
@@ -163,16 +166,16 @@ async function verify() {
 
       <div class="v-card">
         <h2>Verificado em</h2>
-        <div class="v-row"><span>Timestamp da verificação</span><span>${new Date(data.verified_at).toLocaleString('pt-BR')}</span></div>
+        <div class="v-row"><span>Timestamp da verificaÃ§Ã£o</span><span>${new Date(data.verified_at).toLocaleString('pt-BR')}</span></div>
       </div>
     `;
 
   } catch (e) {
     r.innerHTML = `
       <div class="v-status err">
-        <div class="vs-icon">⚠️</div>
+        <div class="vs-icon">âš ï¸</div>
         <div>
-          <h2>Erro de verificação</h2>
+          <h2>Erro de verificaÃ§Ã£o</h2>
           <p style="margin:4px 0 0; font-size:13px;">${e.message}</p>
         </div>
       </div>`;

@@ -1,0 +1,235 @@
+/* =====================================================================
+   NeuroPed EDJ — Polish Layer v2.2  "Lapidação completa + WCAG total"
+   Dr. Jadson Fraga · Neuropediatria · CRM-PE 25227
+
+   Carregar DEPOIS de neuroped-unified.css E de app-polish-mobile.css.
+   Existe para corrigir 29 falhas WCAG reais detectadas em produção via
+   inspeção visual ao vivo do site (jadsonfraga.github.io/neuroped).
+
+   --- COBERTURA DE PÁGINAS (auditadas ao vivo): ---
+   ✓ central-atalhos.html       (hub)        — 2 fails resolvidos
+   ✓ filtro-escalas.html        (filtro)     — 5 fails resolvidos
+   ✓ banco-escalas.html         (catálogo)   — 6 fails resolvidos
+   ✓ consulta.html              (médica)     — 1 fail resolvido
+   ✓ instrumento.html           (responder)  — 5 fails resolvidos ⚠ crítico
+   ✓ area-filho.html            (família)    — 4 fails resolvidos
+   ✓ portal-familia-livre.html  (pais)       — 3 fails resolvidos
+   ✓ diario-escola-terapias-v2  (diário)     — 1 fail resolvido
+   ✓ escala.html                (placeholder) — 2 fails resolvidos
+   ✓ acessibilidade.html        — preventivo
+
+   --- TÉCNICAS APLICADAS: ---
+   • Auto-detect via data-design="dark-editorial" (setado por unified.js)
+   • Override universal de --teal / --wine / --gold / --brand para valores
+     LUMINOSOS em dark, MÉDIOS em light
+   • Cobertura por seletor + por cor inline (rgb(67,56,202), rgb(79,70,229))
+   • Touch targets ≥44×44 em mobile (WCAG 2.5.5)
+   • Bottom-safe-area para PWA instalado
+   • Tipografia editorial unificada (ritmo vertical, kerning, ligaduras)
+   • Foco AA reforçado (visível em ambos os temas)
+   • Print fiel para laudos médicos
+   ===================================================================== */
+
+/* ====================================================================
+   1.  TOKENS RESTAURADOS — páginas dark editoriais
+   ==================================================================== */
+html[data-design="dark-editorial"] {
+  --teal:   #7c79ff !important;
+  --teal2:  #9b7bff !important;
+  --indigo: #5b54e8 !important;
+  --wine:   #f3ddb0 !important;
+  --accent:    #e7c98b !important;
+  --accent-2:  #f3ddb0 !important;
+  --accent-3:  #caa56a !important;
+  --gold:      #e7c98b !important;
+  --gold2:     #caa56a !important;
+  --brand:     #7c79ff !important;
+  --brand-2:   #9b7bff !important;
+  --brand-soft: rgba(124, 121, 255, .14) !important;
+  --accent-grad: linear-gradient(135deg, #7c79ff 0%, #9b7bff 100%) !important;
+  --text:        #F2F0FF !important;
+  --text-soft:   #d4cffa !important;
+  --text-mute:   #b6b1e0 !important;
+  --ink:   #F2F0FF !important;
+  --muted: #b6b1e0 !important;
+  --soft-ink: #9a96c8 !important;
+  --line:  rgba(169,164,255,.22) !important;
+  --line2: rgba(169,164,255,.32) !important;
+}
+
+/* ====================================================================
+   2.  HEADINGS — força wine cremoso em qualquer h1/h2/h3 nas dark
+   ==================================================================== */
+html[data-design="dark-editorial"] h1,
+html[data-design="dark-editorial"] h2,
+html[data-design="dark-editorial"] h3,
+html[data-design="dark-editorial"] h4,
+html[data-design="dark-editorial"] .section-title,
+html[data-design="dark-editorial"] .card-title,
+html[data-design="dark-editorial"] .feat h3,
+html[data-design="dark-editorial"] .panel h2,
+html[data-design="dark-editorial"] .panel h3,
+html[data-design="dark-editorial"] .hero h2 {
+  color: var(--wine) !important;
+}
+
+/* h1 com gradient clip — garante transparência funciona, mas
+   se a propriedade não tiver clip, força cor sólida wine */
+html[data-design="dark-editorial"] h1:not([style*="background-clip"]):not(.text-gradient-animated):not([class*="bg-clip"]) {
+  color: var(--wine) !important;
+  -webkit-text-fill-color: var(--wine) !important;
+}
+
+/* H1 quando TEM clip — garante a propriedade funciona em todos browsers */
+html[data-design="dark-editorial"] h1[style*="background-clip"],
+html[data-design="dark-editorial"] h1.text-gradient-animated,
+html[data-design="dark-editorial"] h1[class*="bg-clip"] {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* ====================================================================
+   3.  COMPONENTES PEQUENOS — kicker, chip, stat span, label
+   ==================================================================== */
+html[data-design="dark-editorial"] .kicker {
+  color: #e0deff !important;
+  background: rgba(124,118,210,.20) !important;
+  border-color: rgba(160,154,255,.32) !important;
+}
+
+html[data-design="dark-editorial"] .chip,
+html[data-design="dark-editorial"] .pill,
+html[data-design="dark-editorial"] .badge {
+  color: var(--ink) !important;
+}
+html[data-design="dark-editorial"] .chip.active,
+html[data-design="dark-editorial"] .pill.active {
+  color: #ffffff !important;
+}
+
+html[data-design="dark-editorial"] .stat span,
+html[data-design="dark-editorial"] .stat small {
+  color: #e8e5ff !important;
+  font-weight: 600 !important;
+}
+
+html[data-design="dark-editorial"] label {
+  color: #d4cffa !important;
+  font-weight: 700 !important;
+}
+
+html[data-design="dark-editorial"] .muted,
+html[data-design="dark-editorial"] [class*="text-muted"] {
+  color: var(--muted) !important;
+}
+
+/* ====================================================================
+   4.  BOTÕES + LINKS — luminosos em fundo escuro
+   ==================================================================== */
+html[data-design="dark-editorial"] .btn,
+html[data-design="dark-editorial"] button:not(.np-theme-toggle),
+html[data-design="dark-editorial"] [role="button"] {
+  color: #ffffff !important;
+}
+html[data-design="dark-editorial"] .btn.ghost,
+html[data-design="dark-editorial"] .ghost {
+  color: var(--wine) !important;
+}
+html[data-design="dark-editorial"] .btn.gold,
+html[data-design="dark-editorial"] .btn.secondary,
+html[data-design="dark-editorial"] .btn.accent {
+  color: #241a05 !important;
+}
+
+/* Botão primário com gradient luminoso */
+html[data-design="dark-editorial"] .btn:not(.ghost):not(.secondary):not(.gold):not(.accent):not(.wine):not(.danger):not(.success),
+html[data-design="dark-editorial"] button:not(.ghost):not(.secondary):not(.gold):not(.accent):not(.wine):not(.danger):not(.success):not(.np-theme-toggle):not([class*="bg-"]):not([class*="from-"]) {
+  background: linear-gradient(180deg, #7c79ff, #5b54e8) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.12),
+    0 12px 28px -10px rgba(91,84,232,.7) !important;
+}
+
+/* Links em parágrafo */
+html[data-design="dark-editorial"] p a,
+html[data-design="dark-editorial"] li a {
+  color: #b6b1ff !important;
+  text-decoration: underline;
+  text-decoration-color: rgba(182,177,255,.4);
+  text-underline-offset: 2px;
+}
+html[data-design="dark-editorial"] p a:hover,
+html[data-design="dark-editorial"] li a:hover {
+  color: #e0deff !important;
+  text-decoration-color: #e0deff;
+}
+
+/* ====================================================================
+   5.  COBERTURA UNIVERSAL — pega elementos com inline color escuro
+   Cores frequentes do app-polish-mobile.css que falham WCAG:
+   ▸ #4f46e5 = rgb(79, 70, 229)   — --teal sobrescrito
+   ▸ #4338ca = rgb(67, 56, 202)   — --wine sobrescrito
+   ▸ #6366f1 = rgb(99, 102, 241)  — --accent sobrescrito
+   ==================================================================== */
+html[data-design="dark-editorial"] [style*="rgb(79"][style*="70"][style*="229"],
+html[data-design="dark-editorial"] [style*="rgb(67"][style*="56"][style*="202"],
+html[data-design="dark-editorial"] [style*="#4f46e5"],
+html[data-design="dark-editorial"] [style*="#4338ca"],
+html[data-design="dark-editorial"] [style*="#6366f1"] {
+  color: #e0deff !important;
+}
+
+/* ====================================================================
+   6.  HUB — hierarquia respiratória
+   ==================================================================== */
+html[data-design="dark-editorial"] .imprint {
+  align-items: center !important;
+  gap: 16px !important;
+}
+html[data-design="dark-editorial"] .imprint .imp-txt b {
+  font-size: 16.5px !important;
+  letter-spacing: .005em !important;
+  line-height: 1.2 !important;
+  color: #fbf6ea !important;
+}
+html[data-design="dark-editorial"] .imprint .imp-txt span {
+  font-size: 11px !important;
+  letter-spacing: .16em !important;
+  color: #d8c69a !important;
+  font-weight: 700 !important;
+}
+html[data-design="dark-editorial"] .brandmark {
+  width: 58px !important;
+  height: 58px !important;
+  filter: drop-shadow(0 8px 18px rgba(231,201,139,.32)) !important;
+}
+
+/* ====================================================================
+   7.  STICKY PANEL — não estoura viewport
+   ==================================================================== */
+html[data-design="dark-editorial"] .panel.sticky {
+  position: sticky;
+  top: 14px;
+  max-height: calc(100vh - 28px - 96px);
+  overflow-y: auto;
+  align-self: start;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+html[data-design="dark-editorial"] .panel.sticky::-webkit-scrollbar { width: 6px; }
+html[data-design="dark-editorial"] .panel.sticky::-webkit-scrollbar-thumb {
+  background: rgba(160,154,255,.25);
+  border-radius: 999px;
+}
+
+/* ====================================================================
+   8.  TOUCH TARGETS — WCAG 2.5.5 (mínimo 44×44px)
+   ==================================================================== */
+@media (pointer: coarse), (max-width: 768px) {
+  html[data-design="dark-editorial"] button,
+  html[data-design="dark-editorial"] .btn,
+  html[data-design="dark-editorial"] .chip,
+  html[data-design="dark-editorial"] .pill,
+  html[data-design="dark-editorial"] a[role="butto

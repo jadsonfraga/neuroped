@@ -1,1 +1,83 @@
-/*    /index.html   200
+# =====================================================================
+# NeuroPed EDJ · Cloudflare Pages / Netlify redirects (v2.3 refinado)
+# Dr. Jadson Fraga · CRM-PE 25227
+#
+# RESOLVE BUG P1 do PR #23 (chatgpt-codex-connector review):
+#   Catch-all sozinho ("/* /index.html 200") quebrava assets, .html
+#   específicos e PWA files em produção. Esta versão é escopada.
+#
+# ORDEM IMPORTA: regras avaliadas top-down, primeira match vence.
+# Comentários começam com #, ignorados pelo parser.
+# Documentação: https://developers.cloudflare.com/pages/configuration/redirects/
+# =====================================================================
+
+# ─────────────────────────────────────────────────────────────────────
+# 1. PROXY DE API — Cloudflare Pages Functions
+# ─────────────────────────────────────────────────────────────────────
+/api/*                          /api/:splat                       200
+/.well-known/*                  /.well-known/:splat               200
+
+# ─────────────────────────────────────────────────────────────────────
+# 2. ASSETS BUILD (Vite/React) — hashed, defensivo
+# ─────────────────────────────────────────────────────────────────────
+/assets/*                       /assets/:splat                    200
+/icons/*                        /icons/:splat                     200
+/img/*                          /img/:splat                       200
+/fonts/*                        /fonts/:splat                     200
+
+# ─────────────────────────────────────────────────────────────────────
+# 3. PWA / SW / MANIFEST — sempre devem servir o arquivo real
+# ─────────────────────────────────────────────────────────────────────
+/sw.js                          /sw.js                            200
+/manifest.json                  /manifest.json                    200
+/manifest.webmanifest           /manifest.webmanifest             200
+/robots.txt                     /robots.txt                       200
+/sitemap.xml                    /sitemap.xml                      200
+/favicon.ico                    /favicon.ico                      200
+/icon-192.png                   /icon-192.png                     200
+/icon-512.png                   /icon-512.png                     200
+
+# ─────────────────────────────────────────────────────────────────────
+# 4. ALIASES AMIGÁVEIS (URLs curtas → páginas reais)
+#    Mantém SEO e UX: /hub, /escalas, /consulta funcionam.
+# ─────────────────────────────────────────────────────────────────────
+/hub                            /central-atalhos.html             200
+/atalhos                        /central-atalhos.html             200
+/central                        /central-atalhos.html             200
+/escalas                        /escalas.html                     200
+/banco                          /banco-escalas.html               200
+/banco-escalas                  /banco-escalas.html               200
+/catalogo                       /banco-escalas.html               200
+/filtro                         /filtro-escalas.html              200
+/filtro-escalas                 /filtro-escalas.html              200
+/consulta                       /consulta.html                    200
+/diario                         /diario-escola-terapias-v2.html   200
+/diario-v2                      /diario-escola-terapias-v2.html   200
+/perfil                         /perfil-crianca.html              200
+/perfil-crianca                 /perfil-crianca.html              200
+/timeline                       /timeline-crianca.html            200
+/portal                         /portal-familia-livre.html        200
+/familia                        /portal-familia-livre.html        200
+/portal-familia                 /portal-familia-livre.html        200
+/filho                          /area-filho.html                  200
+/area-filho                     /area-filho.html                  200
+/acessibilidade                 /acessibilidade.html              200
+/assinatura                     /assinatura-digital.html          200
+/caa                            /comunicacao-alternativa.html     200
+/medicacao                      /impacto-medicacao.html           200
+/sobre                          /guia-lancamento.html             200
+/master                         /neuroped-master.html             200
+/biblioteca                     /neuroped-master-biblioteca.html  200
+
+# ─────────────────────────────────────────────────────────────────────
+# 5. REDIRECIONAMENTOS PERMANENTES (URLs legadas/renomeadas)
+# ─────────────────────────────────────────────────────────────────────
+/diario-escola-terapias.html    /diario-escola-terapias-v2.html   301
+/old/*                          /:splat                           301
+
+# ─────────────────────────────────────────────────────────────────────
+# 6. SPA FALLBACK — POR ÚLTIMO
+#    Cloudflare Pages serve arquivos existentes ANTES de aplicar esta
+#    regra (docs CF). Aqui só pegamos rotas virtuais do React Router.
+# ─────────────────────────────────────────────────────────────────────
+/*                              /index.html                       200

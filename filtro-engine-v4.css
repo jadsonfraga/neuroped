@@ -1,0 +1,807 @@
+/* =====================================================================
+   NeuroPed EDJ · Filtro Engine v4 — CSS Clínico Premium
+   Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
+
+   Carrega DEPOIS do inline <style> do filtro-escalas.html.
+   Enriquece a UI da engine v4 com:
+     • Cards 🥇🥈🥉 (medalhas, hierarquia visual real)
+     • Tier badges (gold, screening, complementar, autoral, etc.)
+     • Score breakdown em 7 barras (transparência clínica)
+     • Red flag banner com pulse (urgência)
+     • Empty state educativo (como o filtro pensa)
+     • "Por que NÃO?" modal (transparência completa)
+     • Filtro de respondente premium
+     • Modo finalidade (triagem/laudo/PEI)
+     • Print fiel para laudo médico
+     • Mobile-first responsivo
+   ===================================================================== */
+
+/* ====================================================================
+   TOKENS LOCAIS — alinhados ao dark editorial
+   ==================================================================== */
+:root {
+  --np-medal-gold: linear-gradient(135deg, #f3ddb0, #e7c98b 40%, #caa56a);
+  --np-medal-silver: linear-gradient(135deg, #e8e5ff, #c8c4ff 40%, #9b95d4);
+  --np-medal-bronze: linear-gradient(135deg, #d9b48e, #b58a5e 40%, #8c6543);
+  --np-tier-gold: #e7c98b;
+  --np-tier-screening: #6ee7b7;
+  --np-tier-complementary: #93c5fd;
+  --np-tier-authoral: #c8c4ff;
+  --np-tier-observational: #b6b1e0;
+  --np-tier-experimental: #fbbf77;
+  --np-tier-blocked: #f3a6a6;
+  --np-fit-good: #6ee7b7;
+  --np-fit-medium: #fbbf77;
+  --np-fit-low: #f3a6a6;
+}
+
+/* ====================================================================
+   1. CARDS GSB — Gold / Silver / Bronze (medalhas)
+   ==================================================================== */
+.np-gsb-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin: 18px 0;
+}
+
+.np-gsb-card {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(180deg,
+    rgba(124, 118, 210, 0.10) 0%,
+    rgba(124, 118, 210, 0.05) 100%);
+  border: 1px solid rgba(169, 164, 255, 0.22);
+  border-radius: 22px;
+  padding: 22px 22px 22px 80px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 16px 40px -18px rgba(4, 3, 18, 0.7);
+  transition: transform .26s cubic-bezier(.22, .8, .2, 1),
+              box-shadow .26s cubic-bezier(.22, .8, .2, 1),
+              border-color .26s ease;
+  overflow: hidden;
+}
+
+.np-gsb-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 26px 60px -20px rgba(91, 84, 232, 0.5);
+}
+
+/* MEDALHA — círculo lateral grande */
+.np-gsb-medal {
+  position: absolute;
+  left: 18px;
+  top: 22px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-size: 22px;
+  z-index: 2;
+  color: #1f1500;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.32),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.18),
+    0 10px 26px -8px rgba(0, 0, 0, 0.5);
+}
+
+.np-gsb-medal::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  background: radial-gradient(circle, currentColor 0%, transparent 70%);
+  opacity: 0.15;
+  z-index: -1;
+}
+
+.np-gsb-card.gold .np-gsb-medal { background: var(--np-medal-gold); color: #e7c98b; }
+.np-gsb-card.silver .np-gsb-medal { background: var(--np-medal-silver); color: #c8c4ff; }
+.np-gsb-card.bronze .np-gsb-medal { background: var(--np-medal-bronze); color: #b58a5e; }
+
+.np-gsb-card.gold {
+  border-color: rgba(231, 201, 139, 0.42);
+  background: linear-gradient(180deg,
+    rgba(231, 201, 139, 0.10) 0%,
+    rgba(124, 118, 210, 0.05) 100%);
+}
+.np-gsb-card.gold:hover {
+  border-color: rgba(231, 201, 139, 0.62);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 26px 60px -20px rgba(231, 201, 139, 0.45);
+}
+
+/* RANK LABEL acima do título */
+.np-gsb-rank {
+  font: 800 10.5px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #d8c69a;
+  margin-bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.np-gsb-rank::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(216, 198, 154, 0.22), transparent);
+  min-width: 30px;
+}
+.np-gsb-card.silver .np-gsb-rank { color: #c8c4ff; }
+.np-gsb-card.bronze .np-gsb-rank { color: #c79a72; }
+
+/* TÍTULO */
+.np-gsb-title {
+  font: 700 19px/1.2 "Fraunces", Georgia, serif;
+  color: #fbf6ea;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+
+.np-gsb-subtitle {
+  font: 500 13px/1.5 "Inter", system-ui;
+  color: #b6b2e6;
+  margin: 0 0 12px;
+}
+
+/* META INFO — idade, audiência, tempo, itens */
+.np-gsb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font: 600 11.5px/1 system-ui;
+  color: #c8c4ff;
+  margin-bottom: 14px;
+}
+.np-gsb-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.np-gsb-meta span::before {
+  font-size: 13px;
+  margin-right: 2px;
+}
+.np-gsb-meta .meta-age::before { content: "📆"; }
+.np-gsb-meta .meta-aud::before { content: "👥"; }
+.np-gsb-meta .meta-time::before { content: "⏱"; }
+.np-gsb-meta .meta-items::before { content: "📋"; }
+.np-gsb-meta .meta-domain::before { content: "🎯"; }
+
+/* TIER BADGES */
+.np-gsb-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.np-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 10px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.np-tag.tier-gold {
+  background: linear-gradient(135deg, #e7c98b, #caa56a);
+  color: #1f1500;
+  box-shadow: 0 4px 10px -4px rgba(231, 201, 139, 0.6);
+}
+.np-tag.tier-gold::before { content: "⭐ "; }
+
+.np-tag.tier-screening {
+  background: rgba(110, 231, 183, 0.14);
+  color: var(--np-tier-screening);
+  border: 1px solid rgba(110, 231, 183, 0.32);
+}
+.np-tag.tier-screening::before { content: "✅ "; font-weight: 900; }
+
+.np-tag.tier-complementary {
+  background: rgba(147, 197, 253, 0.14);
+  color: var(--np-tier-complementary);
+  border: 1px solid rgba(147, 197, 253, 0.32);
+}
+.np-tag.tier-complementary::before { content: "🔵 "; }
+
+.np-tag.tier-authoral {
+  background: rgba(200, 196, 255, 0.18);
+  color: var(--np-tier-authoral);
+  border: 1px solid rgba(200, 196, 255, 0.32);
+}
+.np-tag.tier-authoral::before { content: "✍️ "; }
+
+.np-tag.tier-observational {
+  background: rgba(182, 177, 224, 0.12);
+  color: var(--np-tier-observational);
+  border: 1px solid rgba(182, 177, 224, 0.24);
+}
+.np-tag.tier-observational::before { content: "📝 "; }
+
+.np-tag.tier-experimental {
+  background: rgba(251, 191, 119, 0.14);
+  color: var(--np-tier-experimental);
+  border: 1px solid rgba(251, 191, 119, 0.32);
+}
+.np-tag.tier-experimental::before { content: "🧪 "; }
+
+.np-tag.license-required {
+  background: rgba(243, 166, 166, 0.14);
+  color: var(--np-tier-blocked);
+  border: 1px solid rgba(243, 166, 166, 0.32);
+}
+.np-tag.license-required::before { content: "🔒 "; }
+
+.np-tag.first-line {
+  background: linear-gradient(135deg, #f3ddb0, #e7c98b);
+  color: #1f1500;
+  font-weight: 800;
+}
+.np-tag.first-line::before { content: "🥇 "; }
+
+.np-tag.fast-screen { background: rgba(255,255,255,0.10); color: #fff; }
+.np-tag.fast-screen::before { content: "⏱ "; }
+
+.np-tag.school-use { background: rgba(110, 231, 183, 0.10); color: #9be3c0; }
+.np-tag.school-use::before { content: "🏫 "; }
+
+.np-tag.confirmatory { background: rgba(196, 181, 253, 0.12); color: #c4b5fd; }
+.np-tag.confirmatory::before { content: "🧠 "; }
+
+.np-tag.pei { background: rgba(94, 234, 212, 0.10); color: #5eead4; }
+.np-tag.pei::before { content: "📊 "; }
+
+/* SCORE GRANDE */
+.np-gsb-score {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  text-align: right;
+}
+.np-gsb-score-num {
+  font: 800 32px/1 "DM Sans", "Inter", system-ui;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: #fbf6ea;
+  display: block;
+}
+.np-gsb-card.gold .np-gsb-score-num { color: #f3ddb0; }
+.np-gsb-card.silver .np-gsb-score-num { color: #e8e5ff; }
+.np-gsb-card.bronze .np-gsb-score-num { color: #d9b48e; }
+.np-gsb-score-label {
+  display: block;
+  font: 700 9.5px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #928ec6;
+  margin-top: 4px;
+}
+
+/* AÇÕES */
+.np-gsb-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.np-gsb-actions button,
+.np-gsb-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 0;
+  font: 700 13px/1 "Inter", system-ui;
+  cursor: pointer;
+  text-decoration: none;
+  min-height: 40px;
+  transition: filter .2s ease, transform .2s ease;
+}
+.np-gsb-actions .btn-apply {
+  background: linear-gradient(180deg, #7c79ff, #5b54e8);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14),
+              0 10px 22px -8px rgba(91, 84, 232, 0.6);
+}
+.np-gsb-actions .btn-apply:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.np-gsb-card.gold .np-gsb-actions .btn-apply {
+  background: linear-gradient(180deg, #e7c98b, #caa56a);
+  color: #1f1500;
+}
+.np-gsb-actions .btn-secondary {
+  background: rgba(124, 118, 210, 0.14);
+  color: #d4cffa;
+  border: 1px solid rgba(160, 154, 255, 0.22);
+}
+.np-gsb-actions .btn-secondary:hover { background: rgba(124, 118, 210, 0.22); }
+
+/* ====================================================================
+   2. SCORE BREAKDOWN — 7 fatores em barras
+   ==================================================================== */
+.np-breakdown {
+  margin-top: 14px;
+  padding: 14px;
+  background: rgba(10, 9, 24, 0.40);
+  border: 1px solid rgba(160, 154, 255, 0.14);
+  border-radius: 14px;
+}
+
+.np-breakdown summary {
+  font: 700 11px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #c8c4ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  user-select: none;
+}
+.np-breakdown summary::-webkit-details-marker { display: none; }
+.np-breakdown summary::before {
+  content: "▸";
+  color: #9b95d4;
+  transition: transform .2s ease;
+  display: inline-block;
+}
+.np-breakdown[open] summary::before { transform: rotate(90deg); }
+.np-breakdown summary .clinical-fit {
+  margin-left: auto;
+  font: 800 14px/1 system-ui;
+  font-variant-numeric: tabular-nums;
+  color: #f3ddb0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.np-breakdown-grid {
+  display: grid;
+  grid-template-columns: 86px 1fr 36px;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 12px;
+  font: 600 11.5px/1.3 "Inter", system-ui;
+  color: #d4cffa;
+}
+.np-breakdown-grid .lbl {
+  font: 700 10px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b6b2e6;
+}
+.np-breakdown-grid .bar {
+  position: relative;
+  height: 7px;
+  background: rgba(160, 154, 255, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.np-breakdown-grid .bar::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--np-bar-fill, 0%);
+  background: linear-gradient(90deg, #7c79ff, #9b7bff);
+  border-radius: inherit;
+  transition: width .5s cubic-bezier(.22, .8, .2, 1);
+}
+.np-breakdown-grid .bar.full::after {
+  background: linear-gradient(90deg, #e7c98b, #f3ddb0);
+}
+.np-breakdown-grid .num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: #f2f0ff;
+  text-align: right;
+}
+
+.np-breakdown-multipliers {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(160, 154, 255, 0.18);
+  font: 500 11.5px/1.55 system-ui;
+  color: #b6b2e6;
+}
+.np-breakdown-multipliers strong { color: #e0deff; font-weight: 700; }
+.np-breakdown-multipliers .mult-line {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0;
+}
+.np-breakdown-multipliers .mult-line .mult-val {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #c8c4ff;
+}
+
+/* ====================================================================
+   3. RED FLAG BANNER (urgência)
+   ==================================================================== */
+.np-redflag-banner {
+  position: relative;
+  margin: 18px 0;
+  padding: 16px 18px 16px 56px;
+  background: linear-gradient(135deg,
+    rgba(231, 113, 113, 0.16),
+    rgba(231, 113, 113, 0.04) 80%);
+  border: 1px solid rgba(231, 113, 113, 0.42);
+  border-left: 4px solid #e16363;
+  border-radius: 16px;
+  color: #f5dcdc;
+  box-shadow: 0 14px 32px -16px rgba(231, 113, 113, 0.32);
+}
+.np-redflag-banner::before {
+  content: "⚠";
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: #e16363;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: 16px;
+  animation: npRedPulse 2.5s ease-in-out infinite;
+}
+@keyframes npRedPulse {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(231, 113, 113, 0.18); }
+  50%      { box-shadow: 0 0 0 12px rgba(231, 113, 113, 0); }
+}
+.np-redflag-banner h3 {
+  margin: 0 0 6px;
+  font: 700 15px/1.2 "Fraunces", Georgia, serif;
+  color: #f8e8e8;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.np-redflag-banner .urgent-badge {
+  font: 800 9.5px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 4px 10px;
+  background: #e16363;
+  color: #fff;
+  border-radius: 999px;
+  animation: npRedPulse 2.5s ease-in-out infinite;
+}
+.np-redflag-banner ul {
+  margin: 8px 0 6px;
+  padding-left: 18px;
+  font: 500 13px/1.6 "Inter", system-ui;
+}
+.np-redflag-banner li strong { color: #fff; font-weight: 700; }
+.np-redflag-banner .actions-suggested {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(231, 113, 113, 0.32);
+  font: 500 12px/1.6 "Inter", system-ui;
+  color: #e5c4c4;
+}
+.np-redflag-banner .actions-suggested strong { color: #f8e8e8; font-weight: 700; }
+
+/* Variantes por severidade */
+.np-redflag-banner.medium {
+  background: linear-gradient(135deg, rgba(251, 191, 119, 0.14), rgba(251, 191, 119, 0.03));
+  border-color: rgba(251, 191, 119, 0.42);
+  border-left-color: #fbbf77;
+  color: #f5e8d5;
+}
+.np-redflag-banner.medium::before { background: #fbbf77; animation: none; box-shadow: none; }
+.np-redflag-banner.medium .urgent-badge { background: #fbbf77; color: #1f1500; animation: none; }
+
+/* ====================================================================
+   4. EMPTY STATE — educativo
+   ==================================================================== */
+.np-empty-guide {
+  margin: 22px 0;
+  padding: 28px 22px;
+  background:
+    radial-gradient(600px 400px at 50% 0%, rgba(124, 118, 210, 0.12), transparent 60%),
+    rgba(10, 9, 24, 0.35);
+  border: 1px dashed rgba(160, 154, 255, 0.32);
+  border-radius: 22px;
+  text-align: center;
+}
+.np-empty-guide .icon {
+  display: inline-block;
+  font-size: 44px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 6px 18px rgba(124, 118, 210, 0.4));
+  animation: npFloat 4s ease-in-out infinite;
+}
+@keyframes npFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-6px) rotate(-2deg); }
+}
+.np-empty-guide h3 {
+  font: 700 20px/1.2 "Fraunces", Georgia, serif;
+  color: #f3ddb0;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+.np-empty-guide p {
+  font: 500 14px/1.6 "Inter", system-ui;
+  color: #b6b2e6;
+  max-width: 480px;
+  margin: 0 auto 18px;
+}
+
+.np-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  max-width: 420px;
+  margin: 18px auto 0;
+  text-align: left;
+}
+.np-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(124, 118, 210, 0.10);
+  border: 1px solid rgba(160, 154, 255, 0.18);
+  border-radius: 12px;
+}
+.np-step .num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #7c79ff, #5b54e8);
+  color: #fff;
+  border-radius: 50%;
+  font: 800 13px/1 system-ui;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.np-step .txt {
+  font: 500 13px/1.5 "Inter", system-ui;
+  color: #d4cffa;
+}
+.np-step .txt strong { color: #fbf6ea; font-weight: 700; }
+
+.np-tier-legend {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(160, 154, 255, 0.18);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+/* ====================================================================
+   5. INADEQUATE / WHY NOT (transparência)
+   ==================================================================== */
+.np-why-not {
+  margin: 18px 0;
+  padding: 14px 16px;
+  background: rgba(124, 118, 210, 0.06);
+  border: 1px solid rgba(160, 154, 255, 0.16);
+  border-left: 3px solid #b6b1e0;
+  border-radius: 12px;
+}
+.np-why-not summary {
+  font: 700 11px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #c8c4ff;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.np-why-not summary::-webkit-details-marker { display: none; }
+.np-why-not summary::before {
+  content: "ⓘ";
+  color: #9b95d4;
+  font-size: 14px;
+}
+.np-why-not ul {
+  margin: 10px 0 0;
+  padding-left: 16px;
+  font: 500 12.5px/1.6 "Inter", system-ui;
+  color: #b6b2e6;
+}
+.np-why-not li strong { color: #e0deff; font-weight: 700; }
+.np-why-not .reason {
+  display: inline-block;
+  font: 700 10px/1 system-ui;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(231, 113, 113, 0.14);
+  color: #f3a6a6;
+  margin-left: 6px;
+}
+.np-why-not .reason.age { background: rgba(251, 191, 119, 0.14); color: #fbbf77; }
+.np-why-not .reason.dx { background: rgba(231, 113, 113, 0.14); color: #f3a6a6; }
+.np-why-not .reason.license { background: rgba(243, 166, 166, 0.14); color: #f3a6a6; }
+.np-why-not .reason.experimental { background: rgba(251, 191, 119, 0.14); color: #fbbf77; }
+
+/* ====================================================================
+   6. FILTRO DE FINALIDADE (triagem / laudo / PEI)
+   ==================================================================== */
+.np-purpose-filter {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(10, 9, 24, 0.45);
+  border: 1px solid rgba(160, 154, 255, 0.18);
+  border-radius: 12px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.np-purpose-filter button {
+  flex: 1;
+  min-width: 70px;
+  padding: 8px 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: #b6b2e6;
+  font: 600 11px/1.2 system-ui;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all .2s ease;
+}
+.np-purpose-filter button:hover { background: rgba(124, 118, 210, 0.10); color: #e0deff; }
+.np-purpose-filter button.active {
+  background: linear-gradient(135deg, #7c79ff, #5b54e8);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+/* ====================================================================
+   7. RESPONSIVE — mobile-first
+   ==================================================================== */
+@media (max-width: 640px) {
+  .np-gsb-card {
+    padding: 18px 18px 18px 68px;
+    border-radius: 18px;
+  }
+  .np-gsb-medal {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+    left: 14px;
+    top: 18px;
+  }
+  .np-gsb-score {
+    position: static;
+    margin: 10px 0 0;
+    text-align: left;
+  }
+  .np-gsb-score-num { font-size: 24px; }
+  .np-gsb-title { font-size: 17px; }
+  .np-breakdown-grid {
+    grid-template-columns: 70px 1fr 30px;
+    font-size: 10.5px;
+  }
+  .np-empty-guide .icon { font-size: 36px; }
+  .np-empty-guide h3 { font-size: 17px; }
+}
+
+/* ====================================================================
+   8. ACESSIBILIDADE — foco AA forte
+   ==================================================================== */
+.np-gsb-card:focus-within,
+.np-redflag-banner:focus-within,
+.np-breakdown:focus-within {
+  outline: 2.5px solid #c8c4ff;
+  outline-offset: 4px;
+}
+.np-gsb-actions button:focus-visible,
+.np-gsb-actions a:focus-visible,
+.np-purpose-filter button:focus-visible {
+  outline: 2.5px solid #c8c4ff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(124, 121, 255, 0.18);
+}
+
+/* ====================================================================
+   9. REDUCED MOTION
+   ==================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .np-gsb-card, .np-redflag-banner::before, .np-empty-guide .icon,
+  .np-breakdown-grid .bar::after, .np-redflag-banner .urgent-badge {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ====================================================================
+   10. PRINT — laudo médico fiel
+   ==================================================================== */
+@media print {
+  .np-gsb-grid { display: block; }
+  .np-gsb-card {
+    background: #fff !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+    padding: 16px 16px 16px 64px !important;
+    margin: 12px 0;
+    page-break-inside: avoid;
+    color: #000;
+  }
+  .np-gsb-medal {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #444;
+    box-shadow: none !important;
+  }
+  .np-gsb-card.gold .np-gsb-medal { border-color: #b58a3e; color: #b58a3e !important; }
+  .np-gsb-card.silver .np-gsb-medal { border-color: #777; color: #777 !important; }
+  .np-gsb-card.bronze .np-gsb-medal { border-color: #8c6543; color: #8c6543 !important; }
+
+  .np-gsb-title, .np-gsb-subtitle, .np-gsb-meta, .np-gsb-score-num,
+  .np-gsb-score-label, .np-breakdown { color: #000 !important; }
+  .np-tag {
+    background: #f3f3f3 !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+  }
+  .np-redflag-banner {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #b94545 !important;
+    page-break-inside: avoid;
+  }
+  .np-redflag-banner::before {
+    background: #b94545 !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  .np-gsb-actions, .np-purpose-filter, .np-empty-guide {
+    display: none !important;
+  }
+  .np-breakdown {
+    background: #f7f7f7 !important;
+    border: 1px solid #999 !important;
+  }
+  .np-breakdown[open] summary::before { content: "▾"; }
+  .np-breakdown-grid .bar::after {
+    background: #888 !important;
+  }
+  /* Header de laudo */
+  .np-gsb-grid::before {
+    content: "Recomendações de Instrumentos — Dr. Jadson Fraga Araújo Júnior — CRM-PE 25227 — RQE 17756";
+    display: block;
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    font-size: 13pt;
+    text-align: center;
+    color: #000 !important;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8mm;
+    margin-bottom: 8mm;
+  }
+}
+
+/* Fim · filtro-engine-v4.css */

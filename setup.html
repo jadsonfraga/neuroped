@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Setup NeuroPed — 3 cliques</title>
+<title>Setup NeuroPed â€” 3 cliques</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/setup.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Setup NeuroPed — 3 cliques">
+<meta name="twitter:title" content="Setup NeuroPed â€” 3 cliques">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/setup.html">
-<meta name="description" content="Configuração do NeuroPed em poucos cliques: prepare a plataforma de apoio à neuropediatria para uso no consultório.">
+<meta name="description" content="ConfiguraÃ§Ã£o do NeuroPed em poucos cliques: prepare a plataforma de apoio Ã  neuropediatria para uso no consultÃ³rio.">
 <meta name="theme-color" content="#0e0e22">
 <link rel="stylesheet" href="styles.css" />
 <style>
@@ -30,26 +30,29 @@
   .actions { display:flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body data-ns-shell class="ns-bg-fallback">
 
-<h1>NeuroPed EDJ — Setup em 3 cliques</h1>
-<p style="color:var(--text-mute);">Dr. Jadson, esta página automatiza a configuração. Faça os 3 passos abaixo na ordem.</p>
+<h1>NeuroPed EDJ â€” Setup em 3 cliques</h1>
+<p style="color:var(--text-mute);">Dr. Jadson, esta pÃ¡gina automatiza a configuraÃ§Ã£o. FaÃ§a os 3 passos abaixo na ordem.</p>
 
 <!-- PASSO 1 -->
 <div class="step" id="step1">
   <h2><span class="step-num">1</span> Aplicar schema no Supabase</h2>
-  <p>Clica no botão abaixo. Vai abrir o SQL Editor do seu Supabase já com o schema pronto.</p>
+  <p>Clica no botÃ£o abaixo. Vai abrir o SQL Editor do seu Supabase jÃ¡ com o schema pronto.</p>
   <ol style="font-size:14px; color:var(--text-soft);">
-    <li>Botão "Open SQL Editor" abre nova aba</li>
-    <li>O SQL completo já estará copiado no clipboard</li>
+    <li>BotÃ£o "Open SQL Editor" abre nova aba</li>
+    <li>O SQL completo jÃ¡ estarÃ¡ copiado no clipboard</li>
     <li>Clica no editor, <kbd>Ctrl+V</kbd> para colar</li>
     <li>Clica <strong>Run</strong> (canto sup. dir.)</li>
-    <li>Volta aqui e marca como feito ✓</li>
+    <li>Volta aqui e marca como feito âœ“</li>
   </ol>
   <div class="actions">
-    <button class="btn btn-primary" id="btnOpenSql">📋 Copiar SQL + Abrir editor</button>
-    <button class="btn btn-ghost" id="btnDone1">✓ Já apliquei</button>
+    <button class="btn btn-primary" id="btnOpenSql">ðŸ“‹ Copiar SQL + Abrir editor</button>
+    <button class="btn btn-ghost" id="btnDone1">âœ“ JÃ¡ apliquei</button>
   </div>
   <pre id="sqlPreview" style="max-height:200px;overflow:auto;margin-top:14px;display:none;"></pre>
 </div>
@@ -57,12 +60,12 @@
 <!-- PASSO 2 -->
 <div class="step" id="step2">
   <h2><span class="step-num">2</span> Colar anon key</h2>
-  <p>No Supabase: <strong>Settings → API → anon public</strong>. Clica em Copy e cola aqui:</p>
+  <p>No Supabase: <strong>Settings â†’ API â†’ anon public</strong>. Clica em Copy e cola aqui:</p>
   <input type="text" id="anonKey" placeholder="eyJhbGc..." autocomplete="off" />
-  <div class="ditto">Esta chave é pública. Pode colar sem medo.</div>
+  <div class="ditto">Esta chave Ã© pÃºblica. Pode colar sem medo.</div>
   <div class="actions">
-    <button class="btn btn-primary" id="btnSaveKey">💾 Salvar anon key</button>
-    <button class="btn btn-ghost" id="btnOpenApi">🔗 Abrir página de API keys</button>
+    <button class="btn btn-primary" id="btnSaveKey">ðŸ’¾ Salvar anon key</button>
+    <button class="btn btn-ghost" id="btnOpenApi">ðŸ”— Abrir pÃ¡gina de API keys</button>
   </div>
   <div id="step2Status" style="margin-top:10px;"></div>
 </div>
@@ -70,35 +73,35 @@
 <!-- PASSO 3 -->
 <div class="step" id="step3">
   <h2><span class="step-num">3</span> Configurar Cloudflare</h2>
-  <p>Vai no Cloudflare Pages → projeto <strong>neuroped</strong> → Settings → Variables and Secrets. Adiciona:</p>
+  <p>Vai no Cloudflare Pages â†’ projeto <strong>neuroped</strong> â†’ Settings â†’ Variables and Secrets. Adiciona:</p>
   <pre id="envVarsBlock">SUPABASE_URL = https://wizgmjcklfikgkwykewe.supabase.co
 SUPABASE_ANON = (cola a anon key do passo 2)
 SUPABASE_SERVICE_ROLE = (vai no Supabase Settings > API > service_role > Reveal) [marcar como Secret]
 SIGNING_SECRET = NP_v6_a8f3b2e1c9d4_7k3m5n8p2q4r6s9t1u_3w5x7y9z_2026 [marcar como Secret]
 PUBLIC_BASE_URL = https://neuroped.pages.dev
-CERT_PFX_BASE64 = (base64 do .p12 — converta com PowerShell, ver abaixo) [marcar como Secret]
+CERT_PFX_BASE64 = (base64 do .p12 â€” converta com PowerShell, ver abaixo) [marcar como Secret]
 CERT_PASS = (senha do certificado) [marcar como Secret]
 CERT_SUBJECT_CN = Jadson Fraga Araujo Junior</pre>
   <div class="actions">
-    <button class="btn btn-primary" id="btnCopyEnv">📋 Copiar bloco</button>
-    <button class="btn btn-ghost" id="btnOpenCf">🔗 Abrir Cloudflare</button>
+    <button class="btn btn-primary" id="btnCopyEnv">ðŸ“‹ Copiar bloco</button>
+    <button class="btn btn-ghost" id="btnOpenCf">ðŸ”— Abrir Cloudflare</button>
   </div>
   <p style="margin-top:18px;font-size:14px;"><strong>Como converter o P12 para base64 no Windows:</strong></p>
   <pre>$bytes = [IO.File]::ReadAllBytes("C:\caminho\certificado.p12")
 [Convert]::ToBase64String($bytes) | Set-Clipboard
-# pronto, base64 está no Ctrl+V</pre>
+# pronto, base64 estÃ¡ no Ctrl+V</pre>
   <div class="actions">
-    <button class="btn btn-ghost" id="btnDone3">✓ Configurei e fiz Retry deployment</button>
+    <button class="btn btn-ghost" id="btnDone3">âœ“ Configurei e fiz Retry deployment</button>
   </div>
 </div>
 
 <!-- TESTE -->
 <div class="step" id="step4">
-  <h2><span class="step-num">✓</span> Validar funcionamento</h2>
+  <h2><span class="step-num">âœ“</span> Validar funcionamento</h2>
   <div class="actions">
-    <button class="btn btn-primary" id="btnTestHealth">🩺 Testar /api/health</button>
-    <button class="btn btn-primary" id="btnTestConfig">⚙ Testar /api/config</button>
-    <button class="btn btn-primary" id="btnTestAuth">🔐 Testar magic link</button>
+    <button class="btn btn-primary" id="btnTestHealth">ðŸ©º Testar /api/health</button>
+    <button class="btn btn-primary" id="btnTestConfig">âš™ Testar /api/config</button>
+    <button class="btn btn-primary" id="btnTestAuth">ðŸ” Testar magic link</button>
   </div>
   <div id="testResults" style="margin-top:14px;"></div>
 </div>
@@ -118,24 +121,24 @@ render();
 document.getElementById('btnOpenSql').onclick = async () => {
   const res = await fetch(SQL_URL);
   const sql = await res.text();
-  try { await navigator.clipboard.writeText(sql); alert('✓ SQL copiado para clipboard! Abrindo Supabase…'); }
-  catch { alert('Não consegui acessar clipboard. Copia manualmente do preview abaixo.'); document.getElementById('sqlPreview').style.display='block'; document.getElementById('sqlPreview').textContent = sql; }
+  try { await navigator.clipboard.writeText(sql); alert('âœ“ SQL copiado para clipboard! Abrindo Supabaseâ€¦'); }
+  catch { alert('NÃ£o consegui acessar clipboard. Copia manualmente do preview abaixo.'); document.getElementById('sqlPreview').style.display='block'; document.getElementById('sqlPreview').textContent = sql; }
   window.open('https://supabase.com/dashboard/project/wizgmjcklfikgkwykewe/sql/new', '_blank');
 };
 document.getElementById('btnDone1').onclick = () => { state.step1 = true; save(); };
 
 document.getElementById('btnSaveKey').onclick = () => {
   const v = document.getElementById('anonKey').value.trim();
-  if (!v.startsWith('eyJ')) { document.getElementById('step2Status').innerHTML = '<span class="err">Anon key inválida — deve começar com "eyJ"</span>'; return; }
+  if (!v.startsWith('eyJ')) { document.getElementById('step2Status').innerHTML = '<span class="err">Anon key invÃ¡lida â€” deve comeÃ§ar com "eyJ"</span>'; return; }
   state.step2 = true; state.anonKey = v; save();
-  document.getElementById('step2Status').innerHTML = '<span class="ok">✓ Anon key salva localmente. Use também no Cloudflare (passo 3).</span>';
+  document.getElementById('step2Status').innerHTML = '<span class="ok">âœ“ Anon key salva localmente. Use tambÃ©m no Cloudflare (passo 3).</span>';
 };
 document.getElementById('btnOpenApi').onclick = () => window.open('https://supabase.com/dashboard/project/wizgmjcklfikgkwykewe/settings/api-keys', '_blank');
 
 document.getElementById('btnCopyEnv').onclick = async () => {
   const text = document.getElementById('envVarsBlock').textContent;
   await navigator.clipboard.writeText(text);
-  alert('✓ Bloco copiado!');
+  alert('âœ“ Bloco copiado!');
 };
 document.getElementById('btnOpenCf').onclick = () => window.open('https://dash.cloudflare.com/?to=/:account/pages/view/neuroped/settings/environment-variables', '_blank');
 document.getElementById('btnDone3').onclick = () => { state.step3 = true; save(); };

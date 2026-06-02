@@ -1,0 +1,240 @@
+{
+  "$schema": "https://neuroped.io/schemas/taxonomy.v1.json",
+  "version": "1.0.0",
+  "last_reviewed": "2026-06-02",
+  "author": "Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756",
+  "description": "Taxonomia clínica canônica do NeuroPed EDJ. Vocabulário FECHADO de 15 domínios. Resolve a fragmentação de 151 domínios atuais.",
+
+  "canonical_domains": {
+    "TEA": {
+      "label": "Transtorno do Espectro Autista",
+      "subdomains": ["precoce", "suporte", "comunicacao_social", "rigidez", "sensorial", "verbal", "nao_verbal"],
+      "synonyms_in_catalog": ["TEA", "TEA/Comportamento", "TEA Precision-95", "TEA nível de suporte", "TEA funcional", "Social/TEA", "TEA e comunicação social", "TEA precoce e comunicação social", "TEA precoce", "autismo", "ASD"],
+      "primary_complaint_tags": ["tea"],
+      "related_complaint_tags": ["fala", "social", "sensorial", "comportamento"],
+      "age_relevance": [12, 215],
+      "gold_standard_screeners": ["M-CHAT-R/F"],
+      "first_line_authoral_ids": ["fam-12-36-tea-primeiros-sinais", "fam-12-36-brincar-social", "fam-3-5-flexibilidade-rotina"]
+    },
+    "TDAH": {
+      "label": "Transtorno de Déficit de Atenção e Hiperatividade",
+      "subdomains": ["desatento", "hiperativo", "combinado", "executivo", "tod_associado"],
+      "synonyms_in_catalog": ["TDAH", "TDAH/TOD escolar", "TDAH/TOD adolescente", "TDAH/TOD", "TDAH/TOD Adolescente", "TDAH e atenção", "TDAH e função executiva"],
+      "primary_complaint_tags": ["tdah"],
+      "related_complaint_tags": ["escola", "comportamento", "autonomia"],
+      "age_relevance": [60, 215],
+      "gold_standard_screeners": ["SNAP-IV", "Conners-3"],
+      "first_line_authoral_ids": ["fam-6-11-atencao-casa", "fam-6-11-organizacao-memoria"]
+    },
+    "Linguagem": {
+      "label": "Linguagem e Comunicação",
+      "subdomains": ["expressiva", "receptiva", "pragmatica", "TDL", "articulacao"],
+      "synonyms_in_catalog": ["Linguagem", "TDL e aprendizagem", "Linguagem e Aprendizagem", "Linguagem e comunicação funcional"],
+      "primary_complaint_tags": ["fala"],
+      "related_complaint_tags": ["tea", "escola", "social"],
+      "age_relevance": [0, 143],
+      "gold_standard_screeners": [],
+      "first_line_authoral_ids": ["fam-12-36-fala-inicial", "fam-3-5-comunicacao-funcional"]
+    },
+    "Aprendizagem": {
+      "label": "Transtornos Específicos de Aprendizagem",
+      "subdomains": ["leitura", "escrita", "matematica", "escolar_geral"],
+      "synonyms_in_catalog": ["TDL e aprendizagem", "Linguagem e Aprendizagem"],
+      "primary_complaint_tags": ["escola"],
+      "related_complaint_tags": ["tdah", "fala", "autonomia"],
+      "age_relevance": [60, 215],
+      "gold_standard_screeners": [],
+      "first_line_authoral_ids": []
+    },
+    "Comportamento": {
+      "label": "Comportamento e Regulação",
+      "subdomains": ["oposicao", "agressividade", "regulacao", "conduta"],
+      "synonyms_in_catalog": ["Comportamento", "TEA/Comportamento", "TDAH/TOD", "Oposição e Irritabilidade"],
+      "primary_complaint_tags": ["comportamento", "agressividade"],
+      "related_complaint_tags": ["tdah", "ansiedade", "tea"],
+      "age_relevance": [18, 215],
+      "gold_standard_screeners": [],
+      "first_line_authoral_ids": ["fam-3-5-crises-transicoes", "fam-6-11-oposicao-irritabilidade"]
+    },
+    "Ansiedade": {
+      "label": "Transtornos de Ansiedade",
+      "subdomains": ["separacao", "fobia", "social", "generalizada", "panico"],
+      "synonyms_in_catalog": ["Ansiedade", "Ansiedade e Medos"],
+      "primary_complaint_tags": ["ansiedade"],
+      "related_complaint_tags": ["escola", "sono", "humor"],
+      "age_relevance": [36, 215],
+      "gold_standard_screeners": ["SCARED"],
+      "first_line_authoral_ids": ["fam-6-11-ansiedade-infantil"]
+    },
+    "Humor": {
+      "label": "Transtornos do Humor",
+      "subdomains": ["tristeza", "anedonia", "irritabilidade_cronica", "bipolar"],
+      "synonyms_in_catalog": ["Humor", "Depressão", "Disregulação afetiva"],
+      "primary_complaint_tags": ["humor"],
+      "related_complaint_tags": ["ansiedade", "risco", "comportamento"],
+      "age_relevance": [60, 215],
+      "gold_standard_screeners": ["PHQ-9 adolescente"],
+      "first_line_authoral_ids": []
+    },
+    "Sono": {
+      "label": "Sono e Vigília",
+      "subdomains": ["iniciacao", "manutencao", "ronco", "padrao", "parassonia"],
+      "synonyms_in_catalog": ["Sono", "Sono Infantil"],
+      "primary_complaint_tags": ["sono"],
+      "related_complaint_tags": ["tdah", "comportamento", "ansiedade"],
+      "age_relevance": [6, 215],
+      "gold_standard_screeners": ["BISQ"],
+      "first_line_authoral_ids": ["fam-12-36-sono-pequeno", "fam-6-11-sono-escolar"]
+    },
+    "Alimentacao": {
+      "label": "Alimentação",
+      "subdomains": ["seletividade", "recusa", "arfid", "sensorial_oral"],
+      "synonyms_in_catalog": ["Alimentação", "Seletividade alimentar"],
+      "primary_complaint_tags": ["alimentacao"],
+      "related_complaint_tags": ["sensorial", "tea"],
+      "age_relevance": [6, 143],
+      "gold_standard_screeners": [],
+      "first_line_authoral_ids": ["fam-12-36-alimentacao-sensorial"]
+    },
+    "Sensorial": {
+      "label": "Perfil Sensorial",
+      "subdomains": ["hipersensibilidade", "busca_sensorial", "regulacao_sensorial"],
+      "synonyms_in_catalog": ["Sensorial", "Perfil Sensorial Global", "Perfil Sensorial Oral e Alimentar"],
+      "primary_complaint_tags": ["sensorial"],
+      "related_complaint_tags": ["tea", "alimentacao", "comportamento"],
+      "age_relevance": [12, 143],
+      "gold_standard_screeners": ["Sensory Profile 2"],
+      "first_line_authoral_ids": ["fam-3-5-sensorial-diario"]
+    },
+    "Motor": {
+      "label": "Desenvolvimento Motor",
+      "subdomains": ["grosso", "fino", "coordenacao", "equilibrio"],
+      "synonyms_in_catalog": ["Motor", "Desenvolvimento motor", "Coordenação motora"],
+      "primary_complaint_tags": ["motor"],
+      "related_complaint_tags": ["autonomia"],
+      "age_relevance": [0, 71],
+      "gold_standard_screeners": ["GMFCS"],
+      "first_line_authoral_ids": []
+    },
+    "Autonomia": {
+      "label": "Autonomia e Atividades de Vida Diária",
+      "subdomains": ["avds_basicas", "desfralde", "higiene", "escolar", "sociais"],
+      "synonyms_in_catalog": ["Autonomia", "AVDs", "Autonomia e Atividades de Vida Diária"],
+      "primary_complaint_tags": ["autonomia"],
+      "related_complaint_tags": ["tea", "motor"],
+      "age_relevance": [24, 143],
+      "gold_standard_screeners": ["Vineland-3"],
+      "first_line_authoral_ids": ["fam-3-5-autonomia-inicial"]
+    },
+    "Neurologico": {
+      "label": "Neurológico",
+      "subdomains": ["epilepsia", "cefaleia", "regressao", "tics"],
+      "synonyms_in_catalog": ["Neurológico", "Epilepsia", "Cefaleia"],
+      "primary_complaint_tags": ["epilepsia", "cefaleia"],
+      "related_complaint_tags": [],
+      "age_relevance": [0, 215],
+      "gold_standard_screeners": [],
+      "first_line_authoral_ids": []
+    },
+    "Risco": {
+      "label": "Risco Clínico",
+      "subdomains": ["autolesao", "ideacao", "agressao_grave"],
+      "synonyms_in_catalog": ["Risco", "Autolesão", "Ideação suicida"],
+      "primary_complaint_tags": ["risco"],
+      "related_complaint_tags": ["humor", "ansiedade", "comportamento"],
+      "age_relevance": [60, 215],
+      "gold_standard_screeners": ["C-SSRS adolescente"],
+      "first_line_authoral_ids": [],
+      "urgent": true
+    },
+    "Acompanhamento": {
+      "label": "Acompanhamento Clínico",
+      "subdomains": ["medicacao", "evolucao", "pei", "terapia"],
+      "synonyms_in_catalog": ["Acompanhamento", "Impacto medicação", "Evolução clínica"],
+      "primary_complaint_tags": ["medicacao"],
+      "related_complaint_tags": ["tdah", "comportamento"],
+      "age_relevance": [36, 215],
+      "gold_standard_screeners": [],
+      "first_line_authoral_ids": []
+    }
+  },
+
+  "evidence_tiers": {
+    "gold": {
+      "label": "Gold Clínico",
+      "description": "Validado, normatizado PT-BR oficial, gold-standard internacional para a condição+idade",
+      "score_value": 20,
+      "badge": "⭐ Gold clínico",
+      "color": "#e7c98b"
+    },
+    "screening_validated": {
+      "label": "Triagem Validada",
+      "description": "Validado PT-BR, ampla aceitação clínica",
+      "score_value": 16,
+      "badge": "✅ Triagem validada",
+      "color": "#34d399"
+    },
+    "complementary": {
+      "label": "Complementar",
+      "description": "Apoio clínico, não substitui triagem primária",
+      "score_value": 12,
+      "badge": "🔵 Complementar",
+      "color": "#60a5fa"
+    },
+    "authoral_structured": {
+      "label": "Autoral Estruturado",
+      "description": "Instrumento autoral Dr. Jadson, com scoring e interpretação documentados",
+      "score_value": 10,
+      "badge": "✍️ Autoral",
+      "color": "#7c79ff"
+    },
+    "observational": {
+      "label": "Observacional",
+      "description": "Roteiro ou checklist, sem scoring quantitativo",
+      "score_value": 6,
+      "badge": "📝 Observacional",
+      "color": "#9ca3af"
+    },
+    "experimental": {
+      "label": "Experimental",
+      "description": "Em desenvolvimento, não recomendado para uso clínico real",
+      "score_value": 3,
+      "badge": "🧪 Experimental",
+      "color": "#fb923c"
+    }
+  },
+
+  "clinical_use_categories": [
+    "triagem",
+    "confirmacao_diagnostica",
+    "acompanhamento",
+    "pei",
+    "laudo",
+    "junta_medica",
+    "INSS",
+    "terapia",
+    "pesquisa"
+  ],
+
+  "respondents": {
+    "familia": { "label": "Família", "icon": "👪", "weight_when_default": 5 },
+    "escola": { "label": "Escola", "icon": "🏫", "weight_when_default": 5 },
+    "auto": { "label": "Criança / Adolescente", "icon": "🧒", "weight_when_default": 5 },
+    "direto": { "label": "Profissional / Teste direto", "icon": "🧩", "weight_when_default": 5 }
+  },
+
+  "exclusion_rules": [
+    { "rule": "app_status == 'bloqueado' AND query.mode == 'aplicar'", "action": "EXCLUDE" },
+    { "rule": "validation_status == 'descontinuado'", "action": "EXCLUDE" },
+    { "rule": "age outside band ± 24m AND query.mode == 'precisa'", "action": "EXCLUDE" }
+  ],
+
+  "penalty_rules": [
+    { "rule": "is_duplicate_in_family", "multiplier": 0.7 },
+    { "rule": "missing clinical_use", "multiplier": 0.5 },
+    { "rule": "experimental AND query.mode == 'aplicar'", "multiplier": 0.3 },
+    { "rule": "age outside band ± 6m AND query.mode == 'alta'", "multiplier": 0.6 },
+    { "rule": "validation_status == 'em revisão'", "multiplier": 0.6 },
+    { "rule": "not available pt-BR oficial", "multiplier": 0.8 }
+  ]
+}

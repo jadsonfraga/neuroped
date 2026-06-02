@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<title>Perfil da Criança — NeuroPed EDJ</title>
-<meta name="description" content="Cadastre e selecione a criança em acompanhamento no NeuroPed. Dados ficam apenas no seu dispositivo. A criança ativa conecta filtro, escalas e histórico.">
+<title>Perfil da CrianÃ§a â€” NeuroPed EDJ</title>
+<meta name="description" content="Cadastre e selecione a crianÃ§a em acompanhamento no NeuroPed. Dados ficam apenas no seu dispositivo. A crianÃ§a ativa conecta filtro, escalas e histÃ³rico.">
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/perfil-crianca.html">
@@ -74,7 +74,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 .ins-go{border-left-color:var(--teal);background:rgba(109,106,245,.12)}
 .ins-ok{border-left-color:#34d399;background:rgba(52,211,153,.1);color:#bdebd4}
 .ins-info{border-left-color:var(--soft)}
-/* resposta à medicação (stream separado do histórico de escalas) */
+/* resposta Ã  medicaÃ§Ã£o (stream separado do histÃ³rico de escalas) */
 .medbox{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
 .medbox>b{display:block;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:9px}
 .medrow{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px dashed var(--line)}
@@ -84,7 +84,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 .medrow .mmain b{color:var(--ink)}
 .medrow .mmain span{display:block;color:var(--muted);font-size:11.5px}
 .medrow .mfx{font-size:11px;color:#ffb3c6}
-/* síntese do caso (copiloto: cruza escalas × medicação × diário) */
+/* sÃ­ntese do caso (copiloto: cruza escalas Ã— medicaÃ§Ã£o Ã— diÃ¡rio) */
 .synline{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
 .synline:first-child{border-top:0}
 .synline .se{font-size:18px;flex:0 0 auto;line-height:1.3}
@@ -99,72 +99,75 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><link rel="stylesheet" href="./app-polish-mobile.css">
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body>
 <main class="wrap">
-  <a class="back" href="./central-atalhos.html">‹ Central de atalhos</a>
+  <a class="back" href="./central-atalhos.html">â€¹ Central de atalhos</a>
   <section class="hero">
-    <div class="kicker">NeuroPed EDJ · acompanhamento</div>
-    <h1>Perfil da Criança</h1>
-    <p class="lead">Cadastre a criança em acompanhamento. A <strong>criança ativa</strong> conecta o filtro de escalas, os instrumentos e o histórico — tudo passa a girar em torno dela.</p>
-    <div class="note">🔒 <span>Dados de menor são sensíveis. Aqui eles ficam <strong>apenas neste aparelho</strong> (armazenamento local) — nada é enviado a servidor. Apague quando quiser.</span></div>
+    <div class="kicker">NeuroPed EDJ Â· acompanhamento</div>
+    <h1>Perfil da CrianÃ§a</h1>
+    <p class="lead">Cadastre a crianÃ§a em acompanhamento. A <strong>crianÃ§a ativa</strong> conecta o filtro de escalas, os instrumentos e o histÃ³rico â€” tudo passa a girar em torno dela.</p>
+    <div class="note">ðŸ”’ <span>Dados de menor sÃ£o sensÃ­veis. Aqui eles ficam <strong>apenas neste aparelho</strong> (armazenamento local) â€” nada Ã© enviado a servidor. Apague quando quiser.</span></div>
   </section>
 
-  <div class="section-title"><h2>Crianças cadastradas</h2><span id="count" class="meta" style="color:var(--soft);font-size:12px"></span></div>
+  <div class="section-title"><h2>CrianÃ§as cadastradas</h2><span id="count" class="meta" style="color:var(--soft);font-size:12px"></span></div>
   <section id="grid" class="grid"></section>
 
   <section id="synthSec" hidden>
-    <div class="section-title"><h2>🧠 Síntese do caso — <span id="synName">criança ativa</span></h2><button class="btn ghost" id="btnSynPdf" style="padding:8px 12px;font-size:13px">📄 Síntese (PDF)</button></div>
+    <div class="section-title"><h2>ðŸ§  SÃ­ntese do caso â€” <span id="synName">crianÃ§a ativa</span></h2><button class="btn ghost" id="btnSynPdf" style="padding:8px 12px;font-size:13px">ðŸ“„ SÃ­ntese (PDF)</button></div>
     <div class="panel" style="padding:16px"><div id="synBody"></div></div>
   </section>
 
   <section id="docsSec" hidden>
-    <div class="section-title"><h2>📄 Documentos prontos</h2></div>
+    <div class="section-title"><h2>ðŸ“„ Documentos prontos</h2></div>
     <div class="panel" style="padding:16px">
-      <p class="lead" style="margin:0 0 12px;font-size:13px;color:var(--muted)">Modelos pré-preenchidos com a criança ativa e a identificação do Dr. Jadson Fraga. Gera PDF pela impressão do navegador.</p>
+      <p class="lead" style="margin:0 0 12px;font-size:13px;color:var(--muted)">Modelos prÃ©-preenchidos com a crianÃ§a ativa e a identificaÃ§Ã£o do Dr. Jadson Fraga. Gera PDF pela impressÃ£o do navegador.</p>
       <div class="connect" style="margin-top:0">
-        <a href="#" data-doc="escola"><span class="e">🏫</span><span>Declaração para a escola<small>acompanhamento em curso</small></span></a>
-        <a href="#" data-doc="terapeuta"><span class="e">🤝</span><span>Relatório para terapeuta<small>encaminhamento/atualização</small></span></a>
-        <a href="#" data-doc="atestado"><span class="e">📋</span><span>Atestado de acompanhamento<small>comparecimento/seguimento</small></span></a>
+        <a href="#" data-doc="escola"><span class="e">ðŸ«</span><span>DeclaraÃ§Ã£o para a escola<small>acompanhamento em curso</small></span></a>
+        <a href="#" data-doc="terapeuta"><span class="e">ðŸ¤</span><span>RelatÃ³rio para terapeuta<small>encaminhamento/atualizaÃ§Ã£o</small></span></a>
+        <a href="#" data-doc="atestado"><span class="e">ðŸ“‹</span><span>Atestado de acompanhamento<small>comparecimento/seguimento</small></span></a>
       </div>
     </div>
   </section>
 
   <section id="timelineSec" hidden>
-    <div class="section-title"><h2>📈 Linha do tempo — <span id="tlName">criança ativa</span></h2><span id="tlCount" class="meta" style="color:var(--soft);font-size:12px"></span></div>
+    <div class="section-title"><h2>ðŸ“ˆ Linha do tempo â€” <span id="tlName">crianÃ§a ativa</span></h2><span id="tlCount" class="meta" style="color:var(--soft);font-size:12px"></span></div>
     <div class="panel" style="padding:16px">
       <div id="tlInsights"></div>
       <div id="tlChart"></div>
       <div id="tlList"></div>
       <div id="medSection"></div>
       <div class="actions" style="margin-top:14px">
-        <button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">📄 Relatório consolidado (PDF)</button>
-        <button class="btn ghost" id="btnExport">⬇️ Exportar dados</button>
-        <label class="btn ghost" for="impFile" style="cursor:pointer">⬆️ Importar<input type="file" id="impFile" accept="application/json,.json" style="display:none"></label>
+        <button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">ðŸ“„ RelatÃ³rio consolidado (PDF)</button>
+        <button class="btn ghost" id="btnExport">â¬‡ï¸ Exportar dados</button>
+        <label class="btn ghost" for="impFile" style="cursor:pointer">â¬†ï¸ Importar<input type="file" id="impFile" accept="application/json,.json" style="display:none"></label>
       </div>
     </div>
   </section>
 
-  <div class="section-title"><h2 id="formTitle">Adicionar criança</h2></div>
+  <div class="section-title"><h2 id="formTitle">Adicionar crianÃ§a</h2></div>
   <section class="panel">
     <input type="hidden" id="editId">
-    <div class="field"><label for="name">Nome ou iniciais</label><input id="name" placeholder="Ex.: João S. (ou só iniciais)" autocomplete="off"></div>
+    <div class="field"><label for="name">Nome ou iniciais</label><input id="name" placeholder="Ex.: JoÃ£o S. (ou sÃ³ iniciais)" autocomplete="off"></div>
     <div class="row2">
       <div class="field"><label for="birth">Data de nascimento</label><input id="birth" type="date"></div>
-      <div class="field"><label for="sex">Sexo</label><select id="sex"><option value="">—</option><option>Masculino</option><option>Feminino</option><option>Outro/Não informar</option></select></div>
+      <div class="field"><label for="sex">Sexo</label><select id="sex"><option value="">â€”</option><option>Masculino</option><option>Feminino</option><option>Outro/NÃ£o informar</option></select></div>
     </div>
-    <div class="field"><label for="diagnosis">Diagnóstico / hipótese (opcional)</label><input id="diagnosis" placeholder="Ex.: TEA em investigação, TDAH, atraso de linguagem" autocomplete="off"></div>
+    <div class="field"><label for="diagnosis">DiagnÃ³stico / hipÃ³tese (opcional)</label><input id="diagnosis" placeholder="Ex.: TEA em investigaÃ§Ã£o, TDAH, atraso de linguagem" autocomplete="off"></div>
     <div class="actions">
-      <button class="btn" id="save">Salvar criança</button>
-      <button class="btn ghost" id="cancel" style="display:none">Cancelar edição</button>
+      <button class="btn" id="save">Salvar crianÃ§a</button>
+      <button class="btn ghost" id="cancel" style="display:none">Cancelar ediÃ§Ã£o</button>
     </div>
   </section>
 
-  <div class="section-title"><h2>Continuar com a criança ativa</h2></div>
+  <div class="section-title"><h2>Continuar com a crianÃ§a ativa</h2></div>
   <section class="connect">
-    <a href="./filtro-escalas.html"><span class="e">🔎</span><span>Filtro de escalas<small>3 instrumentos indicados</small></span></a>
-    <a href="./diario-escola-terapias-v2.html"><span class="e">📝</span><span>Diário<small>escola e terapias</small></span></a>
-    <a href="./impacto-medicacao.html"><span class="e">💊</span><span>Impacto da medicação<small>acompanhamento</small></span></a>
+    <a href="./filtro-escalas.html"><span class="e">ðŸ”Ž</span><span>Filtro de escalas<small>3 instrumentos indicados</small></span></a>
+    <a href="./diario-escola-terapias-v2.html"><span class="e">ðŸ“</span><span>DiÃ¡rio<small>escola e terapias</small></span></a>
+    <a href="./impacto-medicacao.html"><span class="e">ðŸ’Š</span><span>Impacto da medicaÃ§Ã£o<small>acompanhamento</small></span></a>
   </section>
 </main>
 
@@ -179,21 +182,21 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     try{
       if(!window.NPStore||!window.NPStore.resultsFor)return '';
       var rs=window.NPStore.resultsFor(c);
-      if(!rs.length)return '<div class="hist hist-empty">Nenhuma avaliação registrada ainda</div>';
+      if(!rs.length)return '<div class="hist hist-empty">Nenhuma avaliaÃ§Ã£o registrada ainda</div>';
       rs.sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
       var last=rs[0];
       var d=last.created_at?new Date(last.created_at).toLocaleDateString('pt-BR'):'';
       var pct=last.max?Math.round(100*last.score/last.max)+'%':'';
-      return '<div class="hist"><b>'+rs.length+'</b> avaliação'+(rs.length>1?'ões':'')+' · última: '+esc((last.instrument_title||'escala').slice(0,28))+(d?' ('+d+')':'')+(pct?' · '+pct:'')+'</div>';
+      return '<div class="hist"><b>'+rs.length+'</b> avaliaÃ§Ã£o'+(rs.length>1?'Ãµes':'')+' Â· Ãºltima: '+esc((last.instrument_title||'escala').slice(0,28))+(d?' ('+d+')':'')+(pct?' Â· '+pct:'')+'</div>';
     }catch(e){return '';}
   }
 
   function render(){
     var S=window.NPStore; if(!S){setTimeout(render,120);return;}
     var children=S.list(), act=S.active(), grid=$('grid');
-    $('count').textContent=children.length?children.length+(children.length>1?' crianças':' criança'):'';
+    $('count').textContent=children.length?children.length+(children.length>1?' crianÃ§as':' crianÃ§a'):'';
     if(!children.length){
-      grid.innerHTML='<div class="empty">Nenhuma criança cadastrada ainda.<br>Use o formulário abaixo para começar.</div>';
+      grid.innerHTML='<div class="empty">Nenhuma crianÃ§a cadastrada ainda.<br>Use o formulÃ¡rio abaixo para comeÃ§ar.</div>';
       return;
     }
     grid.innerHTML=children.map(function(c){
@@ -203,7 +206,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
         + (isA?'<span class="badge-active">ativa</span>':'')
         + '<div class="av" aria-hidden="true">'+esc(initials(c.name))+'</div>'
         + '<h3>'+esc(c.name||'Sem nome')+'</h3>'
-        + '<div class="meta">'+(age?esc(age):'idade não informada')+(c.sex?' · '+esc(c.sex):'')+'</div>'
+        + '<div class="meta">'+(age?esc(age):'idade nÃ£o informada')+(c.sex?' Â· '+esc(c.sex):'')+'</div>'
         + (c.diagnosis?'<span class="dx">'+esc(c.diagnosis)+'</span>':'')
         + histLine(c)
         + '<div class="acts">'
@@ -215,9 +218,9 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     [].forEach.call(grid.querySelectorAll('button[data-act]'),function(b){
       b.addEventListener('click',function(){
         var id=b.dataset.id, a=b.dataset.act, S=window.NPStore;
-        if(a==='activate'){S.setActive(id);toast('Criança ativa atualizada');}
+        if(a==='activate'){S.setActive(id);toast('CrianÃ§a ativa atualizada');}
         else if(a==='edit'){startEdit(id);}
-        else if(a==='del'){ if(confirm('Excluir esta criança e seus dados de perfil deste aparelho?')){S.remove(id);} }
+        else if(a==='del'){ if(confirm('Excluir esta crianÃ§a e seus dados de perfil deste aparelho?')){S.remove(id);} }
       });
     });
   }
@@ -225,17 +228,17 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
   function startEdit(id){
     var c=window.NPStore.list().filter(function(x){return x.id===id;})[0]; if(!c)return;
     $('editId').value=c.id; $('name').value=c.name||''; $('birth').value=c.birth||''; $('sex').value=c.sex||''; $('diagnosis').value=c.diagnosis||'';
-    $('formTitle').textContent='Editar criança'; $('cancel').style.display='';
+    $('formTitle').textContent='Editar crianÃ§a'; $('cancel').style.display='';
     $('name').focus(); window.scrollTo({top:document.querySelector('.panel').offsetTop-80,behavior:'smooth'});
   }
   function resetForm(){
     $('editId').value=''; $('name').value=''; $('birth').value=''; $('sex').value=''; $('diagnosis').value='';
-    $('formTitle').textContent='Adicionar criança'; $('cancel').style.display='none';
+    $('formTitle').textContent='Adicionar crianÃ§a'; $('cancel').style.display='none';
   }
   function toast(m){ if(window.npToast)window.npToast(m); }
 
   function chartSVG(points){
-    // points: [{pct, label}] em ordem cronológica. Desenha linha + pontos.
+    // points: [{pct, label}] em ordem cronolÃ³gica. Desenha linha + pontos.
     var W=320,H=140,pad=22,n=points.length;
     if(!n)return '';
     var x=function(i){return n===1?W/2:pad+i*((W-2*pad)/(n-1));};
@@ -245,29 +248,29 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     var path=points.map(function(p,i){return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.pct).toFixed(1);}).join(' ');
     var dots=points.map(function(p,i){return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.pct).toFixed(1)+'" r="4" fill="#f2dca6" stroke="#0a0a16" stroke-width="1.5"><title>'+p.label+': '+p.pct+'%</title></circle>';}).join('');
     var line=n>1?'<path d="'+path+'" fill="none" stroke="url(#tlg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>':'';
-    return '<svg class="tlsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Evolução das avaliações"><defs><linearGradient id="tlg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d6af5"/><stop offset="1" stop-color="#e7c98b"/></linearGradient></defs>'+grid+line+dots+'</svg>';
+    return '<svg class="tlsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="EvoluÃ§Ã£o das avaliaÃ§Ãµes"><defs><linearGradient id="tlg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d6af5"/><stop offset="1" stop-color="#e7c98b"/></linearGradient></defs>'+grid+line+dots+'</svg>';
   }
-  // Inteligência operacional (regras simples, explicáveis, NÃO diagnósticas) sobre o histórico
+  // InteligÃªncia operacional (regras simples, explicÃ¡veis, NÃƒO diagnÃ³sticas) sobre o histÃ³rico
   function insights(rs){
     var tips=[];
-    if(!rs.length){ return [{k:'go',t:'Comece pelo Filtro: escolha uma escala pela queixa/idade, responda e gere o laudo — aparece aqui.'}]; }
+    if(!rs.length){ return [{k:'go',t:'Comece pelo Filtro: escolha uma escala pela queixa/idade, responda e gere o laudo â€” aparece aqui.'}]; }
     var sorted=rs.slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
     var last=sorted[0];
-    // 1) reavaliação vencida
+    // 1) reavaliaÃ§Ã£o vencida
     if(last.created_at){
       var dias=Math.floor((Date.now()-new Date(last.created_at).getTime())/86400000);
-      if(dias>=90) tips.push({k:'warn',t:'Última avaliação há '+dias+' dias. Considere reaplicar para acompanhar a evolução.'});
+      if(dias>=90) tips.push({k:'warn',t:'Ãšltima avaliaÃ§Ã£o hÃ¡ '+dias+' dias. Considere reaplicar para acompanhar a evoluÃ§Ã£o.'});
     }
-    // 2) intensidade elevada na última
-    if(last.max){ var p=Math.round(100*last.score/last.max); if(p>=60) tips.push({k:'warn',t:'Pontuação elevada na última avaliação ('+p+'%). Priorize investigação dirigida e integre com outras visões (família × escola).'}); }
-    // 3) só uma visão/instrumento
+    // 2) intensidade elevada na Ãºltima
+    if(last.max){ var p=Math.round(100*last.score/last.max); if(p>=60) tips.push({k:'warn',t:'PontuaÃ§Ã£o elevada na Ãºltima avaliaÃ§Ã£o ('+p+'%). Priorize investigaÃ§Ã£o dirigida e integre com outras visÃµes (famÃ­lia Ã— escola).'}); }
+    // 3) sÃ³ uma visÃ£o/instrumento
     var instrs={}; rs.forEach(function(r){instrs[r.instrument_id||r.instrument_title]=1;});
-    if(Object.keys(instrs).length===1 && rs.length>=1) tips.push({k:'info',t:'Avaliação baseada em 1 instrumento. Considere uma 2ª visão (outro respondente/escala) para triangular.'});
-    if(!tips.length) tips.push({k:'ok',t:'Acompanhamento em dia. Continue registrando avaliações para enriquecer a linha do tempo.'});
+    if(Object.keys(instrs).length===1 && rs.length>=1) tips.push({k:'info',t:'AvaliaÃ§Ã£o baseada em 1 instrumento. Considere uma 2Âª visÃ£o (outro respondente/escala) para triangular.'});
+    if(!tips.length) tips.push({k:'ok',t:'Acompanhamento em dia. Continue registrando avaliaÃ§Ãµes para enriquecer a linha do tempo.'});
     return tips;
   }
-  // Resposta à medicação: stream SEPARADO (índice de melhora percebida, não escore
-  // de triagem) — por isso fora do gráfico/linha do tempo das escalas.
+  // Resposta Ã  medicaÃ§Ã£o: stream SEPARADO (Ã­ndice de melhora percebida, nÃ£o escore
+  // de triagem) â€” por isso fora do grÃ¡fico/linha do tempo das escalas.
   function renderMed(act){
     var box=$('medSection'); if(!box)return;
     var S=window.NPStore;
@@ -275,16 +278,16 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     if(!ml.length){ box.innerHTML=''; return; }
     var rows=ml.slice(0,6).map(function(m){
       var d=m.at?new Date(m.at).toLocaleDateString('pt-BR'):'';
-      var parts=[]; if(m.pais!=null)parts.push('família '+m.pais+'%'); if(m.escola!=null)parts.push('escola '+m.escola+'%');
-      var pct=(m.pais!=null||m.escola!=null)?Math.round(((m.pais||0)+(m.escola||0))/((m.pais!=null?1:0)+(m.escola!=null?1:0)))+'%':'—';
-      var fx=(m.fx&&m.fx.length)?'<span class="mfx">⚠ efeitos: '+esc(m.fx.join(', ').slice(0,60))+'</span>':'';
-      return '<div class="medrow"><span class="mpct">'+pct+'</span><div class="mmain"><b>'+esc(m.med||'Medicação')+'</b>'
-        +'<span>'+(d?d:'')+(m.tempo?' · '+esc(m.tempo):'')+(parts.length?' · '+esc(parts.join(' · ')):'')+'</span>'+fx+'</div></div>';
+      var parts=[]; if(m.pais!=null)parts.push('famÃ­lia '+m.pais+'%'); if(m.escola!=null)parts.push('escola '+m.escola+'%');
+      var pct=(m.pais!=null||m.escola!=null)?Math.round(((m.pais||0)+(m.escola||0))/((m.pais!=null?1:0)+(m.escola!=null?1:0)))+'%':'â€”';
+      var fx=(m.fx&&m.fx.length)?'<span class="mfx">âš  efeitos: '+esc(m.fx.join(', ').slice(0,60))+'</span>':'';
+      return '<div class="medrow"><span class="mpct">'+pct+'</span><div class="mmain"><b>'+esc(m.med||'MedicaÃ§Ã£o')+'</b>'
+        +'<span>'+(d?d:'')+(m.tempo?' Â· '+esc(m.tempo):'')+(parts.length?' Â· '+esc(parts.join(' Â· ')):'')+'</span>'+fx+'</div></div>';
     }).join('');
-    box.innerHTML='<div class="medbox"><b>💊 Resposta à medicação ('+ml.length+')</b>'+rows
-      +'<div class="ins ins-info" style="margin-top:10px">Índice de <b>melhora percebida</b> (família/escola), registrado em <a href="./impacto-medicacao.html" style="color:#a9a4ff">Impacto da medicação</a>. Acompanhamento — não mede eficácia farmacológica.</div></div>';
+    box.innerHTML='<div class="medbox"><b>ðŸ’Š Resposta Ã  medicaÃ§Ã£o ('+ml.length+')</b>'+rows
+      +'<div class="ins ins-info" style="margin-top:10px">Ãndice de <b>melhora percebida</b> (famÃ­lia/escola), registrado em <a href="./impacto-medicacao.html" style="color:#a9a4ff">Impacto da medicaÃ§Ã£o</a>. Acompanhamento â€” nÃ£o mede eficÃ¡cia farmacolÃ³gica.</div></div>';
   }
-  // ── Comparador longitudinal: agrupa por instrumento, calcula delta vs medição anterior ──
+  // â”€â”€ Comparador longitudinal: agrupa por instrumento, calcula delta vs mediÃ§Ã£o anterior â”€â”€
   function pctOf(r){return r&&r.max?Math.round(100*r.score/r.max):null;}
   function byInstrument(rs){
     var g={};
@@ -294,13 +297,13 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
   }
   function deltaBadge(curr,prev){
     if(prev==null||curr==null)return '';
-    var d=curr-prev; if(d===0)return ' <span class="delta flat">→ estável</span>';
-    // em escalas de sintomas, pontuação MENOR costuma indicar melhora
-    var cls=d<0?'up':'down', arrow=d<0?'▼':'▲';
+    var d=curr-prev; if(d===0)return ' <span class="delta flat">â†’ estÃ¡vel</span>';
+    // em escalas de sintomas, pontuaÃ§Ã£o MENOR costuma indicar melhora
+    var cls=d<0?'up':'down', arrow=d<0?'â–¼':'â–²';
     return ' <span class="delta '+cls+'">'+arrow+' '+Math.abs(d)+' pts</span>';
   }
 
-  // ── Síntese do caso: cruza escalas × resposta à medicação × diário ──
+  // â”€â”€ SÃ­ntese do caso: cruza escalas Ã— resposta Ã  medicaÃ§Ã£o Ã— diÃ¡rio â”€â”€
   function synLines(c, rs){
     var L=[], S=window.NPStore;
     if(rs.length){
@@ -309,20 +312,20 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
       var g=byInstrument(rs)[last.instrument_id||last.instrument_title]||[];
       var prev=g.length>=2?g[g.length-2]:null;
       var d=last.created_at?new Date(last.created_at).toLocaleDateString('pt-BR'):'';
-      L.push({e:'📊',t:'<b>'+rs.length+' avaliação'+(rs.length>1?'ões':'')+'</b> · última: <b>'+esc((last.instrument_title||'escala').slice(0,38))+'</b>'+(p!=null?' — '+p+'%':'')+(d?' ('+d+')':'')+(prev?deltaBadge(p,pctOf(prev))+' vs. anterior':'')});
+      L.push({e:'ðŸ“Š',t:'<b>'+rs.length+' avaliaÃ§Ã£o'+(rs.length>1?'Ãµes':'')+'</b> Â· Ãºltima: <b>'+esc((last.instrument_title||'escala').slice(0,38))+'</b>'+(p!=null?' â€” '+p+'%':'')+(d?' ('+d+')':'')+(prev?deltaBadge(p,pctOf(prev))+' vs. anterior':'')});
     } else {
-      L.push({e:'📊',t:'Nenhuma escala respondida. Comece pelo <a href="./filtro-escalas.html" style="color:#a9a4ff">Filtro de escalas</a>.'});
+      L.push({e:'ðŸ“Š',t:'Nenhuma escala respondida. Comece pelo <a href="./filtro-escalas.html" style="color:#a9a4ff">Filtro de escalas</a>.'});
     }
     var ml=S.medLogFor?S.medLogFor(c):[];
     if(ml.length){
       var m=ml[ml.length-1], parts=[];
-      if(m.pais!=null)parts.push('família '+m.pais+'%'); if(m.escola!=null)parts.push('escola '+m.escola+'%');
-      L.push({e:'💊',t:'Resposta à medicação'+(m.med?' ('+esc(m.med)+')':'')+': <b>'+esc(parts.join(' · ')||'registrada')+'</b>'+((m.fx&&m.fx.length)?' · ⚠ efeitos: '+esc(m.fx.join(', ').slice(0,48)):'')});
+      if(m.pais!=null)parts.push('famÃ­lia '+m.pais+'%'); if(m.escola!=null)parts.push('escola '+m.escola+'%');
+      L.push({e:'ðŸ’Š',t:'Resposta Ã  medicaÃ§Ã£o'+(m.med?' ('+esc(m.med)+')':'')+': <b>'+esc(parts.join(' Â· ')||'registrada')+'</b>'+((m.fx&&m.fx.length)?' Â· âš  efeitos: '+esc(m.fx.join(', ').slice(0,48)):'')});
     }
     var ds=S.diarySummary?S.diarySummary(c):null;
     if(ds&&ds.count){
       var dl=ds.last?new Date(ds.last).toLocaleDateString('pt-BR'):'';
-      L.push({e:'📝',t:'Diário: <b>'+ds.count+' registro'+(ds.count>1?'s':'')+'</b> ('+ds.therapy+' terapêuticos · '+ds.school+' escolares)'+(ds.humorAvg?' · humor médio '+ds.humorAvg+'/5':'')+(dl?' · último '+dl:'')});
+      L.push({e:'ðŸ“',t:'DiÃ¡rio: <b>'+ds.count+' registro'+(ds.count>1?'s':'')+'</b> ('+ds.therapy+' terapÃªuticos Â· '+ds.school+' escolares)'+(ds.humorAvg?' Â· humor mÃ©dio '+ds.humorAvg+'/5':'')+(dl?' Â· Ãºltimo '+dl:'')});
     }
     return L;
   }
@@ -330,11 +333,11 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     var tips=insights(rs).slice(), S=window.NPStore;
     var ml=S.medLogFor?S.medLogFor(c):[];
     if(ml.length){ var m=ml[ml.length-1];
-      if(m.pais!=null&&m.escola!=null&&Math.abs(m.pais-m.escola)>=30) tips.push({k:'warn',t:'Resposta à medicação divergente entre casa e escola ('+Math.abs(m.pais-m.escola)+' pts) — investigar cobertura ao longo do dia/adesão.'});
-      if(m.fx&&m.fx.length) tips.push({k:'warn',t:'Efeitos colaterais assinalados na resposta à medicação — registrar e comunicar na próxima reavaliação.'});
+      if(m.pais!=null&&m.escola!=null&&Math.abs(m.pais-m.escola)>=30) tips.push({k:'warn',t:'Resposta Ã  medicaÃ§Ã£o divergente entre casa e escola ('+Math.abs(m.pais-m.escola)+' pts) â€” investigar cobertura ao longo do dia/adesÃ£o.'});
+      if(m.fx&&m.fx.length) tips.push({k:'warn',t:'Efeitos colaterais assinalados na resposta Ã  medicaÃ§Ã£o â€” registrar e comunicar na prÃ³xima reavaliaÃ§Ã£o.'});
     }
     var ds=S.diarySummary?S.diarySummary(c):null;
-    if((!ds||!ds.count)) tips.push({k:'info',t:'Sem registros no Diário ainda — o acompanhamento de escola/terapias enriquece a leitura longitudinal.'});
+    if((!ds||!ds.count)) tips.push({k:'info',t:'Sem registros no DiÃ¡rio ainda â€” o acompanhamento de escola/terapias enriquece a leitura longitudinal.'});
     return tips;
   }
   function renderSynth(act){
@@ -342,62 +345,65 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     var S=window.NPStore, rs=S.resultsFor(act);
     var ml=S.medLogFor?S.medLogFor(act):[], di=S.diarySummary?S.diarySummary(act):null;
     if(dsec)dsec.hidden=false;
-    $('synName').textContent=act.name||'criança ativa';
+    $('synName').textContent=act.name||'crianÃ§a ativa';
     if(!(rs.length||ml.length||(di&&di.count))){
       sec.hidden=false;
-      $('synBody').innerHTML='<p class="synhead">'+esc(act.name||'Criança')+'</p><p class="synsub">Ainda sem dados para sintetizar. Responda uma escala, registre a resposta à medicação ou abra o Diário — a síntese se monta sozinha.</p>';
+      $('synBody').innerHTML='<p class="synhead">'+esc(act.name||'CrianÃ§a')+'</p><p class="synsub">Ainda sem dados para sintetizar. Responda uma escala, registre a resposta Ã  medicaÃ§Ã£o ou abra o DiÃ¡rio â€” a sÃ­ntese se monta sozinha.</p>';
       return;
     }
     sec.hidden=false;
     var age=S.ageLabel(act);
-    var head='<p class="synhead">'+esc(act.name||'Criança')+'</p><p class="synsub">'+(age?esc(age):'idade não informada')+(act.diagnosis?' · '+esc(act.diagnosis):'')+' · síntese gerada em '+new Date().toLocaleDateString('pt-BR')+'</p>';
+    var head='<p class="synhead">'+esc(act.name||'CrianÃ§a')+'</p><p class="synsub">'+(age?esc(age):'idade nÃ£o informada')+(act.diagnosis?' Â· '+esc(act.diagnosis):'')+' Â· sÃ­ntese gerada em '+new Date().toLocaleDateString('pt-BR')+'</p>';
     var lines=synLines(act,rs).map(function(x){return '<div class="synline"><span class="se">'+x.e+'</span><div class="st">'+x.t+'</div></div>';}).join('');
     var tips=synTips(act,rs);
-    var steps='<div class="insights" style="margin-top:14px"><b>Próximos passos</b>'+tips.map(function(x){return '<div class="ins ins-'+x.k+'">'+esc(x.t)+'</div>';}).join('')+'</div>';
+    var steps='<div class="insights" style="margin-top:14px"><b>PrÃ³ximos passos</b>'+tips.map(function(x){return '<div class="ins ins-'+x.k+'">'+esc(x.t)+'</div>';}).join('')+'</div>';
     $('synBody').innerHTML=head+lines+steps;
   }
 
-  // ── Documentos prontos (modelos do médico, pré-preenchidos) ──
+  // â”€â”€ Documentos prontos (modelos do mÃ©dico, prÃ©-preenchidos) â”€â”€
   function docShell(title, bodyHtml){
     return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+title+'</title>'
       +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px 30px;line-height:1.7;max-width:720px;margin:auto}'
       +'.hd{border-bottom:2px solid #7f1d1d;padding-bottom:10px;margin-bottom:18px}.hd b{font-size:18px;color:#7f1d1d}.hd span{display:block;font-size:12px;color:#555;margin-top:2px}'
       +'h1{font-size:17px;color:#7f1d1d;margin:0 0 14px}p{margin:0 0 12px}.sig{margin-top:46px;text-align:center}.sig .ln{width:280px;border-top:1px solid #333;margin:0 auto 4px}.sig b{font-size:13px}.sig span{display:block;font-size:12px;color:#444}'
-      +'.warn{margin-top:26px;border-top:1px solid #ddd;padding-top:8px;font-size:11px;color:#666}@media print{body{padding:16mm}}</style></head><body>'
-      +'<div class="hd"><b>Dr. Jadson Fraga Araújo Júnior</b><span>Neurologista Infantil · CRM-PE 25227 · RQE 17756 · Petrolina/PE</span></div>'
+      +'.warn{margin-top:26px;border-top:1px solid #ddd;padding-top:8px;font-size:11px;color:#666}@media print{body{padding:16mm}}</style>    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
+</head><body>'
+      +'<div class="hd"><b>Dr. Jadson Fraga AraÃºjo JÃºnior</b><span>Neurologista Infantil Â· CRM-PE 25227 Â· RQE 17756 Â· Petrolina/PE</span></div>'
       +bodyHtml
-      +'<div class="sig"><div class="ln"></div><b>Dr. Jadson Fraga Araújo Júnior</b><span>CRM-PE 25227 · RQE 17756</span></div>'
-      +'<div class="warn">Documento emitido localmente pelo NeuroPed EDJ. Revise o conteúdo antes de assinar/entregar. As informações refletem dados inseridos pelo próprio profissional neste dispositivo.</div>'
+      +'<div class="sig"><div class="ln"></div><b>Dr. Jadson Fraga AraÃºjo JÃºnior</b><span>CRM-PE 25227 Â· RQE 17756</span></div>'
+      +'<div class="warn">Documento emitido localmente pelo NeuroPed EDJ. Revise o conteÃºdo antes de assinar/entregar. As informaÃ§Ãµes refletem dados inseridos pelo prÃ³prio profissional neste dispositivo.</div>'
       +'</body></html>';
   }
   function docHtml(kind, c){
     var pe=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]);});};
     var age=window.NPStore.ageLabel(c), hoje=new Date().toLocaleDateString('pt-BR');
     var quem=pe(c.name||'__________')+(age?', '+pe(age):'')+(c.sex?', '+pe(c.sex):'');
-    var dx=c.diagnosis?' com hipótese/diagnóstico de '+pe(c.diagnosis):'';
+    var dx=c.diagnosis?' com hipÃ³tese/diagnÃ³stico de '+pe(c.diagnosis):'';
     if(kind==='escola'){
-      return docShell('Declaração escolar — '+pe(c.name||'criança'),
-        '<h1>Declaração</h1>'
-        +'<p>Declaro, para os devidos fins, que <b>'+quem+'</b>'+dx+' encontra-se em <b>acompanhamento neuropediátrico</b> sob meus cuidados.</p>'
-        +'<p>Solicito à instituição de ensino atenção às necessidades individuais da criança, favorecendo adaptações pedagógicas e observação do desenvolvimento, em colaboração com a família e a equipe terapêutica.</p>'
-        +'<p>Coloco-me à disposição para esclarecimentos.</p>'
+      return docShell('DeclaraÃ§Ã£o escolar â€” '+pe(c.name||'crianÃ§a'),
+        '<h1>DeclaraÃ§Ã£o</h1>'
+        +'<p>Declaro, para os devidos fins, que <b>'+quem+'</b>'+dx+' encontra-se em <b>acompanhamento neuropediÃ¡trico</b> sob meus cuidados.</p>'
+        +'<p>Solicito Ã  instituiÃ§Ã£o de ensino atenÃ§Ã£o Ã s necessidades individuais da crianÃ§a, favorecendo adaptaÃ§Ãµes pedagÃ³gicas e observaÃ§Ã£o do desenvolvimento, em colaboraÃ§Ã£o com a famÃ­lia e a equipe terapÃªutica.</p>'
+        +'<p>Coloco-me Ã  disposiÃ§Ã£o para esclarecimentos.</p>'
         +'<p>Petrolina/PE, '+hoje+'.</p>');
     }
     if(kind==='terapeuta'){
       var S=window.NPStore, rs=S.resultsFor(c).slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
-      var resumo=rs.length?'<p><b>Instrumentos recentes:</b></p><ul>'+rs.slice(0,5).map(function(r){var p=r.max?Math.round(100*r.score/r.max)+'%':'—';var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';return '<li>'+pe(r.instrument_title||'Instrumento')+' — '+p+(d?' ('+d+')':'')+'</li>';}).join('')+'</ul>':'<p>Sem instrumentos de triagem registrados até o momento.</p>';
-      return docShell('Relatório para terapeuta — '+pe(c.name||'criança'),
-        '<h1>Relatório de encaminhamento / atualização</h1>'
-        +'<p>Encaminho <b>'+quem+'</b>'+dx+', em acompanhamento neuropediátrico, para avaliação e seguimento terapêutico.</p>'
+      var resumo=rs.length?'<p><b>Instrumentos recentes:</b></p><ul>'+rs.slice(0,5).map(function(r){var p=r.max?Math.round(100*r.score/r.max)+'%':'â€”';var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';return '<li>'+pe(r.instrument_title||'Instrumento')+' â€” '+p+(d?' ('+d+')':'')+'</li>';}).join('')+'</ul>':'<p>Sem instrumentos de triagem registrados atÃ© o momento.</p>';
+      return docShell('RelatÃ³rio para terapeuta â€” '+pe(c.name||'crianÃ§a'),
+        '<h1>RelatÃ³rio de encaminhamento / atualizaÃ§Ã£o</h1>'
+        +'<p>Encaminho <b>'+quem+'</b>'+dx+', em acompanhamento neuropediÃ¡trico, para avaliaÃ§Ã£o e seguimento terapÃªutico.</p>'
         +resumo
-        +'<p>Solicito relatório de evolução para integração ao acompanhamento longitudinal. Agradeço a parceria no cuidado.</p>'
+        +'<p>Solicito relatÃ³rio de evoluÃ§Ã£o para integraÃ§Ã£o ao acompanhamento longitudinal. AgradeÃ§o a parceria no cuidado.</p>'
         +'<p>Petrolina/PE, '+hoje+'.</p>');
     }
     // atestado
-    return docShell('Atestado de acompanhamento — '+pe(c.name||'criança'),
+    return docShell('Atestado de acompanhamento â€” '+pe(c.name||'crianÃ§a'),
       '<h1>Atestado</h1>'
-      +'<p>Atesto que <b>'+quem+'</b>'+dx+' encontra-se sob <b>acompanhamento neuropediátrico</b> nesta data, '+hoje+'.</p>'
-      +'<p>O presente atestado destina-se a comprovar o seguimento clínico, podendo ser apresentado a quem de direito.</p>'
+      +'<p>Atesto que <b>'+quem+'</b>'+dx+' encontra-se sob <b>acompanhamento neuropediÃ¡trico</b> nesta data, '+hoje+'.</p>'
+      +'<p>O presente atestado destina-se a comprovar o seguimento clÃ­nico, podendo ser apresentado a quem de direito.</p>'
       +'<p>Petrolina/PE, '+hoje+'.</p>');
   }
 
@@ -406,11 +412,11 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     var lines=synLines(c,rs).map(function(x){return '<p>'+x.e+' '+strip(x.t)+'</p>';}).join('');
     var tips=synTips(c,rs).map(function(x){return '<li>'+strip(x.t)+'</li>';}).join('');
     var age=S.ageLabel(c);
-    return docShell('Síntese do caso — '+(c.name||'criança'),
-      '<h1>Síntese do caso</h1>'
-      +'<p><b>Criança:</b> '+(c.name||'—')+(age?' &middot; <b>Idade:</b> '+age:'')+(c.diagnosis?' &middot; <b>Hipótese:</b> '+c.diagnosis:'')+'</p>'
+    return docShell('SÃ­ntese do caso â€” '+(c.name||'crianÃ§a'),
+      '<h1>SÃ­ntese do caso</h1>'
+      +'<p><b>CrianÃ§a:</b> '+(c.name||'â€”')+(age?' &middot; <b>Idade:</b> '+age:'')+(c.diagnosis?' &middot; <b>HipÃ³tese:</b> '+c.diagnosis:'')+'</p>'
       +lines
-      +'<h1 style="font-size:14px;margin-top:18px">Próximos passos</h1><ul>'+tips+'</ul>'
+      +'<h1 style="font-size:14px;margin-top:18px">PrÃ³ximos passos</h1><ul>'+tips+'</ul>'
       +'<p>Petrolina/PE, '+new Date().toLocaleDateString('pt-BR')+'.</p>');
   }
 
@@ -421,48 +427,51 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
     renderSynth(act);
     renderMed(act);
     var rs=S.resultsFor(act).slice().sort(function(a,b){return (a.created_at||'').localeCompare(b.created_at||'');});
-    $('tlName').textContent=act.name||'criança ativa';
-    $('tlCount').textContent=rs.length?(rs.length+(rs.length>1?' avaliações':' avaliação')):'';
+    $('tlName').textContent=act.name||'crianÃ§a ativa';
+    $('tlCount').textContent=rs.length?(rs.length+(rs.length>1?' avaliaÃ§Ãµes':' avaliaÃ§Ã£o')):'';
     sec.hidden=false;
-    var ic=$('tlInsights'); if(ic){ ic.innerHTML='<div class="insights"><b>Próximos passos</b>'+insights(rs).map(function(x){return '<div class="ins ins-'+x.k+'">'+esc(x.t)+'</div>';}).join('')+'</div>'; }
-    if(!rs.length){ $('tlChart').innerHTML=''; $('tlList').innerHTML='<div class="tl-empty">Ainda sem avaliações. Responda uma escala e gere o laudo — ela aparece aqui.</div>'; return; }
+    var ic=$('tlInsights'); if(ic){ ic.innerHTML='<div class="insights"><b>PrÃ³ximos passos</b>'+insights(rs).map(function(x){return '<div class="ins ins-'+x.k+'">'+esc(x.t)+'</div>';}).join('')+'</div>'; }
+    if(!rs.length){ $('tlChart').innerHTML=''; $('tlList').innerHTML='<div class="tl-empty">Ainda sem avaliaÃ§Ãµes. Responda uma escala e gere o laudo â€” ela aparece aqui.</div>'; return; }
     var pts=rs.map(function(r){return {pct:r.max?Math.round(100*r.score/r.max):0,label:(r.instrument_title||'escala').slice(0,18)};});
     $('tlChart').innerHTML=chartSVG(pts);
-    // delta vs medição anterior do MESMO instrumento (comparador longitudinal)
+    // delta vs mediÃ§Ã£o anterior do MESMO instrumento (comparador longitudinal)
     var groups=byInstrument(rs), prevMap=new Map();
     Object.keys(groups).forEach(function(k){var arr=groups[k];for(var i=1;i<arr.length;i++)prevMap.set(arr[i],pctOf(arr[i-1]));});
     // lista (mais recente primeiro)
     $('tlList').innerHTML=rs.slice().reverse().map(function(r){
       var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';
-      var pct=r.max?Math.round(100*r.score/r.max)+'%':'—';
+      var pct=r.max?Math.round(100*r.score/r.max)+'%':'â€”';
       var dlt=prevMap.has(r)?deltaBadge(pctOf(r),prevMap.get(r)):'';
-      // continuidade: 1 toque reaplica a MESMA escala (reavaliação → alimenta o comparador/delta)
-      var redo=r.instrument_id?'<a class="tl-redo" href="./escala.html?id='+encodeURIComponent(r.instrument_id)+'" title="Reaplicar esta escala">↻ Reaplicar</a>':'';
-      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' · '+r.score+'/'+r.max:'')+dlt+'</span></div><div class="tl-end"><span class="tl-pct">'+pct+'</span>'+redo+'</div></div>';
+      // continuidade: 1 toque reaplica a MESMA escala (reavaliaÃ§Ã£o â†’ alimenta o comparador/delta)
+      var redo=r.instrument_id?'<a class="tl-redo" href="./escala.html?id='+encodeURIComponent(r.instrument_id)+'" title="Reaplicar esta escala">â†» Reaplicar</a>':'';
+      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' Â· '+r.score+'/'+r.max:'')+dlt+'</span></div><div class="tl-end"><span class="tl-pct">'+pct+'</span>'+redo+'</div></div>';
     }).join('');
   }
 
-  /* Relatório consolidado: 1 PDF com a criança + linha do tempo + TODAS as avaliações */
+  /* RelatÃ³rio consolidado: 1 PDF com a crianÃ§a + linha do tempo + TODAS as avaliaÃ§Ãµes */
   function buildReport(c, rs){
     var pe=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]);});};
     var age=window.NPStore.ageLabel(c);
-    var head='<h1>Relatório consolidado de acompanhamento</h1>'
-      +'<div class="box"><b>Criança:</b> '+pe(c.name||'—')+(age?' &middot; <b>Idade:</b> '+pe(age):'')+(c.sex?' &middot; '+pe(c.sex):'')
-      +(c.diagnosis?'<br><b>Diagnóstico/hipótese:</b> '+pe(c.diagnosis):'')+'<br><b>Emitido em:</b> '+new Date().toLocaleString('pt-BR')+'</div>';
+    var head='<h1>RelatÃ³rio consolidado de acompanhamento</h1>'
+      +'<div class="box"><b>CrianÃ§a:</b> '+pe(c.name||'â€”')+(age?' &middot; <b>Idade:</b> '+pe(age):'')+(c.sex?' &middot; '+pe(c.sex):'')
+      +(c.diagnosis?'<br><b>DiagnÃ³stico/hipÃ³tese:</b> '+pe(c.diagnosis):'')+'<br><b>Emitido em:</b> '+new Date().toLocaleString('pt-BR')+'</div>';
     var blocks=rs.map(function(r){
       var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';
-      var pct=r.max?Math.round(100*r.score/r.max)+'%':'—';
+      var pct=r.max?Math.round(100*r.score/r.max)+'%':'â€”';
       var dom=(r.domains||[]).map(function(x){return '<li>'+pe(x.name)+': '+x.score+'/'+x.max+(x.max?' ('+Math.round(100*x.score/x.max)+'%)':'')+'</li>';}).join('');
       return '<div class="ev"><h3>'+pe(r.instrument_title||'Instrumento')+'</h3>'
-        +'<p class="m">'+d+' &middot; pontuação '+r.score+'/'+r.max+' ('+pct+')</p>'
+        +'<p class="m">'+d+' &middot; pontuaÃ§Ã£o '+r.score+'/'+r.max+' ('+pct+')</p>'
         +(dom?'<ul>'+dom+'</ul>':'')+'</div>';
     }).join('');
-    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+pe(c.name||'criança')+'</title>'
-      +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;color:#7f1d1d;margin:0 0 10px}h3{font-size:14px;color:#0f766e;margin:14px 0 2px}.box{border:1px solid #ddd;background:#fafafa;padding:12px;border-radius:8px;margin:8px 0}.ev{border-top:1px solid #eee;padding-top:8px;margin-top:8px}.m{color:#555;font-size:12px;margin:2px 0}ul{margin:4px 0 0 18px;font-size:12px}.warn{font-size:11px;color:#555;margin-top:20px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style></head><body>'
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>RelatÃ³rio â€” '+pe(c.name||'crianÃ§a')+'</title>'
+      +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;color:#7f1d1d;margin:0 0 10px}h3{font-size:14px;color:#0f766e;margin:14px 0 2px}.box{border:1px solid #ddd;background:#fafafa;padding:12px;border-radius:8px;margin:8px 0}.ev{border-top:1px solid #eee;padding-top:8px;margin-top:8px}.m{color:#555;font-size:12px;margin:2px 0}ul{margin:4px 0 0 18px;font-size:12px}.warn{font-size:11px;color:#555;margin-top:20px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style>    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
+</head><body>'
       +head
-      +'<h2 style="font-size:15px;color:#7f1d1d">Avaliações ('+rs.length+')</h2>'
-      +(rs.length?blocks:'<p class="m">Nenhuma avaliação registrada.</p>')
-      +'<div class="warn">Documento de organização clínica gerado localmente no NeuroPed EDJ. Instrumentos autorais de triagem, não normatizados — não substituem avaliação nem diagnóstico. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227.</div>'
+      +'<h2 style="font-size:15px;color:#7f1d1d">AvaliaÃ§Ãµes ('+rs.length+')</h2>'
+      +(rs.length?blocks:'<p class="m">Nenhuma avaliaÃ§Ã£o registrada.</p>')
+      +'<div class="warn">Documento de organizaÃ§Ã£o clÃ­nica gerado localmente no NeuroPed EDJ. Instrumentos autorais de triagem, nÃ£o normatizados â€” nÃ£o substituem avaliaÃ§Ã£o nem diagnÃ³stico. A decisÃ£o Ã© do mÃ©dico responsÃ¡vel. Dr. Jadson Fraga Â· CRM-PE 25227.</div>'
       +'</body></html>';
   }
   function printReport(html){
@@ -481,8 +490,8 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');a.href=url;a.download='neuroped-prontuario-'+new Date().toISOString().slice(0,10)+'.json';
       document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
-      toast('Backup exportado — guarde o arquivo .json');
-    }catch(e){toast('Não foi possível exportar');}
+      toast('Backup exportado â€” guarde o arquivo .json');
+    }catch(e){toast('NÃ£o foi possÃ­vel exportar');}
   }
   function importData(file){
     if(!file)return;
@@ -491,15 +500,15 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
       try{
         var obj=JSON.parse(r.result);
         var res=window.NPStore.importAll(obj);
-        if(!res.ok){toast(res.error||'Arquivo inválido');return;}
-        toast('Importado: '+res.children+' criança(s), '+res.results+' avaliação(ões)');
+        if(!res.ok){toast(res.error||'Arquivo invÃ¡lido');return;}
+        toast('Importado: '+res.children+' crianÃ§a(s), '+res.results+' avaliaÃ§Ã£o(Ãµes)');
         render();renderTimeline();
-      }catch(e){toast('Arquivo inválido ou corrompido');}
+      }catch(e){toast('Arquivo invÃ¡lido ou corrompido');}
     };
     r.readAsText(file);
   }
   function genReport(){
-    var S=window.NPStore; var c=S&&S.active(); if(!c){toast('Selecione uma criança ativa');return;}
+    var S=window.NPStore; var c=S&&S.active(); if(!c){toast('Selecione uma crianÃ§a ativa');return;}
     var rs=S.resultsFor(c).slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
     printReport(buildReport(c, rs));
   }
@@ -511,13 +520,13 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
       if(!name){ $('name').focus(); toast('Informe ao menos o nome ou iniciais'); return; }
       var data={name:name,birth:$('birth').value,sex:$('sex').value,diagnosis:$('diagnosis').value.trim()};
       var id=$('editId').value;
-      if(id){ S.update(id,data); toast('Criança atualizada'); }
-      else { S.add(data); toast('Criança cadastrada e tornada ativa'); }
+      if(id){ S.update(id,data); toast('CrianÃ§a atualizada'); }
+      else { S.add(data); toast('CrianÃ§a cadastrada e tornada ativa'); }
       resetForm(); render(); renderTimeline();
     });
     $('cancel').addEventListener('click',function(){ resetForm(); });
-    var bs=$('btnSynPdf'); if(bs) bs.addEventListener('click',function(){var c=window.NPStore.active(); if(!c){toast('Selecione uma criança ativa');return;} printReport(buildSynthDoc(c));});
-    [].forEach.call(document.querySelectorAll('#docsSec [data-doc]'),function(a){a.addEventListener('click',function(e){e.preventDefault();var c=window.NPStore.active(); if(!c){toast('Selecione uma criança ativa');return;} printReport(docHtml(a.dataset.doc,c));});});
+    var bs=$('btnSynPdf'); if(bs) bs.addEventListener('click',function(){var c=window.NPStore.active(); if(!c){toast('Selecione uma crianÃ§a ativa');return;} printReport(buildSynthDoc(c));});
+    [].forEach.call(document.querySelectorAll('#docsSec [data-doc]'),function(a){a.addEventListener('click',function(e){e.preventDefault();var c=window.NPStore.active(); if(!c){toast('Selecione uma crianÃ§a ativa');return;} printReport(docHtml(a.dataset.doc,c));});});
     var br=$('btnReport'); if(br) br.addEventListener('click', genReport);
     var be=$('btnExport'); if(be) be.addEventListener('click', exportData);
     var imp=$('impFile'); if(imp) imp.addEventListener('change', function(e){ importData(e.target.files&&e.target.files[0]); e.target.value=''; });

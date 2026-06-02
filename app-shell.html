@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
 <meta name="theme-color" content="#0e0e22">
-<meta name="description" content="NeuroPed EDJ — aplicativo único do Dr. Jadson Fraga. Casca dinâmica: cabeçalho e abas fixos, conteúdo fluido.">
+<meta name="description" content="NeuroPed EDJ â€” aplicativo Ãºnico do Dr. Jadson Fraga. Casca dinÃ¢mica: cabeÃ§alho e abas fixos, conteÃºdo fluido.">
 <title>NeuroPed EDJ</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
@@ -29,7 +29,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
 .sh-top .sec{margin-left:auto;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--indigo-l);
   background:rgba(109,106,245,.14);border:1px solid rgba(169,164,255,.24);border-radius:999px;padding:5px 11px}
 
-/* palco / conteúdo */
+/* palco / conteÃºdo */
 .sh-stage{position:relative;flex:1 1 auto;overflow:hidden;background:var(--bg)}
 #sh-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);
   opacity:1;transform:none;transition:opacity .28s ease,transform .28s cubic-bezier(.22,.8,.2,1)}
@@ -74,20 +74,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
 .sh-top .seal,#sh-splash .seal{overflow:hidden;padding:0}
 .sh-top .seal img,#sh-splash .seal img{width:100%;height:100%;object-fit:cover;display:block}
 </style>
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body>
-<div id="sh-splash"><div class="seal"><img src="./logo-jadson.jpg" alt="" width="86" height="86" decoding="async"></div><div class="wm">NeuroPed EDJ</div><div class="sub">Neuropediatria de precisão</div><div class="bar"><i></i></div></div>
+<div id="sh-splash"><div class="seal"><img src="./logo-jadson.jpg" alt="" width="86" height="86" decoding="async"></div><div class="wm">NeuroPed EDJ</div><div class="sub">Neuropediatria de precisÃ£o</div><div class="bar"><i></i></div></div>
 <div id="sh">
   <header class="sh-top">
     <span class="seal"><img src="./logo-jadson.jpg" alt="" width="30" height="30" decoding="async"></span>
     <span class="wm">NeuroPed EDJ</span>
-    <span class="sec" id="sh-sec">Início</span>
+    <span class="sec" id="sh-sec">InÃ­cio</span>
   </header>
   <div class="sh-stage">
-    <iframe id="sh-frame" title="Conteúdo do aplicativo" src="about:blank"></iframe>
-    <div class="sh-load"><div class="sh-spin"></div><div class="lb" id="sh-loadlb">Carregando…</div></div>
+    <iframe id="sh-frame" title="ConteÃºdo do aplicativo" src="about:blank"></iframe>
+    <div class="sh-load"><div class="sh-spin"></div><div class="lb" id="sh-loadlb">Carregandoâ€¦</div></div>
   </div>
-  <nav class="sh-tabs" id="sh-tabs" aria-label="Navegação principal"></nav>
+  <nav class="sh-tabs" id="sh-tabs" aria-label="NavegaÃ§Ã£o principal"></nav>
 </div>
 
 <script>
@@ -102,11 +105,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
     familia:'<path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/>'
   };
   var ROUTES = {
-    inicio:    { url:'./central-atalhos.html',            label:'Início' },
+    inicio:    { url:'./central-atalhos.html',            label:'InÃ­cio' },
     escalas:   { url:'./filtro-escalas.html',             label:'Escalas' },
     biblioteca:{ url:'./neuroped-master-biblioteca.html', label:'Biblioteca' },
     caa:       { url:'./comunicacao-alternativa.html',    label:'CAA' },
-    familia:   { url:'./portal-familia-livre.html',       label:'Família' }
+    familia:   { url:'./portal-familia-livre.html',       label:'FamÃ­lia' }
   };
   var ORDER = ['inicio','escalas','biblioteca','caa','familia'];
   // mapa arquivo -> rota (sincroniza a aba quando navega dentro do quadro)
@@ -144,7 +147,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
     });
     if (ROUTES[k]) secEl.textContent = ROUTES[k].label;
   }
-  function showLoader(label){ if(loadlb) loadlb.textContent = label || 'Carregando…'; sh.classList.add('loading'); }
+  function showLoader(label){ if(loadlb) loadlb.textContent = label || 'Carregandoâ€¦'; sh.classList.add('loading'); }
   function hideLoader(){ sh.classList.remove('loading'); }
 
   function go(k, push){
@@ -152,7 +155,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
     setActive(k);
     showLoader(ROUTES[k].label);
     var target = ROUTES[k].url;
-    // só recarrega o quadro se for outra ferramenta
+    // sÃ³ recarrega o quadro se for outra ferramenta
     var cur = '';
     try { cur = frame.contentWindow.location.pathname.split('/').pop().toLowerCase(); } catch(e){}
     var want = target.split('/').pop().toLowerCase();
@@ -160,7 +163,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
     if (push && location.hash.slice(1) !== k) { try{ history.pushState(null,'','#'+k); }catch(e){ location.hash = k; } }
   }
 
-  // sincroniza a aba quando o usuário navega DENTRO do quadro (mesma origem)
+  // sincroniza a aba quando o usuÃ¡rio navega DENTRO do quadro (mesma origem)
   function hideSplash(){ var sp=document.getElementById('sh-splash'); if(sp) sp.classList.add('hide'); }
   frame.addEventListener('load', function(){
     hideLoader(); hideSplash();
@@ -168,21 +171,21 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
       var file = frame.contentWindow.location.pathname.split('/').pop().toLowerCase();
       var k = FILE2KEY[file];
       if (k){ setActive(k); if (location.hash.slice(1) !== k) { try{ history.replaceState(null,'','#'+k); }catch(e){} } }
-      // título da seção a partir do documento
+      // tÃ­tulo da seÃ§Ã£o a partir do documento
       var t = (frame.contentWindow.document && frame.contentWindow.document.title) || '';
-      if (t && !k) secEl.textContent = t.split('—')[0].split('·')[0].trim().slice(0,22);
+      if (t && !k) secEl.textContent = t.split('â€”')[0].split('Â·')[0].trim().slice(0,22);
     } catch(e){}
   });
-  // segurança: esconde loader se demorar
+  // seguranÃ§a: esconde loader se demorar
   frame.addEventListener('error', hideLoader);
 
   window.addEventListener('hashchange', function(){ var k = location.hash.slice(1); if (ROUTES[k] && k !== curKey) go(k, false); });
 
   var initial = location.hash.slice(1);
   go(ROUTES[initial] ? initial : 'inicio', false);
-  setTimeout(hideSplash, 2600); // segurança: nunca trava no splash
+  setTimeout(hideSplash, 2600); // seguranÃ§a: nunca trava no splash
 
-  // registra o service worker (mesma origem) + força checagem de atualização
+  // registra o service worker (mesma origem) + forÃ§a checagem de atualizaÃ§Ã£o
   if ('serviceWorker' in navigator) {
     try {
       navigator.serviceWorker.register('./sw.js').then(function(reg){

@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<title>Guia de Lançamento — NeuroPed (uso do autor)</title>
+<title>Guia de LanÃ§amento â€” NeuroPed (uso do autor)</title>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <style>
 :root{--bg:#0a0a16;--bg2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--soft:#928ec6;--line:rgba(169,164,255,.16);
@@ -30,7 +30,7 @@ body{color:var(--ink);min-height:100vh;line-height:1.6;
 .step{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin:10px 0;display:flex;gap:13px;align-items:flex-start}
 .step input[type=checkbox]{appearance:none;width:24px;height:24px;border-radius:8px;border:2px solid var(--indigo-l);flex:0 0 auto;cursor:pointer;margin-top:1px;position:relative;transition:.2s}
 .step input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}
-.step input[type=checkbox]:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#0a2a1e;font-weight:900;font-size:15px}
+.step input[type=checkbox]:checked::after{content:"âœ“";position:absolute;inset:0;display:grid;place-items:center;color:#0a2a1e;font-weight:900;font-size:15px}
 .step .body{flex:1}
 .step h3{margin:0 0 3px;font-size:16px;color:var(--ink)}
 .step.done h3{text-decoration:line-through;opacity:.6}
@@ -43,102 +43,105 @@ body{color:var(--ink);min-height:100vh;line-height:1.6;
 .tip{border-left:4px solid var(--gold);background:rgba(231,201,139,.1);border-radius:10px;padding:11px 14px;color:#e8dcc2;font-size:12.5px;margin-top:8px}
 .footer{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;line-height:1.7}
 </style>
+    <link rel="stylesheet" href="./neuroped-unified.css">
+    <link rel="stylesheet" href="./neuroped-polish.css">
+    <script src="./neuroped-unified.js" defer></script>
 </head>
 <body data-ns-shell>
 <main class="wrap">
   <a class="back" href="./central-atalhos.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>Voltar ao app</a>
 
   <section class="hero">
-    <span class="eyebrow">Uso do autor · roteiro privado</span>
+    <span class="eyebrow">Uso do autor Â· roteiro privado</span>
     <h1>Caminho do Sucesso</h1>
-    <p>O passo a passo para transformar o NeuroPed em renda real. Marque cada etapa concluída — seu progresso fica salvo neste aparelho.</p>
+    <p>O passo a passo para transformar o NeuroPed em renda real. Marque cada etapa concluÃ­da â€” seu progresso fica salvo neste aparelho.</p>
     <div class="bar"><i id="bar"></i></div>
-    <div class="barlabel" id="barlabel">0 de 0 concluído</div>
+    <div class="barlabel" id="barlabel">0 de 0 concluÃ­do</div>
   </section>
 
   <!-- FASE 1 -->
   <section class="phase">
-    <h2>Fase 1 · Abrir a porteira (1–2 dias)</h2>
-    <p class="desc">Sem isto, não há como o dinheiro entrar. É a base de tudo.</p>
+    <h2>Fase 1 Â· Abrir a porteira (1â€“2 dias)</h2>
+    <p class="desc">Sem isto, nÃ£o hÃ¡ como o dinheiro entrar. Ã‰ a base de tudo.</p>
 
     <label class="step"><input type="checkbox" data-k="s1">
       <div class="body"><h3>1. Acessar o Mercado Pago</h3>
-      <p>Cuida do pagamento (Pix + cartão) com sua conta já existente. Sem mensalidade, taxa baixa por venda. Entre em "Seu negócio" → "Link de pagamento".</p>
-      <a class="go" href="https://www.mercadopago.com.br" target="_blank" rel="noopener">Abrir Mercado Pago →</a></div></label>
+      <p>Cuida do pagamento (Pix + cartÃ£o) com sua conta jÃ¡ existente. Sem mensalidade, taxa baixa por venda. Entre em "Seu negÃ³cio" â†’ "Link de pagamento".</p>
+      <a class="go" href="https://www.mercadopago.com.br" target="_blank" rel="noopener">Abrir Mercado Pago â†’</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s2">
-      <div class="body"><h3>2. Criar o link de pagamento "NeuroPed Pro — Acesso Integral"</h3>
-      <p>Tipo: produto digital, pagamento único. Valor: <strong>R$ 47</strong> (acesso vitalício). Pix + cartão com parcelamento. A entrega do código é <strong>manual</strong> no início (você envia após o pagamento).</p>
-      <div class="tip">Dica: use o prompt pronto em <code>docs/PROMPT_CLAUDE_CHROME.md</code> para o Claude no Chrome montar isso para você.</div></div></label>
+      <div class="body"><h3>2. Criar o link de pagamento "NeuroPed Pro â€” Acesso Integral"</h3>
+      <p>Tipo: produto digital, pagamento Ãºnico. Valor: <strong>R$ 47</strong> (acesso vitalÃ­cio). Pix + cartÃ£o com parcelamento. A entrega do cÃ³digo Ã© <strong>manual</strong> no inÃ­cio (vocÃª envia apÃ³s o pagamento).</p>
+      <div class="tip">Dica: use o prompt pronto em <code>docs/PROMPT_CLAUDE_CHROME.md</code> para o Claude no Chrome montar isso para vocÃª.</div></div></label>
 
     <label class="step"><input type="checkbox" data-k="s3">
-      <div class="body"><h3>3. Gerar os códigos de licença</h3>
-      <p>Abra o gerador (pede seu PIN), gere um lote (ex.: 50 códigos), copie os <strong>hashes</strong> para o app. Guarde os <strong>códigos</strong> para enviar a cada comprador.</p>
-      <a class="go" href="./gerar-licencas-pro.html">Abrir gerador de licenças →</a></div></label>
+      <div class="body"><h3>3. Gerar os cÃ³digos de licenÃ§a</h3>
+      <p>Abra o gerador (pede seu PIN), gere um lote (ex.: 50 cÃ³digos), copie os <strong>hashes</strong> para o app. Guarde os <strong>cÃ³digos</strong> para enviar a cada comprador.</p>
+      <a class="go" href="./gerar-licencas-pro.html">Abrir gerador de licenÃ§as â†’</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s4">
       <div class="body"><h3>4. Colar o link de pagamento no app</h3>
-      <p>Copie o link do Mercado Pago e cole na variável <code>CHECKOUT_URL</code> em <code>neuroped-pro.html</code>. (Me mande o link aqui que eu configuro e testo para você.)</p>
-      <a class="go alt" href="./neuroped-pro.html">Ver página de vendas →</a></div></label>
+      <p>Copie o link do Mercado Pago e cole na variÃ¡vel <code>CHECKOUT_URL</code> em <code>neuroped-pro.html</code>. (Me mande o link aqui que eu configuro e testo para vocÃª.)</p>
+      <a class="go alt" href="./neuroped-pro.html">Ver pÃ¡gina de vendas â†’</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s5">
       <div class="body"><h3>5. Testar a compra de ponta a ponta</h3>
-      <p>Faça uma compra-teste, gere um código, digite no app e confirme que o acesso Pro libera. Só anuncie depois deste teste passar.</p></div></label>
+      <p>FaÃ§a uma compra-teste, gere um cÃ³digo, digite no app e confirme que o acesso Pro libera. SÃ³ anuncie depois deste teste passar.</p></div></label>
   </section>
 
   <!-- FASE 2 -->
   <section class="phase">
-    <h2>Fase 2 · Primeiras vendas (sua base regional)</h2>
-    <p class="desc">Você já tem autoridade em Petrolina. As primeiras vendas vêm de quem já te conhece.</p>
+    <h2>Fase 2 Â· Primeiras vendas (sua base regional)</h2>
+    <p class="desc">VocÃª jÃ¡ tem autoridade em Petrolina. As primeiras vendas vÃªm de quem jÃ¡ te conhece.</p>
 
     <label class="step"><input type="checkbox" data-k="s6">
       <div class="body"><h3>6. Avisar pacientes atuais (WhatsApp)</h3>
-      <p>Mensagem pronta para enviar a famílias e grupos:</p>
-      <div class="copy"><textarea readonly>Olá! 💙 Criei o NeuroPed, uma plataforma de apoio à neuropediatria para famílias: triagens, comunicação alternativa, diário de escola e terapias — e uma biblioteca clínica completa.
+      <p>Mensagem pronta para enviar a famÃ­lias e grupos:</p>
+      <div class="copy"><textarea readonly>OlÃ¡! ðŸ’™ Criei o NeuroPed, uma plataforma de apoio Ã  neuropediatria para famÃ­lias: triagens, comunicaÃ§Ã£o alternativa, diÃ¡rio de escola e terapias â€” e uma biblioteca clÃ­nica completa.
 
-Conheça aqui: https://jadsonfraga.github.io/neuroped/sobre-dr-jadson.html
+ConheÃ§a aqui: https://jadsonfraga.github.io/neuroped/sobre-dr-jadson.html
 
-— Dr. Jadson Fraga · Neuropediatra (CRM-PE 25227)</textarea>
+â€” Dr. Jadson Fraga Â· Neuropediatra (CRM-PE 25227)</textarea>
       <button data-copy>Copiar mensagem</button></div></div></label>
 
     <label class="step"><input type="checkbox" data-k="s7">
-      <div class="body"><h3>7. QR Code na recepção/consultório</h3>
-      <p>Gere um QR Code (gratuito em qr.io ou similar) apontando para a página "Sobre o Dr. Jadson" e deixe impresso na sala de espera.</p>
-      <a class="go alt" href="./sobre-dr-jadson.html">Ver página de autoridade →</a></div></label>
+      <div class="body"><h3>7. QR Code na recepÃ§Ã£o/consultÃ³rio</h3>
+      <p>Gere um QR Code (gratuito em qr.io ou similar) apontando para a pÃ¡gina "Sobre o Dr. Jadson" e deixe impresso na sala de espera.</p>
+      <a class="go alt" href="./sobre-dr-jadson.html">Ver pÃ¡gina de autoridade â†’</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s8">
       <div class="body"><h3>8. Primeiro post no Instagram</h3>
       <p>Legenda pronta:</p>
-      <div class="copy"><textarea readonly>Apresento o NeuroPed 💙
+      <div class="copy"><textarea readonly>Apresento o NeuroPed ðŸ’™
 
-Uma plataforma que organiza o cuidado da criança com o desenvolvimento — para famílias, escolas e terapeutas. Triagens por idade e queixa, comunicação alternativa gratuita, diário de evolução e muito mais.
+Uma plataforma que organiza o cuidado da crianÃ§a com o desenvolvimento â€” para famÃ­lias, escolas e terapeutas. Triagens por idade e queixa, comunicaÃ§Ã£o alternativa gratuita, diÃ¡rio de evoluÃ§Ã£o e muito mais.
 
 Tudo funciona no celular, offline, com privacidade total.
 
-Link na bio. 🧠✨
+Link na bio. ðŸ§ âœ¨
 #neuropediatria #autismo #tdah #desenvolvimentoinfantil #petrolina</textarea>
       <button data-copy>Copiar legenda</button></div></div></label>
   </section>
 
   <!-- FASE 3 -->
   <section class="phase">
-    <h2>Fase 3 · Alcance nacional (o motor de escala)</h2>
-    <p class="desc">Pais que compartilham com pais = crescimento orgânico, de graça.</p>
+    <h2>Fase 3 Â· Alcance nacional (o motor de escala)</h2>
+    <p class="desc">Pais que compartilham com pais = crescimento orgÃ¢nico, de graÃ§a.</p>
 
     <label class="step"><input type="checkbox" data-k="s9">
       <div class="body"><h3>9. Registrar no Google Search Console</h3>
-      <p>15 minutos, grátis. Faz o Google indexar suas páginas e você aparecer nas buscas por "neuropediatra" e pelo seu nome.</p>
-      <a class="go" href="https://search.google.com/search-console" target="_blank" rel="noopener">Abrir Search Console →</a></div></label>
+      <p>15 minutos, grÃ¡tis. Faz o Google indexar suas pÃ¡ginas e vocÃª aparecer nas buscas por "neuropediatra" e pelo seu nome.</p>
+      <a class="go" href="https://search.google.com/search-console" target="_blank" rel="noopener">Abrir Search Console â†’</a></div></label>
 
     <label class="step"><input type="checkbox" data-k="s10">
-      <div class="body"><h3>10. Postar conteúdo educativo semanal</h3>
-      <p>Use o Gerador de Cards do app para criar posts com sua marca. Conteúdo gratuito atrai → quem gosta compartilha → alguns compram o Pro. É o ciclo que escala.</p>
-      <a class="go alt" href="./gerador-cards.html">Abrir Gerador de Cards →</a></div></label>
+      <div class="body"><h3>10. Postar conteÃºdo educativo semanal</h3>
+      <p>Use o Gerador de Cards do app para criar posts com sua marca. ConteÃºdo gratuito atrai â†’ quem gosta compartilha â†’ alguns compram o Pro. Ã‰ o ciclo que escala.</p>
+      <a class="go alt" href="./gerador-cards.html">Abrir Gerador de Cards â†’</a></div></label>
   </section>
 
   <p class="footer">
-    Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · CRM-PE 25227 | RQE 17756<br>
-    Roteiro privado de lançamento — não substitui planejamento individual de negócio.
+    Dr. Jadson Fraga AraÃºjo JÃºnior Â· Neurologista Infantil Â· CRM-PE 25227 | RQE 17756<br>
+    Roteiro privado de lanÃ§amento â€” nÃ£o substitui planejamento individual de negÃ³cio.
   </p>
 </main>
 
@@ -158,7 +161,7 @@ Link na bio. 🧠✨
     });
     var pct=boxes.length?Math.round(done/boxes.length*100):0;
     document.getElementById('bar').style.width=pct+'%';
-    document.getElementById('barlabel').textContent=done+' de '+boxes.length+' concluído'+(done===1?'':'s')+' · '+pct+'%';
+    document.getElementById('barlabel').textContent=done+' de '+boxes.length+' concluÃ­do'+(done===1?'':'s')+' Â· '+pct+'%';
   }
   boxes.forEach(function(b){
     b.addEventListener('change',function(){
@@ -173,7 +176,7 @@ Link na bio. 🧠✨
     btn.addEventListener('click',function(){
       var ta=btn.previousElementSibling;
       var txt=ta.value;
-      function ok(){var o=btn.textContent;btn.textContent='✓ Copiado!';setTimeout(function(){btn.textContent=o;},1600);}
+      function ok(){var o=btn.textContent;btn.textContent='âœ“ Copiado!';setTimeout(function(){btn.textContent=o;},1600);}
       if(navigator.clipboard){navigator.clipboard.writeText(txt).then(ok,function(){ta.select();document.execCommand('copy');ok();});}
       else{ta.select();document.execCommand('copy');ok();}
     });
