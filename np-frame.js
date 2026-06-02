@@ -16,7 +16,7 @@
   try { if (window.self !== window.top) return; } catch (e) { return; }
 
   // páginas que abrem DENTRO da moldura (ferramentas da jornada)
-  var TOOLS = /(?:^|\/)(filtro-escalas|escala|perfil-crianca|impacto-medicacao|mapa-escalas|escalas|instrumento|instrumento-autoral|diario-escola-terapias-v2|banco-escalas[a-z0-9-]*|comunicacao-alternativa|consulta|neuroped-master-biblioteca|portal-familia-livre|area-filho|sobre-dr-jadson)\.html$/i;
+  var TOOLS = /(?:^|\/)(filtro-escalas|escala|perfil-crianca|impacto-medicacao|instrumento|instrumento-autoral|diario-escola-terapias-v2|banco-escalas[a-z0-9-]*|comunicacao-alternativa|consulta|neuroped-master-biblioteca|portal-familia-livre|area-filho|sobre-dr-jadson)\.html$/i;
 
   var ov = null, frame = null, titleEl = null, open = false;
 
@@ -68,7 +68,7 @@
     var load = ov.querySelector('.npf-load'); if (load) load.style.display = 'grid';
     titleEl.textContent = (label || 'Carregando…').slice(0, 40);
     frame.src = url;
-    requestAnimationFrame(function(){ ov.classList.add('show'); });
+    requestAnimationFrame(function(){ ov.classList.add('show'); var bk=ov.querySelector('.npf-back'); if(bk)bk.focus(); });
     open = true;
     document.documentElement.style.overflow = 'hidden';
     try { history.pushState({ npFrame: 1 }, '', '#ferramenta'); } catch (e) {}
