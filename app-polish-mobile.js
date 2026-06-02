@@ -273,7 +273,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.37.4') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.0') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -379,11 +379,106 @@
     window.addEventListener('pageshow', function(){ document.body.classList.remove('np-leaving'); });
   }
 
+  /* =====================================================
+     GUIA DE JORNADA — fluxo clínico contínuo e contextual.
+     Em vez de telas soltas, o app mostra SEMPRE: onde você está,
+     o que já concluiu e o PRÓXIMO PASSO (computado do contexto real
+     via NPStore: criança ativa + avaliações). Cada etapa conduz à
+     próxima — copiloto, não catálogo.
+     Jornada: Paciente → Escala → Responder → Laudo → Síntese
+     ===================================================== */
+  function journeyGuide(){
+    var PAGE = (location.pathname.split('/').pop() || '').toLowerCase();
+    var PAGES = ['perfil-crianca.html','filtro-escalas.html','escala.html'];
+    if (PAGES.indexOf(PAGE) < 0) return;
+    var S = window.NPStore;
+    if (!S) { setTimeout(journeyGuide, 150); return; }          // espera a espinha de dados
+
+    var STEPS = ['Paciente','Escala','Responder','Laudo','Síntese'];
+
+    function model(){
+      var c = S.active();
+      var results = (c && S.resultsFor) ? S.resultsFor(c) : [];
+      var cur, next;
+      if (!c) {
+        cur = 0;
+        next = (PAGE === 'perfil-crianca.html')
+          ? { hint: 'Cadastre a criança no formulário abaixo — ela conecta todo o fluxo.' }
+          : { label: 'Cadastrar / escolher a criança', href: './perfil-crianca.html' };
+      } else if (PAGE === 'escala.html') {
+        cur = 2; next = { hint: 'Responda os itens — ao terminar, gere o laudo (salvo no histórico da criança).' };
+      } else if (PAGE === 'filtro-escalas.html') {
+        cur = 1; next = { hint: 'Toque idade + queixa → abra a escala mais indicada e responda.' };
+      } else { // perfil com criança
+        if (!results.length) { cur = 1; next = { label: 'Escolher a 1ª escala', href: './filtro-escalas.html' }; }
+        else { cur = 4; next = { label: 'Ver a síntese do caso', href: '#synthSec' }; }
+      }
+      return { child: c, results: results, cur: cur, next: next };
+    }
+
+    function styleOnce(){
+      if (document.getElementById('np-journey-style')) return;
+      var s = document.createElement('style'); s.id = 'np-journey-style';
+      s.textContent =
+        '.np-journey{margin:0 0 16px;padding:13px 15px;border:1px solid rgba(169,164,255,.18);border-radius:18px;background:linear-gradient(180deg,rgba(124,118,210,.13),rgba(124,118,210,.05));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}' +
+        '.np-journey .who{font:800 11px system-ui;letter-spacing:.04em;color:#cdbf9a;margin-bottom:9px;display:flex;align-items:center;gap:7px}' +
+        '.np-journey .who .av{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font:800 10px Georgia,serif;color:#fff;background:linear-gradient(140deg,#6d6af5,#4f46e5)}' +
+        '.np-journey .steps{display:flex;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}' +
+        '.np-journey .steps::-webkit-scrollbar{display:none}' +
+        '.np-journey .st{display:flex;align-items:center;gap:7px;flex:0 0 auto;color:#928ec6;font:800 12px system-ui;white-space:nowrap}' +
+        '.np-journey .st .dot{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:rgba(169,164,255,.12);border:1px solid rgba(169,164,255,.2)}' +
+        '.np-journey .st.done .dot{background:linear-gradient(180deg,#e7c98b,#caa56a);color:#241a05;border-color:transparent}' +
+        '.np-journey .st.cur{color:#ECEAFF}' +
+        '.np-journey .st.cur .dot{background:linear-gradient(180deg,#6d6af5,#4f46e5);color:#fff;border-color:transparent;box-shadow:0 0 0 4px rgba(109,106,245,.18)}' +
+        '.np-journey .sep{flex:0 0 16px;height:2px;border-radius:2px;background:rgba(169,164,255,.16);margin:0 3px}' +
+        '.np-journey .sep.done{background:linear-gradient(90deg,#caa56a,rgba(169,164,255,.16))}' +
+        '.np-journey .nx{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}' +
+        '.np-journey .nx .lb{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.08em;color:#928ec6}' +
+        '.np-journey .nx .hint{color:#b6b2e6;font-size:13px;line-height:1.4}' +
+        '.np-journey .nx a.cta{display:inline-flex;align-items:center;gap:7px;text-decoration:none;border-radius:12px;padding:10px 15px;font:800 13px system-ui;color:#241a05;background:linear-gradient(180deg,#e7c98b,#caa56a);box-shadow:0 10px 24px -12px rgba(231,201,139,.6);transition:transform .15s,filter .2s}' +
+        '.np-journey .nx a.cta:hover{transform:translateY(-2px);filter:brightness(1.05)}';
+      document.head.appendChild(s);
+    }
+
+    function ini(n){ var p=(n||'').trim().split(/\s+/); return ((p[0]&&p[0][0]||'')+(p[1]&&p[1][0]||'')).toUpperCase()||'+'; }
+    function esc(t){ return String(t==null?'':t).replace(/[<>&]/g,''); }
+
+    function render(){
+      var m = model();
+      var host = document.getElementById('npJourney');
+      if (!host) {
+        styleOnce();
+        host = document.createElement('section');
+        host.id = 'npJourney'; host.className = 'np-journey';
+        host.setAttribute('aria-label', 'Etapa do atendimento');
+        var main = document.querySelector('main') || document.body;
+        var topbar = main.querySelector(':scope > header, :scope > .topbar');
+        if (topbar && topbar.nextSibling) main.insertBefore(host, topbar.nextSibling);
+        else main.insertBefore(host, main.firstChild);
+      }
+      var who = m.child
+        ? '<div class="who"><span class="av">'+ini(m.child.name)+'</span>Atendendo: '+esc(m.child.name)+'</div>'
+        : '<div class="who"><span class="av" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span>Nenhuma criança ativa</div>';
+      var steps = STEPS.map(function(lbl, i){
+        var cls = i < m.cur ? 'done' : (i === m.cur ? 'cur' : '');
+        var inner = '<span class="st '+cls+'"><span class="dot">'+(i < m.cur ? '✓' : (i+1))+'</span>'+lbl+'</span>';
+        return inner + (i < STEPS.length-1 ? '<span class="sep'+(i < m.cur ? ' done' : '')+'"></span>' : '');
+      }).join('');
+      var nx = m.next.href
+        ? '<span class="lb">Próximo passo</span><a class="cta" href="'+m.next.href+'">'+esc(m.next.label)+' ›</a>'
+        : '<span class="lb">Próximo passo</span><span class="hint">'+esc(m.next.hint)+'</span>';
+      host.innerHTML = who + '<div class="steps">'+steps+'</div><div class="nx">'+nx+'</div>';
+    }
+
+    render();
+    window.addEventListener('np-child-change', render);
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); journeyGuide(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
