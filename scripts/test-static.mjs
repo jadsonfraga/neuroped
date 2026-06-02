@@ -197,6 +197,8 @@ assertIncludes('np-store.js', 'np:children', 'perfil usa namespace np:* (camada 
 assertIncludes('np-store.js', 'resultsFor', 'np-store lê o histórico de avaliações da criança (histórico longitudinal)');
 assertIncludes('scales-enhance.js', 'gerar o laudo TAMBÉM registra', 'gerar laudo grava o resultado no histórico da criança');
 assertIncludes('perfil-crianca.html', 'histLine', 'Perfil mostra as últimas avaliações por criança');
+assertIncludes('perfil-crianca.html', 'function chartSVG', 'Perfil tem linha do tempo (evolução das avaliações em gráfico)');
+assertIncludes('perfil-crianca.html', 'renderTimeline', 'timeline desenha o histórico da criança ativa');
 assertIncludes('np-store.js', 'PATIENT_KEY', 'np-store escreve direto na chave do paciente (sem depender do scales-enhance)');
 assertNotIncludes('perfil-crianca.html', 'scales-enhance.js', 'perfil não carrega scales-enhance (sem poll eterno de 250ms)');
 assertIncludes('filtro-escalas.html', 'NPStore.ageBand', 'filtro pré-seleciona a idade da criança ativa (conexão real, não só nome)');
