@@ -273,7 +273,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.5') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.6') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -553,11 +553,78 @@
     document.body.appendChild(b);
   }
 
+  /* =====================================================
+     ONBOARDING DE PRIMEIRO USO — ativação guiada (Camada I).
+     Na Central, 1ª visita SEM criança cadastrada: convite premium em
+     3 passos com CTA direto. Aparece 1× (np_onboarded). Quem já tem
+     criança nunca vê. Não conflita com o tour do SPA (só no hub).
+     ===================================================== */
+  function onboarding(){
+    var PAGE = (location.pathname.split('/').pop() || '').toLowerCase();
+    if (PAGE !== 'central-atalhos.html') return;
+    try { if (localStorage.getItem('np_onboarded') === '1') return; } catch (e) { return; }
+    if (!window.NPStore) { setTimeout(onboarding, 200); return; }
+    if (window.NPStore.active && window.NPStore.active()) { try { localStorage.setItem('np_onboarded', '1'); } catch (e) {} return; }
+    if (document.getElementById('npOnboard')) return;
+
+    if (!document.getElementById('np-onboard-style')){
+      var st = document.createElement('style'); st.id = 'np-onboard-style';
+      st.textContent =
+        '.np-onboard{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px;' +
+          'background:rgba(8,8,20,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .25s}' +
+        '.np-onboard.show{opacity:1}' +
+        '.np-onboard .card{max-width:440px;width:100%;background:linear-gradient(160deg,#171536,#1d1a44 60%,#15133a);' +
+          'border:1px solid rgba(231,201,139,.3);border-radius:24px;padding:26px 22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.7);' +
+          'transform:translateY(10px) scale(.98);transition:transform .3s cubic-bezier(.22,.9,.25,1)}' +
+        '.np-onboard.show .card{transform:none}' +
+        '.np-onboard .lg{width:64px;height:64px;border-radius:18px;overflow:hidden;margin:0 auto 12px;box-shadow:0 0 0 1px rgba(231,201,139,.4)}' +
+        '.np-onboard .lg img{width:100%;height:100%;object-fit:cover;display:block}' +
+        '.np-onboard h2{margin:0 0 4px;text-align:center;font:700 22px "Fraunces",Georgia,serif;color:#fbf6ea}' +
+        '.np-onboard p.sub{margin:0 0 16px;text-align:center;color:#b6b2e6;font-size:13.5px}' +
+        '.np-onboard .stp{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(169,164,255,.14)}' +
+        '.np-onboard .stp:first-of-type{border-top:0}' +
+        '.np-onboard .stp .n{flex:0 0 auto;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;' +
+          'font:800 13px system-ui;color:#241a05;background:linear-gradient(180deg,#e7c98b,#caa56a)}' +
+        '.np-onboard .stp b{display:block;color:#ECEAFF;font-size:14px}' +
+        '.np-onboard .stp span{color:#928ec6;font-size:12.5px}' +
+        '.np-onboard .acts{margin-top:18px;display:flex;flex-direction:column;gap:9px}' +
+        '.np-onboard .cta{border:0;border-radius:14px;padding:14px;font:800 15px system-ui;cursor:pointer;color:#241a05;' +
+          'background:linear-gradient(180deg,#e7c98b,#caa56a);box-shadow:0 12px 28px -10px rgba(231,201,139,.6)}' +
+        '.np-onboard .skip{border:0;background:none;color:#928ec6;font:700 13px system-ui;cursor:pointer;padding:8px}';
+      document.head.appendChild(st);
+    }
+    var ov = document.createElement('div');
+    ov.id = 'npOnboard'; ov.className = 'np-onboard';
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Bem-vindo ao NeuroPed');
+    ov.innerHTML =
+      '<div class="card">' +
+        '<div class="lg"><img src="./logo-jadson.jpg" alt=""></div>' +
+        '<h2>Bem-vindo ao NeuroPed</h2>' +
+        '<p class="sub">Da triagem ao laudo, em um fluxo só. Veja como começar:</p>' +
+        '<div class="stp"><span class="n">1</span><div><b>Cadastre a criança</b><span>Ela conecta filtro, escalas e histórico — fica só no seu aparelho.</span></div></div>' +
+        '<div class="stp"><span class="n">2</span><div><b>Escolha a queixa e a idade</b><span>O app indica as 3 escalas mais apropriadas, com 1 toque.</span></div></div>' +
+        '<div class="stp"><span class="n">3</span><div><b>Responda e gere o laudo</b><span>PDF com as respostas, salvo no histórico da criança.</span></div></div>' +
+        '<div class="acts"><button type="button" class="cta">Começar agora — cadastrar criança</button>' +
+        '<button type="button" class="skip">Explorar primeiro</button></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.classList.add('show'); var c = ov.querySelector('.cta'); if (c) c.focus(); });
+    function close(go){
+      try { localStorage.setItem('np_onboarded', '1'); } catch (e) {}
+      ov.classList.remove('show');
+      setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); if (go) location.href = './perfil-crianca.html'; }, 240);
+    }
+    ov.querySelector('.cta').addEventListener('click', function(){ close(true); });
+    ov.querySelector('.skip').addEventListener('click', function(){ close(false); });
+    ov.addEventListener('click', function(e){ if (e.target === ov) close(false); });
+    document.addEventListener('keydown', function esc(e){ if (e.key === 'Escape') { document.removeEventListener('keydown', esc); close(false); } });
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); predictivePrefetch(); journeyGuide(); brandMark(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); predictivePrefetch(); journeyGuide(); brandMark(); onboarding(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
