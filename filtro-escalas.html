@@ -196,7 +196,7 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 <header class="topbar">
   <a class="back" href="./central-atalhos.html" aria-label="Voltar ao app">‹</a>
   <div class="tb-brand"><div class="tb-logo">NP</div><div><div class="tb-tt">NeuroPed</div><div class="tb-sub">Filtro de escalas</div></div></div>
-  <div class="tb-right"><a class="tb-pill" href="./escalas.html"><span class="lbl">Índice</span> 📑</a><a class="tb-pill" href="./mapa-escalas.html"><span class="lbl">Mapa</span> 🧭</a></div>
+  <div class="tb-right"><button type="button" class="tb-pill" id="allScales"><span class="lbl">Todas as escalas</span> 🔎</button></div>
 </header>
 <section class="hero"><div class="kicker">Triagem inteligente</div><h1>Qual o instrumento certo?</h1><p>Diga a idade e a queixa — o app prioriza as escalas e testes mais indicados, com perguntas em linguagem fácil e os sinais de alerta a observar.</p><div id="filtroPatientBar" class="mini" style="margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.10);display:none"></div><div class="toolbar"><button type="button" id="printTop">🖨️ Imprimir recomendações</button><button type="button" id="exportTop" class="ghost">📋 Exportar pra laudo</button></div></section>
 <section class="stats"><div class="stat"><strong id="statCount">0</strong><span>instrumentos indexados</span></div><div class="stat"><strong>3</strong><span>mais indicadas por caso</span></div><div class="stat"><strong>0 digitação</strong><span>clique idade + queixa</span></div><div class="stat"><strong>PDF</strong><span>laudo com as respostas</span></div></section>
@@ -227,6 +227,7 @@ var _cl=document.getElementById("clear");if(_cl)_cl.onclick=clearForm;
 var _pt=document.getElementById('printTop');if(_pt)_pt.onclick=printTop;
 var _et=document.getElementById('exportTop');if(_et)_et.onclick=exportTop;
 var _ss=document.getElementById('scaleSearch'),_sst;if(_ss)_ss.addEventListener('input',function(){clearTimeout(_sst);_sst=setTimeout(function(){runSearch(_ss.value)},130)});
+var _all=document.getElementById('allScales');if(_all)_all.onclick=function(){var s=document.getElementById('scaleSearch');if(s){try{s.scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}s.focus();}};
 reflectAge();showPatient();
 /* Perfil da Criança: se há criança ativa e nenhuma idade escolhida, pré-seleciona a faixa dela */
 function npApplyActiveChild(){try{if(window.NPStore){var c=window.NPStore.active();if(c&&!idadeEl.value){var band=window.NPStore.ageBand(c);if(band){idadeEl.value=band;reflectAge();}}}}catch(e){}}
