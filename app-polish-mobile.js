@@ -131,9 +131,9 @@
     el.className = 'np-splash';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML =
-      '<div class="logo" style="font:700 32px/1 Georgia,serif;letter-spacing:.04em;color:#f2dca6;' +
-        'width:84px;height:84px;border:2px solid rgba(184,150,62,.85);border-radius:20px;' +
-        'display:grid;place-items:center;box-shadow:0 0 0 1px rgba(184,150,62,.25),0 14px 40px -12px rgba(0,0,0,.5)">NP</div>' +
+      '<div class="logo" style="width:104px;height:104px;border-radius:24px;overflow:hidden;' +
+        'box-shadow:0 0 0 1px rgba(184,150,62,.45),0 20px 54px -14px rgba(0,0,0,.65)">' +
+        '<img src="./logo-jadson.jpg" alt="Dr. Jadson Fraga" style="width:100%;height:100%;object-fit:cover;display:block"></div>' +
       '<div class="name">NeuroPed EDJ</div>' +
       '<div class="tag">Dr. Jadson Fraga · Neuropediatria</div>' +
       '<div class="spinner"></div>';
@@ -273,7 +273,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.1') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.2') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -511,11 +511,37 @@
     document.addEventListener('focusin', fromEvent);
   }
 
+  /* =====================================================
+     MARCA EM TODA TELA — selo discreto da logo do Dr. Jadson
+     Fixo no canto inferior esquerdo, acima da nav (mobile) ou
+     rente à base (desktop). Decorativo (pointer-events:none): nunca
+     bloqueia clique nem quebra layout. Some na impressão.
+     ===================================================== */
+  function brandMark(){
+    if (document.getElementById('npBrandMark') || !document.body) return;
+    if (!document.getElementById('np-brandmark-style')){
+      var s = document.createElement('style'); s.id = 'np-brandmark-style';
+      s.textContent =
+        '.np-brandmark{position:fixed;z-index:40;left:max(12px,env(safe-area-inset-left,0px));' +
+          'bottom:calc(76px + env(safe-area-inset-bottom,0px));width:44px;height:44px;border-radius:13px;' +
+          'overflow:hidden;pointer-events:none;opacity:.9;background:#0e1222;' +
+          'box-shadow:0 8px 22px -8px rgba(0,0,0,.6),0 0 0 1px rgba(231,201,139,.3)}' +
+        '.np-brandmark img{width:100%;height:100%;object-fit:cover;display:block}' +
+        '@media(min-width:761px){.np-brandmark{bottom:calc(16px + env(safe-area-inset-bottom,0px))}}' +
+        '@media print{.np-brandmark{display:none!important}}';
+      document.head.appendChild(s);
+    }
+    var b = document.createElement('div');
+    b.id = 'npBrandMark'; b.className = 'np-brandmark'; b.setAttribute('aria-hidden', 'true');
+    b.innerHTML = '<img src="./logo-jadson.jpg" alt="">';
+    document.body.appendChild(b);
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); predictivePrefetch(); journeyGuide(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); predictivePrefetch(); journeyGuide(); brandMark(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

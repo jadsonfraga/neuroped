@@ -253,6 +253,10 @@ assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacida
 assertIncludes('app-polish-mobile.js', 'function journeyGuide', 'guia de jornada: etapa atual + próximo passo contextual (fluxo guiado)');
 assertIncludes('app-polish-mobile.js', 'Próximo passo', 'jornada destaca o próximo passo (navegação preditiva)');
 assertIncludes('app-polish-mobile.js', 'function predictivePrefetch', 'prefetch preditivo: próxima tela carrega antes do clique (instantâneo)');
+assertFile('logo-jadson.jpg');
+assertIncludes('app-polish-mobile.js', 'function brandMark', 'logo do Dr. Jadson presente em toda tela (marca)');
+assertIncludes('app-polish-mobile.js', './logo-jadson.jpg', 'selo de marca usa a logo oficial');
+assertIncludes('sw.js', './logo-jadson.jpg', 'logo no precache (marca disponível offline)');
 assertIncludes('filtro-escalas.html', 'Responder a 1ª agora', 'filtro: atalho de 1 toque para a escala mais indicada (menos cliques)');
 assertIncludes('filtro-escalas.html', "'np:reco'", 'filtro grava a fila de recomendadas (runner encadeia próxima)');
 assertIncludes('escala.html', 'Próxima recomendada', 'runner encadeia a próxima escala recomendada (triagem em sequência)');
