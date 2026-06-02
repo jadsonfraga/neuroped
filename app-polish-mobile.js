@@ -273,7 +273,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.2') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.3') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -390,7 +390,21 @@
   function journeyGuide(){
     var PAGE = (location.pathname.split('/').pop() || '').toLowerCase();
     var PAGES = ['perfil-crianca.html','filtro-escalas.html','escala.html'];
-    if (PAGES.indexOf(PAGE) < 0) return;
+    // telas-ramo (fora da linha escala): mostram contexto + próximo passo, sem o
+    // stepper de 5 etapas. Eliminam becos sem saída — toda tela aponta a continuidade.
+    var BRANCH = {
+      'impacto-medicacao.html': function (c) { return c
+        ? { label: 'Acompanhar resposta no Perfil', href: './perfil-crianca.html#synthSec' }
+        : { label: 'Selecionar a criança no Perfil', href: './perfil-crianca.html' }; },
+      'diario-escola-terapias-v2.html': function (c) { return c
+        ? { label: 'Ver a síntese do caso', href: './perfil-crianca.html#synthSec' }
+        : { label: 'Cadastrar a criança no Perfil', href: './perfil-crianca.html' }; },
+      'consulta.html': function (c) { return c
+        ? { label: 'Abrir o filtro de escalas', href: './filtro-escalas.html' }
+        : { label: 'Selecionar a criança no Perfil', href: './perfil-crianca.html' }; }
+    };
+    var isMain = PAGES.indexOf(PAGE) >= 0, branchFn = BRANCH[PAGE];
+    if (!isMain && !branchFn) return;
     var S = window.NPStore;
     if (!S) { setTimeout(journeyGuide, 150); return; }          // espera a espinha de dados
 
@@ -400,6 +414,7 @@
       var c = S.active();
       var results = (c && S.resultsFor) ? S.resultsFor(c) : [];
       var cur, next;
+      if (branchFn) { return { child: c, results: results, branch: true, next: branchFn(c, results) }; }
       if (!c) {
         cur = 0;
         next = (PAGE === 'perfil-crianca.html')
@@ -467,7 +482,8 @@
       var nx = m.next.href
         ? '<span class="lb">Próximo passo</span><a class="cta" href="'+m.next.href+'">'+esc(m.next.label)+' ›</a>'
         : '<span class="lb">Próximo passo</span><span class="hint">'+esc(m.next.hint)+'</span>';
-      host.innerHTML = who + '<div class="steps">'+steps+'</div><div class="nx">'+nx+'</div>';
+      var stepsHtml = m.branch ? '' : '<div class="steps">'+steps+'</div>';   // ramo: sem stepper
+      host.innerHTML = who + stepsHtml + '<div class="nx">'+nx+'</div>';
       // prefetch proativo da próxima tela provável (não páginas-âncora)
       if (m.next.href && m.next.href.charAt(0) !== '#' && window.__npPrefetchNext) window.__npPrefetchNext(m.next.href);
     }
