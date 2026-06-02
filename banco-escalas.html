@@ -119,7 +119,7 @@ function renderList(){
 }
 function selectInst(id){activeId=id;renderList();renderDetail();}
 function renderDetail(){
-  const inst=instruments.find(i=>i.id===activeId)||instruments[0];
+  const inst=instruments.find(i=>i.id===activeId)||instruments[0];try{window.scales=[inst];window.activeId=inst.id;window.answers=answers;}catch(e){}
   const items=flatItems(inst);
   const answered=Object.keys(answers[inst.id]||{}).length;
   const total=items.length;
