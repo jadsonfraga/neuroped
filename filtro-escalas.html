@@ -146,6 +146,15 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 .rf li{margin:4px 0;color:#e6e3ff;font-size:13.5px}
 .rf .src{font-size:11px;color:var(--soft-ink);margin-top:12px}
 .rf.has-u{border-color:rgba(248,113,113,.4)}
+.reasoning-panel{border-radius:18px;padding:14px 18px;margin:0 0 14px;border:1px solid rgba(124,118,210,.28);background:linear-gradient(180deg,rgba(124,118,210,.12),var(--glass));animation:npRise .4s ease both}
+.reasoning-panel summary{cursor:pointer;font:800 14px/1.2 var(--display,system-ui);color:var(--ink);list-style:none;display:flex;align-items:center;gap:6px}
+.reasoning-panel summary::-webkit-details-marker{display:none}
+.reasoning-panel .rz-diff{margin:10px 0 0}
+.reasoning-panel .rz-lab{display:inline-block;font:800 11px system-ui;letter-spacing:.04em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.reasoning-panel .rz-diff ul{margin:4px 0 0;padding-left:0;list-style:none}
+.reasoning-panel .rz-diff li{font-size:13px;line-height:1.5;padding:5px 0;border-top:1px solid var(--line)}
+.reasoning-panel .src{font-size:11px;color:var(--soft-ink);margin:12px 0 0}
+@media (prefers-reduced-motion:reduce){.reasoning-panel{animation:none}}
 
 /* ── SUMMARY / SKELETON ── */
 #summary{transition:background .3s}
@@ -204,7 +213,7 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 </header>
 <section class="hero"><div class="kicker">Triagem inteligente</div><h1>Qual o instrumento certo?</h1><p>Diga a idade e a queixa — o app prioriza as escalas e testes mais indicados, com perguntas em linguagem fácil e os sinais de alerta a observar.</p><div id="filtroPatientBar" class="mini" style="margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.10);display:none"></div><div class="toolbar"><button type="button" id="printTop">🖨️ Imprimir recomendações</button><button type="button" id="exportTop" class="ghost">📋 Exportar pra laudo</button></div></section>
 <section class="stats"><div class="stat"><strong id="statCount">0</strong><span>instrumentos indexados</span></div><div class="stat"><strong>3</strong><span>mais indicadas por caso</span></div><div class="stat"><strong>0 digitação</strong><span>clique idade + queixa</span></div><div class="stat"><strong>PDF</strong><span>laudo com as respostas</span></div></section>
-<section class="grid"><aside class="panel sticky"><h2>Monte o caso</h2><div class="field"><label>1 · Idade da criança</label><div id="ageChips" class="chips" role="group" aria-label="Idade"></div></div><div class="field"><label>2 · Queixa principal</label><div id="chips" class="chips" role="group" aria-label="Queixa"></div></div><div class="toolbar"><button class="ghost" id="clear">Limpar</button></div><p class="notice">Toque na idade e na queixa → as <strong>3 mais indicadas</strong>. Ou use a <strong>busca</strong> ao lado para achar qualquer escala do catálogo.</p><input type="hidden" id="idade"><input type="hidden" id="queixaLivre"><input type="hidden" id="respondente" value=""><input type="hidden" id="sensibilidade" value="alta"></aside><section class="panel"><h2>Escalas &amp; testes</h2><div class="scalesearch"><input id="scaleSearch" type="search" placeholder="🔎 Buscar qualquer escala pelo nome ou sintoma…" aria-label="Buscar escala em todo o catálogo" autocomplete="off"></div><div id="summary" class="notice" role="status" aria-live="polite">Selecione idade e queixa ao lado — ou busque qualquer escala acima.</div><div id="results"></div><div id="redFlags" hidden></div><div id="package" hidden></div><div id="triangulacao" hidden></div></section></section>
+<section class="grid"><aside class="panel sticky"><h2>Monte o caso</h2><div class="field"><label>1 · Idade da criança</label><div id="ageChips" class="chips" role="group" aria-label="Idade"></div></div><div class="field"><label>2 · Queixa principal</label><div id="chips" class="chips" role="group" aria-label="Queixa"></div></div><div class="toolbar"><button class="ghost" id="clear">Limpar</button></div><p class="notice">Toque na idade e na queixa → as <strong>3 mais indicadas</strong>. Ou use a <strong>busca</strong> ao lado para achar qualquer escala do catálogo.</p><input type="hidden" id="idade"><input type="hidden" id="queixaLivre"><input type="hidden" id="respondente" value=""><input type="hidden" id="sensibilidade" value="alta"></aside><section class="panel"><h2>Escalas &amp; testes</h2><div class="scalesearch"><input id="scaleSearch" type="search" placeholder="🔎 Buscar qualquer escala pelo nome ou sintoma…" aria-label="Buscar escala em todo o catálogo" autocomplete="off"></div><div id="summary" class="notice" role="status" aria-live="polite">Selecione idade e queixa ao lado — ou busque qualquer escala acima.</div><div id="reasoning" hidden></div><div id="results"></div><div id="redFlags" hidden></div><div id="package" hidden></div><div id="triangulacao" hidden></div></section></section>
 <p class="footer"><strong>Nota clínica:</strong> instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica, pedagógica ou terapêutica.</p>
 </main>
 
@@ -284,6 +293,45 @@ const CONSTRUCTS={
   risco:['autolesao','suicida','humor','regulacao emocional']
 };
 function expandConstructs(comp){var out={};(comp||[]).forEach(function(t){var c=CONSTRUCTS[norm(t)];if(c)c.forEach(function(x){out[norm(x)]=1})});return Object.keys(out);}
+// DIFERENCIAIS clínicos (conhecimento factual, não diagnóstico): para cada queixa,
+// quais quadros mimetizam/coexistem e merecem ser CRUZADOS na avaliação. Apoio à
+// decisão — nunca fecha hipótese. Só relações consagradas em neuropediatria.
+const DIFFERENTIALS={
+  tdah:[['ansiedade','desatenção pode ser preocupação/ansiedade'],['sono','privação de sono mimetiza desatenção e agitação'],['tea','desatenção pode ser desconexão social do TEA'],['escola','transtorno de aprendizagem gera desatenção secundária']],
+  tea:[['fala','atraso de linguagem isolado × TEA — pesar o prejuízo social'],['tdah','sobreposição de atenção/regulação social'],['autonomia','avaliar perfil adaptativo (atraso global × específico)']],
+  fala:[['tea','triar TEA quando há prejuízo social/pragmático'],['autonomia','atraso global × específico de linguagem']],
+  escola:[['tdah','desatenção como causa do baixo rendimento'],['ansiedade','ansiedade de desempenho/recusa'],['fala','linguagem subjacente à leitura/escrita']],
+  comportamento:[['ansiedade','oposição pode mascarar ansiedade'],['humor','irritabilidade do humor'],['tdah','impulsividade alimentando a oposição']],
+  agressividade:[['risco','avaliar autolesão e segurança — prioridade'],['sensorial','sobrecarga sensorial desencadeia crise'],['ansiedade','crise como descarga ansiosa']],
+  ansiedade:[['humor','ansiedade e depressão coocorrem'],['escola','recusa escolar'],['tdah','agitação ansiosa × hiperatividade']],
+  humor:[['risco','rastrear risco quando há tristeza/isolamento'],['ansiedade','comorbidade frequente']],
+  sono:[['tdah','privação de sono imita TDAH'],['epilepsia','eventos noturnos — diferenciar de crise'],['ansiedade','insônia ansiosa']],
+  sensorial:[['tea','perfil sensorial frequente no TEA'],['tdah','busca sensorial × agitação']],
+  alimentacao:[['sensorial','seletividade de base sensorial'],['tea','seletividade no contexto do TEA']],
+  motor:[['autonomia','impacto funcional/atraso global'],['epilepsia','quedas — diferenciar de crise atônica']],
+  epilepsia:[['sono','eventos paroxísticos do sono'],['tdah','ausências confundidas com desatenção']],
+  cefaleia:[['ansiedade','somatização/cefaleia tensional'],['humor','dor associada a sofrimento emocional']],
+  autonomia:[['tea','perfil adaptativo no TEA'],['motor','atraso global com componente motor']],
+  risco:[['humor','avaliar humor subjacente'],['ansiedade','avaliar ansiedade subjacente']]
+};
+var QLABEL={};QUICK.forEach(function(q){QLABEL[q[0]]={label:q[1],emoji:q[2]}});
+// Painel de raciocínio: fenótipo inferido + diferenciais a cruzar. Compacto, recolhível,
+// sempre rotulado como apoio à decisão (não fecha diagnóstico).
+function renderReasoning(comp){var el=document.getElementById('reasoning');if(!el)return;
+  if(!comp||!comp.length){el.innerHTML='';el.hidden=true;return;}
+  var sel={};comp.forEach(function(t){sel[t]=1});
+  var seen={},diffs=[];
+  comp.forEach(function(t){(DIFFERENTIALS[t]||[]).forEach(function(d){var tag=d[0];if(sel[tag]||seen[tag])return;seen[tag]=1;diffs.push({tag:tag,why:d[1]});});});
+  diffs=diffs.slice(0,4);
+  var cons=expandConstructs(comp).slice(0,6);
+  var qz=comp.map(function(t){return (QLABEL[t]?QLABEL[t].label:t)}).join(' · ');
+  var diffHtml=diffs.length?('<div class="rz-diff"><span class="rz-lab">Diferenciais a cruzar</span><ul>'+diffs.map(function(d){var m=QLABEL[d.tag]||{label:d.tag,emoji:'🔎'};return '<li><b>'+m.emoji+' '+esc(m.label)+'</b> — '+esc(d.why)+'</li>'}).join('')+'</ul></div>'):'';
+  var consHtml=cons.length?('<p class="mini" style="margin:6px 0 0"><b>Construtos relacionados:</b> '+cons.map(esc).join(', ')+'</p>'):'';
+  el.hidden=false;
+  el.innerHTML='<details class="reasoning-panel" open><summary>🧠 Raciocínio clínico do caso</summary>'+
+    '<p class="mini" style="margin:8px 0 0"><b>Fenótipo da queixa:</b> '+esc(qz)+'</p>'+consHtml+diffHtml+
+    '<p class="src">Apoio à decisão, não diagnóstico. Os diferenciais são quadros que mimetizam ou coexistem — cruze com a avaliação clínica antes de concluir.</p></details>';
+}
 function scoreScale(s,comp,age,resp,mode,text){let score=0,reasons=[];const words=[...(s.complaints||[]),...(s.keywords||[]),...(s.symptoms||[]),(s.title||""),(s.domain||"")].map(norm);
   // queixa casa por palavra/tag completa (evita substring frouxa tipo "tea" em "roteamento")
   const hits=comp.filter(t=>{const nt=norm(t);return words.some(w=>w===nt||w.split(/[^a-z0-9]+/).includes(nt)||(nt.length>=4&&w.includes(nt)));});score+=hits.length*60;if(hits.length)reasons.push("queixa: "+hits.join(", "));
@@ -335,7 +383,7 @@ function runSearch(raw){
     return {s:s,score:score};
   }).filter(function(x){return x.score>0 && !/lote|banco completo/i.test(x.s.title||'')})
     .sort(function(a,b){return b.score-a.score}).slice(0,12).map(function(x){return x.s});
-  ["redFlags","package","triangulacao"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML="";});
+  ["redFlags","package","triangulacao","reasoning"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML="";});
   var sum=document.getElementById("summary");
   if(rows.length){ if(sum)sum.innerHTML='<strong>'+rows.length+'</strong> escala'+(rows.length>1?'s':'')+' para "'+esc(q)+'" — toque para responder:'; document.getElementById("results").innerHTML=rows.map(function(r){return cardLite(r)}).join(""); }
   else { if(sum)sum.textContent='Nada encontrado para "'+esc(q)+'". Tente outro termo ou use idade + queixa.'; document.getElementById("results").innerHTML=""; }
@@ -345,7 +393,7 @@ function run(){var __s=document.getElementById('scaleSearch'); if(__s&&norm(__s.
   const age=months(document.getElementById("idade").value);
   const comp=detect();
   var sum=document.getElementById("summary");
-  if(!comp.length && age===null){ if(sum)sum.textContent="Selecione idade e queixa ao lado."; document.getElementById("results").innerHTML=""; return; }
+  if(!comp.length && age===null){ if(sum)sum.textContent="Selecione idade e queixa ao lado."; document.getElementById("results").innerHTML=""; var _rz=document.getElementById("reasoning");if(_rz){_rz.innerHTML="";_rz.hidden=true;} return; }
   // só escalas temáticas (patamar 500+), ordenadas por relevância; exclui lotes/bancos
   var rows=INDEX.map(function(s){return scoreScale(s,comp,age,"","alta","")}).filter(function(r){return r.score>=500}).sort(function(a,b){return b.score-a.score});
   if(!rows.length) rows=INDEX.map(function(s){return scoreScale(s,comp,age,"","muito-alta","")}).filter(function(r){return r.score>=300}).sort(function(a,b){return b.score-a.score});
@@ -355,6 +403,7 @@ function run(){var __s=document.getElementById('scaleSearch'); if(__s&&norm(__s.
   try{localStorage.setItem('np:reco',JSON.stringify(rows.map(function(r){return {id:r.id,title:r.title}})));}catch(e){}
   // saída enxuta: SÓ as 3 escalas. Nada de summary técnico, red flags, pacote ou bancos.
   ["redFlags","package","triangulacao"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML=""});
+  renderReasoning(comp);
   if(rows.length){
     if(sum){var qz=comp.length?comp.join(", "):"caso"; var it=age===null?"":" · "+(age<24?age+" meses":Math.floor(age/12)+" anos"); var one=rows[0]?' <a class="btn" style="margin-left:8px;padding:9px 13px;vertical-align:middle" href="./escala.html?id='+encodeURIComponent(rows[0].id)+'">▶ Responder a 1ª agora</a>':''; sum.innerHTML="Para <strong>"+qz+"</strong>"+it+" — as 3 mais indicadas:"+one;}
     document.getElementById("results").innerHTML=rows.map(function(r,i){return card(r,i)}).join("");
