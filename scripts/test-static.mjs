@@ -216,6 +216,8 @@ assertIncludes('central-atalhos.html', 'class="featured"', 'hub tem faixa de des
 assertIncludes('central-atalhos.html', 'IntersectionObserver', 'hub revela seções ao rolar (ritmo/transição)');
 assertIncludes('central-atalhos.html', 'id="activeChild"', 'hub mostra a criança ativa (indicador de uso / personalização)');
 assertIncludes('central-atalhos.html', 'np-store.js', 'hub integra a espinha de dados (criança ativa)');
+assertIncludes('central-atalhos.html', 'class="fmeta"', 'destaques do hub têm indicadores de uso vivos (arquitetura de atenção)');
+assertIncludes('central-atalhos.html', 'paintMeta', 'hub popula indicadores de uso com estado real da plataforma');
 // Landing UX (v6.23): busca, recentes, skip-link
 assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
 assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');
@@ -509,6 +511,13 @@ assertIncludes('scales-impacto-medicacao.js', 'npe-med-pais', 'inventário pós-
 assertIncludes('scales-impacto-medicacao.js', 'npe-med-escola', 'inventário pós-medicação visão escola');
 assertIncludes('impacto-medicacao.html', 'content="#0e0e22"', 'impacto-medicacao no tema índigo');
 assertIncludes('impacto-medicacao.html', 'eficácia farmacológica', 'impacto deixa claro que não mede eficácia');
+// Resposta à medicação ligada ao perfil (stream SEPARADO, não polui linha do tempo das escalas)
+assertIncludes('np-store.js', 'medLogFor', 'np-store guarda resposta à medicação por criança (stream separado)');
+assertIncludes('np-store.js', "MEDLOG_KEY = 'np:medlog'", 'resposta à medicação em namespace próprio (np:medlog)');
+assertIncludes('impacto-medicacao.html', './np-store.js', 'impacto-medicacao integra a criança ativa');
+assertIncludes('impacto-medicacao.html', 'addMedLog', 'impacto-medicacao salva a resposta no perfil');
+assertIncludes('perfil-crianca.html', 'Resposta à medicação', 'perfil mostra resposta à medicação (separada das escalas)');
+assertIncludes('perfil-crianca.html', 'medLogFor', 'perfil lê o stream de resposta à medicação');
 assertIncludes('filtro-escalas.html', 'renderTriangulation', 'filtro sugere 3 visões distintas (triangulação)');
 assertIncludes('scales-bundle.js', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
 assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');

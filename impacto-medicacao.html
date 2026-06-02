@@ -57,6 +57,10 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
 .compare b{color:#f2dca6}
 .disc{border-left:4px solid var(--gold);background:rgba(231,201,139,.1);border-radius:10px;padding:10px 12px;color:#e8dcc2;font-size:12.5px;margin-top:12px;line-height:1.55}
 .disc.lgpd{border-left-color:var(--indigo);background:rgba(124,118,210,.08);color:var(--muted)}
+.whochip{display:inline-flex;align-items:center;gap:9px;margin-top:13px;text-decoration:none;background:rgba(124,118,210,.16);border:1px solid rgba(169,164,255,.32);border-radius:13px;padding:9px 13px;color:#f3ede0;font-weight:700;font-size:13px}
+.whochip.none{background:rgba(231,201,139,.1);border-color:rgba(231,201,139,.3);color:#e7c98b}
+.whochip .wa{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font:800 12px Georgia,serif;color:#fff;background:linear-gradient(140deg,var(--indigo),var(--indigo-d));flex:0 0 auto}
+.whochip small{color:#cdbf9a;font-weight:600}
 </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 </head>
@@ -65,6 +69,7 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
   <header class="top">
     <a class="btn ghost" href="./filtro-escalas.html">← Filtro</a>
     <a class="btn ghost" href="./escalas.html">Índice</a>
+    <button class="btn ghost" id="saveBtn" type="button" title="Salvar no perfil da criança ativa">💾 Salvar no perfil</button>
     <button class="btn gold" id="copyBtn" type="button">Copiar resumo</button>
   </header>
 
@@ -80,6 +85,7 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
       <input id="med" placeholder="Medicação em uso (ex.: metilfenidato)">
       <input id="tempo" placeholder="Tempo de uso / dose (ex.: 6 sem · manhã)">
     </div>
+    <a id="whoChip" class="whochip" href="./perfil-crianca.html" hidden></a>
   </section>
 
   <section id="body"></section>
@@ -104,6 +110,7 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
   </div>
 </main>
 
+<script src="./np-store.js"></script>
 <script src="./scales-impacto-medicacao.js"></script>
 <script>
 (function(){
@@ -203,8 +210,36 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
     return L.join('\n');
   }
 
+  // ── vínculo com a criança ativa (perfil) ──
+  function ini(n){var p=(n||'').trim().split(/\s+/);return ((p[0]&&p[0][0]||'')+(p[1]&&p[1][0]||'')).toUpperCase()||'+';}
+  function activeChild(){try{return window.NPStore&&window.NPStore.active&&window.NPStore.active();}catch(e){return null;}}
+  function paintWho(){
+    var el=document.getElementById('whoChip');if(!el)return;
+    var c=activeChild();
+    if(c&&c.name){var age=window.NPStore.ageLabel(c);el.classList.remove('none');
+      el.innerHTML='<span class="wa" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+esc(c.name)+'</b>'+(age?' <small>· '+esc(age)+'</small>':'')+'</span>';}
+    else {el.classList.add('none');el.innerHTML='<span class="wa" aria-hidden="true" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Cadastrar criança no Perfil para salvar aqui</span>';}
+    el.hidden=false;
+  }
+  function saveToProfile(){
+    var c=activeChild();
+    if(!c){alert('Selecione uma criança ativa no Perfil para salvar a resposta à medicação.');location.href='./perfil-crianca.html';return;}
+    var p=indexFor('pais'),e=indexFor('escola');
+    if(!p&&!e){alert('Responda ao menos uma visão (família ou escola) antes de salvar.');return;}
+    var fxAll={};['pais','escola'].forEach(function(v){var s=byView[v];(ans.fx[v]||[]).forEach(function(i){if(s&&s.side_effects&&s.side_effects[i])fxAll[s.side_effects[i]]=1;});});
+    window.NPStore.addMedLog({
+      med:(document.getElementById('med').value||'').trim(),
+      tempo:(document.getElementById('tempo').value||'').trim(),
+      pais:p?p.pct:null, escola:e?e.pct:null,
+      fx:Object.keys(fxAll)
+    });
+    alert('Resposta à medicação salva no perfil de '+(c.name||'criança')+'.');
+  }
+
   Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){t.onclick=function(){setView(t.dataset.view)}});
   document.getElementById('copyBtn').onclick=function(){var t=summary();if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){alert('Resumo copiado.')});else prompt('Copie:',t)};
+  var sb=document.getElementById('saveBtn');if(sb)sb.onclick=saveToProfile;
+  paintWho();window.addEventListener('np-child-change',paintWho);
   render();
 })();
 </script>
