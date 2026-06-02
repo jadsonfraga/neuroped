@@ -248,6 +248,8 @@ assertIncludes('app-polish-mobile.css', '.np-skel', 'skeleton loaders definidos 
 assertIncludes('app-polish-mobile.css', '.np-empty', 'estado vazio institucional definido');
 assertIncludes('filtro-escalas.html', 'np-skel', 'filtro mostra skeleton enquanto carrega');
 assertIncludes('app-polish-mobile.js', 'qualitySeal', 'selo de qualidade no rodapé (robustez)');
+assertIncludes('app-polish-mobile.js', 'function pageExit', 'navegação guiada: transição de saída ao trocar de tela (app-wide)');
+assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacidade (não quebra sticky/fixed)');
 assertIncludes('diario-escola-terapias-v2.html', 'aria-label="Novo registro"', 'diário tem aria-label nos botões só-ícone');
 assertIncludes('diario-escola-terapias-v2.html', 'np-empty', 'diário usa estado vazio institucional');
 {

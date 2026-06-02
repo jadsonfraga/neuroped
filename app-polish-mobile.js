@@ -202,6 +202,9 @@
         // fade + leve subida ao entrar na página (respeitando reduced-motion)
         '@keyframes npPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
         '@media(prefers-reduced-motion:no-preference){body{animation:npPageIn .42s cubic-bezier(.22,.9,.25,1) both}}' +
+        // saída suave ao navegar (fluxo guiado app-wide): só opacidade — nunca quebra
+        // sticky/fixed (transform criaria containing block). Fade rápido pra não pesar.
+        '@media(prefers-reduced-motion:no-preference){body.np-leaving{opacity:0;transition:opacity .19s ease}}' +
         // micro-feedback universal ao tocar links/cards/botões
         'a,button,.card,.chip,.scale-card,.btn,.pill,.tb-pill{ -webkit-tap-highlight-color:rgba(124,118,210,.18) }' +
         'a:active,button:active,.card:active,.scale-card:active{ transition:transform .08s }' +
@@ -270,7 +273,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.37.3') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.37.4') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -338,11 +341,49 @@
     document.body.appendChild(b);
   }
 
+  /* =====================================================
+     Fluxo guiado app-wide: transição de SAÍDA ao navegar.
+     Cada clique de link/aba interna faz um fade suave e só então
+     troca de tela — junto com o fade de ENTRADA (npPageIn), a
+     navegação inteira vira um auto-avanço contínuo, sem corte seco.
+     Opacidade apenas (não mexe em layout). Respeita reduced-motion,
+     cliques modificados (ctrl/cmd/meio = nova aba), âncoras e externos.
+     ===================================================== */
+  function pageExit(){
+    if (window.__npPageExit) return; window.__npPageExit = true;
+    var reduce = false; try { reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+    if (reduce) return;                                   // sem animação → navegação normal
+    var navigating = false;
+    document.addEventListener('click', function(e){       // bubble: handlers da página têm prioridade
+      if (e.defaultPrevented) return;                     // SPA/handler próprio já tratou
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; // nova aba/etc.
+      var a = e.target && e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (a.target && a.target !== '_self') return;        // _blank etc.
+      if (a.hasAttribute('download')) return;
+      if (/^(#|mailto:|tel:|javascript:)/i.test(href)) return;
+      if (a.origin && a.origin !== location.origin) return;        // externo
+      if (a.href === location.href) return;                        // mesma URL → no-op
+      if (a.pathname === location.pathname && a.hash) return;      // âncora interna → scroll suave nativo
+      // navegação interna entre telas: fade-out e então troca
+      e.preventDefault();
+      if (navigating) return; navigating = true;
+      var dest = a.href, done = false;
+      var go = function(){ if (done) return; done = true; window.location.href = dest; };
+      document.body.classList.add('np-leaving');
+      document.body.addEventListener('transitionend', go, { once: true });
+      setTimeout(go, 340);                                 // fallback se transitionend não vier
+    }, false);
+    // volta do bfcache: reexibe a página (senão voltaria “apagada”)
+    window.addEventListener('pageshow', function(){ document.body.classList.remove('np-leaving'); });
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
-    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
+    if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
