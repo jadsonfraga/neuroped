@@ -263,13 +263,40 @@ function viewOf(s){const a=(s.audience||'').toLowerCase();const resp=((s.respond
   if(/autorrelato|adolescente|autoestima|como voce se sente|sentimento|humor|ansiedade|autopercep/.test(t)&&((s.age_min_months||0)>=120))return'auto';
   return'familia'}
 function respMatch(resp,s){if(!resp)return null;const v=viewOf(s);if(resp==='direto')return v==='direto';if(resp==='autoteste')return v==='auto';if(resp==='familia')return v==='familia';if(resp==='escola')return v==='escola';return s.audience===resp}
+// CONSTRUTOS clínicos (conhecimento factual): mapeia cada queixa aos construtos
+// relacionados, para o filtro raciocinar além da tag literal.
+const CONSTRUCTS={
+  tea:['social','comunicacao','linguagem','sensorial','rigidez','rotina','contato visual','interacao','estereotipia'],
+  fala:['linguagem','comunicacao','pragmatica','vocabulario','fonologia','gestos'],
+  tdah:['atencao','funcoes executivas','impulsividade','hiperatividade','organizacao','memoria de trabalho'],
+  comportamento:['regulacao','oposicao','irritabilidade','frustracao','limite'],
+  agressividade:['regulacao','comportamento','impulsividade','crise','heteroagressividade','autolesao'],
+  ansiedade:['medo','evitacao','separacao','regulacao emocional','somatizacao','fobia'],
+  humor:['tristeza','isolamento','regulacao emocional','energia','desanimo'],
+  escola:['aprendizagem','leitura','escrita','matematica','funcoes executivas','atencao'],
+  sensorial:['sensorial','tea','regulacao','seletividade','textura','barulho'],
+  motor:['coordenacao','marcha','equilibrio','motor fino','motor grosso','quedas'],
+  sono:['rotina','regulacao','irritabilidade','despertares'],
+  autonomia:['avd','adaptativo','funcional','suporte','higiene'],
+  alimentacao:['seletividade','sensorial','textura','recusa','mastigacao'],
+  rigidez:['flexibilidade','funcoes executivas','rotina','tea','interesses restritos'],
+  epilepsia:['crise','convulsao','ausencia','olhar parado'],
+  risco:['autolesao','suicida','humor','regulacao emocional']
+};
+function expandConstructs(comp){var out={};(comp||[]).forEach(function(t){var c=CONSTRUCTS[norm(t)];if(c)c.forEach(function(x){out[norm(x)]=1})});return Object.keys(out);}
 function scoreScale(s,comp,age,resp,mode,text){let score=0,reasons=[];const words=[...(s.complaints||[]),...(s.keywords||[]),...(s.symptoms||[]),(s.title||""),(s.domain||"")].map(norm);
   // queixa casa por palavra/tag completa (evita substring frouxa tipo "tea" em "roteamento")
   const hits=comp.filter(t=>{const nt=norm(t);return words.some(w=>w===nt||w.split(/[^a-z0-9]+/).includes(nt)||(nt.length>=4&&w.includes(nt)));});score+=hits.length*60;if(hits.length)reasons.push("queixa: "+hits.join(", "));
+  // CONSTRUTOS clínicos: a queixa ativa construtos relacionados (rigidez→flexibilidade
+  // executiva, agressividade→regulação…) — o filtro pensa como neuropediatra. Peso menor
+  // que a queixa direta. Conhecimento clínico factual, não métrica inventada.
+  const cwords=expandConstructs(comp);
+  const cHits=cwords.filter(function(t){return words.some(function(w){return w===t||w.split(/[^a-z0-9]+/).includes(t)||(t.length>=4&&w.includes(t))})});
+  if(cHits.length){score+=Math.min(cHits.length*15,50);if(!hits.length)reasons.push("construto relacionado: "+cHits.slice(0,3).join(", "));}
   // texto livre: só palavras significativas (>=4 chars) e casadas como token
   const tokens=(text||"").split(/[^a-z0-9]+/).filter(t=>t.length>=4);
   const direct=tokens.filter(t=>words.some(w=>w.split(/[^a-z0-9]+/).includes(t)||w.includes(t))).length;score+=Math.min(direct*22,66);if(direct)reasons.push("texto livre compatível");
-  const tematico=hits.length>0||direct>0;
+  const tematico=hits.length>0||direct>0||cHits.length>0;
   const buscaVazia=comp.length===0&&!text;
   // PATAMAR: escala temática fica num nível inalcançável pela não-temática.
   // priority entra só como DESEMPATE (peso pequeno), nunca como motor do score.

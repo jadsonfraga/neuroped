@@ -169,6 +169,8 @@ assertIncludes('filtro-escalas.html', 'r.score>=500', 'filtro só mostra escalas
 assertIncludes('filtro-escalas.html', 'score*=_mul', 'idade é GATE multiplicador (fora da faixa some — segurança clínica)');
 assertIncludes('filtro-escalas.html', 'autorrelato pouco viável nesta idade', 'penaliza autorrelato impróprio p/ pré-escolar (modalidade×idade)');
 assertIncludes('filtro-escalas.html', 'Ouro clínico', 'hierarquia clínica Ouro/Prata/Bronze (não ranking artificial)');
+assertIncludes('filtro-escalas.html', 'const CONSTRUCTS=', 'filtro pensa por construto clínico (rigidez→flexibilidade executiva etc.), não só tag literal');
+assertIncludes('filtro-escalas.html', 'function expandConstructs', 'queixa expande para construtos relacionados (raciocínio de neuropediatra)');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
