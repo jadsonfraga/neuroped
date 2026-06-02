@@ -103,7 +103,7 @@
         lines.push('• ' + (d.name || ('Domínio ' + (di + 1))));
         (d.items || []).forEach(function(item, ii){
           var v = answers && answers[di + '-' + ii];
-          var label = (v != null && inst.labels && inst.labels[v]) != null ? inst.labels[v] : '— (não respondida)';
+          var label = (v != null && inst.labels && inst.labels[v] != null) ? inst.labels[v] : '— (não respondida)';
           lines.push('   ' + (ii + 1) + '. ' + item + '  →  ' + label);
         });
       });

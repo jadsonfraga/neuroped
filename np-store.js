@@ -127,6 +127,23 @@
       .sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
   }
 
+  // Diário (escola/terapias) — leitura só-resumo para a Síntese do caso. O diário é
+  // de criança única e casado por NOME; só associamos se bate com a criança ativa
+  // (nunca mistura registros de outra criança).
+  var DIARY_KEY = 'diario_neuroped_v2';
+  function diarySummary(child) {
+    var d = read(DIARY_KEY, null);
+    if (!d || !Array.isArray(d.registros)) return null;
+    var c = d.config && d.config.crianca;
+    if (child && child.name && c && c.nome && c.nome.trim().toLowerCase() !== child.name.trim().toLowerCase()) return { count: 0, mismatch: true };
+    var regs = d.registros;
+    var last = regs.reduce(function (m, r) { var t = Date.parse(String(r.data || '').replace(' ', 'T')) || 0; return t > m ? t : m; }, 0);
+    var hum = regs.filter(function (r) { return r.humor; }).map(function (r) { return r.humor; });
+    var humAvg = hum.length ? Math.round(hum.reduce(function (a, b) { return a + b; }, 0) / hum.length * 10) / 10 : null;
+    var ter = regs.filter(function (r) { return r.tipo && r.tipo !== 'escola'; }).length;
+    return { count: regs.length, last: last || null, humorAvg: humAvg, therapy: ter, school: regs.length - ter };
+  }
+
   // Portabilidade (LGPD: portabilidade + backup). Exporta/importa o prontuário local
   // (crianças + ativa + resultados + resposta à medicação). Import MESCLA por id —
   // nunca apaga o que existe.
@@ -167,6 +184,7 @@
     ageMonths: ageMonths, ageLabel: ageLabel, ageBand: ageBand,
     resultsFor: resultsFor, code: codeOf,
     addMedLog: addMedLog, medLogFor: medLogFor,
+    diarySummary: diarySummary,
     exportAll: exportAll, importAll: importAll
   };
 

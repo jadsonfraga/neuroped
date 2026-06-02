@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.36.0';
+const CACHE_NAME = 'neuroped-edj-v6.37.0';
 const SHELL = [
   './',
   './app-shell.html',
@@ -21,7 +21,7 @@ const SHELL = [
   './premium-motion.js',
   './tour.js',
   './splash-premium.js',
-  './filtro-escalas.html','./mapa-escalas.html','./escalas.html','./instrumento.html','./instrumento-autoral.html','./impacto-medicacao.html',
+  './filtro-escalas.html','./escala.html','./mapa-escalas.html','./escalas.html','./instrumento.html','./instrumento-autoral.html','./impacto-medicacao.html',
   './diario-escola-terapias-v2.html','./consulta.html','./banco-escalas.html','./banco-escalas-lote1.html','./banco-escalas-lote2-80.html','./banco-escalas-lote3-100.html','./banco-escalas-lote4-200.html','./banco-escalas-lote5-90.html',
   './neuroped-master-biblioteca.html','./neuroped-master-biblioteca.css','./neuroped-master-biblioteca.js','./neuroped-master-biblioteca-data.js','./neuroped-master-protegido-data.js',
   './neuroped-master-vitrine.html','./neuroped-master-vitrine.css','./perfil-crianca.html','./np-store.js','./central-atalhos.html','./comunicacao-alternativa.html','./portal-familia-livre.html','./gerador-cards.html','./gerador-cards.js',
