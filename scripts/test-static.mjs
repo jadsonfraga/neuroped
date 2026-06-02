@@ -377,7 +377,7 @@ assertIncludes('instrumento.html', './scales-diarios-uteis.js', 'instrumento lig
 assertFile('instrumento.html');
 assertIncludes('instrumento.html', 'nunca/ausente', 'instrumento tem respostas clicáveis (escala 0–4)');
 assertIncludes('instrumento.html', 'Faixa orientativa', 'instrumento gera resultado/faixa ao final');
-assertIncludes('filtro-escalas.html', 'r.page', 'filtro tem botão Abrir para o instrumento');
+assertIncludes('filtro-escalas.html', 'Responder e gerar laudo', 'filtro tem botão para responder a escala e gerar laudo');
 // Validados + curadoria honesta
 
 
@@ -522,6 +522,20 @@ assertIncludes('filtro-escalas.html', 'renderTriangulation', 'filtro sugere 3 vi
 assertIncludes('scales-bundle.js', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
 assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');
 assertIncludes('filtro-escalas.html', 'Autorrelato', 'filtro distingue autorrelato');
+
+// ===== CORE: runner unificado de escala (corrige "escalas não abriam") =====
+// Antes: filtro abria banco-X.html#anchor, mas os bancos ignoravam o hash e os
+// anchors não batiam com os ids — toda recomendação caía na escala-padrão do banco.
+// Agora o filtro abre escala.html?id=<id>, que responde QUALQUER escala e gera laudo.
+assertFile('escala.html');
+assertIncludes('filtro-escalas.html', 'escala.html?id=', 'filtro abre a escala recomendada no runner (corrige abertura)');
+assertNotIncludes('filtro-escalas.html', "href=\"./'+r.page+(r.anchor", 'filtro não usa mais o link de banco+anchor (que não abria a escala certa)');
+assertIncludes('escala.html', './scales-bundle.js', 'runner carrega o catálogo+motor pelo bundle');
+assertNotIncludes('escala.html', 'src="./scales-enhance.js"', 'runner não recarrega o motor (evita laudo duplicado; já vem no bundle)');
+assertIncludes('escala.html', 'window.scales', 'runner expõe o instrumento ao motor de laudo');
+assertIncludes('escala.html', "qs('id')", 'runner resolve a escala pelo id da URL');
+assertIncludes('escala.html', './np-store.js', 'runner amarra o laudo à criança ativa');
+assertIncludes('sw.js', './escala.html', 'runner no precache (funciona offline)');
 
 // ===== Cara de app: transições entre páginas + navegação fluida =====
 assertIncludes('app-polish-mobile.css', '@view-transition', 'transições entre páginas (View Transitions API)');
