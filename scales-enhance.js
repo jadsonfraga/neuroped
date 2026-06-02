@@ -39,7 +39,19 @@
   function allResults(){ return readJSON(RESULTS_KEY, []); }
   function saveResult(r){
     var list = allResults();
-    list.unshift(r);
+    var prev = list[0];
+    // dedupe de sessão: gerar/reimprimir o MESMO laudo (mesma escala+paciente+score)
+    // em < 5 min substitui a última entrada em vez de duplicar o histórico.
+    // Uma reavaliação real (score diferente OU depois de 5 min) cria entrada nova.
+    if (prev && prev.instrument_id === r.instrument_id
+        && (prev.patient_code || '') === (r.patient_code || '')
+        && prev.score === r.score && prev.max === r.max
+        && prev.created_at && r.created_at
+        && Math.abs(new Date(r.created_at).getTime() - new Date(prev.created_at).getTime()) < 300000) {
+      list[0] = r;
+    } else {
+      list.unshift(r);
+    }
     list = list.slice(0, 400);
     writeJSON(RESULTS_KEY, list);
   }
