@@ -37,6 +37,8 @@ const criticalFiles = [
 for (const f of criticalFiles) assertFile(f);
 
 assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
+assertIncludes('sw.js', 'patchPdfLibEncoder', 'SW torna o encoder do pdf-lib tolerante a emoji (laudo PDF não quebra)');
+assertIncludes('sw.js', 'PDFButton-', 'SW remenda o chunk-núcleo do pdf-lib (cobre todos os geradores de PDF)');
 // SEO: páginas públicas têm og:image + canonical + twitter (compartilhamento/busca)
 for (const p of ['escalas.html','central-atalhos.html','sobre-dr-jadson.html','filtro-escalas.html','mapa-escalas.html','neuroped-pro.html','portal-familia-livre.html']) {
   assertIncludes(p, 'property="og:image"', p+' tem og:image (compartilhamento)');

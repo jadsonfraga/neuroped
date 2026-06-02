@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.40.2';
+const CACHE_NAME = 'neuroped-edj-v6.40.3';
 const SHELL = [
   './',
   './app-shell.html',
@@ -95,6 +95,16 @@ self.addEventListener('fetch', e => {
     return;
   }
 
+  // PATCH UNIVERSAL do pdf-lib (núcleo no chunk PDFButton): o encoder WinAnsi
+  // (Helvetica) LANÇA erro ao topar com emoji/char fora do Latin-1 — quebra TODOS
+  // os geradores de PDF do SPA (laudo de escala, teste, receita…). Aqui tornamos o
+  // encoder tolerante: caractere não-codificável vira espaço (ou '?') em vez de throw.
+  // Cobre desenho E medição de largura de uma vez. Auto-validável (no-op se a âncora sumir).
+  if (url.origin === self.location.origin && /\/PDFButton-[^/]*\.js$/.test(url.pathname)) {
+    e.respondWith(patchPdfLibEncoder(req));
+    return;
+  }
+
   // PATCH do gerador de PDF da SPA: o chunk usa fonte WinAnsi (Helvetica) e quebra
   // ao desenhar emoji/caracteres não-Latin1 → o PDF não gerava. Aqui injetamos uma
   // sanitização no ponto de entrada (title/content), SEM tocar a lógica. É
@@ -156,6 +166,27 @@ async function patchPdfGenerator(req) {
         '.replace(/[^\\u0000-\\u00FF]/g," ").replace(/[ ]{2,}/g," ").trim());};' +
         'if(n&&typeof n==="object"){n.title=__s(n.title);n.subtitle=__s(n.subtitle);n.content=__s(n.content);n.patientName=__s(n.patientName);n.extraFooter=__s(n.extraFooter);}}catch(__e){}var __npPdfSafe=1;';
       code = code.replace(anchor, inject);
+      return new Response(code, { headers: { 'Content-Type': 'application/javascript; charset=utf-8' } });
+    }
+    return new Response(code, { headers: res.headers });
+  } catch (err) {
+    return fetch(req);
+  }
+}
+
+// Torna o encoder WinAnsi do pdf-lib TOLERANTE a emoji/char fora do Latin-1:
+// onde ele lançaria erro (codepoint sem mapeamento), passamos a usar espaço (32)
+// ou '?' (63) — assim NENHUM gerador de PDF do SPA quebra. Cobre todas as cópias
+// do encoder (WinAnsi/Symbol/ZapfDingbats). No-op seguro se a âncora não existir.
+async function patchPdfLibEncoder(req) {
+  try {
+    const res = await fetch(req);
+    if (!res || !res.ok) return res;
+    let code = await res.text();
+    const anchor = 'this.encodeUnicodeCodePoint=function(i){var o=n.unicodeMappings[i];if(!o){';
+    if (code.indexOf(anchor) !== -1) {
+      const repl = 'this.encodeUnicodeCodePoint=function(i){var o=n.unicodeMappings[i];if(!o)o=n.unicodeMappings[32]||n.unicodeMappings[63];if(!o){';
+      code = code.split(anchor).join(repl);
       return new Response(code, { headers: { 'Content-Type': 'application/javascript; charset=utf-8' } });
     }
     return new Response(code, { headers: res.headers });
