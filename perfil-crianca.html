@@ -64,6 +64,9 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 .tl-main b{display:block;font-size:14px;color:var(--ink);font-weight:700}
 .tl-main span{font-size:12px;color:var(--muted)}
 .tl-pct{font:800 15px system-ui;color:var(--wine);flex:0 0 auto}
+.tl-end{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.tl-redo{font:800 11px system-ui;color:#a9a4ff;text-decoration:none;background:rgba(124,118,210,.12);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.tl-redo:hover{background:rgba(124,118,210,.22);color:#fff}
 .insights{margin:0 0 14px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:rgba(124,118,210,.06)}
 .insights>b{display:block;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}
 .ins{font-size:13px;line-height:1.5;padding:7px 11px;border-radius:10px;margin:5px 0;border-left:3px solid var(--teal);background:rgba(124,118,210,.08)}
@@ -433,7 +436,9 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
       var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';
       var pct=r.max?Math.round(100*r.score/r.max)+'%':'—';
       var dlt=prevMap.has(r)?deltaBadge(pctOf(r),prevMap.get(r)):'';
-      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' · '+r.score+'/'+r.max:'')+dlt+'</span></div><span class="tl-pct">'+pct+'</span></div>';
+      // continuidade: 1 toque reaplica a MESMA escala (reavaliação → alimenta o comparador/delta)
+      var redo=r.instrument_id?'<a class="tl-redo" href="./escala.html?id='+encodeURIComponent(r.instrument_id)+'" title="Reaplicar esta escala">↻ Reaplicar</a>':'';
+      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' · '+r.score+'/'+r.max:'')+dlt+'</span></div><div class="tl-end"><span class="tl-pct">'+pct+'</span>'+redo+'</div></div>';
     }).join('');
   }
 
