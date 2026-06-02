@@ -81,6 +81,18 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 .medrow .mmain b{color:var(--ink)}
 .medrow .mmain span{display:block;color:var(--muted);font-size:11.5px}
 .medrow .mfx{font-size:11px;color:#ffb3c6}
+/* síntese do caso (copiloto: cruza escalas × medicação × diário) */
+.synline{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.synline:first-child{border-top:0}
+.synline .se{font-size:18px;flex:0 0 auto;line-height:1.3}
+.synline .st{flex:1;min-width:0;font-size:13.5px;line-height:1.5}
+.synline .st b{color:var(--ink)}
+.synline .delta{font:800 12px system-ui;border-radius:999px;padding:2px 8px;margin-left:6px}
+.delta.up{color:#bdebd4;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.3)}
+.delta.down{color:#ffc0cf;background:rgba(220,80,110,.16);border:1px solid rgba(220,80,110,.35)}
+.delta.flat{color:var(--soft);background:rgba(169,164,255,.1);border:1px solid var(--line)}
+.synhead{font:800 22px Georgia,serif;color:var(--wine);margin:0 0 4px}
+.synsub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
 </style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
@@ -97,6 +109,23 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 
   <div class="section-title"><h2>Crianças cadastradas</h2><span id="count" class="meta" style="color:var(--soft);font-size:12px"></span></div>
   <section id="grid" class="grid"></section>
+
+  <section id="synthSec" hidden>
+    <div class="section-title"><h2>🧠 Síntese do caso — <span id="synName">criança ativa</span></h2><button class="btn ghost" id="btnSynPdf" style="padding:8px 12px;font-size:13px">📄 Síntese (PDF)</button></div>
+    <div class="panel" style="padding:16px"><div id="synBody"></div></div>
+  </section>
+
+  <section id="docsSec" hidden>
+    <div class="section-title"><h2>📄 Documentos prontos</h2></div>
+    <div class="panel" style="padding:16px">
+      <p class="lead" style="margin:0 0 12px;font-size:13px;color:var(--muted)">Modelos pré-preenchidos com a criança ativa e a identificação do Dr. Jadson Fraga. Gera PDF pela impressão do navegador.</p>
+      <div class="connect" style="margin-top:0">
+        <a href="#" data-doc="escola"><span class="e">🏫</span><span>Declaração para a escola<small>acompanhamento em curso</small></span></a>
+        <a href="#" data-doc="terapeuta"><span class="e">🤝</span><span>Relatório para terapeuta<small>encaminhamento/atualização</small></span></a>
+        <a href="#" data-doc="atestado"><span class="e">📋</span><span>Atestado de acompanhamento<small>comparecimento/seguimento</small></span></a>
+      </div>
+    </div>
+  </section>
 
   <section id="timelineSec" hidden>
     <div class="section-title"><h2>📈 Linha do tempo — <span id="tlName">criança ativa</span></h2><span id="tlCount" class="meta" style="color:var(--soft);font-size:12px"></span></div>
@@ -252,10 +281,141 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     box.innerHTML='<div class="medbox"><b>💊 Resposta à medicação ('+ml.length+')</b>'+rows
       +'<div class="ins ins-info" style="margin-top:10px">Índice de <b>melhora percebida</b> (família/escola), registrado em <a href="./impacto-medicacao.html" style="color:#a9a4ff">Impacto da medicação</a>. Acompanhamento — não mede eficácia farmacológica.</div></div>';
   }
+  // ── Comparador longitudinal: agrupa por instrumento, calcula delta vs medição anterior ──
+  function pctOf(r){return r&&r.max?Math.round(100*r.score/r.max):null;}
+  function byInstrument(rs){
+    var g={};
+    rs.forEach(function(r){var k=r.instrument_id||r.instrument_title||'?';(g[k]||(g[k]=[])).push(r);});
+    Object.keys(g).forEach(function(k){g[k].sort(function(a,b){return (a.created_at||'').localeCompare(b.created_at||'');});});
+    return g;
+  }
+  function deltaBadge(curr,prev){
+    if(prev==null||curr==null)return '';
+    var d=curr-prev; if(d===0)return ' <span class="delta flat">→ estável</span>';
+    // em escalas de sintomas, pontuação MENOR costuma indicar melhora
+    var cls=d<0?'up':'down', arrow=d<0?'▼':'▲';
+    return ' <span class="delta '+cls+'">'+arrow+' '+Math.abs(d)+' pts</span>';
+  }
+
+  // ── Síntese do caso: cruza escalas × resposta à medicação × diário ──
+  function synLines(c, rs){
+    var L=[], S=window.NPStore;
+    if(rs.length){
+      var sorted=rs.slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
+      var last=sorted[0], p=pctOf(last);
+      var g=byInstrument(rs)[last.instrument_id||last.instrument_title]||[];
+      var prev=g.length>=2?g[g.length-2]:null;
+      var d=last.created_at?new Date(last.created_at).toLocaleDateString('pt-BR'):'';
+      L.push({e:'📊',t:'<b>'+rs.length+' avaliação'+(rs.length>1?'ões':'')+'</b> · última: <b>'+esc((last.instrument_title||'escala').slice(0,38))+'</b>'+(p!=null?' — '+p+'%':'')+(d?' ('+d+')':'')+(prev?deltaBadge(p,pctOf(prev))+' vs. anterior':'')});
+    } else {
+      L.push({e:'📊',t:'Nenhuma escala respondida. Comece pelo <a href="./filtro-escalas.html" style="color:#a9a4ff">Filtro de escalas</a>.'});
+    }
+    var ml=S.medLogFor?S.medLogFor(c):[];
+    if(ml.length){
+      var m=ml[ml.length-1], parts=[];
+      if(m.pais!=null)parts.push('família '+m.pais+'%'); if(m.escola!=null)parts.push('escola '+m.escola+'%');
+      L.push({e:'💊',t:'Resposta à medicação'+(m.med?' ('+esc(m.med)+')':'')+': <b>'+esc(parts.join(' · ')||'registrada')+'</b>'+((m.fx&&m.fx.length)?' · ⚠ efeitos: '+esc(m.fx.join(', ').slice(0,48)):'')});
+    }
+    var ds=S.diarySummary?S.diarySummary(c):null;
+    if(ds&&ds.count){
+      var dl=ds.last?new Date(ds.last).toLocaleDateString('pt-BR'):'';
+      L.push({e:'📝',t:'Diário: <b>'+ds.count+' registro'+(ds.count>1?'s':'')+'</b> ('+ds.therapy+' terapêuticos · '+ds.school+' escolares)'+(ds.humorAvg?' · humor médio '+ds.humorAvg+'/5':'')+(dl?' · último '+dl:'')});
+    }
+    return L;
+  }
+  function synTips(c, rs){
+    var tips=insights(rs).slice(), S=window.NPStore;
+    var ml=S.medLogFor?S.medLogFor(c):[];
+    if(ml.length){ var m=ml[ml.length-1];
+      if(m.pais!=null&&m.escola!=null&&Math.abs(m.pais-m.escola)>=30) tips.push({k:'warn',t:'Resposta à medicação divergente entre casa e escola ('+Math.abs(m.pais-m.escola)+' pts) — investigar cobertura ao longo do dia/adesão.'});
+      if(m.fx&&m.fx.length) tips.push({k:'warn',t:'Efeitos colaterais assinalados na resposta à medicação — registrar e comunicar na próxima reavaliação.'});
+    }
+    var ds=S.diarySummary?S.diarySummary(c):null;
+    if((!ds||!ds.count)) tips.push({k:'info',t:'Sem registros no Diário ainda — o acompanhamento de escola/terapias enriquece a leitura longitudinal.'});
+    return tips;
+  }
+  function renderSynth(act){
+    var sec=$('synthSec'), dsec=$('docsSec'); if(!sec)return;
+    var S=window.NPStore, rs=S.resultsFor(act);
+    var ml=S.medLogFor?S.medLogFor(act):[], di=S.diarySummary?S.diarySummary(act):null;
+    if(dsec)dsec.hidden=false;
+    $('synName').textContent=act.name||'criança ativa';
+    if(!(rs.length||ml.length||(di&&di.count))){
+      sec.hidden=false;
+      $('synBody').innerHTML='<p class="synhead">'+esc(act.name||'Criança')+'</p><p class="synsub">Ainda sem dados para sintetizar. Responda uma escala, registre a resposta à medicação ou abra o Diário — a síntese se monta sozinha.</p>';
+      return;
+    }
+    sec.hidden=false;
+    var age=S.ageLabel(act);
+    var head='<p class="synhead">'+esc(act.name||'Criança')+'</p><p class="synsub">'+(age?esc(age):'idade não informada')+(act.diagnosis?' · '+esc(act.diagnosis):'')+' · síntese gerada em '+new Date().toLocaleDateString('pt-BR')+'</p>';
+    var lines=synLines(act,rs).map(function(x){return '<div class="synline"><span class="se">'+x.e+'</span><div class="st">'+x.t+'</div></div>';}).join('');
+    var tips=synTips(act,rs);
+    var steps='<div class="insights" style="margin-top:14px"><b>Próximos passos</b>'+tips.map(function(x){return '<div class="ins ins-'+x.k+'">'+esc(x.t)+'</div>';}).join('')+'</div>';
+    $('synBody').innerHTML=head+lines+steps;
+  }
+
+  // ── Documentos prontos (modelos do médico, pré-preenchidos) ──
+  function docShell(title, bodyHtml){
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+title+'</title>'
+      +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px 30px;line-height:1.7;max-width:720px;margin:auto}'
+      +'.hd{border-bottom:2px solid #7f1d1d;padding-bottom:10px;margin-bottom:18px}.hd b{font-size:18px;color:#7f1d1d}.hd span{display:block;font-size:12px;color:#555;margin-top:2px}'
+      +'h1{font-size:17px;color:#7f1d1d;margin:0 0 14px}p{margin:0 0 12px}.sig{margin-top:46px;text-align:center}.sig .ln{width:280px;border-top:1px solid #333;margin:0 auto 4px}.sig b{font-size:13px}.sig span{display:block;font-size:12px;color:#444}'
+      +'.warn{margin-top:26px;border-top:1px solid #ddd;padding-top:8px;font-size:11px;color:#666}@media print{body{padding:16mm}}</style></head><body>'
+      +'<div class="hd"><b>Dr. Jadson Fraga Araújo Júnior</b><span>Neurologista Infantil · CRM-PE 25227 · RQE 17756 · Petrolina/PE</span></div>'
+      +bodyHtml
+      +'<div class="sig"><div class="ln"></div><b>Dr. Jadson Fraga Araújo Júnior</b><span>CRM-PE 25227 · RQE 17756</span></div>'
+      +'<div class="warn">Documento emitido localmente pelo NeuroPed EDJ. Revise o conteúdo antes de assinar/entregar. As informações refletem dados inseridos pelo próprio profissional neste dispositivo.</div>'
+      +'</body></html>';
+  }
+  function docHtml(kind, c){
+    var pe=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]);});};
+    var age=window.NPStore.ageLabel(c), hoje=new Date().toLocaleDateString('pt-BR');
+    var quem=pe(c.name||'__________')+(age?', '+pe(age):'')+(c.sex?', '+pe(c.sex):'');
+    var dx=c.diagnosis?' com hipótese/diagnóstico de '+pe(c.diagnosis):'';
+    if(kind==='escola'){
+      return docShell('Declaração escolar — '+pe(c.name||'criança'),
+        '<h1>Declaração</h1>'
+        +'<p>Declaro, para os devidos fins, que <b>'+quem+'</b>'+dx+' encontra-se em <b>acompanhamento neuropediátrico</b> sob meus cuidados.</p>'
+        +'<p>Solicito à instituição de ensino atenção às necessidades individuais da criança, favorecendo adaptações pedagógicas e observação do desenvolvimento, em colaboração com a família e a equipe terapêutica.</p>'
+        +'<p>Coloco-me à disposição para esclarecimentos.</p>'
+        +'<p>Petrolina/PE, '+hoje+'.</p>');
+    }
+    if(kind==='terapeuta'){
+      var S=window.NPStore, rs=S.resultsFor(c).slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
+      var resumo=rs.length?'<p><b>Instrumentos recentes:</b></p><ul>'+rs.slice(0,5).map(function(r){var p=r.max?Math.round(100*r.score/r.max)+'%':'—';var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';return '<li>'+pe(r.instrument_title||'Instrumento')+' — '+p+(d?' ('+d+')':'')+'</li>';}).join('')+'</ul>':'<p>Sem instrumentos de triagem registrados até o momento.</p>';
+      return docShell('Relatório para terapeuta — '+pe(c.name||'criança'),
+        '<h1>Relatório de encaminhamento / atualização</h1>'
+        +'<p>Encaminho <b>'+quem+'</b>'+dx+', em acompanhamento neuropediátrico, para avaliação e seguimento terapêutico.</p>'
+        +resumo
+        +'<p>Solicito relatório de evolução para integração ao acompanhamento longitudinal. Agradeço a parceria no cuidado.</p>'
+        +'<p>Petrolina/PE, '+hoje+'.</p>');
+    }
+    // atestado
+    return docShell('Atestado de acompanhamento — '+pe(c.name||'criança'),
+      '<h1>Atestado</h1>'
+      +'<p>Atesto que <b>'+quem+'</b>'+dx+' encontra-se sob <b>acompanhamento neuropediátrico</b> nesta data, '+hoje+'.</p>'
+      +'<p>O presente atestado destina-se a comprovar o seguimento clínico, podendo ser apresentado a quem de direito.</p>'
+      +'<p>Petrolina/PE, '+hoje+'.</p>');
+  }
+
+  function buildSynthDoc(c){
+    var S=window.NPStore, rs=S.resultsFor(c), strip=function(h){return String(h).replace(/<[^>]+>/g,'');};
+    var lines=synLines(c,rs).map(function(x){return '<p>'+x.e+' '+strip(x.t)+'</p>';}).join('');
+    var tips=synTips(c,rs).map(function(x){return '<li>'+strip(x.t)+'</li>';}).join('');
+    var age=S.ageLabel(c);
+    return docShell('Síntese do caso — '+(c.name||'criança'),
+      '<h1>Síntese do caso</h1>'
+      +'<p><b>Criança:</b> '+(c.name||'—')+(age?' &middot; <b>Idade:</b> '+age:'')+(c.diagnosis?' &middot; <b>Hipótese:</b> '+c.diagnosis:'')+'</p>'
+      +lines
+      +'<h1 style="font-size:14px;margin-top:18px">Próximos passos</h1><ul>'+tips+'</ul>'
+      +'<p>Petrolina/PE, '+new Date().toLocaleDateString('pt-BR')+'.</p>');
+  }
+
   function renderTimeline(){
     var S=window.NPStore; if(!S||!S.resultsFor)return;
     var sec=$('timelineSec'); var act=S.active();
-    if(!act){sec.hidden=true;return;}
+    if(!act){sec.hidden=true; var s1=$('synthSec'),s2=$('docsSec'); if(s1)s1.hidden=true; if(s2)s2.hidden=true; return;}
+    renderSynth(act);
     renderMed(act);
     var rs=S.resultsFor(act).slice().sort(function(a,b){return (a.created_at||'').localeCompare(b.created_at||'');});
     $('tlName').textContent=act.name||'criança ativa';
@@ -265,11 +425,15 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     if(!rs.length){ $('tlChart').innerHTML=''; $('tlList').innerHTML='<div class="tl-empty">Ainda sem avaliações. Responda uma escala e gere o laudo — ela aparece aqui.</div>'; return; }
     var pts=rs.map(function(r){return {pct:r.max?Math.round(100*r.score/r.max):0,label:(r.instrument_title||'escala').slice(0,18)};});
     $('tlChart').innerHTML=chartSVG(pts);
+    // delta vs medição anterior do MESMO instrumento (comparador longitudinal)
+    var groups=byInstrument(rs), prevMap=new Map();
+    Object.keys(groups).forEach(function(k){var arr=groups[k];for(var i=1;i<arr.length;i++)prevMap.set(arr[i],pctOf(arr[i-1]));});
     // lista (mais recente primeiro)
     $('tlList').innerHTML=rs.slice().reverse().map(function(r){
       var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';
       var pct=r.max?Math.round(100*r.score/r.max)+'%':'—';
-      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' · '+r.score+'/'+r.max:'')+'</span></div><span class="tl-pct">'+pct+'</span></div>';
+      var dlt=prevMap.has(r)?deltaBadge(pctOf(r),prevMap.get(r)):'';
+      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' · '+r.score+'/'+r.max:'')+dlt+'</span></div><span class="tl-pct">'+pct+'</span></div>';
     }).join('');
   }
 
@@ -347,6 +511,8 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
       resetForm(); render(); renderTimeline();
     });
     $('cancel').addEventListener('click',function(){ resetForm(); });
+    var bs=$('btnSynPdf'); if(bs) bs.addEventListener('click',function(){var c=window.NPStore.active(); if(!c){toast('Selecione uma criança ativa');return;} printReport(buildSynthDoc(c));});
+    [].forEach.call(document.querySelectorAll('#docsSec [data-doc]'),function(a){a.addEventListener('click',function(e){e.preventDefault();var c=window.NPStore.active(); if(!c){toast('Selecione uma criança ativa');return;} printReport(docHtml(a.dataset.doc,c));});});
     var br=$('btnReport'); if(br) br.addEventListener('click', genReport);
     var be=$('btnExport'); if(be) be.addEventListener('click', exportData);
     var imp=$('impFile'); if(imp) imp.addEventListener('change', function(e){ importData(e.target.files&&e.target.files[0]); e.target.value=''; });
