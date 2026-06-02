@@ -210,6 +210,15 @@
         'a:active,button:active,.card:active,.scale-card:active{ transition:transform .08s }' +
         // foco visível premium e consistente (acessibilidade)
         'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:2px solid #7c79ff;outline-offset:2px;border-radius:10px}' +
+        // micro-tema premium universal (consistência sem tocar layout): seleção e
+        // barra de rolagem temáticas em todas as telas. Scrollbar só no desktop
+        // (no mobile a nativa é melhor). Não-invasivo: só decorativo.
+        '::selection{background:rgba(124,118,210,.34);color:#fff}' +
+        '@media(min-width:761px){html{scrollbar-width:thin;scrollbar-color:rgba(124,118,210,.45) transparent}' +
+        '::-webkit-scrollbar{width:11px;height:11px}' +
+        '::-webkit-scrollbar-thumb{background:rgba(124,118,210,.4);border-radius:9px;border:3px solid transparent;background-clip:content-box}' +
+        '::-webkit-scrollbar-thumb:hover{background:rgba(124,118,210,.62);background-clip:content-box}' +
+        '::-webkit-scrollbar-track{background:transparent}}' +
         // tipografia harmonizada: títulos editoriais usam Fraunces quando a página não definiu fonte própria
         'h1,h2,h3{font-feature-settings:"ss01","liga"}';
       document.head.appendChild(s);
@@ -273,7 +282,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.6') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.38.7') + '</span>';
     document.body.appendChild(seal);
   }
 

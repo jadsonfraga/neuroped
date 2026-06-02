@@ -107,6 +107,7 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
 .active-child:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.5)}
 .active-child .ac-av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font:800 13px "Fraunces",Georgia,serif;color:#fff;background:linear-gradient(140deg,var(--teal),var(--teal-d));flex:0 0 auto}
 .active-child .ac-sub{color:#cdbf9a;font-weight:600;font-size:12px}
+.active-child .ac-go{display:inline-block;margin-left:6px;font:800 11.5px system-ui;color:#241a05;background:linear-gradient(180deg,var(--gold),var(--gold-d));border-radius:999px;padding:3px 10px}
 .active-child.none{background:rgba(231,201,139,.1);border-color:rgba(231,201,139,.3);color:#e7c98b}
 .statbar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 15px;text-align:left}
@@ -312,9 +313,14 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
     var c=window.NPStore.active();
     if(c&&c.name){
       var age=window.NPStore.ageLabel(c);
+      // descoberta automática: retoma o caso no próximo passo certo (sem o usuário procurar)
+      var rs=window.NPStore.resultsFor?window.NPStore.resultsFor(c):[];
+      var step=rs.length?{t:'Continuar o caso',href:'./perfil-crianca.html'}:{t:'Escolher a 1ª escala',href:'./filtro-escalas.html'};
+      el.href=step.href;
       el.classList.remove('none');
-      el.innerHTML='<span class="ac-av" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+String(c.name).replace(/[<>&]/g,'')+'</b>'+(age?' <span class="ac-sub">· '+age+'</span>':'')+'</span>';
+      el.innerHTML='<span class="ac-av" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+String(c.name).replace(/[<>&]/g,'')+'</b>'+(age?' <span class="ac-sub">· '+age+'</span>':'')+(rs.length?' <span class="ac-sub">· '+rs.length+' aval.</span>':'')+' <span class="ac-go">'+step.t+' ›</span></span>';
     } else {
+      el.href='./perfil-crianca.html';
       el.classList.add('none');
       el.innerHTML='<span class="ac-av" aria-hidden="true" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Cadastrar criança em acompanhamento</span>';
     }
