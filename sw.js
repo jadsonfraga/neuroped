@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.37.4';
+const CACHE_NAME = 'neuroped-edj-v6.38.0';
 const SHELL = [
   './',
   './app-shell.html',
