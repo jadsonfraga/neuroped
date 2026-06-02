@@ -94,10 +94,24 @@
     else emit();
   }
 
+  // Histórico clínico da criança: lê os resultados de escala (gravados pelo
+  // scales-enhance em neuroped_scales_results_v1) filtrados pelo código da criança.
+  // É o "dado que não morre na tela" — a avaliação vira histórico longitudinal.
+  var RESULTS_KEY = 'neuroped_scales_results_v1';
+  function codeOf(c) { return c && c.id ? c.id.slice(-5) : ''; }
+  function resultsFor(child) {
+    var code = codeOf(child);
+    if (!code) return [];
+    var all = read(RESULTS_KEY, []);
+    if (!Array.isArray(all)) return [];
+    return all.filter(function (r) { return r && r.patient_code === code; });
+  }
+
   window.NPStore = {
     list: list, add: add, update: update, remove: remove,
     active: active, setActive: setActive,
-    ageMonths: ageMonths, ageLabel: ageLabel, ageBand: ageBand
+    ageMonths: ageMonths, ageLabel: ageLabel, ageBand: ageBand,
+    resultsFor: resultsFor, code: codeOf
   };
 
   // ao carregar: garante que o paciente do sistema reflita a criança ativa

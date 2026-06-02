@@ -31,6 +31,9 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 .child h3{margin:0 0 2px;font:700 17px Georgia,serif;color:var(--wine)}
 .child .meta{font-size:12.5px;color:var(--muted)}
 .child .dx{display:inline-block;margin-top:7px;font-size:11px;font-weight:800;color:#9be7c4;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.3);border-radius:999px;padding:3px 9px}
+.child .hist{margin-top:9px;font-size:11.5px;color:var(--muted);line-height:1.4;border-top:1px dashed var(--line);padding-top:8px}
+.child .hist b{color:var(--gold)}
+.child .hist-empty{color:var(--soft);font-style:italic}
 .child .acts{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
 .child .acts button{flex:0 0 auto;border:1px solid var(--line);background:rgba(124,118,210,.1);color:var(--ink);border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}
 .child .acts .pri{background:linear-gradient(135deg,var(--teal),var(--teal-d));border-color:transparent;color:#fff}
@@ -98,6 +101,18 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
   function $(id){return document.getElementById(id);}
   function esc(s){return String(s||'').replace(/[<>&"]/g,function(c){return({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]);});}
   function initials(n){var p=(n||'').trim().split(/\s+/);if(!p[0])return'?';return ((p[0][0]||'')+(p[1]?p[1][0]:'')).toUpperCase();}
+  function histLine(c){
+    try{
+      if(!window.NPStore||!window.NPStore.resultsFor)return '';
+      var rs=window.NPStore.resultsFor(c);
+      if(!rs.length)return '<div class="hist hist-empty">Nenhuma avaliação registrada ainda</div>';
+      rs.sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
+      var last=rs[0];
+      var d=last.created_at?new Date(last.created_at).toLocaleDateString('pt-BR'):'';
+      var pct=last.max?Math.round(100*last.score/last.max)+'%':'';
+      return '<div class="hist"><b>'+rs.length+'</b> avaliação'+(rs.length>1?'ões':'')+' · última: '+esc((last.instrument_title||'escala').slice(0,28))+(d?' ('+d+')':'')+(pct?' · '+pct:'')+'</div>';
+    }catch(e){return '';}
+  }
 
   function render(){
     var S=window.NPStore; if(!S){setTimeout(render,120);return;}
@@ -116,6 +131,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
         + '<h3>'+esc(c.name||'Sem nome')+'</h3>'
         + '<div class="meta">'+(age?esc(age):'idade não informada')+(c.sex?' · '+esc(c.sex):'')+'</div>'
         + (c.diagnosis?'<span class="dx">'+esc(c.diagnosis)+'</span>':'')
+        + histLine(c)
         + '<div class="acts">'
         + (isA?'':'<button class="pri" data-act="activate" data-id="'+c.id+'">Tornar ativa</button>')
         + '<button data-act="edit" data-id="'+c.id+'">Editar</button>'
