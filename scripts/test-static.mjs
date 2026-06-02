@@ -98,6 +98,10 @@ assertIncludes('scales-enhance.js', 'laudoText', 'scales-enhance gera texto pra 
 assertIncludes('scales-enhance.js', 'Respostas:', 'laudo registra as respostas item-a-item (não só o score)');
 assertIncludes('scales-enhance.js', '<th>Resposta</th>', 'PDF do laudo tem coluna de Resposta por item');
 assertIncludes('scales-enhance.js', 'Gerar laudo (PDF)', 'laudo PDF é a ação principal e clara ao fim da escala respondida');
+// Ponte banco→laudo: cada banco expõe window.scales(+domains)/activeId/answers ao scales-enhance
+for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+  assertIncludes(b, 'window.scales=[', b + ': ponte do laudo (escala respondida → laudo PDF com respostas)');
+}
 // Resultado de escala SEMPRE aparece na tela (overlay), independente de pop-up
 assertIncludes('scales-enhance.js', 'npResultOverlay', 'resultado da escala aparece em overlay na própria tela');
 assertIncludes('scales-enhance.js', 'function showResultOverlay', 'overlay de resultado é renderizado sempre');
