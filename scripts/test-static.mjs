@@ -536,6 +536,9 @@ assertIncludes('escala.html', 'window.scales', 'runner expõe o instrumento ao m
 assertIncludes('escala.html', "qs('id')", 'runner resolve a escala pelo id da URL');
 assertIncludes('escala.html', './np-store.js', 'runner amarra o laudo à criança ativa');
 assertIncludes('sw.js', './escala.html', 'runner no precache (funciona offline)');
+assertIncludes('escala.html', 'id="doneBanner"', 'runner celebra a conclusão e leva ao laudo');
+assertIncludes('escala.html', 'function advance', 'runner guia ao próximo item sem resposta (fluxo guiado)');
+assertIncludes('escala.html', 'class="skel"', 'runner mostra skeleton enquanto carrega o catálogo');
 
 // ===== Cara de app: transições entre páginas + navegação fluida =====
 assertIncludes('app-polish-mobile.css', '@view-transition', 'transições entre páginas (View Transitions API)');
