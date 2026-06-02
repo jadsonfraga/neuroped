@@ -228,7 +228,8 @@ assertIncludes('escalas.html', 'Pular para o conteúdo', 'skip-link rotulado em 
 // Refinamento landing: busca acessível
 assertIncludes('escalas.html', 'aria-live="polite"', 'busca anuncia resultados ao leitor de tela');
 assertIncludes('escalas.html', 'sr-only', 'status de busca visualmente oculto mas lido');
-assertIncludes('mapa-escalas.html', 'backdrop-filter', 'mapa-escalas usa glassmorphism (visual unificado)');
+// CONSOLIDAÇÃO: mapa-escalas foi ABSORVIDO pelo Filtro (porta única) → agora redireciona
+assertIncludes('mapa-escalas.html', "location.replace('./filtro-escalas.html')", 'mapa-escalas redireciona para a porta única (filtro)');
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
 assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
 assertIncludes('secretaria.html', 'backdrop-filter', 'secretaria usa glassmorphism (visual unificado)');
@@ -423,7 +424,7 @@ assertIncludes('app-polish-mobile.js', 'EMBEDDED', 'app-polish suprime chrome pr
 assertFile('scales-diarios-uteis.js');
 assertIncludes('scales-bundle.js', 'scales-453-authorial.js', 'filtro liga os geradores (453+)');
 assertIncludes('scales-bundle.js', 'scales-diarios-uteis.js', 'filtro liga diários/testes/ferramentas');
-assertIncludes('mapa-escalas.html', './scales-global-max.js', 'mapa liga o global-max');
+assertIncludes('filtro-escalas.html', 'scales-bundle.js', 'o filtro (porta única) carrega o catálogo completo incl. global-max (absorveu o mapa)');
 assertIncludes('instrumento.html', './scales-diarios-uteis.js', 'instrumento liga o catálogo completo');
 assertFile('instrumento.html');
 assertIncludes('instrumento.html', 'nunca/ausente', 'instrumento tem respostas clicáveis (escala 0–4)');
