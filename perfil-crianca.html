@@ -64,6 +64,13 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 .tl-main b{display:block;font-size:14px;color:var(--ink);font-weight:700}
 .tl-main span{font-size:12px;color:var(--muted)}
 .tl-pct{font:800 15px system-ui;color:var(--wine);flex:0 0 auto}
+.insights{margin:0 0 14px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:rgba(124,118,210,.06)}
+.insights>b{display:block;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}
+.ins{font-size:13px;line-height:1.5;padding:7px 11px;border-radius:10px;margin:5px 0;border-left:3px solid var(--teal);background:rgba(124,118,210,.08)}
+.ins-warn{border-left-color:var(--gold);background:rgba(231,201,139,.1);color:#e8dcc2}
+.ins-go{border-left-color:var(--teal);background:rgba(109,106,245,.12)}
+.ins-ok{border-left-color:#34d399;background:rgba(52,211,153,.1);color:#bdebd4}
+.ins-info{border-left-color:var(--soft)}
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
 </style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
@@ -84,6 +91,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
   <section id="timelineSec" hidden>
     <div class="section-title"><h2>📈 Linha do tempo — <span id="tlName">criança ativa</span></h2><span id="tlCount" class="meta" style="color:var(--soft);font-size:12px"></span></div>
     <div class="panel" style="padding:16px">
+      <div id="tlInsights"></div>
       <div id="tlChart"></div>
       <div id="tlList"></div>
       <div class="actions" style="margin-top:14px"><button class="btn" id="btnReport" style="background:linear-gradient(135deg,var(--gold),#caa56a);color:#241a05">📄 Relatório consolidado (PDF)</button></div>
@@ -192,6 +200,25 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     var line=n>1?'<path d="'+path+'" fill="none" stroke="url(#tlg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>':'';
     return '<svg class="tlsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Evolução das avaliações"><defs><linearGradient id="tlg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d6af5"/><stop offset="1" stop-color="#e7c98b"/></linearGradient></defs>'+grid+line+dots+'</svg>';
   }
+  // Inteligência operacional (regras simples, explicáveis, NÃO diagnósticas) sobre o histórico
+  function insights(rs){
+    var tips=[];
+    if(!rs.length){ return [{k:'go',t:'Comece pelo Filtro: escolha uma escala pela queixa/idade, responda e gere o laudo — aparece aqui.'}]; }
+    var sorted=rs.slice().sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
+    var last=sorted[0];
+    // 1) reavaliação vencida
+    if(last.created_at){
+      var dias=Math.floor((Date.now()-new Date(last.created_at).getTime())/86400000);
+      if(dias>=90) tips.push({k:'warn',t:'Última avaliação há '+dias+' dias. Considere reaplicar para acompanhar a evolução.'});
+    }
+    // 2) intensidade elevada na última
+    if(last.max){ var p=Math.round(100*last.score/last.max); if(p>=60) tips.push({k:'warn',t:'Pontuação elevada na última avaliação ('+p+'%). Priorize investigação dirigida e integre com outras visões (família × escola).'}); }
+    // 3) só uma visão/instrumento
+    var instrs={}; rs.forEach(function(r){instrs[r.instrument_id||r.instrument_title]=1;});
+    if(Object.keys(instrs).length===1 && rs.length>=1) tips.push({k:'info',t:'Avaliação baseada em 1 instrumento. Considere uma 2ª visão (outro respondente/escala) para triangular.'});
+    if(!tips.length) tips.push({k:'ok',t:'Acompanhamento em dia. Continue registrando avaliações para enriquecer a linha do tempo.'});
+    return tips;
+  }
   function renderTimeline(){
     var S=window.NPStore; if(!S||!S.resultsFor)return;
     var sec=$('timelineSec'); var act=S.active();
@@ -200,6 +227,7 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
     $('tlName').textContent=act.name||'criança ativa';
     $('tlCount').textContent=rs.length?(rs.length+(rs.length>1?' avaliações':' avaliação')):'';
     sec.hidden=false;
+    var ic=$('tlInsights'); if(ic){ ic.innerHTML='<div class="insights"><b>Próximos passos</b>'+insights(rs).map(function(x){return '<div class="ins ins-'+x.k+'">'+esc(x.t)+'</div>';}).join('')+'</div>'; }
     if(!rs.length){ $('tlChart').innerHTML=''; $('tlList').innerHTML='<div class="tl-empty">Ainda sem avaliações. Responda uma escala e gere o laudo — ela aparece aqui.</div>'; return; }
     var pts=rs.map(function(r){return {pct:r.max?Math.round(100*r.score/r.max):0,label:(r.instrument_title||'escala').slice(0,18)};});
     $('tlChart').innerHTML=chartSVG(pts);
