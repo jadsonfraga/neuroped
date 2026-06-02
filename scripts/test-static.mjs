@@ -333,6 +333,7 @@ assertIncludes('index.html', 'https://*.supabase.co', 'index.html permite Supaba
 assertIncludes('index.html', './np-cloud.js', 'index.html carrega np-cloud.js');
 assertIncludes('index.html', './cloud-config.js', 'index.html carrega cloud-config.js');
 assertIncludes('scales-enhance.js', 'NeuroPedCloud', 'scales-enhance roteia para Supabase quando disponivel');
+assertIncludes('scales-enhance.js', 'dedupe de sessão', 'laudo reimpresso não duplica o histórico (mesma escala+paciente+score em <5min)');
 
 // Instrumento enhance
 assertFile('instrumento-enhance.js');
