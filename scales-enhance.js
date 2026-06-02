@@ -95,6 +95,19 @@
         lines.push('  · ' + d.name + ': ' + d.score + ' / ' + d.max + (d.max ? ' (' + fmtPct(d.pct) + ')' : ''));
       });
     }
+    // Respostas item-a-item (o laudo precisa registrar O QUE foi respondido, não só o score)
+    if ((inst.domains || []).length) {
+      lines.push('');
+      lines.push('Respostas:');
+      (inst.domains || []).forEach(function(d, di){
+        lines.push('• ' + (d.name || ('Domínio ' + (di + 1))));
+        (d.items || []).forEach(function(item, ii){
+          var v = answers && answers[di + '-' + ii];
+          var label = (v != null && inst.labels && inst.labels[v]) != null ? inst.labels[v] : '— (não respondida)';
+          lines.push('   ' + (ii + 1) + '. ' + item + '  →  ' + label);
+        });
+      });
+    }
     lines.push('');
     lines.push('Observação: faixa interpretativa baseada em % do score máximo bruto. Não substitui validação clínica nem cutoffs originais do instrumento. A decisão diagnóstica é do médico responsável.');
     return lines.join('\n');
