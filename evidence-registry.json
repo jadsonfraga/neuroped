@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "purpose": "Registro de evidência/diretriz POR INSTRUMENTO. Preenchimento exclusivamente por curadoria humana (Dr. Jadson Fraga). NUNCA gerar por inferência automática.",
+    "rule": "Campo sem fonte verificada permanece null + _needs_curation:true. Um valor preenchido é uma AFIRMAÇÃO CLÍNICA — só registre o que puder citar.",
+    "consumed_by": "filtro-escalas.html (scoreScale) e escala.html — somente quando o instrumento tiver entrada curada aqui; ausência = sem claim.",
+    "schema": {
+      "instrument_id": "string (igual ao id do catálogo)",
+      "guideline_support": "array de {body: 'AAP|NICE|AACAP|DSM-5-TR|ICD-11|Cochrane', statement: 'texto verificável', citation: 'referência'}",
+      "evidence_level": "string|null — só se houver gradação publicada e citável",
+      "recommended_for": "array de strings (uso para o qual há suporte)",
+      "contraindicated_for": "array de strings (uso desaconselhado, com motivo)",
+      "false_positive_with": "array de strings (quadros que inflam a escala)",
+      "_needs_curation": "boolean"
+    },
+    "version": "0.1.0",
+    "updated": "2026-06-02"
+  },
+  "instruments": {
+    "_example_template": {
+      "instrument_id": "_example_template",
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": [],
+      "contraindicated_for": [],
+      "false_positive_with": [],
+      "_needs_curation": true
+    }
+  }
+}
