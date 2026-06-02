@@ -468,6 +468,14 @@ assertNotIncludes('index.html', 'maximum-scale=1', 'index.html NÃO bloqueia zoo
 assertNotIncludes('app-shell.html', 'maximum-scale=1', 'app-shell NÃO bloqueia zoom de toque (a11y)');
 assertIncludes('app-polish-mobile.js', 'maximum-scale=5', 'fixViewport permite pinch-zoom até 5x (a11y)');
 assertIncludes('app-polish-mobile.css', 'touch-action: manipulation', 'polish global desativa double-tap-zoom');
+// Camada F — a11y: NENHUMA tela do app pode travar o zoom (varredura cross-file)
+{
+  const htmlAll = readdirSync(root).filter(f => f.endsWith('.html'));
+  const zoomLocked = htmlAll.filter(f => /user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1\b/.test(file(f) || ''));
+  zoomLocked.length === 0
+    ? pass(`a11y: nenhuma das ${htmlAll.length} telas trava o zoom (WCAG 1.4.4)`)
+    : fail('a11y: telas travando zoom de toque', zoomLocked.join(', '));
+}
 assertIncludes('tour.js', 'npt-x', 'tour tem botão × de fechar/pular em todos os passos');
 assertIncludes('tour.js', "ev.key==='Escape'", 'tour fecha com ESC');
 // Segurança: links target=_blank gerados no checklist usam rel=noopener (anti-tabnabbing)
