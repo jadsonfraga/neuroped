@@ -255,6 +255,11 @@ assertIncludes('app-polish-mobile.js', 'Próximo passo', 'jornada destaca o pró
 assertIncludes('app-polish-mobile.js', "'impacto-medicacao.html': function", 'guia cobre telas-ramo (impacto) — sem becos sem saída');
 assertIncludes('app-polish-mobile.js', "'diario-escola-terapias-v2.html': function", 'guia cobre telas-ramo (diário)');
 assertIncludes('app-polish-mobile.js', "'consulta.html': function", 'guia cobre telas-ramo (consulta)');
+// Camada D — consistência: tipografia de exibição (Fraunces) unificada nas telas-ramo
+assertIncludes('diario-escola-terapias-v2.html', 'Fraunces', 'diário usa a fonte de exibição unificada (Fraunces)');
+assertIncludes('consulta.html', 'Fraunces', 'consulta usa a fonte de exibição unificada (Fraunces)');
+assertIncludes('comunicacao-alternativa.html', 'Fraunces', 'CAA usa a fonte de exibição unificada (Fraunces)');
+assertIncludes('neuroped-master-biblioteca.css', 'Fraunces', 'biblioteca usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('app-polish-mobile.js', 'function predictivePrefetch', 'prefetch preditivo: próxima tela carrega antes do clique (instantâneo)');
 assertFile('logo-jadson.jpg');
 assertIncludes('app-polish-mobile.js', 'function brandMark', 'logo do Dr. Jadson presente em toda tela (marca)');
