@@ -177,6 +177,12 @@ assertIncludes('escalas.html', 'backdrop-filter', 'escalas.html usa glassmorphis
 assertNotIncludes('escalas.html', 'background:linear-gradient(135deg,#ffffff', 'escalas.html sem cards de fundo branco (destoavam)');
 assertIncludes('central-atalhos.html', 'backdrop-filter', 'central-atalhos usa glassmorphism (visual unificado)');
 assertFile('np-cards.css');
+// Perfil da Criança (espinha de dados — conecta filtro/escalas/histórico)
+assertFile('np-store.js');
+assertFile('perfil-crianca.html');
+assertIncludes('np-store.js', 'NeuroPedScales.setPatient', 'criança ativa vira o paciente do sistema (fonte única, sem duplicar)');
+assertIncludes('np-store.js', 'np:children', 'perfil usa namespace np:* (camada de dados única)');
+assertIncludes('central-atalhos.html', 'perfil-crianca.html', 'hub linka o Perfil da Criança');
 // Landing UX (v6.23): busca, recentes, skip-link
 assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
 assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');

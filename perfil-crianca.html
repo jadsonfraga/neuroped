@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0e22">
+<title>Perfil da Criança — NeuroPed EDJ</title>
+<meta name="description" content="Cadastre e selecione a criança em acompanhamento no NeuroPed. Dados ficam apenas no seu dispositivo. A criança ativa conecta filtro, escalas e histórico.">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/perfil-crianca.html">
+<style>
+:root{--bg:#0a0a16;--bg2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--soft:#928ec6;--line:rgba(169,164,255,.16);--teal:#6d6af5;--teal-d:#4f46e5;--wine:#f2dca6;--gold:#e7c98b;--rose:#fb7185}
+*{box-sizing:border-box}html,body{margin:0}
+body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;line-height:1.5;
+  background:radial-gradient(1100px 620px at 8% -8%,hsl(243 85% 56% / .26),transparent 60%),radial-gradient(1000px 640px at 102% 2%,hsl(266 80% 56% / .22),transparent 56%),linear-gradient(160deg,var(--bg),var(--bg2) 60%,var(--bg));background-attachment:fixed}
+.wrap{max-width:920px;margin:auto;padding:20px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+.back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:10px}
+.hero{background:linear-gradient(135deg,#14132a,#1a1840);border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:0 18px 50px -20px rgba(2,2,12,.7);position:relative;overflow:hidden}
+.kicker{text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--teal);font-weight:900}
+h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px 0 8px}
+.lead{color:var(--muted);max-width:62ch}
+.note{display:flex;gap:9px;align-items:flex-start;margin-top:14px;font-size:12.5px;color:#e8dcc2;background:rgba(231,201,139,.1);border-left:3px solid var(--gold);border-radius:12px;padding:11px 13px}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 2px 12px}
+.section-title h2{font:700 13px system-ui;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.child{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(124,118,210,.12),rgba(124,118,210,.05));border:1px solid var(--line);border-radius:18px;padding:15px;backdrop-filter:blur(10px);transition:transform .2s,border-color .2s,box-shadow .2s}
+.child:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.3)}
+.child.active{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal),0 16px 40px -18px rgba(91,84,232,.5)}
+.child .av{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font:800 16px Georgia,serif;color:#fff;background:linear-gradient(140deg,var(--teal),var(--teal-d));margin-bottom:9px}
+.child h3{margin:0 0 2px;font:700 17px Georgia,serif;color:var(--wine)}
+.child .meta{font-size:12.5px;color:var(--muted)}
+.child .dx{display:inline-block;margin-top:7px;font-size:11px;font-weight:800;color:#9be7c4;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.3);border-radius:999px;padding:3px 9px}
+.child .acts{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.child .acts button{flex:0 0 auto;border:1px solid var(--line);background:rgba(124,118,210,.1);color:var(--ink);border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.child .acts .pri{background:linear-gradient(135deg,var(--teal),var(--teal-d));border-color:transparent;color:#fff}
+.child .acts .del{color:#ffb3c6}
+.badge-active{position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:var(--teal);border-radius:999px;padding:3px 9px}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:28px;border:1px dashed var(--line);border-radius:18px}
+.panel{background:rgba(124,118,210,.08);border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:14px}
+.field{margin:10px 0}
+.field label{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:rgba(10,9,24,.55);color:var(--ink);padding:12px 13px;font:15px system-ui;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(124,118,210,.18)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:14px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;font-weight:800;padding:13px 16px;cursor:pointer;font-size:15px}
+.btn.ghost{background:rgba(124,118,210,.1);color:var(--ink);border:1px solid var(--line)}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
+.connect{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+.connect a{display:flex;align-items:center;gap:9px;background:rgba(124,118,210,.08);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-decoration:none;color:var(--ink);font-weight:700}
+.connect a .e{font-size:20px}
+.connect a small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+@media(max-width:420px){.row2{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.child{transition:none}}
+</style>
+<link rel="stylesheet" href="./app-polish-mobile.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="./central-atalhos.html">‹ Central de atalhos</a>
+  <section class="hero">
+    <div class="kicker">NeuroPed EDJ · acompanhamento</div>
+    <h1>Perfil da Criança</h1>
+    <p class="lead">Cadastre a criança em acompanhamento. A <strong>criança ativa</strong> conecta o filtro de escalas, os instrumentos e o histórico — tudo passa a girar em torno dela.</p>
+    <div class="note">🔒 <span>Dados de menor são sensíveis. Aqui eles ficam <strong>apenas neste aparelho</strong> (armazenamento local) — nada é enviado a servidor. Apague quando quiser.</span></div>
+  </section>
+
+  <div class="section-title"><h2>Crianças cadastradas</h2><span id="count" class="meta" style="color:var(--soft);font-size:12px"></span></div>
+  <section id="grid" class="grid"></section>
+
+  <div class="section-title"><h2 id="formTitle">Adicionar criança</h2></div>
+  <section class="panel">
+    <input type="hidden" id="editId">
+    <div class="field"><label for="name">Nome ou iniciais</label><input id="name" placeholder="Ex.: João S. (ou só iniciais)" autocomplete="off"></div>
+    <div class="row2">
+      <div class="field"><label for="birth">Data de nascimento</label><input id="birth" type="date"></div>
+      <div class="field"><label for="sex">Sexo</label><select id="sex"><option value="">—</option><option>Masculino</option><option>Feminino</option><option>Outro/Não informar</option></select></div>
+    </div>
+    <div class="field"><label for="diagnosis">Diagnóstico / hipótese (opcional)</label><input id="diagnosis" placeholder="Ex.: TEA em investigação, TDAH, atraso de linguagem" autocomplete="off"></div>
+    <div class="actions">
+      <button class="btn" id="save">Salvar criança</button>
+      <button class="btn ghost" id="cancel" style="display:none">Cancelar edição</button>
+    </div>
+  </section>
+
+  <div class="section-title"><h2>Continuar com a criança ativa</h2></div>
+  <section class="connect">
+    <a href="./filtro-escalas.html"><span class="e">🔎</span><span>Filtro de escalas<small>3 instrumentos indicados</small></span></a>
+    <a href="./diario-escola-terapias-v2.html"><span class="e">📝</span><span>Diário<small>escola e terapias</small></span></a>
+    <a href="./impacto-medicacao.html"><span class="e">💊</span><span>Impacto da medicação<small>acompanhamento</small></span></a>
+  </section>
+</main>
+
+<script src="./scales-enhance.js" defer></script>
+<script src="./np-store.js" defer></script>
+<script>
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s||'').replace(/[<>&"]/g,function(c){return({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]);});}
+  function initials(n){var p=(n||'').trim().split(/\s+/);if(!p[0])return'?';return ((p[0][0]||'')+(p[1]?p[1][0]:'')).toUpperCase();}
+
+  function render(){
+    var S=window.NPStore; if(!S){setTimeout(render,120);return;}
+    var children=S.list(), act=S.active(), grid=$('grid');
+    $('count').textContent=children.length?children.length+(children.length>1?' crianças':' criança'):'';
+    if(!children.length){
+      grid.innerHTML='<div class="empty">Nenhuma criança cadastrada ainda.<br>Use o formulário abaixo para começar.</div>';
+      return;
+    }
+    grid.innerHTML=children.map(function(c){
+      var isA=act&&act.id===c.id;
+      var age=S.ageLabel(c);
+      return '<article class="child'+(isA?' active':'')+'">'
+        + (isA?'<span class="badge-active">ativa</span>':'')
+        + '<div class="av" aria-hidden="true">'+esc(initials(c.name))+'</div>'
+        + '<h3>'+esc(c.name||'Sem nome')+'</h3>'
+        + '<div class="meta">'+(age?esc(age):'idade não informada')+(c.sex?' · '+esc(c.sex):'')+'</div>'
+        + (c.diagnosis?'<span class="dx">'+esc(c.diagnosis)+'</span>':'')
+        + '<div class="acts">'
+        + (isA?'':'<button class="pri" data-act="activate" data-id="'+c.id+'">Tornar ativa</button>')
+        + '<button data-act="edit" data-id="'+c.id+'">Editar</button>'
+        + '<button class="del" data-act="del" data-id="'+c.id+'">Excluir</button>'
+        + '</div></article>';
+    }).join('');
+    [].forEach.call(grid.querySelectorAll('button[data-act]'),function(b){
+      b.addEventListener('click',function(){
+        var id=b.dataset.id, a=b.dataset.act, S=window.NPStore;
+        if(a==='activate'){S.setActive(id);toast('Criança ativa atualizada');}
+        else if(a==='edit'){startEdit(id);}
+        else if(a==='del'){ if(confirm('Excluir esta criança e seus dados de perfil deste aparelho?')){S.remove(id);} }
+      });
+    });
+  }
+
+  function startEdit(id){
+    var c=window.NPStore.list().filter(function(x){return x.id===id;})[0]; if(!c)return;
+    $('editId').value=c.id; $('name').value=c.name||''; $('birth').value=c.birth||''; $('sex').value=c.sex||''; $('diagnosis').value=c.diagnosis||'';
+    $('formTitle').textContent='Editar criança'; $('cancel').style.display='';
+    $('name').focus(); window.scrollTo({top:document.querySelector('.panel').offsetTop-80,behavior:'smooth'});
+  }
+  function resetForm(){
+    $('editId').value=''; $('name').value=''; $('birth').value=''; $('sex').value=''; $('diagnosis').value='';
+    $('formTitle').textContent='Adicionar criança'; $('cancel').style.display='none';
+  }
+  function toast(m){ if(window.npToast)window.npToast(m); }
+
+  function start(){
+    var S=window.NPStore; if(!S){setTimeout(start,120);return;}
+    $('save').addEventListener('click',function(){
+      var name=$('name').value.trim();
+      if(!name){ $('name').focus(); toast('Informe ao menos o nome ou iniciais'); return; }
+      var data={name:name,birth:$('birth').value,sex:$('sex').value,diagnosis:$('diagnosis').value.trim()};
+      var id=$('editId').value;
+      if(id){ S.update(id,data); toast('Criança atualizada'); }
+      else { S.add(data); toast('Criança cadastrada e tornada ativa'); }
+      resetForm(); render();
+    });
+    $('cancel').addEventListener('click',function(){ resetForm(); });
+    window.addEventListener('np-child-change',render);
+    render();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start); else start();
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+</body>
+</html>
