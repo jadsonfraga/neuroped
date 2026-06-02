@@ -214,6 +214,8 @@ assertIncludes('diario-escola-terapias-v2.html', 'window.NPStore.active', 'diár
 assertIncludes('central-atalhos.html', 'perfil-crianca.html', 'hub linka o Perfil da Criança');
 assertIncludes('central-atalhos.html', 'class="featured"', 'hub tem faixa de destaques (hierarquia de produto)');
 assertIncludes('central-atalhos.html', 'IntersectionObserver', 'hub revela seções ao rolar (ritmo/transição)');
+assertIncludes('central-atalhos.html', 'id="activeChild"', 'hub mostra a criança ativa (indicador de uso / personalização)');
+assertIncludes('central-atalhos.html', 'np-store.js', 'hub integra a espinha de dados (criança ativa)');
 // Landing UX (v6.23): busca, recentes, skip-link
 assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
 assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');

@@ -96,6 +96,11 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
 .credline span{display:inline-flex;align-items:center;gap:7px;font:700 11.5px system-ui;color:#e9dcbf;
   background:rgba(231,201,139,.12);border:1px solid rgba(231,201,139,.3);border-radius:999px;padding:6px 12px}
 .credline .ico{width:15px;height:15px;color:var(--gold)}
+.active-child{display:inline-flex;align-items:center;gap:9px;margin-top:16px;text-decoration:none;background:rgba(124,118,210,.16);border:1px solid rgba(169,164,255,.34);border-radius:14px;padding:10px 14px;color:#f3ede0;font-weight:700;font-size:13.5px;transition:transform .2s,border-color .2s}
+.active-child:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.5)}
+.active-child .ac-av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font:800 13px Georgia,serif;color:#fff;background:linear-gradient(140deg,var(--teal),var(--teal-d));flex:0 0 auto}
+.active-child .ac-sub{color:#cdbf9a;font-weight:600;font-size:12px}
+.active-child.none{background:rgba(231,201,139,.1);border-color:rgba(231,201,139,.3);color:#e7c98b}
 .statbar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 15px;text-align:left}
 .stat b{display:block;font:800 22px Georgia,serif;color:var(--gold);line-height:1}
@@ -159,6 +164,7 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
       <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>Neurologista Infantil · CRM-PE 25227 · RQE 17756</span>
       <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Petrolina/PE</span>
     </div>
+    <a id="activeChild" class="active-child" href="./perfil-crianca.html" hidden></a>
   </section>
 
   <div class="statbar">
@@ -286,6 +292,27 @@ h1{font:700 clamp(34px,7vw,56px)/.98 Georgia,serif;margin:14px 0 6px;color:#fbf6
       groups.forEach(function(g){io.observe(g);});
     } else { groups.forEach(function(g){g.classList.add('reveal');}); }
   }catch(e){ groups.forEach(function(g){g.classList.add('reveal');}); }
+})();
+</script>
+<script src="./np-store.js"></script>
+<script>
+(function(){
+  function ini(n){var p=(n||'').trim().split(/\s+/);return ((p[0]&&p[0][0]||'')+(p[1]&&p[1][0]||'')).toUpperCase()||'+';}
+  function paint(){
+    var el=document.getElementById('activeChild'); if(!el||!window.NPStore)return;
+    var c=window.NPStore.active();
+    if(c&&c.name){
+      var age=window.NPStore.ageLabel(c);
+      el.classList.remove('none');
+      el.innerHTML='<span class="ac-av" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+String(c.name).replace(/[<>&]/g,'')+'</b>'+(age?' <span class="ac-sub">· '+age+'</span>':'')+'</span>';
+    } else {
+      el.classList.add('none');
+      el.innerHTML='<span class="ac-av" aria-hidden="true" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Cadastrar criança em acompanhamento</span>';
+    }
+    el.hidden=false;
+  }
+  if(window.NPStore)paint(); else window.addEventListener('DOMContentLoaded',paint);
+  window.addEventListener('np-child-change',paint);
 })();
 </script>
 <script src="./app-polish-mobile.js" defer></script>
