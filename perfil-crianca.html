@@ -54,6 +54,16 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 .connect a .e{font-size:20px}
 .connect a small{display:block;color:var(--muted);font-weight:500;font-size:12px}
 @media(max-width:420px){.row2{grid-template-columns:1fr}}
+/* timeline */
+.tlsvg{width:100%;height:140px;display:block}
+.tl-empty{color:var(--soft);font-size:14px;text-align:center;padding:18px}
+.tl-item{display:flex;align-items:center;gap:11px;padding:11px 4px;border-top:1px solid var(--line)}
+.tl-item:first-child{border-top:0}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex:0 0 auto;box-shadow:0 0 0 3px rgba(124,118,210,.18)}
+.tl-main{flex:1;min-width:0}
+.tl-main b{display:block;font-size:14px;color:var(--ink);font-weight:700}
+.tl-main span{font-size:12px;color:var(--muted)}
+.tl-pct{font:800 15px system-ui;color:var(--wine);flex:0 0 auto}
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
 </style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
@@ -70,6 +80,14 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
 
   <div class="section-title"><h2>Crianças cadastradas</h2><span id="count" class="meta" style="color:var(--soft);font-size:12px"></span></div>
   <section id="grid" class="grid"></section>
+
+  <section id="timelineSec" hidden>
+    <div class="section-title"><h2>📈 Linha do tempo — <span id="tlName">criança ativa</span></h2><span id="tlCount" class="meta" style="color:var(--soft);font-size:12px"></span></div>
+    <div class="panel" style="padding:16px">
+      <div id="tlChart"></div>
+      <div id="tlList"></div>
+    </div>
+  </section>
 
   <div class="section-title"><h2 id="formTitle">Adicionar criança</h2></div>
   <section class="panel">
@@ -160,6 +178,38 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
   }
   function toast(m){ if(window.npToast)window.npToast(m); }
 
+  function chartSVG(points){
+    // points: [{pct, label}] em ordem cronológica. Desenha linha + pontos.
+    var W=320,H=140,pad=22,n=points.length;
+    if(!n)return '';
+    var x=function(i){return n===1?W/2:pad+i*((W-2*pad)/(n-1));};
+    var y=function(p){return H-pad-(p/100)*(H-2*pad);};
+    var grid='';
+    [0,50,100].forEach(function(v){var yy=y(v);grid+='<line x1="'+pad+'" y1="'+yy+'" x2="'+(W-pad)+'" y2="'+yy+'" stroke="rgba(169,164,255,.12)" stroke-width="1"/><text x="2" y="'+(yy+3)+'" fill="#928ec6" font-size="9">'+v+'%</text>';});
+    var path=points.map(function(p,i){return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.pct).toFixed(1);}).join(' ');
+    var dots=points.map(function(p,i){return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.pct).toFixed(1)+'" r="4" fill="#f2dca6" stroke="#0a0a16" stroke-width="1.5"><title>'+p.label+': '+p.pct+'%</title></circle>';}).join('');
+    var line=n>1?'<path d="'+path+'" fill="none" stroke="url(#tlg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>':'';
+    return '<svg class="tlsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Evolução das avaliações"><defs><linearGradient id="tlg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d6af5"/><stop offset="1" stop-color="#e7c98b"/></linearGradient></defs>'+grid+line+dots+'</svg>';
+  }
+  function renderTimeline(){
+    var S=window.NPStore; if(!S||!S.resultsFor)return;
+    var sec=$('timelineSec'); var act=S.active();
+    if(!act){sec.hidden=true;return;}
+    var rs=S.resultsFor(act).slice().sort(function(a,b){return (a.created_at||'').localeCompare(b.created_at||'');});
+    $('tlName').textContent=act.name||'criança ativa';
+    $('tlCount').textContent=rs.length?(rs.length+(rs.length>1?' avaliações':' avaliação')):'';
+    sec.hidden=false;
+    if(!rs.length){ $('tlChart').innerHTML=''; $('tlList').innerHTML='<div class="tl-empty">Ainda sem avaliações. Responda uma escala e gere o laudo — ela aparece aqui.</div>'; return; }
+    var pts=rs.map(function(r){return {pct:r.max?Math.round(100*r.score/r.max):0,label:(r.instrument_title||'escala').slice(0,18)};});
+    $('tlChart').innerHTML=chartSVG(pts);
+    // lista (mais recente primeiro)
+    $('tlList').innerHTML=rs.slice().reverse().map(function(r){
+      var d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'';
+      var pct=r.max?Math.round(100*r.score/r.max)+'%':'—';
+      return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-main"><b>'+esc((r.instrument_title||'Escala').slice(0,40))+'</b><span>'+d+(r.score!=null?' · '+r.score+'/'+r.max:'')+'</span></div><span class="tl-pct">'+pct+'</span></div>';
+    }).join('');
+  }
+
   function start(){
     var S=window.NPStore; if(!S){setTimeout(start,120);return;}
     $('save').addEventListener('click',function(){
@@ -169,11 +219,11 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 Georgia,serif;color:var(--wine);margin:6px
       var id=$('editId').value;
       if(id){ S.update(id,data); toast('Criança atualizada'); }
       else { S.add(data); toast('Criança cadastrada e tornada ativa'); }
-      resetForm(); render();
+      resetForm(); render(); renderTimeline();
     });
     $('cancel').addEventListener('click',function(){ resetForm(); });
-    window.addEventListener('np-child-change',render);
-    render();
+    window.addEventListener('np-child-change',function(){ render(); renderTimeline(); });
+    render(); renderTimeline();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start); else start();
 })();
