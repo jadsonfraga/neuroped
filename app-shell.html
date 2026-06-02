@@ -70,13 +70,16 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
 .sh-tab.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:3px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,var(--indigo),var(--indigo-l))}
 .sh-tab:active{color:#fff}
 @media(prefers-reduced-motion:reduce){#sh-frame,.sh-spin,.sh-tab svg{transition:none;animation:none}}
+/* marca oficial na casca (topo + splash) */
+.sh-top .seal,#sh-splash .seal{overflow:hidden;padding:0}
+.sh-top .seal img,#sh-splash .seal img{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
-<div id="sh-splash"><div class="seal">NP</div><div class="wm">NeuroPed EDJ</div><div class="sub">Neuropediatria de precisão</div><div class="bar"><i></i></div></div>
+<div id="sh-splash"><div class="seal"><img src="./logo-jadson.jpg" alt="" width="86" height="86" decoding="async"></div><div class="wm">NeuroPed EDJ</div><div class="sub">Neuropediatria de precisão</div><div class="bar"><i></i></div></div>
 <div id="sh">
   <header class="sh-top">
-    <span class="seal">NP</span>
+    <span class="seal"><img src="./logo-jadson.jpg" alt="" width="30" height="30" decoding="async"></span>
     <span class="wm">NeuroPed EDJ</span>
     <span class="sec" id="sh-sec">Início</span>
   </header>

@@ -392,6 +392,7 @@ assertIncludes('routes.config.js', 'gerador-cards.html', 'routes.config registra
 // App shell — hub dinâmico (chrome persistente, conteúdo em quadro)
 assertFile('app-shell.html');
 assertIncludes('app-shell.html', 'sh-frame', 'app-shell tem o quadro de conteúdo persistente');
+assertIncludes('app-shell.html', 'logo-jadson.jpg', 'casca usa a logo oficial no topo e no splash');
 assertIncludes('app-shell.html', 'comunicacao-alternativa.html', 'app-shell roteia a CAA');
 assertIncludes('app-shell.html', 'neuroped-master-biblioteca.html', 'app-shell roteia a Biblioteca');
 assertIncludes('manifest.json', './app-shell.html', 'manifest aponta o PWA para a casca dinâmica');
