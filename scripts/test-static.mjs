@@ -185,6 +185,8 @@ assertIncludes('np-store.js', 'np:children', 'perfil usa namespace np:* (camada 
 assertIncludes('np-store.js', 'PATIENT_KEY', 'np-store escreve direto na chave do paciente (sem depender do scales-enhance)');
 assertNotIncludes('perfil-crianca.html', 'scales-enhance.js', 'perfil não carrega scales-enhance (sem poll eterno de 250ms)');
 assertIncludes('filtro-escalas.html', 'NPStore.ageBand', 'filtro pré-seleciona a idade da criança ativa (conexão real, não só nome)');
+assertIncludes('diario-escola-terapias-v2.html', 'np-store.js', 'diário carrega a espinha de dados (Perfil)');
+assertIncludes('diario-escola-terapias-v2.html', 'window.NPStore.active', 'diário semeia a criança do Perfil (fim do cadastro duplicado)');
 assertIncludes('central-atalhos.html', 'perfil-crianca.html', 'hub linka o Perfil da Criança');
 // Landing UX (v6.23): busca, recentes, skip-link
 assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
