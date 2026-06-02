@@ -107,11 +107,39 @@
     return all.filter(function (r) { return r && r.patient_code === code; });
   }
 
+  // Portabilidade (LGPD: portabilidade + backup). Exporta/importa o prontuário local
+  // (crianças + ativa + resultados). Import MESCLA por id — nunca apaga o que existe.
+  function exportAll() {
+    return {
+      app: 'NeuroPed', kind: 'np-export', v: 1,
+      exportedAt: new Date().toISOString(),
+      children: list(),
+      active: read(K_ACTIVE, ''),
+      results: read(RESULTS_KEY, [])
+    };
+  }
+  function importAll(obj) {
+    if (!obj || obj.kind !== 'np-export') return { ok: false, error: 'Arquivo inválido' };
+    var added = 0, mergedR = 0;
+    // crianças: mescla por id
+    var cur = list(), byId = {}; cur.forEach(function (c) { byId[c.id] = c; });
+    (obj.children || []).forEach(function (c) { if (c && c.id && !byId[c.id]) { cur.push(c); byId[c.id] = c; added++; } });
+    write(K_CHILDREN, cur);
+    // resultados: mescla por id
+    var rs = read(RESULTS_KEY, []); if (!Array.isArray(rs)) rs = [];
+    var seen = {}; rs.forEach(function (r) { if (r && r.id) seen[r.id] = 1; });
+    (obj.results || []).forEach(function (r) { if (r && r.id && !seen[r.id]) { rs.push(r); seen[r.id] = 1; mergedR++; } });
+    write(RESULTS_KEY, rs.slice(0, 1000));
+    if (!read(K_ACTIVE, '') && obj.active) setActive(obj.active); else { syncPatient(); emit(); }
+    return { ok: true, children: added, results: mergedR };
+  }
+
   window.NPStore = {
     list: list, add: add, update: update, remove: remove,
     active: active, setActive: setActive,
     ageMonths: ageMonths, ageLabel: ageLabel, ageBand: ageBand,
-    resultsFor: resultsFor, code: codeOf
+    resultsFor: resultsFor, code: codeOf,
+    exportAll: exportAll, importAll: importAll
   };
 
   // ao carregar: garante que o paciente do sistema reflita a criança ativa
