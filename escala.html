@@ -35,6 +35,20 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .prog .bar{flex:1;height:8px;border-radius:999px;background:rgba(124,118,210,.16);overflow:hidden}
 .prog .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .3s cubic-bezier(.22,.9,.25,1)}
 .prog .pc{font:800 13px system-ui;color:var(--wine);min-width:62px;text-align:right}
+.prog.done{border-color:rgba(231,201,139,.45);box-shadow:0 0 0 1px rgba(231,201,139,.3)}
+.prog.done .bar i{background:linear-gradient(90deg,var(--gold),#fff3d6)}
+.prog.done .pc{color:var(--gold)}
+/* skeleton de carregamento */
+.skel{border:1px solid var(--line);border-radius:18px;margin:11px 0;height:96px;background:linear-gradient(100deg,rgba(124,118,210,.06) 30%,rgba(124,118,210,.16) 50%,rgba(124,118,210,.06) 70%);background-size:300% 100%;animation:skel 1.3s ease-in-out infinite}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* estado de conclusão: celebra e leva ao laudo */
+.done{display:none;text-align:center;margin:18px 0;padding:20px;border-radius:20px;border:1px solid rgba(231,201,139,.4);background:linear-gradient(160deg,rgba(231,201,139,.14),rgba(124,118,210,.06))}
+.done.show{display:block;animation:donePop .42s cubic-bezier(.22,.9,.25,1)}
+@keyframes donePop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.done b{display:block;font:700 19px "Fraunces",Georgia,serif;color:var(--wine);margin-bottom:4px}
+.done p{margin:0 0 13px;color:var(--muted);font-size:13.5px}
+.done button{border:0;border-radius:14px;padding:13px 20px;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer;color:#241a05;background:linear-gradient(180deg,var(--gold),var(--gold2));box-shadow:0 12px 28px -10px rgba(231,201,139,.6);transition:transform .15s,filter .2s}
+.done button:hover{transform:translateY(-2px);filter:brightness(1.05)}
 .domain{margin:18px 0 6px}
 .domain h2{font:700 13px system-ui;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 10px}
 .item{border:1px solid var(--line);background:linear-gradient(180deg,var(--glass2),var(--glass));border-radius:18px;padding:15px;margin:11px 0;transition:border-color .2s,box-shadow .2s}
@@ -64,7 +78,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 #npScalesStatus{color:var(--soft)!important}
 #npScalesHistList{color:var(--muted)!important}
 #npScalesInterpret{border:1px solid rgba(0,0,0,.06)}
-#npScalesPatientBar{top:64px!important;border-radius:14px!important}
+#npScalesPatientBar{position:static!important;border-radius:14px!important;margin:14px 0!important}  /* não-sticky: evita colidir com a barra de progresso */
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -92,6 +106,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   <!-- #detail: o scales-enhance.js observa este nó e injeta a barra de laudo/PDF -->
   <section id="detail"></section>
   <p class="miss" id="miss">Responda todos os itens para um laudo completo (itens sem resposta saem marcados no PDF).</p>
+  <div class="done" id="doneBanner"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button></div>
   <div class="toolbar"></div>
 
   <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica ou pedagógica. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756.</p>
@@ -134,10 +149,19 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   function totalCount(){return INST.domains.reduce(function(a,d){return a+d.items.length;},0)}
   function answeredCount(){return Object.keys(ANSWERS).length}
   function updateProgress(){
-    var t=totalCount(),a=answeredCount(),p=t?Math.round(100*a/t):0;
+    var t=totalCount(),a=answeredCount(),p=t?Math.round(100*a/t):0,complete=(t>0&&a>=t);
     document.getElementById('progBar').style.width=p+'%';
     document.getElementById('progPc').textContent=a+'/'+t;
     document.getElementById('miss').style.display=(a<t&&a>0)?'block':'none';
+    document.getElementById('prog').classList.toggle('done',complete);
+    var db=document.getElementById('doneBanner'); if(db)db.classList.toggle('show',complete);
+  }
+  // guia premium: ao responder, leva suavemente ao próximo item ainda sem resposta;
+  // quando tudo respondido, leva ao laudo. (Typeform-like, reduz fricção.)
+  function advance(){
+    var items=document.querySelectorAll('#detail .item'), i;
+    for(i=0;i<items.length;i++){ if(!items[i].classList.contains('answered')){ items[i].scrollIntoView({behavior:'smooth',block:'center'}); return; } }
+    var db=document.getElementById('doneBanner'); if(db&&db.classList.contains('show'))db.scrollIntoView({behavior:'smooth',block:'center'});
   }
   function renderDetail(){
     var det=document.getElementById('detail');
@@ -157,7 +181,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
-  window.__mark=function(key,li){ ANSWERS[key]=li; renderDetail(); };
+  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; renderDetail(); if(wasNew)setTimeout(advance,70); };
 
   function paintWho(){
     var el=document.getElementById('whoChip'); if(!el)return;
@@ -177,6 +201,9 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   function boot(){
     var id=qs('id');
     if(!id){showEmpty('Nenhum instrumento informado.');return;}
+    // skeleton enquanto o catálogo carrega (sensação de app, sem tela em branco)
+    document.getElementById('detail').innerHTML='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+    var dc=document.getElementById('doneCta'); if(dc)dc.onclick=function(){var b=document.getElementById('npScalesPrint'); if(b)b.click(); else alert('Role até a barra de laudo para gerar o PDF.');};
     catalog(function(map){
       var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
       INST=normalize(raw);
