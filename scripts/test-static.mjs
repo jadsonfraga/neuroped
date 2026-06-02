@@ -188,6 +188,8 @@ assertIncludes('filtro-escalas.html', 'NPStore.ageBand', 'filtro pré-seleciona 
 assertIncludes('diario-escola-terapias-v2.html', 'np-store.js', 'diário carrega a espinha de dados (Perfil)');
 assertIncludes('diario-escola-terapias-v2.html', 'window.NPStore.active', 'diário semeia a criança do Perfil (fim do cadastro duplicado)');
 assertIncludes('central-atalhos.html', 'perfil-crianca.html', 'hub linka o Perfil da Criança');
+assertIncludes('central-atalhos.html', 'class="featured"', 'hub tem faixa de destaques (hierarquia de produto)');
+assertIncludes('central-atalhos.html', 'IntersectionObserver', 'hub revela seções ao rolar (ritmo/transição)');
 // Landing UX (v6.23): busca, recentes, skip-link
 assertIncludes('escalas.html', 'id="toolSearch"', 'landing tem busca typeahead');
 assertIncludes('escalas.html', 'np_recent_tools', 'landing rastreia acessados recentemente');
