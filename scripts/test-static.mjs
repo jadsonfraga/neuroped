@@ -97,6 +97,7 @@ assertIncludes('scales-enhance.js', 'NeuroPedScales', 'scales-enhance expoe API 
 assertIncludes('scales-enhance.js', 'laudoText', 'scales-enhance gera texto pra laudo');
 assertIncludes('scales-enhance.js', 'Respostas:', 'laudo registra as respostas item-a-item (não só o score)');
 assertIncludes('scales-enhance.js', '<th>Resposta</th>', 'PDF do laudo tem coluna de Resposta por item');
+assertIncludes('scales-enhance.js', 'Gerar laudo (PDF)', 'laudo PDF é a ação principal e clara ao fim da escala respondida');
 // Resultado de escala SEMPRE aparece na tela (overlay), independente de pop-up
 assertIncludes('scales-enhance.js', 'npResultOverlay', 'resultado da escala aparece em overlay na própria tela');
 assertIncludes('scales-enhance.js', 'function showResultOverlay', 'overlay de resultado é renderizado sempre');
