@@ -165,6 +165,10 @@ assertIncludes('filtro-escalas.html', 'slice(0,3)', 'filtro retorna as 3 escalas
 assertIncludes('filtro-escalas.html', 'id="scaleSearch"', 'filtro unifica busca de QUALQUER escala (achar + aplicar na mesma tela)');
 assertIncludes('filtro-escalas.html', 'function runSearch', 'busca varre todo o catálogo e abre no runner');
 assertIncludes('filtro-escalas.html', 'r.score>=500', 'filtro só mostra escalas temáticas relevantes (patamar 500+)');
+// Engine clínica: gate de idade duro + modalidade×idade + hierarquia ouro/prata/bronze
+assertIncludes('filtro-escalas.html', 'score*=_mul', 'idade é GATE multiplicador (fora da faixa some — segurança clínica)');
+assertIncludes('filtro-escalas.html', 'autorrelato pouco viável nesta idade', 'penaliza autorrelato impróprio p/ pré-escolar (modalidade×idade)');
+assertIncludes('filtro-escalas.html', 'Ouro clínico', 'hierarquia clínica Ouro/Prata/Bronze (não ranking artificial)');
 assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
 assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
 assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');

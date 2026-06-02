@@ -111,6 +111,10 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 .result-card.top .rank{background:linear-gradient(160deg,var(--gold),var(--gold2));border-color:transparent;box-shadow:0 12px 26px -10px rgba(231,201,139,.6)}
 .result-card.top .rank b{color:#241a05}
 .result-card.top .rank small{color:#5a4413}
+.rank-1{background:linear-gradient(160deg,#cfd3dc,#9aa1ad);border-color:transparent}
+.rank-1 b{color:#1f2430}.rank-1 small{color:#39414f}
+.rank-2{background:linear-gradient(160deg,#d8a566,#b07b3e);border-color:transparent}
+.rank-2 b{color:#2a1c08}.rank-2 small{color:#48330f}
 
 .scalesearch{margin:0 0 14px}
 .scalesearch input{width:100%;border:1px solid var(--line2);border-radius:14px;padding:13px 15px;background:rgba(10,9,24,.6);color:var(--ink);font:15px "Inter",system-ui;transition:border-color .2s,box-shadow .2s}
@@ -273,6 +277,18 @@ function scoreScale(s,comp,age,resp,mode,text){let score=0,reasons=[];const word
   score+=Math.min(Number(s.priority||50),200)/20; // desempate: 0..10 pts
   // idade só pontua quando há afinidade temática (não infla escala irrelevante)
   const as=ageScore(age,s,mode);if(tematico){score+=as;if(as>0)reasons.push("idade compatível/ampliada");}
+  // ENGINE CLÍNICA: idade como GATE multiplicador (fora da faixa validada → some
+  // do topo). Segurança clínica real — não inventa métrica, usa a faixa que existe.
+  if(tematico&&age!==null){
+    var _a=s.age_min_months||0,_b=s.age_max_months||240,_m=18;
+    var _mul=(age>=_a&&age<=_b)?1:(age>=_a-_m&&age<=_b+_m)?0.5:0.08;
+    score*=_mul;
+    reasons.push(_mul===1?"idade adequada":(_mul<0.5?"⚠ fora da faixa etária":"faixa ampliada"));
+    // modalidade × idade: autorrelato exige leitura/insight → impróprio p/ pré-escolar
+    if(viewOf(s)==="auto"&&age<96){score*=0.3;reasons.push("autorrelato pouco viável nesta idade");}
+  }
+  // tier por SINAL REAL (sem fabricar sensibilidade): fonte oficial validada pontua +
+  if(s.official_catalog||s.official_url){score+=40;}
   const rm=respMatch(resp,s);if(rm===true){if(tematico){score+=18;reasons.push("visão compatível");}}else if(rm===false&&mode==="precisa")score-=10;
   // busca vazia: mostra catálogo por priority; com queixa/texto, só temáticas passam o threshold
   if(buscaVazia) score+=Number(s.priority||50)/4;
@@ -326,7 +342,7 @@ function renderRows(rows){const top=rows.slice(0,10).map((r,i)=>card(r,i)).join(
 function copyRec(id){const r=INDEX.find(x=>x.id===id);if(!r)return;const txt=`${r.title}\n${r.audience_label} · ${r.age_band} · ${r.domain}\nSintomas: ${(r.symptoms||[]).join(', ')}\nPerguntas:\n- ${(r.plain_questions||[]).join('\n- ')}`;navigator.clipboard?.writeText(txt)}
 /* card COMPACTO para resultados de busca (clareza + leveza: sem lista de perguntas) */
 function cardLite(r){return`<article class="result-card"><div><h3 style="margin-bottom:7px">${r.title}</h3><span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${(r.symptoms||[]).length?`<div class="symptoms">${(r.symptoms||[]).slice(0,4).map(s=>`<span>${s}</span>`).join('')}</div>`:''}<div class="toolbar" style="margin-top:9px">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte ↗</a>'):('<a class="btn" href="./escala.html?id='+encodeURIComponent(r.id)+'">▶ Responder</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar</button></div></div></article>`}
-function card(r,i,sub){return`<article class="result-card ${i===0?'top':''}"><div><h3>${r.title}</h3><span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${r.official_catalog?'<span class="badge gold">Fonte oficial</span>':''}${r.status?'<span class="badge info" style="background:rgba(231,201,139,.18);color:#7a5d12">'+r.status+'</span>':''}<div class="symptoms">${(r.symptoms||[]).slice(0,5).map(s=>`<span>${s}</span>`).join('')}</div><details class="qx"><summary>Ver perguntas-guia</summary><ol class="questions">${(r.plain_questions||[]).slice(0,5).map(q=>`<li>${q}</li>`).join('')}</ol></details><p class="mini"><strong>Por que apareceu:</strong> ${(r.reasons||[]).join(' · ')||'triagem ampla por idade e queixa'}</p><p class="mini"><strong>Limite:</strong> ${r.not_normative_disclaimer||'Instrumento de apoio; não substitui avaliação.'}</p><div class="toolbar">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte oficial ↗</a>'):('<a class="btn" href="./escala.html?id='+encodeURIComponent(r.id)+'">▶ Responder e gerar laudo</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar recomendação</button></div></div><div class="rank"><b>${i+1}ª</b><small>${sub||'indicada'}</small></div></article>`}
+function card(r,i,sub){return`<article class="result-card ${i===0?'top':''}"><div><h3>${r.title}</h3><span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${r.official_catalog?'<span class="badge gold">Fonte oficial</span>':''}${r.status?'<span class="badge info" style="background:rgba(231,201,139,.18);color:#7a5d12">'+r.status+'</span>':''}<div class="symptoms">${(r.symptoms||[]).slice(0,5).map(s=>`<span>${s}</span>`).join('')}</div><details class="qx"><summary>Ver perguntas-guia</summary><ol class="questions">${(r.plain_questions||[]).slice(0,5).map(q=>`<li>${q}</li>`).join('')}</ol></details><p class="mini"><strong>Por que apareceu:</strong> ${(r.reasons||[]).join(' · ')||'triagem ampla por idade e queixa'}</p><p class="mini"><strong>Limite:</strong> ${r.not_normative_disclaimer||'Instrumento de apoio; não substitui avaliação.'}</p><div class="toolbar">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte oficial ↗</a>'):('<a class="btn" href="./escala.html?id='+encodeURIComponent(r.id)+'">▶ Responder e gerar laudo</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar recomendação</button></div></div><div class="rank rank-${i<3?i:'x'}"><b>${['🥇','🥈','🥉'][i]||(i+1)}</b><small>${sub||['Ouro clínico','Prata','Bronze'][i]||'indicada'}</small></div></article>`}
 </script>
 <script src="./np-store.js" defer></script>
 <script src="./app-polish-mobile.js" defer></script>
