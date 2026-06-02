@@ -401,6 +401,10 @@ assertIncludes('index.html', './np-frame.js', 'home (SPA) carrega a moldura de f
 assertIncludes('np-frame.js', 'npf-ov', 'np-frame tem overlay de moldura');
 assertIncludes('np-frame.js', 'self !== window.top', 'np-frame só age no topo (não empilha molduras)');
 assertIncludes('sw.js', './np-frame.js', 'np-frame no precache (offline)');
+// Fluxo único de escalas: runner abre DENTRO da superfície (overlay), sem trocar de página
+assertIncludes('filtro-escalas.html', './np-frame.js', 'filtro abre o runner em overlay (achar→aplicar numa tarefa só)');
+assertIncludes('perfil-crianca.html', './np-frame.js', 'perfil abre runner/reaplicar em overlay (fluxo contínuo)');
+assertIncludes('central-atalhos.html', './np-frame.js', 'hub abre ferramentas em overlay (jornada contínua)');
 // S1 (roadmap 9.9): README na versão canônica + sem vazamentos/divergências
 assertNotIncludes('README.md', 'v5.1', 'README não está mais na versão defasada (v5.1)');
 assertNotIncludes('README.md', 'FRAGA1108', 'README não expõe PIN em texto claro (S12)');
