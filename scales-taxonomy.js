@@ -100,7 +100,51 @@
     return EXAMPLES[norm(tag)] || null;
   }
 
-  var api = { classify: classify, functionalExamples: functionalExamples, KINDS: KINDS };
+  /* ---------- Cobertura por MODALIDADE (triangulação clínica) ----------
+     Garante que a recomendação cruze olhares (família × escola × criança ×
+     teste direto × observação) em vez de empilhar só questionários parentais.
+     Resolve a dor "o filtro só sugere questionário" — testes diretos e
+     observação entram no topo quando existem e são relevantes. */
+  var BUCKET = {
+    escala_pais: 'familia', escala_escola: 'escola', autorrelato: 'crianca',
+    teste_direto: 'direto', observacao: 'observacao', triagem: 'triagem',
+    inventario: 'relato', questionario: 'relato'
+  };
+  var BUCKET_LABEL = {
+    familia: '👪 Família', escola: '🏫 Escola', crianca: '🧒 Criança',
+    direto: '🎯 Teste direto', observacao: '👀 Observação', triagem: '⚡ Triagem', relato: '📋 Relato estruturado'
+  };
+  function bucketOf(s) { return BUCKET[classify(s).kind] || 'relato'; }
+
+  // Reordena uma lista JÁ ordenada por relevância (score desc) para maximizar a
+  // diversidade de modalidade no topo, sem inventar relevância: pega o melhor de
+  // cada modalidade ainda não coberta; quando todas cobertas, segue pelo ranking.
+  function balanceByType(rows, limit) {
+    limit = Math.max(1, limit || 3);
+    var pool = (rows || []).slice();
+    var picked = [], used = {};
+    while (picked.length < limit && pool.length) {
+      var idx = -1;
+      for (var i = 0; i < pool.length; i++) { if (!used[bucketOf(pool[i])]) { idx = i; break; } }
+      if (idx === -1) idx = 0; // todas as modalidades já cobertas → segue o ranking puro
+      used[bucketOf(pool[idx])] = 1;
+      picked.push(pool.splice(idx, 1)[0]);
+    }
+    return picked;
+  }
+
+  // Lista de modalidades presentes (para um resumo "este caso cruza: …").
+  function coverageOf(rows) {
+    var seen = {}, out = [];
+    (rows || []).forEach(function (s) { var b = bucketOf(s); if (!seen[b]) { seen[b] = 1; out.push(b); } });
+    return out;
+  }
+  function coverageLabels(rows) { return coverageOf(rows).map(function (b) { return BUCKET_LABEL[b] || b; }); }
+
+  var api = {
+    classify: classify, functionalExamples: functionalExamples, KINDS: KINDS,
+    bucketOf: bucketOf, balanceByType: balanceByType, coverageOf: coverageOf, coverageLabels: coverageLabels
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedTaxonomy = api;
 })(typeof window !== 'undefined' ? window : null);
