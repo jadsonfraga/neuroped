@@ -30,7 +30,7 @@
   .actions { display:flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
-<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
 </head>
 <body data-ns-shell class="ns-bg-fallback">
 
@@ -49,8 +49,8 @@
     <li>Volta aqui e marca como feito ✓</li>
   </ol>
   <div class="actions">
-    <button class="btn btn-primary" id="btnOpenSql">📋 Copiar SQL + Abrir editor</button>
-    <button class="btn btn-ghost" id="btnDone1">✓ Já apliquei</button>
+    <button class="np-btn np-btn--primary" id="btnOpenSql">📋 Copiar SQL + Abrir editor</button>
+    <button class="np-btn np-btn--ghost" id="btnDone1">✓ Já apliquei</button>
   </div>
   <pre id="sqlPreview" style="max-height:200px;overflow:auto;margin-top:14px;display:none;"></pre>
 </div>
@@ -62,8 +62,8 @@
   <input type="text" id="anonKey" placeholder="eyJhbGc..." autocomplete="off" />
   <div class="ditto">Esta chave é pública. Pode colar sem medo.</div>
   <div class="actions">
-    <button class="btn btn-primary" id="btnSaveKey">💾 Salvar anon key</button>
-    <button class="btn btn-ghost" id="btnOpenApi">🔗 Abrir página de API keys</button>
+    <button class="np-btn np-btn--primary" id="btnSaveKey">💾 Salvar anon key</button>
+    <button class="np-btn np-btn--ghost" id="btnOpenApi">🔗 Abrir página de API keys</button>
   </div>
   <div id="step2Status" style="margin-top:10px;"></div>
 </div>
@@ -81,15 +81,15 @@ CERT_PFX_BASE64 = (base64 do .p12 — converta com PowerShell, ver abaixo) [marc
 CERT_PASS = (senha do certificado) [marcar como Secret]
 CERT_SUBJECT_CN = Jadson Fraga Araujo Junior</pre>
   <div class="actions">
-    <button class="btn btn-primary" id="btnCopyEnv">📋 Copiar bloco</button>
-    <button class="btn btn-ghost" id="btnOpenCf">🔗 Abrir Cloudflare</button>
+    <button class="np-btn np-btn--primary" id="btnCopyEnv">📋 Copiar bloco</button>
+    <button class="np-btn np-btn--ghost" id="btnOpenCf">🔗 Abrir Cloudflare</button>
   </div>
   <p style="margin-top:18px;font-size:14px;"><strong>Como converter o P12 para base64 no Windows:</strong></p>
   <pre>$bytes = [IO.File]::ReadAllBytes("C:\caminho\certificado.p12")
 [Convert]::ToBase64String($bytes) | Set-Clipboard
 # pronto, base64 está no Ctrl+V</pre>
   <div class="actions">
-    <button class="btn btn-ghost" id="btnDone3">✓ Configurei e fiz Retry deployment</button>
+    <button class="np-btn np-btn--ghost" id="btnDone3">✓ Configurei e fiz Retry deployment</button>
   </div>
 </div>
 
@@ -97,9 +97,9 @@ CERT_SUBJECT_CN = Jadson Fraga Araujo Junior</pre>
 <div class="step" id="step4">
   <h2><span class="step-num">✓</span> Validar funcionamento</h2>
   <div class="actions">
-    <button class="btn btn-primary" id="btnTestHealth">🩺 Testar /api/health</button>
-    <button class="btn btn-primary" id="btnTestConfig">⚙ Testar /api/config</button>
-    <button class="btn btn-primary" id="btnTestAuth">🔐 Testar magic link</button>
+    <button class="np-btn np-btn--primary" id="btnTestHealth">🩺 Testar /api/health</button>
+    <button class="np-btn np-btn--primary" id="btnTestConfig">⚙ Testar /api/config</button>
+    <button class="np-btn np-btn--primary" id="btnTestAuth">🔐 Testar magic link</button>
   </div>
   <div id="testResults" style="margin-top:14px;"></div>
 </div>

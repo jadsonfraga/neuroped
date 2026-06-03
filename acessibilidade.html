@@ -14,22 +14,24 @@
   <meta name="theme-color" content="#0e0e22" />
   <meta name="robots" content="index, follow" />
   <style>
+    /* Fase 4 DS: paleta da página redirecionada aos tokens canônicos (tokens.css).
+       Conteúdo e layout preservados; cores agora vêm do Design System. */
     :root {
-      --pant-cream: #0a0a16;
-      --pant-cream-elevated: #14132a;
-      --pant-cream-sunken: rgba(124,118,210,.08);
-      --pant-gold: #b8963e;
-      --pant-teal: #6d6af5;
-      --pant-teal-hover: #155752;
-      --pant-burgundy: #f2dca6;
-      --pant-plum: #a9a4ff;
-      --pant-dark: #ECEAFF;
-      --pant-text-primary: #ECEAFF;
-      --pant-text-secondary: #57514a;
-      --pant-border: rgba(45, 41, 38, 0.12);
-      --pant-shadow-soft: 0 4px 12px rgba(45, 41, 38, 0.08);
-      --pant-radius-md: 8px;
-      --pant-radius-lg: 16px;
+      --pant-cream: var(--bg);
+      --pant-cream-elevated: var(--surface);
+      --pant-cream-sunken: var(--surface-muted);
+      --pant-gold: var(--accent-gold);
+      --pant-teal: var(--primary);
+      --pant-teal-hover: var(--primary-hover);
+      --pant-burgundy: var(--accent-gold);
+      --pant-plum: var(--primary-light);
+      --pant-dark: var(--text-strong);
+      --pant-text-primary: var(--text);
+      --pant-text-secondary: var(--text-muted);
+      --pant-border: var(--border);
+      --pant-shadow-soft: var(--shadow-2);
+      --pant-radius-md: var(--radius-sm);
+      --pant-radius-lg: var(--radius-lg);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -149,7 +151,7 @@
     }
   </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
-<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
 </head>
 <body data-ns-shell>
   <main class="container">
