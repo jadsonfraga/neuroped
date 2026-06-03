@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.44.1';
+const CACHE_NAME = 'neuroped-edj-v6.44.2';
 const SHELL = [
   './',
   './app-shell.html',
@@ -85,8 +85,14 @@ self.addEventListener('fetch', e => {
       fetch(req)
         .then(res => {
           if (res && res.ok && res.type === 'basic') {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then(c => c.put('./index.html', clone));
+            // Só a RAIZ/SPA atualiza o cache de './index.html'. Antes, QUALQUER
+            // navegação (filtro, perfil…) sobrescrevia index.html com a página
+            // visitada → o fallback offline do SPA virava a última página aberta.
+            const isIndex = url.pathname === '/' || url.pathname.endsWith('/') || url.pathname.endsWith('/index.html');
+            caches.open(CACHE_NAME).then(c => {
+              c.put(req, res.clone());                            // a própria página (offline)
+              if (isIndex) c.put('./index.html', res.clone());    // index só pela raiz
+            });
           }
           return res;
         })

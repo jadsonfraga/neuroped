@@ -59,6 +59,8 @@ assertIncludes('neuroped-pro.html', '"Service"', 'landing pro tem Service schema
 assertIncludes('filtro-escalas.html', 'aria-live="polite"', 'filtro anuncia resultado ao leitor de tela');
 // Fonte premium offline: SW cacheia Google Fonts (PWA funciona sem rede)
 assertIncludes('sw.js', 'fonts.gstatic.com', 'SW cacheia arquivos de fonte (offline)');
+// Correção: só a raiz atualiza ./index.html (navegar p/ outra página não corrompe o fallback do SPA)
+assertIncludes('sw.js', 'if (isIndex) c.put', 'SW só sobrescreve ./index.html pela raiz/SPA — navegação a outra página não clobbera o fallback offline');
 assertIncludes('sw.js', 'fonts.googleapis.com', 'SW cacheia CSS da fonte (offline)');
 // Offline-readiness: páginas de uso diário precisam abrir sem internet
 assertIncludes('sw.js', './diario-escola-terapias-v2.html', 'diário no precache (família usa offline)');
