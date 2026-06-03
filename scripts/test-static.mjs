@@ -251,7 +251,7 @@ assertNotFile('escalas-card-premium.js');
 for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
   assertIncludes(b, 'ds-tokens.css', b + ' migrou: carrega a camada de tokens');
   assertIncludes(b, 'ds-components.css', b + ' migrou: carrega os componentes canônicos');
-  assertIncludes(b, 'content="#F7F8FA"', b + ' usa o fundo clínico off-white (DS)');
+  assertIncludes(b, 'content="#050816"', b + ' usa o chrome dark-premium (DS)');
   assertNotIncludes(b, 'escalas-card-premium', b + ' sem a skin J26 legada');
   assertNotIncludes(b, '#6d6af5', b + ' sem o roxo legado (linguagem unificada)');
 }
@@ -492,28 +492,29 @@ for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-
 assertFile('ds-tokens.css');
 assertFile('ds-components.css');
 assertFile('design-system.html');
-assertIncludes('ds-tokens.css', '--primary: #2D6FF0', 'token de cor primária clínica (azul) definido');
+assertIncludes('ds-tokens.css', '--primary: #6D5CFF', 'token de ação primária (violeta neural · dark premium) é o padrão');
 assertIncludes('ds-tokens.css', '--space-4: 16px', 'escala de espaçamento 4px definida');
-assertIncludes('ds-tokens.css', '[data-theme="dark"]', 'dark mode é troca de tokens (sem folha paralela)');
+assertIncludes('ds-tokens.css', '[data-theme="light"]', 'light clínico AA é tema alternativo por troca de tokens (sem folha paralela)');
+assertIncludes('ds-tokens.css', '--primary: #2D6FF0', 'tema light clínico preserva o azul AA');
 assertIncludes('ds-components.css', '.ds-btn', 'componente botão canônico definido');
 assertIncludes('ds-components.css', '.ds-card', 'componente card canônico definido');
 assertNotIncludes('ds-components.css', '#', 'componentes consomem só tokens (zero cor crua)');
 // banco-escalas.html: piloto da migração (fase 4) para o DS canônico
 assertIncludes('banco-escalas.html', 'ds-tokens.css', 'banco-escalas migrou: carrega a camada de tokens');
 assertIncludes('banco-escalas.html', 'ds-components.css', 'banco-escalas migrou: carrega os componentes canônicos');
-assertIncludes('banco-escalas.html', 'content="#F7F8FA"', 'banco-escalas usa o fundo clínico off-white (DS)');
+assertIncludes('banco-escalas.html', 'content="#050816"', 'banco-escalas usa o chrome dark-premium (DS)');
 assertNotIncludes('banco-escalas.html', '#6d6af5', 'banco-escalas sem o roxo legado (linguagem unificada)');
 assertNotIncludes('banco-escalas.html', 'escalas-card-premium', 'banco-escalas sem a skin J26 legada');
 // escala.html: runner de aplicação de questionário migrado (fase 4)
 assertIncludes('escala.html', 'ds-tokens.css', 'runner migrou: carrega a camada de tokens');
 assertIncludes('escala.html', 'ds-components.css', 'runner migrou: carrega os componentes canônicos');
-assertIncludes('escala.html', 'content="#F7F8FA"', 'runner usa o fundo clínico off-white (DS)');
+assertIncludes('escala.html', 'content="#050816"', 'runner usa o chrome dark-premium (DS)');
 assertNotIncludes('escala.html', 'Fraunces', 'runner sem fonte serif legada (tipografia Inter unificada)');
 assertNotIncludes('escala.html', 'app-polish-mobile.js', 'runner sem a skin universal legada (serif/índigo)');
 // filtro-escalas.html: porta de entrada do fluxo, migrada (fase 4)
 assertIncludes('filtro-escalas.html', 'ds-tokens.css', 'filtro migrou: carrega a camada de tokens');
 assertIncludes('filtro-escalas.html', 'ds-components.css', 'filtro migrou: carrega os componentes canônicos');
-assertIncludes('filtro-escalas.html', 'content="#F7F8FA"', 'filtro usa o fundo clínico off-white (DS)');
+assertIncludes('filtro-escalas.html', 'content="#050816"', 'filtro usa o chrome dark-premium (DS)');
 assertNotIncludes('filtro-escalas.html', '#7c79ff', 'filtro sem o roxo legado (linguagem unificada)');
 // app-polish-mobile não pode reescrever o theme-color para teal
 assertNotIncludes('app-polish-mobile.js', "content = '#1a6b65'", 'app-polish-mobile não força theme-color teal');

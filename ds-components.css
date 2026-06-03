@@ -34,17 +34,20 @@
    Hover (tablet: press): eleva a shadow-3 + translateY(-1px).
    --------------------------------------------------------------------------- */
 .ds-card {
-  background: var(--surface);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-2), var(--glass-highlight);
   padding: var(--space-6);
   transition: box-shadow var(--motion-base) var(--ease),
-              transform var(--motion-base) var(--ease);
+              transform var(--motion-base) var(--ease),
+              border-color var(--motion-base) var(--ease);
 }
 .ds-card--interactive { cursor: pointer; }
 @media (hover: hover) {
-  .ds-card--interactive:hover { box-shadow: var(--shadow-3); transform: translateY(-1px); }
+  .ds-card--interactive:hover { box-shadow: var(--shadow-3), var(--glass-highlight); transform: translateY(-1px); border-color: var(--border-strong); }
 }
 .ds-card--interactive:active { box-shadow: var(--shadow-3); transform: translateY(-1px); }
 .ds-card--interactive:focus-visible {
@@ -86,10 +89,11 @@
 .ds-btn:active { transform: translateY(1px) scale(.99); }
 .ds-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
 
-.ds-btn--primary   { --_bg: var(--primary);    --_fg: var(--on-primary); }
+.ds-btn--primary   { --_bg: var(--primary-grad); --_fg: var(--on-primary); box-shadow: 0 8px 24px -8px var(--glow-violet), var(--glass-highlight); }
+@media (hover: hover) { .ds-btn--primary:hover { box-shadow: 0 12px 30px -8px var(--glow-violet), var(--glass-highlight); filter: brightness(1.04); } }
 .ds-btn--danger    { --_bg: var(--danger);     --_fg: var(--on-danger);  }
 .ds-btn--danger:focus-visible { box-shadow: 0 0 0 3px var(--danger-12); }
-.ds-btn--secondary { --_bg: var(--surface); --_fg: var(--text-strong); --_bd: var(--border); box-shadow: var(--shadow-1); }
+.ds-btn--secondary { --_bg: var(--glass-bg); --_fg: var(--text-strong); --_bd: var(--border); -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow-1); }
 @media (hover: hover) { .ds-btn--secondary:hover { background: var(--surface-muted); filter: none; } }
 .ds-btn--ghost     { --_bg: transparent; --_fg: var(--primary); --_bd: transparent; }
 @media (hover: hover) { .ds-btn--ghost:hover { background: var(--primary-12); filter: none; } }

@@ -1,178 +1,192 @@
 /* ============================================================================
-   NeuroPed — SUPERNEUROPED Design System · Camada de TOKENS
+   NeuroPed — SUPERSYSTEM Design System · Camada de TOKENS
    Fonte única da verdade. Nenhum valor cru é permitido fora deste arquivo.
-   Especificação: SUPERNEUROPED · Seção 3 (Camada de tokens).
 
-   Como usar:
-     <link rel="stylesheet" href="./ds-tokens.css">
-     <link rel="stylesheet" href="./ds-components.css">
+   Tema PADRÃO: dark-premium neurodigital (navy espacial + violeta neural,
+   glass refinado, glow ambiente). Tema ALTERNATIVO: light-clínico AA via
+   <html data-theme="light">. Dark mode é a assinatura; light é troca de tokens.
 
-   Dark mode (Seção 3.5): troca de tokens, sem folha de estilo paralela.
-     - Automático: respeita prefers-color-scheme.
-     - Manual: <html data-theme="dark"> ou <html data-theme="light">.
+   Princípio "Apple secret lab": o brilho é sentido, não percebido. Texto sempre AA.
    ========================================================================== */
 
 :root {
-  /* ---- 3.1 Espaçamento — escala 4px (única origem de margem/padding/gutter) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-12: 48px;
-  --space-16: 64px;
+  /* ---- Espaçamento — escala 4px (única origem de margem/padding/gutter) */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
 
-  /* ---- 3.2 Raios */
-  --radius-sm: 8px;   /* inputs, badges */
-  --radius-md: 12px;  /* botões        */
-  --radius-lg: 16px;  /* cards         */
-  --radius-xl: 24px;  /* modais        */
+  /* ---- Raios (Linear/Stripe-aligned; premium sem exagero) */
+  --radius-sm: 10px;  /* inputs, badges  */
+  --radius-md: 14px;  /* botões          */
+  --radius-lg: 20px;  /* cards           */
+  --radius-xl: 28px;  /* modais, heroes  */
 
-  /* ---- 3.3 Sombras — profundidade em camadas (nunca borda dura) */
-  --shadow-1: 0 1px 2px rgba(16, 24, 40, .06);
-  --shadow-2: 0 4px 12px rgba(16, 24, 40, .08);
-  --shadow-3: 0 12px 32px rgba(16, 24, 40, .12);
+  /* ======================================================================
+     TEMA PADRÃO — DARK PREMIUM (neurodigital)
+     ====================================================================== */
 
-  /* ---- 3.4 Paleta — Light */
-  --bg: #F7F8FA;            /* fundo clínico off-white       */
-  --surface: #FFFFFF;       /* cards e superfícies           */
-  --surface-muted: #F1F3F6; /* zonas secundárias             */
-  --border: #E4E7EC;        /* divisores discretos           */
-  --text-strong: #101828;   /* títulos                       */
-  --text: #344054;          /* corpo                         */
-  --text-muted: #667085;    /* legendas, placeholders        */
-  --primary: #2D6FF0;       /* azul clínico (ação principal) */
-  --accent-violet: #6B4FD8; /* destaque tecnológico          */
-  --accent-teal: #0FA3A3;   /* dados / secundário            */
-  --success: #12B76A;       /* status positivo               */
-  --warning: #F79009;       /* atenção (âmbar moderado)      */
-  --danger: #D92D20;        /* erro / risco                  */
+  /* Fundo espacial em camadas (depth fog + glow ambiente, ultrassutil). */
+  --bg: #050816;
+  --app-bg:
+    radial-gradient(1200px 720px at 12% -8%, rgba(124, 92, 255, .14), transparent 55%),
+    radial-gradient(1100px 760px at 104% 4%, rgba(56, 189, 248, .10), transparent 52%),
+    radial-gradient(900px 900px at 50% 120%, rgba(37, 99, 235, .08), transparent 60%),
+    linear-gradient(170deg, #030712, #050816 55%, #081020);
 
-  /* Versões "on" (texto legível sobre fundo da cor) — todas brancas (AA). */
+  /* Superfícies em glass refinado. */
+  --surface: rgba(17, 21, 38, .82);
+  --surface-solid: #11152699;
+  --surface-muted: rgba(12, 16, 32, .72);
+  --border: rgba(255, 255, 255, .08);
+  --border-strong: rgba(255, 255, 255, .14);
+
+  --text-strong: #F4F6FB;
+  --text: #C7CEDB;
+  --text-muted: #8A93A7;
+
+  /* Ação primária: violeta neural com gradiente premium. */
+  --primary: #6D5CFF;
+  --primary-grad: linear-gradient(135deg, #4F46E5 0%, #6D5CFF 50%, #7C3AED 100%);
+  --accent-violet: #8B5CF6;
+  --accent-teal: #38BDF8;   /* azul-neural (dados) */
+  --accent-cyan: #22D3EE;
+  --highlight-violet: #A78BFA;
+  --highlight-blue: #38BDF8;
+
+  --success: #34D399;
+  --warning: #FBBF4C;
+  --danger:  #F87171;
+
   --on-primary: #FFFFFF;
   --on-accent-violet: #FFFFFF;
+  --on-accent-teal: #03121F;
+  --on-success: #04140C;
+  --on-warning: #1A1304;
+  --on-danger: #1A0606;
+
+  /* Tonais (fundo da cor a ~16% no dark) e ring de foco. */
+  --primary-12: rgba(124, 92, 255, .18);
+  --primary-10: rgba(124, 92, 255, .14);
+  --primary-ring: rgba(124, 92, 255, .42);
+  --violet-12: rgba(139, 92, 246, .18);
+  --teal-12: rgba(56, 189, 248, .16);
+  --success-12: rgba(52, 211, 153, .16);
+  --warning-12: rgba(251, 191, 76, .16);
+  --danger-12: rgba(248, 113, 113, .16);
+
+  --overlay: rgba(3, 6, 12, .62);
+
+  /* ---- Glass & Glow (ativos no dark; neutralizados no light) */
+  --glass-bg: rgba(18, 22, 40, .78);
+  --glass-bg-strong: rgba(18, 22, 40, .92);
+  --glass-blur: 20px;
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, .06);
+  --glow-violet: rgba(124, 92, 255, .18);
+  --glow-blue: rgba(56, 189, 248, .12);
+  --card-glow: 0 0 30px rgba(124, 92, 255, .12);
+  --glow-ring: 0 0 0 1px rgba(124, 92, 255, .14);
+
+  /* ---- Sombras — profundidade cinematográfica em camadas */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+  --shadow-2: 0 10px 40px rgba(0, 0, 0, .35), var(--card-glow);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, .50), 0 0 40px rgba(124, 92, 255, .14);
+
+  /* ---- Tipografia — Apple-level (SF Pro → Inter → Jakarta → Geist) */
+  --font-sans: "Inter", "SF Pro Display", "SF Pro Text", -apple-system,
+               BlinkMacSystemFont, "Plus Jakarta Sans", "Geist", "Segoe UI",
+               Roboto, system-ui, sans-serif;
+  --font-mono: "SF Mono", "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  --t-display-size: 30px; --t-display-weight: 600; --t-display-lh: 1.18;
+  --t-h1-size: 23px;      --t-h1-weight: 600;      --t-h1-lh: 1.3;
+  --t-h2-size: 18px;      --t-h2-weight: 600;      --t-h2-lh: 1.35;
+  --t-body-size: 15px;    --t-body-weight: 400;    --t-body-lh: 1.6;
+  --t-label-size: 13px;   --t-label-weight: 500;   --t-label-lh: 1.4;
+  --t-mono-size: 13px;    --t-mono-weight: 400;    --t-mono-lh: 1.45;
+
+  /* ---- Movimento — física premium (spring + cinematic) */
+  --motion-fast: 140ms;
+  --motion-base: 240ms;
+  --motion-slow: 420ms;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+
+  /* ---- Grid / ergonomia */
+  --tap-min: 44px;
+  --container-max: 1120px;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   TEMA ALTERNATIVO — LIGHT CLÍNICO (AA). Troca de tokens, sem folha paralela.
+   ========================================================================== */
+:root[data-theme="light"] {
+  --bg: #F7F8FA;
+  --app-bg: var(--bg);
+  --surface: #FFFFFF;
+  --surface-solid: #FFFFFF;
+  --surface-muted: #F1F3F6;
+  --border: #E4E7EC;
+  --border-strong: #D0D5DD;
+  --text-strong: #101828;
+  --text: #344054;
+  --text-muted: #667085;
+
+  --primary: #2D6FF0;
+  --primary-grad: linear-gradient(135deg, #2D6FF0, #2D6FF0);
+  --accent-violet: #6B4FD8;
+  --accent-teal: #0FA3A3;
+  --accent-cyan: #0FA3A3;
+  --highlight-violet: #6B4FD8;
+  --highlight-blue: #2D6FF0;
+  --success: #12B76A;
+  --warning: #F79009;
+  --danger: #D92D20;
+
+  --on-primary: #FFFFFF;
   --on-accent-teal: #FFFFFF;
   --on-success: #FFFFFF;
   --on-warning: #FFFFFF;
   --on-danger: #FFFFFF;
 
-  /* Derivados tonais para badges/estados (fundo da cor de status a 12%, ring a 16%). */
   --primary-12: rgba(45, 111, 240, .12);
   --primary-10: rgba(45, 111, 240, .10);
-  --primary-ring: rgba(45, 111, 240, .16);
+  --primary-ring: rgba(45, 111, 240, .28);
   --violet-12: rgba(107, 79, 216, .12);
   --teal-12: rgba(15, 163, 163, .12);
   --success-12: rgba(18, 183, 106, .12);
   --warning-12: rgba(247, 144, 9, .12);
   --danger-12: rgba(217, 45, 32, .12);
 
-  /* Overlay de modal (Seção 4 · Modal) */
   --overlay: rgba(16, 24, 40, .45);
 
-  /* ---- 3.6 Tipografia — Inter (fallback SF Pro) */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
-               "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
-  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+  /* Glass/glow neutralizados: superfície sólida e plana (clínico, AA). */
+  --glass-bg: #FFFFFF;
+  --glass-bg-strong: #FFFFFF;
+  --glass-blur: 0px;
+  --glass-highlight: none;
+  --glow-violet: transparent;
+  --glow-blue: transparent;
+  --card-glow: 0 0 #0000;
+  --glow-ring: 0 0 #0000;
 
-  /* Pares tamanho/peso/altura-de-linha (uso via utilitários .t-* em components). */
-  --t-display-size: 28px; --t-display-weight: 600; --t-display-lh: 1.2;
-  --t-h1-size: 22px;      --t-h1-weight: 600;      --t-h1-lh: 1.3;
-  --t-h2-size: 18px;      --t-h2-weight: 600;      --t-h2-lh: 1.35;
-  --t-body-size: 15px;    --t-body-weight: 400;    --t-body-lh: 1.55;
-  --t-label-size: 13px;   --t-label-weight: 500;   --t-label-lh: 1.4;
-  --t-mono-size: 13px;    --t-mono-weight: 400;    --t-mono-lh: 1.45;
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, .06);
+  --shadow-2: 0 4px 12px rgba(16, 24, 40, .08);
+  --shadow-3: 0 12px 32px rgba(16, 24, 40, .12);
 
-  /* ---- 3.7 Movimento — easing único; animar só transform e opacity */
-  --motion-fast: 120ms;
-  --motion-base: 200ms;
-  --motion-slow: 320ms;
-  --ease: cubic-bezier(.2, .8, .2, 1);
-
-  /* ---- 5. Grid / ergonomia tablet-first */
-  --tap-min: 44px;            /* alvo de toque mínimo            */
-  --container-max: 1120px;    /* largura máxima de conteúdo      */
+  color-scheme: light;
 }
 
 /* ============================================================================
-   3.5 Paleta — Dark (real, não inversão): superfícies a partir de azul-grafite.
-   Primárias/acentos: mesma matiz, +6–10% de luminância para preservar AA.
-   ========================================================================== */
-:root[data-theme="dark"] {
-  --bg: #0E1116;
-  --surface: #161A21;
-  --surface-muted: #1C212B;
-  --border: #2A313C;
-  --text-strong: #F2F4F7;
-  --text: #CDD3DC;
-  --text-muted: #8A93A1;
-
-  --primary: #4D86F5;        /* +luminância para AA sobre fundo grafite */
-  --accent-violet: #876BE6;
-  --accent-teal: #2FB8B8;
-  --success: #2ECC82;
-  --warning: #FBA63B;
-  --danger: #F0584C;
-
-  --primary-12: rgba(77, 134, 245, .16);
-  --primary-10: rgba(77, 134, 245, .14);
-  --primary-ring: rgba(77, 134, 245, .24);
-  --violet-12: rgba(135, 107, 230, .16);
-  --teal-12: rgba(47, 184, 184, .16);
-  --success-12: rgba(46, 204, 130, .16);
-  --warning-12: rgba(251, 166, 59, .16);
-  --danger-12: rgba(240, 88, 76, .16);
-
-  --overlay: rgba(3, 6, 12, .60);
-
-  /* Sombras mais profundas para contraste em fundo escuro. */
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
-  --shadow-2: 0 4px 12px rgba(0, 0, 0, .45);
-  --shadow-3: 0 12px 32px rgba(0, 0, 0, .55);
-}
-
-/* Dark automático quando o usuário não fixou um tema manualmente. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    --bg: #0E1116;
-    --surface: #161A21;
-    --surface-muted: #1C212B;
-    --border: #2A313C;
-    --text-strong: #F2F4F7;
-    --text: #CDD3DC;
-    --text-muted: #8A93A1;
-    --primary: #4D86F5;
-    --accent-violet: #876BE6;
-    --accent-teal: #2FB8B8;
-    --success: #2ECC82;
-    --warning: #FBA63B;
-    --danger: #F0584C;
-    --primary-12: rgba(77, 134, 245, .16);
-    --primary-10: rgba(77, 134, 245, .14);
-    --primary-ring: rgba(77, 134, 245, .24);
-    --violet-12: rgba(135, 107, 230, .16);
-    --teal-12: rgba(47, 184, 184, .16);
-    --success-12: rgba(46, 204, 130, .16);
-    --warning-12: rgba(247, 144, 9, .16);
-    --danger-12: rgba(240, 88, 76, .16);
-    --overlay: rgba(3, 6, 12, .60);
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
-    --shadow-2: 0 4px 12px rgba(0, 0, 0, .45);
-    --shadow-3: 0 12px 32px rgba(0, 0, 0, .55);
-  }
-}
-
-/* ============================================================================
-   Base mínima — vincula o documento aos tokens. Não estiliza componentes
-   (isso vive em ds-components.css). Mantém propagação automática (Seção 9).
+   Base — vincula o documento aos tokens e cria a iluminação ambiente.
    ========================================================================== */
 *, *::before, *::after { box-sizing: border-box; }
-
 html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  background: var(--app-bg) fixed;
   color: var(--text);
   font-family: var(--font-sans);
   font-size: var(--t-body-size);
@@ -182,7 +196,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* 3.7 — Respeitar usuários com movimento reduzido. */
+::selection { background: var(--primary-12); color: var(--text-strong); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .001ms !important;
