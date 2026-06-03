@@ -88,7 +88,10 @@
     wrap.setAttribute('aria-hidden', 'true');
     wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden';
     var palette = ['rgba(167,139,250,.5)', 'rgba(56,189,248,.4)', 'rgba(34,211,238,.35)', 'rgba(124,92,255,.45)', 'rgba(139,92,246,.4)'];
-    for (var i = 0; i < 5; i++) {
+    // Em telas pequenas (~mobile baixo-end), reduz para 3 partículas — cada
+    // partícula tem filter:blur(40px) e 5 podem pesar em GPU modesta.
+    var maxParticles = (window.innerWidth < 520) ? 3 : 5;
+    for (var i = 0; i < maxParticles; i++) {
       var p = document.createElement('div');
       p.className = 'np-particle';
       var x = (12 + i * 21 + (i % 2 ? 4 : -3)) + '%';
@@ -144,12 +147,28 @@
     ensureParticles();
     ensureBloomStyles();
     autoApplyBloom();
-    // re-aplica bloom em DOM dinâmico (cards injetados depois)
+    // re-aplica bloom em DOM dinâmico (cards injetados depois).
+    // Debounce + auto-disconnect após 30s sem mudanças relevantes para evitar
+    // leak em SPAs com churn de DOM contínuo.
+    var debounceTimer = null;
+    var disconnectTimer = null;
     var mo = new MutationObserver(function(muts){
-      var any = muts.some(function(m){ return m.addedNodes && m.addedNodes.length; });
-      if (any) autoApplyBloom();
+      var added = muts.some(function(m){ return m.addedNodes && m.addedNodes.length; });
+      if (!added) return;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(autoApplyBloom, 180);
+      // reseta o timer de auto-disconnect
+      clearTimeout(disconnectTimer);
+      disconnectTimer = setTimeout(function(){
+        try { mo.disconnect(); } catch (e) {}
+      }, 30000);
     });
     mo.observe(document.body, { childList: true, subtree: true });
+    // Limpeza definitiva no unload
+    window.addEventListener('pagehide', function(){
+      try { mo.disconnect(); } catch (e) {}
+      clearTimeout(debounceTimer); clearTimeout(disconnectTimer);
+    }, { once: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
