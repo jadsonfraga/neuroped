@@ -322,7 +322,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     var c=null; try{c=window.NPStore&&window.NPStore.active();}catch(e){}
     if(c&&c.name){var age=window.NPStore.ageLabel(c);var ini=(c.name.trim().split(/\s+/).map(function(x){return x[0]}).slice(0,2).join('')||'+').toUpperCase();
       el.classList.remove('none');el.innerHTML='<span class="wa">'+esc(ini)+'</span><span>Para: <b>'+esc(c.name)+'</b>'+(age?' <small>· '+esc(age)+'</small>':'')+'</span>';}
-    else{el.classList.add('none');el.innerHTML='<span class="wa" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Sem criança ativa — o laudo sai sem identificação</span>';}
+    else{el.classList.add('none');el.innerHTML='<span class="wa" style="background:linear-gradient(140deg,#7C3AED,#4F46E5);color:#fff">+</span><span>Sem criança ativa — o laudo sai sem identificação</span>';}
     el.hidden=false;
   }
 

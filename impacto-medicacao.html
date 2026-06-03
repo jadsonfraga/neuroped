@@ -219,7 +219,7 @@ h1{font:700 clamp(22px,4.5vw,32px)/1.1 Georgia,serif;color:#fbf6ea;margin:6px 0}
     var c=activeChild();
     if(c&&c.name){var age=window.NPStore.ageLabel(c);el.classList.remove('none');
       el.innerHTML='<span class="wa" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+esc(c.name)+'</b>'+(age?' <small>· '+esc(age)+'</small>':'')+'</span>';}
-    else {el.classList.add('none');el.innerHTML='<span class="wa" aria-hidden="true" style="background:linear-gradient(140deg,#e7c98b,#caa56a);color:#241a05">+</span><span>Cadastrar criança no Perfil para salvar aqui</span>';}
+    else {el.classList.add('none');el.innerHTML='<span class="wa" aria-hidden="true" style="background:linear-gradient(140deg,#7C3AED,#4F46E5);color:#fff">+</span><span>Cadastrar criança no Perfil para salvar aqui</span>';}
     el.hidden=false;
   }
   function saveToProfile(){
