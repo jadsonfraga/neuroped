@@ -32,6 +32,7 @@
   // Bloqueia "evidence_level" ou "guideline_support" sem fonte → impede fabricação.
   function validateRegistry(obj) {
     var errors = [], inst = (obj && obj.instruments) || {};
+    var PMID = /^\d{6,9}$/;
     Object.keys(inst).forEach(function (k) {
       if (k.charAt(0) === '_') return;          // _example_template etc.
       var e = inst[k] || {};
@@ -43,7 +44,20 @@
         if (g && g.body && !/^(AAP|NICE|AACAP|DSM-5-TR|ICD-11|Cochrane)$/.test(String(g.body)))
           errors.push(k + ': body "' + g.body + '" fora do vocabulário de diretrizes');
       });
-      if (e.evidence_level && !gs.some(function (g) { return g && g.citation; }))
+      // FONTE PRIMÁRIA psicométrica: PMID rastreável é OBRIGATÓRIO (anti-fabricação).
+      var vs = e.validation_sources || [];
+      vs.forEach(function (s, i) {
+        if (!s || !s.citation || !String(s.citation).trim())
+          errors.push(k + ': validation_sources[' + i + '] sem citation');
+        if (!s || !PMID.test(String(s.pmid || '')))
+          errors.push(k + ': validation_sources[' + i + '] sem PMID rastreável');
+      });
+      // Entrada curada precisa de AO MENOS uma fonte (diretriz citada OU fonte com PMID).
+      var hasSource = gs.some(function (g) { return g && g.citation; }) ||
+        vs.some(function (s) { return s && s.citation && PMID.test(String(s.pmid || '')); });
+      if (!hasSource)
+        errors.push(k + ': curado (sem _needs_curation) porém SEM nenhuma fonte rastreável');
+      if (e.evidence_level && !hasSource)
         errors.push(k + ': evidence_level definido sem nenhuma fonte citável');
     });
     return { ok: errors.length === 0, errors: errors };

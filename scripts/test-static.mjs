@@ -897,6 +897,13 @@ assertIncludes('sw.js', "'./clinical-meta.js'", 'loader de meta clínica no prec
   (!M.validateRegistry(bad).ok && M.validateRegistry(good).ok)
     ? pass('validador bloqueia afirmação clínica SEM citação e aceita COM citação (anti-fabricação)')
     : fail('validador de evidência não aplica a regra de citação');
+  // 3) Fase 1 curada: instrumentos oficiais com fonte primária + PMID rastreável
+  const cur = M.curatedOnly(ev);
+  const f1 = ['ofc-mchat', 'ofc-sdq', 'ofc-vanderbilt', 'ofc-asq', 'ofc-cssrs'];
+  const allCited = f1.every(id => cur[id] && (cur[id].validation_sources || []).some(s => /^\d{6,9}$/.test(String(s.pmid || ''))));
+  allCited
+    ? pass('Fase 1 (M-CHAT/SDQ/Vanderbilt/ASQ/C-SSRS) curada com fonte primária + PMID')
+    : fail('Fase 1 sem PMID rastreável', f1.filter(id => !(cur[id] && (cur[id].validation_sources || []).some(s => /^\d{6,9}$/.test(String(s.pmid || ''))))).join(', '));
 }
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
