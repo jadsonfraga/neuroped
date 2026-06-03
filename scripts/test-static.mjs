@@ -851,6 +851,25 @@ assertIncludes('scales-questions.js', 'NÃO são itens de instrumentos propriet�
     ? pass('guia adapta por idade sem esvaziar e tem fallback genérico (queixa sem guia curado)')
     : fail('guia esvaziou por idade/fallback');
 }
+// Modo fadiga + salvar/retomar progresso (helper puro, pronto p/ o runner)
+assertFile('scales-progress.js');
+assertIncludes('sw.js', "'./scales-progress.js'", 'progresso de escala no precache do SW (offline)');
+{
+  const require = createRequire(import.meta.url);
+  const P = require(join(root, 'scales-progress.js'));
+  // fadiga (pura): blocos balanceados, sem bloco órfão de 1 item
+  const plan = P.blockPlan(20, 8).map(b => b.count);
+  const balanced = plan.reduce((a, b) => a + b, 0) === 20 && Math.min(...plan) >= Math.max(...plan) - 1;
+  (P.isLong(20) && !P.isLong(10) && balanced && P.shouldOfferBreak(8, 8) && !P.shouldOfferBreak(0, 8))
+    ? pass('fadiga: isLong + blocos balanceados (' + plan.join('/') + ') + pausa no limite de bloco')
+    : fail('lógica de fadiga incorreta', plan.join('/'));
+  // salvar → retomar → limpar
+  P.save({ instrumentId: 't1', childCode: 'c1', index: 4, total: 18 });
+  const r = P.load('t1', 'c1');
+  (r && r.index === 4 && P.percent(r) === 22 && (P.clear('t1', 'c1'), P.load('t1', 'c1') === null))
+    ? pass('progresso salva/retoma/limpa (retomar de onde parou — reduz abandono)')
+    : fail('save/load/clear de progresso falhou');
+}
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
 assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
