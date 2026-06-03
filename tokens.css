@@ -32,6 +32,7 @@
   --radius-md: 12px;  /* botoes */
   --radius-lg: 16px;  /* cards */
   --radius-xl: 24px;  /* modais */
+  --radius-pill: 9999px; /* pill / chip arredondado total */
 
   /* ---------- 3.3 Sombras (profundidade em camadas) ---------- */
   --shadow-1: 0 1px 2px rgba(16, 24, 40, .06);

@@ -33,13 +33,14 @@ const IGNORE_FILES = new Set([
 const PATTERNS = {
   hex_color:    /#[0-9a-fA-F]{3,8}\b/g,
   rgb_color:    /\b(?:rgb|rgba|hsl|hsla)\(/g,
-  // espacamentos hardcoded em px que NAO sao multiplos de 4 ou que estao em 4,8,12 etc.
-  // detectamos QUALQUER pixel para fim de relatorio
+  // px crus FORA de var(--...). clamp() e calc() com var() sao ok.
   px_value:     /\b\d+(?:\.\d+)?px\b/g,
-  shadow_inline: /box-shadow\s*:\s*[^;]+;/g,
-  border_radius: /border-radius\s*:\s*[^;]+;/g,
-  // tipografia hardcoded
-  font_size:    /font-size\s*:\s*[^;]+;/g,
+  // box-shadow nao-token: regra inteira sem var(--shadow-*)
+  shadow_inline: /box-shadow\s*:\s*(?!var\(--shadow)[^;}]+(?:;|})/g,
+  // border-radius cru: regra sem var(--radius-*)
+  border_radius: /border-radius\s*:\s*(?!var\(--radius)[^;}]+(?:;|})/g,
+  // font-size cru: regra sem var(--t-*-size). clamp() ainda conta.
+  font_size:    /font-size\s*:\s*(?!var\(--t-)[^;}]+(?:;|})/g,
 };
 
 function walk(dir, acc) {
