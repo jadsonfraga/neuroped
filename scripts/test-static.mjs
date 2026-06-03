@@ -762,6 +762,17 @@ for (const p of ['comunicacao-alternativa.html','impacto-medicacao.html','sobre-
 // fica sem cor. Tem de resolver em runtime (cvar via getComputedStyle).
 assertNotIncludes('agenda-financeiro.html', "Style = 'var(--", 'canvas resolve cor em runtime (cvar), não var() cru');
 assertIncludes('agenda-financeiro.html', 'function cvar', 'agenda resolve token do CSS p/ o canvas (theme-aware)');
+// Regressão app-wide: var(--token) em ATRIBUTO de apresentação SVG (fill=/stroke=/
+// stop-color=) NÃO resolve em vários navegadores → ícone/gráfico fica preto/invisível.
+// O correto é style="fill:var(--x)". Pega a classe inteira de bug (efeito de migração em massa).
+{
+  const reAttr = /(?:fill|stroke|stop-color|flood-color)="var\(--[a-z0-9-]+\)"/i;
+  const offenders = readdirSync(root).filter(f => f.endsWith('.html'))
+    .filter(f => reAttr.test(readFileSync(join(root, f), 'utf8')));
+  offenders.length === 0
+    ? pass('nenhum SVG usa var(--token) em atributo de apresentação (usa style= — resolve em todo navegador)')
+    : fail('SVG com var() em atributo de apresentação (invisível em Safari/etc.): ' + offenders.join(', '), 'troque por style="fill:var(--x)"');
+}
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
