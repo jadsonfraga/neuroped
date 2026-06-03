@@ -1,0 +1,85 @@
+/* ============================================================
+   NeuroPed EDJ — animations.css · Motion Library Premium
+   ============================================================
+   Sensação "produto milionário": fade-up, stagger, magnetic hover,
+   spring physics, shimmer skeleton, cinematic scrolling.
+   ============================================================ */
+
+/* ---------- KEYFRAMES ---------- */
+@keyframes np-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes np-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes np-scale-in {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes np-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes np-pulse {
+  0%, 100% { opacity: .85; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.02); }
+}
+@keyframes np-spin { to { transform: rotate(360deg); } }
+@keyframes np-glow-violet {
+  0%, 100% { box-shadow: 0 0 16px rgba(167, 139, 250, .25); }
+  50%      { box-shadow: 0 0 32px rgba(167, 139, 250, .45); }
+}
+
+/* ---------- ANIMATION UTILITIES ---------- */
+.np-anim-fade-up    { animation: np-fade-up    var(--motion-slow) var(--motion-ease) both; }
+.np-anim-fade-in    { animation: np-fade-in    var(--motion-base) var(--motion-ease) both; }
+.np-anim-scale-in   { animation: np-scale-in   var(--motion-base) cubic-bezier(.34, 1.56, .64, 1) both; }
+.np-anim-pulse      { animation: np-pulse      2.4s ease-in-out infinite; }
+.np-anim-glow       { animation: np-glow-violet 3s ease-in-out infinite; }
+
+/* ---------- STAGGER (delays incrementais até 8 filhos) ---------- */
+.np-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.np-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.np-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.np-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.np-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.np-stagger > *:nth-child(6) { animation-delay: 300ms; }
+.np-stagger > *:nth-child(7) { animation-delay: 360ms; }
+.np-stagger > *:nth-child(8) { animation-delay: 420ms; }
+
+/* ---------- SKELETON SHIMMER ---------- */
+.np-skeleton, .skeleton {
+  display: block;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.04) 0%,
+    rgba(255,255,255,.10) 50%,
+    rgba(255,255,255,.04) 100%);
+  background-size: 200% 100%;
+  animation: np-shimmer 1.5s linear infinite;
+  border-radius: 10px;
+  min-height: 14px;
+}
+
+/* ---------- MAGNETIC HOVER (cards/botões) ---------- */
+.np-magnetic { transition: transform var(--motion-base) cubic-bezier(.2, .8, .2, 1); }
+.np-magnetic:hover { transform: translate3d(0, -3px, 0) scale(1.005); }
+
+/* ---------- HOVER SPRING (botões) ---------- */
+.np-spring:hover { transform: translateY(-2px) scale(1.02); }
+.np-spring:active { transform: translateY(0) scale(.97); transition: transform 80ms var(--motion-ease); }
+
+/* ---------- BOOT FADE para body inteiro ---------- */
+body.np-boot-fade { animation: np-fade-in 320ms var(--motion-ease) both; }
+
+/* ---------- prefers-reduced-motion: zera tudo ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .np-anim-fade-up, .np-anim-fade-in, .np-anim-scale-in,
+  .np-anim-pulse, .np-anim-glow,
+  .np-skeleton, .np-magnetic, .np-spring,
+  body.np-boot-fade {
+    animation: none !important;
+    transition: none !important;
+  }
+}

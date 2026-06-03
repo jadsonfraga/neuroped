@@ -39,37 +39,95 @@
   --shadow-2: 0 4px 12px rgba(16, 24, 40, .08);
   --shadow-3: 0 12px 32px rgba(16, 24, 40, .12);
 
-  /* ---------- 3.4 Paleta Light ---------- */
-  --bg:            #F7F8FA;
-  --surface:       #FFFFFF;
-  --surface-muted: #F1F3F6;
-  --border:        #E4E7EC;
-  --text-strong:   #101828;
-  --text:          #344054;
-  --text-muted:    #667085;
+  /* ---------- 3.4 Paleta DEFAULT — SuperNeuroPed Navy Premium ---------- */
+  /* Briefing definitivo: dark mode premium, fundo navy profundo, gradientes
+     violetas/azulados, glow suave, glassmorphism refinado, Apple-level. */
 
-  --primary:        #2D6FF0;
-  --primary-hover:  #1F5BD0;
-  --primary-press:  #1949B5;
-  --primary-tint:   rgba(45, 111, 240, .12);
+  /* BACKGROUND — navy em 4 níveis para gradientes radiais */
+  --bg:            #030712;
+  --bg-2:          #050816;
+  --bg-3:          #081020;
+  --bg-4:          #0B1020;
 
-  --accent-violet:  #6B4FD8;
-  --accent-teal:    #0FA3A3;
-  --success:        #12B76A;
-  --warning:        #F79009;
-  --danger:         #D92D20;
+  /* SUPERFÍCIES — glass tradicional + sólido + muted */
+  --surface:       rgba(15, 18, 35, .92);     /* card sólido com leve transparência (premium) */
+  --surface-muted: rgba(20, 26, 48, .78);     /* fundo dropdown / sub-card */
+  --surface-solid: #0F1223;                    /* card 100% opaco (mobile) */
+  --surface-glass: rgba(18, 22, 40, .78);     /* card glass (briefing) */
 
-  /* Tints para badges (cor de status a 12%) */
-  --success-tint:  rgba(18, 183, 106, .12);
-  --warning-tint:  rgba(247, 144, 9,  .12);
-  --danger-tint:   rgba(217, 45, 32,  .12);
-  --primary-tint-strong: rgba(45, 111, 240, .16); /* focus ring 3px */
+  /* BORDAS — todas translúcidas */
+  --border:        rgba(255, 255, 255, .08);
+  --border-soft:   rgba(255, 255, 255, .04);
+  --border-strong: rgba(255, 255, 255, .14);
 
-  /* ---------- 3.6 Tipografia (Inter, fallback SF Pro) ---------- */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-               'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-               'Liberation Mono', monospace;
+  /* TEXTO — Apple-level legibilidade */
+  --text-strong:   #FFFFFF;
+  --text:          #E5E7EB;
+  --text-muted:    #94A3B8;
+  --text-soft:     #64748B;
+  --text-display:  #FFFFFF;
+  --text-display-soft: #E0E7FF;
+
+  /* PRIMARY GRADIENT — violeta+azul Tesla/Linear */
+  --primary:        #7C3AED;                  /* violeta principal (CTA) */
+  --primary-hover:  #8B5CF6;
+  --primary-press:  #6D5CFF;
+  --primary-light:  #A78BFA;
+  --primary-deep:   #4F46E5;
+  --primary-blue:   #2563EB;
+  --primary-cyan:   #0EA5E9;
+  --primary-tint:        rgba(124, 58, 237, .14);
+  --primary-tint-strong: rgba(124, 58, 237, .24);
+  --primary-gradient:    linear-gradient(135deg, #7C3AED 0%, #4F46E5 50%, #2563EB 100%);
+  --primary-gradient-soft: linear-gradient(135deg, rgba(124,58,237,.15) 0%, rgba(37,99,235,.10) 100%);
+  --shadow-primary:      0 10px 40px rgba(0, 0, 0, .35), 0 0 30px rgba(124, 92, 255, .12);
+  --shadow-primary-strong: 0 16px 50px rgba(0, 0, 0, .5), 0 0 40px rgba(124, 92, 255, .28);
+
+  /* HIGHLIGHTS — accents vivos para cards individuais */
+  --accent-violet:  #A78BFA;
+  --accent-blue:    #38BDF8;
+  --accent-cyan:    #22D3EE;
+  --accent-pink:    #EC4899;
+  --accent-rose:    #F43F5E;
+  --accent-emerald: #10B981;
+  --accent-teal:    #14B8A6;
+  --accent-amber:   #F59E0B;
+  --accent-gold:    #E7C98B;
+  --accent-gold-dark: #CAA56A;
+  --gold-gradient:  linear-gradient(135deg, #E7C98B, #CAA56A);
+  --shadow-gold:    0 10px 30px rgba(231, 201, 139, .25);
+
+  /* STATUS — tons que destacam contra navy profundo */
+  --success:        #10B981;
+  --warning:        #F59E0B;
+  --danger:         #F43F5E;
+  --info:           #38BDF8;
+
+  --success-tint:  rgba(16, 185, 129, .14);
+  --warning-tint:  rgba(245, 158, 11, .14);
+  --danger-tint:   rgba(244, 63, 94, .14);
+  --info-tint:     rgba(56, 189, 248, .14);
+
+  /* AURORA — radial gradients que compõem o fundo navy premium */
+  --aurora-1: radial-gradient(1200px 700px at 10% -10%, rgba(124, 58, 237, .18), transparent 60%);
+  --aurora-2: radial-gradient(1000px 640px at 100% 0%,  rgba(37, 99, 235, .14), transparent 56%);
+  --aurora-3: radial-gradient(1200px 800px at 50% 110%, rgba(14, 165, 233, .10), transparent 60%);
+  --aurora-base: linear-gradient(160deg, var(--bg), var(--bg-2) 40%, var(--bg-3) 80%, var(--bg));
+
+  /* SOMBRAS — cinematográficas, com glow violeta suave */
+  --shadow-card:        0 10px 40px rgba(0, 0, 0, .35), 0 0 30px rgba(124, 92, 255, .08);
+  --shadow-card-hover:  0 20px 60px rgba(0, 0, 0, .5),  0 0 40px rgba(124, 92, 255, .18);
+  --shadow-drama:       0 30px 80px rgba(0, 0, 0, .55), 0 0 60px rgba(124, 92, 255, .22);
+  --shadow-glow-violet: 0 0 20px rgba(167, 139, 250, .35);
+  --shadow-glow-cyan:   0 0 20px rgba(34, 211, 238, .25);
+
+  /* ---------- 3.6 Tipografia — SF Pro Display / Inter / Geist (briefing) ---------- */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+               'Inter', 'Geist', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+                  'Inter', 'Geist', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', 'Geist Mono',
+               Menlo, Consolas, 'Liberation Mono', monospace;
 
   /* tamanho / line-height (peso definido nos componentes/utility .np-t-*) */
   --t-display-size: 28px; --t-display-lh: 1.2;
@@ -103,43 +161,50 @@
   --z-toast:   70;
 }
 
-/* ---------- 3.5 Paleta Dark — DNA NeuroPed (indigo + dourado) ----------
-   Identidade das telas-referência (filtro/central): fundo índigo-noite,
-   tinta clara, primária índigo, realce dourado. Não é inversão de cor.
-   Tokens dark reaproveitados por [data-theme="dark"] E pelo padrão do app. */
-[data-theme="dark"],
-:root:not([data-theme="light"]) {
-  --bg:            #0a0a16;
-  --surface:       #14132a;
-  --surface-muted: #1c1a3a;
-  --border:        rgba(169, 164, 255, .18);
-  --text-strong:   #F2F0FF;
-  --text:          #ECEAFF;
-  --text-muted:    #b6b2e6;
-
-  /* Primária índigo (marca) — tons claros no dark p/ contraste AA */
-  --primary:        #6d6af5;
-  --primary-hover:  #8b88ff;
-  --primary-press:  #a9a4ff;
-  --primary-tint:   rgba(109, 106, 245, .18);
-  --primary-tint-strong: rgba(109, 106, 245, .26);
-
-  --accent-violet:  #a78bfa;
-  --accent-teal:    #5ed3c4;
-  --accent-gold:    #e7c98b;            /* realce dourado da marca */
-  --accent-gold-tint: rgba(231, 201, 139, .18);
-  --success:        #5fd99a;
-  --warning:        #f0c060;
-  --danger:         #f08a82;
-
-  --success-tint:  rgba(95, 217, 154, .18);
-  --warning-tint:  rgba(240, 192, 96, .18);
-  --danger-tint:   rgba(240, 138, 130, .18);
-
-  /* Sombras densas índigo-noite */
-  --shadow-1: 0 1px 2px rgba(4, 3, 18, .45);
-  --shadow-2: 0 8px 22px rgba(4, 3, 18, .50);
-  --shadow-3: 0 16px 42px rgba(4, 3, 18, .58);
+/* ---------- 3.5 [data-theme="light"] — clinical opt-in (paleta clínica AA) ----------
+   Opt-in via <html data-theme="light">. Padrão = índigo aurora (já em :root). */
+[data-theme="light"] {
+  --bg:            #F7F8FA;
+  --bg-2:          #EEF1F5;
+  --surface:       #FFFFFF;
+  --surface-muted: #F1F3F6;
+  --surface-solid: #FFFFFF;
+  --border:        #E4E7EC;
+  --border-soft:   #EEF1F5;
+  --text-strong:   #101828;
+  --text:          #344054;
+  --text-muted:    #667085;
+  --text-soft:     #8A93A1;
+  --text-display:  #2D6FF0;
+  --text-display-soft: #1F5BD0;
+  --primary:        #2D6FF0;
+  --primary-hover:  #1F5BD0;
+  --primary-press:  #1949B5;
+  --primary-light:  #5A8DF5;
+  --primary-tint:        rgba(45, 111, 240, .12);
+  --primary-tint-strong: rgba(45, 111, 240, .16);
+  --primary-gradient: linear-gradient(180deg, #2D6FF0, #1F5BD0);
+  --shadow-primary:   0 12px 28px -8px rgba(45, 111, 240, .35);
+  --accent-violet:  #6B4FD8;
+  --accent-teal:    #0FA3A3;
+  --accent-pink:    #DB2777;
+  --accent-emerald: #047857;
+  --accent-cyan:    #0891B2;
+  --accent-gold:    #B8963E;
+  --accent-gold-dark: #92741E;
+  --success:        #12B76A;
+  --warning:        #F79009;
+  --danger:         #D92D20;
+  --success-tint:  rgba(18, 183, 106, .12);
+  --warning-tint:  rgba(247, 144, 9,  .12);
+  --danger-tint:   rgba(217, 45, 32,  .12);
+  --aurora-1: none;
+  --aurora-2: none;
+  --aurora-3: none;
+  --aurora-base: var(--bg);
+  --shadow-card:       0 4px 12px rgba(16, 24, 40, .08);
+  --shadow-card-hover: 0 12px 32px rgba(16, 24, 40, .12);
+  --shadow-drama:      0 24px 60px rgba(16, 24, 40, .14);
 }
 
 /* Tipografia base aplicada ao root para garantir Inter onde os tokens forem usados.
