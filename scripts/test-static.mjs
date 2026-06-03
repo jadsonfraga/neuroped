@@ -189,7 +189,9 @@ assertIncludes('app-polish-mobile.css', '.np-sheet', 'polish CSS define bottom s
 assertIncludes('app-polish-mobile.css', 'prefers-reduced-motion', 'polish CSS respeita prefers-reduced-motion');
 assertIncludes('app-polish-mobile.js', 'npToast', 'polish JS expoe window.npToast');
 assertIncludes('app-polish-mobile.js', 'npConfirm', 'polish JS expoe window.npConfirm');
-for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','banco-escalas.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
+// banco-escalas.html migrou para o design system canônico (ds-tokens/ds-components)
+// e abandonou as skins legadas (app-polish/escalas-card-premium). Ver bloco DS abaixo.
+for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
   assertIncludes(p, 'app-polish-mobile.css', p + ' carrega app-polish-mobile.css');
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
 }
@@ -246,7 +248,8 @@ assertFile('escalas-card-premium.css');
 assertFile('escalas-card-premium.js');
 assertIncludes('escalas-card-premium.js', 'jpEmoji', 'decorator tem heurística de emoji por queixa');
 assertIncludes('escalas-card-premium.js', 'jpColor', 'decorator tem cor determinística por categoria');
-for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+// banco-escalas.html migrou para o DS canônico — fora da estética J26 legada (lotes seguem por ora).
+for (const b of ['banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
   assertIncludes(b, 'escalas-card-premium.css', b+' carrega o CSS premium dos cards');
   assertIncludes(b, 'escalas-card-premium.js', b+' carrega o decorator J26');
 }
@@ -479,9 +482,29 @@ assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra conta
 // Contagem inflada "507" não pode voltar nas páginas de lote
 for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
   assertNotIncludes(b, '507', b + ' não exibe a contagem inflada 507');
-  assertIncludes(b, 'content="#0e0e22"', b + ' usa o tema índigo escuro (coesão)');
   assertNotIncludes(b, '--bg:#f7f2e8', b + ' não usa mais o tema creme antigo');
 }
+// Lotes ainda no tema índigo legado (migração tela a tela em andamento).
+for (const b of ['banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+  assertIncludes(b, 'content="#0e0e22"', b + ' usa o tema índigo escuro (coesão)');
+}
+
+// ===== Design System canônico (SUPERNEUROPED) — fonte única da verdade =====
+assertFile('ds-tokens.css');
+assertFile('ds-components.css');
+assertFile('design-system.html');
+assertIncludes('ds-tokens.css', '--primary: #2D6FF0', 'token de cor primária clínica (azul) definido');
+assertIncludes('ds-tokens.css', '--space-4: 16px', 'escala de espaçamento 4px definida');
+assertIncludes('ds-tokens.css', '[data-theme="dark"]', 'dark mode é troca de tokens (sem folha paralela)');
+assertIncludes('ds-components.css', '.ds-btn', 'componente botão canônico definido');
+assertIncludes('ds-components.css', '.ds-card', 'componente card canônico definido');
+assertNotIncludes('ds-components.css', '#', 'componentes consomem só tokens (zero cor crua)');
+// banco-escalas.html: piloto da migração (fase 4) para o DS canônico
+assertIncludes('banco-escalas.html', 'ds-tokens.css', 'banco-escalas migrou: carrega a camada de tokens');
+assertIncludes('banco-escalas.html', 'ds-components.css', 'banco-escalas migrou: carrega os componentes canônicos');
+assertIncludes('banco-escalas.html', 'content="#F7F8FA"', 'banco-escalas usa o fundo clínico off-white (DS)');
+assertNotIncludes('banco-escalas.html', '#6d6af5', 'banco-escalas sem o roxo legado (linguagem unificada)');
+assertNotIncludes('banco-escalas.html', 'escalas-card-premium', 'banco-escalas sem a skin J26 legada');
 // app-polish-mobile não pode reescrever o theme-color para teal
 assertNotIncludes('app-polish-mobile.js', "content = '#1a6b65'", 'app-polish-mobile não força theme-color teal');
 assertIncludes('app-polish-mobile.js', "content = '#0e0e22'", 'app-polish-mobile usa theme-color índigo');

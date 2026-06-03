@@ -119,6 +119,20 @@ Pré-requisito cumprido: fases 1 (tokens) e 3 (componentes) entregues nesta bran
 
 ---
 
+## 4.1 Migração em andamento (fase 4)
+
+| Tela | Estado | Observações |
+|---|---|---|
+| `banco-escalas.html` (biblioteca de escalas + aplicação de questionário) | **✅ migrada (piloto)** | Tokens clínicos light, Inter, componentes `ds-*`. Removidas as skins legadas (`app-polish-mobile.css/js`, `escalas-card-premium.css/js`) e o `:root` roxo/escuro. Zero hex cru. Alvos ≥ 44px. Gate atualizado para travar o novo padrão. |
+| `banco-escalas-lote{1..5}.html` | pendente | Ainda no tema índigo legado + estética J26. Próximos da fila (mesmo template do piloto). |
+| dashboard clínico, aplicação de questionários (`escala.html`), cards modulares, relatório | pendente | Telas-referência seguintes (Seção 2). |
+
+> **Camada universal a aposentar (global):** `app-polish-mobile.css` força títulos
+> em Fraunces serif e re-tinge tokens para índigo — incompatível com a Seção 3.6.
+> O piloto a removeu localmente; o passo global é reescrever o chrome `np-*`
+> (bottom-nav, toasts, sheets, journey) sobre os tokens canônicos e então retirar
+> a skin de todas as telas.
+
 ## 5. Como verificar a fundação agora
 
 Abra `design-system.html` (carrega **apenas** `ds-tokens.css` +
