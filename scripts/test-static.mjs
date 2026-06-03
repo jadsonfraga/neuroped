@@ -259,6 +259,15 @@ assertIncludes('app-polish-mobile.css', '.np-skel', 'skeleton loaders definidos 
 assertIncludes('app-polish-mobile.css', '.np-empty', 'estado vazio institucional definido');
 assertIncludes('filtro-escalas.html', 'np-skel', 'filtro mostra skeleton enquanto carrega');
 assertIncludes('app-polish-mobile.js', 'qualitySeal', 'selo de qualidade no rodapé (robustez)');
+// Design System global (DNA premium v3) — homogeneização visual de todo o app
+assertFile('design-system-premium.css');
+assertIncludes('design-system-premium.css', '--nds-', 'design system usa tokens namespaced (--nds-*) — não sequestra variáveis locais da página');
+assertIncludes('design-system-premium.css', '.np-ds-card', 'design system expõe componentes opt-in (.np-ds-card etc.) p/ telas novas herdarem');
+assertIncludes('design-system-premium.css', '.np-ds-btn', 'design system define botão premium unificado (.np-ds-btn)');
+assertIncludes('design-system-premium.css', 'pointer:coarse', 'design system é tablet-first (alvos de toque ≥46px em telas de toque)');
+assertIncludes('app-polish-mobile.js', 'function designSystem', 'app-polish injeta o design system global em toda tela standalone');
+assertIncludes('app-polish-mobile.js', "querySelector('#root')", 'injeção do DS pula a SPA compilada (#root) — não sobrescreve o produto compilado');
+assertIncludes('sw.js', 'design-system-premium.css', 'design system está no precache do service worker (offline)');
 assertIncludes('app-polish-mobile.js', 'function pageExit', 'navegação guiada: transição de saída ao trocar de tela (app-wide)');
 assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacidade (não quebra sticky/fixed)');
 assertIncludes('app-polish-mobile.js', 'function journeyGuide', 'guia de jornada: etapa atual + próximo passo contextual (fluxo guiado)');

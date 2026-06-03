@@ -282,7 +282,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.42.0') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.43.0') + '</span>';
     document.body.appendChild(seal);
   }
 
@@ -629,7 +629,27 @@
     document.addEventListener('keydown', function esc(e){ if (e.key === 'Escape') { document.removeEventListener('keydown', esc); close(false); } });
   }
 
+  /* =====================================================
+     0) Design System global (DNA premium) — injeta design-system-premium.css
+        em TODA tela standalone, sem editar cada HTML. Telas novas herdam
+        automaticamente a identidade. NÃO toca a SPA compilada (#root): ela
+        tem o próprio design system e já é uma das telas-referência.
+     ===================================================== */
+  function designSystem(){
+    try {
+      if (document.getElementById('app')) return;          // monta-pontos da SPA
+      if (document.querySelector('#root')) return;          // SPA Vite — não sobrescrever
+      if (document.querySelector('link[href*="design-system-premium.css"]')) return;
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = './design-system-premium.css';
+      l.setAttribute('data-np-ds', '1');
+      document.head.appendChild(l);
+    } catch (e) {}
+  }
+
   function boot(){
+    designSystem();
     themeColor();
     fixViewport();
     premiumNav();
