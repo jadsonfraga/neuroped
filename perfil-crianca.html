@@ -99,7 +99,8 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><link rel="stylesheet" href="./app-polish-mobile.css">
-<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"></head>
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+</head>
 <body>
 <main class="wrap">
   <a class="back" href="./central-atalhos.html">‹ Central de atalhos</a>
@@ -363,12 +364,14 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
       +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px 30px;line-height:1.7;max-width:720px;margin:auto}'
       +'.hd{border-bottom:2px solid #7f1d1d;padding-bottom:10px;margin-bottom:18px}.hd b{font-size:18px;color:#7f1d1d}.hd span{display:block;font-size:12px;color:#555;margin-top:2px}'
       +'h1{font-size:17px;color:#7f1d1d;margin:0 0 14px}p{margin:0 0 12px}.sig{margin-top:46px;text-align:center}.sig .ln{width:280px;border-top:1px solid #333;margin:0 auto 4px}.sig b{font-size:13px}.sig span{display:block;font-size:12px;color:#444}'
-      +'.warn{margin-top:26px;border-top:1px solid #ddd;padding-top:8px;font-size:11px;color:#666}@media print{body{padding:16mm}}</style><link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"></head><body>'
+      +'.warn{margin-top:26px;border-top:1px solid #ddd;padding-top:8px;font-size:11px;color:#666}@media print{body{padding:16mm}}</style><link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+</head><body>'
       +'<div class="hd"><b>Dr. Jadson Fraga Araújo Júnior</b><span>Neurologista Infantil · CRM-PE 25227 · RQE 17756 · Petrolina/PE</span></div>'
       +bodyHtml
       +'<div class="sig"><div class="ln"></div><b>Dr. Jadson Fraga Araújo Júnior</b><span>CRM-PE 25227 · RQE 17756</span></div>'
       +'<div class="warn">Documento emitido localmente pelo NeuroPed EDJ. Revise o conteúdo antes de assinar/entregar. As informações refletem dados inseridos pelo próprio profissional neste dispositivo.</div>'
-      +'</body></html>';
+      +'<script src="./app-frame.js" defer></script>
+</body></html>';
   }
   function docHtml(kind, c){
     var pe=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]);});};
@@ -458,12 +461,14 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
         +(dom?'<ul>'+dom+'</ul>':'')+'</div>';
     }).join('');
     return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+pe(c.name||'criança')+'</title>'
-      +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;color:#7f1d1d;margin:0 0 10px}h3{font-size:14px;color:#0f766e;margin:14px 0 2px}.box{border:1px solid #ddd;background:#fafafa;padding:12px;border-radius:8px;margin:8px 0}.ev{border-top:1px solid #eee;padding-top:8px;margin-top:8px}.m{color:#555;font-size:12px;margin:2px 0}ul{margin:4px 0 0 18px;font-size:12px}.warn{font-size:11px;color:#555;margin-top:20px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style><link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"></head><body>'
+      +'<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{font-size:20px;color:#7f1d1d;margin:0 0 10px}h3{font-size:14px;color:#0f766e;margin:14px 0 2px}.box{border:1px solid #ddd;background:#fafafa;padding:12px;border-radius:8px;margin:8px 0}.ev{border-top:1px solid #eee;padding-top:8px;margin-top:8px}.m{color:#555;font-size:12px;margin:2px 0}ul{margin:4px 0 0 18px;font-size:12px}.warn{font-size:11px;color:#555;margin-top:20px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style><link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+</head><body>'
       +head
       +'<h2 style="font-size:15px;color:#7f1d1d">Avaliações ('+rs.length+')</h2>'
       +(rs.length?blocks:'<p class="m">Nenhuma avaliação registrada.</p>')
       +'<div class="warn">Documento de organização clínica gerado localmente no NeuroPed EDJ. Instrumentos autorais de triagem, não normatizados — não substituem avaliação nem diagnóstico. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227.</div>'
-      +'</body></html>';
+      +'<script src="./app-frame.js" defer></script>
+</body></html>';
   }
   function printReport(html){
     try{
@@ -529,5 +534,6 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 </script>
 <script src="./app-polish-mobile.js" defer></script>
 <script src="./np-frame.js" defer></script>
+<script src="./app-frame.js" defer></script>
 </body>
 </html>
