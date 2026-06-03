@@ -8,7 +8,7 @@ function hex(buffer){return Array.from(new Uint8Array(buffer)).map(x=>x.toString
 function nowBR(){return new Date().toLocaleString('pt-BR')}
 function dateFile(){return new Date().toISOString().slice(0,10)}
 function getRegs(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
-function setRegs(r){localStorage.setItem(KEY,JSON.stringify(r||[]))}
+function setRegs(r){try{localStorage.setItem(KEY,JSON.stringify(r||[]));return true}catch(e){return false}}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function val(id){return document.getElementById(id)?.value||''}
 function setHTML(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html}

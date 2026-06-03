@@ -18,9 +18,7 @@
     if(!txt){toast('Monte uma frase primeiro');return;}
     let list=[];try{list=JSON.parse(localStorage.getItem(QUICK_KEY)||'[]')}catch{}
     if(!list.includes(txt)) list.unshift(txt);
-    localStorage.setItem(QUICK_KEY, JSON.stringify(list.slice(0,30)));
-    toast('Frase rápida salva');
-    renderSaved();
+    try{localStorage.setItem(QUICK_KEY, JSON.stringify(list.slice(0,30)));toast('Frase rápida salva');renderSaved();}catch(e){toast('Não foi possível salvar (armazenamento cheio)');}
   }
   function renderSaved(){
     const quick=document.getElementById('quick');
