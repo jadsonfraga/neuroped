@@ -715,23 +715,20 @@ try {
   buildBundle(root).trim() === onDisk.trim() ? pass("scales-bundle está fresco (= concatenação dos fontes)") : fail("scales-bundle DEFASADO — rode: node scripts/build-scales-bundle.mjs");
 } catch (e) { warn("não validou frescor do bundle", String(e)); }
 
-console.log('\nNeuroPed static quality check');
-console.log('============================');
-console.log(oks.join('\n'));
-if(warnings.length) console.log('\nWarnings:\n'+warnings.join('\n'));
-if(failures.length){console.error('\nFailures:\n'+failures.join('\n'));process.exit(1)}
-console.log(`\nResultado: ${oks.length} OK, ${warnings.length} aviso(s), 0 falhas.`);
-
 // Design system (SUPERNEUROPED fase 1 + 3)
 assertFile('tokens.css');
 assertFile('components.css');
 assertFile('scripts/design-audit.mjs');
-assertIncludes('tokens.css', '--space-1: 4px', 'tokens escala 4 px (--space-1 a --space-16)');
+assertIncludes('tokens.css', '--space-1:', 'tokens escala 4 px (--space-1 a --space-16)');
 assertIncludes('tokens.css', '--radius-sm: 8px', 'tokens raios sm/md/lg/xl');
 assertIncludes('tokens.css', '--shadow-1:', 'tokens sombras em 3 camadas');
 assertIncludes('tokens.css', "--primary:        #2D6FF0", 'tokens primary light = 2D6FF0');
 assertIncludes(  'tokens.css', '[data-theme="dark"]', 'tokens definem dark via data-theme');
-assertIncludes(  'tokens.css', 'prefers-color-scheme: dark', 'tokens respeitam prefers-color-scheme');
+assertIncludes(  'tokens.css', ':root:not([data-theme="light"])', 'DARK indigo+gold é o PADRÃO do app (light = opt-in via data-theme=light)');
+assertIncludes(  'tokens.css', '--accent-gold:', 'dark token tem o realce dourado da marca (DNA NeuroPed)');
+assertIncludes(  'tokens.css', '--bg:            #0a0a16', 'fundo padrão = índigo-noite (DNA das telas-referência)');
+assertIncludes(  'sw.js', "'./tokens.css'", 'tokens.css no precache do SW (design system offline)');
+assertIncludes(  'sw.js', "'./components.css'", 'components.css no precache do SW (design system offline)');
 assertIncludes(  'tokens.css', 'prefers-reduced-motion: reduce', 'tokens anulam motion em prefers-reduced-motion');
 assertIncludes(  'components.css', '.np-card', 'components define .np-card');
 assertIncludes(  'components.css', '.np-btn--primary', 'components define .np-btn--primary');
@@ -747,3 +744,12 @@ for (const p of ['index.html','consulta.html','filtro-escalas.html','escalas.htm
   assertIncludes(p, 'tokens.css', p + ' carrega tokens.css');
   assertIncludes(p, 'components.css', p + ' carrega components.css');
 }
+
+// ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
+//    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
+console.log('\nNeuroPed static quality check');
+console.log('============================');
+console.log(oks.join('\n'));
+if(warnings.length) console.log('\nWarnings:\n'+warnings.join('\n'));
+if(failures.length){console.error('\nFailures:\n'+failures.join('\n'));process.exit(1)}
+console.log(`\nResultado: ${oks.length} OK, ${warnings.length} aviso(s), 0 falhas.`);

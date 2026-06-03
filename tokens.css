@@ -6,8 +6,9 @@
    Nenhum componente novo pode usar valor cru (hardcoded) que nao venha dos tokens
    abaixo. Para auditar, rode: `node scripts/design-audit.mjs`.
 
-   Light = default. Dark = ativado por [data-theme="dark"] no <html> OU
-   prefers-color-scheme: dark se nenhum data-theme estiver setado.
+   DARK indigo+gold = PADRÃO do app (DNA das telas-referência filtro/central).
+   Tema claro clínico = opt-in via [data-theme="light"] no <html>.
+   [data-theme="dark"] força o dark explicitamente (mesma paleta do padrão).
 
    Ordem de carga recomendada (depois de qualquer reset/normalize, antes do
    components.css):
@@ -101,71 +102,43 @@
   --z-toast:   70;
 }
 
-/* ---------- 3.5 Paleta Dark (azul-grafite, nao inversao) ---------- */
-[data-theme="dark"] {
-  --bg:            #0E1116;
-  --surface:       #161A21;
-  --surface-muted: #1C212B;
-  --border:        #2A313C;
-  --text-strong:   #F2F4F7;
-  --text:          #CDD3DC;
-  --text-muted:    #8A93A1;
+/* ---------- 3.5 Paleta Dark — DNA NeuroPed (indigo + dourado) ----------
+   Identidade das telas-referência (filtro/central): fundo índigo-noite,
+   tinta clara, primária índigo, realce dourado. Não é inversão de cor.
+   Tokens dark reaproveitados por [data-theme="dark"] E pelo padrão do app. */
+[data-theme="dark"],
+:root:not([data-theme="light"]) {
+  --bg:            #0a0a16;
+  --surface:       #14132a;
+  --surface-muted: #1c1a3a;
+  --border:        rgba(169, 164, 255, .18);
+  --text-strong:   #F2F0FF;
+  --text:          #ECEAFF;
+  --text-muted:    #b6b2e6;
 
-  /* Primarias e acentos +6-10% luminancia para preservar contraste AA no dark */
-  --primary:        #5A8DF5;
-  --primary-hover:  #79A4F9;
-  --primary-press:  #97B9FB;
-  --primary-tint:   rgba(90, 141, 245, .18);
-  --primary-tint-strong: rgba(90, 141, 245, .26);
+  /* Primária índigo (marca) — tons claros no dark p/ contraste AA */
+  --primary:        #6d6af5;
+  --primary-hover:  #8b88ff;
+  --primary-press:  #a9a4ff;
+  --primary-tint:   rgba(109, 106, 245, .18);
+  --primary-tint-strong: rgba(109, 106, 245, .26);
 
-  --accent-violet:  #8E76E6;
-  --accent-teal:    #2BB8B8;
-  --success:        #2DCB7E;
-  --warning:        #FFA52E;
-  --danger:         #EB544A;
+  --accent-violet:  #a78bfa;
+  --accent-teal:    #5ed3c4;
+  --accent-gold:    #e7c98b;            /* realce dourado da marca */
+  --accent-gold-tint: rgba(231, 201, 139, .18);
+  --success:        #5fd99a;
+  --warning:        #f0c060;
+  --danger:         #f08a82;
 
-  --success-tint:  rgba(45, 203, 126, .18);
-  --warning-tint:  rgba(255, 165, 46, .18);
-  --danger-tint:   rgba(235,  84, 74, .18);
+  --success-tint:  rgba(95, 217, 154, .18);
+  --warning-tint:  rgba(240, 192, 96, .18);
+  --danger-tint:   rgba(240, 138, 130, .18);
 
-  /* Sombras mais densas no dark (pretas com mais opacidade) */
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
-  --shadow-2: 0 4px 12px rgba(0, 0, 0, .45);
-  --shadow-3: 0 12px 32px rgba(0, 0, 0, .55);
-}
-
-/* Auto-dark se o usuario nao tiver setado data-theme explicito.
-   Use [data-theme="light"] para forcar light mesmo no SO em dark. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    --bg:            #0E1116;
-    --surface:       #161A21;
-    --surface-muted: #1C212B;
-    --border:        #2A313C;
-    --text-strong:   #F2F4F7;
-    --text:          #CDD3DC;
-    --text-muted:    #8A93A1;
-
-    --primary:        #5A8DF5;
-    --primary-hover:  #79A4F9;
-    --primary-press:  #97B9FB;
-    --primary-tint:   rgba(90, 141, 245, .18);
-    --primary-tint-strong: rgba(90, 141, 245, .26);
-
-    --accent-violet:  #8E76E6;
-    --accent-teal:    #2BB8B8;
-    --success:        #2DCB7E;
-    --warning:        #FFA52E;
-    --danger:         #EB544A;
-
-    --success-tint:  rgba(45, 203, 126, .18);
-    --warning-tint:  rgba(255, 165, 46, .18);
-    --danger-tint:   rgba(235,  84, 74, .18);
-
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
-    --shadow-2: 0 4px 12px rgba(0, 0, 0, .45);
-    --shadow-3: 0 12px 32px rgba(0, 0, 0, .55);
-  }
+  /* Sombras densas índigo-noite */
+  --shadow-1: 0 1px 2px rgba(4, 3, 18, .45);
+  --shadow-2: 0 8px 22px rgba(4, 3, 18, .50);
+  --shadow-3: 0 16px 42px rgba(4, 3, 18, .58);
 }
 
 /* Tipografia base aplicada ao root para garantir Inter onde os tokens forem usados.
