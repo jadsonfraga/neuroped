@@ -28,7 +28,7 @@ body{margin:0;color:var(--ink);font-family:"Inter",system-ui,-apple-system,"Sego
 .kicker{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--teal);font-weight:800;background:rgba(124,118,210,.14);border:1px solid var(--line2);padding:6px 12px;border-radius:999px}
 .kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:npBlink 2s ease-in-out infinite}
 h1{margin:14px 0 8px;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;font-weight:800;font-family:"Fraunces","Georgia",serif;
-  background:linear-gradient(120deg,#fff 10%,var(--wine) 60%,var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:linear-gradient(120deg,#fff 10%,var(--teal2) 65%,var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hero p{color:var(--muted);max-width:62ch;font-size:15px}
 h2,h3{margin:0 0 8px;color:var(--wine);font-family:"Fraunces","Georgia",serif;font-weight:700;letter-spacing:-.01em}
 
@@ -59,7 +59,7 @@ button,.btn{position:relative;overflow:hidden;border:0;border-radius:14px;paddin
   background:linear-gradient(180deg,var(--teal),var(--indigo));box-shadow:0 10px 26px -10px rgba(91,84,232,.7);transition:transform .16s cubic-bezier(.22,.9,.25,1),box-shadow .2s,filter .2s}
 button:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(91,84,232,.8);filter:brightness(1.06)}
 button:active,.btn:active{transform:translateY(0) scale(.97)}
-.btn.secondary,.secondary{background:linear-gradient(180deg,var(--gold),var(--gold2))!important;color:#241a05!important;box-shadow:0 10px 26px -12px rgba(231,201,139,.6)!important}
+.btn.secondary,.secondary{background:linear-gradient(180deg,var(--teal2),var(--indigo))!important;color:#fff!important;box-shadow:0 10px 26px -12px rgba(91,84,232,.6)!important}
 .btn.ghost,.ghost{background:rgba(124,118,210,.10)!important;color:var(--wine)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
 .btn.ghost:hover,.ghost:hover{background:rgba(124,118,210,.18)!important}
 
@@ -187,7 +187,7 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
 .topbar .back{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:13px;border:1px solid var(--line2);background:rgba(124,118,210,.12);color:var(--ink);text-decoration:none;font-size:18px;transition:transform .18s cubic-bezier(.34,1.56,.64,1),background .2s}
 .topbar .back:hover{transform:translateX(-2px) scale(1.05);background:rgba(124,118,210,.22)}
 .topbar .tb-brand{display:flex;align-items:center;gap:10px;min-width:0}
-.topbar .tb-logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font:800 17px "Fraunces",Georgia,serif;color:#1a1530;background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 8px 20px -8px rgba(231,201,139,.6)}
+.topbar .tb-logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font:800 17px "Fraunces",Georgia,serif;color:#fff;background:linear-gradient(135deg,var(--teal2),var(--indigo));box-shadow:0 8px 20px -8px rgba(91,84,232,.6)}
 .topbar .tb-tt{font:700 15px "Fraunces",Georgia,serif;color:var(--wine);line-height:1.1}
 .topbar .tb-sub{font-size:11px;color:var(--soft-ink);letter-spacing:.02em}
 .topbar .tb-right{margin-left:auto;display:flex;gap:8px}
