@@ -27,7 +27,7 @@ const SHELL = [
   './neuroped-master-biblioteca.html','./neuroped-master-biblioteca.css','./neuroped-master-biblioteca.js','./neuroped-master-biblioteca-data.js','./neuroped-master-protegido-data.js',
   './neuroped-master-vitrine.html','./neuroped-master-vitrine.css','./perfil-crianca.html','./np-store.js','./central-atalhos.html','./comunicacao-alternativa.html','./portal-familia-livre.html','./gerador-cards.html','./gerador-cards.js',
   './ds-tokens.css','./ds-components.css','./design-system.html',
-  './neuroped-shell.css','./np-cards.css','./escalas-card-premium.css','./escalas-card-premium.js','./app-polish-mobile.css','./app-polish-mobile.js','./np-frame.js','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
+  './neuroped-shell.css','./np-cards.css','./app-polish-mobile.css','./app-polish-mobile.js','./np-frame.js','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
   './scales-editorial.js','./scales-453-authorial.js','./scales-global-max.js','./scales-featured-extra.js','./scales-featured-10.js','./scales-priority-uploaded.js','./scales-diarios-uteis.js','./scales-autorais-npe.js','./scales-impacto-medicacao.js','./neuroped-pro.html','./pro-license.js','./pro-hashes.js','./sobre-dr-jadson.html','./guia-lancamento.html','./scales-oficiais.js','./scales-oficiais-lote2.js','./scales-curate.js','./scales-red-flags.js','./scales-enhance.js','./scales-bundle.js','./scales-index.json'
 ];
 

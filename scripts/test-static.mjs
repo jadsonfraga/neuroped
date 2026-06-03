@@ -16,6 +16,7 @@ function pass(name) { oks.push(`OK: ${name}`); }
 function warn(name, detail = '') { warnings.push(`WARN: ${name}${detail ? ' — ' + detail : ''}`); }
 function fail(name, detail = '') { failures.push(`FAIL: ${name}${detail ? ' — ' + detail : ''}`); }
 function assertFile(path) { existsSync(join(root, path)) ? pass(`arquivo existe: ${path}`) : fail(`arquivo ausente: ${path}`); }
+function assertNotFile(path) { existsSync(join(root, path)) ? fail(`arquivo órfão ainda presente: ${path}`) : pass(`arquivo órfão removido: ${path}`); }
 function assertIncludes(path, needle, name) { const content = file(path); if (!content) return fail(name, `${path} ausente`); content.includes(needle) ? pass(name) : fail(name, `não encontrou ${needle}`); }
 function assertNotIncludes(path, needle, name) { const content = file(path); if (!content) return fail(name, `${path} ausente`); !content.includes(needle) ? pass(name) : fail(name, `encontrou ${needle}`); }
 
@@ -243,15 +244,16 @@ assertIncludes('mapa-escalas.html', "location.replace('./filtro-escalas.html')",
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
 assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
 assertIncludes('secretaria.html', 'backdrop-filter', 'secretaria usa glassmorphism (visual unificado)');
-// Estética J26 nos 6 bancos de escalas (sidebar com avatar+sigla+emoji)
-assertFile('escalas-card-premium.css');
-assertFile('escalas-card-premium.js');
-assertIncludes('escalas-card-premium.js', 'jpEmoji', 'decorator tem heurística de emoji por queixa');
-assertIncludes('escalas-card-premium.js', 'jpColor', 'decorator tem cor determinística por categoria');
-// banco-escalas.html migrou para o DS canônico — fora da estética J26 legada (lotes seguem por ora).
-for (const b of ['banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
-  assertIncludes(b, 'escalas-card-premium.css', b+' carrega o CSS premium dos cards');
-  assertIncludes(b, 'escalas-card-premium.js', b+' carrega o decorator J26');
+// Estética J26 (escalas-card-premium) aposentada: toda a área de escalas migrou
+// para o design system canônico (ds-tokens/ds-components). Arquivos órfãos removidos.
+assertNotFile('escalas-card-premium.css');
+assertNotFile('escalas-card-premium.js');
+for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
+  assertIncludes(b, 'ds-tokens.css', b + ' migrou: carrega a camada de tokens');
+  assertIncludes(b, 'ds-components.css', b + ' migrou: carrega os componentes canônicos');
+  assertIncludes(b, 'content="#F7F8FA"', b + ' usa o fundo clínico off-white (DS)');
+  assertNotIncludes(b, 'escalas-card-premium', b + ' sem a skin J26 legada');
+  assertNotIncludes(b, '#6d6af5', b + ' sem o roxo legado (linguagem unificada)');
 }
 assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem capa institucional (posicionamento)');
 assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
@@ -484,10 +486,7 @@ for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-
   assertNotIncludes(b, '507', b + ' não exibe a contagem inflada 507');
   assertNotIncludes(b, '--bg:#f7f2e8', b + ' não usa mais o tema creme antigo');
 }
-// Lotes ainda no tema índigo legado (migração tela a tela em andamento).
-for (const b of ['banco-escalas-lote1.html','banco-escalas-lote2-80.html','banco-escalas-lote3-100.html','banco-escalas-lote4-200.html','banco-escalas-lote5-90.html']) {
-  assertIncludes(b, 'content="#0e0e22"', b + ' usa o tema índigo escuro (coesão)');
-}
+// Lotes migrados para o DS canônico (asserções de tokens no bloco "Design System").
 
 // ===== Design System canônico (SUPERNEUROPED) — fonte única da verdade =====
 assertFile('ds-tokens.css');
