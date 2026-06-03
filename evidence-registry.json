@@ -111,6 +111,40 @@
       "contraindicated_for": ["reduzir a um escore único ignorando o gradiente de gravidade", "aplicar sem capacidade de resposta a um positivo de risco"],
       "false_positive_with": [],
       "_needs_curation": false
+    },
+    "ofc-gmfcs": {
+      "instrument_id": "ofc-gmfcs",
+      "validation_sources": [
+        {
+          "statement": "Sistema de classificação em 5 níveis para função motora grossa na paralisia cerebral; validade de conteúdo por consenso (Delphi, 48 especialistas); confiabilidade interavaliadores (kappa) 0,55 para menores de 2 anos e 0,75 para 2–12 anos.",
+          "citation": "Palisano R et al. Development and reliability of a system to classify gross motor function. Dev Med Child Neurol. 1997;39(4):214-23.",
+          "pmid": "9183258",
+          "doi": "10.1111/j.1469-8749.1997.tb07414.x"
+        }
+      ],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["classificação da função motora grossa na paralisia cerebral (5 níveis)"],
+      "contraindicated_for": ["uso como rastreio ou diagnóstico", "classificar fora da paralisia cerebral sem validação"],
+      "false_positive_with": [],
+      "_needs_curation": false
+    },
+    "ofc-macs": {
+      "instrument_id": "ofc-macs",
+      "validation_sources": [
+        {
+          "statement": "Sistema de classificação em 5 níveis do desempenho manual típico (uso colaborativo das duas mãos no dia a dia, não capacidade máxima) na paralisia cerebral; N=168 (4–18 anos); ICC entre terapeutas 0,97 (IC95% 0,96–0,98) e entre pais e terapeuta 0,96 (IC95% 0,89–0,98).",
+          "citation": "Eliasson AC et al. The Manual Ability Classification System (MACS). Dev Med Child Neurol. 2006;48(7):549-54.",
+          "pmid": "16780622",
+          "doi": "10.1017/S0012162206001162"
+        }
+      ],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["classificação da habilidade manual na paralisia cerebral (4–18 anos, 5 níveis)"],
+      "contraindicated_for": ["confundir desempenho típico com capacidade máxima", "uso como rastreio ou diagnóstico"],
+      "false_positive_with": [],
+      "_needs_curation": false
     }
   }
 }
