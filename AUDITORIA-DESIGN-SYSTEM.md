@@ -132,6 +132,30 @@ Pré-requisito cumprido: fases 1 (tokens) e 3 (componentes) entregues nesta bran
 > **Área de escalas: 100% unificada.** O fluxo central
 > `filtro-escalas → escala → laudo` e os 6 bancos consomem só o DS canônico.
 
+## 4.2 Direção definitiva + propagação às 55 (manifesto SUPERSYSTEM)
+
+Decisão do titular (Opção 2): **dark-premium neurodigital** vira o tema **padrão**;
+o light-clínico AA permanece como tema alternativo (troca de tokens). A fundação
+foi pivotada (`ds-tokens.css`/`ds-components.css`: fundo espacial, glass, glow,
+violeta-neural; light em `[data-theme="light"]`).
+
+**Cobertura atual — 56 telas:**
+
+| Grupo | Qtd | Como |
+|---|---|---|
+| Migradas tela-a-tela (componentes `ds-*`, zero CSS órfão) | 8 + showcase | escalas (6 bancos), runner, filtro, `design-system.html` |
+| Unificadas pela **ponte premium** (`ds-premium-bridge.css`) | 40 | fundo espacial + Inter + tokens (re-aponta vars legadas) + glass/glow em contêineres/botões; chrome `#050816` |
+| SPA host / casca (design compilado próprio) | 2 | `index.html`, `app-shell.html` — fora da ponte por opção |
+| Redirects (stubs) | 5 | sem tema |
+
+A **ponte** é a camada de unificação **transitória**: leva todas as telas ao mesmo
+DNA sem reescrever cada arquivo, é aditiva e afinável de um só lugar. À medida que
+cada tela for migrada de verdade (substituindo seu `<style>` embutido por
+componentes `ds-*`), ela **deixa de depender da ponte** — que então some.
+
+**Próximo refino (tela-a-tela, sobre a ponte):** telas-vitrine do manifesto
+— dashboard/central, perfil, consulta, relatórios — para nível keynote.
+
 > **Camada universal a aposentar (global):** `app-polish-mobile.css` força títulos
 > em Fraunces serif e re-tinge tokens para índigo — incompatível com a Seção 3.6.
 > O piloto a removeu localmente; o passo global é reescrever o chrome `np-*`

@@ -472,10 +472,10 @@ assertIncludes('instrumento-autoral.html', 'level005', 'autoral classifica risco
 assertIncludes('instrumento-autoral.html', 'sentinel', 'autoral trata pergunta-sentinela (004→005)');
 assertIncludes('instrumento-autoral.html', 'differential', 'autoral trata diferencial dislexia×global (011)');
 assertIncludes('scales-bundle.js', 'scales-autorais-npe.js', 'filtro liga os autorais NPE-BR');
-assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
+assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no chrome dark-premium (coesão)');
 // Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
 for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
-  assertIncludes(p, 'content="#0e0e22"', p + ' usa o tema índigo escuro (coesão visual)');
+  assertIncludes(p, 'content="#050816"', p + ' usa o chrome dark-premium (coesão)');
   assertNotIncludes(p, 'content="#1a6b65"', p + ' não usa mais o tema teal claro');
 }
 assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
@@ -516,6 +516,18 @@ assertIncludes('filtro-escalas.html', 'ds-tokens.css', 'filtro migrou: carrega a
 assertIncludes('filtro-escalas.html', 'ds-components.css', 'filtro migrou: carrega os componentes canônicos');
 assertIncludes('filtro-escalas.html', 'content="#050816"', 'filtro usa o chrome dark-premium (DS)');
 assertNotIncludes('filtro-escalas.html', '#7c79ff', 'filtro sem o roxo legado (linguagem unificada)');
+// Ponte premium: unifica o DNA (fundo espacial, Inter, tokens, glass) nas telas
+// ainda não migradas tela-a-tela. Aditiva e token-driven.
+assertFile('ds-premium-bridge.css');
+assertIncludes('ds-premium-bridge.css', 'var(--app-bg)', 'ponte aplica o fundo espacial dos tokens');
+assertIncludes('ds-premium-bridge.css', '--teal: var(--primary)', 'ponte re-aponta variáveis legadas para tokens');
+assertIncludes('ds-premium-bridge.css', '.btn.danger', 'ponte preserva a cor de botões de status (danger)');
+for (const p of ['central-atalhos.html','perfil-crianca.html','consulta.html','secretaria.html','portal-novidades.html','agenda-financeiro.html']) {
+  assertIncludes(p, 'ds-premium-bridge.css', p + ' está no DNA premium (ponte de unificação)');
+  assertIncludes(p, 'content="#050816"', p + ' usa o chrome dark-premium');
+}
+assertNotIncludes('index.html', 'ds-premium-bridge.css', 'index (SPA) fora da ponte (design compilado próprio)');
+assertNotIncludes('app-shell.html', 'ds-premium-bridge.css', 'app-shell (casca) fora da ponte');
 // app-polish-mobile não pode reescrever o theme-color para teal
 assertNotIncludes('app-polish-mobile.js', "content = '#1a6b65'", 'app-polish-mobile não força theme-color teal');
 assertIncludes('app-polish-mobile.js', "content = '#0e0e22'", 'app-polish-mobile usa theme-color índigo');
@@ -529,7 +541,7 @@ assertNotIncludes('index.html', 'escalas validadas', 'index.html não promete "e
 // sem link quebrado de credibilidade
 assertNotIncludes('mapa-escalas.html', 'credibilidade-clinica.html', 'mapa-escalas não aponta para página inexistente');
 // 404 no tema escuro
-assertIncludes('404.html', 'content="#0e0e22"', '404.html usa o tema índigo escuro');
+assertIncludes('404.html', 'content="#050816"', '404.html usa o chrome dark-premium');
 
 // ===== Ética clínica & segurança (anti-regressão) =====
 assertIncludes('instrumento.html', 'Natureza da ferramenta', 'instrumento.html declara natureza não-diagnóstica');
@@ -613,7 +625,7 @@ assertFile('scales-impacto-medicacao.js');
 assertFile('impacto-medicacao.html');
 assertIncludes('scales-impacto-medicacao.js', 'npe-med-pais', 'inventário pós-medicação visão família');
 assertIncludes('scales-impacto-medicacao.js', 'npe-med-escola', 'inventário pós-medicação visão escola');
-assertIncludes('impacto-medicacao.html', 'content="#0e0e22"', 'impacto-medicacao no tema índigo');
+assertIncludes('impacto-medicacao.html', 'content="#050816"', 'impacto-medicacao no chrome dark-premium');
 assertIncludes('impacto-medicacao.html', 'eficácia farmacológica', 'impacto deixa claro que não mede eficácia');
 // Resposta à medicação ligada ao perfil (stream SEPARADO, não polui linha do tempo das escalas)
 assertIncludes('np-store.js', 'medLogFor', 'np-store guarda resposta à medicação por criança (stream separado)');

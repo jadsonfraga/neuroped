@@ -1,0 +1,109 @@
+/* ============================================================================
+   NeuroPed — SUPERSYSTEM · Ponte Premium (camada de unificação transitória)
+
+   Propósito: levar as telas ainda NÃO migradas tela-a-tela ao mesmo DNA visual
+   do design system (fundo espacial dark, tipografia Inter/Apple-level, paleta
+   violeta-neural via tokens, glass + glow nos contêineres comuns), sem reescrever
+   cada arquivo. É aditiva e 100% token-driven — afinável a partir de um só lugar.
+
+   Carregar SEMPRE depois de ds-tokens.css e por ÚLTIMO no <head>, para vencer o
+   <style> embutido legado. À medida que cada tela for migrada de verdade
+   (componentes ds-*), ela deixa de depender desta ponte.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ---- Re-aponta nomes de variáveis LEGADAS → tokens SUPERSYSTEM -------------- */
+:root {
+  --ink: var(--text-strong); --dark: var(--text-strong); --wine: var(--text-strong);
+  --muted: var(--text-muted); --soft: var(--text-muted); --soft-ink: var(--text-muted);
+  --text-soft: var(--text); --text-mute: var(--text-muted);
+  --line: var(--border); --line2: var(--border-strong); --glass-border: var(--border);
+  --card: var(--surface); --paper: var(--surface); --cream: var(--surface);
+  --surface-2: var(--surface-muted); --surface-3: var(--surface-muted);
+  --bg-elev: var(--surface); --bg-soft: var(--surface-muted);
+  --glass: var(--surface); --glass2: var(--surface); --glass-strong: var(--surface-solid);
+  --teal: var(--primary); --teal2: var(--accent-violet); --indigo: var(--primary);
+  --burgundy: var(--accent-violet); --plum: var(--accent-violet);
+  --brand: var(--primary); --brand-2: var(--accent-violet);
+  --accent: var(--primary); --accent-2: var(--accent-teal); --accent-3: var(--accent-violet);
+  --info: var(--accent-teal); --blue: var(--accent-teal);
+  --gold: var(--warning); --gold2: var(--warning); --warn: var(--warning);
+  --ok: var(--success);
+  --brand-soft: var(--primary-12); --brand-grad: var(--primary-grad); --accent-grad: var(--primary-grad);
+}
+
+/* ---- Ambiente: fundo espacial + tipografia Apple-level em toda tela --------- */
+html body {
+  background: var(--app-bg) fixed !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, .view-title, .report-title, .brand-title {
+  font-family: var(--font-sans) !important;
+  color: var(--text-strong);
+  letter-spacing: -.01em;
+}
+
+/* ---- Contêineres comuns → glass premium ------------------------------------ */
+.card, .panel, .np-card, .np-box, .box, .tool, .hero, .entry-card, .report-preview,
+.stat, .settings-item, .detail-block, .today-summary, .surface, .tile {
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-2), var(--glass-highlight) !important;
+  color: var(--text);
+}
+.hero { border-radius: var(--radius-xl) !important; }
+
+/* ---- Botões → gradiente premium + glow (legibilidade preservada) ----------- */
+.btn, button.btn, .np-btn, .fab, .cta {
+  background: var(--primary-grad) !important;
+  color: var(--on-primary) !important;
+  border: 0 !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 24px -8px var(--glow-violet) !important;
+  transition: filter var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease) !important;
+}
+.btn:active, .np-btn:active, button.btn:active { transform: translateY(1px) scale(.99) !important; }
+.btn.secondary, .btn.ghost, .secondary, .ghost, .btn-secondary {
+  background: var(--glass-bg) !important;
+  color: var(--text-strong) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+/* Botões de status preservam a cor de status (nunca viram primário). */
+.btn.danger, .btn.delete, .btn.destructive, button.danger {
+  background: var(--danger) !important; color: var(--on-danger) !important;
+  box-shadow: 0 8px 24px -8px var(--danger-12) !important;
+}
+.btn.success, .btn.ok, button.success { background: var(--success) !important; color: var(--on-success) !important; box-shadow: none !important; }
+.btn.warn, .btn.warning, button.warning { background: var(--warning) !important; color: var(--on-warning) !important; box-shadow: none !important; }
+
+/* ---- Campos de formulário -------------------------------------------------- */
+input, select, textarea {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-ring) !important;
+}
+
+/* ---- Foco visível universal (acessibilidade premium) ----------------------- */
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px var(--primary-ring) !important;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Divisores / pills tonais comuns --------------------------------------- */
+.badge, .chip, .pill, .tag { border-radius: 999px; }
+hr, .divider { border-color: var(--border) !important; }
