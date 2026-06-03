@@ -633,29 +633,32 @@
   }
 
   /* =====================================================
-     POLIMENTO PREMIUM GLOBAL — 3 ondas de refino visual,
-     aditivas e idempotentes, válidas em qualquer página:
-       1) Cabeçalhos (.topbar): glow violeta coeso no logo + transições.
+     POLIMENTO PREMIUM GLOBAL — 3 ondas de refino visual, aplicadas
+     como BASELINE não-destrutivo: todos os seletores usam :where()
+     (especificidade 0), então qualquer estilo próprio da página SEMPRE
+     vence. Páginas sem o estilo recebem o polimento; páginas que já têm
+     (ex.: filtro-escalas com hover próprio) ficam intactas.
+       1) Cabeçalhos (.topbar): transições suaves no voltar/pills.
        2) Microinterações nos cards de escala (.result-card/.scale-card).
-       3) Acessibilidade: anel de foco visível consistente (teclado · AA).
+       3) Acessibilidade: anel de foco visível (teclado · WCAG 2.4.7).
      Respeita prefers-reduced-motion. Não altera markup nem cores de marca.
      ===================================================== */
   function premiumPolish(){
     if (document.getElementById('np-premium-polish')) return;
     var s = document.createElement('style'); s.id = 'np-premium-polish';
     s.textContent =
-      /* 3) Foco visível — apenas via teclado (focus-visible), nunca no clique */
-      'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{' +
+      /* 3) Foco visível — só via teclado. outline + box-shadow: o anel
+         (box-shadow) sobrevive a resets `outline:none` por ser outra
+         propriedade, garantindo indicador visível mesmo nessas páginas. */
+      ':where(a,button,input,select,textarea,summary,[role="button"],[tabindex]):focus-visible{' +
         'outline:2px solid #a9a4ff;outline-offset:2px;box-shadow:0 0 0 4px rgba(124,58,237,.28)}' +
-      /* 1) Cabeçalho coeso: glow violeta no logo (uniformiza entre páginas) */
-      '.topbar .tb-logo{box-shadow:0 8px 20px -8px rgba(91,84,232,.55)}' +
       '@media(prefers-reduced-motion:no-preference){' +
-        '.topbar .back,.topbar .tb-pill{transition:transform .16s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .2s}' +
-        /* 2) Microinterações: elevação + sombra suave ao passar dedo/mouse */
-        '.result-card,.scale-card{transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}' +
-        '.result-card:hover,.scale-card:hover{transform:translateY(-3px);box-shadow:0 20px 44px -22px rgba(2,2,12,.85)}' +
-        '.result-card:active,.scale-card:active{transform:translateY(-1px) scale(.995)}' +
-        'button:active,.btn:active{transform:scale(.985)}' +
+        ':where(.topbar .back,.topbar .tb-pill){transition:transform .16s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .2s}' +
+        /* 2) Microinterações: elevação + sombra suave (cede a hover próprio da página) */
+        ':where(.result-card,.scale-card){transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}' +
+        ':where(.result-card,.scale-card):hover{transform:translateY(-3px);box-shadow:0 20px 44px -22px rgba(2,2,12,.85)}' +
+        ':where(.result-card,.scale-card):active{transform:translateY(-1px) scale(.995)}' +
+        ':where(button,.btn):active{transform:scale(.985)}' +
       '}';
     document.head.appendChild(s);
   }
