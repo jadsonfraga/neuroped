@@ -904,7 +904,15 @@ assertIncludes('sw.js', "'./clinical-meta.js'", 'loader de meta clínica no prec
   (ids.length >= 7 && semPmid.length === 0)
     ? pass(`evidence-registry: ${ids.length} instrumentos curados, todos com fonte primária + PMID`)
     : fail('entrada curada sem PMID rastreável', semPmid.join(', ') || ('curados=' + ids.length));
+  // PVI-L: toda fonte curada declara verification (proveniência)
+  const semVer = ids.filter(id => (cur[id].validation_sources || []).some(s => !s.verification || !String(s.verification).trim()));
+  semVer.length === 0
+    ? pass('PVI-L: toda fonte curada declara verification (✔/◻/⚠ — proveniência)')
+    : fail('fonte curada sem verification (PVI-L)', semVer.join(', '));
 }
+// PVI-L: o gerador da declaração de pendências roda a partir do registro vivo
+assertFile('scripts/pvi-l-report.mjs');
+assertIncludes('scripts/pvi-l-report.mjs', 'evidence-registry.json', 'pvi-l-report gera a declaração a partir do registro vivo (não cópia que drifta)');
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
 assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
