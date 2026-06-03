@@ -121,13 +121,20 @@
   --shadow-glow-violet: 0 0 20px rgba(167, 139, 250, .35);
   --shadow-glow-cyan:   0 0 20px rgba(34, 211, 238, .25);
 
-  /* ---------- 3.6 Tipografia — SF Pro Display / Inter / Geist (briefing) ---------- */
+  /* ---------- 3.6 Tipografia — SF Pro Display / Inter / Geist / Plus Jakarta Sans ---------- */
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
-               'Inter', 'Geist', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+               'Inter', 'Geist', 'Plus Jakarta Sans', 'Segoe UI', Roboto,
+               Helvetica, Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
-                  'Inter', 'Geist', sans-serif;
+                  'Inter', 'Geist', 'Plus Jakarta Sans', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', 'Geist Mono',
                Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* ---------- Glow tokens (manifesto: rgba específicas para halos/bloom) ---------- */
+  --glow-violet:     rgba(124,  92, 255, .18);
+  --glow-cyan:       rgba( 56, 189, 248, .12);
+  --glow-violet-soft: rgba(124,  92, 255, .08);
+  --glow-cyan-soft:   rgba( 56, 189, 248, .06);
 
   /* tamanho / line-height (peso definido nos componentes/utility .np-t-*) */
   --t-display-size: 28px; --t-display-lh: 1.2;

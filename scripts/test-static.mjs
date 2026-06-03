@@ -767,3 +767,14 @@ console.log(oks.join('\n'));
 if(warnings.length) console.log('\nWarnings:\n'+warnings.join('\n'));
 if(failures.length){console.error('\nFailures:\n'+failures.join('\n'));process.exit(1)}
 console.log(`\nResultado: ${oks.length} OK, ${warnings.length} aviso(s), 0 falhas.`);
+
+// Camada Apple Secret Lab (manifesto NEUROPED SUPERSYSTEM)
+assertFile('ambient-effects.js');
+assertIncludes('ambient-effects.js', 'npAmbientAurora', 'ambient: breathing aurora overlay');
+assertIncludes('ambient-effects.js', 'npAmbientNoise', 'ambient: noise cinematográfico SVG fractal');
+assertIncludes('ambient-effects.js', 'npAmbientParticles', 'ambient: partículas neurodigitais drift');
+assertIncludes('ambient-effects.js', 'np-bloom', 'ambient: bloom interno reativo em cards');
+assertIncludes('ambient-effects.js', 'prefers-reduced-motion', 'ambient respeita prefers-reduced-motion');
+assertIncludes('tokens.css', 'Plus Jakarta Sans', 'tokens incluem Plus Jakarta Sans no font stack');
+assertIncludes('tokens.css', '--glow-violet:', 'tokens definem --glow-violet específico');
+assertIncludes('tokens.css', '--glow-cyan:', 'tokens definem --glow-cyan específico');
