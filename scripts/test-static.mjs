@@ -149,11 +149,11 @@ assertIncludes('filtro-escalas.html', '@keyframes npRise', 'filtro tem motion (e
 assertIncludes('filtro-escalas.html', 'prefers-reduced-motion', 'motion respeita prefers-reduced-motion (acessibilidade)');
 assertIncludes('filtro-escalas.html', 'conic-gradient', 'filtro tem score como anel de progresso (premium)');
 assertIncludes('filtro-escalas.html', 'panel sticky', 'filtro tem painel de entrada fixo (UX premium)');
-assertIncludes('filtro-escalas.html', 'Fraunces', 'filtro usa tipografia premium (Fraunces/Inter)');
-// Chips de queixa com carinha (emoji) + motion fofo
+assertIncludes('filtro-escalas.html', 'ds-tokens.css', 'filtro migrou: tipografia Inter via design system canônico');
+assertNotIncludes('filtro-escalas.html', 'Fraunces', 'filtro sem serif legada (Inter unificada)');
+// Chips de queixa com carinha (emoji) + motion
 assertIncludes('filtro-escalas.html', 'class="ce"', 'chips de queixa têm carinha/emoji (não só texto)');
-assertIncludes('filtro-escalas.html', '@keyframes npBounce', 'chip faz bounce ao selecionar (motion fofo)');
-assertIncludes('filtro-escalas.html', '@keyframes npWiggle', 'carinha do chip ativo balança (vivo)');
+assertIncludes('filtro-escalas.html', '@keyframes npPop', 'chip anima ao selecionar (motion)');
 // Integração ao app: topbar coesa com voltar + marca (não parece página solta)
 assertIncludes('filtro-escalas.html', 'class="topbar"', 'filtro tem topbar do app (integrado, não página solta)');
 assertIncludes('filtro-escalas.html', 'central-atalhos.html', 'topbar do filtro volta ao app (hub)');
@@ -192,7 +192,7 @@ assertIncludes('app-polish-mobile.js', 'npToast', 'polish JS expoe window.npToas
 assertIncludes('app-polish-mobile.js', 'npConfirm', 'polish JS expoe window.npConfirm');
 // banco-escalas.html migrou para o design system canônico (ds-tokens/ds-components)
 // e abandonou as skins legadas (app-polish/escalas-card-premium). Ver bloco DS abaixo.
-for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
+for (const p of ['index.html','consulta.html','instrumento.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
   assertIncludes(p, 'app-polish-mobile.css', p + ' carrega app-polish-mobile.css');
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
 }
@@ -510,6 +510,11 @@ assertIncludes('escala.html', 'ds-components.css', 'runner migrou: carrega os co
 assertIncludes('escala.html', 'content="#F7F8FA"', 'runner usa o fundo clínico off-white (DS)');
 assertNotIncludes('escala.html', 'Fraunces', 'runner sem fonte serif legada (tipografia Inter unificada)');
 assertNotIncludes('escala.html', 'app-polish-mobile.js', 'runner sem a skin universal legada (serif/índigo)');
+// filtro-escalas.html: porta de entrada do fluxo, migrada (fase 4)
+assertIncludes('filtro-escalas.html', 'ds-tokens.css', 'filtro migrou: carrega a camada de tokens');
+assertIncludes('filtro-escalas.html', 'ds-components.css', 'filtro migrou: carrega os componentes canônicos');
+assertIncludes('filtro-escalas.html', 'content="#F7F8FA"', 'filtro usa o fundo clínico off-white (DS)');
+assertNotIncludes('filtro-escalas.html', '#7c79ff', 'filtro sem o roxo legado (linguagem unificada)');
 // app-polish-mobile não pode reescrever o theme-color para teal
 assertNotIncludes('app-polish-mobile.js', "content = '#1a6b65'", 'app-polish-mobile não força theme-color teal');
 assertIncludes('app-polish-mobile.js', "content = '#0e0e22'", 'app-polish-mobile usa theme-color índigo');
@@ -549,11 +554,12 @@ assertIncludes('tour.js', 'npt-x', 'tour tem botão × de fechar/pular em todos 
 assertIncludes('tour.js', "ev.key==='Escape'", 'tour fecha com ESC');
 // Segurança: links target=_blank gerados no checklist usam rel=noopener (anti-tabnabbing)
 assertIncludes('teste-e2e-manual.html', 'rel="noopener"', 'checklist usa rel=noopener em links externos');
-// Performance: janela de impressão do filtro não injeta o chrome do app
+// filtro-escalas migrou para o DS: não carrega mais a skin universal legada,
+// e a janela de impressão segue isolada (printViaIframe com HTML próprio).
 {
   const c = file('filtro-escalas.html');
   const total = (c.match(/app-polish-mobile\.js/g) || []).length;
-  total === 1 ? pass('filtro-escalas carrega o polish 1× (sem injeção no print)') : fail('filtro-escalas com app-polish duplicado', `${total}×`);
+  total === 0 ? pass('filtro-escalas sem app-polish (migrado ao DS)') : fail('filtro-escalas ainda carrega app-polish', `${total}×`);
 }
 // favicon e página de teste sem paleta antiga
 assertNotIncludes('index.html', "fill='%231a6b65'", 'favicon não usa mais o teal antigo');

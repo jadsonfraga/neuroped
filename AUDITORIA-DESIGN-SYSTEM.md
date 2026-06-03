@@ -125,8 +125,12 @@ Pré-requisito cumprido: fases 1 (tokens) e 3 (componentes) entregues nesta bran
 |---|---|---|
 | `banco-escalas.html` (biblioteca de escalas + aplicação de questionário) | **✅ migrada (piloto)** | Tokens clínicos light, Inter, componentes `ds-*`. Removidas as skins legadas (`app-polish-mobile.css/js`, `escalas-card-premium.css/js`) e o `:root` roxo/escuro. Zero hex cru. Alvos ≥ 44px. Gate atualizado para travar o novo padrão. |
 | `escala.html` (runner · aplicação de questionário) | **✅ migrada** | Tela-referência #3. Tema clínico light, Inter, itens/opções com alvo ≥ 44px, progresso e estado de conclusão em tokens; barra de laudo do motor `scales-enhance` re-vestida via tokens. `<script>` do runner intacto. Removidas `neuroped-shell.css`, `app-polish-mobile.css/js`, Fraunces. |
-| `banco-escalas-lote{1..5}.html` | pendente | Ainda no tema índigo legado + estética J26. Próximos da fila (mesmo template do piloto). |
+| `banco-escalas-lote{1..5}.html` | **✅ migradas** | Mesmo template do piloto, em lote. Skins J26/app-polish removidas; `escalas-card-premium.css/js` **deletados** (órfãos). |
+| `filtro-escalas.html` (porta de entrada · idade + queixa → 3 indicadas) | **✅ migrada** | Chips, score-ring (conic-gradient em `--primary`), rank, red-flags, reasoning, badges e topbar reescritos em tokens. Shims de variáveis legadas cobrem `style=""` inline. Janela de impressão/PDF mantém layout claro próprio. |
 | dashboard clínico, cards modulares, geração de relatório | pendente | Telas-referência restantes (Seção 2). |
+
+> **Área de escalas: 100% unificada.** O fluxo central
+> `filtro-escalas → escala → laudo` e os 6 bancos consomem só o DS canônico.
 
 > **Camada universal a aposentar (global):** `app-polish-mobile.css` força títulos
 > em Fraunces serif e re-tinge tokens para índigo — incompatível com a Seção 3.6.
