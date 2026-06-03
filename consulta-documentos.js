@@ -13,7 +13,7 @@ function note(t){let n=g('docNote');if(n)n.textContent=t}
 function addScript(src){if(document.querySelector('script[src="'+src+'"]'))return;const s=document.createElement('script');s.src=src;s.defer=true;document.body.appendChild(s)}
 function loadAdvanced(){addScript('./consulta-voz.js');addScript('./consulta-docflow.js')}
 function cabecalho(tipo){return 'Dr. Jadson Fraga Araújo Júnior\nNeuropediatria · CRM-PE 25227 · RQE 17756\nAv. Cardoso de Sá, 1000 – Bairro Novo Centro – Petrolina/PE\n\n'+tipo+'\n\nPaciente: '+paciente()+'\nData: '+data()+'\n\n'}
-function salvar(){const d={livre:v('docLivre'),presc:v('docPresc'),laudo:v('docLaudo')};localStorage.setItem(K,JSON.stringify(d));note('Rascunho salvo localmente.')}
+function salvar(){const d={livre:v('docLivre'),presc:v('docPresc'),laudo:v('docLaudo')};try{localStorage.setItem(K,JSON.stringify(d));note('Rascunho salvo localmente.')}catch(e){note('Não foi possível salvar (armazenamento cheio ou bloqueado).')}}
 function copiar(texto){navigator.clipboard.writeText(texto).then(()=>note('Texto copiado.')).catch(()=>note('Não foi possível copiar.'))}
 function imprimir(titulo,texto){const w=window.open('','_blank');if(!w){note('Pop-up bloqueado. Use copiar.');return}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+titulo+'</title><style>body{font-family:Arial,sans-serif;padding:34px;line-height:1.55;color:#111}pre{white-space:pre-wrap;font:15px Arial,sans-serif}</style></head><body><pre>'+texto.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'</pre></body></html>');w.document.close();w.print()}
 function insere(txt){const el=g('docLivre');if(!el)return;el.value+=(el.value?'\n\n':'')+txt;el.focus();salvar()}

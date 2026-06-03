@@ -15,7 +15,7 @@ function dateBR(){return new Date().toLocaleDateString('pt-BR')}
 function now(){return new Date().toISOString()}
 function msg(t){if(g('docflowMsg'))g('docflowMsg').textContent=t}
 function load(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}}
-function save(){const d={};['docReceituario','docExames','docJustificativa','docLaudoFinalidade','docLaudoTexto'].forEach(id=>d[id]=v(id));localStorage.setItem(STORE,JSON.stringify(d));msg('Rascunhos documentais salvos localmente.')}
+function save(){const d={};['docReceituario','docExames','docJustificativa','docLaudoFinalidade','docLaudoTexto'].forEach(id=>d[id]=v(id));try{localStorage.setItem(STORE,JSON.stringify(d));msg('Rascunhos documentais salvos localmente.')}catch(e){msg('Não foi possível salvar (armazenamento cheio ou bloqueado).')}}
 function header(type){return 'Dr. Jadson Fraga Araújo Júnior\nNeuropediatria · CRM-PE 25227 · RQE 17756\nAv. Cardoso de Sá, 1000 – Bairro Novo Centro – Petrolina/PE\n\n'+type+'\n\nPaciente: '+patient()+'\nData: '+dateBR()+'\n\n'}
 function receituarioText(){return header('RECEITUÁRIO / ORIENTAÇÃO MÉDICA')+(v('docReceituario')||'Texto livre do médico responsável.')+'\n\nAssinatura e carimbo do médico\n'}
 function examesText(){return header('SOLICITAÇÃO DE EXAMES')+'Exames solicitados:\n'+(v('docExames')||'—')+'\n\nJustificativa clínica:\n'+(v('docJustificativa')||'—')+'\n\nAssinatura e carimbo do médico\n'}

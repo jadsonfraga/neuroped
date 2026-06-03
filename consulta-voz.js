@@ -7,7 +7,7 @@ function master(){try{const v=JSON.parse(localStorage.getItem(KEY)||'{}');return
 function g(id){return document.getElementById(id)}
 function v(id){return g(id)?.value||''}
 function msg(t){let el=g('vozMsg');if(el)el.textContent=t}
-function save(){localStorage.setItem(STORE,JSON.stringify({voz:v('vozAnamnese')}));msg('Anamnese de voz salva localmente.')}
+function save(){try{localStorage.setItem(STORE,JSON.stringify({voz:v('vozAnamnese')}));msg('Anamnese de voz salva localmente.')}catch(e){msg('Não foi possível salvar (armazenamento cheio ou bloqueado).')}}
 function load(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}}
 function addTo(id,text){const el=g(id);if(!el)return;el.value+=(el.value?'\n':'')+text;el.dispatchEvent(new Event('input',{bubbles:true}));msg('Texto enviado para '+id+'.')}
 function startVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg('Reconhecimento de voz indisponível neste navegador. Use o ditado do teclado do celular.');return}const rec=new SR();window.__npVozRec=rec;rec.lang='pt-BR';rec.continuous=true;rec.interimResults=true;let final='';rec.onresult=function(ev){let interim='';for(let i=ev.resultIndex;i<ev.results.length;i++){const t=ev.results[i][0].transcript;if(ev.results[i].isFinal)final+=t+' ';else interim+=t}g('vozAnamnese').value=(v('vozAnamnese')+' '+final+' '+interim).replace(/\s+/g,' ').trim();save()};rec.onerror=function(){msg('Falha no microfone ou permissão negada.')} ;rec.onend=function(){msg('Gravação pausada. Revise o texto antes de usar.')} ;rec.start();msg('Gravando em português. Fale pausadamente e revise depois.')}

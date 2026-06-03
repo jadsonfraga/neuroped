@@ -86,5 +86,8 @@
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){watchInputs();decorate()})}else{watchInputs();decorate()}
   window.addEventListener('hashchange',function(){setTimeout(decorate,120)});
   window.addEventListener('storage',function(ev){if(ev.key===KEY)decorate()});
-  setInterval(decorate,15000);
+  /* Polling de decoração: handle exposto para cleanup. Em SPA com churn
+     longo (sessão >>1h), o interval ficava ativo perpetuamente sem clear. */
+  var decorateInterval=setInterval(decorate,15000);
+  window.addEventListener('pagehide',function(){try{clearInterval(decorateInterval)}catch(e){}},{once:true});
 })();
