@@ -820,6 +820,15 @@ assertIncludes('sw.js', "'./scales-taxonomy.js'", 'taxonomia no precache do SW (
   (tax.functionalExamples('tdah') && tax.functionalExamples('tea'))
     ? pass('taxonomia expõe exemplos funcionais por queixa (prompts genéricos, não itens de instrumento)')
     : fail('functionalExamples ausente');
+  // (B) anti over-call: escala de avaliação clínica NÃO pode virar "teste direto"
+  const naoDireto = [
+    { audience: 'clinico', title: 'Protocolo de Exames TEA/TDAH/Farmacogenética' },
+    { audience: 'clinico', title: 'TDL e Aprendizagem Escolar até 8 anos' },
+    { audience: 'clinico', title: 'Avaliação de consciência fonológica' },
+  ];
+  naoDireto.every(s => tax.classify(s).kind !== 'teste_direto')
+    ? pass('classify não rotula escala clínica como teste_direto (refino contra catálogo real)')
+    : fail('classify ainda super-rotula teste_direto', naoDireto.map(s => s.title + '→' + tax.classify(s).kind).join(' · '));
   // (C, pré-ligação) balanceByType: mistura modalidades no topo (não empilha 3 parentais)
   if (typeof tax.balanceByType === 'function') {
     const pool = [
