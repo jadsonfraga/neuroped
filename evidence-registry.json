@@ -24,6 +24,16 @@
       "contraindicated_for": [],
       "false_positive_with": [],
       "_needs_curation": true
+    },
+    "ofc-mchat": {
+      "instrument_id": "ofc-mchat",
+      "_note": "Âncora de curadoria. recommended_for = finalidade declarada do próprio instrumento (factual). guideline_support/evidence_level AGUARDAM as fontes que o Dr. Jadson ditar — não preencher por inferência.",
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["rastreio de autismo (TEA) na faixa de 16–30 meses"],
+      "contraindicated_for": [],
+      "false_positive_with": [],
+      "_needs_curation": true
     }
   }
 }
