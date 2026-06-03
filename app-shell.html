@@ -161,6 +161,18 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
     if (push && location.hash.slice(1) !== k) { try{ history.pushState(null,'','#'+k); }catch(e){ location.hash = k; } }
   }
 
+  function viewFromHash(){ var h = location.hash.slice(1); return (h.indexOf('v=') === 0) ? decodeURIComponent(h.slice(2)) : null; }
+  // carrega QUALQUER página auxiliar no quadro (extensão do app), além das abas
+  function goUrl(view, push){
+    if (!view) return;
+    var file = view.split('?')[0].split('#')[0].toLowerCase();
+    setActive(FILE2KEY[file] || null);
+    showLoader('Carregando…');
+    frame.src = './' + view;
+    var want = '#v=' + encodeURIComponent(view);
+    if (push && location.hash !== want) { try { history.pushState(null, '', want); } catch (e) {} }
+  }
+
   // sincroniza a aba quando o usuário navega DENTRO do quadro (mesma origem)
   function hideSplash(){ var sp=document.getElementById('sh-splash'); if(sp) sp.classList.add('hide'); }
   frame.addEventListener('load', function(){
@@ -177,10 +189,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
   // segurança: esconde loader se demorar
   frame.addEventListener('error', hideLoader);
 
-  window.addEventListener('hashchange', function(){ var k = location.hash.slice(1); if (ROUTES[k] && k !== curKey) go(k, false); });
+  window.addEventListener('hashchange', function(){
+    var v = viewFromHash();
+    if (v) { goUrl(v, false); return; }
+    var k = location.hash.slice(1); if (ROUTES[k] && k !== curKey) go(k, false);
+  });
 
-  var initial = location.hash.slice(1);
-  go(ROUTES[initial] ? initial : 'inicio', false);
+  var initialView = viewFromHash();
+  if (initialView) { goUrl(initialView, false); }
+  else { var initial = location.hash.slice(1); go(ROUTES[initial] ? initial : 'inicio', false); }
   setTimeout(hideSplash, 2600); // segurança: nunca trava no splash
 
   // registra o service worker (mesma origem) + força checagem de atualização

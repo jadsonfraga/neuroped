@@ -15,6 +15,27 @@
   if (window.__npFrame) return;
   window.__npFrame = true;
 
+  // Está dentro da casca (app-shell)? Então o chrome é da casca.
+  var EMBEDDED = (function(){ try { return window.self !== window.top; } catch (e) { return true; } })();
+  // Auxiliares NÃO abrem soltas: páginas abaixo permanecem autônomas; o resto,
+  // aberto no topo, é reaberto embutido em ./app-shell.html#v=<arquivo>.
+  var NP_STANDALONE = {
+    'index.html':1, 'app-shell.html':1, '':1, '/':1, '404.html':1, 'ds-pilot.html':1,
+    'restricted.html':1, 'verificar.html':1, 'verificar-documento.html':1, 'verificar-app.html':1,
+    'assinatura-digital.html':1, 'qa-smoke-test.html':1, 'teste-e2e-manual.html':1,
+    'teste-ouro-pin.html':1, 'privacy-policy.html':1
+  };
+  function maybeEmbedRedirect(){
+    if (EMBEDDED) return false;
+    var b = document.body;
+    if (b && (b.dataset.npFrame === 'off' || b.dataset.npStandalone === '1')) return false;
+    var f = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    if (NP_STANDALONE[f]) return false;
+    var to = './app-shell.html#v=' + encodeURIComponent(f + location.search + location.hash);
+    try { location.replace(to); } catch (e) { location.href = to; }
+    return true;
+  }
+
   function shouldSkip(){
     var b = document.body;
     if (!b) return true;
@@ -136,7 +157,9 @@
 
   /* ---------- Boot ---------- */
   function boot(){
-    if (shouldSkip()) return;
+    if (maybeEmbedRedirect()) return;                 // auxiliar solta → reabre na casca
+    if (EMBEDDED) { try { document.documentElement.classList.add('np-embedded'); } catch (e) {} ensurePremiumPolish(); return; } // chrome é da casca
+    if (shouldSkip()) { ensurePremiumPolish(); return; }
     document.body.classList.add('np-boot-fade');
     ensureHeader();
     ensureBottomNav();
