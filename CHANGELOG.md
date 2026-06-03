@@ -1,5 +1,12 @@
 # Changelog — NeuroPed EDJ
 
+## v6.44.9 — 2026-06-03 — Unificação do progresso/fadiga
+
+- O runner `escala.html` passa a usar o helper compartilhado **`NeuroPedProgress`**
+  (`scales-progress.js`) como fonte única de salvar/retomar e do plano de blocos
+  (`blockPlan`/`isLong`), no lugar da lógica própria. Sem duplicar storage; o bloco
+  de retomada é derivado das respostas (abre no primeiro item ainda sem resposta).
+
 ## v6.44.7 — 2026-06-03 — Runner: coach, blocos e testes diretos
 
 Camada exclusiva do **runner `escala.html`** (não toca a taxonomia/medalhas/curadoria já em produção).
