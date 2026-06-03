@@ -298,13 +298,13 @@
     var TXT = 'Conheça o NeuroPed, do Dr. Jadson Fraga — apoio à neuropediatria para famílias, escolas e terapeutas:';
     var box = document.createElement('div');
     box.id = 'npReferral';
-    box.style.cssText = 'max-width:1020px;margin:22px auto 0;padding:16px 18px;border:1px solid rgba(231,201,139,.28);'
-      + 'border-radius:18px;background:rgba(231,201,139,.08);display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between';
+    box.style.cssText = 'max-width:1020px;margin:22px auto 0;padding:16px 18px;border:1px solid rgba(169,164,255,.26);'
+      + 'border-radius:18px;background:linear-gradient(180deg,rgba(124,118,210,.12),rgba(124,118,210,.05));display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between';
     box.innerHTML = '<div style="flex:1;min-width:220px">'
-      + '<strong style="display:block;color:#f2dca6;font:700 15px var(--np-font-display,Georgia,serif)">Conhece outra família que precisa disso?</strong>'
+      + '<strong style="display:block;color:#ECEAFF;font:700 15px var(--np-font-display,Georgia,serif)">Conhece outra família que precisa disso?</strong>'
       + '<span style="color:#b6b2e6;font-size:13px">Compartilhar leva informação séria e acolhimento a quem precisa.</span></div>'
       + '<button id="npRefBtn" type="button" style="border:0;border-radius:13px;cursor:pointer;font-weight:800;font-size:14px;'
-      + 'padding:12px 18px;background:linear-gradient(180deg,#e7c98b,#caa56a);color:#241a05;display:inline-flex;gap:8px;align-items:center">'
+      + 'padding:12px 18px;background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;display:inline-flex;gap:8px;align-items:center">'
       + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg>Indicar</button>';
     var main = document.querySelector('main') || document.body;
     main.appendChild(box);
@@ -459,8 +459,11 @@
         '.np-journey .nx{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}' +
         '.np-journey .nx .lb{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.08em;color:#928ec6}' +
         '.np-journey .nx .hint{color:#b6b2e6;font-size:13px;line-height:1.4}' +
-        '.np-journey .nx a.cta{display:inline-flex;align-items:center;gap:7px;text-decoration:none;border-radius:12px;padding:10px 15px;font:800 13px system-ui;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5);box-shadow:0 10px 24px -12px rgba(124,58,237,.6);transition:transform .15s,filter .2s}' +
-        '.np-journey .nx a.cta:hover{transform:translateY(-2px);filter:brightness(1.05)}';
+        '.np-journey .nx a.cta{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;text-decoration:none;border-radius:12px;padding:10px 15px;font:800 13px system-ui;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5);box-shadow:0 10px 24px -12px rgba(124,58,237,.6);transition:transform .15s,filter .2s,box-shadow .2s}' +
+        '.np-journey .nx a.cta:hover{transform:translateY(-2px);filter:brightness(1.06);box-shadow:0 16px 32px -12px rgba(124,58,237,.78)}' +
+        '.np-journey .nx a.cta::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-18deg);animation:npSheen 3.8s ease-in-out infinite;pointer-events:none}' +
+        '@keyframes npSheen{0%,62%{left:-60%}82%,100%{left:130%}}' +
+        '@media(prefers-reduced-motion:reduce){.np-journey .nx a.cta::after{display:none}}';
       document.head.appendChild(s);
     }
 
@@ -583,22 +586,22 @@
           'background:rgba(8,8,20,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .25s}' +
         '.np-onboard.show{opacity:1}' +
         '.np-onboard .card{max-width:440px;width:100%;background:linear-gradient(160deg,#171536,#1d1a44 60%,#15133a);' +
-          'border:1px solid rgba(231,201,139,.3);border-radius:24px;padding:26px 22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.7);' +
+          'border:1px solid rgba(169,164,255,.28);border-radius:24px;padding:26px 22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.7);' +
           'transform:translateY(10px) scale(.98);transition:transform .3s cubic-bezier(.22,.9,.25,1)}' +
         '.np-onboard.show .card{transform:none}' +
-        '.np-onboard .lg{width:64px;height:64px;border-radius:18px;overflow:hidden;margin:0 auto 12px;box-shadow:0 0 0 1px rgba(231,201,139,.4)}' +
+        '.np-onboard .lg{width:64px;height:64px;border-radius:18px;overflow:hidden;margin:0 auto 12px;box-shadow:0 0 0 1px rgba(169,164,255,.4)}' +
         '.np-onboard .lg img{width:100%;height:100%;object-fit:cover;display:block}' +
         '.np-onboard h2{margin:0 0 4px;text-align:center;font:700 22px "Fraunces",Georgia,serif;color:#fbf6ea}' +
         '.np-onboard p.sub{margin:0 0 16px;text-align:center;color:#b6b2e6;font-size:13.5px}' +
         '.np-onboard .stp{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(169,164,255,.14)}' +
         '.np-onboard .stp:first-of-type{border-top:0}' +
         '.np-onboard .stp .n{flex:0 0 auto;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;' +
-          'font:800 13px system-ui;color:#241a05;background:linear-gradient(180deg,#e7c98b,#caa56a)}' +
+          'font:800 13px system-ui;color:#fff;background:linear-gradient(180deg,#7C3AED,#4F46E5)}' +
         '.np-onboard .stp b{display:block;color:#ECEAFF;font-size:14px}' +
         '.np-onboard .stp span{color:#928ec6;font-size:12.5px}' +
         '.np-onboard .acts{margin-top:18px;display:flex;flex-direction:column;gap:9px}' +
-        '.np-onboard .cta{border:0;border-radius:14px;padding:14px;font:800 15px system-ui;cursor:pointer;color:#241a05;' +
-          'background:linear-gradient(180deg,#e7c98b,#caa56a);box-shadow:0 12px 28px -10px rgba(231,201,139,.6)}' +
+        '.np-onboard .cta{border:0;border-radius:14px;padding:14px;font:800 15px system-ui;cursor:pointer;color:#fff;' +
+          'background:linear-gradient(135deg,#7C3AED,#4F46E5);box-shadow:0 12px 28px -10px rgba(124,58,237,.6)}' +
         '.np-onboard .skip{border:0;background:none;color:#928ec6;font:700 13px system-ui;cursor:pointer;padding:8px}';
       document.head.appendChild(st);
     }
