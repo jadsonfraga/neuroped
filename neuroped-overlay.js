@@ -31,26 +31,55 @@
   // ──────────────────────────────────────────────────────────
   const CATALOG = {
 
-    // ── NPE Família 12–36 meses ──
-    'fam-12-36-tea-primeiros-sinais':     O.asFamilyScale(3),
-    'fam-12-36-fala-inicial':             O.asFamilyScale(3),
-    'fam-12-36-alimentacao-sensorial':    O.asFamilyScale(3),
-    'fam-12-36-sono-pequeno':             O.asFamilyScale(3),
-    'fam-12-36-brincar-social':           O.asFamilyScale(3),
+    // ── NPE Família 12–36 meses (IDs reais do bundle, verificado em 2026-06-03) ──
+    'fam-12-36-tea':                      O.asFamilyScale(3),
+    'fam-12-36-fala':                     O.asFamilyScale(3),
+    'fam-12-36-alimentacao':              O.asFamilyScale(3),
+    'fam-12-36-sono':                     O.asFamilyScale(3),
+    'fam-12-36-brincar':                  O.asFamilyScale(3),
+    'fam-12-36-motor':                    O.asFamilyScale(3),
 
     // ── NPE Família 3–5 anos ──
-    'fam-3-5-comunicacao-funcional':      O.asFamilyScale(3),
-    'fam-3-5-crises-transicoes':          O.asFamilyScale(3),
-    'fam-3-5-sensorial-diario':           O.asFamilyScale(3),  // nome enganoso; é escala
-    'fam-3-5-autonomia-inicial':          O.asFamilyScale(3),
-    'fam-3-5-flexibilidade-rotina':       O.asFamilyScale(3),
+    'fam-3-5-comunicacao':                O.asFamilyScale(3),
+    'fam-3-5-crises':                     O.asFamilyScale(3),
+    'fam-3-5-sensorial':                  O.asFamilyScale(3),
+    'fam-3-5-autonomia':                  O.asFamilyScale(3),
+    'fam-3-5-flexibilidade':              O.asFamilyScale(3),
+    'fam-3-5-brincar-simbolico':          O.asFamilyScale(3),
 
     // ── NPE Família 6–11 anos ──
-    'fam-6-11-atencao-casa':              O.asFamilyScale(3),
-    'fam-6-11-organizacao-memoria':       O.asFamilyScale(3),
-    'fam-6-11-ansiedade-infantil':        O.asFamilyScale(3),
-    'fam-6-11-oposicao-irritabilidade':   O.asFamilyScale(3),
-    'fam-6-11-sono-escolar':              O.asFamilyScale(3),
+    'fam-6-11-atencao':                   O.asFamilyScale(3),
+    'fam-6-11-organizacao':               O.asFamilyScale(3),
+    'fam-6-11-ansiedade':                 O.asFamilyScale(3),
+    'fam-6-11-oposicao':                  O.asFamilyScale(3),
+    'fam-6-11-sono':                      O.asFamilyScale(3),
+    'fam-6-11-aprendizagem':              O.asFamilyScale(3),
+
+    // ── NPE Família 12–17 anos (adolescente) ──
+    'fam-12-17-alimentacao':              O.asFamilyScale(3),
+    'fam-12-17-autonomia':                O.asFamilyScale(3),
+    'fam-12-17-digital-sono':             O.asFamilyScale(3),
+    'fam-12-17-social':                   O.asFamilyScale(3),
+
+    // Humor adolescente — sentinela ativa (rastreio depressão)
+    'fam-12-17-humor': Object.assign(O.asFamilyScale(3), {
+      sentinel: {
+        enabled: true,
+        action: 'show_resources',
+        reason: 'Rastreio de humor depressivo em adolescente — exibir recursos se positivo'
+      }
+    }),
+
+    // ⚠️ RISCO AUTOLESIVO ADOLESCENTE — sentinela crítica
+    // Acessível à família (early-detection) MAS com alerta ao clínico se positivo.
+    'fam-12-17-risco': Object.assign(O.asFamilyScale(3), {
+      sentinel: {
+        enabled: true,
+        action: 'alert_clinician',
+        trigger_threshold: 1,
+        reason: 'Item de risco autolesivo positivo — escalar imediatamente ao clínico'
+      }
+    }),
 
     // ── Autorais Dr. Jadson Fraga ──
     'jf-einp-tdah-tod-12mais':            O.asMultiInformantScale(15),
