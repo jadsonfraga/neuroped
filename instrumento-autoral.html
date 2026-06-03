@@ -1,17 +1,17 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<title>Instrumento autoral — NeuroPed EDJ</title>
+<title>Instrumento autoral â€” NeuroPed EDJ</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/instrumento-autoral.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Instrumento autoral — NeuroPed EDJ">
+<meta name="twitter:title" content="Instrumento autoral â€” NeuroPed EDJ">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/instrumento-autoral.html">
-<meta name="description" content="Instrumento autoral NeuroPed de triagem em neuropediatria, preenchível com pontuação por domínios. Apoio clínico estruturado.">
+<meta name="description" content="Instrumento autoral NeuroPed de triagem em neuropediatria, preenchÃ­vel com pontuaÃ§Ã£o por domÃ­nios. Apoio clÃ­nico estruturado.">
 <style>
 :root{--bg:#0a0a16;--bg-2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--soft:#928ec6;--line:rgba(169,164,255,.16);
   --indigo:#6d6af5;--indigo-d:#4f46e5;--indigo-l:#a9a4ff;--gold:#e7c98b;--paper:rgba(124,118,210,.07)}
@@ -59,19 +59,20 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
 </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body data-ns-shell>
 <main class="app">
   <header class="top">
-    <a class="btn ghost" href="./filtro-escalas.html">← Filtro</a>
+    <a class="btn ghost" href="./filtro-escalas.html">â† Filtro</a>
     <a class="btn ghost" href="./mapa-escalas.html">Mapa</a>
     <button class="btn gold" id="copyBtn" type="button">Copiar resumo</button>
   </header>
-  <section class="hero" id="hero"><div class="miss">Carregando instrumento…</div></section>
+  <section class="hero" id="hero"><div class="miss">Carregando instrumentoâ€¦</div></section>
   <section id="body"></section>
-  <div class="result" id="result" hidden><div class="scorebox"><div class="big" id="score">—</div><div class="band warn" id="band">Responda os itens.</div></div><div class="subscores" id="subscores"></div><div class="alerts" id="alerts"></div><div class="disclaim" id="disc2"></div></div>
-  <p class="disclaim" style="border:1px solid rgba(231,201,139,.3);border-left:4px solid var(--gold);border-radius:12px;background:rgba(231,201,139,.10);padding:12px 14px;margin-top:14px;line-height:1.6;color:#e8dcc2">⚕️ <strong>Natureza da ferramenta.</strong> Os instrumentos autorais NeuroPed são <strong>roteiros de triagem e de organização do raciocínio clínico</strong>, de autoria do Dr. Jadson Fraga Araújo Júnior, construídos a partir de sua experiência em neurologia infantil. <strong>Não são escalas psicometricamente validadas nem normatizadas</strong> e não possuem ponto de corte diagnóstico — os limiares são <em>pontos de atenção operacional</em>. Nenhum resultado aqui confirma, exclui ou estabelece diagnóstico; ele apenas organiza observações e orienta a decisão de aprofundar a investigação. <strong>O diagnóstico é sempre um ato médico individual, presencial e contextualizado.</strong></p>
-  <p class="disclaim" style="border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.08);padding:11px 14px;margin-top:10px;line-height:1.5">🔒 <strong>Privacidade (LGPD):</strong> as respostas <strong>não são enviadas nem armazenadas em servidor</strong> — ficam apenas neste dispositivo durante o uso e são descartadas ao fechar a página. Nenhum dado pessoal é coletado.</p>
+  <div class="result" id="result" hidden><div class="scorebox"><div class="big" id="score">â€”</div><div class="band warn" id="band">Responda os itens.</div></div><div class="subscores" id="subscores"></div><div class="alerts" id="alerts"></div><div class="disclaim" id="disc2"></div></div>
+  <p class="disclaim" style="border:1px solid rgba(231,201,139,.3);border-left:4px solid var(--gold);border-radius:12px;background:rgba(231,201,139,.10);padding:12px 14px;margin-top:14px;line-height:1.6;color:#e8dcc2">âš•ï¸ <strong>Natureza da ferramenta.</strong> Os instrumentos autorais NeuroPed sÃ£o <strong>roteiros de triagem e de organizaÃ§Ã£o do raciocÃ­nio clÃ­nico</strong>, de autoria do Dr. Jadson Fraga AraÃºjo JÃºnior, construÃ­dos a partir de sua experiÃªncia em neurologia infantil. <strong>NÃ£o sÃ£o escalas psicometricamente validadas nem normatizadas</strong> e nÃ£o possuem ponto de corte diagnÃ³stico â€” os limiares sÃ£o <em>pontos de atenÃ§Ã£o operacional</em>. Nenhum resultado aqui confirma, exclui ou estabelece diagnÃ³stico; ele apenas organiza observaÃ§Ãµes e orienta a decisÃ£o de aprofundar a investigaÃ§Ã£o. <strong>O diagnÃ³stico Ã© sempre um ato mÃ©dico individual, presencial e contextualizado.</strong></p>
+  <p class="disclaim" style="border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.08);padding:11px 14px;margin-top:10px;line-height:1.5">ðŸ”’ <strong>Privacidade (LGPD):</strong> as respostas <strong>nÃ£o sÃ£o enviadas nem armazenadas em servidor</strong> â€” ficam apenas neste dispositivo durante o uso e sÃ£o descartadas ao fechar a pÃ¡gina. Nenhum dado pessoal Ã© coletado.</p>
 </main>
 <script src="./scales-editorial.js"></script>
 <script src="./scales-autorais-npe.js"></script>
@@ -86,15 +87,15 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
   var inst=list.find(function(s){return s.id===id||s.anchor===id})||list[0];
   var ans={}, sentinelAns=null;
 
-  if(!inst){document.getElementById('hero').innerHTML='<div class="miss">Instrumento não encontrado.</div>';return;}
-  document.title=inst.short_title+' — NeuroPed';
+  if(!inst){document.getElementById('hero').innerHTML='<div class="miss">Instrumento nÃ£o encontrado.</div>';return;}
+  document.title=inst.short_title+' â€” NeuroPed';
 
   function renderHero(){
     document.getElementById('hero').innerHTML=
-      '<span class="badge b-aut">Autoral NeuroPed · '+esc(inst.code)+'</span>'+(inst.restrito?'<span class="badge b-rest">Uso profissional restrito</span>':'')
+      '<span class="badge b-aut">Autoral NeuroPed Â· '+esc(inst.code)+'</span>'+(inst.restrito?'<span class="badge b-rest">Uso profissional restrito</span>':'')
       +'<span class="badge b-aut">'+esc(inst.age_band)+'</span><span class="badge b-aut">'+esc(inst.audience_label)+'</span>'
       +'<h1>'+esc(inst.title)+'</h1>'
-      +'<div class="instr">'+esc(inst.finalidade)+(inst.periodo?' · Período: '+esc(inst.periodo):'')+'</div>'
+      +'<div class="instr">'+esc(inst.finalidade)+(inst.periodo?' Â· PerÃ­odo: '+esc(inst.periodo):'')+'</div>'
       +(inst.aviso_oficial?'<div class="disc">'+esc(inst.aviso_oficial)+'</div>':'')
       +'<div class="disc">'+esc(inst.not_normative_disclaimer)+'</div>';
   }
@@ -104,8 +105,8 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
 
   // PIN para instrumentos restritos
   if(inst.restrito && !unlocked()){
-    bodyEl.innerHTML='<div class="card gate"><div style="font-size:34px">🔒</div><h3 style="font-family:Georgia,serif;color:#f2dca6">Uso profissional restrito</h3>'
-      +'<p class="miss">Este instrumento ('+esc(inst.code)+') é de aplicação profissional. Informe o <strong>PIN master</strong> para liberar neste dispositivo.</p>'
+    bodyEl.innerHTML='<div class="card gate"><div style="font-size:34px">ðŸ”’</div><h3 style="font-family:Georgia,serif;color:#f2dca6">Uso profissional restrito</h3>'
+      +'<p class="miss">Este instrumento ('+esc(inst.code)+') Ã© de aplicaÃ§Ã£o profissional. Informe o <strong>PIN master</strong> para liberar neste dispositivo.</p>'
       +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><input id="pin" type="password" inputmode="numeric" placeholder="PIN master" autocomplete="off"><button class="btn" id="pingo" type="button">Liberar</button></div></div>';
     var pin=document.getElementById('pin'),go=document.getElementById('pingo');
     function tryPin(){if(!window.NeuroPedMasterAccess)return;window.NeuroPedMasterAccess.unlockIfPin(pin.value).then(function(ok){if(ok||unlocked())renderItems();}).catch(function(){});}
@@ -122,7 +123,7 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
     }).join('');
     // sentinela (NPE-BR-004)
     if(inst.sentinel){
-      html+='<div class="subhead">Pergunta-sentinela (sem pontuação)</div><div class="item"><h3>'+esc(inst.sentinel.q)+'</h3><div class="opts" data-sent="1">'
+      html+='<div class="subhead">Pergunta-sentinela (sem pontuaÃ§Ã£o)</div><div class="item"><h3>'+esc(inst.sentinel.q)+'</h3><div class="opts" data-sent="1">'
         +inst.sentinel.options.map(function(l,v){return '<button type="button" data-v="'+v+'">'+esc(l)+'</button>';}).join('')+'</div></div>';
     }
     bodyEl.innerHTML=html;
@@ -150,24 +151,24 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
   function calc(){
     var scoreEl=document.getElementById('score'),bandEl=document.getElementById('band'),subEl=document.getElementById('subscores'),alEl=document.getElementById('alerts');
     var n=Object.keys(ans).length,total=inst.items.length;
-    document.getElementById('disc2').textContent='Ponto de atenção operacional — não é ponto de corte diagnóstico. '+(inst.code||'');
+    document.getElementById('disc2').textContent='Ponto de atenÃ§Ã£o operacional â€” nÃ£o Ã© ponto de corte diagnÃ³stico. '+(inst.code||'');
 
-    // ---- 005: classificação de risco (sem escore) ----
+    // ---- 005: classificaÃ§Ã£o de risco (sem escore) ----
     if(inst.risk_mode){
       scoreEl.textContent='S';
       var lvl=level005();
       var L=(inst.levels||[]).filter(function(x){return x.k===lvl;})[0];
       bandEl.className='band '+((L&&L.cls)||'warn');
-      bandEl.innerHTML=L?('<b>'+L.k+' — '+esc(L.label)+'</b>'+(n<total?' (entrevista incompleta)':'')+'<small>'+esc(L.conduct)+'</small>'):'<b>Responda a entrevista.</b>';
-      subEl.innerHTML=''; alEl.innerHTML= lvl && (lvl==='S2'||lvl==='S3') ? '<div class="alert prio">⚠ <strong>Risco identificado.</strong> Avaliação profissional de segurança <strong>agora</strong>. Não deixar a criança/adolescente desacompanhado(a) em risco iminente.<br><br>📞 <strong>Emergência:</strong> <a href="tel:192" style="color:#ffd0db;font-weight:800">SAMU 192</a> · <a href="tel:188" style="color:#ffd0db;font-weight:800">CVV 188</a> (apoio emocional 24h) · pronto-socorro ou CAPS mais próximo.<br><span style="font-size:11.5px;opacity:.85">Esta tela é triagem orientativa e não substitui o atendimento de emergência.</span></div>':'';
+      bandEl.innerHTML=L?('<b>'+L.k+' â€” '+esc(L.label)+'</b>'+(n<total?' (entrevista incompleta)':'')+'<small>'+esc(L.conduct)+'</small>'):'<b>Responda a entrevista.</b>';
+      subEl.innerHTML=''; alEl.innerHTML= lvl && (lvl==='S2'||lvl==='S3') ? '<div class="alert prio">âš  <strong>Risco identificado.</strong> AvaliaÃ§Ã£o profissional de seguranÃ§a <strong>agora</strong>. NÃ£o deixar a crianÃ§a/adolescente desacompanhado(a) em risco iminente.<br><br>ðŸ“ž <strong>EmergÃªncia:</strong> <a href="tel:192" style="color:#ffd0db;font-weight:800">SAMU 192</a> Â· <a href="tel:188" style="color:#ffd0db;font-weight:800">CVV 188</a> (apoio emocional 24h) Â· pronto-socorro ou CAPS mais prÃ³ximo.<br><span style="font-size:11.5px;opacity:.85">Esta tela Ã© triagem orientativa e nÃ£o substitui o atendimento de emergÃªncia.</span></div>':'';
       return;
     }
 
-    // ---- soma padrão ----
+    // ---- soma padrÃ£o ----
     var raw=0; Object.keys(ans).forEach(function(k){raw+=ans[k];});
     scoreEl.textContent=raw;
 
-    // ---- 011: diferencial dislexia × global ----
+    // ---- 011: diferencial dislexia Ã— global ----
     if(inst.differential){
       var d=inst.differential, a=0,b=0;
       d.a.idx.forEach(function(i){a+=(ans[i]||0);}); d.b.idx.forEach(function(i){b+=(ans[i]||0);});
@@ -175,12 +176,12 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
       (d.rules||[]).forEach(function(r){ if(!rule){ try{ if(new Function('a','b','return '+r.when)(a,b)) rule=r; }catch(e){} } });
       bandEl.className='band '+((rule&&rule.cls)||'warn');
       bandEl.innerHTML=rule?('<b>'+esc(rule.label)+'</b>'+(n<total?' (faltam '+(total-n)+' itens)':'')+'<small>'+esc(rule.note)+'</small>'):'<b>Responda os itens.</b>';
-      subEl.innerHTML='<b>'+esc(d.a.name)+':</b> '+a+'/'+(d.a.idx.length*3)+' &nbsp;·&nbsp; <b>'+esc(d.b.name)+':</b> '+b+'/'+(d.b.idx.length*3);
+      subEl.innerHTML='<b>'+esc(d.a.name)+':</b> '+a+'/'+(d.a.idx.length*3)+' &nbsp;Â·&nbsp; <b>'+esc(d.b.name)+':</b> '+b+'/'+(d.b.idx.length*3);
       renderAlerts(alEl);
       return;
     }
 
-    // ---- bandas + subdomínios ----
+    // ---- bandas + subdomÃ­nios ----
     var c=pickCut(raw);
     bandEl.className='band '+((c&&c.cls)||'warn');
     var gate='';
@@ -188,8 +189,8 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
       var g=inst.gate_message, anyHit=g.anyItem.some(function(i){return (ans[i]||0)>=g.min;});
       if(raw>=g.requireTotal && anyHit) gate='<br><b style="color:#ffb3c6">'+esc(g.msg)+'</b>';
     }
-    bandEl.innerHTML='<b>'+esc(c?c.label:'—')+'</b>'+(n<total?' (faltam '+(total-n)+' itens)':'')+gate+'<small>Total '+raw+' / '+inst.score_max+' · ponto de atenção operacional.</small>';
-    subEl.innerHTML=subScores().map(function(s){return '<b>'+esc(s.name)+':</b> '+s.score+'/'+s.max;}).join(' &nbsp;·&nbsp; ');
+    bandEl.innerHTML='<b>'+esc(c?c.label:'â€”')+'</b>'+(n<total?' (faltam '+(total-n)+' itens)':'')+gate+'<small>Total '+raw+' / '+inst.score_max+' Â· ponto de atenÃ§Ã£o operacional.</small>';
+    subEl.innerHTML=subScores().map(function(s){return '<b>'+esc(s.name)+':</b> '+s.score+'/'+s.max;}).join(' &nbsp;Â·&nbsp; ');
     renderAlerts(alEl);
   }
 
@@ -197,21 +198,21 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
     var out=[];
     (inst.traps||[]).forEach(function(t){
       var hit=t.idx.some(function(i){return (ans[i]||0)>=t.min;});
-      if(hit) out.push('<div class="alert'+(t.level==='prioritario'?' prio':'')+'">'+(t.level==='prioritario'?'⚠ ':'• ')+esc(t.msg)+'</div>');
+      if(hit) out.push('<div class="alert'+(t.level==='prioritario'?' prio':'')+'">'+(t.level==='prioritario'?'âš  ':'â€¢ ')+esc(t.msg)+'</div>');
     });
     (inst.suggest||[]).forEach(function(sg){
       var s=subScores().filter(function(x){return x.name===sg.sub;})[0];
-      if(s && s.score>=sg.min) out.push('<div class="alert">• '+esc(sg.msg)+'</div>');
+      if(s && s.score>=sg.min) out.push('<div class="alert">â€¢ '+esc(sg.msg)+'</div>');
     });
     if(inst.sentinel && (inst.sentinel.positive||[]).indexOf(sentinelAns)>=0){
-      out.push('<div class="alert prio">⚠ '+esc(inst.sentinel.msg)+' <a href="./instrumento-autoral.html?id='+esc(inst.sentinel.target)+'" style="color:#fff;text-decoration:underline">Abrir NPE-BR-005 →</a></div>');
+      out.push('<div class="alert prio">âš  '+esc(inst.sentinel.msg)+' <a href="./instrumento-autoral.html?id='+esc(inst.sentinel.target)+'" style="color:#fff;text-decoration:underline">Abrir NPE-BR-005 â†’</a></div>');
     }
     alEl.innerHTML=out.join('');
   }
 
   function level005(){
     function pos(i){return ans[i]===2;}                 // Sim
-    var unsafe=(ans[6]!=null && ans[6]<=1);             // Q7: Não/Não sei = não garante segurança
+    var unsafe=(ans[6]!=null && ans[6]<=1);             // Q7: NÃ£o/NÃ£o sei = nÃ£o garante seguranÃ§a
     if(pos(4) || unsafe || (pos(5) && (pos(2)||pos(3)||pos(0)||pos(1)))) return 'S3';
     if(pos(2)||pos(3)||pos(5)) return 'S2';
     if(pos(0)||pos(1)) return 'S1';
@@ -219,14 +220,14 @@ h1{font:700 clamp(22px,4.5vw,34px)/1.08 Georgia,serif;color:#fbf6ea;margin:8px 0
   }
 
   document.getElementById('copyBtn').addEventListener('click',function(){
-    var L=['NeuroPed EDJ — '+inst.title,'Código: '+inst.code+' ('+inst.sigla+')','Data: '+new Date().toLocaleString('pt-BR'),''];
+    var L=['NeuroPed EDJ â€” '+inst.title,'CÃ³digo: '+inst.code+' ('+inst.sigla+')','Data: '+new Date().toLocaleString('pt-BR'),''];
     if(inst.risk_mode){
-      inst.items.forEach(function(q,i){var v=ans[i],lbl='—';(inst.options||[]).forEach(function(o){if(o.value===v)lbl=o.label;});L.push((i+1)+'. '+q+' → '+lbl);});
-      L.push('','Classificação de risco: '+document.getElementById('band').textContent.replace(/\s+/g,' ').trim());
+      inst.items.forEach(function(q,i){var v=ans[i],lbl='â€”';(inst.options||[]).forEach(function(o){if(o.value===v)lbl=o.label;});L.push((i+1)+'. '+q+' â†’ '+lbl);});
+      L.push('','ClassificaÃ§Ã£o de risco: '+document.getElementById('band').textContent.replace(/\s+/g,' ').trim());
     } else {
-      inst.items.forEach(function(q,i){var v=ans[i],lbl='—';(inst.options||[]).forEach(function(o){if(o.value===v)lbl=o.label;});L.push((i+1)+'. '+q+' → '+lbl);});
+      inst.items.forEach(function(q,i){var v=ans[i],lbl='â€”';(inst.options||[]).forEach(function(o){if(o.value===v)lbl=o.label;});L.push((i+1)+'. '+q+' â†’ '+lbl);});
       L.push('','Resultado: '+document.getElementById('band').textContent.replace(/\s+/g,' ').trim());
-      var sub=document.getElementById('subscores').textContent; if(sub)L.push('Subdomínios: '+sub);
+      var sub=document.getElementById('subscores').textContent; if(sub)L.push('SubdomÃ­nios: '+sub);
     }
     L.push('',inst.not_normative_disclaimer);
     var txt=L.join('\n'); if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){window.npToast?npToast('Resumo copiado.'):alert('Resumo copiado.');});

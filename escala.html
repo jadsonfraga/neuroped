@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<title>Responder escala — NeuroPed EDJ</title>
-<meta name="description" content="Responda a escala selecionada e gere o laudo em PDF com as respostas. Acompanhamento local, não diagnóstico.">
+<title>Responder escala â€” NeuroPed EDJ</title>
+<meta name="description" content="Responda a escala selecionada e gere o laudo em PDF com as respostas. Acompanhamento local, nÃ£o diagnÃ³stico.">
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/escala.html">
 <style>
@@ -41,7 +41,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 /* skeleton de carregamento */
 .skel{border:1px solid var(--line);border-radius:18px;margin:11px 0;height:96px;background:linear-gradient(100deg,rgba(124,118,210,.06) 30%,rgba(124,118,210,.16) 50%,rgba(124,118,210,.06) 70%);background-size:300% 100%;animation:skel 1.3s ease-in-out infinite}
 @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
-/* estado de conclusão: celebra e leva ao laudo */
+/* estado de conclusÃ£o: celebra e leva ao laudo */
 .done{display:none;text-align:center;margin:18px 0;padding:20px;border-radius:20px;border:1px solid rgba(231,201,139,.4);background:linear-gradient(160deg,rgba(231,201,139,.14),rgba(124,118,210,.06))}
 .done.show{display:block;animation:donePop .42s cubic-bezier(.22,.9,.25,1)}
 @keyframes donePop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
@@ -58,7 +58,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .item .q{font-size:15px;color:#ece9ff;margin:0 0 11px;font-weight:600}
 .item .q .n{color:var(--teal);font-weight:800;margin-right:7px}
 .item .q .qe{margin-right:6px;font-size:17px;line-height:1}
-/* ── COACH: humaniza a pergunta (exemplos do dia a dia + o que observar) ── */
+/* â”€â”€ COACH: humaniza a pergunta (exemplos do dia a dia + o que observar) â”€â”€ */
 .coach{margin:0 0 11px;border:1px solid var(--line2);border-radius:13px;background:rgba(124,118,210,.06);overflow:hidden}
 .coach>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 12px;font:700 12.5px "Inter",system-ui;color:var(--teal)}
 .coach>summary::-webkit-details-marker{display:none}
@@ -78,7 +78,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .coach.coach-risco .ctip{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#ffd9df}
 .why{margin:10px 0 0;font-size:13px;color:#d8d4f4;line-height:1.5}
 .why b{color:var(--wine)}
-/* ── BLOCOS (anti-fadiga): escala longa vira etapas curtas ── */
+/* â”€â”€ BLOCOS (anti-fadiga): escala longa vira etapas curtas â”€â”€ */
 .blocknav{margin:18px 0 4px;border:1px solid var(--line2);border-radius:16px;padding:15px;background:linear-gradient(180deg,var(--glass2),var(--glass))}
 .blocknav .bk-meta{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
 .blocknav .bk-meta b{color:var(--wine)}
@@ -93,7 +93,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .bk-btn.ghostb{background:rgba(124,118,210,.14);color:var(--wine);border:1px solid var(--line2);box-shadow:none}
 .bk-btn.pulse{animation:bkPulse 1s ease-in-out 2}
 @keyframes bkPulse{0%,100%{transform:none}50%{transform:scale(1.05)}}
-/* ── TESTES DIRETOS sugeridos (tarefas aplicadas na criança) ── */
+/* â”€â”€ TESTES DIRETOS sugeridos (tarefas aplicadas na crianÃ§a) â”€â”€ */
 .dtask{margin:18px 0 4px;border:1px solid var(--line2);border-radius:18px;background:linear-gradient(180deg,var(--glass2),var(--glass));overflow:hidden}
 .dtask>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px;padding:14px 16px;font:700 14px "Fraunces",Georgia,serif;color:var(--wine)}
 .dtask>summary::-webkit-details-marker{display:none}
@@ -121,18 +121,18 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .empty{text-align:center;padding:40px 18px;color:var(--muted)}
 .empty a{color:var(--teal);font-weight:700}
 .foot{text-align:center;font-size:11.5px;color:var(--soft);margin-top:24px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
-/* ── o engine (scales-enhance) injeta a barra de laudo dentro de #detail.
-   Aqui vestimos esses nós com o tema premium (sem tocar o JS do motor). ── */
+/* â”€â”€ o engine (scales-enhance) injeta a barra de laudo dentro de #detail.
+   Aqui vestimos esses nÃ³s com o tema premium (sem tocar o JS do motor). â”€â”€ */
 #npScalesFooter{margin-top:18px!important;border:1px solid var(--line2)!important;background:linear-gradient(180deg,var(--glass2),var(--glass))!important;border-radius:18px!important;padding:16px!important}
 #npScalesFooter .btn{border:0;border-radius:13px;padding:12px 15px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--teal),var(--indigo));box-shadow:0 10px 24px -12px rgba(91,84,232,.6);transition:transform .15s,filter .2s}
 #npScalesFooter .btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
 #npScalesFooter .btn.secondary{background:rgba(124,118,210,.14)!important;color:var(--wine)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
-#npScalesSubmit{display:none!important}            /* sem backend neste deploy: esconder reduz ruído */
+#npScalesSubmit{display:none!important}            /* sem backend neste deploy: esconder reduz ruÃ­do */
 #npScalesDomains{color:var(--muted)!important;line-height:2}
 #npScalesStatus{color:var(--soft)!important}
 #npScalesHistList{color:var(--muted)!important}
 #npScalesInterpret{border:1px solid rgba(0,0,0,.06)}
-#npScalesPatientBar{position:static!important;border-radius:14px!important;margin:14px 0!important}  /* não-sticky: evita colidir com a barra de progresso */
+#npScalesPatientBar{position:static!important;border-radius:14px!important;margin:14px 0!important}  /* nÃ£o-sticky: evita colidir com a barra de progresso */
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -140,17 +140,18 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body data-ns-shell>
 <main class="wrap">
   <header class="topbar">
-    <a class="back" href="./filtro-escalas.html" aria-label="Voltar ao filtro">‹</a>
+    <a class="back" href="./filtro-escalas.html" aria-label="Voltar ao filtro">â€¹</a>
     <div><b>NeuroPed</b><div class="sub">Responder escala</div></div>
   </header>
 
   <section class="hero">
-    <div class="kick">Aplicação do instrumento</div>
-    <h1 id="title">Carregando…</h1>
+    <div class="kick">AplicaÃ§Ã£o do instrumento</div>
+    <h1 id="title">Carregandoâ€¦</h1>
     <div class="meta" id="meta"></div>
     <p class="why" id="why" hidden></p>
     <div class="sym" id="sym"></div>
@@ -159,14 +160,14 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 
   <div class="prog" id="prog" hidden><div class="bar"><i id="progBar"></i></div><div class="pc" id="progPc">0%</div></div>
 
-  <!-- #detail: o scales-enhance.js observa este nó e injeta a barra de laudo/PDF -->
+  <!-- #detail: o scales-enhance.js observa este nÃ³ e injeta a barra de laudo/PDF -->
   <section id="detail"></section>
   <p class="miss" id="miss">Responda todos os itens para um laudo completo (itens sem resposta saem marcados no PDF).</p>
   <section id="directTasks" hidden></section>
-  <div class="done" id="doneBanner"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
+  <div class="done" id="doneBanner"><b>âœ“ Tudo respondido</b><p>Gere o laudo em PDF com as respostas â€” fica salvo no histÃ³rico da crianÃ§a.</p><button type="button" id="doneCta">ðŸ“„ Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil â€º</a></div>
   <div class="toolbar"></div>
 
-  <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica ou pedagógica. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756.</p>
+  <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. NÃ£o substitui avaliaÃ§Ã£o mÃ©dica, fonoaudiolÃ³gica, psicolÃ³gica ou pedagÃ³gica. A decisÃ£o Ã© do mÃ©dico responsÃ¡vel. Dr. Jadson Fraga Â· CRM-PE 25227 Â· RQE 17756.</p>
 </main>
 
 <script src="./np-store.js"></script>
@@ -179,11 +180,11 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 <script>
 (function(){
   "use strict";
-  var LIK4=['Não / nunca','Às vezes','Frequente','Quase sempre'];
+  var LIK4=['NÃ£o / nunca','Ã€s vezes','Frequente','Quase sempre'];
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
   function qs(k){return new URLSearchParams(location.search).get(k)||''}
 
-  // catálogo: editorial (bundle) + base (index json). Resolve qualquer id recomendado pelo filtro.
+  // catÃ¡logo: editorial (bundle) + base (index json). Resolve qualquer id recomendado pelo filtro.
   function catalog(cb){
     var ed=window.NEUROPED_EDITORIAL_SCALES||[];
     var map={}; ed.forEach(function(s){if(s&&s.id&&!map[s.id])map[s.id]=s;});
@@ -195,13 +196,13 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   function normalize(s){
     if(!s)return null;
     var inst={id:s.id,title:s.title||s.id,cat:s.domain||s.cat||'',
-      subtitle:[s.audience_label||'',s.age_band||''].filter(Boolean).join(' · '),
+      subtitle:[s.audience_label||'',s.age_band||''].filter(Boolean).join(' Â· '),
       not_normative_disclaimer:s.not_normative_disclaimer};
     if(Array.isArray(s.domains)&&s.domains.length&&s.domains[0]&&Array.isArray(s.domains[0].items)){
       inst.domains=s.domains; inst.labels=s.labels||LIK4;
     }else{
       var qss=(s.plain_questions||s.questions||[]).filter(Boolean);
-      if(!qss.length)qss=['O sinal aparece com frequência?','Atrapalha casa, escola ou terapias?','Houve piora recente?','Melhora com rotina/apoio?','Precisa de avaliação complementar?'];
+      if(!qss.length)qss=['O sinal aparece com frequÃªncia?','Atrapalha casa, escola ou terapias?','Houve piora recente?','Melhora com rotina/apoio?','Precisa de avaliaÃ§Ã£o complementar?'];
       inst.domains=[{name:s.domain||'Itens de triagem',items:qss}]; inst.labels=s.labels||LIK4;
     }
     inst._symptoms=s.symptoms||[];
@@ -212,9 +213,9 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   }
 
   var INST=null, ANSWERS={};
-  // progresso salvo POR CRIANÇA + instrumento: retomar sem perder o que já respondeu
-  // progresso salvo via helper compartilhado NeuroPedProgress (mesma lógica de
-  // salvar/retomar da plataforma — não duplica storage).
+  // progresso salvo POR CRIANÃ‡A + instrumento: retomar sem perder o que jÃ¡ respondeu
+  // progresso salvo via helper compartilhado NeuroPedProgress (mesma lÃ³gica de
+  // salvar/retomar da plataforma â€” nÃ£o duplica storage).
   function childCode(){ try{var c=window.NPStore&&window.NPStore.active&&window.NPStore.active(); return (c&&(c.code||c.id))||''; }catch(e){return '';} }
   function saveProgress(){ if(!window.NeuroPedProgress||!INST)return; try{ window.NeuroPedProgress.save({instrumentId:INST.id, childCode:childCode(), title:INST.title, answers:ANSWERS, index:answeredCount(), total:totalCount()}); }catch(e){} }
   function loadProgress(){ if(!window.NeuroPedProgress||!INST)return; try{ var rec=window.NeuroPedProgress.load(INST.id, childCode()); if(rec&&rec.answers&&typeof rec.answers==='object'&&!Array.isArray(rec.answers)) ANSWERS=rec.answers; }catch(e){} }
@@ -228,10 +229,10 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     document.getElementById('prog').classList.toggle('done',complete);
     var db=document.getElementById('doneBanner'); if(db)db.classList.toggle('show',complete);
   }
-  // BLOCOS (anti-fadiga): escala longa (>7 itens) é dividida em etapas curtas
+  // BLOCOS (anti-fadiga): escala longa (>7 itens) Ã© dividida em etapas curtas
   // de 6 itens; o progresso (respostas + bloco atual) fica salvo para retomar.
   // BLOCOS (anti-fadiga): usa o helper puro compartilhado NeuroPedProgress.blockPlan/
-  // isLong (mesma lógica da plataforma). O bloco de retomada é derivado das respostas.
+  // isLong (mesma lÃ³gica da plataforma). O bloco de retomada Ã© derivado das respostas.
   var CURRENT_BLOCK=0;
   function flat(){ var out=[]; INST.domains.forEach(function(d,di){ d.items.forEach(function(item,ii){ out.push({di:di,ii:ii,key:di+'-'+ii,dom:d.name,item:item}); }); }); return out; }
   function plan(){ var t=flat().length; return (window.NeuroPedProgress&&window.NeuroPedProgress.blockPlan)?window.NeuroPedProgress.blockPlan(t,6):[{from:0,to:t,count:t,label:''}]; }
@@ -239,8 +240,8 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   function blockCount(){ return Math.max(1,plan().length); }
   function firstUnansweredBlock(){ if(!blocksOn())return 0; var p=plan(),all=flat(); for(var b=0;b<p.length;b++){ for(var i=p[b].from;i<p[b].to;i++){ if(ANSWERS[all[i].key]==null)return b; } } return p.length-1; }
   window.__block=function(delta){ var n=blockCount(); CURRENT_BLOCK=Math.max(0,Math.min(n-1,CURRENT_BLOCK+delta)); renderDetail(); var d=document.getElementById('detail'); if(d)d.scrollIntoView({behavior:'smooth',block:'start'}); };
-  // guia premium: ao responder, leva suavemente ao próximo item ainda sem resposta;
-  // no fim do bloco, destaca "Próximo bloco"; com tudo respondido, leva ao laudo.
+  // guia premium: ao responder, leva suavemente ao prÃ³ximo item ainda sem resposta;
+  // no fim do bloco, destaca "PrÃ³ximo bloco"; com tudo respondido, leva ao laudo.
   function advance(){
     var items=document.querySelectorAll('#detail .item'), i;
     for(i=0;i<items.length;i++){ if(!items[i].classList.contains('answered')){ items[i].scrollIntoView({behavior:'smooth',block:'center'}); return; } }
@@ -262,10 +263,10 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     var open=COACH_OPEN[key]?' open':'';
     var lis=c.examples.map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
     return '<details class="coach'+(risk?' coach-risco':'')+'" data-k="'+esc(key)+'"'+open+' ontoggle="__coachToggle(\''+esc(key)+'\',this.open)">'+
-      '<summary><span class="cx">'+(risk?'🛟':'💡')+'</span>Exemplos e o que observar<span class="ca">›</span></summary>'+
+      '<summary><span class="cx">'+(risk?'ðŸ›Ÿ':'ðŸ’¡')+'</span>Exemplos e o que observar<span class="ca">â€º</span></summary>'+
       '<div class="cbody">'+
-        '<div class="cex"><b>📌 No dia a dia</b><ul>'+lis+'</ul></div>'+
-        (c.tip?'<div class="ctip"><span class="ti">'+(risk?'⚠️':'👀')+'</span><span>'+esc(c.tip)+'</span></div>':'')+
+        '<div class="cex"><b>ðŸ“Œ No dia a dia</b><ul>'+lis+'</ul></div>'+
+        (c.tip?'<div class="ctip"><span class="ti">'+(risk?'âš ï¸':'ðŸ‘€')+'</span><span>'+esc(c.tip)+'</span></div>':'')+
       '</div></details>';
   }
   function itemHtml(f){
@@ -283,9 +284,9 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     var n=p.length, slice=flat().slice(start,end), tot=slice.length, ans=0;
     slice.forEach(function(f){ if(ANSWERS[f.key]!=null)ans++; });
     var dots=''; for(var b=0;b<n;b++){ var cls=(b===CURRENT_BLOCK)?'cur':(b<CURRENT_BLOCK?'on':''); dots+='<i class="'+cls+'"></i>'; }
-    var prev=CURRENT_BLOCK>0?'<button type="button" class="bk-btn ghostb" onclick="__block(-1)">‹ Bloco anterior</button>':'<span></span>';
-    var next=(CURRENT_BLOCK<n-1)?'<button type="button" class="bk-btn nextb" onclick="__block(1)">Próximo bloco ›</button>':'<span></span>';
-    return '<div class="blocknav"><div class="bk-dots">'+dots+'</div><div class="bk-meta"><b>🧩 Bloco '+(CURRENT_BLOCK+1)+' de '+n+'</b> · '+ans+'/'+tot+' respondidas aqui<small>Pode parar e voltar quando quiser — o progresso fica salvo.</small></div><div class="bk-row">'+prev+next+'</div></div>';
+    var prev=CURRENT_BLOCK>0?'<button type="button" class="bk-btn ghostb" onclick="__block(-1)">â€¹ Bloco anterior</button>':'<span></span>';
+    var next=(CURRENT_BLOCK<n-1)?'<button type="button" class="bk-btn nextb" onclick="__block(1)">PrÃ³ximo bloco â€º</button>':'<span></span>';
+    return '<div class="blocknav"><div class="bk-dots">'+dots+'</div><div class="bk-meta"><b>ðŸ§© Bloco '+(CURRENT_BLOCK+1)+' de '+n+'</b> Â· '+ans+'/'+tot+' respondidas aqui<small>Pode parar e voltar quando quiser â€” o progresso fica salvo.</small></div><div class="bk-row">'+prev+next+'</div></div>';
   }
   function renderDetail(){
     var det=document.getElementById('detail');
@@ -299,60 +300,60 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     });
     if(lastDom!==null)body+='</div>';
     det.innerHTML=body+(on?blockNavHtml(p,start,end):'');
-    // expõe ao engine (scales-enhance lê estes globais e injeta a barra de laudo)
+    // expÃµe ao engine (scales-enhance lÃª estes globais e injeta a barra de laudo)
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
   window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveProgress(); renderDetail(); if(wasNew)setTimeout(advance,70); };
 
-  // TESTES DIRETOS sugeridos: tarefas aplicadas na criança, roteadas pelo
-  // domínio/keywords da escala e pela faixa etária do instrumento.
+  // TESTES DIRETOS sugeridos: tarefas aplicadas na crianÃ§a, roteadas pelo
+  // domÃ­nio/keywords da escala e pela faixa etÃ¡ria do instrumento.
   function renderDirectTasks(){
     var el=document.getElementById('directTasks'); if(!el)return;
     var tasks=[]; try{ if(window.NeuroPedDirectTasks)tasks=window.NeuroPedDirectTasks.forDomain(INST._domain, INST._ageMid, INST._keywords)||[]; }catch(e){ tasks=[]; }
     if(!tasks.length){ el.hidden=true; return; }
     var rows=tasks.map(function(t){
       var risk=t.risk?' dt-risco':'';
-      return '<div class="dt'+risk+'"><div class="de" aria-hidden="true">'+t.emoji+'</div><div class="dc"><p class="dtt">'+esc(t.titulo)+'</p><p class="di">'+esc(t.instrucao)+'</p><p class="do">👀 '+esc(t.observar)+'</p></div></div>';
+      return '<div class="dt'+risk+'"><div class="de" aria-hidden="true">'+t.emoji+'</div><div class="dc"><p class="dtt">'+esc(t.titulo)+'</p><p class="di">'+esc(t.instrucao)+'</p><p class="do">ðŸ‘€ '+esc(t.observar)+'</p></div></div>';
     }).join('');
-    el.innerHTML='<details class="dtask"><summary>🎯 Testes diretos sugeridos para aplicar com a criança<span class="ca">›</span></summary><div class="dbody"><p class="dnote">Tarefas práticas para observar a criança ao vivo — complementam o questionário. Proponha como brincadeira e <b>pare se a criança cansar</b>. Apoio à observação clínica, não é teste normatizado.</p>'+rows+'</div></details>';
+    el.innerHTML='<details class="dtask"><summary>ðŸŽ¯ Testes diretos sugeridos para aplicar com a crianÃ§a<span class="ca">â€º</span></summary><div class="dbody"><p class="dnote">Tarefas prÃ¡ticas para observar a crianÃ§a ao vivo â€” complementam o questionÃ¡rio. Proponha como brincadeira e <b>pare se a crianÃ§a cansar</b>. Apoio Ã  observaÃ§Ã£o clÃ­nica, nÃ£o Ã© teste normatizado.</p>'+rows+'</div></details>';
     el.hidden=false;
   }
   function paintWho(){
     var el=document.getElementById('whoChip'); if(!el)return;
     var c=null; try{c=window.NPStore&&window.NPStore.active();}catch(e){}
     if(c&&c.name){var age=window.NPStore.ageLabel(c);var ini=(c.name.trim().split(/\s+/).map(function(x){return x[0]}).slice(0,2).join('')||'+').toUpperCase();
-      el.classList.remove('none');el.innerHTML='<span class="wa">'+esc(ini)+'</span><span>Para: <b>'+esc(c.name)+'</b>'+(age?' <small>· '+esc(age)+'</small>':'')+'</span>';}
-    else{el.classList.add('none');el.innerHTML='<span class="wa" style="background:linear-gradient(140deg,#7C3AED,#4F46E5);color:#fff">+</span><span>Sem criança ativa — o laudo sai sem identificação</span>';}
+      el.classList.remove('none');el.innerHTML='<span class="wa">'+esc(ini)+'</span><span>Para: <b>'+esc(c.name)+'</b>'+(age?' <small>Â· '+esc(age)+'</small>':'')+'</span>';}
+    else{el.classList.add('none');el.innerHTML='<span class="wa" style="background:linear-gradient(140deg,#7C3AED,#4F46E5);color:#fff">+</span><span>Sem crianÃ§a ativa â€” o laudo sai sem identificaÃ§Ã£o</span>';}
     el.hidden=false;
   }
 
   function showEmpty(msg){
-    document.getElementById('title').textContent='Escala não encontrada';
-    document.getElementById('detail').innerHTML='<div class="empty"><p>'+esc(msg||'Não consegui localizar este instrumento.')+'</p><p><a href="./filtro-escalas.html">‹ Voltar ao filtro de escalas</a></p></div>';
+    document.getElementById('title').textContent='Escala nÃ£o encontrada';
+    document.getElementById('detail').innerHTML='<div class="empty"><p>'+esc(msg||'NÃ£o consegui localizar este instrumento.')+'</p><p><a href="./filtro-escalas.html">â€¹ Voltar ao filtro de escalas</a></p></div>';
     document.getElementById('prog').hidden=true;
   }
 
   function boot(){
     var id=qs('id');
     if(!id){showEmpty('Nenhum instrumento informado.');return;}
-    // skeleton enquanto o catálogo carrega (sensação de app, sem tela em branco)
+    // skeleton enquanto o catÃ¡logo carrega (sensaÃ§Ã£o de app, sem tela em branco)
     document.getElementById('detail').innerHTML='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-    var dc=document.getElementById('doneCta'); if(dc)dc.onclick=function(){var b=document.getElementById('npScalesPrint'); if(b)b.click(); else alert('Role até a barra de laudo para gerar o PDF.');};
+    var dc=document.getElementById('doneCta'); if(dc)dc.onclick=function(){var b=document.getElementById('npScalesPrint'); if(b)b.click(); else alert('Role atÃ© a barra de laudo para gerar o PDF.');};
     catalog(function(map){
-      var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
+      var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" nÃ£o estÃ¡ no catÃ¡logo.');return;}
       INST=normalize(raw);
       loadProgress(); CURRENT_BLOCK=firstUnansweredBlock(); // retoma respostas e abre no bloco a continuar
       document.getElementById('title').textContent=INST.title;
-      document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' · ');
-      var w=document.getElementById('why'); if(w){ if(INST.finalidade){ w.innerHTML='🎯 <b>Para que serve:</b> '+esc(INST.finalidade); w.hidden=false; } else { w.hidden=true; } }
+      document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' Â· ');
+      var w=document.getElementById('why'); if(w){ if(INST.finalidade){ w.innerHTML='ðŸŽ¯ <b>Para que serve:</b> '+esc(INST.finalidade); w.hidden=false; } else { w.hidden=true; } }
       document.getElementById('sym').innerHTML=(INST._symptoms||[]).slice(0,6).map(function(s){return '<span>'+esc(s)+'</span>'}).join('');
       document.getElementById('prog').hidden=false;
       paintWho();
       renderDetail();
       renderDirectTasks();
-      // encadeia "próxima escala recomendada" (fila gravada pelo filtro) → triagem
-      // em sequência (ex.: triangulação família × escola) sem voltar ao menu.
+      // encadeia "prÃ³xima escala recomendada" (fila gravada pelo filtro) â†’ triagem
+      // em sequÃªncia (ex.: triangulaÃ§Ã£o famÃ­lia Ã— escola) sem voltar ao menu.
       try{
         var q=JSON.parse(localStorage.getItem('np:reco')||'[]');
         if(Array.isArray(q)&&q.length){
@@ -361,7 +362,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
             var nxt=q[idx+1], db=document.getElementById('doneBanner');
             if(db){var a=document.createElement('a');a.className='dlink';a.style.display='block';
               a.href='./escala.html?id='+encodeURIComponent(nxt.id);
-              a.textContent='▶ Próxima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
+              a.textContent='â–¶ PrÃ³xima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' â€º';
               db.appendChild(a);}
           }
         }
@@ -372,7 +373,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   boot();
 })();
 </script>
-<!-- scales-bundle.js já inclui o motor scales-enhance (laudo/score). NÃO recarregar aqui. -->
+<!-- scales-bundle.js jÃ¡ inclui o motor scales-enhance (laudo/score). NÃƒO recarregar aqui. -->
 <script src="./app-polish-mobile.js" defer></script>
 <script src="./app-frame.js" defer></script>
 <script src="./ambient-effects.js" defer></script>

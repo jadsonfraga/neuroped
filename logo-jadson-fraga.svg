@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="Dr. Jadson Fraga · Neuropediatria">
+  <defs>
+    <linearGradient id="jf-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#f2dca6"/>
+      <stop offset="55%" stop-color="#e7c98b"/>
+      <stop offset="100%" stop-color="#c9a96b"/>
+    </linearGradient>
+    <linearGradient id="jf-teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c79ff"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <radialGradient id="jf-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#6d6af5" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#6d6af5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Emblema circular -->
+  <g transform="translate(48,48)">
+    <circle r="42" fill="url(#jf-glow)"/>
+    <circle r="36" fill="none" stroke="url(#jf-teal)" stroke-width="1.4" opacity="0.85"/>
+    <circle r="32" fill="none" stroke="url(#jf-gold)" stroke-width="0.7" opacity="0.55"/>
+
+    <!-- Monograma JF entrelaçado, tipografia serif clássica -->
+    <text x="-15" y="13"
+          font-family="'Fraunces','Playfair Display',Georgia,'Times New Roman',serif"
+          font-size="44" font-weight="600" font-style="italic"
+          fill="url(#jf-gold)"
+          style="letter-spacing:-2px;">J</text>
+    <text x="6" y="13"
+          font-family="'Fraunces','Playfair Display',Georgia,'Times New Roman',serif"
+          font-size="44" font-weight="600" font-style="italic"
+          fill="url(#jf-gold)"
+          style="letter-spacing:-2px;">F</text>
+
+    <!-- Serifa decorativa abaixo do monograma -->
+    <line x1="-18" y1="22" x2="18" y2="22" stroke="url(#jf-gold)" stroke-width="0.8" opacity="0.6"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(102,42)">
+    <text x="0" y="0"
+          font-family="'Fraunces','Playfair Display',Georgia,serif"
+          font-size="20" font-weight="600"
+          fill="#f2dca6"
+          style="letter-spacing:0.5px;">Dr. Jadson Fraga</text>
+    <text x="0" y="20"
+          font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+          font-size="10" font-weight="500"
+          fill="#a8a4d8"
+          style="letter-spacing:3.5px;text-transform:uppercase;">Neuropediatria · CRM-PE 25227</text>
+    <line x1="0" y1="28" x2="32" y2="28" stroke="url(#jf-gold)" stroke-width="1.2"/>
+  </g>
+</svg>
