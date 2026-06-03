@@ -57,6 +57,58 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .item.answered{border-color:rgba(52,211,153,.34);box-shadow:0 0 0 1px rgba(52,211,153,.18)}
 .item .q{font-size:15px;color:#ece9ff;margin:0 0 11px;font-weight:600}
 .item .q .n{color:var(--teal);font-weight:800;margin-right:7px}
+.item .q .qe{margin-right:6px;font-size:17px;line-height:1}
+/* ── COACH: humaniza a pergunta (exemplos do dia a dia + o que observar) ── */
+.coach{margin:0 0 11px;border:1px solid var(--line2);border-radius:13px;background:rgba(124,118,210,.06);overflow:hidden}
+.coach>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 12px;font:700 12.5px "Inter",system-ui;color:var(--teal)}
+.coach>summary::-webkit-details-marker{display:none}
+.coach>summary .cx{font-size:14px;line-height:1}
+.coach>summary .ca{margin-left:auto;color:var(--soft);transition:transform .2s;font-size:12px}
+.coach[open]>summary .ca{transform:rotate(90deg)}
+.coach[open]>summary{border-bottom:1px solid var(--line)}
+.coach .cbody{padding:11px 13px 13px}
+.coach .cex{margin:0 0 9px}
+.coach .cex b{display:block;font:800 11px "Inter",system-ui;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);margin:0 0 6px}
+.coach .cex ul{margin:0;padding-left:18px;color:#d8d4f4}
+.coach .cex li{margin:3px 0;font-size:13px;line-height:1.45}
+.coach .ctip{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.5;color:#e8dcc2;background:rgba(231,201,139,.08);border:1px solid rgba(231,201,139,.22);border-radius:10px;padding:9px 11px}
+.coach .ctip .ti{flex-shrink:0;font-size:14px;line-height:1.4}
+.coach.coach-risco{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.07)}
+.coach.coach-risco>summary{color:#fca5a5}
+.coach.coach-risco .ctip{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#ffd9df}
+.why{margin:10px 0 0;font-size:13px;color:#d8d4f4;line-height:1.5}
+.why b{color:var(--wine)}
+/* ── BLOCOS (anti-fadiga): escala longa vira etapas curtas ── */
+.blocknav{margin:18px 0 4px;border:1px solid var(--line2);border-radius:16px;padding:15px;background:linear-gradient(180deg,var(--glass2),var(--glass))}
+.blocknav .bk-meta{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.blocknav .bk-meta b{color:var(--wine)}
+.blocknav .bk-meta small{display:block;margin-top:3px;color:var(--soft)}
+.blocknav .bk-dots{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.blocknav .bk-dots i{width:22px;height:6px;border-radius:999px;background:rgba(124,118,210,.2)}
+.blocknav .bk-dots i.on{background:linear-gradient(90deg,var(--teal),var(--gold))}
+.blocknav .bk-dots i.cur{background:var(--gold);box-shadow:0 0 0 2px rgba(231,201,139,.3)}
+.blocknav .bk-row{display:flex;gap:10px;justify-content:space-between;align-items:center}
+.bk-btn{border:0;border-radius:13px;padding:12px 16px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--teal),var(--indigo));box-shadow:0 10px 24px -12px rgba(91,84,232,.6);transition:transform .15s,filter .2s}
+.bk-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.bk-btn.ghostb{background:rgba(124,118,210,.14);color:var(--wine);border:1px solid var(--line2);box-shadow:none}
+.bk-btn.pulse{animation:bkPulse 1s ease-in-out 2}
+@keyframes bkPulse{0%,100%{transform:none}50%{transform:scale(1.05)}}
+/* ── TESTES DIRETOS sugeridos (tarefas aplicadas na criança) ── */
+.dtask{margin:18px 0 4px;border:1px solid var(--line2);border-radius:18px;background:linear-gradient(180deg,var(--glass2),var(--glass));overflow:hidden}
+.dtask>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px;padding:14px 16px;font:700 14px "Fraunces",Georgia,serif;color:var(--wine)}
+.dtask>summary::-webkit-details-marker{display:none}
+.dtask>summary .ca{margin-left:auto;color:var(--soft);transition:transform .2s}
+.dtask[open]>summary .ca{transform:rotate(90deg)}
+.dtask .dbody{padding:4px 16px 16px}
+.dtask .dnote{font-size:12.5px;color:var(--soft);margin:0 0 12px;line-height:1.5}
+.dt{display:flex;gap:11px;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(20,18,46,.4);margin:9px 0}
+.dt .de{flex-shrink:0;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:18px;background:rgba(124,118,210,.16);border:1px solid var(--line2)}
+.dt .dc{min-width:0}
+.dt .dtt{font-weight:800;font-size:13.5px;color:#ece9ff;margin:0 0 3px}
+.dt .di{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 5px}
+.dt .do{font-size:12px;color:#e8dcc2;background:rgba(231,201,139,.08);border-left:2px solid rgba(231,201,139,.4);padding:5px 9px;border-radius:0 8px 8px 0}
+.dt.dt-risco{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.06)}
+.dt.dt-risco .do{background:rgba(248,113,113,.1);border-left-color:rgba(248,113,113,.5);color:#ffd9df}
 .opts{display:flex;gap:8px;flex-wrap:wrap}
 .opts label{flex:1 1 auto;min-width:120px;cursor:pointer}
 .opts input{position:absolute;opacity:0;pointer-events:none}
@@ -100,6 +152,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     <div class="kick">Aplicação do instrumento</div>
     <h1 id="title">Carregando…</h1>
     <div class="meta" id="meta"></div>
+    <p class="why" id="why" hidden></p>
     <div class="sym" id="sym"></div>
     <a class="who" id="whoChip" href="./perfil-crianca.html" hidden></a>
   </section>
@@ -109,6 +162,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   <!-- #detail: o scales-enhance.js observa este nó e injeta a barra de laudo/PDF -->
   <section id="detail"></section>
   <p class="miss" id="miss">Responda todos os itens para um laudo completo (itens sem resposta saem marcados no PDF).</p>
+  <section id="directTasks" hidden></section>
   <div class="done" id="doneBanner"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
   <div class="toolbar"></div>
 
@@ -117,6 +171,8 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 
 <script src="./np-store.js"></script>
 <script src="./scales-bundle.js"></script>
+<script src="./scales-question-coach.js"></script>
+<script src="./scales-direct-tasks.js"></script>
 <script>
 (function(){
   "use strict";
@@ -145,10 +201,19 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
       if(!qss.length)qss=['O sinal aparece com frequência?','Atrapalha casa, escola ou terapias?','Houve piora recente?','Melhora com rotina/apoio?','Precisa de avaliação complementar?'];
       inst.domains=[{name:s.domain||'Itens de triagem',items:qss}]; inst.labels=s.labels||LIK4;
     }
-    inst._symptoms=s.symptoms||[]; return inst;
+    inst._symptoms=s.symptoms||[];
+    inst._domain=s.domain||s.cat||''; inst._keywords=s.keywords||s.complaints||s.symptoms||[];
+    inst._audience=s.audience||''; inst.finalidade=s.finalidade||s.clinical_use||s.fim||'';
+    inst._ageMid=(Number(s.age_min_months||0)+Number(s.age_max_months||0))/2||0;
+    return inst;
   }
 
   var INST=null, ANSWERS={};
+  // progresso salvo POR CRIANÇA + instrumento: retomar sem perder o que já respondeu
+  function childId(){ try{var c=window.NPStore&&window.NPStore.active&&window.NPStore.active(); return (c&&c.id)?c.id:'_anon';}catch(e){return '_anon';} }
+  function persistKey(){ return 'np:escala:answers:'+childId()+':'+((INST&&INST.id)||'_'); }
+  function saveAnswers(){ try{ localStorage.setItem(persistKey(), JSON.stringify(ANSWERS)); }catch(e){} }
+  function loadAnswers(){ try{ var raw=localStorage.getItem(persistKey()); if(raw){ var o=JSON.parse(raw); if(o&&typeof o==='object'&&!Array.isArray(o)) ANSWERS=o; } }catch(e){} }
   function totalCount(){return INST.domains.reduce(function(a,d){return a+d.items.length;},0)}
   function answeredCount(){return Object.keys(ANSWERS).length}
   function updateProgress(){
@@ -159,33 +224,95 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     document.getElementById('prog').classList.toggle('done',complete);
     var db=document.getElementById('doneBanner'); if(db)db.classList.toggle('show',complete);
   }
+  // BLOCOS (anti-fadiga): escala longa (>7 itens) é dividida em etapas curtas
+  // de 6 itens; o progresso (respostas + bloco atual) fica salvo para retomar.
+  var BLOCK_SIZE=6, CURRENT_BLOCK=0;
+  function flat(){ var out=[]; INST.domains.forEach(function(d,di){ d.items.forEach(function(item,ii){ out.push({di:di,ii:ii,key:di+'-'+ii,dom:d.name,item:item}); }); }); return out; }
+  function blocksOn(){ return flat().length>7; }
+  function blockCount(){ return Math.max(1,Math.ceil(flat().length/BLOCK_SIZE)); }
+  function blockKey(){ return 'np:escala:block:'+childId()+':'+((INST&&INST.id)||'_'); }
+  function saveBlock(){ try{ localStorage.setItem(blockKey(),String(CURRENT_BLOCK)); }catch(e){} }
+  function loadBlock(){ try{ var v=parseInt(localStorage.getItem(blockKey()),10); if(!isNaN(v))CURRENT_BLOCK=v; }catch(e){} }
+  window.__block=function(delta){ var n=blockCount(); CURRENT_BLOCK=Math.max(0,Math.min(n-1,CURRENT_BLOCK+delta)); saveBlock(); renderDetail(); var d=document.getElementById('detail'); if(d)d.scrollIntoView({behavior:'smooth',block:'start'}); };
   // guia premium: ao responder, leva suavemente ao próximo item ainda sem resposta;
-  // quando tudo respondido, leva ao laudo. (Typeform-like, reduz fricção.)
+  // no fim do bloco, destaca "Próximo bloco"; com tudo respondido, leva ao laudo.
   function advance(){
     var items=document.querySelectorAll('#detail .item'), i;
     for(i=0;i<items.length;i++){ if(!items[i].classList.contains('answered')){ items[i].scrollIntoView({behavior:'smooth',block:'center'}); return; } }
+    var nx=document.querySelector('#detail .blocknav .nextb');
+    if(nx){ nx.classList.add('pulse'); nx.scrollIntoView({behavior:'smooth',block:'center'}); return; }
     var db=document.getElementById('doneBanner'); if(db&&db.classList.contains('show'))db.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  // COACH: humaniza cada pergunta com emoji, exemplos do dia a dia e o que observar.
+  // Estado de "exemplos abertos" preservado entre re-renders (o detail re-renderiza a cada resposta).
+  var COACH_OPEN={};
+  window.__coachToggle=function(k,open){ if(open)COACH_OPEN[k]=1; else delete COACH_OPEN[k]; };
+  function coachFor(item){
+    if(!window.NeuroPedCoach)return null;
+    try{ return window.NeuroPedCoach.forItem({id:INST.id,itemText:item,domain:INST._domain,keywords:INST._keywords,audience:INST._audience}); }catch(e){ return null; }
+  }
+  function coachHtml(key,c){
+    if(!c)return '';
+    var risk=(c.theme==='risco');
+    var open=COACH_OPEN[key]?' open':'';
+    var lis=c.examples.map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+    return '<details class="coach'+(risk?' coach-risco':'')+'" data-k="'+esc(key)+'"'+open+' ontoggle="__coachToggle(\''+esc(key)+'\',this.open)">'+
+      '<summary><span class="cx">'+(risk?'🛟':'💡')+'</span>Exemplos e o que observar<span class="ca">›</span></summary>'+
+      '<div class="cbody">'+
+        '<div class="cex"><b>📌 No dia a dia</b><ul>'+lis+'</ul></div>'+
+        (c.tip?'<div class="ctip"><span class="ti">'+(risk?'⚠️':'👀')+'</span><span>'+esc(c.tip)+'</span></div>':'')+
+      '</div></details>';
+  }
+  function itemHtml(f){
+    var key=f.key, val=ANSWERS[key];
+    var ans=(val!=null)?' answered':'';
+    var c=coachFor(f.item);
+    var emoji=c?('<span class="qe" aria-hidden="true">'+c.emoji+'</span>'):'';
+    var opts=INST.labels.map(function(lab,li){
+      var on=(String(val)===String(li))?' checked':'';
+      return '<label><input type="radio" name="q-'+key+'" value="'+li+'"'+on+' onchange="__mark(\''+key+'\','+li+')"><span class="b">'+esc(lab)+'</span></label>';
+    }).join('');
+    return '<div class="item'+ans+'"><p class="q"><span class="n">'+(f.ii+1)+'.</span>'+emoji+esc(f.item)+'</p>'+coachHtml(key,c)+'<div class="opts">'+opts+'</div></div>';
+  }
+  function blockNavHtml(n,start,end){
+    var slice=flat().slice(start,end), tot=slice.length, ans=0;
+    slice.forEach(function(f){ if(ANSWERS[f.key]!=null)ans++; });
+    var dots=''; for(var b=0;b<n;b++){ var cls=(b===CURRENT_BLOCK)?'cur':(b<CURRENT_BLOCK?'on':''); dots+='<i class="'+cls+'"></i>'; }
+    var prev=CURRENT_BLOCK>0?'<button type="button" class="bk-btn ghostb" onclick="__block(-1)">‹ Bloco anterior</button>':'<span></span>';
+    var next=(CURRENT_BLOCK<n-1)?'<button type="button" class="bk-btn nextb" onclick="__block(1)">Próximo bloco ›</button>':'<span></span>';
+    return '<div class="blocknav"><div class="bk-dots">'+dots+'</div><div class="bk-meta"><b>🧩 Bloco '+(CURRENT_BLOCK+1)+' de '+n+'</b> · '+ans+'/'+tot+' respondidas aqui<small>Pode parar e voltar quando quiser — o progresso fica salvo.</small></div><div class="bk-row">'+prev+next+'</div></div>';
   }
   function renderDetail(){
     var det=document.getElementById('detail');
-    var html=INST.domains.map(function(d,di){
-      return '<div class="domain"><h2>'+esc(d.name)+'</h2>'+d.items.map(function(item,ii){
-        var key=di+'-'+ii, val=ANSWERS[key];
-        var ans=(val!=null)?' answered':'';
-        var opts=INST.labels.map(function(lab,li){
-          var on=(String(val)===String(li))?' checked':'';
-          return '<label><input type="radio" name="q-'+key+'" value="'+li+'"'+on+' onchange="__mark(\''+key+'\','+li+')"><span class="b">'+esc(lab)+'</span></label>';
-        }).join('');
-        return '<div class="item'+ans+'"><p class="q"><span class="n">'+(ii+1)+'.</span>'+esc(item)+'</p><div class="opts">'+opts+'</div></div>';
-      }).join('')+'</div>';
-    }).join('');
-    det.innerHTML=html;
+    var all=flat(), on=blocksOn(), n=blockCount();
+    if(CURRENT_BLOCK>n-1)CURRENT_BLOCK=n-1; if(CURRENT_BLOCK<0)CURRENT_BLOCK=0;
+    var start=on?CURRENT_BLOCK*BLOCK_SIZE:0, end=on?Math.min(all.length,start+BLOCK_SIZE):all.length;
+    var slice=all.slice(start,end), lastDom=null, body='';
+    slice.forEach(function(f){
+      if(f.dom!==lastDom){ if(lastDom!==null)body+='</div>'; body+='<div class="domain"><h2>'+esc(f.dom)+'</h2>'; lastDom=f.dom; }
+      body+=itemHtml(f);
+    });
+    if(lastDom!==null)body+='</div>';
+    det.innerHTML=body+(on?blockNavHtml(n,start,end):'');
     // expõe ao engine (scales-enhance lê estes globais e injeta a barra de laudo)
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
-  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; renderDetail(); if(wasNew)setTimeout(advance,70); };
+  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveAnswers(); renderDetail(); if(wasNew)setTimeout(advance,70); };
 
+  // TESTES DIRETOS sugeridos: tarefas aplicadas na criança, roteadas pelo
+  // domínio/keywords da escala e pela faixa etária do instrumento.
+  function renderDirectTasks(){
+    var el=document.getElementById('directTasks'); if(!el)return;
+    var tasks=[]; try{ if(window.NeuroPedDirectTasks)tasks=window.NeuroPedDirectTasks.forDomain(INST._domain, INST._ageMid, INST._keywords)||[]; }catch(e){ tasks=[]; }
+    if(!tasks.length){ el.hidden=true; return; }
+    var rows=tasks.map(function(t){
+      var risk=t.risk?' dt-risco':'';
+      return '<div class="dt'+risk+'"><div class="de" aria-hidden="true">'+t.emoji+'</div><div class="dc"><p class="dtt">'+esc(t.titulo)+'</p><p class="di">'+esc(t.instrucao)+'</p><p class="do">👀 '+esc(t.observar)+'</p></div></div>';
+    }).join('');
+    el.innerHTML='<details class="dtask"><summary>🎯 Testes diretos sugeridos para aplicar com a criança<span class="ca">›</span></summary><div class="dbody"><p class="dnote">Tarefas práticas para observar a criança ao vivo — complementam o questionário. Proponha como brincadeira e <b>pare se a criança cansar</b>. Apoio à observação clínica, não é teste normatizado.</p>'+rows+'</div></details>';
+    el.hidden=false;
+  }
   function paintWho(){
     var el=document.getElementById('whoChip'); if(!el)return;
     var c=null; try{c=window.NPStore&&window.NPStore.active();}catch(e){}
@@ -210,12 +337,15 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     catalog(function(map){
       var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
       INST=normalize(raw);
+      loadAnswers(); loadBlock(); // retoma respostas e o bloco atual (anti-fadiga: não perde o progresso)
       document.getElementById('title').textContent=INST.title;
       document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' · ');
+      var w=document.getElementById('why'); if(w){ if(INST.finalidade){ w.innerHTML='🎯 <b>Para que serve:</b> '+esc(INST.finalidade); w.hidden=false; } else { w.hidden=true; } }
       document.getElementById('sym').innerHTML=(INST._symptoms||[]).slice(0,6).map(function(s){return '<span>'+esc(s)+'</span>'}).join('');
       document.getElementById('prog').hidden=false;
       paintWho();
       renderDetail();
+      renderDirectTasks();
       // encadeia "próxima escala recomendada" (fila gravada pelo filtro) → triagem
       // em sequência (ex.: triangulação família × escola) sem voltar ao menu.
       try{

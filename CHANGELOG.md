@@ -1,5 +1,24 @@
 # Changelog — NeuroPed EDJ
 
+## v6.44.7 — 2026-06-03 — Runner: coach, blocos e testes diretos
+
+Camada exclusiva do **runner `escala.html`** (não toca a taxonomia/medalhas/curadoria já em produção).
+
+### Adicionado
+- **`scales-question-coach.js`** — humaniza cada pergunta do runner: emoji contextual,
+  exemplos do dia a dia (📌) e microexplicação de "o que observar" (👀). Roteia por
+  25 temas clínicos (texto do item + domínio/keywords), com segurança em primeiro lugar.
+- **`scales-direct-tasks.js`** — biblioteca de **testes diretos aplicados na criança**
+  (reconhecimento de letras, consciência fonológica, span de dígitos, nomeação rápida,
+  leitura, atenção/inibição, observação social, motor…), roteada por domínio e idade.
+
+### Melhorado — `escala.html`
+- Cada pergunta com emoji + bloco recolhível "Exemplos e o que observar".
+- **Anti-fadiga:** escalas com mais de 7 itens divididas em **blocos** de 6, com
+  navegação, dots de etapa e bloco atual salvo.
+- **Progresso salvo** por criança + instrumento (retoma de onde parou).
+- Linha "🎯 Para que serve" e seção "🎯 Testes diretos sugeridos".
+
 ## v5.1 — 2026-05-28 — Truth-Pass
 
 ### Removido (correção da verdade pública)
