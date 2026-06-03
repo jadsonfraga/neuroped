@@ -835,6 +835,22 @@ assertIncludes('sw.js', "'./scales-taxonomy.js'", 'taxonomia no precache do SW (
       : fail('balanceByType não diversificou', top.map(tax.bucketOf).join(','));
   } else { fail('balanceByType ausente'); }
 }
+// Camada de perguntas-guia enriquecidas (dados frios, prontos p/ o runner)
+assertFile('scales-questions.js');
+assertIncludes('sw.js', "'./scales-questions.js'", 'perguntas-guia no precache do SW (offline)');
+assertIncludes('scales-questions.js', 'NÃO são itens de instrumentos proprietários', 'perguntas-guia declaram conformidade (não reproduzem itens protegidos)');
+{
+  const require = createRequire(import.meta.url);
+  const Q = require(join(root, 'scales-questions.js'));
+  const g = Q.guide('tdah', 84);
+  const ok = Array.isArray(g) && g.length >= 1 && g.every(x => x.pergunta && x.emoji && Array.isArray(x.exemplos) && Array.isArray(x.contexto) && Array.isArray(x.faixa));
+  ok ? pass(`perguntas-guia enriquecidas (emoji+exemplos+contexto+faixa) — ${g.length} p/ TDAH @84m`)
+     : fail('schema de pergunta-guia incompleto');
+  // adaptação por idade nunca esvazia + fallback genérico (queixa sem guia curado)
+  (Q.guide('tdah', 30).length >= 1 && Q.guide('sono', 48).length >= 1)
+    ? pass('guia adapta por idade sem esvaziar e tem fallback genérico (queixa sem guia curado)')
+    : fail('guia esvaziou por idade/fallback');
+}
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
 assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
