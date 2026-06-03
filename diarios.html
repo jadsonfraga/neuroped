@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0e22">
+<title>Diários de Acompanhamento · NeuroPed</title>
+<meta name="description" content="Diários de acompanhamento longitudinal (uso em casa): sono, humor, crises, cefaleia, comportamento A-B-C, alimentação, medicação e mais. Ferramentas de monitoração — não são instrumentos de triagem de pré-consulta.">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./app-skin.css">
+<style>
+  body{margin:0;background:var(--bg,#08080f);color:var(--text,#E5E7EB);font-family:var(--font-sans,system-ui,-apple-system,sans-serif);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:18px 16px calc(96px + env(safe-area-inset-bottom))}
+  .intro{border:1px solid var(--border,rgba(255,255,255,.08));border-radius:var(--radius-lg,16px);padding:16px 18px;margin:6px 0 18px;background:linear-gradient(180deg,rgba(124,118,210,.12),rgba(124,118,210,.04))}
+  .intro h1{margin:0 0 6px;font:800 clamp(22px,5vw,30px)/1.1 "Fraunces",Georgia,serif;background:linear-gradient(120deg,#fff 10%,#9b7bff 65%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .intro p{margin:0;color:var(--text-muted,#94A3B8);font-size:14px;line-height:1.5}
+  .intro .tag{display:inline-block;margin-bottom:8px;font:800 11px system-ui;letter-spacing:.06em;text-transform:uppercase;color:#A78BFA;background:rgba(124,58,237,.14);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:999px;padding:5px 11px}
+  .grid{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:620px){.grid{grid-template-columns:1fr 1fr}}
+  @media(min-width:980px){.grid{grid-template-columns:1fr 1fr 1fr}}
+  a.card{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;border:1px solid var(--border,rgba(255,255,255,.08));border-radius:var(--radius-lg,16px);padding:15px 16px;background:rgba(124,118,210,.06);transition:transform .2s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}
+  @media(prefers-reduced-motion:no-preference){a.card:hover{transform:translateY(-3px);box-shadow:0 20px 44px -22px rgba(2,2,12,.85);border-color:rgba(169,164,255,.34)}}
+  a.card .em{font-size:26px;line-height:1}
+  a.card h3{margin:2px 0 0;font:700 16px var(--font-sans);color:var(--text,#E5E7EB)}
+  a.card .meta{font-size:12px;color:var(--text-muted,#94A3B8)}
+  a.card .go{margin-top:6px;font:800 12px system-ui;color:#A78BFA}
+  .empty{color:var(--text-muted,#94A3B8);padding:24px;text-align:center}
+  .foothint{margin-top:20px;color:var(--text-muted,#94A3B8);font-size:12.5px;line-height:1.5;border-top:1px solid var(--border,rgba(255,255,255,.08));padding-top:14px}
+  .foothint a{color:#A78BFA}
+</style>
+</head>
+<body data-no-bottom-nav="false">
+  <main class="wrap">
+    <section class="intro">
+      <span class="tag">📔 Acompanhamento longitudinal</span>
+      <h1>Diários de Acompanhamento</h1>
+      <p>Ferramentas de <strong>uso em casa</strong> para registrar ao longo dos dias (sono, humor, crises, cefaleia, comportamento, alimentação, medicação e mais). Não são instrumentos de triagem de pré-consulta — por isso ficam <strong>fora do filtro de escalas</strong>. Toque em um diário para abrir e usar.</p>
+    </section>
+    <div id="grid" class="grid"><div class="empty">Carregando diários…</div></div>
+    <p class="foothint">Para escolher um instrumento de triagem (testes diretos, questionários, inventários e escalas), use o <a href="./filtro-escalas.html">filtro de escalas</a>. Apoio clínico — não substitui avaliação profissional.</p>
+  </main>
+
+  <script src="./scales-bundle.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    // Mesma definição do filtro: o que sai da triagem entra aqui (simetria).
+    function isDiary(s){ if(!s) return false; var t=String(s.title||''); if(/invent[áa]rio|inventory/i.test(t)) return false; return s.kind==='diário' || s.daily===true || /^diario-/.test(s.id||''); }
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+    function band(s){ return s.age_band || ((s.age_min_months||0)+'–'+(s.age_max_months||215)+' meses'); }
+    function render(){
+      var cat = window.NEUROPED_EDITORIAL_SCALES || [];
+      var seen = {}, list = [];
+      cat.forEach(function(s){ if(s && s.id && isDiary(s) && !seen[s.id]){ seen[s.id]=1; list.push(s); } });
+      list.sort(function(a,b){ return String(a.domain||'').localeCompare(String(b.domain||''),'pt') || (b.priority||0)-(a.priority||0); });
+      var grid = document.getElementById('grid');
+      if(!list.length){ grid.innerHTML = '<div class="empty">Nenhum diário disponível no catálogo.</div>'; return; }
+      grid.innerHTML = list.map(function(s){
+        return '<a class="card" href="./instrumento.html?id='+encodeURIComponent(s.id)+'">' +
+          '<span class="em" aria-hidden="true">'+esc(s.emoji||'📝')+'</span>' +
+          '<h3>'+esc(s.short_title||s.title)+'</h3>' +
+          '<span class="meta">'+esc(s.domain||'Acompanhamento')+' · '+esc(band(s))+'</span>' +
+          '<span class="go">Abrir diário ›</span></a>';
+      }).join('');
+    }
+    if(window.NEUROPED_EDITORIAL_SCALES){ render(); }
+    else { var n=0, iv=setInterval(function(){ if(window.NEUROPED_EDITORIAL_SCALES||n++>60){ clearInterval(iv); render(); } }, 50); }
+  })();
+  </script>
+  <script src="./app-polish-mobile.js" defer></script>
+  <script src="./app-frame.js" defer></script>
+  <script src="./ambient-effects.js" defer></script>
+</body>
+</html>
