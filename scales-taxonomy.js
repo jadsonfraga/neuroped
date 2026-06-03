@@ -1,5 +1,6 @@
 /* ============================================================
    NeuroPed EDJ — scales-taxonomy.js
+   ------------------------------------------------------------
    Fundação de LÓGICA para o módulo de escalas/testes (não estética).
    ------------------------------------------------------------
    1) classify(s): tipa o instrumento por CAMPO FACTUAL (audience/respondent/
@@ -12,8 +13,12 @@
       social) por queixa — linguagem de pais. NÃO são itens de instrumentos
       proprietários (que não podem ser reproduzidos); são prompts genéricos
       de observação, conhecimento comum.
-   Puro, sem dependências. Funciona no browser (window.NeuroPedTaxonomy) e em
-   Node (module.exports) para teste unitário.
+   3) Compat shim window.NPScaleTaxonomy — expõe inferType()/badge() pra
+      a camada de display premium (scales-medals, scales-why-card,
+      scales-filter-integration, instrumento-enriched) sem duplicar lógica.
+
+   Puro, sem dependências. Funciona no browser (window.NeuroPedTaxonomy +
+   window.NPScaleTaxonomy) e em Node (module.exports) para teste unitário.
    ============================================================ */
 (function (root) {
   'use strict';
@@ -147,4 +152,67 @@
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedTaxonomy = api;
+
+  /* ============================================================
+     Compat shim — window.NPScaleTaxonomy
+     ------------------------------------------------------------
+     A camada premium (scales-medals, scales-why-card, scales-filter-integration,
+     instrumento-enriched) usa uma API curta com 6 tipos visuais e cor por
+     categoria. Mapeia 1:1 sobre classify() acima.
+     ============================================================ */
+  if (!root) return;
+
+  var TYPES = {
+    'escala':       { emoji: '📋', label: 'Escala',          color: '#7c79ff', desc: 'Métrica formal pontuada' },
+    'inventario':   { emoji: '📚', label: 'Inventário',      color: '#9b7bff', desc: 'Perfil multi-domínio' },
+    'questionario': { emoji: '📝', label: 'Questionário',    color: '#60a5fa', desc: 'Coleta estruturada' },
+    'teste-direto': { emoji: '🎯', label: 'Teste direto',    color: '#f59e0b', desc: 'Tarefa aplicada na criança' },
+    'observacao':   { emoji: '👀', label: 'Observação',      color: '#34d399', desc: 'Checklist observacional clínico' },
+    'triagem':      { emoji: '⚡', label: 'Triagem',          color: '#f472b6', desc: 'Rastreio rápido' }
+  };
+
+  // Mapeia kind do classify() (8 categorias) → tipo visual (6 categorias)
+  var KIND_TO_TYPE = {
+    teste_direto: 'teste-direto',
+    observacao:   'observacao',
+    triagem:      'triagem',
+    inventario:   'inventario',
+    autorrelato:  'escala',     // autorrelato vira escala visual (com badge de família neutra)
+    escala_pais:  'escala',
+    escala_escola:'escala',
+    questionario: 'questionario'
+  };
+
+  function inferType(scale){
+    if (!scale) return 'escala';
+    if (scale.tipo && TYPES[scale.tipo]) return scale.tipo;
+    var k = classify(scale).kind;
+    return KIND_TO_TYPE[k] || 'escala';
+  }
+
+  function badge(scale, opts){
+    var tipo = inferType(scale);
+    var meta = TYPES[tipo];
+    var size = (opts && opts.size) || 'sm';
+    var pad = size === 'lg' ? '5px 11px' : '3px 8px';
+    var fz = size === 'lg' ? '12px' : '10.5px';
+    return '<span class="np-type-badge" data-tipo="' + tipo + '" ' +
+      'title="' + meta.label + ' — ' + meta.desc + '" ' +
+      'style="display:inline-flex;align-items:center;gap:4px;padding:' + pad + ';' +
+      'border-radius:7px;font:800 ' + fz + '/1 system-ui;letter-spacing:.02em;' +
+      'background:' + meta.color + '22;color:' + meta.color + ';' +
+      'border:1px solid ' + meta.color + '55;">' +
+      meta.emoji + ' ' + meta.label + '</span>';
+  }
+
+  function listAll(){ return Object.keys(TYPES).map(function(k){ return Object.assign({ id: k }, TYPES[k]); }); }
+
+  root.NPScaleTaxonomy = {
+    version: '1.1.0',
+    TYPES: TYPES,
+    KIND_TO_TYPE: KIND_TO_TYPE,
+    inferType: inferType,
+    badge: badge,
+    listAll: listAll
+  };
 })(typeof window !== 'undefined' ? window : null);
