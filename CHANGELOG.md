@@ -1,5 +1,14 @@
 # Changelog — NeuroPed EDJ
 
+## v6.44.14 — 2026-06-03 — Evidência verificada: +6 instrumentos no registry
+
+- `evidence-registry.json` (curadoria autorizada pelo Dr. Jadson): adicionadas 6 entradas
+  curadas com fonte primária e PMID rastreável — **ofc-psc** (PSC-17, Gardner 2007),
+  **ofc-swyc** (SWYC Milestones, Sheldrick 2013), **ofc-rcads** (Chorpita 2000),
+  **ofc-phq-gad** (PHQ-A Johnson 2002 + GAD-7 Spitzer 2006), **ofc-crafft** (Knight 2002)
+  e **ofc-minimacs** (Eliasson 2017). Total: 13 instrumentos curados, todos validados pelo
+  `validateRegistry` (PMID obrigatório). Fontes verificadas no PubMed.
+
 ## v6.44.10 — 2026-06-03 — Testes diretos lúdicos + celebrações de progresso
 
 Adiciona **5 mini-testes interativos** aplicados na criança em página própria
