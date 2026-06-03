@@ -337,3 +337,30 @@ img { max-width: 100%; height: auto; }
   .hero, .card, .panel, .np-card { background: #fff !important; border: 1px solid #ccc !important; box-shadow: none !important; backdrop-filter: none !important; }
   .btn, .chip, .badge { box-shadow: none !important; }
 }
+
+/* =====================================================================
+   #187 — Unificação violeta + auditoria (delta limpo sobre o main)
+   Reversível: remover este bloco restaura o estado do main.
+   ===================================================================== */
+/* 1) Remoção do dourado — paleta 100% violeta (pedido do Dr. Jadson).
+   Override por variável (!important vence redefinições por página). */
+:root, html, body, [data-ns-shell]{
+  --gold:#7C3AED !important;  --gold2:#6D5CFF !important;
+  --wine:#EEF0FF !important;  --ns-gold:#7C3AED !important;
+  --ns-wine:#EEF0FF !important; --amber:#A78BFA !important;
+}
+.gold, .btn.gold, .ns-btn-gold, .btn-gold, [class*="btn"][class*="gold"]{
+  background:linear-gradient(135deg,#6D5CFF,#7C3AED) !important;
+  color:#fff !important; border-color:transparent !important;
+  box-shadow:0 8px 22px -10px rgba(124,92,255,.55) !important;
+}
+/* 2) Sem rolagem horizontal acidental (clip preserva position:sticky) */
+html{ overflow-x:clip; }
+body{ overflow-x:clip; max-width:100%; }
+/* 3) Headers claros (.top) → vidro dark (corrige texto claro sobre fundo claro) */
+.top{
+  background:rgba(8,11,26,.72) !important; border-color:var(--border) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(140%); backdrop-filter:blur(14px) saturate(140%);
+}
+.top, .top *{ color:#EEF0FF; }
+.top .muted, .top small{ color:#B9BEE6; }
