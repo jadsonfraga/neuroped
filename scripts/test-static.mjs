@@ -773,6 +773,8 @@ assertIncludes('agenda-financeiro.html', 'function cvar', 'agenda resolve token 
     ? pass('nenhum SVG usa var(--token) em atributo de apresentação (usa style= — resolve em todo navegador)')
     : fail('SVG com var() em atributo de apresentação (invisível em Safari/etc.): ' + offenders.join(', '), 'troque por style="fill:var(--x)"');
 }
+// Perf: ambient-effects não empilha em iframe (np-frame abre páginas dentro de outra)
+assertIncludes('ambient-effects.js', 'ancestorHasAmbient', 'ambient não duplica aurora/partículas quando a página abre dentro de outra (perf tablet)');
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
