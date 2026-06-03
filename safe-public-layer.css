@@ -1,0 +1,58 @@
+/* ======================================================
+   NeuroPed EDJ — Safe Public Layer v1
+   CSS de ocultação de itens clínicos sensíveis do menu público.
+   Aplicação não-destrutiva: a rota e o componente continuam
+   existindo no bundle, apenas não são apresentados na navegação.
+   ====================================================== */
+
+/* Itens da navegação principal (sidebar e mobile menu)
+   marcados como sensíveis e ocultos da camada pública. */
+[data-testid^="nav-"][data-testid*="Pacientes"],
+[data-testid^="nav-"][data-testid*="Prontu"],
+[data-testid^="nav-"][data-testid*="Prescri"],
+[data-testid^="nav-"][data-testid*="Receita"],
+[data-testid^="nav-"][data-testid*="Calculadora"],
+[data-testid^="nav-"][data-testid*="Farmacolog"],
+[data-testid^="nav-"][data-testid*="Laudo"],
+[data-testid^="nav-"][data-testid*="Certificado"],
+[data-testid^="nav-"][data-testid*="Alarme"],
+[data-testid^="nav-"][data-testid*="Lembrete"],
+[data-testid^="nav-"][data-testid*="Secretaria"],
+[data-testid^="nav-"][data-testid*="Gerador"],
+[data-testid^="nav-"][data-testid*="Prescritor"],
+[data-testid^="nav-"][data-testid*="Plano Terapêu"],
+[data-testid^="nav-"][data-testid*="Plano Interven"],
+[data-testid^="nav-"][data-testid*="Equival"],
+[data-testid^="nav-"][data-testid*="Relat"],
+[data-testid^="nav-"][data-testid*="Anamnese"],
+[data-testid^="nav-"][data-testid*="Diário Epileps"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* FAB (Floating Action Button) global de impressão de PDF
+   também fica oculto na camada pública para evitar geração
+   de documentos sem contexto clínico. */
+[data-testid="fab-print-global"] {
+  display: none !important;
+}
+
+/* Marca discreta de "modo público" no rodapé, opcional.
+   Pode ser ativada removendo display:none. */
+.neuroped-public-mode-badge {
+  display: none;
+  position: fixed;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  z-index: 9000;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.6875rem;
+  font-family: "DM Sans", sans-serif;
+  color: #57514a;
+  background: rgba(250, 248, 244, 0.92);
+  border: 1px solid rgba(45, 41, 38, 0.12);
+  border-radius: 999px;
+  pointer-events: none;
+  user-select: none;
+}

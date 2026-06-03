@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal das Famílias — Novidades</title>
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta property="og:url" content="https://jadsonfraga.github.io/neuroped/portal-novidades.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Portal das Famílias — Novidades">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/portal-novidades.html">
+<meta name="description" content="Portal das Famílias NeuroPed: novidades, artigos e orientações baseadas em evidências sobre neurodesenvolvimento infantil.">
+<meta name="theme-color" content="#0e0e22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a16;
+  --surface: #14132a;
+  --surface-2: #f3f1ed;
+  --border: rgba(169,164,255,.16);
+  --text: #ECEAFF;
+  --text-muted: #b6b2e6;
+  --text-faint: #928ec6;
+  --primary: #6d6af5;
+  --primary-light: rgba(124,118,210,.14);
+  --primary-hover: #4f46e5;
+  --accent-orange: #e8853a;
+  --accent-blue: #4a8ec2;
+  --accent-purple: #8b6cc1;
+  --accent-rose: #c96b8b;
+  --accent-teal: #6d6af5;
+  --shadow-sm: 0 1px 3px rgba(44,42,37,0.06);
+  --shadow-md: 0 4px 16px rgba(44,42,37,0.08);
+  --shadow-lg: 0 8px 32px rgba(44,42,37,0.12);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ======= HEADER ======= */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo svg { flex-shrink: 0; }
+.header-logo span {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--primary);
+}
+.header-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+/* ======= HERO ======= */
+.hero {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 8px;
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.hero p {
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+/* ======= DESTAQUES (CAROUSEL) ======= */
+.featured {
+  max-width: 900px;
+  margin: 24px auto 0;
+  padding: 0 20px;
+}
+.featured-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.featured-scroll::-webkit-scrollbar { display: none; }
+
+.featured-card {
+  flex: 0 0 min(85%, 360px);
+  scroll-snap-align: start;
+  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.featured-card:nth-child(2) {
+  background: linear-gradient(135deg, var(--accent-blue) 0%, #3570a0 100%);
+}
+.featured-card:nth-child(3) {
+  background: linear-gradient(135deg, var(--accent-purple) 0%, #6a4fa8 100%);
+}
+.featured-card:active { transform: scale(0.98); }
+
+.featured-card::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.featured-card .tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+.featured-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.featured-card .meta {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ======= CATEGORIAS ======= */
+.categories {
+  max-width: 900px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+}
+.categories-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.categories-scroll::-webkit-scrollbar { display: none; }
+
+.cat-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.cat-btn:hover { border-color: var(--primary); color: var(--primary); }
+.cat-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.cat-btn .emoji { margin-right: 4px; }
+
+/* ======= FEED ======= */
+.feed {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 20px 40px;
+}
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.feed-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.feed-count {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.article-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 20px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.article-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+.article-card:active { transform: scale(0.995); }
+
+.article-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.article-icon.tea { background: rgba(34,160,120,.18); }
+.article-icon.tdah { background: rgba(231,201,139,.18); }
+.article-icon.sono { background: rgba(109,106,245,.18); }
+.article-icon.dev { background: rgba(167,139,250,.18); }
+.article-icon.comp { background: rgba(220,80,110,.18); }
+.article-icon.nutri { background: rgba(34,160,120,.18); }
+.article-icon.escola { background: rgba(231,201,139,.18); }
+.article-icon.fala { background: rgba(109,106,245,.18); }
+
+.article-body { flex: 1; min-width: 0; }
+.article-body .cat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+.cat-label.tea { color: var(--accent-teal); }
+.cat-label.tdah { color: var(--accent-orange); }
+.cat-label.sono { color: var(--accent-blue); }
+.cat-label.dev { color: var(--accent-purple); }
+.cat-label.comp { color: var(--accent-rose); }
+.cat-label.nutri { color: #4caf50; }
+.cat-label.escola { color: #f9a825; }
+.cat-label.fala { color: #0288d1; }
+
+.article-body h3 {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+.article-body p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.article-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.article-footer .read-time {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.new-badge {
+  background: #ef5350;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+}
+
+/* ======= MODAL / ARTIGO EXPANDIDO ======= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44,42,37,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 90dvh;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  z-index: 201;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.modal.open { transform: translateY(0); }
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+.modal-content { padding: 20px 24px 40px; }
+.modal-content .cat-label { margin-bottom: 8px; }
+.modal-content h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+.modal-content .article-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-content .article-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.modal-content .article-text p { margin-bottom: 14px; max-width: 65ch; }
+.modal-content .article-text h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 20px 0 8px;
+}
+.modal-content .article-text ul {
+  padding-left: 20px;
+  margin-bottom: 14px;
+}
+.modal-content .article-text li {
+  margin-bottom: 6px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.tip-box {
+  background: var(--primary-light);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-left: 3px solid var(--primary);
+}
+.tip-box .tip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.tip-box p { font-size: 14px; color: var(--text); line-height: 1.5; }
+
+.source-note {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.modal-close {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  background: linear-gradient(var(--surface), transparent);
+  z-index: 5;
+}
+.modal-close button {
+  background: var(--surface-2);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 18px;
+  transition: background 0.2s;
+}
+.modal-close button:hover { background: var(--border); }
+
+/* ======= EMPTY / LOADING ======= */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+}
+.empty-state svg { margin: 0 auto 16px; color: var(--text-faint); }
+.empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 4px; }
+.empty-state p { font-size: 14px; }
+
+/* ======= ANIMAÇÕES ======= */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.article-card { animation: fadeUp 0.4s ease both; }
+.article-card:nth-child(2) { animation-delay: 0.05s; }
+.article-card:nth-child(3) { animation-delay: 0.1s; }
+.article-card:nth-child(4) { animation-delay: 0.15s; }
+.article-card:nth-child(5) { animation-delay: 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .article-card { animation: none; }
+  .modal { transition: none; }
+}
+
+/* ======= RESPONSIVO DESKTOP ======= */
+@media (min-width: 768px) {
+  .feed-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .feed-grid .article-card { margin-bottom: 0; }
+  .modal {
+    max-width: 640px;
+    left: 50%;
+    transform: translate(-50%, 100%);
+    border-radius: 20px;
+    bottom: 20px;
+    max-height: 85dvh;
+  }
+  .modal.open { transform: translate(-50%, 0); }
+}
+</style>
+<link rel="stylesheet" href="./app-polish-mobile.css">
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="8" fill="#2a7d6e"/>
+        <path d="M14 7c-3.5 0-6 2.5-6 6 0 2.2 1.1 4.1 2.8 5.2-.1.6-.4 1.2-.8 1.8 1.5 0 2.8-.5 3.6-1.1.1 0 .3 0 .4 0 3.5 0 6-2.5 6-6s-2.5-6-6-6z" fill="#fff" opacity="0.9"/>
+        <circle cx="11" cy="12.5" r="1" fill="#2a7d6e"/>
+        <circle cx="14" cy="12.5" r="1" fill="#2a7d6e"/>
+        <circle cx="17" cy="12.5" r="1" fill="#2a7d6e"/>
+      </svg>
+      <span>Portal das Famílias</span>
+    </div>
+    <span class="header-badge">Novidades</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Saúde & Desenvolvimento</h1>
+  <p>Conteúdos selecionados sobre neuropsiquiatria infantil para apoiar o cuidado do seu filho.</p>
+</section>
+
+<!-- DESTAQUES -->
+<section class="featured">
+  <div class="featured-scroll" id="featuredScroll">
+    <div class="featured-card" onclick="openArticle('destaque-tea')">
+      <div class="tag">Destaque da semana</div>
+      <h3>Sinais precoces do TEA: quando buscar avaliação?</h3>
+      <div class="meta">5 min de leitura • Atualizado em Mar/2026</div>
+    </div>
+    <div class="featured-card" onclick="openArticle('destaque-sono')">
+      <div class="tag">Novo</div>
+      <h3>Higiene do sono: guia prático para crianças de 2 a 10 anos</h3>
+      <div class="meta">4 min de leitura • Atualizado em Mar/2026</div>
+    </div>
+    <div class="featured-card" onclick="openArticle('destaque-tdah')">
+      <div class="tag">Série especial</div>
+      <h3>TDAH na escola: estratégias que realmente funcionam</h3>
+      <div class="meta">6 min de leitura • Atualizado em Fev/2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIAS -->
+<section class="categories">
+  <div class="categories-scroll">
+    <button class="cat-btn active" data-cat="todos" onclick="filterCat('todos', this)"><span class="emoji">📋</span>Todos</button>
+    <button class="cat-btn" data-cat="tea" onclick="filterCat('tea', this)"><span class="emoji">🧩</span>TEA</button>
+    <button class="cat-btn" data-cat="tdah" onclick="filterCat('tdah', this)"><span class="emoji">⚡</span>TDAH</button>
+    <button class="cat-btn" data-cat="dev" onclick="filterCat('dev', this)"><span class="emoji">🌱</span>Desenvolvimento</button>
+    <button class="cat-btn" data-cat="sono" onclick="filterCat('sono', this)"><span class="emoji">🌙</span>Sono</button>
+    <button class="cat-btn" data-cat="comp" onclick="filterCat('comp', this)"><span class="emoji">💛</span>Comportamento</button>
+    <button class="cat-btn" data-cat="fala" onclick="filterCat('fala', this)"><span class="emoji">💬</span>Fala</button>
+    <button class="cat-btn" data-cat="escola" onclick="filterCat('escola', this)"><span class="emoji">🎒</span>Escola</button>
+    <button class="cat-btn" data-cat="nutri" onclick="filterCat('nutri', this)"><span class="emoji">🥦</span>Nutrição</button>
+  </div>
+</section>
+
+<!-- FEED -->
+<section class="feed">
+  <div class="feed-header">
+    <h2>Artigos Recentes</h2>
+    <span class="feed-count" id="feedCount"></span>
+  </div>
+  <div class="feed-grid" id="feedGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <h3>Nenhum artigo nesta categoria</h3>
+    <p>Novos conteúdos são adicionados toda semana.</p>
+  </div>
+</section>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-handle"></div>
+  <div class="modal-close"><button onclick="closeModal()" aria-label="Fechar">✕</button></div>
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+// ========== BANCO DE ARTIGOS ==========
+const articles = [
+  {
+    id: 'destaque-tea',
+    cat: 'tea',
+    emoji: '🧩',
+    isNew: true,
+    title: 'Sinais precoces do TEA: quando buscar avaliação?',
+    summary: 'Entenda os principais marcos do desenvolvimento e quando a ausência deles pode indicar necessidade de avaliação especializada.',
+    readTime: '5 min',
+    date: '28 Mar 2026',
+    content: `
+      <p>O Transtorno do Espectro Autista (TEA) pode ser identificado precocemente quando pais e cuidadores conhecem os marcos esperados do desenvolvimento infantil. Quanto mais cedo a identificação, melhores são os resultados das intervenções.</p>
+      <h3>Sinais de alerta por faixa etária</h3>
+      <p><strong>Até 12 meses:</strong> pouco contato visual, não responde ao nome quando chamado, não aponta para objetos ou pessoas, ausência de balbucio variado.</p>
+      <p><strong>12 a 18 meses:</strong> não fala nenhuma palavra, não imita gestos (tchau, mandar beijo), não demonstra interesse em brincadeiras compartilhadas (mostrar brinquedos para o adulto).</p>
+      <p><strong>18 a 24 meses:</strong> vocabulário menor que 10 palavras, não faz brincadeira simbólica (faz de conta), dificuldade em entender instruções simples, movimentos repetitivos com mãos ou corpo.</p>
+      <p><strong>Após 24 meses:</strong> não combina duas palavras, prefere brincar sozinho, reage de forma intensa a sons, texturas ou luzes, dificuldade com mudanças na rotina.</p>
+      <div class="tip-box">
+        <div class="tip-title">💡 Dica importante</div>
+        <p>Cada criança tem seu ritmo, e a presença de um sinal isolado não significa diagnóstico. No entanto, quando vários sinais aparecem juntos, é fundamental procurar avaliação com neuropediatra ou psiquiatra infantil.</p>
+      </div>
+      <h3>O que fazer ao notar sinais?</h3>
+      <p>Converse com o pediatra e solicite encaminhamento para avaliação especializada. Não espere para "ver se melhora" — a intervenção precoce (antes dos 3 anos) é o maior preditor de evolução positiva no TEA.</p>
+      <p class="source-note">Baseado nas diretrizes da Sociedade Brasileira de Pediatria (SBP) e American Academy of Pediatrics (AAP), 2023-2025.</p>
+    `
+  },
+  {
+    id: 'destaque-sono',
+    cat: 'sono',
+    emoji: '🌙',
+    isNew: true,
+    title: 'Higiene do sono: guia prático para crianças de 2 a 10 anos',
+    summary: 'Rotinas consistentes de sono melhoram atenção, humor e aprendizado. Veja como estruturar o sono do seu filho.',
+    readTime: '4 min',
+    date: '25 Mar 2026',
+    content: `
+      <p>O sono é fundamental para o desenvolvimento cerebral da criança. Durante o sono profundo, ocorre a consolidação da memória, regulação emocional e liberação do hormônio do crescimento. Crianças que dormem mal apresentam mais irritabilidade, dificuldade de atenção e problemas de comportamento.</p>
+      <h3>Quanto tempo de sono por idade?</h3>
+      <ul>
+        <li><strong>2 a 3 anos:</strong> 11 a 14 horas (incluindo soneca)</li>
+        <li><strong>3 a 5 anos:</strong> 10 a 13 horas</li>
+        <li><strong>6 a 12 anos:</strong> 9 a 12 horas</li>
+      </ul>
+      <h3>7 regras de ouro da higiene do sono</h3>
+      <ul>
+        <li><strong>Horário fixo:</strong> dormir e acordar no mesmo horário todos os dias (inclusive fins de semana).</li>
+        <li><strong>Ritual de desaceleração:</strong> 30 minutos antes de dormir, diminuir luzes, falar mais baixo, ler história.</li>
+        <li><strong>Sem telas 1h antes:</strong> luz azul bloqueia a melatonina. Sem TV, tablet ou celular.</li>
+        <li><strong>Quarto escuro e fresco:</strong> use cortina blackout e mantenha temperatura confortável.</li>
+        <li><strong>Evitar açúcar à noite:</strong> alimentos estimulantes dificultam o início do sono.</li>
+        <li><strong>Exercício físico de dia:</strong> crianças ativas dormem melhor, mas evite atividade intensa à noite.</li>
+        <li><strong>A cama é só para dormir:</strong> não usar para castigo, lição de casa ou brincadeira.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-title">💡 Para crianças com TDAH ou TEA</div>
+        <p>Dificuldades de sono são ainda mais comuns nesses casos. Use apoios visuais (quadro de rotina noturna com imagens) e considere discutir com o médico sobre suplementação de melatonina quando necessário.</p>
+      </div>
+      <p class="source-note">Referências: American Academy of Sleep Medicine (AASM), 2024. Sociedade Brasileira de Pediatria — Departamento de Sono, 2023.</p>
+    `
+  },
+  {
+    id: 'destaque-tdah',
+    cat: 'tdah',
+    emoji: '⚡',
+    isNew: false,
+    title: 'TDAH na escola: estratégias que realmente funcionam',
+    summary: 'Adaptações simples no ambiente escolar podem transformar o desempenho e a autoestima de crianças com TDAH.',
+    readTime: '6 min',
+    date: '18 Fev 2026',
+    content: `
+      <p>Crianças com TDAH não aprendem menos — aprendem diferente. O ambiente escolar tradicional muitas vezes penaliza características do TDAH (necessidade de movimento, dificuldade com tarefas longas e monótonas), mas com adaptações simples, essas crianças podem ter um desempenho excelente.</p>
+      <h3>Estratégias comprovadas</h3>
+      <ul>
+        <li><strong>Sentar na frente:</strong> reduz distrações visuais e auditivas. Perto do professor, não da janela.</li>
+        <li><strong>Instruções curtas e claras:</strong> uma instrução por vez. "Abra o livro na página 32" é melhor que "Abra o livro, leia o texto e responda as questões".</li>
+        <li><strong>Pausas programadas:</strong> intervalos de 5 min a cada 20-25 min de atividade. Deixe a criança levantar e se mover.</li>
+        <li><strong>Checklist visual:</strong> quadro com os passos da tarefa. A criança vai marcando conforme avança.</li>
+        <li><strong>Tempo extra em provas:</strong> 20-30% a mais de tempo é uma adaptação legítima e necessária.</li>
+        <li><strong>Reforço positivo:</strong> elogiar o esforço ("Você ficou concentrado por 15 minutos, parabéns!") em vez de só apontar erros.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-title">💡 Comunicação escola-família</div>
+        <p>Peça ao professor um caderno de comunicação diário ou semanal. Saber como foi o dia na escola (pontos positivos!) ajuda a manter a criança motivada e a família informada.</p>
+      </div>
+      <h3>O que evitar</h3>
+      <p>Nunca retirar o recreio como punição — o intervalo é terapêutico para crianças com TDAH. Evite expor a criança ("Fulano, presta atenção de novo?") e não use o TDAH como desculpa para não cobrar responsabilidade — cobre com adaptações.</p>
+      <p class="source-note">Baseado em: ABDA (Associação Brasileira do Déficit de Atenção), CHADD (Children and Adults with ADHD), e evidências do Journal of Attention Disorders.</p>
+    `
+  },
+  {
+    id: 'art-fala-atraso',
+    cat: 'fala',
+    emoji: '💬',
+    isNew: true,
+    title: 'Atraso na fala: o que é esperado e quando se preocupar',
+    summary: 'Marcos da linguagem de 1 a 4 anos e sinais de que uma avaliação fonoaudiológica é necessária.',
+    readTime: '4 min',
+    date: '22 Mar 2026',
+    content: `
+      <p>A linguagem é uma das áreas do desenvolvimento que mais gera dúvidas nas famílias. É normal que cada criança tenha seu ritmo, mas existem marcos que ajudam a identificar quando algo pode precisar de atenção profissional.</p>
+      <h3>Marcos esperados</h3>
+      <ul>
+        <li><strong>12 meses:</strong> primeiras palavras com significado (mamã, papá, dá).</li>
+        <li><strong>18 meses:</strong> vocabulário de pelo menos 10-20 palavras.</li>
+        <li><strong>24 meses:</strong> combina 2 palavras ("qué água"), vocabulário de 50+ palavras.</li>
+        <li><strong>3 anos:</strong> frases de 3-4 palavras, pessoas de fora entendem ~75% do que fala.</li>
+        <li><strong>4 anos:</strong> conta histórias simples, é entendido por estranhos quase totalmente.</li>
+      </ul>
+      <h3>Quando buscar avaliação?</h3>
+      <p>Se a criança não atinge os marcos acima, ou se houve regressão (falava e parou), procure avaliação com fonoaudiólogo e neuropediatra. O atraso de fala pode ser isolado ou fazer parte de quadros como TEA, deficiência auditiva ou transtorno de linguagem.</p>
+      <div class="tip-box">
+        <div class="tip-title">💡 O que fazer enquanto isso</div>
+        <p>Converse bastante com seu filho, nomeie objetos do cotidiano, leia histórias com figuras e evite o uso excessivo de telas antes dos 2 anos — a interação humana é o maior estimulador da linguagem.</p>
+      </div>
+      <p class="source-note">Referências: Sociedade Brasileira de Fonoaudiologia, American Speech-Language-Hearing Association (ASHA).</p>
+    `
+  },
+  {
+    id: 'art-comp-birra',
+    cat: 'comp',
+    emoji: '💛',
+    isNew: false,
+    title: 'Birras e crises: como lidar sem perder a calma',
+    summary: 'Entenda por que birras acontecem e aprenda técnicas baseadas em evidências para manejar crises com acolhimento.',
+    readTime: '5 min',
+    date: '15 Mar 2026',
+    content: `
+      <p>Birras são uma parte normal do desenvolvimento entre 1 e 4 anos. Elas acontecem porque o cérebro da criança ainda não tem maturidade para regular emoções intensas — a parte do cérebro responsável pelo autocontrole (córtex pré-frontal) só amadurece completamente por volta dos 25 anos.</p>
+      <h3>Por que acontecem?</h3>
+      <ul>
+        <li><strong>Frustração:</strong> a criança quer algo e não consegue (abrir um pote, ter um brinquedo).</li>
+        <li><strong>Cansaço ou fome:</strong> necessidades básicas não atendidas amplificam qualquer emoção.</li>
+        <li><strong>Dificuldade de comunicação:</strong> não consegue expressar o que sente com palavras.</li>
+        <li><strong>Sobrecarga sensorial:</strong> especialmente em crianças com TEA ou sensibilidade sensorial.</li>
+      </ul>
+      <h3>Técnica dos 3 passos</h3>
+      <p><strong>1. Acolha:</strong> "Eu sei que você está com raiva." Nomear a emoção ajuda a criança a se sentir vista.</p>
+      <p><strong>2. Espere:</strong> Não tente racionalizar durante a crise. Fique perto, em silêncio seguro. A crise vai passar.</p>
+      <p><strong>3. Converse depois:</strong> Quando a calma voltar, converse sobre o que aconteceu e o que fazer diferente na próxima vez.</p>
+      <div class="tip-box">
+        <div class="tip-title">💡 Quando as birras merecem atenção profissional?</div>
+        <p>Se as crises são muito frequentes (várias por dia após os 4 anos), muito intensas (autoagressão, destruição), ou se a criança não consegue se acalmar após 30 minutos, converse com o neuropediatra ou psiquiatra infantil.</p>
+      </div>
+      <p class="source-note">Referências: Yale Child Study Center. Disciplina Positiva — Jane Nelsen.</p>
+    `
+  },
+  {
+    id: 'art-dev-telas',
+    cat: 'dev',
+    emoji: '📱',
+    isNew: true,
+    title: 'Tempo de tela por idade: recomendações atualizadas 2026',
+    summary: 'As diretrizes mais recentes sobre uso de telas e seu impacto no desenvolvimento cerebral infantil.',
+    readTime: '4 min',
+    date: '20 Mar 2026',
+    content: `
+      <p>O uso de telas na infância é um dos temas mais discutidos na neuropsiquiatria infantil. Evidências crescentes mostram que o excesso de tempo de tela está associado a atrasos de linguagem, dificuldades de atenção e problemas de sono.</p>
+      <h3>Recomendações por faixa etária</h3>
+      <ul>
+        <li><strong>0 a 2 anos:</strong> evitar totalmente (exceto videochamadas com familiares).</li>
+        <li><strong>2 a 5 anos:</strong> máximo 1 hora/dia, com conteúdo educativo de qualidade e sempre com adulto junto.</li>
+        <li><strong>6 a 12 anos:</strong> máximo 2 horas/dia de tempo recreativo de tela (não conta o uso para escola).</li>
+      </ul>
+      <h3>Por que o limite importa?</h3>
+      <p>O cérebro infantil precisa de interações reais (olhar nos olhos, toque, conversa de ida e volta) para desenvolver linguagem, empatia e regulação emocional. Telas passivas não substituem essa interação.</p>
+      <div class="tip-box">
+        <div class="tip-title">💡 Dicas práticas</div>
+        <p>Crie "zonas livres de tela" (refeições, quarto de dormir). Use timer visual para a criança saber quando o tempo acaba. Ofereça alternativas: massinha, desenho livre, brincadeira ao ar livre, livros.</p>
+      </div>
+      <p class="source-note">Referências: SBP — #MenosTelas #MaisSaúde, 2024. OMS — Guidelines on Physical Activity, Sedentary Behaviour and Sleep, 2024.</p>
+    `
+  },
+  {
+    id: 'art-tdah-mitos',
+    cat: 'tdah',
+    emoji: '⚡',
+    isNew: false,
+    title: '5 mitos sobre TDAH que toda família precisa conhecer',
+    summary: 'Desfazendo equívocos comuns que podem atrasar o diagnóstico e tratamento adequado.',
+    readTime: '3 min',
+    date: '10 Mar 2026',
+    content: `
+      <p>O TDAH (Transtorno de Déficit de Atenção e Hiperatividade) é um dos transtornos mais estudados da infância, mas ainda cercado de desinformação. Vamos esclarecer os mitos mais prejudiciais.</p>
+      <h3>Mitos e verdades</h3>
+      <p><strong>Mito 1: "TDAH é falta de disciplina."</strong><br>Verdade: TDAH é um transtorno neurobiológico com base genética. Exames de neuroimagem mostram diferenças no funcionamento do córtex pré-frontal.</p>
+      <p><strong>Mito 2: "Só menino tem TDAH."</strong><br>Verdade: Meninas também têm, mas com apresentação diferente — mais desatenção, menos hiperatividade. Por isso, são subdiagnosticadas.</p>
+      <p><strong>Mito 3: "Se consegue jogar videogame por horas, não tem TDAH."</strong><br>Verdade: O hiperfoco é uma característica do TDAH. A criança consegue se concentrar em atividades muito estimulantes, mas não nas de baixo estímulo.</p>
+      <p><strong>Mito 4: "Medicação transforma a criança em zumbi."</strong><br>Verdade: Quando a dose é correta e ajustada pelo médico, a medicação melhora a atenção sem alterar a personalidade.</p>
+      <p><strong>Mito 5: "TDAH passa com a idade."</strong><br>Verdade: Cerca de 60% dos casos persistem na vida adulta. A hiperatividade pode diminuir, mas a desatenção frequentemente continua.</p>
+      <p class="source-note">Referências: ABDA, American Psychiatric Association (DSM-5-TR), meta-análises publicadas no Lancet Psychiatry.</p>
+    `
+  },
+  {
+    id: 'art-tea-sensorial',
+    cat: 'tea',
+    emoji: '🧩',
+    isNew: false,
+    title: 'Sensibilidade sensorial no TEA: entendendo o mundo do seu filho',
+    summary: 'Como crianças com TEA processam estímulos sensoriais de forma diferente e estratégias para o dia a dia.',
+    readTime: '5 min',
+    date: '05 Mar 2026',
+    content: `
+      <p>Muitas crianças com TEA processam informações sensoriais de forma diferente. Sons, luzes, texturas, cheiros ou movimentos que para outros são neutros, para elas podem ser extremamente desconfortáveis — ou, ao contrário, podem buscar sensações intensas.</p>
+      <h3>Dois perfis sensoriais</h3>
+      <p><strong>Hipersensibilidade (evita estímulos):</strong> tampa os ouvidos com barulho, recusa certas texturas de roupa ou alimentos, se incomoda com luzes fortes, evita abraços.</p>
+      <p><strong>Hipossensibilidade (busca estímulos):</strong> gira o corpo, balança, toca tudo, coloca objetos na boca, busca pressão profunda (abraços apertados, se enfiar debaixo de almofadas).</p>
+      <h3>Estratégias para o dia a dia</h3>
+      <ul>
+        <li><strong>Ambiente previsível:</strong> avise sobre mudanças com antecedência, use apoio visual (quadro de rotina).</li>
+        <li><strong>Kit sensorial:</strong> fone abafador para ambientes barulhentos, brinquedo de apertar (fidget), óculos de sol.</li>
+        <li><strong>Respeite os limites:</strong> se a criança evita certos alimentos por textura, não force — trabalhe gradualmente com terapeuta ocupacional.</li>
+        <li><strong>Espaço de descompressão:</strong> um cantinho calmo em casa onde a criança pode ir quando se sentir sobrecarregada.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-title">💡 Profissional indicado</div>
+        <p>O Terapeuta Ocupacional com formação em Integração Sensorial é o profissional mais indicado para avaliar o perfil sensorial da criança e orientar estratégias individualizadas.</p>
+      </div>
+      <p class="source-note">Referências: Dunn's Sensory Profile, STAR Institute for Sensory Processing.</p>
+    `
+  },
+  {
+    id: 'art-escola-inclusao',
+    cat: 'escola',
+    emoji: '🎒',
+    isNew: false,
+    title: 'Direitos da criança com deficiência na escola: o que exigir',
+    summary: 'Conheça os direitos legais do seu filho e como garantir inclusão real no ambiente escolar.',
+    readTime: '4 min',
+    date: '28 Fev 2026',
+    content: `
+      <p>Toda criança tem direito à educação inclusiva. A legislação brasileira garante que crianças com TEA, TDAH, deficiência intelectual e outros transtornos do neurodesenvolvimento tenham acesso e permanência na escola regular com os apoios necessários.</p>
+      <h3>Principais direitos</h3>
+      <ul>
+        <li><strong>Matrícula garantida:</strong> a escola não pode recusar matrícula por causa do diagnóstico (Lei 12.764/2012 para TEA).</li>
+        <li><strong>Acompanhante especializado:</strong> crianças com TEA que necessitam têm direito a profissional de apoio em sala.</li>
+        <li><strong>Adaptação curricular:</strong> o conteúdo e as avaliações devem ser adaptados conforme o PEI (Plano Educacional Individualizado).</li>
+        <li><strong>Tempo extra em provas:</strong> previsto em lei para crianças com TDAH e outros transtornos.</li>
+        <li><strong>AEE (Atendimento Educacional Especializado):</strong> no contraturno, gratuito, em sala de recursos.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-title">💡 Como garantir na prática</div>
+        <p>Solicite por escrito a elaboração do PEI (Plano Educacional Individualizado) com metas claras. Participe das reuniões de revisão. Se a escola não cumprir, procure o Conselho Tutelar ou o Ministério Público.</p>
+      </div>
+      <p class="source-note">Referências: Lei Berenice Piana (12.764/2012), LBI (13.146/2015), LDB (9.394/1996).</p>
+    `
+  },
+  {
+    id: 'art-nutri-omega',
+    cat: 'nutri',
+    emoji: '🥦',
+    isNew: false,
+    title: 'Ômega-3 e cérebro infantil: o que a ciência diz',
+    summary: 'Evidências atuais sobre suplementação de ômega-3 e seu papel no neurodesenvolvimento.',
+    readTime: '3 min',
+    date: '20 Fev 2026',
+    content: `
+      <p>O ômega-3 (especialmente DHA e EPA) é um ácido graxo essencial para o desenvolvimento cerebral. O cérebro é composto por cerca de 60% de gordura, e o DHA é um dos principais componentes estruturais.</p>
+      <h3>O que as evidências mostram?</h3>
+      <p><strong>Para todas as crianças:</strong> uma dieta rica em ômega-3 (peixes, nozes, linhaça) está associada a melhor desenvolvimento cognitivo e de linguagem.</p>
+      <p><strong>No TDAH:</strong> alguns estudos mostram melhora discreta na atenção com suplementação, mas não substitui o tratamento padrão.</p>
+      <p><strong>No TEA:</strong> evidências ainda inconclusivas. Pode ajudar como complemento, mas não há comprovação de benefício isolado.</p>
+      <h3>Fontes alimentares</h3>
+      <ul>
+        <li>Salmão, sardinha, atum (2x por semana)</li>
+        <li>Chia, linhaça (triturada), nozes</li>
+        <li>Ovos enriquecidos com ômega-3</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-title">💡 Sobre suplementação</div>
+        <p>Não suplemente por conta própria. Converse com o médico da criança para avaliar necessidade, dose e forma adequada (líquido para crianças menores, cápsula para maiores).</p>
+      </div>
+      <p class="source-note">Referências: Cochrane Reviews, Journal of Child Psychology and Psychiatry, SBP.</p>
+    `
+  },
+  {
+    id: 'art-comp-ansiedade',
+    cat: 'comp',
+    emoji: '💛',
+    isNew: true,
+    title: 'Ansiedade na infância: quando o medo vira transtorno',
+    summary: 'Medos são normais no desenvolvimento, mas quando passam a limitar a vida da criança, é hora de buscar ajuda.',
+    readTime: '5 min',
+    date: '18 Mar 2026',
+    content: `
+      <p>Ter medo é normal e faz parte do desenvolvimento saudável. Medo de escuro aos 3 anos, de monstros aos 5, de provas aos 8 — todos esperados. O problema surge quando o medo é desproporcional, persistente e começa a impedir a criança de fazer atividades do dia a dia.</p>
+      <h3>Sinais de transtorno de ansiedade</h3>
+      <ul>
+        <li>Recusa em ir à escola repetidamente (não é preguiça).</li>
+        <li>Queixas físicas frequentes: dor de barriga, dor de cabeça, náusea — sem causa médica.</li>
+        <li>Dificuldade em se separar dos pais (além do esperado para a idade).</li>
+        <li>Preocupação excessiva com situações do futuro ("e se acontecer algo ruim?").</li>
+        <li>Dificuldade em dormir por causa de preocupações.</li>
+        <li>Evita situações sociais, festas, apresentações.</li>
+      </ul>
+      <h3>O que fazer</h3>
+      <p>Valide o sentimento ("Eu entendo que você está com medo"), mas não evite a situação temida — a evitação reforça a ansiedade. Ajude gradualmente, em pequenos passos. A terapia cognitivo-comportamental (TCC) é o tratamento com mais evidência para ansiedade infantil.</p>
+      <div class="tip-box">
+        <div class="tip-title">💡 Quando buscar profissional</div>
+        <p>Se os sintomas duram mais de 4 semanas e impactam escola, amizades ou vida familiar, procure avaliação com psiquiatra infantil ou psicólogo especializado em TCC infantil.</p>
+      </div>
+      <p class="source-note">Referências: AACAP (American Academy of Child and Adolescent Psychiatry), NICE Guidelines for Anxiety in Children.</p>
+    `
+  },
+  {
+    id: 'art-dev-marcos',
+    cat: 'dev',
+    emoji: '🌱',
+    isNew: false,
+    title: 'Marcos do desenvolvimento motor: do rolar ao correr',
+    summary: 'Acompanhe as conquistas motoras esperadas do primeiro ano até os 5 anos de idade.',
+    readTime: '4 min',
+    date: '12 Mar 2026',
+    content: `
+      <p>O desenvolvimento motor segue uma sequência previsível, embora o ritmo varie de criança para criança. Conhecer os marcos ajuda a identificar precocemente possíveis atrasos que podem se beneficiar de intervenção.</p>
+      <h3>Marcos esperados</h3>
+      <ul>
+        <li><strong>3-4 meses:</strong> sustenta a cabeça, começa a rolar.</li>
+        <li><strong>6-7 meses:</strong> senta sem apoio, transfere objetos entre mãos.</li>
+        <li><strong>9-10 meses:</strong> engatinha, fica de pé com apoio.</li>
+        <li><strong>12-15 meses:</strong> primeiros passos independentes.</li>
+        <li><strong>18-24 meses:</strong> corre (com base alargada), chuta bola, sobe escadas com apoio.</li>
+        <li><strong>3 anos:</strong> pedala triciclo, pula com os dois pés, equilibra-se em um pé por 1-2 segundos.</li>
+        <li><strong>4-5 anos:</strong> pula em um pé, desce escada alternando pés, anda em linha reta.</li>
+      </ul>
+      <h3>Sinais de alerta</h3>
+      <p>Atraso significativo (mais de 2-3 meses) em qualquer marco, assimetria persistente (usa mais um lado), perda de habilidades já adquiridas, ou tônus muscular muito mole (hipotonia) ou muito rígido (hipertonia).</p>
+      <div class="tip-box">
+        <div class="tip-title">💡 Estimulação natural</div>
+        <p>Deixe a criança brincar no chão, explorar diferentes superfícies, subir e descer (com supervisão). O excesso de tempo no bebê-conforto, andador ou tela reduz as oportunidades de prática motora.</p>
+      </div>
+      <p class="source-note">Referências: Denver II, Bayley Scales, Caderneta de Saúde da Criança (MS).</p>
+    `
+  }
+];
+
+// ========== RENDER FEED ==========
+const feedGrid = document.getElementById('feedGrid');
+const feedCount = document.getElementById('feedCount');
+const emptyState = document.getElementById('emptyState');
+let currentCat = 'todos';
+
+function renderFeed(cat) {
+  const filtered = cat === 'todos' ? articles : articles.filter(a => a.cat === cat);
+  feedGrid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    emptyState.style.display = 'block';
+    feedCount.textContent = '';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  feedCount.textContent = filtered.length + ' artigo' + (filtered.length > 1 ? 's' : '');
+
+  filtered.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'article-card';
+    card.onclick = () => openArticle(a.id);
+    card.innerHTML = `
+      <div class="article-icon ${a.cat}">${a.emoji}</div>
+      <div class="article-body">
+        <div class="cat-label ${a.cat}">${getCatName(a.cat)}</div>
+        <h3>${a.title}</h3>
+        <p>${a.summary}</p>
+        <div class="article-footer">
+          <span class="read-time">📖 ${a.readTime}</span>
+          <span>${a.date}</span>
+          ${a.isNew ? '<span class="new-badge">NOVO</span>' : ''}
+        </div>
+      </div>
+    `;
+    feedGrid.appendChild(card);
+  });
+}
+
+function getCatName(cat) {
+  const names = {
+    tea: 'TEA — Autismo',
+    tdah: 'TDAH',
+    sono: 'Sono',
+    dev: 'Desenvolvimento',
+    comp: 'Comportamento',
+    fala: 'Fala & Linguagem',
+    escola: 'Escola & Direitos',
+    nutri: 'Nutrição'
+  };
+  return names[cat] || cat;
+}
+
+function filterCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed(cat);
+}
+
+// ========== MODAL ==========
+function openArticle(id) {
+  const article = articles.find(a => a.id === id);
+  if (!article) return;
+
+  const mc = document.getElementById('modalContent');
+  mc.innerHTML = `
+    <div class="cat-label ${article.cat}">${getCatName(article.cat)}</div>
+    <h2>${article.title}</h2>
+    <div class="article-meta">
+      <span>📖 ${article.readTime} de leitura</span>
+      <span>📅 ${article.date}</span>
+    </div>
+    <div class="article-text">${article.content}</div>
+  `;
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Touch-to-close modal
+let touchStartY = 0;
+document.getElementById('modal').addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+});
+document.getElementById('modal').addEventListener('touchmove', e => {
+  const diff = e.touches[0].clientY - touchStartY;
+  if (diff > 80) closeModal();
+});
+
+// ESC to close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Init
+renderFeed('todos');
+</script>
+<script data-pplx-inline-edit>
+(function(){
+  if(window===window.top)return;
+  function inlineAll(orig,clone){
+    if(orig.nodeType!==1)return;
+    try{
+      var cs=getComputedStyle(orig);
+      var t='';
+      for(var i=0;i<cs.length;i++){t+=cs[i]+':'+cs.getPropertyValue(cs[i])+';';}
+      clone.style.cssText=t;
+    }catch(e){}
+    var oc=orig.children,cc=clone.children;
+    for(var j=0;j<oc.length&&j<cc.length;j++){inlineAll(oc[j],cc[j]);}
+  }
+  function stripExternal(clone){
+    var imgs=clone.querySelectorAll('img');
+    for(var i=0;i<imgs.length;i++){
+      var s=imgs[i].getAttribute('src');
+      if(s&&!s.startsWith('data:'))imgs[i].removeAttribute('src');
+    }
+    var all=clone.querySelectorAll('*');
+    for(var i=0;i<all.length;i++){
+      var st=all[i].style.cssText;
+      if(st&&st.indexOf('url(')>=0){
+        all[i].style.cssText=st.replace(/url\(["']?(?!data:)[^)"']*["']?\)/gi,'none');
+      }
+    }
+  }
+  var scrollRaf=0;
+  function emitScroll(){
+    scrollRaf=0;
+    var x=window.scrollX||window.pageXOffset||0;
+    var y=window.scrollY||window.pageYOffset||0;
+    window.parent.postMessage({type:'INLINE_EDIT_SCROLL',scrollX:x,scrollY:y},'*');
+  }
+  window.addEventListener('scroll',function(){
+    if(scrollRaf)return;
+    scrollRaf=requestAnimationFrame(emitScroll);
+  },{passive:true,capture:true});
+  emitScroll();
+  window.addEventListener('message',function(e){
+    if(!e.data||e.data.type!=='INLINE_EDIT_CAPTURE_REQUEST')return;
+    var scrollX=window.scrollX||window.pageXOffset||0;
+    var scrollY=window.scrollY||window.pageYOffset||0;
+    var w=window.innerWidth,h=window.innerHeight;
+    try{
+      var clone=document.documentElement.cloneNode(true);
+      var rm=clone.querySelectorAll('script,link[rel="stylesheet"],style');
+      for(var i=0;i<rm.length;i++){rm[i].remove();}
+      inlineAll(document.documentElement,clone);
+      stripExternal(clone);
+      var html=new XMLSerializer().serializeToString(clone);
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'
+        +'<foreignObject width="100%" height="100%">'
+        +'<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+w+'px;height:'+h+'px;overflow:hidden">'
+        +'<div style="transform:translate(-'+scrollX+'px,-'+scrollY+'px);transform-origin:top left">'
+        +html+'</div></div></foreignObject></svg>';
+      var svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+      var img=new Image();
+      img.onload=function(){
+        var c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0);
+        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:c.toDataURL('image/png'),scrollX:scrollX,scrollY:scrollY},'*');
+      };
+      img.onerror=function(){
+        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
+      };
+      img.src=svgUrl;
+    }catch(err){
+      window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
+    }
+  });
+})();
+</script><script src="./app-polish-mobile.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+</body>
+</html>

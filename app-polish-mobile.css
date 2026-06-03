@@ -1,0 +1,371 @@
+/* NeuroPed EDJ - app-polish-mobile.css
+ * Camada de "cara de app" sobre tudo que ja existe. Nao reescreve estilos
+ * existentes - apenas adiciona safe-area, bottom nav, toast, e
+ * micro-interacoes consistentes em mobile e desktop.
+ */
+
+/* Tipografia premium institucional (CSP ja permite fonts.googleapis/gstatic).
+   Fraunces = display serif editorial; Inter = corpo legivel.
+   Substituem Georgia/system-ui SEM tocar no HTML de cada pagina. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --np-font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --np-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --np-safe-top:    env(safe-area-inset-top, 0px);
+  --np-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --np-safe-left:   env(safe-area-inset-left, 0px);
+  --np-safe-right:  env(safe-area-inset-right, 0px);
+  --np-tap:         44px;
+  --np-radius:      16px;
+}
+
+/* ============================================================
+   Unidade de marca ÍNDIGO nas páginas estáticas (editoriais)
+   Carrega depois do <style> inline → re-tinge os acentos.
+   Mantém o gold como acento quente secundário (índigo + dourado).
+   ============================================================ */
+:root{
+  --teal:  #4f46e5;
+  --teal2: #6366f1;
+  --wine:  #4338ca;
+  --accent:    #6366f1;
+  --accent-2:  #6d6af5;
+  --accent-3:  #8b5cf6;
+  --brand:     #4f46e5;
+  --brand-2:   #6d6af5;
+  --brand-soft:#ecebfe;
+  --accent-grad: linear-gradient(135deg, #4f46e5 0%, #6d6af5 100%);
+}
+
+/* Tipografia institucional aplicada sobre o que ja existe.
+   Corpo em Inter; titulos serif (Georgia no codigo antigo) viram Fraunces. */
+body { font-family: var(--np-font-body); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+h1, h2, h3, .h-sec, .view-title, .report-title, .brand-title, .cover h1, .hero h1, .hero h2 {
+  font-family: var(--np-font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+}
+
+/* Skeleton loaders reutilizaveis (sensacao de app, nao de site estatico) */
+.np-skel {
+  background: linear-gradient(100deg, rgba(124,118,210,.08) 40%, rgba(169,164,255,.18) 50%, rgba(124,118,210,.08) 60%);
+  background-size: 220% 100%;
+  border-radius: 12px;
+  animation: np-shimmer 1.3s ease-in-out infinite;
+}
+.np-skel.line { height: 13px; margin: 8px 0; }
+.np-skel.line.w70 { width: 70%; } .np-skel.line.w90 { width: 90%; } .np-skel.line.w50 { width: 50%; }
+.np-skel.card { height: 92px; margin: 10px 0; border-radius: 18px; }
+@keyframes np-shimmer { from { background-position: 180% 0; } to { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .np-skel { animation: none; } }
+
+/* Empty-state institucional (quando nao ha registros ainda) */
+.empty, .np-empty {
+  text-align: center; padding: 34px 18px; color: var(--muted, #b6b2e6);
+}
+.empty strong, .np-empty strong { display: block; font: 700 17px var(--np-font-display); color: #ECEAFF; margin: 10px 0 4px; }
+.empty span, .np-empty span { display: block; font-size: 13px; opacity: .9; }
+.np-empty .art { width: 64px; height: 64px; margin: 0 auto; opacity: .9; }
+
+/* Anti-zoom no toque: impede o "pulo" de zoom a cada clique (double-tap) e o
+   auto-ajuste de fonte do iOS. Combinado com maximum-scale=1 no viewport. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+a, button, [role="button"], input, select, textarea, label,
+.card, .chip, .pill, .tab, .nav a, .scale-card, .app-action {
+  touch-action: manipulation;
+}
+
+/* Touch target minimo - botoes e links de UI nao podem ser menores */
+.btn, button.btn, a.btn, .chip, .pill, .scale-card, .app-action {
+  min-height: var(--np-tap);
+  -webkit-tap-highlight-color: rgba(109, 106, 245, 0.22);
+  touch-action: manipulation;
+}
+
+/* Safe area no corpo (notch / home indicator) */
+@media (max-width: 760px) {
+  body {
+    padding-bottom: calc(var(--np-safe-bottom) + 80px);
+  }
+}
+
+/* ============================================================
+   Bottom nav (so no mobile)
+   ============================================================ */
+.np-bottom-nav {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 0;
+  background: rgba(14, 14, 34, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(169,164,255,.16);
+  padding: 6px calc(var(--np-safe-right) + 6px) calc(var(--np-safe-bottom) + 6px) calc(var(--np-safe-left) + 6px);
+  z-index: 9990;
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+@media (max-width: 760px) {
+  .np-bottom-nav { display: grid; }
+  /* Esconde a nav horizontal de topo no mobile para nao duplicar */
+  .app-shell-nav { display: none !important; }
+  .app-shell-row { padding: 6px 12px !important; }
+  body { padding-top: calc(var(--np-safe-top) + 56px) !important; }
+}
+.np-bottom-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  text-decoration: none;
+  border-radius: 14px;
+  color: #b6b2e6;
+  font: 800 10px system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.02em;
+  min-height: var(--np-tap);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.np-bottom-nav a[aria-current="page"] {
+  background: rgba(109, 106, 245, 0.16);
+  color: #a9a4ff;
+}
+.np-bottom-nav a:active { background: rgba(109, 106, 245, 0.24); }
+.np-bottom-nav .ic { font-size: 20px; line-height: 1; }
+.np-bottom-nav .lbl { font-size: 10px; }
+.np-bottom-nav a:focus-visible {
+  outline: 2px solid #6d6af5;
+  outline-offset: -2px;
+}
+
+/* ============================================================
+   Toast unificado (substitui alert() de boas)
+   ============================================================ */
+.np-toast-stack {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--np-safe-bottom) + 88px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: min(92vw, 480px);
+}
+@media (min-width: 761px) {
+  .np-toast-stack { bottom: calc(var(--np-safe-bottom) + 20px); }
+}
+.np-toast {
+  pointer-events: auto;
+  background: #2d2926;
+  color: #faf8f4;
+  border-radius: var(--np-radius);
+  padding: 12px 16px;
+  font: 700 13px system-ui;
+  box-shadow: 0 12px 30px rgba(0,0,0,.25);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+.np-toast.show { opacity: 1; transform: translateY(0); }
+.np-toast.ok    { background: #4f46e5; }
+.np-toast.warn  { background: #9a3412; }
+.np-toast.error { background: #7f1d1d; }
+
+/* ============================================================
+   Bottom sheet (substitui confirm())
+   ============================================================ */
+.np-sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(45, 41, 38, 0.45);
+  z-index: 9995;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+.np-sheet-backdrop.show { display: flex; opacity: 1; }
+@media (min-width: 761px) {
+  .np-sheet-backdrop { align-items: center; }
+}
+.np-sheet {
+  background: #14132a;
+  border-radius: 24px 24px 0 0;
+  padding: 18px 18px calc(var(--np-safe-bottom) + 18px);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 -18px 50px rgba(0,0,0,.18);
+  transform: translateY(20px);
+  transition: transform .18s ease;
+}
+.np-sheet-backdrop.show .np-sheet { transform: translateY(0); }
+@media (min-width: 761px) {
+  .np-sheet { border-radius: 24px; padding-bottom: 18px; }
+}
+.np-sheet h3 { margin: 0 0 6px; color: #f2dca6; font: 760 18px Georgia, serif; }
+.np-sheet p { margin: 0 0 14px; color: #b6b2e6; line-height: 1.5; font-size: 14px; }
+.np-sheet .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.np-sheet button {
+  flex: 1;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px;
+  font: 900 14px system-ui;
+  cursor: pointer;
+  min-height: var(--np-tap);
+}
+.np-sheet button.ok    { background: linear-gradient(180deg,#6d6af5,#4f46e5); color: #fff; }
+.np-sheet button.cancel { background: rgba(124,118,210,.10); color: #a9a4ff; border: 1px solid rgba(169,164,255,.16); }
+.np-sheet button.danger { background: #7f1d1d; color: #fff; }
+
+/* ============================================================
+   Splash inicial (uma vez por sessao)
+   ============================================================ */
+.np-splash {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #4f46e5, #3730a3);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #faf8f4;
+  font: 800 14px system-ui;
+  opacity: 1;
+  transition: opacity .35s ease;
+}
+.np-splash.hide { opacity: 0; pointer-events: none; }
+.np-splash .logo {
+  width: 80px; height: 80px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.12);
+  display: grid; place-items: center;
+  font-size: 38px;
+}
+.np-splash .name { font: 700 22px Georgia, serif; letter-spacing: .02em; }
+.np-splash .tag  { opacity: .8; font-size: 12px; }
+.np-splash .spinner {
+  margin-top: 12px;
+  width: 28px; height: 28px;
+  border: 3px solid rgba(255,255,255,.25);
+  border-top-color: #faf8f4;
+  border-radius: 50%;
+  animation: np-spin .85s linear infinite;
+}
+@keyframes np-spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   Micro-interacoes em botoes/cards (pressionar)
+   ============================================================ */
+.btn:active, .app-action:active, .chip:active, .scale-card:active {
+  transform: scale(.97);
+  transition: transform .08s ease;
+}
+
+/* Focus visivel uniforme para teclado */
+.btn:focus-visible, button:focus-visible, a:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid #6d6af5;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Smooth scroll global (respeitando preferencia de movimento reduzido) */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+
+  /* ============================================================
+     Movimento premium — entrada de página, abas e cartões
+     Aditivo e suave; desligado por prefers-reduced-motion abaixo.
+     ============================================================ */
+  @keyframes np-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes np-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  /* Entrada do conteúdo principal */
+  main, .wrap, .app, #app, #root > * {
+    animation: np-rise .5s cubic-bezier(.22,.61,.36,1) both;
+  }
+  /* Entrada escalonada de cartões/itens (efeito cascata leve) */
+  .card, .tool, .scale-card, .stat, .item, .app-card, .entry-card {
+    animation: np-rise .45s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .grid > *:nth-child(2), .stats > *:nth-child(2) { animation-delay: .04s; }
+  .grid > *:nth-child(3), .stats > *:nth-child(3) { animation-delay: .08s; }
+  .grid > *:nth-child(4), .stats > *:nth-child(4) { animation-delay: .12s; }
+  .grid > *:nth-child(n+5) { animation-delay: .16s; }
+
+  /* Troca de abas/seções: a seção ativa surge com crossfade */
+  .section[data-section], .view, .tab-panel {
+    transition: opacity .28s ease, transform .28s ease;
+  }
+  .section[data-section].active, .section[data-section][aria-hidden="false"] {
+    animation: np-fade .32s ease both;
+  }
+
+  /* Realce tátil das abas (movimento do indicador) */
+  .tab, [role="tab"] {
+    transition: color .2s ease, background .2s ease, border-color .2s ease, transform .12s ease;
+  }
+  .tab:active, [role="tab"]:active { transform: translateY(1px) scale(.98); }
+  .tab[aria-selected="true"], .tab.active, [role="tab"][aria-selected="true"] {
+    transition: color .2s ease, background .25s ease, box-shadow .25s ease;
+  }
+
+  /* Botões/links com leve elevação ao passar (desktop) */
+  @media (hover: hover) {
+    .btn:hover, .app-action:hover, a.btn:hover {
+      transform: translateY(-1px);
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      filter: brightness(1.04);
+    }
+  }
+}
+
+/* ============================================================
+   Transições entre páginas (View Transitions API)
+   Faz a navegação entre páginas parecer um app único (sem flash de
+   recarregamento). Progressive enhancement: navegadores sem suporte
+   simplesmente ignoram. Desligado por prefers-reduced-motion.
+   ============================================================ */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: np-vt-out .26s cubic-bezier(.4,0,.2,1) both;
+  }
+  ::view-transition-new(root) {
+    animation: np-vt-in .34s cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes np-vt-out { to { opacity: 0; transform: translateY(-8px) scale(.992); } }
+  @keyframes np-vt-in { from { opacity: 0; transform: translateY(10px) scale(.994); } }
+}
+
+/* Barra de progresso de navegação (sensação de app, não de site) */
+.np-navbar {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  z-index: 100000;
+  background: linear-gradient(90deg, #6d6af5, #a9a4ff, #e7c98b);
+  box-shadow: 0 0 12px rgba(109,106,245,.6);
+  transition: width .25s ease, opacity .3s ease;
+  pointer-events: none;
+}
+
+/* prefers-reduced-motion: desliga animacoes */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Print: esconde nav e toast/sheet/splash */
+@media print {
+  .np-bottom-nav, .np-toast-stack, .np-sheet-backdrop, .np-splash, .np-navbar { display: none !important; }
+}

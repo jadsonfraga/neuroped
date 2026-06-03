@@ -1,0 +1,19 @@
+(function(){
+'use strict';
+const KEY='neuroped_master_access_v1';
+const STORE='np_consulta_voz_v1';
+const TTL=12*60*60*1000;
+function master(){try{const v=JSON.parse(localStorage.getItem(KEY)||'{}');return v.ok&&Date.now()-Number(v.ts||0)<TTL}catch(e){return false}}
+function g(id){return document.getElementById(id)}
+function v(id){return g(id)?.value||''}
+function msg(t){let el=g('vozMsg');if(el)el.textContent=t}
+function save(){try{localStorage.setItem(STORE,JSON.stringify({voz:v('vozAnamnese')}));msg('Anamnese de voz salva localmente.')}catch(e){msg('Não foi possível salvar (armazenamento cheio ou bloqueado).')}}
+function load(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}}
+function addTo(id,text){const el=g(id);if(!el)return;el.value+=(el.value?'\n':'')+text;el.dispatchEvent(new Event('input',{bubbles:true}));msg('Texto enviado para '+id+'.')}
+function startVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg('Reconhecimento de voz indisponível neste navegador. Use o ditado do teclado do celular.');return}const rec=new SR();window.__npVozRec=rec;rec.lang='pt-BR';rec.continuous=true;rec.interimResults=true;let final='';rec.onresult=function(ev){let interim='';for(let i=ev.resultIndex;i<ev.results.length;i++){const t=ev.results[i][0].transcript;if(ev.results[i].isFinal)final+=t+' ';else interim+=t}g('vozAnamnese').value=(v('vozAnamnese')+' '+final+' '+interim).replace(/\s+/g,' ').trim();save()};rec.onerror=function(){msg('Falha no microfone ou permissão negada.')} ;rec.onend=function(){msg('Gravação pausada. Revise o texto antes de usar.')} ;rec.start();msg('Gravando em português. Fale pausadamente e revise depois.')}
+function stopVoice(){try{if(window.__npVozRec){window.__npVozRec.stop();window.__npVozRec=null}msg('Gravação interrompida.')}catch(e){}}
+function html(){return '<div class="card span12 no-print" id="vozClinicaCard"><h2>Anamnese por voz</h2><p class="muted">Ditado clínico protegido por PIN master. Usa reconhecimento do navegador quando disponível. O texto deve ser revisado pelo médico antes de integrar ao prontuário ou documento.</p><label>Anamnese captada por voz</label><textarea id="vozAnamnese" placeholder="Toque em Gravar voz e dite a história clínica. Revise o texto antes de usar."></textarea><div class="actions"><button class="btn gold" id="vozStartBtn">Gravar voz</button><button class="btn ghost" id="vozStopBtn">Parar</button><button class="btn" id="vozToQueixa">Enviar para queixa</button><button class="btn" id="vozToContexto">Enviar para contexto</button><button class="btn" id="vozToPlano">Enviar para plano</button><button class="btn ghost" id="vozSaveBtn">Salvar</button></div><p id="vozMsg" class="status">Aguardando ditado.</p></div>'}
+function inject(){if(!/consulta\.html/i.test(location.pathname))return false;if(!master())return false;if(g('vozClinicaCard'))return true;const grid=document.querySelector('#app .grid')||document.querySelector('section#app .grid');if(!grid)return false;const tmp=document.createElement('div');tmp.innerHTML=html();grid.insertBefore(tmp.firstChild,grid.firstChild);const d=load();if(d.voz)g('vozAnamnese').value=d.voz;g('vozStartBtn').onclick=startVoice;g('vozStopBtn').onclick=stopVoice;g('vozToQueixa').onclick=()=>addTo('queixa',v('vozAnamnese'));g('vozToContexto').onclick=()=>addTo('contexto',v('vozAnamnese'));g('vozToPlano').onclick=()=>addTo('plano',v('vozAnamnese'));g('vozSaveBtn').onclick=save;g('vozAnamnese').addEventListener('input',save);return true}
+function boot(){if(inject())return;let n=0;const t=setInterval(()=>{n++;if(inject()||n>120)clearInterval(t)},700);const onClick=()=>{setTimeout(()=>{if(inject())document.removeEventListener('click',onClick,true)},150)};document.addEventListener('click',onClick,true)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();

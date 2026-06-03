@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "purpose": "Ontologia clínica do catálogo — o QUE cada instrumento mede e seu valor diferencial. Estrutura para curadoria humana incremental.",
+    "rule": "Só preencher campos verificáveis. ecological_validity / fatigue_cost / estimated_minutes podem ser estimados pelo autor (curador), nunca passados como métrica psicométrica oficial.",
+    "consumed_by": "filtro-escalas.html — usado como reforço de relevância e orquestração quando presente; ausente = comportamento atual (construto + diferencial).",
+    "construct_vocabulary": ["executivo","social","pragmatica","sensorial","emocional","adaptativo","motor","linguagem","atencao","regulacao","aprendizagem","sono","alimentacao"],
+    "schema": {
+      "instrument_id": "string",
+      "measures": "array de construtos do vocabulário",
+      "differential_value": "string|null — o que ajuda a distinguir",
+      "ecological_validity": "string|null — contexto onde o dado é mais válido (casa/escola/clínica)",
+      "fatigue_cost": "low|medium|high|null — estimativa do autor sobre carga p/ a família",
+      "estimated_minutes": "number|null",
+      "respondent": "array — pais|escola|crianca|clinico",
+      "longitudinal_use": "boolean|null",
+      "_needs_curation": "boolean"
+    },
+    "version": "0.1.0",
+    "updated": "2026-06-02"
+  },
+  "instruments": {
+    "_example_template": {
+      "instrument_id": "_example_template",
+      "measures": [],
+      "differential_value": null,
+      "ecological_validity": null,
+      "fatigue_cost": null,
+      "estimated_minutes": null,
+      "respondent": [],
+      "longitudinal_use": null,
+      "_needs_curation": true
+    }
+  }
+}

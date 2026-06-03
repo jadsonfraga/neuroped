@@ -1,0 +1,39 @@
+{
+  "app": "NeuroPed EDJ",
+  "version": "safe-public-layer-v1",
+  "publico_aprovado": [
+    "home institucional",
+    "CAA Premium",
+    "biblioteca educativa",
+    "guias para familias",
+    "guias escolares gerais",
+    "metadados de escalas",
+    "filtro orientativo de escalas",
+    "marcos do desenvolvimento",
+    "glossario neuropediatrico",
+    "preparo para consulta",
+    "testes ludicos sem diagnostico",
+    "diario local educativo"
+  ],
+  "restrito": [
+    "pacientes",
+    "prontuario",
+    "prescricao",
+    "receita",
+    "calculadora de dose",
+    "farmacologia",
+    "laudos",
+    "portal com documentos reais",
+    "agenda clinica",
+    "lembretes clinicos",
+    "escalas proprietarias completas",
+    "diagnostico automatico",
+    "qualquer dado identificavel"
+  ],
+  "aviso_padrao": "Conteudo educativo. Nao substitui consulta medica, avaliacao individualizada, diagnostico clinico, prescricao ou acompanhamento com profissional habilitado.",
+  "revisao_tripla": [
+    "risco juridico e LGPD",
+    "risco medico-assistencial",
+    "risco reputacional, autoral e interpretacao por leigos"
+  ]
+}

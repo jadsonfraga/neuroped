@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e0e22">
+<title>NeuroPed EDJ — Filtro de Escalas</title>
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta property="og:url" content="https://jadsonfraga.github.io/neuroped/filtro-escalas.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NeuroPed EDJ — Filtro de Escalas">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/filtro-escalas.html">
+<meta name="description" content="Filtro de escalas NeuroPed por queixa e idade: encontre o instrumento de triagem certo por sintoma, faixa etária e quem responde.">
+<style>
+:root{--bg:#08080f;--bg2:#0e0e1f;--ink:#F2F0FF;--muted:#a9a4d8;--soft-ink:#8b86b8;--teal:#7c79ff;--teal2:#9b7bff;--indigo:#5b54e8;--wine:#f3ddb0;--gold:#e7c98b;--gold2:#caa56a;--line:rgba(160,154,255,.14);--line2:rgba(160,154,255,.22);--glass:rgba(124,118,210,.07);--glass2:rgba(124,118,210,.11);--ok:#34d399;--okbg:rgba(52,211,153,.14);--blue:#60a5fa;--bluebg:rgba(96,165,250,.14);--purplebg:rgba(155,123,255,.16);--shadow:0 20px 60px -20px rgba(2,2,12,.85);--radius:22px}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(1200px 700px at 6% -10%,hsl(248 90% 60%/.22),transparent 55%),radial-gradient(1100px 720px at 104% 0%,hsl(270 85% 62%/.20),transparent 52%),radial-gradient(900px 900px at 50% 120%,hsl(210 90% 56%/.10),transparent 60%),linear-gradient(165deg,var(--bg),var(--bg2) 55%,var(--bg));background-attachment:fixed}
+.wrap{max-width:1200px;margin:auto;padding:22px 16px 96px}
+
+/* ── HERO ── */
+.hero{position:relative;overflow:hidden;border:1px solid var(--line2);border-radius:28px;padding:30px 26px;
+  background:linear-gradient(140deg,rgba(30,27,68,.92),rgba(18,16,42,.92));box-shadow:var(--shadow);backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%)}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(640px 320px at 88% -20%,rgba(231,201,139,.14),transparent 60%);pointer-events:none}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(124,118,210,.22),transparent 70%);pointer-events:none;animation:npFloat 9s ease-in-out infinite}
+.hero>*{position:relative;z-index:1}
+.kicker{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--teal);font-weight:800;background:rgba(124,118,210,.14);border:1px solid var(--line2);padding:6px 12px;border-radius:999px}
+.kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:npBlink 2s ease-in-out infinite}
+h1{margin:14px 0 8px;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;font-weight:800;font-family:"Fraunces","Georgia",serif;
+  background:linear-gradient(120deg,#fff 10%,var(--teal2) 65%,var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);max-width:62ch;font-size:15px}
+h2,h3{margin:0 0 8px;color:var(--wine);font-family:"Fraunces","Georgia",serif;font-weight:700;letter-spacing:-.01em}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.stat{position:relative;overflow:hidden;background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:15px 16px;transition:transform .25s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}
+.stat::before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
+.stat:hover{transform:translateY(-3px);box-shadow:0 16px 40px -16px rgba(2,2,12,.8);border-color:var(--line2)}
+.stat strong{display:block;font-size:24px;font-weight:800;background:linear-gradient(120deg,var(--wine),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat span{font-size:11.5px;color:var(--soft-ink)}
+
+/* ── LAYOUT ── */
+.grid{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:14px}
+.panel{border:1px solid var(--line);background:linear-gradient(180deg,var(--glass2),var(--glass));border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.panel.sticky{position:sticky;top:14px;align-self:start}
+
+/* ── INPUTS ── */
+.field{margin-bottom:14px}
+label{display:block;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;color:var(--muted)}
+input,select,textarea{width:100%;border:1px solid var(--line2);border-radius:14px;padding:13px 14px;background:rgba(10,9,24,.55);color:var(--ink);font-size:14.5px;font-family:inherit;transition:border-color .2s,box-shadow .2s,background .2s}
+input::placeholder,textarea::placeholder{color:var(--soft-ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(124,118,210,.18);background:rgba(10,9,24,.78)}
+textarea{min-height:108px;resize:vertical}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--teal) 50%),linear-gradient(135deg,var(--teal) 50%,transparent 50%);background-position:calc(100% - 18px) 1.25em,calc(100% - 13px) 1.25em;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+
+/* ── BOTÕES ── */
+button,.btn{position:relative;overflow:hidden;border:0;border-radius:14px;padding:13px 16px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#fff;
+  background:linear-gradient(180deg,var(--teal),var(--indigo));box-shadow:0 10px 26px -10px rgba(91,84,232,.7);transition:transform .16s cubic-bezier(.22,.9,.25,1),box-shadow .2s,filter .2s}
+button:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(91,84,232,.8);filter:brightness(1.06)}
+button:active,.btn:active{transform:translateY(0) scale(.97)}
+.btn.secondary,.secondary{background:linear-gradient(180deg,var(--teal2),var(--indigo))!important;color:#fff!important;box-shadow:0 10px 26px -12px rgba(91,84,232,.6)!important}
+.btn.ghost,.ghost{background:rgba(124,118,210,.10)!important;color:var(--wine)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
+.btn.ghost:hover,.ghost:hover{background:rgba(124,118,210,.18)!important}
+
+/* ── CHIPS fofos com carinha ── */
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);background:rgba(124,118,210,.08);color:var(--muted);border-radius:999px;padding:7px 14px 7px 7px;font-size:12.5px;font-weight:700;cursor:pointer;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .25s,border-color .25s,color .25s,box-shadow .25s}
+.chip .ce{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font-size:15px;line-height:1;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.14),rgba(124,118,210,.14));border:1px solid var(--line);transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .25s}
+.chip .cl{padding-right:4px}
+.chip:hover{transform:translateY(-3px) scale(1.03);border-color:var(--teal);color:var(--ink);box-shadow:0 12px 24px -12px rgba(91,84,232,.6)}
+.chip:hover .ce{transform:scale(1.18) rotate(-8deg)}
+.chip:active{transform:translateY(-1px) scale(.97)}
+.chip.active{background:linear-gradient(135deg,var(--teal),var(--indigo));border-color:transparent;color:#fff;box-shadow:0 10px 24px -8px rgba(91,84,232,.75)}
+.chip.active .ce{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35);transform:scale(1.08)}
+.chip.active .ce{animation:npWiggle 2.4s ease-in-out infinite}
+.chip.npBounce{animation:npBounce .55s cubic-bezier(.34,1.56,.64,1)}
+@keyframes npBounce{0%{transform:scale(.9)}40%{transform:scale(1.12) translateY(-4px)}70%{transform:scale(.98)}100%{transform:scale(1)}}
+@keyframes npWiggle{0%,100%{transform:scale(1.08) rotate(0)}25%{transform:scale(1.08) rotate(-9deg)}75%{transform:scale(1.08) rotate(9deg)}}
+
+/* ── TOOLBAR / NOTICE ── */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.notice{border-left:3px solid var(--gold);background:rgba(231,201,139,.08);padding:12px 14px;border-radius:12px;margin:12px 0;color:#e8dcc2;font-size:13px}
+
+/* ── RESULT CARDS ── */
+.result-card{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--glass2),var(--glass));border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:14px 0;display:grid;grid-template-columns:1fr auto;gap:16px;box-shadow:0 12px 34px -18px rgba(2,2,12,.7)}
+.result-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--teal),transparent);opacity:.5;transition:opacity .25s}
+.result-card:hover::before{opacity:1}
+.result-card.top{border-color:var(--line2);box-shadow:0 0 0 1px rgba(124,118,210,.3),0 16px 44px -18px rgba(91,84,232,.5)}
+.result-card.top::before{background:linear-gradient(180deg,var(--gold),var(--teal));opacity:1;width:4px}
+.result-card h3{font-size:18px;margin-bottom:8px;color:#fff;font-family:"Fraunces","Georgia",serif}
+.badge{display:inline-flex;align-items:center;border-radius:8px;padding:4px 9px;font-size:10.5px;font-weight:800;letter-spacing:.02em;margin:0 5px 6px 0;border:1px solid transparent}
+.ok{background:var(--okbg);color:var(--ok);border-color:rgba(52,211,153,.3)}
+.info{background:var(--bluebg);color:var(--blue);border-color:rgba(96,165,250,.3)}
+.purple{background:var(--purplebg);color:var(--teal2);border-color:rgba(155,123,255,.3)}
+.gold{background:rgba(231,201,139,.16);color:var(--gold);border-color:rgba(231,201,139,.34)}
+
+/* ── SCORE RING ── */
+.score{position:relative;min-width:72px;width:72px;height:72px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:19px;color:#fff;align-self:start;
+  background:conic-gradient(var(--teal) calc(var(--p,60)*1%),rgba(124,118,210,.16) 0);box-shadow:0 8px 22px -8px rgba(91,84,232,.7)}
+.score::before{content:"";position:absolute;inset:5px;border-radius:50%;background:linear-gradient(160deg,#15132f,#0d0c1f)}
+.score>*{position:relative;z-index:1}
+.score small{font-size:9px;font-weight:700;color:var(--soft-ink);text-transform:uppercase;letter-spacing:.04em}
+/* selo de RANK (1ª/2ª/3ª) — substitui o anel de "prioridade" (número opaco ao clínico) */
+.rank{min-width:64px;width:64px;height:64px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;align-self:start;
+  background:linear-gradient(160deg,rgba(124,118,210,.2),rgba(124,118,210,.06));border:1px solid var(--line2);color:var(--ink)}
+.rank b{font:800 24px "Fraunces","Georgia",serif;line-height:1;color:#fff}
+.rank small{font-size:9px;font-weight:800;color:var(--soft-ink);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.result-card.top .rank{background:linear-gradient(160deg,var(--gold),var(--gold2));border-color:transparent;box-shadow:0 12px 26px -10px rgba(231,201,139,.6)}
+.result-card.top .rank b{color:#241a05}
+.result-card.top .rank small{color:#5a4413}
+.rank-1{background:linear-gradient(160deg,#cfd3dc,#9aa1ad);border-color:transparent}
+.rank-1 b{color:#1f2430}.rank-1 small{color:#39414f}
+.rank-2{background:linear-gradient(160deg,#d8a566,#b07b3e);border-color:transparent}
+.rank-2 b{color:#2a1c08}.rank-2 small{color:#48330f}
+
+.scalesearch{margin:0 0 14px}
+.scalesearch input{width:100%;border:1px solid var(--line2);border-radius:14px;padding:13px 15px;background:rgba(10,9,24,.6);color:var(--ink);font:15px "Inter",system-ui;transition:border-color .2s,box-shadow .2s}
+.scalesearch input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(124,118,210,.18)}
+.scalesearch input::placeholder{color:var(--soft-ink)}
+.path,.mini{font-size:12.5px;color:var(--soft-ink)}
+.mini strong{color:var(--muted)}
+.package{background:rgba(231,201,139,.06);border:1px dashed rgba(231,201,139,.34);border-radius:18px;padding:14px 16px;margin:14px 0}
+.package h3{font-size:15px}
+.bank{opacity:.6}
+.qx{margin:9px 0 2px}
+.qx summary{cursor:pointer;font:800 11.5px system-ui;color:var(--teal);list-style:none;display:inline-flex;align-items:center;gap:5px;padding:5px 0}
+.qx summary::-webkit-details-marker{display:none}
+.qx summary::before{content:"›";transition:transform .2s;display:inline-block}
+.qx[open] summary::before{transform:rotate(90deg)}
+.questions{margin:10px 0 0;padding-left:18px;color:#c8c4ee}
+.questions li{margin:5px 0;font-size:13px}
+.symptoms{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.symptoms span{background:rgba(231,201,139,.10);border:1px solid rgba(231,201,139,.26);color:var(--gold);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:700}
+
+/* ── RED FLAGS ── */
+.rf{border-radius:18px;padding:16px 18px;margin:0 0 14px;border:1px solid rgba(231,201,139,.3);background:linear-gradient(180deg,rgba(124,118,210,.1),var(--glass))}
+.rf h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
+.rf .grp{margin:10px 0 0}
+.rf .lab{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;display:inline-block;border-radius:999px;padding:4px 11px;margin-bottom:7px}
+.rf .lab.u{background:rgba(248,113,113,.16);color:#fca5a5;border:1px solid rgba(248,113,113,.4)}
+.rf .lab.p{background:rgba(231,201,139,.16);color:var(--gold);border:1px solid rgba(231,201,139,.4)}
+.rf ul{margin:5px 0 0;padding-left:20px}
+.rf li{margin:4px 0;color:#e6e3ff;font-size:13.5px}
+.rf .src{font-size:11px;color:var(--soft-ink);margin-top:12px}
+.rf.has-u{border-color:rgba(248,113,113,.4)}
+.reasoning-panel{border-radius:18px;padding:14px 18px;margin:0 0 14px;border:1px solid rgba(124,118,210,.28);background:linear-gradient(180deg,rgba(124,118,210,.12),var(--glass));animation:npRise .4s ease both}
+.reasoning-panel summary{cursor:pointer;font:800 14px/1.2 var(--display,system-ui);color:var(--ink);list-style:none;display:flex;align-items:center;gap:6px}
+.reasoning-panel summary::-webkit-details-marker{display:none}
+.reasoning-panel .rz-diff{margin:10px 0 0}
+.reasoning-panel .rz-lab{display:inline-block;font:800 11px system-ui;letter-spacing:.04em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.reasoning-panel .rz-diff ul{margin:4px 0 0;padding-left:0;list-style:none}
+.reasoning-panel .rz-diff li{font-size:13px;line-height:1.5;padding:5px 0;border-top:1px solid var(--line)}
+.reasoning-panel .src{font-size:11px;color:var(--soft-ink);margin:12px 0 0}
+@media (prefers-reduced-motion:reduce){.reasoning-panel{animation:none}}
+
+/* ── SUMMARY / SKELETON ── */
+#summary{transition:background .3s}
+#summary strong{color:var(--wine)}
+.np-skel{background:linear-gradient(100deg,rgba(124,118,210,.06) 30%,rgba(124,118,210,.16) 50%,rgba(124,118,210,.06) 70%);background-size:300% 100%;animation:npShimmer 1.3s ease-in-out infinite;border-radius:var(--radius);min-height:120px;margin:14px 0;border:1px solid var(--line)}
+
+.footer{text-align:center;font-size:12px;color:var(--soft-ink);margin-top:30px;line-height:1.7;padding-top:18px;border-top:1px solid var(--line)}
+
+/* ── MOTION ── */
+@keyframes npRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes npPop{0%{transform:scale(.94)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes npShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes npSpin{to{transform:rotate(360deg)}}
+@keyframes npFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(16px)}}
+@keyframes npBlink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes npGlow{0%,100%{box-shadow:0 0 0 1px rgba(248,113,113,.4),0 0 22px -6px rgba(248,113,113,.5)}50%{box-shadow:0 0 0 1px rgba(248,113,113,.7),0 0 34px -4px rgba(248,113,113,.8)}}
+.result-card{animation:npRise .44s cubic-bezier(.22,.9,.25,1) both}
+.result-card:nth-child(1){animation-delay:.03s}.result-card:nth-child(2){animation-delay:.09s}.result-card:nth-child(3){animation-delay:.15s}.result-card:nth-child(4){animation-delay:.21s}.result-card:nth-child(5){animation-delay:.27s}.result-card:nth-child(6){animation-delay:.33s}.result-card:nth-child(n+7){animation-delay:.39s}
+.result-card{transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .22s,border-color .22s}
+.result-card:hover{transform:translateY(-4px);box-shadow:0 26px 60px -22px rgba(91,84,232,.6);border-color:var(--line2)}
+.chip.active{animation:npPop .3s ease}
+.rf.has-u{animation:npRise .42s ease both,npGlow 2.4s ease-in-out infinite .42s}
+#redFlags .rf{animation:npRise .4s ease both}
+.np-loading{position:relative;min-height:90px}
+.np-loading::after{content:"";position:absolute;left:50%;top:36px;width:26px;height:26px;margin-left:-13px;border:3px solid rgba(160,154,255,.22);border-top-color:var(--teal);border-radius:50%;animation:npSpin .7s linear infinite}
+
+/* ── TOPBAR (integra ao app) ── */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;margin:-22px -16px 18px;padding:13px 16px calc(13px);
+  background:rgba(12,11,26,.72);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid var(--line)}
+.topbar .back{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:13px;border:1px solid var(--line2);background:rgba(124,118,210,.12);color:var(--ink);text-decoration:none;font-size:18px;transition:transform .18s cubic-bezier(.34,1.56,.64,1),background .2s}
+.topbar .back:hover{transform:translateX(-2px) scale(1.05);background:rgba(124,118,210,.22)}
+.topbar .tb-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar .tb-logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font:800 17px "Fraunces",Georgia,serif;color:#fff;background:linear-gradient(135deg,var(--teal2),var(--indigo));box-shadow:0 8px 20px -8px rgba(91,84,232,.6)}
+.topbar .tb-tt{font:700 15px "Fraunces",Georgia,serif;color:var(--wine);line-height:1.1}
+.topbar .tb-sub{font-size:11px;color:var(--soft-ink);letter-spacing:.02em}
+.topbar .tb-right{margin-left:auto;display:flex;gap:8px}
+.topbar .tb-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--teal);background:rgba(124,118,210,.12);border:1px solid var(--line2);border-radius:999px;padding:7px 12px;text-decoration:none;transition:transform .16s,background .2s}
+.topbar .tb-pill:hover{transform:translateY(-1px);background:rgba(124,118,210,.2)}
+@media(max-width:920px){.topbar{margin:-16px -13px 16px}}
+@media(max-width:560px){.topbar .tb-sub{display:none}.topbar .tb-pill .lbl{display:none}}
+
+@media(max-width:920px){.grid{grid-template-columns:1fr}.panel.sticky{position:static}.stats{grid-template-columns:repeat(2,1fr)}.result-card{grid-template-columns:1fr}.score{align-self:center;margin-top:4px}.wrap{padding:16px 13px 90px}.hero{padding:24px 20px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link rel="stylesheet" href="./scales-ui-premium.css">
+</head>
+<body data-ns-shell>
+<main class="wrap">
+<header class="topbar">
+  <a class="back" href="./central-atalhos.html" aria-label="Voltar ao app">‹</a>
+  <div class="tb-brand"><div class="tb-logo">NP</div><div><div class="tb-tt">NeuroPed</div><div class="tb-sub">Filtro de escalas</div></div></div>
+  <div class="tb-right"><button type="button" class="tb-pill" id="allScales"><span class="lbl">Todas as escalas</span> 🔎</button></div>
+</header>
+<section class="hero"><div class="kicker">Triagem inteligente</div><h1>Qual o instrumento certo?</h1><p>Diga a idade e a queixa — o app prioriza as escalas e testes mais indicados, com perguntas em linguagem fácil e os sinais de alerta a observar.</p><div id="filtroPatientBar" class="mini" style="margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(124,118,210,.10);display:none"></div><div class="toolbar"><button type="button" id="printTop">🖨️ Imprimir recomendações</button><button type="button" id="exportTop" class="ghost">📋 Exportar pra laudo</button></div></section>
+<section class="stats"><div class="stat"><strong id="statCount">0</strong><span>instrumentos indexados</span></div><div class="stat"><strong>3</strong><span>mais indicadas por caso</span></div><div class="stat"><strong>0 digitação</strong><span>clique idade + queixa</span></div><div class="stat"><strong>PDF</strong><span>laudo com as respostas</span></div></section>
+<section class="grid"><aside class="panel sticky"><h2>Monte o caso</h2><div class="field"><label>1 · Idade da criança</label><div id="ageChips" class="chips" role="group" aria-label="Idade"></div></div><div class="field"><label>2 · Queixa principal</label><div id="chips" class="chips" role="group" aria-label="Queixa"></div></div><div class="toolbar"><button class="ghost" id="clear">Limpar</button></div><p class="notice">Toque na idade e na queixa → as <strong>3 mais indicadas</strong>. Ou use a <strong>busca</strong> ao lado para achar qualquer escala do catálogo.</p><input type="hidden" id="idade"><input type="hidden" id="queixaLivre"><input type="hidden" id="respondente" value=""><input type="hidden" id="sensibilidade" value="alta"></aside><section class="panel"><h2>Escalas &amp; testes</h2><div class="scalesearch"><input id="scaleSearch" type="search" placeholder="🔎 Buscar qualquer escala pelo nome ou sintoma…" aria-label="Buscar escala em todo o catálogo" autocomplete="off"></div><div id="summary" class="notice" role="status" aria-live="polite">Selecione idade e queixa ao lado — ou busque qualquer escala acima.</div><div id="reasoning" hidden></div><div id="results"></div><div id="redFlags" hidden></div><div id="package" hidden></div><div id="triangulacao" hidden></div></section></section>
+<p class="footer"><strong>Nota clínica:</strong> instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica, pedagógica ou terapêutica.</p>
+</main>
+
+
+<script src="./scales-bundle.js"></script>
+<script>
+const QUICK=[["fala","Atraso de fala","🗣️"],["tea","Suspeita de TEA","🧩"],["tdah","Desatenção/TDAH","🎯"],["escola","Dificuldade escolar","📚"],["comportamento","Birra/oposição","💢"],["agressividade","Agressividade/crises","🌋"],["sono","Sono","🌙"],["alimentacao","Seletividade alimentar","🍽️"],["ansiedade","Ansiedade","😰"],["humor","Humor/tristeza","💧"],["motor","Atraso motor","🤸"],["sensorial","Sensorial","✨"],["epilepsia","Epilepsia/crises","⚡"],["cefaleia","Cefaleia/dor","🤕"],["autonomia","Autonomia/AVDs","🧷"],["risco","Risco/autolesão","🛟"],["medicacao","Impacto pós-medicação","💊"]];
+const SYN={fala:["fala","linguagem","nao fala","não fala","atraso de fala","comunicacao","comunicação","ecolalia","apraxia","poucas palavras","fal"],tea:["tea","autismo","autimo","autista","contato visual","nome","rotina","rigidez","estereotipia","sensorial","brinca sozinho","social"],tdah:["tdah","desatencao","desatenção","hiperatividade","impulsivo","agitado","nao para","não para","esquece","organizacao","organização"],escola:["escola","aprendizagem","alfabetizacao","alfabetização","leitura","escrita","matematica","matemática","baixo rendimento","professora"],comportamento:["birra","birrra","oposicao","oposição","tod","desafia","teimoso","raiva","irritabilidade","limite","frustracao","frustração"],agressividade:["agressividade","agride","bate","morde","crise","se machuca"],sono:["sono","dorme","insonia","insônia","acorda","pesadelo","ronco"],alimentacao:["alimentacao","alimentação","seletividade","seletivdade","comida","textura","recusa","mastigacao","mastigação","engasgo"],ansiedade:["ansiedade","medo","preocupacao","preocupação","panico","pânico","separacao","separação","fobia"],humor:["humor","triste","chora","isolamento","desanimo","desânimo","irritado"],motor:["motor","marcha","anda","equilibrio","equilíbrio","coordenação","coordenacao","quedas"],sensorial:["sensorial","sensorail","barulho","textura","toque","cheiro","luz"],epilepsia:["epilepsia","crise","convulsao","convulsão","ausencia","ausência","desmaio","olhar parado"],cefaleia:["cefaleia","cabeça","cabeca","dor","enxaqueca","vomito","vômito"],autonomia:["autonomia","avd","higiene","banho","vestir","alimentar","desfralde","fralda"],risco:["risco","autolesao","autolesão","suicida","não quer viver","nao quer viver","se machucar"],medicacao:["medicacao","medicação","remedio","remédio","metilfenidato","ritalina","concerta","venvanse","risperidona","aripiprazol","melhora","pos medicacao","pós medicação","efeito colateral","colateral","tratamento","resposta ao tratamento","reavaliacao","reavaliação","dose"]};
+const BANKS=["banco-escalas.html","banco-escalas-lote1.html","banco-escalas-lote2-80.html","banco-escalas-lote3-100.html","banco-escalas-lote4-200.html","banco-escalas-lote5-90.html"];
+const STATE_KEY='neuroped_filtro_state_v1';
+// memória POR CRIANÇA: cada criança lembra a própria queixa/idade (sem repetir,
+// sem herdar contexto de outra). Sem criança ativa → chave global (legado).
+function stateKey(){try{var c=window.NPStore&&window.NPStore.active&&window.NPStore.active();return c&&c.id?STATE_KEY+':'+c.id:STATE_KEY;}catch(e){return STATE_KEY;}}
+function loadState(){try{return JSON.parse(localStorage.getItem(stateKey())||'{}')}catch(e){return{}}}
+function saveState(){try{localStorage.setItem(stateKey(),JSON.stringify({idade:document.getElementById('idade').value,queixaLivre:document.getElementById('queixaLivre').value,respondente:document.getElementById('respondente').value,sensibilidade:document.getElementById('sensibilidade').value,selected:[...selected]}))}catch(e){}}
+function restoreState(){const s=loadState();if(s.idade)document.getElementById('idade').value=s.idade;if(s.queixaLivre)document.getElementById('queixaLivre').value=s.queixaLivre;if(s.respondente)document.getElementById('respondente').value=s.respondente;if(s.sensibilidade)document.getElementById('sensibilidade').value=s.sensibilidade;(s.selected||[]).forEach(id=>{selected.add(id);const c=chips.querySelector('button[data-tag="'+id+'"]');if(c){c.classList.add('active');c.setAttribute('aria-pressed','true')}})}
+function showPatient(){const bar=document.getElementById('filtroPatientBar');if(!bar)return;const p=(window.NeuroPedScales&&window.NeuroPedScales.patient)?window.NeuroPedScales.patient():null;if(p&&(p.code||p.name)){bar.style.display='block';bar.textContent='Filtrando para o paciente: '+(p.name||p.code||'—')+(p.code&&p.name?' · código '+p.code:'')}else bar.style.display='none'}
+let INDEX=[],selected=new Set(),LAST_ROWS=[];const chips=document.getElementById("chips");QUICK.forEach(([id,label,emoji])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.dataset.tag=id;c.setAttribute('role','switch');c.setAttribute('aria-pressed','false');c.setAttribute('aria-label',label);c.innerHTML='<span class="ce" aria-hidden="true">'+(emoji||'🔎')+'</span><span class="cl">'+label+'</span>';c.onclick=()=>{const on=!selected.has(id);if(on){selected.add(id);c.classList.remove('npBounce');void c.offsetWidth;c.classList.add('npBounce')}else{selected.delete(id)}c.classList.toggle("active",on);c.setAttribute('aria-pressed',on?'true':'false');saveState();run()};chips.appendChild(c)});/* chips de IDADE (clique único, sem digitar) */
+const AGES=[["0–2 anos","18 meses"],["3–5 anos","4 anos"],["6–11 anos","9 anos"],["12–17 anos","15 anos"],["18+","20 anos"]];
+const ageBox=document.getElementById("ageChips");const idadeEl=document.getElementById("idade");
+function reflectAge(){const v=idadeEl.value;[].forEach.call(ageBox.querySelectorAll("button"),function(b){const on=b.dataset.val===v;b.classList.toggle("active",on);b.setAttribute("aria-pressed",on?"true":"false")})}
+AGES.forEach(function(a){const b=document.createElement("button");b.type="button";b.className="chip";b.dataset.val=a[1];b.setAttribute("role","switch");b.setAttribute("aria-pressed","false");b.innerHTML='<span class="cl">'+a[0]+'</span>';b.onclick=function(){idadeEl.value=(idadeEl.value===a[1])?"":a[1];b.classList.remove('npBounce');void b.offsetWidth;b.classList.add('npBounce');reflectAge();saveState();run()};ageBox.appendChild(b)});
+var _cl=document.getElementById("clear");if(_cl)_cl.onclick=clearForm;
+var _pt=document.getElementById('printTop');if(_pt)_pt.onclick=printTop;
+var _et=document.getElementById('exportTop');if(_et)_et.onclick=exportTop;
+var _ss=document.getElementById('scaleSearch'),_sst;if(_ss)_ss.addEventListener('input',function(){clearTimeout(_sst);_sst=setTimeout(function(){runSearch(_ss.value)},130)});
+var _all=document.getElementById('allScales');if(_all)_all.onclick=function(){var s=document.getElementById('scaleSearch');if(s){try{s.scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}s.focus();}};
+reflectAge();showPatient();
+/* Perfil da Criança: se há criança ativa e nenhuma idade escolhida, pré-seleciona a faixa dela */
+function npApplyActiveChild(){try{if(window.NPStore){var c=window.NPStore.active();if(c&&!idadeEl.value){var band=window.NPStore.ageBand(c);if(band){idadeEl.value=band;reflectAge();}}}}catch(e){}}
+/* restaura a memória POR CRIANÇA só depois que a espinha (np-store, defer) está pronta —
+   senão a chave cairia na global. Restaura queixa/idade da criança e mostra os 3 resultados. */
+function npInit(){try{restoreState();reflectAge();npApplyActiveChild();reflectAge();showPatient();if(INDEX.length)run();}catch(e){}}
+if(window.NPStore){npInit();}else{window.addEventListener('DOMContentLoaded',npInit);}window.addEventListener('storage',showPatient);
+async function boot(){let base=[];try{const r=await fetch("./scales-index.json",{cache:"no-store"});base=await r.json()}catch(e){}const editorial=window.NEUROPED_EDITORIAL_SCALES||[];const map=new Map();[...base,...editorial].forEach(s=>{if(s&&s.id)map.set(s.id,normalizeScale(s))});INDEX=[...map.values()];document.getElementById("statCount").textContent=INDEX.length;var __st=window.NEUROPED_CATALOG_STATS;document.getElementById("summary").textContent=INDEX.length?((__st?(__st.curados+" autorais distintos · "+__st.variacoes+" variações por faixa/respondente · "+__st.oficiais+" fontes oficiais catalogadas · "+__st.dominios+" domínios. "):"")+"Preencha idade e queixa."):"Falha ao carregar catálogo.";run()}boot();
+function normalizeScale(s){if(!s.audience&&s.respondent){s.audience=(s.respondent[0]==='pais'?'familia':s.respondent[0])}if(!s.audience_label)s.audience_label=s.audience||'Instrumento';if(!s.emoji){const m=(s.title||'').match(/^\S+/);s.emoji=m?m[0]:'📋'}if(!s.symptoms)s.symptoms=(s.complaints||[]).slice(0,4);if(!s.plain_questions)s.plain_questions=["O sinal aparece com frequência?","Isso atrapalha rotina ou escola?","Houve piora recente?","Melhora com apoio ou rotina?","Precisa de avaliação complementar?"];return s}
+function clearForm(){selected.clear();document.querySelectorAll(".chip").forEach(c=>{c.classList.remove("active");c.setAttribute('aria-pressed','false')});["idade","queixaLivre"].forEach(id=>document.getElementById(id).value="");document.getElementById("respondente").value="";document.getElementById("results").innerHTML="";document.getElementById("package").innerHTML="";var __tri=document.getElementById("triangulacao");if(__tri)__tri.innerHTML="";var __rf=document.getElementById("redFlags");if(__rf)__rf.innerHTML="";document.getElementById("summary").textContent="Preencha idade e queixa para gerar recomendações.";saveState()}
+function currentTop(){if(LAST_ROWS&&LAST_ROWS.length)return LAST_ROWS;if(!INDEX.length)return[];const age=months(document.getElementById("idade").value);const comp=detect();const resp=document.getElementById("respondente").value;const mode=document.getElementById("sensibilidade").value;const text=norm(document.getElementById("queixaLivre").value);return INDEX.map(s=>scoreScale(s,comp,age,resp,mode,text)).filter(r=>!/lote|banco completo/i.test(r.title||"")).sort((a,b)=>b.score-a.score).slice(0,3)}
+function topAsText(top){const p=(window.NeuroPedScales&&window.NeuroPedScales.patient)?window.NeuroPedScales.patient():{};const lines=['NeuroPed EDJ — Instrumentos recomendados pelo filtro','Data: '+new Date().toLocaleString('pt-BR')];if(p&&(p.name||p.code))lines.push('Paciente: '+(p.name||p.code)+(p.code&&p.name?' (cod. '+p.code+')':''));lines.push('Idade informada: '+(document.getElementById('idade').value||'não informada'));lines.push('Queixa: '+(document.getElementById('queixaLivre').value||'—'));lines.push('Queixas rápidas: '+([...selected].join(', ')||'nenhuma'));lines.push('');top.forEach((r,i)=>{lines.push((i+1)+'. '+r.title);lines.push('   '+(r.audience_label||'instrumento')+' · '+(r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses'))+' · '+(r.domain||''));if(r.symptoms&&r.symptoms.length)lines.push('   Sinais: '+r.symptoms.slice(0,5).join(', '));if(r.reasons&&r.reasons.length)lines.push('   Por que: '+r.reasons.join(' · '));if(r.plain_questions&&r.plain_questions.length){lines.push('   Perguntas guia:');r.plain_questions.slice(0,5).forEach(q=>lines.push('     - '+q))}lines.push('')});lines.push('Observação: sugestão por relevância, não diagnóstico. A decisão é do médico responsável.');return lines.join('\n')}
+function exportTop(){const top=currentTop();if(!top.length){alert('Preencha idade ou queixa primeiro.');return}const txt=topAsText(top);if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>{document.getElementById('summary').textContent='Recomendações copiadas pra área de transferência.'});else prompt('Selecione e copie:',txt)}
+function printTop(){const top=currentTop();if(!top.length){alert('Preencha idade ou queixa primeiro.');return}const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const p=(window.NeuroPedScales&&window.NeuroPedScales.patient)?window.NeuroPedScales.patient():{};const rows=top.map((r,i)=>'<article style="border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0"><h3 style="margin:0 0 4px;color:#7f1d1d;font-size:15px">'+(i+1)+'. '+esc(r.title)+'</h3><p style="margin:0;color:#444;font-size:12px">'+esc(r.audience_label||'instrumento')+' · '+esc(r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses'))+' · '+esc(r.domain||'')+'</p>'+(r.symptoms?'<p style="font-size:12px;color:#555;margin:6px 0">Sinais: '+r.symptoms.slice(0,5).map(esc).join(', ')+'</p>':'')+'<p style="font-size:12px;color:#555;margin:6px 0">Por que: '+esc((r.reasons||[]).join(' · ')||'—')+'</p><ol style="margin:6px 0 0 18px;padding:0;color:#333;font-size:12px">'+(r.plain_questions||[]).slice(0,5).map(q=>'<li>'+esc(q)+'</li>').join('')+'</ol></article>').join('');const html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>NeuroPed — Instrumentos recomendados</title><style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;line-height:1.5}h1{color:#7f1d1d;font-size:20px;margin:0 0 6px}.box{border:1px solid #ddd;background:#fafafa;padding:10px;border-radius:8px;margin:8px 0;font-size:13px}.warn{font-size:11px;color:#555;margin-top:18px;border-top:1px solid #ddd;padding-top:8px}@media print{body{padding:14mm}}</style></head><body><h1>Instrumentos recomendados</h1><div class="box"><b>Paciente:</b> '+esc(p.name||p.code||'—')+(p.code&&p.name?' &middot; <b>Código:</b> '+esc(p.code):'')+' &middot; <b>Data:</b> '+esc(new Date().toLocaleString('pt-BR'))+'<br><b>Idade:</b> '+esc(document.getElementById('idade').value||'—')+' &middot; <b>Queixa:</b> '+esc(document.getElementById('queixaLivre').value||'—')+' &middot; <b>Queixas rápidas:</b> '+esc([...selected].join(', ')||'nenhuma')+'</div>'+rows+'<div class="warn">Sugestão por relevância, baseada no filtro. Não é diagnóstico. A decisão é do médico responsável.</div></body></html>';printViaIframe(html)}
+function printViaIframe(html){try{var old=document.getElementById('npFiltroPrintFrame');if(old&&old.parentNode)old.parentNode.removeChild(old);var f=document.createElement('iframe');f.id='npFiltroPrintFrame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';document.body.appendChild(f);var fired=false;function doPrint(){if(fired)return;fired=true;try{f.contentWindow.focus();f.contentWindow.print()}catch(e){popupPrint(html)}}f.onload=function(){setTimeout(doPrint,120)};var doc=f.contentWindow.document;doc.open();doc.write(html);doc.close();setTimeout(doPrint,600)}catch(e){popupPrint(html)}}
+function popupPrint(html){var w=window.open('','_blank');if(w){w.document.open();w.document.write(html);w.document.close();setTimeout(function(){try{w.focus();w.print()}catch(e){}},250);return}alert('Impressão bloqueada pelo navegador. Libere os pop-ups deste site ou use "Exportar pra laudo".')}
+function norm(s){return(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ")}function months(s){const t=norm(s);const m=t.match(/\d+([,.]\d+)?/);if(!m)return null;const n=parseFloat(m[0].replace(",","."));if(t.includes("mes"))return Math.round(n);if(t.includes("ano")||t.match(/\d+a/))return Math.round(n*12);return n>24?Math.round(n*12):Math.round(n)}function lev(a,b){const m=[];for(let i=0;i<=b.length;i++)m[i]=[i];for(let j=0;j<=a.length;j++)m[0][j]=j;for(let i=1;i<=b.length;i++)for(let j=1;j<=a.length;j++)m[i][j]=b[i-1]==a[j-1]?m[i-1][j-1]:Math.min(m[i-1][j-1]+1,m[i][j-1]+1,m[i-1][j]+1);return m[b.length][a.length]}function fuzzy(text,word){if(!word||word.length<5)return false;return text.split(/\s+/).some(p=>lev(p,word)<=1||(word.length>7&&lev(p,word)<=2))}
+function detect(){const text=norm(document.getElementById("queixaLivre").value);const found=new Set(selected);Object.entries(SYN).forEach(([tag,words])=>{if(words.some(w=>text.includes(norm(w))||fuzzy(text,norm(w))))found.add(tag)});return[...found]}
+function ageScore(age,s,mode){if(age===null)return 8;const a=s.age_min_months??0,b=s.age_max_months??240;if(age>=a&&age<=b)return 32;const margin=mode==="muito-alta"?36:18;if(age>=a-margin&&age<=b+margin)return 16;return mode==="precisa"?-24:-8}
+const VIEWS={familia:{icon:'👪',label:'Heterorrelato — Família'},escola:{icon:'🏫',label:'Heterorrelato — Escola'},auto:{icon:'🧒',label:'Autorrelato — criança/adolescente'},direto:{icon:'🧩',label:'Teste direto com a criança'}};
+function viewOf(s){const a=(s.audience||'').toLowerCase();const resp=((s.respondent||[]).join(' ')+' '+a).toLowerCase();const t=norm((s.title||'')+' '+(s.domain||'')+' '+(s.audience_label||'')+' '+((s.keywords||[]).join(' '))+' '+((s.symptoms||[]).join(' ')));
+  // 1) audiência explícita
+  if(a==='autoteste'||/autorrelato|autorelato|autoteste|\bself\b/.test(resp))return'auto';
+  if(a==='escola'||/escola|professor/.test(resp))return'escola';
+  if(s.direct_test||a==='clinico'||a==='direct'||a==='terapeuta')return'direto';
+  // 2) heurística por conteúdo quando a audiência é família/genérica
+  if(/escola|professor|aprendiz|alfabetiz|leitura|escrita|matematica|calculo|sala de aula|rendimento|caderno|dever|pedagog/.test(t))return'escola';
+  if(/teste direto|tarefa|aplica|observa direta|nomeacao|nomeação|repetir|memoria de trabalho|prova|desempenho|fluencia|fluência|cognic|cogniç/.test(t))return'direto';
+  if(/autorrelato|adolescente|autoestima|como voce se sente|sentimento|humor|ansiedade|autopercep/.test(t)&&((s.age_min_months||0)>=120))return'auto';
+  return'familia'}
+function respMatch(resp,s){if(!resp)return null;const v=viewOf(s);if(resp==='direto')return v==='direto';if(resp==='autoteste')return v==='auto';if(resp==='familia')return v==='familia';if(resp==='escola')return v==='escola';return s.audience===resp}
+// CONSTRUTOS clínicos (conhecimento factual): mapeia cada queixa aos construtos
+// relacionados, para o filtro raciocinar além da tag literal.
+const CONSTRUCTS={
+  tea:['social','comunicacao','linguagem','sensorial','rigidez','rotina','contato visual','interacao','estereotipia'],
+  fala:['linguagem','comunicacao','pragmatica','vocabulario','fonologia','gestos'],
+  tdah:['atencao','funcoes executivas','impulsividade','hiperatividade','organizacao','memoria de trabalho'],
+  comportamento:['regulacao','oposicao','irritabilidade','frustracao','limite'],
+  agressividade:['regulacao','comportamento','impulsividade','crise','heteroagressividade','autolesao'],
+  ansiedade:['medo','evitacao','separacao','regulacao emocional','somatizacao','fobia'],
+  humor:['tristeza','isolamento','regulacao emocional','energia','desanimo'],
+  escola:['aprendizagem','leitura','escrita','matematica','funcoes executivas','atencao'],
+  sensorial:['sensorial','tea','regulacao','seletividade','textura','barulho'],
+  motor:['coordenacao','marcha','equilibrio','motor fino','motor grosso','quedas'],
+  sono:['rotina','regulacao','irritabilidade','despertares'],
+  autonomia:['avd','adaptativo','funcional','suporte','higiene'],
+  alimentacao:['seletividade','sensorial','textura','recusa','mastigacao'],
+  rigidez:['flexibilidade','funcoes executivas','rotina','tea','interesses restritos'],
+  epilepsia:['crise','convulsao','ausencia','olhar parado'],
+  risco:['autolesao','suicida','humor','regulacao emocional']
+};
+function expandConstructs(comp){var out={};(comp||[]).forEach(function(t){var c=CONSTRUCTS[norm(t)];if(c)c.forEach(function(x){out[norm(x)]=1})});return Object.keys(out);}
+// DIFERENCIAIS clínicos (conhecimento factual, não diagnóstico): para cada queixa,
+// quais quadros mimetizam/coexistem e merecem ser CRUZADOS na avaliação. Apoio à
+// decisão — nunca fecha hipótese. Só relações consagradas em neuropediatria.
+const DIFFERENTIALS={
+  tdah:[['ansiedade','desatenção pode ser preocupação/ansiedade'],['sono','privação de sono mimetiza desatenção e agitação'],['tea','desatenção pode ser desconexão social do TEA'],['escola','transtorno de aprendizagem gera desatenção secundária']],
+  tea:[['fala','atraso de linguagem isolado × TEA — pesar o prejuízo social'],['tdah','sobreposição de atenção/regulação social'],['autonomia','avaliar perfil adaptativo (atraso global × específico)']],
+  fala:[['tea','triar TEA quando há prejuízo social/pragmático'],['autonomia','atraso global × específico de linguagem']],
+  escola:[['tdah','desatenção como causa do baixo rendimento'],['ansiedade','ansiedade de desempenho/recusa'],['fala','linguagem subjacente à leitura/escrita']],
+  comportamento:[['ansiedade','oposição pode mascarar ansiedade'],['humor','irritabilidade do humor'],['tdah','impulsividade alimentando a oposição']],
+  agressividade:[['risco','avaliar autolesão e segurança — prioridade'],['sensorial','sobrecarga sensorial desencadeia crise'],['ansiedade','crise como descarga ansiosa']],
+  ansiedade:[['humor','ansiedade e depressão coocorrem'],['escola','recusa escolar'],['tdah','agitação ansiosa × hiperatividade']],
+  humor:[['risco','rastrear risco quando há tristeza/isolamento'],['ansiedade','comorbidade frequente']],
+  sono:[['tdah','privação de sono imita TDAH'],['epilepsia','eventos noturnos — diferenciar de crise'],['ansiedade','insônia ansiosa']],
+  sensorial:[['tea','perfil sensorial frequente no TEA'],['tdah','busca sensorial × agitação']],
+  alimentacao:[['sensorial','seletividade de base sensorial'],['tea','seletividade no contexto do TEA']],
+  motor:[['autonomia','impacto funcional/atraso global'],['epilepsia','quedas — diferenciar de crise atônica']],
+  epilepsia:[['sono','eventos paroxísticos do sono'],['tdah','ausências confundidas com desatenção']],
+  cefaleia:[['ansiedade','somatização/cefaleia tensional'],['humor','dor associada a sofrimento emocional']],
+  autonomia:[['tea','perfil adaptativo no TEA'],['motor','atraso global com componente motor']],
+  risco:[['humor','avaliar humor subjacente'],['ansiedade','avaliar ansiedade subjacente']]
+};
+var QLABEL={};QUICK.forEach(function(q){QLABEL[q[0]]={label:q[1],emoji:q[2]}});
+// Painel de raciocínio: fenótipo inferido + diferenciais a cruzar. Compacto, recolhível,
+// sempre rotulado como apoio à decisão (não fecha diagnóstico).
+function renderReasoning(comp){var el=document.getElementById('reasoning');if(!el)return;
+  if(!comp||!comp.length){el.innerHTML='';el.hidden=true;return;}
+  var sel={};comp.forEach(function(t){sel[t]=1});
+  var seen={},diffs=[];
+  comp.forEach(function(t){(DIFFERENTIALS[t]||[]).forEach(function(d){var tag=d[0];if(sel[tag]||seen[tag])return;seen[tag]=1;diffs.push({tag:tag,why:d[1]});});});
+  diffs=diffs.slice(0,4);
+  var cons=expandConstructs(comp).slice(0,6);
+  var qz=comp.map(function(t){return (QLABEL[t]?QLABEL[t].label:t)}).join(' · ');
+  var diffHtml=diffs.length?('<div class="rz-diff"><span class="rz-lab">Diferenciais a cruzar</span><ul>'+diffs.map(function(d){var m=QLABEL[d.tag]||{label:d.tag,emoji:'🔎'};return '<li><b>'+m.emoji+' '+esc(m.label)+'</b> — '+esc(d.why)+'</li>'}).join('')+'</ul></div>'):'';
+  var consHtml=cons.length?('<p class="mini" style="margin:6px 0 0"><b>Construtos relacionados:</b> '+cons.map(esc).join(', ')+'</p>'):'';
+  var exHtml='';
+  if(window.NeuroPedTaxonomy){comp.slice(0,2).forEach(function(t){var fe=window.NeuroPedTaxonomy.functionalExamples(t);if(!fe)return;var m=QLABEL[t]||{label:t,emoji:fe.emoji};exHtml+='<div class="rz-diff"><span class="rz-lab">'+(fe.emoji||'')+' Observar — '+esc(m.label)+'</span><ul>'+(fe.observe||[]).slice(0,3).map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul></div>';});}
+  el.hidden=false;
+  el.innerHTML='<details class="reasoning-panel" open><summary>🧠 Raciocínio clínico do caso</summary>'+
+    '<p class="mini" style="margin:8px 0 0"><b>Fenótipo da queixa:</b> '+esc(qz)+'</p>'+consHtml+exHtml+diffHtml+
+    '<p class="src">Apoio à decisão, não diagnóstico. Os diferenciais são quadros que mimetizam ou coexistem — cruze com a avaliação clínica antes de concluir.</p></details>';
+}
+function scoreScale(s,comp,age,resp,mode,text){let score=0,reasons=[];const words=[...(s.complaints||[]),...(s.keywords||[]),...(s.symptoms||[]),(s.title||""),(s.domain||"")].map(norm);
+  // queixa casa por palavra/tag completa (evita substring frouxa tipo "tea" em "roteamento")
+  const hits=comp.filter(t=>{const nt=norm(t);return words.some(w=>w===nt||w.split(/[^a-z0-9]+/).includes(nt)||(nt.length>=4&&w.includes(nt)));});score+=hits.length*60;if(hits.length)reasons.push("queixa: "+hits.join(", "));
+  // CONSTRUTOS clínicos: a queixa ativa construtos relacionados (rigidez→flexibilidade
+  // executiva, agressividade→regulação…) — o filtro pensa como neuropediatra. Peso menor
+  // que a queixa direta. Conhecimento clínico factual, não métrica inventada.
+  const cwords=expandConstructs(comp);
+  const cHits=cwords.filter(function(t){return words.some(function(w){return w===t||w.split(/[^a-z0-9]+/).includes(t)||(t.length>=4&&w.includes(t))})});
+  if(cHits.length){score+=Math.min(cHits.length*15,50);if(!hits.length)reasons.push("construto relacionado: "+cHits.slice(0,3).join(", "));}
+  // texto livre: só palavras significativas (>=4 chars) e casadas como token
+  const tokens=(text||"").split(/[^a-z0-9]+/).filter(t=>t.length>=4);
+  const direct=tokens.filter(t=>words.some(w=>w.split(/[^a-z0-9]+/).includes(t)||w.includes(t))).length;score+=Math.min(direct*22,66);if(direct)reasons.push("texto livre compatível");
+  const tematico=hits.length>0||direct>0||cHits.length>0;
+  const buscaVazia=comp.length===0&&!text;
+  // PATAMAR: escala temática fica num nível inalcançável pela não-temática.
+  // priority entra só como DESEMPATE (peso pequeno), nunca como motor do score.
+  if(tematico) score+=1000;
+  score+=Math.min(Number(s.priority||50),200)/20; // desempate: 0..10 pts
+  // idade só pontua quando há afinidade temática (não infla escala irrelevante)
+  const as=ageScore(age,s,mode);if(tematico){score+=as;if(as>0)reasons.push("idade compatível/ampliada");}
+  // ENGINE CLÍNICA: idade como GATE multiplicador (fora da faixa validada → some
+  // do topo). Segurança clínica real — não inventa métrica, usa a faixa que existe.
+  if(tematico&&age!==null){
+    var _a=s.age_min_months||0,_b=s.age_max_months||240,_m=18;
+    var _mul=(age>=_a&&age<=_b)?1:(age>=_a-_m&&age<=_b+_m)?0.5:0.08;
+    score*=_mul;
+    reasons.push(_mul===1?"idade adequada":(_mul<0.5?"⚠ fora da faixa etária":"faixa ampliada"));
+    // modalidade × idade: autorrelato exige leitura/insight → impróprio p/ pré-escolar
+    if(viewOf(s)==="auto"&&age<96){score*=0.3;reasons.push("autorrelato pouco viável nesta idade");}
+  }
+  // tier por SINAL REAL (sem fabricar sensibilidade): fonte oficial validada pontua +
+  if(s.official_catalog||s.official_url){score+=40;}
+  const rm=respMatch(resp,s);if(rm===true){if(tematico){score+=18;reasons.push("visão compatível");}}else if(rm===false&&mode==="precisa")score-=10;
+  // busca vazia: mostra catálogo por priority; com queixa/texto, só temáticas passam o threshold
+  if(buscaVazia) score+=Number(s.priority||50)/4;
+  if(/lote|banco completo/i.test(s.title||""))score-=80;return{...s,score,reasons}}
+function renderTriangulation(rows){const el=document.getElementById('triangulacao');if(!el)return;const real=rows.filter(r=>!/lote|banco completo/i.test(r.title||''));if(real.length<2){el.innerHTML='';return}const best={};real.forEach(r=>{const v=viewOf(r);if(!best[v]||r.score>best[v].score)best[v]=r});const picks=Object.keys(best).map(v=>({v,r:best[v]})).sort((a,b)=>b.r.score-a.r.score).slice(0,3);if(picks.length<1){el.innerHTML='';return}var nota=picks.length>=3?'Um instrumento por ângulo (família × escola × criança), para cruzar olhares e reduzir o viés de um único informante.':'Para este caso há '+picks.length+' visão(ões) distinta(s) entre os instrumentos disponíveis — as demais perspectivas podem ser cobertas pela entrevista clínica.';el.innerHTML='<h3 style="margin-top:6px">🔺 Visões distintas recomendadas ('+picks.length+')</h3><p class="mini">'+nota+'</p>'+picks.map(p=>{const r=p.r,vm=VIEWS[p.v]||{icon:'📋',label:'Instrumento'};const pct=Math.max(0,Math.min(99,Math.round(r.score)));const open=r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Fonte oficial ↗</a>'):('<a class="btn" href="./escala.html?id='+encodeURIComponent(r.id)+'">▶ Responder</a>');return '<article class="result-card top"><div><span class="badge purple">'+vm.icon+' '+vm.label+'</span><h3>'+r.title+'</h3><p class="mini">'+(r.audience_label||'instrumento')+' · '+(r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses'))+' · '+(r.domain||'')+'</p><div class="toolbar">'+open+'<button class="ghost" onclick="copyRec(\''+r.id+'\')">Copiar</button></div></div><div class="score" style="--p:'+pct+'"><span>'+pct+'</span><small>prior.</small></div></article>'}).join('')}
+/* BUSCA EM TODO O CATÁLOGO — acha QUALQUER escala (nome/sintoma) e abre no runner.
+   Unifica "achar escala + aplicar teste" na mesma tela, com a estética do filtro. */
+function runSearch(raw){
+  var sEl=document.getElementById('scaleSearch'); if(!sEl)return;
+  var q=norm(raw||sEl.value);
+  if(q.length<2){ run(); return; }
+  if(!INDEX.length)return;
+  var toks=q.split(/\s+/).filter(Boolean);
+  var rows=INDEX.map(function(s){
+    var title=norm(s.title||''), hay=norm([s.title,s.short_title,(s.symptoms||[]).join(' '),(s.keywords||[]).join(' '),(s.complaints||[]).join(' '),s.domain,s.audience_label].join(' '));
+    var score=0; toks.forEach(function(t){ if(title.indexOf(t)!==-1)score+=4; else if(hay.indexOf(t)!==-1)score+=1; });
+    return {s:s,score:score};
+  }).filter(function(x){return x.score>0 && !/lote|banco completo/i.test(x.s.title||'')})
+    .sort(function(a,b){return b.score-a.score}).slice(0,12).map(function(x){return x.s});
+  ["redFlags","package","triangulacao","reasoning"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML="";});
+  var sum=document.getElementById("summary");
+  if(rows.length){ if(sum)sum.innerHTML='<strong>'+rows.length+'</strong> escala'+(rows.length>1?'s':'')+' para "'+esc(q)+'" — toque para responder:'; document.getElementById("results").innerHTML=rows.map(function(r){return cardLite(r)}).join(""); }
+  else { if(sum)sum.textContent='Nada encontrado para "'+esc(q)+'". Tente outro termo ou use idade + queixa.'; document.getElementById("results").innerHTML=""; }
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])})}
+function run(){var __s=document.getElementById('scaleSearch'); if(__s&&norm(__s.value).length>=2){runSearch(__s.value);return;} if(!INDEX.length)return;
+  const age=months(document.getElementById("idade").value);
+  const comp=detect();
+  var sum=document.getElementById("summary");
+  if(!comp.length && age===null){ if(sum)sum.textContent="Selecione idade e queixa ao lado."; document.getElementById("results").innerHTML=""; var _rz=document.getElementById("reasoning");if(_rz){_rz.innerHTML="";_rz.hidden=true;} return; }
+  // só escalas temáticas (patamar 500+), ordenadas por relevância; exclui lotes/bancos
+  var rows=INDEX.map(function(s){return scoreScale(s,comp,age,"","alta","")}).filter(function(r){return r.score>=500}).sort(function(a,b){return b.score-a.score});
+  if(!rows.length) rows=INDEX.map(function(s){return scoreScale(s,comp,age,"","muito-alta","")}).filter(function(r){return r.score>=300}).sort(function(a,b){return b.score-a.score});
+  rows=rows.filter(function(r){return !/lote|banco completo/i.test(r.title||"")}).slice(0,3);
+  LAST_ROWS=rows;
+  // fila de recomendadas → o runner encadeia "próxima escala" (triangulação sem voltar ao menu)
+  try{localStorage.setItem('np:reco',JSON.stringify(rows.map(function(r){return {id:r.id,title:r.title}})));}catch(e){}
+  // saída enxuta: SÓ as 3 escalas. Nada de summary técnico, red flags, pacote ou bancos.
+  ["redFlags","package","triangulacao"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML=""});
+  renderReasoning(comp);
+  if(rows.length){
+    if(sum){var qz=comp.length?comp.join(", "):"caso"; var it=age===null?"":" · "+(age<24?age+" meses":Math.floor(age/12)+" anos"); var one=rows[0]?' <a class="btn" style="margin-left:8px;padding:9px 13px;vertical-align:middle" href="./escala.html?id='+encodeURIComponent(rows[0].id)+'">▶ Responder a 1ª agora</a>':''; sum.innerHTML="Para <strong>"+qz+"</strong>"+it+" — as 3 mais indicadas:"+one;}
+    document.getElementById("results").innerHTML=rows.map(function(r,i){return card(r,i)}).join("");
+  } else {
+    if(sum)sum.textContent="Sem instrumento específico para esta combinação. Tente outra queixa.";
+    document.getElementById("results").innerHTML="";
+  }
+}
+function renderRedFlags(comp){const el=document.getElementById('redFlags');if(!el)return;const DB=window.NEUROPED_RED_FLAGS||{};const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const seen=new Set();const urg=[],pri=[];(comp||[]).forEach(tag=>{const d=DB[tag];if(!d)return;(d.urgente||[]).forEach(s=>{const k='u:'+s;if(!seen.has(k)){seen.add(k);urg.push(s)}});(d.prioritario||[]).forEach(s=>{const k='p:'+s;if(!seen.has(k)){seen.add(k);pri.push(s)}})});if(!urg.length&&!pri.length){el.innerHTML='';return}const grpU=urg.length?'<div class="grp"><span class="lab u">⚠️ Avaliação imediata</span><ul>'+urg.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul></div>':'';const grpP=pri.length?'<div class="grp"><span class="lab p">Prioritário — não postergar</span><ul>'+pri.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul></div>':'';el.innerHTML='<div class="rf'+(urg.length?' has-u':'')+'"><h3>🚩 Sinais de alerta para as queixas detectadas</h3>'+grpU+grpP+'<p class="src">Apoio à decisão, não diagnóstico. Diante de qualquer destes sinais, priorize avaliação profissional presencial.</p></div>'}
+function renderPackage(rows,comp){document.getElementById("package").innerHTML=`<h3>Pacote mínimo recomendado</h3><p>${rows.slice(0,5).map(r=>r.emoji+' '+r.short_title).join(' · ')||'preencher idade e queixa'}</p><p class="mini">Use o Top 5 como organização inicial, não como diagnóstico automático.</p>`}
+function renderRows(rows){const top=rows.slice(0,10).map((r,i)=>card(r,i)).join("");const banks=BANKS.map((p,i)=>`<article class="result-card bank"><div><h3>Banco complementar ${i?'- Lote '+i:'- Base inicial'}</h3><p class="mini">Consulta ampla. Não substitui os instrumentos específicos priorizados acima.</p><div class="path"><a href="./${p}">${p}</a></div></div><div class="score" style="--p:0"><small>base</small></div></article>`).join("");document.getElementById("results").innerHTML=top+banks||'<div class="notice">Sem resultados.</div>'}
+function copyRec(id){const r=INDEX.find(x=>x.id===id);if(!r)return;const txt=`${r.title}\n${r.audience_label} · ${r.age_band} · ${r.domain}\nSintomas: ${(r.symptoms||[]).join(', ')}\nPerguntas:\n- ${(r.plain_questions||[]).join('\n- ')}`;navigator.clipboard?.writeText(txt)}
+/* card COMPACTO para resultados de busca (clareza + leveza: sem lista de perguntas) */
+function cardLite(r){return`<article class="result-card"><div><h3 style="margin-bottom:7px">${r.title}</h3><span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${(r.symptoms||[]).length?`<div class="symptoms">${(r.symptoms||[]).slice(0,4).map(s=>`<span>${s}</span>`).join('')}</div>`:''}<div class="toolbar" style="margin-top:9px">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte ↗</a>'):('<a class="btn" href="./escala.html?id='+encodeURIComponent(r.id)+'">▶ Responder</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar</button></div></div></article>`}
+function card(r,i,sub){return`<article class="result-card ${i===0?'top':''}"><div><h3>${r.title}</h3>${(window.NeuroPedTaxonomy?(function(){var k=window.NeuroPedTaxonomy.classify(r);return '<span class="badge" style="background:rgba(109,106,245,.18);color:#a9a4ff" title="'+esc(k.label)+'">'+k.emoji+' '+esc(k.label)+'</span>'})():'')}<span class="badge ok">${r.audience_label||'instrumento'}</span><span class="badge info">${r.age_band||((r.age_min_months||0)+'–'+(r.age_max_months||240)+' meses')}</span><span class="badge purple">${r.domain||'Domínio clínico'}</span>${r.official_catalog?'<span class="badge gold">Fonte oficial</span>':''}${r.status?'<span class="badge info" style="background:rgba(231,201,139,.18);color:#7a5d12">'+r.status+'</span>':''}<div class="symptoms">${(r.symptoms||[]).slice(0,5).map(s=>`<span>${s}</span>`).join('')}</div><details class="qx"><summary>Ver perguntas-guia</summary><ol class="questions">${(r.plain_questions||[]).slice(0,5).map(q=>`<li>${q}</li>`).join('')}</ol></details><p class="mini"><strong>Por que apareceu:</strong> ${(r.reasons||[]).join(' · ')||'triagem ampla por idade e queixa'}</p><p class="mini"><strong>Limite:</strong> ${r.not_normative_disclaimer||'Instrumento de apoio; não substitui avaliação.'}</p>${(function(){try{var ev=window.NeuroPedMeta&&NeuroPedMeta.evidence(r.id);if(!ev)return '';var s=(ev.validation_sources||[])[0]||{};return s.citation?('<p class="mini"><strong>📚 Evidência:</strong> '+esc(s.citation)+(s.pmid?(' · PMID '+esc(s.pmid)):'')+'</p>'):'';}catch(e){return ''}})()}<div class="toolbar">${r.official_url?('<a class="btn" target="_blank" rel="noopener" href="'+r.official_url+'">Abrir fonte oficial ↗</a>'):('<a class="btn" href="./escala.html?id='+encodeURIComponent(r.id)+'">▶ Responder e gerar laudo</a>')}<button class="ghost" onclick="copyRec('${r.id}')">Copiar recomendação</button></div></div><div class="rank rank-${i<3?i:'x'}"><b>${['🥇','🥈','🥉'][i]||(i+1)}</b><small>${sub||['Ouro clínico','Prata','Bronze'][i]||'indicada'}</small></div></article>`}
+</script>
+<script src="./scales-taxonomy.js" defer></script>
+<script src="./clinical-meta.js" defer></script>
+<script src="./np-store.js" defer></script>
+<script src="./scales-taxonomy.js" defer></script>
+<script src="./scales-medals.js" defer></script>
+<script src="./scales-why-card.js" defer></script>
+<script src="./scales-context-chips.js" defer></script>
+<script src="./scales-enriched-questions.js" defer></script>
+<script src="./scales-filter-integration.js" defer></script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./np-frame.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0e22">
+<title>Guia de Lançamento — NeuroPed (uso do autor)</title>
+<link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
+<style>
+:root{--bg:#0a0a16;--bg2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--soft:#928ec6;--line:rgba(169,164,255,.16);
+  --indigo:#6d6af5;--indigo-d:#4f46e5;--indigo-l:#a9a4ff;--gold:#e7c98b;--gold-d:#caa56a;--paper:rgba(124,118,210,.07);--ok:#9be7c4}
+*{box-sizing:border-box}html,body{margin:0}
+body{color:var(--ink);min-height:100vh;line-height:1.6;
+  background:radial-gradient(1100px 620px at 8% -8%,hsl(243 85% 56% / .26),transparent 60%),
+             radial-gradient(1000px 640px at 102% 2%,hsl(266 80% 56% / .22),transparent 56%),
+             linear-gradient(160deg,var(--bg),var(--bg2) 60%,var(--bg));background-attachment:fixed}
+.wrap{max-width:820px;margin:auto;padding:18px 16px 90px}
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--indigo-l);text-decoration:none;font-weight:700;font-size:14px;margin-bottom:10px}
+.hero{border-radius:24px;padding:26px;background:linear-gradient(155deg,#15143a,#221c52 55%,#15143a);border:1px solid rgba(231,201,139,.3)}
+.hero h1{font-size:clamp(26px,5vw,38px);margin:6px 0 6px;color:#fbf6ea;letter-spacing:-.02em}
+.hero p{color:#cfd0ea;margin:0;font-size:15px}
+.eyebrow{display:inline-block;text-transform:uppercase;letter-spacing:.18em;font-weight:800;font-size:10.5px;color:#241a05;background:var(--gold);padding:5px 11px;border-radius:4px}
+.bar{height:10px;border-radius:999px;background:rgba(124,118,210,.15);overflow:hidden;margin:18px 0 6px}
+.bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-d));transition:width .4s}
+.barlabel{font-size:12.5px;color:var(--muted);text-align:right}
+.phase{margin-top:26px}
+.phase > h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin:0 0 4px}
+.phase > .desc{color:var(--soft);font-size:13px;margin:0 0 12px}
+.step{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin:10px 0;display:flex;gap:13px;align-items:flex-start}
+.step input[type=checkbox]{appearance:none;width:24px;height:24px;border-radius:8px;border:2px solid var(--indigo-l);flex:0 0 auto;cursor:pointer;margin-top:1px;position:relative;transition:.2s}
+.step input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}
+.step input[type=checkbox]:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#0a2a1e;font-weight:900;font-size:15px}
+.step .body{flex:1}
+.step h3{margin:0 0 3px;font-size:16px;color:var(--ink)}
+.step.done h3{text-decoration:line-through;opacity:.6}
+.step p{margin:0;color:var(--muted);font-size:13.5px}
+.step a.go{display:inline-flex;align-items:center;gap:6px;margin-top:9px;font-weight:800;font-size:13px;text-decoration:none;color:#241a05;background:linear-gradient(180deg,var(--gold),var(--gold-d));padding:9px 14px;border-radius:11px}
+.step a.alt{color:var(--indigo-l);background:rgba(124,118,210,.10);border:1px solid var(--line)}
+.copy{margin-top:10px;background:rgba(20,18,46,.55);border:1px solid var(--line);border-radius:12px;padding:12px}
+.copy textarea{width:100%;background:transparent;border:0;color:#d8d6ef;font:13px/1.5 system-ui;resize:vertical;min-height:74px}
+.copy button{margin-top:6px;border:0;border-radius:10px;background:var(--indigo);color:#fff;font-weight:800;padding:8px 14px;cursor:pointer;font-size:13px}
+.tip{border-left:4px solid var(--gold);background:rgba(231,201,139,.1);border-radius:10px;padding:11px 14px;color:#e8dcc2;font-size:12.5px;margin-top:8px}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;line-height:1.7}
+</style>
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+</head>
+<body data-ns-shell>
+<main class="wrap">
+  <a class="back" href="./central-atalhos.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>Voltar ao app</a>
+
+  <section class="hero">
+    <span class="eyebrow">Uso do autor · roteiro privado</span>
+    <h1>Caminho do Sucesso</h1>
+    <p>O passo a passo para transformar o NeuroPed em renda real. Marque cada etapa concluída — seu progresso fica salvo neste aparelho.</p>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="barlabel" id="barlabel">0 de 0 concluído</div>
+  </section>
+
+  <!-- FASE 1 -->
+  <section class="phase">
+    <h2>Fase 1 · Abrir a porteira (1–2 dias)</h2>
+    <p class="desc">Sem isto, não há como o dinheiro entrar. É a base de tudo.</p>
+
+    <label class="step"><input type="checkbox" data-k="s1">
+      <div class="body"><h3>1. Acessar o Mercado Pago</h3>
+      <p>Cuida do pagamento (Pix + cartão) com sua conta já existente. Sem mensalidade, taxa baixa por venda. Entre em "Seu negócio" → "Link de pagamento".</p>
+      <a class="go" href="https://www.mercadopago.com.br" target="_blank" rel="noopener">Abrir Mercado Pago →</a></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s2">
+      <div class="body"><h3>2. Criar o link de pagamento "NeuroPed Pro — Acesso Integral"</h3>
+      <p>Tipo: produto digital, pagamento único. Valor: <strong>R$ 47</strong> (acesso vitalício). Pix + cartão com parcelamento. A entrega do código é <strong>manual</strong> no início (você envia após o pagamento).</p>
+      <div class="tip">Dica: use o prompt pronto em <code>docs/PROMPT_CLAUDE_CHROME.md</code> para o Claude no Chrome montar isso para você.</div></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s3">
+      <div class="body"><h3>3. Gerar os códigos de licença</h3>
+      <p>Abra o gerador (pede seu PIN), gere um lote (ex.: 50 códigos), copie os <strong>hashes</strong> para o app. Guarde os <strong>códigos</strong> para enviar a cada comprador.</p>
+      <a class="go" href="./gerar-licencas-pro.html">Abrir gerador de licenças →</a></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s4">
+      <div class="body"><h3>4. Colar o link de pagamento no app</h3>
+      <p>Copie o link do Mercado Pago e cole na variável <code>CHECKOUT_URL</code> em <code>neuroped-pro.html</code>. (Me mande o link aqui que eu configuro e testo para você.)</p>
+      <a class="go alt" href="./neuroped-pro.html">Ver página de vendas →</a></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s5">
+      <div class="body"><h3>5. Testar a compra de ponta a ponta</h3>
+      <p>Faça uma compra-teste, gere um código, digite no app e confirme que o acesso Pro libera. Só anuncie depois deste teste passar.</p></div></label>
+  </section>
+
+  <!-- FASE 2 -->
+  <section class="phase">
+    <h2>Fase 2 · Primeiras vendas (sua base regional)</h2>
+    <p class="desc">Você já tem autoridade em Petrolina. As primeiras vendas vêm de quem já te conhece.</p>
+
+    <label class="step"><input type="checkbox" data-k="s6">
+      <div class="body"><h3>6. Avisar pacientes atuais (WhatsApp)</h3>
+      <p>Mensagem pronta para enviar a famílias e grupos:</p>
+      <div class="copy"><textarea readonly>Olá! 💙 Criei o NeuroPed, uma plataforma de apoio à neuropediatria para famílias: triagens, comunicação alternativa, diário de escola e terapias — e uma biblioteca clínica completa.
+
+Conheça aqui: https://jadsonfraga.github.io/neuroped/sobre-dr-jadson.html
+
+— Dr. Jadson Fraga · Neuropediatra (CRM-PE 25227)</textarea>
+      <button data-copy>Copiar mensagem</button></div></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s7">
+      <div class="body"><h3>7. QR Code na recepção/consultório</h3>
+      <p>Gere um QR Code (gratuito em qr.io ou similar) apontando para a página "Sobre o Dr. Jadson" e deixe impresso na sala de espera.</p>
+      <a class="go alt" href="./sobre-dr-jadson.html">Ver página de autoridade →</a></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s8">
+      <div class="body"><h3>8. Primeiro post no Instagram</h3>
+      <p>Legenda pronta:</p>
+      <div class="copy"><textarea readonly>Apresento o NeuroPed 💙
+
+Uma plataforma que organiza o cuidado da criança com o desenvolvimento — para famílias, escolas e terapeutas. Triagens por idade e queixa, comunicação alternativa gratuita, diário de evolução e muito mais.
+
+Tudo funciona no celular, offline, com privacidade total.
+
+Link na bio. 🧠✨
+#neuropediatria #autismo #tdah #desenvolvimentoinfantil #petrolina</textarea>
+      <button data-copy>Copiar legenda</button></div></div></label>
+  </section>
+
+  <!-- FASE 3 -->
+  <section class="phase">
+    <h2>Fase 3 · Alcance nacional (o motor de escala)</h2>
+    <p class="desc">Pais que compartilham com pais = crescimento orgânico, de graça.</p>
+
+    <label class="step"><input type="checkbox" data-k="s9">
+      <div class="body"><h3>9. Registrar no Google Search Console</h3>
+      <p>15 minutos, grátis. Faz o Google indexar suas páginas e você aparecer nas buscas por "neuropediatra" e pelo seu nome.</p>
+      <a class="go" href="https://search.google.com/search-console" target="_blank" rel="noopener">Abrir Search Console →</a></div></label>
+
+    <label class="step"><input type="checkbox" data-k="s10">
+      <div class="body"><h3>10. Postar conteúdo educativo semanal</h3>
+      <p>Use o Gerador de Cards do app para criar posts com sua marca. Conteúdo gratuito atrai → quem gosta compartilha → alguns compram o Pro. É o ciclo que escala.</p>
+      <a class="go alt" href="./gerador-cards.html">Abrir Gerador de Cards →</a></div></label>
+  </section>
+
+  <p class="footer">
+    Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · CRM-PE 25227 | RQE 17756<br>
+    Roteiro privado de lançamento — não substitui planejamento individual de negócio.
+  </p>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var KEY='np_launch_progress_v1';
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox][data-k]'));
+  var state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){state={};}
+  function reflect(){
+    var done=0;
+    boxes.forEach(function(b){
+      b.checked=!!state[b.dataset.k];
+      b.closest('.step').classList.toggle('done',b.checked);
+      if(b.checked)done++;
+    });
+    var pct=boxes.length?Math.round(done/boxes.length*100):0;
+    document.getElementById('bar').style.width=pct+'%';
+    document.getElementById('barlabel').textContent=done+' de '+boxes.length+' concluído'+(done===1?'':'s')+' · '+pct+'%';
+  }
+  boxes.forEach(function(b){
+    b.addEventListener('change',function(){
+      state[b.dataset.k]=b.checked;
+      try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+      reflect();
+    });
+  });
+  reflect();
+  // copiar textos prontos
+  [].slice.call(document.querySelectorAll('[data-copy]')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var ta=btn.previousElementSibling;
+      var txt=ta.value;
+      function ok(){var o=btn.textContent;btn.textContent='✓ Copiado!';setTimeout(function(){btn.textContent=o;},1600);}
+      if(navigator.clipboard){navigator.clipboard.writeText(txt).then(ok,function(){ta.select();document.execCommand('copy');ok();});}
+      else{ta.select();document.execCommand('copy');ok();}
+    });
+  });
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#0e0e22" />
+<title>NeuroPed — página não encontrada</title>
+<style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(135deg,#0a0a16,#0e0e22);color:#ECEAFF;display:grid;place-items:center;min-height:100vh}main{max-width:480px;padding:32px;text-align:center}h1{color:#f2dca6;margin:0 0 8px}p{color:#b6b2e6;line-height:1.6}a{display:inline-block;margin-top:16px;padding:12px 18px;border-radius:14px;background:linear-gradient(180deg,#6d6af5,#4f46e5);color:#fff;text-decoration:none;font-weight:900}</style>
+<script>
+(function () {
+  var path = window.location.pathname;
+  var basePath = path.split('/').slice(0, 2).join('/') + '/';
+  if (path !== basePath) {
+    var rest = path.substring(basePath.length);
+    window.location.replace(basePath + 'index.html#/' + rest + window.location.search);
+  } else {
+    window.location.replace(basePath);
+  }
+})();
+</script>
+<link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+</head>
+<body>
+<main>
+<h1>Redirecionando…</h1>
+<p>Você está sendo levado(a) ao NeuroPed EDJ.</p>
+<noscript>
+<p>JavaScript está desativado. Use o link abaixo para continuar:</p>
+<a href="./">Ir para o NeuroPed</a>
+</noscript>
+</main>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+</body>
+</html>

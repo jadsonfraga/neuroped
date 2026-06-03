@@ -1,0 +1,26 @@
+﻿# Dependencies
+node_modules/
+.pnpm-store/
+# Build
+dist/
+build/
+.cache/
+.vite/
+# Logs
+*.log
+# Env
+.env
+.env.local
+# IDE
+.vscode/
+.idea/
+*.swp
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+# Temp
+*.tmp
+*.bak
+# Render artifacts locais (screenshots de QA via Playwright)
+.shots/

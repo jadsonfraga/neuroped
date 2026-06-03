@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e0e22">
+<title>Testes Diretos · NeuroPed</title>
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta property="og:url" content="https://jadsonfraga.github.io/neuroped/testes-diretos.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Testes diretos · NeuroPed">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/testes-diretos.html">
+<meta name="description" content="Mini-testes diretos aplicados na criança: memória operacional, atenção visual, inibição e consciência fonológica em formato lúdico.">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./app-skin.css">
+<link rel="stylesheet" href="./animations.css">
+<style>
+:root{
+  --bg:#08080f; --bg2:#0e0e1f; --ink:#F2F0FF; --muted:#a9a4d8; --soft:#8b86b8;
+  --teal:#7c79ff; --indigo:#5b54e8; --gold:#e7c98b; --gold2:#caa56a;
+  --line:rgba(160,154,255,.14); --line2:rgba(160,154,255,.22);
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:"Inter",system-ui,-apple-system,sans-serif;line-height:1.55;
+  background:radial-gradient(1200px 700px at 6% -10%,hsl(248 90% 60%/.20),transparent 55%),
+             radial-gradient(1100px 720px at 104% 0%,hsl(270 85% 62%/.18),transparent 52%),
+             radial-gradient(900px 900px at 50% 120%,hsl(210 90% 56%/.10),transparent 60%),
+             linear-gradient(165deg,var(--bg),var(--bg2) 55%,var(--bg));
+  background-attachment:fixed;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:auto;padding:22px 16px 96px}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;margin:-22px -16px 18px;padding:13px 16px;
+  background:rgba(12,11,26,.72);backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid var(--line)}
+.topbar .back{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:13px;
+  border:1px solid var(--line2);background:rgba(124,118,210,.12);color:var(--ink);text-decoration:none;font-size:18px}
+.topbar .tt{font:700 15px "Fraunces",Georgia,serif;color:#f2dca6}
+.topbar .sub{font-size:11px;color:var(--soft);letter-spacing:.02em}
+.hero{position:relative;overflow:hidden;border:1px solid var(--line2);border-radius:24px;padding:24px;
+  background:linear-gradient(140deg,rgba(30,27,68,.92),rgba(18,16,42,.92));box-shadow:0 20px 60px -20px rgba(2,2,12,.85)}
+.hero h1{margin:8px 0 8px;font:800 clamp(24px,4vw,36px)/1.05 "Fraunces",Georgia,serif;letter-spacing:-.02em;
+  background:linear-gradient(120deg,#fff 10%,#f3ddb0 60%,#e7c98b);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:14px;max-width:60ch;margin:0}
+.kicker{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;letter-spacing:.16em;
+  color:var(--teal);font-weight:800;background:rgba(124,118,210,.14);border:1px solid var(--line2);padding:5px 11px;border-radius:999px}
+.kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399}
+
+/* Card de teste — menu */
+.tests{display:grid;gap:12px;margin-top:18px}
+.test-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;
+  background:linear-gradient(180deg,rgba(124,118,210,.10),rgba(124,118,210,.04));
+  padding:18px;display:flex;gap:14px;align-items:flex-start;cursor:pointer;
+  transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .22s,border-color .22s}
+.test-card:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:0 24px 60px -22px rgba(91,84,232,.5)}
+.test-card .te{font-size:42px;line-height:1;flex:0 0 56px;display:grid;place-items:center;
+  background:rgba(124,118,210,.10);border-radius:14px;width:64px;height:64px;border:1px solid var(--line)}
+.test-card .tb{flex:1;min-width:0}
+.test-card .tb h3{margin:0 0 4px;color:#fff;font:700 17px "Inter",system-ui}
+.test-card .tb p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.test-card .tt{font-size:11px;color:var(--soft);letter-spacing:.04em;text-transform:uppercase;font-weight:700;margin-top:6px;display:inline-block}
+.test-card .arrow{color:var(--teal);font-size:22px;align-self:center;font-weight:700}
+.test-card[data-done="1"]::after{
+  content:'✓ feito';position:absolute;top:12px;right:14px;
+  background:rgba(52,211,153,.18);color:#34d399;border:1px solid rgba(52,211,153,.4);
+  border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:800;letter-spacing:.04em
+}
+
+/* Tela do teste ativo */
+.test-host{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:20px;
+  background:linear-gradient(180deg,rgba(124,118,210,.06),rgba(124,118,210,.02));
+  box-shadow:0 16px 40px -20px rgba(2,2,12,.7);min-height:300px;position:relative}
+.test-host .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.test-host .head h2{margin:0;font:700 20px "Fraunces",Georgia,serif;color:#f2dca6;letter-spacing:-.01em}
+.test-host .head button{background:rgba(124,118,210,.10);color:var(--muted);border:1px solid var(--line2);
+  border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.test-host .head button:hover{background:rgba(124,118,210,.2)}
+
+/* Sumário */
+.summary{margin-top:18px;border:1px solid var(--line);border-radius:18px;padding:18px;
+  background:linear-gradient(180deg,rgba(231,201,139,.10),rgba(124,118,210,.04))}
+.summary h3{margin:0 0 10px;color:#f2dca6;font:700 17px Georgia,serif}
+.summary ul{margin:0;padding-left:18px;color:#cdc8ee;font-size:13.5px;line-height:1.6}
+.summary .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.summary button{background:rgba(124,118,210,.10);color:var(--ink);border:1px solid var(--line2);
+  border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.summary button.primary{background:linear-gradient(180deg,#7c79ff,#5b54e8);color:#fff;border-color:transparent}
+
+.footer{text-align:center;font-size:11.5px;color:var(--soft);margin-top:24px;line-height:1.7;
+  padding-top:18px;border-top:1px solid var(--line)}
+
+/* Animations */
+@keyframes npPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes npCelebrate{
+  0%{opacity:0;transform:scale(.6)}
+  30%{opacity:1;transform:scale(1.05)}
+  100%{opacity:0;transform:scale(1.15)}
+}
+
+@media(max-width:560px){
+  .test-card{padding:14px}
+  .test-card .te{width:54px;height:54px;font-size:34px;flex:0 0 54px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-ns-shell>
+<main class="wrap">
+<header class="topbar">
+  <a class="back" href="./central-atalhos.html" aria-label="Voltar ao app">‹</a>
+  <div><div class="tt">Testes Diretos</div><div class="sub">Aplicados na criança · NeuroPed</div></div>
+</header>
+
+<section class="hero">
+  <div class="kicker">Aplicação ativa</div>
+  <h1>Mini-testes diretos com a criança</h1>
+  <p>Tarefas práticas pra observar memória, atenção, inibição e consciência fonológica ao vivo. Proponha como brincadeira, pare se a criança cansar. Apoio à observação clínica — não é teste normatizado nem ponto de corte.</p>
+</section>
+
+<section id="testList" class="tests"></section>
+
+<section id="testHost" class="test-host" hidden>
+  <div class="head">
+    <h2 id="testTitle">—</h2>
+    <button id="closeTest">← Voltar</button>
+  </div>
+  <div id="testBody"></div>
+</section>
+
+<section id="summary" class="summary" hidden>
+  <h3>📋 Sumário da sessão</h3>
+  <ul id="summaryList"></ul>
+  <div class="actions">
+    <button id="exportSummary" class="primary">📋 Copiar pra laudo</button>
+    <button id="clearSummary">🗑️ Limpar resultados</button>
+  </div>
+</section>
+
+<p class="footer">⚕️ Apoio à observação clínica. Não substitui avaliação neuropsicológica formal.<br>
+Nada é enviado ao servidor — todos os resultados ficam só neste aparelho.</p>
+</main>
+
+<script src="./testes-diretos-engine.js"></script>
+<script>
+(function(){
+  'use strict';
+  var TESTS = [
+    { id:'digit-span',     emoji:'🔢', title:'Span de Dígitos',         desc:'Memória operacional. Repetir sequências de números (direta e inversa).', tag:'Memória de trabalho · ≥ 5 anos', fn:'digitSpan' },
+    { id:'picture-memory', emoji:'🧠', title:'Memória de Figuras',      desc:'4 figurinhas aparecem por 4s. Lembrar quais eram entre distratores.',     tag:'Memória visual · ≥ 4 anos',     fn:'pictureMemory' },
+    { id:'visual-search',  emoji:'🔍', title:'Atenção Visual',           desc:'Encontrar o alvo (gatinho, maçã vermelha) num grid com distratores.',     tag:'Atenção seletiva · ≥ 5 anos',   fn:'visualSearch' },
+    { id:'day-night',      emoji:'🌗', title:'Inibição — Dia/Noite',     desc:'Ver a palavra e tocar no OPOSTO. Controle inibitório verbal.',           tag:'Função executiva · ≥ 5 anos',   fn:'dayNight' },
+    { id:'phonological',   emoji:'🎵', title:'Consciência Fonológica',   desc:'Som inicial, rima e contagem de sílabas. Apoio pra alfabetização.',     tag:'Pré-escrita · 5-8 anos',         fn:'phonological' }
+  ];
+
+  function renderList(){
+    var box = document.getElementById('testList');
+    var results = window.NPDirectTestEngine.results();
+    box.innerHTML = '';
+    TESTS.forEach(function(t){
+      var card = document.createElement('article');
+      card.className = 'test-card';
+      if (results[t.id]) card.dataset.done = '1';
+      card.innerHTML =
+        '<div class="te">' + t.emoji + '</div>' +
+        '<div class="tb"><h3>' + t.title + '</h3><p>' + t.desc + '</p><span class="tt">' + t.tag + '</span></div>' +
+        '<div class="arrow">›</div>';
+      card.onclick = function(){ openTest(t); };
+      box.appendChild(card);
+    });
+    renderSummary();
+  }
+
+  function openTest(t){
+    document.getElementById('testList').hidden = true;
+    document.getElementById('summary').hidden = true;
+    var host = document.getElementById('testHost');
+    host.hidden = false;
+    document.getElementById('testTitle').textContent = t.emoji + '  ' + t.title;
+    var body = document.getElementById('testBody');
+    body.innerHTML = '';
+    try {
+      window.NPDirectTestEngine[t.fn](body);
+    } catch(e) {
+      body.innerHTML = '<p style="color:#f87171">Erro ao carregar o teste: ' + (e && e.message || e) + '</p>';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function closeTest(){
+    document.getElementById('testHost').hidden = true;
+    document.getElementById('testList').hidden = false;
+    renderList();
+  }
+
+  function renderSummary(){
+    var results = window.NPDirectTestEngine.results();
+    var keys = Object.keys(results);
+    var box = document.getElementById('summary');
+    if (!keys.length) { box.hidden = true; return; }
+    box.hidden = false;
+    var list = document.getElementById('summaryList');
+    list.innerHTML = '';
+    keys.forEach(function(k){
+      var r = results[k];
+      var li = document.createElement('li');
+      li.innerHTML = '<strong>' + r.label + ':</strong> ' + (r.line || '—') +
+                     ' <small style="color:#8b86b8">(' + new Date(r.at).toLocaleString('pt-BR') + ')</small>';
+      list.appendChild(li);
+    });
+  }
+
+  function exportSummary(){
+    var results = window.NPDirectTestEngine.results();
+    var lines = ['NeuroPed EDJ — Testes Diretos · ' + new Date().toLocaleString('pt-BR'), ''];
+    Object.keys(results).forEach(function(k){
+      var r = results[k];
+      lines.push('• ' + r.label + ': ' + (r.line || '—'));
+    });
+    lines.push('', 'Apoio à observação clínica. Não é teste normatizado.');
+    var txt = lines.join('\n');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(txt).then(function(){
+        var btn = document.getElementById('exportSummary');
+        var orig = btn.textContent;
+        btn.textContent = '✓ Copiado';
+        setTimeout(function(){ btn.textContent = orig; }, 1800);
+      });
+    } else {
+      prompt('Copie:', txt);
+    }
+  }
+
+  function clearAll(){
+    if (!confirm('Apagar todos os resultados desta sessão?')) return;
+    window.NPDirectTestEngine.clearResults();
+    renderList();
+  }
+
+  document.getElementById('closeTest').onclick = closeTest;
+  document.getElementById('exportSummary').onclick = exportSummary;
+  document.getElementById('clearSummary').onclick = clearAll;
+
+  renderList();
+})();
+</script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+</body>
+</html>

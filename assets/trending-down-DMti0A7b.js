@@ -1,0 +1,1 @@
+import{y as n}from"./index-CCN60Z39.js";const e=n("Minus",[["path",{d:"M5 12h14",key:"1ays0h"}]]);const i=n("TrendingDown",[["polyline",{points:"22 17 13.5 8.5 8.5 13.5 2 7",key:"1r2t7k"}],["polyline",{points:"16 17 22 17 22 11",key:"11uiuu"}]]);export{e as M,i as T};
