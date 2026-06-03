@@ -218,6 +218,12 @@ button:active,.btn:active{transform:translateY(0) scale(.97)}
     <script src="./clinical-plugin-sdk.js" defer></script>
     <script src="./clinical-future-adapters.js" defer></script>
     <script src="./clinical-integrity-tests.js" defer></script>
+    <script src="./clinical-lgpd-consent.js" defer></script>
+    <script src="./clinical-auth-adapter.js" defer></script>
+    <script src="./clinical-drive-adapter.js" defer></script>
+    <script src="./clinical-fhir-adapter.js" defer></script>
+    <script src="./clinical-v4-integration.js" defer></script>
+    <script src="./clinical-v4-tests.js" defer></script>
 </head>
 <body data-ns-shell>
 <main class="wrap">
@@ -286,6 +292,12 @@ function printTop(){const top=currentTop();if(!top.length){alert('Preencha idade
     <script src="./clinical-plugin-sdk.js" defer></script>
     <script src="./clinical-future-adapters.js" defer></script>
     <script src="./clinical-integrity-tests.js" defer></script>
+    <script src="./clinical-lgpd-consent.js" defer></script>
+    <script src="./clinical-auth-adapter.js" defer></script>
+    <script src="./clinical-drive-adapter.js" defer></script>
+    <script src="./clinical-fhir-adapter.js" defer></script>
+    <script src="./clinical-v4-integration.js" defer></script>
+    <script src="./clinical-v4-tests.js" defer></script>
 </head><body><h1>Instrumentos recomendados</h1><div class="box"><b>Paciente:</b> '+esc(p.name||p.code||'â€”')+(p.code&&p.name?' &middot; <b>CÃ³digo:</b> '+esc(p.code):'')+' &middot; <b>Data:</b> '+esc(new Date().toLocaleString('pt-BR'))+'<br><b>Idade:</b> '+esc(document.getElementById('idade').value||'â€”')+' &middot; <b>Queixa:</b> '+esc(document.getElementById('queixaLivre').value||'â€”')+' &middot; <b>Queixas rÃ¡pidas:</b> '+esc([...selected].join(', ')||'nenhuma')+'</div>'+rows+'<div class="warn">SugestÃ£o por relevÃ¢ncia, baseada no filtro. NÃ£o Ã© diagnÃ³stico. A decisÃ£o Ã© do mÃ©dico responsÃ¡vel.</div></body></html>';printViaIframe(html)}
 function printViaIframe(html){try{var old=document.getElementById('npFiltroPrintFrame');if(old&&old.parentNode)old.parentNode.removeChild(old);var f=document.createElement('iframe');f.id='npFiltroPrintFrame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';document.body.appendChild(f);var fired=false;function doPrint(){if(fired)return;fired=true;try{f.contentWindow.focus();f.contentWindow.print()}catch(e){popupPrint(html)}}f.onload=function(){setTimeout(doPrint,120)};var doc=f.contentWindow.document;doc.open();doc.write(html);doc.close();setTimeout(doPrint,600)}catch(e){popupPrint(html)}}
 function popupPrint(html){var w=window.open('','_blank');if(w){w.document.open();w.document.write(html);w.document.close();setTimeout(function(){try{w.focus();w.print()}catch(e){}},250);return}alert('ImpressÃ£o bloqueada pelo navegador. Libere os pop-ups deste site ou use "Exportar pra laudo".')}
