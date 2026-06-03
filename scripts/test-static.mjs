@@ -775,6 +775,25 @@ assertIncludes('agenda-financeiro.html', 'function cvar', 'agenda resolve token 
 }
 // Perf: ambient-effects não empilha em iframe (np-frame abre páginas dentro de outra)
 assertIncludes('ambient-effects.js', 'ancestorHasAmbient', 'ambient não duplica aurora/partículas quando a página abre dentro de outra (perf tablet)');
+// CRÍTICO: todo <script> inline executável tem de PARSEAR. Pega regressão de
+// edição em massa (ex.: injeção de <link>/<script> + \n DENTRO de string de doc
+// de impressão → quebra a string e/ou trunca o script com </script> literal).
+{
+  let broken = 0, scanned = 0;
+  for (const f of readdirSync(root).filter(f => f.endsWith('.html'))) {
+    const html = readFileSync(join(root, f), 'utf8');
+    for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+      const attrs = m[1] || '';
+      if (/\bsrc=/i.test(attrs)) continue;
+      const tm = attrs.match(/\btype\s*=\s*["']?([^"'\s>]+)/i);
+      if (tm && !/javascript|module/.test(tm[1].toLowerCase())) continue; // pula ld+json
+      scanned++;
+      try { new Function(m[2]); }
+      catch (e) { broken++; fail(`script inline quebrado em ${f}`, e.message.split('\n')[0]); }
+    }
+  }
+  if (!broken) pass(`todos os ${scanned} <script> inline executáveis parseiam (sem quebra por edição em massa)`);
+}
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
