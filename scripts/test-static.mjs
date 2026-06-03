@@ -758,6 +758,10 @@ for (const p of ['comunicacao-alternativa.html','impacto-medicacao.html','sobre-
   assertIncludes(p, 'var(--primary)', p + ' (Lote C) consome o token de cor primária');
   assertIncludes(p, 'var(--text)', p + ' (Lote C) consome o token de texto');
 }
+// Regressão: canvas NÃO pode usar var(--token) cru — o contexto 2D ignora e o gráfico
+// fica sem cor. Tem de resolver em runtime (cvar via getComputedStyle).
+assertNotIncludes('agenda-financeiro.html', "Style = 'var(--", 'canvas resolve cor em runtime (cvar), não var() cru');
+assertIncludes('agenda-financeiro.html', 'function cvar', 'agenda resolve token do CSS p/ o canvas (theme-aware)');
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
