@@ -819,6 +819,10 @@ assertIncludes('sw.js', "'./scales-taxonomy.js'", 'taxonomia no precache do SW (
     ? pass('taxonomia expõe exemplos funcionais por queixa (prompts genéricos, não itens de instrumento)')
     : fail('functionalExamples ausente');
 }
+// Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
+assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
+assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
+assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.functionalExamples', 'filtro injeta exemplos funcionais (o que observar) no raciocínio');
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
