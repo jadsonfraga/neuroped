@@ -1,18 +1,18 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#030712">
 <meta name="robots" content="noindex,nofollow">
-<title>Design System — Tela de referência (piloto)</title>
-<meta name="description" content="Tela de referência do Design System NeuroPed: componentes canônicos .np-* sobre tokens.css. Modelo validado para migração (Fase 4).">
-<!-- Cadeia canônica: tokens (Fase 1) → componentes (Fase 3) → ponte de legados -->
+<title>Design System â€” Tela de referÃªncia (piloto)</title>
+<meta name="description" content="Tela de referÃªncia do Design System NeuroPed: componentes canÃ´nicos .np-* sobre tokens.css. Modelo validado para migraÃ§Ã£o (Fase 4).">
+<!-- Cadeia canÃ´nica: tokens (Fase 1) â†’ componentes (Fase 3) â†’ ponte de legados -->
 <link rel="stylesheet" href="./tokens.css">
 <link rel="stylesheet" href="./components.css">
 <link rel="stylesheet" href="./ds-tokens.css">
 <style>
-  /* Apenas LAYOUT da página de referência (sem cor/valor cru de componente:
+  /* Apenas LAYOUT da pÃ¡gina de referÃªncia (sem cor/valor cru de componente:
      tudo vem de tokens.css + components.css). */
   body { margin: 0; background: var(--aurora-base); color: var(--text); min-height: 100vh; }
   .wrap { max-width: var(--content-max); margin: 0 auto; padding: var(--space-8) var(--space-4) var(--space-16); }
@@ -34,21 +34,22 @@
     padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); color: var(--text); margin: var(--space-4) 0; }
   .foot { margin-top: var(--space-16); color: var(--text-soft); font-size: var(--t-label-size); border-top: 1px solid var(--border); padding-top: var(--space-4); }
 </style>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body>
 <main class="wrap">
 
   <header class="page">
-    <span class="eyebrow">Design System · piloto</span>
-    <h1 class="np-t-display" style="margin:var(--space-4) 0 var(--space-2)">Tela de referência</h1>
+    <span class="eyebrow">Design System Â· piloto</span>
+    <h1 class="np-t-display" style="margin:var(--space-4) 0 var(--space-2)">Tela de referÃªncia</h1>
     <p class="np-t-body np-text-muted" style="max-width:72ch">
-      Construída 100% sobre os componentes canônicos <code>.np-*</code> (<code>components.css</code>)
-      e os tokens (<code>tokens.css</code>), com a ponte de variáveis legadas (<code>ds-tokens.css</code>).
-      É o <strong>modelo validado</strong> para a migração tela a tela (Fase 4). Veja
+      ConstruÃ­da 100% sobre os componentes canÃ´nicos <code>.np-*</code> (<code>components.css</code>)
+      e os tokens (<code>tokens.css</code>), com a ponte de variÃ¡veis legadas (<code>ds-tokens.css</code>).
+      Ã‰ o <strong>modelo validado</strong> para a migraÃ§Ã£o tela a tela (Fase 4). Veja
       <code>docs/ds-recon.md</code>.
     </p>
     <div class="note np-t-label">
-      ⚠️ Esta página é aditiva e interna (noindex). Nenhuma página de produção foi alterada.
+      âš ï¸ Esta pÃ¡gina Ã© aditiva e interna (noindex). Nenhuma pÃ¡gina de produÃ§Ã£o foi alterada.
       Abra no navegador para validar visualmente antes de migrar telas reais.
     </div>
   </header>
@@ -56,21 +57,21 @@
   <!-- TIPOGRAFIA -->
   <section class="demo">
     <h2>Tipografia</h2>
-    <p class="lead">Escala canônica via utilitários <code>.np-t-*</code>.</p>
+    <p class="lead">Escala canÃ´nica via utilitÃ¡rios <code>.np-t-*</code>.</p>
     <div class="np-card np-stack-2">
-      <div class="np-t-display">Display — síntese clínica</div>
-      <div class="np-t-h1">H1 — título de seção</div>
-      <div class="np-t-h2">H2 — subtítulo</div>
-      <div class="np-t-body">Body — texto corrido de apoio à decisão, legível em tablet e desktop.</div>
-      <div class="np-t-label np-text-muted">Label — metadado / rótulo</div>
-      <div class="np-t-mono">Mono — PMID: 24366990</div>
+      <div class="np-t-display">Display â€” sÃ­ntese clÃ­nica</div>
+      <div class="np-t-h1">H1 â€” tÃ­tulo de seÃ§Ã£o</div>
+      <div class="np-t-h2">H2 â€” subtÃ­tulo</div>
+      <div class="np-t-body">Body â€” texto corrido de apoio Ã  decisÃ£o, legÃ­vel em tablet e desktop.</div>
+      <div class="np-t-label np-text-muted">Label â€” metadado / rÃ³tulo</div>
+      <div class="np-t-mono">Mono â€” PMID: 24366990</div>
     </div>
   </section>
 
   <!-- CORES (tokens) -->
   <section class="demo">
     <h2>Cores (tokens)</h2>
-    <p class="lead">Amostras dos tokens semânticos — nenhum valor cru.</p>
+    <p class="lead">Amostras dos tokens semÃ¢nticos â€” nenhum valor cru.</p>
     <div class="swatches">
       <div class="swatch"><div class="chip" style="background:var(--primary)"></div><div class="name">--primary</div></div>
       <div class="swatch"><div class="chip" style="background:var(--primary-deep)"></div><div class="name">--primary-deep</div></div>
@@ -81,16 +82,16 @@
       <div class="swatch"><div class="chip" style="background:var(--info)"></div><div class="name">--info</div></div>
       <div class="swatch"><div class="chip" style="background:var(--surface)"></div><div class="name">--surface</div></div>
     </div>
-    <div class="note np-t-label">Ponte legada ativa: <code>--teal → --primary</code>, <code>--wine/--gold → --accent-gold</code>, <code>--ink → --text-strong</code>, <code>--line → --border</code> (ver <code>ds-tokens.css</code>).</div>
+    <div class="note np-t-label">Ponte legada ativa: <code>--teal â†’ --primary</code>, <code>--wine/--gold â†’ --accent-gold</code>, <code>--ink â†’ --text-strong</code>, <code>--line â†’ --border</code> (ver <code>ds-tokens.css</code>).</div>
   </section>
 
-  <!-- BOTÕES -->
+  <!-- BOTÃ•ES -->
   <section class="demo">
-    <h2>Botões — <code>.np-btn</code></h2>
-    <p class="lead">Variantes e estados (foco visível, disabled, busy).</p>
+    <h2>BotÃµes â€” <code>.np-btn</code></h2>
+    <p class="lead">Variantes e estados (foco visÃ­vel, disabled, busy).</p>
     <div class="np-card np-row">
-      <button class="np-btn np-btn--primary"><span class="np-btn-label">Primário</span></button>
-      <button class="np-btn np-btn--secondary">Secundário</button>
+      <button class="np-btn np-btn--primary"><span class="np-btn-label">PrimÃ¡rio</span></button>
+      <button class="np-btn np-btn--secondary">SecundÃ¡rio</button>
       <button class="np-btn np-btn--ghost">Ghost</button>
       <button class="np-btn np-btn--danger">Perigo</button>
       <button class="np-btn np-btn--secondary" aria-busy="true"><span class="np-btn-label">Carregando</span></button>
@@ -100,70 +101,70 @@
 
   <!-- INPUTS -->
   <section class="demo">
-    <h2>Campos — <code>.np-input / .np-select / .np-textarea</code></h2>
-    <p class="lead">Foco, placeholder, inválido e desabilitado.</p>
+    <h2>Campos â€” <code>.np-input / .np-select / .np-textarea</code></h2>
+    <p class="lead">Foco, placeholder, invÃ¡lido e desabilitado.</p>
     <div class="np-card grid">
       <label class="np-stack-1"><span class="np-t-label">Nome</span>
-        <input class="np-input" placeholder="ex.: João da Silva"></label>
-      <label class="np-stack-1"><span class="np-t-label">Faixa etária</span>
-        <select class="np-select"><option>16–30 meses</option><option>3–5 anos</option><option>6–11 anos</option></select></label>
-      <label class="np-stack-1"><span class="np-t-label">Campo inválido</span>
-        <input class="np-input" aria-invalid="true" value="valor inválido"></label>
+        <input class="np-input" placeholder="ex.: JoÃ£o da Silva"></label>
+      <label class="np-stack-1"><span class="np-t-label">Faixa etÃ¡ria</span>
+        <select class="np-select"><option>16â€“30 meses</option><option>3â€“5 anos</option><option>6â€“11 anos</option></select></label>
+      <label class="np-stack-1"><span class="np-t-label">Campo invÃ¡lido</span>
+        <input class="np-input" aria-invalid="true" value="valor invÃ¡lido"></label>
       <label class="np-stack-1"><span class="np-t-label">Desabilitado</span>
-        <input class="np-input" disabled value="—"></label>
-      <label class="np-stack-1" style="grid-column:1/-1"><span class="np-t-label">Observações clínicas</span>
-        <textarea class="np-textarea" placeholder="Anote exemplos, contexto, comportamento…"></textarea></label>
+        <input class="np-input" disabled value="â€”"></label>
+      <label class="np-stack-1" style="grid-column:1/-1"><span class="np-t-label">ObservaÃ§Ãµes clÃ­nicas</span>
+        <textarea class="np-textarea" placeholder="Anote exemplos, contexto, comportamentoâ€¦"></textarea></label>
     </div>
   </section>
 
   <!-- BADGES -->
   <section class="demo">
-    <h2>Badges — <code>.np-badge</code></h2>
-    <p class="lead">Status e rótulos.</p>
+    <h2>Badges â€” <code>.np-badge</code></h2>
+    <p class="lead">Status e rÃ³tulos.</p>
     <div class="np-card np-row">
       <span class="np-badge">Neutro</span>
       <span class="np-badge np-badge--primary">Triagem</span>
       <span class="np-badge np-badge--success">Baixo risco</span>
-      <span class="np-badge np-badge--warning">Atenção</span>
+      <span class="np-badge np-badge--warning">AtenÃ§Ã£o</span>
       <span class="np-badge np-badge--danger">Risco</span>
     </div>
   </section>
 
   <!-- TABELA -->
   <section class="demo">
-    <h2>Tabela — <code>.np-table</code></h2>
-    <p class="lead">Cabeçalho, densidade única, hover sutil.</p>
+    <h2>Tabela â€” <code>.np-table</code></h2>
+    <p class="lead">CabeÃ§alho, densidade Ãºnica, hover sutil.</p>
     <table class="np-table">
-      <thead><tr><th>Instrumento</th><th>Faixa</th><th>Tipo</th><th>Evidência</th></tr></thead>
+      <thead><tr><th>Instrumento</th><th>Faixa</th><th>Tipo</th><th>EvidÃªncia</th></tr></thead>
       <tbody>
-        <tr><td>M-CHAT-R/F</td><td>16–30 meses</td><td><span class="np-badge np-badge--primary">Triagem</span></td><td>PMID 24366990</td></tr>
-        <tr><td>ASQ</td><td>10–21 anos</td><td><span class="np-badge np-badge--danger">Risco</span></td><td>PMID 23027429</td></tr>
-        <tr><td>GMFCS</td><td>PC</td><td><span class="np-badge">Classificação</span></td><td>PMID 9183258</td></tr>
+        <tr><td>M-CHAT-R/F</td><td>16â€“30 meses</td><td><span class="np-badge np-badge--primary">Triagem</span></td><td>PMID 24366990</td></tr>
+        <tr><td>ASQ</td><td>10â€“21 anos</td><td><span class="np-badge np-badge--danger">Risco</span></td><td>PMID 23027429</td></tr>
+        <tr><td>GMFCS</td><td>PC</td><td><span class="np-badge">ClassificaÃ§Ã£o</span></td><td>PMID 9183258</td></tr>
       </tbody>
     </table>
   </section>
 
   <!-- MODAL -->
   <section class="demo">
-    <h2>Modal — <code>.np-modal</code></h2>
-    <p class="lead">Abertura via <code>aria-hidden</code> (sem dependência externa).</p>
+    <h2>Modal â€” <code>.np-modal</code></h2>
+    <p class="lead">Abertura via <code>aria-hidden</code> (sem dependÃªncia externa).</p>
     <div class="np-card">
       <button class="np-btn np-btn--primary" id="openModal"><span class="np-btn-label">Abrir modal</span></button>
     </div>
   </section>
 
   <p class="foot">
-    NeuroPed EDJ · Design System (SUPERNEUROPED) — tokens.css + components.css (.np-*) + ds-tokens.css.
-    Página de referência interna. Apoio à migração; não é conteúdo clínico.
+    NeuroPed EDJ Â· Design System (SUPERNEUROPED) â€” tokens.css + components.css (.np-*) + ds-tokens.css.
+    PÃ¡gina de referÃªncia interna. Apoio Ã  migraÃ§Ã£o; nÃ£o Ã© conteÃºdo clÃ­nico.
   </p>
 </main>
 
-<!-- Modal canônico -->
+<!-- Modal canÃ´nico -->
 <div class="np-modal-backdrop" id="modal" aria-hidden="true" role="presentation">
   <div class="np-modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-    <h2 class="np-t-h1" id="mTitle" style="margin:0 0 var(--space-2)">Confirmar ação</h2>
+    <h2 class="np-t-h1" id="mTitle" style="margin:0 0 var(--space-2)">Confirmar aÃ§Ã£o</h2>
     <p class="np-t-body np-text-muted" style="margin:0 0 var(--space-6)">
-      Exemplo de modal canônico usando apenas tokens e <code>.np-*</code>.
+      Exemplo de modal canÃ´nico usando apenas tokens e <code>.np-*</code>.
     </p>
     <div class="np-row" style="justify-content:flex-end">
       <button class="np-btn np-btn--ghost" data-close>Cancelar</button>

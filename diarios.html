@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<title>Diários de Acompanhamento · NeuroPed</title>
-<meta name="description" content="Diários de acompanhamento longitudinal (uso em casa): sono, humor, crises, cefaleia, comportamento A-B-C, alimentação, medicação e mais. Ferramentas de monitoração — não são instrumentos de triagem de pré-consulta.">
+<title>DiÃ¡rios de Acompanhamento Â· NeuroPed</title>
+<meta name="description" content="DiÃ¡rios de acompanhamento longitudinal (uso em casa): sono, humor, crises, cefaleia, comportamento A-B-C, alimentaÃ§Ã£o, medicaÃ§Ã£o e mais. Ferramentas de monitoraÃ§Ã£o â€” nÃ£o sÃ£o instrumentos de triagem de prÃ©-consulta.">
 <link rel="stylesheet" href="./tokens.css">
 <link rel="stylesheet" href="./components.css">
 <link rel="stylesheet" href="./app-skin.css">
@@ -29,39 +29,40 @@
   .foothint{margin-top:20px;color:var(--text-muted,#94A3B8);font-size:12.5px;line-height:1.5;border-top:1px solid var(--border,rgba(255,255,255,.08));padding-top:14px}
   .foothint a{color:#A78BFA}
 </style>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body data-no-bottom-nav="false">
   <main class="wrap">
     <section class="intro">
-      <span class="tag">📔 Acompanhamento longitudinal</span>
-      <h1>Diários de Acompanhamento</h1>
-      <p>Ferramentas de <strong>uso em casa</strong> para registrar ao longo dos dias (sono, humor, crises, cefaleia, comportamento, alimentação, medicação e mais). Não são instrumentos de triagem de pré-consulta — por isso ficam <strong>fora do filtro de escalas</strong>. Toque em um diário para abrir e usar.</p>
+      <span class="tag">ðŸ“” Acompanhamento longitudinal</span>
+      <h1>DiÃ¡rios de Acompanhamento</h1>
+      <p>Ferramentas de <strong>uso em casa</strong> para registrar ao longo dos dias (sono, humor, crises, cefaleia, comportamento, alimentaÃ§Ã£o, medicaÃ§Ã£o e mais). NÃ£o sÃ£o instrumentos de triagem de prÃ©-consulta â€” por isso ficam <strong>fora do filtro de escalas</strong>. Toque em um diÃ¡rio para abrir e usar.</p>
     </section>
-    <div id="grid" class="grid"><div class="empty">Carregando diários…</div></div>
-    <p class="foothint">Para escolher um instrumento de triagem (testes diretos, questionários, inventários e escalas), use o <a href="./filtro-escalas.html">filtro de escalas</a>. Apoio clínico — não substitui avaliação profissional.</p>
+    <div id="grid" class="grid"><div class="empty">Carregando diÃ¡riosâ€¦</div></div>
+    <p class="foothint">Para escolher um instrumento de triagem (testes diretos, questionÃ¡rios, inventÃ¡rios e escalas), use o <a href="./filtro-escalas.html">filtro de escalas</a>. Apoio clÃ­nico â€” nÃ£o substitui avaliaÃ§Ã£o profissional.</p>
   </main>
 
   <script src="./scales-bundle.js"></script>
   <script>
   (function(){
     'use strict';
-    // Mesma definição do filtro: o que sai da triagem entra aqui (simetria).
-    function isDiary(s){ if(!s) return false; var t=String(s.title||''); if(/invent[áa]rio|inventory/i.test(t)) return false; return s.kind==='diário' || s.daily===true || /^diario-/.test(s.id||''); }
+    // Mesma definiÃ§Ã£o do filtro: o que sai da triagem entra aqui (simetria).
+    function isDiary(s){ if(!s) return false; var t=String(s.title||''); if(/invent[Ã¡a]rio|inventory/i.test(t)) return false; return s.kind==='diÃ¡rio' || s.daily===true || /^diario-/.test(s.id||''); }
     function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
-    function band(s){ return s.age_band || ((s.age_min_months||0)+'–'+(s.age_max_months||215)+' meses'); }
+    function band(s){ return s.age_band || ((s.age_min_months||0)+'â€“'+(s.age_max_months||215)+' meses'); }
     function render(){
       var cat = window.NEUROPED_EDITORIAL_SCALES || [];
       var seen = {}, list = [];
       cat.forEach(function(s){ if(s && s.id && isDiary(s) && !seen[s.id]){ seen[s.id]=1; list.push(s); } });
       list.sort(function(a,b){ return String(a.domain||'').localeCompare(String(b.domain||''),'pt') || (b.priority||0)-(a.priority||0); });
       var grid = document.getElementById('grid');
-      if(!list.length){ grid.innerHTML = '<div class="empty">Nenhum diário disponível no catálogo.</div>'; return; }
+      if(!list.length){ grid.innerHTML = '<div class="empty">Nenhum diÃ¡rio disponÃ­vel no catÃ¡logo.</div>'; return; }
       grid.innerHTML = list.map(function(s){
         return '<a class="card" href="./instrumento.html?id='+encodeURIComponent(s.id)+'">' +
-          '<span class="em" aria-hidden="true">'+esc(s.emoji||'📝')+'</span>' +
+          '<span class="em" aria-hidden="true">'+esc(s.emoji||'ðŸ“')+'</span>' +
           '<h3>'+esc(s.short_title||s.title)+'</h3>' +
-          '<span class="meta">'+esc(s.domain||'Acompanhamento')+' · '+esc(band(s))+'</span>' +
-          '<span class="go">Abrir diário ›</span></a>';
+          '<span class="meta">'+esc(s.domain||'Acompanhamento')+' Â· '+esc(band(s))+'</span>' +
+          '<span class="go">Abrir diÃ¡rio â€º</span></a>';
       }).join('');
     }
     if(window.NEUROPED_EDITORIAL_SCALES){ render(); }

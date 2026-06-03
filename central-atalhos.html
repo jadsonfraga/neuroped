@@ -1,18 +1,18 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
-<meta name="description" content="Central de atalhos do NeuroPed EDJ: acesso rápido a triagens, escalas, comunicação alternativa, diário, consulta e portal da família. Por Dr. Jadson Fraga.">
-<meta property="og:title" content="Central de Atalhos — NeuroPed EDJ">
-<meta property="og:description" content="Central de atalhos do NeuroPed EDJ: acesso rápido a triagens, escalas, comunicação alternativa, diário, consulta e portal da família. Por Dr. Jadson Fraga.">
+<meta name="description" content="Central de atalhos do NeuroPed EDJ: acesso rÃ¡pido a triagens, escalas, comunicaÃ§Ã£o alternativa, diÃ¡rio, consulta e portal da famÃ­lia. Por Dr. Jadson Fraga.">
+<meta property="og:title" content="Central de Atalhos â€” NeuroPed EDJ">
+<meta property="og:description" content="Central de atalhos do NeuroPed EDJ: acesso rÃ¡pido a triagens, escalas, comunicaÃ§Ã£o alternativa, diÃ¡rio, consulta e portal da famÃ­lia. Por Dr. Jadson Fraga.">
 <meta property="og:type" content="website">
-<title>Central de Atalhos — NeuroPed EDJ</title>
+<title>Central de Atalhos â€” NeuroPed EDJ</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/central-atalhos.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Central de Atalhos — NeuroPed EDJ">
+<meta name="twitter:title" content="Central de Atalhos â€” NeuroPed EDJ">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/central-atalhos.html">
 <style>
@@ -31,7 +31,7 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
 .np-skip{position:absolute;left:-9999px;top:8px;z-index:100;background:var(--gold);color:#241a05;font-weight:800;padding:10px 14px;border-radius:10px;text-decoration:none}
 .np-skip:focus{left:12px}
 .ico{width:20px;height:20px;flex:0 0 auto}
-/* brasão SVG nítido (substitui o logo de texto pesado) */
+/* brasÃ£o SVG nÃ­tido (substitui o logo de texto pesado) */
 .brandmark{width:54px;height:54px;flex:0 0 auto;filter:drop-shadow(0 6px 14px rgba(231,201,139,.28))}
 .imprint{display:flex;align-items:center;gap:13px}
 .imprint .imp-txt{display:flex;flex-direction:column;gap:2px}
@@ -42,10 +42,10 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
 .hubsearch input{width:100%;padding:13px 16px 13px 44px;border:1px solid var(--line);border-radius:14px;background:rgba(10,9,24,.55);color:var(--ink);font:15px system-ui;transition:border-color .2s,box-shadow .2s}
 .hubsearch input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(124,118,210,.18)}
 .hubsearch input::placeholder{color:var(--soft)}
-.hubsearch::before{content:"🔎";position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.6;font-size:15px;pointer-events:none}
+.hubsearch::before{content:"ðŸ”Ž";position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.6;font-size:15px;pointer-events:none}
 .card.is-hidden{display:none}
 .group.is-empty{display:none}
-/* ── camada de DESTAQUE (módulos estratégicos) ── */
+/* â”€â”€ camada de DESTAQUE (mÃ³dulos estratÃ©gicos) â”€â”€ */
 .featured{display:grid;grid-template-columns:repeat(auto-fit,minmax(216px,1fr));gap:13px;margin:20px 0 4px}
 .featured.is-hidden{display:none}
 .feat{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:11px;text-decoration:none;color:var(--ink);
@@ -68,11 +68,11 @@ body{color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans
 .feat .fmeta::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);flex:0 0 auto;box-shadow:0 0 7px var(--gold)}
 .feat .fmeta.muted{color:var(--soft);background:rgba(169,164,255,.08);border-color:var(--line)}
 .feat .fmeta.muted::before{background:var(--soft);box-shadow:none}
-/* ── divisor de camada (essencial → mais ferramentas) ── */
+/* â”€â”€ divisor de camada (essencial â†’ mais ferramentas) â”€â”€ */
 .tier{display:flex;align-items:center;gap:13px;margin:34px 2px 2px}
 .tier::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
 .tier span{font:800 11px system-ui;text-transform:uppercase;letter-spacing:.16em;color:var(--soft)}
-/* ── ritmo: entrada escalonada dos destaques + revelação das seções ao rolar ── */
+/* â”€â”€ ritmo: entrada escalonada dos destaques + revelaÃ§Ã£o das seÃ§Ãµes ao rolar â”€â”€ */
 @keyframes hubIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:no-preference){
   .featured .feat{animation:hubIn .5s cubic-bezier(.22,.9,.25,1) both}
@@ -153,9 +153,10 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body data-ns-shell>
-<a href="#hubmain" class="np-skip">Pular para o conteúdo</a>
+<a href="#hubmain" class="np-skip">Pular para o conteÃºdo</a>
 <main class="wrap" id="hubmain">
 
   <section class="cover">
@@ -169,13 +170,13 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
         <path d="M32 8 12 14.5V31c0 13 9 20.5 20 25 11-4.5 20-12 20-25V14.5z" fill="none" stroke="url(#bmG)" stroke-width="1.2" opacity=".55"/>
         <path d="M35 17 24 35h7l-3 13 12-19h-7z" fill="url(#bmG)" stroke="#fff3d6" stroke-width=".6"/>
       </svg>
-      <div class="imp-txt"><b>NeuroPed EDJ</b><span>Dr. Jadson Fraga · Plataforma Clínica</span></div>
+      <div class="imp-txt"><b>NeuroPed EDJ</b><span>Dr. Jadson Fraga Â· Plataforma ClÃ­nica</span></div>
     </div>
     <span class="eyebrow">Da triagem ao encaminhamento</span>
     <h1>NeuroPed</h1>
-    <p class="lede">Plataforma de apoio à neuropediatria do <strong>Dr. Jadson Fraga Araújo Júnior</strong> — triagens, instrumentos autorais, biblioteca clínica e ferramentas de família, escola e terapias, organizadas em um só lugar.</p>
+    <p class="lede">Plataforma de apoio Ã  neuropediatria do <strong>Dr. Jadson Fraga AraÃºjo JÃºnior</strong> â€” triagens, instrumentos autorais, biblioteca clÃ­nica e ferramentas de famÃ­lia, escola e terapias, organizadas em um sÃ³ lugar.</p>
     <div class="credline">
-      <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>Neurologista Infantil · CRM-PE 25227 · RQE 17756</span>
+      <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>Neurologista Infantil Â· CRM-PE 25227 Â· RQE 17756</span>
       <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Petrolina/PE</span>
     </div>
     <a id="activeChild" class="active-child" href="./perfil-crianca.html" hidden></a>
@@ -183,21 +184,21 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
 
   <div class="statbar">
     <div class="stat"><b>340+</b><span>instrumentos por idade e queixa</span></div>
-    <div class="stat"><b>100%</b><span>local — sem envio a servidor</span></div>
-    <div class="stat"><b>Offline</b><span>funciona como app instalável</span></div>
+    <div class="stat"><b>100%</b><span>local â€” sem envio a servidor</span></div>
+    <div class="stat"><b>Offline</b><span>funciona como app instalÃ¡vel</span></div>
     <div class="stat"><b>Autoral</b><span>metodologia do Dr. Jadson Fraga</span></div>
   </div>
 
-  <div class="hubsearch"><input type="search" id="hubSearch" placeholder="Buscar atalho… (ex.: filtro, diário, CAA, consulta)" aria-label="Buscar atalho" aria-describedby="hubStatus" autocomplete="off"></div>
+  <div class="hubsearch"><input type="search" id="hubSearch" placeholder="Buscar atalhoâ€¦ (ex.: filtro, diÃ¡rio, CAA, consulta)" aria-label="Buscar atalho" aria-describedby="hubStatus" autocomplete="off"></div>
   <p id="hubStatus" class="hub-empty" role="status" aria-live="polite">Nenhum atalho encontrado. Tente outro termo.</p>
 
-  <section class="featured" id="featured" aria-label="Ações principais">
-    <a class="feat gold" data-k="perfil" href="./perfil-crianca.html"><span class="arrow">›</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="M12 12v3"/></svg></span><h3>Perfil da Criança</h3><p>Cadastre e escolha a criança ativa — conecta tudo.</p><span class="fmeta" hidden></span></a>
-    <a class="feat" data-k="filtro" href="./filtro-escalas.html"><span class="arrow">›</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span><h3>Escalas &amp; testes</h3><p>Idade, queixa ou busca → responda e gere o laudo.</p><span class="fmeta" hidden></span></a>
-    <a class="feat" data-k="diario" href="./diario-escola-terapias-v2.html"><span class="arrow">›</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><h3>Diário</h3><p>Escola, terapias e relatório de evolução.</p><span class="fmeta" hidden></span></a>
-    <a class="feat" data-k="caa" href="./comunicacao-alternativa.html"><span class="arrow">›</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/></svg></span><h3>CAA Gratuita</h3><p>Figurinhas, voz e frases para comunicar.</p><span class="fmeta" hidden></span></a>
-    <a class="feat" data-k="testes-diretos" href="./testes-diretos.html"><span class="arrow">›</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></span><h3>Testes Diretos</h3><p>5 mini-tarefas lúdicas aplicadas na criança ao vivo.</p><span class="fmeta" hidden></span></a>
-    <a class="feat" data-k="entrevista-autismo" href="./entrevista-autismo-adir.html"><span class="arrow">›</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></span><h3>Entrevista TEA (ADI‑R)</h3><p>Entrevista clínica de autismo para os pais — preenche e imprime.</p><span class="fmeta" hidden></span></a>
+  <section class="featured" id="featured" aria-label="AÃ§Ãµes principais">
+    <a class="feat gold" data-k="perfil" href="./perfil-crianca.html"><span class="arrow">â€º</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="M12 12v3"/></svg></span><h3>Perfil da CrianÃ§a</h3><p>Cadastre e escolha a crianÃ§a ativa â€” conecta tudo.</p><span class="fmeta" hidden></span></a>
+    <a class="feat" data-k="filtro" href="./filtro-escalas.html"><span class="arrow">â€º</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span><h3>Escalas &amp; testes</h3><p>Idade, queixa ou busca â†’ responda e gere o laudo.</p><span class="fmeta" hidden></span></a>
+    <a class="feat" data-k="diario" href="./diario-escola-terapias-v2.html"><span class="arrow">â€º</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><h3>DiÃ¡rio</h3><p>Escola, terapias e relatÃ³rio de evoluÃ§Ã£o.</p><span class="fmeta" hidden></span></a>
+    <a class="feat" data-k="caa" href="./comunicacao-alternativa.html"><span class="arrow">â€º</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/></svg></span><h3>CAA Gratuita</h3><p>Figurinhas, voz e frases para comunicar.</p><span class="fmeta" hidden></span></a>
+    <a class="feat" data-k="testes-diretos" href="./testes-diretos.html"><span class="arrow">â€º</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></span><h3>Testes Diretos</h3><p>5 mini-tarefas lÃºdicas aplicadas na crianÃ§a ao vivo.</p><span class="fmeta" hidden></span></a>
+    <a class="feat" data-k="entrevista-autismo" href="./entrevista-autismo-adir.html"><span class="arrow">â€º</span><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></span><h3>Entrevista TEA (ADIâ€‘R)</h3><p>Entrevista clÃ­nica de autismo para os pais â€” preenche e imprime.</p><span class="fmeta" hidden></span></a>
   </section>
 
   <div class="tier" id="tierMore"><span>Mais ferramentas</span></div>
@@ -206,44 +207,44 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
   <section class="group">
     <div class="group-head">
       <span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span>
-      <h2>NeuroPed Master · obra autoral</h2><span class="gn">05</span>
+      <h2>NeuroPed Master Â· obra autoral</h2><span class="gn">05</span>
     </div>
     <div class="grid">
-      <a class="card gold" href="./neuroped-pro.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h3>NeuroPed Pro</h3><p>Acesso integral à obra — protocolos, farmacoterapia e diretriz TEA.</p></div></a>
-      <a class="card gold" href="./neuroped-master-vitrine.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span><div><h3>NeuroPed Master</h3><p>Vitrine pública — estrutura da obra e amostra catalogada.</p></div></a>
-      <a class="card" href="./neuroped-master-biblioteca.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><div><h3>Biblioteca Master</h3><p>Catálogo aberto: 210 protocolos J26, escalas e farmacoterapia — material educativo.</p></div></a>
-      <a class="card gold" href="./solicitar-neuroped-master.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div><h3>Solicitar e-book</h3><p>Pedir acesso ao material integral mediante autorização do autor.</p></div></a>
-      <a class="card" href="./gerador-cards.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 14h6"/><circle cx="16" cy="15" r="1.5"/></svg></span><div><h3>Gerador de Cards</h3><p>Cards educacionais com sua marca — compartilhar ou salvar em PDF.</p></div></a>
+      <a class="card gold" href="./neuroped-pro.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h3>NeuroPed Pro</h3><p>Acesso integral Ã  obra â€” protocolos, farmacoterapia e diretriz TEA.</p></div></a>
+      <a class="card gold" href="./neuroped-master-vitrine.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z"/><path d="M17 3v16"/></svg></span><div><h3>NeuroPed Master</h3><p>Vitrine pÃºblica â€” estrutura da obra e amostra catalogada.</p></div></a>
+      <a class="card" href="./neuroped-master-biblioteca.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><div><h3>Biblioteca Master</h3><p>CatÃ¡logo aberto: 210 protocolos J26, escalas e farmacoterapia â€” material educativo.</p></div></a>
+      <a class="card gold" href="./solicitar-neuroped-master.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div><h3>Solicitar e-book</h3><p>Pedir acesso ao material integral mediante autorizaÃ§Ã£o do autor.</p></div></a>
+      <a class="card" href="./gerador-cards.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 14h6"/><circle cx="16" cy="15" r="1.5"/></svg></span><div><h3>Gerador de Cards</h3><p>Cards educacionais com sua marca â€” compartilhar ou salvar em PDF.</p></div></a>
     </div>
   </section>
 
-  <!-- FAMÍLIA -->
+  <!-- FAMÃLIA -->
   <section class="group">
     <div class="group-head">
       <span class="gi"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9"/></svg></span>
-      <h2>Família e desenvolvimento</h2><span class="gn">04</span>
+      <h2>FamÃ­lia e desenvolvimento</h2><span class="gn">04</span>
     </div>
     <div class="grid">
-      <a class="card gold" href="./perfil-crianca.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="M12 12v3"/></svg></span><div><h3>Perfil da Criança</h3><p>Cadastre e escolha a criança ativa — conecta filtro, escalas e histórico.</p></div></a>
-      <a class="card" href="./portal-familia-livre.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/></svg></span><div><h3>Portal da Família</h3><p>Conteúdos públicos e orientação familiar.</p></div></a>
-      <a class="card" href="./area-filho.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><div><h3>Área do Filho</h3><p>Ferramentas familiares de uso livre, sem cadastro.</p></div></a>
+      <a class="card gold" href="./perfil-crianca.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="M12 12v3"/></svg></span><div><h3>Perfil da CrianÃ§a</h3><p>Cadastre e escolha a crianÃ§a ativa â€” conecta filtro, escalas e histÃ³rico.</p></div></a>
+      <a class="card" href="./portal-familia-livre.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/></svg></span><div><h3>Portal da FamÃ­lia</h3><p>ConteÃºdos pÃºblicos e orientaÃ§Ã£o familiar.</p></div></a>
+      <a class="card" href="./area-filho.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><div><h3>Ãrea do Filho</h3><p>Ferramentas familiares de uso livre, sem cadastro.</p></div></a>
       <a class="card" href="./comunicacao-alternativa.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/></svg></span><div><h3>CAA Gratuita</h3><p>Figurinhas, voz e frases.</p></div></a>
-      <a class="card" href="./diario-escola-terapias-v2.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><div><h3>Diário</h3><p>Escola, terapias e relatório.</p></div></a>
-      <a class="card" href="./impacto-medicacao.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5 4 14a4.95 4.95 0 0 1 7-7l6.5 6.5a4.95 4.95 0 0 1-7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span><div><h3>Impacto da medicação</h3><p>Resposta família × escola, salva no perfil.</p></div></a>
+      <a class="card" href="./diario-escola-terapias-v2.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><div><h3>DiÃ¡rio</h3><p>Escola, terapias e relatÃ³rio.</p></div></a>
+      <a class="card" href="./impacto-medicacao.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5 4 14a4.95 4.95 0 0 1 7-7l6.5 6.5a4.95 4.95 0 0 1-7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span><div><h3>Impacto da medicaÃ§Ã£o</h3><p>Resposta famÃ­lia Ã— escola, salva no perfil.</p></div></a>
     </div>
   </section>
 
   <!-- INSTRUMENTOS -->
 
-  <!-- ÁREA MÉDICA -->
+  <!-- ÃREA MÃ‰DICA -->
   <section class="group">
     <div class="group-head">
       <span class="gi" style="background:linear-gradient(180deg,var(--wine),#6f2531)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-      <h2>Área médica protegida</h2><span class="gn">PIN</span>
+      <h2>Ãrea mÃ©dica protegida</h2><span class="gn">PIN</span>
     </div>
     <div class="grid">
       <a class="card wine" href="./consulta.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M9 5h6"/><path d="M6 9v5a6 6 0 0 0 12 0V9"/><circle cx="12" cy="20" r="2"/></svg></span><div><h3>Consulta</h3><p>Painel de consulta operacional.</p><span class="lockbadge">PIN master</span></div></a>
-      <a class="card wine" href="./politica-acesso-familiar.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/></svg></span><div><h3>Política de acesso</h3><p>Regras de família, médico e dados sensíveis.</p></div></a>
+      <a class="card wine" href="./politica-acesso-familiar.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/></svg></span><div><h3>PolÃ­tica de acesso</h3><p>Regras de famÃ­lia, mÃ©dico e dados sensÃ­veis.</p></div></a>
     </div>
   </section>
 
@@ -254,19 +255,19 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
       <h2>App e sistema</h2><span class="gn">03</span>
     </div>
     <div class="grid">
-      <a class="card gold" href="./guia-lancamento.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg></span><div><h3>Guia de Lançamento</h3><p>Passo a passo para gerar renda — uso do autor.</p></div></a>
-      <a class="card" href="./sobre-dr-jadson.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><div><h3>Sobre o Dr. Jadson</h3><p>Conheça o autor e indique a plataforma a outra família.</p></div></a>
+      <a class="card gold" href="./guia-lancamento.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg></span><div><h3>Guia de LanÃ§amento</h3><p>Passo a passo para gerar renda â€” uso do autor.</p></div></a>
+      <a class="card" href="./sobre-dr-jadson.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><div><h3>Sobre o Dr. Jadson</h3><p>ConheÃ§a o autor e indique a plataforma a outra famÃ­lia.</p></div></a>
       <a class="card gold" href="./"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/></svg></span><div><h3>App principal</h3><p>Voltar ao NeuroPed EDJ.</p></div></a>
-      <a class="card gold" href="./verificar-app.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span><div><h3>Verificar app</h3><p>Confere rotas e versão publicada.</p></div></a>
+      <a class="card gold" href="./verificar-app.html"><span class="ci"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span><div><h3>Verificar app</h3><p>Confere rotas e versÃ£o publicada.</p></div></a>
     </div>
   </section>
 
-  <p class="footer">Ferramenta educacional de apoio à organização clínica. Não substitui avaliação profissional.<br>Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · CRM-PE 25227 | RQE 17756</p>
+  <p class="footer">Ferramenta educacional de apoio Ã  organizaÃ§Ã£o clÃ­nica. NÃ£o substitui avaliaÃ§Ã£o profissional.<br>Dr. Jadson Fraga AraÃºjo JÃºnior Â· Neurologista Infantil Â· CRM-PE 25227 | RQE 17756</p>
 </main>
 <script>
 (function(){
   'use strict';
-  var norm=function(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');};
+  var norm=function(s){return (s||'').toLowerCase().normalize('NFD').replace(/[Ì€-Í¯]/g,'');};
   var input=document.getElementById('hubSearch');
   var status=document.getElementById('hubStatus');
   if(!input)return;
@@ -280,7 +281,7 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
       c.classList.toggle('is-hidden',!match);
       if(match)visible++;
     });
-    // esconde grupos sem nenhum card visível
+    // esconde grupos sem nenhum card visÃ­vel
     groups.forEach(function(g){
       var any=g.querySelectorAll('.grid .card:not(.is-hidden)').length>0;
       g.classList.toggle('is-empty',!any);
@@ -292,7 +293,7 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
   });
   input.addEventListener('keydown',function(e){ if(e.key==='Escape'&&input.value){input.value='';input.dispatchEvent(new Event('input'));} });
 
-  /* ritmo: revela cada grupo ao entrar na viewport (navegação fluida, "digital") */
+  /* ritmo: revela cada grupo ao entrar na viewport (navegaÃ§Ã£o fluida, "digital") */
   try{
     if('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches){
       var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.isIntersecting){en.target.classList.add('reveal');io.unobserve(en.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:.08});
@@ -310,16 +311,16 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
     var c=window.NPStore.active();
     if(c&&c.name){
       var age=window.NPStore.ageLabel(c);
-      // descoberta automática: retoma o caso no próximo passo certo (sem o usuário procurar)
+      // descoberta automÃ¡tica: retoma o caso no prÃ³ximo passo certo (sem o usuÃ¡rio procurar)
       var rs=window.NPStore.resultsFor?window.NPStore.resultsFor(c):[];
-      var step=rs.length?{t:'Continuar o caso',href:'./perfil-crianca.html'}:{t:'Escolher a 1ª escala',href:'./filtro-escalas.html'};
+      var step=rs.length?{t:'Continuar o caso',href:'./perfil-crianca.html'}:{t:'Escolher a 1Âª escala',href:'./filtro-escalas.html'};
       el.href=step.href;
       el.classList.remove('none');
-      el.innerHTML='<span class="ac-av" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+String(c.name).replace(/[<>&]/g,'')+'</b>'+(age?' <span class="ac-sub">· '+age+'</span>':'')+(rs.length?' <span class="ac-sub">· '+rs.length+' aval.</span>':'')+' <span class="ac-go">'+step.t+' ›</span></span>';
+      el.innerHTML='<span class="ac-av" aria-hidden="true">'+ini(c.name)+'</span><span>Acompanhando: <b>'+String(c.name).replace(/[<>&]/g,'')+'</b>'+(age?' <span class="ac-sub">Â· '+age+'</span>':'')+(rs.length?' <span class="ac-sub">Â· '+rs.length+' aval.</span>':'')+' <span class="ac-go">'+step.t+' â€º</span></span>';
     } else {
       el.href='./perfil-crianca.html';
       el.classList.add('none');
-      el.innerHTML='<span class="ac-av" aria-hidden="true" style="background:linear-gradient(140deg,#7C3AED,#4F46E5);color:#fff">+</span><span>Cadastrar criança em acompanhamento</span>';
+      el.innerHTML='<span class="ac-av" aria-hidden="true" style="background:linear-gradient(140deg,#7C3AED,#4F46E5);color:#fff">+</span><span>Cadastrar crianÃ§a em acompanhamento</span>';
     }
     el.hidden=false;
   }
@@ -334,17 +335,17 @@ h1{font:700 clamp(34px,7vw,56px)/.98 "Fraunces",Georgia,serif;margin:14px 0 6px;
     if(!window.NPStore)return;
     var kids=window.NPStore.list(),act=window.NPStore.active();
     // Perfil
-    if(kids.length)setMeta('perfil',kids.length===1?'1 criança'+(act?' · ativa':''):kids.length+' crianças'+(act?' · 1 ativa':''));
+    if(kids.length)setMeta('perfil',kids.length===1?'1 crianÃ§a'+(act?' Â· ativa':''):kids.length+' crianÃ§as'+(act?' Â· 1 ativa':''));
     else setMeta('perfil','Comece por aqui',true);
-    // Filtro → avaliações da criança ativa
+    // Filtro â†’ avaliaÃ§Ãµes da crianÃ§a ativa
     var rs=act&&window.NPStore.resultsFor?window.NPStore.resultsFor(act):[];
-    if(act)setMeta('filtro',rs.length?rs.length+(rs.length>1?' avaliações':' avaliação'):'Pronto para triar',!rs.length);
+    if(act)setMeta('filtro',rs.length?rs.length+(rs.length>1?' avaliaÃ§Ãµes':' avaliaÃ§Ã£o'):'Pronto para triar',!rs.length);
     else setMeta('filtro','340+ instrumentos',true);
-    // Diário → registros no aparelho
+    // DiÃ¡rio â†’ registros no aparelho
     var dj=rd('diario_neuroped_v2',null);var regs=dj&&dj.registros&&dj.registros.length||dj&&dj.entries&&dj.entries.length||0;
-    setMeta('diario',regs?regs+(regs>1?' registros':' registro'):'Registrar evolução',!regs);
-    // CAA → sempre disponível, sem estado pessoal
-    setMeta('caa','Grátis · offline',true);
+    setMeta('diario',regs?regs+(regs>1?' registros':' registro'):'Registrar evoluÃ§Ã£o',!regs);
+    // CAA â†’ sempre disponÃ­vel, sem estado pessoal
+    setMeta('caa','GrÃ¡tis Â· offline',true);
   }
   function paintAll(){paint();paintMeta();}
   if(window.NPStore)paintAll(); else window.addEventListener('DOMContentLoaded',paintAll);

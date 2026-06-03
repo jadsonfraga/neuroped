@@ -1,0 +1,166 @@
+{
+  "$schema": "https://neuroped.io/schemas/clinical-taxonomy.v3.1.json",
+  "version": "3.1.0",
+  "author": "Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756",
+  "last_reviewed": "2026-06-03",
+  "description": "Taxonomia clínica V3.1 — schema completo com tipagem forte (JSDoc-compatível). Cada instrumento DEVE possuir 9 campos canônicos. Estende V3 com application_mode, longitudinal, purpose e requires_training como campos de primeira classe.",
+
+  "required_fields_per_instrument": [
+    "id",
+    "name",
+    "type",
+    "subtype",
+    "category",
+    "application_mode",
+    "respondent",
+    "longitudinal",
+    "requires_training",
+    "estimated_minutes",
+    "purpose"
+  ],
+
+  "field_definitions": {
+    "id":                { "type": "string",  "pattern": "^(td|esc|diar|ofc|fam)[a-z0-9-]+$", "description": "ID canônico com prefixo do tipo" },
+    "name":              { "type": "string",  "minLength": 3 },
+    "type":              { "type": "enum",    "values": ["direct_test", "scale", "diary"] },
+    "subtype":           { "type": "string",  "description": "Subtipo dentro do type — vide types.allowed_subtypes" },
+    "category":          { "type": "enum",    "values": ["clinical_application", "pre_consultation", "longitudinal_followup"] },
+    "application_mode":  { "type": "enum",    "values": ["presencial", "remoto", "hibrido", "recorrente"] },
+    "respondent":        { "type": "enum",    "values": ["clinico", "clinico_observacao", "familia", "escola", "autoteste_adolescente", "familia_e_escola", "cuidador", "paciente_em_desempenho"] },
+    "longitudinal":      { "type": "boolean", "description": "true só para diary" },
+    "requires_training": { "type": "boolean", "description": "true bloqueia pré-consulta" },
+    "estimated_minutes": { "type": "number",  "min": 0, "max": 240 },
+    "purpose":           { "type": "enum",    "values": ["triagem", "confirmacao", "acompanhamento", "monitoramento", "resposta_tratamento", "rastreio_risco"] }
+  },
+
+  "types": {
+    "direct_test": {
+      "label": "Teste direto",
+      "icon": "🎯",
+      "category_canonical": "clinical_application",
+      "application_mode_default": "presencial",
+      "longitudinal_default": false,
+      "requires_training_default": true,
+      "ui_panel": "testes-diretos.html",
+      "engine": "DirectTestEngine",
+      "allowed_subtypes": [
+        "academic", "cognitive_screening", "phonological_awareness", "naming",
+        "letter_recognition", "motor_task", "neuropsych_brief",
+        "language_production", "executive_function_task", "reading", "writing", "math"
+      ],
+      "ux_principles": ["fullscreen", "cronometro_opcional", "pontuacao_imediata", "foco_clinico"]
+    },
+    "scale": {
+      "label": "Escala / Questionário / Inventário",
+      "icon": "📋",
+      "category_canonical": "pre_consultation",
+      "application_mode_default": "remoto",
+      "longitudinal_default": false,
+      "requires_training_default": false,
+      "ui_panel": "escalas-questionarios.html",
+      "engine": "ScaleEngine",
+      "allowed_subtypes": [
+        "behavioral", "developmental", "attention", "social", "emotional",
+        "anxiety", "depression", "sensory", "adaptive", "school",
+        "obsessive_compulsive", "sleep_screening", "feeding_screening", "risk"
+      ],
+      "ux_principles": ["compartilhamento_remoto", "barra_de_progresso", "linguagem_familiar", "export_pdf"]
+    },
+    "diary": {
+      "label": "Diário clínico",
+      "icon": "📔",
+      "category_canonical": "longitudinal_followup",
+      "application_mode_default": "recorrente",
+      "longitudinal_default": true,
+      "requires_training_default": false,
+      "ui_panel": "diarios-clinicos.html",
+      "engine": "DiaryEngine",
+      "allowed_subtypes": [
+        "sleep", "feeding", "behavior", "seizure", "bowel", "school_daily",
+        "medication", "aggression", "sensory", "mood", "headache", "tics"
+      ],
+      "ux_principles": ["calendario", "timeline", "graficos_evolutivos", "export_csv_pdf", "recorrencia"]
+    }
+  },
+
+  "categories": {
+    "clinical_application":   { "label": "Aplicação clínica presencial", "engine": "DirectTestEngine" },
+    "pre_consultation":       { "label": "Pré-consulta",                 "engine": "ScaleEngine" },
+    "longitudinal_followup":  { "label": "Acompanhamento longitudinal",  "engine": "DiaryEngine" }
+  },
+
+  "pre_consultation_filter": {
+    "rule": "Bloqueia escalas que exigem treinamento clínico, observação estruturada, entrevista profissional, >20min, ou possuem gate diagnóstico.",
+    "blocklist": ["ofc-vineland-3", "ofc-cars-2", "ofc-conners-3", "ofc-gmfcs-er", "ofc-cssrs", "ofc-asq-suicide", "ofc-cbcl"],
+    "allowlist": [
+      "ofc-mchat-rf", "ofc-snap-iv", "ofc-vanderbilt", "ofc-sdq",
+      "ofc-phq-a", "ofc-gad-7", "ofc-bisq", "ofc-srs-2", "ofc-asq-3",
+      "ofc-scared", "ofc-cdi-2", "esc-abc-comportamento", "esc-perfil-sensorial",
+      "fam-12-36-tea-primeiros-sinais"
+    ]
+  },
+
+  "canonical_catalog": {
+    "scale": [
+      { "id": "ofc-mchat-rf",                       "name": "M-CHAT-R/F",                   "subtype": "developmental", "application_mode": "remoto",  "respondent": "familia",                "longitudinal": false, "requires_training": false, "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "fam-12-36-tea-primeiros-sinais",     "name": "Primeiros Sinais TEA",         "subtype": "developmental", "application_mode": "remoto",  "respondent": "familia",                "longitudinal": false, "requires_training": false, "estimated_minutes": 4,  "purpose": "triagem" },
+      { "id": "ofc-snap-iv",                        "name": "SNAP-IV",                      "subtype": "attention",     "application_mode": "remoto",  "respondent": "familia_e_escola",       "longitudinal": false, "requires_training": false, "estimated_minutes": 7,  "purpose": "triagem" },
+      { "id": "ofc-vanderbilt",                     "name": "NICHQ Vanderbilt",             "subtype": "attention",     "application_mode": "remoto",  "respondent": "familia_e_escola",       "longitudinal": false, "requires_training": false, "estimated_minutes": 10, "purpose": "triagem" },
+      { "id": "ofc-conners-3",                      "name": "Conners 3",                    "subtype": "attention",     "application_mode": "hibrido", "respondent": "familia_e_escola",       "longitudinal": false, "requires_training": true,  "estimated_minutes": 25, "purpose": "confirmacao" },
+      { "id": "ofc-asq-3",                          "name": "ASQ-3",                        "subtype": "developmental", "application_mode": "remoto",  "respondent": "familia",                "longitudinal": false, "requires_training": false, "estimated_minutes": 15, "purpose": "triagem" },
+      { "id": "ofc-srs-2",                          "name": "SRS-2",                        "subtype": "social",        "application_mode": "remoto",  "respondent": "familia_e_escola",       "longitudinal": false, "requires_training": false, "estimated_minutes": 20, "purpose": "triagem" },
+      { "id": "ofc-cars-2",                         "name": "CARS-2",                       "subtype": "social",        "application_mode": "presencial","respondent":"clinico_observacao",     "longitudinal": false, "requires_training": true,  "estimated_minutes": 30, "purpose": "confirmacao" },
+      { "id": "ofc-sdq",                            "name": "SDQ",                          "subtype": "behavioral",    "application_mode": "remoto",  "respondent": "familia_e_escola",       "longitudinal": false, "requires_training": false, "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "ofc-cbcl",                           "name": "CBCL",                         "subtype": "behavioral",    "application_mode": "hibrido", "respondent": "familia",                "longitudinal": false, "requires_training": true,  "estimated_minutes": 25, "purpose": "confirmacao" },
+      { "id": "ofc-vineland-3",                     "name": "Vineland-3",                   "subtype": "adaptive",      "application_mode": "presencial","respondent":"clinico",                "longitudinal": false, "requires_training": true,  "estimated_minutes": 60, "purpose": "confirmacao" },
+      { "id": "ofc-phq-a",                          "name": "PHQ-A",                        "subtype": "depression",    "application_mode": "remoto",  "respondent": "autoteste_adolescente",  "longitudinal": false, "requires_training": false, "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "ofc-cdi-2",                          "name": "CDI 2",                        "subtype": "depression",    "application_mode": "remoto",  "respondent": "autoteste_adolescente",  "longitudinal": false, "requires_training": false, "estimated_minutes": 15, "purpose": "triagem" },
+      { "id": "ofc-gad-7",                          "name": "GAD-7",                        "subtype": "anxiety",       "application_mode": "remoto",  "respondent": "autoteste_adolescente",  "longitudinal": false, "requires_training": false, "estimated_minutes": 3,  "purpose": "triagem" },
+      { "id": "ofc-scared",                         "name": "SCARED",                       "subtype": "anxiety",       "application_mode": "remoto",  "respondent": "autoteste_adolescente",  "longitudinal": false, "requires_training": false, "estimated_minutes": 10, "purpose": "triagem" },
+      { "id": "ofc-cssrs",                          "name": "C-SSRS",                       "subtype": "risk",          "application_mode": "presencial","respondent":"clinico",                "longitudinal": false, "requires_training": true,  "estimated_minutes": 15, "purpose": "rastreio_risco" },
+      { "id": "ofc-asq-suicide",                    "name": "ASQ Suicide Toolkit",          "subtype": "risk",          "application_mode": "presencial","respondent":"clinico",                "longitudinal": false, "requires_training": true,  "estimated_minutes": 2,  "purpose": "rastreio_risco" },
+      { "id": "ofc-bisq",                           "name": "BISQ",                         "subtype": "sleep_screening","application_mode": "remoto", "respondent": "familia",                "longitudinal": false, "requires_training": false, "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "ofc-cy-bocs",                        "name": "CY-BOCS",                      "subtype": "obsessive_compulsive","application_mode":"presencial","respondent":"clinico",          "longitudinal": false, "requires_training": true,  "estimated_minutes": 30, "purpose": "confirmacao" },
+      { "id": "esc-abc-comportamento",              "name": "ABC Comportamento",            "subtype": "behavioral",    "application_mode": "remoto",  "respondent": "familia_e_escola",       "longitudinal": false, "requires_training": false, "estimated_minutes": 10, "purpose": "triagem" },
+      { "id": "esc-perfil-sensorial",               "name": "Perfil Sensorial",             "subtype": "sensory",       "application_mode": "remoto",  "respondent": "familia",                "longitudinal": false, "requires_training": false, "estimated_minutes": 15, "purpose": "triagem" }
+    ],
+    "direct_test": [
+      { "id": "td-teste-leitura",              "name": "Teste de Leitura",                "subtype": "academic",                "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 10, "purpose": "confirmacao" },
+      { "id": "td-teste-escrita",              "name": "Teste de Escrita",                "subtype": "academic",                "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 10, "purpose": "confirmacao" },
+      { "id": "td-consciencia-fonologica",     "name": "Consciência Fonológica",          "subtype": "phonological_awareness",  "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 8,  "purpose": "confirmacao" },
+      { "id": "td-nomeacao-rapida-ran",        "name": "Nomeação Rápida (RAN)",           "subtype": "naming",                  "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 5,  "purpose": "confirmacao" },
+      { "id": "td-reconhecimento-letras",      "name": "Reconhecimento de Letras",        "subtype": "letter_recognition",      "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": false, "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "td-rastreio-cognitivo-rapido",  "name": "Rastreio Cognitivo Rápido",       "subtype": "cognitive_screening",     "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 15, "purpose": "triagem" },
+      { "id": "td-coordenacao-motora-fina",    "name": "Coordenação Motora Fina",         "subtype": "motor_task",              "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "td-coordenacao-motora-grossa",  "name": "Coordenação Motora Grossa",       "subtype": "motor_task",              "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 5,  "purpose": "triagem" },
+      { "id": "td-fluencia-verbal-fas",        "name": "Fluência Verbal (FAS)",           "subtype": "language_production",     "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 5,  "purpose": "confirmacao" },
+      { "id": "td-stroop-pediatrico",          "name": "Stroop Pediátrico",               "subtype": "executive_function_task", "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 10, "purpose": "confirmacao" },
+      { "id": "td-digit-span-direto-inverso",  "name": "Digit Span (direto + inverso)",   "subtype": "executive_function_task", "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 5,  "purpose": "confirmacao" },
+      { "id": "td-trilhas-coloridas",          "name": "Trilhas Coloridas",               "subtype": "executive_function_task", "application_mode": "presencial", "respondent": "paciente_em_desempenho", "longitudinal": false, "requires_training": true,  "estimated_minutes": 10, "purpose": "confirmacao" }
+    ],
+    "diary": [
+      { "id": "diar-sono",                "name": "Diário do Sono",          "subtype": "sleep",        "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-alimentar",           "name": "Diário Alimentar",        "subtype": "feeding",      "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-comportamento",       "name": "Diário Comportamental",   "subtype": "behavior",     "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 3, "purpose": "monitoramento" },
+      { "id": "diar-crises-epilepticas",  "name": "Diário de Crises",        "subtype": "seizure",      "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-evacuatorio",         "name": "Diário Evacuatório",      "subtype": "bowel",        "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 1, "purpose": "monitoramento" },
+      { "id": "diar-escolar-diario",      "name": "Registro Escolar Diário", "subtype": "school_daily", "application_mode": "recorrente", "respondent": "escola",   "longitudinal": true, "requires_training": false, "estimated_minutes": 3, "purpose": "monitoramento" },
+      { "id": "diar-medicacao",           "name": "Diário de Medicação",     "subtype": "medication",   "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 1, "purpose": "monitoramento" },
+      { "id": "diar-agressividade",       "name": "Diário de Agressividade", "subtype": "aggression",   "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-sensorial",           "name": "Diário Sensorial",        "subtype": "sensory",      "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-humor-adolescente",   "name": "Diário de Humor",         "subtype": "mood",         "application_mode": "recorrente", "respondent": "autoteste_adolescente", "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-cefaleia",            "name": "Diário de Cefaleia",      "subtype": "headache",     "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" },
+      { "id": "diar-tiques",              "name": "Diário de Tiques",        "subtype": "tics",         "application_mode": "recorrente", "respondent": "familia",  "longitudinal": true, "requires_training": false, "estimated_minutes": 2, "purpose": "monitoramento" }
+    ]
+  },
+
+  "filter_contract": {
+    "anti_pattern_forbidden": "if (item.tipo === 'teste') { ... }",
+    "engines_must_be_isolated": true,
+    "panels": {
+      "testes-diretos.html":        { "engine": "DirectTestEngine", "type": "direct_test", "category": "clinical_application" },
+      "escalas-questionarios.html": { "engine": "ScaleEngine",      "type": "scale",       "category": "pre_consultation" },
+      "diarios-clinicos.html":      { "engine": "DiaryEngine",      "type": "diary",       "category": "longitudinal_followup" }
+    }
+  }
+}
