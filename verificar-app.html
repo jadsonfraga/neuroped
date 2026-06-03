@@ -1,6 +1,6 @@
-﻿<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Verificar NeuroPed</title>
-<!-- Migrado para o Design System canÃ´nico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
+<!-- Migrado para o Design System canônico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-polish-mobile.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
 <style>
   body { margin: 0; background: var(--aurora-base); color: var(--text); font-family: var(--font-sans); min-height: 100vh; }
@@ -12,15 +12,15 @@
 </head><body><main class="wrap">
 <section class="np-card">
   <h1 class="np-t-display" style="margin:0 0 var(--space-2)">Verificar app</h1>
-  <p class="np-t-body np-text-muted">Confere rotas crÃ­ticas, Consulta, Portal da FamÃ­lia, passe familiar de 4 meses e recarga suave.</p>
+  <p class="np-t-body np-text-muted">Confere rotas críticas, Consulta, Portal da Família, passe familiar de 4 meses e recarga suave.</p>
   <div class="hero-actions">
-    <button class="np-btn np-btn--primary" onclick="check()"><span class="np-btn-label">Verificar versÃ£o</span></button>
+    <button class="np-btn np-btn--primary" onclick="check()"><span class="np-btn-label">Verificar versão</span></button>
     <button class="np-btn np-btn--secondary" onclick="location.replace('./?fresh='+Date.now())">Recarregar app</button>
     <a class="np-btn np-btn--ghost" href="./central-atalhos.html">Central</a>
     <a class="np-btn np-btn--ghost" href="./consulta.html">Consulta</a>
     <a class="np-btn np-btn--ghost" href="./ativar-passe-familiar.html">Ativar passe</a>
   </div>
-  <pre id="log">Aguardando verificaÃ§Ã£o.</pre>
+  <pre id="log">Aguardando verificação.</pre>
 </section>
 </main>
 <script>
@@ -28,18 +28,18 @@ async function ok(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no
 async function txt(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no-store'}).then(r=>r.text())}catch(e){return ''}}
 async function check(){
   const out=[];function log(x){out.push(x);document.getElementById('log').textContent=out.join('\n')}
-  const VERSAO='6.44.20';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
-  log('VersÃ£o canÃ´nica esperada: '+VERSAO);
+  const VERSAO='6.44.21';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
+  log('Versão canônica esperada: '+VERSAO);
   const pkg=await txt('./package.json');let pkgV='';try{pkgV=(JSON.parse(pkg||'{}').version)||''}catch(e){}
-  log(pkgV?('OK: package.json em '+pkgV+(pkgV===VERSAO?' (alinhado)':' â€” AtenÃ§Ã£o: diverge de '+VERSAO)):'AtenÃ§Ã£o: versÃ£o do package.json nÃ£o identificada');
+  log(pkgV?('OK: package.json em '+pkgV+(pkgV===VERSAO?' (alinhado)':' — Atenção: diverge de '+VERSAO)):'Atenção: versão do package.json não identificada');
   const sw=await txt('./sw.js');const m=sw.match(/neuroped-edj-v[0-9][^'\"]*/);
-  log(m?(m[0]===CACHE_ESPERADO?'OK: cache do service worker em '+m[0]+' (alinhado)':'AtenÃ§Ã£o: cache '+m[0]+' diverge de '+CACHE_ESPERADO):'AtenÃ§Ã£o: cache do service worker nÃ£o identificado');
+  log(m?(m[0]===CACHE_ESPERADO?'OK: cache do service worker em '+m[0]+' (alinhado)':'Atenção: cache '+m[0]+' diverge de '+CACHE_ESPERADO):'Atenção: cache do service worker não identificado');
   const routes=['./neuroped-master-vitrine.html','./neuroped-master-biblioteca.html','./central-atalhos.html','./portal-familia-livre.html','./area-filho.html','./politica-acesso-familiar.html','./consulta.html','./ativar-passe-familiar.html','./family-pass.js','./family-pass-generator.js','./family-pass-portal.js','./family-voucher.js','./family-voucher-ui.js','./comunicacao-alternativa.html','./diario-escola-terapias-v2.html','./filtro-escalas.html','./mapa-escalas.html','./manifest.json','./editorial-impact.css'];
   for(const r of routes){log((await ok(r)?'OK: ':'FALHA: ')+r)}
-  const consulta=await txt('./consulta.html');log(consulta.includes('PIN master obrigatÃ³rio')&&consulta.includes('Painel de consulta operacional')?'OK: Consulta exige PIN e tem painel operacional':'FALHA: Consulta nÃ£o parece operacional');
-  const gen=await txt('./family-pass-generator.js');log(gen.includes('Passe Familiar de 4 meses')&&gen.includes('setInterval')?'OK: gerador de passe robusto apÃ³s PIN':'FALHA: gerador de passe nÃ£o robusto');
-  const pass=await txt('./family-pass.js');log(pass.includes('DAYS=120')||pass.includes('const DAYS=120')?'OK: passe familiar com validade de 120 dias':'FALHA: validade do passe nÃ£o encontrada');
-  const ativa=await txt('./ativar-passe-familiar.html');log(ativa.includes('Ativar acesso da famÃ­lia')?'OK: tela de ativaÃ§Ã£o do passe existe':'FALHA: ativaÃ§Ã£o de passe ausente');
+  const consulta=await txt('./consulta.html');log(consulta.includes('PIN master obrigatório')&&consulta.includes('Painel de consulta operacional')?'OK: Consulta exige PIN e tem painel operacional':'FALHA: Consulta não parece operacional');
+  const gen=await txt('./family-pass-generator.js');log(gen.includes('Passe Familiar de 4 meses')&&gen.includes('setInterval')?'OK: gerador de passe robusto após PIN':'FALHA: gerador de passe não robusto');
+  const pass=await txt('./family-pass.js');log(pass.includes('DAYS=120')||pass.includes('const DAYS=120')?'OK: passe familiar com validade de 120 dias':'FALHA: validade do passe não encontrada');
+  const ativa=await txt('./ativar-passe-familiar.html');log(ativa.includes('Ativar acesso da família')?'OK: tela de ativação do passe existe':'FALHA: ativação de passe ausente');
 }
 </script><script src="./app-polish-mobile.js" defer></script>
 <script src="./app-frame.js" defer></script>
