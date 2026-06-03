@@ -1,0 +1,72 @@
+/* ============================================================
+   NeuroPed EDJ — ds-tokens.css  (camada de PONTE, aditiva)
+   ============================================================
+
+   IMPORTANTE: o token canônico já é `tokens.css` (spec SUPERNEUROPED, Fase 1).
+   Este arquivo NÃO redefine valores — ele apenas:
+
+   1. Expõe aliases semânticos `--ds-*` apontando para os tokens canônicos
+      (namespace estável para novos componentes/migração).
+   2. PONTE de variáveis LEGADAS: dá os nomes inline antigos (--teal, --ink,
+      --wine, --gold, --line, --glass…) a páginas que ainda NÃO os definem,
+      mapeando-os para os tokens canônicos. Assim dá para adotar os componentes
+      `.np-*` (components.css) sem depender da paleta inline legada.
+
+   Regras:
+   - Carregar DEPOIS de tokens.css (precisa dos tokens canônicos resolvidos).
+   - Páginas que DEFINEM esses nomes inline continuam mandando (a definição
+     local no <style> vence). A ponte só preenche onde falta → sem regressão.
+   - Reversível: remover este arquivo não quebra nada que já usa tokens.css.
+
+   Auditar: `node scripts/design-audit.mjs`.
+   ============================================================ */
+
+:root {
+  /* ---------- 1) Aliases semânticos --ds-* (namespace canônico) ---------- */
+  --ds-bg:            var(--bg);
+  --ds-surface:       var(--surface);
+  --ds-surface-muted: var(--surface-muted);
+  --ds-border:        var(--border);
+  --ds-border-strong: var(--border-strong);
+  --ds-text:          var(--text);
+  --ds-text-strong:   var(--text-strong);
+  --ds-text-muted:    var(--text-muted);
+  --ds-text-soft:     var(--text-soft);
+  --ds-primary:       var(--primary);
+  --ds-primary-tint:  var(--primary-tint);
+  --ds-accent-gold:   var(--accent-gold);
+  --ds-success:       var(--success);
+  --ds-warning:       var(--warning);
+  --ds-danger:        var(--danger);
+  --ds-info:          var(--info);
+  --ds-radius-card:   var(--radius-lg);
+  --ds-radius-btn:    var(--radius-md);
+  --ds-radius-input:  var(--radius-sm);
+  --ds-shadow-card:   var(--shadow-2);
+  --ds-shadow-pop:    var(--shadow-3);
+
+  /* ---------- 2) PONTE de variáveis legadas → tokens canônicos ----------
+     (mapeamento documentado em docs/ds-recon.md §3). Só preenche onde a
+     página não define o nome inline; não sobrescreve definições locais.) */
+  --teal:      var(--primary);
+  --teal2:     var(--primary-light);
+  --indigo:    var(--primary-deep);
+  --ink:       var(--text-strong);
+  --muted:     var(--text-muted);
+  --soft:      var(--text-soft);
+  --soft-ink:  var(--text-soft);
+  --wine:      var(--accent-gold);
+  --gold:      var(--accent-gold);
+  --gold2:     var(--accent-gold-dark);
+  --line:      var(--border);
+  --line2:     var(--border-strong);
+  --glass:     var(--surface-glass);
+  --glass2:    var(--surface-muted);
+  --bg2:       var(--bg-2);
+  --ok:        var(--success);
+  --okbg:      var(--success-tint);
+  --blue:      var(--info);
+  --bluebg:    var(--info-tint);
+  --shadow:    var(--shadow-card);
+  --radius:    var(--radius-lg);
+}
