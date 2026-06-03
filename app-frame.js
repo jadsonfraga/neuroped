@@ -69,6 +69,10 @@
   ];
   function ensureBottomNav(){
     if (document.getElementById('npFrameNav')) return;
+    // Dedup: este é o nav canônico. Remove o nav legado do app-polish-mobile.js
+    // (.np-bottom-nav) se ele já foi injetado, evitando duas barras no mobile.
+    var legacy = document.querySelector('.np-bottom-nav');
+    if (legacy && legacy.parentNode) legacy.parentNode.removeChild(legacy);
     var here = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
     var nav = document.createElement('nav');
     nav.id = 'npFrameNav';
