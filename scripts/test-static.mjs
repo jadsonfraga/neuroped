@@ -505,6 +505,12 @@ assertIncludes('banco-escalas.html', 'ds-components.css', 'banco-escalas migrou:
 assertIncludes('banco-escalas.html', 'content="#F7F8FA"', 'banco-escalas usa o fundo clínico off-white (DS)');
 assertNotIncludes('banco-escalas.html', '#6d6af5', 'banco-escalas sem o roxo legado (linguagem unificada)');
 assertNotIncludes('banco-escalas.html', 'escalas-card-premium', 'banco-escalas sem a skin J26 legada');
+// escala.html: runner de aplicação de questionário migrado (fase 4)
+assertIncludes('escala.html', 'ds-tokens.css', 'runner migrou: carrega a camada de tokens');
+assertIncludes('escala.html', 'ds-components.css', 'runner migrou: carrega os componentes canônicos');
+assertIncludes('escala.html', 'content="#F7F8FA"', 'runner usa o fundo clínico off-white (DS)');
+assertNotIncludes('escala.html', 'Fraunces', 'runner sem fonte serif legada (tipografia Inter unificada)');
+assertNotIncludes('escala.html', 'app-polish-mobile.js', 'runner sem a skin universal legada (serif/índigo)');
 // app-polish-mobile não pode reescrever o theme-color para teal
 assertNotIncludes('app-polish-mobile.js', "content = '#1a6b65'", 'app-polish-mobile não força theme-color teal');
 assertIncludes('app-polish-mobile.js', "content = '#0e0e22'", 'app-polish-mobile usa theme-color índigo');
