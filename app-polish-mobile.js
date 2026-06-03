@@ -99,6 +99,7 @@
     // opt-out por página (ex.: landing de vendas, foco em 1 ação)
     if (document.body && document.body.hasAttribute('data-no-bottom-nav')) return;
     if (document.querySelector('.np-bottom-nav')) return;
+    if (document.getElementById('npFrameNav')) return;   // app-frame.js já provê o nav canônico — não duplicar
     navStyle();
     var nav = document.createElement('nav');
     nav.className = 'np-bottom-nav';
