@@ -909,6 +909,9 @@ assertIncludes('sw.js', "'./clinical-meta.js'", 'loader de meta clínica no prec
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
 assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
 assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.functionalExamples', 'filtro injeta exemplos funcionais (o que observar) no raciocínio');
+assertIncludes('filtro-escalas.html', 'clinical-meta.js', 'filtro carrega a meta clínica (evidência curada)');
+assertIncludes('filtro-escalas.html', 'NeuroPedMeta.evidence', 'filtro mostra 📚 Evidência (citação + PMID) quando o instrumento tem fonte curada');
+assertIncludes('clinical-meta.js', 'api.load()', 'clinical-meta auto-carrega o registry no browser');
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
