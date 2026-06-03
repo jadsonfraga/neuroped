@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Triagem Comportamental A-B-C · NeuroPed</title>
+<style>
+  :root{
+    --bg:#f7f9fb; --card:#fff; --ink:#0f172a; --muted:#475569;
+    --line:#e2e8f0; --brand:#0e7490; --brand-soft:#ecfeff;
+    --warn:#b45309; --warn-soft:#fffbeb;
+    --ok:#15803d; --ok-soft:#f0fdf4;
+    --hi:#b91c1c; --hi-soft:#fef2f2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);line-height:1.5}
+  .wrap{max-width:880px;margin:24px auto;padding:0 16px}
+  header.card{padding:18px 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h1{font-size:20px;margin:0 0 6px}
+  h2{font-size:16px;margin:0 0 8px;color:var(--brand)}
+  .sub{color:var(--muted);font-size:13px;margin:0}
+  .tags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+  .tag{background:var(--brand-soft);color:var(--brand);font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid #cffafe}
+  .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .q{padding:16px 20px;border-top:1px solid var(--line)}
+  .q:first-of-type{border-top:none}
+  .q-title{font-weight:600;margin:0 0 6px;font-size:15px}
+  .q-title .n{color:var(--brand);margin-right:6px}
+  details{margin:6px 0 10px;background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+  details summary{cursor:pointer;font-size:13px;color:var(--brand);font-weight:500;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"💡 ";opacity:.9}
+  details[open] summary::before{content:"💡 ▾ "}
+  details ul{margin:8px 0 4px;padding-left:18px;color:var(--muted);font-size:13px}
+  details ul li{margin:2px 0}
+  details .obs{margin-top:8px;font-size:12.5px;color:#334155;background:#fff;border-left:3px solid var(--brand);padding:6px 10px;border-radius:6px}
+  .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+  .opts label{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 6px;font-size:13px;cursor:pointer;transition:.15s;text-align:center}
+  .opts label:hover{border-color:var(--brand);background:var(--brand-soft)}
+  .opts input{accent-color:var(--brand)}
+  .opts input:checked + span{font-weight:600;color:var(--brand)}
+  .opts label:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+  .functional{margin-top:10px;padding:10px 12px;background:#fafafa;border:1px solid var(--line);border-radius:10px}
+  .functional p{margin:0 0 6px;font-size:13px;color:var(--muted)}
+  .funcgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .funcgrid label{display:flex;gap:8px;align-items:flex-start;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;cursor:pointer}
+  .funcgrid label:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+  .funcgrid b{display:block;font-weight:600;color:var(--ink)}
+  .funcgrid small{color:var(--muted)}
+  .result{padding:18px 20px}
+  .result h2{margin-bottom:10px}
+  .bar{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:6px 0 4px}
+  .bar > i{display:block;height:100%;background:var(--brand);border-radius:999px;transition:.3s}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;font-weight:600;margin-left:6px}
+  .pill.low{background:var(--ok-soft);color:var(--ok)}
+  .pill.mid{background:var(--warn-soft);color:var(--warn)}
+  .pill.hi{background:var(--hi-soft);color:var(--hi)}
+  .profile{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+  .pcell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .pcell .lbl{font-size:12px;color:var(--muted)}
+  .pcell .val{font-weight:600;color:var(--ink)}
+  .actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+  .btn{appearance:none;border:1px solid var(--brand);background:var(--brand);color:#fff;padding:9px 14px;border-radius:10px;font-weight:600;cursor:pointer;font-size:13px}
+  .btn.ghost{background:#fff;color:var(--brand)}
+  .note{font-size:12px;color:var(--muted);margin-top:10px}
+  @media (max-width:560px){
+    .opts{grid-template-columns:repeat(2,1fr)}
+    .funcgrid,.profile{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="card">
+    <h1>Triagem Comportamental A-B-C</h1>
+    <p class="sub">Teste familiar · 2–17 anos · Domínio: Comportamento</p>
+    <p class="sub" style="margin-top:6px">🎯 Mapeia gatilhos, topografia, consequências e <b>função aparente</b> do comportamento-alvo para orientar o plano comportamental individualizado.</p>
+    <div class="tags">
+      <span class="tag">birra</span><span class="tag">agressividade</span>
+      <span class="tag">autoagressão</span><span class="tag">oposição</span>
+    </div>
+    <div class="meta">
+      <span>👤 Sem criança ativa — o laudo sai sem identificação</span>
+      <span id="counter">0/6 respondidos</span>
+    </div>
+  </header>
+
+  <section class="card" id="form">
+
+    <!-- 1. ANTECEDENTE -->
+    <div class="q" data-q="1">
+      <p class="q-title"><span class="n">1.</span>🧩 ANTECEDENTE — situações que costumam preceder o comportamento-alvo</p>
+      <details>
+        <summary>Exemplos e o que observar</summary>
+        <ul>
+          <li>Pedido para interromper atividade prazerosa (tela, brincadeira)</li>
+          <li>Transições: sair de casa, ir dormir, trocar de ambiente</li>
+          <li>Negativa do adulto a um pedido da criança</li>
+          <li>Ambiente barulhento, cheio ou desorganizado</li>
+          <li>Fome, sono, dor, cansaço acumulado</li>
+          <li>Tarefa percebida como difícil, longa ou repetitiva</li>
+          <li>Conflito com irmão ou colega</li>
+        </ul>
+        <div class="obs">👀 Observe se há um padrão recorrente de contexto antes do episódio — esse é o gatilho que o plano vai modificar.</div>
+      </details>
+      <div class="opts">
+        <label><input type="radio" name="q1" value="0"><span>Não / nunca</span></label>
+        <label><input type="radio" name="q1" value="1"><span>Às vezes</span></label>
+        <label><input type="radio" name="q1" value="2"><span>Frequente</span></label>
+        <label><input type="radio" name="q1" value="3"><span>Quase sempre</span></label>
+      </div>
+    </div>
+
+    <!-- 2. COMPORTAMENTO -->
+    <div class="q" data-q="2">
+      <p class="q-title"><span class="n">2.</span>🧩 COMPORTAMENTO — o que a criança faz de forma observável</p>
+      <details>
+        <summary>Exemplos e o que observar</summary>
+        <ul>
+          <li>Gritar, chorar de forma intensa, xingar</li>
+          <li>Jogar-se no chão, debater-se</li>
+          <li>Bater em adulto, irmão ou colega</li>
+          <li>Morder, arranhar, puxar cabelo</li>
+          <li>Autoagressão: bater a cabeça, morder-se, arranhar-se</li>
+          <li>Quebrar ou arremessar objetos</li>
+          <li>Fugir do local, esconder-se</li>
+          <li>Recusa verbal persistente ("não vou", "não quero")</li>
+        </ul>
+        <div class="obs">👀 Descreva o que é visível — não o que se imagina. Evite rótulos ("nervoso", "estressado"); registre a ação.</div>
+      </details>
+      <div class="opts">
+        <label><input type="radio" name="q2" value="0"><span>Não / nunca</span></label>
+        <label><input type="radio" name="q2" value="1"><span>Às vezes</span></label>
+        <label><input type="radio" name="q2" value="2"><span>Frequente</span></label>
+        <label><input type="radio" name="q2" value="3"><span>Quase sempre</span></label>
+      </div>
+    </div>
+
+    <!-- 3. CONSEQUÊNCIA -->
+    <div class="q" data-q="3">
+      <p class="q-title"><span class="n">3.</span>🧩 CONSEQUÊNCIA — o que os adultos costumam fazer logo depois</p>
+      <details>
+        <summary>Exemplos e o que observar</summary>
+        <ul>
+          <li>Conversa longa, explicação ou bronca prolongada (atenção)</li>
+          <li>Ceder ao pedido da criança para encerrar o episódio</li>
+          <li>Retirar a exigência ou a tarefa</li>
+          <li>Isolar a criança ("vai pro quarto", castigo)</li>
+          <li>Castigo físico ou contenção</li>
+          <li>Ignorar ativamente / virar as costas</li>
+          <li>Oferecer item desejado (tela, comida, brinquedo) para acalmar</li>
+        </ul>
+        <div class="obs">👀 A consequência mantém o comportamento. Se o que vem depois "funciona" para a criança, o comportamento se repete.</div>
+      </details>
+      <div class="opts">
+        <label><input type="radio" name="q3" value="0"><span>Não / nunca</span></label>
+        <label><input type="radio" name="q3" value="1"><span>Às vezes</span></label>
+        <label><input type="radio" name="q3" value="2"><span>Frequente</span></label>
+        <label><input type="radio" name="q3" value="3"><span>Quase sempre</span></label>
+      </div>
+    </div>
+
+    <!-- 4. CONTEXTO -->
+    <div class="q" data-q="4">
+      <p class="q-title"><span class="n">4.</span>🧩 CONTEXTO — onde e com quem ocorre mais</p>
+      <details>
+        <summary>Exemplos e o que observar</summary>
+        <ul>
+          <li>Em casa, com a mãe / com o pai / com cuidador</li>
+          <li>Na escola: sala de aula, recreio, transição entre atividades</li>
+          <li>No transporte, supermercado, consultório, festa</li>
+          <li>Na presença de irmão, primo, colega específico</li>
+          <li>Com pessoas estranhas ou em ambientes novos</li>
+          <li>Apenas em um contexto, ou generalizado</li>
+        </ul>
+        <div class="obs">👀 Comportamento concentrado em um único contexto sugere fator situacional; comportamento generalizado sugere padrão mais estável.</div>
+      </details>
+      <div class="opts">
+        <label><input type="radio" name="q4" value="0"><span>Não / nunca</span></label>
+        <label><input type="radio" name="q4" value="1"><span>Às vezes</span></label>
+        <label><input type="radio" name="q4" value="2"><span>Frequente</span></label>
+        <label><input type="radio" name="q4" value="3"><span>Quase sempre</span></label>
+      </div>
+    </div>
+
+    <!-- 5. DURAÇÃO E INTENSIDADE -->
+    <div class="q" data-q="5">
+      <p class="q-title"><span class="n">5.</span>🧩 DURAÇÃO E INTENSIDADE média do episódio</p>
+      <details>
+        <summary>Exemplos e o que observar</summary>
+        <ul>
+          <li>Leve: até 2 minutos, sem agressão ou risco</li>
+          <li>Moderado: 2 a 10 minutos, com choro intenso ou agressão verbal</li>
+          <li>Intenso: 10 a 30 minutos, com agressão física a si ou outros</li>
+          <li>Muito intenso: acima de 30 minutos, risco físico claro</li>
+          <li>Há marcas no corpo, hematomas, ferimentos?</li>
+          <li>Há quebra de objetos ou destruição de ambiente?</li>
+        </ul>
+        <div class="obs">👀 Episódios longos e com risco físico exigem plano de manejo de crise documentado, além do plano comportamental rotineiro.</div>
+      </details>
+      <div class="opts">
+        <label><input type="radio" name="q5" value="0"><span>Não / nunca</span></label>
+        <label><input type="radio" name="q5" value="1"><span>Às vezes</span></label>
+        <label><input type="radio" name="q5" value="2"><span>Frequente</span></label>
+        <label><input type="radio" name="q5" value="3"><span>Quase sempre</span></label>
+      </div>
+    </div>
+
+    <!-- 6. FUNÇÃO APARENTE -->
+    <div class="q" data-q="6">
+      <p class="q-title"><span class="n">6.</span>😟 FUNÇÃO APARENTE — o que a criança parece obter ou evitar com o comportamento</p>
+      <details>
+        <summary>Exemplos e o que observar</summary>
+        <ul>
+          <li><b>Fuga / esquiva:</b> escapar de tarefa, demanda, ambiente, pessoa</li>
+          <li><b>Atenção:</b> obter olhar, fala, reação do adulto (mesmo bronca)</li>
+          <li><b>Acesso tangível:</b> conseguir objeto, tela, comida, atividade</li>
+          <li><b>Sensorial / autorregulação:</b> aliviar sobrecarga, buscar estímulo</li>
+          <li><b>Alívio de desconforto:</b> dor, fome, sono, doença, medo</li>
+        </ul>
+        <div class="obs">👀 A função é a chave do plano. Sem identificar a função, intervenções viram tentativa-e-erro.</div>
+      </details>
+
+      <div class="opts">
+        <label><input type="radio" name="q6" value="0"><span>Não / nunca</span></label>
+        <label><input type="radio" name="q6" value="1"><span>Às vezes</span></label>
+        <label><input type="radio" name="q6" value="2"><span>Frequente</span></label>
+        <label><input type="radio" name="q6" value="3"><span>Quase sempre</span></label>
+      </div>
+
+      <div class="functional">
+        <p>Marque <b>todas</b> as funções que se aplicam ao comportamento-alvo (gera o perfil funcional):</p>
+        <div class="funcgrid">
+          <label><input type="checkbox" name="func" value="fuga">
+            <span><b>Fuga / esquiva</b><small>evitar demanda, tarefa ou ambiente</small></span></label>
+          <label><input type="checkbox" name="func" value="atencao">
+            <span><b>Atenção</b><small>obter reação do adulto</small></span></label>
+          <label><input type="checkbox" name="func" value="tangivel">
+            <span><b>Acesso tangível</b><small>conseguir item, tela, atividade</small></span></label>
+          <label><input type="checkbox" name="func" value="sensorial">
+            <span><b>Sensorial</b><small>autorregulação, busca/alívio de estímulo</small></span></label>
+          <label><input type="checkbox" name="func" value="desconforto">
+            <span><b>Alívio de desconforto</b><small>dor, fome, sono, medo</small></span></label>
+          <label><input type="checkbox" name="func" value="indeterminada">
+            <span><b>Indeterminada</b><small>ainda não identificada</small></span></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card result" id="result">
+    <h2>Resultado da triagem</h2>
+    <div>
+      <span>Pontuação:</span>
+      <b id="score">0 / 18</b>
+      <span id="pill" class="pill low">baixa</span>
+    </div>
+    <div class="bar"><i id="barFill" style="width:0%"></i></div>
+    <p class="sub" id="interp">Aguardando respostas…</p>
+
+    <div class="profile" id="profile" style="display:none">
+      <div class="pcell"><div class="lbl">Função predominante</div><div class="val" id="funcMain">—</div></div>
+      <div class="pcell"><div class="lbl">Funções marcadas</div><div class="val" id="funcAll">—</div></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="window.print()">🖨️ Gerar laudo</button>
+      <button class="btn ghost" onclick="resetForm()">↺ Limpar</button>
+    </div>
+    <p class="note">Instrumento autoral/operacional de triagem. Não substitui avaliação clínica. Decisão do médico responsável.<br>Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756 · NeuroPed v6.44.20</p>
+  </section>
+</div>
+
+<script>
+  const FUNC_LABEL = {
+    fuga:"Fuga / esquiva",
+    atencao:"Atenção",
+    tangivel:"Acesso tangível",
+    sensorial:"Sensorial",
+    desconforto:"Alívio de desconforto",
+    indeterminada:"Indeterminada"
+  };
+
+  function compute(){
+    let total=0, answered=0;
+    for(let i=1;i<=6;i++){
+      const v = document.querySelector(`input[name="q${i}"]:checked`);
+      if(v){ total += +v.value; answered++; }
+    }
+    document.getElementById("counter").textContent = `${answered}/6 respondidos`;
+    document.getElementById("score").textContent = `${total} / 18`;
+    document.getElementById("barFill").style.width = (total/18*100)+"%";
+
+    const pill = document.getElementById("pill");
+    const interp = document.getElementById("interp");
+    let cls="low", lbl="baixa", txt="Pontuação relativamente baixa. Continue acompanhando e ajuste se aparecerem novos sinais.";
+    if(total>=7 && total<=12){ cls="mid"; lbl="moderada"; txt="Padrão comportamental relevante. Indicada análise funcional formal e plano comportamental estruturado."; }
+    else if(total>=13){ cls="hi"; lbl="alta"; txt="Padrão de alta intensidade/frequência. Indicada intervenção comportamental prioritária; considerar plano de manejo de crise se houver risco físico."; }
+    pill.className = "pill "+cls; pill.textContent = lbl;
+    interp.textContent = txt + ` (${total}/18 · ${Math.round(total/18*100)}%)`;
+
+    const funcs = [...document.querySelectorAll('input[name="func"]:checked')].map(c=>c.value);
+    const prof = document.getElementById("profile");
+    if(funcs.length){
+      prof.style.display="grid";
+      document.getElementById("funcAll").textContent = funcs.map(f=>FUNC_LABEL[f]).join(" · ");
+      const main = funcs.find(f=>f!=="indeterminada") || "indeterminada";
+      document.getElementById("funcMain").textContent = FUNC_LABEL[main];
+    } else {
+      prof.style.display="none";
+    }
+  }
+
+  function resetForm(){
+    document.querySelectorAll('input[type="radio"],input[type="checkbox"]').forEach(i=>i.checked=false);
+    compute();
+  }
+
+  document.getElementById("form").addEventListener("change", compute);
+  compute();
+</script>
+</body>
+</html>
