@@ -1,5 +1,39 @@
 # Changelog — NeuroPed EDJ
 
+## v6.44.10 — 2026-06-03 — Testes diretos lúdicos + celebrações de progresso
+
+Adiciona **5 mini-testes interativos** aplicados na criança em página própria
+(`testes-diretos.html`), com UI tipo Duolingo, e camada de **micro-celebrações**
+em 25/50/75/100% das escalas longas.
+
+**Novo módulo `testes-diretos.html` + `testes-diretos-engine.js`** (motor puro)
+- 🔢 **Span de Dígitos** — dígito aparece em tela cheia, criança toca no teclado
+  numérico pra repetir; trava em direta após erro, parte pra inversa; mede maior
+  span correto. Forward/backward separados.
+- 🧠 **Memória de Figuras** — 4 emojis aparecem por 4s, depois grid de 8 pra
+  apontar quais estavam ali. 3 rodadas. Score = corretos − erros.
+- 🔍 **Atenção Visual** — grid 5×5 com 24 distratores + 1 alvo (gatinho entre
+  cachorrinhos, maçã vermelha entre verdes, etc). 5 rodadas. Cronometra tempo
+  médio e erros.
+- 🌗 **Inibição Dia/Noite** — clássica de função executiva: palavra DIA aparece,
+  criança toca em NOITE. 10 rodadas, 4 pares. Acerto + tempo médio.
+- 🎵 **Consciência Fonológica** — som inicial, rima e contagem de sílabas. 5
+  perguntas com 3 opções cada. Hint clínico no feedback.
+
+Cada teste salva resultado em `np_direct_tests_session_v1` com uma linha pronta
+pro laudo. Sumário exporta tudo via clipboard.
+
+**Camada `instrumento-celebrations.js`**
+- Hook em `#answered` via MutationObserver. Dispara toast central animado em
+  25/50/75/100% das respostas: 🌱 ⭐ 🚀 🏆.
+- Respeita `prefers-reduced-motion` (sem animação).
+- Idempotente (cada milestone só uma vez) + cleanup em `pagehide`.
+
+**Wiring**
+- Card "Testes Diretos" adicionado ao `central-atalhos.html` (faixa principal).
+- SW precache atualizado (`v6.44.10`) com os 3 arquivos novos.
+- Suite estática preservada em 740+ OK / 0 falhas.
+
 ## v6.44.9 — 2026-06-03 — Unificação do progresso/fadiga
 
 - O runner `escala.html` passa a usar o helper compartilhado **`NeuroPedProgress`**
