@@ -1543,7 +1543,10 @@ window.NEUROPED_EDITORIAL_SCALES=clean.concat(base);
   ];
 
   window.NEUROPED_IMPACTO = IMPACTO;
-  window.NEUROPED_EDITORIAL_SCALES = (window.NEUROPED_EDITORIAL_SCALES || []).concat(IMPACTO);
+  // dedup por id (mesmo padrão dos demais merges) — evita reentrar a mesma escala
+  var __npBase = window.NEUROPED_EDITORIAL_SCALES || [];
+  var __npIds = new Set(__npBase.map(function (x) { return x && x.id; }));
+  window.NEUROPED_EDITORIAL_SCALES = __npBase.concat(IMPACTO.filter(function (x) { return x && !__npIds.has(x.id); }));
 })();
 
 
