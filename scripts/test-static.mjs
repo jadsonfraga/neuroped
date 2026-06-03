@@ -870,6 +870,25 @@ assertIncludes('sw.js', "'./scales-progress.js'", 'progresso de escala no precac
     ? pass('progresso salva/retoma/limpa (retomar de onde parou — reduz abandono)')
     : fail('save/load/clear de progresso falhou');
 }
+// Trilhos da curadoria de evidência: validador anti-fabricação (afirmação sem citação reprova)
+assertFile('clinical-meta.js');
+assertFile('evidence-registry.json'); assertFile('clinical-ontology.json');
+assertIncludes('sw.js', "'./clinical-meta.js'", 'loader de meta clínica no precache do SW');
+{
+  const require = createRequire(import.meta.url);
+  const M = require(join(root, 'clinical-meta.js'));
+  // 1) o registry real (só template hoje) tem de ser válido
+  let ev = {}; try { ev = JSON.parse(readFileSync(join(root, 'evidence-registry.json'), 'utf8')); } catch (e) {}
+  M.validateRegistry(ev).ok
+    ? pass('evidence-registry válido (sem afirmação sem fonte)')
+    : fail('evidence-registry inválido', M.validateRegistry(ev).errors.join(' · '));
+  // 2) o validador REPROVA claim sem citação (garante a regra anti-fabricação)
+  const bad = { instruments: { x: { guideline_support: [{ body: 'AAP', statement: 's' }], evidence_level: 'A' } } };
+  const good = { instruments: { x: { guideline_support: [{ body: 'AAP', statement: 's', citation: 'AAP 2020' }] } } };
+  (!M.validateRegistry(bad).ok && M.validateRegistry(good).ok)
+    ? pass('validador bloqueia afirmação clínica SEM citação e aceita COM citação (anti-fabricação)')
+    : fail('validador de evidência não aplica a regra de citação');
+}
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
 assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
