@@ -632,10 +632,39 @@
     document.addEventListener('keydown', function esc(e){ if (e.key === 'Escape') { document.removeEventListener('keydown', esc); close(false); } });
   }
 
+  /* =====================================================
+     POLIMENTO PREMIUM GLOBAL — 3 ondas de refino visual,
+     aditivas e idempotentes, válidas em qualquer página:
+       1) Cabeçalhos (.topbar): glow violeta coeso no logo + transições.
+       2) Microinterações nos cards de escala (.result-card/.scale-card).
+       3) Acessibilidade: anel de foco visível consistente (teclado · AA).
+     Respeita prefers-reduced-motion. Não altera markup nem cores de marca.
+     ===================================================== */
+  function premiumPolish(){
+    if (document.getElementById('np-premium-polish')) return;
+    var s = document.createElement('style'); s.id = 'np-premium-polish';
+    s.textContent =
+      /* 3) Foco visível — apenas via teclado (focus-visible), nunca no clique */
+      'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{' +
+        'outline:2px solid #a9a4ff;outline-offset:2px;box-shadow:0 0 0 4px rgba(124,58,237,.28)}' +
+      /* 1) Cabeçalho coeso: glow violeta no logo (uniformiza entre páginas) */
+      '.topbar .tb-logo{box-shadow:0 8px 20px -8px rgba(91,84,232,.55)}' +
+      '@media(prefers-reduced-motion:no-preference){' +
+        '.topbar .back,.topbar .tb-pill{transition:transform .16s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .2s}' +
+        /* 2) Microinterações: elevação + sombra suave ao passar dedo/mouse */
+        '.result-card,.scale-card{transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}' +
+        '.result-card:hover,.scale-card:hover{transform:translateY(-3px);box-shadow:0 20px 44px -22px rgba(2,2,12,.85)}' +
+        '.result-card:active,.scale-card:active{transform:translateY(-1px) scale(.995)}' +
+        'button:active,.btn:active{transform:scale(.985)}' +
+      '}';
+    document.head.appendChild(s);
+  }
+
   function boot(){
     themeColor();
     fixViewport();
     premiumNav();
+    premiumPolish();
     if (!EMBEDDED) { splash(); bottomNav(); navProgress(); pageExit(); predictivePrefetch(); journeyGuide(); brandMark(); onboarding(); qualitySeal(); referralWidget(); lgpdBanner(); }   // dentro da casca (app-shell), o chrome é da casca
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
