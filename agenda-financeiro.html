@@ -725,6 +725,8 @@ function exportCSV() {
 // CANVAS CHART
 // ═══════════════════════════════════════════════
 
+// canvas não resolve var(--token) do CSS — resolvemos em runtime (theme-aware)
+function cvar(name, fallback){try{var v=getComputedStyle(document.documentElement).getPropertyValue(name).trim();return v||fallback}catch(e){return fallback}}
 function drawChart(data) {
   const canvas = document.getElementById('finChart');
   if (!canvas) return;
@@ -747,7 +749,7 @@ function drawChart(data) {
 
   const days = Object.keys(byDay).map(Number).sort((a,b) => a - b);
   if (days.length === 0) {
-    ctx.fillStyle = 'var(--text-muted)'; ctx.font = '13px Inter'; ctx.textAlign = 'center';
+    ctx.fillStyle = cvar('--text-muted','#b6b2e6'); ctx.font = '13px Inter'; ctx.textAlign = 'center';
     ctx.fillText('Sem dados no período', W/2, H/2);
     return;
   }
@@ -760,11 +762,11 @@ function drawChart(data) {
   const gap = chartW / days.length;
 
   // Y axis
-  ctx.strokeStyle = 'var(--border)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = cvar('--border','rgba(169,164,255,.18)'); ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = pad.top + chartH - (chartH * i / 4);
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-    ctx.fillStyle = 'var(--text-muted)'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+    ctx.fillStyle = cvar('--text-muted','#b6b2e6'); ctx.font = '10px Inter'; ctx.textAlign = 'right';
     ctx.fillText(`R$${Math.round(maxVal * i / 4)}`, pad.left - 4, y + 3);
   }
 
@@ -774,10 +776,10 @@ function drawChart(data) {
     const hPago = (byDay[day].pago / maxVal) * chartH;
     const hPend = (byDay[day].pendente / maxVal) * chartH;
 
-    ctx.fillStyle = 'var(--primary)';
+    ctx.fillStyle = cvar('--primary','#6d6af5');
     ctx.fillRect(x - barW - 1, pad.top + chartH - hPago, barW, hPago);
 
-    ctx.fillStyle = 'var(--warning)';
+    ctx.fillStyle = cvar('--warning','#f0c060');
     ctx.fillRect(x + 1, pad.top + chartH - hPend, barW, hPend);
 
     ctx.fillStyle = '#666'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
