@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 const root = process.cwd();
 const failures = [];
@@ -793,6 +794,30 @@ assertIncludes('ambient-effects.js', 'ancestorHasAmbient', 'ambient não duplica
     }
   }
   if (!broken) pass(`todos os ${scanned} <script> inline executáveis parseiam (sem quebra por edição em massa)`);
+}
+// Taxonomia clínica de instrumentos (fundação do módulo de escalas/testes)
+assertFile('scales-taxonomy.js');
+assertIncludes('sw.js', "'./scales-taxonomy.js'", 'taxonomia no precache do SW (offline)');
+{
+  const require = createRequire(import.meta.url);
+  const tax = require(join(root, 'scales-taxonomy.js'));
+  const cases = [
+    [{ direct_test: true, title: 'Span de dígitos' }, 'teste_direto'],
+    [{ title: 'Nomeação automática rápida (RAN) — leitura' }, 'teste_direto'],
+    [{ title: 'Protocolo de observação — contato ocular e brincar simbólico' }, 'observacao'],
+    [{ title: 'M-CHAT-R/F triagem de autismo' }, 'triagem'],
+    [{ title: 'Inventário de comportamento CBCL' }, 'inventario'],
+    [{ audience: 'autoteste', title: 'Autorrelato do adolescente' }, 'autorrelato'],
+    [{ audience: 'escola', title: 'versão professor' }, 'escala_escola'],
+    [{ audience: 'pais', title: 'questionário para os pais' }, 'escala_pais'],
+  ];
+  const wrong = cases.filter(([inp, exp]) => tax.classify(inp).kind !== exp);
+  wrong.length === 0
+    ? pass(`taxonomia classifica os ${cases.length} tipos (escala parental × teste direto × inventário × observação × triagem…)`)
+    : fail('taxonomia errou', wrong.map(([i, e]) => (i.title || '') + '≠' + e).join(' · '));
+  (tax.functionalExamples('tdah') && tax.functionalExamples('tea'))
+    ? pass('taxonomia expõe exemplos funcionais por queixa (prompts genéricos, não itens de instrumento)')
+    : fail('functionalExamples ausente');
 }
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
