@@ -73,7 +73,7 @@
     <div><label for="cAge">Idade / data de nascimento</label><input id="cAge" autocomplete="off" placeholder="Ex.: 4 anos · 10/2021"></div>
   </div>
 
-  <div class="note warnmiss">ℹ️ A <strong>Seção A (itens 1–12)</strong> — identificação e desenvolvimento inicial — não foi incluída neste conteúdo. Posso adicioná-la assim que você enviar os itens.</div>
+  <div class="note warnmiss">📝 A <strong>Seção A (itens 1–12)</strong> — identificação e desenvolvimento inicial — é um <strong>rascunho de anamnese padrão</strong> (não reproduz o ADI‑R). Revise/ajuste o texto conforme sua prática.</div>
 
   <div id="form"></div>
 
@@ -92,6 +92,20 @@
 (function(){
   'use strict';
   var SECTIONS = [
+    { id:'A', title:'A · Identificação e desenvolvimento inicial', items:[
+      [1,'Identificação da criança.','Nome, idade atual, com quem mora e quem está respondendo (mãe/pai/responsável). Ex.: João, 4 anos, mora com pais e avó; responde a mãe.'],
+      [2,'Principal preocupação atual.','O que mais preocupa vocês hoje no desenvolvimento/comportamento? Ex.: fala pouco e não interage com outras crianças.'],
+      [3,'Gestação e parto.','Houve intercorrências na gravidez/parto, prematuridade, internação em UTI neonatal? Ex.: nasceu de 36 semanas, ficou 3 dias na UTI.'],
+      [4,'Primeiros meses (bebê).','Era um bebê calmo ou irritado? Olhava nos olhos, sorria de volta, gostava de colo? Ex.: bebê muito quieto, evitava o olhar.'],
+      [5,'Marcos motores.','Com que idade firmou o pescoço, sentou, engatinhou e andou? Ex.: andou com 14 meses, dentro do esperado.'],
+      [6,'Linguagem inicial.','Quando surgiram balbucio, primeiras palavras e primeiras frases? Ex.: primeiras palavras aos 18 meses, ainda não faz frases.'],
+      [7,'Autonomia / esfíncteres.','Controle de xixi e cocô; come e veste-se sozinho conforme a idade? Ex.: ainda usa fralda aos 4 anos.'],
+      [8,'Primeira preocupação.','Com que idade vocês, a escola ou o pediatra notaram que "algo era diferente" e o quê? Ex.: a creche, aos 2 anos, notou que não atendia pelo nome.'],
+      [9,'Regressão de habilidades.','Houve perda de habilidades já adquiridas (parou de falar palavras que dizia, perdeu contato social)? Quando? Ex.: falava "mamãe/papai" e parou por volta dos 20 meses.'],
+      [10,'Sono e alimentação.','Como são o sono e a alimentação desde cedo (seletividade, despertares)? Ex.: dorme mal e só aceita alimentos de uma cor/textura.'],
+      [11,'Saúde e exames.','Convulsões, internações, doenças relevantes, medicações em uso; audição e visão já foram testadas? Ex.: fez teste da orelhinha normal; nunca teve crise.'],
+      [12,'História familiar e contexto.','Casos na família de autismo, TDAH, deficiência intelectual, epilepsia ou atraso de linguagem; escola atual e terapias em curso. Ex.: tio com autismo; faz fono 1x/semana.']
+    ]},
     { id:'B', title:'B · Comunicação e linguagem', items:[
       [13,'Usa gestos para pedir ou mostrar?','Aponta para o que quer, mostra brinquedo? Ex.: Puxa minha mão até a geladeira em vez de apontar.'],
       [14,'Aponta para compartilhar interesse?',"Mostra algo só para dividir atenção, tipo 'olha ali'? Ex.: Aponta o avião no céu e olha pra mim sorrindo."],
