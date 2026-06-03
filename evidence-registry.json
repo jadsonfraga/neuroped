@@ -145,6 +145,81 @@
       "contraindicated_for": ["confundir desempenho típico com capacidade máxima", "uso como rastreio ou diagnóstico"],
       "false_positive_with": [],
       "_needs_curation": false
+    },
+    "ofc-rcads": {
+      "instrument_id": "ofc-rcads",
+      "validation_sources": [
+        {
+          "statement": "Escala dimensional de ansiedade e depressão (6 subescalas; 47 itens; 6–18 anos); consistência interna (alfa de Cronbach) entre 0,73 e 0,82 no estudo original. Identidade confirmada no PubMed.",
+          "citation": "Chorpita BF et al. Assessment of symptoms of DSM-IV anxiety and depression in children: a revised child anxiety and depression scale (RCADS). Behav Res Ther. 2000.",
+          "pmid": "10937431"
+        }
+      ],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["rastreio/monitoramento dimensional de ansiedade e depressão (6–18 anos), autorrelato e versão para pais"],
+      "contraindicated_for": ["diagnóstico isolado pelo escore", "interpretar escore bruto sem T-score normatizado"],
+      "false_positive_with": [],
+      "_needs_curation": false
+    },
+    "ofc-phq-gad": {
+      "instrument_id": "ofc-phq-gad",
+      "validation_sources": [
+        {
+          "statement": "PHQ-9 (9 itens, 0–27): escore ≥10 com sensibilidade 88% e especificidade 88% para depressão maior; bandas 5/10/15/20 (leve a grave). Validação em ADULTOS na atenção primária.",
+          "citation": "Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure. J Gen Intern Med. 2001;16(9):606-13.",
+          "pmid": "11556941"
+        },
+        {
+          "statement": "GAD-7 (7 itens, 0–21): ponto de corte com sensibilidade 89% e especificidade 82% para transtorno de ansiedade generalizada. Validação em ADULTOS na atenção primária.",
+          "citation": "Spitzer RL, Kroenke K, Williams JBW, Löwe B. A brief measure for assessing generalized anxiety disorder: the GAD-7. Arch Intern Med. 2006.",
+          "pmid": "16717171"
+        }
+      ],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["rastreio e monitoramento de gravidade de depressão (PHQ-9/PHQ-A) e ansiedade (GAD-7)"],
+      "contraindicated_for": ["diagnóstico isolado pelo escore", "extrapolar os cortes adultos para crianças/adolescentes sem a versão e validação específicas (ex.: PHQ-A)", "ignorar item de ideação suicida do PHQ-9"],
+      "false_positive_with": [],
+      "_needs_curation": false
+    },
+    "ofc-crafft": {
+      "instrument_id": "ofc-crafft",
+      "validation_sources": [
+        {
+          "statement": "Rastreio de uso de substâncias na adolescência (6 itens); estudo de validação por critério em pacientes adolescentes de ambulatório, comparando o escore com entrevista diagnóstica estruturada. Identidade confirmada no PubMed.",
+          "citation": "Knight JR, Sherritt L, Shrier LA, Harris SK, Chang G. Validity of the CRAFFT substance abuse screening test among adolescent clinic patients. Arch Pediatr Adolesc Med. 2002;156(6):607-14.",
+          "pmid": "12038895"
+        }
+      ],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["rastreio de uso/risco de substâncias na adolescência"],
+      "contraindicated_for": ["diagnóstico de transtorno por uso pelo escore", "aplicar sem garantir confidencialidade"],
+      "false_positive_with": [],
+      "_needs_curation": false
+    },
+    "ofc-psc": {
+      "instrument_id": "ofc-psc",
+      "_note": "PENDENTE: paper seminal do PSC-17 (Gardner 1999, Ambulatory Child Health) não está indexado no PubMed com PMID limpo. Aguardando PMID de fonte primária citável antes de expor claim.",
+      "validation_sources": [],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["rastreio de problemas psicossociais em escolares (PSC-17; internalização/externalização/atenção)"],
+      "contraindicated_for": [],
+      "false_positive_with": [],
+      "_needs_curation": true
+    },
+    "ofc-swyc": {
+      "instrument_id": "ofc-swyc",
+      "_note": "PENDENTE: aguardando confirmação de PMID seminal único do SWYC (desenvolvimento + socioemocional + risco familiar) antes de expor claim.",
+      "validation_sources": [],
+      "guideline_support": [],
+      "evidence_level": null,
+      "recommended_for": ["rastreio amplo da primeira infância (0–65 meses): desenvolvimento, socioemocional e risco familiar"],
+      "contraindicated_for": [],
+      "false_positive_with": [],
+      "_needs_curation": true
     }
   }
 }
