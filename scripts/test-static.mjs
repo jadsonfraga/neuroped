@@ -192,7 +192,7 @@ assertIncludes('app-polish-mobile.js', 'npToast', 'polish JS expoe window.npToas
 assertIncludes('app-polish-mobile.js', 'npConfirm', 'polish JS expoe window.npConfirm');
 // banco-escalas.html migrou para o design system canônico (ds-tokens/ds-components)
 // e abandonou as skins legadas (app-polish/escalas-card-premium). Ver bloco DS abaixo.
-for (const p of ['index.html','consulta.html','instrumento.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
+for (const p of ['index.html','instrumento.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
   assertIncludes(p, 'app-polish-mobile.css', p + ' carrega app-polish-mobile.css');
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
 }
@@ -282,7 +282,7 @@ assertIncludes('filtro-escalas.html', 'function stateKey', 'filtro lembra queixa
 assertIncludes('central-atalhos.html', 'impacto-medicacao.html', 'hub linka o Impacto da Medicação (deixa de ser funcionalidade escondida)');
 // Camada D — consistência: tipografia de exibição (Fraunces) unificada nas telas-ramo
 assertIncludes('diario-escola-terapias-v2.html', 'Fraunces', 'diário usa a fonte de exibição unificada (Fraunces)');
-assertIncludes('consulta.html', 'Fraunces', 'consulta usa a fonte de exibição unificada (Fraunces)');
+assertNotIncludes('consulta.html', 'Fraunces', 'consulta migrou: tipografia Inter unificada (sem serif legada)');
 assertIncludes('comunicacao-alternativa.html', 'Fraunces', 'CAA usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('neuroped-master-biblioteca.css', 'Fraunces', 'biblioteca usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('app-polish-mobile.js', 'function predictivePrefetch', 'prefetch preditivo: próxima tela carrega antes do clique (instantâneo)');
@@ -522,12 +522,12 @@ assertFile('ds-premium-bridge.css');
 assertIncludes('ds-premium-bridge.css', 'var(--app-bg)', 'ponte aplica o fundo espacial dos tokens');
 assertIncludes('ds-premium-bridge.css', '--teal: var(--primary)', 'ponte re-aponta variáveis legadas para tokens');
 assertIncludes('ds-premium-bridge.css', '.btn.danger', 'ponte preserva a cor de botões de status (danger)');
-for (const p of ['consulta.html','secretaria.html','portal-novidades.html','agenda-financeiro.html']) {
+for (const p of ['secretaria.html','portal-novidades.html','agenda-financeiro.html']) {
   assertIncludes(p, 'ds-premium-bridge.css', p + ' está no DNA premium (ponte de unificação)');
   assertIncludes(p, 'content="#050816"', p + ' usa o chrome dark-premium');
 }
-// Vitrines migradas tela-a-tela (manifesto): hub e perfil longitudinal
-for (const p of ['central-atalhos.html','perfil-crianca.html']) {
+// Vitrines migradas tela-a-tela (manifesto): hub, perfil longitudinal, consulta
+for (const p of ['central-atalhos.html','perfil-crianca.html','consulta.html']) {
   assertIncludes(p, 'ds-tokens.css', p + ' migrou: carrega a camada de tokens');
   assertNotIncludes(p, 'ds-premium-bridge.css', p + ' não depende mais da ponte (migrado de verdade)');
   assertNotIncludes(p, 'Fraunces', p + ' sem serif legada (Inter unificada)');
