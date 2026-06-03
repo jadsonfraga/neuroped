@@ -1,8 +1,8 @@
-﻿{
+{
     "id":  "/?source=pwa",
-    "name":  "NeuroPed EDJ â€” Dr. Jadson Fraga",
+    "name":  "NeuroPed EDJ — Dr. Jadson Fraga",
     "short_name":  "NeuroPed",
-    "description":  "Plataforma clÃ­nica integrada de neuropediatria: escalas, consulta, agenda, diÃ¡rio, CAA e nuvem.",
+    "description":  "Plataforma clínica integrada de neuropediatria: escalas, consulta, agenda, diário, CAA e nuvem.",
     "start_url":  "./app-shell.html",
     "scope":  "./",
     "display":  "standalone",
@@ -40,19 +40,19 @@
                           "name":  "Escalas",
                           "short_name":  "Escalas",
                           "url":  "./index.html#/escalas",
-                          "description":  "Banco de instrumentos clÃ­nicos"
+                          "description":  "Banco de instrumentos clínicos"
                       },
                       {
                           "name":  "Agenda",
                           "short_name":  "Agenda",
                           "url":  "./index.html#/agenda",
-                          "description":  "CalendÃ¡rio e financeiro"
+                          "description":  "Calendário e financeiro"
                       },
                       {
                           "name":  "CAA Gratuita",
                           "short_name":  "CAA",
                           "url":  "./index.html#/caa",
-                          "description":  "ComunicaÃ§Ã£o alternativa gratuita"
+                          "description":  "Comunicação alternativa gratuita"
                       }
                   ]
 }

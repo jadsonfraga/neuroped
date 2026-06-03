@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auditoria da Ontologia Â· NeuroPed</title>
+<title>Auditoria da Ontologia · NeuroPed</title>
 <style>
   :root{
     --bg:#0f172a; --card:#1e293b; --ink:#f1f5f9; --muted:#94a3b8;
@@ -53,68 +53,68 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>ðŸ” Auditoria da Ontologia de Instrumentos</h1>
-    <p>InspeÃ§Ã£o runtime do catÃ¡logo classificado pelo overlay v1.0. Identifique instrumentos em <code>heuristic_fallback</code> para promovÃª-los a entradas explÃ­citas no <code>CATALOG</code>.</p>
+    <h1>🔍 Auditoria da Ontologia de Instrumentos</h1>
+    <p>Inspeção runtime do catálogo classificado pelo overlay v1.0. Identifique instrumentos em <code>heuristic_fallback</code> para promovê-los a entradas explícitas no <code>CATALOG</code>.</p>
   </header>
 
   <div class="stats" id="stats">
-    <div class="stat"><div class="l">Total</div><div class="v" id="s-total">â€”</div></div>
-    <div class="stat"><div class="l">CatÃ¡logo manual</div><div class="v" id="s-catalog">â€”</div></div>
-    <div class="stat"><div class="l">Fallback heurÃ­stico</div><div class="v" id="s-fallback">â€”</div></div>
-    <div class="stat"><div class="l">InvÃ¡lidos</div><div class="v" id="s-invalid">â€”</div></div>
-    <div class="stat"><div class="l">PrÃ©-consulta OK</div><div class="v" id="s-preconsult">â€”</div></div>
+    <div class="stat"><div class="l">Total</div><div class="v" id="s-total">—</div></div>
+    <div class="stat"><div class="l">Catálogo manual</div><div class="v" id="s-catalog">—</div></div>
+    <div class="stat"><div class="l">Fallback heurístico</div><div class="v" id="s-fallback">—</div></div>
+    <div class="stat"><div class="l">Inválidos</div><div class="v" id="s-invalid">—</div></div>
+    <div class="stat"><div class="l">Pré-consulta OK</div><div class="v" id="s-preconsult">—</div></div>
   </div>
 
   <div class="help">
-    <strong>Como usar:</strong> filtre por classificaÃ§Ã£o para ver onde a heurÃ­stica estÃ¡ agindo.
+    <strong>Como usar:</strong> filtre por classificação para ver onde a heurística está agindo.
     Cada linha em <span class="badge b-fallback">FALLBACK</span> deveria virar uma entrada manual no
-    <code>CATALOG</code> de <code>neuroped-overlay.js</code> com classificaÃ§Ã£o revisada clinicamente.
+    <code>CATALOG</code> de <code>neuroped-overlay.js</code> com classificação revisada clinicamente.
   </div>
 
   <div class="filters">
     <select id="f-source">
       <option value="">Todos</option>
-      <option value="catalog">SÃ³ catÃ¡logo manual</option>
-      <option value="heuristic_fallback">SÃ³ fallback heurÃ­stico</option>
+      <option value="catalog">Só catálogo manual</option>
+      <option value="heuristic_fallback">Só fallback heurístico</option>
     </select>
     <select id="f-type">
       <option value="">Todos os tipos</option>
       <option value="direct_test">Teste direto</option>
       <option value="scale_questionnaire">Escala</option>
-      <option value="inventory">InventÃ¡rio</option>
-      <option value="diary">DiÃ¡rio</option>
-      <option value="clinical_tool">Ferramenta clÃ­nica</option>
+      <option value="inventory">Inventário</option>
+      <option value="diary">Diário</option>
+      <option value="clinical_tool">Ferramenta clínica</option>
     </select>
     <select id="f-gate">
-      <option value="">Todos prÃ©-consulta</option>
-      <option value="yes">SÃ³ permitidos na prÃ©-consulta</option>
-      <option value="no">SÃ³ bloqueados da prÃ©-consulta</option>
+      <option value="">Todos pré-consulta</option>
+      <option value="yes">Só permitidos na pré-consulta</option>
+      <option value="no">Só bloqueados da pré-consulta</option>
     </select>
-    <input type="search" id="f-text" placeholder="Buscar por id ou tÃ­tuloâ€¦">
-    <button onclick="exportCSV()">â¬‡ Exportar CSV</button>
+    <input type="search" id="f-text" placeholder="Buscar por id ou título…">
+    <button onclick="exportCSV()">⬇ Exportar CSV</button>
   </div>
 
   <table>
     <thead>
       <tr>
         <th>ID</th>
-        <th>TÃ­tulo</th>
+        <th>Título</th>
         <th>Tipo</th>
         <th>Respondente</th>
         <th>Treino</th>
         <th>Min</th>
         <th>Origem</th>
-        <th>PrÃ©-cons</th>
+        <th>Pré-cons</th>
         <th>Motivo gate</th>
-        <th>AÃ§Ãµes</th>
+        <th>Ações</th>
       </tr>
     </thead>
-    <tbody id="tbody"><tr><td colspan="10" class="empty">Carregando catÃ¡logoâ€¦</td></tr></tbody>
+    <tbody id="tbody"><tr><td colspan="10" class="empty">Carregando catálogo…</td></tr></tbody>
   </table>
 
   <details>
-    <summary>ðŸ“‹ Stub JSON para promoÃ§Ã£o manual</summary>
-    <p style="font-size:12px;color:var(--muted);margin:6px 0;">Clique em "Stub" em qualquer linha de fallback. O bloco JSON aparecerÃ¡ aqui â€” copie e cole no <code>CATALOG</code> de <code>neuroped-overlay.js</code>.</p>
+    <summary>📋 Stub JSON para promoção manual</summary>
+    <p style="font-size:12px;color:var(--muted);margin:6px 0;">Clique em "Stub" em qualquer linha de fallback. O bloco JSON aparecerá aqui — copie e cole no <code>CATALOG</code> de <code>neuroped-overlay.js</code>.</p>
     <pre id="stub-area">Nenhum stub gerado ainda.</pre>
   </details>
 </div>
@@ -142,11 +142,11 @@
         : { allowed: false, code: 'no_gate' };
       return {
         id: s.id,
-        title: s.title || '(sem tÃ­tulo)',
+        title: s.title || '(sem título)',
         type: t.instrument_type || '?',
         respondent: t.respondent_required || '?',
         training: t.training_required ? (t.training_level || 'yes') : 'no',
-        minutes: t.time_to_apply_minutes == null ? 'â€”' : t.time_to_apply_minutes,
+        minutes: t.time_to_apply_minutes == null ? '—' : t.time_to_apply_minutes,
         source: t.classification_source || 'unknown',
         preconsult: gate.allowed,
         gateCode: gate.code,
@@ -213,8 +213,8 @@
         <td>${r.training}</td>
         <td style="text-align:right">${r.minutes}</td>
         <td><span class="badge b-${r.source === 'catalog' ? 'catalog' : 'fallback'}">${r.source.replace('heuristic_','')}</span></td>
-        <td style="text-align:center">${r.preconsult ? 'âœ…' : 'ðŸš«'}</td>
-        <td style="font-size:11px;color:var(--muted);max-width:240px">${escape(r.gateReason || 'â€”')}</td>
+        <td style="text-align:center">${r.preconsult ? '✅' : '🚫'}</td>
+        <td style="font-size:11px;color:var(--muted);max-width:240px">${escape(r.gateReason || '—')}</td>
         <td><div class="row-actions">
           <button onclick="generateStub('${r.id}')">Stub</button>
         </div></td>

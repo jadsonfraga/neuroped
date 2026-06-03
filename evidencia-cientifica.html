@@ -1,13 +1,13 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050816">
-<title>EvidÃªncia CientÃ­fica â€” Instrumentos | NeuroPed EDJ</title>
-<meta name="description" content="EvidÃªncia clÃ­nica verificada (PubMed/PMID) dos principais instrumentos de rastreio em neuropediatria e saÃºde mental infantil: finalidade, lÃ³gica de pontuaÃ§Ã£o, psicometria, red flags, orientaÃ§Ã£o familiar e referÃªncias. Apoio educacional â€” rastreio nÃ£o Ã© diagnÃ³stico.">
+<title>Evidência Científica — Instrumentos | NeuroPed EDJ</title>
+<meta name="description" content="Evidência clínica verificada (PubMed/PMID) dos principais instrumentos de rastreio em neuropediatria e saúde mental infantil: finalidade, lógica de pontuação, psicometria, red flags, orientação familiar e referências. Apoio educacional — rastreio não é diagnóstico.">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/evidencia-cientifica.html">
-<meta property="og:title" content="EvidÃªncia CientÃ­fica â€” Instrumentos | NeuroPed EDJ">
+<meta property="og:title" content="Evidência Científica — Instrumentos | NeuroPed EDJ">
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/evidencia-cientifica.html">
 <meta name="twitter:card" content="summary_large_image">
@@ -50,18 +50,18 @@
 <body data-ns-shell>
 <main class="ev-wrap">
   <section class="ns-hero hero">
-    <span class="ns-kicker">Curadoria cientÃ­fica Â· verificada no PubMed</span>
-    <h1 style="margin:6px 0">EvidÃªncia dos instrumentos</h1>
-    <p class="ns-lead">Finalidade, lÃ³gica de pontuaÃ§Ã£o, psicometria, red flags, orientaÃ§Ã£o familiar e referÃªncias dos principais instrumentos oficiais de rastreio. Cada mÃ©trica Ã© marcada por nÃ­vel de evidÃªncia e remete a uma fonte primÃ¡ria com PMID.</p>
+    <span class="ns-kicker">Curadoria científica · verificada no PubMed</span>
+    <h1 style="margin:6px 0">Evidência dos instrumentos</h1>
+    <p class="ns-lead">Finalidade, lógica de pontuação, psicometria, red flags, orientação familiar e referências dos principais instrumentos oficiais de rastreio. Cada métrica é marcada por nível de evidência e remete a uma fonte primária com PMID.</p>
     <div class="ev-legend" style="margin-top:12px">
-      <span><b>âœ”</b> verificado (PMID/DOI)</span>
-      <span><b>â‰ˆ</b> consenso/manual</span>
-      <span><b>âš </b> nÃ£o confirmado</span>
+      <span><b>✔</b> verificado (PMID/DOI)</span>
+      <span><b>≈</b> consenso/manual</span>
+      <span><b>⚠</b> não confirmado</span>
     </div>
   </section>
 
   <div class="ev-tools">
-    <input id="q" class="neuro-input" type="search" placeholder="Buscar por sigla, domÃ­nio (TEA, TDAH, risco suicida, reabilitaÃ§Ã£o)â€¦" aria-label="Buscar instrumento" autocomplete="off">
+    <input id="q" class="neuro-input" type="search" placeholder="Buscar por sigla, domínio (TEA, TDAH, risco suicida, reabilitação)…" aria-label="Buscar instrumento" autocomplete="off">
     <a class="np-btn neuro-btn" href="./instrumento.html">Aplicar instrumento</a>
     <a class="ns-btn ns-btn-ghost btn ghost" href="./central-atalhos.html">Central</a>
   </div>
@@ -69,7 +69,7 @@
   <section id="grid" class="ev-grid" aria-live="polite"></section>
   <p id="empty" class="ev-empty" hidden>Nenhum instrumento encontrado para esse termo.</p>
 
-  <p class="ev-disclaimer">âš•ï¸ <strong>Apoio educacional e decisÃ³rio.</strong> O conteÃºdo descreve a finalidade e a psicometria dos instrumentos (nÃ£o reproduz itens protegidos). <strong>Rastreio nÃ£o estabelece diagnÃ³stico</strong> â€” o diagnÃ³stico Ã© ato mÃ©dico individual, presencial e contextualizado. VerificaÃ§Ã£o via PubMed; PMIDs em cada referÃªncia.</p>
+  <p class="ev-disclaimer">⚕️ <strong>Apoio educacional e decisório.</strong> O conteúdo descreve a finalidade e a psicometria dos instrumentos (não reproduz itens protegidos). <strong>Rastreio não estabelece diagnóstico</strong> — o diagnóstico é ato médico individual, presencial e contextualizado. Verificação via PubMed; PMIDs em cada referência.</p>
 </main>
 
 <script src="./scales-evidence-curada.js"></script>
@@ -81,7 +81,7 @@
   var empty = document.getElementById('empty');
   var q = document.getElementById('q');
 
-  function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[Ì€-Í¯]/g,'');}
+  function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
   function listSec(title,arr){
@@ -100,23 +100,23 @@
       if(r.doi) links+='<a href="https://doi.org/'+esc(r.doi)+'" target="_blank" rel="noopener">DOI</a>';
       return '<span class="ev-ref">'+links+esc(r.cite)+'</span>';
     }).join('');
-    return '<div class="ev-sec"><h4>ReferÃªncias (PubMed)</h4>'+rows+'</div>';
+    return '<div class="ev-sec"><h4>Referências (PubMed)</h4>'+rows+'</div>';
   }
 
   function cardHTML(id,d){
     return '<details class="np-card neuro-card ev-card" data-key="'+esc(norm(id+' '+(d.sigla||'')+' '+(d.title||'')+' '+(d.domain||'')))+'">'
-      + '<summary><span class="ev-emoji" aria-hidden="true">'+esc(d.emoji||'ðŸ“‹')+'</span>'
+      + '<summary><span class="ev-emoji" aria-hidden="true">'+esc(d.emoji||'📋')+'</span>'
       + '<span><span class="ev-ttl">'+esc(d.sigla||d.title)+'</span>'
-      + '<span class="ev-sub">'+esc(d.domain||'')+(d.title&&d.title!==d.sigla?' Â· '+esc(d.title):'')+'</span></span>'
-      + '<span class="ev-chev" aria-hidden="true">â–¾</span></summary>'
+      + '<span class="ev-sub">'+esc(d.domain||'')+(d.title&&d.title!==d.sigla?' · '+esc(d.title):'')+'</span></span>'
+      + '<span class="ev-chev" aria-hidden="true">▾</span></summary>'
       + '<div class="ev-body">'
       + textSec('Identidade', d.clinical_summary)
-      + textSec('PontuaÃ§Ã£o e interpretaÃ§Ã£o', d.interpretation_logic)
-      + listSec('Sinais clÃ­nicos / encaminhamento', d.clinical_flags)
-      + textSec('OrientaÃ§Ã£o para famÃ­lias', d.guidance_for_families)
-      + textSec('Notas psicomÃ©tricas', d.psychometric_notes)
-      + listSec('PÃ©rolas clÃ­nicas', d.clinical_pearls)
-      + listSec('ContraindicaÃ§Ãµes e cautelas', d.contraindications_and_cautions)
+      + textSec('Pontuação e interpretação', d.interpretation_logic)
+      + listSec('Sinais clínicos / encaminhamento', d.clinical_flags)
+      + textSec('Orientação para famílias', d.guidance_for_families)
+      + textSec('Notas psicométricas', d.psychometric_notes)
+      + listSec('Pérolas clínicas', d.clinical_pearls)
+      + listSec('Contraindicações e cautelas', d.contraindications_and_cautions)
       + refsSec(d.references_used)
       + '</div></details>';
   }
