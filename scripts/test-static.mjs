@@ -820,6 +820,20 @@ assertIncludes('sw.js', "'./scales-taxonomy.js'", 'taxonomia no precache do SW (
   (tax.functionalExamples('tdah') && tax.functionalExamples('tea'))
     ? pass('taxonomia expõe exemplos funcionais por queixa (prompts genéricos, não itens de instrumento)')
     : fail('functionalExamples ausente');
+  // (C, pré-ligação) balanceByType: mistura modalidades no topo (não empilha 3 parentais)
+  if (typeof tax.balanceByType === 'function') {
+    const pool = [
+      { title: 'Questionário de linguagem para pais', audience: 'pais' },
+      { title: 'Escala de desenvolvimento — pais', audience: 'pais' },
+      { title: 'M-CHAT-R/F triagem de autismo' },
+      { title: 'Tarefa de resposta ao nome', direct_test: true },
+    ];
+    const top = tax.balanceByType(pool, 3);
+    const distinct = new Set(top.map(tax.bucketOf)).size;
+    (distinct >= 3 && tax.bucketOf(top[1]) !== 'familia')
+      ? pass('balanceByType diversifica modalidade no topo (teste direto/triagem entram, não 3 questionários parentais)')
+      : fail('balanceByType não diversificou', top.map(tax.bucketOf).join(','));
+  } else { fail('balanceByType ausente'); }
 }
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
 assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
