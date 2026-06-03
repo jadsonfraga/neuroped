@@ -1,0 +1,286 @@
+/* ============================================================================
+   NeuroPed — SUPERNEUROPED Design System · Biblioteca de COMPONENTES canônicos
+   Especificação: SUPERNEUROPED · Seção 4 + Seção 6.
+
+   Regras:
+     - Cada componente tem UMA implementação, com TODOS os estados.
+     - Consome exclusivamente tokens de ds-tokens.css. Zero valor cru.
+     - Namespace `ds-` para coexistir com CSS legado durante a migração
+       (Seção 7, fase 4) sem clobber. Telas novas usam apenas estas classes.
+
+   Requer: ds-tokens.css carregado antes.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Utilitários tipográficos (3.6) — herança automática do sistema.
+   --------------------------------------------------------------------------- */
+.t-display { font: var(--t-display-weight) var(--t-display-size)/var(--t-display-lh) var(--font-sans); color: var(--text-strong); letter-spacing: -.01em; margin: 0; }
+.t-h1      { font: var(--t-h1-weight) var(--t-h1-size)/var(--t-h1-lh) var(--font-sans); color: var(--text-strong); letter-spacing: -.01em; margin: 0; }
+.t-h2      { font: var(--t-h2-weight) var(--t-h2-size)/var(--t-h2-lh) var(--font-sans); color: var(--text-strong); margin: 0; }
+.t-body    { font: var(--t-body-weight) var(--t-body-size)/var(--t-body-lh) var(--font-sans); color: var(--text); margin: 0; }
+.t-label   { font: var(--t-label-weight) var(--t-label-size)/var(--t-label-lh) var(--font-sans); color: var(--text); }
+.t-muted   { color: var(--text-muted); }
+.t-mono    { font: var(--t-mono-weight) var(--t-mono-size)/var(--t-mono-lh) var(--font-mono); color: var(--text); }
+
+/* ---------------------------------------------------------------------------
+   Grid / container (Seção 5) — tablet-first.
+   --------------------------------------------------------------------------- */
+.ds-container { width: 100%; max-width: var(--container-max); margin-inline: auto; padding-inline: var(--space-4); }
+.ds-stack > * + * { margin-top: var(--space-4); }
+.ds-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+/* ---------------------------------------------------------------------------
+   Card (Seção 4) — surface, radius-lg, shadow-2, padding space-6, borda 1px.
+   Hover (tablet: press): eleva a shadow-3 + translateY(-1px).
+   --------------------------------------------------------------------------- */
+.ds-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-6);
+  transition: box-shadow var(--motion-base) var(--ease),
+              transform var(--motion-base) var(--ease);
+}
+.ds-card--interactive { cursor: pointer; }
+@media (hover: hover) {
+  .ds-card--interactive:hover { box-shadow: var(--shadow-3); transform: translateY(-1px); }
+}
+.ds-card--interactive:active { box-shadow: var(--shadow-3); transform: translateY(-1px); }
+.ds-card--interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-3), 0 0 0 3px var(--primary-ring);
+}
+
+/* ---------------------------------------------------------------------------
+   Botão (Seção 4) — altura 44px, radius-md, t-label.
+   Variantes: primary / secondary / ghost / danger.
+   Estados: default, hover, pressed, focus-visible, loading, disabled.
+   --------------------------------------------------------------------------- */
+.ds-btn {
+  --_bg: var(--primary);
+  --_fg: var(--on-primary);
+  --_bd: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--_bd);
+  border-radius: var(--radius-md);
+  background: var(--_bg);
+  color: var(--_fg);
+  font: var(--t-label-weight) var(--t-label-size)/1 var(--font-sans);
+  letter-spacing: .01em;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter var(--motion-fast) var(--ease),
+              transform var(--motion-fast) var(--ease),
+              box-shadow var(--motion-fast) var(--ease),
+              background var(--motion-fast) var(--ease);
+}
+@media (hover: hover) { .ds-btn:hover { filter: brightness(.96); } }
+.ds-btn:active { transform: translateY(1px) scale(.99); }
+.ds-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
+
+.ds-btn--primary   { --_bg: var(--primary);    --_fg: var(--on-primary); }
+.ds-btn--danger    { --_bg: var(--danger);     --_fg: var(--on-danger);  }
+.ds-btn--danger:focus-visible { box-shadow: 0 0 0 3px var(--danger-12); }
+.ds-btn--secondary { --_bg: var(--surface); --_fg: var(--text-strong); --_bd: var(--border); box-shadow: var(--shadow-1); }
+@media (hover: hover) { .ds-btn--secondary:hover { background: var(--surface-muted); filter: none; } }
+.ds-btn--ghost     { --_bg: transparent; --_fg: var(--primary); --_bd: transparent; }
+@media (hover: hover) { .ds-btn--ghost:hover { background: var(--primary-12); filter: none; } }
+
+.ds-btn:disabled, .ds-btn[aria-disabled="true"], .ds-btn[disabled] {
+  opacity: .5; cursor: not-allowed; pointer-events: none; box-shadow: none;
+}
+
+/* loading: spinner inline, largura travada para evitar reflow. */
+.ds-btn.is-loading { color: transparent !important; pointer-events: none; position: relative; }
+.ds-btn.is-loading::after {
+  content: ""; position: absolute; width: 16px; height: 16px;
+  border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%;
+  color: var(--_fg);
+  animation: ds-spin .7s linear infinite;
+}
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------------------------
+   Input / select / textarea (Seção 4) — altura 44px, radius-sm, borda border.
+   focus: borda primary + ring 3px. Estados error e disabled.
+   --------------------------------------------------------------------------- */
+.ds-input, .ds-select, .ds-textarea {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: var(--t-body-weight) var(--t-body-size)/1.4 var(--font-sans);
+  transition: border-color var(--motion-fast) var(--ease),
+              box-shadow var(--motion-fast) var(--ease);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ds-textarea { padding: var(--space-3); min-height: 96px; resize: vertical; line-height: var(--t-body-lh); }
+.ds-input::placeholder, .ds-textarea::placeholder { color: var(--text-muted); }
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring);
+}
+.ds-input[aria-invalid="true"], .ds-input.is-error,
+.ds-select.is-error, .ds-textarea.is-error {
+  border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-12);
+}
+.ds-input:disabled, .ds-select:disabled, .ds-textarea:disabled {
+  background: var(--surface-muted); color: var(--text-muted); cursor: not-allowed;
+}
+.ds-field { display: grid; gap: var(--space-2); }
+.ds-field > label { font: var(--t-label-weight) var(--t-label-size)/var(--t-label-lh) var(--font-sans); color: var(--text); }
+.ds-field .ds-hint { font: 400 var(--t-label-size)/var(--t-label-lh) var(--font-sans); color: var(--text-muted); }
+.ds-field .ds-error { font: 500 var(--t-label-size)/var(--t-label-lh) var(--font-sans); color: var(--danger); }
+
+/* ---------------------------------------------------------------------------
+   Badge / status (Seção 4) — t-label, radius-sm, fundo tonal da cor a 12%.
+   --------------------------------------------------------------------------- */
+.ds-badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font: var(--t-label-weight) var(--t-label-size)/1 var(--font-sans);
+  background: var(--surface-muted); color: var(--text);
+}
+.ds-badge--primary { background: var(--primary-12); color: var(--primary); }
+.ds-badge--violet  { background: var(--violet-12);  color: var(--accent-violet); }
+.ds-badge--teal    { background: var(--teal-12);    color: var(--accent-teal); }
+.ds-badge--success { background: var(--success-12); color: var(--success); }
+.ds-badge--warning { background: var(--warning-12); color: var(--warning); }
+.ds-badge--danger  { background: var(--danger-12);  color: var(--danger); }
+.ds-badge .ds-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ---------------------------------------------------------------------------
+   Modal (Seção 4) — radius-xl, shadow-3, overlay .45, máx 560px,
+   entra com fade + scale 0.98→1 em motion-base.
+   --------------------------------------------------------------------------- */
+.ds-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: grid; place-items: center; padding: var(--space-4);
+  background: var(--overlay);
+  animation: ds-fade var(--motion-base) var(--ease) both;
+}
+.ds-modal {
+  width: 100%; max-width: 560px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-3);
+  padding: var(--space-6);
+  animation: ds-pop var(--motion-base) var(--ease) both;
+}
+.ds-modal__header { display: flex; align-items: start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.ds-modal__footer { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-6); }
+@keyframes ds-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ds-pop  { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
+
+/* ---------------------------------------------------------------------------
+   Tabela / lista (Seção 4) — header surface-muted, divisor border,
+   densidade única (linha 52px), zebra desativado, hover de linha sutil.
+   --------------------------------------------------------------------------- */
+.ds-table { width: 100%; border-collapse: collapse; background: var(--surface); }
+.ds-table thead th {
+  height: 52px; padding: 0 var(--space-4); text-align: left;
+  background: var(--surface-muted);
+  font: var(--t-label-weight) var(--t-label-size)/1.4 var(--font-sans); color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.ds-table tbody td {
+  height: 52px; padding: 0 var(--space-4);
+  font: var(--t-body-weight) var(--t-body-size)/1.4 var(--font-sans); color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+@media (hover: hover) { .ds-table tbody tr:hover td { background: var(--surface-muted); } }
+
+/* ---------------------------------------------------------------------------
+   Sidebar (Seção 4) — largura fixa, ícone + label, item ativo com fundo
+   tonal primary a 10% + barra de 3px, agrupamentos com label text-muted.
+   --------------------------------------------------------------------------- */
+.ds-sidebar { width: 256px; background: var(--surface); border-right: 1px solid var(--border); padding: var(--space-4) var(--space-3); }
+.ds-sidebar__group-label { padding: var(--space-2) var(--space-3); font: var(--t-label-weight) 11px/1.4 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.ds-nav-item {
+  position: relative; display: flex; align-items: center; gap: var(--space-3);
+  min-height: var(--tap-min); padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text); text-decoration: none;
+  font: var(--t-label-weight) var(--t-body-size)/1 var(--font-sans);
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+@media (hover: hover) { .ds-nav-item:hover { background: var(--surface-muted); } }
+.ds-nav-item:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
+.ds-nav-item.is-active { background: var(--primary-10); color: var(--primary); }
+.ds-nav-item.is-active::before {
+  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; border-radius: 0 3px 3px 0; background: var(--primary);
+}
+.ds-nav-item .ds-ico { width: 20px; height: 20px; flex: 0 0 20px; display: grid; place-items: center; }
+
+/* ---------------------------------------------------------------------------
+   Estados de sistema (Seção 4) — skeleton, empty, toast, tooltip.
+   --------------------------------------------------------------------------- */
+.ds-skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(100deg, var(--surface-muted) 30%, var(--border) 50%, var(--surface-muted) 70%);
+  background-size: 300% 100%;
+  animation: ds-shimmer 1.3s ease-in-out infinite;
+}
+.ds-skeleton--text { height: 12px; margin: var(--space-2) 0; }
+.ds-skeleton--card { height: 120px; }
+@keyframes ds-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.ds-empty { text-align: center; padding: var(--space-12) var(--space-6); display: grid; gap: var(--space-3); justify-items: center; }
+.ds-empty .ds-empty__icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: var(--radius-lg); background: var(--surface-muted); color: var(--text-muted); }
+.ds-empty .ds-empty__title { font: var(--t-h2-weight) var(--t-h2-size)/var(--t-h2-lh) var(--font-sans); color: var(--text-strong); }
+.ds-empty .ds-empty__text { font: var(--t-body-weight) var(--t-body-size)/var(--t-body-lh) var(--font-sans); color: var(--text-muted); max-width: 38ch; }
+
+.ds-toast {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-3);
+  color: var(--text); font: var(--t-body-weight) var(--t-body-size)/1.4 var(--font-sans);
+  animation: ds-pop var(--motion-base) var(--ease) both;
+}
+.ds-toast--success { border-left: 3px solid var(--success); }
+.ds-toast--warning { border-left: 3px solid var(--warning); }
+.ds-toast--danger  { border-left: 3px solid var(--danger); }
+
+.ds-tooltip { position: relative; display: inline-flex; }
+.ds-tooltip__bubble {
+  position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%);
+  padding: var(--space-1) var(--space-2);
+  background: var(--text-strong); color: var(--surface);
+  border-radius: var(--radius-sm); font: var(--t-label-weight) var(--t-label-size)/1.3 var(--font-sans);
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+.ds-tooltip:hover .ds-tooltip__bubble, .ds-tooltip:focus-within .ds-tooltip__bubble { opacity: 1; }
+
+/* ---------------------------------------------------------------------------
+   Escalas — vitrine (Seção 6): catálogo modular, badge de categoria,
+   CTA uniforme, status (não aplicada / em andamento / concluída).
+   --------------------------------------------------------------------------- */
+.ds-scale-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.ds-scale-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.ds-scale-card__title { font: var(--t-h2-weight) var(--t-h2-size)/var(--t-h2-lh) var(--font-sans); color: var(--text-strong); }
+.ds-scale-card__desc { font: var(--t-body-weight) var(--t-body-size)/var(--t-body-lh) var(--font-sans); color: var(--text-muted); }
+.ds-scale-card__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: auto; }
+/* status canônico */
+.ds-status { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--t-label-weight) var(--t-label-size)/1 var(--font-sans); }
+.ds-status--idle   { color: var(--text-muted); }
+.ds-status--idle   .ds-dot { background: var(--text-muted); }
+.ds-status--active { color: var(--warning); }
+.ds-status--active .ds-dot { background: var(--warning); }
+.ds-status--done   { color: var(--success); }
+.ds-status--done   .ds-dot { background: var(--success); }
+.ds-status .ds-dot { width: 8px; height: 8px; border-radius: 50%; }

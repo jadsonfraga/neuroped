@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F7F8FA">
+<title>Design System — SUPERNEUROPED</title>
+<meta name="description" content="Style guide vivo do SUPERNEUROPED: tokens e componentes canônicos. Uma tela criada do zero herda o sistema sem nenhum CSS adicional.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- ÚNICAS folhas de estilo. Nenhum CSS adicional nesta página: prova viva da
+     Seção 8 — "uma tela nova criada do zero herda o sistema sem nenhum CSS adicional". -->
+<link rel="stylesheet" href="./ds-tokens.css">
+<link rel="stylesheet" href="./ds-components.css">
+</head>
+<body>
+<div class="ds-container ds-stack" style="padding-block: var(--space-8)">
+
+  <header class="ds-stack">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
+      <div>
+        <p class="t-label t-muted">SUPERNEUROPED · Design System</p>
+        <h1 class="t-display">Unificação visual total</h1>
+        <p class="t-body t-muted">Tokens (Seção 3) + componentes canônicos (Seção 4). Só esta página carrega <code class="t-mono">ds-tokens.css</code> e <code class="t-mono">ds-components.css</code> — nada mais.</p>
+      </div>
+      <button class="ds-btn ds-btn--secondary" id="themeToggle" type="button" aria-label="Alternar tema">🌓 Tema</button>
+    </div>
+  </header>
+
+  <!-- TIPOGRAFIA -->
+  <section class="ds-card ds-stack">
+    <h2 class="t-h1">Tipografia · Inter</h2>
+    <p class="t-display">Display 28/600 — título de tela</p>
+    <p class="t-h1">H1 22/600 — seção</p>
+    <p class="t-h2">H2 18/600 — subseção / título de card</p>
+    <p class="t-body">Body 15/400 — corpo de texto com altura de linha confortável para leitura clínica em consulta.</p>
+    <p class="t-label">Label 13/500 — rótulos e badges</p>
+    <p class="t-mono">F84.0 · CID-10 · mono 13/400</p>
+  </section>
+
+  <!-- BOTÕES -->
+  <section class="ds-card ds-stack">
+    <h2 class="t-h1">Botões · todos os estados</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3)">
+      <button class="ds-btn ds-btn--primary" type="button">Primary</button>
+      <button class="ds-btn ds-btn--secondary" type="button">Secondary</button>
+      <button class="ds-btn ds-btn--ghost" type="button">Ghost</button>
+      <button class="ds-btn ds-btn--danger" type="button">Danger</button>
+      <button class="ds-btn ds-btn--primary is-loading" type="button">Loading</button>
+      <button class="ds-btn ds-btn--primary" type="button" disabled>Disabled</button>
+    </div>
+    <p class="t-label t-muted">Altura 44px · hover · pressed · focus-visible (Tab) · loading (spinner inline, largura travada) · disabled.</p>
+  </section>
+
+  <!-- INPUTS -->
+  <section class="ds-card ds-stack">
+    <h2 class="t-h1">Inputs · select · textarea</h2>
+    <div class="ds-grid">
+      <div class="ds-field">
+        <label for="i1">Nome da criança</label>
+        <input class="ds-input" id="i1" placeholder="Ex.: Maria">
+        <span class="ds-hint">Dados ficam no dispositivo (local-first).</span>
+      </div>
+      <div class="ds-field">
+        <label for="i2">Idade</label>
+        <select class="ds-select" id="i2"><option>Selecione…</option><option>3 anos</option><option>7 anos</option></select>
+      </div>
+      <div class="ds-field">
+        <label for="i3">Campo com erro</label>
+        <input class="ds-input is-error" id="i3" value="valor inválido" aria-invalid="true">
+        <span class="ds-error">Verifique o valor informado.</span>
+      </div>
+      <div class="ds-field">
+        <label for="i4">Desabilitado</label>
+        <input class="ds-input" id="i4" value="somente leitura" disabled>
+      </div>
+    </div>
+    <div class="ds-field">
+      <label for="t1">Observações</label>
+      <textarea class="ds-textarea" id="t1" placeholder="Anotações da consulta…"></textarea>
+    </div>
+  </section>
+
+  <!-- BADGES + STATUS -->
+  <section class="ds-card ds-stack">
+    <h2 class="t-h1">Badges · status</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+      <span class="ds-badge ds-badge--primary">Triagem</span>
+      <span class="ds-badge ds-badge--violet">Autoral</span>
+      <span class="ds-badge ds-badge--teal">Dados</span>
+      <span class="ds-badge ds-badge--success"><span class="ds-dot"></span>Concluída</span>
+      <span class="ds-badge ds-badge--warning"><span class="ds-dot"></span>Em andamento</span>
+      <span class="ds-badge ds-badge--danger"><span class="ds-dot"></span>Risco</span>
+    </div>
+  </section>
+
+  <!-- ESCALAS (vitrine, Seção 6) -->
+  <section class="ds-stack">
+    <h2 class="t-h1">Escalas · vitrine (Seção 6)</h2>
+    <div class="ds-grid">
+      <article class="ds-card ds-scale-card ds-card--interactive" tabindex="0">
+        <div class="ds-scale-card__head">
+          <span class="ds-badge ds-badge--primary">Atenção</span>
+          <span class="ds-status ds-status--idle"><span class="ds-dot"></span>Não aplicada</span>
+        </div>
+        <div class="ds-scale-card__title">SNAP-IV (TDAH)</div>
+        <p class="ds-scale-card__desc">Triagem de desatenção e hiperatividade. 18 itens, ~4 min.</p>
+        <div class="ds-scale-card__foot">
+          <span class="t-label t-muted">18 itens</span>
+          <span class="ds-btn ds-btn--primary">Aplicar</span>
+        </div>
+      </article>
+      <article class="ds-card ds-scale-card ds-card--interactive" tabindex="0">
+        <div class="ds-scale-card__head">
+          <span class="ds-badge ds-badge--violet">Espectro</span>
+          <span class="ds-status ds-status--active"><span class="ds-dot"></span>Em andamento</span>
+        </div>
+        <div class="ds-scale-card__title">M-CHAT-R/F</div>
+        <p class="ds-scale-card__desc">Rastreio de sinais de autismo em 16–30 meses.</p>
+        <div class="ds-scale-card__foot">
+          <span class="t-label t-muted">20 itens</span>
+          <span class="ds-btn ds-btn--primary">Continuar</span>
+        </div>
+      </article>
+      <article class="ds-card ds-scale-card ds-card--interactive" tabindex="0">
+        <div class="ds-scale-card__head">
+          <span class="ds-badge ds-badge--teal">Sono</span>
+          <span class="ds-status ds-status--done"><span class="ds-dot"></span>Concluída</span>
+        </div>
+        <div class="ds-scale-card__title">Inventário de sono</div>
+        <p class="ds-scale-card__desc">Padrões de sono e higiene. Resultado disponível.</p>
+        <div class="ds-scale-card__foot">
+          <span class="t-label t-muted">12 itens</span>
+          <span class="ds-btn ds-btn--secondary">Ver laudo</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- TABELA -->
+  <section class="ds-stack">
+    <h2 class="t-h1">Tabela / lista</h2>
+    <div class="ds-card" style="padding:0;overflow:hidden">
+      <table class="ds-table">
+        <thead><tr><th>Escala</th><th>Data</th><th>Status</th><th>Escore</th></tr></thead>
+        <tbody>
+          <tr><td>SNAP-IV</td><td>02/06/2026</td><td><span class="ds-status ds-status--done"><span class="ds-dot"></span>Concluída</span></td><td class="t-mono">14</td></tr>
+          <tr><td>M-CHAT-R/F</td><td>28/05/2026</td><td><span class="ds-status ds-status--active"><span class="ds-dot"></span>Andamento</span></td><td class="t-mono">—</td></tr>
+          <tr><td>Sono</td><td>20/05/2026</td><td><span class="ds-status ds-status--idle"><span class="ds-dot"></span>Não aplicada</span></td><td class="t-mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ESTADOS DE SISTEMA -->
+  <section class="ds-grid">
+    <div class="ds-card ds-stack">
+      <h2 class="t-h2">Skeleton</h2>
+      <div class="ds-skeleton ds-skeleton--card"></div>
+      <div class="ds-skeleton ds-skeleton--text" style="width:80%"></div>
+      <div class="ds-skeleton ds-skeleton--text" style="width:55%"></div>
+    </div>
+    <div class="ds-card">
+      <div class="ds-empty">
+        <div class="ds-empty__icon">🗂️</div>
+        <div class="ds-empty__title">Nenhuma escala aplicada</div>
+        <p class="ds-empty__text">Comece pela vitrine de escalas para gerar o primeiro laudo da criança ativa.</p>
+        <button class="ds-btn ds-btn--primary" type="button">Aplicar escala</button>
+      </div>
+    </div>
+    <div class="ds-card ds-stack">
+      <h2 class="t-h2">Toasts</h2>
+      <div class="ds-toast ds-toast--success">✓ Laudo gerado e salvo no histórico.</div>
+      <div class="ds-toast ds-toast--warning">⚠ Há uma aplicação em andamento.</div>
+      <div class="ds-toast ds-toast--danger">✕ Falha ao gerar PDF.</div>
+    </div>
+  </section>
+
+  <!-- MODAL -->
+  <section class="ds-card ds-stack">
+    <h2 class="t-h1">Modal</h2>
+    <button class="ds-btn ds-btn--primary" id="openModal" type="button">Abrir modal</button>
+  </section>
+
+  <footer style="padding-block: var(--space-8)">
+    <p class="t-label t-muted">Regra permanente (Seção 9): toda tela futura consome estes tokens e componentes. Estilo novo fora do sistema é regressão.</p>
+  </footer>
+</div>
+
+<!-- Modal montado sob demanda -->
+<template id="modalTpl">
+  <div class="ds-overlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="ds-modal ds-stack">
+      <div class="ds-modal__header">
+        <h2 class="t-h1" id="mTitle">Confirmar aplicação</h2>
+        <button class="ds-btn ds-btn--ghost" data-close type="button" aria-label="Fechar">✕</button>
+      </div>
+      <p class="t-body">Aplicar a escala para a criança ativa? O laudo será salvo no histórico local.</p>
+      <div class="ds-modal__footer">
+        <button class="ds-btn ds-btn--secondary" data-close type="button">Cancelar</button>
+        <button class="ds-btn ds-btn--primary" data-close type="button">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  // Comportamento mínimo (sem estilo): toggle de tema e modal. Dark = troca de tokens.
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var html = document.documentElement;
+    html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.querySelector('meta[name=theme-color]').setAttribute('content',
+      html.dataset.theme === 'dark' ? '#0E1116' : '#F7F8FA');
+  });
+  document.getElementById('openModal').addEventListener('click', function () {
+    var node = document.getElementById('modalTpl').content.cloneNode(true);
+    document.body.appendChild(node);
+    var overlay = document.body.lastElementChild;
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.hasAttribute('data-close')) overlay.remove();
+    });
+  });
+</script>
+</body>
+</html>
