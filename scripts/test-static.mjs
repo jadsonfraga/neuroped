@@ -522,10 +522,16 @@ assertFile('ds-premium-bridge.css');
 assertIncludes('ds-premium-bridge.css', 'var(--app-bg)', 'ponte aplica o fundo espacial dos tokens');
 assertIncludes('ds-premium-bridge.css', '--teal: var(--primary)', 'ponte re-aponta variáveis legadas para tokens');
 assertIncludes('ds-premium-bridge.css', '.btn.danger', 'ponte preserva a cor de botões de status (danger)');
-for (const p of ['central-atalhos.html','perfil-crianca.html','consulta.html','secretaria.html','portal-novidades.html','agenda-financeiro.html']) {
+for (const p of ['perfil-crianca.html','consulta.html','secretaria.html','portal-novidades.html','agenda-financeiro.html']) {
   assertIncludes(p, 'ds-premium-bridge.css', p + ' está no DNA premium (ponte de unificação)');
   assertIncludes(p, 'content="#050816"', p + ' usa o chrome dark-premium');
 }
+// central-atalhos.html: hub/dashboard migrado tela-a-tela (vitrine do manifesto)
+assertIncludes('central-atalhos.html', 'ds-tokens.css', 'hub migrou: carrega a camada de tokens');
+assertNotIncludes('central-atalhos.html', 'ds-premium-bridge.css', 'hub não depende mais da ponte (migrado de verdade)');
+assertNotIncludes('central-atalhos.html', 'Fraunces', 'hub sem serif legada (Inter unificada)');
+assertNotIncludes('central-atalhos.html', 'app-polish-mobile.js', 'hub sem a skin universal legada');
+assertIncludes('central-atalhos.html', 'content="#050816"', 'hub usa o chrome dark-premium');
 assertNotIncludes('index.html', 'ds-premium-bridge.css', 'index (SPA) fora da ponte (design compilado próprio)');
 assertNotIncludes('app-shell.html', 'ds-premium-bridge.css', 'app-shell (casca) fora da ponte');
 // app-polish-mobile não pode reescrever o theme-color para teal
