@@ -10,7 +10,7 @@ Implementação da spec **SUPERNEUROPED — UNIFICAÇÃO VISUAL TOTAL**.
 | 2. Auditoria | ✅ ferramenta entregue | `scripts/design-audit.mjs` (rode com `node scripts/design-audit.mjs`) |
 | 3. Componentes canônicos | ✅ entregues | `components.css` (`.np-*`) |
 | 4. Migração tela a tela | ⏳ aberta — PRs subsequentes | use `node scripts/design-audit.mjs` para escolher lote |
-| 5. Dark mode | ✅ pronto (data-theme + prefers-color-scheme) | `tokens.css` |
+| 5. Dark mode | ✅ DARK indigo+gold é o PADRÃO (light = opt-in via `data-theme="light"`) | `tokens.css` |
 | 6. Polimento | parcial (`app-polish-mobile.*` já existe) | a consolidar com `components.css` |
 
 ## Regra permanente
@@ -65,13 +65,17 @@ CI: `node scripts/design-audit.mjs --strict` falha quando isso for ativado (não
 
 ## Dark mode
 
+**Padrão do app = DARK indigo+gold** (DNA das telas-referência filtro/central).
+O tema claro clínico é opt-in.
+
 ```html
-<html data-theme="dark">   <!-- forçado dark -->
-<html data-theme="light">  <!-- forçado light -->
-<html>                      <!-- auto via prefers-color-scheme -->
+<html>                      <!-- PADRÃO: dark indigo+gold -->
+<html data-theme="light">  <!-- opt-in: tema clínico claro -->
+<html data-theme="dark">   <!-- força dark explicitamente (idem padrão) -->
 ```
 
-Tokens viram dark sem CSS paralelo. Componentes herdam.
+Tokens viram dark sem CSS paralelo. Componentes herdam. Identidade dark:
+fundo `#0a0a16`, primária índigo `#6d6af5`, realce dourado `--accent-gold #e7c98b`.
 
 ## Auditoria (Fase 2)
 
