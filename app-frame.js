@@ -108,6 +108,28 @@
     setTimeout(function(){ if (d.parentNode) d.remove(); }, 6000); // some após 6s pra não atrapalhar
   }
 
+  /* ---------- Polimento premium (mesmo baseline do app-polish-mobile.js) ----------
+     Espelha o <style id="np-premium-polish"> para cobrir as páginas que carregam
+     este frame mas NÃO o app-polish-mobile.js (ex.: testes-diretos.html). O guard
+     por id garante injeção única — no-op onde o app-polish já injetou. Apenas CSS:
+     foco visível (WCAG 2.4.7) + microinterações em cards, como baseline :where()
+     (especificidade 0), que cede a qualquer estilo próprio da página. */
+  function ensurePremiumPolish(){
+    if (document.getElementById('np-premium-polish')) return;
+    var s = document.createElement('style'); s.id = 'np-premium-polish';
+    s.textContent =
+      ':where(a,button,input,select,textarea,summary,[role="button"],[tabindex]):focus-visible{' +
+        'outline:2px solid #a9a4ff;outline-offset:2px;box-shadow:0 0 0 4px rgba(124,58,237,.28)}' +
+      '@media(prefers-reduced-motion:no-preference){' +
+        ':where(.topbar .back,.topbar .tb-pill){transition:transform .16s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .2s}' +
+        ':where(.result-card,.scale-card){transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .25s,border-color .25s}' +
+        ':where(.result-card,.scale-card):hover{transform:translateY(-3px);box-shadow:0 20px 44px -22px rgba(2,2,12,.85)}' +
+        ':where(.result-card,.scale-card):active{transform:translateY(-1px) scale(.995)}' +
+        ':where(button,.btn):active{transform:scale(.985)}' +
+      '}';
+    document.head.appendChild(s);
+  }
+
   /* ---------- Boot ---------- */
   function boot(){
     if (shouldSkip()) return;
@@ -115,6 +137,7 @@
     ensureHeader();
     ensureBottomNav();
     ensureDomainPill();
+    ensurePremiumPolish();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
