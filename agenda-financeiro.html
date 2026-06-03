@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
 <meta name="theme-color" content="#0e0e22">
-<title>NeuroPed — Agenda & Financeiro</title>
+<title>NeuroPed â€” Agenda & Financeiro</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/agenda-financeiro.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="NeuroPed — Agenda & Financeiro">
+<meta name="twitter:title" content="NeuroPed â€” Agenda & Financeiro">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/agenda-financeiro.html">
-<meta name="description" content="Agenda e controle financeiro do consultório NeuroPed — organização de atendimentos e receitas. Uso local, dados no próprio dispositivo.">
+<meta name="description" content="Agenda e controle financeiro do consultÃ³rio NeuroPed â€” organizaÃ§Ã£o de atendimentos e receitas. Uso local, dados no prÃ³prio dispositivo.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -136,14 +136,15 @@ canvas{width:100%;height:200px;margin-top:16px;background:var(--surface);border-
 </style>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body>
 
 <div class="header">
   <button class="btn-create" id="btnCreate" onclick="openNewAppt()">+ Criar</button>
   <div class="spacer"></div>
-  <select id="selClinica" aria-label="Selecionar clínica">
-    <option>Consultório Dr. Jadson Fraga</option>
+  <select id="selClinica" aria-label="Selecionar clÃ­nica">
+    <option>ConsultÃ³rio Dr. Jadson Fraga</option>
     <option>NeuroPed Petrolina</option>
   </select>
   <select id="selProfissional" aria-label="Selecionar profissional">
@@ -153,25 +154,25 @@ canvas{width:100%;height:200px;margin-top:16px;background:var(--surface);border-
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-tab="agenda" onclick="switchTab('agenda')">📅 Agenda</div>
-  <div class="tab" data-tab="financeiro" onclick="switchTab('financeiro')">💰 Financeiro</div>
+  <div class="tab active" data-tab="agenda" onclick="switchTab('agenda')">ðŸ“… Agenda</div>
+  <div class="tab" data-tab="financeiro" onclick="switchTab('financeiro')">ðŸ’° Financeiro</div>
 </div>
 
 <div id="app-root"></div>
 
 <script>
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DATA LAYER
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-const DAYS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
-const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS = ['DOM','SEG','TER','QUA','QUI','SEX','SÃB'];
+const MONTHS = ['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
-// ═══════════════════════════════════════════════
-// CLOUD STORAGE (npoint.io) — persistência real
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// CLOUD STORAGE (npoint.io) â€” persistÃªncia real
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const NEUROPED_BIN = 'a796112908591afcf02f';
 const CLOUD_URL = `https://api.npoint.io/${NEUROPED_BIN}`;
 let _cloudCache = null;
@@ -274,7 +275,7 @@ function setConfig(c) { _configAgenda = c; }
 
 // Carrega da nuvem ao iniciar (antes da UI renderizar)
 loadCloudData().then(() => {
-  // Re-renderiza UI se já estiver pronta
+  // Re-renderiza UI se jÃ¡ estiver pronta
   if (typeof render === 'function') { try { render(); } catch {} }
 });
 
@@ -285,9 +286,9 @@ setInterval(() => {
   });
 }, 30000);
 
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // NAVIGATION
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 let currentTab = 'agenda';
 let viewDate = new Date();
@@ -305,9 +306,9 @@ function render() {
   else renderFinanceiro(root);
 }
 
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // AGENDA MODULE
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function renderAgenda(root) {
   const weekStart = getWeekStart(selectedDate);
@@ -315,7 +316,7 @@ function renderAgenda(root) {
     <div class="agenda-wrap">
       <div class="sidebar">
         ${renderMiniCalendar()}
-        <button class="config-btn" onclick="openConfig()">⚙️ Configurar Agenda</button>
+        <button class="config-btn" onclick="openConfig()">âš™ï¸ Configurar Agenda</button>
       </div>
       <div class="main-grid">
         ${renderWeekHeader(weekStart)}
@@ -404,7 +405,7 @@ function renderTimeGrid(weekStart) {
           html += `<div class="slot occupied" onclick="openEditAppt('${appt.id}')">
             <div class="occ-name">${appt.paciente}</div>
             <div class="occ-time">${appt.horaInicio}</div>
-            <div class="occ-icon">${appt.statusPagamento === 'Pago' ? '💰' : '⏳'}</div>
+            <div class="occ-icon">${appt.statusPagamento === 'Pago' ? 'ðŸ’°' : 'â³'}</div>
           </div>`;
         } else if (isInSchedule) {
           html += `<div class="slot available" onclick="openNewAppt('${dateStr}','${timeStr}')"></div>`;
@@ -428,9 +429,9 @@ function isTimeInSchedule(time, dayConfig) {
 function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
 function minToTime(m) { return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
 
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MODALS
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function openNewAppt(date, time) {
   const config = getConfig();
@@ -443,13 +444,13 @@ function openNewAppt(date, time) {
   showModal(`
     <h3>Novo Agendamento</h3>
     <label for="mData">Data</label><input type="date" id="mData" value="${d}">
-    <label for="mHoraI">Hora Início</label><input type="time" id="mHoraI" value="${t}">
+    <label for="mHoraI">Hora InÃ­cio</label><input type="time" id="mHoraI" value="${t}">
     <label for="mHoraF">Hora Fim</label><input type="time" id="mHoraF" value="${endTime}">
     <label for="mPaciente">Paciente</label><input type="text" id="mPaciente" placeholder="Nome do paciente">
     <label for="mTipo">Tipo de Consulta</label><input type="text" id="mTipo" value="Consulta" placeholder="Ex: Retorno, Primeira consulta">
     <label for="mValor">Valor (R$)</label><input type="number" id="mValor" value="150" step="10">
     <label>Forma de Pagamento</label>
-    <select id="mForma" aria-label="Forma de pagamento"><option>PIX</option><option>Dinheiro</option><option>Crédito</option><option>Débito</option><option>Convênio</option></select>
+    <select id="mForma" aria-label="Forma de pagamento"><option>PIX</option><option>Dinheiro</option><option>CrÃ©dito</option><option>DÃ©bito</option><option>ConvÃªnio</option></select>
     <label>Status</label>
     <select id="mStatus" aria-label="Status do agendamento"><option>Pendente</option><option>Pago</option></select>
     <div class="modal-btns">
@@ -470,7 +471,7 @@ function saveNewAppt() {
   const dow = dt.getDay();
   const dayConfig = config.dias[dow];
   if (!dayConfig || !dayConfig.ativo || !isTimeInSchedule(horaInicio, dayConfig)) {
-    alert('Horário fora do expediente configurado!'); return;
+    alert('HorÃ¡rio fora do expediente configurado!'); return;
   }
 
   const appts = getAgendamentos();
@@ -505,11 +506,11 @@ function openEditAppt(id) {
     <label for="mTipo">Tipo</label><input type="text" id="mTipo" value="${appt.tipo}">
     <label for="mValor">Valor (R$)</label><input type="number" id="mValor" value="${appt.valor}" step="10">
     <label>Forma de Pagamento</label>
-    <select id="mForma" aria-label="Forma de pagamento">${['PIX','Dinheiro','Crédito','Débito','Convênio'].map(f => `<option${f===appt.formaPagamento?' selected':''}>${f}</option>`).join('')}</select>
+    <select id="mForma" aria-label="Forma de pagamento">${['PIX','Dinheiro','CrÃ©dito','DÃ©bito','ConvÃªnio'].map(f => `<option${f===appt.formaPagamento?' selected':''}>${f}</option>`).join('')}</select>
     <label>Status</label>
     <select id="mStatus" aria-label="Status do agendamento">${['Pendente','Pago','Cancelado'].map(s => `<option${s===appt.statusPagamento?' selected':''}>${s}</option>`).join('')}</select>
     <div class="modal-btns">
-      <button class="btn-delete" onclick="deleteAppt('${id}')">🗑 Excluir</button>
+      <button class="btn-delete" onclick="deleteAppt('${id}')">ðŸ—‘ Excluir</button>
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="updateAppt('${id}')">Salvar</button>
     </div>
@@ -553,33 +554,33 @@ function closeModal() {
   if (m) m.remove();
 }
 
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIG MODAL
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function openConfig() {
   const c = getConfig();
-  const dayNames = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const dayNames = ['Domingo','Segunda','TerÃ§a','Quarta','Quinta','Sexta','SÃ¡bado'];
   let daysHtml = '';
   for (let i = 0; i < 7; i++) {
     const d = c.dias[i] || {ativo:false,t1i:'',t1f:'',t2i:'',t2f:''};
     daysHtml += `<div class="config-day">
       <input type="checkbox" class="toggle" id="cfgAtivo${i}" ${d.ativo?'checked':''}>
       <label style="min-width:65px;font-weight:600">${dayNames[i]}</label>
-      <input type="time" id="cfgT1i${i}" aria-label="Horário de atendimento" value="${d.t1i}" placeholder="Início T1" style="width:90px">
+      <input type="time" id="cfgT1i${i}" aria-label="HorÃ¡rio de atendimento" value="${d.t1i}" placeholder="InÃ­cio T1" style="width:90px">
       <span>-</span>
-      <input type="time" id="cfgT1f${i}" aria-label="Horário de atendimento" value="${d.t1f}" style="width:90px">
+      <input type="time" id="cfgT1f${i}" aria-label="HorÃ¡rio de atendimento" value="${d.t1f}" style="width:90px">
       <span style="margin:0 4px;font-size:var(--t-mono-size);color:var(--text-muted)">T2:</span>
-      <input type="time" id="cfgT2i${i}" aria-label="Horário de atendimento" value="${d.t2i}" style="width:90px">
+      <input type="time" id="cfgT2i${i}" aria-label="HorÃ¡rio de atendimento" value="${d.t2i}" style="width:90px">
       <span>-</span>
-      <input type="time" id="cfgT2f${i}" aria-label="Horário de atendimento" value="${d.t2f}" style="width:90px">
+      <input type="time" id="cfgT2f${i}" aria-label="HorÃ¡rio de atendimento" value="${d.t2f}" style="width:90px">
     </div>`;
   }
   showModal(`
-    <h3>⚙️ Configuração da Agenda</h3>
+    <h3>âš™ï¸ ConfiguraÃ§Ã£o da Agenda</h3>
     <div class="config-row">
-      <label>Duração da consulta:</label>
-      <select id="cfgDur" aria-label="Duração da consulta">${[15,20,30,45,60].map(v => `<option value="${v}"${v===c.duracao?' selected':''}>${v} min</option>`).join('')}</select>
+      <label>DuraÃ§Ã£o da consulta:</label>
+      <select id="cfgDur" aria-label="DuraÃ§Ã£o da consulta">${[15,20,30,45,60].map(v => `<option value="${v}"${v===c.duracao?' selected':''}>${v} min</option>`).join('')}</select>
     </div>
     <div class="config-row">
       <label>Intervalo entre pacientes:</label>
@@ -618,9 +619,9 @@ function saveConfig() {
   closeModal(); render();
 }
 
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FINANCEIRO MODULE
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function renderFinanceiro(root) {
   const appts = getAgendamentos();
@@ -638,20 +639,20 @@ function renderFinanceiro(root) {
 
   root.innerHTML = `<div class="fin-wrap">
     <div class="cards-row">
-      <div class="card"><div class="card-label">Recebido no Mês</div><div class="card-value green">${fmt(mesPago)}</div></div>
-      <div class="card"><div class="card-label">Pendente no Mês</div><div class="card-value yellow">${fmt(mesPend)}</div></div>
+      <div class="card"><div class="card-label">Recebido no MÃªs</div><div class="card-value green">${fmt(mesPago)}</div></div>
+      <div class="card"><div class="card-label">Pendente no MÃªs</div><div class="card-value yellow">${fmt(mesPend)}</div></div>
       <div class="card"><div class="card-label">Receita de Hoje</div><div class="card-value blue">${fmt(diaPago)}</div></div>
-      <div class="card"><div class="card-label">Ticket Médio</div><div class="card-value purple">${fmt(ticket)}</div></div>
+      <div class="card"><div class="card-label">Ticket MÃ©dio</div><div class="card-value purple">${fmt(ticket)}</div></div>
     </div>
     <div class="filters">
       <input type="date" id="fDi" aria-label="Data inicial do filtro" value="${mesAtual}-01">
       <input type="date" id="fDf" aria-label="Data final do filtro" value="${hoje}">
       <select id="fProf" aria-label="Filtrar por profissional"><option value="">Todos</option><option>Dr. Jadson Fraga</option><option>Dra. Auxiliar</option></select>
       <select id="fStatus" aria-label="Filtrar por status"><option value="">Todos</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select>
-      <button class="btn-export" onclick="exportCSV()">📥 Exportar CSV</button>
-      <button class="btn-sm btn-pago" onclick="applyFilters()" style="margin-left:auto">🔍 Filtrar</button>
+      <button class="btn-export" onclick="exportCSV()">ðŸ“¥ Exportar CSV</button>
+      <button class="btn-sm btn-pago" onclick="applyFilters()" style="margin-left:auto">ðŸ” Filtrar</button>
     </div>
-    <table><thead><tr><th>Data</th><th>Hora</th><th>Paciente</th><th>Procedimento</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead>
+    <table><thead><tr><th>Data</th><th>Hora</th><th>Paciente</th><th>Procedimento</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>AÃ§Ãµes</th></tr></thead>
     <tbody id="finTable"></tbody></table>
     <canvas id="finChart" width="800" height="200"></canvas>
     <div class="chart-legend"><span class="legend-blue">Recebido</span><span class="legend-yellow">Pendente</span></div>
@@ -688,8 +689,8 @@ function applyFilters() {
       <td>${a.formaPagamento}</td>
       <td>${a.statusPagamento}</td>
       <td>
-        ${a.statusPagamento === 'Pendente' ? `<button class="btn-sm btn-pago" onclick="markPago('${a.id}')">✓ Pago</button>` : ''}
-        <button class="btn-sm btn-excluir" onclick="deleteApptFin('${a.id}')">🗑</button>
+        ${a.statusPagamento === 'Pendente' ? `<button class="btn-sm btn-pago" onclick="markPago('${a.id}')">âœ“ Pago</button>` : ''}
+        <button class="btn-sm btn-excluir" onclick="deleteApptFin('${a.id}')">ðŸ—‘</button>
       </td>
     </tr>
   `).join('');
@@ -705,7 +706,7 @@ function markPago(id) {
 }
 
 function deleteApptFin(id) {
-  if (!confirm('Excluir este lançamento?')) return;
+  if (!confirm('Excluir este lanÃ§amento?')) return;
   setAgendamentos(getAgendamentos().filter(a => a.id !== id));
   renderFinanceiro(document.getElementById('app-root'));
 }
@@ -721,11 +722,11 @@ function exportCSV() {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CANVAS CHART
-// ═══════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-// canvas não resolve var(--token) do CSS — resolvemos em runtime (theme-aware)
+// canvas nÃ£o resolve var(--token) do CSS â€” resolvemos em runtime (theme-aware)
 function cvar(name, fallback){try{var v=getComputedStyle(document.documentElement).getPropertyValue(name).trim();return v||fallback}catch(e){return fallback}}
 function drawChart(data) {
   const canvas = document.getElementById('finChart');
@@ -750,7 +751,7 @@ function drawChart(data) {
   const days = Object.keys(byDay).map(Number).sort((a,b) => a - b);
   if (days.length === 0) {
     ctx.fillStyle = cvar('--text-muted','#b6b2e6'); ctx.font = '13px Inter'; ctx.textAlign = 'center';
-    ctx.fillText('Sem dados no período', W/2, H/2);
+    ctx.fillText('Sem dados no perÃ­odo', W/2, H/2);
     return;
   }
 

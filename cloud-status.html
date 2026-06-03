@@ -1,12 +1,12 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Status da Nuvem — NeuroPed EDJ</title>
+﻿<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Status da Nuvem â€” NeuroPed EDJ</title>
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/cloud-status.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Status da Nuvem — NeuroPed EDJ">
+<meta name="twitter:title" content="Status da Nuvem â€” NeuroPed EDJ">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/cloud-status.html">
-<meta name="description" content="Status de sincronização em nuvem do NeuroPed EDJ. O app funciona local e offline enquanto o backend externo não é conectado.">
-<!-- Migrado para o Design System canônico (Fase 4): tokens.css + components.css (.np-*) + ponte. -->
+<meta name="description" content="Status de sincronizaÃ§Ã£o em nuvem do NeuroPed EDJ. O app funciona local e offline enquanto o backend externo nÃ£o Ã© conectado.">
+<!-- Migrado para o Design System canÃ´nico (Fase 4): tokens.css + components.css (.np-*) + ponte. -->
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
 <style>
@@ -18,10 +18,11 @@
   .list { line-height: 1.9; }
   code { background: var(--primary-tint); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 6px; font-family: var(--font-mono); font-size: .9em; }
 </style>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head><body data-ns-shell><main class="wrap">
 <section class="np-card">
   <h1 class="np-t-display" style="margin:0 0 var(--space-2)">Status da Nuvem</h1>
-  <p class="np-t-body np-text-muted">Painel de prontidão para o backend do NeuroPed EDJ. O app continua local/offline enquanto o projeto externo não for conectado.</p>
+  <p class="np-t-body np-text-muted">Painel de prontidÃ£o para o backend do NeuroPed EDJ. O app continua local/offline enquanto o projeto externo nÃ£o for conectado.</p>
   <div class="hero-actions">
     <a class="np-btn np-btn--primary" href="./consulta.html">Consulta</a>
     <a class="np-btn np-btn--ghost" href="./assinatura-digital.html">Assinatura Digital</a>
@@ -30,24 +31,24 @@
 </section>
 <section class="grid">
   <div class="np-card"><div class="q-head"><h3 class="np-t-h2" style="margin:0">Schema</h3><span class="np-badge np-badge--success">OK</span></div><div class="np-t-label np-text-muted">Arquivo criado em <code>supabase/schema.sql</code></div></div>
-  <div class="np-card"><div class="q-head"><h3 class="np-t-h2" style="margin:0">Conexão</h3><span class="np-badge np-badge--warning">Pendente</span></div><div class="np-t-label np-text-muted" id="cloudConnection">Verificando...</div></div>
+  <div class="np-card"><div class="q-head"><h3 class="np-t-h2" style="margin:0">ConexÃ£o</h3><span class="np-badge np-badge--warning">Pendente</span></div><div class="np-t-label np-text-muted" id="cloudConnection">Verificando...</div></div>
   <div class="np-card"><div class="q-head"><h3 class="np-t-h2" style="margin:0">Fallback local</h3><span class="np-badge np-badge--success">OK</span></div><div class="np-t-label np-text-muted">O app segue funcionando mesmo sem nuvem.</div></div>
-  <div class="np-card"><div class="q-head"><h3 class="np-t-h2" style="margin:0">Próximo passo</h3><span class="np-badge np-badge--warning">Ação</span></div><div class="np-t-label np-text-muted">Configurar projeto externo e regras por perfil.</div></div>
+  <div class="np-card"><div class="q-head"><h3 class="np-t-h2" style="margin:0">PrÃ³ximo passo</h3><span class="np-badge np-badge--warning">AÃ§Ã£o</span></div><div class="np-t-label np-text-muted">Configurar projeto externo e regras por perfil.</div></div>
 </section>
 <section class="np-card" style="margin-top:var(--space-4)">
-  <h2 class="np-t-h1" style="margin:0 0 var(--space-3)">Checklist de implantação</h2>
+  <h2 class="np-t-h1" style="margin:0 0 var(--space-3)">Checklist de implantaÃ§Ã£o</h2>
   <div class="list np-t-body">
     <div>1. Criar projeto externo de banco/nuvem.</div>
     <div>2. Executar <code>supabase/schema.sql</code>.</div>
-    <div>3. Configurar perfis: médico, secretaria, família, escola e terapeuta.</div>
-    <div>4. Ativar regras de acesso por criança e por perfil.</div>
-    <div>5. Conectar o app usando arquivo de configuração próprio do deploy.</div>
-    <div>6. Testar Consulta, Passe Familiar, Diário, CAA, Documentos e Assinatura Digital.</div>
+    <div>3. Configurar perfis: mÃ©dico, secretaria, famÃ­lia, escola e terapeuta.</div>
+    <div>4. Ativar regras de acesso por crianÃ§a e por perfil.</div>
+    <div>5. Conectar o app usando arquivo de configuraÃ§Ã£o prÃ³prio do deploy.</div>
+    <div>6. Testar Consulta, Passe Familiar, DiÃ¡rio, CAA, Documentos e Assinatura Digital.</div>
   </div>
 </section>
 </main>
 <script src="./cloud-config.example.js"></script>
-<script>const c=window.NEUROPED_CLOUD||{};const ok=!!(c.enabled&&c.supabaseUrl&&String(c.supabaseUrl).indexOf('SEU-PROJETO')===-1);document.getElementById('cloudConnection').textContent=ok?'Nuvem configurada.':'Nuvem preparada, ainda não conectada.';</script>
+<script>const c=window.NEUROPED_CLOUD||{};const ok=!!(c.enabled&&c.supabaseUrl&&String(c.supabaseUrl).indexOf('SEU-PROJETO')===-1);document.getElementById('cloudConnection').textContent=ok?'Nuvem configurada.':'Nuvem preparada, ainda nÃ£o conectada.';</script>
 <script src="./app-polish-mobile.js" defer></script>
 <script src="./app-frame.js" defer></script>
 <script src="./ambient-effects.js" defer></script>
