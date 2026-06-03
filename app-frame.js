@@ -158,7 +158,16 @@
   /* ---------- Boot ---------- */
   function boot(){
     if (maybeEmbedRedirect()) return;                 // auxiliar solta → reabre na casca
-    if (EMBEDDED) { try { document.documentElement.classList.add('np-embedded'); } catch (e) {} ensurePremiumPolish(); return; } // chrome é da casca
+    if (EMBEDDED) {                                   // chrome é da casca
+      try {
+        document.documentElement.classList.add('np-embedded');
+        if (!document.getElementById('np-embedded-css')) {
+          var l = document.createElement('link'); l.id = 'np-embedded-css'; l.rel = 'stylesheet'; l.href = './np-embedded.css';
+          (document.head || document.documentElement).appendChild(l);
+        }
+      } catch (e) {}
+      ensurePremiumPolish(); return;
+    }
     if (shouldSkip()) { ensurePremiumPolish(); return; }
     document.body.classList.add('np-boot-fade');
     ensureHeader();
