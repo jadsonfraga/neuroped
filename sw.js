@@ -28,7 +28,8 @@ const SHELL = [
   './neuroped-master-vitrine.html','./neuroped-master-vitrine.css','./perfil-crianca.html','./np-store.js','./central-atalhos.html','./comunicacao-alternativa.html','./portal-familia-livre.html','./gerador-cards.html','./gerador-cards.js',
   './neuroped-shell.css','./np-cards.css','./escalas-card-premium.css','./escalas-card-premium.js','./app-polish-mobile.css','./app-polish-mobile.js','./tokens.css','./components.css','./np-frame.js','./clinical-meta.js','./evidence-registry.json','./clinical-ontology.json','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
   './scales-editorial.js','./scales-453-authorial.js','./scales-global-max.js','./scales-featured-extra.js','./scales-featured-10.js','./scales-priority-uploaded.js','./scales-diarios-uteis.js','./scales-autorais-npe.js','./scales-impacto-medicacao.js','./neuroped-pro.html','./pro-license.js','./pro-hashes.js','./sobre-dr-jadson.html','./guia-lancamento.html','./scales-oficiais.js','./scales-oficiais-lote2.js','./scales-curate.js','./scales-red-flags.js','./scales-enhance.js','./scales-taxonomy.js','./scales-questions.js','./scales-progress.js','./scales-bundle.js','./scales-question-coach.js','./scales-direct-tasks.js','./scales-index.json',
-  './testes-diretos.html','./testes-diretos-engine.js','./instrumento-celebrations.js'
+  './testes-diretos.html','./testes-diretos-engine.js','./instrumento-celebrations.js',
+  './scales-evidence-panel.js','./curated-evidence/instruments.json'
 ];
 
 self.addEventListener('install', e => {
