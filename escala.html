@@ -173,6 +173,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 <script src="./scales-bundle.js"></script>
 <script src="./scales-question-coach.js"></script>
 <script src="./scales-direct-tasks.js"></script>
+<script src="./scales-progress.js"></script>
 <script>
 (function(){
   "use strict";
@@ -210,10 +211,11 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 
   var INST=null, ANSWERS={};
   // progresso salvo POR CRIANÇA + instrumento: retomar sem perder o que já respondeu
-  function childId(){ try{var c=window.NPStore&&window.NPStore.active&&window.NPStore.active(); return (c&&c.id)?c.id:'_anon';}catch(e){return '_anon';} }
-  function persistKey(){ return 'np:escala:answers:'+childId()+':'+((INST&&INST.id)||'_'); }
-  function saveAnswers(){ try{ localStorage.setItem(persistKey(), JSON.stringify(ANSWERS)); }catch(e){} }
-  function loadAnswers(){ try{ var raw=localStorage.getItem(persistKey()); if(raw){ var o=JSON.parse(raw); if(o&&typeof o==='object'&&!Array.isArray(o)) ANSWERS=o; } }catch(e){} }
+  // progresso salvo via helper compartilhado NeuroPedProgress (mesma lógica de
+  // salvar/retomar da plataforma — não duplica storage).
+  function childCode(){ try{var c=window.NPStore&&window.NPStore.active&&window.NPStore.active(); return (c&&(c.code||c.id))||''; }catch(e){return '';} }
+  function saveProgress(){ if(!window.NeuroPedProgress||!INST)return; try{ window.NeuroPedProgress.save({instrumentId:INST.id, childCode:childCode(), title:INST.title, answers:ANSWERS, index:answeredCount(), total:totalCount()}); }catch(e){} }
+  function loadProgress(){ if(!window.NeuroPedProgress||!INST)return; try{ var rec=window.NeuroPedProgress.load(INST.id, childCode()); if(rec&&rec.answers&&typeof rec.answers==='object'&&!Array.isArray(rec.answers)) ANSWERS=rec.answers; }catch(e){} }
   function totalCount(){return INST.domains.reduce(function(a,d){return a+d.items.length;},0)}
   function answeredCount(){return Object.keys(ANSWERS).length}
   function updateProgress(){
@@ -226,14 +228,15 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   }
   // BLOCOS (anti-fadiga): escala longa (>7 itens) é dividida em etapas curtas
   // de 6 itens; o progresso (respostas + bloco atual) fica salvo para retomar.
-  var BLOCK_SIZE=6, CURRENT_BLOCK=0;
+  // BLOCOS (anti-fadiga): usa o helper puro compartilhado NeuroPedProgress.blockPlan/
+  // isLong (mesma lógica da plataforma). O bloco de retomada é derivado das respostas.
+  var CURRENT_BLOCK=0;
   function flat(){ var out=[]; INST.domains.forEach(function(d,di){ d.items.forEach(function(item,ii){ out.push({di:di,ii:ii,key:di+'-'+ii,dom:d.name,item:item}); }); }); return out; }
-  function blocksOn(){ return flat().length>7; }
-  function blockCount(){ return Math.max(1,Math.ceil(flat().length/BLOCK_SIZE)); }
-  function blockKey(){ return 'np:escala:block:'+childId()+':'+((INST&&INST.id)||'_'); }
-  function saveBlock(){ try{ localStorage.setItem(blockKey(),String(CURRENT_BLOCK)); }catch(e){} }
-  function loadBlock(){ try{ var v=parseInt(localStorage.getItem(blockKey()),10); if(!isNaN(v))CURRENT_BLOCK=v; }catch(e){} }
-  window.__block=function(delta){ var n=blockCount(); CURRENT_BLOCK=Math.max(0,Math.min(n-1,CURRENT_BLOCK+delta)); saveBlock(); renderDetail(); var d=document.getElementById('detail'); if(d)d.scrollIntoView({behavior:'smooth',block:'start'}); };
+  function plan(){ var t=flat().length; return (window.NeuroPedProgress&&window.NeuroPedProgress.blockPlan)?window.NeuroPedProgress.blockPlan(t,6):[{from:0,to:t,count:t,label:''}]; }
+  function blocksOn(){ var t=flat().length; return (window.NeuroPedProgress&&window.NeuroPedProgress.isLong)?window.NeuroPedProgress.isLong(t,7):(t>7); }
+  function blockCount(){ return Math.max(1,plan().length); }
+  function firstUnansweredBlock(){ if(!blocksOn())return 0; var p=plan(),all=flat(); for(var b=0;b<p.length;b++){ for(var i=p[b].from;i<p[b].to;i++){ if(ANSWERS[all[i].key]==null)return b; } } return p.length-1; }
+  window.__block=function(delta){ var n=blockCount(); CURRENT_BLOCK=Math.max(0,Math.min(n-1,CURRENT_BLOCK+delta)); renderDetail(); var d=document.getElementById('detail'); if(d)d.scrollIntoView({behavior:'smooth',block:'start'}); };
   // guia premium: ao responder, leva suavemente ao próximo item ainda sem resposta;
   // no fim do bloco, destaca "Próximo bloco"; com tudo respondido, leva ao laudo.
   function advance(){
@@ -274,8 +277,8 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     }).join('');
     return '<div class="item'+ans+'"><p class="q"><span class="n">'+(f.ii+1)+'.</span>'+emoji+esc(f.item)+'</p>'+coachHtml(key,c)+'<div class="opts">'+opts+'</div></div>';
   }
-  function blockNavHtml(n,start,end){
-    var slice=flat().slice(start,end), tot=slice.length, ans=0;
+  function blockNavHtml(p,start,end){
+    var n=p.length, slice=flat().slice(start,end), tot=slice.length, ans=0;
     slice.forEach(function(f){ if(ANSWERS[f.key]!=null)ans++; });
     var dots=''; for(var b=0;b<n;b++){ var cls=(b===CURRENT_BLOCK)?'cur':(b<CURRENT_BLOCK?'on':''); dots+='<i class="'+cls+'"></i>'; }
     var prev=CURRENT_BLOCK>0?'<button type="button" class="bk-btn ghostb" onclick="__block(-1)">‹ Bloco anterior</button>':'<span></span>';
@@ -284,21 +287,21 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   }
   function renderDetail(){
     var det=document.getElementById('detail');
-    var all=flat(), on=blocksOn(), n=blockCount();
+    var all=flat(), on=blocksOn(), p=plan(), n=p.length;
     if(CURRENT_BLOCK>n-1)CURRENT_BLOCK=n-1; if(CURRENT_BLOCK<0)CURRENT_BLOCK=0;
-    var start=on?CURRENT_BLOCK*BLOCK_SIZE:0, end=on?Math.min(all.length,start+BLOCK_SIZE):all.length;
+    var start=on?p[CURRENT_BLOCK].from:0, end=on?p[CURRENT_BLOCK].to:all.length;
     var slice=all.slice(start,end), lastDom=null, body='';
     slice.forEach(function(f){
       if(f.dom!==lastDom){ if(lastDom!==null)body+='</div>'; body+='<div class="domain"><h2>'+esc(f.dom)+'</h2>'; lastDom=f.dom; }
       body+=itemHtml(f);
     });
     if(lastDom!==null)body+='</div>';
-    det.innerHTML=body+(on?blockNavHtml(n,start,end):'');
+    det.innerHTML=body+(on?blockNavHtml(p,start,end):'');
     // expõe ao engine (scales-enhance lê estes globais e injeta a barra de laudo)
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
-  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveAnswers(); renderDetail(); if(wasNew)setTimeout(advance,70); };
+  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveProgress(); renderDetail(); if(wasNew)setTimeout(advance,70); };
 
   // TESTES DIRETOS sugeridos: tarefas aplicadas na criança, roteadas pelo
   // domínio/keywords da escala e pela faixa etária do instrumento.
@@ -337,7 +340,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     catalog(function(map){
       var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
       INST=normalize(raw);
-      loadAnswers(); loadBlock(); // retoma respostas e o bloco atual (anti-fadiga: não perde o progresso)
+      loadProgress(); CURRENT_BLOCK=firstUnansweredBlock(); // retoma respostas e abre no bloco a continuar
       document.getElementById('title').textContent=INST.title;
       document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' · ');
       var w=document.getElementById('why'); if(w){ if(INST.finalidade){ w.innerHTML='🎯 <b>Para que serve:</b> '+esc(INST.finalidade); w.hidden=false; } else { w.hidden=true; } }
