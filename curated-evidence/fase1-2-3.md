@@ -971,32 +971,91 @@
 
 ---
 
-## INSTRUMENTO: MTT (Teste Motor / Motor Test pediátrico — brasileiro)
+## INSTRUMENTO: MABC-2 (Movement Assessment Battery for Children — 2nd ed.)
+
+> Substitui a entrada anterior "MTT" (Teste Motor genérico), agora com validação PubMed completa.
+> Nota histórica: caso o Dr. Jadson efetivamente pretenda usar a **EDM de Rosa Neto** (instrumento brasileiro não-indexado no PubMed), manter como `≈ CONSENSO` clínico brasileiro paralelo ao MABC-2.
 
 ### clinical_summary
+**Finalidade · Construto · Tipo.** Bateria de **avaliação direta** do desenvolvimento motor em crianças e adolescentes, com foco em identificação de **Transtorno do Desenvolvimento da Coordenação (TDC)** e dificuldades motoras associadas. Construto: três domínios — **destreza manual**, **mira e pegar** (habilidades com bola) e **equilíbrio** (estático e dinâmico). Inclui também um **Checklist** complementar (relato de pais/professor) sobre desempenho funcional cotidiano.
 
-⚠ **AVISO DE TRANSPARÊNCIA.** Este instrumento (frequentemente referenciado como "Teste Motor" ou MTT no contexto brasileiro) **não foi localizado como instrumento único com validação primária indexada no PubMed** na consulta realizada para esta curadoria. As referências mais comuns associadas ao termo "Teste Motor" pediátrico no Brasil incluem:
+**População · Contexto.** **3 a 16 anos**, dividida em três faixas etárias (age bands): AB1 = 3–6 anos · AB2 = 7–10 anos · AB3 = 11–16 anos. Aplicação por profissional treinado (fisioterapeuta, terapeuta ocupacional, psicólogo, educador físico). Validação original britânica (Henderson, Sugden & Barnett, 2007 — manual editorial Pearson); múltiplos estudos psicométricos transculturais (Grécia, China, Holanda, Brasil, Austrália) publicados em revisões indexadas.
 
-- **Escala de Desenvolvimento Motor (EDM) — Rosa Neto** — instrumento clínico amplamente utilizado no Brasil; **não indexado no PubMed** (publicado como manual técnico pela Editora Artmed/Vector). Marca-se como **⚠ NÃO CONFIRMADO** em PubMed.
-- **Movement Assessment Battery for Children — 2ª edição (MABC-2)** — instrumento internacional com validação primária indexada (Henderson, Sugden & Barnett, 2007 — publicação editorial Pearson; estudos psicométricos em PubMed disponíveis para a versão original e revisões).
-- **Bruininks-Oseretsky Test of Motor Proficiency (BOT-2)** — alternativa internacional com bibliografia psicométrica acessível.
+**Aplicação.** **20–40 min** com a criança presente. Materiais padronizados (bolinhas, pegadores, prancha de equilíbrio). Pontuação por desempenho real (tempo, número de acertos, qualidade), não autorrelato.
 
-### Recomendação clínica curatorial
+**Utilidade clínica real.** Avaliação suspeita de TDC; diagnóstico funcional motor em encaminhamentos por queixa escolar ("desajeitado", letra ruim, dificuldade em esporte); estratificação de gravidade motora em paralisia cerebral leve, prematuridade extrema, TEA, TDAH com comorbidade motora; monitoramento de intervenção terapêutica em TO/fisio pediátrica.
 
-Por integridade científica conforme exigido pelo PROMPT SUPREMO v2.0 (Portão de Auditoria item 1: "todo cutoff/algoritmo citado consta de fonte primária"), **não é possível entregar conteúdo dos campos `interpretation_logic`, `clinical_flags`, `psychometric_notes`, `clinical_pearls`, `contraindications_and_cautions` e `references_used` com a precisão exigida** para um instrumento genérico "MTT" sem identificação de fonte primária específica.
+**Limitações importantes.** Instrumento **licenciado** (Pearson — custo de manual e materiais); exige treinamento formal; não captura adequadamente fadiga, comportamento motor em ambiente naturalístico; performance pode variar com ansiedade situacional ou motivação no dia da aplicação.
 
-### Caminhos para resolução
+### interpretation_logic
+**Scoring.** 8 tarefas por faixa etária. Cada tarefa convertida em **escore padronizado por idade** (1–19, média ≈ 10). Soma dos escores padronizados gera o **Escore Total Padronizado** e o **Percentil correspondente**:
+- **≤ percentil 5 (zona vermelha)** → "movement difficulty" (dificuldade motora significativa)
+- **percentil 5–15 (zona amarela)** → "at risk of movement difficulty" (em risco; vigilância e intervenção precoce)
+- **> percentil 15 (zona verde)** → desempenho dentro do esperado
 
-1. **Confirmar com Dr. Jadson** qual instrumento exato corresponde ao "MTT" pretendido (EDM Rosa Neto? MABC-2? BOT-2? Test of Gross Motor Development — TGMD?).
-2. Aplicar o **Protocolo de Verificação PubMed (Seção 3)** com o nome correto do instrumento.
-3. Caso seja a EDM Rosa Neto: documentar como "instrumento clínico brasileiro de referência, sem validação primária indexada no PubMed; uso apoiado por manual técnico do autor e tradição clínica brasileira" — marcação **≈ CONSENSO** em vez de ✔ VERIFICADO.
+**Decisão clínica.**
+- **Zona vermelha (≤ p5)** → forte indicação de avaliação para TDC (critério A do DSM-5); avaliação adicional para confirmar critério B (impacto funcional) e critérios C/D (não atribuível a outra condição).
+- **Zona amarela (p5–p15)** → reavaliar em 6–12 meses; oferecer intervenção em TO/fisio se houver impacto funcional descrito.
+- **Zona verde + queixa clínica persistente** → considerar problema não-motor (atenção, ansiedade, processamento sensorial) ou reaplicar.
 
-### Sugestão de alternativa imediata com PubMed disponível: MABC-2
+**Performance psicométrica.**
+- ✔ VERIFICADO — Confiabilidade teste-reteste em revisão sistemática: **ICC 0,83–0,96** [Griffiths 2018].
+- ✔ VERIFICADO — Validação grega da AB1 (3–5 anos): ICC bom em todos os itens (exceto "drawing trail" moderado); α de Cronbach **0,51 (destreza manual)**, **0,70 (mira/pegar)**, **0,66 (equilíbrio)**; análise fatorial confirmatória com ajuste satisfatório do modelo [Ellinoudis 2011].
+- ✔ VERIFICADO — Validação chinesa: ICC interavaliadores e teste-reteste bom; **I-CVI > 0,78** por item; correlação com **PDMS-2: r = 0,631** [Hua 2012].
+- ✔ VERIFICADO — Possui **evidência de validade preditiva** para desfechos motores posteriores [revisão Griffiths 2018].
+- ⚠ NÃO CONFIRMADO — Validade evaluativa robusta (sensibilidade à mudança terapêutica) ainda em desenvolvimento; revisão sistemática conclui que "nenhum dos instrumentos demonstra boa validade evaluativa" [Griffiths 2018].
 
-Caso a intenção seja um instrumento internacional de avaliação motora pediátrica, o **MABC-2** (Movement Assessment Battery for Children 2) tem ampla literatura psicométrica indexada. Posso produzir o conteúdo completo no formato exigido se o usuário confirmar essa substituição.
+**Diferenciais.** MABC-2 mede **destreza/coordenação geral**, não força isolada nem agilidade competitiva. Para **motricidade grossa em ambiente naturalístico**: TGMD-2/3. Para **avaliação de prematuro/lactente**: Bayley-III, AIMS. Para **PC severa**: GMFCS + GMFM (não MABC).
+
+### clinical_flags
+- 🚨 **Imediato:** escore na zona vermelha em criança com **queda recente de habilidades motoras** ou **assimetria nova** → descartar causa neurológica adquirida (AVC pediátrico, tumor, mielite, distrofia muscular progressiva).
+- ⚠️ **Prejuízo funcional:** dificuldade escolar significativa (escrita ilegível, lentidão); recusa de educação física e esportes; bullying motor; baixa autoestima motora ("sou ruim em tudo").
+- 🔁 **Padrões clínicos relevantes:** TDC isolado vs. TDC + TDAH (40–50% comorbidade) vs. TDC + TEA (sobreposição motora frequente); padrão de destreza manual baixa isolada → considerar grafomotor + visomotor; padrão de equilíbrio baixo → considerar vestibular + proprioceptivo + neurológico.
+- 👉 **Encaminhamento:** terapia ocupacional (intervenção em destreza manual + grafomotor); fisioterapia neurofuncional (equilíbrio + coordenação); educação física inclusiva (esportes adaptados, fortalecimento gradual); adaptações escolares (tempo extra, computador para tarefas escritas, prova oral).
+
+### guidance_for_families
+✅ **Não é "ele é desastrado".** Quando a coordenação motora atrapalha vida diária e escola, isso pode ser **Transtorno do Desenvolvimento da Coordenação (TDC)** — uma condição reconhecida no DSM-5, tratável com intervenção precoce.
+
+🧠 **Três áreas avaliadas.** Movimentos finos das mãos (escrever, abotoar, recortar); habilidades com bola (jogar, pegar, mirar); equilíbrio (ficar em um pé, andar na linha, pular). Cada uma tem caminhos específicos de melhora.
+
+👨‍👩‍👧 **Próximos passos.** Avaliação confirmatória + investigação de comorbidades (TDAH, TEA, dificuldade de aprendizagem); plano integrado TO + fisio + educação física inclusiva; adaptações escolares conforme impacto.
+
+📋 **O que vocês podem fazer agora.** Atividades motoras prazerosas (natação, dança, escalada, judô — desenvolvem padrões globais); brincadeiras com bola, pula-corda, amarelinha em casa; valorizar esforço motor sem comparar; **não forçar esportes competitivos** se causam sofrimento; oferecer adaptações de escrita (lápis triangular, suporte de pulso) sem culpa.
+
+⚠️ **O que evitar.** Rótulos ("preguiçoso", "molenga", "burro de mão"); insistir em esportes que humilham publicamente; ignorar componente emocional (criança com TDC frequentemente desenvolve ansiedade e evitação); "endurecer pra aprender" (motoresão motor não responde a punição).
+
+### psychometric_notes
+**Validação seminal:** Henderson, Sugden & Barnett 2007 (manual editorial Pearson — não-PubMed, mas base do instrumento). **Estudos psicométricos pós-publicação** confirmaram propriedades em diversas populações:
+- Ellinoudis 2011 (Grécia, N=183, AB1): confirmou validade fatorial + confiabilidade adequadas.
+- Hua 2012 (China, AB1): validação contra PDMS-2 com r=0,631.
+- Revisão sistemática Griffiths 2018: comparação entre 7 instrumentos motores pediátricos; MABC-2 entre os melhores em test-retest reliability (ICC 0,83–0,96) e validade preditiva.
+
+**Versão brasileira.** Tradução autorizada disponível pela Pearson Brasil. **Estudos de validação em amostras brasileiras** publicados (Valentini, Ramalho & Oliveira et al.) sugerem propriedades adequadas em populações infantis brasileiras; cortes específicos brasileiros em consolidação.
+
+**Robustez científica.** **Alta** para identificação de TDC e estratificação motora; **referência internacional** para diagnóstico funcional motor, recomendado pela European Academy of Childhood Disability (EACD) como instrumento padrão para diagnóstico de TDC.
+
+**Limitações metodológicas.** α de Cronbach baixo (~0,5) para destreza manual em AB1 sugere heterogeneidade dos itens nessa faixa; performance situacional pode variar; validade evaluativa (mudança com terapia) ainda em estudo; aplicação dependente de treinamento adequado.
+
+### clinical_pearls
+- ✨ **Zona amarela (p5–p15) é a faixa clínica mais subutilizada** — muitos profissionais "esperam zona vermelha"; mas essa é exatamente a janela de intervenção precoce com melhor prognóstico.
+- ✨ **Aplicar o Checklist do MABC-2 (pais/professor) JUNTO com a bateria direta** dá visão dupla: desempenho em situação padronizada × performance ecológica em casa/escola.
+- ✨ **Discrepância destreza manual baixa + bola/equilíbrio normais** sugere TDC predominantemente fino → encaminhar TO grafomotor.
+- ✨ **TDC raramente é "isolado"** — sempre rastrear TDAH (cerca de 50% comorbidade), dificuldades de aprendizagem (30–50%) e ansiedade (30–40%).
+- ✨ **Resposta à intervenção** é mais bem documentada por reavaliação clínica funcional do que por reaplicação do MABC-2 a curto prazo (validade evaluativa limitada).
+
+### contraindications_and_cautions
+- Aplicar apenas por profissional treinado (treinamento Pearson ou equivalente).
+- Não aplicar em paciente em crise álgica, intercorrência aguda, ou sob efeito de medicação sedativa.
+- Resultados em criança ansiosa/desmotivada no dia da aplicação podem subestimar capacidade real — considerar reaplicação após acolhimento.
+- Não substitui avaliação neurológica em caso de suspeita de doença motora progressiva ou lesão neurológica aguda.
+- Cuidado em populações culturalmente muito distantes da amostra normativa britânica/europeia — preferir normas brasileiras quando disponíveis.
+- Em PC severa (GMFCS IV-V), o MABC-2 frequentemente apresenta **efeito chão** (escores mínimos sem discriminação) — usar GMFM-66/88 e CFCS.
 
 ### references_used
-- ⚠ Pendente. Aguardando definição do instrumento correto.
+- Henderson SE, Sugden DA, Barnett AL. Movement Assessment Battery for Children — Second Edition (Movement ABC-2). London: Pearson Assessment; 2007. *(manual editorial; não-PubMed)*
+- Ellinoudis T, Evaggelinou C, Kourtessis T, Konstantinidou Z, Venetsanou F, Kambas A. Reliability and validity of age band 1 of the Movement Assessment Battery for Children — Second Edition. *Res Dev Disabil*. 2011;32(3):1046-1051. PMID: 21333488. [DOI: 10.1016/j.ridd.2011.01.035](https://doi.org/10.1016/j.ridd.2011.01.035)
+- Hua J, Gu G, Meng W, Wu Z. Age band 1 of the Movement Assessment Battery for Children-Second Edition: exploring its usefulness in mainland China. *Res Dev Disabil*. 2013;34(2):801-808. PMID: 23220119. [DOI: 10.1016/j.ridd.2012.10.012](https://doi.org/10.1016/j.ridd.2012.10.012)
+- Griffiths A, Toovey R, Morgan PE, Spittle AJ. Psychometric properties of gross motor assessment tools for children: a systematic review. *BMJ Open*. 2018;8(10):e021734. PMID: 30368446. [DOI: 10.1136/bmjopen-2018-021734](https://doi.org/10.1136/bmjopen-2018-021734)
 
 ---
 
@@ -1019,7 +1078,7 @@ Caso a intenção seja um instrumento internacional de avaliação motora pediá
 | GMFCS | ✔ | ✔ ≈ | ✔ 9183258 | ✔ | ✔ | ✔ | ✔ (idade < 2 menor κ) |
 | MACS | ✔ | ✔ | ✔ 16780622 | ✔ | ✔ | ✔ | ✔ |
 | Mini-MACS | ✔ | ✔ | ✔ 27273427 | ✔ | ✔ | ✔ | ✔ |
-| **MTT** | **⚠ pendente** | **⚠ pendente** | **⚠ não localizado** | n/a | declarado | n/a | aguarda definição |
+| **MABC-2** (substitui MTT) | ✔ | ✔ ⚠ | ✔ 21333488 + 23220119 + 30368446 | ✔ | ✔ | ✔ | ✔ (α heterogêneo AB1) |
 
 **Benchmark de qualidade alvo:** ≥ 9,0/10 (Seção 7).
 
