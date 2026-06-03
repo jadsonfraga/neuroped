@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0e0e22">
 <meta name="robots" content="noindex">
-<title>Gerar LicenÃ§as Pro â€” NeuroPed (uso do autor)</title>
+<title>Gerar Licenças Pro — NeuroPed (uso do autor)</title>
 <link rel="stylesheet" href="./neuroped-shell.css"><link rel="stylesheet" href="./app-polish-mobile.css">
 <style>
 :root{--bg:#0a0a16;--bg2:#0e0e22;--ink:#ECEAFF;--muted:#b6b2e6;--line:rgba(169,164,255,.16);--indigo:#6d6af5;--indigo-d:#4f46e5;--indigo-l:#a9a4ff;--gold:#e7c98b;--paper:rgba(124,118,210,.08)}
@@ -31,18 +31,18 @@ pre{white-space:pre-wrap;word-break:break-all;background:rgba(20,18,46,.6);borde
 </head>
 <body data-ns-shell>
 <main class="wrap">
-  <h1>Gerar LicenÃ§as Pro</h1>
-  <p class="muted">Ferramenta do autor. Gera cÃ³digos de venda e os hashes para publicar no app.</p>
+  <h1>Gerar Licenças Pro</h1>
+  <p class="muted">Ferramenta do autor. Gera códigos de venda e os hashes para publicar no app.</p>
 
   <section id="gate" class="card gate">
-    <p class="muted">Ãrea protegida. Informe o <strong>PIN master</strong>.</p>
+    <p class="muted">Área protegida. Informe o <strong>PIN master</strong>.</p>
     <input id="pin" type="password" inputmode="numeric" placeholder="PIN master" autocomplete="off" aria-label="PIN master">
     <div style="margin-top:12px"><button class="btn" id="pinGo">Entrar</button></div>
   </section>
 
   <section id="tool" class="hide">
     <div class="card">
-      <label for="qtd">Quantos cÃ³digos gerar?</label>
+      <label for="qtd">Quantos códigos gerar?</label>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <input type="number" id="qtd" value="10" min="1" max="500">
         <button class="btn gold" id="gen">Gerar lote</button>
@@ -50,19 +50,19 @@ pre{white-space:pre-wrap;word-break:break-all;background:rgba(20,18,46,.6);borde
     </div>
 
     <div class="card" id="out" style="display:none">
-      <label>1 Â· CÃ³digos para VENDER (entregue um por comprador na plataforma)</label>
+      <label>1 · Códigos para VENDER (entregue um por comprador na plataforma)</label>
       <pre id="codes"></pre>
-      <button class="btn" id="copyCodes" style="margin-bottom:14px">Copiar cÃ³digos</button>
+      <button class="btn" id="copyCodes" style="margin-bottom:14px">Copiar códigos</button>
 
-      <label>2 Â· Hashes para PUBLICAR (cole em pro-hashes.js â†’ NEUROPED_PRO_HASHES)</label>
+      <label>2 · Hashes para PUBLICAR (cole em pro-hashes.js → NEUROPED_PRO_HASHES)</label>
       <pre id="hashes"></pre>
       <button class="btn" id="copyHashes">Copiar hashes</button>
 
       <ol class="steps">
         <li>Copie os <strong>hashes</strong> e substitua/adicione na lista de <code>pro-hashes.js</code>; publique o app.</li>
-        <li>Guarde cada <strong>cÃ³digo</strong> para enviar ao comprador apÃ³s o pagamento (entrega manual via Mercado Pago, ou automÃ¡tica se usar Kiwify/Hotmart).</li>
-        <li>O comprador digita o cÃ³digo em <code>neuroped-pro.html</code> e libera o acesso.</li>
-        <li>Guarde os cÃ³digos em local seguro â€” eles nÃ£o podem ser recuperados depois.</li>
+        <li>Guarde cada <strong>código</strong> para enviar ao comprador após o pagamento (entrega manual via Mercado Pago, ou automática se usar Kiwify/Hotmart).</li>
+        <li>O comprador digita o código em <code>neuroped-pro.html</code> e libera o acesso.</li>
+        <li>Guarde os códigos em local seguro — eles não podem ser recuperados depois.</li>
       </ol>
     </div>
   </section>

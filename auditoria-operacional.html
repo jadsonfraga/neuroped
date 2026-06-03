@@ -1,6 +1,6 @@
-﻿<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Auditoria Operacional â€” NeuroPed EDJ</title>
-<!-- Migrado para o Design System canÃ´nico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Auditoria Operacional — NeuroPed EDJ</title>
+<!-- Migrado para o Design System canônico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-polish-mobile.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
 <style>
   body { margin: 0; background: var(--aurora-base); color: var(--text); font-family: var(--font-sans); min-height: 100vh; }
@@ -15,7 +15,7 @@
 <section class="np-card">
   <span class="np-t-label np-text-muted" id="score">Auditoria pronta</span>
   <h1 class="np-t-display" style="margin:var(--space-2) 0">Auditoria Operacional</h1>
-  <p class="np-t-body np-text-muted">Verifica os pontos essenciais do NeuroPed EDJ: rotas, Consulta, passe familiar, CAA, DiÃ¡rio, Filtro, Mapa, PWA/cache e camada visual.</p>
+  <p class="np-t-body np-text-muted">Verifica os pontos essenciais do NeuroPed EDJ: rotas, Consulta, passe familiar, CAA, Diário, Filtro, Mapa, PWA/cache e camada visual.</p>
   <div class="hero-actions">
     <button class="np-btn np-btn--primary" onclick="runAudit()"><span class="np-btn-label">Rodar auditoria completa</span></button>
     <button class="np-btn np-btn--secondary" onclick="copyResults()">Copiar resultado</button>
@@ -25,7 +25,7 @@
   </div>
 </section>
 <section id="results" class="grid"></section>
-<pre id="log">Aguardando execuÃ§Ã£o.</pre>
+<pre id="log">Aguardando execução.</pre>
 </main>
 <script>
 const tests=[];let lines=[];
@@ -35,49 +35,49 @@ function add(name,status,detail){
   tests.push({name,status,detail});
   const card=document.createElement('div');
   card.className='np-card';
-  const badge=status==='ok'?'<span class="np-badge np-badge--success">OK</span>':status==='warn'?'<span class="np-badge np-badge--warning">AtenÃ§Ã£o</span>':'<span class="np-badge np-badge--danger">Falha</span>';
+  const badge=status==='ok'?'<span class="np-badge np-badge--success">OK</span>':status==='warn'?'<span class="np-badge np-badge--warning">Atenção</span>':'<span class="np-badge np-badge--danger">Falha</span>';
   card.innerHTML='<div class="q-head"><h3 class="np-t-h2" style="margin:0">'+name+'</h3>'+badge+'</div>'
     +'<div class="np-t-label np-text-muted" style="white-space:pre-wrap">'+String(detail).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'</div>';
   document.getElementById('results').appendChild(card);
-  lines.push((status==='ok'?'OK':status==='warn'?'ATENÃ‡ÃƒO':'FALHA')+' â€” '+name+'\n'+detail);
+  lines.push((status==='ok'?'OK':status==='warn'?'ATENÇÃO':'FALHA')+' — '+name+'\n'+detail);
 }
 function percent(){const okn=tests.filter(t=>t.status==='ok').length;const total=tests.length||1;return Math.round(100*okn/total)}
 async function runAudit(){
   tests.length=0;lines=[];document.getElementById('results').innerHTML='';document.getElementById('log').textContent='Executando...';
   const files=['./index.html','./central-atalhos.html','./portal-familia-livre.html','./area-filho.html','./politica-acesso-familiar.html','./consulta.html','./ativar-passe-familiar.html','./comunicacao-alternativa.html','./diario-escola-terapias-v2.html','./filtro-escalas.html','./mapa-escalas.html','./manifest.json','./sw.js'];
-  for(const f of files){const r=await ok(f);add('Rota '+f,r?'ok':'fail',r?'HTTP OK':'NÃ£o respondeu com sucesso')}
+  for(const f of files){const r=await ok(f);add('Rota '+f,r?'ok':'fail',r?'HTTP OK':'Não respondeu com sucesso')}
   const sw=await txt('./sw.js');
   const swTag=(sw.match(/neuroped-edj-v[0-9.]+/)||[''])[0];
-  add('Service Worker',swTag?'ok':'fail',swTag||'versÃ£o nÃ£o identificada');
+  add('Service Worker',swTag?'ok':'fail',swTag||'versão não identificada');
   add('Cache inclui auditoria',sw.includes('auditoria-operacional.html')?'ok':'fail','auditoria-operacional.html no precache');
-  add('Cache inclui passe familiar',sw.includes('family-pass.js')&&sw.includes('family-pass-generator.js')&&sw.includes('ativar-passe-familiar.html')?'ok':'fail','family-pass, generator e ativaÃ§Ã£o no precache');
+  add('Cache inclui passe familiar',sw.includes('family-pass.js')&&sw.includes('family-pass-generator.js')&&sw.includes('ativar-passe-familiar.html')?'ok':'fail','family-pass, generator e ativação no precache');
   add('Cache inclui visual premium',sw.includes('design-system-premium.css')&&sw.includes('editorial-impact.css')?'ok':'fail','design system e camada editorial');
   const consulta=await txt('./consulta.html');
-  add('Consulta exige PIN',consulta.includes('PIN master obrigatÃ³rio')&&consulta.includes('MASTER_HASH')?'ok':'fail','Tela de PIN e hash master presentes');
-  add('Consulta abre se master jÃ¡ ativo',consulta.includes('if(masterActive()){openApp()')||consulta.includes('if(masterActive()){openApp();')?'ok':'fail','Evita sensaÃ§Ã£o de aba morta quando PIN jÃ¡ estÃ¡ ativo');
-  add('Consulta tem scripts de passe diretos',consulta.includes('family-pass.js')&&consulta.includes('family-pass-generator.js')?'ok':'fail','Gerador nÃ£o depende exclusivamente do service worker');
+  add('Consulta exige PIN',consulta.includes('PIN master obrigatório')&&consulta.includes('MASTER_HASH')?'ok':'fail','Tela de PIN e hash master presentes');
+  add('Consulta abre se master já ativo',consulta.includes('if(masterActive()){openApp()')||consulta.includes('if(masterActive()){openApp();')?'ok':'fail','Evita sensação de aba morta quando PIN já está ativo');
+  add('Consulta tem scripts de passe diretos',consulta.includes('family-pass.js')&&consulta.includes('family-pass-generator.js')?'ok':'fail','Gerador não depende exclusivamente do service worker');
   add('Consulta tem painel operacional',consulta.includes('Painel de consulta operacional')&&consulta.includes('copySummary')&&consulta.includes('window.print')?'ok':'fail','Resumo, copiar e imprimir presentes');
   const gen=await txt('./family-pass-generator.js');
-  add('Gerador de passe apÃ³s PIN',gen.includes('setInterval')&&gen.includes('Gerar passe familiar')?'ok':'fail','Gerador robusto e reativo Ã  ativaÃ§Ã£o do PIN');
+  add('Gerador de passe após PIN',gen.includes('setInterval')&&gen.includes('Gerar passe familiar')?'ok':'fail','Gerador robusto e reativo à ativação do PIN');
   const pass=await txt('./family-pass.js');
   add('Passe familiar 120 dias',pass.includes('DAYS=120')||pass.includes('const DAYS=120')?'ok':'fail','Validade operacional de 4 meses');
   const ativa=await txt('./ativar-passe-familiar.html');
-  add('Tela ativar passe',ativa.includes('Ativar acesso da famÃ­lia')||ativa.includes('Ativar passe')?'ok':'fail','FamÃ­lia tem rota direta para ativaÃ§Ã£o');
+  add('Tela ativar passe',ativa.includes('Ativar acesso da família')||ativa.includes('Ativar passe')?'ok':'fail','Família tem rota direta para ativação');
   const portal=await txt('./portal-familia-livre.html');
   add('Portal com cara de app',portal.includes('Cuidado familiar com clareza')&&portal.includes('Ferramentas principais')?'ok':'fail','Hero, ferramentas principais e layout familiar');
   const cAA=await txt('./comunicacao-alternativa.html');
-  add('CAA preservada',cAA.includes('speechSynthesis')||cAA.includes('Falar frase')||cAA.includes('comunicaÃ§Ã£o alternativa')?'ok':'warn','Busca por voz/frase/CAA');
+  add('CAA preservada',cAA.includes('speechSynthesis')||cAA.includes('Falar frase')||cAA.includes('comunicação alternativa')?'ok':'warn','Busca por voz/frase/CAA');
   const diario=await txt('./diario-escola-terapias-v2.html');
-  add('DiÃ¡rio preservado',diario.includes('Novo registro')||diario.includes('DiÃ¡rio de escola e terapias')?'ok':'warn','Cadastro/registro/diÃ¡rio encontrados');
+  add('Diário preservado',diario.includes('Novo registro')||diario.includes('Diário de escola e terapias')?'ok':'warn','Cadastro/registro/diário encontrados');
   const filtro=await txt('./filtro-escalas.html');
-  add('Filtro de escalas',filtro.includes('scales-index.json')||filtro.includes('perguntas fÃ¡ceis')?'ok':'warn','Uso de Ã­ndice ou humanizaÃ§Ã£o detectado');
+  add('Filtro de escalas',filtro.includes('scales-index.json')||filtro.includes('perguntas fáceis')?'ok':'warn','Uso de índice ou humanização detectado');
   const mapa=await txt('./mapa-escalas.html');
-  add('Mapa de instrumentos',mapa.includes('Mapa de Instrumentos')||mapa.includes('scales-index.json')?'ok':'warn','Mapa e Ã­ndice detectados');
+  add('Mapa de instrumentos',mapa.includes('Mapa de Instrumentos')||mapa.includes('scales-index.json')?'ok':'warn','Mapa e índice detectados');
   const manifest=await txt('./manifest.json');
-  add('Manifest sem CAA Premium',!manifest.includes('CAA Premium')&&manifest.includes('CAA Gratuita')?'ok':'fail','RÃ³tulo correto no PWA');
+  add('Manifest sem CAA Premium',!manifest.includes('CAA Premium')&&manifest.includes('CAA Gratuita')?'ok':'fail','Rótulo correto no PWA');
   const css=await txt('./editorial-impact.css');
   add('Visual editorial',css.includes('Editorial Impact Layer')?'ok':'warn','Camada editorial presente');
-  document.getElementById('score').textContent='PontuaÃ§Ã£o operacional: '+percent()+'%';
+  document.getElementById('score').textContent='Pontuação operacional: '+percent()+'%';
   document.getElementById('log').textContent=lines.join('\n\n');
 }
 function copyResults(){navigator.clipboard.writeText(document.getElementById('score').textContent+'\n\n'+lines.join('\n\n')).then(()=>alert('Resultado copiado.'))}
