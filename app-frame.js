@@ -24,9 +24,24 @@
     return p === 'index.html' || p === '' || p === '/' || p === 'app-shell.html';
   }
 
+  function pageAlreadyHasFixedHeader(){
+    // Não injeta header se a página já tem um <header> próprio sticky/fixed
+    // no topo do DOM (evita 2 headers empilhados).
+    var existing = document.querySelector('header, [role="banner"], .top, .app-shell');
+    if (!existing) return false;
+    var pos = getComputedStyle(existing).position;
+    if (pos === 'sticky' || pos === 'fixed') return true;
+    // Heurística: <header> declarado no topo do <body> antes de qualquer
+    // <main>/<section> tipicamente serve como header do app.
+    var firstChild = document.body.firstElementChild;
+    if (existing === firstChild && existing.matches('header')) return true;
+    return false;
+  }
+
   /* ---------- Header brand (top) ---------- */
   function ensureHeader(){
     if (document.getElementById('npFrameHeader')) return;
+    if (pageAlreadyHasFixedHeader()) return; // skip: evita header duplicado
     var h = document.createElement('header');
     h.id = 'npFrameHeader';
     h.setAttribute('role', 'banner');
