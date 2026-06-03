@@ -1,20 +1,21 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+﻿<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Qualidade NeuroPed</title>
-<!-- Migrado para o Design System canônico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
+<!-- Migrado para o Design System canÃ´nico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
 <link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-polish-mobile.css"><link rel="stylesheet" href="./animations.css">
 <style>
-  /* Apenas LAYOUT — sem cor/valor cru; tudo vem dos tokens e dos componentes .np-*. */
+  /* Apenas LAYOUT â€” sem cor/valor cru; tudo vem dos tokens e dos componentes .np-*. */
   body { margin: 0; background: var(--aurora-base); color: var(--text); font-family: var(--font-sans); min-height: 100vh; }
   .wrap { max-width: var(--content-max); margin: auto; padding: var(--space-8) var(--space-4) var(--space-16); }
   .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: var(--space-4); margin-top: var(--space-6); }
   .q-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
 </style>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head><body><main class="wrap">
 <section class="np-card">
   <div class="np-t-label np-text-muted" id="score">Painel de qualidade</div>
   <h1 class="np-t-display" style="margin:var(--space-2) 0 var(--space-2)">Qualidade NeuroPed</h1>
-  <p class="np-t-body np-text-muted">Status rápido de versão, rotas, PIN, PWA, Consulta, Portal, CAA, Diário, Filtro, Mapa e riscos estruturais.</p>
+  <p class="np-t-body np-text-muted">Status rÃ¡pido de versÃ£o, rotas, PIN, PWA, Consulta, Portal, CAA, DiÃ¡rio, Filtro, Mapa e riscos estruturais.</p>
   <div class="hero-actions">
     <button class="np-btn np-btn--primary" onclick="run()"><span class="np-btn-label">Atualizar status</span></button>
     <button class="np-btn np-btn--secondary" onclick="copy()">Copiar status</button>
@@ -33,31 +34,31 @@ function add(name,status,detail){
   const c=document.createElement('div');
   c.className='np-card';
   const badge = status==='ok' ? '<span class="np-badge np-badge--success">OK</span>'
-              : status==='warn' ? '<span class="np-badge np-badge--warning">Atenção</span>'
+              : status==='warn' ? '<span class="np-badge np-badge--warning">AtenÃ§Ã£o</span>'
               : '<span class="np-badge np-badge--danger">Falha</span>';
   c.innerHTML='<div class="q-head"><h3 class="np-t-h2" style="margin:0">'+name+'</h3>'+badge+'</div>'
     +'<div class="np-t-label np-text-muted">'+String(detail).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'</div>';
   document.getElementById('cards').appendChild(c);
-  lines.push((status==='ok'?'OK':status==='warn'?'ATENÇÃO':'FALHA')+' — '+name+'\n'+detail);
+  lines.push((status==='ok'?'OK':status==='warn'?'ATENÃ‡ÃƒO':'FALHA')+' â€” '+name+'\n'+detail);
 }
 function pct(){const total=lines.length||1;const oks=lines.filter(x=>x.startsWith('OK')).length;return Math.round(oks*100/total)}
 async function run(){
   lines=[];document.getElementById('cards').innerHTML='';
   const sw=await txt('./sw.js');const manifest=await txt('./manifest.json');const routes=window.NEUROPED_ROUTES||[];
-  // versão/cache: lê o token de cache atual dinamicamente (sem fixar versão → não fica obsoleto)
+  // versÃ£o/cache: lÃª o token de cache atual dinamicamente (sem fixar versÃ£o â†’ nÃ£o fica obsoleto)
   const cacheTag=(sw.match(/neuroped-edj-v[0-9.]+/)||[''])[0];
-  add('Versão/cache',cacheTag?'ok':'fail',cacheTag||'não encontrado');
+  add('VersÃ£o/cache',cacheTag?'ok':'fail',cacheTag||'nÃ£o encontrado');
   add('Manifest PWA',manifest.includes('NeuroPed EDJ')&&manifest.includes('CAA Gratuita')?'ok':'fail','Manifest publicado e sem CAA Premium.');
   add('Roteador central',routes.length>=10?'ok':'fail',routes.length+' rotas registradas.');
   add('Rotas protegidas marcadas',routes.filter(r=>r.requiresPin).length>=5?'ok':'warn',routes.filter(r=>r.requiresPin).map(r=>r.label).join(', '));
   const required=['./consulta.html','./portal-familia-livre.html','./comunicacao-alternativa.html','./diario-escola-terapias-v2.html','./filtro-escalas.html','./mapa-escalas.html','./teste-ouro-pin.html','./auditoria-operacional.html'];
   for(const r of required)add('Rota '+r,await ok(r)?'ok':'fail',await ok(r)?'HTTP OK':'falhou');
   const pin=await txt('./consulta-pin-fix.js');const exit=await txt('./consulta-safe-exit.js');
-  add('PIN alfanumérico',pin.includes('inputmode')&&pin.includes('text')?'ok':'fail','Teclado completo para letras e números.');
-  add('Voltar só após erro',exit.includes('after-fail')?'ok':'fail','Opção de voltar aparece apenas após falha do PIN.');
+  add('PIN alfanumÃ©rico',pin.includes('inputmode')&&pin.includes('text')?'ok':'fail','Teclado completo para letras e nÃºmeros.');
+  add('Voltar sÃ³ apÃ³s erro',exit.includes('after-fail')?'ok':'fail','OpÃ§Ã£o de voltar aparece apenas apÃ³s falha do PIN.');
   const policy=window.NeuroPedStoragePolicy&&window.NeuroPedStoragePolicy.status();
-  add('Política de storage',policy&&policy.categories.sensitiveStorage.allowed===false?'ok':'fail','SensitiveStorage desabilitado para dados reais.');
-  add('Modo do app',window.NEUROPED_APP_MODE&&window.NEUROPED_APP_MODE.mode==='HOMOLOGAÇÃO'?'ok':'fail',window.NEUROPED_APP_MODE?window.NEUROPED_APP_MODE.message:'app-mode.js não carregou');
+  add('PolÃ­tica de storage',policy&&policy.categories.sensitiveStorage.allowed===false?'ok':'fail','SensitiveStorage desabilitado para dados reais.');
+  add('Modo do app',window.NEUROPED_APP_MODE&&window.NEUROPED_APP_MODE.mode==='HOMOLOGAÃ‡ÃƒO'?'ok':'fail',window.NEUROPED_APP_MODE?window.NEUROPED_APP_MODE.message:'app-mode.js nÃ£o carregou');
   document.getElementById('score').textContent='Qualidade operacional: '+pct()+'%';
 }
 function copy(){navigator.clipboard.writeText(document.getElementById('score').textContent+'\n\n'+lines.join('\n\n')).then(()=>alert('Status copiado.'))}
