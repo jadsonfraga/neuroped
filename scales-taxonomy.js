@@ -40,41 +40,44 @@
     questionario: { label: 'Questionário estruturado', emoji: '📋', direct: false }
   };
 
-  /* classify: retorna { kind, label, emoji, direct } — factual, determinístico. */
+  /* classify: retorna { kind, label, emoji, direct } — factual, determinístico.
+     Estratégia (refinada contra o catálogo real, scripts/audit-taxonomy.mjs):
+     o GÊNERO do instrumento manda quando o próprio NOME o declara (inventário/
+     triagem/observação) ou há tarefa neuropsicológica nomeada; senão decide pela
+     AUDIÊNCIA (sinal factual). Conservador no teste_direto: melhor sub-rotular do
+     que chamar uma escala de avaliação de "teste aplicado na criança". */
   function classify(s) {
     s = s || {};
     var a = norm(s.audience);
     var resp = norm([].concat(s.respondent || s.respondente || []).join(' ') + ' ' + a);
+    var title = norm([s.title, s.short_title].join(' '));
     var t = norm([s.title, s.short_title, s.domain, s.finalidade,
       [].concat(s.keywords || []).join(' '), [].concat(s.symptoms || []).join(' ')].join(' '));
 
-    // 1) TESTE DIRETO — flag explícita, audiência clínica, ou tarefa cognitiva/acadêmica
-    if (s.direct_test === true || s.direct_test === 1 ||
-        a === 'clinico' || a === 'direct' || a === 'terapeuta' ||
-        /\b(teste direto|tarefa|prova|nomeacao|nomeacao rapida|span de digitos|span de dig|trilhas|consciencia fonologica|fonologic|leitura|escrita|nomeacao automatica|memoria operacional|memoria de trabalho|fluencia|reconhecimento de letras|aplicacao direta)\b/.test(t)) {
+    // 0) TESTE DIRETO explícito (flag) — sinal mais forte e raro.
+    if (s.direct_test === true || s.direct_test === 1 || s.task === true) return view('teste_direto');
+
+    // 1) GÊNERO declarado no NOME do instrumento (sinal forte, pouco ruído).
+    if (/\b(invent[áa]rio|inventory)\b/.test(title)) return view('inventario');
+    if (/\b(triagem|rastreio|screening|sinais precoces|m-?chat|q-?chat)\b/.test(title)) return view('triagem');
+    if (/\b(observa[çc][aã]o|protocolo observ|checklist observ)\b/.test(title)) return view('observacao');
+
+    // 2) TAREFA neuropsicológica DIRETA — whitelist específica de nome de tarefa
+    //    (não palavras amplas como "leitura/escrita", que aparecem em escalas).
+    if (/\b(span de d[íi]gitos|d[íi]gitos diretos|d[íi]gitos inversos|trail making|teste de trilhas|nomea[çc][aã]o autom[áa]tica r[áa]pida|\bran\b|cubos de corsi|flu[êe]ncia verbal|teste direto|tarefa de |prova de )\b/.test(t)) {
       return view('teste_direto');
     }
-    // 2) OBSERVAÇÃO ESTRUTURADA — checklist observacional clínico
-    if (/\b(observa|checklist observ|contato ocular|contato visual|reciprocidade|brincar simbolico|estereotipia|protocolo observ)\b/.test(t)) {
-      return view('observacao');
-    }
-    // 3) TRIAGEM / RASTREIO — instrumento breve de rastreio
-    if (/\b(triagem|rastreio|screening|m-?chat|q-?chat|rapid|breve|sinais de alerta|red flag)\b/.test(t)) {
-      return view('triagem');
-    }
-    // 4) INVENTÁRIO — perfil comportamental/emocional amplo
-    if (/\b(inventario|inventory|cbcl|brief|perfil comportamental|perfil emocional|checklist comportamental)\b/.test(t)) {
-      return view('inventario');
-    }
-    // 5) AUTORRELATO — a própria criança/adolescente responde
-    if (a === 'autoteste' || /\b(autorrelato|autorelato|autoteste|self report|self-report|\bself\b|adolescente responde)\b/.test(resp)) {
+
+    // 3) AUTORRELATO — a própria criança/adolescente responde.
+    if (a === 'autoteste' || a === 'autorrelato' || /\b(autorrelato|autorelato|autoteste|self report|self-report)\b/.test(resp)) {
       return view('autorrelato');
     }
-    // 6) ESCALA por RESPONDENTE (heterorrelato)
+    // 4) ESCALA por RESPONDENTE (heterorrelato) — sinal factual de audiência.
     if (a === 'escola' || /\b(escola|professor|pedagog)\b/.test(resp)) return view('escala_escola');
-    if (a === 'pais' || a === 'familia' || a === 'cuidador' || /\b(pais|familia|cuidador|mae|pai|responsavel)\b/.test(resp)) return view('escala_pais');
+    if (a === 'pais' || a === 'familia' || a === 'cuidador' || /\b(pais|familia|cuidador|responsavel)\b/.test(resp)) return view('escala_pais');
 
-    // 7) default
+    // 5) clinico/terapeuta/misto e demais → questionário estruturado (aplicado/
+    //    avaliado por profissional). NÃO é "teste direto" sem nomear a tarefa.
     return view('questionario');
   }
   function view(kind) {
