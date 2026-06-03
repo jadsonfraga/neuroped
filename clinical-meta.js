@@ -51,6 +51,9 @@
           errors.push(k + ': validation_sources[' + i + '] sem citation');
         if (!s || !PMID.test(String(s.pmid || '')))
           errors.push(k + ': validation_sources[' + i + '] sem PMID rastreável');
+        // PVI-L: proveniência declarada (✔ verificado / ◻ operador / ⚠ ausente).
+        if (!s || !s.verification || !String(s.verification).trim())
+          errors.push(k + ': validation_sources[' + i + '] sem verification (proveniência PVI-L)');
       });
       // Entrada curada precisa de AO MENOS uma fonte (diretriz citada OU fonte com PMID).
       var hasSource = gs.some(function (g) { return g && g.citation; }) ||

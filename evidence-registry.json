@@ -5,7 +5,7 @@
     "consumed_by": "clinical-meta.js (evidence(id)) → filtro/laudo; só entradas curadas (_needs_curation:false) são expostas.",
     "schema": {
       "instrument_id": "string (igual ao id do catálogo)",
-      "validation_sources": "array de {statement, citation, pmid, doi} — FONTE PRIMÁRIA psicométrica; pmid OBRIGATÓRIO",
+      "validation_sources": "array de {statement, citation, pmid, doi?, verification} — pmid OBRIGATÓRIO; verification = proveniência PVI-L",
       "guideline_support": "array de {body: 'AAP|NICE|AACAP|DSM-5-TR|ICD-11|Cochrane', statement, citation} — endosso de diretriz",
       "evidence_level": "string|null — só se houver gradação publicada e citável",
       "recommended_for": "array de strings (uso para o qual há suporte)",
@@ -14,7 +14,9 @@
       "_needs_curation": "boolean"
     },
     "version": "1.1.0",
-    "updated": "2026-06-03"
+    "updated": "2026-06-03",
+    "provenance": "PVI-L: cada validation_source traz verification — ✔ verificado na fonte · ◻ fornecido pelo operador (não reconfirmado) · ⚠ ausente da fonte (não estimado). Valor do operador NUNCA é reapresentado como confirmado.",
+    "env_limit": "API estruturada do PubMed (eutils) bloqueada (403) neste ambiente: confirma-se IDENTIDADE via busca; métricas fora do resultado de busca ficam ⚠ ausente da fonte (não estimadas)."
   },
   "instruments": {
     "_example_template": {
@@ -34,7 +36,8 @@
           "statement": "Protocolo de 2 etapas (questionário + follow-up): VPP para TEA 47,5% (IC95% 0,41–0,54) e 94,6% para qualquer atraso/preocupação do desenvolvimento (IC95% 0,92–0,98); N=16.071 (18 e 24 meses).",
           "citation": "Robins DL et al. Validation of the M-CHAT-R/F. Pediatrics. 2014;133(1):37-45.",
           "pmid": "24366990",
-          "doi": "10.1542/peds.2013-1813"
+          "doi": "10.1542/peds.2013-1813",
+          "verification": "✔ identidade conferida no PubMed; ◻ métricas fornecidas pelo operador (não reconfirmadas no resumo)"
         }
       ],
       "guideline_support": [],
@@ -60,7 +63,8 @@
           "statement": "Estrutura de 5 fatores confirmada; alfa de Cronbach médio 0,73; correlação entre informantes média 0,34; teste-reteste médio 0,62; escore acima do percentil 90 eleva a probabilidade de transtorno (OR médio 15,7 pais / 15,2 professores / 6,2 autorrelato); N=10.438.",
           "citation": "Goodman R. Psychometric properties of the SDQ. J Am Acad Child Adolesc Psychiatry. 2001;40(11):1337-45.",
           "pmid": "11699809",
-          "doi": "10.1097/00004583-200111000-00015"
+          "doi": "10.1097/00004583-200111000-00015",
+          "verification": "✔ identidade conferida no PubMed; ◻ α/métricas fornecidas pelo operador, NÃO reconfirmadas (a busca trouxe valores de subescala menores, 0,35–0,64)"
         }
       ],
       "guideline_support": [],
@@ -83,7 +87,8 @@
           "statement": "Consistência interna e estrutura fatorial aceitáveis e coerentes com o DSM-IV; instrumento confiável e de baixo custo para uso clínico e de pesquisa; N=243 (população encaminhada).",
           "citation": "Wolraich ML et al. Psychometric properties of the VADPRS. J Pediatr Psychol. 2003;28(8):559-67.",
           "pmid": "14602846",
-          "doi": "10.1093/jpepsy/jsg046"
+          "doi": "10.1093/jpepsy/jsg046",
+          "verification": "✔ identidade conferida no PubMed; afirmação qualitativa (sem números cravados)"
         }
       ],
       "guideline_support": [],
@@ -110,7 +115,8 @@
           "statement": "Rastreio de 4 perguntas (de 17 candidatas): sensibilidade 96,9% (IC95% 91,3–99,4), especificidade 87,6% (IC95% 84,0–90,5), VPN 99,7% (clínico/cirúrgico) e 96,9% (psiquiátrico); N=524, emergência pediátrica; desenvolvido no NIMH.",
           "citation": "Horowitz LM et al. Ask Suicide-Screening Questions (ASQ). Arch Pediatr Adolesc Med. 2012;166(12):1170-6.",
           "pmid": "23027429",
-          "doi": "10.1001/archpediatrics.2012.1276"
+          "doi": "10.1001/archpediatrics.2012.1276",
+          "verification": "✔ identidade e métricas (sens/esp/VPN) conferidas no resultado de busca do PubMed"
         }
       ],
       "guideline_support": [],
@@ -133,7 +139,8 @@
           "statement": "Validada em 3 amostras multicêntricas (adolescentes que tentaram suicídio N=124; ensaio com deprimidos N=312; emergência adulta N=237): boa validade convergente/divergente; subescalas de ideação e comportamento sensíveis à mudança; ideação de pior momento (vida toda) predisse tentativas durante o estudo.",
           "citation": "Posner K et al. The Columbia-Suicide Severity Rating Scale. Am J Psychiatry. 2011;168(12):1266-77.",
           "pmid": "22193671",
-          "doi": "10.1176/appi.ajp.2011.10111704"
+          "doi": "10.1176/appi.ajp.2011.10111704",
+          "verification": "✔ identidade conferida no PubMed; afirmação qualitativa (sem números cravados)"
         }
       ],
       "guideline_support": [],
@@ -155,7 +162,8 @@
           "statement": "Sistema de classificação em 5 níveis para função motora grossa na paralisia cerebral; validade de conteúdo por consenso (Delphi, 48 especialistas); confiabilidade interavaliadores (kappa) 0,55 para menores de 2 anos e 0,75 para 2–12 anos.",
           "citation": "Palisano R et al. Development and reliability of a system to classify gross motor function. Dev Med Child Neurol. 1997;39(4):214-23.",
           "pmid": "9183258",
-          "doi": "10.1111/j.1469-8749.1997.tb07414.x"
+          "doi": "10.1111/j.1469-8749.1997.tb07414.x",
+          "verification": "✔ identidade e confiabilidade (kappa) conferidas no resultado de busca do PubMed"
         }
       ],
       "guideline_support": [],
@@ -177,7 +185,8 @@
           "statement": "Sistema de classificação em 5 níveis do desempenho manual típico (uso colaborativo das duas mãos no dia a dia, não capacidade máxima) na paralisia cerebral; N=168 (4–18 anos); ICC entre terapeutas 0,97 (IC95% 0,96–0,98) e entre pais e terapeuta 0,96 (IC95% 0,89–0,98).",
           "citation": "Eliasson AC et al. The Manual Ability Classification System (MACS). Dev Med Child Neurol. 2006;48(7):549-54.",
           "pmid": "16780622",
-          "doi": "10.1017/S0012162206001162"
+          "doi": "10.1017/S0012162206001162",
+          "verification": "✔ identidade conferida no PubMed; ◻ ICC fornecido pelo operador (não reconfirmado no resumo)"
         }
       ],
       "guideline_support": [],
@@ -194,69 +203,48 @@
     },
     "ofc-psc": {
       "instrument_id": "ofc-psc",
-      "validation_sources": [
-        {
-          "statement": "Subescalas (internalização, externalização, atenção) com desempenho equivalente a instrumentos mais longos (CDI, SCARED, CBCL): AUC ≥0,80 para TDAH, transtornos externalizantes e depressão; AUC=0,68 para ansiedade; N=269 (8–15 anos), critério K-SADS-PL; baixo VPP em populações de baixo risco.",
-          "citation": "Gardner W et al. Comparison of the PSC-17 and alternative mental health screens in an at-risk primary care sample. J Am Acad Child Adolesc Psychiatry. 2007;46(5):611-618.",
-          "pmid": "17450052",
-          "doi": "10.1097/chi.0b013e318032384b"
-        }
-      ],
+      "_note": "PENDENTE: paper seminal do PSC-17 (Gardner 1999, Ambulatory Child Health) não está indexado no PubMed com PMID limpo. Aguardando PMID de fonte primária citável antes de expor claim.",
+      "validation_sources": [],
       "guideline_support": [],
       "evidence_level": null,
       "recommended_for": [
-        "rastreio psicossocial amplo (4–17 anos), parent-report, com subescalas internalização/externalização/atenção"
+        "rastreio de problemas psicossociais em escolares (PSC-17; internalização/externalização/atenção)"
       ],
-      "contraindicated_for": [
-        "diagnóstico isolado",
-        "uso de cutoff sem norma local",
-        "tratar positivo em população de baixo risco como alta probabilidade (baixo VPP)"
-      ],
+      "contraindicated_for": [],
       "false_positive_with": [],
-      "_needs_curation": false
+      "_needs_curation": true
     },
     "ofc-swyc": {
       "instrument_id": "ofc-swyc",
-      "validation_sources": [
-        {
-          "statement": "Componente Milestones: 54 itens por modelo de resposta ao item (IRT) com bom ajuste independentemente de raça/etnia, escolaridade e sexo; validade concorrente com o ASQ-3 a partir dos 4 meses; sensibilidade/especificidade adequadas para detectar atraso relatado pelos pais, EXCETO o formulário de 60 meses; N=469 e 308 (replicação) + 395 de clínicas de referência.",
-          "citation": "Sheldrick RC, Perrin EC. Evidence-based milestones for surveillance of cognitive, language, and motor development. Acad Pediatr. 2013;13(6):577-86.",
-          "pmid": "24238685",
-          "doi": "10.1016/j.acap.2013.07.001"
-        }
-      ],
+      "_note": "PENDENTE: aguardando confirmação de PMID seminal único do SWYC (desenvolvimento + socioemocional + risco familiar) antes de expor claim.",
+      "validation_sources": [],
       "guideline_support": [],
       "evidence_level": null,
       "recommended_for": [
-        "vigilância do desenvolvimento (<5 anos), parent-report; componente Milestones em consultas de puericultura"
+        "rastreio amplo da primeira infância (0–65 meses): desenvolvimento, socioemocional e risco familiar"
       ],
-      "contraindicated_for": [
-        "diagnóstico do desenvolvimento",
-        "depender do formulário de 60 meses para detectar atraso (desempenho inferior)",
-        "aplicar fora da faixa dos formulários"
-      ],
+      "contraindicated_for": [],
       "false_positive_with": [],
-      "_needs_curation": false
+      "_needs_curation": true
     },
     "ofc-rcads": {
       "instrument_id": "ofc-rcads",
       "validation_sources": [
         {
-          "statement": "Estrutura fatorial consistente com transtornos de ansiedade do DSM-IV e depressão maior; validade fatorial em amostra escolar N=1.641 e confiabilidade/validade em amostra independente N=246; autorrelato (há versão para pais).",
-          "citation": "Chorpita BF et al. Assessment of symptoms of DSM-IV anxiety and depression in children: a revised child anxiety and depression scale. Behav Res Ther. 2000;38(8):835-55.",
+          "statement": "Escala dimensional de ansiedade e depressão (6 subescalas; 47 itens; 6–18 anos); consistência interna (alfa de Cronbach) entre 0,73 e 0,82 no estudo original. Identidade confirmada no PubMed.",
+          "citation": "Chorpita BF et al. Assessment of symptoms of DSM-IV anxiety and depression in children: a revised child anxiety and depression scale (RCADS). Behav Res Ther. 2000.",
           "pmid": "10937431",
-          "doi": "10.1016/s0005-7967(99)00130-8"
+          "verification": "✔ identidade conferida no PubMed; alfa 0,73–0,82 conforme resultado de busca"
         }
       ],
       "guideline_support": [],
       "evidence_level": null,
       "recommended_for": [
-        "rastreio dimensional de ansiedade e depressão (DSM-IV) em escolares/adolescentes; monitoramento de resposta"
+        "rastreio/monitoramento dimensional de ansiedade e depressão (6–18 anos), autorrelato e versão para pais"
       ],
       "contraindicated_for": [
-        "diagnóstico isolado",
-        "interpretar escore bruto sem norma por idade/sexo (escores T)",
-        "aplicar a quem não tem leitura/compreensão suficiente"
+        "diagnóstico isolado pelo escore",
+        "interpretar escore bruto sem T-score normatizado"
       ],
       "false_positive_with": [],
       "_needs_curation": false
@@ -265,52 +253,49 @@
       "instrument_id": "ofc-phq-gad",
       "validation_sources": [
         {
-          "statement": "PHQ-A (adolescentes): N=403, entrevista clínica cega como critério; sensibilidade, especificidade e acurácia diagnóstica satisfatórias para transtornos de humor, ansiedade, alimentares e por uso de substâncias; primeiro instrumento do tipo validado em adolescentes.",
-          "citation": "Johnson JG et al. The Patient Health Questionnaire for Adolescents (PHQ-A). J Adolesc Health. 2002;30(3):196-204.",
-          "pmid": "11869927",
-          "doi": "10.1016/s1054-139x(01)00333-0"
+          "statement": "PHQ-9 (9 itens, 0–27): escore ≥10 com sensibilidade 88% e especificidade 88% para depressão maior; bandas 5/10/15/20 (leve a grave). Validação em ADULTOS na atenção primária.",
+          "citation": "Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure. J Gen Intern Med. 2001;16(9):606-13.",
+          "pmid": "11556941",
+          "verification": "✔ identidade e cortes/sens-esp conforme resultado de busca; ⚠ validação ADULTA (não pediátrica)"
         },
         {
-          "statement": "GAD-7 (validado em adultos, N=2.740, atenção primária): ponto de corte ótimo com sensibilidade 89% e especificidade 82%; análise fatorial confirma TAG e depressão como dimensões distintas. Uso pediátrico exige cautela.",
-          "citation": "Spitzer RL et al. A brief measure for assessing generalized anxiety disorder: the GAD-7. Arch Intern Med. 2006;166(10):1092-7.",
+          "statement": "GAD-7 (7 itens, 0–21): ponto de corte com sensibilidade 89% e especificidade 82% para transtorno de ansiedade generalizada. Validação em ADULTOS na atenção primária.",
+          "citation": "Spitzer RL, Kroenke K, Williams JBW, Löwe B. A brief measure for assessing generalized anxiety disorder: the GAD-7. Arch Intern Med. 2006.",
           "pmid": "16717171",
-          "doi": "10.1001/archinte.166.10.1092"
+          "verification": "✔ identidade e sens/esp conforme resultado de busca; ⚠ validação ADULTA (não pediátrica)"
         }
       ],
       "guideline_support": [],
       "evidence_level": null,
       "recommended_for": [
-        "triagem de sintomas depressivos (PHQ-A no adolescente) e ansiosos (GAD-7); monitoramento de gravidade"
+        "rastreio e monitoramento de gravidade de depressão (PHQ-9/PHQ-A) e ansiedade (GAD-7)"
       ],
       "contraindicated_for": [
-        "assumir cortes adultos do GAD-7 em pediatria sem ressalva",
         "diagnóstico isolado pelo escore",
-        "ignorar o item de ideação/risco do PHQ"
+        "extrapolar os cortes adultos para crianças/adolescentes sem a versão e validação específicas (ex.: PHQ-A)",
+        "ignorar item de ideação suicida do PHQ-9"
       ],
-      "false_positive_with": [
-        "sintomas somáticos de doença física (podem inflar o escore de depressão)"
-      ],
+      "false_positive_with": [],
       "_needs_curation": false
     },
     "ofc-crafft": {
       "instrument_id": "ofc-crafft",
       "validation_sources": [
         {
-          "statement": "6 itens; corte ≥2 ótimo: 'qualquer problema' sensibilidade 0,76 / especificidade 0,94 / VPP 0,83 / VPN 0,91; 'qualquer transtorno' sens 0,80 / esp 0,86; dependência sens 0,92 / VPN 0,99; N=538 (14–18 anos); validade não afetada por idade, sexo ou raça.",
-          "citation": "Knight JR et al. Validity of the CRAFFT substance abuse screening test among adolescent clinic patients. Arch Pediatr Adolesc Med. 2002;156(6):607-14.",
+          "statement": "Rastreio de uso de substâncias na adolescência (6 itens); estudo de validação por critério em pacientes adolescentes de ambulatório, comparando o escore com entrevista diagnóstica estruturada. Identidade confirmada no PubMed.",
+          "citation": "Knight JR, Sherritt L, Shrier LA, Harris SK, Chang G. Validity of the CRAFFT substance abuse screening test among adolescent clinic patients. Arch Pediatr Adolesc Med. 2002;156(6):607-14.",
           "pmid": "12038895",
-          "doi": "10.1001/archpedi.156.6.607"
+          "verification": "✔ identidade conferida no PubMed; ⚠ métricas específicas não puxadas (eutils 403) — ausentes da fonte"
         }
       ],
       "guideline_support": [],
       "evidence_level": null,
       "recommended_for": [
-        "rastreio de uso problemático de álcool/substâncias em adolescentes (validado 14–18 anos); corte ≥2"
+        "rastreio de uso/risco de substâncias na adolescência"
       ],
       "contraindicated_for": [
-        "diagnóstico de transtorno por uso de substância",
-        "aplicar sem privacidade/confidencialidade",
-        "usar versão/idioma não validado"
+        "diagnóstico de transtorno por uso pelo escore",
+        "aplicar sem garantir confidencialidade"
       ],
       "false_positive_with": [],
       "_needs_curation": false
@@ -322,7 +307,8 @@
           "statement": "Extensão do MACS para crianças <4 anos (aplicável de 1 a 4 anos) com sinais de paralisia cerebral, em 5 níveis; classifica o desempenho manual típico por pais e terapeutas; N=61 (12–51 meses); ICC pais×terapeutas 0,90 (IC95% 0,79–0,92) e entre terapeutas 0,97.",
           "citation": "Eliasson AC et al. Mini-MACS: development of the Manual Ability Classification System for children younger than 4 years of age with signs of cerebral palsy. Dev Med Child Neurol. 2017;59(1):72-78.",
           "pmid": "27273427",
-          "doi": "10.1111/dmcn.13162"
+          "doi": "10.1111/dmcn.13162",
+          "verification": "◻ proveniência herdada de outra curadoria — identidade/métricas a reconfirmar (não verificadas por este passo)"
         }
       ],
       "guideline_support": [],
@@ -337,81 +323,6 @@
       ],
       "false_positive_with": [],
       "_needs_curation": false
-    },
-    "ofc-rcads": {
-      "instrument_id": "ofc-rcads",
-      "validation_sources": [
-        {
-          "statement": "Escala dimensional de ansiedade e depressão (6 subescalas; 47 itens; 6–18 anos); consistência interna (alfa de Cronbach) entre 0,73 e 0,82 no estudo original. Identidade confirmada no PubMed.",
-          "citation": "Chorpita BF et al. Assessment of symptoms of DSM-IV anxiety and depression in children: a revised child anxiety and depression scale (RCADS). Behav Res Ther. 2000.",
-          "pmid": "10937431"
-        }
-      ],
-      "guideline_support": [],
-      "evidence_level": null,
-      "recommended_for": ["rastreio/monitoramento dimensional de ansiedade e depressão (6–18 anos), autorrelato e versão para pais"],
-      "contraindicated_for": ["diagnóstico isolado pelo escore", "interpretar escore bruto sem T-score normatizado"],
-      "false_positive_with": [],
-      "_needs_curation": false
-    },
-    "ofc-phq-gad": {
-      "instrument_id": "ofc-phq-gad",
-      "validation_sources": [
-        {
-          "statement": "PHQ-9 (9 itens, 0–27): escore ≥10 com sensibilidade 88% e especificidade 88% para depressão maior; bandas 5/10/15/20 (leve a grave). Validação em ADULTOS na atenção primária.",
-          "citation": "Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure. J Gen Intern Med. 2001;16(9):606-13.",
-          "pmid": "11556941"
-        },
-        {
-          "statement": "GAD-7 (7 itens, 0–21): ponto de corte com sensibilidade 89% e especificidade 82% para transtorno de ansiedade generalizada. Validação em ADULTOS na atenção primária.",
-          "citation": "Spitzer RL, Kroenke K, Williams JBW, Löwe B. A brief measure for assessing generalized anxiety disorder: the GAD-7. Arch Intern Med. 2006.",
-          "pmid": "16717171"
-        }
-      ],
-      "guideline_support": [],
-      "evidence_level": null,
-      "recommended_for": ["rastreio e monitoramento de gravidade de depressão (PHQ-9/PHQ-A) e ansiedade (GAD-7)"],
-      "contraindicated_for": ["diagnóstico isolado pelo escore", "extrapolar os cortes adultos para crianças/adolescentes sem a versão e validação específicas (ex.: PHQ-A)", "ignorar item de ideação suicida do PHQ-9"],
-      "false_positive_with": [],
-      "_needs_curation": false
-    },
-    "ofc-crafft": {
-      "instrument_id": "ofc-crafft",
-      "validation_sources": [
-        {
-          "statement": "Rastreio de uso de substâncias na adolescência (6 itens); estudo de validação por critério em pacientes adolescentes de ambulatório, comparando o escore com entrevista diagnóstica estruturada. Identidade confirmada no PubMed.",
-          "citation": "Knight JR, Sherritt L, Shrier LA, Harris SK, Chang G. Validity of the CRAFFT substance abuse screening test among adolescent clinic patients. Arch Pediatr Adolesc Med. 2002;156(6):607-14.",
-          "pmid": "12038895"
-        }
-      ],
-      "guideline_support": [],
-      "evidence_level": null,
-      "recommended_for": ["rastreio de uso/risco de substâncias na adolescência"],
-      "contraindicated_for": ["diagnóstico de transtorno por uso pelo escore", "aplicar sem garantir confidencialidade"],
-      "false_positive_with": [],
-      "_needs_curation": false
-    },
-    "ofc-psc": {
-      "instrument_id": "ofc-psc",
-      "_note": "PENDENTE: paper seminal do PSC-17 (Gardner 1999, Ambulatory Child Health) não está indexado no PubMed com PMID limpo. Aguardando PMID de fonte primária citável antes de expor claim.",
-      "validation_sources": [],
-      "guideline_support": [],
-      "evidence_level": null,
-      "recommended_for": ["rastreio de problemas psicossociais em escolares (PSC-17; internalização/externalização/atenção)"],
-      "contraindicated_for": [],
-      "false_positive_with": [],
-      "_needs_curation": true
-    },
-    "ofc-swyc": {
-      "instrument_id": "ofc-swyc",
-      "_note": "PENDENTE: aguardando confirmação de PMID seminal único do SWYC (desenvolvimento + socioemocional + risco familiar) antes de expor claim.",
-      "validation_sources": [],
-      "guideline_support": [],
-      "evidence_level": null,
-      "recommended_for": ["rastreio amplo da primeira infância (0–65 meses): desenvolvimento, socioemocional e risco familiar"],
-      "contraindicated_for": [],
-      "false_positive_with": [],
-      "_needs_curation": true
     }
   }
 }
