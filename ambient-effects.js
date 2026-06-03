@@ -18,10 +18,20 @@
   if (window.__npAmbient) return;
   window.__npAmbient = true;
 
+  // Em iframe (np-frame abre páginas DENTRO da home/filtro), se algum ancestral
+  // já desenhou a ambient, NÃO redesenha — evita empilhar aurora+noise+partículas
+  // (cada partícula tem blur(40px); dobrar isso pesa em GPU de tablet). Renderiza
+  // só no frame mais alto que a tem; descendentes herdam visualmente.
+  function ancestorHasAmbient(){
+    try { var w = window; while (w !== w.parent) { w = w.parent; if (w.__npAmbient) return true; } }
+    catch (e) { /* cross-origin: na dúvida, não bloqueia */ }
+    return false;
+  }
   function shouldSkip(){
     if (!document.body) return true;
     if (document.body.dataset.npAmbient === 'off') return true;
     if (window.matchMedia && window.matchMedia('print').matches) return true;
+    if (ancestorHasAmbient()) return true;
     return false;
   }
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
