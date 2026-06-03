@@ -84,5 +84,9 @@
 
   var api = { validateRegistry: validateRegistry, curatedOnly: curatedOnly, evidence: evidence, ontology: ontology, load: load };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  if (root) { root.NeuroPedMeta = api; }
+  if (root) {
+    root.NeuroPedMeta = api;
+    // auto-carrega no browser (fetch dos JSON curados); no-op em Node/teste.
+    if (typeof fetch === 'function') { try { api.load(); } catch (e) {} }
+  }
 })(typeof window !== 'undefined' ? window : null);
