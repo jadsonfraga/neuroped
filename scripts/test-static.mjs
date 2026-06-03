@@ -744,6 +744,11 @@ for (const p of ['index.html','consulta.html','filtro-escalas.html','escalas.htm
   assertIncludes(p, 'tokens.css', p + ' carrega tokens.css');
   assertIncludes(p, 'components.css', p + ' carrega components.css');
 }
+// Fase 4 Lote C — telas de apoio consomem os tokens (cores via var(--*), sem hex cru no :root)
+for (const p of ['comunicacao-alternativa.html','impacto-medicacao.html','sobre-dr-jadson.html']) {
+  assertIncludes(p, 'var(--primary)', p + ' (Lote C) consome o token de cor primária');
+  assertIncludes(p, 'var(--text)', p + ' (Lote C) consome o token de texto');
+}
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
