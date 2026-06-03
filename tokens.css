@@ -1,0 +1,182 @@
+/* ============================================================
+   NeuroPed EDJ — Design System Tokens (fase 1 da spec SUPERNEUROPED)
+   ============================================================
+
+   Fonte unica da verdade para cor, espaco, raio, sombra, tipografia e movimento.
+   Nenhum componente novo pode usar valor cru (hardcoded) que nao venha dos tokens
+   abaixo. Para auditar, rode: `node scripts/design-audit.mjs`.
+
+   Light = default. Dark = ativado por [data-theme="dark"] no <html> OU
+   prefers-color-scheme: dark se nenhum data-theme estiver setado.
+
+   Ordem de carga recomendada (depois de qualquer reset/normalize, antes do
+   components.css):
+     <link rel="stylesheet" href="./tokens.css">
+     <link rel="stylesheet" href="./components.css">
+   ============================================================ */
+
+:root {
+  /* ---------- 3.1 Espacamento (escala 4 px) ---------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---------- 3.2 Raios ---------- */
+  --radius-sm: 8px;   /* inputs, badges */
+  --radius-md: 12px;  /* botoes */
+  --radius-lg: 16px;  /* cards */
+  --radius-xl: 24px;  /* modais */
+
+  /* ---------- 3.3 Sombras (profundidade em camadas) ---------- */
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, .06);
+  --shadow-2: 0 4px 12px rgba(16, 24, 40, .08);
+  --shadow-3: 0 12px 32px rgba(16, 24, 40, .12);
+
+  /* ---------- 3.4 Paleta Light ---------- */
+  --bg:            #F7F8FA;
+  --surface:       #FFFFFF;
+  --surface-muted: #F1F3F6;
+  --border:        #E4E7EC;
+  --text-strong:   #101828;
+  --text:          #344054;
+  --text-muted:    #667085;
+
+  --primary:        #2D6FF0;
+  --primary-hover:  #1F5BD0;
+  --primary-press:  #1949B5;
+  --primary-tint:   rgba(45, 111, 240, .12);
+
+  --accent-violet:  #6B4FD8;
+  --accent-teal:    #0FA3A3;
+  --success:        #12B76A;
+  --warning:        #F79009;
+  --danger:         #D92D20;
+
+  /* Tints para badges (cor de status a 12%) */
+  --success-tint:  rgba(18, 183, 106, .12);
+  --warning-tint:  rgba(247, 144, 9,  .12);
+  --danger-tint:   rgba(217, 45, 32,  .12);
+  --primary-tint-strong: rgba(45, 111, 240, .16); /* focus ring 3px */
+
+  /* ---------- 3.6 Tipografia (Inter, fallback SF Pro) ---------- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+               'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+               'Liberation Mono', monospace;
+
+  /* tamanho / line-height (peso definido nos componentes/utility .np-t-*) */
+  --t-display-size: 28px; --t-display-lh: 1.2;
+  --t-h1-size:      22px; --t-h1-lh:      1.3;
+  --t-h2-size:      18px; --t-h2-lh:      1.35;
+  --t-body-size:    15px; --t-body-lh:    1.55;
+  --t-label-size:   13px; --t-label-lh:   1.4;
+  --t-mono-size:    13px; --t-mono-lh:    1.4;
+
+  /* Pesos canonicos (so 3) */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold: 600;
+
+  /* ---------- 3.7 Movimento ---------- */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --motion-ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* ---------- Layout (tablet-first) ---------- */
+  --content-max:   1180px;
+  --tap-min:       44px;       /* alvo de toque minimo */
+
+  /* z-index canonicos */
+  --z-base:    1;
+  --z-sticky:  10;
+  --z-nav:     20;
+  --z-overlay: 50;
+  --z-modal:   60;
+  --z-toast:   70;
+}
+
+/* ---------- 3.5 Paleta Dark (azul-grafite, nao inversao) ---------- */
+[data-theme="dark"] {
+  --bg:            #0E1116;
+  --surface:       #161A21;
+  --surface-muted: #1C212B;
+  --border:        #2A313C;
+  --text-strong:   #F2F4F7;
+  --text:          #CDD3DC;
+  --text-muted:    #8A93A1;
+
+  /* Primarias e acentos +6-10% luminancia para preservar contraste AA no dark */
+  --primary:        #5A8DF5;
+  --primary-hover:  #79A4F9;
+  --primary-press:  #97B9FB;
+  --primary-tint:   rgba(90, 141, 245, .18);
+  --primary-tint-strong: rgba(90, 141, 245, .26);
+
+  --accent-violet:  #8E76E6;
+  --accent-teal:    #2BB8B8;
+  --success:        #2DCB7E;
+  --warning:        #FFA52E;
+  --danger:         #EB544A;
+
+  --success-tint:  rgba(45, 203, 126, .18);
+  --warning-tint:  rgba(255, 165, 46, .18);
+  --danger-tint:   rgba(235,  84, 74, .18);
+
+  /* Sombras mais densas no dark (pretas com mais opacidade) */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, .45);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, .55);
+}
+
+/* Auto-dark se o usuario nao tiver setado data-theme explicito.
+   Use [data-theme="light"] para forcar light mesmo no SO em dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg:            #0E1116;
+    --surface:       #161A21;
+    --surface-muted: #1C212B;
+    --border:        #2A313C;
+    --text-strong:   #F2F4F7;
+    --text:          #CDD3DC;
+    --text-muted:    #8A93A1;
+
+    --primary:        #5A8DF5;
+    --primary-hover:  #79A4F9;
+    --primary-press:  #97B9FB;
+    --primary-tint:   rgba(90, 141, 245, .18);
+    --primary-tint-strong: rgba(90, 141, 245, .26);
+
+    --accent-violet:  #8E76E6;
+    --accent-teal:    #2BB8B8;
+    --success:        #2DCB7E;
+    --warning:        #FFA52E;
+    --danger:         #EB544A;
+
+    --success-tint:  rgba(45, 203, 126, .18);
+    --warning-tint:  rgba(255, 165, 46, .18);
+    --danger-tint:   rgba(235,  84, 74, .18);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, .45);
+    --shadow-3: 0 12px 32px rgba(0, 0, 0, .55);
+  }
+}
+
+/* Tipografia base aplicada ao root para garantir Inter onde os tokens forem usados.
+   NAO sobrescreve regras existentes do app (specificity 0,0,1). */
+html { font-family: var(--font-sans); }
+
+/* prefers-reduced-motion: anula motion-* (componentes devem respeitar) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}

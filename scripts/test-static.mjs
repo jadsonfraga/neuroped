@@ -721,3 +721,29 @@ console.log(oks.join('\n'));
 if(warnings.length) console.log('\nWarnings:\n'+warnings.join('\n'));
 if(failures.length){console.error('\nFailures:\n'+failures.join('\n'));process.exit(1)}
 console.log(`\nResultado: ${oks.length} OK, ${warnings.length} aviso(s), 0 falhas.`);
+
+// Design system (SUPERNEUROPED fase 1 + 3)
+assertFile('tokens.css');
+assertFile('components.css');
+assertFile('scripts/design-audit.mjs');
+assertIncludes('tokens.css', '--space-1: 4px', 'tokens escala 4 px (--space-1 a --space-16)');
+assertIncludes('tokens.css', '--radius-sm: 8px', 'tokens raios sm/md/lg/xl');
+assertIncludes('tokens.css', '--shadow-1:', 'tokens sombras em 3 camadas');
+assertIncludes('tokens.css', "--primary:        #2D6FF0", 'tokens primary light = 2D6FF0');
+assertIncludes(  'tokens.css', '[data-theme="dark"]', 'tokens definem dark via data-theme');
+assertIncludes(  'tokens.css', 'prefers-color-scheme: dark', 'tokens respeitam prefers-color-scheme');
+assertIncludes(  'tokens.css', 'prefers-reduced-motion: reduce', 'tokens anulam motion em prefers-reduced-motion');
+assertIncludes(  'components.css', '.np-card', 'components define .np-card');
+assertIncludes(  'components.css', '.np-btn--primary', 'components define .np-btn--primary');
+assertIncludes(  'components.css', '.np-input', 'components define .np-input');
+assertIncludes(  'components.css', '.np-badge', 'components define .np-badge');
+assertIncludes(  'components.css', '.np-modal', 'components define .np-modal');
+assertIncludes(  'components.css', '.np-table', 'components define .np-table');
+assertIncludes(  'components.css', '.np-sidebar', 'components define .np-sidebar');
+assertIncludes(  'components.css', '.np-skeleton', 'components define .np-skeleton');
+assertIncludes(  'components.css', '.np-empty', 'components define .np-empty');
+assertNotIncludes('components.css', '#2D6FF0', 'components NAO contem hex cru (consome tokens)');
+for (const p of ['index.html','consulta.html','filtro-escalas.html','escalas.html','banco-escalas.html']) {
+  assertIncludes(p, 'tokens.css', p + ' carrega tokens.css');
+  assertIncludes(p, 'components.css', p + ' carrega components.css');
+}
