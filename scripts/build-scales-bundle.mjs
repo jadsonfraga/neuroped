@@ -16,6 +16,7 @@ export const BUNDLE_ORDER = [
   'scales-autorais-npe.js',
   'scales-impacto-medicacao.js',
   'scales-oficiais.js',
+  'scales-oficiais-lote3.js',        // lote 3: instrumentos padronizados (TEA/TDAH/neuropsico/adaptativo) como referência
   'scales-curate.js',
   'scales-red-flags.js',
   'scales-direct-tasks.js',          // biblioteca de tarefas diretas (fonte de verdade)
