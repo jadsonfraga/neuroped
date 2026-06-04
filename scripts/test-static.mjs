@@ -1057,6 +1057,39 @@ assertIncludes('agenda-financeiro.html', 'aria-label="Excluir lançamento"', 'ag
 assertIncludes('auditoria-ontologia.html', 'aria-label="Filtrar por fonte"', 'auditoria-ontologia: <select> de fonte rotulado');
 assertIncludes('neuroped-diary-engine.js', 'aria-label="${f.label}"', 'diários: <select> dinâmico rotulado pelo label do campo');
 
+// ── Skin hero consistente nas telas vizinhas de escalas ──
+assertIncludes('escala.html', './escalas-hero.css', 'escala.html herda a skin hero (CSS)');
+assertIncludes('escala.html', './escalas-hero.js', 'escala.html herda a camada hero (som + FX)');
+assertIncludes('banco-escalas.html', './escalas-hero.css', 'banco-escalas herda a skin hero (CSS)');
+assertIncludes('banco-escalas.html', './escalas-hero.js', 'banco-escalas herda a camada hero (som + FX)');
+assertIncludes('banco-escalas.html', 'data-hero-title', 'banco-escalas marca o título para o tratamento cômic');
+assertIncludes('banco-escalas.html', 'family=Bangers', 'banco-escalas carrega a fonte cômic Bangers');
+assertIncludes('escalas-hero.js', "'.engine-title,[data-hero-title]'", 'hero aplica o título em qualquer tela marcada');
+assertIncludes('escalas-hero.css', 'body.eh-on::before', 'backdrop hero só liga quando o JS marca eh-on');
+
+// ── Sensibilidade CITADA (sourced; anti-fabricação) ──
+assertFile('scales-sensitivity.js');
+assertIncludes('filtro-escalas.html', './scales-sensitivity.js', 'filtro carrega a camada de sensibilidade citada');
+assertIncludes('filtro-escalas.html', 'NeuroPedSensitivity', 'filtro lê a sensibilidade curada para o selo + desempate');
+assertIncludes('filtro-escalas.html', 'sc-sens', 'card mostra o selo de sensibilidade quando há fonte');
+assertIncludes('filtro-escalas.html', 'function sensBoost', 'pódio usa a sensibilidade citada como desempate real');
+assertIncludes('scales-sensitivity.js', 'PMID.test', 'sensibilidade só vale com PMID rastreável (sem fabricação)');
+{ // funcional: parse extrai o número; sem fonte → null; registro vivo confere
+  const require = createRequire(import.meta.url);
+  try {
+    const S = require(join(root, 'scales-sensitivity.js'));
+    (S.parse('sensibilidade 96,9% (IC95% 91,3–99,4)') === 96.9)
+      ? pass('sensitivity.parse extrai "96,9%" → 96.9') : fail('sensitivity.parse não extraiu o número');
+    (S.parse('afirmação qualitativa sem número') === null)
+      ? pass('sensitivity.parse ignora afirmação sem número (não fabrica)') : fail('sensitivity.parse inventou número');
+    const reg = JSON.parse(file('evidence-registry.json') || '{}');
+    const asq = ((reg.instruments || {})['ofc-asq'] || {}).validation_sources || [];
+    const found = asq.map(s => S.parse(s && s.statement)).find(v => v != null);
+    (found === 96.9) ? pass('registro vivo: ofc-asq → sensibilidade 96,9% (PMID curado)')
+                     : warn('registro vivo: ofc-asq sem 96,9% parseável', String(found));
+  } catch (e) { fail('scales-sensitivity.js não pôde ser exercitado', e.message); }
+}
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');

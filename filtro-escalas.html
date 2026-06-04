@@ -213,6 +213,7 @@
 
 <script src="./scales-bundle.js"></script>
 <script src="./clinical-meta.js"></script>
+<script src="./scales-sensitivity.js"></script>
 <script src="./scales-taxonomy.js"></script>
 <script src="./scales-smart-rank.js"></script>
 <script src="./scales-questions.js"></script>
@@ -388,6 +389,8 @@
   function card(r){
     var s=r.s, c=colorFor(s), tier=r.tier, aud=AUD[s.audience||'clinico']||'';
     var ev=evidenceFor(s.id);
+    // Sensibilidade CITADA (com PMID) — transparência: número real onde a curadoria tem fonte.
+    var sens=(window.NeuroPedSensitivity&&NeuroPedSensitivity.get)?NeuroPedSensitivity.get(s.id):null;
     // Proveniência visível: selo de licença + bandeira de origem
     var ls=s.license_status||(s.official_catalog?'verificar':'autoral');
     var LIC={livre:['🟢','Uso livre'],'livre-nc':['🟢','Livre não comercial'],'livre-reg':['🔵','Livre · registro'],verificar:['⚪','Verificar licença'],autoral:['🟢','Autoral NeuroPed'],restrito:['🔒','Estudo · restrito']};
@@ -400,6 +403,7 @@
       +'<div class="sc-tt"><h3>'+esc(s.short_title||s.title)+'</h3><span class="sc-sub">'+esc(s.domain||'instrumento')+'</span></div></div>'
       +'<div class="sc-badges">'+badges+'</div>'
       +(r.tier?axisChips(r):'')
+      +(sens?'<div class="sc-sens" title="'+esc(sens.citation||'')+'">📈 Sensibilidade '+esc(String(sens.pct).replace('.',','))+'%'+(sens.pmid?' · PMID '+esc(sens.pmid):'')+'</div>':'')
       +(ev?'<div class="sc-ev">📚 <b>Evidência:</b> '+ev+'</div>':'')
       +'</a>';
   }
@@ -522,7 +526,12 @@
     var schoolPick=pickSchool(top, tokens, age, directPick&&directPick.s.id);
     var skip={}; if(directPick)skip[directPick.s.id]=1; if(schoolPick)skip[schoolPick.s.id]=1;
     // 1º–3º: os MAIS sensíveis à idade+queixa que NÃO são teste direto nem escola.
-    var medals=top.filter(function(r){return !isDirectTest(r.s)&&!isSchoolQ(r.s)&&!skip[r.s.id];}).slice(0,3);
+    // desempate REAL: instrumentos com sensibilidade CITADA (com PMID) sobem no
+    // pódio — número curado pesa sobre o heurístico, sem mudar slots 4/5.
+    function sensBoost(r){ var x=(window.NeuroPedSensitivity&&NeuroPedSensitivity.get)?NeuroPedSensitivity.get(r.s.id):null; return x?Math.min(12,x.pct*0.12):0; }
+    var medalPool=top.filter(function(r){return !isDirectTest(r.s)&&!isSchoolQ(r.s)&&!skip[r.s.id];});
+    medalPool.sort(function(a,b){ return ((b.fit+sensBoost(b))-(a.fit+sensBoost(a)))||(b.hits.length-a.hits.length); });
+    var medals=medalPool.slice(0,3);
     medals.forEach(function(r,i){ r.tier=['ouro','prata','bronze'][i]; r.rank=3-i; });
     if(directPick) directPick.tier='direto';
     if(schoolPick) schoolPick.tier='escola';
