@@ -292,7 +292,10 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.44.39') + '</span>';
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.44.40') + '</span>'
+      + '<div style="margin:6px auto 0;max-width:540px;font-size:10.5px;line-height:1.55;color:rgba(182,178,230,.55)">'
+      + 'Ferramenta <strong>educacional de apoio</strong> — não é diagnóstico e não substitui avaliação profissional. '
+      + 'Os dados ficam só neste aparelho.</div>';
     document.body.appendChild(seal);
   }
 
@@ -343,9 +346,10 @@
       + 'display:flex;gap:12px;align-items:center;flex-wrap:wrap';
     var txt = document.createElement('div');
     txt.style.cssText = 'flex:1;min-width:200px';
-    txt.innerHTML = '<strong style="color:#f2dca6">Privacidade</strong> — este app guarda dados '
-      + '<strong>apenas no seu dispositivo</strong> (armazenamento local). Nenhum cookie de rastreamento '
-      + 'é enviado a servidores. <a href="./privacidade.html" style="color:#a9a4ff">Saber mais</a>.';
+    txt.innerHTML = '<strong style="color:#f2dca6">Natureza & privacidade</strong> — ferramenta '
+      + '<strong>educacional de apoio</strong> (não substitui avaliação profissional). Os dados ficam '
+      + '<strong>apenas no seu dispositivo</strong>; nenhum rastreamento é enviado a servidores. '
+      + '<a href="./privacidade.html" style="color:#a9a4ff">Saber mais</a>.';
     var ok = document.createElement('button');
     ok.type = 'button';
     ok.textContent = 'Entendi';
