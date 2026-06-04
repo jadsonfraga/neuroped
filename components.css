@@ -38,80 +38,6 @@
   .np-card:active { transform: translateY(-1px); box-shadow: var(--shadow-3); }
 }
 
-/* ---------- Card System: anatomia unica ----------
-   Todo card deriva de .np-card. Header/body/footer opcionais, com ritmo via tokens.
-   Use as variantes --* abaixo em vez de criar CSS de card novo (regressao = bug). */
-.np-card__header {
-  display: flex; align-items: center; gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-.np-card__title {
-  font: var(--weight-semibold) var(--t-h2-size)/var(--t-h2-lh) var(--font-sans);
-  color: var(--text-strong); margin: 0;
-}
-.np-card__subtitle { color: var(--text-muted); font-size: var(--t-label-size); }
-.np-card__body   { color: var(--text); }
-.np-card__footer {
-  display: flex; align-items: center; gap: var(--space-2);
-  margin-top: var(--space-4); padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-}
-.np-card__metric {
-  font: var(--weight-semibold) var(--t-display-size)/var(--t-display-lh) var(--font-sans);
-  color: var(--text-strong);
-}
-.np-card__delta { font-size: var(--t-label-size); font-weight: var(--weight-medium); }
-.np-card__delta--up   { color: var(--success); }
-.np-card__delta--down { color: var(--danger); }
-.np-card__delta--flat { color: var(--text-muted); }
-
-/* ---------- Card System: variantes (modificadores, nao CSS novo) ---------- */
-
-/* Faixa de severidade clinica semantica (esquerda). NUNCA inventa direcao: a cor
-   vem de um estado ja decidido pela engine/medico, nao do componente. */
-.np-card--clinical { border-left: 3px solid var(--border-strong); }
-.np-card--clinical.is-critical { border-left-color: var(--danger);  background: var(--danger-tint); }
-.np-card--clinical.is-warning  { border-left-color: var(--warning); background: var(--warning-tint); }
-.np-card--clinical.is-stable   { border-left-color: var(--success); background: var(--success-tint); }
-.np-card--clinical.is-info     { border-left-color: var(--info);    background: var(--info-tint); }
-
-/* Card de metrica: numero grande + delta + (opcional) sparkline no body. */
-.np-card--metric { display: flex; flex-direction: column; gap: var(--space-2); }
-
-/* Item de trajetoria/timeline: marcador + conteudo. */
-.np-card--timeline { position: relative; padding-left: var(--space-8); }
-.np-card--timeline::before {
-  content: ""; position: absolute; left: var(--space-4); top: var(--space-6);
-  width: var(--space-2); height: var(--space-2); border-radius: var(--radius-full, 999px);
-  background: var(--primary); box-shadow: 0 0 0 4px var(--primary-tint);
-}
-
-/* CTA da secretaria/medico: realce sutil de superficie acionavel. */
-.np-card--action { background: var(--surface-muted); cursor: pointer; }
-.np-card--action:hover { border-color: var(--primary); }
-
-/* Insight do motor clinico (.np-card--insight) e recomendacao do copiloto
-   (.np-card--ai): SEMPRE acompanham evidencia + disclaimer. O atributo
-   data-evidence="" marca ausencia de evidencia → o card se esconde (principio
-   3: sem caixa-preta; insight sem evidence[] nao deve renderizar). */
-.np-card--insight { background: var(--primary-tint); border-color: var(--primary); }
-.np-card--ai {
-  background: var(--surface-muted);
-  border: 1px solid var(--accent-gold);
-  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--primary-tint);
-}
-.np-card--insight[data-evidence=""],
-.np-card--ai[data-evidence=""] { display: none !important; }
-.np-card__evidence {
-  margin-top: var(--space-3); padding-top: var(--space-3);
-  border-top: 1px dashed var(--border-strong);
-  font-size: var(--t-label-size); color: var(--text-muted);
-}
-.np-card__disclaimer {
-  margin-top: var(--space-2); font-size: var(--t-label-size);
-  color: var(--text-soft); font-style: italic;
-}
-
 /* ---------- Botao ---------- */
 .np-btn {
   display: inline-flex;
@@ -454,3 +380,35 @@
 .np-conf--high { background: var(--success-tint); color: var(--success); }
 .np-conf--med  { background: var(--warning-tint); color: var(--warning); }
 .np-conf--low  { background: var(--surface-muted); color: var(--text-muted); }
+
+/* ============================================================
+   Card System — extensoes ADITIVAS (nao redefinem o canonico acima).
+   Camadas sobre o Clinical Card System (Onda 1, #250): estados de
+   severidade semantica, card acionavel, metrica com delta direcional
+   e a regra de explicabilidade obrigatoria (insight/ai sem evidencia
+   se escondem). So consome tokens.
+   ============================================================ */
+
+/* Severidade clinica: a cor vem de um estado decidido pela engine/medico,
+   NUNCA inventada pelo componente. Layeram sobre .np-card--clinical. */
+.np-card--clinical.is-critical { border-left-color: var(--danger);  background: var(--danger-tint); }
+.np-card--clinical.is-warning  { border-left-color: var(--warning); background: var(--warning-tint); }
+.np-card--clinical.is-stable   { border-left-color: var(--success); background: var(--success-tint); }
+.np-card--clinical.is-info     { border-left-color: var(--info);    background: var(--info-tint); }
+
+/* Metrica: numero grande + delta direcional (slots para .np-card--metric). */
+.np-card__metric { font: var(--weight-semibold) var(--t-display-size)/var(--t-display-lh) var(--font-sans); color: var(--text-strong); }
+.np-card__delta  { font-size: var(--t-label-size); font-weight: var(--weight-medium); }
+.np-card__delta--up   { color: var(--success); }
+.np-card__delta--down { color: var(--danger); }
+.np-card__delta--flat { color: var(--text-muted); }
+
+/* CTA acionavel da secretaria/medico. */
+.np-card--action { background: var(--surface-muted); cursor: pointer; }
+.np-card--action:hover { border-color: var(--primary); }
+
+/* Explicabilidade obrigatoria (principio 3 — sem caixa-preta): insight/ai SEM
+   evidencia nao renderizam. O JS marca data-evidence="" quando evidence[] vazio. */
+.np-card--insight[data-evidence=""],
+.np-card--ai[data-evidence=""] { display: none !important; }
+.np-card__disclaimer { margin-top: var(--space-2); font-size: var(--t-label-size); color: var(--text-soft); font-style: italic; }

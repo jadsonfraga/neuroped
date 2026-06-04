@@ -6,9 +6,17 @@
 >
 > Este documento é o **prompt mestre arquitetural** desta evolução. Ele NÃO inventa
 > um sistema novo — ele **mapeia o que já existe**, declara o que congelar, o que
-> proibir e em que ordem ativar. Substitui (como documento) a "arquitetura executiva"
-> de #248 que foi revertida em #249, agora sem mexer em código antes de cada onda
-> ser aprovada.
+> proibir e em que ordem ativar.
+>
+> **Companheiro de:** `docs/ARQUITETURA-EXECUTIVA-DS-COPILOTO.md` (#250) — aquele descreve
+> o **plano executivo do DS + copiloto**; este foca no **diagnóstico honesto + governança +
+> gate de não-regressão** (a métrica `design-audit` que mede e blinda a migração). Ler os dois.
+>
+> **Status (atualizado):** a Onda 1 **já começou** — #250 restaurou nav SPA-home + ds-bridge +
+> Clinical Card System; #251 aplicou a skin premium do Perfil; #252, da Triagem + Filtro. O
+> débito visual já caiu de 9.256 → **9.068** hits (ver `scripts/design-audit-baseline.json`), o
+> que valida a catraca descrita aqui. Este doc passa a ser a **camada de governança** que evita
+> que essa migração regrida (sem repetir o big-bang revertido em #249).
 
 ---
 
