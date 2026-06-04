@@ -8,71 +8,73 @@
 <link rel="stylesheet" href="./np-tokens.css">
 <link rel="stylesheet" href="./np-foundation.css">
 <link rel="stylesheet" href="./np-components.css">
+<link rel="stylesheet" href="./np-catalog.css">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet">
 </head>
 <body class="np-stage np-type">
 
 <!-- 1 · TOPBAR -->
-<header class="npc-topbar">
-  <span class="npc-topbar__brand">
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="8" style="fill:var(--np-accent)"/><path d="M11 21V11l10 10V11" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    NeuroPed · Design System
+<header class="np-topbar">
+  <span class="np-topbar__brand">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="8" style="fill:var(--np-accent)"/><path d="M11 21V11l10 10V11" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <strong style="font-family:var(--np-font-text);color:var(--np-text)">NeuroPed · Design System</strong>
   </span>
-  <span class="npc-topbar__spacer"></span>
-  <div class="npc-topbar__actions">
-    <button class="npc-iconbtn" id="themeToggle" type="button" aria-label="Alternar tema claro/escuro">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-    </button>
-    <button class="npc-iconbtn" type="button" aria-label="Menu">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+  <span class="np-topbar__spacer"></span>
+  <div class="np-topbar__actions">
+    <button class="np-btn np-btn--ghost" id="themeToggle" type="button" aria-label="Alternar tema claro/escuro" style="min-width:44px;padding:0 var(--np-s-3)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--np-text-mute)"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
     </button>
   </div>
 </header>
 
 <!-- 2 · HERO -->
-<section class="npc-hero" style="min-height:64vh">
-  <span class="npc-hero__eyebrow">SUPERNEUROPED · Apple-grade</span>
-  <h1 class="npc-hero__title">Componentes-âncora</h1>
-  <p class="npc-hero__sub">Cada pixel, cada animação e cada microcópia com motivo clínico ou estético. Dez peças que sustentam a elevação 7,8 → 9,8.</p>
-  <a class="npc-btn npc-btn--lg" href="./filtro-escalas.html">Ver no app →</a>
-  <span class="npc-hero__scroll" aria-hidden="true"></span>
+<section class="np-hero" style="min-height:64vh">
+  <span class="np-pill np-pill--accent np-hero__eyebrow">SUPERNEUROPED · Apple-grade</span>
+  <h1 class="np-hero__title">Componentes-âncora</h1>
+  <p class="np-hero__sub">Cada pixel, cada animação e cada microcópia com motivo clínico ou estético. Dez peças que sustentam a elevação 7,8 → 9,8.</p>
+  <a class="np-btn np-btn--primary np-btn--pill np-hero__cta" href="./filtro-escalas.html">Ver no app →</a>
+  <span class="np-hero__scroll-indicator" aria-hidden="true"></span>
 </section>
 
 <main class="npc-catalog">
 
   <!-- 3 · CARD -->
   <section class="npc-section">
-    <div class="npc-section__head"><span class="npc-section__n">03</span><h2 class="npc-section__title">Card clínico</h2><span class="npc-section__meta">hover eleva + revela ação contextual</span></div>
+    <div class="npc-section__head"><span class="npc-section__n">03</span><h2 class="npc-section__title">Card clínico</h2><span class="npc-section__meta">hover eleva + revela menu</span></div>
     <div class="npc-grid" id="cardGrid">
-      <article class="npc-card">
-        <button class="npc-iconbtn npc-card__action" type="button" aria-label="Ações do card"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
-        <span class="npc-medal npc-medal--ouro">🥇 Ouro <span class="npc-medal__score np-tnum">9.5</span></span>
-        <h3 class="npc-card__title">SNAP-IV</h3>
-        <p class="npc-card__meta">TDAH · pais e escola · 6–17 anos</p>
+      <article class="np-card" tabindex="0">
+        <button class="np-card__menu" type="button" aria-label="Ações"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+        <div class="np-card__header"><span class="np-medal"><span class="np-pill np-pill--gold">Ouro</span><span class="np-medal__score np-tnum">9.5</span></span></div>
+        <h3 class="np-card__title">SNAP-IV</h3>
+        <p class="np-card__meta">TDAH · pais e escola · 6–17 anos</p>
+        <div class="np-card__actions"><a class="np-btn np-btn--primary" href="./filtro-escalas.html">Aplicar</a><button class="np-btn" type="button">Detalhes</button></div>
       </article>
-      <article class="npc-card">
-        <button class="npc-iconbtn npc-card__action" type="button" aria-label="Ações do card"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
-        <span class="npc-medal npc-medal--prata">🥈 Prata <span class="npc-medal__score np-tnum">8.1</span></span>
-        <h3 class="npc-card__title">M-CHAT-R/F</h3>
-        <p class="npc-card__meta">TEA · pais · 16–30 meses</p>
+      <article class="np-card" tabindex="0">
+        <button class="np-card__menu" type="button" aria-label="Ações"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+        <div class="np-card__header"><span class="np-medal"><span class="np-pill np-pill--silver">Prata</span><span class="np-medal__score np-tnum">8.1</span></span></div>
+        <h3 class="np-card__title">M-CHAT-R/F</h3>
+        <p class="np-card__meta">TEA · pais · 16–30 meses</p>
+        <div class="np-card__actions"><a class="np-btn np-btn--primary" href="./filtro-escalas.html">Aplicar</a><button class="np-btn" type="button">Detalhes</button></div>
       </article>
-      <article class="npc-card">
-        <button class="npc-iconbtn npc-card__action" type="button" aria-label="Ações do card"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
-        <span class="npc-medal npc-medal--bronze">🥉 Bronze <span class="npc-medal__score np-tnum">7.4</span></span>
-        <h3 class="npc-card__title">Vanderbilt</h3>
-        <p class="npc-card__meta">TDAH · professor · 6–12 anos</p>
+      <article class="np-card" tabindex="0">
+        <button class="np-card__menu" type="button" aria-label="Ações"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+        <div class="np-card__header"><span class="np-medal"><span class="np-pill np-pill--bronze">Bronze</span><span class="np-medal__score np-tnum">7.4</span></span></div>
+        <h3 class="np-card__title">Vanderbilt</h3>
+        <p class="np-card__meta">TDAH · professor · 6–12 anos</p>
+        <div class="np-card__actions"><a class="np-btn np-btn--primary" href="./filtro-escalas.html">Aplicar</a><button class="np-btn" type="button">Detalhes</button></div>
       </article>
     </div>
   </section>
 
-  <!-- 4 · MEDALHAS -->
+  <!-- 4 · MEDALHAS / PILLS -->
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">04</span><h2 class="npc-section__title">Pill medalhista</h2><span class="npc-section__meta">score em Fraunces tabular-nums</span></div>
     <div class="npc-row">
-      <span class="npc-medal npc-medal--ouro">🥇 Ouro <span class="np-tnum" id="medalScore">0.0</span></span>
-      <span class="npc-medal npc-medal--prata">🥈 Prata <span class="np-tnum">8.1</span></span>
-      <span class="npc-medal npc-medal--bronze">🥉 Bronze <span class="np-tnum">7.4</span></span>
+      <span class="np-medal"><span class="np-pill np-pill--gold">Ouro</span><span class="np-medal__score np-tnum" id="medalScore">0.0</span></span>
+      <span class="np-medal"><span class="np-pill np-pill--silver">Prata</span><span class="np-medal__score np-tnum">8.1</span></span>
+      <span class="np-medal"><span class="np-pill np-pill--bronze">Bronze</span><span class="np-medal__score np-tnum">7.4</span></span>
+      <span class="np-pill np-pill--accent">Teste direto</span>
     </div>
   </section>
 
@@ -80,13 +82,13 @@
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">05</span><h2 class="npc-section__title">Input editorial</h2><span class="npc-section__meta">hairline + label flutuante</span></div>
     <div class="npc-stack" style="max-width:420px">
-      <div class="npc-field">
-        <input class="npc-field__input" id="f1" type="text" placeholder=" " autocomplete="off">
-        <label class="npc-field__label" for="f1">Nome do paciente</label>
+      <div class="np-field">
+        <input class="np-field__input" id="f1" type="text" placeholder=" " autocomplete="off">
+        <label class="np-field__label" for="f1">Nome do paciente</label>
       </div>
-      <div class="npc-field">
-        <input class="npc-field__input" id="f2" type="text" placeholder=" " autocomplete="off">
-        <label class="npc-field__label" for="f2">Idade + queixa</label>
+      <div class="np-field">
+        <input class="np-field__input" id="f2" type="text" placeholder=" " autocomplete="off">
+        <label class="np-field__label" for="f2">Idade + queixa</label>
       </div>
     </div>
   </section>
@@ -95,20 +97,20 @@
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">06</span><h2 class="npc-section__title">Toast nativo</h2><span class="npc-section__meta">bottom-center · auto-dismiss 4s · barra de progresso</span></div>
     <div class="npc-row">
-      <button class="npc-btn" id="toastOk" type="button">Salvar laudo</button>
-      <button class="npc-btn npc-btn--ghost" id="toastWarn" type="button">Disparar aviso</button>
+      <button class="np-btn np-btn--primary" id="toastOk" type="button">Salvar laudo</button>
+      <button class="np-btn" id="toastErr" type="button">Disparar erro</button>
     </div>
   </section>
 
   <!-- 7 · SKELETON -->
   <section class="npc-section">
-    <div class="npc-section__head"><span class="npc-section__n">07</span><h2 class="npc-section__title">Skeleton</h2><span class="npc-section__meta">gradiente diagonal · jamais spinner</span></div>
+    <div class="npc-section__head"><span class="npc-section__n">07</span><h2 class="npc-section__title">Skeleton</h2><span class="npc-section__meta">shimmer diagonal · jamais spinner</span></div>
     <div class="npc-grid">
-      <div class="npc-skel npc-skel--card"></div>
+      <div class="np-skeleton np-skeleton--card"></div>
       <div class="npc-stack">
-        <div class="npc-skel npc-skel--line" style="width:80%"></div>
-        <div class="npc-skel npc-skel--line" style="width:100%"></div>
-        <div class="npc-skel npc-skel--line" style="width:60%"></div>
+        <div class="np-skeleton np-skeleton--title"></div>
+        <div class="np-skeleton np-skeleton--text"></div>
+        <div class="np-skeleton np-skeleton--text" style="width:80%"></div>
       </div>
     </div>
   </section>
@@ -116,34 +118,35 @@
   <!-- 8 · BOTTOM SHEET -->
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">08</span><h2 class="npc-section__title">Bottom sheet</h2><span class="npc-section__meta">drag handle · swipe-to-dismiss spring</span></div>
-    <button class="npc-btn" id="sheetOpen" type="button">Abrir bottom sheet</button>
+    <button class="np-btn np-btn--primary" id="sheetOpen" type="button">Abrir bottom sheet</button>
   </section>
 
   <!-- 9 · CHIP GROUP -->
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">09</span><h2 class="npc-section__title">Filtro chip group</h2><span class="npc-section__meta">scroll-snap horizontal em mobile</span></div>
-    <div class="npc-chips" id="chipGroup" role="group" aria-label="Filtros de exemplo">
-      <button class="npc-chip" type="button" aria-pressed="true">Todos</button>
-      <button class="npc-chip" type="button" aria-pressed="false">🧩 TEA</button>
-      <button class="npc-chip" type="button" aria-pressed="false">🎯 TDAH</button>
-      <button class="npc-chip" type="button" aria-pressed="false">🗣️ Linguagem</button>
-      <button class="npc-chip" type="button" aria-pressed="false">📚 Aprendizagem</button>
-      <button class="npc-chip" type="button" aria-pressed="false">😰 Ansiedade</button>
-      <button class="npc-chip" type="button" aria-pressed="false">🌙 Sono</button>
+    <div class="np-chip-group np-chip-group--scroll" id="chipGroup" role="group" aria-label="Filtros de exemplo">
+      <button class="np-chip" type="button" aria-pressed="true">Todos</button>
+      <button class="np-chip" type="button" aria-pressed="false">🧩 TEA</button>
+      <button class="np-chip" type="button" aria-pressed="false">🎯 TDAH</button>
+      <button class="np-chip" type="button" aria-pressed="false">🗣️ Linguagem</button>
+      <button class="np-chip" type="button" aria-pressed="false">📚 Aprendizagem</button>
+      <button class="np-chip" type="button" aria-pressed="false">😰 Ansiedade</button>
+      <button class="np-chip" type="button" aria-pressed="false">🌙 Sono</button>
     </div>
   </section>
 
   <!-- 10 · EMPTY STATE -->
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">10</span><h2 class="npc-section__title">Empty state</h2><span class="npc-section__meta">ilustração + empatia + 1 CTA</span></div>
-    <div class="npc-empty">
-      <svg class="npc-empty__art" viewBox="0 0 96 96" fill="none" aria-hidden="true">
+    <div class="np-empty">
+      <svg class="np-empty__art" viewBox="0 0 96 96" fill="none" aria-hidden="true" style="color:var(--np-accent)">
         <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="3" opacity="0.35"/>
         <circle cx="42" cy="44" r="14" stroke="currentColor" stroke-width="3"/>
         <path d="M53 55l12 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
       </svg>
-      <p class="npc-empty__msg">Nada por aqui ainda. Descreva idade + queixa e o NeuroPed prioriza os instrumentos certos.</p>
-      <a class="npc-btn" href="./filtro-escalas.html">Começar triagem →</a>
+      <h3 class="np-empty__title">Nada por aqui ainda</h3>
+      <p class="np-empty__sub">Descreva idade + queixa e o NeuroPed prioriza os instrumentos certos.</p>
+      <a class="np-btn np-btn--primary np-empty__cta" href="./filtro-escalas.html">Começar triagem →</a>
     </div>
   </section>
 
@@ -151,25 +154,29 @@
   <section class="npc-section">
     <div class="npc-section__head"><span class="npc-section__n">＋</span><h2 class="npc-section__title">Botões</h2><span class="npc-section__meta">press spring + haptic</span></div>
     <div class="npc-row">
-      <button class="npc-btn npc-btn--lg" type="button">Primário grande</button>
-      <button class="npc-btn" type="button">Primário</button>
-      <button class="npc-btn npc-btn--ghost" type="button">Fantasma</button>
+      <button class="np-btn np-btn--primary np-btn--pill" type="button">Primário pill</button>
+      <button class="np-btn np-btn--primary" type="button">Primário</button>
+      <button class="np-btn" type="button">Padrão</button>
+      <button class="np-btn np-btn--ghost" type="button">Fantasma</button>
     </div>
   </section>
 
 </main>
 
-<!-- Bottom sheet (markup) -->
-<div class="npc-sheet__backdrop" id="sheetBackdrop"></div>
-<aside class="npc-sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Exemplo de bottom sheet">
-  <div class="npc-sheet__handle"></div>
-  <h3 class="npc-sheet__title">Ações rápidas</h3>
+<!-- Bottom sheet (markup real .np-sheet[data-open]) + backdrop do catálogo -->
+<div id="sheetBackdrop" style="position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity var(--np-dur-3) var(--np-ease-out)"></div>
+<aside class="np-sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Exemplo de bottom sheet">
+  <div class="np-sheet__handle"></div>
+  <h3 class="np-card__title" style="margin:0 0 var(--np-s-3)">Ações rápidas</h3>
   <div class="npc-stack">
-    <button class="npc-btn npc-btn--ghost" type="button">Aplicar escala recomendada</button>
-    <button class="npc-btn npc-btn--ghost" type="button">Adicionar ao prontuário</button>
-    <button class="npc-btn" id="sheetClose" type="button">Fechar</button>
+    <button class="np-btn" type="button">Aplicar escala recomendada</button>
+    <button class="np-btn" type="button">Adicionar ao prontuário</button>
+    <button class="np-btn np-btn--primary" id="sheetClose" type="button">Fechar</button>
   </div>
 </aside>
+
+<!-- raiz de toasts (markup real #np-toast-root) -->
+<div id="np-toast-root"></div>
 
 <script src="./np-motion.js"></script>
 <script>
@@ -177,8 +184,7 @@
   'use strict';
   var M = window.NPMotion;
 
-  // press spring + haptic em todos os botões/ícones
-  if (M) { document.querySelectorAll('.npc-btn, .npc-iconbtn, .npc-chip').forEach(function(b){ M.pressable(b); }); }
+  if (M) document.querySelectorAll('.np-btn, .np-card__menu, .np-chip').forEach(function(b){ M.pressable(b); });
 
   // tema claro/escuro com transição suave (§3.6)
   var tt = document.getElementById('themeToggle');
@@ -189,47 +195,47 @@
     setTimeout(function(){ r.classList.remove('theme-transitioning'); }, 340);
   });
 
-  // toast com auto-dismiss + barra de progresso
+  // toast (#np-toast-root, .np-toast) com auto-dismiss + barra animada
   function toast(msg, variant){
+    var root = document.getElementById('np-toast-root'); if (!root) return;
     var el = document.createElement('div');
-    el.className = 'npc-toast' + (variant ? ' npc-toast--' + variant : '');
+    el.className = 'np-toast' + (variant ? ' np-toast--' + variant : '');
     el.setAttribute('role', 'status');
-    var ic = variant === 'warn'
-      ? '<svg class="npc-toast__icon" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 17h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 3l9 16H3z" stroke="currentColor" stroke-width="2"/></svg>'
-      : '<svg class="npc-toast__icon" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    el.innerHTML = '<span class="npc-toast__bar"></span>' + ic + '<span>' + msg + '</span>';
-    document.body.appendChild(el);
-    if (M) { M.animate(el, [{opacity:0, transform:'translateX(-50%) translateY(16px)'},{opacity:1, transform:'translateX(-50%) translateY(0)'}], {duration:320, easing:M.EASE.spring}); M.haptic([4,12,4]); }
+    var sym = variant === 'error' ? '!' : '✓';
+    el.innerHTML = '<span class="np-toast__bar"></span><span class="np-toast__icon">' + sym + '</span><span>' + msg + '</span>';
+    root.appendChild(el);
+    var bar = el.querySelector('.np-toast__bar');
+    if (M) { M.animate(el, [{opacity:0, transform:'translateY(16px)'},{opacity:1, transform:'translateY(0)'}], {duration:320, easing:M.EASE.spring}); M.haptic([4,12,4]); }
+    if (bar && M && !M.reduced()) M.animate(bar, [{transform:'scaleX(1)'},{transform:'scaleX(0)'}], {duration:4000, easing:'linear', fill:'forwards'});
     setTimeout(function(){
       if (M) { var a = M.animate(el, [{opacity:1},{opacity:0}], {duration:200}); if (a) { a.finished.then(function(){el.remove();}, function(){el.remove();}); return; } }
       el.remove();
     }, 4000);
   }
   var b1 = document.getElementById('toastOk'); if (b1) b1.addEventListener('click', function(){ toast('Laudo salvo com sucesso.', 'success'); });
-  var b2 = document.getElementById('toastWarn'); if (b2) b2.addEventListener('click', function(){ toast('Verifique a faixa etária do instrumento.', 'warn'); });
+  var b2 = document.getElementById('toastErr'); if (b2) b2.addEventListener('click', function(){ toast('Falha ao salvar — tente novamente.', 'error'); });
 
-  // bottom sheet open/close + swipe-to-dismiss (física spring)
+  // bottom sheet (.np-sheet[data-open]) + backdrop + swipe-to-dismiss
   var sheet = document.getElementById('sheet'), back = document.getElementById('sheetBackdrop');
-  function openSheet(){ sheet.classList.add('is-open'); back.classList.add('is-open'); }
-  function closeSheet(){ sheet.style.transform=''; sheet.classList.remove('is-open'); back.classList.remove('is-open'); }
+  function openSheet(){ sheet.setAttribute('data-open','true'); back.style.opacity='1'; back.style.pointerEvents='auto'; }
+  function closeSheet(){ sheet.style.transform=''; sheet.removeAttribute('data-open'); back.style.opacity='0'; back.style.pointerEvents='none'; }
   var so = document.getElementById('sheetOpen'); if (so) so.addEventListener('click', openSheet);
   var sc = document.getElementById('sheetClose'); if (sc) sc.addEventListener('click', closeSheet);
   if (back) back.addEventListener('click', closeSheet);
-  // drag no handle/topo
   (function(){
     if (!sheet) return;
-    var startY = null, dy = 0, h = sheet.querySelector('.npc-sheet__handle');
+    var startY = null, dy = 0, handle = sheet.querySelector('.np-sheet__handle');
     function down(e){ startY = (e.touches ? e.touches[0].clientY : e.clientY); dy = 0; sheet.style.transition = 'none'; }
     function move(e){ if (startY == null) return; var y = (e.touches ? e.touches[0].clientY : e.clientY); dy = Math.max(0, y - startY); sheet.style.transform = 'translateY(' + dy + 'px)'; }
     function up(){ if (startY == null) return; sheet.style.transition = ''; startY = null; if (dy > sheet.offsetHeight * 0.4) closeSheet(); else sheet.style.transform = 'translateY(0)'; }
-    [h, sheet].forEach(function(t){ if(!t) return; t.addEventListener('pointerdown', down); });
+    [handle, sheet].forEach(function(t){ if (t) t.addEventListener('pointerdown', down); });
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   })();
 
   // chips toggle (single highlight no exemplo)
   var cg = document.getElementById('chipGroup');
-  if (cg) cg.querySelectorAll('.npc-chip').forEach(function(c){ c.addEventListener('click', function(){
-    cg.querySelectorAll('.npc-chip').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+  if (cg) cg.querySelectorAll('.np-chip').forEach(function(c){ c.addEventListener('click', function(){
+    cg.querySelectorAll('.np-chip').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
     c.setAttribute('aria-pressed','true');
   }); });
 

@@ -74,6 +74,13 @@
   --np-blur-sm: saturate(180%) blur(8px);
   --np-blur-md: saturate(180%) blur(20px);
   --np-blur-lg: saturate(180%) blur(40px);
+
+  /* Z-INDEX — camadas nomeadas (sticky < modal < toast). Consumidas por
+     np-components.css (topbar/sheet/toast). */
+  --np-z-base:   0;
+  --np-z-sticky: 50;
+  --np-z-modal:  90;
+  --np-z-toast:  100;
 }
 
 /* MODO CLARO — apple-grade também (data-theme="light") */
