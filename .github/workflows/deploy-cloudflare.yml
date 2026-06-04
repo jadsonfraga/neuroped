@@ -122,6 +122,11 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: d1 execute ${{ env.CF_D1_NAME }} --file=./schema.sql --remote
 
+      # Remove arquivos sensíveis ANTES de publicar (após testes/predeploy).
+      # O repositório os mantém; só não vão ao ar. Ver scripts/strip-private.mjs.
+      - name: Strip private files from public deploy
+        run: node scripts/strip-private.mjs
+
       - name: Deploy para Cloudflare Pages
         id: deploy
         uses: cloudflare/wrangler-action@v3
