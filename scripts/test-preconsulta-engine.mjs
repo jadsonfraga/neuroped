@@ -83,6 +83,20 @@ assert(expanded.includes('tdah'), `SmartRank expande "desatento/hiperativo" → 
 const expAnx = Smart.expand('adolescente muito ansioso e com medo');
 assert(expAnx.includes('ansiedade'), 'SmartRank expande "ansioso/medo" → ansiedade');
 
+// 2b) SMARTRANK — PRECISÃO (caça-bruxas anti-falso-positivo) ----------------
+const expTea = Smart.expand('autismo');
+assert(expTea.includes('tea') && expTea.includes('autismo'), 'expand mantém o construto TEA');
+assert(!expTea.includes('visual') && !expTea.includes('conta') && !expTea.includes('objetos'),
+  'expand NÃO injeta fragmentos genéricos de frase (visual/conta/objetos)');
+const TM = Smart.tokenMatches;
+assert(typeof TM === 'function', 'SmartRank expõe tokenMatches()');
+assert(TM('impulsiv', 'crianca muito impulsiva') === true, 'tokenMatches: stem casa (impulsiv→impulsiva)');
+assert(TM('oposic', 'comportamento de oposicao') === true, 'tokenMatches: stem casa (oposic→oposicao)');
+assert(TM('dor', 'demora para dormir e acorda a noite') === false, 'tokenMatches: "dor" NÃO casa "dormir" (bruxa morta)');
+assert(TM('tod', 'todos os dias falta na escola') === false, 'tokenMatches: "tod" NÃO casa "todos" (bruxa morta)');
+assert(TM('tdah', 'quadro compativel com tdah') === true, 'tokenMatches: "tdah" (palavra exata) casa');
+assert(TM('contato visual', 'mantem pouco contato visual') === true, 'tokenMatches: frase casa por substring');
+
 // 3) PERGUNTAS-GUIA — queixas completadas respondem -------------------------
 const guideTags = ['alimentacao', 'adaptativo', 'agressividade', 'epilepsia'];
 let guideBad = 0;

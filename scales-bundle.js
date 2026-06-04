@@ -2774,10 +2774,6 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       strong: ['atraso global', 'regressao', 'nao senta', 'nao engatinha', 'marcos', 'atrasado para idade', 'vigilancia do desenvolvimento'],
       weak: ['desenvolvimento', 'atraso']
     },
-    substancias: {
-      strong: ['alcool', 'maconha', 'cigarro', 'vape', 'droga', 'substancia', 'crafft', 'bebida alcool'],
-      weak: ['usa']
-    },
     cognicao: {
       strong: ['deficiencia intelectual', 'atraso cognitivo', 'idade mental', 'aprende devagar', 'retardo'],
       weak: ['cognic', 'raciocinio', 'memoria', 'inteligencia', 'imaturo']
@@ -2833,13 +2829,39 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     var active = activeConstructs(text);
     Object.keys(active).forEach(function (k) {
       out[k] = 1;
-      (CONSTRUCTS[k].strong || []).forEach(function (w) { w.split(' ').forEach(function (x) { if (x.length >= 3) out[x] = 1; }); });
+      // Só termos ESPECÍFICOS do gatilho entram: frases inteiras (casadas por
+      // substring) e palavras únicas significativas. NUNCA fragmentos genéricos
+      // de frases multi-palavra ('contato visual' não injeta 'visual'; 'faz de
+      // conta' não injeta 'conta') — eram a maior fonte de falsos positivos.
+      (CONSTRUCTS[k].strong || []).forEach(function (w) {
+        if (w.indexOf(' ') >= 0) out[w] = 1;        // frase específica
+        else if (w.length >= 3) out[w] = 1;          // termo único do construto
+      });
     });
     return Object.keys(out);
   }
 
   // Quais construtos a queixa ativou (para "por que apareceu" e diferenciais).
   function constructsOf(text) { return Object.keys(activeConstructs(text)); }
+
+  // tokenMatches(tk, blob): casamento PRECISO de um termo da queixa contra o blob
+  // (já normalizado) de um instrumento. Regras anti-falso-positivo:
+  //   • frase (tem espaço): substring — específica o bastante.
+  //   • termo ≤3 letras: PALAVRA EXATA (\btk\b) — mata 'dor'→'dormir', 'tod'→'todos'.
+  //   • termo ≥4 letras: PREFIXO em fronteira de palavra (\btk) — casa os stems do
+  //     vocabulário clínico ('impulsiv'→'impulsivo', 'oposic'→'oposição').
+  // Pressupõe entradas já normalizadas (norm()). Regex em cache (perf).
+  var _reCache = {};
+  function tokenMatches(tk, blob) {
+    if (!tk || !blob) return false;
+    if (tk.indexOf(' ') >= 0) return blob.indexOf(tk) >= 0;
+    var re = _reCache[tk];
+    if (!re) {
+      var e = tk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      re = _reCache[tk] = new RegExp('\\b' + e + (tk.length <= 3 ? '\\b' : ''));
+    }
+    return re.test(blob);
+  }
 
   function modalityOf(s) {
     if (!s) return 'escala';
@@ -2937,7 +2959,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
   ];
 
-  var api = { version: '1.1.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  var api = { version: '1.2.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);
