@@ -65,7 +65,10 @@
   }
   function haptic(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
 
-  function gate() { return enabled && !document.hidden && !matchMedia('print').matches; }
+  // Mudo por página: telas clínicas marcam <body data-np-sound="off"> (via
+  // retro-arcade) para nunca tocar som 8-bit durante triagem/laudo/consulta.
+  function pageMuted() { try { return document.body && document.body.getAttribute('data-np-sound') === 'off'; } catch (e) { return false; } }
+  function gate() { return enabled && !pageMuted() && !document.hidden && !matchMedia('print').matches; }
 
   // ---- Paleta 8-bit (Super Mario Bros): moeda, pulo, power-up, cano, fanfarra.
   var S = {
