@@ -34,6 +34,11 @@ const PRIVATE_FILES = [
   // Administração / financeiro
   'secretaria.html', 'agenda-financeiro.html',
   // Monetização / licenças / acesso pago + conteúdo pago
+  // Decisão do autor: NADA de monetização por enquanto → Pro + e-book saem do público.
+  'neuroped-pro.html', 'pro-license.js', 'pro-hashes.js',
+  'neuroped-master-vitrine.html', 'neuroped-master-vitrine.css',
+  'neuroped-master-vitrine.js', 'neuroped-master-vitrine-data.js',
+  'solicitar-neuroped-master.html',
   'gerar-licencas-pro.html', 'ativar-passe-familiar.html', 'politica-acesso-familiar.html',
   'family-pass.js', 'family-pass-generator.js', 'family-pass-portal.js',
   'family-voucher.js', 'family-voucher-ui.js',
