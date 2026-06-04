@@ -94,6 +94,21 @@
       id: 'ofc3-smq', title: 'SMQ — mutismo seletivo (pais)', short_title: 'SMQ (referência)',
       emoji: '🤐', domain: 'Mutismo seletivo', age_band: '3–11 anos', age_min_months: 36, age_max_months: 132,
       official_url: '', _citation: 'Bergman RL, et al. (Selective Mutism Questionnaire).', _pmid: '33995539', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-essenceq', title: 'ESSENCE-Q — rastreio precoce de neurodesenvolvimento (Suécia)', short_title: 'ESSENCE-Q (referência)',
+      emoji: '🇸🇪', domain: 'Neurodesenvolvimento (rastreio precoce)', age_band: '0–5 anos', age_min_months: 0, age_max_months: 60,
+      official_url: 'https://www.gu.se/en/gnc/gncs-resources/screening-questionnaires', _citation: 'Gillberg C, et al. (ESSENCE-Q). Gillberg Neuropsychiatry Centre, Suécia.', _pmid: '27478377', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ftf515', title: '5-15 (FTF) — neurodesenvolvimento amplo (Nórdico)', short_title: '5-15 / FTF (referência)',
+      emoji: '🇪🇺', domain: 'Neurodesenvolvimento amplo', age_band: '5–15 anos', age_min_months: 60, age_max_months: 180,
+      official_url: '', _citation: 'Kadesjö B, Gillberg C, et al. Eur Child Adolesc Psychiatry. 2004 (questionário 5-15/FTF, países nórdicos).', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-kdst', title: 'K-DST — triagem nacional do desenvolvimento (Coreia do Sul)', short_title: 'K-DST (referência)',
+      emoji: '🇰🇷', domain: 'Triagem do desenvolvimento', age_band: '0–6 anos', age_min_months: 4, age_max_months: 71,
+      official_url: '', _citation: 'Korean Developmental Screening Test (K-DST), Coreia do Sul — triagem nacional pública.', _pmid: '32683817', license_status: 'livre'
     }
   ];
 
