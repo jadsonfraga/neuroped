@@ -342,3 +342,41 @@
 @media print {
   .np-modal-backdrop, .np-tooltip { display: none !important; }
 }
+
+/* ============================================================
+   Clinical Card System (Onda 1) — variantes de .np-card por
+   modificador (governança: derivar, não criar arquivo/prefixo).
+   Anatomia: __head/__icon/__title · __why/__foot/__evidence.
+   Tipos: --clinical/--metric/--timeline (cards de seção) ·
+          --insight/--ai (painéis de explicabilidade aninhados).
+   ============================================================ */
+.np-card__head   { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); }
+.np-card__icon   { width: 26px; height: 26px; border-radius: var(--radius-sm); display: grid; place-items: center;
+                   flex: 0 0 auto; background: var(--primary-tint); color: var(--primary-light); font-size: 14px; }
+.np-card__title  { margin: 0; font: var(--weight-semibold) var(--t-label-size)/1.2 var(--font-sans);
+                   color: var(--text-strong); letter-spacing: .04em; text-transform: uppercase; }
+.np-card__why    { color: var(--text); font-size: var(--t-body-size); line-height: 1.5; }
+.np-card__foot   { margin-top: var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.np-card__evidence { font: var(--weight-regular) var(--t-mono-size)/1.4 var(--font-mono, ui-monospace, monospace);
+                     color: var(--text-muted); }
+
+/* Faixa de acento por tipo de card de seção */
+.np-card--clinical { border-left: 3px solid var(--primary); }
+.np-card--metric   { border-left: 3px solid var(--accent-cyan); }
+.np-card--timeline { border-left: 3px solid var(--primary-light); }
+
+/* Painéis de explicabilidade aninhados (sem o chrome pesado do card) */
+.np-card--insight, .np-card--ai {
+  box-shadow: none; border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-3) var(--space-4); margin: var(--space-2) 0;
+}
+.np-card--insight { background: var(--primary-tint);        border-left: 3px solid var(--primary); }
+.np-card--ai      { background: var(--primary-tint-strong); border-left: 3px solid var(--accent-violet); }
+.np-card--insight:hover, .np-card--ai:hover { transform: none; box-shadow: none; }
+
+/* Chip de confiança (explicabilidade obrigatória / proveniência do insight) */
+.np-conf { display: inline-flex; align-items: center; gap: 5px; border-radius: var(--radius-pill);
+           padding: 4px 9px; font: var(--weight-semibold) var(--t-mono-size)/1 var(--font-sans); }
+.np-conf--high { background: var(--success-tint); color: var(--success); }
+.np-conf--med  { background: var(--warning-tint); color: var(--warning); }
+.np-conf--low  { background: var(--surface-muted); color: var(--text-muted); }

@@ -16,7 +16,7 @@
   try { if (window.self !== window.top) return; } catch (e) { return; }
 
   // páginas que abrem DENTRO da moldura (ferramentas da jornada)
-  var TOOLS = /(?:^|\/)(filtro-escalas|escala|perfil-crianca|impacto-medicacao|instrumento|instrumento-autoral|diario-escola-terapias-v2|banco-escalas[a-z0-9-]*|comunicacao-alternativa|consulta|neuroped-master-biblioteca|portal-familia-livre|area-filho|sobre-dr-jadson)\.html$/i;
+  var TOOLS = /(?:^|\/)(filtro-escalas|escala|perfil-crianca|impacto-medicacao|instrumento|instrumento-autoral|diario-escola-terapias-v2|banco-escalas[a-z0-9-]*|comunicacao-alternativa|consulta|neuroped-master-biblioteca|intake|sobre-dr-jadson)\.html$/i;
 
   var ov = null, frame = null, titleEl = null, open = false;
 
