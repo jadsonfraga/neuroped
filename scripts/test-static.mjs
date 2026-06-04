@@ -150,44 +150,21 @@ assertIncludes('index.html', './spa-route-watchdog.js', 'index.html carrega o wa
 assertIncludes('sw.js', 'patchPdfGenerator', 'SW corrige o gerador de PDF da SPA (emoji quebrava WinAnsi)');
 assertIncludes('sw.js', 'async function xt(n){', 'patch usa âncora exata do generatePDF (auto-validável)');
 assertIncludes('index.html', './consulta-bridge.js', 'index.html carrega o bridge de roteamento');
-assertIncludes('filtro-escalas.html', 'scales-bundle.js', 'filtro carrega o bundle de escalas (13 requests viram 1) — scales-bundle.js (perf)');
+assertIncludes('filtro-escalas.html', 'scales-bundle.js', 'filtro carrega o catálogo completo (scales-bundle, perf)');
 assertIncludes('scales-bundle.js', 'scales-enhance.js', 'filtro-escalas carrega scales-enhance.js');
-// PDF do Top 5 via iframe (sem pop-up bloqueável) + dinamismo visual
-assertIncludes('filtro-escalas.html', 'npFiltroPrintFrame', 'filtro imprime Top 5 via iframe (sem pop-up)');
-assertIncludes('filtro-escalas.html', '@keyframes npRise', 'filtro tem motion (entrada animada dos cards)');
+// Clinical Intelligence Engine: busca semântica sobre o catálogo REAL (371), não lista fixa
+assertIncludes('filtro-escalas.html', 'NEUROPED_EDITORIAL_SCALES', 'engine roda sobre o catálogo real (371 instrumentos)');
+assertNotIncludes('filtro-escalas.html', 'const SEARCH_DATA', 'engine não usa mais a lista hardcoded de 4 escalas do protótipo');
+assertIncludes('filtro-escalas.html', 'function score', 'engine pontua a queixa por relevância sobre os metadados');
+assertIncludes('filtro-escalas.html', 'ageMonthsFromText', 'engine detecta a idade no texto livre (gate de faixa etária)');
+assertIncludes('filtro-escalas.html', 'top.slice(0,3)', 'engine destaca as 3 sugestões preditivas');
+assertIncludes('filtro-escalas.html', 'id="searchInput"', 'busca semântica por texto livre (idade + queixa)');
+assertIncludes('filtro-escalas.html', 'id="contextChips"', 'chips de contexto (queixas comuns) injetam na busca');
+assertIncludes('filtro-escalas.html', 'np_cie_q', 'engine persiste a última busca em localStorage');
 assertIncludes('filtro-escalas.html', 'prefers-reduced-motion', 'motion respeita prefers-reduced-motion (acessibilidade)');
-assertIncludes('filtro-escalas.html', 'conic-gradient', 'filtro tem score como anel de progresso (premium)');
-assertIncludes('filtro-escalas.html', 'panel sticky', 'filtro tem painel de entrada fixo (UX premium)');
 assertIncludes('filtro-escalas.html', 'Fraunces', 'filtro usa tipografia premium (Fraunces/Inter)');
-// Chips de queixa com carinha (emoji) + motion fofo
-assertIncludes('filtro-escalas.html', 'class="ce"', 'chips de queixa têm carinha/emoji (não só texto)');
-assertIncludes('filtro-escalas.html', '@keyframes npBounce', 'chip faz bounce ao selecionar (motion fofo)');
-assertIncludes('filtro-escalas.html', '@keyframes npWiggle', 'carinha do chip ativo balança (vivo)');
-// Integração ao app: topbar coesa com voltar + marca (não parece página solta)
-assertIncludes('filtro-escalas.html', 'class="topbar"', 'filtro tem topbar do app (integrado, não página solta)');
-assertIncludes('filtro-escalas.html', 'href="./index.html"', 'topbar do filtro volta ao app (home/SPA)');
-// Relevância do filtro: queixa casa por token (não substring frouxa) e sem tema derruba
-assertIncludes('filtro-escalas.html', 'inalcançável pela não-temática', 'scoreScale usa patamar: escala temática sempre acima da irrelevante');
-// Filtro redesenhado: entrada 100% por clique (idade+queixa) e saída = só as 3 mais indicadas
-assertIncludes('filtro-escalas.html', 'id="ageChips"', 'idade é selecionada por clique (chips), sem digitar');
-assertNotIncludes('filtro-escalas.html', '<textarea id="queixaLivre"', 'sem campo de queixa por digitação (só clique)');
-assertIncludes('filtro-escalas.html', 'slice(0,3)', 'filtro retorna as 3 escalas mais indicadas (saída enxuta)');
-assertIncludes('filtro-escalas.html', 'id="scaleSearch"', 'filtro unifica busca de QUALQUER escala (achar + aplicar na mesma tela)');
-assertIncludes('filtro-escalas.html', 'function runSearch', 'busca varre todo o catálogo e abre no runner');
-assertIncludes('filtro-escalas.html', 'r.score>=500', 'filtro só mostra escalas temáticas relevantes (patamar 500+)');
-// Engine clínica: gate de idade duro + modalidade×idade + hierarquia ouro/prata/bronze
-assertIncludes('filtro-escalas.html', 'score*=_mul', 'idade é GATE multiplicador (fora da faixa some — segurança clínica)');
-assertIncludes('filtro-escalas.html', 'autorrelato pouco viável nesta idade', 'penaliza autorrelato impróprio p/ pré-escolar (modalidade×idade)');
-assertIncludes('filtro-escalas.html', 'Ouro clínico', 'hierarquia clínica Ouro/Prata/Bronze (não ranking artificial)');
-assertIncludes('filtro-escalas.html', 'const CONSTRUCTS=', 'filtro pensa por construto clínico (rigidez→flexibilidade executiva etc.), não só tag literal');
-assertIncludes('filtro-escalas.html', 'function expandConstructs', 'queixa expande para construtos relacionados (raciocínio de neuropediatra)');
-assertIncludes('filtro-escalas.html', 'const DIFFERENTIALS=', 'filtro surge diferenciais clínicos a cruzar (mimics/comorbidade), não só ranking');
-assertIncludes('filtro-escalas.html', 'function renderReasoning', 'filtro mostra painel de raciocínio clínico (fenótipo + diferenciais)');
-assertIncludes('filtro-escalas.html', 'Apoio à decisão, não diagnóstico', 'painel de raciocínio rotulado como apoio à decisão (defensabilidade médica)');
-assertIncludes('filtro-escalas.html', 'STATE_KEY', 'filtro-escalas persiste a busca em localStorage');
-assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro têm aria-pressed');
-assertIncludes('filtro-escalas.html', 'printTop', 'filtro tem função print do Top 5');
-assertIncludes('filtro-escalas.html', 'exportTop', 'filtro tem função export do Top 5');
+assertIncludes('filtro-escalas.html', 'href="./index.html"', 'filtro volta ao app (home/SPA)');
+assertIncludes('filtro-escalas.html', 'Apoio à decisão, não diagnóstico', 'engine rotulado como apoio à decisão (defensabilidade médica)');
 
 // App polish mobile (cara de app: bottom nav, toast, safe-area, splash)
 assertFile('app-polish-mobile.css');
@@ -242,8 +219,8 @@ assertIncludes('perfil-crianca.html', 'id="grid"', 'perfil-crianca preserva o co
 assertIncludes('perfil-crianca.html', 'id="timelineSec"', 'perfil-crianca preserva o contrato JS (linha do tempo)');
 assertIncludes('intake.html', 'PREMIUM SKIN', 'intake (Triagem) tem a camada de skin premium (Onda 1)');
 assertIncludes('intake.html', 'id="relato"', 'intake preserva o contrato JS (campo de relato)');
-assertIncludes('filtro-escalas.html', 'PREMIUM SKIN', 'filtro-escalas tem a camada de skin premium (Onda 1)');
-assertIncludes('filtro-escalas.html', 'id="results"', 'filtro-escalas preserva o contrato JS (resultados)');
+assertIncludes('filtro-escalas.html', 'Clinical Intelligence Engine', 'filtro-escalas é o motor premium de busca (Onda 1)');
+assertIncludes('filtro-escalas.html', 'id="allResults"', 'filtro-escalas tem o grid de resultados do motor');
 
 // ===== Camada de feedback sensorial (som/háptico/pulso) =====
 assertFile('np-sound.js');
@@ -286,7 +263,7 @@ assertIncludes('perfil-crianca.html', 'id="btnExport"', 'Perfil tem exportar/imp
 assertIncludes('perfil-crianca.html', 'renderTimeline', 'timeline desenha o histórico da criança ativa');
 assertIncludes('np-store.js', 'PATIENT_KEY', 'np-store escreve direto na chave do paciente (sem depender do scales-enhance)');
 assertNotIncludes('perfil-crianca.html', 'scales-enhance.js', 'perfil não carrega scales-enhance (sem poll eterno de 250ms)');
-assertIncludes('filtro-escalas.html', 'NPStore.ageBand', 'filtro pré-seleciona a idade da criança ativa (conexão real, não só nome)');
+assertIncludes('filtro-escalas.html', 'function colorFor', 'cards do filtro têm identidade visual determinística por instrumento');
 assertIncludes('diario-escola-terapias-v2.html', 'np-store.js', 'diário carrega a espinha de dados (Perfil)');
 assertIncludes('diario-escola-terapias-v2.html', 'window.NPStore.active', 'diário semeia a criança do Perfil (fim do cadastro duplicado)');
 // Hub antigo (central-atalhos) aposentado: discoverability migrou para o SPA + filtro.
@@ -309,7 +286,7 @@ for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-
 // Polimento: skeletons, estados vazios, selo de qualidade, acessibilidade
 assertIncludes('app-polish-mobile.css', '.np-skel', 'skeleton loaders definidos (sensação de app)');
 assertIncludes('app-polish-mobile.css', '.np-empty', 'estado vazio institucional definido');
-assertIncludes('filtro-escalas.html', 'np-skel', 'filtro mostra skeleton enquanto carrega');
+assertIncludes('filtro-escalas.html', 'Carregando catálogo', 'filtro mostra estado de carregamento do catálogo');
 assertIncludes('app-polish-mobile.js', 'qualitySeal', 'selo de qualidade no rodapé (robustez)');
 assertIncludes('app-polish-mobile.js', 'function pageExit', 'navegação guiada: transição de saída ao trocar de tela (app-wide)');
 assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacidade (não quebra sticky/fixed)');
@@ -324,7 +301,7 @@ assertIncludes('app-polish-mobile.js', 'np_onboarded', 'onboarding aparece só n
 assertIncludes('app-polish-mobile.js', '::selection', 'micro-tema premium universal (seleção/scrollbar temáticas)');
 assertIncludes('perfil-crianca.html', 'tl-redo', 'histórico permite reaplicar a mesma escala em 1 toque (reavaliação → comparador)');
 assertIncludes('perfil-crianca.html', './escala.html?id=', 'reaplicar abre o runner com o mesmo instrumento (reuso/continuidade)');
-assertIncludes('filtro-escalas.html', 'function stateKey', 'filtro lembra queixa/idade POR CRIANÇA (descoberta automática, sem herdar contexto)');
+assertIncludes('filtro-escalas.html', 'function topCatalog', 'filtro mostra catálogo em destaque quando não há busca');
 // Camada D — consistência: tipografia de exibição (Fraunces) unificada nas telas-ramo
 assertIncludes('diario-escola-terapias-v2.html', 'Fraunces', 'diário usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('consulta.html', 'Fraunces', 'consulta usa a fonte de exibição unificada (Fraunces)');
@@ -335,8 +312,8 @@ assertFile('logo-jadson.jpg');
 assertIncludes('app-polish-mobile.js', 'function brandMark', 'logo do Dr. Jadson presente em toda tela (marca)');
 assertIncludes('app-polish-mobile.js', './logo-jadson.jpg', 'selo de marca usa a logo oficial');
 assertIncludes('sw.js', './logo-jadson.jpg', 'logo no precache (marca disponível offline)');
-assertIncludes('filtro-escalas.html', 'Responder a 1ª agora', 'filtro: atalho de 1 toque para a escala mais indicada (menos cliques)');
-assertIncludes('filtro-escalas.html', "'np:reco'", 'filtro grava a fila de recomendadas (runner encadeia próxima)');
+assertIncludes('filtro-escalas.html', 'Sugestões preditivas', 'filtro destaca as sugestões preditivas (top 3)');
+assertIncludes('filtro-escalas.html', 'function evidenceFor', 'filtro resolve a evidência curada por instrumento');
 assertIncludes('escala.html', 'Próxima recomendada', 'runner encadeia a próxima escala recomendada (triagem em sequência)');
 assertIncludes('diario-escola-terapias-v2.html', 'aria-label="Novo registro"', 'diário tem aria-label nos botões só-ícone');
 assertIncludes('diario-escola-terapias-v2.html', 'np-empty', 'diário usa estado vazio institucional');
@@ -458,7 +435,7 @@ assertIncludes('np-frame.js', 'self !== window.top', 'np-frame só age no topo (
 assertIncludes('sw.js', './np-frame.js', 'np-frame no precache (offline)');
 // Fluxo único de escalas: runner abre DENTRO da superfície (overlay), sem trocar de página
 assertIncludes('filtro-escalas.html', './np-frame.js', 'filtro abre o runner em overlay (achar→aplicar numa tarefa só)');
-assertIncludes('filtro-escalas.html', 'id="allScales"', 'filtro é porta única: "Todas as escalas" foca a busca (sem sair do fluxo)');
+assertIncludes('filtro-escalas.html', 'id="searchGo"', 'filtro tem ação de busca explícita (porta única semântica)');
 assertNotIncludes('filtro-escalas.html', 'href="./mapa-escalas.html"', 'filtro não puxa o usuário para fora do fluxo (mapa via hub)');
 assertIncludes('perfil-crianca.html', './np-frame.js', 'perfil abre runner/reaplicar em overlay (fluxo contínuo)');
 // S1 (roadmap 9.9): README na versão canônica + sem vazamentos/divergências
@@ -482,7 +459,7 @@ assertIncludes('instrumento.html', './scales-diarios-uteis.js', 'instrumento lig
 assertFile('instrumento.html');
 assertIncludes('instrumento.html', 'nunca/ausente', 'instrumento tem respostas clicáveis (escala 0–4)');
 assertIncludes('instrumento.html', 'Faixa orientativa', 'instrumento gera resultado/faixa ao final');
-assertIncludes('filtro-escalas.html', 'Responder e gerar laudo', 'filtro tem botão para responder a escala e gerar laudo');
+assertIncludes('filtro-escalas.html', 'class="search-go"', 'filtro tem botão Buscar (entrada do motor semântico)');
 // Validados + curadoria honesta
 
 
@@ -499,7 +476,7 @@ assertIncludes('scales-oficiais.js', 'official_catalog', 'itens oficiais marcado
 assertIncludes('scales-oficiais.js', 'mchatscreen.com', 'M-CHAT como catálogo+fonte (sem itens)');
 assertNotIncludes('scales-oficiais.js', 'plain_questions:[\'', 'catálogo oficial NÃO reproduz perguntas');
 assertIncludes('scales-bundle.js', 'scales-oficiais.js', 'filtro liga o catálogo oficial');
-assertIncludes('filtro-escalas.html', 'Abrir fonte oficial', 'filtro abre a fonte oficial dos instrumentos de terceiros');
+assertIncludes('filtro-escalas.html', 'Fonte oficial', 'filtro marca instrumentos de fonte oficial');
 assertIncludes('scales-curate.js', 'oficiais', 'curadoria separa fontes oficiais da contagem aplicável');
 // Instrumentos autorais NPE-BR (itens próprios + lógica clínica)
 assertFile('scales-autorais-npe.js'); assertFile('instrumento-autoral.html');
@@ -517,7 +494,7 @@ for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','are
   assertIncludes(p, 'content="#0e0e22"', p + ' usa o tema índigo escuro (coesão visual)');
   assertNotIncludes(p, 'content="#1a6b65"', p + ' não usa mais o tema teal claro');
 }
-assertIncludes('filtro-escalas.html', 'autorais distintos', 'filtro mostra contagem honesta');
+assertIncludes('filtro-escalas.html', 'Instrumentos indicados', 'filtro rotula a seção de instrumentos indicados');
 
 // ===== Caça às bruxas — coesão e honestidade (anti-regressão) =====
 // Contagem inflada "507" não pode voltar nas páginas de lote
@@ -595,8 +572,8 @@ assertIncludes('sobre-dr-jadson.html', 'neuroped-pro.html', 'página de autorida
 assertFile('scales-red-flags.js');
 assertIncludes('scales-red-flags.js', 'NEUROPED_RED_FLAGS', 'módulo de sinais de alerta expõe a base');
 assertIncludes('scales-bundle.js', 'scales-red-flags.js', 'filtro carrega o módulo de sinais de alerta');
-assertIncludes('filtro-escalas.html', 'renderRedFlags', 'filtro renderiza sinais de alerta por queixa');
-assertIncludes('filtro-escalas.html', 'Apoio à decisão, não diagnóstico', 'painel de alerta mantém disclaimer (não diagnóstico)');
+assertIncludes('filtro-escalas.html', 'id="detected"', 'filtro mostra idade/termos detectados na busca');
+assertIncludes('filtro-escalas.html', 'Apoio à decisão, não diagnóstico', 'filtro mantém disclaimer (não diagnóstico)');
 // Consistência da oferta: guia/gerador alinhados ao Mercado Pago R$ 47 (sem preço antigo)
 assertNotIncludes('guia-lancamento.html', 'R$ 127', 'guia de lançamento sem preço antigo (R$ 127)');
 assertIncludes('guia-lancamento.html', 'Mercado Pago', 'guia de lançamento alinhado ao Mercado Pago');
@@ -629,10 +606,10 @@ assertIncludes('impacto-medicacao.html', './np-store.js', 'impacto-medicacao int
 assertIncludes('impacto-medicacao.html', 'addMedLog', 'impacto-medicacao salva a resposta no perfil');
 assertIncludes('perfil-crianca.html', 'Resposta à medicação', 'perfil mostra resposta à medicação (separada das escalas)');
 assertIncludes('perfil-crianca.html', 'medLogFor', 'perfil lê o stream de resposta à medicação');
-assertIncludes('filtro-escalas.html', 'renderTriangulation', 'filtro sugere 3 visões distintas (triangulação)');
+assertIncludes('filtro-escalas.html', 'recommendedResults', 'filtro tem o grid de sugestões preditivas');
 assertIncludes('scales-bundle.js', 'scales-impacto-medicacao.js', 'filtro carrega os inventários pós-medicação');
-assertIncludes('filtro-escalas.html', 'Teste direto com a criança', 'filtro distingue teste direto com a criança');
-assertIncludes('filtro-escalas.html', 'Autorrelato', 'filtro distingue autorrelato');
+assertIncludes('filtro-escalas.html', 'sc-sigla', 'cards do filtro têm sigla com cor por instrumento');
+assertIncludes('filtro-escalas.html', 'sc-badges', 'cards do filtro têm selos (idade/domínio/fonte)');
 
 // ===== CORE: runner unificado de escala (corrige "escalas não abriam") =====
 // Antes: filtro abria banco-X.html#anchor, mas os bancos ignoravam o hash e os
@@ -953,9 +930,9 @@ assertIncludes('sw.js', "'./clinical-meta.js'", 'loader de meta clínica no prec
 assertFile('scripts/pvi-l-report.mjs');
 assertIncludes('scripts/pvi-l-report.mjs', 'evidence-registry.json', 'pvi-l-report gera a declaração a partir do registro vivo (não cópia que drifta)');
 // Integração (A): filtro usa a taxonomia (selo de tipo + exemplos funcionais)
-assertIncludes('filtro-escalas.html', 'scales-taxonomy.js', 'filtro carrega a taxonomia');
-assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.classify', 'filtro mostra o TIPO do instrumento no card (teste direto × escala dos pais…)');
-assertIncludes('filtro-escalas.html', 'NeuroPedTaxonomy.functionalExamples', 'filtro injeta exemplos funcionais (o que observar) no raciocínio');
+assertIncludes('filtro-escalas.html', 'np-cards.css', 'filtro usa o sistema de cards canônico');
+assertIncludes('filtro-escalas.html', 'sc-badge', 'filtro mostra selos de classificação no card');
+assertIncludes('filtro-escalas.html', 'PALETTE', 'filtro gera identidade de cor por instrumento');
 assertIncludes('filtro-escalas.html', 'clinical-meta.js', 'filtro carrega a meta clínica (evidência curada)');
 assertIncludes('filtro-escalas.html', 'NeuroPedMeta.evidence', 'filtro mostra 📚 Evidência (citação + PMID) quando o instrumento tem fonte curada');
 assertIncludes('clinical-meta.js', 'api.load()', 'clinical-meta auto-carrega o registry no browser');
