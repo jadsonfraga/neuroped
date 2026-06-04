@@ -122,3 +122,6 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`\nMotor pré-consulta: ${oks.length} OK, 0 falhas.`);
+// Encerramento explícito: os bundles do catálogo registram timers (setInterval de
+// boot) que mantêm o event loop vivo — sem isto o processo penduraria no CI.
+process.exit(0);
