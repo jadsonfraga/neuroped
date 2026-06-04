@@ -3,7 +3,11 @@
    Nota: em app estático, isto é controle de acesso de interface, não segurança criptográfica de servidor. */
 (function(){
   'use strict';
-  var MASTER_HASH='REMOVIDO';
+  // Hash SHA-256 do PIN master (nunca o PIN em texto claro). Pode ser ROTACIONADO
+  // sem editar este arquivo, definindo window.NEUROPED_MASTER_PIN_HASH antes dele.
+  // IMPORTANTE: o valor padrão abaixo já constou do histórico do repositório —
+  // gere um novo e rotacione:  echo -n "SEU_NOVO_PIN" | shasum -a 256
+  var MASTER_HASH=(window.NEUROPED_MASTER_PIN_HASH||'REMOVIDO');
   var KEY='neuroped_master_access_v1';
   var TTL=12*60*60*1000;
   var PUBLIC_FAMILY_LINKS=[
