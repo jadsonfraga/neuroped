@@ -143,6 +143,17 @@ assert(SF({ qOK: true, agePoints: 0 }) === 36 && CF(36) === 'parcial',
 assert(SF({ qStrong: true, agePoints: 26, respChosen: true, respMatch: false, official: true, featured: true }) === 76,
   'scoreFit: responde escolhido e NÃO casa zera o eixo (40+26+0+6+4 = 76)');
 
+// 2f) NP-MOTION — sistema de movimento Apple-grade (carrega em Node; no-op sem DOM)
+const NPM = require(join(root, 'np-motion.js'));
+assert(NPM && typeof NPM.animate === 'function' && typeof NPM.stagger === 'function' &&
+  typeof NPM.pressable === 'function' && typeof NPM.haptic === 'function' && typeof NPM.countUp === 'function',
+  'NPMotion expõe animate/stagger/pressable/haptic/countUp');
+assert(NPM.EASE.spring === 'cubic-bezier(0.32, 0.72, 0, 1)', 'NPMotion: curva spring = iOS button press (token)');
+assert(NPM.animate(null, []) === null, 'NPMotion.animate é no-op seguro sem elemento/DOM');
+assert((function () { try { NPM.countUp(null, 10); NPM.haptic(8); NPM.stagger(null); return true; } catch (e) { return false; } })(),
+  'NPMotion: countUp/haptic/stagger são defensivos (não lançam fora do browser)');
+assert(typeof NPM.reduced() === 'boolean', 'NPMotion.reduced() retorna boolean');
+
 // 3) PERGUNTAS-GUIA — queixas completadas respondem -------------------------
 const guideTags = ['alimentacao', 'adaptativo', 'agressividade', 'epilepsia'];
 let guideBad = 0;
