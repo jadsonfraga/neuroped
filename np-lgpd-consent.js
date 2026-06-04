@@ -80,12 +80,15 @@
     if (document.getElementById('np-lgpd-gate')) return;
     // SEM backdrop-filter: no iOS Safari um pai com backdrop-filter faz os FILHOS
     // não renderizarem — a caixa do consentimento sumia e a tela travava borrada.
-    var scrim = el('div', 'position:fixed;inset:0;z-index:2147483630;display:grid;place-items:center;padding:18px;' +
-      'background:rgba(3,2,16,.9)');
-    scrim.id = 'np-lgpd-gate'; scrim.setAttribute('role', 'dialog'); scrim.setAttribute('aria-modal', 'true'); scrim.setAttribute('aria-labelledby', 'np-lgpd-h');
-    var box = el('div', 'max-width:560px;width:100%;max-height:88vh;overflow:auto;border-radius:20px;padding:22px 20px;' +
+    var scrim = el('div', 'position:fixed;inset:0;z-index:2147483630;background:rgba(3,2,16,.82)');
+    scrim.id = 'np-lgpd-gate';
+    // Caixa com posicionamento FIXO próprio (não depende de grid/flex do pai, que o
+    // iOS às vezes quebra) e z ACIMA do scrim — garante visível e centrada no iOS.
+    var box = el('div', 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483631;' +
+      'width:calc(100% - 32px);max-width:560px;max-height:86vh;overflow:auto;border-radius:20px;padding:22px 20px;' +
       'background:#0f1223;color:#E5E7EB;border:1px solid rgba(169,164,255,.22);box-shadow:0 30px 80px rgba(0,0,0,.6);' +
       'font:15px/1.55 -apple-system,Segoe UI,Roboto,sans-serif');
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'np-lgpd-h');
     box.innerHTML =
       '<h2 id="np-lgpd-h" style="margin:0 0 6px;font:700 19px Georgia,serif;color:#f2dca6">Privacidade e natureza da ferramenta</h2>' +
       '<p style="margin:0 0 10px;color:#cfd3e6"><b>O NeuroPed EDJ é uma ferramenta educativa e de triagem.</b> Os instrumentos autorais são de triagem <b>não normatizada</b> e <b>não substituem</b> avaliação, diagnóstico ou conduta de um profissional.</p>' +
@@ -103,8 +106,8 @@
         '<button id="np-lgpd-ok" style="flex:1;min-width:160px;border:0;border-radius:12px;padding:13px 16px;font:800 14px system-ui;cursor:pointer;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5)">Li e concordo — continuar</button>' +
         '<button id="np-lgpd-no" style="border:1px solid rgba(169,164,255,.3);border-radius:12px;padding:13px 16px;font:700 14px system-ui;cursor:pointer;color:#cfd3e6;background:transparent">Recusar</button>' +
       '</div>';
-    scrim.appendChild(box);
     document.body.appendChild(scrim);
+    document.body.appendChild(box);
     document.documentElement.style.overflow = 'hidden';
     var okBtn = box.querySelector('#np-lgpd-ok');
     var noBtn = box.querySelector('#np-lgpd-no');
@@ -112,7 +115,7 @@
     // foco preso no diálogo; Esc não fecha à força (exibe a explicação de recusa)
     var release = trapFocus(box, function () { try { noBtn.focus(); } catch (e) {} declineMsg(); });
     okBtn.addEventListener('click', function () {
-      setConsent(); document.documentElement.style.overflow = ''; release(); scrim.remove(); mountShield();
+      setConsent(); document.documentElement.style.overflow = ''; release(); scrim.remove(); box.remove(); mountShield();
     });
     noBtn.addEventListener('click', declineMsg);
     setTimeout(function () { try { okBtn.focus(); } catch (e) {} }, 30); // foco no botão primário
