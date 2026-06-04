@@ -50,7 +50,7 @@
   var STEPS = [
     { emoji:'👋', title:'Bem-vindo ao NeuroPed SDG', body:'Em 1 minutinho eu mostro o essencial do app de neuropediatria do Dr. Jadson Fraga. Vamos juntos?' },
     { emoji:'🔎', title:'Busca universal', body:'Digite uma queixa — autismo, sono, TDAH — e o app encontra as escalas e ferramentas certas na hora.', find:function(){return q('input[placeholder*="procura" i]')||q('input[type="search"]');} },
-    { emoji:'📊', title:'Mais de 490 escalas', body:'Em “Encontrar Escala” você acessa o banco de instrumentos organizado por queixa e faixa etária.', find:function(){return vis(document.querySelectorAll('.card-premium')[0]);} },
+    { emoji:'📊', title:'Mais de 470 escalas', body:'Em “Encontrar Escala” você acessa o banco de instrumentos organizado por queixa e faixa etária.', find:function(){return vis(document.querySelectorAll('.card-premium')[0]);} },
     { emoji:'🧒', title:'Testes com a criança', body:'Testes diretos e lúdicos: cognitivo, reconhecimento visual, motricidade e pedagógico — por idade, com mascotes.', find:function(){return byText(/TESTES COM A CRIAN/i)||vis(document.querySelectorAll('.card-premium')[1]);} },
     { emoji:'💬', title:'CAA Gratuita', body:'Comunicação alternativa com voz em português, cartões grandes, favoritos e montagem de frases.', find:function(){return byText(/^CAA$/i,'a,button,span,div');} },
     { emoji:'📚', title:'Educativo / Psicoeducação', body:'Conteúdo educativo livre: marcos do desenvolvimento, orientações e psicoeducação para as famílias.', find:function(){return byText(/Educativo|Psicoeduca|Fam[íi]lia/i,'a,button,span,div');} },
