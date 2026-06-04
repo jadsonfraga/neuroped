@@ -886,6 +886,14 @@ assertIncludes('scales-questions.js', 'NÃO são itens de instrumentos propriet�
   (Q.guide('tdah', 30).length >= 1 && Q.guide('sono', 48).length >= 1)
     ? pass('guia adapta por idade sem esvaziar e tem fallback genérico (queixa sem guia curado)')
     : fail('guia esvaziou por idade/fallback');
+  // Cobertura ampliada: queixas antes sem guia agora têm prompts completos (não vagos)
+  (['sono','sensorial','motor','aprendizagem','humor'].every(t => Q.guide(t, 72).length >= 2))
+    ? pass('guia cobre sono/sensorial/motor/aprendizagem/humor (perguntas completas)')
+    : fail('guia ainda cai em fallback vago para queixas comuns');
+  // Fallback honesto agora é COMPLETO (frequência/contexto + impacto funcional), não 1 frase vaga
+  (Q.guide('tag-sem-guia-xyz', 60).length >= 2)
+    ? pass('fallback genérico devolve pergunta completa (não uma frase vaga)')
+    : fail('fallback genérico ainda é uma pergunta vaga');
 }
 // Modo fadiga + salvar/retomar progresso (helper puro, pronto p/ o runner)
 assertFile('scales-progress.js');
