@@ -26,7 +26,8 @@ export const BUNDLE_ORDER = [
   'scales-autoral-funcional.js',     // autorais Dr. Jadson: autonomia, risco cognitivo, risco de dislexia
   'scales-estudo-restrito.js',       // proprietários como REFERÊNCIA DE ESTUDO (senha, não clínico)
   'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
-  'scales-official-questions.js',    // ÚLTIMO: perguntas-guia autorais p/ instrumentos de referência (abrem completos)
+  'scales-official-questions.js',    // perguntas-guia autorais p/ instrumentos de referência (abrem completos)
+  'scales-robustez.js',              // ÚLTIMO: aprofunda (facetas autorais extras) + orientação de interpretação
 ];
 
 export function buildBundle(root = process.cwd()) {
