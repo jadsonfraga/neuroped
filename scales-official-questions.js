@@ -189,6 +189,78 @@
       'Houve algum evento ou estresse novo desde o último contato?',
       'A adesão (consultas, terapias, medicação) está adequada?',
       'É preciso ajustar o plano ou encaminhar para avaliação?'
+    ],
+    trauma: [
+      'Houve algum evento assustador, perda, acidente ou situação muito difícil?',
+      'A criança revive a situação sem querer (pensamentos, imagens, pesadelos)?',
+      'Evita lugares, pessoas ou assuntos que lembram o que aconteceu?',
+      'Ficou mais assustada, alerta ou se sobressalta com facilidade?',
+      'Tem dificuldade para dormir ou se concentrar desde o evento?',
+      'O humor mudou (mais irritada, triste ou "desligada") após o ocorrido?',
+      'Voltou a comportamentos de quando era menor (xixi na cama, muito apego)?',
+      'Brinca repetidamente cenas ligadas ao que aconteceu?',
+      'Esses sinais já duram mais de um mês?',
+      'Isso atrapalha a escola, o sono ou a convivência?'
+    ],
+    dor: [
+      'A criança sente dor com frequência? Onde costuma doer?',
+      'De 0 a 10, qual costuma ser a intensidade da dor?',
+      'A dor faz parar de brincar, estudar ou dormir?',
+      'Com que frequência a dor aparece (diária, semanal, esporádica)?',
+      'Há algo que parece desencadear (esforço, telas, jejum, estresse)?',
+      'A dor vem com náusea, tontura ou incômodo com luz/barulho?',
+      'A criança falta à escola por causa da dor?',
+      'Algo costuma melhorar (repouso, remédio, ambiente escuro)?',
+      'A dor mudou de padrão ou piorou recentemente?',
+      'A dor atrapalha o humor e as atividades do dia a dia?'
+    ],
+    toc: [
+      'Tem pensamentos repetitivos que incomodam e não saem da cabeça?',
+      'Sente necessidade de repetir ações (lavar as mãos, conferir, arrumar) muitas vezes?',
+      'Fica muito aflita se for impedida de fazer esses rituais?',
+      'Precisa que as coisas estejam "do jeito certo", em ordem ou simétricas?',
+      'Evita tocar em certas coisas por medo de germes ou sujeira?',
+      'Repete perguntas ou pede a mesma garantia várias vezes?',
+      'Os rituais tomam tempo (mais de 1h/dia) ou atrasam a rotina?',
+      'Tenta esconder esses comportamentos dos outros?',
+      'Reconhece que é exagerado, mas não consegue parar?',
+      'Isso atrapalha a escola, o sono ou a convivência?'
+    ],
+    tiques: [
+      'Faz movimentos repetidos e involuntários (piscar, franzir, balançar cabeça/ombros)?',
+      'Emite sons repetidos sem querer (pigarro, fungar, estalos, palavras)?',
+      'Os tiques aumentam quando está ansiosa, cansada ou empolgada?',
+      'Consegue segurar o tique por um tempo, mas depois "precisa" fazer?',
+      'Sente uma urgência ou sensação antes do movimento/som?',
+      'Os tiques mudam de tipo ou de lugar ao longo do tempo?',
+      'Há quanto tempo aparecem (mais de um ano)?',
+      'Causam constrangimento, dor ou atrapalham tarefas?',
+      'Há histórico de tiques ou TOC na família?',
+      'A criança é alvo de comentários ou brincadeiras por causa disso?'
+    ],
+    regulacao: [
+      'Consegue se acalmar sozinha depois de irritar ou frustrar?',
+      'As reações emocionais são proporcionais ao que aconteceu?',
+      'Tolera um "não", a espera ou uma mudança de planos?',
+      'Recompõe-se com facilidade (chora e logo se acalma)?',
+      'Tem explosões emocionais frequentes e difíceis de conter?',
+      'Consegue nomear o que está sentindo?',
+      'Demonstra carinho e empatia de forma adequada?',
+      'Precisa muito do adulto para conseguir se regular?',
+      'A desregulação atrapalha amizades, escola ou a rotina de casa?',
+      'Melhora com antecipação, rotina e estratégias de calma?'
+    ],
+    mutismo: [
+      'Fala normalmente em casa, mas fica em silêncio em certos lugares (escola)?',
+      'Deixa de falar com pessoas específicas (professores, desconhecidos)?',
+      'Isso já dura mais de um mês, fora o período de adaptação?',
+      'Comunica-se por gestos, acenos ou sussurros nesses lugares?',
+      'Parece travar ou ficar muito tensa quando esperam que fale?',
+      'Evita situações em que precise falar em público?',
+      'Fala bem quando está confortável e segura?',
+      'O silêncio atrapalha o aprendizado ou a socialização?',
+      'Há também timidez intensa ou ansiedade em outras situações?',
+      'Melhora quando a pressão para falar diminui?'
     ]
   };
 
@@ -207,7 +279,13 @@
     comportamento: { complaints: ['comportamento', 'oposicao', 'desafia', 'birra', 'agressividade', 'tod'], symptoms: ['desafia regras', 'explosões de raiva', 'agressividade'] },
     sono: { complaints: ['sono', 'insonia', 'pesadelo', 'ronca', 'acorda', 'dormir'], symptoms: ['dificuldade para dormir', 'desperta à noite', 'sonolência diurna'] },
     saude_mental_global: { complaints: ['saude mental', 'rastreio', 'bem-estar', 'forças e dificuldades', 'triagem'], symptoms: ['sinais emocionais', 'sinais comportamentais', 'impacto funcional'] },
-    seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] }
+    seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] },
+    trauma: { complaints: ['trauma', 'tept', 'estresse pos-traumatico', 'evento', 'susto', 'abuso', 'perda', 'luto', 'pesadelo', 'acidente'], symptoms: ['revive o evento', 'evita lembranças', 'hipervigilância', 'sobressalto'] },
+    dor: { complaints: ['dor', 'cefaleia', 'dor de cabeca', 'enxaqueca', 'dor abdominal', 'dor cronica', 'doi'], symptoms: ['dor recorrente', 'falta escolar por dor', 'dor com náusea'] },
+    toc: { complaints: ['toc', 'obsessao', 'compulsao', 'ritual', 'mania de repetir', 'lavar as maos', 'conferir', 'simetria', 'contaminacao'], symptoms: ['rituais repetitivos', 'pensamentos intrusivos', 'aflição se impedido'] },
+    tiques: { complaints: ['tique', 'tiques', 'tic', 'tourette', 'pisca', 'pigarro', 'movimento involuntario', 'som repetido'], symptoms: ['tiques motores', 'tiques vocais', 'urgência premonitória'] },
+    regulacao: { complaints: ['regulacao', 'desregulacao', 'explosao', 'descontrole emocional', 'frustracao', 'autocontrole', 'birra intensa', 'raiva'], symptoms: ['explosões emocionais', 'dificuldade de se acalmar', 'baixa tolerância à frustração'] },
+    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] }
   };
 
   // Classificação de licença (alto grau de confiança; demais → verificar na fonte).
@@ -243,14 +321,18 @@
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
-    // Lote 3 — construto correto p/ as perguntas-guia autorais.
+    // Lote 3 (padronizados) — construto correto p/ as perguntas-guia autorais.
     'ofc3-snap-iv': 'tdah', 'ofc3-conners': 'tdah', 'ofc3-brief2': 'tdah',
     'ofc3-abc-aberrant': 'comportamento',
     'ofc3-cars2': 'tea', 'ofc3-adi-r': 'tea', 'ofc3-scq': 'tea',
     'ofc3-vineland3': 'desenvolvimento', 'ofc3-denver2': 'desenvolvimento', 'ofc3-bayley4': 'desenvolvimento',
     'ofc3-wisc5': 'aprendizagem', 'ofc3-nepsy2': 'aprendizagem',
     'ofc3-mabc2': 'motor', 'ofc3-aseba-cbcl': 'saude_mental_global',
-    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor'
+    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor',
+    // Curadoria internacional (livres) — vinda do main.
+    'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
+    'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor',
+    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -258,7 +340,13 @@
     if (ID_BUCKET[s.id]) return ID_BUCKET[s.id];
     var d = norm([s.domain || '', s.cat || '', s.finalidade || '', s.title || '', s.id || ''].join(' '));
     if (/risco|suicid|seguranca|autoagress|cssrs|\basq\b/.test(d)) return 'risco';
-    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia/.test(d)) return 'desenvolvimento';
+    if (/trauma|tept|ptsd|pos-?traumat|abuso|\bluto\b|evento traumat|cries/.test(d)) return 'trauma';
+    if (/\bdor\b|cefaleia|enxaqueca|\bpain\b|fps-r|faces de dor/.test(d)) return 'dor';
+    if (/\btoc\b|obsess|compuls|oci-cv|ritual/.test(d)) return 'toc';
+    if (/tique|tiques|tourette|\bmoves\b/.test(d)) return 'tiques';
+    if (/regulac|desregulac|autocontrole|emotion regulation|\berc\b/.test(d)) return 'regulacao';
+    if (/mutismo|mutism|\bsmq\b|seletiv/.test(d)) return 'mutismo';
+    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee/.test(d)) return 'desenvolvimento';
     if (/substanc|alcool|drog|cigarro|crafft|vape/.test(d)) return 'substancias';
     if (/tea|autis|espectro|mchat/.test(d)) return 'tea';
     if (/sono|insonia|cshq|sleep/.test(d)) return 'sono';
@@ -294,12 +382,13 @@
     s.keywords = uniq([].concat(s.keywords || [], m.complaints, m.symptoms, [norm(s.domain || ''), bucket]));
     s._authorial_proxy = true;
     s._proxy_bucket = bucket;
-    // proveniência honesta
-    var lic = licenseOf(s.id || '');
+    // proveniência honesta (respeita licença já declarada no instrumento)
+    var lic = s.license_status || licenseOf(s.id || '');
     s.license_status = lic;
-    s.license_note = LIC_TXT[lic];
+    s.license_note = LIC_TXT[lic] || LIC_TXT.verificar;
     var ref = s.official_url ? (' Fonte oficial: ' + s.official_url) : '';
-    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). ' + LIC_TXT[lic] + ' Use o instrumento oficial para pontuação formal.' + ref;
+    var cite = s._citation ? (' Referência: ' + s._citation + (s._pmid ? ' (PMID ' + s._pmid + ')' : '')) : '';
+    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). ' + (LIC_TXT[lic] || LIC_TXT.verificar) + ' Use o instrumento oficial para pontuação formal.' + ref + cite;
     n++;
   });
   window.NEUROPED_OFFICIAL_QUESTIONS_FILLED = n;

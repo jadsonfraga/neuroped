@@ -138,7 +138,18 @@ textarea{min-height:104px}
     var mm = t.match(/(\d+)\s*(meses|mes|m\b)/); if(mm) return parseInt(mm[1],10);
     return null;
   }
-  function isDiary(s){ var t=String(s.title||''); if(/invent[áa]rio|inventory/i.test(t)) return false; return s.kind==='diário' || s.daily===true || /^diario-/.test(s.id||''); }
+  // Pré-consulta: diários (família/paciente/longitudinais) NÃO entram. O sinal
+  // factual kind==='diário'/daily prevalece sobre o título (havia diários
+  // titulados "Inventário … ritmo diário" vazando pela guarda antiga).
+  function isDiary(s){
+    if(!s) return false;
+    if(s.kind==='diário' || s.kind==='diario' || s.daily===true) return true;
+    var id=norm(s.id);
+    if(/(^|[-_])diario(s)?([-_]|$)/.test(id)) return true;
+    var t=norm([s.title,s.short_title,s.domain].join(' '));
+    if(/\bdiario\b|registro diario|controle diario|monitoramento longitud|acompanhamento longitud|longitudinal/.test(t)) return true;
+    return false;
+  }
   function isBank(s){ return /lote|banco completo/i.test(s.title||''); }
 
   function score(s, tokens, age){

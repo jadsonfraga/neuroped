@@ -2084,6 +2084,21 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       { emoji: '✏️', titulo: 'Ditado', instrucao: 'Dite: casa, bola, janela, prato. Depois a frase: "A menina gosta de ler."', observar: 'Trocas, omissões e organização na linha.', faixa: [72, 215] },
       { emoji: '🔢', titulo: 'Matemática rápida', instrucao: 'Resolva junto: 8+5, 14−6, 3 grupos de 4, metade de 10.', observar: 'Estratégia (conta nos dedos?) e acertos.', faixa: [72, 215] }
     ],
+    cognicao: [
+      { emoji: '🧠', titulo: 'Memória visual imediata', instrucao: 'Mostre 4 figuras por 5 segundos, cubra e peça para lembrar quais eram.', observar: 'Quantas recorda e se usa estratégia (nomear, agrupar).', faixa: [48, 215] },
+      { emoji: '🔗', titulo: 'Semelhanças (raciocínio)', instrucao: 'Pergunte: "No que banana e maçã se parecem? E cachorro e gato?"', observar: 'Se abstrai a categoria (frutas, animais) ou fica no concreto.', faixa: [60, 215] },
+      { emoji: '🧩', titulo: 'Sequência lógica', instrucao: 'Conte uma historinha em 3 partes fora de ordem e peça para ordenar o que vem antes/depois.', observar: 'Noção de antes/depois, causa e efeito.', faixa: [54, 215] },
+      { emoji: '⚡', titulo: 'Velocidade de processamento', instrucao: 'Peça para nomear o mais rápido possível 8 cores/figuras conhecidas em sequência.', observar: 'Ritmo, pausas e travas; compare com o esperado para a idade.', faixa: [60, 215] },
+      { emoji: '🔢', titulo: 'Memória de trabalho', instrucao: 'Peça para repetir números na ordem (4-8-2) e de trás pra frente (5-2-9).', observar: 'Maior sequência correta direta e inversa.', faixa: [60, 215] }
+    ],
+    visual: [
+      { emoji: '🔷', titulo: 'Reconhecimento de formas', instrucao: 'Mostre formas e peça para nomear: círculo, quadrado, triângulo, estrela.', observar: 'Quantas reconhece e nomeia.', faixa: [36, 144] },
+      { emoji: '🎨', titulo: 'Reconhecimento de cores', instrucao: 'Aponte objetos e pergunte a cor; depois peça "me dê o que é azul".', observar: 'Nomeia e seleciona cores corretamente?', faixa: [36, 120] },
+      { emoji: '🔍', titulo: 'Discriminação visual', instrucao: 'Mostre 4 figuras quase iguais e 1 diferente: "Qual é a diferente?"', observar: 'Percebe pequenos detalhes que mudam.', faixa: [48, 168] },
+      { emoji: '🖼️', titulo: 'Figura-fundo', instrucao: 'Numa cena cheia, peça para achar um objeto específico ("ache o gato").', observar: 'Isola a figura do fundo sem se perder.', faixa: [48, 168] },
+      { emoji: '✏️', titulo: 'Cópia de figura', instrucao: 'Desenhe um quadrado, um triângulo e uma cruz e peça para copiar.', observar: 'Proporção, linhas e organização da cópia (visomotor).', faixa: [48, 168] },
+      { emoji: '🧠', titulo: 'Memória visual de figuras', instrucao: 'Mostre 3 figuras, esconda e, depois de uma distração curta, pergunte quais eram.', observar: 'Retém a imagem após intervalo.', faixa: [48, 215] }
+    ],
     sensorial: [
       { emoji: '✨', titulo: 'Termômetro sensorial', instrucao: '"De 0 a 5, quanto incomoda: barulho de liquidificador? etiqueta na roupa? luz forte?"', observar: 'Reações e quais estímulos pesam mais.' },
       { emoji: '🖐️', titulo: 'Tolerância gradual', instrucao: 'Ofereça olhar → tocar → cheirar um item novo, sem forçar.', observar: 'Até onde aceita e o que ajuda a regular.' }
@@ -2113,8 +2128,10 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
   var MAP = {
     linguagem: ['linguagem'],
     social: ['social'], rigidez: ['social'],
-    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao'],
-    escola: ['escola'],
+    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao', 'cognicao'],
+    cognicao: ['cognicao'], memoria: ['cognicao'], raciocinio: ['cognicao'], cognitivo: ['cognicao'],
+    visual: ['visual'], percepcao: ['visual'], visomotor: ['visual'],
+    escola: ['escola', 'visual'], aprendizagem: ['escola', 'cognicao'],
     sensorial: ['sensorial'], alimentacao: ['sensorial'],
     humor: ['emocional'], ansiedade: ['emocional'], regulacao: ['emocional'], risco: ['emocional'], substancias: ['emocional'],
     motor: ['motor'], motorfino: ['motor'],
@@ -2209,6 +2226,20 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       complaints: ['escola', 'aprendizagem', 'leitura', 'escrita', 'letras', 'alfabetização', 'dislexia', 'discalculia', 'matemática', 'reconhecimento visual', 'não lê', 'não escreve', 'pedagógico'],
       symptoms: ['confunde letras (b/d, p/q)', 'não lê para a série', 'troca letras na escrita', 'dificuldade em matemática']
     },
+    cognicao: {
+      id: 'td-cognicao', emoji: '🧠',
+      title: 'Sondagem cognitiva direta — memória · raciocínio · velocidade · memória de trabalho',
+      short: 'Cognitivo (teste direto)', domain: 'Cognição', age: [48, 215],
+      complaints: ['cognição', 'cognitivo', 'memória', 'raciocínio', 'inteligência', 'lentidão', 'esquece', 'aprende devagar', 'atenção', 'executiva', 'processamento'],
+      symptoms: ['esquece o que acabou de ver/ouvir', 'pensa de forma muito concreta', 'lento para responder', 'dificuldade em sequência lógica']
+    },
+    visual: {
+      id: 'td-visual', emoji: '🔍',
+      title: 'Sondagem de reconhecimento visual — formas · cores · discriminação · figura-fundo · cópia',
+      short: 'Reconhecimento visual (teste direto)', domain: 'Percepção visual', age: [36, 168],
+      complaints: ['visual', 'percepção', 'reconhecimento visual', 'formas', 'cores', 'discriminação visual', 'figura-fundo', 'visomotor', 'cópia', 'não reconhece letras', 'desenho'],
+      symptoms: ['não nomeia formas/cores esperadas', 'não acha o diferente', 'cópia desorganizada', 'perde-se em cena cheia']
+    },
     sensorial: {
       id: 'td-sensorial', emoji: '✨',
       title: 'Sondagem sensorial direta — reatividade e tolerância gradual',
@@ -2277,6 +2308,319 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
   var ids = new Set(base.map(function (x) { return x && x.id; }));
   window.NEUROPED_EDITORIAL_SCALES = out.filter(function (x) { return !ids.has(x.id); }).concat(base);
   window.NEUROPED_DIRECT_TESTS = out;
+})();
+
+
+/* ===== scales-med-eficacia.js ===== */
+/* NeuroPed EDJ — Eficácia da medicação (relato pré-consulta)
+ * ----------------------------------------------------------
+ * Instrumento AUTORAL para pacientes/famílias que usam medicação responderem
+ * ANTES da consulta: a medicação está sendo eficaz? Há efeitos? Adesão? O médico
+ * recebe um resumo estruturado para decidir manter, ajustar ou trocar.
+ * Apoio ao acompanhamento; NÃO substitui avaliação médica nem orienta mudar dose
+ * por conta própria.
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_MED_EFICACIA_LOADED) return;
+  window.NEUROPED_MED_EFICACIA_LOADED = true;
+
+  var inst = {
+    id: 'jf-med-eficacia-preconsulta',
+    title: '💊 Eficácia da medicação — relato pré-consulta',
+    short_title: 'Eficácia da medicação (pré-consulta)',
+    emoji: '💊',
+    audience: 'familia',
+    audience_label: 'Família/Paciente',
+    age_band: '0–18+ anos',
+    age_min_months: 0,
+    age_max_months: 960,
+    domain: 'Resposta à medicação',
+    complaints: ['medicacao', 'medicação', 'remédio', 'remedio', 'eficácia', 'eficacia', 'resposta', 'efeito colateral', 'dose', 'tratamento', 'metilfenidato', 'ritalina', 'risperidona', 'melhora', 'piora', 'ajuste'],
+    symptoms: ['medicação em uso', 'dúvida sobre eficácia', 'efeito colateral', 'adesão'],
+    keywords: ['medicacao', 'eficacia', 'resposta a medicacao', 'efeito colateral', 'adesao', 'pre-consulta', 'farmacoterapia', 'dose'],
+    plain_questions: [
+      'Qual(is) medicação(ões) a criança usa hoje, com dose e horário?',
+      'Há quanto tempo está usando nesta dose?',
+      'Desde que começou, houve melhora no problema-alvo (atenção, comportamento, humor, sono, crises…)?',
+      'A melhora aparece o dia todo ou só em parte do dia (ex.: só de manhã, "efeito acaba à tarde")?',
+      'A medicação está sendo tomada todos os dias, no horário combinado?',
+      'Surgiu algum efeito indesejado (apetite, sono, humor, dor de cabeça, tiques, irritabilidade…)?',
+      'A escola percebeu alguma mudança, para melhor ou pior?',
+      'No geral, de 0 a 10, quanto você está satisfeito(a) com o resultado da medicação?',
+      'Na sua percepção, a medicação está sendo eficaz, mais ou menos, ou não está ajudando?',
+      'Há alguma dúvida, dificuldade ou preocupação com a medicação que você quer falar na consulta?'
+    ],
+    clinical_use: 'Relato estruturado, respondido ANTES da consulta, sobre eficácia, adesão e efeitos da medicação — qualifica a decisão de manter, ajustar ou trocar.',
+    differentiator: 'Foco em EFICÁCIA + adesão + efeitos colaterais + impacto funcional (casa/escola), no formato pré-consulta — economiza tempo e dá ao médico um panorama objetivo.',
+    not_normative_disclaimer: 'Instrumento autoral de acompanhamento; não substitui avaliação médica e NÃO orienta iniciar, mudar ou suspender dose por conta própria.',
+    page: 'instrumento.html',
+    priority: 210
+  };
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  if (!base.some(function (x) { return x && x.id === inst.id; })) {
+    window.NEUROPED_EDITORIAL_SCALES = [inst].concat(base);
+  }
+  window.NEUROPED_MED_EFICACIA = inst;
+})();
+
+
+/* ===== scales-intl-livres.js ===== */
+/* NeuroPed EDJ — Instrumentos internacionais de LICENÇA LIVRE (curadoria)
+ * --------------------------------------------------------------------------
+ * Curadoria seletiva (NÃO é "encher linguiça") de instrumentos consagrados,
+ * gratuitos/uso livre, que preenchem LACUNAS reais do catálogo — Brasil e mundo.
+ * Entram como REFERÊNCIA: catalogados com fonte/citação; as perguntas que abrem
+ * são AUTORAIS NeuroPed sobre o mesmo construto (preenchidas por
+ * scales-official-questions.js) — NÃO reproduzem os itens originais.
+ *
+ * Seleção (com fonte primária):
+ *  • Q-CHAT  — rastreio quantitativo de TEA no toddler (Allison/Baron-Cohen) · PMID 22265366
+ *  • SCARED  — ansiedade infantojuvenil (Birmaher 1997) · PMID 9100430
+ *  • CSHQ    — hábitos de sono (Owens 2000) · PMID 11145319
+ *  • KIDSCREEN-10 — qualidade de vida (Europa, Ravens-Sieberer) · PMID 30014304
+ *  • SNAP-IV — TDAH/TOD (Swanson) · uso livre
+ *  • IRDI    — indicadores de risco ao desenvolvimento (Brasil, Kupfer et al.) · uso livre
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_INTL_LIVRES_LOADED) return;
+  window.NEUROPED_INTL_LIVRES_LOADED = true;
+
+  var ITEMS = [
+    {
+      id: 'ofc3-qchat', title: 'Q-CHAT — rastreio quantitativo de TEA (toddler)', short_title: 'Q-CHAT (referência)',
+      emoji: '🧩', domain: 'TEA precoce (rastreio)', age_band: '18–24 meses', age_min_months: 18, age_max_months: 30,
+      official_url: 'https://www.autismresearchcentre.com/tests/', _citation: 'Allison C, Baron-Cohen S, et al. (Q-CHAT).', _pmid: '22265366', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-scared', title: 'SCARED — sintomas de ansiedade infantojuvenil', short_title: 'SCARED (referência)',
+      emoji: '😟', domain: 'Ansiedade (criança/adolescente)', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: 'https://www.midss.org/content/screen-child-anxiety-related-disorders-scared', _citation: 'Birmaher B, et al. J Am Acad Child Adolesc Psychiatry. 1997.', _pmid: '9100430', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-cshq', title: 'CSHQ — hábitos e dificuldades de sono', short_title: 'CSHQ (referência)',
+      emoji: '🌙', domain: 'Sono', age_band: '4–10 anos', age_min_months: 48, age_max_months: 144,
+      official_url: '', _citation: 'Owens JA, Spirito A, McGuinn M. Sleep. 2000.', _pmid: '11145319', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-kidscreen10', title: 'KIDSCREEN-10 — qualidade de vida relacionada à saúde', short_title: 'KIDSCREEN-10 (referência)',
+      emoji: '🌈', domain: 'Qualidade de vida', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: 'https://www.kidscreen.org', _citation: 'Ravens-Sieberer U, et al. (KIDSCREEN). Eur grupo.', _pmid: '30014304', license_status: 'livre-reg'
+    },
+    {
+      id: 'ofc3-snap-iv', title: 'SNAP-IV — TDAH e sintomas de oposição', short_title: 'SNAP-IV (referência)',
+      emoji: '🎯', domain: 'TDAH', age_band: '6–18 anos', age_min_months: 72, age_max_months: 215,
+      official_url: 'https://www.shared-care.ca/files/Scoring_for_SNAP_IV_Guide_26-item.pdf', _citation: 'Swanson JM, et al. (SNAP-IV). Uso livre.', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-irdi', title: 'IRDI — indicadores de risco ao desenvolvimento infantil (Brasil)', short_title: 'IRDI (referência)',
+      emoji: '🇧🇷', domain: 'Desenvolvimento (risco precoce)', age_band: '0–18 meses', age_min_months: 0, age_max_months: 18,
+      official_url: '', _citation: 'Kupfer MC, Jerusalinsky AN, et al. Pesquisa multicêntrica IRDI, Brasil.', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-cries8', title: 'CRIES-8 — reações a evento traumático (TEPT)', short_title: 'CRIES-8 (referência)',
+      emoji: '🌧️', domain: 'Trauma / estresse pós-traumático', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: 'https://www.childrenandwar.org/measures/', _citation: 'Children and War Foundation; Verlinden E, et al. 2014.', _pmid: '24797017', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-mfq', title: 'MFQ — humor e sentimentos (depressão)', short_title: 'MFQ (referência)',
+      emoji: '🌧️', domain: 'Humor / depressão', age_band: '6–18 anos', age_min_months: 72, age_max_months: 215,
+      official_url: 'https://devepi.duhs.duke.edu/measures/the-mood-and-feelings-questionnaire-mfq/', _citation: 'Angold A, Costello EJ, et al. (MFQ).', _pmid: '33836780', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-fpsr', title: 'FPS-R — escala de faces de dor (autorrelato)', short_title: 'FPS-R (referência)',
+      emoji: '🤕', domain: 'Dor (autorrelato)', age_band: '4–12 anos', age_min_months: 48, age_max_months: 156,
+      official_url: 'https://www.iasp-pain.org/resources/faces-pain-scale-revised/', _citation: 'Hicks CL, von Baeyer CL, et al. Pain. 2001.', _pmid: '11427329', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-aq10', title: 'AQ-10 — rastreio de traços do espectro autista (escolar/adolescente)', short_title: 'AQ-10 (referência)',
+      emoji: '🧩', domain: 'TEA (rastreio escolar)', age_band: '4–16 anos', age_min_months: 48, age_max_months: 200,
+      official_url: 'https://www.autismresearchcentre.com/tests/', _citation: 'Allison C, Auyeung B, Baron-Cohen S. 2012.', _pmid: '22265366', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ndds', title: 'NDDS (Nipissing/Looksee) — triagem do desenvolvimento (Canadá)', short_title: 'NDDS (referência)',
+      emoji: '🍁', domain: 'Vigilância do desenvolvimento', age_band: '0–6 anos', age_min_months: 0, age_max_months: 72,
+      official_url: 'https://www.lookseechecklist.com', _citation: 'Nipissing District Developmental Screen, Canadá.', _pmid: '26983782', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ocicv', title: 'OCI-CV — sintomas obsessivo-compulsivos (TOC)', short_title: 'OCI-CV (referência)',
+      emoji: '🔁', domain: 'TOC (obsessivo-compulsivo)', age_band: '7–17 anos', age_min_months: 84, age_max_months: 215,
+      official_url: '', _citation: 'Foa EB, et al. (OCI-CV).', _pmid: '35091252', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-moves', title: 'MOVES — rastreio de tiques e Tourette', short_title: 'MOVES (referência)',
+      emoji: '😬', domain: 'Tiques / Tourette', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: '', _citation: 'Gaffney GR, et al. (MOVES).', _pmid: '29392455', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-erc', title: 'ERC — regulação emocional (cuidador)', short_title: 'ERC (referência)',
+      emoji: '🎭', domain: 'Regulação emocional', age_band: '6–12 anos', age_min_months: 72, age_max_months: 156,
+      official_url: '', _citation: 'Shields A, Cicchetti D. (Emotion Regulation Checklist).', _pmid: '15212574', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-smq', title: 'SMQ — mutismo seletivo (pais)', short_title: 'SMQ (referência)',
+      emoji: '🤐', domain: 'Mutismo seletivo', age_band: '3–11 anos', age_min_months: 36, age_max_months: 132,
+      official_url: '', _citation: 'Bergman RL, et al. (Selective Mutism Questionnaire).', _pmid: '33995539', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-essenceq', title: 'ESSENCE-Q — rastreio precoce de neurodesenvolvimento (Suécia)', short_title: 'ESSENCE-Q (referência)',
+      emoji: '🇸🇪', domain: 'Neurodesenvolvimento (rastreio precoce)', age_band: '0–5 anos', age_min_months: 0, age_max_months: 60,
+      official_url: 'https://www.gu.se/en/gnc/gncs-resources/screening-questionnaires', _citation: 'Gillberg C, et al. (ESSENCE-Q). Gillberg Neuropsychiatry Centre, Suécia.', _pmid: '27478377', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ftf515', title: '5-15 (FTF) — neurodesenvolvimento amplo (Nórdico)', short_title: '5-15 / FTF (referência)',
+      emoji: '🇪🇺', domain: 'Neurodesenvolvimento amplo', age_band: '5–15 anos', age_min_months: 60, age_max_months: 180,
+      official_url: '', _citation: 'Kadesjö B, Gillberg C, et al. Eur Child Adolesc Psychiatry. 2004 (questionário 5-15/FTF, países nórdicos).', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-kdst', title: 'K-DST — triagem nacional do desenvolvimento (Coreia do Sul)', short_title: 'K-DST (referência)',
+      emoji: '🇰🇷', domain: 'Triagem do desenvolvimento', age_band: '0–6 anos', age_min_months: 4, age_max_months: 71,
+      official_url: '', _citation: 'Korean Developmental Screening Test (K-DST), Coreia do Sul — triagem nacional pública.', _pmid: '32683817', license_status: 'livre'
+    }
+  ];
+
+  // Bandeira de origem (proveniência visível).
+  var ORIGIN = {
+    'ofc3-qchat': '🇬🇧', 'ofc3-aq10': '🇬🇧', 'ofc3-cries8': '🇬🇧',
+    'ofc3-scared': '🇺🇸', 'ofc3-mfq': '🇺🇸', 'ofc3-cshq': '🇺🇸', 'ofc3-snap-iv': '🇺🇸',
+    'ofc3-ocicv': '🇺🇸', 'ofc3-moves': '🇺🇸', 'ofc3-erc': '🇺🇸', 'ofc3-smq': '🇺🇸',
+    'ofc3-fpsr': '🌍', 'ofc3-kidscreen10': '🇪🇺', 'ofc3-ftf515': '🇪🇺',
+    'ofc3-essenceq': '🇸🇪', 'ofc3-kdst': '🇰🇷', 'ofc3-ndds': '🇨🇦', 'ofc3-irdi': '🇧🇷'
+  };
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  var ids = {}; base.forEach(function (x) { if (x && x.id) ids[x.id] = 1; });
+  var add = [];
+  ITEMS.forEach(function (it) {
+    if (ids[it.id]) return;
+    add.push({
+      id: it.id, title: it.emoji + ' ' + it.title, short_title: it.short_title, emoji: it.emoji,
+      audience: 'familia', audience_label: 'Família/Clínico',
+      age_band: it.age_band, age_min_months: it.age_min_months, age_max_months: it.age_max_months,
+      domain: it.domain,
+      official_catalog: true, official_url: it.official_url,
+      plain_questions: [],            // preenchidas (autorais) por scales-official-questions.js
+      applicable: false,
+      license_status: it.license_status,
+      _origin: ORIGIN[it.id] || '🌍',
+      _citation: it._citation, _pmid: it._pmid, _intl_curated: true
+    });
+  });
+  window.NEUROPED_EDITORIAL_SCALES = add.concat(base);
+  window.NEUROPED_INTL_LIVRES = add;
+})();
+
+
+/* ===== scales-autoral-funcional.js ===== */
+/* NeuroPed EDJ — Instrumentos AUTORAIS Dr. Jadson: funcional/adaptativo,
+ * risco cognitivo e risco de dislexia.
+ * --------------------------------------------------------------------------
+ * Conteúdo 100% autoral (perguntas originais sobre o construto). NÃO reproduz
+ * itens de instrumentos de terceiros (ex.: Vineland é proprietário). Triagem
+ * de apoio à decisão — não diagnostica.
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_AUTORAL_FUNCIONAL_LOADED) return;
+  window.NEUROPED_AUTORAL_FUNCIONAL_LOADED = true;
+
+  var INST = [
+    {
+      id: 'jf-autonomia-idade',
+      title: '🧗 Autonomia e Independência por idade (NeuroPed)',
+      short_title: 'Autonomia e Independência',
+      emoji: '🧗', audience: 'familia', audience_label: 'Família/Escola',
+      age_band: '0–18+ anos', age_min_months: 0, age_max_months: 960,
+      domain: 'Autonomia e funcionamento adaptativo',
+      complaints: ['autonomia', 'independencia', 'adaptativo', 'vida diaria', 'avd', 'autocuidado', 'depende', 'nao faz sozinho', 'vestir', 'come sozinho', 'banheiro'],
+      symptoms: ['depende para tarefas da idade', 'não realiza autocuidado esperado', 'pouca autonomia'],
+      keywords: ['autonomia', 'independencia', 'adaptativo', 'comportamento adaptativo', 'vida diaria', 'autocuidado'],
+      plain_questions: [
+        'Come sozinho(a) de forma compatível com a idade (talheres, copo)?',
+        'Cuida da própria higiene esperada para a idade (lavar mãos, escovar dentes, banho com supervisão adequada)?',
+        'Veste-se e calça sapatos com a independência esperada para a idade?',
+        'Avisa ou vai ao banheiro sozinho(a) conforme a idade?',
+        'Comunica suas necessidades e vontades de forma clara para a idade?',
+        'Cumpre pequenas tarefas e combinados da rotina sem precisar repetir muito?',
+        'Organiza seus pertences (mochila, brinquedos, quarto) conforme a idade?',
+        'Tem a noção de segurança esperada (rua, tomada, estranhos) para a idade?',
+        'Desloca-se com a independência esperada para a idade (casa, escola, trajetos)?',
+        'Resolve pequenos problemas do dia a dia sem depender totalmente do adulto?',
+        'Maiores/adolescentes: administra tempo, dinheiro e compromissos básicos?',
+        'No geral, a autonomia está compatível com a idade ou abaixo do esperado?'
+      ],
+      clinical_use: 'Triagem do funcionamento adaptativo e da autonomia em relação ao esperado para a idade, por relato de família/escola.',
+      differentiator: 'Mede INDEPENDÊNCIA FUNCIONAL por faixa etária (autocuidado, comunicação, vida diária, segurança), não só sintomas.',
+      not_normative_disclaimer: 'Instrumento autoral de triagem; não substitui avaliação formal do comportamento adaptativo nem instrumento normatizado.',
+      page: 'instrumento.html', priority: 190
+    },
+    {
+      id: 'jf-risco-cognitivo',
+      title: '🧠 Triagem de risco cognitivo — nível de desenvolvimento por idade (NeuroPed)',
+      short_title: 'Risco cognitivo / nível de desenvolvimento',
+      emoji: '🧠', audience: 'familia', audience_label: 'Família/Clínico',
+      age_band: '1–18 anos', age_min_months: 12, age_max_months: 215,
+      domain: 'Desenvolvimento cognitivo (triagem de risco)',
+      complaints: ['cognicao', 'atraso cognitivo', 'deficiencia intelectual', 'atraso global', 'idade mental', 'aprende devagar', 'imaturo', 'atrasado para a idade', 'atraso de desenvolvimento'],
+      symptoms: ['atraso em vários marcos', 'raciocínio abaixo da idade', 'aprende mais devagar que os colegas'],
+      keywords: ['cognicao', 'atraso cognitivo', 'deficiencia intelectual', 'atraso global do desenvolvimento', 'nivel de desenvolvimento'],
+      plain_questions: [
+        'A fala e a compreensão estão no nível esperado para a idade?',
+        'O raciocínio e a resolução de problemas acompanham a idade?',
+        'A criança aprende coisas novas no ritmo dos colegas da mesma idade?',
+        'Brinca de forma compatível com a idade (faz-de-conta, regras, complexidade)?',
+        'A autonomia (autocuidado, vida diária) está no nível da idade?',
+        'Houve atraso para alcançar marcos importantes (andar, falar, frases)?',
+        'A criança parece "mais nova" que a idade em várias áreas ao mesmo tempo?',
+        'Já perdeu habilidades que antes tinha (regressão)?',
+        'Precisa de muito mais apoio e repetição que os colegas para aprender?',
+        'A dificuldade aparece em CASA e na ESCOLA (vários ambientes)?',
+        'Há fatores de risco na história (prematuridade, intercorrência no parto, causa genética)?',
+        'No geral, o nível de desenvolvimento parece compatível com a idade ou abaixo?'
+      ],
+      clinical_use: 'Triagem de SINAL DE ALERTA para atraso global do desenvolvimento / risco de deficiência intelectual: estima descompasso entre o nível de desenvolvimento e a idade cronológica, em vários domínios.',
+      differentiator: 'Compara funcionamento × idade em múltiplos domínios (linguagem, raciocínio, aprendizagem, autonomia, brincar) para sinalizar quando indicar avaliação cognitiva/adaptativa formal.',
+      not_normative_disclaimer: 'Triagem autoral de RISCO — NÃO mede QI, NÃO mede "idade mental" e NÃO diagnostica deficiência intelectual. Resultado abaixo do esperado indica encaminhamento para avaliação neuropsicológica/multiprofissional formal.',
+      page: 'instrumento.html', priority: 188
+    },
+    {
+      id: 'jf-dislexia-risco',
+      title: '📖 Triagem de risco de dislexia — leitura e escrita (NeuroPed)',
+      short_title: 'Risco de dislexia',
+      emoji: '📖', audience: 'familia', audience_label: 'Família/Escola',
+      age_band: '5–14 anos', age_min_months: 60, age_max_months: 168,
+      domain: 'Aprendizagem — leitura e escrita (dislexia)',
+      complaints: ['dislexia', 'leitura', 'escrita', 'le devagar', 'troca letras', 'nao le', 'dificuldade de leitura', 'soletra', 'alfabetizacao', 'inverte letras'],
+      symptoms: ['lê devagar/silabando', 'troca ou inverte letras', 'erros de escrita persistentes'],
+      keywords: ['dislexia', 'leitura', 'escrita', 'consciencia fonologica', 'transtorno de leitura'],
+      plain_questions: [
+        'Demorou a falar ou trocou muitos sons quando menor?',
+        'Tem dificuldade de perceber rimas e sons das palavras (consciência fonológica)?',
+        'Confunde letras parecidas (b/d, p/q) ou inverte ao ler/escrever?',
+        'Lê mais devagar, silabando ou adivinhando, comparado aos colegas?',
+        'Comete muitos erros de escrita que persistem apesar do ensino?',
+        'Tem dificuldade de entender o que leu, mesmo conseguindo decodificar?',
+        'O esforço para ler/escrever é muito maior que o resultado obtido?',
+        'Evita ler em voz alta, lição de leitura/escrita, ou se frustra muito?',
+        'A dificuldade contrasta com bom desempenho em outras áreas (oral, raciocínio)?',
+        'Há histórico de dislexia ou dificuldade de leitura na família?',
+        'A dificuldade persiste há mais de um ano apesar de apoio?',
+        'No geral, a leitura/escrita está bem abaixo do esperado para a série?'
+      ],
+      clinical_use: 'Triagem de sinais de risco para dislexia (transtorno específico de leitura), por relato de família/escola.',
+      differentiator: 'Foca a tríade da dislexia: consciência fonológica + decodificação/velocidade + discrepância esforço×resultado, com história familiar.',
+      not_normative_disclaimer: 'Triagem autoral; NÃO diagnostica dislexia. Sinais positivos indicam avaliação psicopedagógica, fonoaudiológica e/ou neuropsicológica formal.',
+      page: 'instrumento.html', priority: 186
+    }
+  ];
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  var ids = {}; base.forEach(function (x) { if (x && x.id) ids[x.id] = 1; });
+  var add = INST.filter(function (x) { return !ids[x.id]; });
+  window.NEUROPED_EDITORIAL_SCALES = add.concat(base);
+  window.NEUROPED_AUTORAL_FUNCIONAL = add;
 })();
 
 
@@ -2651,6 +2995,78 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       'Houve algum evento ou estresse novo desde o último contato?',
       'A adesão (consultas, terapias, medicação) está adequada?',
       'É preciso ajustar o plano ou encaminhar para avaliação?'
+    ],
+    trauma: [
+      'Houve algum evento assustador, perda, acidente ou situação muito difícil?',
+      'A criança revive a situação sem querer (pensamentos, imagens, pesadelos)?',
+      'Evita lugares, pessoas ou assuntos que lembram o que aconteceu?',
+      'Ficou mais assustada, alerta ou se sobressalta com facilidade?',
+      'Tem dificuldade para dormir ou se concentrar desde o evento?',
+      'O humor mudou (mais irritada, triste ou "desligada") após o ocorrido?',
+      'Voltou a comportamentos de quando era menor (xixi na cama, muito apego)?',
+      'Brinca repetidamente cenas ligadas ao que aconteceu?',
+      'Esses sinais já duram mais de um mês?',
+      'Isso atrapalha a escola, o sono ou a convivência?'
+    ],
+    dor: [
+      'A criança sente dor com frequência? Onde costuma doer?',
+      'De 0 a 10, qual costuma ser a intensidade da dor?',
+      'A dor faz parar de brincar, estudar ou dormir?',
+      'Com que frequência a dor aparece (diária, semanal, esporádica)?',
+      'Há algo que parece desencadear (esforço, telas, jejum, estresse)?',
+      'A dor vem com náusea, tontura ou incômodo com luz/barulho?',
+      'A criança falta à escola por causa da dor?',
+      'Algo costuma melhorar (repouso, remédio, ambiente escuro)?',
+      'A dor mudou de padrão ou piorou recentemente?',
+      'A dor atrapalha o humor e as atividades do dia a dia?'
+    ],
+    toc: [
+      'Tem pensamentos repetitivos que incomodam e não saem da cabeça?',
+      'Sente necessidade de repetir ações (lavar as mãos, conferir, arrumar) muitas vezes?',
+      'Fica muito aflita se for impedida de fazer esses rituais?',
+      'Precisa que as coisas estejam "do jeito certo", em ordem ou simétricas?',
+      'Evita tocar em certas coisas por medo de germes ou sujeira?',
+      'Repete perguntas ou pede a mesma garantia várias vezes?',
+      'Os rituais tomam tempo (mais de 1h/dia) ou atrasam a rotina?',
+      'Tenta esconder esses comportamentos dos outros?',
+      'Reconhece que é exagerado, mas não consegue parar?',
+      'Isso atrapalha a escola, o sono ou a convivência?'
+    ],
+    tiques: [
+      'Faz movimentos repetidos e involuntários (piscar, franzir, balançar cabeça/ombros)?',
+      'Emite sons repetidos sem querer (pigarro, fungar, estalos, palavras)?',
+      'Os tiques aumentam quando está ansiosa, cansada ou empolgada?',
+      'Consegue segurar o tique por um tempo, mas depois "precisa" fazer?',
+      'Sente uma urgência ou sensação antes do movimento/som?',
+      'Os tiques mudam de tipo ou de lugar ao longo do tempo?',
+      'Há quanto tempo aparecem (mais de um ano)?',
+      'Causam constrangimento, dor ou atrapalham tarefas?',
+      'Há histórico de tiques ou TOC na família?',
+      'A criança é alvo de comentários ou brincadeiras por causa disso?'
+    ],
+    regulacao: [
+      'Consegue se acalmar sozinha depois de irritar ou frustrar?',
+      'As reações emocionais são proporcionais ao que aconteceu?',
+      'Tolera um "não", a espera ou uma mudança de planos?',
+      'Recompõe-se com facilidade (chora e logo se acalma)?',
+      'Tem explosões emocionais frequentes e difíceis de conter?',
+      'Consegue nomear o que está sentindo?',
+      'Demonstra carinho e empatia de forma adequada?',
+      'Precisa muito do adulto para conseguir se regular?',
+      'A desregulação atrapalha amizades, escola ou a rotina de casa?',
+      'Melhora com antecipação, rotina e estratégias de calma?'
+    ],
+    mutismo: [
+      'Fala normalmente em casa, mas fica em silêncio em certos lugares (escola)?',
+      'Deixa de falar com pessoas específicas (professores, desconhecidos)?',
+      'Isso já dura mais de um mês, fora o período de adaptação?',
+      'Comunica-se por gestos, acenos ou sussurros nesses lugares?',
+      'Parece travar ou ficar muito tensa quando esperam que fale?',
+      'Evita situações em que precise falar em público?',
+      'Fala bem quando está confortável e segura?',
+      'O silêncio atrapalha o aprendizado ou a socialização?',
+      'Há também timidez intensa ou ansiedade em outras situações?',
+      'Melhora quando a pressão para falar diminui?'
     ]
   };
 
@@ -2669,7 +3085,13 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     comportamento: { complaints: ['comportamento', 'oposicao', 'desafia', 'birra', 'agressividade', 'tod'], symptoms: ['desafia regras', 'explosões de raiva', 'agressividade'] },
     sono: { complaints: ['sono', 'insonia', 'pesadelo', 'ronca', 'acorda', 'dormir'], symptoms: ['dificuldade para dormir', 'desperta à noite', 'sonolência diurna'] },
     saude_mental_global: { complaints: ['saude mental', 'rastreio', 'bem-estar', 'forças e dificuldades', 'triagem'], symptoms: ['sinais emocionais', 'sinais comportamentais', 'impacto funcional'] },
-    seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] }
+    seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] },
+    trauma: { complaints: ['trauma', 'tept', 'estresse pos-traumatico', 'evento', 'susto', 'abuso', 'perda', 'luto', 'pesadelo', 'acidente'], symptoms: ['revive o evento', 'evita lembranças', 'hipervigilância', 'sobressalto'] },
+    dor: { complaints: ['dor', 'cefaleia', 'dor de cabeca', 'enxaqueca', 'dor abdominal', 'dor cronica', 'doi'], symptoms: ['dor recorrente', 'falta escolar por dor', 'dor com náusea'] },
+    toc: { complaints: ['toc', 'obsessao', 'compulsao', 'ritual', 'mania de repetir', 'lavar as maos', 'conferir', 'simetria', 'contaminacao'], symptoms: ['rituais repetitivos', 'pensamentos intrusivos', 'aflição se impedido'] },
+    tiques: { complaints: ['tique', 'tiques', 'tic', 'tourette', 'pisca', 'pigarro', 'movimento involuntario', 'som repetido'], symptoms: ['tiques motores', 'tiques vocais', 'urgência premonitória'] },
+    regulacao: { complaints: ['regulacao', 'desregulacao', 'explosao', 'descontrole emocional', 'frustracao', 'autocontrole', 'birra intensa', 'raiva'], symptoms: ['explosões emocionais', 'dificuldade de se acalmar', 'baixa tolerância à frustração'] },
+    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] }
   };
 
   // Classificação de licença (alto grau de confiança; demais → verificar na fonte).
@@ -2705,14 +3127,18 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
-    // Lote 3 — construto correto p/ as perguntas-guia autorais.
+    // Lote 3 (padronizados) — construto correto p/ as perguntas-guia autorais.
     'ofc3-snap-iv': 'tdah', 'ofc3-conners': 'tdah', 'ofc3-brief2': 'tdah',
     'ofc3-abc-aberrant': 'comportamento',
     'ofc3-cars2': 'tea', 'ofc3-adi-r': 'tea', 'ofc3-scq': 'tea',
     'ofc3-vineland3': 'desenvolvimento', 'ofc3-denver2': 'desenvolvimento', 'ofc3-bayley4': 'desenvolvimento',
     'ofc3-wisc5': 'aprendizagem', 'ofc3-nepsy2': 'aprendizagem',
     'ofc3-mabc2': 'motor', 'ofc3-aseba-cbcl': 'saude_mental_global',
-    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor'
+    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor',
+    // Curadoria internacional (livres) — vinda do main.
+    'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
+    'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor',
+    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -2720,7 +3146,13 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     if (ID_BUCKET[s.id]) return ID_BUCKET[s.id];
     var d = norm([s.domain || '', s.cat || '', s.finalidade || '', s.title || '', s.id || ''].join(' '));
     if (/risco|suicid|seguranca|autoagress|cssrs|\basq\b/.test(d)) return 'risco';
-    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia/.test(d)) return 'desenvolvimento';
+    if (/trauma|tept|ptsd|pos-?traumat|abuso|\bluto\b|evento traumat|cries/.test(d)) return 'trauma';
+    if (/\bdor\b|cefaleia|enxaqueca|\bpain\b|fps-r|faces de dor/.test(d)) return 'dor';
+    if (/\btoc\b|obsess|compuls|oci-cv|ritual/.test(d)) return 'toc';
+    if (/tique|tiques|tourette|\bmoves\b/.test(d)) return 'tiques';
+    if (/regulac|desregulac|autocontrole|emotion regulation|\berc\b/.test(d)) return 'regulacao';
+    if (/mutismo|mutism|\bsmq\b|seletiv/.test(d)) return 'mutismo';
+    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee/.test(d)) return 'desenvolvimento';
     if (/substanc|alcool|drog|cigarro|crafft|vape/.test(d)) return 'substancias';
     if (/tea|autis|espectro|mchat/.test(d)) return 'tea';
     if (/sono|insonia|cshq|sleep/.test(d)) return 'sono';
@@ -2756,12 +3188,13 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     s.keywords = uniq([].concat(s.keywords || [], m.complaints, m.symptoms, [norm(s.domain || ''), bucket]));
     s._authorial_proxy = true;
     s._proxy_bucket = bucket;
-    // proveniência honesta
-    var lic = licenseOf(s.id || '');
+    // proveniência honesta (respeita licença já declarada no instrumento)
+    var lic = s.license_status || licenseOf(s.id || '');
     s.license_status = lic;
-    s.license_note = LIC_TXT[lic];
+    s.license_note = LIC_TXT[lic] || LIC_TXT.verificar;
     var ref = s.official_url ? (' Fonte oficial: ' + s.official_url) : '';
-    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). ' + LIC_TXT[lic] + ' Use o instrumento oficial para pontuação formal.' + ref;
+    var cite = s._citation ? (' Referência: ' + s._citation + (s._pmid ? ' (PMID ' + s._pmid + ')' : '')) : '';
+    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). ' + (LIC_TXT[lic] || LIC_TXT.verificar) + ' Use o instrumento oficial para pontuação formal.' + ref + cite;
     n++;
   });
   window.NEUROPED_OFFICIAL_QUESTIONS_FILLED = n;
