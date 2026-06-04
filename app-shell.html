@@ -103,16 +103,16 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
     familia:'<path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/>'
   };
   var ROUTES = {
-    inicio:    { url:'./index.html',                      label:'Início' },
+    inicio:    { url:'./central-atalhos.html',            label:'Início' },
     escalas:   { url:'./filtro-escalas.html',             label:'Escalas' },
     biblioteca:{ url:'./neuroped-master-biblioteca.html', label:'Biblioteca' },
     caa:       { url:'./comunicacao-alternativa.html',    label:'CAA' },
-    familia:   { url:'./index.html#/portal-familias',     label:'Família' }
+    familia:   { url:'./portal-familia-livre.html',       label:'Família' }
   };
   var ORDER = ['inicio','escalas','biblioteca','caa','familia'];
   // mapa arquivo -> rota (sincroniza a aba quando navega dentro do quadro)
   var FILE2KEY = {
-    'index.html':'inicio','central-atalhos.html':'inicio','':'inicio',
+    'central-atalhos.html':'inicio','index.html':'inicio','':'inicio',
     'filtro-escalas.html':'escalas','mapa-escalas.html':'escalas','escalas.html':'escalas',
     'neuroped-master-biblioteca.html':'biblioteca','neuroped-master-vitrine.html':'biblioteca',
     'solicitar-neuroped-master.html':'biblioteca','gerador-cards.html':'biblioteca',
