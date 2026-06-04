@@ -295,7 +295,10 @@
     'ofc-phq-gad': 'livre', 'ofc-asq': 'livre', 'ofc-cssrs': 'livre', 'ofc-crafft': 'livre',
     'ofc-psc': 'livre', 'ofc-swyc': 'livre', 'ofc-vanderbilt': 'livre', 'ofc-cdc-milestones': 'livre',
     'ofc-sdq': 'livre-nc', 'ofc-rcads': 'livre-nc', 'ofc-mchat': 'livre',
-    'ofc-gmfcs': 'livre', 'ofc-macs': 'livre', 'ofc-minimacs': 'livre'
+    'ofc-gmfcs': 'livre', 'ofc-macs': 'livre', 'ofc-minimacs': 'livre',
+    // Lote 3 — genuinamente livres (atribuição à fonte). Os demais ofc3-* ficam
+    // como 'verificar' (proprietários: Conners, CARS-2, ADI-R, Vineland, WISC…).
+    'ofc3-snap-iv': 'livre', 'ofc3-scared': 'livre'
   };
   function licenseOf(id) {
     if (LICENSE[id]) return LICENSE[id];
@@ -318,6 +321,15 @@
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
+    // Lote 3 (padronizados) — construto correto p/ as perguntas-guia autorais.
+    'ofc3-snap-iv': 'tdah', 'ofc3-conners': 'tdah', 'ofc3-brief2': 'tdah',
+    'ofc3-abc-aberrant': 'comportamento',
+    'ofc3-cars2': 'tea', 'ofc3-adi-r': 'tea', 'ofc3-scq': 'tea',
+    'ofc3-vineland3': 'desenvolvimento', 'ofc3-denver2': 'desenvolvimento', 'ofc3-bayley4': 'desenvolvimento',
+    'ofc3-wisc5': 'aprendizagem', 'ofc3-nepsy2': 'aprendizagem',
+    'ofc3-mabc2': 'motor', 'ofc3-aseba-cbcl': 'saude_mental_global',
+    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor',
+    // Curadoria internacional (livres) — vinda do main.
     'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
     'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor',
     'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo'
