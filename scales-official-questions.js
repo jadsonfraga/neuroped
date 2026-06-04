@@ -239,7 +239,8 @@
     'ofc-swyc': 'desenvolvimento', 'ofc-cdc-milestones': 'desenvolvimento',
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
-    'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global'
+    'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
+    'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -283,12 +284,13 @@
     s.keywords = uniq([].concat(s.keywords || [], m.complaints, m.symptoms, [norm(s.domain || ''), bucket]));
     s._authorial_proxy = true;
     s._proxy_bucket = bucket;
-    // proveniência honesta
-    var lic = licenseOf(s.id || '');
+    // proveniência honesta (respeita licença já declarada no instrumento)
+    var lic = s.license_status || licenseOf(s.id || '');
     s.license_status = lic;
-    s.license_note = LIC_TXT[lic];
+    s.license_note = LIC_TXT[lic] || LIC_TXT.verificar;
     var ref = s.official_url ? (' Fonte oficial: ' + s.official_url) : '';
-    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). ' + LIC_TXT[lic] + ' Use o instrumento oficial para pontuação formal.' + ref;
+    var cite = s._citation ? (' Referência: ' + s._citation + (s._pmid ? ' (PMID ' + s._pmid + ')' : '')) : '';
+    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). ' + (LIC_TXT[lic] || LIC_TXT.verificar) + ' Use o instrumento oficial para pontuação formal.' + ref + cite;
     n++;
   });
   window.NEUROPED_OFFICIAL_QUESTIONS_FILLED = n;
