@@ -19,13 +19,15 @@
   .rawx{margin-top:14px;border:1px solid var(--line,rgba(169,164,255,.16));border-radius:var(--radius-md);background:rgba(124,118,210,.05)}.rawx>summary{cursor:pointer;padding:11px 14px;font-size:12.5px;font-weight:800;color:var(--muted,var(--text-muted));list-style:none;user-select:none}.rawx>summary::-webkit-details-marker{display:none}.rawx>summary::before{content:"▸ ";color:var(--teal,var(--primary))}.rawx[open]>summary::before{content:"▾ "}.rawx .result{margin:0 14px 14px}</style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./escalas-card-premium.css"><link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="./escalas-hero.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body>
   <main class="wrap">
     <section class="hero">
       <div class="kicker">NeuroPed SDG · Banco seguro de instrumentos</div>
-      <h1>Escalas e inventários por extenso</h1>
+      <h1 data-hero-title>Escalas e inventários por extenso</h1>
       <p>Camada estática para integrar, uma a uma, as escalas realmente preenchíveis. As escalas autorais/operacionais podem aparecer por extenso. Escalas proprietárias ou licenciadas ficam travadas até inserção local com autorização/licença.</p>
     </section>
 
@@ -148,6 +150,7 @@ renderList();renderDetail();
 <script src="./escalas-card-premium.js" defer></script><script src="./app-frame.js" defer></script>
 <script src="./ambient-effects.js" defer></script>
     <script src="./retro-arcade.js" defer></script>
+    <script src="./escalas-hero.js" defer></script>
     <script src="./np-lgpd-consent.js" defer></script>
 </body>
 </html>

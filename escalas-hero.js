@@ -1,14 +1,16 @@
 /* ============================================================
-   NeuroPed SDG — escalas-hero.js · Clinical Intelligence Engine
+   NeuroPed SDG — escalas-hero.js · camada "super-herói premium lúdico"
    ------------------------------------------------------------
-   Camada "super-herói infantil premium lúdico" do FILTRO de escalas:
-     - SOM AGRADÁVEL (não-moeda) em tudo que for clicável — sino/cintilância
-       sintetizado em Web Audio (0 assets, offline). Botões primários e cards
-       ganham um acorde de "power-up" mais rico.
-     - FAÍSCAS/RELÂMPAGOS no clique (FX cômico premium).
-     - TÍTULO herói: letras quebradas em <span> com flutuação + relâmpago.
-     - CÉU de raios/estrelas flutuando (movimento sutil na página).
-   Tudo idempotente, respeita prefers-reduced-motion, aba oculta e impressão.
+   Usada no FILTRO (Clinical Intelligence Engine) e nas telas vizinhas de
+   escalas (escala.html, banco-escalas.html) para dar CONSISTÊNCIA visual:
+     - SOM AGRADÁVEL (sino/cintilância warm em Web Audio, 0 assets, offline)
+       em tudo que for clicável — NÃO é a moeda 8-bit. Botões primários e
+       cards ganham um acorde de "power-up".
+     - FAÍSCAS/RELÂMPAGOS no ponto do clique (FX cômico premium).
+     - TÍTULO herói: letras quebradas em <span> com flutuação + relâmpago
+       (apenas em .engine-title ou [data-hero-title]).
+     - CÉU de raios/estrelas flutuando (movimento sutil) + backdrop aurora.
+   Idempotente; respeita prefers-reduced-motion, aba oculta e impressão.
    O som honra a preferência global np_sound_v1 (mesmo botão liga/desliga).
    ============================================================ */
 (function () {
@@ -21,41 +23,41 @@
   function reduce(){ try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } }
   function printing(){ try { return matchMedia('print').matches; } catch(e){ return false; } }
 
-  /* ---------- Web Audio: sino/cintilância agradável (warm) ---------- */
+  /* ---------- Web Audio: sino/cintilância warm e DISCRETO ---------- */
   var ctx = null, bus = null;
   function audio(){
     if (ctx) return ctx;
     var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
     ctx = new AC();
-    bus = ctx.createGain(); bus.gain.value = 0.10;          // discreto (consultório)
-    var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7200; // calor (sem aspereza)
+    bus = ctx.createGain(); bus.gain.value = 0.075;         // discreto (consultório/sala de espera)
+    var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6200; // warm (sem aspereza)
     bus.connect(lp); lp.connect(ctx.destination);
     return ctx;
   }
-  // tom suave com envelope sino (ataque rápido, cauda longa) — onda triangular = doce
+  // tom suave com envelope de sino (ataque rápido, cauda exponencial) — triangular = doce.
   function bell(freq, t0, dur, gain, type){
     var c = audio(); if (!c) return;
     var o = c.createOscillator(), g = c.createGain();
     o.type = type || 'triangle'; o.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.014);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g); g.connect(bus); o.start(t0); o.stop(t0 + dur + 0.03);
   }
   function gate(){ return enabled && !document.hidden && !printing(); }
-  // tap = díade doce e curta (ré/lá). hero = arpejo ascendente "power-up" + brilho.
+  // tap = quinta justa doce e curta (sol5→ré6). hero = arpejo maior ascendente "power-up".
   function play(kind){
     if (!gate()) return;
     var c = audio(); if (!c) return;
     if (c.state === 'suspended') { try { c.resume(); } catch (e) {} }
     var t = c.currentTime;
     if (kind === 'hero'){
-      [[659,0],[988,0.06],[1319,0.12]].forEach(function(n){ bell(n[0], t + n[1], 0.5, 0.16); });
-      bell(2637, t + 0.12, 0.4, 0.05, 'sine');           // cintilância no topo
+      [[659,0],[988,0.06],[1319,0.12]].forEach(function(n){ bell(n[0], t + n[1], 0.52, 0.15); });
+      bell(2637, t + 0.12, 0.42, 0.038, 'sine');           // cintilância no topo (bem sutil)
     } else {
-      bell(880,  t,        0.34, 0.13);                  // lá5
-      bell(1318, t + 0.035, 0.30, 0.10);                 // mi6 (díade alegre)
-      bell(2349, t + 0.02,  0.18, 0.035, 'sine');        // brilho sutil
+      bell(784,  t,        0.32, 0.115);                   // sol5
+      bell(1175, t + 0.04, 0.28, 0.085);                   // ré6 (quinta justa, alegre)
+      bell(2349, t + 0.02, 0.16, 0.028, 'sine');           // brilho discreto
     }
   }
 
@@ -68,7 +70,7 @@
     s.textContent = SPARKS[(Math.random()*SPARKS.length)|0];
     s.style.left = x + 'px'; s.style.top = y + 'px';
     document.body.appendChild(s);
-    setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); }, 550);
+    setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); }, 520);
   }
 
   /* ---------- Wiring de cliques ---------- */
@@ -103,8 +105,9 @@
 
   /* ---------- Título herói: quebra em letras + relâmpago ---------- */
   function heroTitle(){
-    var h = document.querySelector('.engine-title'); if (!h || h.dataset.eh) return;
-    var text = h.textContent; h.dataset.eh = '1';
+    var h = document.querySelector('.engine-title,[data-hero-title]'); if (!h || h.dataset.eh) return;
+    var text = (h.textContent || '').trim(); if (!text) return;
+    h.dataset.eh = '1'; h.classList.add('eh-title');
     h.setAttribute('aria-label', text); // mantém leitura íntegra no leitor de tela
     var words = text.split(/(\s+)/), i = 0, html = '';
     words.forEach(function(w){
@@ -125,23 +128,23 @@
     if (reduce() || document.getElementById('eh-sky')) return;
     var sk = document.createElement('div'); sk.id = 'eh-sky'; sk.className = 'eh-sky'; sk.setAttribute('aria-hidden','true');
     var glyphs = ['⚡','✨','✳','⭐','✴'];
-    for (var n = 0; n < 9; n++){
+    for (var n = 0; n < 7; n++){
       var s = document.createElement('span'); s.className = 'eh-star';
       s.textContent = glyphs[(Math.random()*glyphs.length)|0];
       s.style.left = (Math.random()*100) + 'vw';
       s.style.bottom = '-24px';
-      s.style.fontSize = (11 + Math.random()*14).toFixed(0) + 'px';
-      s.style.animationDuration = (13 + Math.random()*12).toFixed(1) + 's';
-      s.style.animationDelay = (Math.random()*12).toFixed(1) + 's';
+      s.style.fontSize = (11 + Math.random()*13).toFixed(0) + 'px';
+      s.style.animationDuration = (14 + Math.random()*12).toFixed(1) + 's';
+      s.style.animationDelay = (Math.random()*13).toFixed(1) + 's';
       sk.appendChild(s);
     }
     document.body.appendChild(sk);
   }
 
   function init(){
+    document.body && document.body.classList.add('eh-on');
     heroTitle(); sky(); mountToggle();
     document.addEventListener('pointerdown', onDown, true);
-    // destrava o áudio no 1º gesto (políticas de autoplay)
     window.addEventListener('pointerdown', function once(){ audio(); window.removeEventListener('pointerdown', once); }, { once:true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

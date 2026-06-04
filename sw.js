@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.45.12';
+const CACHE_NAME = 'neuroped-edj-v6.45.13';
 const SHELL = [
   './',
   './app-shell.html',
@@ -33,7 +33,7 @@ const SHELL = [
   './scales-evidence-panel.js','./curated-evidence/instruments.json',
   './ds-tokens.css','./ds-pilot.html',
   './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js',
-  './escalas-hero.css','./escalas-hero.js'
+  './escalas-hero.css','./escalas-hero.js','./scales-sensitivity.js'
 ];
 
 self.addEventListener('install', e => {
