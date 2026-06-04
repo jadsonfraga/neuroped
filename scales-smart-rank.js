@@ -24,50 +24,106 @@
     return norm(s).split(/[^a-z0-9]+/).filter(function (w) { return w.length >= 3; });
   }
 
-  // Construto clínico → gatilhos leigos/técnicos. Se a queixa contém QUALQUER
-  // gatilho, expandimos a busca com o construto + todos os tokens dos gatilhos.
+  // Construto clínico → gatilhos FORTES (específicos: ativam sozinhos) e FRACOS
+  // (ambíguos/genéricos: só ativam com corroboração — ≥2 fracos ou junto de 1
+  // forte). Isso eleva a PRECISÃO: um único termo ambíguo ("isolado",
+  // "irritado", "agitado") não dispara um construto inteiro sozinho.
+  // Na expansão só entram os tokens dos gatilhos FORTES do construto ativado —
+  // os fracos ficam de fora para não puxar instrumentos irrelevantes.
   var CONSTRUCTS = {
-    tea: ['tea', 'autismo', 'autista', 'espectro', 'nao olha', 'pouco olho', 'contato visual', 'nao aponta', 'brinca sozinho', 'isolado', 'repete', 'ecolalia', 'rigidez', 'rotina', 'nao responde nome', 'gira objetos', 'enfileira', 'restrito'],
-    tdah: ['tdah', 'atencao', 'desatento', 'desatencao', 'agitado', 'inquieto', 'nao para', 'levanta', 'impulsivo', 'hiperativo', 'hiperatividade', 'distrai', 'esquece', 'desorganizado', 'nao termina', 'aereo', 'avoado'],
-    linguagem: ['linguagem', 'fala', 'nao fala', 'atraso de fala', 'atraso fala', 'troca sons', 'troca som', 'gagueira', 'gagueja', 'disfluencia', 'vocabulario', 'nao monta frase', 'fala pouco', 'so aponta'],
-    aprendizagem: ['aprendizagem', 'escola', 'escolar', 'leitura', 'le ', 'nao le', 'escrita', 'nao escreve', 'dislexia', 'discalculia', 'matematica', 'conta', 'letras', 'alfabetiza', 'copia', 'rendimento', 'reprovou', 'troca letras', 'soletra'],
-    ansiedade: ['ansiedade', 'ansioso', 'medo', 'preocupa', 'tenso', 'panico', 'fobia', 'separacao', 'timido', 'evita', 'aflito', 'nervoso'],
-    humor: ['humor', 'triste', 'tristeza', 'depress', 'deprimido', 'irritado', 'irritabilidade', 'choro', 'chora', 'desanimo', 'sem vontade', 'anedonia'],
-    sono: ['sono', 'dorme', 'dormir', 'insonia', 'acorda', 'pesadelo', 'ronca', 'sonolento', 'cansado de dia'],
-    sensorial: ['sensorial', 'barulho', 'textura', 'etiqueta', 'luz forte', 'seletivo', 'seletividade', 'tato', 'tapa ouvido', 'enjoa'],
-    motor: ['motor', 'coordenacao', 'equilibrio', 'desajeitado', 'cai', 'tropeca', 'lapis', 'motricidade', 'tdc', 'anda na ponta', 'desengoncado'],
-    comportamento: ['comportamento', 'oposicao', 'opositor', 'desafia', 'birra', 'agressiv', 'bate', 'morde', 'limite', 'tod', 'explos', 'teimoso', 'desobedece'],
-    risco: ['risco', 'suicid', 'se machucar', 'machucar', 'morrer', 'sumir', 'autoagress', 'cortar', 'nao querer viver'],
-    adaptativo: ['adaptativo', 'autonomia', 'vida diaria', 'independencia', 'avd', 'veste', 'come sozinho', 'banheiro', 'depende'],
-    epilepsia: ['epilepsia', 'convuls', 'crise', 'ausencia', 'desmaio', 'abala', 'olhar parado', 'episodio'],
-    paralisiacerebral: ['paralisia', 'pc ', 'gmfcs', 'macs', 'cadeira de rodas', 'espasti', 'hipotonia', 'nao anda', 'mao fechada'],
-    desenvolvimento: ['desenvolvimento', 'marcos', 'atraso global', 'nao senta', 'nao engatinha', 'regressao', 'atrasado para idade', 'vigilancia']
+    tea: {
+      strong: ['tea', 'autismo', 'autista', 'espectro', 'nao aponta', 'brinca sozinho', 'ecolalia', 'nao responde ao nome', 'nao responde nome', 'gira objetos', 'enfileira', 'faz de conta', 'interesse restrito', 'contato visual'],
+      weak: ['nao olha', 'pouco olho', 'repete', 'rigidez', 'rotina', 'isolado', 'sozinho', 'restrito']
+    },
+    tdah: {
+      strong: ['tdah', 'desatento', 'desatencao', 'hiperativo', 'hiperatividade', 'impulsiv', 'nao termina', 'nao para quieto', 'aereo', 'avoado', 'desorganizado'],
+      weak: ['atencao', 'agitado', 'inquieto', 'nao para', 'levanta', 'distrai', 'esquece']
+    },
+    linguagem: {
+      strong: ['nao fala', 'atraso de fala', 'atraso fala', 'troca sons', 'troca som', 'gagueira', 'gagueja', 'disfluencia', 'nao monta frase', 'so aponta', 'fala enrolada'],
+      weak: ['fala', 'linguagem', 'vocabulario', 'fala pouco']
+    },
+    aprendizagem: {
+      strong: ['dislexia', 'discalculia', 'nao le', 'nao escreve', 'troca letras', 'dificuldade escolar', 'alfabetiza', 'soletra', 'reprovou', 'rendimento escolar'],
+      weak: ['escola', 'escolar', 'leitura', 'escrita', 'matematica', 'letras', 'copia']
+    },
+    ansiedade: {
+      strong: ['ansiedade', 'ansioso', 'panico', 'fobia', 'separacao', 'medo', 'preocupa demais', 'aflito'],
+      weak: ['preocupa', 'tenso', 'timido', 'evita', 'nervoso']
+    },
+    humor: {
+      strong: ['depress', 'deprimido', 'tristeza', 'triste', 'anedonia', 'sem vontade', 'desanimo'],
+      weak: ['irritado', 'irritabilidade', 'choro', 'chora', 'isolado', 'desinteresse']
+    },
+    sono: {
+      strong: ['sono', 'insonia', 'nao dorme', 'pesadelo', 'terror noturno', 'ronca', 'sonambulismo'],
+      weak: ['dorme', 'acorda', 'sonolento', 'cansado']
+    },
+    sensorial: {
+      strong: ['sensorial', 'tapa ouvido', 'seletividade', 'hipersensiv', 'defensivo sensorial'],
+      weak: ['barulho', 'textura', 'etiqueta', 'luz', 'seletivo', 'tato']
+    },
+    motor: {
+      strong: ['coordenacao', 'motricidade', 'desajeitado', 'tdc', 'anda na ponta', 'desengoncado', 'descoordenado'],
+      weak: ['motor', 'equilibrio', 'cai', 'tropeca', 'lapis']
+    },
+    comportamento: {
+      strong: ['oposic', 'opositor', 'desafia', 'tod', 'agressiv', 'explos', 'birra', 'desobedece', 'conduta'],
+      weak: ['comportamento', 'bate', 'morde', 'limite', 'teimoso']
+    },
+    risco: {
+      strong: ['suicid', 'se machucar', 'se cortar', 'autoagress', 'nao querer viver', 'tirar a vida', 'morrer', 'sumir', 'cortar'],
+      weak: []
+    },
+    substancias: {
+      strong: ['alcool', 'maconha', 'cigarro', 'vape', 'substancia', 'droga', 'crafft', 'bebida'],
+      weak: []
+    },
+    adaptativo: {
+      strong: ['autonomia', 'vida diaria', 'avd', 'nao se veste', 'depende para', 'come sozinho', 'autocuidado'],
+      weak: ['independencia', 'veste', 'banheiro', 'depende']
+    },
+    epilepsia: {
+      strong: ['epilepsia', 'convuls', 'ausencia', 'olhar parado', 'crise epil', 'abala'],
+      weak: ['crise', 'desmaio', 'episodio']
+    },
+    paralisiacerebral: {
+      strong: ['paralisia cerebral', 'gmfcs', 'macs', 'espasti', 'hipotonia', 'cadeira de rodas', 'nao anda'],
+      weak: ['paralisia', 'mao fechada']
+    },
+    desenvolvimento: {
+      strong: ['atraso global', 'regressao', 'nao senta', 'nao engatinha', 'marcos', 'atrasado para idade', 'vigilancia do desenvolvimento'],
+      weak: ['desenvolvimento', 'atraso']
+    }
   };
 
-  // expand(text) → conjunto de tokens enriquecido com construtos detectados.
+  // Um construto ATIVA se: ≥1 gatilho forte, OU ≥2 gatilhos fracos (corroboração).
+  function activeConstructs(text) {
+    var t = ' ' + norm(text) + ' ', active = {};
+    Object.keys(CONSTRUCTS).forEach(function (k) {
+      var c = CONSTRUCTS[k];
+      var strong = (c.strong || []).filter(function (w) { return t.indexOf(w) >= 0; });
+      var weak = (c.weak || []).filter(function (w) { return t.indexOf(w) >= 0; });
+      if (strong.length >= 1 || weak.length >= 2) active[k] = strong;
+    });
+    return active;
+  }
+
+  // expand(text) → tokens da queixa + construtos ativados + tokens dos gatilhos
+  // FORTES desses construtos (os fracos/ambíguos NÃO entram na expansão).
   function expand(text) {
-    var t = ' ' + norm(text) + ' ';
     var out = {};
     tokens(text).forEach(function (x) { out[x] = 1; });
-    Object.keys(CONSTRUCTS).forEach(function (k) {
-      var trig = CONSTRUCTS[k];
-      var hit = trig.some(function (w) { return t.indexOf(' ' + w) >= 0 || t.indexOf(w + ' ') >= 0 || t.indexOf(w) >= 0; });
-      if (hit) {
-        out[k] = 1;
-        trig.forEach(function (w) { w.split(' ').forEach(function (x) { if (x.length >= 3) out[x] = 1; }); });
-      }
+    var active = activeConstructs(text);
+    Object.keys(active).forEach(function (k) {
+      out[k] = 1;
+      (CONSTRUCTS[k].strong || []).forEach(function (w) { w.split(' ').forEach(function (x) { if (x.length >= 3) out[x] = 1; }); });
     });
     return Object.keys(out);
   }
 
   // Quais construtos a queixa ativou (para "por que apareceu" e diferenciais).
-  function constructsOf(text) {
-    var t = ' ' + norm(text) + ' ', hits = [];
-    Object.keys(CONSTRUCTS).forEach(function (k) {
-      if (CONSTRUCTS[k].some(function (w) { return t.indexOf(w) >= 0; })) hits.push(k);
-    });
-    return hits;
-  }
+  function constructsOf(text) { return Object.keys(activeConstructs(text)); }
 
   function modalityOf(s) {
     if (!s) return 'escala';
