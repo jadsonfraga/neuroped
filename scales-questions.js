@@ -89,6 +89,58 @@
       q('✍️', 'Evita ou cansa muito rápido em ler/escrever?',
         'Esquiva e fadiga podem indicar dificuldade específica.',
         ['some na hora da lição', 'reclama que "não consegue"'], ['escola', 'casa'], 60)
+    ],
+    sono: [
+      q('🌙', 'Tem dificuldade para pegar no sono ou acorda muito à noite?',
+        'Início e manutenção do sono nas últimas semanas.',
+        ['demora mais de 30min para dormir', 'acorda várias vezes', 'só dorme acompanhado'], ['casa'], 12),
+      q('😴', 'Durante o dia parece sonolento, irritado ou "desligado" por falta de sono?',
+        'Repercussão diurna costuma indicar sono insuficiente ou fragmentado.',
+        ['cochila fora de hora', 'muito irritado de manhã', 'chora fácil'], ['casa', 'escola'], 24),
+      q('🛏️', 'A rotina antes de dormir é agitada (telas, sem horário fixo)?',
+        'Higiene do sono: ambiente e rotina influenciam diretamente.',
+        ['usa tela até deitar', 'sem horário de dormir', 'quarto claro/barulhento'], ['casa'], 12)
+    ],
+    sensorial: [
+      q('🔊', 'Reage de forma intensa a sons, luzes, texturas ou toques?',
+        'Hiper-reatividade sensorial: incômodo desproporcional a estímulos comuns.',
+        ['tapa os ouvidos com barulho', 'recusa certas roupas/etiquetas', 'enjoa com texturas'], ['casa', 'escola'], 12),
+      q('🤸', 'Procura muito movimento, apertos ou estímulos fortes?',
+        'Busca sensorial: parece precisar de estímulo intenso para se regular.',
+        ['gira/pula sem parar', 'gosta de apertos fortes', 'esbarra de propósito'], ['casa', 'social'], 18),
+      q('🍽️', 'A seletividade alimentar parece ligada a textura/cheiro (não só birra)?',
+        'Aspecto sensorial da alimentação, distinto de manha.',
+        ['só come uma textura', 'enjoa com cheiro forte'], ['casa'], 18)
+    ],
+    motor: [
+      q('🤹', 'Parece desajeitado, tropeça ou esbarra mais que os colegas?',
+        'Coordenação motora ampla comparada aos pares.',
+        ['cai com frequência', 'dificuldade para pular/correr', 'evita o parquinho'], ['casa', 'escola'], 36),
+      q('✏️', 'Tem dificuldade com tarefas de mão fina (lápis, botão, tesoura)?',
+        'Coordenação motora fina e preensão.',
+        ['letra muito difícil', 'cansa ao escrever', 'não abotoa/amarra'], ['escola', 'casa'], 48),
+      q('⏱️', 'Demorou para alcançar marcos motores (sentar, andar)?',
+        'Histórico de marcos motores — comparar com o esperado.',
+        ['andou após 18 meses', 'ainda instável para a idade'], ['casa'], 6, 60)
+    ],
+    aprendizagem: [
+      q('🔤', 'Tem dificuldade para reconhecer letras/sons ou juntar sílabas na idade esperada?',
+        'Base da leitura (consciência fonológica / decodificação).',
+        ['troca/inverte letras (b/d, p/q)', 'lê muito devagar', 'não junta sílabas'], ['escola'], 60),
+      q('🔢', 'Erra muito em contas simples ou confunde quantidades?',
+        'Habilidades numéricas básicas.',
+        ['conta sempre nos dedos', 'confunde maior/menor', 'erra somas simples'], ['escola'], 72),
+      q('🧠', 'O esforço é grande, mas o rendimento fica abaixo do esperado para ele?',
+        'Discrepância esforço×resultado sugere dificuldade específica.',
+        ['estuda e vai mal', 'cansa rápido na lição', 'evita ler'], ['escola', 'casa'], 72)
+    ],
+    humor: [
+      q('😔', 'Anda muito triste, desanimado ou perdeu o interesse pelo que gostava?',
+        'Humor deprimido / anedonia mantidos por semanas.',
+        ['não quer brincar', 'chora fácil', 'fica isolado'], ['casa', 'escola'], 60),
+      q('🌋', 'Tem explosões de raiva desproporcionais e frequentes?',
+        'Irritabilidade / desregulação — intensidade e frequência importam.',
+        ['crises por pouco', 'demora a se acalmar', 'agride no auge'], ['casa', 'escola'], 48)
     ]
   };
 
@@ -102,10 +154,18 @@
   function genericFor(tag) {
     var tax = getTax();
     var fe = (tax && tax.functionalExamples) ? tax.functionalExamples(tag) : null;
-    if (!fe) return [];
-    return [q(fe.emoji || '🔎', 'O que você observa em relação a isso no dia a dia?',
-      'Compare com o esperado para a idade e com outras crianças.',
-      (fe.observe || fe.examples || []).slice(0, 4), ['casa', 'escola'], 0)];
+    var ex = (fe && (fe.observe || fe.examples)) || [];
+    var emoji = (fe && fe.emoji) || '🔎';
+    // Fallback honesto, porém COMPLETO: frequência+contexto e impacto funcional
+    // (em vez de uma única pergunta vaga). Genérico — apoio à observação.
+    return [
+      q(emoji, 'Com que frequência isso aparece, e em quais situações do dia a dia?',
+        'Frequência e contexto ajudam a separar variação normal de algo a investigar.',
+        ex.slice(0, 4), ['casa', 'escola'], 0),
+      q('📈', 'Isso atrapalha a rotina dele — em casa, na escola ou com os amigos?',
+        'O impacto funcional orienta a conduta mais do que o sintoma isolado.',
+        ['na escola', 'em casa', 'com os amigos'], ['casa', 'escola', 'social'], 0)
+    ];
   }
 
   function guide(tag, ageMonths) {
