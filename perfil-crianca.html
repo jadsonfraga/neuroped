@@ -97,14 +97,81 @@ h1{font:700 clamp(28px,5vw,42px)/1.05 "Fraunces",Georgia,serif;color:var(--wine)
 .synhead{font:800 22px "Fraunces",Georgia,serif;color:var(--wine);margin:0 0 4px}
 .synsub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
 @media(prefers-reduced-motion:reduce){.child{transition:none}}
+
+/* ============================================================
+   PREMIUM SKIN (Onda 1 — Perfil do paciente)
+   Camada de override (vence na cascata) — eleva a percepção a
+   "produto premium" SEM tocar a lógica/IDs. Reversível: remova este bloco.
+   ============================================================ */
+.wrap{max-width:980px;padding-top:24px}
+/* Hero — vidro escuro com brilho superior, borda-fio interna e profundidade */
+.hero{background:
+    radial-gradient(760px 340px at 90% -34%,rgba(231,201,139,.13),transparent 60%),
+    radial-gradient(620px 320px at -6% 0%,rgba(124,118,210,.22),transparent 58%),
+    linear-gradient(150deg,#17152f,#1d1a49 56%,#131229);
+  border:1px solid rgba(169,164,255,.20);border-radius:30px;padding:32px 30px;
+  box-shadow:0 34px 90px -38px rgba(3,2,16,.92),inset 0 1px 0 rgba(255,255,255,.06)}
+.hero::after{content:"";position:absolute;inset:11px;border:1px solid rgba(231,201,139,.14);border-radius:21px;pointer-events:none}
+.kicker{display:inline-block;background:rgba(124,118,210,.16);border:1px solid rgba(169,164,255,.24);
+  padding:5px 12px;border-radius:999px;letter-spacing:.16em;font-size:10.5px}
+h1{letter-spacing:-.01em;margin-top:12px;text-shadow:0 2px 36px rgba(124,118,210,.28)}
+.lead{font-size:15px}
+/* Cards de seção (.panel) — vidro elevado, coerente com o Card System */
+.panel{background:linear-gradient(180deg,rgba(124,118,210,.11),rgba(124,118,210,.035));
+  border:1px solid rgba(169,164,255,.16);border-radius:22px;padding:20px;
+  box-shadow:0 22px 60px -32px rgba(3,2,16,.85),inset 0 1px 0 rgba(255,255,255,.045)}
+/* Rótulo de seção com trilho de acento (ritmo visual) */
+.section-title{margin-top:30px}
+.section-title h2{display:flex;align-items:center;gap:10px}
+.section-title h2::before{content:"";width:20px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--primary,#7c79ff),transparent)}
+/* Cartões de criança — tiles premium com estado ativo em destaque */
+.child{background:linear-gradient(180deg,rgba(124,118,210,.14),rgba(124,118,210,.045));
+  border-radius:20px;padding:17px;box-shadow:0 16px 42px -26px rgba(3,2,16,.82)}
+.child:hover{transform:translateY(-3px);box-shadow:0 28px 64px -28px rgba(91,84,232,.52)}
+.child.active{box-shadow:0 0 0 1px var(--primary,#7c79ff),0 24px 60px -24px rgba(91,84,232,.6)}
+.child .av{width:46px;height:46px;border-radius:15px;
+  box-shadow:0 10px 24px -10px rgba(91,84,232,.7),inset 0 1px 0 rgba(255,255,255,.28)}
+.badge-active{background:linear-gradient(135deg,var(--primary,#7c79ff),var(--primary-deep,#4f46e5));
+  box-shadow:0 8px 18px -8px rgba(91,84,232,.8)}
+.child .acts .pri{box-shadow:0 10px 22px -12px rgba(91,84,232,.7)}
+/* Próximos passos — painéis de explicabilidade (estilo InsightCard) */
+.insights{background:linear-gradient(180deg,rgba(124,118,210,.10),rgba(124,118,210,.04));border-radius:16px;padding:15px 16px}
+.ins{display:flex;gap:9px;align-items:flex-start;border-radius:12px;padding:9px 12px}
+.ins::before{content:"›";font-weight:900;opacity:.65;line-height:1.4}
+/* Linha do tempo — linhas com hover e ponto com brilho */
+.tl-item{padding:12px 6px;border-radius:12px;transition:background .18s}
+.tl-item:hover{background:rgba(124,118,210,.07)}
+.tl-dot{box-shadow:0 0 0 3px rgba(124,118,210,.18),0 0 12px var(--primary,#7c79ff)}
+.tl-pct{font-size:16px}
+.tl-redo{transition:background .18s,color .18s}
+/* Tiles de navegação (.connect) — premium com elevação no hover */
+.connect a{background:linear-gradient(180deg,rgba(124,118,210,.10),rgba(124,118,210,.04));border-radius:16px;padding:14px 15px;
+  transition:transform .18s,border-color .18s,box-shadow .18s}
+.connect a:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.34);box-shadow:0 20px 44px -26px rgba(91,84,232,.5)}
+.connect a .e{font-size:22px}
+/* Botões — gradiente, profundidade e press tátil */
+.btn{box-shadow:0 14px 30px -14px rgba(91,84,232,.6);transition:transform .12s,box-shadow .18s,filter .18s}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn.ghost{box-shadow:none}
+/* Síntese / medicação — densidade clínica premium */
+.synhead{font-size:26px}
+.medrow,.synline{border-radius:10px;transition:background .18s}
+/* Campos — foco premium */
+.field input:focus,.field select:focus,.field textarea:focus{box-shadow:0 0 0 4px rgba(124,118,210,.22),0 0 0 1px var(--primary,#7c79ff)}
+/* Atalho da Trajetória — CTA premium */
+#npTrajLink{transition:transform .18s,box-shadow .18s,border-color .18s}
+#npTrajLink:hover{transform:translateY(-2px);box-shadow:0 22px 48px -26px rgba(91,84,232,.55)}
+@media(prefers-reduced-motion:reduce){.child,.connect a,.btn,.tl-item,#npTrajLink{transition:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><link rel="stylesheet" href="./app-polish-mobile.css">
-<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css"><link rel="stylesheet" href="./ds-bridge.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body>
 <main class="wrap">
-  <a class="back" href="./central-atalhos.html">‹ Central de atalhos</a>
+  <a class="back" href="./index.html">‹ Central de atalhos</a>
   <section class="hero">
     <div class="kicker">NeuroPed EDJ · acompanhamento</div>
     <h1>Perfil da Criança</h1>
