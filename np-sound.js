@@ -20,23 +20,30 @@
   if (window.__npSound) return; window.__npSound = true;
 
   var KEY = 'np_sound_v1';
-  var enabled = false;
-  try { enabled = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  // Padrão LIGADO (pedido: video game retrô nos cliques). Quem desligou antes,
+  // permanece desligado (respeita a escolha salva).
+  var enabled = true;
+  try { var st = localStorage.getItem(KEY); if (st !== null) enabled = (st === '1'); } catch (e) {}
 
-  var ctx = null, master = null, filt = null;
+  var ctx = null, master = null, filt = null, bright = null;
   function audio() {
     if (ctx) return ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
-    filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 5200; // warm
-    master = ctx.createGain(); master.gain.value = 0.08;                                  // sempre baixo
-    filt.connect(master); master.connect(ctx.destination);
+    master = ctx.createGain(); master.gain.value = 0.085;        // sempre baixo (consultório)
+    master.connect(ctx.destination);
+    // Barramento WARM (tons suaves, legado) — lowpass.
+    filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 5200;
+    filt.connect(master);
+    // Barramento BRIGHT (chiptune 8-bit) — quase sem filtro, deixa o "quadrado" crocante.
+    bright = ctx.createBiquadFilter(); bright.type = 'lowpass'; bright.frequency.value = 9000;
+    bright.connect(master);
     return ctx;
   }
 
-  // Um tom curto com envelope (ataque/queda) suave.
-  function tone(freq, dur, type, gain, delay) {
+  // Um tom curto com envelope (ataque/queda). bus: 'bright' (8-bit) ou warm (padrão).
+  function tone(freq, dur, type, gain, delay, busBright) {
     var c = audio(); if (!c) return;
     if (c.state === 'suspended') { try { c.resume(); } catch (e) {} }
     var t0 = c.currentTime + (delay || 0);
@@ -44,10 +51,14 @@
     o.type = type || 'sine'; o.frequency.value = freq;
     var peak = (gain == null ? 0.6 : gain);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.012);          // ataque rápido
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);          // queda suave
-    o.connect(g); g.connect(filt);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.008);          // ataque rápido (8-bit "snap")
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);          // queda
+    o.connect(g); g.connect(busBright ? bright : filt);
     o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  // Sequência de notas "quadradas" (chiptune) no barramento bright.
+  function blips(seq, type, gain) {
+    seq.forEach(function (n) { tone(n[0], n[2] || 0.07, type || 'square', gain == null ? 0.5 : gain, n[1], true); });
   }
   function chord(notes, dur, type, gain, stagger) {
     notes.forEach(function (f, i) { tone(f, dur, type, gain, (stagger || 0) * i); });
@@ -56,13 +67,20 @@
 
   function gate() { return enabled && !document.hidden && !matchMedia('print').matches; }
 
+  // ---- Paleta 8-bit (Super Mario Bros): moeda, pulo, power-up, cano, fanfarra.
   var S = {
-    tap:       function () { if (gate()) tone(660, 0.05, 'sine', 0.5); },
-    nav:       function () { if (gate()) { tone(523, 0.06, 'sine', 0.5); tone(392, 0.10, 'sine', 0.4, 0.04); } },
-    success:   function () { if (gate()) { chord([659.25, 987.77], 0.18, 'sine', 0.5, 0.06); haptic(12); } },
-    error:     function () { if (gate()) { tone(196, 0.18, 'triangle', 0.5); tone(185, 0.22, 'triangle', 0.4, 0.06); haptic([8, 40, 8]); } },
-    celebrate: function () { if (gate()) { chord([523.25, 659.25, 783.99, 1046.5], 0.22, 'sine', 0.55, 0.075); haptic(18); pulse(); } },
-    welcome:   function () { if (gate()) chord([392.00, 523.25, 659.25, 783.99], 0.26, 'sine', 0.5, 0.09); }   // assinatura de boas-vindas
+    // CLIQUE = "moeda" (B5 → E6), curto e cristalino.
+    tap:       function () { if (gate()) blips([[987.77, 0, 0.06], [1318.51, 0.05, 0.13]], 'square', 0.42); },
+    // NAVEGAR = "pulo" (quadrado subindo).
+    nav:       function () { if (gate()) { blips([[392, 0], [523, 0.03], [659, 0.06], [784, 0.09, 0.10]], 'square', 0.40); haptic(8); } },
+    // SUCESSO = "power-up" (corrida ascendente rápida).
+    success:   function () { if (gate()) { blips([[392, 0], [523, 0.04], [659, 0.08], [784, 0.12], [1047, 0.16, 0.12]], 'square', 0.45); haptic(12); } },
+    // ERRO = descida no "cano" (notas graves caindo).
+    error:     function () { if (gate()) { blips([[330, 0, 0.12], [262, 0.08, 0.14], [196, 0.16, 0.20]], 'square', 0.42); haptic([8, 40, 8]); } },
+    // CELEBRAR = fanfarra de fim de fase (arpejo triunfante) + pulso visual.
+    celebrate: function () { if (gate()) { blips([[523, 0], [659, 0.07], [784, 0.14], [1047, 0.21], [1319, 0.28], [1568, 0.36, 0.18]], 'square', 0.48); haptic(18); pulse(); } },
+    // BOAS-VINDAS = motivo de abertura do tema (E E . E C E G), discreto.
+    welcome:   function () { if (gate()) blips([[659, 0], [659, 0.16], [659, 0.36], [523, 0.50], [659, 0.62], [784, 0.80, 0.18]], 'square', 0.40); }
   };
 
   // Pulso visual sutil (só em vitórias grandes) — glow radial que aparece e some.
