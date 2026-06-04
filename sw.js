@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.45.11';
+const CACHE_NAME = 'neuroped-edj-v6.45.12';
 const SHELL = [
   './',
   './app-shell.html',
@@ -32,7 +32,8 @@ const SHELL = [
   './clinical-explainability.js','./clinical-normalization.js','./clinical-timeline-engine.js','./phenotype-engine.js','./therapeutic-burden-engine.js','./response-engine.js','./contradiction-engine.js','./clinical-decision-support.js','./clinical-visual-schema.js','./clinical-config.example.js','./clinical-config.js','./clinical-config-adapter.js','./clinical-trajectory-explain.js','./clinical-trajetoria.html','./clinical-trajetoria-demo.html',
   './scales-evidence-panel.js','./curated-evidence/instruments.json',
   './ds-tokens.css','./ds-pilot.html',
-  './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js'
+  './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js',
+  './escalas-hero.css','./escalas-hero.js'
 ];
 
 self.addEventListener('install', e => {

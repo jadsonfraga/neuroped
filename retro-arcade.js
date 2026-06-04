@@ -60,10 +60,10 @@
   var PLAYFUL = /^(comunicacao-alternativa|area-filho|portal-familia-livre|gerador-cards)\.html$/.test(FILE);
 
   // Telas profissionais que PODEM ter o feedback sonoro sutil (sem a decoração
-  // retrô): o Clinical Intelligence Engine é uma ferramenta do clínico para
-  // buscar/ranquear escalas — não um rastreio dos pais. O som segue o próprio
-  // toggle 🔊 do np-sound (não força "off" aqui).
-  var SOUND_OK = /^(filtro-escalas)\.html$/.test(FILE);
+  // retrô). O Clinical Intelligence Engine (filtro-escalas) tem a PRÓPRIA camada
+  // de som agradável (escalas-hero.js) — por isso fica fora daqui, para a moeda
+  // 8-bit do np-sound não duplicar com o sino premium do hero.
+  var SOUND_OK = /^(__none__)\.html$/.test(FILE);
 
   // Controle do usuário: preferência persistente liga/desliga o retrô. API global
   // + um botão 🎮 nas telas lúdicas (em qualquer estado, para poder reativar).
