@@ -285,6 +285,16 @@ details p{color:var(--muted);font-size:14px;margin:0 0 14px}
   var byId = function(id){return document.getElementById(id);};
   byId('priceVal').innerHTML = PRICE + '<small> à vista</small>';
 
+  // Honestidade (pré-lançamento): hoje o acesso é liberado por CONTATO/WhatsApp,
+  // com entrega manual — não há cobrança automática nem desbloqueio digital
+  // instantâneo (em preparação). Evita "checkout que não entrega".
+  try {
+    var _pn = document.createElement('p');
+    _pn.style.cssText = 'margin:10px 0 0;font-size:12.5px;line-height:1.5;color:#e6d4a6;background:rgba(231,201,139,.10);border:1px solid rgba(231,201,139,.28);border-radius:12px;padding:9px 12px';
+    _pn.innerHTML = '⏳ <b>Pré-lançamento.</b> O acesso é combinado por <b>contato no WhatsApp</b>, com entrega manual. <b>Não há cobrança automática</b> nesta etapa — o checkout e o desbloqueio digital estão em preparação.';
+    var pv = byId('priceVal'); if (pv && pv.parentNode) pv.parentNode.appendChild(_pn);
+  } catch (e) {}
+
   function goCheckout(e){
     if (e) e.preventDefault();
     if (CHECKOUT_URL) { window.open(CHECKOUT_URL, '_blank', 'noopener'); return; }
