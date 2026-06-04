@@ -1883,3 +1883,566 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     },
   };
 })();
+
+
+/* ===== scales-direct-tasks.js ===== */
+/* NeuroPed EDJ — Testes diretos com a criança (tarefas aplicadas)
+ * ---------------------------------------------------------------
+ * Biblioteca estruturada de TAREFAS DIRETAS (aplicadas ativamente na
+ * criança), complementando as escalas de heterorrelato. Cada tarefa traz:
+ *   emoji · título · instrução LÚDICA (o que dizer/fazer) · o que observar
+ *   · faixa etária opcional (em meses).
+ *
+ * Roteia pelo domínio da escala (reaproveita NeuroPedCoach.themeOf quando
+ * presente) para sugerir as tarefas mais pertinentes ao caso — assim o
+ * sistema "também sugere testes diretos", não só questionários.
+ *
+ * Apoio à observação clínica; NÃO é teste normatizado nem ponto de corte.
+ *
+ * API:
+ *   window.NeuroPedDirectTasks.forDomain(domain, ageMonths) -> [tarefa, ...]
+ */
+(function () {
+  'use strict';
+  if (window.NeuroPedDirectTasks) return;
+
+  function norm(s) {
+    return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // Tarefas por "balde" funcional. faixa:[minMeses,maxMeses] é opcional.
+  var TASKS = {
+    linguagem: [
+      { emoji: '🐶', titulo: 'Nomeação por figuras', instrucao: 'Mostre objetos ou figuras: "O que é isso?" (copo, bola, cachorro, mão, sapato).', observar: 'Quantos nomeia, trocas de som, se usa gesto no lugar da palavra.' },
+      { emoji: '💬', titulo: 'Compreensão de ordem', instrucao: 'Sem apontar, peça: "Pegue o lápis e coloque em cima da mesa."', observar: 'Se cumpre as duas etapas sem pista visual.' },
+      { emoji: '🗣️', titulo: 'Repetição de frase', instrucao: '"O menino pegou a bola azul." Peça para repetir igualzinho.', observar: 'Se omite ou troca palavras (memória + fala).' },
+      { emoji: '⚡', titulo: 'Nomeação rápida', instrucao: 'Aponte 5 figuras conhecidas em sequência: "Diga o nome o mais rápido que conseguir."', observar: 'Velocidade, pausas e travas de evocação.', faixa: [48, 215] }
+    ],
+    social: [
+      { emoji: '🙋', titulo: 'Resposta ao nome', instrucao: 'Chame o nome 2–3 vezes, fora do campo de visão da criança.', observar: 'Se vira e busca o olhar de quem chamou.', faixa: [12, 72] },
+      { emoji: '👉', titulo: 'Atenção compartilhada', instrucao: 'Aponte algo interessante e diga "Olha!".', observar: 'Se segue o apontar e alterna o olhar entre você e o objeto.', faixa: [12, 72] },
+      { emoji: '🧸', titulo: 'Brincar simbólico', instrucao: 'Ofereça boneco, copo e colher: "Vamos dar comidinha?"', observar: 'Se faz de conta, imita e cria pequenas cenas.', faixa: [18, 84] },
+      { emoji: '🔁', titulo: 'Troca de turno', instrucao: 'Brinque de "minha vez, sua vez" com uma bola ou torre de blocos.', observar: 'Se espera a vez e mantém a reciprocidade.' }
+    ],
+    atencao: [
+      { emoji: '🎯', titulo: 'Atenção auditiva (alvo)', instrucao: 'Leia: sol, bola, peixe, bola, casa, bola. Combine: "Bata na mesa quando ouvir BOLA."', observar: 'Acertos, omissões e impulsos (bate na palavra errada).' },
+      { emoji: '🔢', titulo: 'Span de dígitos (memória operacional)', instrucao: 'Peça para repetir: 4-8-2; depois 7-1-9-3; depois de trás pra frente: 5-2-9.', observar: 'Maior sequência correta, na ordem direta e inversa.', faixa: [60, 215] },
+      { emoji: '🚦', titulo: 'Inibição (dia/noite)', instrucao: 'Combine: quando eu disser "dia", você diz "noite"; e o contrário.', observar: 'Se segura a resposta automática (controle inibitório).', faixa: [60, 215] },
+      { emoji: '🧭', titulo: 'Sequência de 3 passos', instrucao: '"Desenhe um círculo, escreva seu nome e faça um risco embaixo."', observar: 'Se mantém a ordem e conclui (planejamento).' }
+    ],
+    escola: [
+      { emoji: '🔤', titulo: 'Reconhecimento de letras', instrucao: 'Mostre letras fora de ordem (A, M, S, O, P, E): "Vamos descobrir as letras? 🎈"', observar: 'Quantas nomeia e confusões (b/d, p/q).', faixa: [48, 144] },
+      { emoji: '🧩', titulo: 'Consciência fonológica', instrucao: '"Com que som começa BOLA?" · "Bata palma em cada pedaço: ca-sa, bo-ne-ca" · "O que rima com PÃO?"', observar: 'Sílabas, som inicial e rima.', faixa: [48, 120] },
+      { emoji: '📖', titulo: 'Leitura curta', instrucao: '"Lia viu um sapo no jardim. O sapo pulou perto da flor." Pergunte: quem viu o sapo? onde estava?', observar: 'Fluência, trocas e compreensão.', faixa: [72, 215] },
+      { emoji: '✏️', titulo: 'Ditado', instrucao: 'Dite: casa, bola, janela, prato. Depois a frase: "A menina gosta de ler."', observar: 'Trocas, omissões e organização na linha.', faixa: [72, 215] },
+      { emoji: '🔢', titulo: 'Matemática rápida', instrucao: 'Resolva junto: 8+5, 14−6, 3 grupos de 4, metade de 10.', observar: 'Estratégia (conta nos dedos?) e acertos.', faixa: [72, 215] }
+    ],
+    sensorial: [
+      { emoji: '✨', titulo: 'Termômetro sensorial', instrucao: '"De 0 a 5, quanto incomoda: barulho de liquidificador? etiqueta na roupa? luz forte?"', observar: 'Reações e quais estímulos pesam mais.' },
+      { emoji: '🖐️', titulo: 'Tolerância gradual', instrucao: 'Ofereça olhar → tocar → cheirar um item novo, sem forçar.', observar: 'Até onde aceita e o que ajuda a regular.' }
+    ],
+    emocional: [
+      { emoji: '😊', titulo: 'Nomear emoções', instrucao: 'Peça para escolher/apontar: feliz, triste, bravo, com medo, cansado.', observar: 'Vocabulário emocional e reconhecimento.' },
+      { emoji: '🌡️', titulo: 'Termômetro emocional', instrucao: '"De 0 a 10, quanto está a preocupação/tristeza hoje?"', observar: 'Intensidade percebida e gatilhos.', faixa: [72, 215] },
+      { emoji: '💬', titulo: 'Situação social', instrucao: '"Um colega não respondeu sua mensagem. O que pode ter acontecido?"', observar: 'Flexibilidade de interpretação (viés negativo?).', faixa: [96, 215] },
+      { emoji: '🛟', titulo: 'Checagem de segurança', instrucao: 'Com acolhimento e linguagem apropriada, pergunte se já pensou em se machucar ou sumir. Liste 3 adultos de confiança.', observar: 'Se positivo/hesitante: acionar protocolo — CVV 188 · SAMU 192.', risk: true, faixa: [96, 215] }
+    ],
+    motor: [
+      { emoji: '🤸', titulo: 'Coordenação grossa', instrucao: 'Peça: pular num pé só, andar sobre uma linha, chutar e pegar uma bola.', observar: 'Equilíbrio, quedas e diferença em relação à idade.' },
+      { emoji: '✍️', titulo: 'Motricidade fina', instrucao: 'Peça para recortar, abotoar e desenhar uma pessoa.', observar: 'Preensão do lápis, esforço e legibilidade.' }
+    ],
+    registro: [
+      { emoji: '📝', titulo: 'Linha do tempo do evento', instrucao: 'Registre hora, duração, gatilho, sinais associados e como foi a recuperação.', observar: 'Padrão, consciência durante o evento e impacto na rotina.' },
+      { emoji: '🎥', titulo: 'Registro em vídeo', instrucao: 'Quando possível e seguro, grave um vídeo curto do evento para mostrar ao médico.', observar: 'Nunca atrase o socorro para filmar.' }
+    ],
+    geral: [
+      { emoji: '🎲', titulo: 'Observação funcional', instrucao: 'Proponha uma tarefa simples (montar, guardar, vestir) como brincadeira.', observar: 'Independência, ajuda necessária e tolerância à frustração.' },
+      { emoji: '🗣️', titulo: 'Linguagem espontânea', instrucao: 'Converse sobre algo que a criança gosta e deixe contar.', observar: 'Palavras/frases usadas sem modelo, clareza e iniciativa.' },
+      { emoji: '🤝', titulo: 'Interação', instrucao: 'Brinquem juntos por alguns minutos.', observar: 'Se compartilha, espera a vez e responde ao adulto.' }
+    ]
+  };
+
+  // domínio/tema clínico → baldes de tarefas pertinentes
+  var MAP = {
+    linguagem: ['linguagem'],
+    social: ['social'], rigidez: ['social'],
+    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao'],
+    escola: ['escola'],
+    sensorial: ['sensorial'], alimentacao: ['sensorial'],
+    humor: ['emocional'], ansiedade: ['emocional'], regulacao: ['emocional'], risco: ['emocional'], substancias: ['emocional'],
+    motor: ['motor'], motorfino: ['motor'],
+    epilepsia: ['registro'], dor: ['registro'], fadiga: ['registro'],
+    autonomia: ['geral'], bullying: ['social', 'emocional'], estigma: ['emocional'], familia: ['geral'], qualidade: ['geral']
+  };
+
+  function themeOf(domain, keywords) {
+    if (window.NeuroPedCoach && window.NeuroPedCoach.themeOf) {
+      var t = window.NeuroPedCoach.themeOf(domain || '', domain || '', keywords || []);
+      if (t) return t;
+    }
+    var d = norm([domain || '', (keywords || []).join(' ')].join(' '));
+    var keys = Object.keys(MAP);
+    for (var i = 0; i < keys.length; i++) { if (d.indexOf(keys[i]) >= 0) return keys[i]; }
+    return '';
+  }
+
+  function forDomain(domain, ageMonths, keywords) {
+    var theme = themeOf(domain, keywords);
+    var buckets = MAP[theme] || ['geral'];
+    var out = [], seen = {};
+    buckets.forEach(function (b) {
+      (TASKS[b] || []).forEach(function (t) { if (!seen[t.titulo]) { seen[t.titulo] = 1; out.push(t); } });
+    });
+    var age = Number(ageMonths);
+    if (Number.isFinite(age) && age > 0) {
+      out = out.filter(function (t) { return !t.faixa || (age >= t.faixa[0] && age <= t.faixa[1]); });
+    }
+    if (!out.length) out = TASKS.geral.slice();
+    return out.slice(0, 6);
+  }
+
+  window.NeuroPedDirectTasks = { version: '1.1.0', forDomain: forDomain, themeOf: themeOf, TASKS: TASKS };
+})();
+
+
+/* ===== scales-direct-tests-catalog.js ===== */
+/* NeuroPed EDJ — Testes diretos como INSTRUMENTOS FILTRÁVEIS do catálogo
+ * ----------------------------------------------------------------------
+ * Promove a biblioteca de tarefas diretas (scales-direct-tasks.js →
+ * NeuroPedDirectTasks.TASKS) a instrumentos de primeira classe dentro de
+ * window.NEUROPED_EDITORIAL_SCALES, para que o FILTRO os selecione no top-3
+ * da pré-consulta junto com os inventários de família.
+ *
+ * Cada balde funcional (linguagem, social, atenção/executiva, pedagógico,
+ * sensorial, emocional, motor) vira UM instrumento "teste direto" (aplicado
+ * ATIVAMENTE na criança), marcado com direct_test:true → a taxonomia o
+ * classifica como "Teste direto" e o card mostra o tipo.
+ *
+ * Fonte única de verdade: as tarefas vêm de NeuroPedDirectTasks.TASKS — se
+ * editar lá, estes instrumentos se regeneram no próximo build do bundle.
+ *
+ * Apoio à observação clínica; NÃO é teste normatizado nem ponto de corte.
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_DIRECT_TESTS_CATALOG_LOADED) return;
+  window.NEUROPED_DIRECT_TESTS_CATALOG_LOADED = true;
+
+  var DT = window.NeuroPedDirectTasks;
+  var TASKS = (DT && DT.TASKS) || {};
+
+  // Balde funcional → metadados clínicos do instrumento filtrável.
+  // age:[minMeses,maxMeses] é a faixa de aplicação típica do conjunto.
+  var BUCKETS = {
+    linguagem: {
+      id: 'td-linguagem', emoji: '🗣️',
+      title: 'Sondagem direta de linguagem — nomeação · compreensão · repetição',
+      short: 'Linguagem (teste direto)', domain: 'Linguagem', age: [24, 215],
+      complaints: ['linguagem', 'fala', 'não fala', 'nao fala', 'atraso de fala', 'troca sons', 'vocabulário', 'comunicação', 'nomeação', 'gagueira'],
+      symptoms: ['não fala para a idade', 'troca sons', 'fala pouco', 'não repete frases', 'usa gesto no lugar da palavra']
+    },
+    social: {
+      id: 'td-social', emoji: '🧩',
+      title: 'Sondagem social direta (TEA) — nome · apontar · brincar · turno',
+      short: 'Social/TEA (teste direto)', domain: 'TEA e comunicação social', age: [12, 84],
+      complaints: ['tea', 'autismo', 'social', 'olhar', 'nome', 'apontar', 'brincar', 'reciprocidade', 'rigidez', 'contato visual'],
+      symptoms: ['não responde ao nome', 'não aponta para mostrar', 'brinca sozinho', 'pouco contato visual', 'não faz de conta']
+    },
+    atencao: {
+      id: 'td-atencao', emoji: '🎯',
+      title: 'Sondagem direta de atenção e função executiva — alvo · memória · inibição',
+      short: 'Atenção/Executiva (teste direto)', domain: 'TDAH e função executiva', age: [48, 215],
+      complaints: ['tdah', 'atenção', 'atencao', 'hiperatividade', 'impulsividade', 'desatenção', 'memória', 'executiva', 'concentração', 'organização'],
+      symptoms: ['desatento', 'agitado', 'impulsivo', 'esquece instruções', 'não termina tarefas']
+    },
+    escola: {
+      id: 'td-escola', emoji: '📚',
+      title: 'Sondagem pedagógica direta — letras (visual) · fonológica · leitura · escrita · cálculo',
+      short: 'Pedagógico (teste direto)', domain: 'Aprendizagem escolar', age: [48, 215],
+      complaints: ['escola', 'aprendizagem', 'leitura', 'escrita', 'letras', 'alfabetização', 'dislexia', 'discalculia', 'matemática', 'reconhecimento visual', 'não lê', 'não escreve', 'pedagógico'],
+      symptoms: ['confunde letras (b/d, p/q)', 'não lê para a série', 'troca letras na escrita', 'dificuldade em matemática']
+    },
+    sensorial: {
+      id: 'td-sensorial', emoji: '✨',
+      title: 'Sondagem sensorial direta — reatividade e tolerância gradual',
+      short: 'Sensorial (teste direto)', domain: 'Processamento sensorial', age: [24, 215],
+      complaints: ['sensorial', 'barulho', 'textura', 'luz', 'seletividade', 'alimentação', 'tato', 'etiqueta', 'regulação'],
+      symptoms: ['tapa os ouvidos com sons', 'incomoda-se com texturas/etiquetas', 'seletividade alimentar intensa', 'busca muito movimento']
+    },
+    emocional: {
+      id: 'td-emocional', emoji: '💗',
+      title: 'Sondagem emocional direta — emoções · ansiedade · checagem de segurança',
+      short: 'Emocional (teste direto)', domain: 'Saúde emocional', age: [60, 215],
+      complaints: ['ansiedade', 'tristeza', 'humor', 'medo', 'emoções', 'irritabilidade', 'risco', 'preocupação', 'regulação'],
+      symptoms: ['preocupa-se demais', 'triste/irritado na maior parte do dia', 'dificuldade em nomear emoções', 'viés negativo na interpretação']
+    },
+    motor: {
+      id: 'td-motor', emoji: '🤸',
+      title: 'Sondagem motora direta — coordenação grossa e motricidade fina',
+      short: 'Motor (teste direto)', domain: 'Motor e coordenação', age: [24, 215],
+      complaints: ['motor', 'coordenação', 'equilíbrio', 'motricidade fina', 'escrita', 'desajeitado', 'quedas', 'tdc', 'lápis'],
+      symptoms: ['cai muito / tropeça', 'desajeitado para a idade', 'dificuldade com lápis e tesoura', 'cansa rápido no esforço']
+    }
+  };
+
+  function uniq(arr) { var s = {}, o = []; arr.forEach(function (x) { if (x && !s[x]) { s[x] = 1; o.push(x); } }); return o; }
+  function yrs(m) { return m % 12 === 0 ? (m / 12) : (m / 12).toFixed(0); }
+  function band(min, max) { return yrs(min) + '–' + (max >= 216 ? '18+' : yrs(max)) + ' anos'; }
+
+  var out = [];
+  Object.keys(BUCKETS).forEach(function (k) {
+    var cfg = BUCKETS[k];
+    var tasks = TASKS[k] || [];
+    if (!tasks.length) return; // sem tarefas → não gera (degrada com segurança)
+
+    var direct_tasks = tasks.map(function (t) { return (t.emoji ? t.emoji + ' ' : '') + t.titulo + ' — ' + t.instrucao; });
+    var plain_questions = tasks.map(function (t) { return t.titulo + ' — observar: ' + String(t.observar || '').replace(/\.$/, '') + '.'; });
+    var min = cfg.age[0], max = cfg.age[1];
+
+    out.push({
+      id: cfg.id,
+      title: cfg.emoji + ' ' + cfg.title,
+      short_title: cfg.short,
+      emoji: cfg.emoji,
+      direct_test: true,
+      kind: 'teste_direto',
+      audience: 'clinico',
+      audience_label: 'Teste direto (criança)',
+      age_band: band(min, max),
+      age_min_months: min,
+      age_max_months: max,
+      domain: cfg.domain,
+      symptoms: cfg.symptoms,
+      complaints: cfg.complaints,
+      keywords: uniq([].concat(cfg.complaints, cfg.symptoms, ['teste direto', 'sondagem', 'aplicado na criança', 'pré-consulta', cfg.domain.toLowerCase(), band(min, max)])),
+      plain_questions: plain_questions,
+      direct_tasks: direct_tasks,
+      clinical_use: 'Sondagem ATIVA aplicada na própria criança na pré-consulta — complementa o heterorrelato dos questionários de família/escola com desempenho observado.',
+      differentiator: 'Testa diretamente a criança (desempenho), não só relato. Ideal para a secretária/equipe preparar a pré-consulta junto a um inventário de família.',
+      not_normative_disclaimer: 'Apoio à observação clínica; não é teste normatizado nem ponto de corte. Não substitui avaliação especializada (fono, neuropsico, psicopedagogia).',
+      page: 'testes-diretos.html',
+      anchor: k,
+      priority: 132
+    });
+  });
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  var ids = new Set(base.map(function (x) { return x && x.id; }));
+  window.NEUROPED_EDITORIAL_SCALES = out.filter(function (x) { return !ids.has(x.id); }).concat(base);
+  window.NEUROPED_DIRECT_TESTS = out;
+})();
+
+
+/* ===== scales-smart-rank.js ===== */
+/* NeuroPed EDJ — Smart Rank: inteligência de seleção de instrumentos
+ * ------------------------------------------------------------------
+ * Eleva a escolha do filtro acima da contagem crua de palavras-chave:
+ *   1) EXPANSÃO POR CONSTRUTO — termos leigos da queixa ("agitado",
+ *      "não para", "não olha", "troca letras") são mapeados ao construto
+ *      clínico (tdah, tea, aprendizagem…) e às suas variações, para casar
+ *      com os metadados mesmo quando a família não usa o termo técnico.
+ *   2) MIX DE MODALIDADE — o top-3 da pré-consulta tende a juntar UM teste
+ *      direto (aplicado na criança) + UM inventário de família + UMA escala,
+ *      em vez de 3 do mesmo tipo.
+ *   3) DEDUP por assinatura (domínio + faixa + respondente) — colapsa as
+ *      variantes quase idênticas dos instrumentos gerados.
+ *
+ * Puro e sem dependências. window.NeuroPedSmartRank (browser) + module.exports
+ * (Node, para teste). O filtro usa expand()/pickTop() com fallback gracioso.
+ */
+(function (root) {
+  'use strict';
+
+  function norm(s) {
+    return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+  function tokens(s) {
+    return norm(s).split(/[^a-z0-9]+/).filter(function (w) { return w.length >= 3; });
+  }
+
+  // Construto clínico → gatilhos leigos/técnicos. Se a queixa contém QUALQUER
+  // gatilho, expandimos a busca com o construto + todos os tokens dos gatilhos.
+  var CONSTRUCTS = {
+    tea: ['tea', 'autismo', 'autista', 'espectro', 'nao olha', 'pouco olho', 'contato visual', 'nao aponta', 'brinca sozinho', 'isolado', 'repete', 'ecolalia', 'rigidez', 'rotina', 'nao responde nome', 'gira objetos', 'enfileira', 'restrito'],
+    tdah: ['tdah', 'atencao', 'desatento', 'desatencao', 'agitado', 'inquieto', 'nao para', 'levanta', 'impulsivo', 'hiperativo', 'hiperatividade', 'distrai', 'esquece', 'desorganizado', 'nao termina', 'aereo', 'avoado'],
+    linguagem: ['linguagem', 'fala', 'nao fala', 'atraso de fala', 'atraso fala', 'troca sons', 'troca som', 'gagueira', 'gagueja', 'disfluencia', 'vocabulario', 'nao monta frase', 'fala pouco', 'so aponta'],
+    aprendizagem: ['aprendizagem', 'escola', 'escolar', 'leitura', 'le ', 'nao le', 'escrita', 'nao escreve', 'dislexia', 'discalculia', 'matematica', 'conta', 'letras', 'alfabetiza', 'copia', 'rendimento', 'reprovou', 'troca letras', 'soletra'],
+    ansiedade: ['ansiedade', 'ansioso', 'medo', 'preocupa', 'tenso', 'panico', 'fobia', 'separacao', 'timido', 'evita', 'aflito', 'nervoso'],
+    humor: ['humor', 'triste', 'tristeza', 'depress', 'deprimido', 'irritado', 'irritabilidade', 'choro', 'chora', 'desanimo', 'sem vontade', 'anedonia'],
+    sono: ['sono', 'dorme', 'dormir', 'insonia', 'acorda', 'pesadelo', 'ronca', 'sonolento', 'cansado de dia'],
+    sensorial: ['sensorial', 'barulho', 'textura', 'etiqueta', 'luz forte', 'seletivo', 'seletividade', 'tato', 'tapa ouvido', 'enjoa'],
+    motor: ['motor', 'coordenacao', 'equilibrio', 'desajeitado', 'cai', 'tropeca', 'lapis', 'motricidade', 'tdc', 'anda na ponta', 'desengoncado'],
+    comportamento: ['comportamento', 'oposicao', 'opositor', 'desafia', 'birra', 'agressiv', 'bate', 'morde', 'limite', 'tod', 'explos', 'teimoso', 'desobedece'],
+    risco: ['risco', 'suicid', 'se machucar', 'machucar', 'morrer', 'sumir', 'autoagress', 'cortar', 'nao querer viver'],
+    adaptativo: ['adaptativo', 'autonomia', 'vida diaria', 'independencia', 'avd', 'veste', 'come sozinho', 'banheiro', 'depende'],
+    epilepsia: ['epilepsia', 'convuls', 'crise', 'ausencia', 'desmaio', 'abala', 'olhar parado', 'episodio'],
+    paralisiacerebral: ['paralisia', 'pc ', 'gmfcs', 'macs', 'cadeira de rodas', 'espasti', 'hipotonia', 'nao anda', 'mao fechada'],
+    desenvolvimento: ['desenvolvimento', 'marcos', 'atraso global', 'nao senta', 'nao engatinha', 'regressao', 'atrasado para idade', 'vigilancia']
+  };
+
+  // expand(text) → conjunto de tokens enriquecido com construtos detectados.
+  function expand(text) {
+    var t = ' ' + norm(text) + ' ';
+    var out = {};
+    tokens(text).forEach(function (x) { out[x] = 1; });
+    Object.keys(CONSTRUCTS).forEach(function (k) {
+      var trig = CONSTRUCTS[k];
+      var hit = trig.some(function (w) { return t.indexOf(' ' + w) >= 0 || t.indexOf(w + ' ') >= 0 || t.indexOf(w) >= 0; });
+      if (hit) {
+        out[k] = 1;
+        trig.forEach(function (w) { w.split(' ').forEach(function (x) { if (x.length >= 3) out[x] = 1; }); });
+      }
+    });
+    return Object.keys(out);
+  }
+
+  // Quais construtos a queixa ativou (para "por que apareceu" e diferenciais).
+  function constructsOf(text) {
+    var t = ' ' + norm(text) + ' ', hits = [];
+    Object.keys(CONSTRUCTS).forEach(function (k) {
+      if (CONSTRUCTS[k].some(function (w) { return t.indexOf(w) >= 0; })) hits.push(k);
+    });
+    return hits;
+  }
+
+  function modalityOf(s) {
+    if (!s) return 'escala';
+    if (s.direct_test || s.kind === 'teste_direto') return 'direto';
+    var a = norm(s.audience || '');
+    if (a === 'familia' || a === 'pais' || a === 'cuidador') return 'familia';
+    if (a === 'escola') return 'escola';
+    return 'escala';
+  }
+
+  // Assinatura para dedup de variantes quase idênticas (mesmo construto+faixa+quem responde).
+  function sig(s) {
+    return norm(s.domain || '') + '|' + (s.age_band || (s.age_min_months + '-' + s.age_max_months)) + '|' + norm(s.audience || '');
+  }
+
+  // pickTop(ranked, n): a partir da lista JÁ ordenada (rank/score desc), devolve
+  // até n itens deduplicados e com MIX de modalidade (1 direto + 1 família + 1
+  // escala quando houver), completando por score. ranked = [{s, sc, ...}].
+  function pickTop(ranked, n) {
+    n = n || 3;
+    var bySig = {}, deduped = [];
+    ranked.forEach(function (r) {
+      var k = sig(r.s);
+      if (!bySig[k]) { bySig[k] = 1; deduped.push(r); } // mantém o de maior score (lista já ordenada)
+    });
+    var pick = [], used = {};
+    ['direto', 'familia', 'escala'].forEach(function (m) {
+      if (pick.length >= n) return;
+      for (var i = 0; i < deduped.length; i++) {
+        var r = deduped[i];
+        if (!used[r.s.id] && modalityOf(r.s) === m) { pick.push(r); used[r.s.id] = 1; break; }
+      }
+    });
+    for (var i = 0; i < deduped.length && pick.length < n; i++) {
+      if (!used[deduped[i].s.id]) { pick.push(deduped[i]); used[deduped[i].s.id] = 1; }
+    }
+    return pick.sort(function (a, b) { return (b.sc || 0) - (a.sc || 0); });
+  }
+
+  // dedupAll(ranked): remove variantes quase idênticas de toda a lista (não só do topo).
+  function dedupAll(ranked) {
+    var seen = {}, out = [];
+    ranked.forEach(function (r) { var k = sig(r.s); if (!seen[k]) { seen[k] = 1; out.push(r); } });
+    return out;
+  }
+
+  var api = { version: '1.0.0', CONSTRUCTS: CONSTRUCTS, expand: expand, constructsOf: constructsOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (root) root.NeuroPedSmartRank = api;
+})(typeof window !== 'undefined' ? window : null);
+
+
+/* ===== scales-official-questions.js ===== */
+/* NeuroPed EDJ — Perguntas-guia AUTORAIS para instrumentos de referência
+ * ----------------------------------------------------------------------
+ * Os instrumentos oficiais de terceiros (M-CHAT, SDQ, Vanderbilt, ASQ,
+ * C-SSRS…) são catalogados como REFERÊNCIA (applicable:false) e NÃO podem
+ * reproduzir seus itens protegidos por direito autoral. Antes, ao abrir,
+ * caíam num fallback genérico de 5 perguntas — abriam "incompletos".
+ *
+ * Este módulo injeta, para cada instrumento sem perguntas, um conjunto
+ * AUTORAL de perguntas-guia em linguagem simples sobre o MESMO construto —
+ * redigidas do zero, NÃO são os itens do instrumento original. Assim a tela
+ * abre completa e lógica, mantendo conformidade. A fonte oficial continua
+ * linkada e o disclaimer deixa a natureza autoral explícita.
+ *
+ * Roda por último no bundle (após todos os instrumentos carregarem).
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_OFFICIAL_QUESTIONS_LOADED) return;
+  window.NEUROPED_OFFICIAL_QUESTIONS_LOADED = true;
+
+  function norm(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+  // Banco autoral por construto (perguntas-guia próprias, não itens originais).
+  var BANK = {
+    tea: [
+      'A criança responde quando você chama o nome dela, mesmo de longe?',
+      'Ela olha nos seus olhos durante a interação do dia a dia?',
+      'Aponta ou mostra coisas para compartilhar interesse com você?',
+      'Brinca de faz-de-conta (dar comida ao boneco, fingir cozinhar)?',
+      'Repete falas, sons ou movimentos de forma marcante?',
+      'Incomoda-se muito com mudanças de rotina ou imprevistos?',
+      'Prefere brincar sozinha a interagir com outras crianças?'
+    ],
+    tdah: [
+      'Tem dificuldade de manter a atenção até terminar uma tarefa?',
+      'Parece "no mundo da lua" ou não escuta quando falam com ela?',
+      'Agita-se, levanta ou não para quieta em momentos que pedem calma?',
+      'Age por impulso, sem esperar ou pensar nas consequências?',
+      'Esquece recados, perde materiais ou se desorganiza com frequência?',
+      'Tem dificuldade de esperar a vez em jogos e conversas?',
+      'O comportamento melhora bastante quando há rotina e apoio próximo?'
+    ],
+    aprendizagem: [
+      'Tem dificuldade para reconhecer ou nomear letras e números?',
+      'Confunde letras parecidas (b/d, p/q) ao ler ou escrever?',
+      'Lê mais devagar ou com mais erros que os colegas da mesma série?',
+      'Troca, omite ou junta letras ao escrever ou no ditado?',
+      'Tem dificuldade com contas simples ou noção de quantidade?',
+      'Evita atividades de leitura, escrita ou lição de casa?',
+      'A dificuldade escolar afeta a autoestima ou o ânimo dela?'
+    ],
+    linguagem: [
+      'Demorou para começar a falar palavras ou frases?',
+      'Usa menos palavras do que o esperado para a idade?',
+      'Troca ou omite sons, tornando a fala difícil de entender?',
+      'Tem dificuldade de entender ordens com duas etapas?',
+      'Usa mais gestos do que palavras para se comunicar?',
+      'Tem dificuldade de contar o que aconteceu no dia?',
+      'A dificuldade de fala atrapalha a interação com outras pessoas?'
+    ],
+    ansiedade: [
+      'Preocupa-se demais com coisas do dia a dia, mais que outras crianças?',
+      'Evita situações, lugares ou pessoas por medo ou insegurança?',
+      'Tem dificuldade de se separar dos pais sem grande sofrimento?',
+      'Apresenta queixas físicas (dor de barriga, cabeça) sem causa clara?',
+      'Fica muito tensa, agitada ou irritada quando ansiosa?',
+      'O medo ou a preocupação atrapalham a rotina, a escola ou o sono?',
+      'Tem dificuldade de relaxar mesmo em momentos tranquilos?'
+    ],
+    humor: [
+      'Tem estado triste, para baixo ou irritada na maior parte dos dias?',
+      'Perdeu o interesse por brincadeiras ou coisas de que gostava?',
+      'Mudou o apetite ou o sono de forma marcante?',
+      'Queixa-se de cansaço, falta de energia ou desânimo?',
+      'Fala de si mesma de forma muito negativa ("não sirvo", "sou ruim")?',
+      'A tristeza ou irritação atrapalha a escola e a convivência?',
+      'Tem se isolado de amigos e da família?'
+    ],
+    risco: [
+      'A criança/adolescente já falou em se machucar, sumir ou não querer viver?',
+      'Houve algum gesto ou tentativa de se machucar?',
+      'Esses pensamentos têm aparecido com mais frequência ou intensidade?',
+      'Existe acesso fácil a meios perigosos (remédios, objetos cortantes) em casa?',
+      'Ela consegue procurar um adulto de confiança quando está muito mal?',
+      'Há adultos protetores disponíveis e atentos no dia a dia?',
+      'O plano de segurança (quem chamar, o que fazer) está combinado?'
+    ],
+    substancias: [
+      'Houve uso de álcool, cigarro/vape ou outras substâncias?',
+      'O uso aconteceu para relaxar, se encaixar ou lidar com problemas?',
+      'Já usou sozinho(a) ou começou mais cedo no dia?',
+      'Amigos próximos ou familiares fazem uso frequente?',
+      'O uso já causou problema na escola, em casa ou com a lei?',
+      'Já tentou reduzir ou parar e teve dificuldade?',
+      'Percebe esquecimentos ou situações de risco ligados ao uso?'
+    ],
+    motor: [
+      'Atingiu os marcos motores (sentar, andar) no tempo esperado?',
+      'Cai muito, tropeça ou parece desajeitada para a idade?',
+      'Tem dificuldade para segurar o lápis, usar tesoura ou se vestir?',
+      'Usa mais um lado do corpo que o outro de forma marcante?',
+      'Apresenta rigidez, moleza ou movimentos involuntários?',
+      'Precisa de apoio, órtese ou dispositivo para se locomover?',
+      'A dificuldade motora limita brincar, escola ou autocuidado?'
+    ],
+    desenvolvimento: [
+      'A criança está atingindo os marcos esperados para a idade?',
+      'Já perdeu alguma habilidade que tinha (fala, gestos, contato)?',
+      'Há diferença marcante entre o que faz e o esperado para a idade?',
+      'Interage, sorri e responde socialmente como esperado?',
+      'Compreende e usa a comunicação de forma compatível com a idade?',
+      'Brinca e explora os objetos de maneira variada?',
+      'Há preocupação dos pais ou da escola sobre o desenvolvimento?'
+    ],
+    comportamento: [
+      'Desafia regras ou discute com adultos com frequência?',
+      'Tem explosões de raiva intensas ou desproporcionais?',
+      'Machuca pessoas, a si mesma ou quebra objetos quando frustrada?',
+      'Tem dificuldade de aceitar limites e combinados simples?',
+      'Irrita-se com facilidade ou guarda rancor?',
+      'O comportamento gera problemas em casa, na escola ou com amigos?',
+      'Melhora com rotina previsível, reforço positivo e clareza de regras?'
+    ],
+    sono: [
+      'Demora muito para adormecer na maioria das noites?',
+      'Acorda várias vezes durante a noite?',
+      'Ronca, faz pausas ou respira pela boca ao dormir?',
+      'Tem pesadelos, terror noturno ou anda dormindo?',
+      'Acorda cansada ou fica sonolenta durante o dia?',
+      'A rotina de sono é irregular (horários muito variáveis)?',
+      'O sono ruim afeta o humor, a atenção ou a escola?'
+    ],
+    saude_mental_global: [
+      'Há sinais de ansiedade, tristeza ou irritabilidade marcantes?',
+      'Há dificuldades de atenção, agitação ou impulsividade?',
+      'Há problemas de comportamento ou de aceitar limites?',
+      'Há dificuldade de relacionamento com colegas ou família?',
+      'Há queixas físicas frequentes sem causa clara?',
+      'Esses sinais atrapalham a rotina, a escola ou a convivência?',
+      'Houve mudança recente importante no jeito de ser da criança?'
+    ],
+    seguimento: [
+      'Desde a última avaliação, os sintomas melhoraram, pioraram ou seguem iguais?',
+      'A criança está conseguindo realizar a rotina (escola, sono, convívio)?',
+      'O tratamento/estratégias combinados estão sendo seguidos?',
+      'Surgiram efeitos novos, colaterais ou dificuldades?',
+      'A família percebe ganhos funcionais no dia a dia?',
+      'As metas combinadas foram alcançadas, total ou parcialmente?',
+      'É preciso ajustar o plano ou encaminhar para avaliação?'
+    ]
+  };
+
+  // Classifica o domínio do instrumento → construto do banco.
+  function bucketOf(s) {
+    var d = norm([s.domain || '', s.cat || '', s.finalidade || '', s.title || ''].join(' '));
+    if (/risco|suicid|seguranca|autoagress/.test(d)) return 'risco';
+    if (/substanc|alcool|drog|cigarro|crafft/.test(d)) return 'substancias';
+    if (/tea|autis|espectro/.test(d)) return 'tea';
+    if (/tdah|atenc|hiperativ|vanderbilt|executiv/.test(d)) return 'tdah';
+    if (/parali|gmfcs|macs|motor|manual|cerebral/.test(d)) return 'motor';
+    if (/aprendiz|leitura|escrita|dislex|discalc|escolar/.test(d)) return 'aprendizagem';
+    if (/linguagem|fala|comunica/.test(d)) return 'linguagem';
+    if (/ansiedad|medo|preocup|pswq|gad|scared/.test(d)) return 'ansiedade';
+    if (/depress|humor|tristeza|phq/.test(d)) return 'humor';
+    if (/sono|insonia|cshq/.test(d)) return 'sono';
+    if (/comportament|oposic|tod|conduta/.test(d)) return 'comportamento';
+    if (/desenvolv|marcos|swyc|asq|denver|milestone|vigil/.test(d)) return 'desenvolvimento';
+    if (/seguiment|terapeut|monitor|mtt/.test(d)) return 'seguimento';
+    if (/saude mental|global|psc|sdq|bem-estar|forcas/.test(d)) return 'saude_mental_global';
+    return 'saude_mental_global';
+  }
+
+  var cat = window.NEUROPED_EDITORIAL_SCALES;
+  if (!Array.isArray(cat)) return;
+  var n = 0;
+  cat.forEach(function (s) {
+    if (!s || (s.plain_questions && s.plain_questions.filter(Boolean).length) || (s.questions && s.questions.length)) return;
+    if (Array.isArray(s.domains) && s.domains[0] && Array.isArray(s.domains[0].items) && s.domains[0].items.length) return;
+    var bucket = bucketOf(s);
+    var qs = BANK[bucket] || BANK.saude_mental_global;
+    s.plain_questions = qs.slice();
+    s._authorial_proxy = true;
+    s._proxy_bucket = bucket;
+    var ref = s.official_url ? (' Fonte oficial: ' + s.official_url) : '';
+    s.not_normative_disclaimer = 'Perguntas-guia AUTORAIS NeuroPed sobre o mesmo construto — redigidas pela equipe, NÃO são os itens do instrumento original (protegidos por direito autoral). Use o instrumento oficial para pontuação formal.' + ref;
+    n++;
+  });
+  window.NEUROPED_OFFICIAL_QUESTIONS_FILLED = n;
+})();
