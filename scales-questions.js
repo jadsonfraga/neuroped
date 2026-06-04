@@ -141,6 +141,50 @@
       q('🌋', 'Tem explosões de raiva desproporcionais e frequentes?',
         'Irritabilidade / desregulação — intensidade e frequência importam.',
         ['crises por pouco', 'demora a se acalmar', 'agride no auge'], ['casa', 'escola'], 48)
+    ],
+    alimentacao: [
+      q('🍽️', 'Aceita variedade de alimentos ou come sempre os mesmos poucos itens?',
+        'Seletividade alimentar: leque restrito mantido ao longo do tempo.',
+        ['recusa texturas/cores novas', 'come só 4–5 itens', 'rejeita o que a família come'], ['casa'], 12),
+      q('😬', 'A recusa parece ligada a textura, cheiro ou cor — e não só a "manha"?',
+        'O componente sensorial distingue seletividade de birra pontual.',
+        ['enjoa com cheiro forte', 'não mistura alimentos', 'incomoda-se com certas texturas'], ['casa'], 18),
+      q('🥄', 'Mastiga e engole bem, sem engasgos frequentes?',
+        'Segurança da deglutição — engasgos repetidos merecem atenção.',
+        ['engasga com sólidos', 'guarda comida na boca', 'demora muito para engolir'], ['casa'], 6)
+    ],
+    adaptativo: [
+      q('🧦', 'Faz sozinho as tarefas de autocuidado esperadas para a idade?',
+        'Independência nas atividades de vida diária comparada ao esperado.',
+        ['vestir-se e calçar', 'escovar os dentes', 'tomar banho com pouca ajuda'], ['casa'], 24),
+      q('🚽', 'Já tem controle de xixi/cocô compatível com a idade?',
+        'Desfralde e aviso de necessidades — comparar com o esperado.',
+        ['avisa para ir ao banheiro', 'fica seco à noite', 'escapes frequentes para a idade'], ['casa'], 24, 84),
+      q('🧹', 'Ajuda na rotina e guarda os próprios materiais quando combinado?',
+        'Autonomia de organização no dia a dia.',
+        ['guarda os brinquedos', 'organiza a mochila', 'segue os passos de uma rotina'], ['casa', 'escola'], 36)
+    ],
+    agressividade: [
+      q('🌋', 'Tem explosões de raiva intensas e desproporcionais ao que as causou?',
+        'Intensidade e desproporção importam mais que a birra comum.',
+        ['crise por um "não"', 'grita / joga objetos', 'demora muito a se acalmar'], ['casa', 'escola'], 24),
+      q('✋', 'Machuca a si, outras pessoas ou quebra coisas quando perde o controle?',
+        'Hetero/autoagressão sinaliza necessidade de apoio e segurança.',
+        ['bate / morde / empurra', 'se machuca quando frustrado', 'quebra objetos no auge'], ['casa', 'escola', 'social'], 24),
+      q('🧯', 'Depois da crise, consegue se acalmar — sozinho ou com ajuda?',
+        'Capacidade de recuperação e o que ajuda a regular.',
+        ['acalma com colo / pausa', 'melhora ao tirar o gatilho', 'precisa de muito tempo'], ['casa'], 24)
+    ],
+    epilepsia: [
+      q('⚡', 'Tem episódios de "desligar", olhar parado ou ausências por instantes?',
+        'Eventos paroxísticos breves podem passar despercebidos.',
+        ['para no meio de uma fala', 'olhar fixo por segundos', 'não responde por instantes'], ['casa', 'escola'], 12),
+      q('🎥', 'Já teve abalos, quedas ou perda de consciência sem explicação?',
+        'Eventos motores ou perda de consciência merecem avaliação.',
+        ['abalos de braços/pernas', 'queda súbita', 'confusão logo depois'], ['casa'], 0),
+      q('📝', 'Você consegue descrever horário, duração e como foi a recuperação?',
+        'Detalhes do evento orientam a investigação; um vídeo ajuda muito.',
+        ['quanto durou', 'o que fazia antes', 'como ficou depois'], ['casa'], 0)
     ]
   };
 
