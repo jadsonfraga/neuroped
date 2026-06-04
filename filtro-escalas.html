@@ -382,15 +382,17 @@
     });});
   })();
 
-  // chips de contexto
+  // chips de contexto = QUEIXAS leigas (≥40). Clicar define a queixa e busca;
+  // clicar de novo limpa. A consulta dispara o construto certo (smart-rank.expand).
   (function(){ var box=document.getElementById('contextChips');
-    box.innerHTML=CHIPS.map(function(c){return '<button class="chip" type="button" aria-pressed="false">'+esc(c)+'</button>';}).join('');
+    var Q=(window.NeuroPedSmartRank&&NeuroPedSmartRank.QUEIXAS)||CHIPS.map(function(c){return {label:c,q:c.split('/')[0].trim()};});
+    box.innerHTML=Q.map(function(c){return '<button class="chip" type="button" aria-pressed="false" data-q="'+esc(c.q)+'">'+esc(c.label)+'</button>';}).join('');
     box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
-      b.classList.toggle('active');
-      b.setAttribute('aria-pressed', b.classList.contains('active')?'true':'false');
+      var on=b.classList.contains('active');
+      box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
       var inp=document.getElementById('searchInput');
-      var txt=b.textContent.split('/')[0].trim();
-      if(b.classList.contains('active')) inp.value=(inp.value?inp.value+' ':'')+txt;
+      if(on){ inp.value=''; } else { b.classList.add('active'); b.setAttribute('aria-pressed','true'); inp.value=b.getAttribute('data-q')||''; }
+      if(typeof toggleClear==='function') toggleClear();
       run();
     });});
   })();
