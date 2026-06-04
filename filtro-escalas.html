@@ -50,6 +50,13 @@
     background:linear-gradient(135deg,#7C3AED,#4F46E5);box-shadow:0 12px 26px -12px rgba(124,58,237,.6)}
   .search-go:active{transform:scale(.97)}
   .context-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:12px}
+  .qcats{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-top:12px}
+  .chip.qcat{font-size:12px;padding:6px 12px;background:rgba(124,118,210,.08)}
+  .chip.qcat small{opacity:.6;font-size:10px;margin-left:3px}
+  .chip.qcat.active{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border-color:transparent}
+  .qchips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+  .actnote{max-width:760px;margin:8px auto 0;font-size:12.5px;text-align:center;color:#a7f3d0;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:7px 11px}
+  .actnote button{background:none;border:0;color:#fda4af;font-weight:700;cursor:pointer;margin-left:8px;font-size:12px}
   .chip{padding:7px 14px;border-radius:999px;font:700 13px system-ui;cursor:pointer;color:#c9c4f0;
     background:rgba(124,118,210,.12);border:1px solid rgba(169,164,255,.2);transition:transform .16s,border-color .18s,background .18s,box-shadow .18s}
   .chip:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.4)}
@@ -193,6 +200,7 @@
 <script src="./scales-smart-rank.js"></script>
 <script src="./scales-questions.js"></script>
 <script src="./scales-preconsulta-gate.js"></script>
+<script src="./np-store.js"></script>
 <script>
 (function(){
   'use strict';
@@ -413,6 +421,12 @@
     // (ex.: "agitado não para" → tdah/atenção) antes de casar com os metadados.
     var baseTokens=window.NeuroPedSmartRank?NeuroPedSmartRank.expand(q):norm(q).split(/[^a-z0-9]+/);
     var tokens=baseTokens.filter(function(x){return x.length>=3 && !STOP[x];});
+    function byAge(list){ if(age==null) return list; var f=list.filter(function(r){var a0=+(r.s.age_min_months||0),a1=+(r.s.age_max_months||240);return age>=a0&&age<=a1;}); return f.length?f:list; }
+    if(!tokens.length){ // só idade / sem queixa → nunca tela vazia: catálogo (da idade) + dica
+      det.hidden=false; det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b> · escolha uma queixa nos chips para refinar.';
+      rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
+      var tc=byAge(topCatalog()); cnt.textContent='· '+tc.length; all.innerHTML=tc.map(function(r){return card(r,false);}).join(''); return;
+    }
     var ranked=cat.map(function(s){return score(s,tokens,age);}).filter(Boolean).map(function(r){return decorate(r,age);});
     ranked.sort(function(a,b){ return (b.rank-a.rank)||(b.fit-a.fit)||(b.hits.length-a.hits.length); });
     var seen={},seenT={},top=[]; ranked.forEach(function(r){ var tk=norm(r.s.short_title||r.s.title); if(!seen[r.s.id]&&!seenT[tk]){seen[r.s.id]=1;seenT[tk]=1;top.push(r);} });
@@ -421,7 +435,9 @@
     det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b>'+(RESP?(' · responde: <b>'+esc(RESP_LABEL[RESP]||RESP)+'</b>'):'')+' · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
     cnt.textContent='· '+top.length;
     renderGuide(q, tokens, top, age);
-    if(!top.length){ rec.style.display='none'; all.innerHTML='<div class="empty">Nenhum instrumento casou com a queixa. Tente sintomas/suspeita (ex.: “não fala”, “agitado”, “seletivo”).</div>'; return; }
+    if(!top.length){ rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
+      var tc2=byAge(topCatalog());
+      all.innerHTML='<div class="empty">Sem correspondência exata. Tente um termo mais simples (ex.: “não fala”, “agitado”) ou um chip de queixa acima. Enquanto isso, instrumentos comuns'+(age!=null?' para a idade':'')+':</div>'+tc2.map(function(r){return card(r,false);}).join(''); return; }
     // Ouro: até 3 mais alinhados, cruzando OLHARES (teste direto × família × escala
     // × criança) e deduplicando variantes — triangulação clínica de pré-consulta.
     var ouroAll=top.filter(function(r){return r.tier==='ouro';});
@@ -448,19 +464,43 @@
     });});
   })();
 
-  // chips de contexto = QUEIXAS leigas (≥40). Clicar define a queixa e busca;
-  // clicar de novo limpa. A consulta dispara o construto certo (smart-rank.expand).
+  // chips de contexto = QUEIXAS leigas (≥40), AGRUPADAS por categoria (acordeão):
+  // a categoria selecionada mostra suas queixas; clicar numa queixa busca; clicar
+  // de novo limpa. A consulta dispara o construto certo (smart-rank.expand).
   (function(){ var box=document.getElementById('contextChips');
     var Q=(window.NeuroPedSmartRank&&NeuroPedSmartRank.QUEIXAS)||CHIPS.map(function(c){return {label:c,q:c.split('/')[0].trim()};});
-    box.innerHTML=Q.map(function(c){return '<button class="chip" type="button" aria-pressed="false" data-q="'+esc(c.q)+'">'+esc(c.label)+'</button>';}).join('');
-    box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
-      var on=b.classList.contains('active');
-      box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
-      var inp=document.getElementById('searchInput');
-      if(on){ inp.value=''; } else { b.classList.add('active'); b.setAttribute('aria-pressed','true'); inp.value=b.getAttribute('data-q')||''; }
-      if(typeof toggleClear==='function') toggleClear();
-      run();
+    function catOf(x){ if(x.c) return x.c; var t=norm(x.q);
+      if(/autismo|\btea\b|aponta|ecolalia|olho/.test(t))return 'TEA / autismo';
+      if(/tdah|hiperativ|desaten|impulsiv|agitado|esquece/.test(t))return 'TDAH / atenção';
+      if(/dislex|discalc|leitura|escrita|escolar|letras/.test(t))return 'Aprendizagem';
+      if(/\bfala\b|linguagem|gagueira|sons/.test(t))return 'Linguagem';
+      if(/birra|oposic|agressiv|desregula|comportamento/.test(t))return 'Comportamento';
+      if(/humor|triste|irritab|ansiedade|medo|separac|mutismo|preocupa/.test(t))return 'Humor / ansiedade';
+      if(/sono|insonia|pesadelo|ronca|sensorial|seletiv/.test(t))return 'Sono / sensorial';
+      if(/motor|coordena|motricidade|marcos|anda|desenvolvimento|regress/.test(t))return 'Motor / desenvolvimento';
+      if(/autonomia|autocuidado|cognit|deficiencia intelectual|aprende devagar/.test(t))return 'Autonomia / cognição';
+      return 'Outros / alerta';
+    }
+    var cats=[], byCat={};
+    Q.forEach(function(x){ var c=catOf(x); if(!byCat[c]){byCat[c]=[];cats.push(c);} byCat[c].push(x); });
+    box.innerHTML='<div class="qcats" id="qcats" role="tablist"></div><div class="qchips" id="qchips"></div>';
+    var catBox=document.getElementById('qcats'), chipBox=document.getElementById('qchips');
+    catBox.innerHTML=cats.map(function(c,i){return '<button class="chip qcat'+(i===0?' active':'')+'" type="button" role="tab" aria-selected="'+(i===0?'true':'false')+'" data-cat="'+esc(c)+'">'+esc(c)+' <small>'+byCat[c].length+'</small></button>';}).join('');
+    function showCat(c){
+      chipBox.innerHTML=(byCat[c]||[]).map(function(x){return '<button class="chip" type="button" aria-pressed="false" data-q="'+esc(x.q)+'">'+esc(x.label)+'</button>';}).join('');
+      chipBox.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
+        var on=b.classList.contains('active');
+        chipBox.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
+        if(on){ inp.value=''; } else { b.classList.add('active'); b.setAttribute('aria-pressed','true'); inp.value=b.getAttribute('data-q')||''; }
+        if(typeof toggleClear==='function') toggleClear();
+        run();
+      });});
+    }
+    catBox.querySelectorAll('.qcat').forEach(function(cb){ cb.addEventListener('click',function(){
+      catBox.querySelectorAll('.qcat').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-selected','false');});
+      cb.classList.add('active'); cb.setAttribute('aria-selected','true'); showCat(cb.getAttribute('data-cat'));
     });});
+    showCat(cats[0]);
   })();
 
   var inp=document.getElementById('searchInput'), clr=document.getElementById('searchClear');
@@ -471,8 +511,33 @@
   document.getElementById('searchGo').addEventListener('click',run);
   clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });
 
+  // Pré-seleção pela CRIANÇA ATIVA: queixa registrada (diagnóstico/notas) + idade.
+  // Só preenche se o campo estiver vazio (respeita busca salva/digitada).
+  function showActNote(nome, ageL, filled){
+    var el=document.getElementById('actNote');
+    if(!el){ el=document.createElement('p'); el.id='actNote'; el.className='actnote';
+      var ref=document.getElementById('detected'); if(ref&&ref.parentNode){ ref.parentNode.insertBefore(el,ref); } else { return; } }
+    el.innerHTML='👶 <b>'+esc(nome)+'</b>'+(ageL?' · '+esc(ageL):'')+(filled?' — busca pré-preenchida pela queixa registrada':' — escolha a queixa abaixo')+' <button type="button" id="actClear">limpar</button>';
+    el.hidden=false;
+    var bc=document.getElementById('actClear'); if(bc) bc.onclick=function(){ inp.value=''; toggleClear(); el.hidden=true; document.querySelectorAll('#qchips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); };
+  }
+  function prefillFromChild(){
+    try{
+      if(inp.value) return;                       // já há busca → respeita
+      var S=window.NPStore; if(!S||!S.active) return;
+      var c=S.active(); if(!c) return;
+      var compl=String(c.diagnosis||c.notes||'').trim();
+      var m=(S.ageMonths?S.ageMonths(c):null);
+      var ageL=(m!=null)?(m%12===0?(m/12+' anos'):(m+' meses')):'';
+      var toks=compl.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').split(/[^a-z0-9]+/).filter(function(w){return w.length>=3&&!STOP[w];});
+      if(!toks.length){ if(c.name||ageL) showActNote(c.name||'Criança ativa', ageL, false); return; }
+      inp.value=(compl+(ageL?' '+ageL:'')).trim(); toggleClear();
+      showActNote(c.name||'Criança ativa', ageL, true);
+    }catch(e){}
+  }
   function boot(){
     toggleClear();
+    prefillFromChild();
     var ready=(window.NEUROPED_EDITORIAL_SCALES||[]).length;
     if(!ready) skeleton();                                   // mostra skeleton enquanto o catálogo carrega
     if(window.NeuroPedMeta&&NeuroPedMeta.load) NeuroPedMeta.load().then(run).catch(run); else run();
