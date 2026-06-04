@@ -105,7 +105,7 @@
     var tries=0;
     var iv=setInterval(function(){
       tries++;
-      if (ready()){ clearInterval(iv); started=true; ensureHelp(); var done=false; try{ done = localStorage.getItem(DONE_KEY)==='1'; }catch(e){} if(!done) setTimeout(function(){ show(0); }, 500); }
+      if (ready()){ clearInterval(iv); started=true; ensureHelp(); /* tour NÃO abre sozinho ao iniciar o app — só pelo botão "?" (npTour) */ }
       else if (tries>70){ clearInterval(iv); ensureHelp(); }
     }, 300);
   }
