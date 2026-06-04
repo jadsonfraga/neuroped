@@ -22,6 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Remove os arquivos sensíveis ANTES de publicar (modo público).
+      # O repositório os mantém; só não vão ao ar. Ver scripts/strip-private.mjs.
+      - name: Strip private files from public deploy
+        run: node scripts/strip-private.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
