@@ -56,11 +56,9 @@
   function path(){var h=location.hash||'';return h.charAt(0)==='#'?h.slice(1):h||'/'}
   function decorate(){
     document.documentElement.classList.toggle('np-master-unlocked',isUnlocked());
-    var old=document.getElementById('np-master-badge');
-    if(isUnlocked()){
-      if(!old){var b=document.createElement('button');b.id='np-master-badge';b.type='button';b.textContent='🔓 Master ativo';b.title='Clique para encerrar o acesso master';b.setAttribute('aria-label','PIN master ativo. Clique para encerrar o acesso protegido.');b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:999998;background:linear-gradient(180deg,#6d6af5,#4f46e5);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:10px 12px;font:800 12px system-ui;box-shadow:0 10px 24px rgba(4,3,18,.5);cursor:pointer';b.onclick=function(){clear();b.remove();decorate();announce('Acesso master encerrado.')};document.body.appendChild(b)}
-    }else if(old){old.remove()}
-    injectFamilyPanel();
+    // PIN master removido do app: sem badge flutuante e sem painel da família.
+    var old=document.getElementById('np-master-badge'); if(old) old.remove();
+    var fp=document.getElementById('np-family-free-panel'); if(fp) fp.remove();
   }
   function injectFamilyPanel(){
     var p=path();
@@ -83,7 +81,7 @@
   if (/instrumento-autoral\.html$/i.test(location.pathname) && !window.NEUROPED_NPE_LOTE2_LOADED && document.readyState==='loading') {
     document.write('<script src="./scales-autorais-npe-lote2.js"><\/script>');
   }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){watchInputs();decorate()})}else{watchInputs();decorate()}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',decorate)}else{decorate()}
   window.addEventListener('hashchange',function(){setTimeout(decorate,120)});
   window.addEventListener('storage',function(ev){if(ev.key===KEY)decorate()});
   /* Polling de decoração: handle exposto para cleanup. Em SPA com churn
