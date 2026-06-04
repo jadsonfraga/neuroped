@@ -213,6 +213,54 @@
       'Algo costuma melhorar (repouso, remédio, ambiente escuro)?',
       'A dor mudou de padrão ou piorou recentemente?',
       'A dor atrapalha o humor e as atividades do dia a dia?'
+    ],
+    toc: [
+      'Tem pensamentos repetitivos que incomodam e não saem da cabeça?',
+      'Sente necessidade de repetir ações (lavar as mãos, conferir, arrumar) muitas vezes?',
+      'Fica muito aflita se for impedida de fazer esses rituais?',
+      'Precisa que as coisas estejam "do jeito certo", em ordem ou simétricas?',
+      'Evita tocar em certas coisas por medo de germes ou sujeira?',
+      'Repete perguntas ou pede a mesma garantia várias vezes?',
+      'Os rituais tomam tempo (mais de 1h/dia) ou atrasam a rotina?',
+      'Tenta esconder esses comportamentos dos outros?',
+      'Reconhece que é exagerado, mas não consegue parar?',
+      'Isso atrapalha a escola, o sono ou a convivência?'
+    ],
+    tiques: [
+      'Faz movimentos repetidos e involuntários (piscar, franzir, balançar cabeça/ombros)?',
+      'Emite sons repetidos sem querer (pigarro, fungar, estalos, palavras)?',
+      'Os tiques aumentam quando está ansiosa, cansada ou empolgada?',
+      'Consegue segurar o tique por um tempo, mas depois "precisa" fazer?',
+      'Sente uma urgência ou sensação antes do movimento/som?',
+      'Os tiques mudam de tipo ou de lugar ao longo do tempo?',
+      'Há quanto tempo aparecem (mais de um ano)?',
+      'Causam constrangimento, dor ou atrapalham tarefas?',
+      'Há histórico de tiques ou TOC na família?',
+      'A criança é alvo de comentários ou brincadeiras por causa disso?'
+    ],
+    regulacao: [
+      'Consegue se acalmar sozinha depois de irritar ou frustrar?',
+      'As reações emocionais são proporcionais ao que aconteceu?',
+      'Tolera um "não", a espera ou uma mudança de planos?',
+      'Recompõe-se com facilidade (chora e logo se acalma)?',
+      'Tem explosões emocionais frequentes e difíceis de conter?',
+      'Consegue nomear o que está sentindo?',
+      'Demonstra carinho e empatia de forma adequada?',
+      'Precisa muito do adulto para conseguir se regular?',
+      'A desregulação atrapalha amizades, escola ou a rotina de casa?',
+      'Melhora com antecipação, rotina e estratégias de calma?'
+    ],
+    mutismo: [
+      'Fala normalmente em casa, mas fica em silêncio em certos lugares (escola)?',
+      'Deixa de falar com pessoas específicas (professores, desconhecidos)?',
+      'Isso já dura mais de um mês, fora o período de adaptação?',
+      'Comunica-se por gestos, acenos ou sussurros nesses lugares?',
+      'Parece travar ou ficar muito tensa quando esperam que fale?',
+      'Evita situações em que precise falar em público?',
+      'Fala bem quando está confortável e segura?',
+      'O silêncio atrapalha o aprendizado ou a socialização?',
+      'Há também timidez intensa ou ansiedade em outras situações?',
+      'Melhora quando a pressão para falar diminui?'
     ]
   };
 
@@ -233,7 +281,11 @@
     saude_mental_global: { complaints: ['saude mental', 'rastreio', 'bem-estar', 'forças e dificuldades', 'triagem'], symptoms: ['sinais emocionais', 'sinais comportamentais', 'impacto funcional'] },
     seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] },
     trauma: { complaints: ['trauma', 'tept', 'estresse pos-traumatico', 'evento', 'susto', 'abuso', 'perda', 'luto', 'pesadelo', 'acidente'], symptoms: ['revive o evento', 'evita lembranças', 'hipervigilância', 'sobressalto'] },
-    dor: { complaints: ['dor', 'cefaleia', 'dor de cabeca', 'enxaqueca', 'dor abdominal', 'dor cronica', 'doi'], symptoms: ['dor recorrente', 'falta escolar por dor', 'dor com náusea'] }
+    dor: { complaints: ['dor', 'cefaleia', 'dor de cabeca', 'enxaqueca', 'dor abdominal', 'dor cronica', 'doi'], symptoms: ['dor recorrente', 'falta escolar por dor', 'dor com náusea'] },
+    toc: { complaints: ['toc', 'obsessao', 'compulsao', 'ritual', 'mania de repetir', 'lavar as maos', 'conferir', 'simetria', 'contaminacao'], symptoms: ['rituais repetitivos', 'pensamentos intrusivos', 'aflição se impedido'] },
+    tiques: { complaints: ['tique', 'tiques', 'tic', 'tourette', 'pisca', 'pigarro', 'movimento involuntario', 'som repetido'], symptoms: ['tiques motores', 'tiques vocais', 'urgência premonitória'] },
+    regulacao: { complaints: ['regulacao', 'desregulacao', 'explosao', 'descontrole emocional', 'frustracao', 'autocontrole', 'birra intensa', 'raiva'], symptoms: ['explosões emocionais', 'dificuldade de se acalmar', 'baixa tolerância à frustração'] },
+    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] }
   };
 
   // Classificação de licença (alto grau de confiança; demais → verificar na fonte).
@@ -267,7 +319,8 @@
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
     'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
-    'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor'
+    'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor',
+    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -277,6 +330,10 @@
     if (/risco|suicid|seguranca|autoagress|cssrs|\basq\b/.test(d)) return 'risco';
     if (/trauma|tept|ptsd|pos-?traumat|abuso|\bluto\b|evento traumat|cries/.test(d)) return 'trauma';
     if (/\bdor\b|cefaleia|enxaqueca|\bpain\b|fps-r|faces de dor/.test(d)) return 'dor';
+    if (/\btoc\b|obsess|compuls|oci-cv|ritual/.test(d)) return 'toc';
+    if (/tique|tiques|tourette|\bmoves\b/.test(d)) return 'tiques';
+    if (/regulac|desregulac|autocontrole|emotion regulation|\berc\b/.test(d)) return 'regulacao';
+    if (/mutismo|mutism|\bsmq\b|seletiv/.test(d)) return 'mutismo';
     if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee/.test(d)) return 'desenvolvimento';
     if (/substanc|alcool|drog|cigarro|crafft|vape/.test(d)) return 'substancias';
     if (/tea|autis|espectro|mchat/.test(d)) return 'tea';

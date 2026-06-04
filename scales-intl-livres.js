@@ -74,6 +74,26 @@
       id: 'ofc3-ndds', title: 'NDDS (Nipissing/Looksee) — triagem do desenvolvimento (Canadá)', short_title: 'NDDS (referência)',
       emoji: '🍁', domain: 'Vigilância do desenvolvimento', age_band: '0–6 anos', age_min_months: 0, age_max_months: 72,
       official_url: 'https://www.lookseechecklist.com', _citation: 'Nipissing District Developmental Screen, Canadá.', _pmid: '26983782', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ocicv', title: 'OCI-CV — sintomas obsessivo-compulsivos (TOC)', short_title: 'OCI-CV (referência)',
+      emoji: '🔁', domain: 'TOC (obsessivo-compulsivo)', age_band: '7–17 anos', age_min_months: 84, age_max_months: 215,
+      official_url: '', _citation: 'Foa EB, et al. (OCI-CV).', _pmid: '35091252', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-moves', title: 'MOVES — rastreio de tiques e Tourette', short_title: 'MOVES (referência)',
+      emoji: '😬', domain: 'Tiques / Tourette', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: '', _citation: 'Gaffney GR, et al. (MOVES).', _pmid: '29392455', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-erc', title: 'ERC — regulação emocional (cuidador)', short_title: 'ERC (referência)',
+      emoji: '🎭', domain: 'Regulação emocional', age_band: '6–12 anos', age_min_months: 72, age_max_months: 156,
+      official_url: '', _citation: 'Shields A, Cicchetti D. (Emotion Regulation Checklist).', _pmid: '15212574', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-smq', title: 'SMQ — mutismo seletivo (pais)', short_title: 'SMQ (referência)',
+      emoji: '🤐', domain: 'Mutismo seletivo', age_band: '3–11 anos', age_min_months: 36, age_max_months: 132,
+      official_url: '', _citation: 'Bergman RL, et al. (Selective Mutism Questionnaire).', _pmid: '33995539', license_status: 'livre'
     }
   ];
 
