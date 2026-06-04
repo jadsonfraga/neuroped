@@ -378,12 +378,13 @@
     var qStrong = nStrong>=2 || (nStrong>=1 && r.hits.length>=2);
     var rm = respMatch(s);
 
-    var fit=0;
-    fit += qStrong?40:(qOK?24:0);
-    fit += AF.points;   // idade graduada pela borda (ver ageFit): 26/18/10/0 · 14 se idade desconhecida
-    fit += RESP?(rm>=2?22:0):12;
-    if(s.official_catalog||s.official_url) fit+=6;
-    if(s.featured_rank||s.priority) fit+=4;
+    // Fórmula de fit ÚNICA e testada (NeuroPedSmartRank.scoreFit), com fallback inline.
+    var SR=window.NeuroPedSmartRank;
+    var fitParts={qStrong:qStrong,qOK:qOK,agePoints:AF.points,respChosen:!!RESP,respMatch:rm>=2,official:!!(s.official_catalog||s.official_url),featured:!!(s.featured_rank||s.priority)};
+    var fit=(SR&&SR.scoreFit)?SR.scoreFit(fitParts):(function(){
+      var f=qStrong?40:(qOK?24:0); f+=AF.points; f+=RESP?(rm>=2?22:0):12;
+      if(fitParts.official)f+=6; if(fitParts.featured)f+=4; return f;
+    })();
 
     var aAxis = AF.axis;
     var qAxis = qStrong?'ok':(qOK?'partial':'no');
@@ -394,7 +395,7 @@
 
     r.fit=fit; r.sc=fit; r.tier=tier; r.rank=(tier==='ouro'?3:(tier==='prata'?2:1));
     r.ageKnown=ageKnown; r.edgeDist=edgeDist;
-    r.conf = fit>=70?'alta':(fit>=48?'boa':'parcial');   // nível de correspondência (transparência do ranking)
+    r.conf = (SR&&SR.confOf)?SR.confOf(fit):(fit>=70?'alta':(fit>=48?'boa':'parcial'));   // nível de correspondência (transparência do ranking)
     r.axes={ q:qAxis, a:aAxis, r:rAxis };
     r.ageBand=(s.age_band||((amin/12<1?amin+'m':Math.round(amin/12)+'a')+'–'+(amax>=240?'18a':Math.round(amax/12)+'a')));
     return r;
@@ -655,6 +656,15 @@
   inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSearch(); } });
   document.getElementById('searchGo').addEventListener('click',submitSearch);
   clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#qchips .chip.active,#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });
+  // Atalhos de teclado (produtividade): "/" foca a busca de qualquer lugar;
+  // Esc limpa a busca (e os chips ativos) sem tirar o foco do campo.
+  document.addEventListener('keydown',function(e){
+    if(e.key==='/' && !e.metaKey && !e.ctrlKey && !e.altKey){
+      var ae=document.activeElement, tn=(ae&&ae.tagName||'').toLowerCase();
+      if(ae!==inp && tn!=='input' && tn!=='textarea' && tn!=='select' && !(ae&&ae.isContentEditable)){ e.preventDefault(); inp.focus(); inp.select(); }
+    }
+  });
+  inp.addEventListener('keydown',function(e){ if(e.key==='Escape' && inp.value){ e.preventDefault(); inp.value=''; toggleClear(); document.querySelectorAll('#qchips .chip.active,#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); } });
 
   // Pré-seleção pela CRIANÇA ATIVA: queixa registrada (diagnóstico/notas) + idade.
   // Só preenche se o campo estiver vazio (respeita busca salva/digitada).

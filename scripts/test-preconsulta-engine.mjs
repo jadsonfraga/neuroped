@@ -115,6 +115,34 @@ assert(AF(66, 0, 60).points === 18 && AF(66, 0, 60).axis === 'partial',
 assert(AF(null, 36, 72).known === false && AF(null, 36, 72).points === 14 && AF(null, 36, 72).axis === 'partial',
   'ageFit: idade desconhecida → neutro (14 pts, eixo partial)');
 
+// 2d) SMARTRANK — GUARDA DE NEGAÇÃO (precisão: "sem/descartado X" não ativa X) --
+assert(!Smart.constructsOf('crianca sem autismo, investigar tdah').includes('tea'),
+  'negação: "sem autismo" NÃO ativa TEA');
+assert(Smart.constructsOf('crianca sem autismo, investigar tdah').includes('tdah'),
+  'negação: o construto não-negado (tdah) segue ativo na mesma frase');
+assert(!Smart.constructsOf('hipotese de tdah descartada').includes('tdah') ||
+       !Smart.constructsOf('descartado tdah').includes('tdah'),
+  'negação: "descartado tdah" NÃO ativa TDAH');
+// REGRESSÃO (caça-bruxas): "não" legítimo de queixa NÃO é tratado como negador
+assert(Smart.constructsOf('crianca nao fala e nao aponta').includes('linguagem'),
+  'negação NÃO quebra "não fala" → linguagem segue ativa');
+assert(Smart.constructsOf('crianca nao fala e nao aponta').includes('tea'),
+  'negação NÃO quebra "não aponta" → TEA segue ativo');
+assert(Smart.constructsOf('sem vontade de nada, muito triste').includes('humor'),
+  'negação NÃO quebra "sem vontade" (gatilho legítimo de humor)');
+
+// 2e) SMARTRANK — FÓRMULA DE FIT ÚNICA (scoreFit/confOf, 0–100) --------------
+const SF = Smart.scoreFit, CF = Smart.confOf;
+assert(typeof SF === 'function' && typeof CF === 'function', 'SmartRank expõe scoreFit() e confOf()');
+assert(SF({ qStrong: true, agePoints: 26 }) === 78 && CF(78) === 'alta',
+  'scoreFit: queixa forte + na faixa + responde neutro = 78 → confiança alta');
+assert(SF({ qOK: true, agePoints: 14, respChosen: true, respMatch: true }) === 60 && CF(60) === 'boa',
+  'scoreFit: queixa casa + idade? + responde casa = 60 → confiança boa');
+assert(SF({ qOK: true, agePoints: 0 }) === 36 && CF(36) === 'parcial',
+  'scoreFit: queixa fraca + fora da faixa = 36 → confiança parcial');
+assert(SF({ qStrong: true, agePoints: 26, respChosen: true, respMatch: false, official: true, featured: true }) === 76,
+  'scoreFit: responde escolhido e NÃO casa zera o eixo (40+26+0+6+4 = 76)');
+
 // 3) PERGUNTAS-GUIA — queixas completadas respondem -------------------------
 const guideTags = ['alimentacao', 'adaptativo', 'agressividade', 'epilepsia'];
 let guideBad = 0;
