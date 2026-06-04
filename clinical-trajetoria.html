@@ -70,7 +70,7 @@
 
   function run(){
     var C = window.NeuroPedCIL || {};
-    var g = gateConfig(window.NeuroPedClinicalConfig || {});
+    var g = gateConfig(window.CLINICAL_CONFIG || window.NeuroPedClinicalConfig || {});
     var out = document.getElementById('out'), gate = document.getElementById('gate');
     gate.className = g.validated ? 'gate ok' : 'gate';
     gate.innerHTML = g.validated
