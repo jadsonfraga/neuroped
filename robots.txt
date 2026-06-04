@@ -1,3 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /restricted.html
+Disallow: /teste-ouro-pin.html
+Disallow: /gerar-licencas-pro.html
+Disallow: /agenda-financeiro.html
+Disallow: /consulta.html
+Disallow: /qa-smoke-test.html
+Disallow: /teste-e2e-manual.html
+
 Sitemap: https://jadsonfraga.github.io/neuroped/sitemap.xml
