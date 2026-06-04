@@ -371,6 +371,21 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
       loadProgress(); CURRENT_BLOCK=firstUnansweredBlock(); // retoma respostas e abre no bloco a continuar
       document.getElementById('title').textContent=INST.title;
       document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' · ')+(INST._study_only?' · 🔒 USO RESTRITO — ESTUDO, NÃO CLÍNICO':'');
+      // Natureza do instrumento SEMPRE visível: referência (não é o oficial) vs
+      // triagem autoral não normatizada. Nenhum instrumento aqui é normatizado/validado.
+      (function(){
+        var host=document.getElementById('meta'); if(!host) return;
+        var old=document.getElementById('np-nature'); if(old) old.remove();
+        var isRef=!!(INST._official_url||(INST._license_status&&INST._license_status!=='autoral'));
+        var msg=INST.not_normative_disclaimer || (isRef
+          ? 'Instrumento de REFERÊNCIA: as perguntas são guias autorais NeuroPed sobre o mesmo construto — NÃO são os itens do instrumento oficial e não substituem sua aplicação licenciada.'
+          : 'Triagem AUTORAL não normatizada — apoio à observação clínica/familiar. NÃO é teste validado e não substitui avaliação ou diagnóstico profissional.');
+        var refLink=INST._official_url?(' <a href="'+esc(INST._official_url)+'" target="_blank" rel="noopener" style="color:#a9a4ff;font-weight:700">fonte oficial ›</a>'):'';
+        var b=document.createElement('div'); b.id='np-nature'; b.setAttribute('role','note');
+        b.style.cssText='margin:10px 0 2px;padding:11px 13px;border-radius:14px;font-size:12.8px;line-height:1.5;border:1px solid rgba(231,201,139,.42);background:rgba(231,201,139,.10);color:#f0e2c0';
+        b.innerHTML='<b>'+(isRef?'📄 Referência — não é o instrumento oficial.':'⚠️ Triagem não normatizada — não substitui avaliação.')+'</b> '+esc(msg)+refLink;
+        host.parentNode.insertBefore(b, host.nextSibling);
+      })();
       var w=document.getElementById('why'); if(w){ if(INST.finalidade){ w.innerHTML='🎯 <b>Para que serve:</b> '+esc(INST.finalidade); w.hidden=false; } else { w.hidden=true; } }
       document.getElementById('sym').innerHTML=(INST._symptoms||[]).slice(0,6).map(function(s){return '<span>'+esc(s)+'</span>'}).join('');
       document.getElementById('prog').hidden=false;
