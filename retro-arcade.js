@@ -54,8 +54,10 @@
      laudo, instrumento, diários, agenda…) permanecem SÉRIAS — atenua a crítica
      de "gamificar a angústia dos pais" em rastreios clínicos. */
   var FILE = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-  var PLAYFUL = FILE === '' ||
-    /^(index|comunicacao-alternativa|area-filho|portal-familia-livre|portal-novidades|gerador-cards|central-atalhos)\.html$/.test(FILE);
+  // Retrô SÓ nas telas genuinamente infantis/lúdicas. A HOME pública (index),
+  // hubs e institucionais ficam SÓBRIOS — 1ª impressão profissional para
+  // famílias, colegas e imprensa (atenua "Mario na porta de entrada").
+  var PLAYFUL = /^(comunicacao-alternativa|area-filho|portal-familia-livre|gerador-cards)\.html$/.test(FILE);
   if (!PLAYFUL) {
     // Silencia a camada de som 8-bit nesta página (np-sound respeita o atributo).
     try { (document.body || document.documentElement).setAttribute('data-np-sound', 'off'); } catch (e) {}
