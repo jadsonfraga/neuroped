@@ -320,6 +320,7 @@ assertIncludes('filtro-escalas.html', 'id="respChips"', 'filtro tem o seletor "q
 assertIncludes('filtro-escalas.html', 'function respMatch', 'medalha pondera o respondente (audience do instrumento)');
 assertIncludes('filtro-escalas.html', 'function decorate', 'filtro decora cada candidato com os 3 eixos (queixa/idade/responde) + fit');
 assertIncludes('filtro-escalas.html', 'sc-axes', 'cards explicam a medalha pelos 3 eixos (queixa · idade · quem responde)');
+assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro anunciam estado (aria-pressed) p/ leitor de tela');
 // Regra de ouro: o filtro é a PRÉ-CONSULTA — diários (família/paciente/longitudinais) NÃO entram
 assertIncludes('filtro-escalas.html', "s.kind==='diário'", 'filtro exclui diários do catálogo (sinal factual kind==="diário")');
 assertIncludes('filtro-escalas.html', 'monitoramento longitud', 'filtro exclui registros longitudinais/monitoramento da pré-consulta');

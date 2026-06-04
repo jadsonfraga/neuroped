@@ -365,18 +365,19 @@
   // Quem responde? — seletor (single-select). Eixo que muda a medalha: ao escolher,
   // instrumentos cujo respondente não casa deixam de ser Ouro/Prata (viram alternativa).
   (function(){ var box=document.getElementById('respChips'); if(!box) return;
-    box.innerHTML=RESP_OPTS.map(function(o,i){return '<button class="chip resp'+(i===0?' active':'')+'" type="button" data-resp="'+esc(o.val)+'">'+(o.val?esc(o.icon)+' ':'')+esc(o.label)+'</button>';}).join('');
+    box.innerHTML=RESP_OPTS.map(function(o,i){return '<button class="chip resp'+(i===0?' active':'')+'" type="button" aria-pressed="'+(i===0?'true':'false')+'" data-resp="'+esc(o.val)+'">'+(o.val?esc(o.icon)+' ':'')+esc(o.label)+'</button>';}).join('');
     box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
-      box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
-      b.classList.add('active'); RESP=b.getAttribute('data-resp')||''; run();
+      box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
+      b.classList.add('active'); b.setAttribute('aria-pressed','true'); RESP=b.getAttribute('data-resp')||''; run();
     });});
   })();
 
   // chips de contexto
   (function(){ var box=document.getElementById('contextChips');
-    box.innerHTML=CHIPS.map(function(c){return '<button class="chip" type="button">'+esc(c)+'</button>';}).join('');
+    box.innerHTML=CHIPS.map(function(c){return '<button class="chip" type="button" aria-pressed="false">'+esc(c)+'</button>';}).join('');
     box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
       b.classList.toggle('active');
+      b.setAttribute('aria-pressed', b.classList.contains('active')?'true':'false');
       var inp=document.getElementById('searchInput');
       var txt=b.textContent.split('/')[0].trim();
       if(b.classList.contains('active')) inp.value=(inp.value?inp.value+' ':'')+txt;
