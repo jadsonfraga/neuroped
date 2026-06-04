@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.44.26';
+const CACHE_NAME = 'neuroped-edj-v6.44.28';
 const SHELL = [
   './',
   './app-shell.html',
@@ -26,7 +26,7 @@ const SHELL = [
   './diario-escola-terapias-v2.html','./consulta.html','./banco-escalas.html','./banco-escalas-lote1.html','./banco-escalas-lote2-80.html','./banco-escalas-lote3-100.html','./banco-escalas-lote4-200.html','./banco-escalas-lote5-90.html',
   './neuroped-master-biblioteca.html','./neuroped-master-biblioteca.css','./neuroped-master-biblioteca.js','./neuroped-master-biblioteca-data.js','./neuroped-master-protegido-data.js',
   './neuroped-master-vitrine.html','./neuroped-master-vitrine.css','./perfil-crianca.html','./np-store.js','./central-atalhos.html','./comunicacao-alternativa.html','./portal-familia-livre.html','./gerador-cards.html','./gerador-cards.js',
-  './neuroped-shell.css','./np-cards.css','./escalas-card-premium.css','./escalas-card-premium.js','./app-polish-mobile.css','./app-polish-mobile.js','./tokens.css','./components.css','./np-frame.js','./np-embed-guard.js','./np-embedded.css','./clinical-meta.js','./evidence-registry.json','./clinical-ontology.json','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
+  './neuroped-shell.css','./np-cards.css','./escalas-card-premium.css','./escalas-card-premium.js','./app-polish-mobile.css','./app-polish-mobile.js','./tokens.css','./components.css','./ds-bridge.css','./np-frame.js','./np-embed-guard.js','./np-embedded.css','./clinical-meta.js','./evidence-registry.json','./clinical-ontology.json','./master-access-policy.js','./consulta-bridge.js','./spa-route-watchdog.js',
   './scales-editorial.js','./scales-453-authorial.js','./scales-global-max.js','./scales-featured-extra.js','./scales-featured-10.js','./scales-priority-uploaded.js','./scales-diarios-uteis.js','./scales-autorais-npe.js','./scales-impacto-medicacao.js','./neuroped-pro.html','./pro-license.js','./pro-hashes.js','./sobre-dr-jadson.html','./guia-lancamento.html','./scales-oficiais.js','./scales-oficiais-lote2.js','./scales-curate.js','./scales-red-flags.js','./scales-enhance.js','./scales-taxonomy.js','./scales-questions.js','./scales-progress.js','./scales-bundle.js','./scales-question-coach.js','./scales-direct-tasks.js','./scales-index.json','./scales-clinical-signals.js',
   './intake.html','./testes-diretos.html','./testes-diretos-engine.js','./instrumento-celebrations.js','./diarios.html','./entrevista-autismo-adir.html',
   './clinical-explainability.js','./clinical-normalization.js','./clinical-timeline-engine.js','./phenotype-engine.js','./therapeutic-burden-engine.js','./response-engine.js','./contradiction-engine.js','./clinical-decision-support.js','./clinical-visual-schema.js','./clinical-config.example.js','./clinical-config.js','./clinical-config-adapter.js','./clinical-trajectory-explain.js','./clinical-trajetoria.html','./clinical-trajetoria-demo.html',

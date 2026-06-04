@@ -16,7 +16,7 @@
   <div class="hero-actions">
     <button class="np-btn np-btn--primary" onclick="check()"><span class="np-btn-label">Verificar versão</span></button>
     <button class="np-btn np-btn--secondary" onclick="location.replace('./?fresh='+Date.now())">Recarregar app</button>
-    <a class="np-btn np-btn--ghost" href="./central-atalhos.html">Central</a>
+    <a class="np-btn np-btn--ghost" href="./index.html">Central</a>
     <a class="np-btn np-btn--ghost" href="./consulta.html">Consulta</a>
     <a class="np-btn np-btn--ghost" href="./ativar-passe-familiar.html">Ativar passe</a>
   </div>
@@ -28,7 +28,7 @@ async function ok(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no
 async function txt(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no-store'}).then(r=>r.text())}catch(e){return ''}}
 async function check(){
   const out=[];function log(x){out.push(x);document.getElementById('log').textContent=out.join('\n')}
-  const VERSAO='6.44.26';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
+  const VERSAO='6.44.28';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
   log('Versão canônica esperada: '+VERSAO);
   const pkg=await txt('./package.json');let pkgV='';try{pkgV=(JSON.parse(pkg||'{}').version)||''}catch(e){}
   log(pkgV?('OK: package.json em '+pkgV+(pkgV===VERSAO?' (alinhado)':' — Atenção: diverge de '+VERSAO)):'Atenção: versão do package.json não identificada');
