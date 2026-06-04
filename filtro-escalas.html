@@ -228,7 +228,12 @@
   var PALETTE=[['#7c79ff','#4f46e5'],['#f59e0b','#d97706'],['#10b981','#059669'],['#8b5cf6','#7c3aed'],['#60a5fa','#2563eb'],['#fb7185','#e11d48'],['#34d399','#0ea5e9']];
   var LAST=[];
 
-  function ageMonthsFromText(t){ t=norm(t); var m=t.match(/(\d+)\s*(anos?|a\b)/); if(m) return parseInt(m[1],10)*12; var mm=t.match(/(\d+)\s*(meses|mes|m\b)/); if(mm) return parseInt(mm[1],10); return null; }
+  function ageMonthsFromText(t){ t=norm(t);
+    var ym=t.match(/(\d+)\s*anos?\s*(?:e\s*)?(\d+)\s*(?:meses|mes)\b/); if(ym) return parseInt(ym[1],10)*12+parseInt(ym[2],10);   // "3 anos e 6 meses"
+    var dec=t.match(/(\d+)[.,](\d+)\s*anos?\b/); if(dec) return Math.round(parseFloat(dec[1]+'.'+dec[2])*12);                      // "3,5 anos"
+    var a=t.match(/(\d+)\s*anos?\b/)||t.match(/(\d+)\s*a\b(?!\s*\d)/); if(a) return parseInt(a[1],10)*12;                          // "5 anos" / "5a" (não "1 a 2")
+    var mm=t.match(/(\d+)\s*(?:meses|mes)\b/)||t.match(/(\d+)\s*m\b(?!\s*\d)/); if(mm) return parseInt(mm[1],10);                  // "8 meses" / "8m"
+    return null; }
   // Diários NÃO entram no filtro: ele é o momento de PRÉ-CONSULTA (triagem antes
   // do atendimento), não o acompanhamento longitudinal. Exclui diários da família,
   // do paciente e registros longitudinais — o sinal factual kind==='diário'/daily
@@ -293,12 +298,24 @@
   // gate de candidatura (precisa casar ≥1 termo) e base do eixo "queixa".
   function score(s, tokens, age){
     if(!s||!s.id||isDiary(s)||isBank(s)||isClinicalOnly(s)) return null;
-    // termos da queixa: complaints/symptoms pesam mais que título/domínio
-    var strongTerms=norm([].concat(s.keywords||[],s.complaints||[],s.symptoms||[]).join(' '));
-    var softTerms=norm([s.domain||'',s.title||'',s.short_title||''].join(' '));
-    var hits=[]; tokens.forEach(function(tk){ if(tk.length>=3 && (strongTerms.indexOf(tk)>=0||softTerms.indexOf(tk)>=0) && hits.indexOf(tk)<0) hits.push(tk); });
+    // Blob normalizado por instrumento, em CACHE (não recalcula a cada tecla).
+    // FORTE = keywords/complaints/symptoms · FRACO = domínio/título.
+    if(s.__npStrong==null){
+      s.__npStrong=norm([].concat(s.keywords||[],s.complaints||[],s.symptoms||[]).join(' '));
+      s.__npSoft=norm([s.domain||'',s.title||'',s.short_title||''].join(' '));
+    }
+    // Casamento por PALAVRA/stem (não substring crua) — mata falsos positivos
+    // tipo 'dor'→'dormir'. Fallback gracioso se o SmartRank não carregou.
+    var TM=(window.NeuroPedSmartRank&&NeuroPedSmartRank.tokenMatches)||function(tk,b){return b.indexOf(tk)>=0;};
+    var strongHits=[], softHits=[];
+    tokens.forEach(function(tk){
+      if(tk.length<3) return;
+      if(TM(tk,s.__npStrong)){ if(strongHits.indexOf(tk)<0) strongHits.push(tk); }
+      else if(TM(tk,s.__npSoft)){ if(softHits.indexOf(tk)<0) softHits.push(tk); }
+    });
+    var hits=strongHits.concat(softHits);
     if(!hits.length) return null;
-    return { s:s, hits:hits };
+    return { s:s, hits:hits, strongHits:strongHits, softHits:softHits };
   }
 
   function evidenceFor(id){
@@ -328,7 +345,11 @@
     var inBand = age!=null && age>=amin && age<=amax;
     var nearBand = age!=null && !inBand && Math.abs(age-((amin+amax)/2))<=18;
     var ageKnown = age!=null;
-    var qStrong = r.hits.length>=2, qOK = r.hits.length>=1;
+    var nStrong = (r.strongHits||[]).length;
+    var qOK = r.hits.length>=1;
+    // "Forte" exige casar campo forte (keyword/queixa/sintoma): ≥2 fortes, ou ≥1
+    // forte com corroboração. Casar só no título/domínio nunca conta como forte.
+    var qStrong = nStrong>=2 || (nStrong>=1 && r.hits.length>=2);
     var rm = respMatch(s);
 
     var fit=0;
@@ -345,7 +366,7 @@
 
     var tier=tierOf(fit, qOK, aOK, (RESP && rm<2));
 
-    r.fit=fit; r.tier=tier; r.rank=(tier==='ouro'?3:(tier==='prata'?2:1));
+    r.fit=fit; r.sc=fit; r.tier=tier; r.rank=(tier==='ouro'?3:(tier==='prata'?2:1));
     r.ageKnown=ageKnown;
     r.axes={ q:qAxis, a:aAxis, r:rAxis };
     r.ageBand=(s.age_band||((amin/12<1?amin+'m':Math.round(amin/12)+'a')+'–'+(amax>=240?'18a':Math.round(amax/12)+'a')));

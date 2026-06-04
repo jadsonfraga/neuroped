@@ -6,7 +6,7 @@
    - API/Supabase: network-first
    =========================================================== */
 
-const CACHE_NAME = 'neuroped-edj-v6.45.9';
+const CACHE_NAME = 'neuroped-edj-v6.45.11';
 const SHELL = [
   './',
   './app-shell.html',
@@ -38,8 +38,11 @@ const SHELL = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      // add tolerante por item: um recurso faltando não invalida o resto
-      .then(c => Promise.allSettled(SHELL.map(u => c.add(u))))
+      // add tolerante por item: um recurso faltando não invalida o resto.
+      // cache:'reload' força buscar do servidor (ignora cache HTTP do navegador) —
+      // sem isto, ao bumpar a versão o SW re-guardava bundles VELHOS já cacheados
+      // (ex.: home mostrando "340" mesmo após o patch). Mesma URL → não duplica módulo.
+      .then(c => Promise.allSettled(SHELL.map(u => c.add(new Request(u, { cache: 'reload' })))))
       .then(() => self.skipWaiting())
   );
 });
