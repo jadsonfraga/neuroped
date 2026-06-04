@@ -245,6 +245,17 @@ assertIncludes('intake.html', 'id="relato"', 'intake preserva o contrato JS (cam
 assertIncludes('filtro-escalas.html', 'PREMIUM SKIN', 'filtro-escalas tem a camada de skin premium (Onda 1)');
 assertIncludes('filtro-escalas.html', 'id="results"', 'filtro-escalas preserva o contrato JS (resultados)');
 
+// ===== Camada de feedback sensorial (som/háptico/pulso) =====
+assertFile('np-sound.js');
+assertIncludes('np-sound.js', 'AudioContext', 'np-sound usa Web Audio sintetizado (sem assets, offline)');
+assertIncludes('np-sound.js', "localStorage.getItem(KEY)", 'np-sound persiste a preferência do usuário');
+assertIncludes('np-sound.js', "enabled = false", 'np-sound nasce DESLIGADO (opt-in — contexto clínico)');
+assertIncludes('np-sound.js', "prefers-reduced-motion", 'np-sound respeita prefers-reduced-motion no pulso visual');
+assertIncludes('np-sound.js', "np:celebrate", 'np-sound reage ao evento de celebração');
+assertIncludes('app-polish-mobile.js', './np-sound.js', 'polish injeta a camada de som globalmente');
+assertIncludes('instrumento-celebrations.js', "np:celebrate", 'conclusão de escala dispara o feedback sonoro');
+assertIncludes('sw.js', './np-sound.js', 'np-sound no precache (offline)');
+
 // Identidade premium: tipografia institucional + capa do hub
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
 assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');
