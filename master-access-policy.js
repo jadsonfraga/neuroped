@@ -46,6 +46,11 @@
   function clear(){try{localStorage.removeItem(KEY)}catch(e){}}
   function isUnlocked(){var v=read();return !!(v&&v.ok&&Date.now()-Number(v.ts||0)<TTL)}
   async function unlockIfPin(value){
+    // MODO PÚBLICO: PIN master DESATIVADO. O app é educacional e sem senhas;
+    // áreas sensíveis ficam OCULTAS (public-mode.js), não protegidas por PIN.
+    // Mantido como no-op para não quebrar chamadas legadas.
+    return false;
+    /* eslint-disable no-unreachable */
     if(isUnlocked())return false;
     var c=clean(value);
     if(c.length<4 || c.length>32 || !crypto.subtle)return false;
