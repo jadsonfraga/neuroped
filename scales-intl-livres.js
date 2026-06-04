@@ -74,8 +74,52 @@
       id: 'ofc3-ndds', title: 'NDDS (Nipissing/Looksee) — triagem do desenvolvimento (Canadá)', short_title: 'NDDS (referência)',
       emoji: '🍁', domain: 'Vigilância do desenvolvimento', age_band: '0–6 anos', age_min_months: 0, age_max_months: 72,
       official_url: 'https://www.lookseechecklist.com', _citation: 'Nipissing District Developmental Screen, Canadá.', _pmid: '26983782', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ocicv', title: 'OCI-CV — sintomas obsessivo-compulsivos (TOC)', short_title: 'OCI-CV (referência)',
+      emoji: '🔁', domain: 'TOC (obsessivo-compulsivo)', age_band: '7–17 anos', age_min_months: 84, age_max_months: 215,
+      official_url: '', _citation: 'Foa EB, et al. (OCI-CV).', _pmid: '35091252', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-moves', title: 'MOVES — rastreio de tiques e Tourette', short_title: 'MOVES (referência)',
+      emoji: '😬', domain: 'Tiques / Tourette', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: '', _citation: 'Gaffney GR, et al. (MOVES).', _pmid: '29392455', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-erc', title: 'ERC — regulação emocional (cuidador)', short_title: 'ERC (referência)',
+      emoji: '🎭', domain: 'Regulação emocional', age_band: '6–12 anos', age_min_months: 72, age_max_months: 156,
+      official_url: '', _citation: 'Shields A, Cicchetti D. (Emotion Regulation Checklist).', _pmid: '15212574', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-smq', title: 'SMQ — mutismo seletivo (pais)', short_title: 'SMQ (referência)',
+      emoji: '🤐', domain: 'Mutismo seletivo', age_band: '3–11 anos', age_min_months: 36, age_max_months: 132,
+      official_url: '', _citation: 'Bergman RL, et al. (Selective Mutism Questionnaire).', _pmid: '33995539', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-essenceq', title: 'ESSENCE-Q — rastreio precoce de neurodesenvolvimento (Suécia)', short_title: 'ESSENCE-Q (referência)',
+      emoji: '🇸🇪', domain: 'Neurodesenvolvimento (rastreio precoce)', age_band: '0–5 anos', age_min_months: 0, age_max_months: 60,
+      official_url: 'https://www.gu.se/en/gnc/gncs-resources/screening-questionnaires', _citation: 'Gillberg C, et al. (ESSENCE-Q). Gillberg Neuropsychiatry Centre, Suécia.', _pmid: '27478377', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ftf515', title: '5-15 (FTF) — neurodesenvolvimento amplo (Nórdico)', short_title: '5-15 / FTF (referência)',
+      emoji: '🇪🇺', domain: 'Neurodesenvolvimento amplo', age_band: '5–15 anos', age_min_months: 60, age_max_months: 180,
+      official_url: '', _citation: 'Kadesjö B, Gillberg C, et al. Eur Child Adolesc Psychiatry. 2004 (questionário 5-15/FTF, países nórdicos).', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-kdst', title: 'K-DST — triagem nacional do desenvolvimento (Coreia do Sul)', short_title: 'K-DST (referência)',
+      emoji: '🇰🇷', domain: 'Triagem do desenvolvimento', age_band: '0–6 anos', age_min_months: 4, age_max_months: 71,
+      official_url: '', _citation: 'Korean Developmental Screening Test (K-DST), Coreia do Sul — triagem nacional pública.', _pmid: '32683817', license_status: 'livre'
     }
   ];
+
+  // Bandeira de origem (proveniência visível).
+  var ORIGIN = {
+    'ofc3-qchat': '🇬🇧', 'ofc3-aq10': '🇬🇧', 'ofc3-cries8': '🇬🇧',
+    'ofc3-scared': '🇺🇸', 'ofc3-mfq': '🇺🇸', 'ofc3-cshq': '🇺🇸', 'ofc3-snap-iv': '🇺🇸',
+    'ofc3-ocicv': '🇺🇸', 'ofc3-moves': '🇺🇸', 'ofc3-erc': '🇺🇸', 'ofc3-smq': '🇺🇸',
+    'ofc3-fpsr': '🌍', 'ofc3-kidscreen10': '🇪🇺', 'ofc3-ftf515': '🇪🇺',
+    'ofc3-essenceq': '🇸🇪', 'ofc3-kdst': '🇰🇷', 'ofc3-ndds': '🇨🇦', 'ofc3-irdi': '🇧🇷'
+  };
 
   var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
   var ids = {}; base.forEach(function (x) { if (x && x.id) ids[x.id] = 1; });
@@ -91,6 +135,7 @@
       plain_questions: [],            // preenchidas (autorais) por scales-official-questions.js
       applicable: false,
       license_status: it.license_status,
+      _origin: ORIGIN[it.id] || '🌍',
       _citation: it._citation, _pmid: it._pmid, _intl_curated: true
     });
   });
