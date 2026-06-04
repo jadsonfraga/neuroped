@@ -294,6 +294,12 @@ h1.font-black.tracking-wider{
   background-size: 160% 160% !important;
   animation: npAuroraDrift 26s ease-in-out infinite;
 }
+/* iOS Safari: background-attachment:fixed é bugado — ancora o fundo ao documento
+   inteiro e renderiza a tela "zoomada/distorcida" de forma persistente (só na home).
+   Em iOS usa scroll + tamanho normal; desktop mantém o fixed com parallax. */
+@supports (-webkit-touch-callout: none){
+  .min-h-screen.bg-background{ background-attachment: scroll !important; background-size: 100% 100% !important; }
+}
 @media (prefers-reduced-motion: no-preference){
   @keyframes npAuroraDrift{
     0%,100%{ background-position: 0% 0%; }
