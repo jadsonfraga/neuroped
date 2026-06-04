@@ -61,6 +61,9 @@ assertNotIncludes('terms-of-use.html', 'privacy-policy.html', 'termos apontam pa
 assertFile('scales-bundle.js');
 assertIncludes('index.html', 'modulepreload', 'index pré-carrega o módulo da SPA (perf)');
 assertIncludes('app-polish-mobile.js', 'np_lgpd_ack', 'banner LGPD (1ª visita) — só localStorage, sem cookies');
+// Posicionamento MVP educacional: enquadramento honesto em TODA tela (rodapé global) + banner
+assertIncludes('app-polish-mobile.js', 'educacional de apoio', 'rodapé global declara natureza educacional (não diagnóstico) em toda tela');
+assertIncludes('app-polish-mobile.js', 'não substitui avaliação profissional', 'disclaimer global: não substitui avaliação profissional');
 assertIncludes('neuroped-pro.html', 'FAQPage', 'landing pro tem FAQ schema (SEO/rich result)');
 assertIncludes('neuroped-pro.html', '"Service"', 'landing pro tem Service schema com preço');
 assertIncludes('filtro-escalas.html', 'aria-live="polite"', 'filtro anuncia resultado ao leitor de tela');
