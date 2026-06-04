@@ -97,6 +97,24 @@ assert(TM('tod', 'todos os dias falta na escola') === false, 'tokenMatches: "tod
 assert(TM('tdah', 'quadro compativel com tdah') === true, 'tokenMatches: "tdah" (palavra exata) casa');
 assert(TM('contato visual', 'mantem pouco contato visual') === true, 'tokenMatches: frase casa por substring');
 
+// 2c) SMARTRANK — ADERÊNCIA ETÁRIA (ageFit: borda vs. ponto-médio) ----------
+const AF = Smart.ageFit;
+assert(typeof AF === 'function', 'SmartRank expõe ageFit()');
+assert(AF(60, 36, 72).inBand === true && AF(60, 36, 72).points === 26 && AF(60, 36, 72).axis === 'ok',
+  'ageFit: idade DENTRO da faixa → inBand, 26 pts, eixo ok');
+assert(AF(78, 36, 72).edgeDist === 6 && AF(78, 36, 72).points === 18 && AF(78, 36, 72).axis === 'partial',
+  'ageFit: 6m acima da borda → edgeDist 6, 18 pts, eixo partial');
+assert(AF(90, 36, 72).edgeDist === 18 && AF(90, 36, 72).points === 10,
+  'ageFit: 18m fora da borda → edgeDist 18, 10 pts');
+assert(AF(120, 36, 72).points === 0 && AF(120, 36, 72).axis === 'no',
+  'ageFit: muito longe (48m fora) → 0 pts, eixo no');
+// O CORAÇÃO DA CORREÇÃO: faixa LARGA é pontuada pela BORDA, não pelo ponto-médio.
+// Faixa 0–60m, criança 66m: borda = 6m (perto). O cálculo antigo (|66-30| = 36) diria "longe".
+assert(AF(66, 0, 60).points === 18 && AF(66, 0, 60).axis === 'partial',
+  'ageFit: faixa larga 0–60m + idade 66m → perto pela BORDA (18 pts), não longe pelo ponto-médio');
+assert(AF(null, 36, 72).known === false && AF(null, 36, 72).points === 14 && AF(null, 36, 72).axis === 'partial',
+  'ageFit: idade desconhecida → neutro (14 pts, eixo partial)');
+
 // 3) PERGUNTAS-GUIA — queixas completadas respondem -------------------------
 const guideTags = ['alimentacao', 'adaptativo', 'agressividade', 'epilepsia'];
 let guideBad = 0;

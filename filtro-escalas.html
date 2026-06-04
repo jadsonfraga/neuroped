@@ -103,7 +103,12 @@
   .sc-card.tier-escola::before{background:linear-gradient(90deg,#38bdf8,#0ea5e9)}
   .sc-card:hover{transform:translateY(-3px);border-color:rgba(169,164,255,.34);box-shadow:0 28px 64px -28px rgba(91,84,232,.5)}
   .sc-card.top{border-color:rgba(231,201,139,.4);box-shadow:0 0 0 1px rgba(231,201,139,.3),0 26px 60px -26px rgba(231,201,139,.28)}
-  .sc-medalrow{display:flex}
+  .sc-medalrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  /* Pílula de confiança: quantifica o "fit" 0–100 do ranking (transparência) */
+  .sc-conf{margin-left:auto;font:800 10px system-ui;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:3px 9px;align-self:center;white-space:nowrap}
+  .sc-conf.alta{background:rgba(16,185,129,.16);color:#6ee7b7;border:1px solid rgba(16,185,129,.32)}
+  .sc-conf.boa{background:rgba(245,158,11,.14);color:#fcd34d;border:1px solid rgba(245,158,11,.32)}
+  .sc-conf.parcial{background:rgba(148,163,184,.14);color:#cbd5e1;border:1px solid rgba(148,163,184,.32)}
   .sc-head{display:flex;align-items:center;gap:12px}
   .sc-sigla{width:44px;height:44px;flex:0 0 auto;border-radius:14px;display:grid;place-items:center;font:800 15px "Fraunces",Georgia,serif;color:#fff;
     background:linear-gradient(140deg,var(--c1,#7c79ff),var(--c2,#4f46e5));box-shadow:0 10px 22px -10px var(--c1,#7c79ff)}
@@ -152,7 +157,11 @@
   .sc-skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:scShimmer 1.4s infinite}
   @keyframes scShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
   @keyframes scRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}}
+  /* Acessibilidade: foco visível por teclado + região só-leitor-de-tela */
+  .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  a.sc-card:focus-visible,.chip:focus-visible,.search-go:focus-visible,.search-clear:focus-visible,.applynow:focus-visible,.dchip:focus-visible{outline:3px solid #a9a4ff;outline-offset:2px}
+  .search-input:focus-visible{outline:2px solid #a9a4ff;outline-offset:2px;border-radius:8px}
+  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}.astro{animation:none}}
 </style>
 <link rel="stylesheet" href="./escalas-hero.css">
 </head>
@@ -199,13 +208,15 @@
   <div id="guidePanel" hidden></div>
 
   <section id="recommendedSection" style="display:none">
-    <div class="rec-head"><div class="section-label">🥇 Mais indicados · pódio + 🧒 teste direto + 🏫 escola</div><a id="applyNow" class="applynow" hidden></a></div>
+    <div class="rec-head"><h2 class="section-label">🥇 Mais indicados · pódio + 🧒 teste direto + 🏫 escola</h2><a id="applyNow" class="applynow" hidden></a></div>
     <div class="np-cards-grid" id="recommendedResults"></div>
   </section>
 
+  <p id="srStatus" class="sr-only" role="status" aria-live="polite"></p>
+
   <section id="allSection">
-    <div class="section-label">Instrumentos indicados <span id="resCount" aria-live="polite" style="font-weight:700;color:var(--text-muted,#94A3B8);text-transform:none;letter-spacing:0"></span></div>
-    <div class="np-cards-grid" id="allResults"></div>
+    <h2 class="section-label">Instrumentos indicados <span id="resCount" style="font-weight:700;color:var(--text-muted,#94A3B8);text-transform:none;letter-spacing:0"></span></h2>
+    <div class="np-cards-grid" id="allResults" aria-busy="false"></div>
   </section>
 
   <p class="disc">Busca por relevância sobre os metadados autorais dos instrumentos + idade/queixa. <strong>Apoio à decisão, não diagnóstico</strong> — não substitui o julgamento do profissional. A evidência exibida é curada (citação + PMID) e não implica validação do instrumento autoral.</p>
@@ -223,6 +234,13 @@
   'use strict';
   function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+  // plain(): remove emoji/decoração para nomes acessíveis (aria-label) limpos.
+  function plain(s){ return String(s==null?'':s).replace(/[←-➿️‍]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g,'').replace(/\s+/g,' ').trim(); }
+  // announce(): mensagem curta na região role="status" (leitor de tela).
+  function announce(msg){ var el=document.getElementById('srStatus'); if(el) el.textContent=msg||''; }
+  // Rótulos PLANOS (sem emoji) p/ a posição na regra de ouro — usados no aria-label.
+  var TIER_PLAIN={ouro:'1ª indicação, ouro',prata:'2ª indicação, prata',bronze:'3ª indicação, bronze',direto:'4ª indicação, teste direto na criança',escola:'5ª indicação, questionário escolar'};
+  var CONF_LB={alta:'alta',boa:'boa',parcial:'parcial'};
   var STOP={'anos':1,'ano':1,'meses':1,'mes':1,'menino':1,'menina':1,'crianca':1,'paciente':1,'filho':1,'filha':1,'idade':1,'suspeita':1,'tem':1,'com':1,'sem':1,'que':1,'uma':1,'dos':1,'das':1,'para':1,'por':1,'apresenta':1,'relata':1,'queixa':1,'escola':1,'anos.':1,'nao':1,'muito':1,'mais':1,'esta':1,'aos':1};
   // chips de contexto = queixas comuns (clique injeta no campo)
   var CHIPS=['TEA / autismo','TDAH','fala / linguagem','comportamento','sono','ansiedade','aprendizagem','motor','sensorial','adaptativo'];
@@ -343,9 +361,15 @@
   // chama tierOf() para a medalha.
   function decorate(r, age){
     var s=r.s, amin=Number(s.age_min_months||0), amax=Number(s.age_max_months||240);
-    var inBand = age!=null && age>=amin && age<=amax;
-    var nearBand = age!=null && !inBand && Math.abs(age-((amin+amax)/2))<=18;
-    var ageKnown = age!=null;
+    // Aderência etária pela BORDA mais próxima da faixa (clinicamente correto, não
+    // pelo ponto-médio). Lógica ÚNICA e testável em NeuroPedSmartRank.ageFit, com
+    // fallback inline para robustez offline-first (PWA / ordem de carga).
+    var AF=(window.NeuroPedSmartRank&&NeuroPedSmartRank.ageFit)?NeuroPedSmartRank.ageFit(age,amin,amax):(function(){
+      if(age==null) return {inBand:false,edgeDist:0,points:14,axis:'partial',known:false};
+      var ib=age>=amin&&age<=amax, ed=ib?0:Math.min(Math.abs(age-amin),Math.abs(age-amax));
+      return {inBand:ib,edgeDist:ed,points:ib?26:(ed<=6?18:(ed<=18?10:0)),axis:ib?'ok':(ed<=18?'partial':'no'),known:true};
+    })();
+    var inBand=AF.inBand, edgeDist=AF.edgeDist||0, ageKnown=AF.known;
     var nStrong = (r.strongHits||[]).length;
     var qOK = r.hits.length>=1;
     // "Forte" exige casar campo forte (keyword/queixa/sintoma): ≥2 fortes, ou ≥1
@@ -355,12 +379,12 @@
 
     var fit=0;
     fit += qStrong?40:(qOK?24:0);
-    fit += !ageKnown?14:(inBand?26:(nearBand?12:0));
+    fit += AF.points;   // idade graduada pela borda (ver ageFit): 26/18/10/0 · 14 se idade desconhecida
     fit += RESP?(rm>=2?22:0):12;
     if(s.official_catalog||s.official_url) fit+=6;
     if(s.featured_rank||s.priority) fit+=4;
 
-    var aAxis = !ageKnown?'partial':(inBand?'ok':(nearBand?'partial':'no'));
+    var aAxis = AF.axis;
     var qAxis = qStrong?'ok':(qOK?'partial':'no');
     var rAxis = !RESP?'partial':(rm>=2?'ok':'no');
     var aOK = !ageKnown || inBand;
@@ -368,7 +392,8 @@
     var tier=tierOf(fit, qOK, aOK, (RESP && rm<2));
 
     r.fit=fit; r.sc=fit; r.tier=tier; r.rank=(tier==='ouro'?3:(tier==='prata'?2:1));
-    r.ageKnown=ageKnown;
+    r.ageKnown=ageKnown; r.edgeDist=edgeDist;
+    r.conf = fit>=70?'alta':(fit>=48?'boa':'parcial');   // nível de correspondência (transparência do ranking)
     r.axes={ q:qAxis, a:aAxis, r:rAxis };
     r.ageBand=(s.age_band||((amin/12<1?amin+'m':Math.round(amin/12)+'a')+'–'+(amax>=240?'18a':Math.round(amax/12)+'a')));
     return r;
@@ -377,7 +402,9 @@
   function axisChips(r){
     var ax=r.axes||{}; var s=r.s;
     var q=' '+(r.hits&&r.hits.length?esc(r.hits.slice(0,3).join(', ')):'—');
-    var aMap={ok:'na faixa',partial:(r.ageKnown?'≈ faixa':'idade —'),no:'fora da faixa'};
+    // distância até a borda da faixa (quando fora/≈), em anos ou meses
+    var aDist=(r.ageKnown&&r.edgeDist)?(' +'+(r.edgeDist%12===0?(r.edgeDist/12+'a'):(r.edgeDist+'m'))):'';
+    var aMap={ok:'na faixa',partial:(r.ageKnown?('≈ faixa'+aDist):'idade —'),no:('fora da faixa'+aDist)};
     var rTxt=AUD[s.audience||'clinico']||'profissional';
     return '<div class="sc-axes">'
       +'<span class="sc-ax '+ax.q+'">🎯 queixa:'+q+'</span>'
@@ -394,9 +421,18 @@
     var li=LIC[ls]||LIC.autoral, flag=s._origin||(ls==='autoral'?'🇧🇷':'');
     var prov='<span class="sc-badge lic-'+ls+'" title="'+esc(s.license_note||'')+'">'+li[0]+' '+li[1]+'</span>'+(flag?'<span class="sc-badge orig">'+flag+'</span>':'');
     var badges='<span class="sc-badge age">'+esc(r.ageBand||s.age_band||'')+'</span>'+(aud?'<span class="sc-badge resp">'+aud+'</span>':'')+(s.domain?'<span class="sc-badge">'+esc(s.domain)+'</span>':'')+(s.official_catalog?'<span class="sc-badge">Fonte oficial</span>':'')+prov;
-    return '<a class="sc-card'+(tier?' tier-'+tier:'')+(tier==='ouro'?' top':'')+'" href="./escala.html?id='+encodeURIComponent(s.id)+'">'
-      +(tier?'<div class="sc-medalrow"><span class="sc-medal '+tier+'">'+MEDAL[tier]+'</span></div>':'')
-      +'<div class="sc-head"><div class="sc-sigla" style="--c1:'+c[0]+';--c2:'+c[1]+'">'+esc(sigla(s))+'</div>'
+    // Nome acessível conciso do card (substitui a sopa de emojis para o leitor de tela).
+    var aud_p=aud?plain(aud):'';
+    var labelParts=[]; if(TIER_PLAIN[tier]) labelParts.push(TIER_PLAIN[tier]);
+    labelParts.push(s.short_title||s.title||'instrumento');
+    if(s.domain) labelParts.push(s.domain);
+    if(r.ageBand||s.age_band) labelParts.push('faixa '+(r.ageBand||s.age_band));
+    if(aud_p) labelParts.push('responde '+aud_p);
+    if(r.tier&&r.conf) labelParts.push('correspondência '+r.conf);
+    var aLabel=esc(labelParts.join('. '));
+    return '<a class="sc-card'+(tier?' tier-'+tier:'')+(tier==='ouro'?' top':'')+'" aria-label="'+aLabel+'" href="./escala.html?id='+encodeURIComponent(s.id)+'">'
+      +(tier?'<div class="sc-medalrow"><span class="sc-medal '+tier+'">'+MEDAL[tier]+'</span>'+(r.conf?'<span class="sc-conf '+r.conf+'" aria-hidden="true">'+CONF_LB[r.conf]+'</span>':'')+'</div>':'')
+      +'<div class="sc-head"><div class="sc-sigla" aria-hidden="true" style="--c1:'+c[0]+';--c2:'+c[1]+'">'+esc(sigla(s))+'</div>'
       +'<div class="sc-tt"><h3>'+esc(s.short_title||s.title)+'</h3><span class="sc-sub">'+esc(s.domain||'instrumento')+'</span></div></div>'
       +'<div class="sc-badges">'+badges+'</div>'
       +(r.tier?axisChips(r):'')
@@ -404,7 +440,7 @@
       +'</a>';
   }
 
-  function skeleton(){ document.getElementById('allResults').innerHTML=Array.apply(null,{length:6}).map(function(){return '<div class="sc-skel"></div>';}).join(''); }
+  function skeleton(){ var g=document.getElementById('allResults'); g.setAttribute('aria-busy','true'); g.innerHTML=Array.apply(null,{length:6}).map(function(){return '<div class="sc-skel"></div>';}).join(''); }
   function topCatalog(){ // estado inicial: instrumentos em destaque do catálogo
     var cat=window.NEUROPED_EDITORIAL_SCALES||[];
     return cat.filter(function(s){return s&&s.id&&!isDiary(s)&&!isBank(s)&&!isClinicalOnly(s);})
@@ -485,12 +521,14 @@
         recR=document.getElementById('recommendedResults'), det=document.getElementById('detected'), cnt=document.getElementById('resCount');
     var q=document.getElementById('searchInput').value.trim();
     if(!cat.length){ all.innerHTML='<div class="empty">Carregando catálogo… toque em Buscar em instantes.</div>'; return; }
+    all.setAttribute('aria-busy','false');
     try{ localStorage.setItem('np_cie_q', q); }catch(e){}
     var gp=document.getElementById('guidePanel');
     if(!q){ // sem query → catálogo em destaque
       det.hidden=true; rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
       var t=topCatalog(); cnt.textContent='· catálogo';
       all.innerHTML=t.map(function(r){return card(r,false);}).join('');
+      announce('Catálogo em destaque com '+t.length+' instrumentos. Descreva idade e queixa, ou toque numa queixa, para priorizar.');
       return;
     }
     var age=ageMonthsFromText(q);
@@ -502,7 +540,8 @@
     if(!tokens.length){ // só idade / sem queixa → nunca tela vazia: catálogo (da idade) + dica
       det.hidden=false; det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b> · escolha uma queixa nos chips para refinar.';
       rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
-      var tc=byAge(topCatalog()); cnt.textContent='· '+tc.length; all.innerHTML=tc.map(function(r){return card(r,false);}).join(''); return;
+      var tc=byAge(topCatalog()); cnt.textContent='· '+tc.length; all.innerHTML=tc.map(function(r){return card(r,false);}).join('');
+      announce('Idade '+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'não informada')+' detectada. '+tc.length+' instrumentos no catálogo. Escolha uma queixa para refinar.'); return;
     }
     var ranked=cat.map(function(s){return score(s,tokens,age);}).filter(Boolean).map(function(r){return decorate(r,age);});
     ranked.sort(function(a,b){ return (b.rank-a.rank)||(b.fit-a.fit)||(b.hits.length-a.hits.length); });
@@ -537,6 +576,9 @@
     all.innerHTML=rest.map(card).join('')||(fixed.length
       ?'<div class="empty">As 5 indicações acima seguem a regra de ouro da pré-consulta (pódio + teste direto + escola).</div>'
       :'<div class="empty">Sem correspondência. Tente um termo mais simples (ex.: “não fala”, “agitado”) ou um chip de queixa acima.</div>');
+    announce(fixed.length
+      ? (fixed.length+' indicações principais'+(rest.length?(' e '+rest.length+' alternativas'):'')+' para '+ageStr+'.')
+      : 'Nenhum instrumento correspondente. Tente um termo mais simples ou um chip de queixa.');
   }
 
   // Quem responde? — seletor (single-select). Eixo que muda a medalha: ao escolher,
