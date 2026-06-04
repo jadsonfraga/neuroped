@@ -566,8 +566,8 @@ function openConfig() {
   for (let i = 0; i < 7; i++) {
     const d = c.dias[i] || {ativo:false,t1i:'',t1f:'',t2i:'',t2f:''};
     daysHtml += `<div class="config-day">
-      <input type="checkbox" class="toggle" id="cfgAtivo${i}" ${d.ativo?'checked':''}>
-      <label style="min-width:65px;font-weight:600">${dayNames[i]}</label>
+      <input type="checkbox" class="toggle" id="cfgAtivo${i}" ${d.ativo?'checked':''} aria-label="Ativar atendimento em ${dayNames[i]}">
+      <label for="cfgAtivo${i}" style="min-width:65px;font-weight:600">${dayNames[i]}</label>
       <input type="time" id="cfgT1i${i}" aria-label="Horário de atendimento" value="${d.t1i}" placeholder="Início T1" style="width:90px">
       <span>-</span>
       <input type="time" id="cfgT1f${i}" aria-label="Horário de atendimento" value="${d.t1f}" style="width:90px">
