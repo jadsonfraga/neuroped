@@ -1,6 +1,8 @@
 (function(){
   'use strict';
-  const MASTER_HASH='a327d31357810ae7bf2cc4f7c0bc7b332fd2a66a4afd2ab5a8ade69865b829cd';
+  // PIN master ROTACIONADO (hash do novo PIN). Mantém em sincronia com
+  // master-access-policy.js. Gate de INTERFACE — não é segurança server-side.
+  const MASTER_HASH=(window.NEUROPED_MASTER_PIN_HASH||'4832aca40e723d040262f8f8475a96c150f36efbe145b7ae208f2c6ce38cd022');
   const MASTER_KEY='neuroped_master_access_v1';
   const TTL=12*60*60*1000;
   function normalizePin(v){return String(v||'').trim().toLowerCase()}
