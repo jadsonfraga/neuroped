@@ -28,6 +28,9 @@
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function pulse(emoji, msg){
+    // Tom SÓBRIO em rastreios de risco (autoagressão/suicídio): nada de
+    // celebração festiva numa tela sensível — o escala.html marca data-np-risk.
+    try { if (document.documentElement.getAttribute('data-np-risk') === '1') return; } catch (e) {}
     try { window.dispatchEvent(new Event('np:celebrate')); } catch (e) {}   // som/háptico/pulso (np-sound, opt-in)
     var existing = document.getElementById('npCelebToast');
     if (existing) existing.remove();

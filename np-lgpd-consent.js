@@ -101,15 +101,19 @@
         '<button id="np-lgpd-ok" style="flex:1;min-width:160px;border:0;border-radius:12px;padding:13px 16px;font:800 14px system-ui;cursor:pointer;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5)">Li e concordo — continuar</button>' +
         '<button id="np-lgpd-no" style="border:1px solid rgba(169,164,255,.3);border-radius:12px;padding:13px 16px;font:700 14px system-ui;cursor:pointer;color:#cfd3e6;background:transparent">Recusar</button>' +
       '</div>';
+    scrim.appendChild(box);
     document.body.appendChild(scrim);
     document.documentElement.style.overflow = 'hidden';
-    box.querySelector('#np-lgpd-ok').addEventListener('click', function () {
-      setConsent(); document.documentElement.style.overflow = ''; scrim.remove(); mountShield();
+    var okBtn = box.querySelector('#np-lgpd-ok');
+    var noBtn = box.querySelector('#np-lgpd-no');
+    function declineMsg() { window.alert('Sem o consentimento não é possível usar as áreas que guardam dados pessoais. Você pode fechar a página ou ler a Política de Privacidade.'); }
+    // foco preso no diálogo; Esc não fecha à força (exibe a explicação de recusa)
+    var release = trapFocus(box, function () { try { noBtn.focus(); } catch (e) {} declineMsg(); });
+    okBtn.addEventListener('click', function () {
+      setConsent(); document.documentElement.style.overflow = ''; release(); scrim.remove(); mountShield();
     });
-    box.querySelector('#np-lgpd-no').addEventListener('click', function () {
-      alert('Sem o consentimento não é possível usar as áreas que guardam dados pessoais. Você pode fechar a página ou ler a Política de Privacidade.');
-    });
-    scrim.appendChild(box);
+    noBtn.addEventListener('click', declineMsg);
+    setTimeout(function () { try { okBtn.focus(); } catch (e) {} }, 30); // foco no botão primário
   }
 
   /* ---------- Botão sempre disponível: direitos do titular ---------- */
@@ -141,11 +145,36 @@
         '<button id="np-lgpd-close" style="border:0;border-radius:12px;padding:11px;font:700 13px system-ui;cursor:pointer;color:#94A3B8;background:transparent">Fechar</button>' +
       '</div>';
     scrim.appendChild(box); document.body.appendChild(scrim);
-    function close() { scrim.remove(); }
+    var release = trapFocus(box, function () { close(); });   // Esc fecha a folha
+    function close() { release(); scrim.remove(); }
     scrim.addEventListener('click', function (e) { if (e.target === scrim) close(); });
     box.querySelector('#np-lgpd-export').addEventListener('click', exportData);
     box.querySelector('#np-lgpd-erase').addEventListener('click', eraseData);
     box.querySelector('#np-lgpd-close').addEventListener('click', close);
+    setTimeout(function () { try { box.querySelector('#np-lgpd-export').focus(); } catch (e) {} }, 30);
+  }
+
+  /* ---------- Acessibilidade: foco preso, Tab cíclico, Esc, retorno de foco ---------- */
+  function focusables(c) {
+    return Array.prototype.slice.call(c.querySelectorAll(
+      'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea,[tabindex]:not([tabindex="-1"])'
+    )).filter(function (n) { return n.offsetParent !== null || n === document.activeElement; });
+  }
+  function trapFocus(container, onEsc) {
+    var prev = document.activeElement;
+    function onKey(e) {
+      if (e.key === 'Escape') { if (onEsc) { e.preventDefault(); onEsc(); } return; }
+      if (e.key !== 'Tab') return;
+      var f = focusables(container); if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    return function release() {
+      document.removeEventListener('keydown', onKey, true);
+      try { if (prev && prev.focus) prev.focus(); } catch (e) {}
+    };
   }
 
   function init() {
