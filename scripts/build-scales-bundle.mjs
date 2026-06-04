@@ -24,6 +24,7 @@ export const BUNDLE_ORDER = [
   'scales-med-eficacia.js',          // escala autoral de eficácia da medicação (pré-consulta)
   'scales-intl-livres.js',           // curadoria de instrumentos internacionais de licença livre (referência)
   'scales-autoral-funcional.js',     // autorais Dr. Jadson: autonomia, risco cognitivo, risco de dislexia
+  'scales-estudo-restrito.js',       // proprietários como REFERÊNCIA DE ESTUDO (senha, não clínico)
   'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
   'scales-official-questions.js',    // ÚLTIMO: perguntas-guia autorais p/ instrumentos de referência (abrem completos)
 ];
