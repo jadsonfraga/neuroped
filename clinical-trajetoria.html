@@ -17,8 +17,7 @@
   h1{font:800 clamp(20px,4.6vw,28px)/1.1 "Fraunces",Georgia,serif;margin:6px 0 4px;background:linear-gradient(120deg,#fff,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .gate{border:1px solid #f59e0b;background:rgba(245,158,11,.10);color:#fcd9a0;border-radius:12px;padding:12px 14px;margin:10px 0;font-size:13px;line-height:1.5}
   .gate.ok{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08);color:#a7f3d0}
-  .card{border:1px solid var(--border,rgba(255,255,255,.08));border-radius:14px;padding:14px 16px;margin:12px 0;background:rgba(124,118,210,.05)}
-  .card h2{font:800 14px var(--font-sans);color:#c9c4f0;margin:0 0 10px}
+  .np-card{margin:12px 0}
   .row{display:flex;align-items:center;gap:10px;margin:6px 0}
   .row .lb{width:160px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-transform:capitalize}
   .bar{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
@@ -26,8 +25,6 @@
   .row .v{width:46px;text-align:right;font:700 12px system-ui;color:#c9c4f0}
   .tag{display:inline-block;font:700 11px system-ui;border-radius:999px;padding:3px 9px;margin:2px 4px 2px 0}
   .t-ok{background:rgba(16,185,129,.16);color:#6ee7b7} .t-warn{background:rgba(245,158,11,.16);color:#fcd9a0} .t-risk{background:rgba(244,63,94,.16);color:#fda4af} .t-muted{background:rgba(148,163,184,.16);color:#cbd5e1}
-  .insight{border-left:3px solid #7C3AED;padding:8px 12px;margin:8px 0;background:rgba(124,58,237,.06);border-radius:0 10px 10px 0;font-size:13px}
-  .insight .ev{font-size:11px;color:var(--text-muted,#94A3B8);margin-top:4px}
   .empty{color:var(--text-muted,#94A3B8);padding:18px;text-align:center}
   a.back{color:#A78BFA;text-decoration:none;font-size:13px}
 </style>
@@ -61,6 +58,19 @@
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
   function clsOf(st){return st==='improving'?'t-ok':(st==='regressing'?'t-risk':(st==='unstable'?'t-warn':'t-muted'));}
   function pct(v){return Math.round((v||0)*100);}
+  // Card System: abre um card de seção canônico (.np-card + variante + cabeçalho)
+  function sec(variant, icon, title){
+    return '<div class="np-card'+(variant?' np-card--'+variant:'')+'">'+
+      '<div class="np-card__head"><span class="np-card__icon">'+icon+'</span>'+
+      '<h2 class="np-card__title">'+esc(title)+'</h2></div>';
+  }
+  // Confiança → faixa (explicabilidade): high/med/low a partir de confidence|confidence_label
+  function confTier(it){
+    var n = (typeof it.confidence==='number') ? it.confidence : null;
+    if(n==null){ var l=String(it.confidence_label||'').toLowerCase();
+      n = /alta|high/.test(l)?0.8 : (/baixa|low/.test(l)?0.3 : 0.5); }
+    return n>=0.66?{k:'high',t:'alta'}:(n>=0.4?{k:'med',t:'média'}:{k:'low',t:'baixa'});
+  }
 
   // GATE DE VALIDAÇÃO: sem config validada pelo médico, a interpretação clínica
   // (severidade/melhora/piora/fenótipo) fica DESLIGADA — só estrutura + sinal bruto.
@@ -84,29 +94,29 @@
     var S = window.NPStore, child = S && S.active && S.active();
     var tl = C.Timeline.buildForActiveChild(g.cfg);
     var html = '';
-    html += '<div class="card"><h2>Resumo</h2>'+
+    html += sec('clinical','📋','Resumo')+
       '<div class="row"><span class="lb">Criança</span><b>'+esc(child&&child.name||'—')+'</b></div>'+
       '<div class="row"><span class="lb">Aplicações</span><b>'+tl.n_applications+'</b></div>'+
       '<div class="row"><span class="lb">Domínios medidos</span><b>'+(tl.domains_covered.length)+'</b></div></div>';
     if(!tl.n_applications){
-      out.innerHTML = html + '<div class="card"><div class="empty">Sem aplicações salvas para esta criança. Responda escalas para a trajetória aparecer.</div></div>';
+      out.innerHTML = html + '<div class="np-card"><div class="empty">Sem aplicações salvas para esta criança. Responda escalas para a trajetória aparecer.</div></div>';
       return;
     }
     // EXPLAINABILITY — justificativa clínica legível ("por quê?")
     if(C.Explainability){
       var ex = C.Explainability.timeline(tl);
-      html += '<div class="card"><h2>Leitura clínica — por quê?</h2>'+
+      html += sec('','🧠','Leitura clínica — por quê?')+
         '<p style="font-size:14px;line-height:1.5;color:var(--text,#E5E7EB);margin:0 0 8px">'+esc(ex.summary)+'</p>';
       (ex.narratives||[]).forEach(function(it){ html += insightHTML(it); });
       html += '</div>';
     }
     var radar = C.VisualSchema.functionalRadar(tl);
-    html += '<div class="card"><h2>Perfil funcional</h2>';
+    html += sec('metric','📊','Perfil funcional');
     radar.axes.sort(function(a,b){return (b.value||0)-(a.value||0);}).forEach(function(ax){
       html += '<div class="row"><span class="lb">'+esc(ax.domain)+'</span><span class="bar"><i style="width:'+pct(ax.value)+'%"></i></span><span class="v">'+pct(ax.value)+'%'+(ax.normalized?'':'*')+'</span></div>';
     });
     html += '<div class="ev" style="font-size:11px;color:#94A3B8;margin-top:6px">'+(g.validated?'Severidade normalizada por config.':'* sinal bruto do próprio instrumento (interpretação desligada).')+'</div></div>';
-    html += '<div class="card"><h2>Trajetória por domínio</h2>';
+    html += sec('timeline','📈','Trajetória por domínio');
     Object.keys(tl.domains).forEach(function(d){
       var tr = tl.domains[d].trajectory; if(!tr) return;
       var label = tr.status==='regressing'?'piora':(tr.status==='improving'?'melhora':(tr.status==='unstable'?'instável':(tr.status==='plateau'?'estável':'variação (sentido bruto)')));
@@ -114,24 +124,30 @@
     });
     html += '</div>';
     var ph = C.Phenotype.detectPhenotypes(tl.signals, g.cfg);
-    html += '<div class="card"><h2>Convergência de perfil</h2>';
+    html += sec('clinical','🧩','Convergência de perfil');
     if(ph.meta && ph.meta.status){ html += '<div class="empty">'+esc(ph.meta.explanation||'Fenotipagem requer config validada.')+'</div>'; }
     else if(!ph.phenotypes || !ph.phenotypes.length){ html += '<div class="empty">Sem sinais normalizados suficientes.</div>'; }
     else { ph.phenotypes.slice(0,4).forEach(function(p){ html += '<div class="row"><span class="lb">'+esc(p.label)+'</span><span class="bar"><i style="width:'+pct(p.score)+'%"></i></span><span class="v">'+pct(p.score)+'%</span></div>'; }); (ph.insights||[]).forEach(function(it){ html += insightHTML(it); }); }
     html += '</div>';
     var con = C.Contradiction.detect(tl.signals, g.cfg);
     var cds = C.DecisionSupport.suggest({ timeline: tl }, g.cfg);
-    var alerts = (con.contradictions||[]).concat(cds.suggestions||[]);
-    html += '<div class="card"><h2>Sinais e sugestões (explicáveis)</h2>';
-    if(!alerts.length) html += '<div class="empty">Nada a sinalizar com os dados/config atuais.</div>';
-    alerts.forEach(function(it){ html += insightHTML(it); });
+    var contras = con.contradictions||[], sugs = cds.suggestions||[];
+    html += sec('','⚠️','Sinais e sugestões (explicáveis)');
+    if(!contras.length && !sugs.length) html += '<div class="empty">Nada a sinalizar com os dados/config atuais.</div>';
+    contras.forEach(function(it){ html += insightHTML(it,'insight'); });   // contradições
+    sugs.forEach(function(it){ html += insightHTML(it,'ai'); });           // recomendações (IA)
     html += '</div>';
     out.innerHTML = html;
   }
-  function insightHTML(it){
+  // InsightCard / AIRecommendationCard (variant 'insight'|'ai') — explicabilidade visível
+  function insightHTML(it, variant){
     if(!it || !it.insight) return '';
-    var ev = (it.evidence||[]).map(function(e){return esc((e.source||'?'))+(e.domain?(' · '+esc(e.domain)):'')+(e.signal!=null?(' ('+Math.round(e.signal*100)/100+')'):'');}).join(' | ');
-    return '<div class="insight">'+esc(it.insight)+'<div class="ev">evidência: '+(ev||'—')+' · confiança '+(it.confidence_label||'—')+'</div></div>';
+    var ev = (it.evidence||[]).map(function(e){return esc((e.source||'?'))+(e.domain?(' · '+esc(e.domain)):'')+(e.signal!=null?(' ('+Math.round(e.signal*100)/100+')'):'');}).join(' · ');
+    var ct = confTier(it);
+    return '<div class="np-card np-card--'+(variant||'insight')+'">'+
+      '<div class="np-card__why">'+esc(it.insight)+'</div>'+
+      '<div class="np-card__foot"><span class="np-card__evidence">evidência: '+(ev||'—')+'</span>'+
+      '<span class="np-conf np-conf--'+ct.k+'">⬤ confiança '+esc(ct.t)+'</span></div></div>';
   }
   function ready(){ return window.NeuroPedCIL && window.NeuroPedCIL.Timeline; }
   if(ready()) run(); else { var n=0, iv=setInterval(function(){ if(ready()||n++>100){ clearInterval(iv); run(); } }, 50); }

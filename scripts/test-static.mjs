@@ -221,6 +221,21 @@ for (const p of ['index.html','perfil-crianca.html','filtro-escalas.html','intak
     : fail(p + ': ds-bridge deve vir DEPOIS de tokens.css', 'ordem de cascata invertida');
 }
 
+// ===== Card System clínico (Onda 1) — variantes de .np-card + adoção real =====
+// Família de cards canônica em components.css; ADOTADA na Trajetória (build+adopt juntos).
+assertIncludes('components.css', '.np-card--insight', 'components define a InsightCard (variante de .np-card)');
+assertIncludes('components.css', '.np-card--ai', 'components define a AIRecommendationCard');
+assertIncludes('components.css', '.np-card__why', 'Card System tem anatomia de explicabilidade (__why)');
+assertIncludes('components.css', '.np-conf--high', 'Card System tem chip de confiança (proveniência)');
+assertIncludes('components.css', '.np-card--metric', 'Card System tem MetricCard');
+assertIncludes('components.css', '.np-card--timeline', 'Card System tem TimelineCard');
+// Adoção: a Trajetória usa o sistema canônico e os insights mostram confiança/evidência
+assertIncludes('clinical-trajetoria.html', "(variant||'insight')", 'Trajetória adota InsightCard (painel de explicabilidade padrão)');
+assertIncludes('clinical-trajetoria.html', "insightHTML(it,'ai')", 'Trajetória marca recomendações como AIRecommendationCard');
+assertIncludes('clinical-trajetoria.html', 'np-conf np-conf--', 'Trajetória exibe chip de confiança (explicabilidade visível)');
+assertIncludes('clinical-trajetoria.html', 'function confTier', 'Trajetória deriva a faixa de confiança de forma determinística');
+assertNotIncludes('clinical-trajetoria.html', '<div class="card">', 'Trajetória migrou: sem o card bespoke antigo (usa .np-card)');
+
 // Identidade premium: tipografia institucional + capa do hub
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
 assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');
