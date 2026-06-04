@@ -50,6 +50,7 @@
 <script src="./clinical-decision-support.js"></script>
 <script src="./clinical-visual-schema.js"></script>
 <script src="./clinical-config-adapter.js"></script>
+<script src="./clinical-trajectory-explain.js"></script>
 <!-- carrega a config validada se existir; senão cai no rascunho de exemplo -->
 <script>window.__npCfgFallback='./clinical-config.example.js';</script>
 <script src="./clinical-config.js" onerror="(function(){var s=document.createElement('script');s.src=window.__npCfgFallback;document.head.appendChild(s);})()"></script>
@@ -89,6 +90,14 @@
     if(!tl.n_applications){
       out.innerHTML = html + '<div class="card"><div class="empty">Sem aplicações salvas para esta criança. Responda escalas para a trajetória aparecer.</div></div>';
       return;
+    }
+    // EXPLAINABILITY — justificativa clínica legível ("por quê?")
+    if(C.Explainability){
+      var ex = C.Explainability.timeline(tl);
+      html += '<div class="card"><h2>Leitura clínica — por quê?</h2>'+
+        '<p style="font-size:14px;line-height:1.5;color:var(--text,#E5E7EB);margin:0 0 8px">'+esc(ex.summary)+'</p>';
+      (ex.narratives||[]).forEach(function(it){ html += insightHTML(it); });
+      html += '</div>';
     }
     var radar = C.VisualSchema.functionalRadar(tl);
     html += '<div class="card"><h2>Perfil funcional</h2>';
