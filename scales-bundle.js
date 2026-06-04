@@ -2863,6 +2863,22 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     return re.test(blob);
   }
 
+  // ageFit(ageMonths, amin, amax): aderência etária pela BORDA mais próxima da
+  // faixa (clinicamente correto), NÃO pelo ponto-médio — uma idade logo acima de
+  // amax está "perto", não importa quão larga seja a faixa. Pura e testável.
+  // Retorna { inBand, edgeDist, points, axis, known }:
+  //   points  → contribuição ao fit 0–100 (dentro=26 · ≤6m=18 · ≤18m=10 · longe=0 · idade?=14)
+  //   axis    → estado do eixo 🎂 do card ('ok' | 'partial' | 'no')
+  function ageFit(age, amin, amax) {
+    amin = +amin || 0; amax = (amax == null ? 240 : (+amax || 240));
+    if (age == null) return { inBand: false, edgeDist: null, points: 14, axis: 'partial', known: false };
+    var inBand = age >= amin && age <= amax;
+    var edgeDist = inBand ? 0 : Math.min(Math.abs(age - amin), Math.abs(age - amax));
+    var points = inBand ? 26 : (edgeDist <= 6 ? 18 : (edgeDist <= 18 ? 10 : 0));
+    var axis = inBand ? 'ok' : (edgeDist <= 18 ? 'partial' : 'no');
+    return { inBand: inBand, edgeDist: edgeDist, points: points, axis: axis, known: true };
+  }
+
   function modalityOf(s) {
     if (!s) return 'escala';
     if (s.direct_test || s.kind === 'teste_direto') return 'direto';
@@ -2959,7 +2975,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
   ];
 
-  var api = { version: '1.2.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  var api = { version: '1.3.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, ageFit: ageFit, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);

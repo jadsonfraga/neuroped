@@ -360,14 +360,15 @@
   // chama tierOf() para a medalha.
   function decorate(r, age){
     var s=r.s, amin=Number(s.age_min_months||0), amax=Number(s.age_max_months||240);
-    var inBand = age!=null && age>=amin && age<=amax;
-    // Proximidade pela BORDA mais próxima da faixa (clinicamente correto): uma idade
-    // logo acima de amax está "perto", não importa quão larga seja a faixa. O cálculo
-    // antigo media a distância ao PONTO-MÉDIO — penalizava injustamente faixas largas
-    // e premiava idades centrais de faixas que sequer cobriam a criança.
-    var edgeDist = (age==null||inBand)?0:Math.min(Math.abs(age-amin),Math.abs(age-amax));
-    var nearBand = age!=null && !inBand && edgeDist<=18;
-    var ageKnown = age!=null;
+    // Aderência etária pela BORDA mais próxima da faixa (clinicamente correto, não
+    // pelo ponto-médio). Lógica ÚNICA e testável em NeuroPedSmartRank.ageFit, com
+    // fallback inline para robustez offline-first (PWA / ordem de carga).
+    var AF=(window.NeuroPedSmartRank&&NeuroPedSmartRank.ageFit)?NeuroPedSmartRank.ageFit(age,amin,amax):(function(){
+      if(age==null) return {inBand:false,edgeDist:0,points:14,axis:'partial',known:false};
+      var ib=age>=amin&&age<=amax, ed=ib?0:Math.min(Math.abs(age-amin),Math.abs(age-amax));
+      return {inBand:ib,edgeDist:ed,points:ib?26:(ed<=6?18:(ed<=18?10:0)),axis:ib?'ok':(ed<=18?'partial':'no'),known:true};
+    })();
+    var inBand=AF.inBand, edgeDist=AF.edgeDist||0, ageKnown=AF.known;
     var nStrong = (r.strongHits||[]).length;
     var qOK = r.hits.length>=1;
     // "Forte" exige casar campo forte (keyword/queixa/sintoma): ≥2 fortes, ou ≥1
@@ -377,13 +378,12 @@
 
     var fit=0;
     fit += qStrong?40:(qOK?24:0);
-    // Idade graduada pela borda: dentro=26 · ≤6m fora=18 · ≤18m fora=10 · longe=0.
-    fit += !ageKnown?14:(inBand?26:(edgeDist<=6?18:(edgeDist<=18?10:0)));
+    fit += AF.points;   // idade graduada pela borda (ver ageFit): 26/18/10/0 · 14 se idade desconhecida
     fit += RESP?(rm>=2?22:0):12;
     if(s.official_catalog||s.official_url) fit+=6;
     if(s.featured_rank||s.priority) fit+=4;
 
-    var aAxis = !ageKnown?'partial':(inBand?'ok':(nearBand?'partial':'no'));
+    var aAxis = AF.axis;
     var qAxis = qStrong?'ok':(qOK?'partial':'no');
     var rAxis = !RESP?'partial':(rm>=2?'ok':'no');
     var aOK = !ageKnown || inBand;
