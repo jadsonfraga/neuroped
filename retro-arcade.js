@@ -58,10 +58,35 @@
   // hubs e institucionais ficam SÓBRIOS — 1ª impressão profissional para
   // famílias, colegas e imprensa (atenua "Mario na porta de entrada").
   var PLAYFUL = /^(comunicacao-alternativa|area-filho|portal-familia-livre|gerador-cards)\.html$/.test(FILE);
-  if (!PLAYFUL) {
+
+  // Controle do usuário: preferência persistente liga/desliga o retrô. API global
+  // + um botão 🎮 nas telas lúdicas (em qualquer estado, para poder reativar).
+  var RETRO_OFF = false; try { RETRO_OFF = localStorage.getItem('np_retro') === 'off'; } catch (e) {}
+  function setRetro(v) { try { localStorage.setItem('np_retro', v); } catch (e) {} location.reload(); }
+  window.npRetro = { on: function () { setRetro('on'); }, off: function () { setRetro('off'); }, toggle: function () { setRetro(RETRO_OFF ? 'on' : 'off'); } };
+  function mountRetroToggle() {
+    if (document.getElementById('np-retro-toggle') || !document.body) return;
+    var b = document.createElement('button');
+    b.id = 'np-retro-toggle'; b.type = 'button';
+    b.textContent = RETRO_OFF ? '🎮' : '🕹️';
+    b.title = RETRO_OFF ? 'Ativar modo retrô' : 'Desativar modo retrô';
+    b.setAttribute('aria-label', b.title);
+    b.style.cssText = 'position:fixed;left:12px;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:99985;' +
+      'width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:17px;cursor:pointer;' +
+      'background:rgba(20,19,46,.66);color:#ECEAFF;border:1px solid rgba(169,164,255,.28);' +
+      'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 30px -12px rgba(4,3,18,.7);opacity:' + (RETRO_OFF ? '.7' : '1');
+    b.addEventListener('click', function () { window.npRetro.toggle(); });
+    document.body.appendChild(b);
+  }
+  if (PLAYFUL) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountRetroToggle);
+    else mountRetroToggle();
+  }
+
+  if (!PLAYFUL || RETRO_OFF) {
     // Silencia a camada de som 8-bit nesta página (np-sound respeita o atributo).
     try { (document.body || document.documentElement).setAttribute('data-np-sound', 'off'); } catch (e) {}
-    return; // sem fonte pixel, moeda, scanline ou data-retro nas telas clínicas
+    return; // sem fonte pixel, moeda, scanline ou data-retro (mas o botão 🎮 fica nas lúdicas)
   }
 
   /* ---------- 2) Fonte pixel (Press Start 2P) ---------- */
