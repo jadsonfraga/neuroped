@@ -57,6 +57,15 @@
   .qchips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
   .actnote{max-width:760px;margin:8px auto 0;font-size:12.5px;text-align:center;color:#a7f3d0;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:7px 11px}
   .actnote button{background:none;border:0;color:#fda4af;font-weight:700;cursor:pointer;margin-left:8px;font-size:12px}
+  .recent{max-width:760px;margin:10px auto 0;display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:center}
+  .recent .rlb{font:800 11px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted,#94A3B8)}
+  .chip.rchip{font-size:12px;padding:5px 11px;background:rgba(124,118,210,.08)}
+  .chip.rclear{font-size:11px;padding:5px 9px;color:#fda4af;background:transparent;border-color:rgba(244,63,94,.25)}
+  .chip.dchip{font-size:12px;padding:5px 11px;background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.28)}
+  .dhint{font-size:11px;color:var(--text-soft,#8b86b8)}
+  .rec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .applynow{display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;font:800 12.5px system-ui;color:#fff;border-radius:12px;padding:8px 14px;background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 10px 22px -10px rgba(231,201,139,.6)}
+  .applynow:active{transform:scale(.97)}
   .chip{padding:7px 14px;border-radius:999px;font:700 13px system-ui;cursor:pointer;color:#c9c4f0;
     background:rgba(124,118,210,.12);border:1px solid rgba(169,164,255,.2);transition:transform .16s,border-color .18s,background .18s,box-shadow .18s}
   .chip:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.4)}
@@ -178,11 +187,12 @@
     <div class="legend"><span>🥇 <b>Ouro</b>: alinhado nos 3 eixos</span><span>🥈 <b>Prata</b>: boa indicação</span><span>🥉 <b>Bronze</b>: alternativa / olhar complementar</span></div>
   </div>
 
+  <div id="recentRow" class="recent" hidden></div>
   <div id="detected" class="detected" hidden></div>
   <div id="guidePanel" hidden></div>
 
   <section id="recommendedSection" style="display:none">
-    <div class="section-label">🥇 Mais indicados (Ouro clínico)</div>
+    <div class="rec-head"><div class="section-label">🥇 Mais indicados (Ouro clínico)</div><a id="applyNow" class="applynow" hidden></a></div>
     <div class="np-cards-grid" id="recommendedResults"></div>
   </section>
 
@@ -260,6 +270,9 @@
     {label:'Profissional', val:'profissional', icon:'🧑‍⚕️'}
   ];
   var RESP_LABEL={crianca:'A criança',familia:'Pais/Família',escola:'Escola',profissional:'Profissional'};
+  // rótulo amigável + consulta de FOCO por construto (para "Entendi:" e correção)
+  var CLABEL={tea:'🧩 TEA',tdah:'🎯 TDAH',linguagem:'🗣️ Linguagem',aprendizagem:'📚 Aprendizagem',ansiedade:'😰 Ansiedade',humor:'💧 Humor',sono:'🌙 Sono',sensorial:'✨ Sensorial',motor:'🤸 Motor',comportamento:'💢 Comportamento',risco:'🛟 Risco',adaptativo:'🧗 Autonomia',epilepsia:'⚡ Epilepsia',paralisiacerebral:'♿ PC',desenvolvimento:'📈 Desenvolvimento',substancias:'🚭 Substâncias',cognicao:'🧠 Cognição',trauma:'🌧️ Trauma',dor:'🤕 Dor',toc:'🔁 TOC',tiques:'😬 Tiques',regulacao:'🎭 Regulação',mutismo:'🤐 Mutismo'};
+  var CFOCUS={tea:'autismo tea',tdah:'tdah desatenção',linguagem:'atraso de fala linguagem',aprendizagem:'dislexia aprendizagem',ansiedade:'ansiedade medo',humor:'humor tristeza',sono:'sono insônia',sensorial:'sensorial seletividade',motor:'motor coordenação',comportamento:'comportamento oposição',risco:'risco suicídio',adaptativo:'autonomia adaptativo',epilepsia:'epilepsia convulsão',paralisiacerebral:'paralisia cerebral',desenvolvimento:'atraso desenvolvimento marcos',substancias:'álcool drogas substâncias',cognicao:'atraso cognitivo deficiência intelectual',trauma:'trauma tept',dor:'dor de cabeça cefaleia',toc:'toc obsessão compulsão',tiques:'tiques tourette',regulacao:'desregulação emocional',mutismo:'mutismo'};
   function respBucket(aud){ return ({familia:'familia',escola:'escola',autoteste:'crianca',clinico:'profissional',terapeuta:'profissional',misto:'misto'})[aud||'clinico']||'profissional'; }
   // 0 = pref definida e não casa · 1 = sem preferência (neutro) · 2 = casa
   function respMatch(s){
@@ -432,7 +445,11 @@
     var seen={},seenT={},top=[]; ranked.forEach(function(r){ var tk=norm(r.s.short_title||r.s.title); if(!seen[r.s.id]&&!seenT[tk]){seen[r.s.id]=1;seenT[tk]=1;top.push(r);} });
     LAST=top;
     det.hidden=false;
-    det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b>'+(RESP?(' · responde: <b>'+esc(RESP_LABEL[RESP]||RESP)+'</b>'):'')+' · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
+    var cons=(window.NeuroPedSmartRank&&NeuroPedSmartRank.constructsOf)?NeuroPedSmartRank.constructsOf(q):[];
+    var ageStr=(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada');
+    var consHtml=cons.slice(0,4).map(function(k){return '<button class="chip dchip" type="button" data-foc="'+esc(CFOCUS[k]||k)+'">'+esc(CLABEL[k]||k)+'</button>';}).join(' ');
+    det.innerHTML='✅ <b>Entendi:</b> '+(consHtml||'<i>queixa livre</i>')+' · 🎂 <b>'+esc(ageStr)+'</b>'+(RESP?(' · 🙋 <b>'+esc(RESP_LABEL[RESP]||RESP)+'</b>'):'')+(cons.length?' <span class="dhint">— não é isso? toque para focar</span>':'');
+    det.querySelectorAll('.dchip').forEach(function(b){ b.addEventListener('click',function(){ inp.value=b.getAttribute('data-foc')||''; if(typeof toggleClear==='function')toggleClear(); run(); }); });
     cnt.textContent='· '+top.length;
     renderGuide(q, tokens, top, age);
     if(!top.length){ rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
@@ -450,6 +467,8 @@
     } else { ouro=ouroAll.slice(0,3); }
     rec.style.display=ouro.length?'block':'none';
     recR.innerHTML=ouro.map(card).join('');
+    var an=document.getElementById('applyNow');
+    if(an){ if(ouro.length){ var t1=ouro[0].s; an.hidden=false; an.textContent='▶ Aplicar “'+(t1.short_title||t1.title||'1ª escala').slice(0,28)+'” agora'; an.setAttribute('href','./escala.html?id='+encodeURIComponent(t1.id)); } else { an.hidden=true; } }
     var rest=top.filter(function(r){return ouro.indexOf(r)<0;});
     all.innerHTML=rest.map(card).join('')||'<div class="empty">As indicações Ouro acima são as mais alinhadas ao caso.</div>';
   }
@@ -507,9 +526,18 @@
   try{ inp.value=localStorage.getItem('np_cie_q')||''; }catch(e){}
   function toggleClear(){ clr.classList.toggle('show', !!inp.value); }
   var deb; inp.addEventListener('input',function(){ toggleClear(); clearTimeout(deb); deb=setTimeout(run,180); });
-  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); run(); } });
-  document.getElementById('searchGo').addEventListener('click',run);
-  clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });
+  // histórico de buscas recentes (gravado só em submit explícito, não a cada tecla)
+  function getHist(){ try{ var h=JSON.parse(localStorage.getItem('np_cie_hist')||'[]'); return Array.isArray(h)?h:[]; }catch(e){ return []; } }
+  function pushHist(q){ q=(q||'').trim(); if(q.length<2) return; var h=getHist().filter(function(x){return x.toLowerCase()!==q.toLowerCase();}); h.unshift(q); h=h.slice(0,6); try{ localStorage.setItem('np_cie_hist',JSON.stringify(h)); }catch(e){} }
+  function renderRecent(){ var el=document.getElementById('recentRow'); if(!el) return; var h=getHist(); if(!h.length){ el.hidden=true; el.innerHTML=''; return; } el.hidden=false;
+    el.innerHTML='<span class="rlb">Recentes</span> '+h.map(function(x){return '<button class="chip rchip" type="button" data-q="'+esc(x)+'">'+esc(x.length>26?x.slice(0,26)+'…':x)+'</button>';}).join(' ')+' <button class="chip rclear" type="button">limpar</button>';
+    el.querySelectorAll('.rchip').forEach(function(b){ b.addEventListener('click',function(){ inp.value=b.getAttribute('data-q')||''; toggleClear(); run(); }); });
+    var rc=el.querySelector('.rclear'); if(rc) rc.onclick=function(){ try{localStorage.removeItem('np_cie_hist');}catch(e){} renderRecent(); };
+  }
+  function submitSearch(){ pushHist(inp.value); run(); renderRecent(); }
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSearch(); } });
+  document.getElementById('searchGo').addEventListener('click',submitSearch);
+  clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#qchips .chip.active,#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });
 
   // Pré-seleção pela CRIANÇA ATIVA: queixa registrada (diagnóstico/notas) + idade.
   // Só preenche se o campo estiver vazio (respeita busca salva/digitada).
@@ -538,6 +566,7 @@
   function boot(){
     toggleClear();
     prefillFromChild();
+    renderRecent();
     var ready=(window.NEUROPED_EDITORIAL_SCALES||[]).length;
     if(!ready) skeleton();                                   // mostra skeleton enquanto o catálogo carrega
     if(window.NeuroPedMeta&&NeuroPedMeta.load) NeuroPedMeta.load().then(run).catch(run); else run();
