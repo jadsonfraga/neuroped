@@ -255,6 +255,11 @@ assertIncludes('np-sound.js', "np:celebrate", 'np-sound reage ao evento de celeb
 assertIncludes('app-polish-mobile.js', './np-sound.js', 'polish injeta a camada de som globalmente');
 assertIncludes('instrumento-celebrations.js', "np:celebrate", 'conclusão de escala dispara o feedback sonoro');
 assertIncludes('sw.js', './np-sound.js', 'np-sound no precache (offline)');
+// Assinatura sonora + Onda 1 (secretaria)
+assertIncludes('np-sound.js', 'welcome:', 'np-sound tem assinatura de boas-vindas');
+assertIncludes('np-frame.js', 'npSound', 'abrir ferramenta na moldura emite som (nav)');
+assertIncludes('secretaria.html', 'PREMIUM SKIN', 'secretaria tem a camada de skin premium (Onda 1)');
+assertIncludes('secretaria.html', 'function render', 'secretaria preserva o contrato JS (agenda)');
 
 // Identidade premium: tipografia institucional + capa do hub
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
