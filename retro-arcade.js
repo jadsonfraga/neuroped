@@ -47,20 +47,18 @@
   addCss('components.css');
   addCss('app-skin.css');
 
-  /* ---------- ESCOPO: retrô só em telas LÚDICAS ----------
-     A uniformização (base navy acima) vale para TODAS as telas. Mas a camada
-     VIDEO GAME (fonte pixel, moedas, som 8-bit, scanline) fica restrita a telas
-     lúdicas/infantis/familiares. Telas clínicas (triagem, escala, consulta,
-     laudo, instrumento, diários, agenda…) permanecem SÉRIAS — atenua a crítica
-     de "gamificar a angústia dos pais" em rastreios clínicos. */
+  /* ---------- ESCOPO: arcade GLOBAL (pedido do Dr. Jadson) ----------
+     A camada VIDEO GAME (fonte pixel, moedas, blocos "?", canos, HUD "MUNDO",
+     som 8-bit, scanline CRT) agora vale para TODAS as telas — uniformidade
+     total com a página inicial, incluindo as clínicas.
+
+     Salvaguardas universais que permanecem ativas:
+       • toggle de mudo por usuário (np-sound, persistido em localStorage);
+       • prefers-reduced-motion → corta moedas/estrelas/pop e suaviza o CRT;
+       • @media print → laudos/PDF saem 100% limpos (sem fonte pixel nem deco);
+       • np-sound.pageMuted() segue respeitando <body data-np-sound="off">,
+         caso alguma tela específica queira opt-out pontual no futuro. */
   var FILE = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-  var PLAYFUL = FILE === '' ||
-    /^(index|comunicacao-alternativa|area-filho|portal-familia-livre|portal-novidades|gerador-cards|central-atalhos)\.html$/.test(FILE);
-  if (!PLAYFUL) {
-    // Silencia a camada de som 8-bit nesta página (np-sound respeita o atributo).
-    try { (document.body || document.documentElement).setAttribute('data-np-sound', 'off'); } catch (e) {}
-    return; // sem fonte pixel, moeda, scanline ou data-retro nas telas clínicas
-  }
 
   /* ---------- 2) Fonte pixel (Press Start 2P) ---------- */
   // CSP do app permite fonts.googleapis.com (style) e fonts.gstatic.com (font).
@@ -118,22 +116,29 @@
       gr.id = 'np-retro-ground'; gr.setAttribute('aria-hidden', 'true');
       document.body.appendChild(gr);
     }
-    // Céu com moedas/estrelas flutuando (sutil; desligado em reduced-motion)
+    // Céu com moedas/estrelas/blocos "?" flutuando (sutil; off em reduced-motion)
     if (!reduceMotion && !document.getElementById('np-retro-sky')) {
       var sky = document.createElement('div');
       sky.id = 'np-retro-sky'; sky.setAttribute('aria-hidden', 'true');
       document.body.appendChild(sky);
       spawnSky(sky);
     }
+    // Canos verdes (Super Mario) nos cantos do rodapé — estático, decorativo
+    buildPipes();
+    // HUD "MUNDO X-Y" + contador de moedas — canto inferior, pílula retrô
+    buildHud();
   }
 
   function spawnSky(sky) {
     var W = function () { return window.innerWidth || 360; };
-    var N = W() < 560 ? 5 : 8;           // densidade baixa no mobile
+    var N = W() < 560 ? 6 : 9;           // densidade baixa no mobile
     for (var i = 0; i < N; i++) {
-      var isStar = (i % 3 === 0);
+      var kind = i % 3;                  // 0 = estrela · 1 = bloco "?" · 2 = moeda
       var el = document.createElement('div');
-      el.className = isStar ? 'np-retro-star' : 'np-retro-coin';
+      if (kind === 0) el.className = 'np-retro-star';
+      else if (kind === 1) { el.className = 'np-retro-qblock'; el.textContent = '?'; }
+      else el.className = 'np-retro-coin';
+      var isStar = (kind === 0);
       el.style.left = Math.round(Math.random() * 96) + 'vw';
       el.style.bottom = '-24px';
       var dur = (isStar ? 4 : 9) + Math.random() * 7;
@@ -141,6 +146,53 @@
       el.style.animationDelay = (Math.random() * dur).toFixed(1) + 's';
       if (isStar) { el.style.top = Math.round(Math.random() * 80) + 'vh'; el.style.bottom = 'auto'; }
       sky.appendChild(el);
+    }
+  }
+
+  // Canos verdes nos dois cantos inferiores (decorativos, atrás do conteúdo).
+  function buildPipes() {
+    if (document.getElementById('np-retro-pipes')) return;
+    if ((window.innerWidth || 360) < 720) return;   // só desktop/tablet largo: sem poluir o mobile
+    var wrap = document.createElement('div');
+    wrap.id = 'np-retro-pipes'; wrap.setAttribute('aria-hidden', 'true');
+    wrap.innerHTML =
+      '<div class="np-pipe np-pipe--l"><span class="np-pipe-rim"></span></div>' +
+      '<div class="np-pipe np-pipe--r"><span class="np-pipe-rim"></span></div>';
+    document.body.appendChild(wrap);
+  }
+
+  /* ---------- HUD "MUNDO X-Y" + moedas (estilo placar 8-bit) ---------- */
+  var COIN_KEY = 'np_coins_v1';
+  var coins = 0;
+  try { coins = parseInt(localStorage.getItem(COIN_KEY) || '0', 10) || 0; } catch (e) {}
+
+  // Deriva um "MUNDO X-Y" estável a partir do nome do arquivo (home = 1-1).
+  function worldLabel() {
+    if (FILE === '' || FILE === 'index.html') return '1-1';
+    var s = 0; for (var i = 0; i < FILE.length; i++) s += FILE.charCodeAt(i);
+    return ((s % 8) + 1) + '-' + ((FILE.length % 4) + 1);
+  }
+
+  var hudCoinEl = null;
+  function buildHud() {
+    if (document.getElementById('np-retro-hud')) return;
+    var hud = document.createElement('div');
+    hud.id = 'np-retro-hud'; hud.setAttribute('aria-hidden', 'true');
+    hud.innerHTML =
+      '<span class="np-hud-coin">🪙<b id="np-hud-coins">' + coins + '</b></span>' +
+      '<span class="np-hud-world">MUNDO ' + worldLabel() + '</span>';
+    document.body.appendChild(hud);
+    hudCoinEl = document.getElementById('np-hud-coins');
+  }
+  function bumpCoins() {
+    coins++;
+    try { localStorage.setItem(COIN_KEY, String(coins)); } catch (e) {}
+    if (hudCoinEl) {
+      hudCoinEl.textContent = coins;
+      hudCoinEl.parentNode.classList.remove('np-hud-bump');
+      // reinicia a animação de "tilintar" do contador
+      void hudCoinEl.offsetWidth;
+      hudCoinEl.parentNode.classList.add('np-hud-bump');
     }
   }
 
@@ -164,6 +216,8 @@
     up.style.left = x + 'px'; up.style.top = (y - 14) + 'px';
     document.body.appendChild(up);
     setTimeout(function () { if (up.parentNode) up.parentNode.removeChild(up); }, 820);
+
+    bumpCoins();                          // soma 1 no placar do HUD "MUNDO"
   }
 
   function wireClicks() {

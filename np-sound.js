@@ -65,8 +65,10 @@
   }
   function haptic(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
 
-  // Mudo por página: telas clínicas marcam <body data-np-sound="off"> (via
-  // retro-arcade) para nunca tocar som 8-bit durante triagem/laudo/consulta.
+  // Mudo por página (opt-out pontual): qualquer tela pode marcar
+  // <body data-np-sound="off"> para silenciar o som 8-bit nela. O arcade é
+  // global por padrão (pedido do Dr. Jadson); este gancho fica disponível caso
+  // alguma tela específica precise ficar muda no futuro.
   function pageMuted() { try { return document.body && document.body.getAttribute('data-np-sound') === 'off'; } catch (e) { return false; } }
   function gate() { return enabled && !pageMuted() && !document.hidden && !matchMedia('print').matches; }
 
