@@ -57,7 +57,7 @@
   function pct(v){return Math.round((v||0)*100);}
 
   function run(){
-    var C = window.NeuroPedClinical || {};
+    var C = window.NeuroPedCIL || {};
     var cfg = window.NeuroPedClinicalConfig || {};
     var out = document.getElementById('out');
     if(!C.Timeline){ out.innerHTML='<div class="empty">Engines V4 não carregaram.</div>'; return; }
@@ -120,8 +120,8 @@
     return '<div class="insight">'+esc(it.insight)+'<div class="ev">evidência: '+(ev||'—')+' · confiança '+(it.confidence_label||'—')+'</div></div>';
   }
 
-  if(window.NeuroPedClinical && window.NeuroPedClinical.Timeline) run();
-  else { var n=0, iv=setInterval(function(){ if((window.NeuroPedClinical&&window.NeuroPedClinical.Timeline)||n++>80){ clearInterval(iv); run(); } }, 50); }
+  if(window.NeuroPedCIL && window.NeuroPedCIL.Timeline) run();
+  else { var n=0, iv=setInterval(function(){ if((window.NeuroPedCIL&&window.NeuroPedCIL.Timeline)||n++>80){ clearInterval(iv); run(); } }, 50); }
 })();
 </script>
 <script src="./app-frame.js" defer></script>

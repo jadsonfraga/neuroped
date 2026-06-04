@@ -71,10 +71,10 @@
     return { suggestions: suggestions, count: suggestions.length, disclaimer: 'Assistência clínica explicável. Nunca diagnóstico automático nem substituição médica.' };
   }
 
-  function dep(name, path) { return (global.NeuroPedClinical && global.NeuroPedClinical[name]) || (typeof require !== 'undefined' ? require(path) : null); }
+  function dep(name, path) { return (global.NeuroPedCIL && global.NeuroPedCIL[name]) || (typeof require !== 'undefined' ? require(path) : null); }
 
   var api = { suggest: suggest };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.DecisionSupport = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.DecisionSupport = api;
 })(typeof self !== 'undefined' ? self : this);

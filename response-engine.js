@@ -71,7 +71,7 @@
   }
 
   function confInterval(a) { if (a.length < 2) return null; var m = mean(a), sd = stdev(a), se = sd / Math.sqrt(a.length); return { mean: round(m, 3), lo: round(m - 1.96 * se, 3), hi: round(m + 1.96 * se, 3) }; }
-  function dep(name, path) { return (global.NeuroPedClinical && global.NeuroPedClinical[name]) || (typeof require !== 'undefined' ? require(path) : null); }
+  function dep(name, path) { return (global.NeuroPedCIL && global.NeuroPedCIL[name]) || (typeof require !== 'undefined' ? require(path) : null); }
   function ts(x) { var t = new Date(x).getTime(); return isNaN(t) ? 0 : t; }
   function mean(a) { return a.length ? a.reduce(function (s, x) { return s + x; }, 0) / a.length : 0; }
   function stdev(a) { if (a.length < 2) return 0; var m = mean(a); return Math.sqrt(mean(a.map(function (x) { return (x - m) * (x - m); }))); }
@@ -80,6 +80,6 @@
 
   var api = { analyze: analyze, smooth: smooth };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.Response = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.Response = api;
 })(typeof self !== 'undefined' ? self : this);
