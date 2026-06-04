@@ -204,23 +204,6 @@ for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
 }
 
-// ===== Design System — Movimento 1: ponte de variáveis (coerência cromática) =====
-// ds-bridge.css mapeia vocabulário legado (--teal/--cream/--ink…) → tokens canônicos,
-// colapsando os violetas divergentes no --primary único. Sem reescrever markup.
-assertFile('ds-bridge.css');
-assertIncludes('ds-bridge.css', 'var(--primary)', 'bridge aponta --teal para o --primary canônico (unifica violetas)');
-assertIncludes('ds-bridge.css', '--teal:', 'bridge cobre o vocabulário legado de cor');
-assertIncludes('ds-bridge.css', 'var(--accent-gold)', 'bridge preserva ouro como ouro (semântico)');
-assertIncludes('sw.js', './ds-bridge.css', 'ds-bridge no precache (offline)');
-// As 6 telas-âncora carregam o bridge como ÚLTIMO stylesheet (vence o :root inline)
-for (const p of ['index.html','perfil-crianca.html','filtro-escalas.html','intake.html','clinical-trajetoria.html','secretaria.html']) {
-  assertIncludes(p, './ds-bridge.css', p + ' carrega a ponte do Design System (âncora do Movimento 1)');
-  const c = file(p);
-  (c.lastIndexOf('tokens.css') < c.lastIndexOf('ds-bridge.css'))
-    ? pass(p + ': ds-bridge carrega depois de tokens.css (cascata correta)')
-    : fail(p + ': ds-bridge deve vir DEPOIS de tokens.css', 'ordem de cascata invertida');
-}
-
 // Identidade premium: tipografia institucional + capa do hub
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
 assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');

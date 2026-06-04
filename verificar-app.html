@@ -28,7 +28,7 @@ async function ok(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no
 async function txt(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no-store'}).then(r=>r.text())}catch(e){return ''}}
 async function check(){
   const out=[];function log(x){out.push(x);document.getElementById('log').textContent=out.join('\n')}
-  const VERSAO='6.44.28';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
+  const VERSAO='6.44.27';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
   log('Versão canônica esperada: '+VERSAO);
   const pkg=await txt('./package.json');let pkgV='';try{pkgV=(JSON.parse(pkg||'{}').version)||''}catch(e){}
   log(pkgV?('OK: package.json em '+pkgV+(pkgV===VERSAO?' (alinhado)':' — Atenção: diverge de '+VERSAO)):'Atenção: versão do package.json não identificada');
