@@ -93,7 +93,10 @@ assertIncludes('consulta-pin-fix.js', 'toLowerCase', 'consulta-pin-fix normaliza
 assertIncludes('consulta.html', 'MASTER_HASH', 'consulta.html define MASTER_HASH inline');
 assertIncludes('consulta.html', 'function persist', 'consulta salva rascunho local (não some ao fechar)');
 assertIncludes('consulta.html', 'window.NPStore.active', 'consulta puxa a criança ativa do Perfil (sem ilha)');
-assertIncludes('safe-public-layer.js', 'consulta.html?next=', 'área sensível envia para PIN');
+// MODO PÚBLICO (sem senha): área sensível vai para a HOME educacional, não para PIN.
+assertIncludes('safe-public-layer.js', 'index.html?indisponivel', 'área sensível volta para a home pública (sem PIN)');
+assertIncludes('public-mode.js', 'HIDDEN_PAGES', 'public-mode oculta páginas sensíveis no deploy público');
+assertNotIncludes('escala.html', "==='removido'", 'sem senha de estudo em texto claro no escala.html');
 assertIncludes('consulta-docflow.js', 'Não são assinatura digital ICP-Brasil', 'QR avisa que não substitui ICP-Brasil');
 assertIncludes('manifest.json', 'CAA Gratuita', 'manifest mantém CAA Gratuita');
 assertNotIncludes('manifest.json', 'CAA Premium', 'manifest não contém CAA Premium');
