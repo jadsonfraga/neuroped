@@ -175,7 +175,7 @@
       const opts = (f.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
       return `<div class="npe-di-field">
         <label>${f.label}${f.required?' *':''}</label>
-        <select name="${f.key}"${req}><option value="">—</option>${opts}</select>
+        <select name="${f.key}"${req} aria-label="${f.label}"><option value="">—</option>${opts}</select>
       </div>`;
     }
     if (f.type === 'textarea') {

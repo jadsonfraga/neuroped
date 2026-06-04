@@ -691,7 +691,7 @@ function applyFilters() {
       <td>${a.statusPagamento}</td>
       <td>
         ${a.statusPagamento === 'Pendente' ? `<button class="btn-sm btn-pago" onclick="markPago('${a.id}')">✓ Pago</button>` : ''}
-        <button class="btn-sm btn-excluir" onclick="deleteApptFin('${a.id}')">🗑</button>
+        <button class="btn-sm btn-excluir" onclick="deleteApptFin('${a.id}')" aria-label="Excluir lançamento" title="Excluir">🗑</button>
       </td>
     </tr>
   `).join('');
