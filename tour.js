@@ -53,7 +53,7 @@
     { emoji:'📊', title:'Mais de 500 escalas', body:'Em “Encontrar Escala” você acessa o banco de instrumentos organizado por queixa e faixa etária.', find:function(){return vis(document.querySelectorAll('.card-premium')[0]);} },
     { emoji:'🧒', title:'Testes com a criança', body:'Testes diretos e lúdicos: cognitivo, reconhecimento visual, motricidade e pedagógico — por idade, com mascotes.', find:function(){return byText(/TESTES COM A CRIAN/i)||vis(document.querySelectorAll('.card-premium')[1]);} },
     { emoji:'💬', title:'CAA Gratuita', body:'Comunicação alternativa com voz em português, cartões grandes, favoritos e montagem de frases.', find:function(){return byText(/^CAA$/i,'a,button,span,div');} },
-    { emoji:'📚', title:'Educativo / Psicoeducação', body:'Conteúdo educativo livre: marcos do desenvolvimento, orientações e psicoeducação para as famílias.', find:function(){return byText(/Educativo|Psicoeduca|Fam[íi]lia/i,'a,button,span,div');} },
+    { emoji:'👨‍👩‍👧', title:'Portal da Família', body:'Conteúdo educativo livre: marcos do desenvolvimento, orientações e psicoeducação para as famílias.', find:function(){return byText(/Fam[íi]lia/i,'a,button,span,div');} },
     { emoji:'🔒', title:'Ambiente demonstrativo', body:'Esta versão é para conhecer o app: nenhum dado real de paciente é salvo no dispositivo. Use à vontade.' },
     { emoji:'✨', title:'Tudo pronto!', body:'Toque no botão “?” no canto inferior sempre que quiser rever este tour. Bom trabalho, Dr. Jadson!' }
   ];

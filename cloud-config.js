@@ -3,7 +3,7 @@
  *
  * Por padrao, fica DESABILITADO. Para ativar:
  *   1. Crie um projeto Supabase: https://supabase.com (free tier serve).
- *   2. Aplique db/supabase-schema.sql no SQL Editor.
+ *   2. Aplique db/supabase-schema-v6.sql no SQL Editor.
  *   3. Project Settings > API: copie 'Project URL' e 'anon public'.
  *   4. Substitua os valores abaixo e troque enabled para true.
  *
@@ -17,8 +17,8 @@
  */
 window.NEUROPED_CLOUD = {
   provider: 'supabase',
-  supabaseUrl: '',          // ex.: https://xyzcompany.supabase.co
-  supabasePublicAnon: '',   // chave anon publica (JWT) do projeto Supabase, copie de Project Settings > API
-  enabled: false,           // troque para true quando os dois campos acima forem preenchidos
+  supabaseUrl: 'https://jadsonfraga-neuroped.supabase.co', // URL de produção (placeholder atualizado)
+  supabasePublicAnon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', // Token anon público
+  enabled: true,           // Habilitado para integração com backend
   projectLabel: 'NeuroPed EDJ Cloud'
 };

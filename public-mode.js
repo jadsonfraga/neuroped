@@ -36,7 +36,9 @@
     'qa-smoke-test.html': 1, 'teste-e2e-manual.html': 1, 'teste-ouro-pin.html': 1,
     'scale-engine-demo.html': 1, 'clinical-trajetoria-demo.html': 1, 'ds-pilot.html': 1,
     'verificar.html': 1, 'verificar-app.html': 1, 'cloud-status.html': 1,
-    'setup.html': 1, 'guia-lancamento.html': 1
+    'setup.html': 1, 'guia-lancamento.html': 1,
+    // Backup e schemas
+    'supabase-schema-v6.sql': 1, 'supabase-schema.sql': 1, 'SCHEMA.md': 1
   };
 
   // ---- Rotas internas sensíveis do SPA (hash) ----

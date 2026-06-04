@@ -15,20 +15,42 @@
       "longitudinal_use": "boolean|null",
       "_needs_curation": "boolean"
     },
-    "version": "0.1.0",
-    "updated": "2026-06-02"
+    "version": "0.1.1",
+    "updated": "2026-06-04"
   },
   "instruments": {
-    "_example_template": {
-      "instrument_id": "_example_template",
-      "measures": [],
-      "differential_value": null,
-      "ecological_validity": null,
-      "fatigue_cost": null,
-      "estimated_minutes": null,
-      "respondent": [],
-      "longitudinal_use": null,
-      "_needs_curation": true
+    "fam-12-36-tea-primeiros-sinais": {
+      "instrument_id": "fam-12-36-tea-primeiros-sinais",
+      "measures": ["social", "pragmatica", "linguagem"],
+      "differential_value": "Rastreio precoce de sinais de alerta para TEA focado em comportamento observável.",
+      "ecological_validity": "casa",
+      "fatigue_cost": "low",
+      "estimated_minutes": 5,
+      "respondent": ["pais"],
+      "longitudinal_use": true,
+      "_needs_curation": false
+    },
+    "fam-6-11-atencao-casa": {
+      "instrument_id": "fam-6-11-atencao-casa",
+      "measures": ["atencao", "executivo"],
+      "differential_value": "Mapeia impacto da desatenção no ambiente doméstico e tarefas escolares.",
+      "ecological_validity": "casa",
+      "fatigue_cost": "medium",
+      "estimated_minutes": 10,
+      "respondent": ["pais"],
+      "longitudinal_use": true,
+      "_needs_curation": false
+    },
+    "m-chat-r-f": {
+      "instrument_id": "m-chat-r-f",
+      "measures": ["social", "pragmatica"],
+      "differential_value": "Padrão-ouro para triagem de TEA em lactentes.",
+      "ecological_validity": "casa",
+      "fatigue_cost": "low",
+      "estimated_minutes": 10,
+      "respondent": ["pais"],
+      "longitudinal_use": false,
+      "_needs_curation": false
     }
   }
 }

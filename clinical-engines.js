@@ -122,6 +122,12 @@
       this.type = type;
       this.registry = registry;
       this.storageNS = opts.storageNS || `neuroped.${type}.v3-1`;
+      // Injeção de Storage V3.2 se disponível
+      if (global.NeuroPedClinicalStorage && global.NeuroPedClinicalStorage.VersionedStorageLayer) {
+        try {
+          this.v32Storage = new global.NeuroPedClinicalStorage.VersionedStorageLayer(`neuro.${type}`);
+        } catch (e) { console.warn(`[Engine] falha ao iniciar storage v3.2 para ${type}:`, e.message); }
+      }
     }
 
     /** @returns {Instrument[]} */
@@ -170,6 +176,11 @@
 
     /** @param {string} instrumentId @param {Object} payload */
     save(instrumentId, payload) {
+      // V3.2: Persistência versionada com checksum e RLS-ready
+      if (this.v32Storage) {
+        this.v32Storage.save(instrumentId, payload);
+      }
+      // Fallback/Legacy V3.1: Mantém compatibilidade com código antigo
       const s = this._read();
       s[instrumentId] = s[instrumentId] || [];
       s[instrumentId].push({ ts: Date.now(), ...payload });
@@ -179,6 +190,14 @@
 
     /** @param {string} instrumentId */
     history(instrumentId) {
+      // Tenta carregar do V3.2 primeiro (mais íntegro)
+      if (this.v32Storage) {
+        const res = this.v32Storage.load(instrumentId);
+        if (res.ok) {
+           // O storage V3.2 guarda o último registro; para histórico completo v3.1 é mantido.
+           // Em uma refatoração futura, o V3.2 suportará histórico nativo.
+        }
+      }
       return (this._read()[instrumentId] || []).sort((a,b) => a.ts - b.ts);
     }
 

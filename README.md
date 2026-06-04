@@ -1,4 +1,4 @@
-# NeuroPed EDJ — v6.39.2
+# NeuroPed EDJ — v6.45.9
 
 **Plataforma educacional e demonstrativa de neuropediatria — local-first (PWA)**
 
