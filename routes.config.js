@@ -9,7 +9,7 @@ window.NEUROPED_ROUTES = [
   { label:'Central de Atalhos', href:'./central-atalhos.html', type:'publico', requiresPin:false, icon:'🧭', order:20 },
   { label:'Biblioteca NeuroPed', href:'./neuroped-master-biblioteca.html', type:'publico', requiresPin:false, icon:'📚', order:27 },
   { label:'Gerador de Cards', href:'./gerador-cards.html', type:'publico', requiresPin:false, icon:'🪪', order:28 },
-  { label:'Portal da Família', href:'./portal-familia-livre.html', type:'familiar', requiresPin:false, icon:'🌿', order:30 },
+  { label:'Educativo / Psicoeducação', href:'./portal-familia-livre.html', type:'familiar', requiresPin:false, icon:'📚', order:30 },
   { label:'Área do Filho', href:'./area-filho.html', type:'familiar', requiresPin:false, icon:'👶', order:40 },
   { label:'CAA Gratuita', href:'./comunicacao-alternativa.html', type:'familiar', requiresPin:false, icon:'💬', order:50 },
   { label:'Diário Escola e Terapias', href:'./diario-escola-terapias-v2.html', type:'familiar', requiresPin:false, icon:'📝', order:60 },
