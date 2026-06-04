@@ -47,6 +47,21 @@
   addCss('components.css');
   addCss('app-skin.css');
 
+  /* ---------- ESCOPO: retrô só em telas LÚDICAS ----------
+     A uniformização (base navy acima) vale para TODAS as telas. Mas a camada
+     VIDEO GAME (fonte pixel, moedas, som 8-bit, scanline) fica restrita a telas
+     lúdicas/infantis/familiares. Telas clínicas (triagem, escala, consulta,
+     laudo, instrumento, diários, agenda…) permanecem SÉRIAS — atenua a crítica
+     de "gamificar a angústia dos pais" em rastreios clínicos. */
+  var FILE = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  var PLAYFUL = FILE === '' ||
+    /^(index|comunicacao-alternativa|area-filho|portal-familia-livre|portal-novidades|gerador-cards|central-atalhos)\.html$/.test(FILE);
+  if (!PLAYFUL) {
+    // Silencia a camada de som 8-bit nesta página (np-sound respeita o atributo).
+    try { (document.body || document.documentElement).setAttribute('data-np-sound', 'off'); } catch (e) {}
+    return; // sem fonte pixel, moeda, scanline ou data-retro nas telas clínicas
+  }
+
   /* ---------- 2) Fonte pixel (Press Start 2P) ---------- */
   // CSP do app permite fonts.googleapis.com (style) e fonts.gstatic.com (font).
   if (!hasLink('Press+Start+2P')) {
