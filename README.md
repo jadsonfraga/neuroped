@@ -27,7 +27,10 @@ Camadas centrais:
 - **`app-polish-mobile.js`** — camada universal (toda página): transições, **guia de jornada** (próximo passo contextual), prefetch preditivo, onboarding, marca em toda tela.
 - **`app-shell.html`** — casca persistente (topo + abas + `<iframe>`) para experiência de moldura única.
 
-Qualidade: `scripts/test-static.mjs` (637+ asserções estáticas, 0 falhas como gate de commit), `scripts/build-scales-bundle.mjs` (frescor do bundle).
+Qualidade: `scripts/test-static.mjs` (**780+ asserções estáticas**, 0 falhas como gate de commit/CI), `scripts/build-scales-bundle.mjs` (frescor do bundle) e **`design-audit --check`** (gate de não-regressão visual). Todo PR roda esses gates no GitHub Actions antes do merge/deploy.
+
+### Por que sem framework (escolha deliberada, não amadorismo)
+HTML/CSS/JS direto é intencional para um produto clínico **local-first** que precisa durar: **zero build obrigatório**, auditável linha a linha, **offline real** via Service Worker, carga leve em aparelho de família e **sem cadeia de dependências** para envelhecer/quebrar. A disciplina vem dos **gates de teste + CI**, não do framework. Onde compila (o `index` é um bundle Vite), o artefato fica versionado e servido estático.
 
 ## O que esta versão FAZ
 
@@ -63,7 +66,10 @@ node scripts/build-scales-bundle.mjs
 
 ## Acesso ao modo profissional (demo)
 
-A área profissional (`consulta.html`) é **demonstrativa** e exige um PIN master. O PIN **não** está em texto claro no bundle: a verificação usa hash (ver `pro-license.js` / `pro-hashes.js`). É proteção de UX contra exposição acidental, **não** mecanismo de segurança. Endurecimento (sessão com expiração, rate-limit, cifragem em repouso) está mapeado no roteiro de segurança/LGPD.
+A área profissional (`consulta.html`) é **demonstrativa** e exige um PIN master. O PIN **não** está em texto claro no bundle: a verificação usa **hash SHA-256** (`master-access-policy.js`), **rotacionável** via `window.NEUROPED_MASTER_PIN_HASH`. É proteção de UX contra exposição acidental, **não** mecanismo de segurança. Endurecimento (sessão com expiração, rate-limit, cifragem em repouso) está mapeado no roteiro de segurança/LGPD.
+
+### Modelo Pro (honesto, por design)
+O desbloqueio Pro valida um **hash** do código no cliente (`pro-license.js` / `pro-hashes.js`) — sem backend. Como em qualquer infoproduto, isso significa que um código pode ser usado em mais de um aparelho; é **aceitável e revogável** (basta remover o hash do lote e republicar). Não é cofre criptográfico, e não precisa ser: o valor está no conteúdo curado, não em DRM.
 
 ## Aviso clínico
 
