@@ -107,6 +107,19 @@
   .sc-ax.ok{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.32);color:#6ee7b7}
   .sc-ax.partial{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32);color:#fcd34d}
   .sc-ax.no{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#fca5a5}
+  /* Painel-guia "o que observar em casa" (perguntas-guia por queixa) */
+  #guidePanel{max-width:760px;margin:0 auto 6px}
+  .guide{border:1px solid rgba(124,118,210,.26);border-radius:14px;background:linear-gradient(180deg,rgba(124,118,210,.1),rgba(124,118,210,.03));overflow:hidden}
+  .guide>summary{cursor:pointer;list-style:none;padding:11px 14px;font:800 12.5px system-ui;color:#c9c4f0;display:flex;align-items:center;gap:8px}
+  .guide>summary::-webkit-details-marker{display:none}
+  .guide .gtag{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:#a7f3d0;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.28);border-radius:999px;padding:2px 8px}
+  .guide .glist{padding:2px 14px 10px;display:grid;gap:9px}
+  .gq{border-left:2px solid rgba(169,164,255,.4);padding-left:10px}
+  .gqh{font:700 13px system-ui;color:var(--text,#ECEAFF);line-height:1.35}
+  .gqx{font-size:11.5px;color:var(--text-muted,#94A3B8);margin-top:2px}
+  .gqe{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  .gqe span{font:600 10.5px system-ui;color:#cbd5e1;background:rgba(124,118,210,.14);border-radius:7px;padding:2px 7px}
+  .gdisc{margin:0;padding:0 14px 11px;font-size:10.5px;color:var(--text-soft,#8b86b8)}
   .empty{grid-column:1/-1;text-align:center;color:var(--text-muted,#94A3B8);padding:30px 18px;border:1px dashed rgba(169,164,255,.2);border-radius:18px}
   .disc{max-width:820px;margin:22px auto 0;font-size:11.5px;color:var(--text-muted,#94A3B8);line-height:1.55;border-top:1px solid rgba(169,164,255,.14);padding-top:12px;text-align:center}
   /* Botão limpar busca */
@@ -159,6 +172,7 @@
   </div>
 
   <div id="detected" class="detected" hidden></div>
+  <div id="guidePanel" hidden></div>
 
   <section id="recommendedSection" style="display:none">
     <div class="section-label">🥇 Mais indicados (Ouro clínico)</div>
@@ -177,6 +191,8 @@
 <script src="./clinical-meta.js"></script>
 <script src="./scales-taxonomy.js"></script>
 <script src="./scales-smart-rank.js"></script>
+<script src="./scales-questions.js"></script>
+<script src="./scales-preconsulta-gate.js"></script>
 <script>
 (function(){
   'use strict';
@@ -193,7 +209,10 @@
   // do atendimento), não o acompanhamento longitudinal. Exclui diários da família,
   // do paciente e registros longitudinais — o sinal factual kind==='diário'/daily
   // prevalece sobre o título (havia diários titulados "Inventário … ritmo diário").
+  // Delegam à DEFINIÇÃO ÚNICA (scales-preconsulta-gate.js) quando carregada;
+  // mantêm fallback inline para robustez offline-first (PWA).
   function isDiary(s){
+    var G=window.NeuroPedPreConsultaGate; if(G) return G.isDiary(s);
     if(!s) return false;
     if(s.kind==='diário'||s.kind==='diario'||s.daily===true) return true;
     var id=norm(s.id);
@@ -202,7 +221,21 @@
     if(/\bdiario\b|registro diario|controle diario|monitoramento longitud|acompanhamento longitud|longitudinal/.test(t)) return true;
     return false;
   }
-  function isBank(s){ return /lote|banco completo/i.test(s.title||''); }
+  function isBank(s){ var G=window.NeuroPedPreConsultaGate; if(G) return G.isBank(s); return /lote|banco completo/i.test(s.title||''); }
+  // Instrumentos de APLICAÇÃO CLÍNICA não entram na pré-consulta: entrevistas
+  // estruturadas, observação clínica, classificações funcionais e gates de risco
+  // exigem profissional treinado e juízo ativo — a secretária não os entrega na
+  // sala de espera. Catálogo não traz duração/training, então gate conservador por
+  // ID conhecido + padrão de nome (cirúrgico: ~4 instrumentos, ex.: C-SSRS, GMFCS).
+  var CLINICAL_BLOCK={'ofc-cssrs':1,'ofc-asq-suicide':1,'ofc-gmfcs-er':1,'ofc-gmfcs':1,'ofc-cars-2':1,'ofc-vineland-3':1,'ofc-conners-3':1,'ofc-cbcl':1};
+  function isClinicalOnly(s){
+    var G=window.NeuroPedPreConsultaGate; if(G) return G.isClinicalOnly(s);
+    if(!s) return false;
+    if(CLINICAL_BLOCK[s.id]) return true;
+    var t=norm([s.title,s.short_title,s.domain].join(' '));
+    if(/entrevista (clinic|estrutur|diagnost|semiestrut)|observacao clinica estrutur|\bados\b|\badi-?r\b|\bcars\b|vineland|conners|c-?ssrs|columbia.*(suic|risco|ideac)|escala de inteligenc|\bwisc\b|\bwais\b|\bwppsi\b|gmfcs/.test(t)) return true;
+    return false;
+  }
   function sigla(s){ var t=norm(s.short_title||s.title||s.id||'?').replace(/[^a-z0-9 ]/g,'').trim(); var p=t.split(/\s+/); return ((p[0]&&p[0][0]||'')+(p[1]?p[1][0]:(p[0]&&p[0][1]||''))).toUpperCase()||'NP'; }
   function colorFor(s){ var k=String(s.id||s.title||''); var h=0; for(var i=0;i<k.length;i++) h=(h*31+k.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length]; }
 
@@ -232,7 +265,7 @@
   // score(): relevância da QUEIXA sobre os metadados autorais. Mantida como
   // gate de candidatura (precisa casar ≥1 termo) e base do eixo "queixa".
   function score(s, tokens, age){
-    if(!s||!s.id||isDiary(s)||isBank(s)) return null;
+    if(!s||!s.id||isDiary(s)||isBank(s)||isClinicalOnly(s)) return null;
     // termos da queixa: complaints/symptoms pesam mais que título/domínio
     var strongTerms=norm([].concat(s.keywords||[],s.complaints||[],s.symptoms||[]).join(' '));
     var softTerms=norm([s.domain||'',s.title||'',s.short_title||''].join(' '));
@@ -325,9 +358,40 @@
   function skeleton(){ document.getElementById('allResults').innerHTML=Array.apply(null,{length:6}).map(function(){return '<div class="sc-skel"></div>';}).join(''); }
   function topCatalog(){ // estado inicial: instrumentos em destaque do catálogo
     var cat=window.NEUROPED_EDITORIAL_SCALES||[];
-    return cat.filter(function(s){return s&&s.id&&!isDiary(s)&&!isBank(s);})
+    return cat.filter(function(s){return s&&s.id&&!isDiary(s)&&!isBank(s)&&!isClinicalOnly(s);})
       .sort(function(a,b){return (b.official_catalog?1:0)-(a.official_catalog?1:0);})
       .slice(0,12).map(function(s){return {s:s,sc:0,hits:[]};});
+  }
+
+  // ── Painel-guia "o que observar em casa" ─────────────────────────────────
+  // Aproveita o GUIDE curado (scales-questions.js) para, na PRÉ-CONSULTA, orientar
+  // a família/secretária sobre o que observar — antes mesmo de escolher a escala.
+  // Construtos do SmartRank → tag do GUIDE (alias linguagem→fala etc.).
+  var GUIDE_ALIAS={linguagem:'fala',paralisiacerebral:'motor',desenvolvimento:'',substancias:'',risco:''};
+  function guideTagFor(q, tokens, top){
+    if(!window.NeuroPedQuestions||!NeuroPedQuestions.GUIDE) return '';
+    var G=NeuroPedQuestions.GUIDE, k, i;
+    var cons=(window.NeuroPedSmartRank&&NeuroPedSmartRank.constructsOf)?NeuroPedSmartRank.constructsOf(q):[];
+    for(i=0;i<cons.length;i++){ k=(GUIDE_ALIAS[cons[i]]!==undefined?GUIDE_ALIAS[cons[i]]:cons[i]); if(k&&G[k]) return k; }
+    for(i=0;i<tokens.length;i++){ k=(GUIDE_ALIAS[tokens[i]]!==undefined?GUIDE_ALIAS[tokens[i]]:tokens[i]); if(k&&G[k]) return k; }
+    if(top&&top[0]){ var d=norm(top[0].s.domain||''), ks=Object.keys(G); for(i=0;i<ks.length;i++){ if(d.indexOf(ks[i])>=0) return ks[i]; } }
+    return '';
+  }
+  function renderGuide(q, tokens, top, age){
+    var box=document.getElementById('guidePanel'); if(!box) return;
+    var tag=guideTagFor(q, tokens, top);
+    if(!tag||!window.NeuroPedQuestions){ box.hidden=true; box.innerHTML=''; return; }
+    var gs=NeuroPedQuestions.guide(tag, age)||[];
+    if(!gs.length){ box.hidden=true; box.innerHTML=''; return; }
+    box.hidden=false;
+    box.innerHTML='<details class="guide"><summary>🔎 O que observar em casa antes da consulta'
+      +'<span class="gtag">'+esc(tag)+'</span></summary><div class="glist">'
+      +gs.slice(0,4).map(function(g){
+        return '<div class="gq"><div class="gqh">'+esc(g.emoji||'📋')+' '+esc(g.pergunta)+'</div>'
+          +(g.explicacao?'<div class="gqx">'+esc(g.explicacao)+'</div>':'')
+          +(g.exemplos&&g.exemplos.length?'<div class="gqe">'+g.exemplos.slice(0,3).map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')
+          +'</div>';
+      }).join('')+'</div><p class="gdisc">Sinais para a família/secretária observarem — apoio à pré-consulta, não diagnóstico.</p></details>';
   }
 
   function run(){
@@ -337,8 +401,9 @@
     var q=document.getElementById('searchInput').value.trim();
     if(!cat.length){ all.innerHTML='<div class="empty">Carregando catálogo… toque em Buscar em instantes.</div>'; return; }
     try{ localStorage.setItem('np_cie_q', q); }catch(e){}
+    var gp=document.getElementById('guidePanel');
     if(!q){ // sem query → catálogo em destaque
-      det.hidden=true; rec.style.display='none';
+      det.hidden=true; rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
       var t=topCatalog(); cnt.textContent='· catálogo';
       all.innerHTML=t.map(function(r){return card(r,false);}).join('');
       return;
@@ -355,6 +420,7 @@
     det.hidden=false;
     det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b>'+(RESP?(' · responde: <b>'+esc(RESP_LABEL[RESP]||RESP)+'</b>'):'')+' · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
     cnt.textContent='· '+top.length;
+    renderGuide(q, tokens, top, age);
     if(!top.length){ rec.style.display='none'; all.innerHTML='<div class="empty">Nenhum instrumento casou com a queixa. Tente sintomas/suspeita (ex.: “não fala”, “agitado”, “seletivo”).</div>'; return; }
     // Ouro: até 3 mais alinhados, cruzando OLHARES (teste direto × família × escala
     // × criança) e deduplicando variantes — triangulação clínica de pré-consulta.
