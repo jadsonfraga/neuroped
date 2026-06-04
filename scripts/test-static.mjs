@@ -100,6 +100,15 @@ assertNotIncludes('caa-hotfix.js', "+t+'</button>'", 'caa-hotfix não concatena 
 assertIncludes('master-access-policy.js', 'eligible', 'master-access filtra inputs elegíveis (sem textareas)');
 assertIncludes('master-access-policy.js', "addEventListener('storage'", 'master-access escuta storage event (sync cross-tab)');
 assertIncludes('master-access-policy.js', 'aria-live', 'toast master tem aria-live para leitores de tela');
+// PIN master REMOVIDO do app (sniffer global + badge + painel da família desligados; API mantida p/ tools do autor)
+assertNotIncludes('master-access-policy.js', 'watchInputs();decorate()', 'PIN master: sniffer global de inputs desligado (PIN fora do app)');
+assertNotIncludes('master-access-policy.js', "textContent='🔓 Master ativo'", 'PIN master: sem badge flutuante no app');
+assertIncludes('master-access-policy.js', 'unlockIfPin', 'API de desbloqueio preservada p/ ferramentas do autor (gerador de licenças)');
+// Portal da família REMOVIDO da navegação do app
+assertNotIncludes('app-polish-mobile.js', "label: 'Família'", 'bottom nav sem Família (portal removido)');
+assertNotIncludes('app-shell.html', "label:'Família'", 'app-shell sem a aba Família');
+assertIncludes('portal-familia-livre.html', "location.replace('./index.html')", 'portal-familia-livre redireciona à home (removido)');
+assertIncludes('area-filho.html', "location.replace('./index.html')", 'area-filho redireciona à home (removido)');
 assertIncludes('app-shell.js', 'aria-label', 'app-shell anota acessibilidade na navegação');
 assertIncludes('app-shell.js', 'aria-current', 'app-shell marca página atual com aria-current');
 assertIncludes('app-shell.css', 'aria-current="page"', 'app-shell.css destaca página atual visualmente');

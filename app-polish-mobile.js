@@ -95,8 +95,7 @@
     { label: 'Início',   href: './index.html',                  svg: '<path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/>' },
     { label: 'Consulta', href: './consulta.html',               svg: '<path d="M6 3v6a6 6 0 0 0 12 0V3"/><path d="M6 3H4M18 3h2"/><circle cx="18" cy="16" r="3"/><path d="M18 11v2"/>' },
     { label: 'Escalas',  href: './filtro-escalas.html',         svg: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>' },
-    { label: 'CAA',      href: './comunicacao-alternativa.html', svg: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/>' },
-    { label: 'Família',  href: './portal-familia-livre.html',   svg: '<path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 7-9s7 4 7 9a7 7 0 0 1-7 7Z"/><path d="M11 20v-7"/>' }
+    { label: 'CAA',      href: './comunicacao-alternativa.html', svg: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/>' }
   ];
   function navStyle(){
     if (document.getElementById('np-nav-ico-style')) return;
@@ -300,7 +299,7 @@
   /* Widget de indicacao (crescimento pai-para-pai). So em paginas de familia.
      Convida a compartilhar a plataforma — leva alcance a quem precisa, eticamente,
      sem coletar nenhum dado. */
-  var REFERRAL_PAGES = ['portal-familia-livre.html','area-filho.html','comunicacao-alternativa.html','diario-escola-terapias-v2.html','central-atalhos.html'];
+  var REFERRAL_PAGES = ['comunicacao-alternativa.html','diario-escola-terapias-v2.html'];
   function referralWidget(){
     if (document.getElementById('npReferral')) return;
     var here = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
@@ -704,8 +703,6 @@
   /* configuração lúdica por página (estática). Ausência = sem mascotes. */
   var PLAYFUL = {
     'comunicacao-alternativa.html': { count: 4, op: 0.30, min: 24, max: 40, set: ['🦊','🧸','🐻','🐥','🦄','🌈'] },
-    'area-filho.html':              { count: 3, op: 0.24, min: 22, max: 36, set: ['🧸','🐻','🐥','⭐','🌈'] },
-    'portal-familia-livre.html':    { count: 2, op: 0.18, min: 22, max: 32, set: ['🌿','✨','🌈'] },
     'index.html':                   { count: 2, op: 0.14, min: 20, max: 30, set: ['✨','⭐'], homeOnly: true },
     '':                             { count: 2, op: 0.14, min: 20, max: 30, set: ['✨','⭐'], homeOnly: true }
   };
