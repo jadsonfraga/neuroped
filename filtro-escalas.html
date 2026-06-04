@@ -161,6 +161,8 @@
   .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   a.sc-card:focus-visible,.chip:focus-visible,.search-go:focus-visible,.search-clear:focus-visible,.applynow:focus-visible,.dchip:focus-visible{outline:3px solid #a9a4ff;outline-offset:2px}
   .search-input:focus-visible{outline:2px solid #a9a4ff;outline-offset:2px;border-radius:8px}
+  /* foco programático (pós-busca) no cabeçalho/grade não mostra anel persistente */
+  .section-label[tabindex]:focus:not(:focus-visible),#allResults[tabindex]:focus:not(:focus-visible){outline:none}
   @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}.astro{animation:none}}
 </style>
 <link rel="stylesheet" href="./escalas-hero.css">
@@ -583,12 +585,22 @@
     if(an){ if(lead){ var t1=lead.s; an.hidden=false; an.textContent='▶ Aplicar “'+(t1.short_title||t1.title||'1ª escala').slice(0,28)+'” agora'; an.setAttribute('href','./escala.html?id='+encodeURIComponent(t1.id)); } else { an.hidden=true; } }
     var used={}; fixed.forEach(function(r){used[r.s.id]=1;});
     var rest=top.filter(function(r){return !used[r.s.id];});
-    all.innerHTML=rest.map(card).join('')||(fixed.length
-      ?'<div class="empty">As 5 indicações acima seguem a regra de ouro da pré-consulta (pódio + teste direto + escola).</div>'
-      :'<div class="empty">Sem correspondência. Tente um termo mais simples (ex.: “não fala”, “agitado”) ou um chip de queixa acima.</div>');
+    if(rest.length){
+      all.innerHTML=rest.map(card).join('');
+    } else if(fixed.length){
+      all.innerHTML='<div class="empty">As 5 indicações acima seguem a regra de ouro da pré-consulta (pódio + teste direto + escola).</div>';
+    } else {
+      // Recuperação: nunca deixa o usuário num beco. Oferece os construtos detectados
+      // (ou queixas-âncora comuns) já clicáveis para refazer a busca em 1 toque.
+      var sugg=(cons.length?cons:['tea','tdah','linguagem','aprendizagem','ansiedade','sono'])
+        .slice(0,6).map(function(k){return '<button class="chip dchip" type="button" data-foc="'+esc(CFOCUS[k]||k)+'">'+esc(CLABEL[k]||k)+'</button>';}).join(' ');
+      all.innerHTML='<div class="empty">Sem correspondência para <b>'+esc(q.length>60?q.slice(0,60)+'…':q)+'</b>.<br>Toque numa queixa para recomeçar:'
+        +'<div class="qchips" style="justify-content:center;margin-top:12px">'+sugg+'</div></div>';
+      all.querySelectorAll('.dchip').forEach(function(b){ b.addEventListener('click',function(){ inp.value=b.getAttribute('data-foc')||''; if(typeof toggleClear==='function')toggleClear(); run(); }); });
+    }
     announce(fixed.length
       ? (fixed.length+' indicações principais'+(rest.length?(' e '+rest.length+' alternativas'):'')+' para '+ageStr+'.')
-      : 'Nenhum instrumento correspondente. Tente um termo mais simples ou um chip de queixa.');
+      : 'Nenhum instrumento correspondente. Sugerimos queixas comuns para recomeçar.');
   }
 
   // Quem responde? — seletor (single-select). Eixo que muda a medalha: ao escolher,
@@ -652,7 +664,14 @@
     el.querySelectorAll('.rchip').forEach(function(b){ b.addEventListener('click',function(){ inp.value=b.getAttribute('data-q')||''; toggleClear(); run(); }); });
     var rc=el.querySelector('.rclear'); if(rc) rc.onclick=function(){ try{localStorage.removeItem('np_cie_hist');}catch(e){} renderRecent(); };
   }
-  function submitSearch(){ pushHist(inp.value); run(); renderRecent(); }
+  // Após busca EXPLÍCITA (Enter/Buscar/recente), leva o foco aos resultados — quem
+  // navega por teclado/leitor de tela aterrissa nas indicações, não fica preso na busca.
+  function focusResults(){
+    var rec=document.getElementById('recommendedSection');
+    var target=(rec&&rec.style.display!=='none')?rec.querySelector('.section-label'):document.getElementById('allResults');
+    if(target){ target.setAttribute('tabindex','-1'); try{ target.focus({preventScroll:false}); }catch(e){ try{target.focus();}catch(_){} } }
+  }
+  function submitSearch(){ pushHist(inp.value); run(); renderRecent(); focusResults(); }
   inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSearch(); } });
   document.getElementById('searchGo').addEventListener('click',submitSearch);
   clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#qchips .chip.active,#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });
