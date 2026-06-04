@@ -343,9 +343,10 @@
       + 'display:flex;gap:12px;align-items:center;flex-wrap:wrap';
     var txt = document.createElement('div');
     txt.style.cssText = 'flex:1;min-width:200px';
-    txt.innerHTML = '<strong style="color:#f2dca6">Privacidade</strong> — este app guarda dados '
-      + '<strong>apenas no seu dispositivo</strong> (armazenamento local). Nenhum cookie de rastreamento '
-      + 'é enviado a servidores. <a href="./privacidade.html" style="color:#a9a4ff">Saber mais</a>.';
+    txt.innerHTML = '<strong style="color:#f2dca6">Natureza & privacidade</strong> — ferramenta '
+      + '<strong>educacional de apoio</strong> (não substitui avaliação profissional). Os dados ficam '
+      + '<strong>apenas no seu dispositivo</strong>; nenhum rastreamento é enviado a servidores. '
+      + '<a href="./privacidade.html" style="color:#a9a4ff">Saber mais</a>.';
     var ok = document.createElement('button');
     ok.type = 'button';
     ok.textContent = 'Entendi';
