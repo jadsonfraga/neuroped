@@ -95,7 +95,12 @@ html[data-retro] a.open {
   font-family: var(--font-pixel) !important;
   font-size: 10px !important;
   letter-spacing: .3px !important;
+  line-height: 1.5 !important;       /* respira: rótulo pixel não cola na borda */
   text-transform: uppercase;
+  /* PT-BR tem rótulos longos ("Continuar para o resumo"): permite quebra
+     elegante em vez de estourar/cortar o botão na fonte pixel larga. */
+  white-space: normal;
+  word-break: break-word;
   border-radius: 12px;
   transition: transform .07s steps(2), box-shadow .12s, filter .12s;
 }
@@ -147,10 +152,12 @@ html[data-retro] textarea:focus-visible {
 /* Scanlines + vinheta CRT — estático (sem flicker), bem sutil */
 #np-retro-crt {
   position: fixed; inset: 0; z-index: 2147483600;
-  pointer-events: none; opacity: .10;
+  pointer-events: none; opacity: .07;
+  /* Scanline mais larga e suave (1px a cada 4px, alfa baixo): evoca o CRT sem
+     moiré nem cansaço sobre texto — leitura premium preservada. */
   background:
-    repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.6) 2px 3px),
-    radial-gradient(120% 120% at 50% 50%, transparent 64%, rgba(0,0,0,.35) 100%);
+    repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 3px, rgba(0,0,0,.4) 3px 4px),
+    radial-gradient(125% 125% at 50% 50%, transparent 66%, rgba(0,0,0,.3) 100%);
 }
 
 /* Camada de moedas/estrelas flutuando — sutil, por cima da UI (como partículas),
@@ -250,7 +257,7 @@ html[data-retro] #np-sound-toggle:active { transform: translateY(3px) scale(.96)
   html[data-retro] .np-retro-star,
   html[data-retro] .np-coin-pop,
   html[data-retro] .np-score-float { animation: none !important; opacity: 0 !important; }
-  html[data-retro] #np-retro-crt { opacity: .08; }
+  html[data-retro] #np-retro-crt { opacity: .055; }
 }
 
 /* Em impressão (laudos/PDF), nada de arcade. */
