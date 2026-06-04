@@ -1028,6 +1028,35 @@ assertIncludes('filtro-escalas.html', 'clinical-meta.js', 'filtro carrega a meta
 assertIncludes('filtro-escalas.html', 'NeuroPedMeta.evidence', 'filtro mostra 📚 Evidência (citação + PMID) quando o instrumento tem fonte curada');
 assertIncludes('clinical-meta.js', 'api.load()', 'clinical-meta auto-carrega o registry no browser');
 
+// ── Regra de ouro do filtro: 5 posições FIXAS (pódio + teste direto + escola) ──
+assertIncludes('filtro-escalas.html', 'function pickDirect', 'filtro garante o 4º slot — teste direto na criança');
+assertIncludes('filtro-escalas.html', 'function pickSchool', 'filtro garante o 5º slot — questionário escolar');
+assertIncludes('filtro-escalas.html', 'function isDirectTest', 'filtro distingue teste direto (4º) do pódio');
+assertIncludes('filtro-escalas.html', 'function isSchoolQ', 'filtro distingue questionário escolar (5º) do pódio');
+assertIncludes('filtro-escalas.html', "['ouro','prata','bronze']", 'pódio 1–3 recebe medalha por POSIÇÃO (mais sensível = Ouro)');
+assertIncludes('filtro-escalas.html', "directPick.tier='direto'", 'o 4º recebe o selo de teste direto');
+assertIncludes('filtro-escalas.html', "schoolPick.tier='escola'", 'o 5º recebe o selo de questionário escolar');
+assertIncludes('filtro-escalas.html', "direto:'🧒", 'MEDAL tem o selo de teste direto');
+assertIncludes('filtro-escalas.html', "escola:'🏫", 'MEDAL tem o selo de questionário escolar');
+
+// ── Skin super-herói premium + som agradável (escalas-hero) ──
+assertFile('escalas-hero.css');
+assertFile('escalas-hero.js');
+assertIncludes('filtro-escalas.html', './escalas-hero.css', 'filtro carrega a skin super-herói (CSS)');
+assertIncludes('filtro-escalas.html', './escalas-hero.js', 'filtro carrega a camada hero (som + FX)');
+assertIncludes('filtro-escalas.html', 'family=Bangers', 'filtro carrega a fonte cômic Bangers do título');
+assertIncludes('escalas-hero.js', 'np_sound_v1', 'som do hero honra a preferência global de som');
+assertIncludes('escalas-hero.js', 'createOscillator', 'som agradável sintetizado em Web Audio (0 assets, offline)');
+assertNotIncludes('escalas-hero.js', '987.77', 'som do hero NÃO é a moeda 8-bit (B5 da moeda do np-sound)');
+assertIncludes('escalas-hero.css', 'prefers-reduced-motion', 'skin hero respeita prefers-reduced-motion');
+assertIncludes('retro-arcade.js', 'escalas-hero.js', 'retro-arcade documenta que o filtro tem som próprio (sem duplicar a moeda)');
+
+// ── Acessibilidade: controles rotulados (WCAG 1.3.1/4.1.2) ──
+assertIncludes('banco-escalas.html', 'aria-label="Filtrar escalas por tipo"', 'banco-escalas: <select> de filtro rotulado');
+assertIncludes('agenda-financeiro.html', 'aria-label="Excluir lançamento"', 'agenda-financeiro: botão-lixeira rotulado');
+assertIncludes('auditoria-ontologia.html', 'aria-label="Filtrar por fonte"', 'auditoria-ontologia: <select> de fonte rotulado');
+assertIncludes('neuroped-diary-engine.js', 'aria-label="${f.label}"', 'diários: <select> dinâmico rotulado pelo label do campo');
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');
