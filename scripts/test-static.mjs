@@ -238,7 +238,7 @@ assertIncludes('filtro-escalas.html', 'id="allResults"', 'filtro-escalas tem o g
 assertFile('np-sound.js');
 assertIncludes('np-sound.js', 'AudioContext', 'np-sound usa Web Audio sintetizado (sem assets, offline)');
 assertIncludes('np-sound.js', "localStorage.getItem(KEY)", 'np-sound persiste a preferência do usuário');
-assertIncludes('np-sound.js', "enabled = false", 'np-sound nasce DESLIGADO (opt-in — contexto clínico)');
+assertIncludes('np-sound.js', "enabled = true", 'np-sound nasce LIGADO por padrão (sons 8-bit retrô; opt-out via toggle de mudo)');
 assertIncludes('np-sound.js', "prefers-reduced-motion", 'np-sound respeita prefers-reduced-motion no pulso visual');
 assertIncludes('np-sound.js', "np:celebrate", 'np-sound reage ao evento de celebração');
 assertIncludes('app-polish-mobile.js', './np-sound.js', 'polish injeta a camada de som globalmente');
