@@ -572,6 +572,30 @@ assertIncludes('scales-coordenacao-motora.js', 'not_normative_disclaimer', 'CMN 
 assertIncludes('scales-bundle.js', 'scales-coordenacao-motora.js', 'filtro liga a Coordenação Motora (CMN)');
 assertIncludes('instrumento-autoral.html', 'scales-coordenacao-motora.js', 'renderizador autoral carrega a Coordenação Motora (CMN)');
 
+// Controle Esfincteriano (CEN) — enurese/encoprese por faixa etária
+assertFile('scales-controle-esfincteriano.js');
+assertIncludes('scales-controle-esfincteriano.js', 'cen-esfincter-2-3', 'CEN cobre a faixa 2–3 anos');
+assertIncludes('scales-controle-esfincteriano.js', 'cen-esfincter-12-17', 'CEN cobre a faixa 12–17 anos');
+for (const eixo of ['Xixi à noite (enurese noturna)', 'Cocô — constipação e retenção', 'Cocô — escape (encoprese)', 'Sinais urinários de alerta']) {
+  assertIncludes('scales-controle-esfincteriano.js', eixo, 'CEN cobre o eixo: ' + eixo);
+}
+assertIncludes('scales-controle-esfincteriano.js', 'a partir de cerca de 5 anos', 'CEN avisa que controle noturno só é esperado ~5 anos');
+assertIncludes('scales-controle-esfincteriano.js', 'not_normative_disclaimer', 'CEN declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-controle-esfincteriano.js', 'filtro liga o Controle Esfincteriano (CEN)');
+assertIncludes('instrumento-autoral.html', 'scales-controle-esfincteriano.js', 'renderizador autoral carrega o Controle Esfincteriano (CEN)');
+
+// Comportamento Alimentar (CAL) — seletividade/ARFID por faixa etária
+assertFile('scales-comportamento-alimentar.js');
+assertIncludes('scales-comportamento-alimentar.js', 'cal-alim-0-2', 'CAL cobre a faixa 0–2 anos');
+assertIncludes('scales-comportamento-alimentar.js', 'cal-alim-12-17', 'CAL cobre a faixa 12–17 anos');
+for (const eixo of ['Seletividade e variedade', 'Habilidades de comer (mastigar/engolir)', 'Sinais de alerta clínicos']) {
+  assertIncludes('scales-comportamento-alimentar.js', eixo, 'CAL cobre o eixo: ' + eixo);
+}
+assertIncludes('scales-comportamento-alimentar.js', 'ARFID', 'CAL sinaliza ARFID');
+assertIncludes('scales-comportamento-alimentar.js', 'not_normative_disclaimer', 'CAL declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-comportamento-alimentar.js', 'filtro liga o Comportamento Alimentar (CAL)');
+assertIncludes('instrumento-autoral.html', 'scales-comportamento-alimentar.js', 'renderizador autoral carrega o Comportamento Alimentar (CAL)');
+
 assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
 // Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
 for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
