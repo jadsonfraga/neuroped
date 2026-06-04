@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="pt-BR" data-design="apple-grade">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NeuroPed · Design Showcase v9.8</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="stylesheet" href="./np-tokens.css">
+<link rel="stylesheet" href="./np-foundation.css">
+<link rel="stylesheet" href="./np-components.css">
+<script src="./np-motion.js" defer></script>
+<style>
+  .showcase { padding: 64px 32px 96px; }
+  .sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-top: 32px; }
+  .sc-section { margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--np-edge); }
+  .sc-label { color: var(--np-text-low); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; letter-spacing: 0.08em; }
+  .sc-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .sc-meta { color: var(--np-text-mute); font-size: 14px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <main class="np-shell showcase">
+    <!-- HERO -->
+    <p class="np-eyebrow">Design system v9.8</p>
+    <h1>NeuroPed Showcase</h1>
+    <p class="sc-meta">Storybook-lite dos 10 componentes-âncora premium. Toque, navegue, sinta o spring.</p>
+
+    <!-- 1. BOTÕES -->
+    <section class="sc-section">
+      <p class="sc-label">01 · BUTTONS</p>
+      <h3>Botões</h3>
+      <div class="sc-row">
+        <button class="np-btn np-btn--primary" data-np-tap>Salvar laudo</button>
+        <button class="np-btn" data-np-tap>Cancelar</button>
+        <button class="np-btn np-btn--ghost" data-np-tap>Solicitar liberação</button>
+        <a href="#" class="np-btn np-btn--primary np-btn--pill" data-np-tap data-np-flash>Triar sem cadastrar →</a>
+      </div>
+    </section>
+
+    <!-- 2. CARDS -->
+    <section class="sc-section">
+      <p class="sc-label">02 · CARDS</p>
+      <h3>Cards clínicos</h3>
+      <div class="sc-grid">
+        <article class="np-card" data-np-card data-np-tap>
+          <header class="np-card__header">
+            <span class="np-pill np-pill--gold">🥇 Ouro clínico</span>
+          </header>
+          <h4 class="np-card__title">NICHQ Vanderbilt</h4>
+          <p class="np-card__meta">TDAH · 6–12 anos · Pais + Escola</p>
+          <p class="np-card__body">Triagem comportamental gold-standard com cutoffs validados.</p>
+          <div class="np-card__actions">
+            <button class="np-btn" data-np-tap>Aplicar</button>
+            <button class="np-btn np-btn--ghost" data-np-tap>Ver evidência</button>
+          </div>
+        </article>
+        <article class="np-card" data-np-card data-np-tap>
+          <header class="np-card__header">
+            <span class="np-pill np-pill--silver">🥈 Prata</span>
+          </header>
+          <h4 class="np-card__title">SNAP-IV</h4>
+          <p class="np-card__meta">TDAH + opositivo · 6–18a · Pais + Escola</p>
+          <p class="np-card__body">Versão livre validada para acompanhamento longitudinal.</p>
+        </article>
+        <article class="np-card" data-np-card data-np-tap>
+          <header class="np-card__header">
+            <span class="np-pill np-pill--bronze">🥉 Bronze</span>
+          </header>
+          <h4 class="np-card__title">Inibição Dia/Noite</h4>
+          <p class="np-card__meta">Atenção/FE · 4–10 anos · Profissional</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. PILLS / MEDALHAS -->
+    <section class="sc-section">
+      <p class="sc-label">03 · PILLS</p>
+      <h3>Pills medalhistas</h3>
+      <div class="sc-row">
+        <span class="np-pill np-pill--gold">🥇 Ouro · <span class="np-medal__score tabular">94</span></span>
+        <span class="np-pill np-pill--silver">🥈 Prata · <span class="np-medal__score tabular">87</span></span>
+        <span class="np-pill np-pill--bronze">🥉 Bronze · <span class="np-medal__score tabular">72</span></span>
+        <span class="np-pill np-pill--accent">4º · Teste direto</span>
+        <span class="np-pill">5º · Questionário escolar</span>
+      </div>
+    </section>
+
+    <!-- 4. INPUTS -->
+    <section class="sc-section">
+      <p class="sc-label">04 · INPUTS</p>
+      <h3>Inputs editoriais</h3>
+      <div class="sc-grid">
+        <label class="np-field">
+          <input class="np-field__input" type="text" placeholder=" " name="patient">
+          <span class="np-field__label">Nome do paciente</span>
+        </label>
+        <label class="np-field">
+          <input class="np-field__input" type="number" placeholder=" " name="age">
+          <span class="np-field__label">Idade em meses</span>
+        </label>
+        <label class="np-field">
+          <input class="np-field__input" type="email" placeholder=" " name="email">
+          <span class="np-field__label">E-mail do responsável</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- 5. CHIPS -->
+    <section class="sc-section">
+      <p class="sc-label">05 · CHIPS</p>
+      <h3>Filtros por queixa</h3>
+      <div class="np-chip-group">
+        <button class="np-chip is-active" aria-pressed="true" data-np-tap>TEA / autismo</button>
+        <button class="np-chip" data-np-tap>TDAH / atenção</button>
+        <button class="np-chip" data-np-tap>Linguagem</button>
+        <button class="np-chip" data-np-tap>Aprendizagem</button>
+        <button class="np-chip" data-np-tap>Comportamento</button>
+        <button class="np-chip" data-np-tap>Humor / ansiedade</button>
+      </div>
+    </section>
+
+    <!-- 6. SKELETON -->
+    <section class="sc-section">
+      <p class="sc-label">06 · SKELETON</p>
+      <h3>Loading premium</h3>
+      <div class="sc-grid">
+        <div>
+          <div class="np-skeleton np-skeleton--title"></div>
+          <div class="np-skeleton np-skeleton--text"></div>
+          <div class="np-skeleton np-skeleton--text" style="width:80%"></div>
+        </div>
+        <div class="np-skeleton np-skeleton--card"></div>
+      </div>
+    </section>
+
+    <!-- 7. TOAST -->
+    <section class="sc-section">
+      <p class="sc-label">07 · TOAST</p>
+      <h3>Toast nativo</h3>
+      <div class="sc-row">
+        <button class="np-btn" onclick="NPMotion.toast('Laudo salvo', {kind:'success'})">Sucesso</button>
+        <button class="np-btn" onclick="NPMotion.toast('Falha ao subir ao Drive', {kind:'error'})">Erro</button>
+        <button class="np-btn" onclick="NPMotion.toast('Sincronizando…')">Info</button>
+      </div>
+    </section>
+
+    <!-- 8. EMPTY STATE -->
+    <section class="sc-section">
+      <p class="sc-label">08 · EMPTY</p>
+      <h3>Empty state ilustrado</h3>
+      <div class="np-empty">
+        <svg class="np-empty__art" viewBox="0 0 96 96" aria-hidden="true">
+          <circle cx="48" cy="48" r="34" fill="none" stroke="var(--np-edge-hi)" stroke-width="2"/>
+          <path d="M28 56 Q48 38 68 56" stroke="var(--np-accent)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="38" cy="42" r="3" fill="var(--np-accent)"/>
+          <circle cx="58" cy="42" r="3" fill="var(--np-accent)"/>
+        </svg>
+        <h4 class="np-empty__title">Nenhum diário ainda</h4>
+        <p class="np-empty__sub">Comece registrando o sono dessa semana — você terá insights em 7 dias.</p>
+        <button class="np-btn np-btn--primary np-empty__cta" data-np-tap>Criar primeiro registro</button>
+      </div>
+    </section>
+
+    <!-- 9. TOPBAR (demo) -->
+    <section class="sc-section">
+      <p class="sc-label">09 · TOPBAR</p>
+      <h3>Topbar institucional</h3>
+      <p class="sc-meta">Visível no topo de toda página. Backdrop blur ativo, hairline inferior.</p>
+    </section>
+
+    <!-- 10. HERO (demo) -->
+    <section class="sc-section">
+      <p class="sc-label">10 · HERO</p>
+      <h3>Hero da home</h3>
+      <p class="sc-meta">Use a classe <code>.np-hero</code> com Fraunces gradiente.</p>
+    </section>
+
+    <!-- TEMA TOGGLE -->
+    <section class="sc-section">
+      <p class="sc-label">EXTRA · TEMA</p>
+      <h3>Toggle de tema</h3>
+      <button class="np-btn np-btn--primary" id="sc-theme-toggle" data-np-tap>Trocar tema</button>
+    </section>
+
+    <p class="sc-meta" style="margin-top:64px;text-align:center;">
+      <span class="np-eyebrow">v<span data-np-version>9.8.0</span> · NeuroPed Design System</span><br>
+      Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
+    </p>
+  </main>
+
+  <script>
+    document.getElementById("sc-theme-toggle").addEventListener("click", () => {
+      const r = document.documentElement;
+      r.classList.add("theme-transitioning");
+      r.setAttribute("data-theme", r.getAttribute("data-theme") === "light" ? "" : "light");
+      setTimeout(() => r.classList.remove("theme-transitioning"), 360);
+    });
+  </script>
+  <script src="./np-version-tag.js" defer></script>
+</body>
+</html>
