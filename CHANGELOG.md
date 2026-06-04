@@ -1,5 +1,32 @@
 # Changelog — NeuroPed EDJ
 
+## v6.46.0 — 2026-06-04 — Apoio à Família: acolhimento que faltava
+
+Nova aba **Apoio** (app-shell + bottom nav global) reunindo quatro conteúdos de
+acolhimento — o app deixa de só *medir* e passa a *orientar a família humanamente*.
+Tudo no design system (tokens), com aviso educativo, **prefers-reduced-motion**,
+offline (precache) e CRM-PE canônico.
+
+- **`apoio-familia.html`** — hub calmo que reúne os quatro caminhos; saúda pelo nome
+  da criança ativa (np-store).
+- **`primeiros-passos.html` — "O que fazer agora"**: guia passo a passo pós-diagnóstico
+  por condição (autismo/TEA, TDAH, epilepsia, atraso do desenvolvimento e "ainda
+  investigando"), **personalizado pelo diagnóstico do perfil**. Acolhe sem prometer.
+- **`mapa-direitos.html` — Mapa de Direitos**: BPC/LOAS, CIPTEA, inclusão escolar/PEI,
+  profissional de apoio, plano de saúde, prioridade e transporte — com **checklist de
+  progresso** salvo localmente (`np:direitos`) e anéis de conclusão. Orientativo, **não é
+  parecer jurídico**.
+- **`quando-acontecer.html` — Resposta rápida**: primeiros socorros em **crise epiléptica**,
+  **sobrecarga sensorial** e **desregulação**, em **modo calmo** (alto contraste, sem
+  gamificação), com barra fixa de emergência (**SAMU 192**) e apoio emocional (**CVV 188**).
+- **`glossario.html` — Glossário em linguagem de gente**: dicionário pesquisável dos termos
+  do dia a dia (hipotonia, estereotipia, EEG, função executiva, PEI, AEE, RQE…), com rigor
+  conceitual (**TDAH ≠ TOD**).
+
+Gate estático ampliado com asserções anti-regressão para as cinco telas (precache,
+navegação, avisos éticos, acessibilidade e rigor conceitual). Versão sincronizada nos
+4 carimbos canônicos.
+
 ## v6.44.14 — 2026-06-03 — Evidência verificada: +6 instrumentos no registry
 
 - `evidence-registry.json` (curadoria autorizada pelo Dr. Jadson): adicionadas 6 entradas

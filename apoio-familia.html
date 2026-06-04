@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script src="./public-mode.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#0e0e22">
+<title>Apoio à Família — NeuroPed EDJ</title>
+<meta name="description" content="Um lugar calmo para a família: o que fazer depois do diagnóstico, mapa de direitos, o que fazer durante uma crise e um glossário em linguagem de gente. Conteúdo educativo de apoio do Dr. Jadson Fraga.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/apoio-familia.html">
+<meta property="og:title" content="Apoio à Família — NeuroPed EDJ">
+<meta property="og:description" content="Primeiros passos, direitos, o que fazer na crise e um glossário acessível. Para caminhar ao lado da sua família.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Apoio à Família — NeuroPed EDJ">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./app-skin.css">
+<link rel="stylesheet" href="./ds-bridge.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  body{margin:0;background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);font-family:var(--font-sans,system-ui);line-height:1.6}
+  .wrap{max-width:780px;margin:0 auto;padding:18px 18px calc(108px + env(safe-area-inset-bottom,0px))}
+  .back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 12px}
+  .hero{position:relative;overflow:hidden;border:1px solid rgba(169,164,255,.2);border-radius:26px;padding:28px 24px;
+    background:radial-gradient(560px 280px at 92% -34%,rgba(231,201,139,.12),transparent 60%),linear-gradient(150deg,#16142e,#1c1947 58%,#131229);
+    box-shadow:0 30px 80px -38px rgba(3,2,16,.9),inset 0 1px 0 rgba(255,255,255,.05);animation:rise .5s var(--motion-ease,ease) both}
+  h1{margin:0 0 8px;font:700 clamp(26px,5.4vw,36px)/1.06 "Fraunces",Georgia,serif;
+    background:linear-gradient(120deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{margin:0;color:var(--text-display-soft,#E0E7FF);font-size:15.5px;max-width:56ch}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
+  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+  .tile{display:flex;flex-direction:column;gap:6px;text-decoration:none;border:1px solid rgba(169,164,255,.18);border-radius:20px;padding:18px 18px;
+    background:linear-gradient(180deg,rgba(124,118,210,.10),rgba(124,118,210,.035));color:var(--text,#ECEAFF);min-height:128px;
+    animation:rise .5s var(--motion-ease,ease) both;transition:transform var(--motion-fast,.12s),border-color var(--motion-fast,.12s),box-shadow var(--motion-base,.2s)}
+  .tile:hover{border-color:rgba(169,164,255,.46);box-shadow:0 18px 44px -26px rgba(124,92,255,.55)}
+  .tile:active{transform:scale(.985)}
+  .tile .ic{font-size:30px;line-height:1}
+  .tile b{font-size:17px;color:#fff;font-weight:700}
+  .tile small{color:var(--text-muted,#b6b2e6);font-size:13px;line-height:1.4}
+  .tile.urgent{border-color:rgba(94,160,255,.34);background:linear-gradient(180deg,rgba(56,120,220,.16),rgba(56,120,220,.05))}
+  .note{margin-top:18px;border:1px solid rgba(231,201,139,.28);background:rgba(231,201,139,.07);border-radius:16px;padding:14px 16px;font-size:13px;color:#e7d6ad}
+  .crm{margin-top:16px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center;border-top:1px solid rgba(169,164,255,.14);padding-top:12px}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.hero,.tile{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body data-ns-shell>
+<main class="wrap">
+  <a class="back" href="./index.html">‹ Início</a>
+  <section class="hero">
+    <h1>Apoio à Família</h1>
+    <p id="lead">Um lugar calmo para respirar e dar o próximo passo. Você não precisa saber tudo de uma vez — comece por onde fizer sentido hoje.</p>
+  </section>
+
+  <div class="grid">
+    <a class="tile" href="./primeiros-passos.html">
+      <span class="ic">🧭</span><b>O que fazer agora</b>
+      <small>Primeiros passos depois do diagnóstico, por condição — com calma e na ordem certa.</small>
+    </a>
+    <a class="tile" href="./mapa-direitos.html">
+      <span class="ic">📜</span><b>Mapa de Direitos</b>
+      <small>BPC, CIPTEA, escola inclusiva, plano de saúde — com checklist do que já está pronto.</small>
+    </a>
+    <a class="tile urgent" href="./quando-acontecer.html">
+      <span class="ic">🆘</span><b>Quando acontecer</b>
+      <small>Passo a passo para crise epiléptica, sobrecarga sensorial e desregulação.</small>
+    </a>
+    <a class="tile" href="./glossario.html">
+      <span class="ic">💬</span><b>Glossário</b>
+      <small>Aquela palavra difícil do laudo, explicada em linguagem de gente.</small>
+    </a>
+  </div>
+
+  <div class="note">
+    <b>Conteúdo educativo de apoio.</b> Este espaço acolhe e organiza a jornada da família — <b>não substitui</b> a avaliação, o diagnóstico e a conduta do seu médico.
+  </div>
+  <p class="crm">Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756 · Petrolina/PE</p>
+</main>
+
+<script src="./np-store.js"></script>
+<script>
+(function(){
+  'use strict';
+  try{
+    var c = window.NPStore && NPStore.active && NPStore.active();
+    if (c && c.name){
+      document.getElementById('lead').textContent =
+        'Um lugar calmo para respirar e cuidar de quem você ama. O caminho de ' + c.name +
+        ' começa com pequenos passos — escolha por onde seguir hoje.';
+    }
+  }catch(e){}
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+<script src="./np-lgpd-consent.js" defer></script>
+</body>
+</html>

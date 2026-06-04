@@ -93,9 +93,10 @@
      ===================================================== */
   var NAV_ITEMS = [
     { label: 'Início',   href: './index.html',                  svg: '<path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/>' },
-    { label: 'Consulta', href: './consulta.html',               svg: '<path d="M6 3v6a6 6 0 0 0 12 0V3"/><path d="M6 3H4M18 3h2"/><circle cx="18" cy="16" r="3"/><path d="M18 11v2"/>' },
+    { label: 'Apoio',    href: './apoio-familia.html',          svg: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>' },
     { label: 'Escalas',  href: './filtro-escalas.html',         svg: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>' },
-    { label: 'CAA',      href: './comunicacao-alternativa.html', svg: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/>' }
+    { label: 'CAA',      href: './comunicacao-alternativa.html', svg: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.3A8.4 8.4 0 1 1 21 11.5Z"/>' },
+    { label: 'Consulta', href: './consulta.html',               svg: '<path d="M6 3v6a6 6 0 0 0 12 0V3"/><path d="M6 3H4M18 3h2"/><circle cx="18" cy="16" r="3"/><path d="M18 11v2"/>' }
   ];
   function navStyle(){
     if (document.getElementById('np-nav-ico-style')) return;
@@ -294,7 +295,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.45.2') + '</span>'
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.46.0') + '</span>'
       + '<div style="margin:6px auto 0;max-width:540px;font-size:10.5px;line-height:1.55;color:rgba(182,178,230,.55)">'
       + '<a href="./sobre-natureza.html" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Ferramenta <strong>educacional de apoio</strong></a> — não é diagnóstico e não substitui avaliação profissional. '
       + 'Os dados ficam só neste aparelho.</div>';

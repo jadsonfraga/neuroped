@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script src="./public-mode.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#0e0e22">
+<title>O que fazer agora — Primeiros Passos | NeuroPed EDJ</title>
+<meta name="description" content="Recebeu um diagnóstico? Um guia calmo de primeiros passos por condição (autismo/TEA, TDAH, epilepsia, atraso do desenvolvimento). Conteúdo educativo de apoio — não substitui avaliação profissional.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/primeiros-passos.html">
+<meta property="og:title" content="O que fazer agora — Primeiros Passos | NeuroPed EDJ">
+<meta property="og:description" content="Um guia calmo de primeiros passos depois do diagnóstico. Apoio educativo — não substitui avaliação profissional.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="O que fazer agora — Primeiros Passos">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./app-skin.css">
+<link rel="stylesheet" href="./ds-bridge.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  body{margin:0;background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);font-family:var(--font-sans,system-ui);line-height:1.6}
+  .wrap{max-width:780px;margin:0 auto;padding:18px 18px calc(108px + env(safe-area-inset-bottom,0px))}
+  .back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 12px}
+  .hero{position:relative;overflow:hidden;border:1px solid rgba(169,164,255,.2);border-radius:26px;padding:28px 24px;
+    background:radial-gradient(560px 280px at 92% -34%,rgba(231,201,139,.12),transparent 60%),linear-gradient(150deg,#16142e,#1c1947 58%,#131229);
+    box-shadow:0 30px 80px -38px rgba(3,2,16,.9),inset 0 1px 0 rgba(255,255,255,.05);animation:rise .5s var(--motion-ease,ease) both}
+  h1{margin:0 0 8px;font:700 clamp(25px,5.2vw,35px)/1.08 "Fraunces",Georgia,serif;
+    background:linear-gradient(120deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{margin:0;color:var(--text-display-soft,#E0E7FF);font-size:15.5px;max-width:58ch}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 4px}
+  .chip{appearance:none;cursor:pointer;border:1px solid rgba(169,164,255,.24);background:rgba(124,118,210,.10);color:#d7d3f7;
+    font:700 13.5px system-ui;padding:9px 15px;border-radius:999px;min-height:44px;transition:transform var(--motion-fast,.12s),border-color var(--motion-fast,.12s),background var(--motion-fast,.12s)}
+  .chip[aria-pressed="true"]{background:linear-gradient(135deg,rgba(124,58,237,.32),rgba(37,99,235,.22));border-color:rgba(169,164,255,.6);color:#fff}
+  .chip:active{transform:scale(.97)}
+  .lead{margin:18px 0 6px;font-size:16px;color:var(--text,#E5E7EB);background:linear-gradient(180deg,rgba(124,118,210,.10),rgba(124,118,210,.035));
+    border:1px solid rgba(169,164,255,.16);border-left:3px solid var(--primary,#7c79ff);border-radius:14px;padding:14px 16px}
+  .steps{list-style:none;margin:14px 0 0;padding:0;counter-reset:s}
+  .step{counter-increment:s;position:relative;border:1px solid rgba(169,164,255,.16);border-radius:18px;padding:16px 18px 16px 60px;margin:11px 0;
+    background:linear-gradient(180deg,rgba(124,118,210,.085),rgba(124,118,210,.03));animation:rise .45s var(--motion-ease,ease) both}
+  .step::before{content:counter(s);position:absolute;left:16px;top:16px;width:32px;height:32px;border-radius:11px;display:grid;place-items:center;
+    font:800 15px "Fraunces",Georgia,serif;color:#0a0a16;background:var(--gold-gradient,linear-gradient(135deg,#E7C98B,#CAA56A));box-shadow:0 6px 16px -6px rgba(231,201,139,.5)}
+  .step h3{margin:0 0 4px;font-size:15.5px;color:#fff;font-weight:700}
+  .step p{margin:0;font-size:14.5px;color:var(--text-muted,#b6b2e6)}
+  .links{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:20px}
+  @media (max-width:560px){.links{grid-template-columns:1fr}}
+  .ln{display:flex;align-items:center;gap:11px;text-decoration:none;border:1px solid rgba(169,164,255,.18);border-radius:16px;padding:14px 15px;
+    background:rgba(124,118,210,.07);color:var(--text,#ECEAFF);min-height:44px;transition:transform var(--motion-fast,.12s),border-color var(--motion-fast,.12s)}
+  .ln:active{transform:scale(.98)}.ln:hover{border-color:rgba(169,164,255,.42)}
+  .ln .ic{font-size:22px;flex:0 0 auto}.ln b{display:block;font-size:14.5px}.ln small{color:var(--text-soft,#928ec6);font-size:12.5px}
+  .note{margin-top:18px;border:1px solid rgba(231,201,139,.28);background:rgba(231,201,139,.07);border-radius:16px;padding:14px 16px;font-size:13px;color:#e7d6ad}
+  .crm{margin-top:16px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center;border-top:1px solid rgba(169,164,255,.14);padding-top:12px}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.hero,.step{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body data-ns-shell>
+<main class="wrap">
+  <a class="back" href="./index.html">‹ Início</a>
+  <section class="hero">
+    <h1 id="heroTitle">O que fazer agora</h1>
+    <p id="heroSub">Recebeu um diagnóstico — ou ainda está investigando? Respire. Você não está só, e o próximo passo é sempre possível. Escolha a situação abaixo para um caminho calmo e prático.</p>
+    <div class="chips" id="chips" role="group" aria-label="Escolha a condição"></div>
+  </section>
+
+  <div class="lead" id="lead"></div>
+  <ol class="steps" id="steps" aria-live="polite"></ol>
+
+  <div class="links">
+    <a class="ln" href="./mapa-direitos.html"><span class="ic">📜</span><span><b>Mapa de Direitos</b><small>BPC, CIPTEA, escola, plano de saúde</small></span></a>
+    <a class="ln" href="./quando-acontecer.html"><span class="ic">🆘</span><span><b>Quando acontecer</b><small>Crise, sobrecarga, desregulação</small></span></a>
+    <a class="ln" href="./glossario.html"><span class="ic">💬</span><span><b>Glossário</b><small>Termos em linguagem de gente</small></span></a>
+    <a class="ln" href="./comunicacao-alternativa.html"><span class="ic">🗣️</span><span><b>Comunicação (CAA)</b><small>Pranchas com voz, grátis</small></span></a>
+  </div>
+
+  <div class="note">
+    <b>Conteúdo educativo de apoio.</b> Este guia organiza o olhar e acolhe a família — <b>não é diagnóstico, não é prescrição e não substitui</b> a avaliação e a conduta do seu médico. Cada criança é única; siga sempre o plano combinado com a sua equipe de saúde.
+  </div>
+  <p class="crm">Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756 · Petrolina/PE</p>
+</main>
+
+<script src="./np-store.js"></script>
+<script>
+(function(){
+  'use strict';
+  var GUIDES = {
+    tea: {
+      label: '💙 Autismo (TEA)',
+      lead: 'O autismo não é uma doença a ser curada — é um jeito de ser e de processar o mundo. O caminho agora é entender, apoiar e abrir portas, no tempo do seu filho.',
+      steps: [
+        ['Acolha o momento', 'Sentir muitas emoções de uma vez é normal e esperado. Você continua sendo a pessoa mais importante para o seu filho. Informação, aos poucos, tira o medo do escuro.'],
+        ['Garanta o acompanhamento certo', 'Neuropediatra para coordenar o cuidado, com equipe conforme a necessidade: fonoaudiologia, terapia ocupacional e psicologia com abordagem para o desenvolvimento.'],
+        ['Comece as terapias cedo', 'A intervenção precoce muda trajetórias. Boas terapias respeitam a criança e desenvolvem habilidades — não tentam “consertar” quem ela é.'],
+        ['Cuide da comunicação', 'Se a fala ainda não veio, ela tem outras formas de se comunicar. Gestos, figuras e a CAA (comunicação alternativa) são pontes legítimas, não “desistir” da fala.'],
+        ['Conheça os direitos', 'CIPTEA (carteira), BPC, inclusão escolar com PEI e profissional de apoio. Veja o Mapa de Direitos para organizar cada um.'],
+        ['Organize a rotina e o ambiente', 'Previsibilidade acalma. Rotinas visíveis, avisos de mudança e redução de excesso de estímulos ajudam muito o dia a dia.'],
+        ['Cuide de você e da família', 'Sua regulação é o que mais regula seu filho. Peça apoio, descanse quando der, conecte-se com outras famílias.']
+      ]
+    },
+    tdah: {
+      label: '⚡ TDAH',
+      lead: 'O TDAH é uma diferença real no funcionamento da atenção e do autocontrole — não é falta de educação, preguiça ou birra. Com o apoio certo, a criança floresce.',
+      steps: [
+        ['Entenda o que é (e o que não é)', 'O TDAH é neurobiológico: o cérebro regula atenção, impulso e movimento de um jeito diferente. Não é resultado de “criação fraca”. (O TDAH é distinto do TOD e da ansiedade — veja o Glossário.)'],
+        ['Acompanhamento profissional', 'O diagnóstico é clínico e considera como a criança é em casa e na escola. Neuropediatra ou psiquiatra da infância conduzem a avaliação e o plano.'],
+        ['Estratégias em casa', 'Rotina visível, instruções curtas e uma de cada vez, reforço positivo do esforço, tarefas quebradas em partes e espaço para o corpo se mover.'],
+        ['Parceria com a escola', 'Combine adaptações (tempo, lugar, fragmentar provas). Adaptações pedagógicas e o PEI são direito — veja o Mapa de Direitos.'],
+        ['Tratamento', 'Inclui orientação comportamental e, quando o médico indica, medicação. Nunca inicie, ajuste ou suspenda remédio por conta própria.'],
+        ['Sono, telas e movimento', 'Dormir bem, reduzir telas e fazer atividade física têm efeito direto e grande sobre os sintomas.'],
+        ['Proteja a autoestima', 'Crianças com TDAH ouvem muito mais broncas que as outras. Elogie o esforço e os acertos — autoestima é parte do tratamento.']
+      ]
+    },
+    epilepsia: {
+      label: '⚡ Epilepsia',
+      lead: 'Epilepsia é uma condição neurológica tratável. A maioria das crianças tem boa qualidade de vida e controla as crises com acompanhamento regular.',
+      steps: [
+        ['Aprenda os primeiros socorros', 'Tenha o passo a passo da crise sempre à mão e compartilhe com quem cuida da criança. Veja a página Quando acontecer.'],
+        ['Acompanhamento com neuropediatra', 'Exames como EEG (e às vezes ressonância) ajudam a definir o tipo de crise e o melhor tratamento.'],
+        ['Use a medicação com regularidade', 'Horários certos, todos os dias. Não pare nem mude a dose por conta própria. Renove a receita antes de o remédio acabar.'],
+        ['Registre as crises', 'Anote data, horário, duração e como foi. O Diário de crises do app vira informação valiosa para o seu médico ajustar o tratamento.'],
+        ['Segurança no dia a dia', 'Banho e natação sempre com supervisão, atenção a alturas. Informe e oriente a escola — a criança pode e deve ter vida normal.'],
+        ['Tenha um plano de resgate', 'Se o médico prescreveu medicação de resgate, saiba exatamente quando e como usar — e quando chamar o SAMU 192.'],
+        ['Vida plena é a meta', 'Escola, esporte, amigos e brincadeira fazem parte do tratamento, com os cuidados que vocês combinarem com a equipe.']
+      ]
+    },
+    atraso: {
+      label: '🌱 Atraso do desenvolvimento',
+      lead: '“Atraso global do desenvolvimento” significa que o desenvolvimento está mais devagar em várias áreas. É um ponto de partida para investigar e estimular — não um veredito definitivo.',
+      steps: [
+        ['Não espere para estimular', 'Quanto antes começa o estímulo, melhor o resultado. A estimulação não depende de um diagnóstico fechado para começar.'],
+        ['Investigação', 'O neuropediatra busca causas e pede exames quando necessário. O quadro pode mudar de nome com o tempo — isso faz parte do processo.'],
+        ['Terapias conforme as áreas', 'Fonoaudiologia (linguagem), terapia ocupacional (motor/sensorial), fisioterapia e psicopedagogia, de acordo com o que cada criança precisa.'],
+        ['Estimule no brincar', 'Brincar é o trabalho da infância. Cada conversa, cada brincadeira no chão, cada música ensina o cérebro a crescer.'],
+        ['Acompanhe os marcos', 'Observe e comemore cada avanço. Registre no app para enxergar a evolução ao longo dos meses.'],
+        ['Direitos e escola', 'Inclusão, Atendimento Educacional Especializado (AEE) e apoios são direito. Veja o Mapa de Direitos.'],
+        ['Cuide do cuidador', 'Peça ajuda, divida as tarefas, mantenha sua rede por perto. Você precisa estar bem para cuidar bem.']
+      ]
+    },
+    investigando: {
+      label: '🔎 Ainda investigando',
+      lead: 'Ainda sem um nome fechado? Tudo bem. O cuidado começa pela observação atenta e pelo estímulo — você não precisa esperar um diagnóstico para apoiar seu filho.',
+      steps: [
+        ['Registre o que você observa', 'Use os diários e as escalas do app. Padrões anotados ao longo do tempo ajudam o médico muito mais do que a memória do dia da consulta.'],
+        ['Mantenha o acompanhamento', 'Investigar leva tempo e às vezes mais de uma consulta. Continue o seguimento mesmo sem um diagnóstico definido.'],
+        ['Estimule pelo brincar', 'Linguagem, motor e interação se desenvolvem na brincadeira do dia a dia. Não há tempo perdido aqui.'],
+        ['Leve dúvidas anotadas', 'Anote perguntas durante a semana e leve à consulta. Conhecer os termos ajuda — veja o Glossário.'],
+        ['Conheça os caminhos possíveis', 'Explore o Mapa de Direitos e a comunicação alternativa (CAA) — eles servem desde já, com ou sem diagnóstico.']
+      ]
+    }
+  };
+  var ORDER = ['tea','tdah','epilepsia','atraso','investigando'];
+
+  function detect(){
+    try{
+      var c = window.NPStore && NPStore.active && NPStore.active();
+      var d = (c && c.diagnosis || '').toLowerCase();
+      if (!d) return null;
+      if (/autis|tea\b|espectro/.test(d)) return 'tea';
+      if (/tdah|d[eé]ficit de aten|hiperativ/.test(d)) return 'tdah';
+      if (/epilep|convuls|cris[ea]/.test(d)) return 'epilepsia';
+      if (/atraso|global|agd|desenvolv|neurodesenvolv/.test(d)) return 'atraso';
+    }catch(e){}
+    return null;
+  }
+
+  var chipsEl = document.getElementById('chips');
+  var leadEl  = document.getElementById('lead');
+  var stepsEl = document.getElementById('steps');
+  var current = null;
+
+  function render(key){
+    current = key;
+    var g = GUIDES[key]; if (!g) return;
+    Array.prototype.forEach.call(chipsEl.children, function(b){ b.setAttribute('aria-pressed', String(b.dataset.k === key)); });
+    leadEl.textContent = g.lead;
+    stepsEl.innerHTML = g.steps.map(function(s, i){
+      return '<li class="step" style="animation-delay:' + (i*40) + 'ms"><h3></h3><p></p></li>';
+    }).join('');
+    Array.prototype.forEach.call(stepsEl.children, function(li, i){
+      li.querySelector('h3').textContent = g.steps[i][0];
+      li.querySelector('p').textContent  = g.steps[i][1];
+    });
+  }
+
+  ORDER.forEach(function(k){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.k = k; b.textContent = GUIDES[k].label;
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function(){ render(k); });
+    chipsEl.appendChild(b);
+  });
+
+  var initial = detect();
+  if (initial){
+    var c = window.NPStore && NPStore.active && NPStore.active();
+    var nm = c && c.name ? (' de ' + c.name) : '';
+    document.getElementById('heroSub').textContent = 'Estes são os próximos passos sugeridos a partir do que você registrou no perfil' + nm + '. Você pode trocar a condição abaixo a qualquer momento.';
+  }
+  render(initial || 'tea');
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+<script src="./np-lgpd-consent.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script src="./public-mode.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#0e0e22">
+<title>Mapa de Direitos — NeuroPed EDJ</title>
+<meta name="description" content="Guia prático e acolhedor dos direitos da criança com deficiência ou transtorno do neurodesenvolvimento no Brasil: BPC/LOAS, CIPTEA, inclusão escolar e PEI, profissional de apoio, plano de saúde, transporte e prioridade. Com checklist de progresso. Orientativo — não é parecer jurídico.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/mapa-direitos.html">
+<meta property="og:title" content="Mapa de Direitos — NeuroPed EDJ">
+<meta property="og:description" content="Um guia prático dos direitos no Brasil, com checklist de progresso. Orientativo — não é parecer jurídico.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mapa de Direitos — NeuroPed EDJ">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./app-skin.css">
+<link rel="stylesheet" href="./ds-bridge.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  body{margin:0;background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);font-family:var(--font-sans,system-ui);line-height:1.6}
+  .wrap{max-width:780px;margin:0 auto;padding:18px 18px calc(108px + env(safe-area-inset-bottom,0px))}
+  .back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 12px}
+  .hero{position:relative;overflow:hidden;border:1px solid rgba(169,164,255,.2);border-radius:26px;padding:26px 24px;
+    background:radial-gradient(560px 280px at 92% -34%,rgba(231,201,139,.12),transparent 60%),linear-gradient(150deg,#16142e,#1c1947 58%,#131229);
+    box-shadow:0 30px 80px -38px rgba(3,2,16,.9),inset 0 1px 0 rgba(255,255,255,.05);animation:rise .5s var(--motion-ease,ease) both}
+  h1{margin:0 0 8px;font:700 clamp(25px,5.2vw,35px)/1.08 "Fraunces",Georgia,serif;
+    background:linear-gradient(120deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{margin:0;color:var(--text-display-soft,#E0E7FF);font-size:15.5px;max-width:60ch}
+  .overall{display:flex;align-items:center;gap:14px;margin:16px 0 2px;border:1px solid rgba(169,164,255,.18);border-radius:18px;padding:14px 16px;background:rgba(124,118,210,.07)}
+  .ring{flex:0 0 auto}
+  .overall b{font-size:15px;color:#fff}.overall small{display:block;color:var(--text-muted,#b6b2e6);font-size:13px;margin-top:2px}
+  .card{border:1px solid rgba(169,164,255,.16);border-radius:20px;padding:16px 18px;margin:13px 0;
+    background:linear-gradient(180deg,rgba(124,118,210,.085),rgba(124,118,210,.03));animation:rise .45s var(--motion-ease,ease) both}
+  .card>.hd{display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+  .card .ic{font-size:24px;flex:0 0 auto}
+  .card h2{margin:0;font-size:16.5px;color:#fff;flex:1;font-weight:700}
+  .card .what{margin:6px 0 10px;font-size:14px;color:var(--text-muted,#b6b2e6)}
+  .mini{transform:rotate(-90deg)}
+  .checks{list-style:none;margin:8px 0 0;padding:0;overflow:hidden;transition:max-height var(--motion-base,.2s) var(--motion-ease,ease)}
+  .ck{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:13px;border:1px solid transparent;cursor:pointer;min-height:44px;transition:background var(--motion-fast,.12s),border-color var(--motion-fast,.12s)}
+  .ck:hover{background:rgba(124,118,210,.08)}
+  .ck input{appearance:none;width:23px;height:23px;flex:0 0 auto;margin-top:1px;border:2px solid rgba(169,164,255,.5);border-radius:8px;cursor:pointer;position:relative;transition:background var(--motion-fast,.12s),border-color var(--motion-fast,.12s)}
+  .ck input:checked{background:var(--success,#10B981);border-color:var(--success,#10B981)}
+  .ck input:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#04140d;font-weight:900;font-size:14px}
+  .ck input:focus-visible{outline:2px solid #a9a4ff;outline-offset:2px}
+  .ck span{font-size:14.5px;line-height:1.45}
+  .ck input:checked + span{color:var(--text-soft,#928ec6);text-decoration:line-through}
+  .src{margin-top:9px;font-size:11.5px;color:var(--text-soft,#7d79ac)}
+  .where{margin:14px 0 4px;border:1px solid rgba(56,189,248,.24);background:rgba(56,189,248,.07);border-radius:16px;padding:14px 16px;font-size:13.5px;color:#bfe6fb}
+  .where b{color:#eaf7ff}
+  .note{margin-top:16px;border:1px solid rgba(231,201,139,.28);background:rgba(231,201,139,.07);border-radius:16px;padding:14px 16px;font-size:13px;color:#e7d6ad}
+  .crm{margin-top:16px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center;border-top:1px solid rgba(169,164,255,.14);padding-top:12px}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.hero,.card{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body data-ns-shell>
+<main class="wrap">
+  <a class="back" href="./index.html">‹ Início</a>
+  <section class="hero">
+    <h1>Mapa de Direitos</h1>
+    <p>Seu filho tem direitos garantidos por lei. Reunimos os principais num só lugar, em linguagem clara, com um passo a passo que você pode ir marcando. O que estiver pronto fica salvo só neste aparelho.</p>
+  </section>
+
+  <div class="overall">
+    <svg class="ring" id="ringAll" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"></svg>
+    <div><b id="ovText">Seu progresso</b><small id="ovSub">Marque os passos conforme avança</small></div>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="where">
+    <b>Onde buscar ajuda gratuita:</b> CRAS e Centro de Referência da Assistência Social (orientam BPC e CadÚnico), Defensoria Pública (questões jurídicas e plano de saúde), Conselho Tutelar e Ministério Público (educação inclusiva), e as associações de famílias da sua cidade.
+  </div>
+
+  <div class="note">
+    <b>Conteúdo educativo e orientativo — não é parecer jurídico.</b> As regras e prazos podem mudar e variam por município. Para o seu caso, confirme nas fontes oficiais (INSS, secretaria de educação, ANS) e, quando precisar, procure a Defensoria Pública ou um(a) advogado(a). Este material apoia a organização da família e não substitui orientação profissional.
+  </div>
+  <p class="crm">Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756 · Petrolina/PE</p>
+</main>
+
+<script src="./np-store.js"></script>
+<script>
+(function(){
+  'use strict';
+  var KEY = 'np:direitos';
+  var DATA = [
+    { id:'bpc', ic:'💰', t:'BPC / LOAS — Benefício de Prestação Continuada',
+      what:'Um salário mínimo por mês, sem precisar ter contribuído ao INSS, para a pessoa com deficiência cuja família tem renda baixa. É benefício assistencial, não aposentadoria.',
+      src:'Base: Lei Orgânica da Assistência Social (Lei 8.742/1993). Avaliação pelo INSS.',
+      items:[
+        'Fazer/atualizar o Cadastro Único (CadÚnico) no CRAS do seu bairro',
+        'Reunir laudos e relatórios médicos que descrevam a deficiência e os impactos',
+        'Dar entrada no pedido pelo Meu INSS (app/site) ou telefone 135',
+        'Comparecer à avaliação social e médica do INSS quando agendada',
+        'Guardar o número do protocolo e acompanhar o resultado'
+      ]},
+    { id:'ciptea', ic:'🪪', t:'CIPTEA — Carteira de Identificação (autismo)',
+      what:'Carteira nacional que identifica a pessoa com Transtorno do Espectro Autista e garante prioridade e acesso a direitos. Para outras deficiências, vale o cordão de girassol (deficiências ocultas).',
+      src:'Base: Lei 13.977/2020 (Lei Romeo Mion). Emissão gratuita pelo órgão indicado no seu estado.',
+      items:[
+        'Obter um laudo/relatório médico com a indicação do TEA (CID)',
+        'Localizar o órgão emissor no seu estado (secretaria da pessoa com deficiência)',
+        'Reunir documentos pessoais e foto recente',
+        'Solicitar a CIPTEA (a emissão é gratuita)'
+      ]},
+    { id:'escola', ic:'🏫', t:'Inclusão escolar, PEI e profissional de apoio',
+      what:'Toda criança tem direito à escola regular inclusiva, com adaptações, Atendimento Educacional Especializado (AEE) e, quando necessário, profissional de apoio escolar. A escola não pode recusar matrícula nem cobrar a mais por isso.',
+      src:'Base: Lei Brasileira de Inclusão (Lei 13.146/2015) e Política Nacional de Proteção da Pessoa com TEA (Lei 12.764/2012).',
+      items:[
+        'Apresentar o laudo/relatório à escola e pedir o registro do caso',
+        'Solicitar por escrito a elaboração do PEI (Plano Educacional Individualizado)',
+        'Verificar o acesso ao AEE (sala de recursos / contraturno)',
+        'Solicitar profissional de apoio quando a criança precisar',
+        'Combinar a comunicação regular escola–família (agenda/relatórios)'
+      ]},
+    { id:'saude', ic:'🩺', t:'Plano de saúde e terapias',
+      what:'Planos de saúde devem cobrir as terapias indicadas (como fono, terapia ocupacional, psicologia), sem limite de número de sessões para transtornos do neurodesenvolvimento. Negativas indevidas podem ser contestadas.',
+      src:'Base: regras da ANS (rol de cobertura) e decisões judiciais. Confirme no seu contrato e na ANS.',
+      items:[
+        'Pedir ao médico a solicitação das terapias com a indicação clara',
+        'Solicitar a autorização ao plano por escrito (guarde os protocolos)',
+        'Se houver negativa, pedir o motivo por escrito',
+        'Acionar a ouvidoria do plano e, se preciso, a ANS ou a Defensoria'
+      ]},
+    { id:'prioridade', ic:'⏱️', t:'Prioridade e transporte',
+      what:'Atendimento prioritário em filas e repartições, e possíveis isenções e benefícios de transporte/estacionamento conforme a condição e as regras locais.',
+      src:'Base: Lei 10.048/2000 (prioridade) e legislações estaduais/municipais de transporte.',
+      items:[
+        'Usar a CIPTEA ou o cordão de girassol para garantir a prioridade',
+        'Verificar na prefeitura a credencial de estacionamento (vaga especial)',
+        'Conferir gratuidades/transporte com a secretaria de mobilidade local'
+      ]},
+    { id:'doc', ic:'🗂️', t:'Organize a sua pasta de documentos',
+      what:'Ter tudo reunido e atualizado acelera benefícios, matrículas e autorizações. Guarde cópias digitais (foto) de cada documento.',
+      src:'Dica de organização — o app ajuda a registrar a evolução para os relatórios.',
+      items:[
+        'Laudos e relatórios médicos atualizados',
+        'Relatórios das terapias (fono, TO, psicologia)',
+        'Relatório/parecer da escola',
+        'Documentos pessoais, CadÚnico e comprovante de residência',
+        'Receitas e exames (EEG, etc.) organizados por data'
+      ]}
+  ];
+
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+  var state = load();
+
+  function ring(svg, pct){
+    var r=22, c=2*Math.PI*r, off=c*(1-pct/100);
+    svg.innerHTML =
+      '<circle cx="28" cy="28" r="'+r+'" fill="none" stroke="rgba(169,164,255,.18)" stroke-width="5"/>'+
+      '<circle class="mini" cx="28" cy="28" r="'+r+'" fill="none" stroke="'+(pct>=100?'#10B981':'#a9a4ff')+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" style="transition:stroke-dashoffset .4s ease"/>'+
+      '<text x="28" y="32" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">'+pct+'%</text>';
+  }
+
+  var cardsEl = document.getElementById('cards');
+  DATA.forEach(function(sec){
+    var card = document.createElement('div'); card.className='card';
+    card.innerHTML =
+      '<div class="hd"><span class="ic">'+sec.ic+'</span><h2>'+sec.t+'</h2>'+
+      '<svg width="42" height="42" viewBox="0 0 56 56" data-ring="'+sec.id+'" aria-hidden="true"></svg></div>'+
+      '<p class="what">'+sec.what+'</p>'+
+      '<ul class="checks"></ul>'+
+      '<p class="src">'+sec.src+'</p>';
+    var ul = card.querySelector('.checks');
+    sec.items.forEach(function(label, i){
+      var key = sec.id+':'+i;
+      var li = document.createElement('label'); li.className='ck';
+      var cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!state[key];
+      cb.setAttribute('aria-label', label);
+      var sp = document.createElement('span'); sp.textContent = label;
+      cb.addEventListener('change', function(){
+        state[key] = cb.checked; save(state); paint();
+        try{ if(window.npToast && cb.checked) npToast('Passo concluído 💜','success'); }catch(e){}
+      });
+      li.appendChild(cb); li.appendChild(sp); ul.appendChild(li);
+    });
+    cardsEl.appendChild(card);
+  });
+
+  function pctOf(sec){
+    var done=0; sec.items.forEach(function(_,i){ if(state[sec.id+':'+i]) done++; });
+    return Math.round(done/sec.items.length*100);
+  }
+  function paint(){
+    var total=0, done=0;
+    DATA.forEach(function(sec){
+      total += sec.items.length;
+      sec.items.forEach(function(_,i){ if(state[sec.id+':'+i]) done++; });
+      var rs = cardsEl.querySelector('[data-ring="'+sec.id+'"]'); if(rs) ring(rs, pctOf(sec));
+    });
+    var p = total? Math.round(done/total*100):0;
+    ring(document.getElementById('ringAll'), p);
+    document.getElementById('ovText').textContent = done+' de '+total+' passos';
+    document.getElementById('ovSub').textContent = p>=100 ? 'Tudo organizado — que jornada! 💜' : 'Marque os passos conforme avança — fica salvo aqui.';
+  }
+  paint();
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+<script src="./np-lgpd-consent.js" defer></script>
+</body>
+</html>

@@ -97,6 +97,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
   "use strict";
   var ICON = {
     inicio:'<path d="m3 11 9-8 9 8"/><path d="M5 9v11h14V9"/>',
+    apoio:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
     consulta:'<path d="M6 3v6a6 6 0 0 0 12 0V3"/><path d="M6 3H4M18 3h2"/><circle cx="18" cy="16" r="3"/><path d="M18 11v2"/>',
     escalas:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>',
     biblioteca:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
@@ -104,14 +105,17 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
   };
   var ROUTES = {
     inicio:    { url:'./index.html',                      label:'Início' },
+    apoio:     { url:'./apoio-familia.html',              label:'Apoio' },
     escalas:   { url:'./filtro-escalas.html',             label:'Escalas' },
     biblioteca:{ url:'./neuroped-master-biblioteca.html', label:'Biblioteca' },
     caa:       { url:'./comunicacao-alternativa.html',    label:'CAA' }
   };
-  var ORDER = ['inicio','escalas','biblioteca','caa'];
+  var ORDER = ['inicio','apoio','escalas','biblioteca','caa'];
   // mapa arquivo -> rota (sincroniza a aba quando navega dentro do quadro)
   var FILE2KEY = {
     'index.html':'inicio','central-atalhos.html':'inicio','':'inicio',
+    'apoio-familia.html':'apoio','primeiros-passos.html':'apoio','mapa-direitos.html':'apoio',
+    'quando-acontecer.html':'apoio','glossario.html':'apoio',
     'filtro-escalas.html':'escalas','mapa-escalas.html':'escalas','escalas.html':'escalas',
     'neuroped-master-biblioteca.html':'biblioteca','neuroped-master-vitrine.html':'biblioteca',
     'solicitar-neuroped-master.html':'biblioteca','gerador-cards.html':'biblioteca',

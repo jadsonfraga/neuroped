@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script src="./public-mode.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#070b16">
+<title>Quando acontecer — Resposta rápida | NeuroPed EDJ</title>
+<meta name="description" content="Passo a passo calmo para os momentos difíceis: crise epiléptica, sobrecarga sensorial (meltdown) e desregulação. Primeiros socorros e quando chamar o SAMU 192. Conteúdo educativo — siga sempre o plano do seu médico.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/quando-acontecer.html">
+<meta property="og:title" content="Quando acontecer — Resposta rápida | NeuroPed EDJ">
+<meta property="og:description" content="Passo a passo calmo para crise epiléptica, sobrecarga sensorial e desregulação. Educativo — não substitui o plano do médico.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Quando acontecer — Resposta rápida">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  /* Modo calmo: alto contraste, sem brilho, sem gamificação. Foco total na ação. */
+  :root{--calm-bg:#070b16;--calm-card:#0e1525;--calm-line:rgba(255,255,255,.12)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--calm-bg);color:#F4F6FB;font-family:var(--font-sans,system-ui);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 16px calc(132px + env(safe-area-inset-bottom,0px))}
+  .back{display:inline-flex;align-items:center;gap:7px;color:#9db4d6;text-decoration:none;font-weight:700;font-size:14px;margin:2px 0 12px}
+  h1{margin:0 0 4px;font-size:clamp(22px,5vw,28px);font-weight:800;letter-spacing:-.01em}
+  .intro{margin:0 0 16px;color:#aebbd1;font-size:14.5px}
+  .tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+  .tab{flex:1 1 auto;min-width:96px;min-height:56px;cursor:pointer;border:1.5px solid var(--calm-line);background:var(--calm-card);color:#cdd7e8;
+    border-radius:16px;padding:9px 10px;font:700 14px system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .tab .e{font-size:22px;line-height:1}
+  .tab[aria-selected="true"]{border-color:#5ea0ff;background:#13233f;color:#fff;box-shadow:0 0 0 1px rgba(94,160,255,.4)}
+  .panel{display:none}
+  .panel[data-on="1"]{display:block}
+  .ribbon{display:flex;align-items:center;gap:10px;border-radius:14px;padding:12px 14px;margin:0 0 14px;font-size:14px;font-weight:600}
+  .ribbon.calm{background:rgba(94,160,255,.12);border:1px solid rgba(94,160,255,.3);color:#cfe1ff}
+  ol.big{list-style:none;counter-reset:b;margin:0;padding:0}
+  ol.big>li{counter-increment:b;position:relative;background:var(--calm-card);border:1.5px solid var(--calm-line);border-radius:18px;
+    padding:16px 16px 16px 62px;margin:10px 0;font-size:16px;line-height:1.45}
+  ol.big>li::before{content:counter(b);position:absolute;left:14px;top:14px;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;
+    font-size:18px;font-weight:800;background:#1c2b48;color:#cfe1ff;border:1px solid rgba(94,160,255,.4)}
+  ol.big>li b{color:#fff}
+  ol.big>li.dont::before{background:#3a1620;color:#ffc9d3;border-color:rgba(255,120,140,.4);content:"✕"}
+  ol.big>li.dont{border-color:rgba(255,120,140,.3)}
+  ol.big>li.call::before{background:#3a2410;color:#ffd9a8;border-color:rgba(245,158,11,.5);content:"!"}
+  ol.big>li.call{border-color:rgba(245,158,11,.4)}
+  .after{margin-top:14px;border:1px dashed var(--calm-line);border-radius:14px;padding:13px 15px;font-size:14px;color:#b9c5da}
+  .after b{color:#eaf0fb}
+  .note{margin-top:16px;font-size:12.5px;color:#8d9bb4;border-top:1px solid var(--calm-line);padding-top:12px}
+  /* Barra de emergência fixa */
+  .sos{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(0deg,#070b16 70%,rgba(7,11,22,0));}
+  .sos a{flex:1;text-decoration:none;text-align:center;border-radius:14px;padding:13px 10px;font-weight:800;font-size:15px;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .sos .emg{background:#e03e52;color:#fff}
+  .sos .cvv{background:#13233f;color:#cfe1ff;border:1.5px solid rgba(94,160,255,.4)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="./index.html">‹ Início</a>
+  <h1>Quando acontecer</h1>
+  <p class="intro">Respire. Você consegue. Escolha o que está acontecendo e siga os passos, um de cada vez.</p>
+
+  <div class="tabs" role="tablist" aria-label="Situação">
+    <button class="tab" role="tab" data-k="crise" aria-selected="true"><span class="e">⚡</span>Crise<br>epiléptica</button>
+    <button class="tab" role="tab" data-k="meltdown" aria-selected="false"><span class="e">🌊</span>Sobrecarga<br>sensorial</button>
+    <button class="tab" role="tab" data-k="desreg" aria-selected="false"><span class="e">💢</span>Desregulação<br>/ agitação</button>
+  </div>
+
+  <section class="panel" data-panel="crise" data-on="1" role="tabpanel">
+    <div class="ribbon calm">A maioria das crises passa sozinha em 1 a 3 minutos.</div>
+    <ol class="big">
+      <li><b>Fique calmo e olhe a hora.</b> Marque o horário em que começou — o tempo é a informação mais importante.</li>
+      <li><b>Proteja a cabeça</b> com algo macio e afaste objetos por perto. Não tente segurar ou conter os movimentos.</li>
+      <li><b>Vire de lado</b> (deite a criança de lado) para a saliva escorrer e a respiração ficar livre.</li>
+      <li class="dont"><b>Não coloque nada na boca.</b> Nada de dedo, colher ou água — ela não vai “engolir a língua”.</li>
+      <li class="dont"><b>Não dê remédio ou água</b> durante a crise. Afrouxe roupas apertadas no pescoço.</li>
+      <li class="call"><b>Chame o SAMU 192 se:</b> durar mais de 5 minutos, repetir sem acordar entre as crises, houver dificuldade para respirar ou lábios roxos, for a primeira crise, acontecer dentro d'água, ou houver ferimento.</li>
+      <li><b>Medicação de resgate</b> (ex.: midazolam) só se o seu médico prescreveu — siga exatamente o plano combinado.</li>
+    </ol>
+    <div class="after"><b>Depois da crise:</b> fique ao lado até a criança se recuperar. Sonolência e confusão são normais. Quando passar, registre no <a href="./diarios.html" style="color:#9db4d6">Diário de crises</a> (duração, horário, como foi) para o médico.</div>
+  </section>
+
+  <section class="panel" data-panel="meltdown" role="tabpanel">
+    <div class="ribbon calm">Não é birra — é o sistema nervoso em sobrecarga. Acolher funciona melhor que corrigir.</div>
+    <ol class="big">
+      <li><b>Reduza os estímulos.</b> Diminua luz, som e movimento ao redor. Se puder, leve para um lugar mais calmo e seguro.</li>
+      <li><b>Fale pouco, baixo e devagar.</b> Menos palavras e menos perguntas. Sua calma é o que mais acalma.</li>
+      <li><b>Ofereça regulação:</b> fone abafador, objeto preferido, pressão profunda (cobertor/abraço apertado) — só se a criança aceitar.</li>
+      <li class="dont"><b>Não force</b> contato físico, olho no olho ou conversa. Não puna no auge — o cérebro não está disponível para aprender agora.</li>
+      <li><b>Garanta a segurança.</b> Afaste o que pode machucar; fique por perto sem invadir o espaço dela.</li>
+      <li><b>Dê tempo.</b> A tempestade passa. Espere baixar antes de retomar a rotina, com gentileza.</li>
+    </ol>
+    <div class="after"><b>Depois:</b> ofereça água e acolhimento, sem cobrança. Mais tarde, anote o que aconteceu antes (o gatilho) — isso ajuda a prevenir a próxima. Apoios visuais e a <a href="./comunicacao-alternativa.html" style="color:#9db4d6">comunicação alternativa (CAA)</a> ajudam muito.</div>
+  </section>
+
+  <section class="panel" data-panel="desreg" role="tabpanel">
+    <div class="ribbon calm">Primeiro a conexão, depois a correção. Comportamento difícil costuma ser um pedido de ajuda.</div>
+    <ol class="big">
+      <li><b>Cheque o básico:</b> fome, sono, dor, sede, banheiro, calor/frio. Muita desregulação começa por uma necessidade física.</li>
+      <li><b>Voz calma e firme.</b> Frases curtas, uma instrução por vez, poucas perguntas.</li>
+      <li><b>Valide o sentimento:</b> “vejo que você está bravo”. Depois ofereça 2 escolhas simples para devolver o controle.</li>
+      <li><b>Use apoios visuais</b> ou a CAA para comunicar o que vem agora e reduzir a frustração.</li>
+      <li class="dont"><b>Evite negociar ou punir no pico.</b> Espere a calma voltar para conversar e combinar.</li>
+      <li class="call"><b>Busque ajuda imediata</b> (SAMU 192 / emergência) se houver agressão grave, autolesão, ou fala de querer morrer. Para apoio emocional, o CVV 188 atende 24h, de graça e em sigilo.</li>
+    </ol>
+    <div class="after"><b>Depois:</b> acolha e retome a rotina aos poucos. Registrar os episódios no <a href="./diarios.html" style="color:#9db4d6">diário</a> ajuda a enxergar padrões e a levar dados úteis à consulta.</div>
+  </section>
+
+  <p class="note">Conteúdo educativo de apoio. <b>Não substitui</b> orientação médica nem o atendimento de emergência. Cada criança tem um plano individual — siga sempre as orientações do seu médico. Em risco de vida, ligue <b>192 (SAMU)</b>. · Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756 · Petrolina/PE</p>
+</main>
+
+<div class="sos">
+  <a class="emg" href="tel:192">🚑 Emergência · SAMU 192</a>
+  <a class="cvv" href="tel:188">💬 Apoio · CVV 188</a>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var tabs = document.querySelectorAll('.tab');
+  var panels = document.querySelectorAll('.panel');
+  function show(k){
+    tabs.forEach(function(t){ t.setAttribute('aria-selected', String(t.dataset.k===k)); });
+    panels.forEach(function(p){ p.setAttribute('data-on', p.dataset.panel===k ? '1':'0'); });
+    try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.k); }); });
+})();
+</script>
+<script src="./np-lgpd-consent.js" defer></script>
+</body>
+</html>

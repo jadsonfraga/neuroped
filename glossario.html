@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script src="./public-mode.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#0e0e22">
+<title>Glossário em linguagem de gente — NeuroPed EDJ</title>
+<meta name="description" content="Dicionário de neuropediatria em linguagem acessível: hipotonia, estereotipia, ecolalia, EEG, função executiva, PEI, AEE, TDAH, TOD, RQE e muito mais. Termos explicados para famílias. Conteúdo educativo de apoio.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/glossario.html">
+<meta property="og:title" content="Glossário em linguagem de gente — NeuroPed EDJ">
+<meta property="og:description" content="Os termos da neuropediatria explicados em linguagem de gente, para famílias.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Glossário em linguagem de gente">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./app-skin.css">
+<link rel="stylesheet" href="./ds-bridge.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  body{margin:0;background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);font-family:var(--font-sans,system-ui);line-height:1.6}
+  .wrap{max-width:780px;margin:0 auto;padding:18px 18px calc(108px + env(safe-area-inset-bottom,0px))}
+  .back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 12px}
+  .hero{position:relative;overflow:hidden;border:1px solid rgba(169,164,255,.2);border-radius:26px;padding:24px 22px;
+    background:radial-gradient(560px 280px at 92% -34%,rgba(231,201,139,.12),transparent 60%),linear-gradient(150deg,#16142e,#1c1947 58%,#131229);
+    box-shadow:0 30px 80px -38px rgba(3,2,16,.9),inset 0 1px 0 rgba(255,255,255,.05)}
+  h1{margin:0 0 6px;font:700 clamp(23px,5vw,32px)/1.1 "Fraunces",Georgia,serif;
+    background:linear-gradient(120deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{margin:0;color:var(--text-display-soft,#E0E7FF);font-size:14.5px}
+  .searchbar{position:sticky;top:8px;z-index:10;margin:16px 0 6px}
+  .searchbar input{width:100%;border:1px solid rgba(169,164,255,.3);background:rgba(12,12,28,.92);backdrop-filter:blur(8px);
+    color:#fff;border-radius:14px;padding:14px 16px;font-size:16px;font-family:inherit;min-height:50px}
+  .searchbar input::placeholder{color:#8b87bd}
+  .searchbar input:focus{outline:2px solid #a9a4ff;outline-offset:1px;border-color:transparent}
+  .count{font-size:12.5px;color:var(--text-soft,#928ec6);margin:2px 2px 10px}
+  .term{border:1px solid rgba(169,164,255,.16);border-radius:16px;padding:14px 16px;margin:9px 0;
+    background:linear-gradient(180deg,rgba(124,118,210,.085),rgba(124,118,210,.03))}
+  .term h2{margin:0 0 3px;font-size:16px;color:#fff;font-weight:700}
+  .term .aka{font-size:12px;color:#c9a96a;font-weight:600;margin:0 0 5px}
+  .term p{margin:0;font-size:14.5px;color:var(--text-muted,#c4c0ea)}
+  .term .app{margin:7px 0 0;font-size:12.5px;color:#9aded0}
+  .empty{text-align:center;color:var(--text-muted,#b6b2e6);padding:34px 16px;font-size:14.5px}
+  .note{margin-top:18px;border:1px solid rgba(231,201,139,.28);background:rgba(231,201,139,.07);border-radius:16px;padding:13px 15px;font-size:12.5px;color:#e7d6ad}
+  .crm{margin-top:14px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center;border-top:1px solid rgba(169,164,255,.14);padding-top:12px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body data-ns-shell>
+<main class="wrap">
+  <a class="back" href="./index.html">‹ Início</a>
+  <section class="hero">
+    <h1>Glossário em linguagem de gente</h1>
+    <p>Aquela palavra que você ouviu na consulta ou no laudo, explicada de um jeito simples. Toque para buscar.</p>
+  </section>
+
+  <div class="searchbar">
+    <input type="search" id="q" placeholder="🔎 Buscar termo (ex.: hipotonia, EEG, PEI…)" aria-label="Buscar termo" autocomplete="off">
+  </div>
+  <div class="count" id="count" aria-live="polite"></div>
+  <div id="list"></div>
+
+  <div class="note"><b>Conteúdo educativo de apoio.</b> Estas explicações servem para entender melhor a sua jornada e conversar com a equipe — <b>não substituem</b> o que o seu médico explica sobre o caso do seu filho.</div>
+  <p class="crm">Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756 · Petrolina/PE</p>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  // Dados do glossário (linguagem acessível para famílias).
+  var TERMS = [
+    {t:'Atraso global do desenvolvimento (AGD)', aka:'atraso do desenvolvimento', d:'Quando a criança está mais devagar em várias áreas ao mesmo tempo (motor, fala, social). É um ponto de partida para investigar e estimular, não um diagnóstico definitivo.'},
+    {t:'Marcos do desenvolvimento', aka:'milestones', d:'As conquistas esperadas para cada idade — sentar, andar, primeiras palavras, brincar de faz de conta. Servem de referência, mas cada criança tem o seu ritmo.'},
+    {t:'Hipotonia', aka:'“molinho”, baixo tônus', d:'Músculos com menos firmeza/tônus que o esperado. A criança parece “molinha” no colo ou demora a firmar o pescoço. Tem muitas causas e nem sempre é grave.'},
+    {t:'Hipertonia', aka:'tônus aumentado, rigidez', d:'O contrário da hipotonia: músculos mais enrijecidos/tensos que o normal, deixando os movimentos mais duros.'},
+    {t:'Estereotipia', aka:'movimentos repetitivos', d:'Movimentos ou sons repetidos, como balançar o corpo, bater palmas ou girar objetos. Muitas vezes ajudam a criança a se regular e se acalmar.'},
+    {t:'Ecolalia', aka:'repetir falas', d:'Repetir palavras ou frases ouvidas (de pessoas, da TV). É uma etapa comum da linguagem e, no autismo, pode ser uma forma de comunicar.'},
+    {t:'Seletividade alimentar', aka:'comer pouca variedade', d:'Aceitar só um grupo pequeno de alimentos, muitas vezes por textura, cor ou cheiro. Comum no autismo e em questões sensoriais.'},
+    {t:'Processamento sensorial', aka:'integração sensorial', d:'Como o cérebro recebe e organiza o que vem dos sentidos (som, luz, toque, movimento). Quando “desregula”, sons ou texturas comuns podem incomodar muito — ou passar despercebidos.'},
+    {t:'Função executiva', aka:'organização mental', d:'O “gerente” do cérebro: planejar, organizar, esperar a vez, focar e controlar impulsos. Costuma ser um ponto de dificuldade no TDAH.'},
+    {t:'Autorregulação', aka:'controle emocional', d:'A capacidade de lidar com emoções e estímulos sem “transbordar”. Crianças aprendem isso aos poucos e com a ajuda dos adultos.'},
+    {t:'Meltdown', aka:'sobrecarga, crise sensorial', d:'Uma explosão de choro/movimento por sobrecarga do sistema nervoso — não é birra nem manha. A criança perde o controle e precisa de acolhimento, não de bronca.'},
+    {t:'TEA — Transtorno do Espectro Autista', aka:'autismo', d:'Uma forma diferente de processar o mundo, a comunicação e a interação social, com interesses e padrões próprios. “Espectro” porque varia muito de pessoa para pessoa.'},
+    {t:'TDAH — Transtorno de Déficit de Atenção e Hiperatividade', aka:'déficit de atenção', d:'Uma diferença neurobiológica na atenção, no autocontrole e (às vezes) na agitação. Não é falta de educação nem preguiça. É distinto do TOD (veja abaixo).'},
+    {t:'TOD — Transtorno Opositivo Desafiador', aka:'comportamento opositor', d:'Um padrão persistente de desafio, irritabilidade e oposição às regras. É diferente do TDAH — embora possam aparecer juntos, são coisas distintas e o tratamento de cada um é próprio.'},
+    {t:'Comorbidade', aka:'condições associadas', d:'Quando mais de uma condição acontece na mesma pessoa (por exemplo, TDAH junto com ansiedade). Cada uma precisa ser cuidada à sua maneira.'},
+    {t:'TDL — Transtorno do Desenvolvimento da Linguagem', aka:'atraso de linguagem', d:'Dificuldade importante e persistente para compreender ou usar a linguagem, sem que seja explicada por outra condição. O acompanhamento é com fonoaudiologia.'},
+    {t:'Dislexia', aka:'dificuldade de leitura', d:'Dificuldade específica para ler e soletrar, apesar de inteligência e ensino adequados. Tem a ver com o processamento dos sons das letras.'},
+    {t:'Discalculia', aka:'dificuldade com números', d:'Dificuldade específica para entender quantidades e fazer contas, mesmo com ensino adequado.'},
+    {t:'Apraxia da fala', aka:'dificuldade para articular', d:'Dificuldade para o cérebro coordenar os movimentos da boca para falar. A criança sabe o que quer dizer, mas “a fala não sai” como deveria.'},
+    {t:'EEG — Eletroencefalograma', aka:'exame das ondas cerebrais', d:'Exame indolor que registra a atividade elétrica do cérebro por sensores no couro cabeludo. Ajuda a investigar crises e epilepsia.'},
+    {t:'Ressonância magnética (RM)', aka:'imagem do cérebro', d:'Exame de imagem detalhado do cérebro, sem radiação. Em crianças pequenas, às vezes precisa de sedação para ficar parada.'},
+    {t:'Crise tônico-clônica', aka:'convulsão generalizada', d:'Tipo de crise epiléptica com enrijecimento e depois abalos do corpo, geralmente com perda de consciência. Veja “Quando acontecer” para os primeiros socorros.'},
+    {t:'Crise de ausência', aka:'“desligar” por segundos', d:'Crise breve em que a criança parece “desligar”, com o olhar parado por alguns segundos, e volta sem perceber. Pode ser confundida com desatenção.'},
+    {t:'Epilepsia', aka:'tendência a crises', d:'Condição em que o cérebro tem tendência a repetir crises. É tratável e, na maioria das crianças, bem controlada com acompanhamento.'},
+    {t:'Neuroplasticidade', aka:'cérebro que se adapta', d:'A capacidade do cérebro de criar novas conexões e aprender, especialmente forte na infância. É o que torna a estimulação precoce tão valiosa.'},
+    {t:'Intervenção precoce', aka:'estimulação precoce', d:'Começar terapias e estímulos o quanto antes, aproveitando a fase de maior aprendizado do cérebro. Quanto antes, melhores os resultados.'},
+    {t:'CAA — Comunicação Aumentativa e Alternativa', aka:'pranchas, figuras, voz', d:'Recursos que ajudam a se comunicar quando a fala não dá conta: figuras, gestos e aplicativos com voz. Não atrapalha a fala — ao contrário, costuma estimular.'},
+    {t:'ABA — Análise do Comportamento Aplicada', aka:'terapia comportamental', d:'Abordagem terapêutica que ensina habilidades e reduz comportamentos que atrapalham, passo a passo, com reforço positivo. Deve respeitar a criança.'},
+    {t:'Terapia ocupacional (TO)', aka:'TO', d:'Terapia que trabalha autonomia no dia a dia: coordenação, questões sensoriais, vestir-se, comer, brincar e escrever.'},
+    {t:'Fonoaudiologia', aka:'fono', d:'Profissional que cuida da comunicação, linguagem, fala e também da alimentação (mastigar e engolir).'},
+    {t:'Psicomotricidade', aka:'corpo e movimento', d:'Trabalho que integra movimento, emoção e cognição por meio do brincar e do corpo.'},
+    {t:'PEI — Plano Educacional Individualizado', aka:'plano da escola', d:'Um plano feito pela escola, com a família, descrevendo metas e adaptações para aquele aluno. É um direito na educação inclusiva.'},
+    {t:'AEE — Atendimento Educacional Especializado', aka:'sala de recursos', d:'Apoio pedagógico complementar (em geral no contraturno) para alunos com deficiência ou transtornos, oferecido pela escola.'},
+    {t:'Profissional de apoio escolar', aka:'mediador, cuidador escolar', d:'Profissional que acompanha o aluno na escola quando ele precisa de apoio para participar das atividades. É um direito quando indicado.'},
+    {t:'CIPTEA', aka:'carteira do autista', d:'Carteira de Identificação da Pessoa com TEA, criada por lei nacional. Garante prioridade e acesso a direitos. A emissão é gratuita.'},
+    {t:'BPC / LOAS', aka:'benefício assistencial', d:'Um salário mínimo por mês para a pessoa com deficiência de família com renda baixa, sem precisar ter contribuído ao INSS. Veja o Mapa de Direitos.'},
+    {t:'Laudo / relatório médico', aka:'documento clínico', d:'Documento em que o profissional descreve a avaliação, hipóteses e orientações. Costuma ser exigido para direitos, escola e plano de saúde.'},
+    {t:'Triagem', aka:'rastreio, screening', d:'Uma checagem inicial que sinaliza se vale investigar mais a fundo. Triagem não é diagnóstico — apenas acende (ou não) um alerta.'},
+    {t:'CID', aka:'código da condição', d:'Classificação Internacional de Doenças: o código que nomeia oficialmente a condição nos documentos (ex.: para benefícios).'},
+    {t:'Regressão do desenvolvimento', aka:'perda de habilidades', d:'Quando a criança perde habilidades que já tinha (fala, contato, brincadeira). Merece avaliação atenta — converse logo com o médico.'},
+    {t:'RQE', aka:'registro de especialista', d:'Registro de Qualificação de Especialista: o número que comprova que o médico é especialista naquela área. O do Dr. Jadson Fraga é RQE 17756 (Neuropediatria), com CRM-PE 25227.'},
+    {t:'Neuropediatra', aka:'neurologista infantil', d:'Médico especialista no cérebro e no desenvolvimento da criança — quem coordena o cuidado nos transtornos do neurodesenvolvimento.'}
+  ].sort(function(a,b){ return a.t.localeCompare(b.t,'pt'); });
+
+  function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  var listEl = document.getElementById('list');
+  var countEl = document.getElementById('count');
+  var q = document.getElementById('q');
+
+  function render(filter){
+    var f = norm(filter);
+    var shown = TERMS.filter(function(x){
+      if (!f) return true;
+      return norm(x.t).indexOf(f)>=0 || norm(x.aka).indexOf(f)>=0 || norm(x.d).indexOf(f)>=0;
+    });
+    if (!shown.length){
+      listEl.innerHTML = '<div class="empty">Nenhum termo encontrado para “'+String(filter).replace(/[<>&]/g,'')+'”.<br>Tente outra palavra — ou pergunte na próxima consulta. 💜</div>';
+      countEl.textContent = '';
+      return;
+    }
+    countEl.textContent = shown.length + (f ? ' resultado(s)' : ' termos') ;
+    listEl.innerHTML = shown.map(function(x){
+      return '<article class="term"><h2></h2>'+(x.aka?'<p class="aka"></p>':'')+'<p class="def"></p></article>';
+    }).join('');
+    var nodes = listEl.querySelectorAll('.term');
+    shown.forEach(function(x,i){
+      var n = nodes[i];
+      n.querySelector('h2').textContent = x.t;
+      if (x.aka) n.querySelector('.aka').textContent = 'também: ' + x.aka;
+      n.querySelector('.def').textContent = x.d;
+    });
+  }
+
+  var deb;
+  q.addEventListener('input', function(){ clearTimeout(deb); deb=setTimeout(function(){ render(q.value); }, 80); });
+  // permite chegar com ?q=termo
+  try{ var pre=new URLSearchParams(location.search).get('q'); if(pre){ q.value=pre; } }catch(e){}
+  render(q.value || '');
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
+<script src="./np-lgpd-consent.js" defer></script>
+</body>
+</html>

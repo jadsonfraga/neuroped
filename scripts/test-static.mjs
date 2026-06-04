@@ -1000,6 +1000,41 @@ assertIncludes('filtro-escalas.html', 'clinical-meta.js', 'filtro carrega a meta
 assertIncludes('filtro-escalas.html', 'NeuroPedMeta.evidence', 'filtro mostra 📚 Evidência (citação + PMID) quando o instrumento tem fonte curada');
 assertIncludes('clinical-meta.js', 'api.load()', 'clinical-meta auto-carrega o registry no browser');
 
+// ===== Apoio à Família — 4 conteúdos de acolhimento (anti-regressão) =====
+// Hub + Primeiros Passos + Mapa de Direitos + Quando acontecer + Glossário.
+// Plugados na navegação (app-shell tabs + bottom nav global) e no precache (offline).
+for (const f of ['apoio-familia.html','primeiros-passos.html','mapa-direitos.html','quando-acontecer.html','glossario.html']) {
+  assertFile(f);
+  assertIncludes('sw.js', `'./${f}'`, `${f} no precache do SW (funciona offline)`);
+  assertIncludes(f, 'prefers-reduced-motion', `${f} respeita prefers-reduced-motion (acessibilidade)`);
+}
+// Navegação: aba "Apoio" no app-shell + item no bottom nav global
+assertIncludes('app-shell.html', './apoio-familia.html', 'app-shell roteia o hub de Apoio à Família');
+assertIncludes('app-shell.html', "label:'Apoio'", 'app-shell tem a aba Apoio');
+assertIncludes('app-shell.html', "'primeiros-passos.html':'apoio'", 'app-shell sincroniza a aba Apoio ao abrir as telas-filhas');
+assertIncludes('app-polish-mobile.js', "label: 'Apoio'", 'bottom nav global oferece Apoio à Família (descoberta)');
+// Hub: leva às 4 telas e mantém o aviso educativo
+for (const href of ['primeiros-passos.html','mapa-direitos.html','quando-acontecer.html','glossario.html']) {
+  assertIncludes('apoio-familia.html', `./${href}`, `hub Apoio leva a ${href}`);
+}
+assertIncludes('apoio-familia.html', 'não substitui', 'hub Apoio mantém o aviso educativo (não substitui avaliação)');
+// Primeiros Passos: guia por condição, personaliza pelo perfil, aviso ético
+assertIncludes('primeiros-passos.html', './np-store.js', 'Primeiros Passos personaliza pela criança ativa (np-store)');
+assertIncludes('primeiros-passos.html', 'não é diagnóstico', 'Primeiros Passos declara natureza não-diagnóstica');
+// Mapa de Direitos: checklist persistente + ressalva jurídica honesta
+assertIncludes('mapa-direitos.html', "'np:direitos'", 'Mapa de Direitos salva o progresso do checklist (namespace np:*)');
+assertIncludes('mapa-direitos.html', 'não é parecer jurídico', 'Mapa de Direitos é orientativo (não é parecer jurídico)');
+// Quando acontecer: primeiros socorros + emergência + modo calmo SEM gamificação
+assertIncludes('quando-acontecer.html', 'SAMU 192', 'Quando acontecer direciona à emergência (SAMU 192)');
+assertIncludes('quando-acontecer.html', 'CVV 188', 'Quando acontecer oferece apoio emocional (CVV 188)');
+assertIncludes('quando-acontecer.html', 'não substitui', 'Quando acontecer mantém o aviso educativo');
+assertNotIncludes('quando-acontecer.html', 'retro-arcade', 'Quando acontecer não carrega gamificação (tela de risco, modo calmo)');
+assertNotIncludes('quando-acontecer.html', 'instrumento-celebrations', 'Quando acontecer não dispara celebrações (não gamificar a angústia)');
+// Glossário: busca + concepção correta (TDAH ≠ TOD) + identidade do autor
+assertIncludes('glossario.html', 'id="q"', 'Glossário tem campo de busca (UI estilo CAA)');
+assertIncludes('glossario.html', 'distinto do TOD', 'Glossário NÃO confunde TDAH com TOD (rigor conceitual)');
+assertIncludes('glossario.html', 'RQE 17756', 'Glossário explica o RQE com a credencial canônica do autor');
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');
