@@ -3,7 +3,7 @@
     "name":  "NeuroPed EDJ — Dr. Jadson Fraga",
     "short_name":  "NeuroPed",
     "description":  "Plataforma clínica integrada de neuropediatria: escalas, consulta, agenda, diário, CAA e nuvem.",
-    "start_url":  "./app-shell.html",
+    "start_url":  "./index.html",
     "scope":  "./",
     "display":  "standalone",
     "display_override":  [
