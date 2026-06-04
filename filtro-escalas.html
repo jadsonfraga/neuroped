@@ -35,7 +35,11 @@
   @keyframes astroFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
   @media(prefers-reduced-motion:reduce){.astro{animation:none}}
   .engine-title{font:700 clamp(24px,5vw,34px)/1.05 "Fraunces",Georgia,serif;margin:0 0 6px;
-    background:linear-gradient(135deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    background:linear-gradient(135deg,#fff 0%,#c4b5ff 28%,#9b7bff 52%,#7c79ff 76%,#fff 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:ctlFlow 7s linear infinite}
+  .engine-title .ltr{display:inline-block;will-change:transform;animation:ctlWave 2.6s ease-in-out infinite;animation-delay:var(--d,0s)}
+  @keyframes ctlFlow{0%{background-position:0% center}100%{background-position:-200% center}}
+  @keyframes ctlWave{0%,100%{transform:translateY(0)}30%{transform:translateY(-.16em)}60%{transform:translateY(.04em)}}
+  @media(prefers-reduced-motion:reduce){.engine-title,.engine-title .ltr{animation:none}}
   .engine-header p{margin:0;color:var(--text-muted,#b6b2e6);font-size:14px}
   /* Busca premium */
   .search-container{max-width:760px;margin:0 auto 18px}
@@ -168,7 +172,7 @@
       <path d="M97 24l2.2 5 5 2.2-5 2.2-2.2 5-2.2-5-5-2.2 5-2.2z" fill="#e7c98b"/>
       <circle cx="22" cy="34" r="2.4" fill="#a9a4ff"/><circle cx="101" cy="70" r="2" fill="#a9a4ff"/>
     </svg>
-    <h1 class="engine-title">Clinical Intelligence Engine</h1>
+    <h1 class="engine-title" aria-label="Clinical Intelligence Engine">Clinical Intelligence Engine</h1>
     <p>Descreva <strong>idade + queixa</strong> — a busca prioriza os instrumentos certos do catálogo, com evidência curada quando houver.</p>
   </header>
 
@@ -582,5 +586,23 @@
 <script src="./ambient-effects.js" defer></script>
     <script src="./retro-arcade.js" defer></script>
     <script src="./np-lgpd-consent.js" defer></script>
+    <script>
+    /* Letras "vivas" do título: quebra em <span.ltr> com atraso escalonado p/ onda */
+    (function(){
+      var el=document.querySelector('.engine-title');
+      if(!el)return;
+      var text=el.textContent,frag=document.createDocumentFragment(),n=0;
+      for(var i=0;i<text.length;i++){
+        var ch=text[i];
+        if(ch===' '){frag.appendChild(document.createTextNode(' '));continue;}
+        var s=document.createElement('span');
+        s.className='ltr';s.textContent=ch;
+        s.style.setProperty('--d',(n*0.06).toFixed(2)+'s');
+        s.setAttribute('aria-hidden','true');
+        frag.appendChild(s);n++;
+      }
+      el.textContent='';el.appendChild(frag);
+    })();
+    </script>
 </body>
 </html>
