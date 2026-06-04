@@ -2810,7 +2810,12 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
   // Um construto ATIVA se: ≥1 gatilho forte, OU ≥2 gatilhos fracos (corroboração).
   function activeConstructs(text) {
-    var t = ' ' + norm(text) + ' ', active = {};
+    var t = ' ' + norm(text) + ' ';
+    // tolerância a erros de digitação comuns (não quebra a busca por um typo)
+    t = t.replace(/anciedade|ansiozo|ansioza/g, 'ansiedade').replace(/\biperativ/g, 'hiperativ')
+      .replace(/autizmo|altismo|autismo /g, 'autismo ').replace(/dislesia|dislexico|dislecia/g, 'dislexia')
+      .replace(/iscalculia|descalculia/g, 'discalculia').replace(/\btdh\b|\btda\b/g, 'tdah');
+    var active = {};
     Object.keys(CONSTRUCTS).forEach(function (k) {
       var c = CONSTRUCTS[k];
       var strong = (c.strong || []).filter(function (w) { return t.indexOf(w) >= 0; });
