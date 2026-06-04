@@ -61,7 +61,8 @@
     nav:       function () { if (gate()) { tone(523, 0.06, 'sine', 0.5); tone(392, 0.10, 'sine', 0.4, 0.04); } },
     success:   function () { if (gate()) { chord([659.25, 987.77], 0.18, 'sine', 0.5, 0.06); haptic(12); } },
     error:     function () { if (gate()) { tone(196, 0.18, 'triangle', 0.5); tone(185, 0.22, 'triangle', 0.4, 0.06); haptic([8, 40, 8]); } },
-    celebrate: function () { if (gate()) { chord([523.25, 659.25, 783.99, 1046.5], 0.22, 'sine', 0.55, 0.075); haptic(18); pulse(); } }
+    celebrate: function () { if (gate()) { chord([523.25, 659.25, 783.99, 1046.5], 0.22, 'sine', 0.55, 0.075); haptic(18); pulse(); } },
+    welcome:   function () { if (gate()) chord([392.00, 523.25, 659.25, 783.99], 0.26, 'sine', 0.5, 0.09); }   // assinatura de boas-vindas
   };
 
   // Pulso visual sutil (só em vitórias grandes) — glow radial que aparece e some.
@@ -139,12 +140,17 @@
 
     // celebração (conclusão de escala etc.) — dispare window.dispatchEvent(new Event('np:celebrate'))
     window.addEventListener('np:celebrate', function () { S.celebrate(); });
-    // primeira interação destrava o AudioContext (políticas de autoplay)
-    window.addEventListener('pointerdown', function once() { audio(); window.removeEventListener('pointerdown', once); }, { once: true });
+    // primeira interação destrava o AudioContext (políticas de autoplay) e toca a
+    // assinatura de boas-vindas uma vez por sessão (se o som estiver ligado).
+    window.addEventListener('pointerdown', function once() {
+      audio();
+      try { if (enabled && !sessionStorage.getItem('np_welcomed')) { sessionStorage.setItem('np_welcomed', '1'); setTimeout(S.welcome, 140); } } catch (e) {}
+      window.removeEventListener('pointerdown', once);
+    }, { once: true });
   }
 
   window.npSound = {
-    tap: S.tap, nav: S.nav, success: S.success, error: S.error, celebrate: S.celebrate,
+    tap: S.tap, nav: S.nav, success: S.success, error: S.error, celebrate: S.celebrate, welcome: S.welcome,
     on: function () { setEnabled(true, true); }, off: function () { setEnabled(false); },
     toggle: function () { setEnabled(!enabled, true); },
     enabled: function () { return enabled; }

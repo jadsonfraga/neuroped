@@ -1,228 +1,230 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Clinical Intelligence Engine · NeuroPed</title>
-    <link rel="stylesheet" href="./tokens.css">
-    <link rel="stylesheet" href="./ds-tokens.css">
-    <link rel="stylesheet" href="./styles.css">
-    <link rel="stylesheet" href="./np-cards.css">
-    <style>
-        body {
-            background: var(--aurora-base);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        .engine-header {
-            padding: var(--space-8) 0 var(--space-6);
-            text-align: center;
-        }
-
-        .engine-title {
-            font-size: clamp(24px, 5vw, 32px);
-            margin-bottom: var(--space-2);
-            background: linear-gradient(135deg, var(--text-strong), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .search-container {
-            max-width: 720px;
-            margin: 0 auto var(--space-8);
-            position: sticky;
-            top: var(--space-4);
-            z-index: var(--z-sticky);
-        }
-
-        .search-box {
-            background: var(--surface-glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: var(--space-2);
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            box-shadow: var(--shadow-drama);
-            transition: all var(--motion-base) var(--motion-ease);
-        }
-
-        .search-box:focus-within {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-card-hover);
-            transform: translateY(-2px);
-        }
-
-        .search-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: var(--space-3) var(--space-4);
-            color: var(--text-strong);
-            font-size: 17px;
-            outline: none;
-        }
-
-        .search-input::placeholder {
-            color: var(--text-soft);
-        }
-
-        .context-chips {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin-top: var(--space-4);
-        }
-
-        .chip {
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--motion-fast) var(--motion-ease);
-        }
-
-        .chip.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: transparent;
-            box-shadow: var(--shadow-glow-violet);
-        }
-
-        .results-grid {
-            padding-bottom: var(--space-10);
-        }
-
-        .section-label {
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--primary);
-            margin-bottom: var(--space-4);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-label::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border), transparent);
-        }
-
-        /* Skeleton Animation */
-        .skeleton-card {
-            height: 200px;
-            background: var(--surface-glass);
-            border-radius: var(--radius-lg);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .skeleton-card::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Clinical Intelligence Engine · NeuroPed</title>
+<meta name="description" content="Busca semântica e triagem clínica: descreva idade + queixa e o NeuroPed prioriza os instrumentos certos do catálogo (371), com evidência curada quando disponível.">
+<link rel="canonical" href="https://jadsonfraga.github.io/neuroped/filtro-escalas.html">
+<meta name="theme-color" content="#0e0e22">
+<meta property="og:title" content="Clinical Intelligence Engine — NeuroPed EDJ">
+<meta property="og:description" content="Triagem semântica: idade + queixa → instrumentos clínicos priorizados, com evidência curada.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<meta property="og:url" content="https://jadsonfraga.github.io/neuroped/filtro-escalas.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Clinical Intelligence Engine — NeuroPed EDJ">
+<meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./np-cards.css">
+<link rel="stylesheet" href="./app-skin.css">
+<link rel="stylesheet" href="./app-polish-mobile.css">
+<link rel="stylesheet" href="./ds-bridge.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  body{background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);min-height:100vh;font-family:var(--font-sans,system-ui)}
+  .wrap{max-width:1060px;margin:0 auto;padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+  .back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 2px}
+  /* Header */
+  .engine-header{padding:20px 0 14px;text-align:center}
+  .engine-title{font:700 clamp(24px,5vw,34px)/1.05 "Fraunces",Georgia,serif;margin:0 0 6px;
+    background:linear-gradient(135deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .engine-header p{margin:0;color:var(--text-muted,#b6b2e6);font-size:14px}
+  /* Busca premium */
+  .search-container{max-width:760px;margin:0 auto 18px;position:sticky;top:8px;z-index:20}
+  .search-box{display:flex;align-items:center;gap:10px;padding:6px 8px 6px 16px;border-radius:20px;
+    background:rgba(20,19,46,.72);border:1px solid rgba(169,164,255,.22);
+    backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
+    box-shadow:0 26px 70px -34px rgba(3,2,16,.92),inset 0 1px 0 rgba(255,255,255,.05);transition:border-color .2s,box-shadow .2s,transform .2s}
+  .search-box:focus-within{border-color:var(--primary,#7c79ff);box-shadow:0 0 0 4px rgba(124,118,210,.18),0 30px 70px -30px rgba(91,84,232,.5);transform:translateY(-1px)}
+  .search-box .mag{font-size:17px;opacity:.7}
+  .search-input{flex:1;background:transparent;border:0;outline:none;color:var(--text-strong,#fff);font-size:16px;padding:12px 4px}
+  .search-input::placeholder{color:var(--text-soft,#8b86b8)}
+  .search-go{border:0;border-radius:14px;padding:10px 16px;font:800 13px system-ui;cursor:pointer;color:#fff;
+    background:linear-gradient(135deg,#7C3AED,#4F46E5);box-shadow:0 12px 26px -12px rgba(124,58,237,.6)}
+  .search-go:active{transform:scale(.97)}
+  .context-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:12px}
+  .chip{padding:7px 14px;border-radius:999px;font:700 13px system-ui;cursor:pointer;color:#c9c4f0;
+    background:rgba(124,118,210,.12);border:1px solid rgba(169,164,255,.2);transition:transform .16s,border-color .18s,background .18s,box-shadow .18s}
+  .chip:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.4)}
+  .chip.active{background:var(--primary,#7c79ff);color:#fff;border-color:transparent;box-shadow:0 12px 26px -12px rgba(91,84,232,.7)}
+  /* Seções + grid */
+  .detected{max-width:760px;margin:0 auto 6px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center}
+  .detected b{color:#a7f3d0}
+  .section-label{display:flex;align-items:center;gap:9px;font:800 12px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--primary-light,#a9a4ff);margin:18px 2px 10px}
+  .section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(169,164,255,.3),transparent)}
+  .np-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:13px}
+  /* Card (premium, sobre np-cards.css/base) */
+  .sc-card{position:relative;display:block;text-decoration:none;color:var(--text,#ECEAFF);overflow:hidden;
+    background:linear-gradient(180deg,rgba(124,118,210,.13),rgba(124,118,210,.045));border:1px solid rgba(169,164,255,.16);
+    border-radius:18px;padding:15px 16px;box-shadow:0 18px 48px -28px rgba(3,2,16,.82);
+    transition:transform .18s,box-shadow .18s,border-color .18s;animation:scRise .45s cubic-bezier(.22,.9,.25,1) both}
+  .sc-card:hover{transform:translateY(-3px);border-color:rgba(169,164,255,.34);box-shadow:0 28px 64px -28px rgba(91,84,232,.5)}
+  .sc-card.top{border-color:rgba(231,201,139,.4);box-shadow:0 0 0 1px rgba(231,201,139,.3),0 26px 60px -26px rgba(231,201,139,.28)}
+  .sc-head{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+  .sc-sigla{width:42px;height:42px;flex:0 0 auto;border-radius:13px;display:grid;place-items:center;font:800 15px "Fraunces",Georgia,serif;color:#fff;
+    background:linear-gradient(140deg,var(--c1,#7c79ff),var(--c2,#4f46e5));box-shadow:0 10px 22px -10px var(--c1,#7c79ff)}
+  .sc-tt h3{margin:0;font:700 15.5px var(--font-sans,system-ui);color:var(--text,#fff);line-height:1.2}
+  .sc-sub{font-size:12px;color:var(--text-muted,#b6b2e6)}
+  .sc-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .sc-badge{font:700 10.5px system-ui;border-radius:999px;padding:3px 8px;background:rgba(124,118,210,.16);color:#c9b8ff;border:1px solid rgba(169,164,255,.2)}
+  .sc-badge.age{background:rgba(16,185,129,.14);color:#6ee7b7;border-color:rgba(16,185,129,.28)}
+  .sc-ev{margin-top:9px;font-size:11.5px;color:#cbd5e1;background:rgba(231,201,139,.10);border:1px solid rgba(231,201,139,.24);border-radius:10px;padding:6px 9px}
+  .sc-ev b{color:#e8dcc2}
+  .sc-why{margin-top:7px;font-size:11.5px;color:var(--text-muted,#94A3B8)}
+  .sc-why b{color:#cbd5e1}
+  .empty{grid-column:1/-1;text-align:center;color:var(--text-muted,#94A3B8);padding:30px 18px;border:1px dashed rgba(169,164,255,.2);border-radius:18px}
+  .disc{max-width:820px;margin:22px auto 0;font-size:11.5px;color:var(--text-muted,#94A3B8);line-height:1.55;border-top:1px solid rgba(169,164,255,.14);padding-top:12px;text-align:center}
+  @keyframes scRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}}
+</style>
 </head>
-<body>
-    <div class="main-content">
-        <header class="engine-header">
-            <h1 class="engine-title">Clinical Intelligence Engine</h1>
-            <p class="text-muted">Busca semântica e triagem clínica inteligente para neuropediatria.</p>
-        </header>
+<body data-ns-shell>
+<main class="wrap">
+  <a class="back" href="./index.html">‹ Início</a>
+  <header class="engine-header">
+    <h1 class="engine-title">Clinical Intelligence Engine</h1>
+    <p>Descreva <strong>idade + queixa</strong> — a busca prioriza os instrumentos certos do catálogo, com evidência curada quando houver.</p>
+  </header>
 
-        <div class="search-container">
-            <div class="search-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Ex: criança agitada, dificuldade na fala, TDAH..." autocomplete="off">
-            </div>
-            <div class="context-chips" id="contextChips">
-                <!-- Chips gerados dinamicamente -->
-            </div>
-        </div>
-
-        <section id="recommendedSection" style="display: none;">
-            <div class="section-label">Sugestões Preditivas</div>
-            <div class="results-grid np-cards-grid" id="recommendedResults"></div>
-        </section>
-
-        <section id="allSection">
-            <div class="section-label">Instrumentos Clínicos</div>
-            <div class="results-grid np-cards-grid" id="allResults">
-                <!-- Cards de escalas -->
-            </div>
-        </section>
+  <div class="search-container">
+    <div class="search-box">
+      <span class="mag" aria-hidden="true">🔎</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Ex.: criança 5 anos agitada, escola suspeita de TDAH…" autocomplete="off" aria-label="Buscar instrumento por idade e queixa">
+      <button class="search-go" id="searchGo" type="button">Buscar</button>
     </div>
+    <div class="context-chips" id="contextChips" role="group" aria-label="Queixas comuns"></div>
+  </div>
 
-    <script src="./scales-taxonomy.js"></script>
-    <script>
-        const SEARCH_DATA = [
-            { id: 'mchat', title: 'M-CHAT-R/F', sub: 'TEA / Rastreio (16-30m)', c1: '#7c79ff', c2: '#4f46e5', tags: ['tea', 'fala', 'social'], age: '16-30m' },
-            { id: 'snap', title: 'SNAP-IV', sub: 'TDAH / Comportamento', c1: '#f59e0b', c2: '#d97706', tags: ['tdah', 'escola', 'atencao'], age: '6-18a' },
-            { id: 'sdq', title: 'SDQ-25', sub: 'Saúde Mental Geral', c1: '#10b981', c2: '#059669', tags: ['comportamento', 'emocional'], age: '3-16a' },
-            { id: 'cars', title: 'CARS-2', sub: 'TEA / Gravidade', c1: '#8b5cf6', c2: '#7c3aed', tags: ['tea', 'gravidade'], age: '2a+' }
-        ];
+  <div id="detected" class="detected" hidden></div>
 
-        function createCard(item) {
-            return `
-                <a href="./escala.html?id=${item.id}" class="np-card">
-                    <div class="np-card-head">
-                        <div class="np-sigla" style="--c1: ${item.c1}; --c2: ${item.c2}">${item.id.toUpperCase().slice(0,2)}</div>
-                        <div class="np-card-tt">
-                            <h3>${item.title}</h3>
-                            <span class="np-card-sub">${item.sub}</span>
-                        </div>
-                    </div>
-                    <div class="np-badges">
-                        <span class="np-badge age">${item.age}</span>
-                        ${item.tags.map(t => `<span class="np-badge">${t}</span>`).join('')}
-                    </div>
-                </a>
-            `;
-        }
+  <section id="recommendedSection" style="display:none">
+    <div class="section-label">Sugestões preditivas</div>
+    <div class="np-cards-grid" id="recommendedResults"></div>
+  </section>
 
-        function render() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const results = SEARCH_DATA.filter(item => 
-                item.title.toLowerCase().includes(query) || 
-                item.sub.toLowerCase().includes(query) ||
-                item.tags.some(t => t.includes(query))
-            );
+  <section id="allSection">
+    <div class="section-label">Instrumentos indicados <span id="resCount" aria-live="polite" style="font-weight:700;color:var(--text-muted,#94A3B8);text-transform:none;letter-spacing:0"></span></div>
+    <div class="np-cards-grid" id="allResults"></div>
+  </section>
 
-            document.getElementById('allResults').innerHTML = results.map(createCard).join('');
-            
-            // Simular lógica preditiva
-            const recommended = document.getElementById('recommendedSection');
-            if (query.length > 3) {
-                recommended.style.display = 'block';
-                document.getElementById('recommendedResults').innerHTML = results.slice(0, 2).map(createCard).join('');
-            } else {
-                recommended.style.display = 'none';
-            }
-        }
+  <p class="disc">Busca por relevância sobre os metadados autorais dos instrumentos + idade/queixa. <strong>Apoio à decisão, não diagnóstico</strong> — não substitui o julgamento do profissional. A evidência exibida é curada (citação + PMID) e não implica validação do instrumento autoral.</p>
+</main>
 
-        document.getElementById('searchInput').addEventListener('input', render);
-        
-        // Initial render
-        render();
-    </script>
-    <script src="./premium-motion.js"></script>
+<script src="./scales-bundle.js"></script>
+<script src="./clinical-meta.js"></script>
+<script>
+(function(){
+  'use strict';
+  function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+  var STOP={'anos':1,'ano':1,'meses':1,'mes':1,'menino':1,'menina':1,'crianca':1,'paciente':1,'filho':1,'filha':1,'idade':1,'suspeita':1,'tem':1,'com':1,'sem':1,'que':1,'uma':1,'dos':1,'das':1,'para':1,'por':1,'apresenta':1,'relata':1,'queixa':1,'escola':1,'anos.':1};
+  // chips de contexto = queixas comuns (clique injeta no campo)
+  var CHIPS=['TEA / autismo','TDAH','fala / linguagem','comportamento','sono','ansiedade','aprendizagem','motor','sensorial','adaptativo'];
+  var PALETTE=[['#7c79ff','#4f46e5'],['#f59e0b','#d97706'],['#10b981','#059669'],['#8b5cf6','#7c3aed'],['#60a5fa','#2563eb'],['#fb7185','#e11d48'],['#34d399','#0ea5e9']];
+  var LAST=[];
+
+  function ageMonthsFromText(t){ t=norm(t); var m=t.match(/(\d+)\s*(anos?|a\b)/); if(m) return parseInt(m[1],10)*12; var mm=t.match(/(\d+)\s*(meses|mes|m\b)/); if(mm) return parseInt(mm[1],10); return null; }
+  function isDiary(s){ var t=String(s.title||''); if(/invent[áa]rio|inventory/i.test(t)) return false; return s.kind==='diário'||s.daily===true||/^diario-/.test(s.id||''); }
+  function isBank(s){ return /lote|banco completo/i.test(s.title||''); }
+  function sigla(s){ var t=norm(s.short_title||s.title||s.id||'?').replace(/[^a-z0-9 ]/g,'').trim(); var p=t.split(/\s+/); return ((p[0]&&p[0][0]||'')+(p[1]?p[1][0]:(p[0]&&p[0][1]||''))).toUpperCase()||'NP'; }
+  function colorFor(s){ var k=String(s.id||s.title||''); var h=0; for(var i=0;i<k.length;i++) h=(h*31+k.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length]; }
+
+  function score(s, tokens, age){
+    if(!s||!s.id||isDiary(s)||isBank(s)) return null;
+    var terms=norm([].concat(s.keywords||[],s.complaints||[],s.symptoms||[],[s.domain||'',s.title||'',s.short_title||'']).join(' '));
+    var hits=[]; tokens.forEach(function(tk){ if(tk.length>=3 && terms.indexOf(tk)>=0 && hits.indexOf(tk)<0) hits.push(tk); });
+    var sc=hits.length*10; if(!sc) return null;
+    var amin=Number(s.age_min_months||0), amax=Number(s.age_max_months||240);
+    if(age!=null){ if(age>=amin&&age<=amax) sc+=12; else if(Math.abs(age-((amin+amax)/2))<=18) sc+=4; else sc-=10; }
+    if(s.official_catalog||s.official_url) sc+=3;
+    return { s:s, sc:sc, hits:hits };
+  }
+
+  function evidenceFor(id){
+    try{ var e=window.NeuroPedMeta&&NeuroPedMeta.evidence?NeuroPedMeta.evidence(id):null; if(!e) return null;
+      var src=(e.validity&&e.validity[0])||(e.guideline_support&&e.guideline_support[0])||null;
+      if(!src||!src.citation) return null;
+      return esc(String(src.citation).slice(0,90))+(src.pmid?(' · PMID '+esc(String(src.pmid))):'');
+    }catch(err){ return null; }
+  }
+
+  function card(r, isTop){
+    var s=r.s, c=colorFor(s), age=s.age_band||((s.age_min_months||0)+'–'+(s.age_max_months||240)+'m');
+    var ev=evidenceFor(s.id);
+    var badges='<span class="sc-badge age">'+esc(age)+'</span>'+(s.domain?'<span class="sc-badge">'+esc(s.domain)+'</span>':'')+(s.official_catalog?'<span class="sc-badge">Fonte oficial</span>':'');
+    return '<a class="sc-card'+(isTop?' top':'')+'" href="./escala.html?id='+encodeURIComponent(s.id)+'">'
+      +'<div class="sc-head"><div class="sc-sigla" style="--c1:'+c[0]+';--c2:'+c[1]+'">'+esc(sigla(s))+'</div>'
+      +'<div class="sc-tt"><h3>'+esc(s.short_title||s.title)+'</h3><span class="sc-sub">'+esc(s.domain||'instrumento')+'</span></div></div>'
+      +'<div class="sc-badges">'+badges+'</div>'
+      +(r.hits&&r.hits.length?'<div class="sc-why"><b>Por que:</b> '+esc(r.hits.join(', '))+'</div>':'')
+      +(ev?'<div class="sc-ev">📚 <b>Evidência:</b> '+ev+'</div>':'')
+      +'</a>';
+  }
+
+  function topCatalog(){ // estado inicial: instrumentos em destaque do catálogo
+    var cat=window.NEUROPED_EDITORIAL_SCALES||[];
+    return cat.filter(function(s){return s&&s.id&&!isDiary(s)&&!isBank(s);})
+      .sort(function(a,b){return (b.official_catalog?1:0)-(a.official_catalog?1:0);})
+      .slice(0,12).map(function(s){return {s:s,sc:0,hits:[]};});
+  }
+
+  function run(){
+    var cat=window.NEUROPED_EDITORIAL_SCALES||[];
+    var all=document.getElementById('allResults'), rec=document.getElementById('recommendedSection'),
+        recR=document.getElementById('recommendedResults'), det=document.getElementById('detected'), cnt=document.getElementById('resCount');
+    var q=document.getElementById('searchInput').value.trim();
+    if(!cat.length){ all.innerHTML='<div class="empty">Carregando catálogo… toque em Buscar em instantes.</div>'; return; }
+    try{ localStorage.setItem('np_cie_q', q); }catch(e){}
+    if(!q){ // sem query → catálogo em destaque
+      det.hidden=true; rec.style.display='none';
+      var t=topCatalog(); cnt.textContent='· catálogo';
+      all.innerHTML=t.map(function(r){return card(r,false);}).join('');
+      return;
+    }
+    var age=ageMonthsFromText(q);
+    var tokens=norm(q).split(/[^a-z0-9]+/).filter(function(x){return x.length>=3 && !STOP[x];});
+    var ranked=cat.map(function(s){return score(s,tokens,age);}).filter(Boolean).sort(function(a,b){return b.sc-a.sc;});
+    var seen={},seenT={},top=[]; ranked.forEach(function(r){ var tk=norm(r.s.short_title||r.s.title); if(!seen[r.s.id]&&!seenT[tk]){seen[r.s.id]=1;seenT[tk]=1;top.push(r);} });
+    LAST=top;
+    det.hidden=false;
+    det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b> · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
+    cnt.textContent='· '+top.length;
+    if(!top.length){ rec.style.display='none'; all.innerHTML='<div class="empty">Nenhum instrumento casou com a queixa. Tente sintomas/suspeita (ex.: “não fala”, “agitado”, “seletivo”).</div>'; return; }
+    rec.style.display='block';
+    recR.innerHTML=top.slice(0,3).map(function(r){return card(r,true);}).join('');
+    all.innerHTML=top.slice(3).map(function(r){return card(r,false);}).join('')||'<div class="empty">Esses 3 acima são os mais indicados para a queixa.</div>';
+  }
+
+  // chips de contexto
+  (function(){ var box=document.getElementById('contextChips');
+    box.innerHTML=CHIPS.map(function(c){return '<button class="chip" type="button">'+esc(c)+'</button>';}).join('');
+    box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
+      b.classList.toggle('active');
+      var inp=document.getElementById('searchInput');
+      var txt=b.textContent.split('/')[0].trim();
+      if(b.classList.contains('active')) inp.value=(inp.value?inp.value+' ':'')+txt;
+      run();
+    });});
+  })();
+
+  var inp=document.getElementById('searchInput'); try{ inp.value=localStorage.getItem('np_cie_q')||''; }catch(e){}
+  var deb; inp.addEventListener('input',function(){ clearTimeout(deb); deb=setTimeout(run,180); });
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); run(); } });
+  document.getElementById('searchGo').addEventListener('click',run);
+
+  function boot(){ if(window.NeuroPedMeta&&NeuroPedMeta.load) NeuroPedMeta.load().then(run).catch(run); else run();
+    // re-render quando o catálogo terminar de carregar
+    if(!(window.NEUROPED_EDITORIAL_SCALES||[]).length){ var n=0,iv=setInterval(function(){ if((window.NEUROPED_EDITORIAL_SCALES||[]).length||n++>60){clearInterval(iv);run();} },120); } }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+<script src="./app-polish-mobile.js" defer></script>
+<script src="./np-frame.js" defer></script>
+<script src="./app-frame.js" defer></script>
+<script src="./ambient-effects.js" defer></script>
 </body>
 </html>

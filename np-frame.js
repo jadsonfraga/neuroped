@@ -65,6 +65,7 @@
 
   function openTool(url, label){
     build();
+    try { if (window.npSound && window.npSound.nav) window.npSound.nav(); } catch (e) {}
     var load = ov.querySelector('.npf-load'); if (load) load.style.display = 'grid';
     titleEl.textContent = (label || 'Carregando…').slice(0, 40);
     frame.src = url;
