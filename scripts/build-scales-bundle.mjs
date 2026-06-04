@@ -18,6 +18,8 @@ export const BUNDLE_ORDER = [
   'scales-oficiais.js',
   'scales-curate.js',
   'scales-red-flags.js',
+  'scales-direct-tasks.js',          // biblioteca de tarefas diretas (fonte de verdade)
+  'scales-direct-tests-catalog.js',  // promove as tarefas a instrumentos filtráveis (top-3 pré-consulta)
 ];
 
 export function buildBundle(root = process.cwd()) {
