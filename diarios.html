@@ -46,8 +46,20 @@
   <script>
   (function(){
     'use strict';
-    // Mesma definição do filtro: o que sai da triagem entra aqui (simetria).
-    function isDiary(s){ if(!s) return false; var t=String(s.title||''); if(/invent[áa]rio|inventory/i.test(t)) return false; return s.kind==='diário' || s.daily===true || /^diario-/.test(s.id||''); }
+    // Definição ÚNICA de "diário" (simetria): o que SAI da triagem de pré-consulta
+    // entra aqui no painel de diários. O sinal factual kind==='diário'/daily prevalece
+    // sobre o título — havia diários titulados "Inventário … ritmo diário" e registros
+    // longitudinais sendo escondidos pela guarda antiga.
+    function isDiary(s){
+      if(!s) return false;
+      if(s.kind==='diário' || s.kind==='diario' || s.daily===true) return true;
+      var n=function(x){ return String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); };
+      var id=n(s.id);
+      if(/(^|[-_])diario(s)?([-_]|$)/.test(id)) return true;
+      var t=n([s.title,s.short_title,s.domain].join(' '));
+      if(/\bdiario\b|registro diario|controle diario|monitoramento longitud|acompanhamento longitud|longitudinal/.test(t)) return true;
+      return false;
+    }
     function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
     function band(s){ return s.age_band || ((s.age_min_months||0)+'–'+(s.age_max_months||215)+' meses'); }
     function render(){

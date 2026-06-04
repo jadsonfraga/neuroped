@@ -219,6 +219,9 @@ assertIncludes('perfil-crianca.html', 'id="grid"', 'perfil-crianca preserva o co
 assertIncludes('perfil-crianca.html', 'id="timelineSec"', 'perfil-crianca preserva o contrato JS (linha do tempo)');
 assertIncludes('intake.html', 'PREMIUM SKIN', 'intake (Triagem) tem a camada de skin premium (Onda 1)');
 assertIncludes('intake.html', 'id="relato"', 'intake preserva o contrato JS (campo de relato)');
+// Regra de ouro (pré-consulta): intake também exclui diários, com o sinal factual kind/daily
+assertIncludes('intake.html', "s.kind==='diário'", 'intake exclui diários (mesma regra de pré-consulta do filtro)');
+assertNotIncludes('intake.html', 'if(/invent[áa]rio|inventory/i.test(t)) return false', 'intake: removida a guarda que deixava diários "Inventário" vazarem');
 assertIncludes('filtro-escalas.html', 'Clinical Intelligence Engine', 'filtro-escalas é o motor premium de busca (Onda 1)');
 assertIncludes('filtro-escalas.html', 'id="allResults"', 'filtro-escalas tem o grid de resultados do motor');
 
