@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script src="./public-mode.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0e22">
@@ -338,25 +339,10 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 
   // Portão de estudo (soft, nível interface): instrumentos proprietários só
   // abrem para ESTUDO com a senha. Não contêm os itens originais.
-  function showStudyGate(){
-    document.getElementById('title').textContent='🔒 Área de estudo — acesso restrito';
-    var m=document.getElementById('meta'); if(m)m.textContent=(INST?INST.title.replace(/^🔒\s*/,''):'')+' · uso restrito (estudo, não clínico)';
-    var w=document.getElementById('why'); if(w)w.hidden=true;
-    var sy=document.getElementById('sym'); if(sy)sy.innerHTML='';
-    document.getElementById('prog').hidden=true;
-    var d=document.getElementById('detail');
-    d.innerHTML='<div style="max-width:520px;margin:14px auto;padding:18px;border:1px solid rgba(169,164,255,.25);border-radius:14px;background:rgba(124,118,210,.08)">'
-      +'<p style="margin:0 0 6px;font-weight:800;color:#f3ddb0">Instrumento proprietário — referência de estudo</p>'
-      +'<p style="margin:0 0 12px;font-size:13px;color:#a9a4d8">Apoio ao ESTUDO do construto (NÃO os itens originais, que são protegidos por direito autoral). Não usar para fins clínicos aqui — para isso, licencie o instrumento original na fonte. Digite a senha de estudo:</p>'
-      +'<input id="studyPw" type="password" placeholder="Senha de estudo" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid rgba(169,164,255,.3);background:rgba(0,0,0,.2);color:#fff;font-size:15px">'
-      +'<button id="studyGo" type="button" style="margin-top:10px;width:100%;padding:11px;border:0;border-radius:10px;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5)">Abrir para estudo</button>'
-      +'<p id="studyErr" style="display:none;margin:8px 0 0;color:#fda4af;font-size:12px">Senha incorreta.</p>'
-      +(INST&&INST._official_url?('<p style="margin:12px 0 0;font-size:12px"><a href="'+esc(INST._official_url)+'" target="_blank" rel="noopener" style="color:#a9a4ff">↗ Fonte oficial — licenciar/obter o original</a></p>'):'')
-      +'</div>';
-    function tryPw(){ var v=(document.getElementById('studyPw').value||'').trim(); if(v==='fraga1108'){ sessionStorage.setItem('np_study_ok','1'); boot(); } else { document.getElementById('studyErr').style.display='block'; } }
-    document.getElementById('studyGo').onclick=tryPw;
-    document.getElementById('studyPw').addEventListener('keydown',function(e){ if(e.key==='Enter')tryPw(); });
-  }
+  // Modo público (sem senhas): instrumentos de referência de estudo abrem
+  // direto como REFERÊNCIA (perguntas-guia autorais + proveniência; nunca os
+  // itens originais protegidos). O antigo portão por senha foi removido.
+  function showStudyGate(){ /* desativado no modo público — sem senha */ }
   function boot(){
     var id=qs('id');
     if(!id){showEmpty('Nenhum instrumento informado.');return;}
@@ -366,8 +352,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     catalog(function(map){
       var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
       INST=normalize(raw);
-      // Instrumentos proprietários: referência de ESTUDO atrás de senha (uso restrito, não clínico).
-      if(INST._study_only && sessionStorage.getItem('np_study_ok')!=='1'){ showStudyGate(); return; }
+      // Modo público: sem portão de senha — referência de estudo abre direto.
       loadProgress(); CURRENT_BLOCK=firstUnansweredBlock(); // retoma respostas e abre no bloco a continuar
       document.getElementById('title').textContent=INST.title;
       document.getElementById('meta').textContent=[INST.subtitle,INST.cat].filter(Boolean).join(' · ')+(INST._study_only?' · 🔒 USO RESTRITO — ESTUDO, NÃO CLÍNICO':'');

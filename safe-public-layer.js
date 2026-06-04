@@ -72,10 +72,11 @@
     catch (e) { return false; }
   }
   function goToPin(path) {
+    // MODO PÚBLICO (sem senha): rota sensível volta para a HOME educacional,
+    // não para um PIN. public-mode.js é o guarda principal.
     try {
       var basePath = window.location.pathname;
-      var target = basePath.replace(/[^/]*$/, "") + "consulta.html?next=" + encodeURIComponent(path || "/");
-      window.location.replace(target);
+      window.location.replace(basePath.replace(/[^/]*$/, "") + "index.html?indisponivel=rota");
     } catch (e) { window.location.hash = ""; }
   }
   function check() {
