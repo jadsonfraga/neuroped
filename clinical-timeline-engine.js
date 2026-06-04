@@ -73,6 +73,7 @@
     var thr = cfg.thresholds || {};
     var dMin = thr.change_min == null ? 0.10 : thr.change_min;      // variação mínima relevante (fração de severity/raw)
     var unstableSd = thr.unstable_sd == null ? 0.18 : thr.unstable_sd;
+    var minPts = thr.min_points == null ? 2 : Math.max(2, Number(thr.min_points)); // mínimo de pontos p/ rotular tendência
 
     // agrupa por instrumento (só compara like-with-like)
     var byInst = {};
@@ -88,8 +89,8 @@
     var points = best.map(function (e) { return { t: e.timestamp, value: useSeverity ? e.severity : e.raw_pct, instrument: e.instrument }; });
     var span = best.length > 1 ? Math.round((ts(best[best.length - 1].timestamp) - ts(best[0].timestamp)) / 86400000) : 0;
 
-    if (vals.length < 2) {
-      return new ClinicalTrajectory({ domain: domain, points: points, status: TRAJ.SINGLE, direction: 'na', magnitude: 0, stability: 1, span_days: span, explanation: 'Apenas uma aplicação comparável neste domínio — sem trajetória ainda.' });
+    if (vals.length < minPts) {
+      return new ClinicalTrajectory({ domain: domain, points: points, status: TRAJ.SINGLE, direction: 'na', magnitude: 0, stability: 1, span_days: span, explanation: 'Pontos insuficientes (' + vals.length + ' de ' + minPts + ') para rotular tendência neste domínio.' });
     }
 
     var delta = vals[vals.length - 1] - vals[0];           // no sentido da métrica usada

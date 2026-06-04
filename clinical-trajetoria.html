@@ -49,6 +49,7 @@
 <script src="./contradiction-engine.js"></script>
 <script src="./clinical-decision-support.js"></script>
 <script src="./clinical-visual-schema.js"></script>
+<script src="./clinical-config-adapter.js"></script>
 <!-- carrega a config validada se existir; senão cai no rascunho de exemplo -->
 <script>window.__npCfgFallback='./clinical-config.example.js';</script>
 <script src="./clinical-config.js" onerror="(function(){var s=document.createElement('script');s.src=window.__npCfgFallback;document.head.appendChild(s);})()"></script>
@@ -70,7 +71,8 @@
 
   function run(){
     var C = window.NeuroPedCIL || {};
-    var g = gateConfig(window.CLINICAL_CONFIG || window.NeuroPedClinicalConfig || {});
+    var rawCfg = window.CLINICAL_CONFIG || window.NeuroPedClinicalConfig || {};
+    var g = gateConfig(C.adaptConfig ? C.adaptConfig(rawCfg) : rawCfg);
     var out = document.getElementById('out'), gate = document.getElementById('gate');
     gate.className = g.validated ? 'gate ok' : 'gate';
     gate.innerHTML = g.validated
