@@ -25,6 +25,8 @@ export const BUNDLE_ORDER = [
   'scales-intl-livres.js',           // curadoria de instrumentos internacionais de licença livre (referência)
   'scales-autoral-funcional.js',     // autorais Dr. Jadson: autonomia, risco cognitivo, risco de dislexia
   'scales-sensorial-perfil.js',      // autoral: Perfil Sensorial NeuroPed (7 sistemas × 5 faixas etárias)
+  'scales-tempo-tela.js',            // autoral: Tempo de Tela e Hábitos Digitais (7 dimensões × 5 faixas)
+  'scales-coordenacao-motora.js',    // autoral: Coordenação Motora e Praxia / TDC (7 áreas × 5 faixas)
   'scales-estudo-restrito.js',       // proprietários como REFERÊNCIA DE ESTUDO (senha, não clínico)
   'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
   'scales-official-questions.js',    // perguntas-guia autorais p/ instrumentos de referência (abrem completos)

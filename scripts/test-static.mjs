@@ -552,6 +552,26 @@ assertIncludes('scales-sensorial-perfil.js', 'not_normative_disclaimer', 'PSN de
 assertIncludes('scales-bundle.js', 'scales-sensorial-perfil.js', 'filtro liga o Perfil Sensorial (PSN)');
 assertIncludes('instrumento-autoral.html', 'scales-sensorial-perfil.js', 'renderizador autoral carrega o Perfil Sensorial (PSN)');
 
+// Tempo de Tela e Hábitos Digitais (HDN) — triagem autoral de uso de telas
+assertFile('scales-tempo-tela.js');
+assertIncludes('scales-tempo-tela.js', 'hdn-tela-0-2', 'HDN cobre a faixa 0–2 anos');
+assertIncludes('scales-tempo-tela.js', 'hdn-tela-12-17', 'HDN cobre a faixa 12–17 anos');
+assertIncludes('scales-tempo-tela.js', 'Conteúdo e segurança', 'HDN cobre conteúdo e segurança online');
+assertIncludes('scales-tempo-tela.js', 'not_normative_disclaimer', 'HDN declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-tempo-tela.js', 'filtro liga o Tempo de Tela (HDN)');
+assertIncludes('instrumento-autoral.html', 'scales-tempo-tela.js', 'renderizador autoral carrega o Tempo de Tela (HDN)');
+
+// Coordenação Motora e Praxia (CMN) — triagem autoral de TDC/disgrafia
+assertFile('scales-coordenacao-motora.js');
+assertIncludes('scales-coordenacao-motora.js', 'cmn-motor-0-2', 'CMN cobre a faixa 0–2 anos');
+assertIncludes('scales-coordenacao-motora.js', 'cmn-motor-12-17', 'CMN cobre a faixa 12–17 anos');
+for (const area of ['Motor grosso', 'Motor fino', 'Escrita e grafismo', 'Praxia e planejamento motor']) {
+  assertIncludes('scales-coordenacao-motora.js', area, 'CMN cobre a área motora: ' + area);
+}
+assertIncludes('scales-coordenacao-motora.js', 'not_normative_disclaimer', 'CMN declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-coordenacao-motora.js', 'filtro liga a Coordenação Motora (CMN)');
+assertIncludes('instrumento-autoral.html', 'scales-coordenacao-motora.js', 'renderizador autoral carrega a Coordenação Motora (CMN)');
+
 assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
 // Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
 for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
