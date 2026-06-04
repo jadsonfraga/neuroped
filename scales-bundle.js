@@ -2773,6 +2773,38 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     desenvolvimento: {
       strong: ['atraso global', 'regressao', 'nao senta', 'nao engatinha', 'marcos', 'atrasado para idade', 'vigilancia do desenvolvimento'],
       weak: ['desenvolvimento', 'atraso']
+    },
+    substancias: {
+      strong: ['alcool', 'maconha', 'cigarro', 'vape', 'droga', 'substancia', 'crafft', 'bebida alcool'],
+      weak: ['usa']
+    },
+    cognicao: {
+      strong: ['deficiencia intelectual', 'atraso cognitivo', 'idade mental', 'aprende devagar', 'retardo'],
+      weak: ['cognic', 'raciocinio', 'memoria', 'inteligencia', 'imaturo']
+    },
+    trauma: {
+      strong: ['trauma', 'tept', 'evento traumatico', 'abuso', 'pesadelo apos', 'luto'],
+      weak: ['susto']
+    },
+    dor: {
+      strong: ['dor de cabeca', 'cefaleia', 'enxaqueca', 'dor abdominal', 'dor cronica'],
+      weak: []
+    },
+    toc: {
+      strong: ['toc', 'obsess', 'compuls', 'ritual', 'mania de repetir', 'lavar as maos'],
+      weak: ['conferir', 'simetria']
+    },
+    tiques: {
+      strong: ['tique', 'tiques', 'tourette', 'movimento involuntario', 'pigarro repetido'],
+      weak: ['pisca muito']
+    },
+    regulacao: {
+      strong: ['desregulac', 'descontrole emocional', 'explosao emocional'],
+      weak: ['autocontrole']
+    },
+    mutismo: {
+      strong: ['mutismo', 'nao fala na escola', 'so fala em casa'],
+      weak: ['timidez extrema']
     }
   };
 
@@ -2849,7 +2881,58 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     return out;
   }
 
-  var api = { version: '1.0.0', CONSTRUCTS: CONSTRUCTS, expand: expand, constructsOf: constructsOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  // Catálogo de QUEIXAS leigas (chips do filtro). label = texto curto exibido;
+  // q = consulta que dispara o construto certo via expand(). 46 queixas distintas.
+  var QUEIXAS = [
+    { label: '🧩 Não olha nos olhos', q: 'não olha nos olhos contato visual autismo' },
+    { label: '🧩 Não atende quando chamam', q: 'não responde ao nome autismo' },
+    { label: '🧩 Não aponta / não mostra', q: 'não aponta autismo' },
+    { label: '🧩 Brinca sozinho / isolado', q: 'brinca sozinho autismo isolado' },
+    { label: '🧩 Movimentos repetitivos', q: 'movimentos repetitivos ecolalia autismo' },
+    { label: '🎯 Muito agitado / não para', q: 'agitado não para quieto hiperatividade' },
+    { label: '🎯 Desatento / disperso', q: 'desatento desatenção tdah' },
+    { label: '🎯 Impulsivo / não espera', q: 'impulsivo não espera a vez tdah' },
+    { label: '🎯 Esquece / desorganizado', q: 'esquece desorganizado tdah' },
+    { label: '🗣️ Atraso de fala', q: 'atraso de fala não fala' },
+    { label: '🗣️ Troca sons / fala enrolada', q: 'troca sons fala enrolada' },
+    { label: '🗣️ Gagueira', q: 'gagueira gagueja disfluência' },
+    { label: '📚 Dificuldade na escola', q: 'dificuldade escolar aprendizagem' },
+    { label: '📖 Não lê bem (dislexia)', q: 'não lê dislexia leitura' },
+    { label: '🔢 Dificuldade com matemática', q: 'discalculia matemática' },
+    { label: '✏️ Troca/inverte letras', q: 'troca letras escrita dislexia' },
+    { label: '💢 Birras intensas / explode', q: 'birra explosão comportamento' },
+    { label: '💢 Desafia / desobedece', q: 'desafia desobedece oposição' },
+    { label: '🌋 Agressivo / bate', q: 'agressivo bate agressividade' },
+    { label: '💧 Triste / desanimado', q: 'triste tristeza desânimo humor' },
+    { label: '😡 Irritado quase sempre', q: 'irritado irritabilidade humor' },
+    { label: '😰 Muito medo / ansioso', q: 'ansioso medo ansiedade' },
+    { label: '😰 Não desgruda dos pais', q: 'ansiedade de separação' },
+    { label: '😰 Preocupa-se demais', q: 'preocupa demais ansiedade' },
+    { label: '🤐 Só fala em casa (mutismo)', q: 'mutismo não fala na escola' },
+    { label: '🌙 Demora a dormir', q: 'não dorme insônia sono' },
+    { label: '🌙 Acorda à noite / pesadelos', q: 'acorda à noite pesadelo sono' },
+    { label: '🌙 Ronca dormindo', q: 'ronca sono' },
+    { label: '✨ Incomoda com barulho/textura', q: 'sensorial barulho textura seletividade' },
+    { label: '🍽️ Come muito mal / seletivo', q: 'seletividade alimentar sensorial' },
+    { label: '🤸 Desajeitado / cai muito', q: 'desajeitado coordenação motora' },
+    { label: '✍️ Dificuldade com lápis', q: 'motricidade fina dificuldade com lápis' },
+    { label: '🧒 Atraso para andar/sentar', q: 'não senta não anda marcos motores atraso' },
+    { label: '📈 Atraso no desenvolvimento', q: 'atraso global do desenvolvimento marcos' },
+    { label: '↩️ Perdeu habilidades (regressão)', q: 'regressão perdeu habilidades' },
+    { label: '🧗 Pouca autonomia p/ idade', q: 'autonomia independência adaptativo' },
+    { label: '🧗 Não faz tarefas sozinho', q: 'depende para tarefas autocuidado' },
+    { label: '🧠 Aprende devagar / imaturo', q: 'aprende devagar atraso cognitivo deficiência intelectual' },
+    { label: '🛟 Fala em se machucar (risco)', q: 'risco suicídio se machucar' },
+    { label: '🚭 Uso de álcool/drogas', q: 'álcool drogas substâncias adolescente' },
+    { label: '🌧️ Após evento traumático', q: 'trauma evento traumático tept' },
+    { label: '🤕 Dor de cabeça frequente', q: 'dor de cabeça cefaleia enxaqueca' },
+    { label: '🔁 Rituais / mania de repetir', q: 'toc obsessão compulsão ritual' },
+    { label: '😬 Tiques / movimentos involuntários', q: 'tiques movimento involuntário tourette' },
+    { label: '⚡ Convulsão / "desligar"', q: 'convulsão crise epilepsia ausência' },
+    { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
+  ];
+
+  var api = { version: '1.1.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);
