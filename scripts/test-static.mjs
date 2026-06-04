@@ -54,6 +54,16 @@ for (const p of ['central-atalhos.html','portal-familia-livre.html','area-filho.
   assertIncludes(p, 'noindex', p+' aposentada é noindex');
 }
 assertIncludes('sitemap.xml', '<lastmod>', 'sitemap tem lastmod');
+// Anti-regressão de nav: o rótulo 'Portal da Família' foi renomeado para
+// 'Educativo / Psicoeducação' (alinhado ao bundle da SPA). Um re-upload do
+// zip-fonte já clobberou esse rename uma vez; estas guardas fazem a suíte
+// (que roda antes do deploy) falhar se qualquer superfície estática voltar
+// ao nome antigo. Fonte da verdade: o bundle da SPA usa 'Educativo'.
+assertIncludes('routes.config.js', "Educativo / Psicoeducação', href:'./portal-familia-livre.html'", "nav: rota familiar usa 'Educativo / Psicoeducação' (não regrediu p/ 'Portal da Família')");
+assertNotIncludes('routes.config.js', "'Portal da Família'", "nav: rótulo antigo 'Portal da Família' não voltou em routes.config.js");
+assertIncludes('app-frame.js', "lbl: 'Educativo',  href: './portal-familia-livre.html'", "nav: bottom nav usa 'Educativo' (não regrediu p/ 'Família')");
+assertIncludes('app-shell.js', "['Educativo','./portal-familia-livre.html'", "nav: header usa 'Educativo' (não regrediu p/ 'Família')");
+assertIncludes('tour.js', "title:'Educativo / Psicoeducação'", "tour: passo educativo renomeado (não regrediu p/ 'Portal da Família')");
 // Consolidação P0: política de privacidade com fonte única
 assertIncludes('privacy-policy.html', 'privacidade.html', 'privacy-policy redireciona p/ fonte única de privacidade');
 assertNotIncludes('terms-of-use.html', 'privacy-policy.html', 'termos apontam para a privacidade canônica');
