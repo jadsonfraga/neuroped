@@ -108,6 +108,6 @@
     comparable: comparable
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.Normalize = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.Normalize = api;
 })(typeof self !== 'undefined' ? self : this);

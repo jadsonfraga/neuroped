@@ -29,7 +29,7 @@ orientada por **fenótipo neurofuncional** — não mais "catálogo de escalas".
 | `clinical-decision-support.js` | 9 | Lacunas, reavaliação devida, excesso terapêutico, domínio subexplorado. |
 | `clinical-visual-schema.js` | 8 | View-models (radar, timeline, heatmap, burden, trajectory, clusters). Sem DOM. |
 
-Namespace global: `window.NeuroPedClinical.{Explain,Normalize,Timeline,Phenotype,Burden,Response,Contradiction,DecisionSupport,VisualSchema}`. Também `module.exports` (testável em Node).
+Namespace global: `window.NeuroPedCIL.{Explain,Normalize,Timeline,Phenotype,Burden,Response,Contradiction,DecisionSupport,VisualSchema}`. Também `module.exports` (testável em Node).
 
 ## Domínios funcionais canônicos (12)
 `linguagem · atencao · hiperatividade · socializacao · rigidez · sensorial · aprendizagem · emocional · comportamento_adaptativo · executivo · sono · autonomia`

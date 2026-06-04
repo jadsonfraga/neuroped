@@ -82,7 +82,7 @@
     return out;
   }
 
-  function dep(name, path) { return (global.NeuroPedClinical && global.NeuroPedClinical[name]) || (typeof require !== 'undefined' ? require(path) : null); }
+  function dep(name, path) { return (global.NeuroPedCIL && global.NeuroPedCIL[name]) || (typeof require !== 'undefined' ? require(path) : null); }
   function mean(a) { return a.length ? a.reduce(function (s, x) { return s + x; }, 0) / a.length : 0; }
   function range(a) { return a.length ? Math.max.apply(null, a) - Math.min.apply(null, a) : 0; }
   function clamp01(n) { n = Number(n); if (isNaN(n)) return 0; return Math.max(0, Math.min(1, n)); }
@@ -91,6 +91,6 @@
 
   var api = { detectPhenotypes: detectPhenotypes, aggregateByDomain: aggregateByDomain, respondentDivergence: respondentDivergence };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.Phenotype = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.Phenotype = api;
 })(typeof self !== 'undefined' ? self : this);

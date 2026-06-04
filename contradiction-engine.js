@@ -69,12 +69,12 @@
     return matched.length ? matched.reduce(function (a, b) { return a + b; }, 0) / matched.length : null;
   }
   function keyOf(sel) { return sel ? [sel.source, sel.domain, sel.respondent].filter(Boolean).join('/') : '?'; }
-  function dep(name, path) { return (global.NeuroPedClinical && global.NeuroPedClinical[name]) || (typeof require !== 'undefined' ? require(path) : null); }
+  function dep(name, path) { return (global.NeuroPedCIL && global.NeuroPedCIL[name]) || (typeof require !== 'undefined' ? require(path) : null); }
   function clamp01(n) { n = Number(n); if (isNaN(n)) return 0; return Math.max(0, Math.min(1, n)); }
   function round(n, d) { var f = Math.pow(10, d || 2); return Math.round(Number(n) * f) / f; }
 
   var api = { detect: detect };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.Contradiction = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.Contradiction = api;
 })(typeof self !== 'undefined' ? self : this);

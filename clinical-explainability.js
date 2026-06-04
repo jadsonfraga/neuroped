@@ -68,6 +68,6 @@
 
   var api = { makeInsight: makeInsight, insufficientConfig: insufficientConfig, _normEvidence: normEvidence };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.Explain = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.Explain = api;
 })(typeof self !== 'undefined' ? self : this);

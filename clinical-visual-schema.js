@@ -82,6 +82,6 @@
 
   var api = { functionalRadar: functionalRadar, evolutionTimeline: evolutionTimeline, symptomHeatmap: symptomHeatmap, burdenMap: burdenMap, trajectoryGraph: trajectoryGraph, phenotypeClusters: phenotypeClusters };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.VisualSchema = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.VisualSchema = api;
 })(typeof self !== 'undefined' ? self : this);

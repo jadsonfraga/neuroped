@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var Norm = (global.NeuroPedClinical && global.NeuroPedClinical.Normalize) ||
+  var Norm = (global.NeuroPedCIL && global.NeuroPedCIL.Normalize) ||
     (typeof require !== 'undefined' ? require('./clinical-normalization.js') : null);
 
   // ---- estruturas ----
@@ -156,6 +156,6 @@
     TRAJ: TRAJ, ClinicalEvent: ClinicalEvent, ClinicalEpisode: ClinicalEpisode, ClinicalTrajectory: ClinicalTrajectory, FunctionalDomain: FunctionalDomain
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.NeuroPedClinical = global.NeuroPedClinical || {};
-  global.NeuroPedClinical.Timeline = api;
+  global.NeuroPedCIL = global.NeuroPedCIL || {};
+  global.NeuroPedCIL.Timeline = api;
 })(typeof self !== 'undefined' ? self : this);
