@@ -240,6 +240,10 @@ assertNotIncludes('clinical-trajetoria.html', '<div class="card">', 'Trajetória
 assertIncludes('perfil-crianca.html', 'PREMIUM SKIN', 'perfil-crianca tem a camada de skin premium (Onda 1)');
 assertIncludes('perfil-crianca.html', 'id="grid"', 'perfil-crianca preserva o contrato JS (grid de crianças)');
 assertIncludes('perfil-crianca.html', 'id="timelineSec"', 'perfil-crianca preserva o contrato JS (linha do tempo)');
+assertIncludes('intake.html', 'PREMIUM SKIN', 'intake (Triagem) tem a camada de skin premium (Onda 1)');
+assertIncludes('intake.html', 'id="relato"', 'intake preserva o contrato JS (campo de relato)');
+assertIncludes('filtro-escalas.html', 'PREMIUM SKIN', 'filtro-escalas tem a camada de skin premium (Onda 1)');
+assertIncludes('filtro-escalas.html', 'id="results"', 'filtro-escalas preserva o contrato JS (resultados)');
 
 // Identidade premium: tipografia institucional + capa do hub
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
