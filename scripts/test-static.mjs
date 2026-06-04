@@ -287,6 +287,11 @@ for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-
 assertIncludes('app-polish-mobile.css', '.np-skel', 'skeleton loaders definidos (sensação de app)');
 assertIncludes('app-polish-mobile.css', '.np-empty', 'estado vazio institucional definido');
 assertIncludes('filtro-escalas.html', 'Carregando catálogo', 'filtro mostra estado de carregamento do catálogo');
+assertIncludes('filtro-escalas.html', 'function skeleton', 'filtro mostra skeletons (CIE) enquanto o catálogo carrega');
+assertIncludes('filtro-escalas.html', 'id="searchClear"', 'filtro tem botão de limpar busca');
+// Limpeza do styles.css órfão (1139→81): páginas não-consumidoras não o carregam mais
+assertNotIncludes('setup.html', 'href="styles.css"', 'setup.html não carrega o styles.css órfão');
+assertNotIncludes('verificar.html', 'href="styles.css"', 'verificar.html não carrega o styles.css órfão');
 assertIncludes('app-polish-mobile.js', 'qualitySeal', 'selo de qualidade no rodapé (robustez)');
 assertIncludes('app-polish-mobile.js', 'function pageExit', 'navegação guiada: transição de saída ao trocar de tela (app-wide)');
 assertIncludes('app-polish-mobile.js', 'np-leaving', 'fade de saída por opacidade (não quebra sticky/fixed)');

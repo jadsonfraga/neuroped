@@ -78,8 +78,16 @@
   .sc-why b{color:#cbd5e1}
   .empty{grid-column:1/-1;text-align:center;color:var(--text-muted,#94A3B8);padding:30px 18px;border:1px dashed rgba(169,164,255,.2);border-radius:18px}
   .disc{max-width:820px;margin:22px auto 0;font-size:11.5px;color:var(--text-muted,#94A3B8);line-height:1.55;border-top:1px solid rgba(169,164,255,.14);padding-top:12px;text-align:center}
+  /* Botão limpar busca */
+  .search-clear{border:0;background:rgba(124,118,210,.14);color:#c9c4f0;border-radius:11px;width:34px;height:34px;font-size:16px;cursor:pointer;flex:0 0 auto;display:none}
+  .search-clear.show{display:inline-grid;place-items:center}
+  .search-clear:hover{background:rgba(124,118,210,.24)}
+  /* Skeleton de carregamento — mesma linguagem dos cards */
+  .sc-skel{height:120px;border-radius:18px;border:1px solid rgba(169,164,255,.12);background:rgba(124,118,210,.06);position:relative;overflow:hidden}
+  .sc-skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:scShimmer 1.4s infinite}
+  @keyframes scShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
   @keyframes scRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}}
+  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}}
 </style>
 </head>
 <body data-ns-shell>
@@ -94,6 +102,7 @@
     <div class="search-box">
       <span class="mag" aria-hidden="true">🔎</span>
       <input type="text" id="searchInput" class="search-input" placeholder="Ex.: criança 5 anos agitada, escola suspeita de TDAH…" autocomplete="off" aria-label="Buscar instrumento por idade e queixa">
+      <button class="search-clear" id="searchClear" type="button" aria-label="Limpar busca">×</button>
       <button class="search-go" id="searchGo" type="button">Buscar</button>
     </div>
     <div class="context-chips" id="contextChips" role="group" aria-label="Queixas comuns"></div>
@@ -165,6 +174,7 @@
       +'</a>';
   }
 
+  function skeleton(){ document.getElementById('allResults').innerHTML=Array.apply(null,{length:6}).map(function(){return '<div class="sc-skel"></div>';}).join(''); }
   function topCatalog(){ // estado inicial: instrumentos em destaque do catálogo
     var cat=window.NEUROPED_EDITORIAL_SCALES||[];
     return cat.filter(function(s){return s&&s.id&&!isDiary(s)&&!isBank(s);})
@@ -211,14 +221,21 @@
     });});
   })();
 
-  var inp=document.getElementById('searchInput'); try{ inp.value=localStorage.getItem('np_cie_q')||''; }catch(e){}
-  var deb; inp.addEventListener('input',function(){ clearTimeout(deb); deb=setTimeout(run,180); });
+  var inp=document.getElementById('searchInput'), clr=document.getElementById('searchClear');
+  try{ inp.value=localStorage.getItem('np_cie_q')||''; }catch(e){}
+  function toggleClear(){ clr.classList.toggle('show', !!inp.value); }
+  var deb; inp.addEventListener('input',function(){ toggleClear(); clearTimeout(deb); deb=setTimeout(run,180); });
   inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); run(); } });
   document.getElementById('searchGo').addEventListener('click',run);
+  clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });
 
-  function boot(){ if(window.NeuroPedMeta&&NeuroPedMeta.load) NeuroPedMeta.load().then(run).catch(run); else run();
-    // re-render quando o catálogo terminar de carregar
-    if(!(window.NEUROPED_EDITORIAL_SCALES||[]).length){ var n=0,iv=setInterval(function(){ if((window.NEUROPED_EDITORIAL_SCALES||[]).length||n++>60){clearInterval(iv);run();} },120); } }
+  function boot(){
+    toggleClear();
+    var ready=(window.NEUROPED_EDITORIAL_SCALES||[]).length;
+    if(!ready) skeleton();                                   // mostra skeleton enquanto o catálogo carrega
+    if(window.NeuroPedMeta&&NeuroPedMeta.load) NeuroPedMeta.load().then(run).catch(run); else run();
+    if(!ready){ var n=0,iv=setInterval(function(){ if((window.NEUROPED_EDITORIAL_SCALES||[]).length||n++>60){clearInterval(iv);run();} },120); }
+  }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
