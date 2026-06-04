@@ -51,6 +51,16 @@
     background:rgba(124,118,210,.12);border:1px solid rgba(169,164,255,.2);transition:transform .16s,border-color .18s,background .18s,box-shadow .18s}
   .chip:hover{transform:translateY(-2px);border-color:rgba(169,164,255,.4)}
   .chip.active{background:var(--primary,#7c79ff);color:#fff;border-color:transparent;box-shadow:0 12px 26px -12px rgba(91,84,232,.7)}
+  /* Quem responde + medalhas */
+  .resp-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:11px}
+  .resp-lb{font:800 11px system-ui;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted,#94A3B8)}
+  .chip.resp.active{background:linear-gradient(135deg,#7C3AED,#4F46E5)}
+  .legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:11px auto 0;font-size:11.5px;color:var(--text-muted,#94A3B8)}
+  .sc-medal{display:inline-flex;align-items:center;gap:4px;font:800 11px system-ui;border-radius:999px;padding:4px 10px}
+  .sc-medal.ouro{background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 8px 18px -8px rgba(231,201,139,.65)}
+  .sc-medal.prata{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#1e293b}
+  .sc-medal.bronze{background:linear-gradient(135deg,rgba(205,127,80,.55),rgba(146,90,56,.55));color:#f3e3d6;border:1px solid rgba(205,127,80,.45)}
+  .sc-badge.resp{background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.26)}
   /* Seções + grid */
   .detected{max-width:760px;margin:0 auto 6px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center}
   .detected b{color:#a7f3d0}
@@ -106,12 +116,14 @@
       <button class="search-go" id="searchGo" type="button">Buscar</button>
     </div>
     <div class="context-chips" id="contextChips" role="group" aria-label="Queixas comuns"></div>
+    <div class="resp-row"><span class="resp-lb">Quem responde?</span><div class="context-chips" id="respChips" role="group" aria-label="Quem responde"></div></div>
+    <div class="legend"><span>🥇 <b>Ouro</b>: melhor indicação (queixa + idade + respondente)</span><span>🥈 <b>Prata</b>: boa</span><span>🥉 <b>Bronze</b>: alternativa</span></div>
   </div>
 
   <div id="detected" class="detected" hidden></div>
 
   <section id="recommendedSection" style="display:none">
-    <div class="section-label">Sugestões preditivas</div>
+    <div class="section-label">🥇 Mais indicados (Ouro clínico)</div>
     <div class="np-cards-grid" id="recommendedResults"></div>
   </section>
 
@@ -161,11 +173,28 @@
     }catch(err){ return null; }
   }
 
-  function card(r, isTop){
+  // Quem responde (audience do catálogo) — filtro/peso
+  var RESP='';
+  var RESP_MAP={'Criança':'clinico','Pais/Família':'familia','Escola':'escola','Adolescente':'autoteste'};
+  var MEDAL={ouro:'🥇 Ouro clínico',prata:'🥈 Prata',bronze:'🥉 Bronze'};
+  var AUD={familia:'👪 Pais',escola:'🏫 Escola',clinico:'🧑‍⚕️ Aplicação',terapeuta:'🤝 Terapeuta',autoteste:'🧒 Autoavaliação',misto:'👪+🏫'};
+  function respMatch(s){ if(!RESP) return 1; var a=s.audience||'clinico'; return (a===RESP||a==='misto')?2:0; }   // 0 não casa · 1 neutro · 2 casa
+  // Medalha = relevância × faixa etária × respondente
+  function tierOf(r, age){
+    var s=r.s, amin=Number(s.age_min_months||0), amax=Number(s.age_max_months||240);
+    var inBand = age==null || (age>=amin&&age<=amax);
+    var nearBand = age!=null && !inBand && Math.abs(age-((amin+amax)/2))<=18;
+    var rm = respMatch(s), strong = r.hits.length>=2 || r.sc>=22;
+    if(strong && inBand && rm>=1) return 'ouro';
+    if(r.hits.length>=1 && (inBand||nearBand) && rm>=1) return 'prata';
+    return 'bronze';
+  }
+  function card(r){
     var s=r.s, c=colorFor(s), age=s.age_band||((s.age_min_months||0)+'–'+(s.age_max_months||240)+'m');
-    var ev=evidenceFor(s.id);
-    var badges='<span class="sc-badge age">'+esc(age)+'</span>'+(s.domain?'<span class="sc-badge">'+esc(s.domain)+'</span>':'')+(s.official_catalog?'<span class="sc-badge">Fonte oficial</span>':'');
-    return '<a class="sc-card'+(isTop?' top':'')+'" href="./escala.html?id='+encodeURIComponent(s.id)+'">'
+    var ev=evidenceFor(s.id), tier=r.tier, aud=AUD[s.audience||'clinico']||'';
+    var badges='<span class="sc-badge age">'+esc(age)+'</span>'+(aud?'<span class="sc-badge resp">'+aud+'</span>':'')+(s.domain?'<span class="sc-badge">'+esc(s.domain)+'</span>':'')+(s.official_catalog?'<span class="sc-badge">Fonte oficial</span>':'');
+    return '<a class="sc-card'+(tier==='ouro'?' top':'')+'" href="./escala.html?id='+encodeURIComponent(s.id)+'">'
+      +(tier?'<div class="sc-badges" style="margin:0 0 8px"><span class="sc-medal '+tier+'">'+MEDAL[tier]+'</span></div>':'')
       +'<div class="sc-head"><div class="sc-sigla" style="--c1:'+c[0]+';--c2:'+c[1]+'">'+esc(sigla(s))+'</div>'
       +'<div class="sc-tt"><h3>'+esc(s.short_title||s.title)+'</h3><span class="sc-sub">'+esc(s.domain||'instrumento')+'</span></div></div>'
       +'<div class="sc-badges">'+badges+'</div>'
@@ -197,17 +226,31 @@
     }
     var age=ageMonthsFromText(q);
     var tokens=norm(q).split(/[^a-z0-9]+/).filter(function(x){return x.length>=3 && !STOP[x];});
-    var ranked=cat.map(function(s){return score(s,tokens,age);}).filter(Boolean).sort(function(a,b){return b.sc-a.sc;});
+    var ranked=cat.map(function(s){return score(s,tokens,age);}).filter(Boolean);
+    ranked.forEach(function(r){ r.tier=tierOf(r,age); r.rank=(r.tier==='ouro'?3:(r.tier==='prata'?2:1)); if(RESP&&respMatch(r.s)>=2) r.sc+=6; });
+    ranked.sort(function(a,b){ return (b.rank-a.rank)||(b.sc-a.sc); });
     var seen={},seenT={},top=[]; ranked.forEach(function(r){ var tk=norm(r.s.short_title||r.s.title); if(!seen[r.s.id]&&!seenT[tk]){seen[r.s.id]=1;seenT[tk]=1;top.push(r);} });
     LAST=top;
     det.hidden=false;
-    det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b> · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
+    det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b>'+(RESP?(' · responde: <b>'+esc(Object.keys(RESP_MAP).filter(function(k){return RESP_MAP[k]===RESP;})[0]||RESP)+'</b>'):'')+' · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
     cnt.textContent='· '+top.length;
     if(!top.length){ rec.style.display='none'; all.innerHTML='<div class="empty">Nenhum instrumento casou com a queixa. Tente sintomas/suspeita (ex.: “não fala”, “agitado”, “seletivo”).</div>'; return; }
-    rec.style.display='block';
-    recR.innerHTML=top.slice(0,3).map(function(r){return card(r,true);}).join('');
-    all.innerHTML=top.slice(3).map(function(r){return card(r,false);}).join('')||'<div class="empty">Esses 3 acima são os mais indicados para a queixa.</div>';
+    var ouro=top.filter(function(r){return r.tier==='ouro';}).slice(0,3);
+    rec.style.display=ouro.length?'block':'none';
+    recR.innerHTML=ouro.map(card).join('');
+    var rest=top.filter(function(r){return ouro.indexOf(r)<0;});
+    all.innerHTML=rest.map(card).join('')||'<div class="empty">As indicações Ouro acima são as mais alinhadas ao caso.</div>';
   }
+
+  // Quem responde? — seletor (single-select)
+  (function(){ var box=document.getElementById('respChips'); if(!box) return;
+    var opts=['Todos','Criança','Pais/Família','Escola','Adolescente'];
+    box.innerHTML=opts.map(function(o,i){return '<button class="chip resp'+(i===0?' active':'')+'" type="button" data-resp="'+(RESP_MAP[o]||'')+'">'+esc(o)+'</button>';}).join('');
+    box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
+      box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active'); RESP=b.getAttribute('data-resp')||''; run();
+    });});
+  })();
 
   // chips de contexto
   (function(){ var box=document.getElementById('contextChips');
