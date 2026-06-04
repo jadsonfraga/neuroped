@@ -2334,6 +2334,15 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     }
   ];
 
+  // Bandeira de origem (proveniência visível).
+  var ORIGIN = {
+    'ofc3-qchat': '🇬🇧', 'ofc3-aq10': '🇬🇧', 'ofc3-cries8': '🇬🇧',
+    'ofc3-scared': '🇺🇸', 'ofc3-mfq': '🇺🇸', 'ofc3-cshq': '🇺🇸', 'ofc3-snap-iv': '🇺🇸',
+    'ofc3-ocicv': '🇺🇸', 'ofc3-moves': '🇺🇸', 'ofc3-erc': '🇺🇸', 'ofc3-smq': '🇺🇸',
+    'ofc3-fpsr': '🌍', 'ofc3-kidscreen10': '🇪🇺', 'ofc3-ftf515': '🇪🇺',
+    'ofc3-essenceq': '🇸🇪', 'ofc3-kdst': '🇰🇷', 'ofc3-ndds': '🇨🇦', 'ofc3-irdi': '🇧🇷'
+  };
+
   var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
   var ids = {}; base.forEach(function (x) { if (x && x.id) ids[x.id] = 1; });
   var add = [];
@@ -2348,6 +2357,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       plain_questions: [],            // preenchidas (autorais) por scales-official-questions.js
       applicable: false,
       license_status: it.license_status,
+      _origin: ORIGIN[it.id] || '🌍',
       _citation: it._citation, _pmid: it._pmid, _intl_curated: true
     });
   });
