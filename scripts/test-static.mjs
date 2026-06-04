@@ -64,6 +64,14 @@ assertIncludes('app-polish-mobile.js', 'np_lgpd_ack', 'banner LGPD (1ª visita) 
 // Posicionamento MVP educacional: enquadramento honesto em TODA tela (rodapé global) + banner
 assertIncludes('app-polish-mobile.js', 'educacional de apoio', 'rodapé global declara natureza educacional (não diagnóstico) em toda tela');
 assertIncludes('app-polish-mobile.js', 'não substitui avaliação profissional', 'disclaimer global: não substitui avaliação profissional');
+// Página "Natureza da ferramenta" (MVP educacional) + smoke funcional
+assertFile('sobre-natureza.html');
+assertIncludes('sobre-natureza.html', 'Não é diagnóstico', 'página de natureza declara: não é diagnóstico');
+assertIncludes('sobre-natureza.html', 'apenas neste aparelho', 'página de natureza explica dados locais');
+assertIncludes('app-polish-mobile.js', './sobre-natureza.html', 'rodapé global linka a página de natureza da ferramenta');
+assertIncludes('sw.js', './sobre-natureza.html', 'sobre-natureza no precache (offline)');
+assertFile('scripts/smoke.mjs');
+assertIncludes('package.json', '"smoke"', 'npm run smoke configurado (E2E funcional em Node)');
 assertIncludes('neuroped-pro.html', 'FAQPage', 'landing pro tem FAQ schema (SEO/rich result)');
 assertIncludes('neuroped-pro.html', '"Service"', 'landing pro tem Service schema com preço');
 assertIncludes('filtro-escalas.html', 'aria-live="polite"', 'filtro anuncia resultado ao leitor de tela');
