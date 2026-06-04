@@ -189,6 +189,30 @@
       'Houve algum evento ou estresse novo desde o último contato?',
       'A adesão (consultas, terapias, medicação) está adequada?',
       'É preciso ajustar o plano ou encaminhar para avaliação?'
+    ],
+    trauma: [
+      'Houve algum evento assustador, perda, acidente ou situação muito difícil?',
+      'A criança revive a situação sem querer (pensamentos, imagens, pesadelos)?',
+      'Evita lugares, pessoas ou assuntos que lembram o que aconteceu?',
+      'Ficou mais assustada, alerta ou se sobressalta com facilidade?',
+      'Tem dificuldade para dormir ou se concentrar desde o evento?',
+      'O humor mudou (mais irritada, triste ou "desligada") após o ocorrido?',
+      'Voltou a comportamentos de quando era menor (xixi na cama, muito apego)?',
+      'Brinca repetidamente cenas ligadas ao que aconteceu?',
+      'Esses sinais já duram mais de um mês?',
+      'Isso atrapalha a escola, o sono ou a convivência?'
+    ],
+    dor: [
+      'A criança sente dor com frequência? Onde costuma doer?',
+      'De 0 a 10, qual costuma ser a intensidade da dor?',
+      'A dor faz parar de brincar, estudar ou dormir?',
+      'Com que frequência a dor aparece (diária, semanal, esporádica)?',
+      'Há algo que parece desencadear (esforço, telas, jejum, estresse)?',
+      'A dor vem com náusea, tontura ou incômodo com luz/barulho?',
+      'A criança falta à escola por causa da dor?',
+      'Algo costuma melhorar (repouso, remédio, ambiente escuro)?',
+      'A dor mudou de padrão ou piorou recentemente?',
+      'A dor atrapalha o humor e as atividades do dia a dia?'
     ]
   };
 
@@ -207,7 +231,9 @@
     comportamento: { complaints: ['comportamento', 'oposicao', 'desafia', 'birra', 'agressividade', 'tod'], symptoms: ['desafia regras', 'explosões de raiva', 'agressividade'] },
     sono: { complaints: ['sono', 'insonia', 'pesadelo', 'ronca', 'acorda', 'dormir'], symptoms: ['dificuldade para dormir', 'desperta à noite', 'sonolência diurna'] },
     saude_mental_global: { complaints: ['saude mental', 'rastreio', 'bem-estar', 'forças e dificuldades', 'triagem'], symptoms: ['sinais emocionais', 'sinais comportamentais', 'impacto funcional'] },
-    seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] }
+    seguimento: { complaints: ['seguimento', 'monitoramento', 'evolucao', 'tratamento', 'resposta'], symptoms: ['mudança no período', 'adesão', 'metas'] },
+    trauma: { complaints: ['trauma', 'tept', 'estresse pos-traumatico', 'evento', 'susto', 'abuso', 'perda', 'luto', 'pesadelo', 'acidente'], symptoms: ['revive o evento', 'evita lembranças', 'hipervigilância', 'sobressalto'] },
+    dor: { complaints: ['dor', 'cefaleia', 'dor de cabeca', 'enxaqueca', 'dor abdominal', 'dor cronica', 'doi'], symptoms: ['dor recorrente', 'falta escolar por dor', 'dor com náusea'] }
   };
 
   // Classificação de licença (alto grau de confiança; demais → verificar na fonte).
@@ -240,7 +266,8 @@
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
-    'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global'
+    'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
+    'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -248,7 +275,9 @@
     if (ID_BUCKET[s.id]) return ID_BUCKET[s.id];
     var d = norm([s.domain || '', s.cat || '', s.finalidade || '', s.title || '', s.id || ''].join(' '));
     if (/risco|suicid|seguranca|autoagress|cssrs|\basq\b/.test(d)) return 'risco';
-    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia/.test(d)) return 'desenvolvimento';
+    if (/trauma|tept|ptsd|pos-?traumat|abuso|\bluto\b|evento traumat|cries/.test(d)) return 'trauma';
+    if (/\bdor\b|cefaleia|enxaqueca|\bpain\b|fps-r|faces de dor/.test(d)) return 'dor';
+    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee/.test(d)) return 'desenvolvimento';
     if (/substanc|alcool|drog|cigarro|crafft|vape/.test(d)) return 'substancias';
     if (/tea|autis|espectro|mchat/.test(d)) return 'tea';
     if (/sono|insonia|cshq|sleep/.test(d)) return 'sono';
