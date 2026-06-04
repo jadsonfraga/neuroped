@@ -139,7 +139,8 @@
       'background:#0f1223;color:#E5E7EB;border:1px solid rgba(169,164,255,.22);box-shadow:0 -20px 60px rgba(0,0,0,.5);font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif');
     box.innerHTML =
       '<h3 style="margin:0 0 4px;font:700 17px Georgia,serif;color:#f2dca6">Privacidade e meus dados</h3>' +
-      '<p style="margin:0 0 12px;font-size:13.5px;color:#94A3B8">Seus dados ficam <b>neste aparelho</b>. Use os botões abaixo para exercer seus direitos (LGPD).</p>' +
+      '<p style="margin:0 0 8px;font-size:13.5px;color:#94A3B8">Seus dados ficam <b>neste aparelho</b>. Use os botões abaixo para exercer seus direitos (LGPD).</p>' +
+      '<p style="margin:0 0 12px;font-size:12.5px;color:#e6c98b;background:rgba(231,201,139,.10);border:1px solid rgba(231,201,139,.24);border-radius:10px;padding:8px 11px">📵 <b>Computador compartilhado</b> (biblioteca, escola, lan house)? <b>Apague os dados ao sair</b> para a próxima pessoa não vê-los.</p>' +
       '<div style="display:grid;gap:8px">' +
         '<button id="np-lgpd-export" style="border:0;border-radius:12px;padding:13px;font:800 14px system-ui;cursor:pointer;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5)">⬇️ Exportar meus dados (backup)</button>' +
         '<button id="np-lgpd-erase" style="border:1px solid rgba(244,63,94,.4);border-radius:12px;padding:13px;font:800 14px system-ui;cursor:pointer;color:#fda4af;background:rgba(244,63,94,.10)">🗑️ Apagar todos os dados deste aparelho</button>' +

@@ -2,7 +2,7 @@
   'use strict';
   // PIN master ROTACIONADO (hash do novo PIN). Mantém em sincronia com
   // master-access-policy.js. Gate de INTERFACE — não é segurança server-side.
-  const MASTER_HASH=(window.NEUROPED_MASTER_PIN_HASH||'REMOVIDO');
+  const MASTER_HASH=(window.NEUROPED_MASTER_PIN_HASH||'');
   const MASTER_KEY='neuroped_master_access_v1';
   const TTL=12*60*60*1000;
   function normalizePin(v){return String(v||'').trim().toLowerCase()}
