@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL STORAGE V3.2
+   NeuroPed SDG · CLINICAL STORAGE V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Camada de persistência versionada para as 3 engines.

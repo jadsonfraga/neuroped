@@ -1,4 +1,4 @@
-# QA SMOKE-TEST — NeuroPed EDJ (validação no aparelho)
+# QA SMOKE-TEST — NeuroPed SDG (validação no aparelho)
 
 > Objetivo: em ~5 min, percorrer o caso clínico completo no celular e confirmar
 > que cada etapa funciona. Para cada passo há o **esperado**. Se divergir, anote

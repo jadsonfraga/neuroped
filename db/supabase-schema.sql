@@ -1,4 +1,4 @@
--- NeuroPed EDJ - Supabase schema (Postgres + RLS)
+-- NeuroPed SDG - Supabase schema (Postgres + RLS)
 --
 -- ATENCAO: este schema e a estrategia coexistir-lado-a-lado escolhida no PR.
 -- O backend D1 + Pages Functions continua canonico. Supabase entra como portal
@@ -145,7 +145,7 @@ create or replace view public.submissions_summary as
 -- ============================================================
 
 comment on table public.submissions is
-  'NeuroPed EDJ - resultados de instrumentos clinicos. Coexiste com tabela equivalente em D1.';
+  'NeuroPed SDG - resultados de instrumentos clinicos. Coexiste com tabela equivalente em D1.';
 comment on column public.submissions.case_code is
   'Codigo local do caso. Sem CPF, sem nome real. Identificador opaco controlado pelo medico.';
 comment on column public.submissions.patient_code is

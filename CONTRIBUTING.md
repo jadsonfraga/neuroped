@@ -1,4 +1,4 @@
-# Contribuindo com o NeuroPed EDJ
+# Contribuindo com o NeuroPed SDG
 
 Obrigado pelo interesse em contribuir. Esta é uma ferramenta clínica de uso profissional, então as contribuições passam por critério mais rigoroso do que repositórios genéricos.
 

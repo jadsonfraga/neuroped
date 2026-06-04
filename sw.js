@@ -1,5 +1,5 @@
 /* ===========================================================
-   NeuroPed EDJ — Service Worker
+   NeuroPed SDG — Service Worker
    Estratégia:
    - Navegação/HTML: network-first (evita servir index.html velho)
    - Assets com hash (imutáveis): cache-first

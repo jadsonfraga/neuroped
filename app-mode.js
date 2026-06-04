@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — App Mode Indicator v42 */
+/* NeuroPed SDG — App Mode Indicator v42 */
 (function(){
   'use strict';
   const MODES={

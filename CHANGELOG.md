@@ -1,4 +1,4 @@
-# Changelog — NeuroPed EDJ
+# Changelog — NeuroPed SDG
 
 ## v6.44.14 — 2026-06-03 — Evidência verificada: +6 instrumentos no registry
 

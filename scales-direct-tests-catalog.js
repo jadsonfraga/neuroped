@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Testes diretos como INSTRUMENTOS FILTRÁVEIS do catálogo
+/* NeuroPed SDG — Testes diretos como INSTRUMENTOS FILTRÁVEIS do catálogo
  * ----------------------------------------------------------------------
  * Promove a biblioteca de tarefas diretas (scales-direct-tasks.js →
  * NeuroPedDirectTasks.TASKS) a instrumentos de primeira classe dentro de

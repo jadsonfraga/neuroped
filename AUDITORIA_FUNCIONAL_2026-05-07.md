@@ -1,4 +1,4 @@
-# AUDITORIA FUNCIONAL — NeuroPed EDJ
+# AUDITORIA FUNCIONAL — NeuroPed SDG
 
 Data: 2026-05-07  
 Escopo: auditoria estática dos arquivos publicados na branch `main`, com foco em funcionalidades não operantes, inconsistências, riscos de cache, experiência de uso e melhorias realistas.

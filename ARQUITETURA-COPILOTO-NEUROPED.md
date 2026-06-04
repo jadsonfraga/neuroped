@@ -1,4 +1,4 @@
-# NeuroPed EDJ — Arquitetura do Copiloto Neuropediátrico
+# NeuroPed SDG — Arquitetura do Copiloto Neuropediátrico
 
 > **Framework executivo** de homogeneização visual + motor cognitivo clínico.
 > De "software médico" para **copiloto neuropediátrico**: experiência única,

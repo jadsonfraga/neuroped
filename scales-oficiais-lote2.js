@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — CATÁLOGO OFICIAL · LOTE 2
+/* NeuroPed SDG — CATÁLOGO OFICIAL · LOTE 2
    PROMIS Pediatric, Neuro-QoL Pediatric, DCDQ-BR e família Spence/SCAS.
    CONFORMIDADE: cards pesquisáveis com metadados e fonte oficial; não reproduz itens protegidos.
    PROMIS/Neuro-QoL: administração eletrônica clínica/comercial requer HEAP/licença.

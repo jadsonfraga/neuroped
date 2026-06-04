@@ -1,4 +1,4 @@
-# Auditoria Contínua NeuroPed EDJ
+# Auditoria Contínua NeuroPed SDG
 
 ## Registro v37 — Quality Foundation
 

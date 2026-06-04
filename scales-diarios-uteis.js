@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Diários de controle, testes diretos e ferramentas úteis gratuitas.
+/* NeuroPed SDG — Diários de controle, testes diretos e ferramentas úteis gratuitas.
    Conteúdo educacional autoral, anexado ao catálogo (NEUROPED_EDITORIAL_SCALES).
    Tipos que faltavam: diários diários (monitoração), testes diretos rápidos,
    inventários e ferramentas práticas — todos gratuitos. Não substituem

@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Instrumentos NÃO-LIVRES: REFERÊNCIA DE ESTUDO (uso restrito)
+/* NeuroPed SDG — Instrumentos NÃO-LIVRES: REFERÊNCIA DE ESTUDO (uso restrito)
  * --------------------------------------------------------------------------
  * Instrumentos proprietários (licença paga) catalogados APENAS como referência
  * de ESTUDO, atrás de senha (uso restrito, não clínico). NÃO contêm os itens

@@ -49,7 +49,7 @@ async function run(){
   // versão/cache: lê o token de cache atual dinamicamente (sem fixar versão → não fica obsoleto)
   const cacheTag=(sw.match(/neuroped-edj-v[0-9.]+/)||[''])[0];
   add('Versão/cache',cacheTag?'ok':'fail',cacheTag||'não encontrado');
-  add('Manifest PWA',manifest.includes('NeuroPed EDJ')&&manifest.includes('CAA Gratuita')?'ok':'fail','Manifest publicado e sem CAA Premium.');
+  add('Manifest PWA',manifest.includes('NeuroPed SDG')&&manifest.includes('CAA Gratuita')?'ok':'fail','Manifest publicado e sem CAA Premium.');
   add('Roteador central',routes.length>=10?'ok':'fail',routes.length+' rotas registradas.');
   add('Rotas protegidas marcadas',routes.filter(r=>r.requiresPin).length>=5?'ok':'warn',routes.filter(r=>r.requiresPin).map(r=>r.label).join(', '));
   const required=['./consulta.html','./portal-familia-livre.html','./comunicacao-alternativa.html','./diario-escola-terapias-v2.html','./filtro-escalas.html','./mapa-escalas.html','./teste-ouro-pin.html','./auditoria-operacional.html'];

@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — instrumento-celebrations.js
+   NeuroPed SDG — instrumento-celebrations.js
    ------------------------------------------------------------
    Micro-celebrações de progresso em instrumento.html / escala.html.
 

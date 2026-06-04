@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-why-card.js
+   NeuroPed SDG — scales-why-card.js
    ============================================================
    Gera o painel "Por que indicado?" para uma escala dado o sinal
    clínico fornecido (idade + queixas + contexto + audiência).

@@ -1,4 +1,4 @@
-# RELATORIO_PREMIUM_FINAL_V27 — NeuroPed EDJ
+# RELATORIO_PREMIUM_FINAL_V27 — NeuroPed SDG
 
 Data: 2026-05-07
 Versão: v27-premium-final
@@ -40,7 +40,7 @@ A entrega é não destrutiva, reversível e focada em percepção premium, legib
 
 A camada `premium-polish.js` injeta discretamente:
 
-- legenda institucional: “NeuroPed EDJ · cuidado, clareza e organização”;
+- legenda institucional: “NeuroPed SDG · cuidado, clareza e organização”;
 - chips contextuais conforme a página:
   - família: “sem CPF”, “ferramentas locais”, “dados sensíveis protegidos”;
   - consulta: “PIN master”, “uso médico”, “consulta organizada”;
@@ -87,4 +87,4 @@ Inclui:
 
 ## Veredito
 
-O NeuroPed EDJ ficou mais coeso, mais elegante e mais confiável visualmente, sem sacrificar funcionalidade. A camada v27 deve ser considerada a versão visualmente mais refinada até aqui.
+O NeuroPed SDG ficou mais coeso, mais elegante e mais confiável visualmente, sem sacrificar funcionalidade. A camada v27 deve ser considerada a versão visualmente mais refinada até aqui.

@@ -52,7 +52,7 @@ window.NEUROPED_CLOUD = {
   supabaseUrl: 'https://xyzcompany.supabase.co',
   supabasePublicAnon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   enabled: true,
-  projectLabel: 'NeuroPed EDJ Cloud'
+  projectLabel: 'NeuroPed SDG Cloud'
 };
 ```
 

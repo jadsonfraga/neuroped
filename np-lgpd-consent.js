@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — np-lgpd-consent.js · Consentimento LGPD + direitos do titular
+   NeuroPed SDG — np-lgpd-consent.js · Consentimento LGPD + direitos do titular
    ============================================================
    Corrige duas lacunas de conformidade ao abrir o app para pacientes/famílias:
 
@@ -48,7 +48,7 @@
     return out;
   }
   function exportData() {
-    var payload = { app: 'NeuroPed EDJ', exported_at: new Date().toISOString(), note: 'Cópia dos dados guardados neste aparelho (portabilidade LGPD).', data: collect() };
+    var payload = { app: 'NeuroPed SDG', exported_at: new Date().toISOString(), note: 'Cópia dos dados guardados neste aparelho (portabilidade LGPD).', data: collect() };
     try {
       var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       var a = document.createElement('a'); a.href = URL.createObjectURL(blob);

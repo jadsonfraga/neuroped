@@ -1,4 +1,4 @@
-# NeuroPed EDJ — v6.45.9
+# NeuroPed SDG — v6.45.9
 
 **Plataforma educacional e demonstrativa de neuropediatria — local-first (PWA)**
 
@@ -87,6 +87,6 @@ Os instrumentos autorais são recursos de **triagem operacional**. Não substitu
 
 ---
 
-© 2026 NeuroPed EDJ · Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756 · Neuropediatria — Petrolina-PE
+© 2026 NeuroPed SDG · Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756 · Neuropediatria — Petrolina-PE
 
 **Soli Deo Gloria.**

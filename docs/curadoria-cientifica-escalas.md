@@ -1,4 +1,4 @@
-# Curadoria Científica de Escalas Clínicas — NeuroPed EDJ
+# Curadoria Científica de Escalas Clínicas — NeuroPed SDG
 
 > Conteúdo clínico verificado conforme **PROMPT SUPREMO v2.0** (Protocolo de Verificação PubMed + Banco de Evidências + Portão de Auditoria). Cada métrica é marcada com nível de evidência: **✔ VERIFICADO** (fonte primária com PMID/DOI), **≈ CONSENSO** (manual/diretriz, sem número único citável), **⚠ NÃO CONFIRMADO** (não localizado em fonte acessível — declarado, nunca inventado).
 >

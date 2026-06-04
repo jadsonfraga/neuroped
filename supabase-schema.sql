@@ -1,4 +1,4 @@
--- NeuroPed EDJ — Supabase Schema (Postgres)
+-- NeuroPed SDG — Supabase Schema (Postgres)
 -- Execute em: SQL Editor do projeto Supabase
 
 create table if not exists public.submissions (

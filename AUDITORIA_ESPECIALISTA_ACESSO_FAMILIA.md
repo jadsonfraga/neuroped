@@ -1,4 +1,4 @@
-# AUDITORIA_ESPECIALISTA_ACESSO_FAMILIA — NeuroPed EDJ
+# AUDITORIA_ESPECIALISTA_ACESSO_FAMILIA — NeuroPed SDG
 
 Data: 2026-05-07
 Escopo: Portal da Família, PIN master, área do filho, dados pessoais, dados clínicos sensíveis e rotas públicas.

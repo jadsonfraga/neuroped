@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Instrumentos Autorais Brasileiros (série NPE-BR).
+/* NeuroPed SDG — Instrumentos Autorais Brasileiros (série NPE-BR).
    Conteúdo AUTORAL do Dr. Jadson Fraga (itens próprios) — pode ser exibido
    por extenso. NÃO normatizado: faixas são "ponto de atenção operacional",
    nunca ponto de corte diagnóstico; sem equivalência a instrumentos
@@ -7,7 +7,7 @@
   'use strict';
   if (window.NEUROPED_NPE_LOADED) return; window.NEUROPED_NPE_LOADED = true;
 
-  var DISC = 'Instrumento autoral brasileiro NeuroPed EDJ para triagem e acompanhamento clínico. Não normatizado. Não substitui avaliação médica, neuropsicológica ou multiprofissional e não corresponde a tradução ou versão validada de instrumento internacional. Os valores são pontos de atenção operacional, não pontos de corte diagnósticos.';
+  var DISC = 'Instrumento autoral brasileiro NeuroPed SDG para triagem e acompanhamento clínico. Não normatizado. Não substitui avaliação médica, neuropsicológica ou multiprofissional e não corresponde a tradução ou versão validada de instrumento internacional. Os valores são pontos de atenção operacional, não pontos de corte diagnósticos.';
 
   var O_FREQ = ['Nunca ou quase nunca','Ocasionalmente','Frequentemente','Muito frequentemente / prejuízo importante'];
   var O_002  = ['Faz claramente e com frequência','Faz, mas de forma inconsistente','Raramente faz','Não faz ou deixou de fazer'];

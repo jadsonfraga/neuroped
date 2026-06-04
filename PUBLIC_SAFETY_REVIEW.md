@@ -1,4 +1,4 @@
-# Public Safety Review — NeuroPed EDJ
+# Public Safety Review — NeuroPed SDG
 
 > Checklist de curadoria aplicado a cada conteúdo antes de ser exposto na camada pública.
 > Apenas conteúdo com **todas as respostas seguras** pode permanecer público.
@@ -92,7 +92,7 @@ Diretrizes de aplicação:
 **Título:** Área profissional restrita
 
 **Texto:**
-> Este módulo envolve dados clínicos, documentos médicos, prescrição, prontuário ou informações identificáveis. Por segurança, ele não fica disponível na camada pública do NeuroPed EDJ.
+> Este módulo envolve dados clínicos, documentos médicos, prescrição, prontuário ou informações identificáveis. Por segurança, ele não fica disponível na camada pública do NeuroPed SDG.
 
 **Botões:**
 - Voltar ao início

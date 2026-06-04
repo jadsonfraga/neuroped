@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — scales-enhance.js
+/* NeuroPed SDG — scales-enhance.js
  * Acoplador clínico para as páginas banco-escalas*.html.
  *
  * Não substitui validação clínica: as faixas interpretativas usam a razão score/score_max
@@ -91,7 +91,7 @@
     var ds = domainScores(inst, answers);
     var tip = tipFor(t.max ? t.score / t.max : 0);
     var lines = [];
-    lines.push('NeuroPed EDJ — registro estruturado de instrumento');
+    lines.push('NeuroPed SDG — registro estruturado de instrumento');
     lines.push('Instrumento: ' + (inst.title || inst.id));
     if (inst.subtitle) lines.push('Aplicação: ' + inst.subtitle);
     lines.push('Paciente: ' + (patient.name || patient.code || '—'));

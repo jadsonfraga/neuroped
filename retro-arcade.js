@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — retro-arcade.js · Bootstrapper estético global
+   NeuroPed SDG — retro-arcade.js · Bootstrapper estético global
    ============================================================
    Faz DUAS coisas, em toda página onde é carregado:
 

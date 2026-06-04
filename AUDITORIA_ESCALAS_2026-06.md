@@ -1,4 +1,4 @@
-# Auditoria das Escalas — NeuroPed EDJ (2026-06)
+# Auditoria das Escalas — NeuroPed SDG (2026-06)
 
 Auditoria de **funcionamento** e **conteúdo** do sistema de escalas/instrumentos.
 Método: carga de todos os bundles num harness Node (stub de `window`/`document`),

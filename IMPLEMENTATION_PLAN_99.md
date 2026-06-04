@@ -1,4 +1,4 @@
-# IMPLEMENTATION_PLAN_99 — NeuroPed EDJ
+# IMPLEMENTATION_PLAN_99 — NeuroPed SDG
 
 Data: 2026-05-07
 Meta: elevar a estabilidade funcional e reduzir dependências frágeis, preservando o app já construído.

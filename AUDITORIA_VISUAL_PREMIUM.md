@@ -1,4 +1,4 @@
-# AUDITORIA_VISUAL_PREMIUM — NeuroPed EDJ
+# AUDITORIA_VISUAL_PREMIUM — NeuroPed SDG
 
 Data: 2026-05-07
 Versão: v25-premium-visual
@@ -46,7 +46,7 @@ Eles são injetados em páginas com blocos hero/cards, em baixa opacidade, sem i
 Criado splash leve com:
 
 - mascote central;
-- título NeuroPed EDJ;
+- título NeuroPed SDG;
 - subtítulo institucional;
 - transição curta;
 - respeito parcial a `prefers-reduced-motion`.

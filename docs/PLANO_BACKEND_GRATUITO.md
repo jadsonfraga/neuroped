@@ -1,4 +1,4 @@
-# Plano de Backend Gratuito — NeuroPed EDJ
+# Plano de Backend Gratuito — NeuroPed SDG
 
 ## Objetivo
 
@@ -42,7 +42,7 @@ POST /api/audit-log
 
 ```json
 {
-  "app": "NeuroPed EDJ",
+  "app": "NeuroPed SDG",
   "version": "v37-quality-foundation",
   "frontend": "github-pages",
   "backendStatus": "planned"

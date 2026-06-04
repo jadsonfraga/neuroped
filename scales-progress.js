@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-progress.js
+   NeuroPed SDG — scales-progress.js
    Modo FADIGA + salvar/retomar progresso de escalas/testes (spec #10).
    ------------------------------------------------------------
    - Persiste respostas parciais por (instrumento × criança) e permite RETOMAR

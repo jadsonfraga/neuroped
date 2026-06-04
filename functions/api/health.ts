@@ -1,7 +1,7 @@
 export const onRequestGet: PagesFunction = async () => {
   return Response.json({
     ok: true,
-    service: "NeuroPed EDJ Backend",
+    service: "NeuroPed SDG Backend",
     backend: "Cloudflare Pages Functions",
     database: "D1",
     version: "1.0.0",

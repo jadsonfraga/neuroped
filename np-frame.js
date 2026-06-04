@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — np-frame.js
+/* NeuroPed SDG — np-frame.js
  * MOLDURA ÚNICA: mantém o usuário dentro da tela inicial bonita (SPA).
  * Intercepta cliques em links para as PÁGINAS-FERRAMENTA e as abre num
  * overlay em <iframe> por cima da home, com botão voltar — em vez de

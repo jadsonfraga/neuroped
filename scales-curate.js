@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Curadoria do catálogo (roda por último).
+/* NeuroPed SDG — Curadoria do catálogo (roda por último).
    Carrega o lote NPE-BR-013 a NPE-BR-024 antes da curadoria para que
    os novos testes sejam contados como aplicáveis e ranqueados no filtro.
    Publica NEUROPED_CATALOG_STATS, incluindo fontes oficiais separadas. */

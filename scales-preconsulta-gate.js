@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-preconsulta-gate.js
+   NeuroPed SDG — scales-preconsulta-gate.js
    ------------------------------------------------------------
    DEFINIÇÃO ÚNICA do que entra (ou não) na PRÉ-CONSULTA — a fonte
    da verdade compartilhada por filtro-escalas, intake e pelos testes.

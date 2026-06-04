@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scripts/test-preconsulta-engine.mjs
+   NeuroPed SDG — scripts/test-preconsulta-engine.mjs
    ------------------------------------------------------------
    Teste COMPORTAMENTAL do motor de pré-consulta (Node puro).
    Vai além de casar strings: carrega o CATÁLOGO real + os módulos

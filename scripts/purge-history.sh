@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# NeuroPed EDJ — purge-history.sh
+# NeuroPed SDG — purge-history.sh
 # ------------------------------------------------------------
 # DESTRUTIVO. NÃO roda em CI. Use só com decisão consciente.
 #

@@ -1,4 +1,4 @@
-# QA_SMOKE_RESULTS_TEMPLATE — NeuroPed EDJ
+# QA_SMOKE_RESULTS_TEMPLATE — NeuroPed SDG
 
 Data do teste: ____/____/______
 Navegador: _____________________

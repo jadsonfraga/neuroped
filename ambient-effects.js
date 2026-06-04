@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — ambient-effects.js · Camada Apple Secret Lab
+   NeuroPed SDG — ambient-effects.js · Camada Apple Secret Lab
    ============================================================
    Adiciona em qualquer HTML:
      - Breathing gradient overlay (aurora respira lentamente)

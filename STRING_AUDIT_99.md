@@ -1,4 +1,4 @@
-# STRING_AUDIT_99 — NeuroPed EDJ
+# STRING_AUDIT_99 — NeuroPed SDG
 
 Data: 2026-05-07
 

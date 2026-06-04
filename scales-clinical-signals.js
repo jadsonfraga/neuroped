@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — scales-clinical-signals.js
+/* NeuroPed SDG — scales-clinical-signals.js
  * Camada ADITIVA e à prova de falhas sobre o motor de laudo.
  *
  * Motivo (auditoria 2026-06): o motor genérico interpreta o resultado apenas

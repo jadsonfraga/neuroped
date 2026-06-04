@@ -213,7 +213,7 @@ Nada é enviado ao servidor — todos os resultados ficam só neste aparelho.</p
 
   function exportSummary(){
     var results = window.NPDirectTestEngine.results();
-    var lines = ['NeuroPed EDJ — Testes Diretos · ' + new Date().toLocaleString('pt-BR'), ''];
+    var lines = ['NeuroPed SDG — Testes Diretos · ' + new Date().toLocaleString('pt-BR'), ''];
     Object.keys(results).forEach(function(k){
       var r = results[k];
       lines.push('• ' + r.label + ': ' + (r.line || '—'));

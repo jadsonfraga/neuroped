@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Smart Rank: inteligência de seleção de instrumentos
+/* NeuroPed SDG — Smart Rank: inteligência de seleção de instrumentos
  * ------------------------------------------------------------------
  * Eleva a escolha do filtro acima da contagem crua de palavras-chave:
  *   1) EXPANSÃO POR CONSTRUTO — termos leigos da queixa ("agitado",

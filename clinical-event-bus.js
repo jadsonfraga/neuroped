@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL EVENT BUS V3.2
+   NeuroPed SDG · CLINICAL EVENT BUS V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Pub/sub clínico desacoplando engines, UI, plugins e adapters futuros.

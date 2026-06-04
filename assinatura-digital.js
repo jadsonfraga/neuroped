@@ -15,7 +15,7 @@ function setHTML(id,html){const el=document.getElementById(id);if(el)el.innerHTM
 window.gerarRegistro=async function(){
   const tipo=val('docTipo'); const paciente=val('docPaciente').trim()||'sem identificação'; const texto=val('docTexto');
   if(!texto.trim()){setHTML('prepOut','<div class="warn">Cole ou digite o texto do documento antes de gerar o hash.</div>');return}
-  const base=['NEUROPED EDJ — REGISTRO DE DOCUMENTO','Tipo: '+tipo,'Paciente/controle: '+paciente,'Data/hora: '+nowBR(),'','CONTEÚDO','',''+texto].join('\n');
+  const base=['NEUROPED SDG — REGISTRO DE DOCUMENTO','Tipo: '+tipo,'Paciente/controle: '+paciente,'Data/hora: '+nowBR(),'','CONTEÚDO','',''+texto].join('\n');
   const hash=await sha256Text(base);
   const item={id:'doc_'+Date.now(),tipo,paciente,createdAt:new Date().toISOString(),createdText:nowBR(),hash,chars:base.length};
   const regs=getRegs(); regs.unshift(item); setRegs(regs.slice(0,80));
@@ -25,7 +25,7 @@ window.gerarRegistro=async function(){
 window.copiarHash=function(hash){navigator.clipboard.writeText(hash).then(()=>alert('Hash copiado.'))};
 window.copiarTexto=function(){const texto=val('docTexto');if(!texto.trim()){alert('Não há texto para copiar.');return}navigator.clipboard.writeText(texto).then(()=>alert('Texto copiado.'))};
 window.baixarTXT=function(){const tipo=val('docTipo')||'documento';const paciente=(val('docPaciente')||'sem_identificacao').replace(/\s+/g,'_');const blob=new Blob([val('docTexto')],{type:'text/plain;charset=utf-8'});download(blob,'neuroPed_'+tipo.replace(/\s+/g,'_')+'_'+paciente+'_'+dateFile()+'.txt')};
-window.baixarRegistro=function(id){const r=getRegs().find(x=>x.id===id);if(!r)return;const txt=['REGISTRO LOCAL DE DOCUMENTO — NEUROPED EDJ','Tipo: '+r.tipo,'Paciente/controle: '+r.paciente,'Gerado em: '+r.createdText,'SHA-256: '+r.hash,'Caracteres no registro-base: '+r.chars,'','Observação: registro local para conferência. Não substitui assinatura digital ICP-Brasil.'].join('\n');download(new Blob([txt],{type:'text/plain;charset=utf-8'}),'registro_hash_'+r.id+'.txt')};
+window.baixarRegistro=function(id){const r=getRegs().find(x=>x.id===id);if(!r)return;const txt=['REGISTRO LOCAL DE DOCUMENTO — NEUROPED SDG','Tipo: '+r.tipo,'Paciente/controle: '+r.paciente,'Gerado em: '+r.createdText,'SHA-256: '+r.hash,'Caracteres no registro-base: '+r.chars,'','Observação: registro local para conferência. Não substitui assinatura digital ICP-Brasil.'].join('\n');download(new Blob([txt],{type:'text/plain;charset=utf-8'}),'registro_hash_'+r.id+'.txt')};
 function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 window.verificarPDF=async function(){
   const file=document.getElementById('pdfFile')?.files?.[0];

@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · RECOMMENDATION PIPELINE V3.2
+   NeuroPed SDG · RECOMMENDATION PIPELINE V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Pipeline multicritério explicável. Substitui scores mágicos por

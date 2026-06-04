@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ — Tour guiado de boas-vindas
+   NeuroPed SDG — Tour guiado de boas-vindas
    Abre no primeiro acesso, ensina passo a passo as potencialidades.
    Botão "?" flutuante para rever a qualquer momento. window.npTour() recomeça.
    Camada externa (não toca no build). Spotlight + carrossel, tema índigo.
@@ -48,7 +48,7 @@
   }
 
   var STEPS = [
-    { emoji:'👋', title:'Bem-vindo ao NeuroPed EDJ', body:'Em 1 minutinho eu mostro o essencial do app de neuropediatria do Dr. Jadson Fraga. Vamos juntos?' },
+    { emoji:'👋', title:'Bem-vindo ao NeuroPed SDG', body:'Em 1 minutinho eu mostro o essencial do app de neuropediatria do Dr. Jadson Fraga. Vamos juntos?' },
     { emoji:'🔎', title:'Busca universal', body:'Digite uma queixa — autismo, sono, TDAH — e o app encontra as escalas e ferramentas certas na hora.', find:function(){return q('input[placeholder*="procura" i]')||q('input[type="search"]');} },
     { emoji:'📊', title:'Mais de 500 escalas', body:'Em “Encontrar Escala” você acessa o banco de instrumentos organizado por queixa e faixa etária.', find:function(){return vis(document.querySelectorAll('.card-premium')[0]);} },
     { emoji:'🧒', title:'Testes com a criança', body:'Testes diretos e lúdicos: cognitivo, reconhecimento visual, motricidade e pedagógico — por idade, com mascotes.', find:function(){return byText(/TESTES COM A CRIAN/i)||vis(document.querySelectorAll('.card-premium')[1]);} },

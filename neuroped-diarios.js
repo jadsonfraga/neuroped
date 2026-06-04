@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · DIÁRIOS CLÍNICOS V3
+   NeuroPed SDG · DIÁRIOS CLÍNICOS V3
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Renderiza painel de diários clínicos com UX longitudinal:

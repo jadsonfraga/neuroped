@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — clinical-meta.js
+   NeuroPed SDG — clinical-meta.js
    Trilhos da CURADORIA de evidência/ontologia clínica (não fabrica conteúdo).
    ------------------------------------------------------------
    Lê evidence-registry.json + clinical-ontology.json (curadoria humana) e

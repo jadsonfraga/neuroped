@@ -1,10 +1,10 @@
-# KNOWN LIMITATIONS — NeuroPed EDJ
+# KNOWN LIMITATIONS — NeuroPed SDG
 
 Este documento existe para evitar que a aparência polida do produto seja confundida
 com prontidão para substituir avaliação clínica ou prontuário regulado. Ele descreve
 a build **atual** (e é mantido em dia — versões antigas descreviam um app diferente).
 
-> **Natureza:** o NeuroPed EDJ é uma ferramenta **educativa e de triagem**. Os
+> **Natureza:** o NeuroPed SDG é uma ferramenta **educativa e de triagem**. Os
 > instrumentos autorais são de triagem **não normatizada** e **não substituem**
 > avaliação, diagnóstico ou conduta de um profissional de saúde.
 

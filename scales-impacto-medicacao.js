@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Inventários de Impacto Pós-Medicação (autorais)
+/* NeuroPed SDG — Inventários de Impacto Pós-Medicação (autorais)
    Acompanhamento da RESPOSTA PERCEBIDA ao tratamento medicamentoso,
    em duas visões independentes (família e escola), para triangulação.
    Não medem eficácia farmacológica nem são escalas validadas. */

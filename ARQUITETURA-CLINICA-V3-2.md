@@ -1,4 +1,4 @@
-# Arquitetura Clínica V3.2 — NeuroPed EDJ
+# Arquitetura Clínica V3.2 — NeuroPed SDG
 
 **Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756**
 **Versão:** 3.2.0 · **Data:** 03/06/2026 · **Tipo:** additive-first sobre V3.1

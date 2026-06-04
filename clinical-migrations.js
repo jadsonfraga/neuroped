@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL MIGRATIONS V3.2
+   NeuroPed SDG · CLINICAL MIGRATIONS V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    MigrationManager — pipeline de migração de schema entre versões.

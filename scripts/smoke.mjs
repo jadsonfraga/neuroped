@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scripts/smoke.mjs
+   NeuroPed SDG — scripts/smoke.mjs
    ------------------------------------------------------------
    Smoke funcional (Node puro, sem browser). Vai ALÉM do test-static
    (que só casa strings): aqui validamos

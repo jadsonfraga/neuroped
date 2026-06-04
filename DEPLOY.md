@@ -41,7 +41,7 @@ Substitua `<URL>` pela URL atribuida (`<projeto>.pages.dev` ou dominio proprio).
 ```sh
 curl -sIL https://<URL>/ | head -10
 curl -s https://<URL>/api/health
-# esperado: {"ok":true,"service":"NeuroPed EDJ Backend",...}
+# esperado: {"ok":true,"service":"NeuroPed SDG Backend",...}
 
 curl -s https://<URL>/api/scales
 # esperado: {"ok":true,"total":507,...}

@@ -1,4 +1,4 @@
-# NeuroPed EDJ — Integração de Escalas por Extenso
+# NeuroPed SDG — Integração de Escalas por Extenso
 
 ## Objetivo
 

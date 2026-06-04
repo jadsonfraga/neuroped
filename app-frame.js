@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — app-frame.js · Frame Premium Universal
+   NeuroPed SDG — app-frame.js · Frame Premium Universal
    ============================================================
    Injeta automaticamente em qualquer HTML auxiliar:
      - Header brand "Dr. Jadson Fraga · NeuroPed" (top)

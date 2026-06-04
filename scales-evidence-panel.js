@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-evidence-panel.js
+   NeuroPed SDG — scales-evidence-panel.js
    ------------------------------------------------------------
    Carrega curated-evidence/instruments.json e injeta um painel
    colapsável "📚 Evidência curada" sob o cabeçalho da escala

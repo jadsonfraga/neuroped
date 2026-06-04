@@ -1,4 +1,4 @@
-# SECURITY — NeuroPed EDJ
+# SECURITY — NeuroPed SDG
 
 **Versão:** v5.1-truth-pass
 **Última revisão:** 2026-05-28

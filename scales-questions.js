@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-questions.js
+   NeuroPed SDG — scales-questions.js
    Camada de DADOS: perguntas-guia ENRIQUECIDAS por queixa, em linguagem de
    pais, com emoji + exemplos funcionais + microexplicação + adaptação por idade.
    ------------------------------------------------------------

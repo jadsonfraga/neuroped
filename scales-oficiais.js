@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — CATÁLOGO de instrumentos oficiais de terceiros.
+/* NeuroPed SDG — CATÁLOGO de instrumentos oficiais de terceiros.
    CONFORMIDADE: NÃO reproduz itens/perguntas protegidas no app público.
    Cada item é um CARD pesquisável (nome, sigla, finalidade, faixa, respondente,
    palavras-chave, STATUS jurídico/clínico e link para a FONTE OFICIAL).

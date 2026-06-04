@@ -8,7 +8,7 @@
 ---
 
 ## 0. Contexto do produto (não mudar a essência)
-NeuroPed EDJ — plataforma clínica de neuropediatria do **Dr. Jadson Fraga (CRM-PE 25227, RQE 17756)**.
+NeuroPed SDG — plataforma clínica de neuropediatria do **Dr. Jadson Fraga (CRM-PE 25227, RQE 17756)**.
 - **Estética:** dark + violeta/índigo (`--primary #7C3AED`, `--primary-deep #4F46E5`), tipografia Fraunces/Inter. O dourado é **semântico** (medalhas/“Ouro clínico”/“Fonte oficial”) — não tratar como erro.
 - **Arquitetura:** PWA. **Casca única `app-shell.html`** (start_url) embute as auxiliares num iframe via `#v=<arquivo>`; o guard (`app-frame.js` + `np-embed-guard.js`) reabre qualquer auxiliar **dentro da casca** e suprime chrome duplicado (`html.np-embedded`).
 - **Service Worker** com versão única alinhada ao `package.json` (teste `test-static.mjs` exige `sw CACHE_NAME == neuroped-edj-v<package.version>`). Ao mudar HTML cacheado, **bumpar a versão** nos 3 lugares (package.json, sw.js, selo em app-polish + verificar-app.html).

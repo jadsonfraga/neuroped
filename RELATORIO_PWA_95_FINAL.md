@@ -1,8 +1,8 @@
-# Relatório Final PWA 9.5 — NeuroPed EDJ
+# Relatório Final PWA 9.5 — NeuroPed SDG
 
 ## Resumo executivo
 
-Foi aplicada uma camada de refinamento PWA premium no NeuroPed EDJ para elevar a percepção visual e operacional do app de um conjunto de páginas HTML para uma experiência mobile integrada.
+Foi aplicada uma camada de refinamento PWA premium no NeuroPed SDG para elevar a percepção visual e operacional do app de um conjunto de páginas HTML para uma experiência mobile integrada.
 
 A implementação preserva os módulos existentes e adiciona:
 
@@ -116,4 +116,4 @@ O piso 9.5 é plausível nas rotas principais se o GitHub Pages entregar a vers�
 
 ## Veredito
 
-A implementação eleva o NeuroPed EDJ para uma experiência PWA visualmente premium, com navegação contínua, busca, atalhos, bottom sheet, dock e feed mobile. O app deixa de parecer apenas um conjunto de páginas e passa a se comportar como plataforma clínica digital mobile.
+A implementação eleva o NeuroPed SDG para uma experiência PWA visualmente premium, com navegação contínua, busca, atalhos, bottom sheet, dock e feed mobile. O app deixa de parecer apenas um conjunto de páginas e passa a se comportar como plataforma clínica digital mobile.

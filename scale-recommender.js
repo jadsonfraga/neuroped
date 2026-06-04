@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Clinical Scale Intelligence v5.1
+/* NeuroPed SDG — Clinical Scale Intelligence v5.1
  * Motor educacional de apoio a decisao clinica.
  * Nao reproduz itens proprietarios de instrumentos.
  */
