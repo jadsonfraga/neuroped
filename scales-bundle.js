@@ -2773,6 +2773,38 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     desenvolvimento: {
       strong: ['atraso global', 'regressao', 'nao senta', 'nao engatinha', 'marcos', 'atrasado para idade', 'vigilancia do desenvolvimento'],
       weak: ['desenvolvimento', 'atraso']
+    },
+    substancias: {
+      strong: ['alcool', 'maconha', 'cigarro', 'vape', 'droga', 'substancia', 'crafft', 'bebida alcool'],
+      weak: ['usa']
+    },
+    cognicao: {
+      strong: ['deficiencia intelectual', 'atraso cognitivo', 'idade mental', 'aprende devagar', 'retardo'],
+      weak: ['cognic', 'raciocinio', 'memoria', 'inteligencia', 'imaturo']
+    },
+    trauma: {
+      strong: ['trauma', 'tept', 'evento traumatico', 'abuso', 'pesadelo apos', 'luto'],
+      weak: ['susto']
+    },
+    dor: {
+      strong: ['dor de cabeca', 'cefaleia', 'enxaqueca', 'dor abdominal', 'dor cronica'],
+      weak: []
+    },
+    toc: {
+      strong: ['toc', 'obsess', 'compuls', 'ritual', 'mania de repetir', 'lavar as maos'],
+      weak: ['conferir', 'simetria']
+    },
+    tiques: {
+      strong: ['tique', 'tiques', 'tourette', 'movimento involuntario', 'pigarro repetido'],
+      weak: ['pisca muito']
+    },
+    regulacao: {
+      strong: ['desregulac', 'descontrole emocional', 'explosao emocional'],
+      weak: ['autocontrole']
+    },
+    mutismo: {
+      strong: ['mutismo', 'nao fala na escola', 'so fala em casa'],
+      weak: ['timidez extrema']
     }
   };
 
@@ -2849,7 +2881,58 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     return out;
   }
 
-  var api = { version: '1.0.0', CONSTRUCTS: CONSTRUCTS, expand: expand, constructsOf: constructsOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  // Catálogo de QUEIXAS leigas (chips do filtro). label = texto curto exibido;
+  // q = consulta que dispara o construto certo via expand(). 46 queixas distintas.
+  var QUEIXAS = [
+    { label: '🧩 Não olha nos olhos', q: 'não olha nos olhos contato visual autismo' },
+    { label: '🧩 Não atende quando chamam', q: 'não responde ao nome autismo' },
+    { label: '🧩 Não aponta / não mostra', q: 'não aponta autismo' },
+    { label: '🧩 Brinca sozinho / isolado', q: 'brinca sozinho autismo isolado' },
+    { label: '🧩 Movimentos repetitivos', q: 'movimentos repetitivos ecolalia autismo' },
+    { label: '🎯 Muito agitado / não para', q: 'agitado não para quieto hiperatividade' },
+    { label: '🎯 Desatento / disperso', q: 'desatento desatenção tdah' },
+    { label: '🎯 Impulsivo / não espera', q: 'impulsivo não espera a vez tdah' },
+    { label: '🎯 Esquece / desorganizado', q: 'esquece desorganizado tdah' },
+    { label: '🗣️ Atraso de fala', q: 'atraso de fala não fala' },
+    { label: '🗣️ Troca sons / fala enrolada', q: 'troca sons fala enrolada' },
+    { label: '🗣️ Gagueira', q: 'gagueira gagueja disfluência' },
+    { label: '📚 Dificuldade na escola', q: 'dificuldade escolar aprendizagem' },
+    { label: '📖 Não lê bem (dislexia)', q: 'não lê dislexia leitura' },
+    { label: '🔢 Dificuldade com matemática', q: 'discalculia matemática' },
+    { label: '✏️ Troca/inverte letras', q: 'troca letras escrita dislexia' },
+    { label: '💢 Birras intensas / explode', q: 'birra explosão comportamento' },
+    { label: '💢 Desafia / desobedece', q: 'desafia desobedece oposição' },
+    { label: '🌋 Agressivo / bate', q: 'agressivo bate agressividade' },
+    { label: '💧 Triste / desanimado', q: 'triste tristeza desânimo humor' },
+    { label: '😡 Irritado quase sempre', q: 'irritado irritabilidade humor' },
+    { label: '😰 Muito medo / ansioso', q: 'ansioso medo ansiedade' },
+    { label: '😰 Não desgruda dos pais', q: 'ansiedade de separação' },
+    { label: '😰 Preocupa-se demais', q: 'preocupa demais ansiedade' },
+    { label: '🤐 Só fala em casa (mutismo)', q: 'mutismo não fala na escola' },
+    { label: '🌙 Demora a dormir', q: 'não dorme insônia sono' },
+    { label: '🌙 Acorda à noite / pesadelos', q: 'acorda à noite pesadelo sono' },
+    { label: '🌙 Ronca dormindo', q: 'ronca sono' },
+    { label: '✨ Incomoda com barulho/textura', q: 'sensorial barulho textura seletividade' },
+    { label: '🍽️ Come muito mal / seletivo', q: 'seletividade alimentar sensorial' },
+    { label: '🤸 Desajeitado / cai muito', q: 'desajeitado coordenação motora' },
+    { label: '✍️ Dificuldade com lápis', q: 'motricidade fina dificuldade com lápis' },
+    { label: '🧒 Atraso para andar/sentar', q: 'não senta não anda marcos motores atraso' },
+    { label: '📈 Atraso no desenvolvimento', q: 'atraso global do desenvolvimento marcos' },
+    { label: '↩️ Perdeu habilidades (regressão)', q: 'regressão perdeu habilidades' },
+    { label: '🧗 Pouca autonomia p/ idade', q: 'autonomia independência adaptativo' },
+    { label: '🧗 Não faz tarefas sozinho', q: 'depende para tarefas autocuidado' },
+    { label: '🧠 Aprende devagar / imaturo', q: 'aprende devagar atraso cognitivo deficiência intelectual' },
+    { label: '🛟 Fala em se machucar (risco)', q: 'risco suicídio se machucar' },
+    { label: '🚭 Uso de álcool/drogas', q: 'álcool drogas substâncias adolescente' },
+    { label: '🌧️ Após evento traumático', q: 'trauma evento traumático tept' },
+    { label: '🤕 Dor de cabeça frequente', q: 'dor de cabeça cefaleia enxaqueca' },
+    { label: '🔁 Rituais / mania de repetir', q: 'toc obsessão compulsão ritual' },
+    { label: '😬 Tiques / movimentos involuntários', q: 'tiques movimento involuntário tourette' },
+    { label: '⚡ Convulsão / "desligar"', q: 'convulsão crise epilepsia ausência' },
+    { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
+  ];
+
+  var api = { version: '1.1.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);
@@ -3281,4 +3364,138 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     n++;
   });
   window.NEUROPED_OFFICIAL_QUESTIONS_FILLED = n;
+})();
+
+
+/* ===== scales-robustez.js ===== */
+/* NeuroPed EDJ — Robustez: aprofundamento AUTORAL + interpretação
+ * --------------------------------------------------------------------------
+ * Torna os instrumentos de REFERÊNCIA mais completos e robustos SEM violar
+ * limites: acrescenta perguntas-guia AUTORAIS extras (facetas adicionais do
+ * mesmo construto, redigidas do zero — NÃO são itens de instrumentos
+ * proprietários) e uma ORIENTAÇÃO DE INTERPRETAÇÃO padronizada.
+ * Roda por ÚLTIMO no bundle (depois de scales-official-questions.js).
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_ROBUSTEZ_LOADED) return;
+  window.NEUROPED_ROBUSTEZ_LOADED = true;
+
+  function uniq(a) { var s = {}, o = []; a.forEach(function (x) { if (x && !s[x]) { s[x] = 1; o.push(x); } }); return o; }
+
+  // Facetas AUTORAIS extras por construto (somam-se às já existentes).
+  var EXTRA = {
+    tea: [
+      'Reage de forma incomum a sons, texturas, luzes ou cheiros?',
+      'Perdeu palavras, gestos ou contato que já tinha (regressão)?',
+      'Tem interesses muito intensos ou restritos a poucos temas/objetos?',
+      'Compartilha alegria ou conquistas olhando espontaneamente para você?',
+      'Usa gestos sociais (acenar "tchau", balançar a cabeça) como esperado?'
+    ],
+    tdah: [
+      'A dificuldade aparece em mais de um ambiente (casa E escola)?',
+      'Tem dificuldade de organizar tarefas e administrar o tempo?',
+      'Perde o fio do que estava fazendo no meio da tarefa?',
+      'Comete erros por desatenção em coisas que sabe fazer?',
+      'A dificuldade já aparecia antes dos 12 anos?'
+    ],
+    linguagem: [
+      'Aponta/usa gestos para compensar quando falta a palavra?',
+      'Conta uma história simples com começo, meio e fim?',
+      'Entende perguntas do tipo "por quê" e "como"?',
+      'Houve infecções de ouvido de repetição ou suspeita de audição?',
+      'A compreensão é melhor que a fala, ou as duas estão atrasadas?'
+    ],
+    aprendizagem: [
+      'Tem dificuldade específica de leitura, de escrita ou de matemática?',
+      'Apesar de esforço e ensino adequado, a dificuldade persiste?',
+      'O desempenho oral é melhor que o escrito?',
+      'Há histórico de dificuldade escolar na família?',
+      'Já recebe apoio/reforço, e mesmo assim mantém a dificuldade?'
+    ],
+    ansiedade: [
+      'A preocupação é difícil de controlar uma vez que começa?',
+      'Tem sintomas físicos quando ansiosa (coração acelerado, falta de ar, suor)?',
+      'Pede para faltar à escola ou a eventos por ansiedade?',
+      'A ansiedade atrapalha dormir ou comer?',
+      'Os medos são desproporcionais ao risco real da situação?'
+    ],
+    humor: [
+      'A irritabilidade ou tristeza dura a maior parte do dia, quase todos os dias?',
+      'Houve mudança no rendimento escolar junto com o humor?',
+      'Tem pensamentos de que "nada vale a pena" ou de desistir?',
+      'Os sintomas duram mais de duas semanas?',
+      'Há períodos de agitação/euforia alternando com a tristeza?'
+    ],
+    comportamento: [
+      'Os episódios são mais intensos ou frequentes que o esperado para a idade?',
+      'O comportamento traz consequências (suspensões, perda de amizades)?',
+      'Há agressão a pessoas, animais ou destruição de objetos?',
+      'A criança demonstra remorso depois, ou parece indiferente?',
+      'O padrão dura seis meses ou mais?'
+    ],
+    sono: [
+      'A dificuldade de sono acontece na maioria das noites da semana?',
+      'A criança dorme em horários muito diferentes a cada dia?',
+      'Range os dentes, mexe muito as pernas ou sua muito ao dormir?',
+      'O ronco vem com pausas na respiração ou engasgos?',
+      'O sono ruim afeta o humor e o desempenho no dia seguinte?'
+    ],
+    motor: [
+      'Tem dificuldade que afeta atividades do dia a dia (vestir, comer, escrever)?',
+      'A dificuldade motora aparece desde cedo e se mantém?',
+      'Evita esportes, parquinho ou brincadeiras que exigem coordenação?',
+      'Há diferença clara entre o que consegue e o esperado para a idade?',
+      'Houve perda de habilidade motora que já tinha?'
+    ],
+    desenvolvimento: [
+      'Houve prematuridade, baixo peso ou intercorrência no parto?',
+      'A diferença em relação ao esperado vem aumentando com o tempo?',
+      'Atrasos aparecem em mais de uma área (motor, fala, social) ao mesmo tempo?',
+      'A criança usa o olhar e o sorriso social como esperado?',
+      'Há preocupação tanto da família quanto da escola/creche?'
+    ],
+    adaptativo: [
+      'A autonomia é parecida em casa, na escola e na casa de outros?',
+      'Precisa de lembretes constantes para tarefas simples da idade?',
+      'Tem noção de perigo e pede ajuda quando precisa?',
+      'Participa de tarefas em grupo conforme a idade?',
+      'A dependência limita a participação social ou escolar?'
+    ],
+    cognicao: [
+      'Generaliza o que aprende para situações novas?',
+      'Segue instruções de vários passos compatíveis com a idade?',
+      'Tem dificuldade de noção de tempo, dinheiro ou quantidade?',
+      'O raciocínio é concreto demais para a idade?',
+      'A dificuldade aparece em quase todas as áreas, não só uma?'
+    ],
+    risco: [
+      'Houve mudança brusca de comportamento, despedidas ou doar pertences?',
+      'A criança/adolescente tem um plano ou acesso a um meio?',
+      'Já houve episódio anterior de autoagressão ou tentativa?',
+      'Sente-se um peso para os outros ou sem saída?',
+      'Há sofrimento intenso que ela não consegue aliviar sozinha?'
+    ]
+  };
+
+  // Orientação de interpretação padronizada (robustez de uso, sem corte diagnóstico).
+  var SCORING = ' · Como interpretar: marque a frequência de cada sinal; NÃO há ponto de corte diagnóstico — quanto mais sinais frequentes e maior o impacto na rotina (casa/escola), mais forte a indicação de avaliação especializada. Triangule família + escola + observação direta. Sinais de alarme isolados já justificam atenção.';
+
+  var cat = window.NEUROPED_EDITORIAL_SCALES;
+  if (!Array.isArray(cat)) return;
+  var n = 0;
+  cat.forEach(function (s) {
+    if (!s || s._robustez) return;
+    if (!s._authorial_proxy) return;          // só os de referência (não toca autorais respondíveis)
+    var b = s._proxy_bucket, ex = EXTRA[b];
+    if (ex && Array.isArray(s.plain_questions)) {
+      s.plain_questions = uniq(s.plain_questions.concat(ex));
+    }
+    s.scoring_note = SCORING.trim();
+    if (typeof s.not_normative_disclaimer === 'string' && s.not_normative_disclaimer.indexOf('Como interpretar') < 0) {
+      s.not_normative_disclaimer += SCORING;
+    }
+    s._robustez = true; n++;
+  });
+  window.NEUROPED_ROBUSTEZ_FILLED = n;
 })();
