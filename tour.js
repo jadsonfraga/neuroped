@@ -34,6 +34,7 @@
     + '.npt-help.npt-intro{width:auto;height:60px;padding:0 22px 0 18px;border-radius:30px;font:800 16px system-ui;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;opacity:1;box-shadow:0 18px 44px -8px hsl(243 85% 55% / .9),0 0 0 7px hsl(243 85% 62% / .18);animation:nptIntroPulse 1.15s ease-in-out infinite}'
     + '@keyframes nptIntroPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}'
     + '@media(prefers-reduced-motion:reduce){.npt-help.npt-intro{animation:none}}'
+    + '.npt-help.npt-bye{opacity:0;transform:translateY(12px) scale(.85);transition:opacity .36s ease,transform .36s ease;pointer-events:none;animation:none}'
     + '@media(prefers-reduced-motion:reduce){.npt-back,.npt-hole,.npt-card{transition:none}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -106,7 +107,9 @@
     var seen=false; try{ seen = localStorage.getItem(INTRO_KEY)==='1'; }catch(e){}
     if(!seen){ try{ localStorage.setItem(INTRO_KEY,'1'); }catch(e){}
       h.classList.add('npt-intro'); h.innerHTML='🧭 Tour do app';
-      setTimeout(function(){ h.classList.remove('npt-intro'); h.innerHTML='?'; }, 5000);
+      // se NÃO for clicado em 5s, some sozinho da tela (não encolhe).
+      var t=setTimeout(function(){ h.classList.add('npt-bye'); setTimeout(function(){ if(h.parentNode) h.parentNode.removeChild(h); }, 380); }, 5000);
+      h.addEventListener('click', function(){ clearTimeout(t); });   // clicou → abre o tour, não some
     }
   }
 
