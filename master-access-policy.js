@@ -8,7 +8,7 @@
   // PIN antigo (que constava no histórico do git) foi ROTACIONADO. Para trocar
   // por um de sua preferência:  printf "%s" "SEU_NOVO_PIN" | shasum -a 256
   // e cole o hash resultante abaixo (ou em window.NEUROPED_MASTER_PIN_HASH).
-  var MASTER_HASH=(window.NEUROPED_MASTER_PIN_HASH||'1b355c4fc72b43ddcec74a3a51e15b52f30cf4c53a4162f491de04cdadbde123');
+  var MASTER_HASH=(window.NEUROPED_MASTER_PIN_HASH||'4832aca40e723d040262f8f8475a96c150f36efbe145b7ae208f2c6ce38cd022');
   var KEY='neuroped_master_access_v1';
   var TTL=12*60*60*1000;
   var PUBLIC_FAMILY_LINKS=[
