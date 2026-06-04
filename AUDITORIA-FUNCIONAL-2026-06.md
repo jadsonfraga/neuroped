@@ -47,3 +47,25 @@ São carregados (aditivamente) pela `filtro-escalas.html` — não a quebram.
 O app estava com **3 páginas de conteúdo quebradas em produção** por arquivos faltantes do
 mega-deploy V3.2 — agora **corrigido** (versões funcionais restauradas/redirecionadas, 0 refs quebradas).
 Os engines V3 carregam; o núcleo (catálogo, escalas, encoding) está íntegro.
+
+---
+
+## Auditoria de LÓGICA dos engines V3 (continuação)
+
+Exercitei a classificação real, não só o load:
+
+### ✅ `clinical-router.classifyItem` — classifica corretamente (4/4)
+| Entrada | Resultado | Correto? |
+|---|---|---|
+| "SNAP‑IV — Questionário para pais" | `scale / attention` | ✓ |
+| "Teste de leitura e nomeação rápida" | `direct_test / academic` (id_pattern) | ✓ |
+| "Diário do Sono (controle diário)" | `diary / sleep` (id_pattern) | ✓ |
+| "Inventário de Processamento Sensorial" | `scale / sensory` | ✓ (inventário ∈ família escala) |
+
+### ✅ Taxonomias são COMPLEMENTARES (corrige suspeita anterior)
+- `clinical-taxonomy-v3.json` (v3.0): `canonical_allowlist` (scale 22 · direct_test 14 · diary 12 · comment 108) + `types`. **Usada pelo `clinical-router`.**
+- `clinical-taxonomy-v3.1.json` (v3.1): `required_fields_per_instrument`. **Usada pelo `clinical-engines`.**
+- **Não há duplicação nem conflito:** só o `clinical-router` seta `window.NeuroPedClinicalTaxonomyV3` (com a v3.0, allowlist intacta); o `clinical-engines` usa a v3.1 internamente. A allowlist curada NÃO é bypassada.
+
+### Conclusão da auditoria de lógica
+Os engines clínicos V3 **carregam e classificam corretamente**. O único problema real da V3 era as **4 telas/arquivos de UI faltantes** (já corrigido em #238). A lógica de classificação/roteamento está íntegra.
