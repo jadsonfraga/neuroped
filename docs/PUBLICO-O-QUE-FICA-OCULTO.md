@@ -75,8 +75,27 @@ bloqueia rotas internas sensíveis do SPA.
   instrumentos de referência de estudo abrem direto como **referência**.
 - `safe-public-layer.js` deixa de mandar para PIN; manda para a home.
 
+## 🧹 Remoção REAL no deploy (não só "cortina de JS")
+`public-mode.js` oculta no navegador (defesa em profundidade), mas a remoção de
+verdade é feita por **`scripts/strip-private.mjs`**, rodado nos workflows de
+deploy (GitHub Pages **e** Cloudflare) **antes de publicar**: os arquivos
+sensíveis (35 — operação clínica, admin, gerador de licenças, conteúdo pago,
+dev/teste) **não vão ao ar** — nem por `curl`, `view-source` ou JS desligado.
+O **repositório os mantém** (build privado do autor é recuperável) e os **testes
+rodam contra o repositório** (intactos). O conteúdo pago (`neuroped-master-protegido-data.js`)
+vira um **stub vazio** no deploy.
+
+> **Mantido público de propósito:** `neuroped-pro.html` é a **landing de vendas**
+> (Pro R$47, checkout, funil) — público por design e indexado para SEO. Não é
+> dado sensível. O **gerador** de licenças (`gerar-licencas-pro.html`), sim, é
+> removido.
+
 ## ⚠️ Limitação honesta
-O app continua **client-only**: dados ficam no `localStorage` do aparelho. O
-`public-mode.js` **oculta** (não "criptografa") — alguém tecnicamente avançado
-ainda pode inspecionar o código. Para áreas realmente protegidas/persistência
-clínica regulada, é necessário **backend** (fora do escopo do deploy público).
+O app continua **client-only**: dados ficam no `localStorage` do aparelho. Para
+persistência clínica regulada/áreas realmente autenticadas, é necessário
+**backend** (fora do escopo do deploy público).
+
+> **Pendência de modelo (sua decisão):** "sem senhas" desativou o desbloqueio
+> Pro/master. A landing continua vendendo, mas o conteúdo pago fica como stub no
+> público e não há mecanismo de unlock. Defina se o Pro continua (precisa de
+> backend/checkout real) ou se o conteúdo vira gratuito.
