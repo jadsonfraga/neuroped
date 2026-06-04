@@ -231,7 +231,10 @@
       return;
     }
     var age=ageMonthsFromText(q);
-    var tokens=norm(q).split(/[^a-z0-9]+/).filter(function(x){return x.length>=3 && !STOP[x];});
+    // Inteligência: expande a queixa leiga ao construto clínico + sinônimos
+    // (ex.: "agitado não para" → tdah/atenção) antes de casar com os metadados.
+    var baseTokens=window.NeuroPedSmartRank?NeuroPedSmartRank.expand(q):norm(q).split(/[^a-z0-9]+/);
+    var tokens=baseTokens.filter(function(x){return x.length>=3 && !STOP[x];});
     var ranked=cat.map(function(s){return score(s,tokens,age);}).filter(Boolean);
     ranked.forEach(function(r){ r.tier=tierOf(r,age); r.rank=(r.tier==='ouro'?3:(r.tier==='prata'?2:1)); if(RESP&&respMatch(r.s)>=2) r.sc+=6; });
     ranked.sort(function(a,b){ return (b.rank-a.rank)||(b.sc-a.sc); });
@@ -241,7 +244,10 @@
     det.innerHTML='Detectado: <b>'+(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada')+'</b>'+(RESP?(' · responde: <b>'+esc(Object.keys(RESP_MAP).filter(function(k){return RESP_MAP[k]===RESP;})[0]||RESP)+'</b>'):'')+' · termos: '+(tokens.slice(0,8).map(esc).join(', ')||'—');
     cnt.textContent='· '+top.length;
     if(!top.length){ rec.style.display='none'; all.innerHTML='<div class="empty">Nenhum instrumento casou com a queixa. Tente sintomas/suspeita (ex.: “não fala”, “agitado”, “seletivo”).</div>'; return; }
-    var ouro=top.filter(function(r){return r.tier==='ouro';}).slice(0,3);
+    // Top-3 com MIX de modalidade (teste direto + inventário família + escala),
+    // deduplicando variantes quase idênticas — pré-consulta equilibrada.
+    var ouroPool=top.filter(function(r){return r.tier==='ouro';});
+    var ouro=window.NeuroPedSmartRank?NeuroPedSmartRank.pickTop(ouroPool,3):ouroPool.slice(0,3);
     rec.style.display=ouro.length?'block':'none';
     recR.innerHTML=ouro.map(card).join('');
     var rest=top.filter(function(r){return ouro.indexOf(r)<0;});

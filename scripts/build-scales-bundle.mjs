@@ -20,6 +20,8 @@ export const BUNDLE_ORDER = [
   'scales-red-flags.js',
   'scales-direct-tasks.js',          // biblioteca de tarefas diretas (fonte de verdade)
   'scales-direct-tests-catalog.js',  // promove as tarefas a instrumentos filtráveis (top-3 pré-consulta)
+  'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
+  'scales-official-questions.js',    // ÚLTIMO: perguntas-guia autorais p/ instrumentos de referência (abrem completos)
 ];
 
 export function buildBundle(root = process.cwd()) {
