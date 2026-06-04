@@ -28,6 +28,7 @@
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function pulse(emoji, msg){
+    try { window.dispatchEvent(new Event('np:celebrate')); } catch (e) {}   // som/háptico/pulso (np-sound, opt-in)
     var existing = document.getElementById('npCelebToast');
     if (existing) existing.remove();
     var t = document.createElement('div');
