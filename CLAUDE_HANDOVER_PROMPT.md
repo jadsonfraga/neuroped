@@ -1,4 +1,4 @@
-# 🚀 HANDOVER: Projeto NeuroPed EDJ (Dr. Jadson Fraga)
+# 🚀 HANDOVER: Projeto NeuroPed SDG (Dr. Jadson Fraga)
 
 **CONTEXTO:**
 Você está assumindo o desenvolvimento de um aplicativo PWA neuropediátrico (HTML/JS puro, arquitetura modular V3.2). O agente Manus realizou uma auditoria e uma remediação autônoma das falhas críticas (P0/P1), elevando a nota do app de **6.5 para 8.5**.

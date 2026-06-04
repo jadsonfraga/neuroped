@@ -1,4 +1,4 @@
--- NeuroPed EDJ — Schema D1 / SQLite compatible
+-- NeuroPed SDG — Schema D1 / SQLite compatible
 -- Mínimo de dados pessoais: somente códigos operacionais e respostas estruturadas (LGPD)
 
 CREATE TABLE IF NOT EXISTS submissions (

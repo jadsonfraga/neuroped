@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — testes-diretos-engine.js
+   NeuroPed SDG — testes-diretos-engine.js
    ------------------------------------------------------------
    Motor dos 5 mini-testes diretos APLICADOS NA CRIANÇA.
 

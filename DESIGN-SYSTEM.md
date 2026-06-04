@@ -1,4 +1,4 @@
-# NeuroPed EDJ — Design System
+# NeuroPed SDG — Design System
 
 Implementação da spec **SUPERNEUROPED — UNIFICAÇÃO VISUAL TOTAL**.
 

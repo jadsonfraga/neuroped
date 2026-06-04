@@ -1,4 +1,4 @@
-# AUDITORIA 95 FINAL — NeuroPed EDJ
+# AUDITORIA 95 FINAL — NeuroPed SDG
 
 Data: 2026-05-07
 Branch: main
@@ -149,7 +149,7 @@ Testes-alvo:
 
 ## 5. Veredito
 
-O NeuroPed EDJ foi elevado de forma relevante e conservando o que já estava construído.
+O NeuroPed SDG foi elevado de forma relevante e conservando o que já estava construído.
 
 Resultado operacional estimado: 9,3/10.
 

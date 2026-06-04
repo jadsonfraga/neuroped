@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-taxonomy.js
+   NeuroPed SDG — scales-taxonomy.js
    ------------------------------------------------------------
    Fundação de LÓGICA para o módulo de escalas/testes (não estética).
    ------------------------------------------------------------

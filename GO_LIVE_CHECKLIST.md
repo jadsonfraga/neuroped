@@ -1,4 +1,4 @@
-# GO LIVE CHECKLIST — NeuroPed EDJ
+# GO LIVE CHECKLIST — NeuroPed SDG
 
 Checklist obrigatório antes de aceitar o primeiro paciente real no sistema.
 

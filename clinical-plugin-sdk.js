@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL PLUGIN SDK V3.2
+   NeuroPed SDG · CLINICAL PLUGIN SDK V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    SDK oficial para plugins externos. Sandbox por capability + lifecycle.

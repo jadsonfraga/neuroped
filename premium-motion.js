@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ — Premium Motion 2.0 (Apple-Class)
+   NeuroPed SDG — Premium Motion 2.0 (Apple-Class)
    Físicas de mola, transições elásticas e continuidade espacial.
    ===================================================================== */
 (function () {

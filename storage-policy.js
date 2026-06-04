@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Storage Policy
+/* NeuroPed SDG — Storage Policy
    Camada declarativa para reduzir risco de armazenamento indevido.
    Controle de interface. Não substitui criptografia/backend para produção. */
 window.NEUROPED_STORAGE_POLICY = {

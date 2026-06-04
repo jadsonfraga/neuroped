@@ -1,4 +1,4 @@
--- NeuroPed EDJ — Supabase schema inicial
+-- NeuroPed SDG — Supabase schema inicial
 -- Execute no SQL Editor do Supabase.
 -- Não inclui dados reais de pacientes.
 

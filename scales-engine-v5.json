@@ -1,9 +1,9 @@
 {
-  "engine": "NeuroPed EDJ Clinical Scale Intelligence",
+  "engine": "NeuroPed SDG Clinical Scale Intelligence",
   "version": "5.1.0",
   "language": "pt-BR",
   "disclaimer": "Ferramenta educacional de apoio a decisao clinica. Triagem nao fecha diagnostico isoladamente. Instrumentos normatizados podem exigir licenca, treinamento ou uso oficial conforme titular.",
-  "institutional_phrase": "O NeuroPed EDJ nao escolhe escalas por popularidade; recomenda instrumentos conforme idade, pergunta clinica, finalidade documental, informante, peso documental, qualidade psicometrica, risco diferencial e impacto funcional.",
+  "institutional_phrase": "O NeuroPed SDG nao escolhe escalas por popularidade; recomenda instrumentos conforme idade, pergunta clinica, finalidade documental, informante, peso documental, qualidade psicometrica, risco diferencial e impacto funcional.",
   "score_model": {
     "idade_compativel": 20,
     "queixa_principal": 30,
@@ -28,7 +28,7 @@
     { "nivel": "B", "tipo": "escala validada ou amplamente usada clinicamente", "peso": "alto", "valor": 16 },
     { "nivel": "C", "tipo": "questionario estruturado de pais, escola ou terapeutas", "peso": "moderado-alto", "valor": 13 },
     { "nivel": "D", "tipo": "observacao medica estruturada", "peso": "alto quando bem descrita", "valor": 16 },
-    { "nivel": "E", "tipo": "escala autoral NeuroPed EDJ", "peso": "complementar-documental", "valor": 10 },
+    { "nivel": "E", "tipo": "escala autoral NeuroPed SDG", "peso": "complementar-documental", "valor": 10 },
     { "nivel": "F", "tipo": "relato livre", "peso": "apoio contextual", "valor": 6 }
   ],
   "packages": [
@@ -234,8 +234,8 @@
     },
     {
       "id": "questionario-professor-edj",
-      "nome": "Questionario Professor NeuroPed EDJ",
-      "classe": "escala autoral NeuroPed EDJ",
+      "nome": "Questionario Professor NeuroPed SDG",
+      "classe": "escala autoral NeuroPed SDG",
       "nivel_documental": "E",
       "dominios": ["escola", "TDAH", "TEA", "aprendizagem", "comportamento", "funcionalidade"],
       "finalidades": ["documento escolar-convenio", "perfil funcional", "diagnostico diferencial"],
@@ -261,7 +261,7 @@
     },
     {
       "id": "observacao-tea-edj",
-      "nome": "Observacao TEA NeuroPed EDJ",
+      "nome": "Observacao TEA NeuroPed SDG",
       "classe": "observacao medica estruturada",
       "nivel_documental": "D",
       "dominios": ["TEA", "reciprocidade", "comunicacao nao verbal", "brincar", "rigidez", "sensorial"],

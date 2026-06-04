@@ -1,4 +1,4 @@
-# AUDITORIA-SISTEMA-V10 — NeuroPed EDJ
+# AUDITORIA-SISTEMA-V10 — NeuroPed SDG
 
 > Auditoria **real**, feita sobre o repositório como ele está (não sobre o estado
 > hipotético descrito no prompt V10). Data: 2026-06-02. Versão: 6.41.x.

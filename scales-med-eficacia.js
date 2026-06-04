@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Eficácia da medicação (relato pré-consulta)
+/* NeuroPed SDG — Eficácia da medicação (relato pré-consulta)
  * ----------------------------------------------------------
  * Instrumento AUTORAL para pacientes/famílias que usam medicação responderem
  * ANTES da consulta: a medicação está sendo eficaz? Há efeitos? Adesão? O médico

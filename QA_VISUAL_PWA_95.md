@@ -1,8 +1,8 @@
-# QA Visual PWA 9.5 — NeuroPed EDJ
+# QA Visual PWA 9.5 — NeuroPed SDG
 
 ## Objetivo
 
-Validar se o NeuroPed EDJ atingiu padrão visual e operacional de PWA mobile premium.
+Validar se o NeuroPed SDG atingiu padrão visual e operacional de PWA mobile premium.
 
 ## Ambientes a testar
 

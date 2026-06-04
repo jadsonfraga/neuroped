@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* NeuroPed EDJ — design-audit.mjs
+/* NeuroPed SDG — design-audit.mjs
  *
  * Fase 2 da spec SUPERNEUROPED: auditoria de valores crus.
  * Lista todos os arquivos com valores de design fora dos tokens.

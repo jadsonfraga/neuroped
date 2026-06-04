@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-context-chips.js
+   NeuroPed SDG — scales-context-chips.js
    ============================================================
    Adiciona terceira dimensão de filtro: CONTEXTO funcional.
    Atua junto com idade + queixa que já existem em filtro-escalas.html.

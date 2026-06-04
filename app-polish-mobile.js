@@ -1,4 +1,4 @@
-/* NeuroPed EDJ - app-polish-mobile.js
+/* NeuroPed SDG - app-polish-mobile.js
  * Aspira "cara de app": bottom nav fixo no mobile, toast/sheet uniformes
  * (em vez de alert/confirm), splash boot, micro-interacoes.
  *
@@ -144,7 +144,7 @@
       '<div class="logo" style="width:104px;height:104px;border-radius:24px;overflow:hidden;' +
         'box-shadow:0 0 0 1px rgba(184,150,62,.45),0 20px 54px -14px rgba(0,0,0,.65)">' +
         '<img src="./logo-jadson.jpg" alt="Dr. Jadson Fraga" width="104" height="104" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block"></div>' +
-      '<div class="name">NeuroPed EDJ</div>' +
+      '<div class="name">NeuroPed SDG</div>' +
       '<div class="tag">Dr. Jadson Fraga · Neuropediatria</div>' +
       '<div class="spinner"></div>';
     document.body.appendChild(el);

@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Instrumentos AUTORAIS Dr. Jadson: funcional/adaptativo,
+/* NeuroPed SDG — Instrumentos AUTORAIS Dr. Jadson: funcional/adaptativo,
  * risco cognitivo e risco de dislexia.
  * --------------------------------------------------------------------------
  * Conteúdo 100% autoral (perguntas originais sobre o construto). NÃO reproduz

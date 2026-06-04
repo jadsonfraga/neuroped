@@ -1,6 +1,6 @@
 # Modo público (educacional) — o que executa e o que fica oculto
 
-O NeuroPed EDJ foi preparado para **divulgação ao público como ferramenta
+O NeuroPed SDG foi preparado para **divulgação ao público como ferramenta
 educacional**, **sem nenhuma senha**. Como não há login/PIN para proteger nada,
 as áreas sensíveis são **ocultadas** do deploy público (não dá para "proteger
 sem senha"). O guarda é o `public-mode.js` (carregado cedo em todas as páginas):

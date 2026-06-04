@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Testes diretos com a criança (tarefas aplicadas)
+/* NeuroPed SDG — Testes diretos com a criança (tarefas aplicadas)
  * ---------------------------------------------------------------
  * Biblioteca estruturada de TAREFAS DIRETAS (aplicadas ativamente na
  * criança), complementando as escalas de heterorrelato. Cada tarefa traz:

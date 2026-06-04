@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Instrumentos internacionais de LICENÇA LIVRE (curadoria)
+/* NeuroPed SDG — Instrumentos internacionais de LICENÇA LIVRE (curadoria)
  * --------------------------------------------------------------------------
  * Curadoria seletiva (NÃO é "encher linguiça") de instrumentos consagrados,
  * gratuitos/uso livre, que preenchem LACUNAS reais do catálogo — Brasil e mundo.

@@ -1,4 +1,4 @@
-# ARCHITECTURE — NeuroPed EDJ
+# ARCHITECTURE — NeuroPed SDG
 
 **Versão deste documento:** v5.1-truth-pass
 **Status:** decisão arquitetural pendente do proprietário

@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-enriched-questions.js
+   NeuroPed SDG — scales-enriched-questions.js
    ============================================================
    Transforma `plain_questions` (string) em pergunta humanizada:
 

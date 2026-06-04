@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL PDF AUDITABLE V3.2
+   NeuroPed SDG · CLINICAL PDF AUDITABLE V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Expande clinical-pdf-export.js (V3.1) com:

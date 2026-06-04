@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ — Splash Premium  ·  abertura cinematográfica + mascotes
+   NeuroPed SDG — Splash Premium  ·  abertura cinematográfica + mascotes
    Overlay injetado o quanto antes; cobre o carregamento (e o splash interno
    do app) e revela o dashboard com fade. Aurora animada, logo com glow,
    mascotes fofinhos flutuando, shimmer. Some sozinho (com timeout de
@@ -49,12 +49,12 @@
   var s = document.createElement('div');
   s.id = 'np-splash';
   s.setAttribute('role', 'status');
-  s.setAttribute('aria-label', 'Carregando NeuroPed EDJ');
+  s.setAttribute('aria-label', 'Carregando NeuroPed SDG');
   s.innerHTML =
       '<div class="nps-stage">'
     +   '<div style="position:relative"><div class="nps-ring"></div>'
     +   '<img class="nps-logo" src="./icon-512.png" alt="" onerror="this.style.display=\'none\'"></div>'
-    +   '<div class="nps-name">NeuroPed EDJ</div>'
+    +   '<div class="nps-name">NeuroPed SDG</div>'
     +   '<div class="nps-sub">Dr. Jadson Fraga · Neuropediatria</div>'
     +   '<div class="nps-seal"><span class="ln"></span><span class="dot"></span><span class="mk">Neuropediatria de precisão</span><span class="dot"></span><span class="ln r"></span></div>'
     +   '<div class="nps-bar"><i></i></div>'

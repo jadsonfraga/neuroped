@@ -1,4 +1,4 @@
-# Memória e Embeddings — NeuroPed EDJ
+# Memória e Embeddings — NeuroPed SDG
 
 ## Estado atual
 

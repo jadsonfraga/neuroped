@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Central Route Registry (MODO PÚBLICO)
+/* NeuroPed SDG — Central Route Registry (MODO PÚBLICO)
    Apenas rotas PÚBLICAS/FAMILIARES (educacionais, sem senha). As áreas
    sensíveis (médica, secretaria, demos clínicas, dev) foram REMOVIDAS deste
    registro e ficam ocultas no público — ver public-mode.js e

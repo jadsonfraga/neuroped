@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — instrumento-enriched.js
+   NeuroPed SDG — instrumento-enriched.js
    ============================================================
    Pós-processa o DOM de instrumento.html para enriquecer cada
    .item de pergunta com:

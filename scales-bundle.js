@@ -2,7 +2,7 @@
    NÃO editar à mão. Edite os scales-*.js e rode o build. */
 
 /* ===== scales-enhance.js ===== */
-/* NeuroPed EDJ — scales-enhance.js
+/* NeuroPed SDG — scales-enhance.js
  * Acoplador clínico para as páginas banco-escalas*.html.
  *
  * Não substitui validação clínica: as faixas interpretativas usam a razão score/score_max
@@ -95,7 +95,7 @@
     var ds = domainScores(inst, answers);
     var tip = tipFor(t.max ? t.score / t.max : 0);
     var lines = [];
-    lines.push('NeuroPed EDJ — registro estruturado de instrumento');
+    lines.push('NeuroPed SDG — registro estruturado de instrumento');
     lines.push('Instrumento: ' + (inst.title || inst.id));
     if (inst.subtitle) lines.push('Aplicação: ' + inst.subtitle);
     lines.push('Paciente: ' + (patient.name || patient.code || '—'));
@@ -669,7 +669,7 @@ const generated=combos.slice(0,453).map((c,i)=>({
   id:`aut453-${String(i+1).padStart(3,'0')}-${slug(c.a.k)}-${slug(c.u.k)}-${slug(c.d.k)}`,
   title:title(c.d,c.a,c.u,i),
   short_title:`${c.d.name} — ${c.a.label}`,
-  original_title:'Inventário operacional autoral NeuroPed EDJ',
+  original_title:'Inventário operacional autoral NeuroPed SDG',
   emoji:c.d.emoji,
   audience:c.u.k,
   audience_label:c.u.label,
@@ -917,7 +917,7 @@ window.NEUROPED_EDITORIAL_SCALES=clean.concat(base);
 })();
 
 /* ===== scales-diarios-uteis.js ===== */
-/* NeuroPed EDJ — Diários de controle, testes diretos e ferramentas úteis gratuitas.
+/* NeuroPed SDG — Diários de controle, testes diretos e ferramentas úteis gratuitas.
    Conteúdo educacional autoral, anexado ao catálogo (NEUROPED_EDITORIAL_SCALES).
    Tipos que faltavam: diários diários (monitoração), testes diretos rápidos,
    inventários e ferramentas práticas — todos gratuitos. Não substituem
@@ -1123,7 +1123,7 @@ window.NEUROPED_EDITORIAL_SCALES=clean.concat(base);
 
 
 /* ===== scales-autorais-npe.js ===== */
-/* NeuroPed EDJ — Instrumentos Autorais Brasileiros (série NPE-BR).
+/* NeuroPed SDG — Instrumentos Autorais Brasileiros (série NPE-BR).
    Conteúdo AUTORAL do Dr. Jadson Fraga (itens próprios) — pode ser exibido
    por extenso. NÃO normatizado: faixas são "ponto de atenção operacional",
    nunca ponto de corte diagnóstico; sem equivalência a instrumentos
@@ -1132,7 +1132,7 @@ window.NEUROPED_EDITORIAL_SCALES=clean.concat(base);
   'use strict';
   if (window.NEUROPED_NPE_LOADED) return; window.NEUROPED_NPE_LOADED = true;
 
-  var DISC = 'Instrumento autoral brasileiro NeuroPed EDJ para triagem e acompanhamento clínico. Não normatizado. Não substitui avaliação médica, neuropsicológica ou multiprofissional e não corresponde a tradução ou versão validada de instrumento internacional. Os valores são pontos de atenção operacional, não pontos de corte diagnósticos.';
+  var DISC = 'Instrumento autoral brasileiro NeuroPed SDG para triagem e acompanhamento clínico. Não normatizado. Não substitui avaliação médica, neuropsicológica ou multiprofissional e não corresponde a tradução ou versão validada de instrumento internacional. Os valores são pontos de atenção operacional, não pontos de corte diagnósticos.';
 
   var O_FREQ = ['Nunca ou quase nunca','Ocasionalmente','Frequentemente','Muito frequentemente / prejuízo importante'];
   var O_002  = ['Faz claramente e com frequência','Faz, mas de forma inconsistente','Raramente faz','Não faz ou deixou de fazer'];
@@ -1449,7 +1449,7 @@ window.NEUROPED_EDITORIAL_SCALES=clean.concat(base);
 
 
 /* ===== scales-impacto-medicacao.js ===== */
-/* NeuroPed EDJ — Inventários de Impacto Pós-Medicação (autorais)
+/* NeuroPed SDG — Inventários de Impacto Pós-Medicação (autorais)
    Acompanhamento da RESPOSTA PERCEBIDA ao tratamento medicamentoso,
    em duas visões independentes (família e escola), para triangulação.
    Não medem eficácia farmacológica nem são escalas validadas. */
@@ -1551,7 +1551,7 @@ window.NEUROPED_EDITORIAL_SCALES=clean.concat(base);
 
 
 /* ===== scales-oficiais.js ===== */
-/* NeuroPed EDJ — CATÁLOGO de instrumentos oficiais de terceiros.
+/* NeuroPed SDG — CATÁLOGO de instrumentos oficiais de terceiros.
    CONFORMIDADE: NÃO reproduz itens/perguntas protegidas no app público.
    Cada item é um CARD pesquisável (nome, sigla, finalidade, faixa, respondente,
    palavras-chave, STATUS jurídico/clínico e link para a FONTE OFICIAL).
@@ -1692,7 +1692,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 }
 
 /* ===== scales-oficiais-lote3.js ===== */
-/* NeuroPed EDJ — CATÁLOGO OFICIAL · LOTE 3
+/* NeuroPed SDG — CATÁLOGO OFICIAL · LOTE 3
    Instrumentos padronizados de terceiros amplamente usados em neuropediatria
    (TEA, TDAH, comportamento adaptativo, neuropsicologia, desenvolvimento, humor,
    ansiedade, motor). Pedido: tornar TODOS filtráveis no Filtro de Escalas.
@@ -1839,7 +1839,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-curate.js ===== */
-/* NeuroPed EDJ — Curadoria do catálogo (roda por último).
+/* NeuroPed SDG — Curadoria do catálogo (roda por último).
    Carrega o lote NPE-BR-013 a NPE-BR-024 antes da curadoria para que
    os novos testes sejam contados como aplicáveis e ranqueados no filtro.
    Publica NEUROPED_CATALOG_STATS, incluindo fontes oficiais separadas. */
@@ -2033,7 +2033,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-direct-tasks.js ===== */
-/* NeuroPed EDJ — Testes diretos com a criança (tarefas aplicadas)
+/* NeuroPed SDG — Testes diretos com a criança (tarefas aplicadas)
  * ---------------------------------------------------------------
  * Biblioteca estruturada de TAREFAS DIRETAS (aplicadas ativamente na
  * criança), complementando as escalas de heterorrelato. Cada tarefa traz:
@@ -2170,7 +2170,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-direct-tests-catalog.js ===== */
-/* NeuroPed EDJ — Testes diretos como INSTRUMENTOS FILTRÁVEIS do catálogo
+/* NeuroPed SDG — Testes diretos como INSTRUMENTOS FILTRÁVEIS do catálogo
  * ----------------------------------------------------------------------
  * Promove a biblioteca de tarefas diretas (scales-direct-tasks.js →
  * NeuroPedDirectTasks.TASKS) a instrumentos de primeira classe dentro de
@@ -2312,7 +2312,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-med-eficacia.js ===== */
-/* NeuroPed EDJ — Eficácia da medicação (relato pré-consulta)
+/* NeuroPed SDG — Eficácia da medicação (relato pré-consulta)
  * ----------------------------------------------------------
  * Instrumento AUTORAL para pacientes/famílias que usam medicação responderem
  * ANTES da consulta: a medicação está sendo eficaz? Há efeitos? Adesão? O médico
@@ -2367,7 +2367,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-intl-livres.js ===== */
-/* NeuroPed EDJ — Instrumentos internacionais de LICENÇA LIVRE (curadoria)
+/* NeuroPed SDG — Instrumentos internacionais de LICENÇA LIVRE (curadoria)
  * --------------------------------------------------------------------------
  * Curadoria seletiva (NÃO é "encher linguiça") de instrumentos consagrados,
  * gratuitos/uso livre, que preenchem LACUNAS reais do catálogo — Brasil e mundo.
@@ -2514,7 +2514,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-autoral-funcional.js ===== */
-/* NeuroPed EDJ — Instrumentos AUTORAIS Dr. Jadson: funcional/adaptativo,
+/* NeuroPed SDG — Instrumentos AUTORAIS Dr. Jadson: funcional/adaptativo,
  * risco cognitivo e risco de dislexia.
  * --------------------------------------------------------------------------
  * Conteúdo 100% autoral (perguntas originais sobre o construto). NÃO reproduz
@@ -2625,7 +2625,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-estudo-restrito.js ===== */
-/* NeuroPed EDJ — Instrumentos NÃO-LIVRES: REFERÊNCIA DE ESTUDO (uso restrito)
+/* NeuroPed SDG — Instrumentos NÃO-LIVRES: REFERÊNCIA DE ESTUDO (uso restrito)
  * --------------------------------------------------------------------------
  * Instrumentos proprietários (licença paga) catalogados APENAS como referência
  * de ESTUDO, atrás de senha (uso restrito, não clínico). NÃO contêm os itens
@@ -2677,7 +2677,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-smart-rank.js ===== */
-/* NeuroPed EDJ — Smart Rank: inteligência de seleção de instrumentos
+/* NeuroPed SDG — Smart Rank: inteligência de seleção de instrumentos
  * ------------------------------------------------------------------
  * Eleva a escolha do filtro acima da contagem crua de palavras-chave:
  *   1) EXPANSÃO POR CONSTRUTO — termos leigos da queixa ("agitado",
@@ -2966,7 +2966,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-official-questions.js ===== */
-/* NeuroPed EDJ — Camada autoral + proveniência para instrumentos de referência
+/* NeuroPed SDG — Camada autoral + proveniência para instrumentos de referência
  * ---------------------------------------------------------------------------
  * Os instrumentos oficiais de terceiros (M-CHAT, SDQ, Vanderbilt, ASQ, C-SSRS,
  * PROMIS, NeuroQoL…) são catalogados como REFERÊNCIA e NÃO reproduzem seus itens
@@ -3395,7 +3395,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 
 
 /* ===== scales-robustez.js ===== */
-/* NeuroPed EDJ — Robustez: aprofundamento AUTORAL + interpretação
+/* NeuroPed SDG — Robustez: aprofundamento AUTORAL + interpretação
  * --------------------------------------------------------------------------
  * Torna os instrumentos de REFERÊNCIA mais completos e robustos SEM violar
  * limites: acrescenta perguntas-guia AUTORAIS extras (facetas adicionais do

@@ -1,9 +1,9 @@
-# NeuroPed EDJ — Release MVP Educacional · v6.45.0
+# NeuroPed SDG — Release MVP Educacional · v6.45.0
 
 **Data:** 2026-06-04 · **Responsável:** Dr. Jadson Fraga Araújo Júnior (CRM-PE 25227 · RQE 17756)
 
 ## Posicionamento (definição do produto)
-O NeuroPed EDJ é uma **ferramenta educacional de apoio** à observação do desenvolvimento
+O NeuroPed SDG é uma **ferramenta educacional de apoio** à observação do desenvolvimento
 infantil. **Não é diagnóstico, não substitui avaliação profissional e não é dispositivo
 médico** para decisão clínica sobre pacientes. Dados ficam **apenas no dispositivo** do usuário.
 

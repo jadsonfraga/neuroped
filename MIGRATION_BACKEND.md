@@ -1,4 +1,4 @@
-# Plano de Migração de Backend — NeuroPed EDJ
+# Plano de Migração de Backend — NeuroPed SDG
 
 > Documento técnico-operacional descrevendo o estado atual do armazenamento de dados, riscos identificados e plano de migração para infraestrutura adequada a uso clínico real e em conformidade com a LGPD.
 

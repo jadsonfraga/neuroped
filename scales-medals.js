@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-medals.js
+   NeuroPed SDG — scales-medals.js
    ============================================================
    Atribui medalhas 🥇🥈🥉 a uma lista de resultados ranqueada.
 

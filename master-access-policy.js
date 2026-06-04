@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Master Access Policy
+/* NeuroPed SDG — Master Access Policy
    Objetivo: PIN master abre áreas restritas; portal da família fica livre para conteúdo educativo.
    Nota: em app estático, isto é controle de acesso de interface, não segurança criptográfica de servidor. */
 (function(){

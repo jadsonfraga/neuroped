@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================
-   NeuroPed EDJ — strip-private.mjs
+   NeuroPed SDG — strip-private.mjs
    ------------------------------------------------------------
    Remove do DEPLOY PÚBLICO (não do repositório) os arquivos sensíveis:
    operação clínica profissional, administração, gerador de licenças,

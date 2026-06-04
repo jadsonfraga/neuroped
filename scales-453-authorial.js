@@ -109,7 +109,7 @@ const generated=combos.slice(0,453).map((c,i)=>({
   id:`aut453-${String(i+1).padStart(3,'0')}-${slug(c.a.k)}-${slug(c.u.k)}-${slug(c.d.k)}`,
   title:title(c.d,c.a,c.u,i),
   short_title:`${c.d.name} — ${c.a.label}`,
-  original_title:'Inventário operacional autoral NeuroPed EDJ',
+  original_title:'Inventário operacional autoral NeuroPed SDG',
   emoji:c.d.emoji,
   audience:c.u.k,
   audience_label:c.u.label,

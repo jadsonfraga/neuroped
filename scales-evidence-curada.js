@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ — EVIDÊNCIA CIENTÍFICA CURADA (instrumentos de terceiros)
+   NeuroPed SDG — EVIDÊNCIA CIENTÍFICA CURADA (instrumentos de terceiros)
    ---------------------------------------------------------------------
    Conteúdo clínico VERIFICADO no PubMed (PMID/DOI reais), produzido sob
    o PROMPT SUPREMO v2.0 e sob direção do curador humano (Dr. Jadson Fraga).

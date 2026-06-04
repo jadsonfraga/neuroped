@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Camada autoral + proveniência para instrumentos de referência
+/* NeuroPed SDG — Camada autoral + proveniência para instrumentos de referência
  * ---------------------------------------------------------------------------
  * Os instrumentos oficiais de terceiros (M-CHAT, SDQ, Vanderbilt, ASQ, C-SSRS,
  * PROMIS, NeuroQoL…) são catalogados como REFERÊNCIA e NÃO reproduzem seus itens

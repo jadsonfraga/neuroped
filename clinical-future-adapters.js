@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · FUTURE ADAPTERS V3.2 (interfaces vazias)
+   NeuroPed SDG · FUTURE ADAPTERS V3.2 (interfaces vazias)
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Contratos para integrações futuras. NÃO implementam — apenas definem

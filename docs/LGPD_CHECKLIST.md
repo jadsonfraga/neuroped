@@ -1,8 +1,8 @@
-# LGPD Checklist — NeuroPed EDJ
+# LGPD Checklist — NeuroPed SDG
 
 ## Estado atual
 
-O NeuroPed EDJ está em modo de homologação estática. Não deve ser usado com dados clínicos reais sem backend seguro e política formal.
+O NeuroPed SDG está em modo de homologação estática. Não deve ser usado com dados clínicos reais sem backend seguro e política formal.
 
 ## Classificação de dados
 

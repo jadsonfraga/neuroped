@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · INTEGRITY TESTS V3.2
+   NeuroPed SDG · INTEGRITY TESTS V3.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Suíte de testes auto-executável. Sem framework externo.

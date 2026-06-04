@@ -1,4 +1,4 @@
-# AUDITORIA OPERACIONAL DE FUNÇÕES — NeuroPed EDJ
+# AUDITORIA OPERACIONAL DE FUNÇÕES — NeuroPed SDG
 
 Data: 2026-05-07
 Escopo: hotfixes cirúrgicos para preservar o app existente e corrigir falhas objetivas apontadas na auditoria funcional.

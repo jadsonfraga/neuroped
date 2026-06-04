@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — np-embedded.css
+/* NeuroPed SDG — np-embedded.css
  * Aplicado SOMENTE quando a página está embutida na casca (app-shell):
  * o guard adiciona <html class="np-embedded"> e injeta este arquivo. Remove
  * apenas logotipos/marca DUPLICADOS (a casca já mostra a marca e a seção),

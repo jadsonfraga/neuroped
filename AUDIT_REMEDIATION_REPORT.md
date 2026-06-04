@@ -1,4 +1,4 @@
-# AUDIT REMEDIATION REPORT — NeuroPed EDJ
+# AUDIT REMEDIATION REPORT — NeuroPed SDG
 
 **Versão:** v5.1-truth-pass
 **Data:** 2026-05-28
@@ -9,7 +9,7 @@
 
 ## 1. Resumo executivo
 
-O NeuroPed EDJ até a v5.0 apresentava uma camada visual de alta qualidade sobre uma camada funcional simulada. Múltiplas afirmações públicas implicavam capacidades inexistentes (507 instrumentos clínicos, laudos assinados, sincronização em nuvem segura, cobrança, telemedicina). Antes da remediação, qualquer utilização do app por uma família ou colega de profissão criaria expectativa indevida e exposição jurídica do médico responsável.
+O NeuroPed SDG até a v5.0 apresentava uma camada visual de alta qualidade sobre uma camada funcional simulada. Múltiplas afirmações públicas implicavam capacidades inexistentes (507 instrumentos clínicos, laudos assinados, sincronização em nuvem segura, cobrança, telemedicina). Antes da remediação, qualquer utilização do app por uma família ou colega de profissão criaria expectativa indevida e exposição jurídica do médico responsável.
 
 A v5.1-truth-pass executa **contenção de risco** e **correção da verdade pública** sem destruir nada do que já funciona. Esta versão é classificada como **DEMO PREMIUM** — não é ainda MVP clínico para uso interno controlado, e não é SaaS comercializável.
 

@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Robustez: aprofundamento AUTORAL + interpretação
+/* NeuroPed SDG — Robustez: aprofundamento AUTORAL + interpretação
  * --------------------------------------------------------------------------
  * Torna os instrumentos de REFERÊNCIA mais completos e robustos SEM violar
  * limites: acrescenta perguntas-guia AUTORAIS extras (facetas adicionais do

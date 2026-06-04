@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — Question Coach (copiloto clínico das perguntas)
+/* NeuroPed SDG — Question Coach (copiloto clínico das perguntas)
  * --------------------------------------------------------------
  * Humaniza cada item de escala/teste: emoji contextual, exemplos
  * do dia a dia e uma microexplicação de "o que observar".

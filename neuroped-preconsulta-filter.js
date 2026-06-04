@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · PRÉ-CONSULTA FILTER V10.2
+   NeuroPed SDG · PRÉ-CONSULTA FILTER V10.2
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    FILTRO PERMANENTE no filtro-escalas.html.

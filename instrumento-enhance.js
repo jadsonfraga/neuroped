@@ -1,4 +1,4 @@
-/* NeuroPed EDJ - instrumento-enhance.js
+/* NeuroPed SDG - instrumento-enhance.js
  *
  * Acoplador da pagina instrumento.html, ativado por <script src> no HTML.
  * Adiciona, sem reescrever a logica original (label, render, calc):
@@ -283,7 +283,7 @@
     var p = patient();
     var title = (document.title || '').replace(/ -- NeuroPed.*/, '');
     var lines = [];
-    lines.push('NeuroPed EDJ - registro de instrumento');
+    lines.push('NeuroPed SDG - registro de instrumento');
     lines.push('Instrumento: ' + title + ' (' + instrumentId() + ')');
     if (p.name || p.code) lines.push('Paciente: ' + (p.name || p.code || '-') + (p.code && p.name ? ' (' + p.code + ')' : ''));
     lines.push('Data: ' + new Date().toLocaleString('pt-BR'));

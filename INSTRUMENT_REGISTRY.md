@@ -1,10 +1,10 @@
-# INSTRUMENT REGISTRY — NeuroPed EDJ
+# INSTRUMENT REGISTRY — NeuroPed SDG
 
 **Última revisão:** 2026-05-28
 **Versão do produto:** v5.1-truth-pass
 **Responsável editorial:** Dr. Jadson Fraga Araújo Júnior (CRM-PE 25227, RQE 17756)
 
-Este documento é a fonte única de verdade sobre os instrumentos clínicos disponibilizados pelo NeuroPed EDJ.
+Este documento é a fonte única de verdade sobre os instrumentos clínicos disponibilizados pelo NeuroPed SDG.
 
 ---
 

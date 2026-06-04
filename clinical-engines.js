@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL ENGINES V3.1
+   NeuroPed SDG · CLINICAL ENGINES V3.1
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Arquitetura: 3 engines ISOLADAS herdando BaseClinicalEngine, mais

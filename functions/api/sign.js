@@ -122,7 +122,7 @@ async function signPdfPades(pdfBytes, privateKey, certificate, chain, opts) {
     ByteRange: [0, 0, 0, 0],            // será atualizado
     Contents: PDFHexString.of(placeholder),
     Reason: PDFString.of(opts.reason || 'Assinatura digital ICP-Brasil'),
-    Location: PDFString.of(opts.location || 'NeuroPed EDJ'),
+    Location: PDFString.of(opts.location || 'NeuroPed SDG'),
     ContactInfo: PDFString.of(opts.contact || ''),
     Name: PDFString.of(opts.signerName || 'Dr. Jadson Fraga'),
     M: PDFString.of('D:' + new Date().toISOString().replace(/[-:T]/g,'').slice(0,14) + 'Z00\'00\'')
@@ -258,7 +258,7 @@ export async function onRequestPost({ request, env }) {
       const { privateKey, certificate, chain } = parsePfx(env.CERT_PFX_BASE64, env.CERT_PASS);
       const result = await signPdfPades(pdfBytes, privateKey, certificate, chain, {
         signerName: body.signer_name || env.CERT_SUBJECT_CN || 'Médico',
-        location: body.location || 'NeuroPed EDJ',
+        location: body.location || 'NeuroPed SDG',
         reason: 'Documento médico — Lei 14.063/2020 / MP 2.200-2/2001',
         contact: body.contact || ''
       });
@@ -305,7 +305,7 @@ export async function onRequestPost({ request, env }) {
 
       signedPdfB64 = body.pdf_base64; // PDF não modificado em modo avançado
       certInfo = {
-        subject: 'NeuroPed EDJ — Advanced Signature',
+        subject: 'NeuroPed SDG — Advanced Signature',
         issuer: 'Self',
         valid_until: new Date(Date.now() + 365*86400000).toISOString()
       };

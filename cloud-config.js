@@ -1,4 +1,4 @@
-/* NeuroPed EDJ - cloud-config.js
+/* NeuroPed SDG - cloud-config.js
  * Configuracao opt-in para o backend Supabase (np-cloud.js).
  *
  * Por padrao, fica DESABILITADO. Para ativar:
@@ -20,5 +20,5 @@ window.NEUROPED_CLOUD = {
   supabaseUrl: 'https://jadsonfraga-neuroped.supabase.co', // URL de produção (placeholder atualizado)
   supabasePublicAnon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', // Token anon público
   enabled: true,           // Habilitado para integração com backend
-  projectLabel: 'NeuroPed EDJ Cloud'
+  projectLabel: 'NeuroPed SDG Cloud'
 };

@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — public-mode.js · Modo público (educacional), SEM SENHAS
+   NeuroPed SDG — public-mode.js · Modo público (educacional), SEM SENHAS
    ============================================================
    Decisão do Dr. Jadson: divulgar o app ao público como ferramenta
    EDUCACIONAL. Não há senha em lugar nenhum. Como não dá para "proteger

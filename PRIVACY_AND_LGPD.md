@@ -1,9 +1,9 @@
-# PRIVACY AND LGPD — NeuroPed EDJ
+# PRIVACY AND LGPD — NeuroPed SDG
 
 **Status atual:** **NÃO CONFORME** para uso com dados reais de pacientes.
 **Versão:** v5.1-truth-pass
 
-Este documento estabelece o que precisa ser feito para que o NeuroPed EDJ esteja em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei 13.709/2018) antes de qualquer uso clínico real.
+Este documento estabelece o que precisa ser feito para que o NeuroPed SDG esteja em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei 13.709/2018) antes de qualquer uso clínico real.
 
 ---
 
@@ -44,7 +44,7 @@ Nenhum desses fluxos está implementado na v5.1.
 | Papel | Responsabilidade |
 |---|---|
 | Controlador | Dr. Jadson Fraga Araújo Júnior (decide finalidades) |
-| Operador | NeuroPed EDJ (software) + Supabase + Cloudflare (infraestrutura) |
+| Operador | NeuroPed SDG (software) + Supabase + Cloudflare (infraestrutura) |
 | Encarregado (DPO) | A designar — pode ser o próprio Dr. Jadson em um primeiro momento |
 
 Contato do DPO deve ser publicado na seção de privacidade do app.

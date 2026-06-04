@@ -1,4 +1,4 @@
-/* NeuroPed EDJ - np-cloud.js
+/* NeuroPed SDG - np-cloud.js
  * Cliente browser para Supabase, opt-in via window.NEUROPED_CLOUD.
  *
  * Coexiste com o backend D1 + Pages Functions: nao remove nada, apenas adiciona

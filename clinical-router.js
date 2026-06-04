@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL ROUTER V3
+   NeuroPed SDG · CLINICAL ROUTER V3
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Routing e classificação por TIPO clínico canônico:

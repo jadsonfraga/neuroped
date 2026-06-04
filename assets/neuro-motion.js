@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ — neuro-motion.js  ·  entrada fade-up (vanilla, sem libs)
+   NeuroPed SDG — neuro-motion.js  ·  entrada fade-up (vanilla, sem libs)
    ---------------------------------------------------------------------
    Progressive enhancement SEGURO: o JS é quem ESCONDE (data-neuro-animate)
    e depois revela (.neuro-in). Se o JS não rodar, ou se o usuário pediu

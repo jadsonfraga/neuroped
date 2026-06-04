@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — scales-filter-integration.js
+   NeuroPed SDG — scales-filter-integration.js
    ============================================================
    Cola taxonomia + medalhas + why-card + context-chips +
    perguntas enriquecidas no filtro-escalas.html SEM reescrever

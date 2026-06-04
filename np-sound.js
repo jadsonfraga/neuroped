@@ -1,5 +1,5 @@
 /* ============================================================
-   NeuroPed EDJ — np-sound.js · Camada de feedback sensorial
+   NeuroPed SDG — np-sound.js · Camada de feedback sensorial
    ============================================================
    Som de interface premium (Web Audio — sintetizado, sem arquivos:
    funciona offline e ocupa ~0kb de assets), + háptico leve + um

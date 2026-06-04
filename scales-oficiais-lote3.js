@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — CATÁLOGO OFICIAL · LOTE 3
+/* NeuroPed SDG — CATÁLOGO OFICIAL · LOTE 3
    Instrumentos padronizados de terceiros amplamente usados em neuropediatria
    (TEA, TDAH, comportamento adaptativo, neuropsicologia, desenvolvimento, humor,
    ansiedade, motor). Pedido: tornar TODOS filtráveis no Filtro de Escalas.

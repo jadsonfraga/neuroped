@@ -1,6 +1,6 @@
 # ANEXO OBRIGATÓRIO — REGRAS CRÍTICAS ANTES DE QUALQUER ALTERAÇÃO
 
-Antes de iniciar qualquer melhoria no NeuroPed EDJ, obedecer estas regras.
+Antes de iniciar qualquer melhoria no NeuroPed SDG, obedecer estas regras.
 
 ---
 

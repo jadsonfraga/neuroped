@@ -8,13 +8,13 @@
 <meta name="description" content="Busca semântica e triagem clínica: descreva idade + queixa e o NeuroPed prioriza os instrumentos certos do catálogo (371), com evidência curada quando disponível.">
 <link rel="canonical" href="https://jadsonfraga.github.io/neuroped/filtro-escalas.html">
 <meta name="theme-color" content="#0e0e22">
-<meta property="og:title" content="Clinical Intelligence Engine — NeuroPed EDJ">
+<meta property="og:title" content="Clinical Intelligence Engine — NeuroPed SDG">
 <meta property="og:description" content="Triagem semântica: idade + queixa → instrumentos clínicos priorizados, com evidência curada.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <meta property="og:url" content="https://jadsonfraga.github.io/neuroped/filtro-escalas.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Clinical Intelligence Engine — NeuroPed EDJ">
+<meta name="twitter:title" content="Clinical Intelligence Engine — NeuroPed SDG">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
 <link rel="stylesheet" href="./tokens.css">
 <link rel="stylesheet" href="./components.css">
@@ -80,6 +80,8 @@
   .sc-medal.ouro{background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 8px 18px -8px rgba(231,201,139,.65)}
   .sc-medal.prata{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#1e293b}
   .sc-medal.bronze{background:linear-gradient(135deg,rgba(205,127,80,.55),rgba(146,90,56,.55));color:#f3e3d6;border:1px solid rgba(205,127,80,.45)}
+  .sc-medal.direto{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 8px 18px -8px rgba(124,58,237,.6)}
+  .sc-medal.escola{background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#05223a;box-shadow:0 8px 18px -8px rgba(14,165,233,.55)}
   .sc-badge.resp{background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.26)}
   /* Seções + grid */
   .detected{max-width:760px;margin:0 auto 6px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center}
@@ -97,6 +99,8 @@
   .sc-card.tier-ouro::before{background:linear-gradient(90deg,#e7c98b,#caa56a)}
   .sc-card.tier-prata::before{background:linear-gradient(90deg,#e2e8f0,#94a3b8)}
   .sc-card.tier-bronze::before{background:linear-gradient(90deg,rgba(205,127,80,.75),rgba(146,90,56,.7))}
+  .sc-card.tier-direto::before{background:linear-gradient(90deg,#a78bfa,#7c3aed)}
+  .sc-card.tier-escola::before{background:linear-gradient(90deg,#38bdf8,#0ea5e9)}
   .sc-card:hover{transform:translateY(-3px);border-color:rgba(169,164,255,.34);box-shadow:0 28px 64px -28px rgba(91,84,232,.5)}
   .sc-card.top{border-color:rgba(231,201,139,.4);box-shadow:0 0 0 1px rgba(231,201,139,.3),0 26px 60px -26px rgba(231,201,139,.28)}
   .sc-medalrow{display:flex}
@@ -185,7 +189,8 @@
       <span>A medalha cruza <b>3 eixos</b>:</span>
       <span>🎯 <b>queixa/quadro</b></span><span>🎂 <b>idade</b></span><span>🙋 <b>quem responde</b></span>
     </div>
-    <div class="legend"><span>🥇 <b>Ouro</b>: alinhado nos 3 eixos</span><span>🥈 <b>Prata</b>: boa indicação</span><span>🥉 <b>Bronze</b>: alternativa / olhar complementar</span></div>
+    <div class="legend"><span>🥇 <b>Ouro</b> · 🥈 <b>Prata</b> · 🥉 <b>Bronze</b>: os 3 mais sensíveis à idade+queixa</span><span>🧒 <b>4º</b> teste direto na criança</span><span>🏫 <b>5º</b> questionário escolar</span></div>
+    <div class="legend"><span>Regra de ouro fixa da pré-consulta: pódio (1–3) + teste direto (4º) + escola (5º).</span></div>
   </div>
 
   <div id="recentRow" class="recent" hidden></div>
@@ -193,7 +198,7 @@
   <div id="guidePanel" hidden></div>
 
   <section id="recommendedSection" style="display:none">
-    <div class="rec-head"><div class="section-label">🥇 Mais indicados (Ouro clínico)</div><a id="applyNow" class="applynow" hidden></a></div>
+    <div class="rec-head"><div class="section-label">🥇 Mais indicados · pódio + 🧒 teste direto + 🏫 escola</div><a id="applyNow" class="applynow" hidden></a></div>
     <div class="np-cards-grid" id="recommendedResults"></div>
   </section>
 
@@ -321,7 +326,7 @@
     }catch(err){ return null; }
   }
 
-  var MEDAL={ouro:'🥇 Ouro clínico',prata:'🥈 Prata',bronze:'🥉 Bronze'};
+  var MEDAL={ouro:'🥇 Ouro clínico',prata:'🥈 Prata',bronze:'🥉 Bronze',direto:'🧒 4º · Teste direto',escola:'🏫 5º · Questionário escolar'};
 
   // tierOf(): decide a MEDALHA cruzando os 3 eixos — relevância da queixa × faixa
   // etária × respondente. Determinístico e explicável. Respondente é gate: quando o
@@ -437,6 +442,42 @@
       }).join('')+'</div><p class="gdisc">Sinais para a família/secretária observarem — apoio à pré-consulta, não diagnóstico.</p></details>';
   }
 
+  // ── REGRA DE OURO (inflexível) da pré-consulta ───────────────────────────
+  // A indicação principal tem SEMPRE 5 posições fixas:
+  //   1º 🥇 Ouro · 2º 🥈 Prata · 3º 🥉 Bronze → os 3 instrumentos MAIS sensíveis
+  //      à idade + queixa (escalas/inventários de heterorrelato/autorrelato).
+  //   4º 🧒 Teste direto na CRIANÇA (pedagógico · cognitivo · reconhecimento
+  //      visual · linguagem…), escolhido pela idade + queixa.
+  //   5º 🏫 Questionário para a ESCOLA (olhar do professor).
+  // As posições 4 e 5 são GARANTIDAS mesmo sem correspondência exata (fallback
+  // por idade) — o clínico sai sempre com a tríade olhar-família + desempenho-da-
+  // -criança + olhar-escola. As medalhas 1–3 passam a refletir a POSIÇÃO (mais
+  // sensível = Ouro), não só o limiar de fit.
+  function isDirectTest(s){ return !!(s && (s.direct_test || s.kind==='teste_direto')); }
+  function isSchoolQ(s){ return !!(s && respBucket(s.audience)==='escola'); }
+  function ageFits(s, age){ if(age==null) return true; var a0=+(s.age_min_months||0), a1=+(s.age_max_months||240); return age>=a0 && age<=a1; }
+  // decora um instrumento bruto como resultado {s,hits,fit,tier…}, pontuando a queixa.
+  function asResult(s, tokens, age){ return decorate(score(s, tokens||[], age) || {s:s, hits:[]}, age); }
+  // melhor de um conjunto: maior fit, depois nº de termos da queixa, depois prioridade.
+  function bestOf(list){ return list.slice().sort(function(a,b){ return (b.fit-a.fit)||(b.hits.length-a.hits.length)||((b.s.priority||0)-(a.s.priority||0)); })[0]||null; }
+  // 4º slot — teste direto na criança (idade+queixa) com fallback "sempre".
+  function pickDirect(matched, tokens, age){
+    var hit=matched.filter(function(r){return isDirectTest(r.s)&&ageFits(r.s,age);});
+    if(hit.length) return bestOf(hit);
+    var pool=window.NEUROPED_DIRECT_TESTS||(window.NEUROPED_EDITORIAL_SCALES||[]).filter(isDirectTest);
+    var fit=pool.filter(function(s){return ageFits(s,age);});
+    return bestOf((fit.length?fit:pool).map(function(s){return asResult(s,tokens,age);}));
+  }
+  // 5º slot — questionário para a escola (idade+queixa) com fallback "sempre".
+  function pickSchool(matched, tokens, age, skipId){
+    var ok=function(s){return isSchoolQ(s)&&s.id!==skipId&&!isDiary(s)&&!isBank(s)&&!isClinicalOnly(s);};
+    var hit=matched.filter(function(r){return ok(r.s)&&ageFits(r.s,age);});
+    if(hit.length) return bestOf(hit);
+    var pool=(window.NEUROPED_EDITORIAL_SCALES||[]).filter(ok);
+    var fit=pool.filter(function(s){return ageFits(s,age);});
+    return bestOf((fit.length?fit:pool).map(function(s){return asResult(s,tokens,age);}));
+  }
+
   function run(){
     var cat=window.NEUROPED_EDITORIAL_SCALES||[];
     var all=document.getElementById('allResults'), rec=document.getElementById('recommendedSection'),
@@ -474,25 +515,27 @@
     det.querySelectorAll('.dchip').forEach(function(b){ b.addEventListener('click',function(){ inp.value=b.getAttribute('data-foc')||''; if(typeof toggleClear==='function')toggleClear(); run(); }); });
     cnt.textContent='· '+top.length;
     renderGuide(q, tokens, top, age);
-    if(!top.length){ rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
-      var tc2=byAge(topCatalog());
-      all.innerHTML='<div class="empty">Sem correspondência exata. Tente um termo mais simples (ex.: “não fala”, “agitado”) ou um chip de queixa acima. Enquanto isso, instrumentos comuns'+(age!=null?' para a idade':'')+':</div>'+tc2.map(function(r){return card(r,false);}).join(''); return; }
-    // Ouro: até 3 mais alinhados, cruzando OLHARES (teste direto × família × escala
-    // × criança) e deduplicando variantes — triangulação clínica de pré-consulta.
-    var ouroAll=top.filter(function(r){return r.tier==='ouro';});
-    var ouro;
-    if(window.NeuroPedSmartRank && NeuroPedSmartRank.pickTop){
-      ouro=NeuroPedSmartRank.pickTop(ouroAll,3);
-    } else if(window.NeuroPedTaxonomy && NeuroPedTaxonomy.balanceByType){
-      ouro=NeuroPedTaxonomy.balanceByType(ouroAll.map(function(r){return r.s;}),3)
-        .map(function(s){return ouroAll.filter(function(r){return r.s===s;})[0];});
-    } else { ouro=ouroAll.slice(0,3); }
-    rec.style.display=ouro.length?'block':'none';
-    recR.innerHTML=ouro.map(card).join('');
+    // ── REGRA DE OURO (inflexível): 5 posições fixas ───────────────────────
+    // 4º (teste direto) e 5º (escola) primeiro, reservando ids p/ não repetirem no pódio.
+    var directPick=pickDirect(top, tokens, age);
+    var schoolPick=pickSchool(top, tokens, age, directPick&&directPick.s.id);
+    var skip={}; if(directPick)skip[directPick.s.id]=1; if(schoolPick)skip[schoolPick.s.id]=1;
+    // 1º–3º: os MAIS sensíveis à idade+queixa que NÃO são teste direto nem escola.
+    var medals=top.filter(function(r){return !isDirectTest(r.s)&&!isSchoolQ(r.s)&&!skip[r.s.id];}).slice(0,3);
+    medals.forEach(function(r,i){ r.tier=['ouro','prata','bronze'][i]; r.rank=3-i; });
+    if(directPick) directPick.tier='direto';
+    if(schoolPick) schoolPick.tier='escola';
+    var fixed=medals.concat(directPick?[directPick]:[], schoolPick?[schoolPick]:[]);
+    rec.style.display=fixed.length?'block':'none';
+    recR.innerHTML=fixed.map(function(r){return card(r);}).join('');
     var an=document.getElementById('applyNow');
-    if(an){ if(ouro.length){ var t1=ouro[0].s; an.hidden=false; an.textContent='▶ Aplicar “'+(t1.short_title||t1.title||'1ª escala').slice(0,28)+'” agora'; an.setAttribute('href','./escala.html?id='+encodeURIComponent(t1.id)); } else { an.hidden=true; } }
-    var rest=top.filter(function(r){return ouro.indexOf(r)<0;});
-    all.innerHTML=rest.map(card).join('')||'<div class="empty">As indicações Ouro acima são as mais alinhadas ao caso.</div>';
+    var lead=medals[0]||fixed[0];
+    if(an){ if(lead){ var t1=lead.s; an.hidden=false; an.textContent='▶ Aplicar “'+(t1.short_title||t1.title||'1ª escala').slice(0,28)+'” agora'; an.setAttribute('href','./escala.html?id='+encodeURIComponent(t1.id)); } else { an.hidden=true; } }
+    var used={}; fixed.forEach(function(r){used[r.s.id]=1;});
+    var rest=top.filter(function(r){return !used[r.s.id];});
+    all.innerHTML=rest.map(card).join('')||(fixed.length
+      ?'<div class="empty">As 5 indicações acima seguem a regra de ouro da pré-consulta (pódio + teste direto + escola).</div>'
+      :'<div class="empty">Sem correspondência. Tente um termo mais simples (ex.: “não fala”, “agitado”) ou um chip de queixa acima.</div>');
   }
 
   // Quem responde? — seletor (single-select). Eixo que muda a medalha: ao escolher,

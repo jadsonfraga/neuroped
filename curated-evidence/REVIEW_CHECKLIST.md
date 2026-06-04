@@ -94,7 +94,7 @@
 
 **Eu, Dr. Jadson Fraga Araújo Júnior (CRM-PE 25227 · RQE 17756 — Neuropediatria), revisei** o conteúdo das curadorias `fase1-2-3.md` e `fase4.md`, aplicando os 7 critérios do Portão de Auditoria + critérios clínicos específicos, e:
 
-- ☐ **Aprovo na íntegra** para uso no NeuroPed EDJ
+- ☐ **Aprovo na íntegra** para uso no NeuroPed SDG
 - ☐ **Aprovo com ressalvas** (listadas acima como ⚠️)
 - ☐ **Requeresce revisão** antes de ir para produção
 

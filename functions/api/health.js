@@ -2,7 +2,7 @@
 export async function onRequest(context) {
   return new Response(JSON.stringify({
     ok: true,
-    service: 'NeuroPed EDJ',
+    service: 'NeuroPed SDG',
     version: '3.0.0',
     timestamp: new Date().toISOString()
   }), {

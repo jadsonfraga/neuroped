@@ -1,5 +1,5 @@
 /* ======================================================
-   NeuroPed EDJ — Safe Public Layer v36
+   NeuroPed SDG — Safe Public Layer v36
    Regra:
    - Primeiro dá chance de digitar PIN master.
    - Só após erro de PIN a Consulta mostra opção de voltar.

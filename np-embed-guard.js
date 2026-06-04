@@ -1,4 +1,4 @@
-/* NeuroPed EDJ — np-embed-guard.js
+/* NeuroPed SDG — np-embed-guard.js
  * Garante que as páginas auxiliares abram SEMPRE dentro do app (a casca
  * app-shell.html), nunca como página HTML solta. Para páginas que NÃO usam
  * app-frame.js (arquitetura V3: testes-diretos, escalas-questionarios,

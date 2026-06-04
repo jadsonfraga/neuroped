@@ -1,5 +1,5 @@
 -- =====================================================================
--- NeuroPed EDJ — Schema v6 production-ready (Supabase / PostgreSQL)
+-- NeuroPed SDG — Schema v6 production-ready (Supabase / PostgreSQL)
 -- Inclui: RLS, auditoria, assinatura digital, multi-tenant futuro
 -- Como aplicar:
 --   1. Supabase SQL Editor → New query

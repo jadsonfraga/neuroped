@@ -1,5 +1,5 @@
 /* =====================================================================
-   NeuroPed EDJ · CLINICAL PDF EXPORT V3.1
+   NeuroPed SDG · CLINICAL PDF EXPORT V3.1
    Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
    ---------------------------------------------------------------------
    Três geradores de PDF, um por engine:
