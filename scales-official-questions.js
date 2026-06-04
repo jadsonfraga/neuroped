@@ -261,6 +261,30 @@
       'O silêncio atrapalha o aprendizado ou a socialização?',
       'Há também timidez intensa ou ansiedade em outras situações?',
       'Melhora quando a pressão para falar diminui?'
+    ],
+    adaptativo: [
+      'Come, veste-se e cuida da higiene com a independência esperada para a idade?',
+      'Comunica necessidades e se faz entender conforme a idade?',
+      'Realiza tarefas de casa e da rotina compatíveis com a idade?',
+      'Tem a noção de segurança e as regras sociais esperadas?',
+      'Desloca-se e resolve problemas do dia a dia com a autonomia esperada?',
+      'Brinca e interage socialmente como esperado para a idade?',
+      'Maiores: lida com tempo, dinheiro e compromissos básicos?',
+      'Precisa de muito mais apoio que os pares para o dia a dia?',
+      'A autonomia mudou ou regrediu recentemente?',
+      'No geral, o funcionamento adaptativo está compatível com a idade?'
+    ],
+    cognicao: [
+      'A compreensão e o raciocínio acompanham a idade?',
+      'Aprende coisas novas no ritmo dos colegas?',
+      'Resolve problemas e faz associações lógicas esperadas?',
+      'A memória para recados e tarefas está adequada?',
+      'Mantém atenção e organiza o pensamento como esperado?',
+      'Brinca/atua em complexidade compatível com a idade?',
+      'Há atraso em vários domínios ao mesmo tempo?',
+      'Precisa de muita repetição e apoio para aprender?',
+      'A dificuldade aparece em casa e na escola?',
+      'No geral, o nível cognitivo parece compatível com a idade?'
     ]
   };
 
@@ -285,7 +309,9 @@
     toc: { complaints: ['toc', 'obsessao', 'compulsao', 'ritual', 'mania de repetir', 'lavar as maos', 'conferir', 'simetria', 'contaminacao'], symptoms: ['rituais repetitivos', 'pensamentos intrusivos', 'aflição se impedido'] },
     tiques: { complaints: ['tique', 'tiques', 'tic', 'tourette', 'pisca', 'pigarro', 'movimento involuntario', 'som repetido'], symptoms: ['tiques motores', 'tiques vocais', 'urgência premonitória'] },
     regulacao: { complaints: ['regulacao', 'desregulacao', 'explosao', 'descontrole emocional', 'frustracao', 'autocontrole', 'birra intensa', 'raiva'], symptoms: ['explosões emocionais', 'dificuldade de se acalmar', 'baixa tolerância à frustração'] },
-    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] }
+    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] },
+    adaptativo: { complaints: ['adaptativo', 'autonomia', 'independencia', 'vida diaria', 'autocuidado', 'funcionamento adaptativo'], symptoms: ['depende para tarefas da idade', 'pouca autonomia', 'autocuidado abaixo do esperado'] },
+    cognicao: { complaints: ['cognicao', 'inteligencia', 'qi', 'raciocinio', 'deficiencia intelectual', 'funcao executiva', 'memoria'], symptoms: ['aprende mais devagar', 'raciocínio abaixo da idade', 'atraso cognitivo'] }
   };
 
   // Classificação de licença (alto grau de confiança; demais → verificar na fonte).
@@ -295,7 +321,10 @@
     'ofc-phq-gad': 'livre', 'ofc-asq': 'livre', 'ofc-cssrs': 'livre', 'ofc-crafft': 'livre',
     'ofc-psc': 'livre', 'ofc-swyc': 'livre', 'ofc-vanderbilt': 'livre', 'ofc-cdc-milestones': 'livre',
     'ofc-sdq': 'livre-nc', 'ofc-rcads': 'livre-nc', 'ofc-mchat': 'livre',
-    'ofc-gmfcs': 'livre', 'ofc-macs': 'livre', 'ofc-minimacs': 'livre'
+    'ofc-gmfcs': 'livre', 'ofc-macs': 'livre', 'ofc-minimacs': 'livre',
+    // Lote 3 — genuinamente livres (atribuição à fonte). Os demais ofc3-* ficam
+    // como 'verificar' (proprietários: Conners, CARS-2, ADI-R, Vineland, WISC…).
+    'ofc3-snap-iv': 'livre', 'ofc3-scared': 'livre'
   };
   function licenseOf(id) {
     if (LICENSE[id]) return LICENSE[id];
@@ -307,7 +336,8 @@
     'livre': 'Uso clínico gratuito (atribuição à fonte oficial).',
     'livre-nc': 'Gratuito para uso não comercial (atribuição à fonte oficial).',
     'livre-reg': 'Gratuito mediante registro na plataforma oficial (HealthMeasures).',
-    'verificar': 'Verifique a licença na fonte oficial antes do uso formal.'
+    'verificar': 'Verifique a licença na fonte oficial antes do uso formal.',
+    'restrito': 'Instrumento PROPRIETÁRIO (licença paga) — referência de ESTUDO, NÃO para uso clínico aqui. Adquira/licencie na fonte oficial.'
   };
 
   // Override explícito para instrumentos amplos/multidomínio cuja descrição cita
@@ -318,9 +348,20 @@
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
+    // Lote 3 (padronizados) — construto correto p/ as perguntas-guia autorais.
+    'ofc3-snap-iv': 'tdah', 'ofc3-conners': 'tdah', 'ofc3-brief2': 'tdah',
+    'ofc3-abc-aberrant': 'comportamento',
+    'ofc3-cars2': 'tea', 'ofc3-adi-r': 'tea', 'ofc3-scq': 'tea',
+    'ofc3-vineland3': 'desenvolvimento', 'ofc3-denver2': 'desenvolvimento', 'ofc3-bayley4': 'desenvolvimento',
+    'ofc3-wisc5': 'aprendizagem', 'ofc3-nepsy2': 'aprendizagem',
+    'ofc3-mabc2': 'motor', 'ofc3-aseba-cbcl': 'saude_mental_global',
+    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor',
+    // Curadoria internacional (livres) — vinda do main.
     'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
     'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor',
-    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo'
+    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo',
+    'rst-vineland3': 'adaptativo', 'rst-wiscv': 'cognicao', 'rst-brief2': 'cognicao', 'rst-cbcl': 'saude_mental_global',
+    'rst-asq3': 'desenvolvimento', 'rst-bayley4': 'desenvolvimento', 'rst-ados2': 'tea', 'rst-srs2': 'tea', 'rst-cars2': 'tea', 'rst-mabc2': 'motor', 'rst-conners3': 'tdah'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -334,7 +375,9 @@
     if (/tique|tiques|tourette|\bmoves\b/.test(d)) return 'tiques';
     if (/regulac|desregulac|autocontrole|emotion regulation|\berc\b/.test(d)) return 'regulacao';
     if (/mutismo|mutism|\bsmq\b|seletiv/.test(d)) return 'mutismo';
-    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee/.test(d)) return 'desenvolvimento';
+    if (/adaptativ|vineland|autonomia|vida diaria|autocuidado/.test(d)) return 'adaptativo';
+    if (/cognic|\bqi\b|inteligencia|wisc|wppsi|executiv|\bbrief\b|intelectual/.test(d)) return 'cognicao';
+    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee|bayley|ages/.test(d)) return 'desenvolvimento';
     if (/substanc|alcool|drog|cigarro|crafft|vape/.test(d)) return 'substancias';
     if (/tea|autis|espectro|mchat/.test(d)) return 'tea';
     if (/sono|insonia|cshq|sleep/.test(d)) return 'sono';

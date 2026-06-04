@@ -1691,6 +1691,153 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
   document.write('<script src="./scales-oficiais-lote2.js"><\/script>');
 }
 
+/* ===== scales-oficiais-lote3.js ===== */
+/* NeuroPed EDJ — CATÁLOGO OFICIAL · LOTE 3
+   Instrumentos padronizados de terceiros amplamente usados em neuropediatria
+   (TEA, TDAH, comportamento adaptativo, neuropsicologia, desenvolvimento, humor,
+   ansiedade, motor). Pedido: tornar TODOS filtráveis no Filtro de Escalas.
+
+   CONFORMIDADE (idêntica ao lote 1/2): cada item é um CARD pesquisável com nome
+   oficial, sigla, finalidade, faixa, respondente, palavras-chave, STATUS
+   jurídico/clínico e LINK para a FONTE OFICIAL. NÃO reproduz itens/perguntas
+   protegidas por direito autoral. Para os instrumentos de referência, o módulo
+   scales-official-questions.js injeta PERGUNTAS-GUIA AUTORAIS NeuroPed (do mesmo
+   construto) + proveniência/licença — nunca os itens originais.
+
+   Os genuinamente livres (ex.: SNAP-IV, SCARED) recebem license_status 'livre'
+   no mapa de licenças; os proprietários ficam como 'verificar' (checar na fonte
+   antes de uso formal), que é o padrão honesto e seguro. */
+(function () {
+  'use strict';
+  if (window.NEUROPED_OFICIAIS_LOTE3_LOADED) return;
+  window.NEUROPED_OFICIAIS_LOTE3_LOADED = true;
+
+  var AUD = { familia:'Família', escola:'Escola', autoteste:'Autoteste', clinico:'Clínico', misto:'Múltiplos respondentes' };
+
+  function mk(o){
+    return {
+      id:'ofc3-' + o.id, title:o.title, short_title:o.sigla || o.title, sigla:o.sigla || '',
+      emoji:o.emoji || '📚', audience:o.aud || 'clinico', audience_label:AUD[o.aud || 'clinico'],
+      age_band:o.band || 'pediátrico', age_min_months:o.min == null ? 0 : o.min, age_max_months:o.max == null ? 215 : o.max,
+      domain:o.area, finalidade:o.fim, status:o.status, official_url:o.url,
+      official_catalog:true, applicable:false, nature:'oficial', kind:'fonte oficial',
+      symptoms:o.kw.slice(0,5), complaints:o.kw, keywords:o.kw.concat([o.sigla, o.area, 'fonte oficial', 'oficial', 'validado', 'referência']),
+      page:'', anchor:'', priority:o.pri || 88,
+      plain_questions:[], clinical_use:o.fim,
+      differentiator:'Instrumento oficial de terceiros — catalogado com fonte. ' + o.status,
+      not_normative_disclaimer:'Instrumento oficial de terceiros. Itens não reproduzidos no app por conformidade de licença. ' + o.status + ' Acesse a fonte oficial para uso conforme os termos.'
+    };
+  }
+
+  // URLs de fonte oficial (editoras/autores) — estáveis e verificáveis.
+  var WPS = 'https://www.wpspublish.com/', PEARSON = 'https://www.pearsonassessments.com/',
+      MHS = 'https://mhs.com/', PAR = 'https://www.parinc.com/', ASEBA = 'https://aseba.org/';
+  var ST_PROP = 'Instrumento proprietário — uso/aplicação exigem aquisição/licença junto à editora oficial.';
+  var ST_FREE = 'Uso clínico gratuito amplamente disponível — atribuição à fonte/autor original.';
+
+  var L3 = [
+    /* ===================== TDAH / comportamento ===================== */
+    mk({ id:'snap-iv', title:'SNAP-IV (Swanson, Nolan e Pelham) — TDAH e oposição', sigla:'SNAP-IV', emoji:'⚡', aud:'misto',
+      band:'6–18 anos', min:72, max:215, area:'TDAH e transtorno opositivo', pri:96,
+      fim:'Rastreio de desatenção, hiperatividade/impulsividade e sintomas opositivos por pais e professores (versões 18 e 26 itens).',
+      status:ST_FREE, url:'https://www.shared-care.ca/files/Scoring_for_SNAP_IV_Guide.pdf',
+      kw:['tdah','desatenção','hiperatividade','impulsividade','oposição','tod','escola','professor'] }),
+    mk({ id:'conners', title:'Conners (Conners 4 / Conners 3 / Conners EC) — TDAH e comorbidades', sigla:'Conners', emoji:'📈', aud:'misto',
+      band:'2–18 anos', min:24, max:215, area:'TDAH e comorbidades', pri:94,
+      fim:'Avaliação multi-informante de TDAH e problemas associados (conduta, aprendizagem, humor) por pais, professores e autorrelato.',
+      status:ST_PROP, url:MHS,
+      kw:['tdah','desatenção','hiperatividade','conduta','aprendizagem','comorbidade','pais','professor'] }),
+    mk({ id:'brief2', title:'BRIEF-2 — Inventário de Funções Executivas', sigla:'BRIEF-2', emoji:'🧩', aud:'misto',
+      band:'5–18 anos', min:60, max:215, area:'Funções executivas', pri:90,
+      fim:'Avaliação comportamental de funções executivas (inibição, memória de trabalho, planejamento, flexibilidade) por pais, professores e autorrelato.',
+      status:ST_PROP, url:PAR,
+      kw:['funções executivas','autorregulação','memória de trabalho','organização','planejamento','flexibilidade','inibição'] }),
+    mk({ id:'abc-aberrant', title:'ABC — Aberrant Behavior Checklist', sigla:'ABC', emoji:'🌀', aud:'misto',
+      band:'pediátrico', min:0, max:215, area:'Comportamento (TEA / deficiência intelectual)', pri:86,
+      fim:'Avaliação de comportamentos-problema (irritabilidade, letargia, estereotipias, hiperatividade, fala inadequada), útil em TEA e DI.',
+      status:ST_PROP, url:'https://www.slosson.com/',
+      kw:['comportamento','irritabilidade','estereotipias','agitação','tea','deficiência intelectual','agressividade'] }),
+
+    /* ===================== TEA ===================== */
+    mk({ id:'cars2', title:'CARS-2 — Childhood Autism Rating Scale (2ª ed.)', sigla:'CARS-2', emoji:'🧠', aud:'clinico',
+      band:'≥ 2 anos', min:24, max:215, area:'TEA (avaliação clínica)', pri:95,
+      fim:'Escala de avaliação clínica da gravidade de características do espectro autista (versões padrão e de alto funcionamento).',
+      status:ST_PROP, url:'https://www.wpspublish.com/cars-2-childhood-autism-rating-scale-second-edition',
+      kw:['tea','autismo','espectro','gravidade','avaliação clínica','interação social','comportamento'] }),
+    mk({ id:'adi-r', title:'ADI-R — Autism Diagnostic Interview-Revised', sigla:'ADI-R', emoji:'🗂️', aud:'clinico',
+      band:'idade mental ≥ 2 anos', min:24, max:215, area:'TEA (entrevista diagnóstica)', pri:93,
+      fim:'Entrevista semiestruturada com cuidadores para avaliação diagnóstica do autismo (comunicação, interação social, padrões restritos/repetitivos).',
+      status:ST_PROP, url:WPS,
+      kw:['tea','autismo','entrevista','diagnóstico','interação social','comunicação','comportamentos repetitivos'] }),
+    mk({ id:'scq', title:'SCQ — Social Communication Questionnaire', sigla:'SCQ', emoji:'💬', aud:'familia',
+      band:'≥ 4 anos', min:48, max:215, area:'TEA (rastreio)', pri:90,
+      fim:'Questionário de rastreio de sintomas associados ao espectro autista, respondido por cuidadores (formas "ao longo da vida" e "atual").',
+      status:ST_PROP, url:WPS,
+      kw:['tea','autismo','rastreio','comunicação social','cuidador','espectro'] }),
+
+    /* ===================== Desenvolvimento / cognição / adaptativo ===================== */
+    mk({ id:'vineland3', title:'Vineland-3 — Escalas de Comportamento Adaptativo', sigla:'Vineland-3', emoji:'🌳', aud:'misto',
+      band:'0–90 anos', min:0, max:215, area:'Comportamento adaptativo', pri:92,
+      fim:'Avaliação do comportamento adaptativo (comunicação, vida diária, socialização, motricidade) por entrevista/questionário com cuidadores e professores.',
+      status:ST_PROP, url:PEARSON,
+      kw:['comportamento adaptativo','autonomia','vida diária','socialização','comunicação','deficiência intelectual','tea'] }),
+    mk({ id:'denver2', title:'Denver II — Triagem do Desenvolvimento', sigla:'Denver II', emoji:'📊', aud:'clinico',
+      band:'0–6 anos', min:0, max:72, area:'Triagem do desenvolvimento', pri:88,
+      fim:'Triagem do desenvolvimento em quatro áreas (pessoal-social, motor fino-adaptativo, linguagem e motor grosseiro).',
+      status:ST_PROP, url:'https://denverii.com/',
+      kw:['desenvolvimento','marcos','triagem','motor','linguagem','pessoal-social','primeira infância'] }),
+    mk({ id:'bayley4', title:'Bayley-4 — Escalas de Desenvolvimento do Bebê e Criança Pequena', sigla:'Bayley-4', emoji:'🍼', aud:'clinico',
+      band:'0–42 meses', min:0, max:42, area:'Desenvolvimento (primeira infância)', pri:88,
+      fim:'Avaliação do desenvolvimento cognitivo, linguagem, motor, socioemocional e comportamento adaptativo em bebês e crianças pequenas.',
+      status:ST_PROP, url:PEARSON,
+      kw:['desenvolvimento','bebê','cognição','linguagem','motor','primeira infância','atraso global'] }),
+    mk({ id:'wisc5', title:'WISC-V — Escala de Inteligência Wechsler para Crianças', sigla:'WISC-V', emoji:'🧮', aud:'clinico',
+      band:'6–16 anos', min:72, max:200, area:'Inteligência / cognição', pri:88,
+      fim:'Avaliação da capacidade intelectual e de domínios cognitivos (compreensão verbal, viso-espacial, raciocínio fluido, memória de trabalho, velocidade).',
+      status:ST_PROP, url:PEARSON,
+      kw:['inteligência','qi','cognição','memória de trabalho','raciocínio','aprendizagem','avaliação neuropsicológica'] }),
+    mk({ id:'nepsy2', title:'NEPSY-II — Avaliação Neuropsicológica do Desenvolvimento', sigla:'NEPSY-II', emoji:'🔬', aud:'clinico',
+      band:'3–16 anos', min:36, max:200, area:'Avaliação neuropsicológica', pri:86,
+      fim:'Bateria neuropsicológica por domínios (atenção/função executiva, linguagem, memória, sensório-motor, processamento viso-espacial, percepção social).',
+      status:ST_PROP, url:PEARSON,
+      kw:['neuropsicologia','atenção','memória','linguagem','funções executivas','viso-espacial','aprendizagem'] }),
+    mk({ id:'mabc2', title:'MABC-2 — Movement Assessment Battery for Children', sigla:'MABC-2', emoji:'🤸', aud:'clinico',
+      band:'3–16 anos', min:36, max:200, area:'Coordenação motora (TDC)', pri:85,
+      fim:'Avaliação da coordenação motora (destreza manual, mirar e agarrar, equilíbrio) — apoio à identificação de Transtorno do Desenvolvimento da Coordenação.',
+      status:ST_PROP, url:PEARSON,
+      kw:['motor','coordenação','tdc','desajeitado','equilíbrio','destreza manual','motricidade'] }),
+
+    /* ===================== Comportamento / emoção (banco ASEBA) ===================== */
+    mk({ id:'aseba-cbcl', title:'ASEBA — CBCL / TRF / YSR (Achenbach)', sigla:'CBCL', emoji:'📋', aud:'misto',
+      band:'1,5–18 anos', min:18, max:215, area:'Comportamento e emoção (banco ASEBA)', pri:90,
+      fim:'Sistema multi-informante de problemas emocionais e comportamentais (pais — CBCL; professores — TRF; autorrelato — YSR), com perfis de síndromes.',
+      status:ST_PROP, url:ASEBA,
+      kw:['comportamento','emoção','ansiedade','depressão','agressividade','isolamento','multi-informante','síndromes'] }),
+
+    /* ===================== Humor / ansiedade ===================== */
+    mk({ id:'scared', title:'SCARED — Screen for Child Anxiety Related Disorders', sigla:'SCARED', emoji:'😟', aud:'misto',
+      band:'8–18 anos', min:96, max:215, area:'Ansiedade', pri:89,
+      fim:'Rastreio de transtornos de ansiedade (pânico/somático, ansiedade generalizada, separação, fobia social, fobia escolar) — criança e pais.',
+      status:ST_FREE, url:'https://www.pediatricbipolar.pitt.edu/resources/instruments',
+      kw:['ansiedade','medo','pânico','separação','fobia social','preocupação','escola'] }),
+    mk({ id:'cdi2', title:'CDI-2 — Children’s Depression Inventory (2ª ed.)', sigla:'CDI-2', emoji:'🌧️', aud:'misto',
+      band:'7–17 anos', min:84, max:215, area:'Humor / depressão', pri:86,
+      fim:'Avaliação de sintomas depressivos em crianças e adolescentes (autorrelato, pais e professores).',
+      status:ST_PROP, url:MHS,
+      kw:['humor','depressão','tristeza','irritabilidade','desânimo','autoestima','adolescente'] })
+  ];
+
+  window.NEUROPED_OFICIAIS_LOTE3 = L3;
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  var ids = new Set(base.map(function(x){ return x && x.id; }));
+  window.NEUROPED_EDITORIAL_SCALES = base.concat(L3.filter(function(x){ return !ids.has(x.id); }));
+  var oficiais = Array.isArray(window.NEUROPED_OFICIAIS) ? window.NEUROPED_OFICIAIS : [];
+  var ofIds = new Set(oficiais.map(function(x){ return x && x.id; }));
+  window.NEUROPED_OFICIAIS = oficiais.concat(L3.filter(function(x){ return !ofIds.has(x.id); }));
+  window.NEUROPED_OFICIAIS_LOTE3_COUNT = L3.length;
+})();
+
+
 /* ===== scales-curate.js ===== */
 /* NeuroPed EDJ — Curadoria do catálogo (roda por último).
    Carrega o lote NPE-BR-013 a NPE-BR-024 antes da curadoria para que
@@ -2477,6 +2624,58 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
 })();
 
 
+/* ===== scales-estudo-restrito.js ===== */
+/* NeuroPed EDJ — Instrumentos NÃO-LIVRES: REFERÊNCIA DE ESTUDO (uso restrito)
+ * --------------------------------------------------------------------------
+ * Instrumentos proprietários (licença paga) catalogados APENAS como referência
+ * de ESTUDO, atrás de senha (uso restrito, não clínico). NÃO contêm os itens
+ * originais (protegidos por direito autoral) — trazem nome, construto, faixa,
+ * citação + LINK DA FONTE OFICIAL (onde licenciar/obter o original) e perguntas-
+ * guia AUTORAIS sobre o mesmo construto (preenchidas por scales-official-
+ * questions.js). study_only:true → o runner exige senha e marca "não clínico".
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_ESTUDO_RESTRITO_LOADED) return;
+  window.NEUROPED_ESTUDO_RESTRITO_LOADED = true;
+
+  var ITEMS = [
+    { id: 'rst-conners3', t: 'Conners-3 — TDAH e comorbidades', dom: 'TDAH', band: '6–18 anos', mn: 72, mx: 215, pub: 'MHS (Multi-Health Systems)', url: 'https://mhs.com/', flag: '🇨🇦' },
+    { id: 'rst-vineland3', t: 'Vineland-3 — comportamento adaptativo', dom: 'Comportamento adaptativo', band: '0–18+ anos', mn: 0, mx: 960, pub: 'Pearson', url: 'https://www.pearsonassessments.com/', flag: '🇺🇸' },
+    { id: 'rst-cars2', t: 'CARS-2 — gravidade do autismo', dom: 'TEA (gravidade)', band: '2–18+ anos', mn: 24, mx: 960, pub: 'WPS', url: 'https://www.wpspublish.com/', flag: '🇺🇸' },
+    { id: 'rst-cbcl', t: 'CBCL / ASEBA — banda larga (Achenbach)', dom: 'Comportamento (banda larga)', band: '1,5–18 anos', mn: 18, mx: 215, pub: 'ASEBA', url: 'https://aseba.org/', flag: '🇺🇸' },
+    { id: 'rst-brief2', t: 'BRIEF-2 — funções executivas', dom: 'Função executiva', band: '5–18 anos', mn: 60, mx: 215, pub: 'PAR', url: 'https://www.parinc.com/', flag: '🇺🇸' },
+    { id: 'rst-srs2', t: 'SRS-2 — responsividade social (TEA)', dom: 'TEA (traços sociais)', band: '2,5–18 anos', mn: 30, mx: 215, pub: 'WPS', url: 'https://www.wpspublish.com/', flag: '🇺🇸' },
+    { id: 'rst-mabc2', t: 'Movement ABC-2 — coordenação motora', dom: 'Motor / coordenação', band: '3–16 anos', mn: 36, mx: 192, pub: 'Pearson', url: 'https://www.pearsonassessments.com/', flag: '🇬🇧' },
+    { id: 'rst-ados2', t: 'ADOS-2 — observação para TEA', dom: 'TEA (observação)', band: '12 meses–adulto', mn: 12, mx: 960, pub: 'WPS', url: 'https://www.wpspublish.com/', flag: '🇺🇸' },
+    { id: 'rst-wiscv', t: 'WISC-V — inteligência (QI)', dom: 'Cognição / inteligência', band: '6–16 anos', mn: 72, mx: 200, pub: 'Pearson', url: 'https://www.pearsonassessments.com/', flag: '🇺🇸' },
+    { id: 'rst-bayley4', t: 'Bayley-4 — desenvolvimento infantil', dom: 'Desenvolvimento (0–3a)', band: '0–42 meses', mn: 0, mx: 42, pub: 'Pearson', url: 'https://www.pearsonassessments.com/', flag: '🇺🇸' },
+    { id: 'rst-asq3', t: 'ASQ-3 — Ages & Stages (triagem do desenvolvimento)', dom: 'Vigilância do desenvolvimento', band: '1–66 meses', mn: 1, mx: 66, pub: 'Brookes Publishing', url: 'https://agesandstages.com/', flag: '🇺🇸' }
+  ];
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  var ids = {}; base.forEach(function (x) { if (x && x.id) ids[x.id] = 1; });
+  var add = [];
+  ITEMS.forEach(function (it) {
+    if (ids[it.id]) return;
+    add.push({
+      id: it.id, title: '🔒 ' + it.t, short_title: it.t.split(' — ')[0] + ' (estudo)', emoji: '🔒',
+      audience: 'clinico', audience_label: 'Estudo (uso restrito)',
+      age_band: it.band, age_min_months: it.mn, age_max_months: it.mx,
+      domain: it.dom,
+      official_catalog: true, official_url: it.url,
+      plain_questions: [],            // preenchidas (autorais) por scales-official-questions.js
+      applicable: false,
+      license_status: 'restrito', study_only: true,
+      _origin: it.flag, _citation: 'Instrumento proprietário — ' + it.pub + '. Licenciar/obter na fonte oficial.',
+      _intl_curated: true, _study_ref: true
+    });
+  });
+  window.NEUROPED_EDITORIAL_SCALES = add.concat(base);
+  window.NEUROPED_ESTUDO_RESTRITO = add;
+})();
+
+
 /* ===== scales-smart-rank.js ===== */
 /* NeuroPed EDJ — Smart Rank: inteligência de seleção de instrumentos
  * ------------------------------------------------------------------
@@ -2920,6 +3119,30 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       'O silêncio atrapalha o aprendizado ou a socialização?',
       'Há também timidez intensa ou ansiedade em outras situações?',
       'Melhora quando a pressão para falar diminui?'
+    ],
+    adaptativo: [
+      'Come, veste-se e cuida da higiene com a independência esperada para a idade?',
+      'Comunica necessidades e se faz entender conforme a idade?',
+      'Realiza tarefas de casa e da rotina compatíveis com a idade?',
+      'Tem a noção de segurança e as regras sociais esperadas?',
+      'Desloca-se e resolve problemas do dia a dia com a autonomia esperada?',
+      'Brinca e interage socialmente como esperado para a idade?',
+      'Maiores: lida com tempo, dinheiro e compromissos básicos?',
+      'Precisa de muito mais apoio que os pares para o dia a dia?',
+      'A autonomia mudou ou regrediu recentemente?',
+      'No geral, o funcionamento adaptativo está compatível com a idade?'
+    ],
+    cognicao: [
+      'A compreensão e o raciocínio acompanham a idade?',
+      'Aprende coisas novas no ritmo dos colegas?',
+      'Resolve problemas e faz associações lógicas esperadas?',
+      'A memória para recados e tarefas está adequada?',
+      'Mantém atenção e organiza o pensamento como esperado?',
+      'Brinca/atua em complexidade compatível com a idade?',
+      'Há atraso em vários domínios ao mesmo tempo?',
+      'Precisa de muita repetição e apoio para aprender?',
+      'A dificuldade aparece em casa e na escola?',
+      'No geral, o nível cognitivo parece compatível com a idade?'
     ]
   };
 
@@ -2944,7 +3167,9 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     toc: { complaints: ['toc', 'obsessao', 'compulsao', 'ritual', 'mania de repetir', 'lavar as maos', 'conferir', 'simetria', 'contaminacao'], symptoms: ['rituais repetitivos', 'pensamentos intrusivos', 'aflição se impedido'] },
     tiques: { complaints: ['tique', 'tiques', 'tic', 'tourette', 'pisca', 'pigarro', 'movimento involuntario', 'som repetido'], symptoms: ['tiques motores', 'tiques vocais', 'urgência premonitória'] },
     regulacao: { complaints: ['regulacao', 'desregulacao', 'explosao', 'descontrole emocional', 'frustracao', 'autocontrole', 'birra intensa', 'raiva'], symptoms: ['explosões emocionais', 'dificuldade de se acalmar', 'baixa tolerância à frustração'] },
-    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] }
+    mutismo: { complaints: ['mutismo', 'mutismo seletivo', 'nao fala na escola', 'silencio', 'timidez extrema', 'trava ao falar'], symptoms: ['fala em casa e cala fora', 'trava ao falar', 'comunica por gestos'] },
+    adaptativo: { complaints: ['adaptativo', 'autonomia', 'independencia', 'vida diaria', 'autocuidado', 'funcionamento adaptativo'], symptoms: ['depende para tarefas da idade', 'pouca autonomia', 'autocuidado abaixo do esperado'] },
+    cognicao: { complaints: ['cognicao', 'inteligencia', 'qi', 'raciocinio', 'deficiencia intelectual', 'funcao executiva', 'memoria'], symptoms: ['aprende mais devagar', 'raciocínio abaixo da idade', 'atraso cognitivo'] }
   };
 
   // Classificação de licença (alto grau de confiança; demais → verificar na fonte).
@@ -2954,7 +3179,10 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     'ofc-phq-gad': 'livre', 'ofc-asq': 'livre', 'ofc-cssrs': 'livre', 'ofc-crafft': 'livre',
     'ofc-psc': 'livre', 'ofc-swyc': 'livre', 'ofc-vanderbilt': 'livre', 'ofc-cdc-milestones': 'livre',
     'ofc-sdq': 'livre-nc', 'ofc-rcads': 'livre-nc', 'ofc-mchat': 'livre',
-    'ofc-gmfcs': 'livre', 'ofc-macs': 'livre', 'ofc-minimacs': 'livre'
+    'ofc-gmfcs': 'livre', 'ofc-macs': 'livre', 'ofc-minimacs': 'livre',
+    // Lote 3 — genuinamente livres (atribuição à fonte). Os demais ofc3-* ficam
+    // como 'verificar' (proprietários: Conners, CARS-2, ADI-R, Vineland, WISC…).
+    'ofc3-snap-iv': 'livre', 'ofc3-scared': 'livre'
   };
   function licenseOf(id) {
     if (LICENSE[id]) return LICENSE[id];
@@ -2966,7 +3194,8 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     'livre': 'Uso clínico gratuito (atribuição à fonte oficial).',
     'livre-nc': 'Gratuito para uso não comercial (atribuição à fonte oficial).',
     'livre-reg': 'Gratuito mediante registro na plataforma oficial (HealthMeasures).',
-    'verificar': 'Verifique a licença na fonte oficial antes do uso formal.'
+    'verificar': 'Verifique a licença na fonte oficial antes do uso formal.',
+    'restrito': 'Instrumento PROPRIETÁRIO (licença paga) — referência de ESTUDO, NÃO para uso clínico aqui. Adquira/licencie na fonte oficial.'
   };
 
   // Override explícito para instrumentos amplos/multidomínio cuja descrição cita
@@ -2977,9 +3206,20 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     'ofc2-promis-global': 'saude_mental_global', 'ofc2-promis-profile25': 'saude_mental_global',
     'ofc2-promis-profile36': 'saude_mental_global', 'ofc2-promis-profile48': 'saude_mental_global',
     'ofc2-casafs': 'saude_mental_global', 'ofc2-bedsy': 'saude_mental_global',
+    // Lote 3 (padronizados) — construto correto p/ as perguntas-guia autorais.
+    'ofc3-snap-iv': 'tdah', 'ofc3-conners': 'tdah', 'ofc3-brief2': 'tdah',
+    'ofc3-abc-aberrant': 'comportamento',
+    'ofc3-cars2': 'tea', 'ofc3-adi-r': 'tea', 'ofc3-scq': 'tea',
+    'ofc3-vineland3': 'desenvolvimento', 'ofc3-denver2': 'desenvolvimento', 'ofc3-bayley4': 'desenvolvimento',
+    'ofc3-wisc5': 'aprendizagem', 'ofc3-nepsy2': 'aprendizagem',
+    'ofc3-mabc2': 'motor', 'ofc3-aseba-cbcl': 'saude_mental_global',
+    'ofc3-scared': 'ansiedade', 'ofc3-cdi2': 'humor',
+    // Curadoria internacional (livres) — vinda do main.
     'ofc3-irdi': 'desenvolvimento', 'ofc3-kidscreen10': 'saude_mental_global',
     'ofc3-cries8': 'trauma', 'ofc3-fpsr': 'dor',
-    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo'
+    'ofc3-ocicv': 'toc', 'ofc3-moves': 'tiques', 'ofc3-erc': 'regulacao', 'ofc3-smq': 'mutismo',
+    'rst-vineland3': 'adaptativo', 'rst-wiscv': 'cognicao', 'rst-brief2': 'cognicao', 'rst-cbcl': 'saude_mental_global',
+    'rst-asq3': 'desenvolvimento', 'rst-bayley4': 'desenvolvimento', 'rst-ados2': 'tea', 'rst-srs2': 'tea', 'rst-cars2': 'tea', 'rst-mabc2': 'motor', 'rst-conners3': 'tdah'
   };
 
   // Classifica o domínio do instrumento → construto do banco (corrigido).
@@ -2993,7 +3233,9 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     if (/tique|tiques|tourette|\bmoves\b/.test(d)) return 'tiques';
     if (/regulac|desregulac|autocontrole|emotion regulation|\berc\b/.test(d)) return 'regulacao';
     if (/mutismo|mutism|\bsmq\b|seletiv/.test(d)) return 'mutismo';
-    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee/.test(d)) return 'desenvolvimento';
+    if (/adaptativ|vineland|autonomia|vida diaria|autocuidado/.test(d)) return 'adaptativo';
+    if (/cognic|\bqi\b|inteligencia|wisc|wppsi|executiv|\bbrief\b|intelectual/.test(d)) return 'cognicao';
+    if (/desenvolv|marcos|swyc|denver|milestone|vigil|primeira infancia|nipissing|looksee|bayley|ages/.test(d)) return 'desenvolvimento';
     if (/substanc|alcool|drog|cigarro|crafft|vape/.test(d)) return 'substancias';
     if (/tea|autis|espectro|mchat/.test(d)) return 'tea';
     if (/sono|insonia|cshq|sleep/.test(d)) return 'sono';
@@ -3039,4 +3281,138 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     n++;
   });
   window.NEUROPED_OFFICIAL_QUESTIONS_FILLED = n;
+})();
+
+
+/* ===== scales-robustez.js ===== */
+/* NeuroPed EDJ — Robustez: aprofundamento AUTORAL + interpretação
+ * --------------------------------------------------------------------------
+ * Torna os instrumentos de REFERÊNCIA mais completos e robustos SEM violar
+ * limites: acrescenta perguntas-guia AUTORAIS extras (facetas adicionais do
+ * mesmo construto, redigidas do zero — NÃO são itens de instrumentos
+ * proprietários) e uma ORIENTAÇÃO DE INTERPRETAÇÃO padronizada.
+ * Roda por ÚLTIMO no bundle (depois de scales-official-questions.js).
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_ROBUSTEZ_LOADED) return;
+  window.NEUROPED_ROBUSTEZ_LOADED = true;
+
+  function uniq(a) { var s = {}, o = []; a.forEach(function (x) { if (x && !s[x]) { s[x] = 1; o.push(x); } }); return o; }
+
+  // Facetas AUTORAIS extras por construto (somam-se às já existentes).
+  var EXTRA = {
+    tea: [
+      'Reage de forma incomum a sons, texturas, luzes ou cheiros?',
+      'Perdeu palavras, gestos ou contato que já tinha (regressão)?',
+      'Tem interesses muito intensos ou restritos a poucos temas/objetos?',
+      'Compartilha alegria ou conquistas olhando espontaneamente para você?',
+      'Usa gestos sociais (acenar "tchau", balançar a cabeça) como esperado?'
+    ],
+    tdah: [
+      'A dificuldade aparece em mais de um ambiente (casa E escola)?',
+      'Tem dificuldade de organizar tarefas e administrar o tempo?',
+      'Perde o fio do que estava fazendo no meio da tarefa?',
+      'Comete erros por desatenção em coisas que sabe fazer?',
+      'A dificuldade já aparecia antes dos 12 anos?'
+    ],
+    linguagem: [
+      'Aponta/usa gestos para compensar quando falta a palavra?',
+      'Conta uma história simples com começo, meio e fim?',
+      'Entende perguntas do tipo "por quê" e "como"?',
+      'Houve infecções de ouvido de repetição ou suspeita de audição?',
+      'A compreensão é melhor que a fala, ou as duas estão atrasadas?'
+    ],
+    aprendizagem: [
+      'Tem dificuldade específica de leitura, de escrita ou de matemática?',
+      'Apesar de esforço e ensino adequado, a dificuldade persiste?',
+      'O desempenho oral é melhor que o escrito?',
+      'Há histórico de dificuldade escolar na família?',
+      'Já recebe apoio/reforço, e mesmo assim mantém a dificuldade?'
+    ],
+    ansiedade: [
+      'A preocupação é difícil de controlar uma vez que começa?',
+      'Tem sintomas físicos quando ansiosa (coração acelerado, falta de ar, suor)?',
+      'Pede para faltar à escola ou a eventos por ansiedade?',
+      'A ansiedade atrapalha dormir ou comer?',
+      'Os medos são desproporcionais ao risco real da situação?'
+    ],
+    humor: [
+      'A irritabilidade ou tristeza dura a maior parte do dia, quase todos os dias?',
+      'Houve mudança no rendimento escolar junto com o humor?',
+      'Tem pensamentos de que "nada vale a pena" ou de desistir?',
+      'Os sintomas duram mais de duas semanas?',
+      'Há períodos de agitação/euforia alternando com a tristeza?'
+    ],
+    comportamento: [
+      'Os episódios são mais intensos ou frequentes que o esperado para a idade?',
+      'O comportamento traz consequências (suspensões, perda de amizades)?',
+      'Há agressão a pessoas, animais ou destruição de objetos?',
+      'A criança demonstra remorso depois, ou parece indiferente?',
+      'O padrão dura seis meses ou mais?'
+    ],
+    sono: [
+      'A dificuldade de sono acontece na maioria das noites da semana?',
+      'A criança dorme em horários muito diferentes a cada dia?',
+      'Range os dentes, mexe muito as pernas ou sua muito ao dormir?',
+      'O ronco vem com pausas na respiração ou engasgos?',
+      'O sono ruim afeta o humor e o desempenho no dia seguinte?'
+    ],
+    motor: [
+      'Tem dificuldade que afeta atividades do dia a dia (vestir, comer, escrever)?',
+      'A dificuldade motora aparece desde cedo e se mantém?',
+      'Evita esportes, parquinho ou brincadeiras que exigem coordenação?',
+      'Há diferença clara entre o que consegue e o esperado para a idade?',
+      'Houve perda de habilidade motora que já tinha?'
+    ],
+    desenvolvimento: [
+      'Houve prematuridade, baixo peso ou intercorrência no parto?',
+      'A diferença em relação ao esperado vem aumentando com o tempo?',
+      'Atrasos aparecem em mais de uma área (motor, fala, social) ao mesmo tempo?',
+      'A criança usa o olhar e o sorriso social como esperado?',
+      'Há preocupação tanto da família quanto da escola/creche?'
+    ],
+    adaptativo: [
+      'A autonomia é parecida em casa, na escola e na casa de outros?',
+      'Precisa de lembretes constantes para tarefas simples da idade?',
+      'Tem noção de perigo e pede ajuda quando precisa?',
+      'Participa de tarefas em grupo conforme a idade?',
+      'A dependência limita a participação social ou escolar?'
+    ],
+    cognicao: [
+      'Generaliza o que aprende para situações novas?',
+      'Segue instruções de vários passos compatíveis com a idade?',
+      'Tem dificuldade de noção de tempo, dinheiro ou quantidade?',
+      'O raciocínio é concreto demais para a idade?',
+      'A dificuldade aparece em quase todas as áreas, não só uma?'
+    ],
+    risco: [
+      'Houve mudança brusca de comportamento, despedidas ou doar pertences?',
+      'A criança/adolescente tem um plano ou acesso a um meio?',
+      'Já houve episódio anterior de autoagressão ou tentativa?',
+      'Sente-se um peso para os outros ou sem saída?',
+      'Há sofrimento intenso que ela não consegue aliviar sozinha?'
+    ]
+  };
+
+  // Orientação de interpretação padronizada (robustez de uso, sem corte diagnóstico).
+  var SCORING = ' · Como interpretar: marque a frequência de cada sinal; NÃO há ponto de corte diagnóstico — quanto mais sinais frequentes e maior o impacto na rotina (casa/escola), mais forte a indicação de avaliação especializada. Triangule família + escola + observação direta. Sinais de alarme isolados já justificam atenção.';
+
+  var cat = window.NEUROPED_EDITORIAL_SCALES;
+  if (!Array.isArray(cat)) return;
+  var n = 0;
+  cat.forEach(function (s) {
+    if (!s || s._robustez) return;
+    if (!s._authorial_proxy) return;          // só os de referência (não toca autorais respondíveis)
+    var b = s._proxy_bucket, ex = EXTRA[b];
+    if (ex && Array.isArray(s.plain_questions)) {
+      s.plain_questions = uniq(s.plain_questions.concat(ex));
+    }
+    s.scoring_note = SCORING.trim();
+    if (typeof s.not_normative_disclaimer === 'string' && s.not_normative_disclaimer.indexOf('Como interpretar') < 0) {
+      s.not_normative_disclaimer += SCORING;
+    }
+    s._robustez = true; n++;
+  });
+  window.NEUROPED_ROBUSTEZ_FILLED = n;
 })();

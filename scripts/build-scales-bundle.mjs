@@ -16,6 +16,7 @@ export const BUNDLE_ORDER = [
   'scales-autorais-npe.js',
   'scales-impacto-medicacao.js',
   'scales-oficiais.js',
+  'scales-oficiais-lote3.js',        // lote 3: instrumentos padronizados (TEA/TDAH/neuropsico/adaptativo) como referência
   'scales-curate.js',
   'scales-red-flags.js',
   'scales-direct-tasks.js',          // biblioteca de tarefas diretas (fonte de verdade)
@@ -23,8 +24,10 @@ export const BUNDLE_ORDER = [
   'scales-med-eficacia.js',          // escala autoral de eficácia da medicação (pré-consulta)
   'scales-intl-livres.js',           // curadoria de instrumentos internacionais de licença livre (referência)
   'scales-autoral-funcional.js',     // autorais Dr. Jadson: autonomia, risco cognitivo, risco de dislexia
+  'scales-estudo-restrito.js',       // proprietários como REFERÊNCIA DE ESTUDO (senha, não clínico)
   'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
-  'scales-official-questions.js',    // ÚLTIMO: perguntas-guia autorais p/ instrumentos de referência (abrem completos)
+  'scales-official-questions.js',    // perguntas-guia autorais p/ instrumentos de referência (abrem completos)
+  'scales-robustez.js',              // ÚLTIMO: aprofunda (facetas autorais extras) + orientação de interpretação
 ];
 
 export function buildBundle(root = process.cwd()) {
