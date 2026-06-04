@@ -59,6 +59,12 @@
   // famílias, colegas e imprensa (atenua "Mario na porta de entrada").
   var PLAYFUL = /^(comunicacao-alternativa|area-filho|portal-familia-livre|gerador-cards)\.html$/.test(FILE);
 
+  // Telas profissionais que PODEM ter o feedback sonoro sutil (sem a decoração
+  // retrô): o Clinical Intelligence Engine é uma ferramenta do clínico para
+  // buscar/ranquear escalas — não um rastreio dos pais. O som segue o próprio
+  // toggle 🔊 do np-sound (não força "off" aqui).
+  var SOUND_OK = /^(filtro-escalas)\.html$/.test(FILE);
+
   // Controle do usuário: preferência persistente liga/desliga o retrô. API global
   // + um botão 🎮 nas telas lúdicas (em qualquer estado, para poder reativar).
   var RETRO_OFF = false; try { RETRO_OFF = localStorage.getItem('np_retro') === 'off'; } catch (e) {}
@@ -85,7 +91,11 @@
 
   if (!PLAYFUL || RETRO_OFF) {
     // Silencia a camada de som 8-bit nesta página (np-sound respeita o atributo).
-    try { (document.body || document.documentElement).setAttribute('data-np-sound', 'off'); } catch (e) {}
+    // Exceção: telas SOUND_OK (ex.: Clinical Intelligence Engine) mantêm o som,
+    // governado pelo toggle 🔊 do próprio np-sound — não force "off" aqui.
+    if (!SOUND_OK) {
+      try { (document.body || document.documentElement).setAttribute('data-np-sound', 'off'); } catch (e) {}
+    }
     return; // sem fonte pixel, moeda, scanline ou data-retro (mas o botão 🎮 fica nas lúdicas)
   }
 
