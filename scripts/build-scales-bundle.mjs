@@ -29,6 +29,8 @@ export const BUNDLE_ORDER = [
   'scales-coordenacao-motora.js',    // autoral: Coordenação Motora e Praxia / TDC (7 áreas × 5 faixas)
   'scales-controle-esfincteriano.js',// autoral: Controle Esfincteriano (enurese/encoprese) (7 eixos × 5 faixas)
   'scales-comportamento-alimentar.js',// autoral: Comportamento Alimentar / ARFID (7 eixos × 5 faixas)
+  'scales-sono.js',                  // autoral: Sono (higiene/SAOS/parassonias) (7 eixos × 5 faixas)
+  'scales-regulacao-emocional.js',   // autoral: Regulação Emocional e birras (7 eixos × 5 faixas)
   'scales-estudo-restrito.js',       // proprietários como REFERÊNCIA DE ESTUDO (senha, não clínico)
   'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
   'scales-official-questions.js',    // perguntas-guia autorais p/ instrumentos de referência (abrem completos)

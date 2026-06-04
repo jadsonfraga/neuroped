@@ -596,6 +596,30 @@ assertIncludes('scales-comportamento-alimentar.js', 'not_normative_disclaimer', 
 assertIncludes('scales-bundle.js', 'scales-comportamento-alimentar.js', 'filtro liga o Comportamento Alimentar (CAL)');
 assertIncludes('instrumento-autoral.html', 'scales-comportamento-alimentar.js', 'renderizador autoral carrega o Comportamento Alimentar (CAL)');
 
+// Sono (SON) — higiene/distúrbios do sono por faixa etária
+assertFile('scales-sono.js');
+assertIncludes('scales-sono.js', 'sono-son-0-2', 'SON cobre a faixa 0–2 anos');
+assertIncludes('scales-sono.js', 'sono-son-12-17', 'SON cobre a faixa 12–17 anos');
+for (const eixo of ['Adormecer', 'Parassonias', 'Respiração no sono', 'Dia seguinte (impacto diurno)']) {
+  assertIncludes('scales-sono.js', eixo, 'SON cobre o eixo: ' + eixo);
+}
+assertIncludes('scales-sono.js', 'SAOS', 'SON alerta para apneia obstrutiva do sono (SAOS)');
+assertIncludes('scales-sono.js', 'not_normative_disclaimer', 'SON declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-sono.js', 'filtro liga o Sono (SON)');
+assertIncludes('instrumento-autoral.html', 'scales-sono.js', 'renderizador autoral carrega o Sono (SON)');
+
+// Regulação Emocional (REN) — birras/autorregulação por faixa etária
+assertFile('scales-regulacao-emocional.js');
+assertIncludes('scales-regulacao-emocional.js', 'ren-emoc-0-2', 'REN cobre a faixa 0–2 anos');
+assertIncludes('scales-regulacao-emocional.js', 'ren-emoc-12-17', 'REN cobre a faixa 12–17 anos');
+for (const eixo of ['Explosões e crises', 'Autorregulação e recuperação', 'Agressividade, impulsividade e segurança']) {
+  assertIncludes('scales-regulacao-emocional.js', eixo, 'REN cobre o eixo: ' + eixo);
+}
+assertIncludes('scales-regulacao-emocional.js', 'CVV 188', 'REN direciona apoio em risco (SAMU/CVV)');
+assertIncludes('scales-regulacao-emocional.js', 'not_normative_disclaimer', 'REN declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-regulacao-emocional.js', 'filtro liga a Regulação Emocional (REN)');
+assertIncludes('instrumento-autoral.html', 'scales-regulacao-emocional.js', 'renderizador autoral carrega a Regulação Emocional (REN)');
+
 assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
 // Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
 for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
