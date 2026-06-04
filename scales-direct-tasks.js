@@ -49,6 +49,21 @@
       { emoji: '✏️', titulo: 'Ditado', instrucao: 'Dite: casa, bola, janela, prato. Depois a frase: "A menina gosta de ler."', observar: 'Trocas, omissões e organização na linha.', faixa: [72, 215] },
       { emoji: '🔢', titulo: 'Matemática rápida', instrucao: 'Resolva junto: 8+5, 14−6, 3 grupos de 4, metade de 10.', observar: 'Estratégia (conta nos dedos?) e acertos.', faixa: [72, 215] }
     ],
+    cognicao: [
+      { emoji: '🧠', titulo: 'Memória visual imediata', instrucao: 'Mostre 4 figuras por 5 segundos, cubra e peça para lembrar quais eram.', observar: 'Quantas recorda e se usa estratégia (nomear, agrupar).', faixa: [48, 215] },
+      { emoji: '🔗', titulo: 'Semelhanças (raciocínio)', instrucao: 'Pergunte: "No que banana e maçã se parecem? E cachorro e gato?"', observar: 'Se abstrai a categoria (frutas, animais) ou fica no concreto.', faixa: [60, 215] },
+      { emoji: '🧩', titulo: 'Sequência lógica', instrucao: 'Conte uma historinha em 3 partes fora de ordem e peça para ordenar o que vem antes/depois.', observar: 'Noção de antes/depois, causa e efeito.', faixa: [54, 215] },
+      { emoji: '⚡', titulo: 'Velocidade de processamento', instrucao: 'Peça para nomear o mais rápido possível 8 cores/figuras conhecidas em sequência.', observar: 'Ritmo, pausas e travas; compare com o esperado para a idade.', faixa: [60, 215] },
+      { emoji: '🔢', titulo: 'Memória de trabalho', instrucao: 'Peça para repetir números na ordem (4-8-2) e de trás pra frente (5-2-9).', observar: 'Maior sequência correta direta e inversa.', faixa: [60, 215] }
+    ],
+    visual: [
+      { emoji: '🔷', titulo: 'Reconhecimento de formas', instrucao: 'Mostre formas e peça para nomear: círculo, quadrado, triângulo, estrela.', observar: 'Quantas reconhece e nomeia.', faixa: [36, 144] },
+      { emoji: '🎨', titulo: 'Reconhecimento de cores', instrucao: 'Aponte objetos e pergunte a cor; depois peça "me dê o que é azul".', observar: 'Nomeia e seleciona cores corretamente?', faixa: [36, 120] },
+      { emoji: '🔍', titulo: 'Discriminação visual', instrucao: 'Mostre 4 figuras quase iguais e 1 diferente: "Qual é a diferente?"', observar: 'Percebe pequenos detalhes que mudam.', faixa: [48, 168] },
+      { emoji: '🖼️', titulo: 'Figura-fundo', instrucao: 'Numa cena cheia, peça para achar um objeto específico ("ache o gato").', observar: 'Isola a figura do fundo sem se perder.', faixa: [48, 168] },
+      { emoji: '✏️', titulo: 'Cópia de figura', instrucao: 'Desenhe um quadrado, um triângulo e uma cruz e peça para copiar.', observar: 'Proporção, linhas e organização da cópia (visomotor).', faixa: [48, 168] },
+      { emoji: '🧠', titulo: 'Memória visual de figuras', instrucao: 'Mostre 3 figuras, esconda e, depois de uma distração curta, pergunte quais eram.', observar: 'Retém a imagem após intervalo.', faixa: [48, 215] }
+    ],
     sensorial: [
       { emoji: '✨', titulo: 'Termômetro sensorial', instrucao: '"De 0 a 5, quanto incomoda: barulho de liquidificador? etiqueta na roupa? luz forte?"', observar: 'Reações e quais estímulos pesam mais.' },
       { emoji: '🖐️', titulo: 'Tolerância gradual', instrucao: 'Ofereça olhar → tocar → cheirar um item novo, sem forçar.', observar: 'Até onde aceita e o que ajuda a regular.' }
@@ -78,8 +93,10 @@
   var MAP = {
     linguagem: ['linguagem'],
     social: ['social'], rigidez: ['social'],
-    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao'],
-    escola: ['escola'],
+    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao', 'cognicao'],
+    cognicao: ['cognicao'], memoria: ['cognicao'], raciocinio: ['cognicao'], cognitivo: ['cognicao'],
+    visual: ['visual'], percepcao: ['visual'], visomotor: ['visual'],
+    escola: ['escola', 'visual'], aprendizagem: ['escola', 'cognicao'],
     sensorial: ['sensorial'], alimentacao: ['sensorial'],
     humor: ['emocional'], ansiedade: ['emocional'], regulacao: ['emocional'], risco: ['emocional'], substancias: ['emocional'],
     motor: ['motor'], motorfino: ['motor'],

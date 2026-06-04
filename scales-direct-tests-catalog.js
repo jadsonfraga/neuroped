@@ -54,6 +54,20 @@
       complaints: ['escola', 'aprendizagem', 'leitura', 'escrita', 'letras', 'alfabetização', 'dislexia', 'discalculia', 'matemática', 'reconhecimento visual', 'não lê', 'não escreve', 'pedagógico'],
       symptoms: ['confunde letras (b/d, p/q)', 'não lê para a série', 'troca letras na escrita', 'dificuldade em matemática']
     },
+    cognicao: {
+      id: 'td-cognicao', emoji: '🧠',
+      title: 'Sondagem cognitiva direta — memória · raciocínio · velocidade · memória de trabalho',
+      short: 'Cognitivo (teste direto)', domain: 'Cognição', age: [48, 215],
+      complaints: ['cognição', 'cognitivo', 'memória', 'raciocínio', 'inteligência', 'lentidão', 'esquece', 'aprende devagar', 'atenção', 'executiva', 'processamento'],
+      symptoms: ['esquece o que acabou de ver/ouvir', 'pensa de forma muito concreta', 'lento para responder', 'dificuldade em sequência lógica']
+    },
+    visual: {
+      id: 'td-visual', emoji: '🔍',
+      title: 'Sondagem de reconhecimento visual — formas · cores · discriminação · figura-fundo · cópia',
+      short: 'Reconhecimento visual (teste direto)', domain: 'Percepção visual', age: [36, 168],
+      complaints: ['visual', 'percepção', 'reconhecimento visual', 'formas', 'cores', 'discriminação visual', 'figura-fundo', 'visomotor', 'cópia', 'não reconhece letras', 'desenho'],
+      symptoms: ['não nomeia formas/cores esperadas', 'não acha o diferente', 'cópia desorganizada', 'perde-se em cena cheia']
+    },
     sensorial: {
       id: 'td-sensorial', emoji: '✨',
       title: 'Sondagem sensorial direta — reatividade e tolerância gradual',
