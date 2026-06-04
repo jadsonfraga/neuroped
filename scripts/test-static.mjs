@@ -236,6 +236,11 @@ assertIncludes('clinical-trajetoria.html', 'np-conf np-conf--', 'Trajetória exi
 assertIncludes('clinical-trajetoria.html', 'function confTier', 'Trajetória deriva a faixa de confiança de forma determinística');
 assertNotIncludes('clinical-trajetoria.html', '<div class="card">', 'Trajetória migrou: sem o card bespoke antigo (usa .np-card)');
 
+// Onda 1 — Perfil do paciente: camada de skin premium (reskin visível, lógica intacta)
+assertIncludes('perfil-crianca.html', 'PREMIUM SKIN', 'perfil-crianca tem a camada de skin premium (Onda 1)');
+assertIncludes('perfil-crianca.html', 'id="grid"', 'perfil-crianca preserva o contrato JS (grid de crianças)');
+assertIncludes('perfil-crianca.html', 'id="timelineSec"', 'perfil-crianca preserva o contrato JS (linha do tempo)');
+
 // Identidade premium: tipografia institucional + capa do hub
 assertIncludes('app-polish-mobile.css', 'Fraunces', 'tipografia premium (Fraunces) carregada globalmente');
 assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display institucional definida');
