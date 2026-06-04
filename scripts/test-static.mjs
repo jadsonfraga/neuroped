@@ -1038,6 +1038,41 @@ assertIncludes('filtro-escalas.html', 'clinical-meta.js', 'filtro carrega a meta
 assertIncludes('filtro-escalas.html', 'NeuroPedMeta.evidence', 'filtro mostra 📚 Evidência (citação + PMID) quando o instrumento tem fonte curada');
 assertIncludes('clinical-meta.js', 'api.load()', 'clinical-meta auto-carrega o registry no browser');
 
+// ── Encoding: anti-regressão de mojibake + BOM ──
+// consulta-livre.html já regrediu com em-dash/elipse triplo-codificados e BOM
+// UTF-8 no topo. Esta guarda varre todo o app (HTML/JS/CSS/JSON) e falha se
+// qualquer sequência clássica de mojibake ou BOM voltar a aparecer.
+{
+  const MOJIBAKE = new RegExp(
+    '\\u00C3[\\u00A9\\u00A3\\u00A7\\u00A1\\u00B3\\u00AA\\u00AD\\u00BA]' +
+    '|\\u00E2\\u20AC[\\u201D\\u0022\\u2026\\u02DC\\u201C]'
+  );
+  const encDirs = ['.', 'scripts', 'functions', 'functions/api', 'db', 'supabase', 'docs'];
+  const seen = new Set();
+  const offenders = [];
+  let bom = [];
+  for (const d of encDirs) {
+    let entries;
+    try { entries = readdirSync(join(root, d)); } catch { continue; }
+    for (const name of entries) {
+      if (!/\.(html|js|css|json|xml|txt)$/.test(name)) continue;
+      const rel = d === '.' ? name : `${d}/${name}`;
+      if (seen.has(rel)) continue; seen.add(rel);
+      // pula bundles minificados gerados (fora do controle deste repo)
+      if (/index-[A-Za-z0-9_-]{8}\.js$|scales-bundle\.js$/.test(name)) continue;
+      let s; try { s = readFileSync(join(root, rel), 'utf8'); } catch { continue; }
+      if (s.charCodeAt(0) === 0xFEFF) bom.push(rel);
+      if (MOJIBAKE.test(s)) offenders.push(rel);
+    }
+  }
+  offenders.length === 0
+    ? pass(`encoding: 0 mojibake residual em ${seen.size} arquivos de texto`)
+    : fail('encoding: mojibake residual', offenders.join(', '));
+  bom.length === 0
+    ? pass('encoding: nenhum arquivo de texto com BOM UTF-8 no topo')
+    : fail('encoding: BOM UTF-8 indevido no topo', bom.join(', '));
+}
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');
