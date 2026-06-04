@@ -386,6 +386,23 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
         b.innerHTML='<b>'+(isRef?'📄 Referência — não é o instrumento oficial.':'⚠️ Triagem não normatizada — não substitui avaliação.')+'</b> '+esc(msg)+refLink;
         host.parentNode.insertBefore(b, host.nextSibling);
       })();
+      // CORREDOR DE SEGURANÇA: instrumentos que tocam em risco (autoagressão/
+      // suicídio/segurança) exibem recursos de crise de forma PERSISTENTE e
+      // destacada — nunca só "um texto". Detecta por construto/título/finalidade.
+      (function(){
+        var hay=[INST.title,INST.subtitle,INST.cat,INST.id,INST.finalidade,(INST._symptoms||[]).join(' '),(INST.keywords||[]).join(' ')].join(' ').toLowerCase();
+        var isRisk=/risco|suic[íi]d|autoagress|autoles|automutil|se machucar|seguran[çc]a|c-?ssrs|columbia|\basq\b|crise/.test(hay) || INST._proxy_bucket==='risco';
+        if(!isRisk) return;
+        var old=document.getElementById('np-safety'); if(old) old.remove();
+        var s=document.createElement('div'); s.id='np-safety'; s.setAttribute('role','alert');
+        s.style.cssText='margin:12px 0 4px;padding:14px 15px;border-radius:16px;border:1px solid rgba(248,113,113,.5);border-left:5px solid #f87171;background:rgba(248,113,113,.12);color:#ffe1e6;font-size:13px;line-height:1.55';
+        s.innerHTML='<b style="display:block;font-size:14px;margin-bottom:6px">🆘 Tópico sensível — recursos de ajuda</b>'
+          +'Se houver <b>risco imediato</b> de a criança/adolescente se machucar: ligue <b>192 (SAMU)</b> ou vá ao <b>pronto-socorro</b> mais próximo agora.<br>'
+          +'Apoio emocional gratuito 24h: <b>CVV 188</b> (ligação) · <a href="https://www.cvv.org.br/" target="_blank" rel="noopener" style="color:#fecaca;font-weight:700">cvv.org.br</a> (chat). Acolhimento contínuo: procure um <b>CAPS</b>.<br>'
+          +'Fique perto, <b>retire o acesso a meios perigosos</b> (remédios, objetos cortantes) e busque um profissional. Este rastreio é apoio à observação — <b>não substitui avaliação imediata</b>.';
+        b.parentNode.insertBefore(s, b.nextSibling);
+        document.documentElement.setAttribute('data-np-risk','1'); // tom sóbrio: sem celebração
+      })();
       var w=document.getElementById('why'); if(w){ if(INST.finalidade){ w.innerHTML='🎯 <b>Para que serve:</b> '+esc(INST.finalidade); w.hidden=false; } else { w.hidden=true; } }
       document.getElementById('sym').innerHTML=(INST._symptoms||[]).slice(0,6).map(function(s){return '<span>'+esc(s)+'</span>'}).join('');
       document.getElementById('prog').hidden=false;
