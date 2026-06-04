@@ -1,0 +1,144 @@
+/* NeuroPed EDJ — Instrumentos internacionais de LICENÇA LIVRE (curadoria)
+ * --------------------------------------------------------------------------
+ * Curadoria seletiva (NÃO é "encher linguiça") de instrumentos consagrados,
+ * gratuitos/uso livre, que preenchem LACUNAS reais do catálogo — Brasil e mundo.
+ * Entram como REFERÊNCIA: catalogados com fonte/citação; as perguntas que abrem
+ * são AUTORAIS NeuroPed sobre o mesmo construto (preenchidas por
+ * scales-official-questions.js) — NÃO reproduzem os itens originais.
+ *
+ * Seleção (com fonte primária):
+ *  • Q-CHAT  — rastreio quantitativo de TEA no toddler (Allison/Baron-Cohen) · PMID 22265366
+ *  • SCARED  — ansiedade infantojuvenil (Birmaher 1997) · PMID 9100430
+ *  • CSHQ    — hábitos de sono (Owens 2000) · PMID 11145319
+ *  • KIDSCREEN-10 — qualidade de vida (Europa, Ravens-Sieberer) · PMID 30014304
+ *  • SNAP-IV — TDAH/TOD (Swanson) · uso livre
+ *  • IRDI    — indicadores de risco ao desenvolvimento (Brasil, Kupfer et al.) · uso livre
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_INTL_LIVRES_LOADED) return;
+  window.NEUROPED_INTL_LIVRES_LOADED = true;
+
+  var ITEMS = [
+    {
+      id: 'ofc3-qchat', title: 'Q-CHAT — rastreio quantitativo de TEA (toddler)', short_title: 'Q-CHAT (referência)',
+      emoji: '🧩', domain: 'TEA precoce (rastreio)', age_band: '18–24 meses', age_min_months: 18, age_max_months: 30,
+      official_url: 'https://www.autismresearchcentre.com/tests/', _citation: 'Allison C, Baron-Cohen S, et al. (Q-CHAT).', _pmid: '22265366', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-scared', title: 'SCARED — sintomas de ansiedade infantojuvenil', short_title: 'SCARED (referência)',
+      emoji: '😟', domain: 'Ansiedade (criança/adolescente)', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: 'https://www.midss.org/content/screen-child-anxiety-related-disorders-scared', _citation: 'Birmaher B, et al. J Am Acad Child Adolesc Psychiatry. 1997.', _pmid: '9100430', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-cshq', title: 'CSHQ — hábitos e dificuldades de sono', short_title: 'CSHQ (referência)',
+      emoji: '🌙', domain: 'Sono', age_band: '4–10 anos', age_min_months: 48, age_max_months: 144,
+      official_url: '', _citation: 'Owens JA, Spirito A, McGuinn M. Sleep. 2000.', _pmid: '11145319', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-kidscreen10', title: 'KIDSCREEN-10 — qualidade de vida relacionada à saúde', short_title: 'KIDSCREEN-10 (referência)',
+      emoji: '🌈', domain: 'Qualidade de vida', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: 'https://www.kidscreen.org', _citation: 'Ravens-Sieberer U, et al. (KIDSCREEN). Eur grupo.', _pmid: '30014304', license_status: 'livre-reg'
+    },
+    {
+      id: 'ofc3-snap-iv', title: 'SNAP-IV — TDAH e sintomas de oposição', short_title: 'SNAP-IV (referência)',
+      emoji: '🎯', domain: 'TDAH', age_band: '6–18 anos', age_min_months: 72, age_max_months: 215,
+      official_url: 'https://www.shared-care.ca/files/Scoring_for_SNAP_IV_Guide_26-item.pdf', _citation: 'Swanson JM, et al. (SNAP-IV). Uso livre.', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-irdi', title: 'IRDI — indicadores de risco ao desenvolvimento infantil (Brasil)', short_title: 'IRDI (referência)',
+      emoji: '🇧🇷', domain: 'Desenvolvimento (risco precoce)', age_band: '0–18 meses', age_min_months: 0, age_max_months: 18,
+      official_url: '', _citation: 'Kupfer MC, Jerusalinsky AN, et al. Pesquisa multicêntrica IRDI, Brasil.', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-cries8', title: 'CRIES-8 — reações a evento traumático (TEPT)', short_title: 'CRIES-8 (referência)',
+      emoji: '🌧️', domain: 'Trauma / estresse pós-traumático', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: 'https://www.childrenandwar.org/measures/', _citation: 'Children and War Foundation; Verlinden E, et al. 2014.', _pmid: '24797017', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-mfq', title: 'MFQ — humor e sentimentos (depressão)', short_title: 'MFQ (referência)',
+      emoji: '🌧️', domain: 'Humor / depressão', age_band: '6–18 anos', age_min_months: 72, age_max_months: 215,
+      official_url: 'https://devepi.duhs.duke.edu/measures/the-mood-and-feelings-questionnaire-mfq/', _citation: 'Angold A, Costello EJ, et al. (MFQ).', _pmid: '33836780', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-fpsr', title: 'FPS-R — escala de faces de dor (autorrelato)', short_title: 'FPS-R (referência)',
+      emoji: '🤕', domain: 'Dor (autorrelato)', age_band: '4–12 anos', age_min_months: 48, age_max_months: 156,
+      official_url: 'https://www.iasp-pain.org/resources/faces-pain-scale-revised/', _citation: 'Hicks CL, von Baeyer CL, et al. Pain. 2001.', _pmid: '11427329', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-aq10', title: 'AQ-10 — rastreio de traços do espectro autista (escolar/adolescente)', short_title: 'AQ-10 (referência)',
+      emoji: '🧩', domain: 'TEA (rastreio escolar)', age_band: '4–16 anos', age_min_months: 48, age_max_months: 200,
+      official_url: 'https://www.autismresearchcentre.com/tests/', _citation: 'Allison C, Auyeung B, Baron-Cohen S. 2012.', _pmid: '22265366', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ndds', title: 'NDDS (Nipissing/Looksee) — triagem do desenvolvimento (Canadá)', short_title: 'NDDS (referência)',
+      emoji: '🍁', domain: 'Vigilância do desenvolvimento', age_band: '0–6 anos', age_min_months: 0, age_max_months: 72,
+      official_url: 'https://www.lookseechecklist.com', _citation: 'Nipissing District Developmental Screen, Canadá.', _pmid: '26983782', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ocicv', title: 'OCI-CV — sintomas obsessivo-compulsivos (TOC)', short_title: 'OCI-CV (referência)',
+      emoji: '🔁', domain: 'TOC (obsessivo-compulsivo)', age_band: '7–17 anos', age_min_months: 84, age_max_months: 215,
+      official_url: '', _citation: 'Foa EB, et al. (OCI-CV).', _pmid: '35091252', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-moves', title: 'MOVES — rastreio de tiques e Tourette', short_title: 'MOVES (referência)',
+      emoji: '😬', domain: 'Tiques / Tourette', age_band: '8–18 anos', age_min_months: 96, age_max_months: 215,
+      official_url: '', _citation: 'Gaffney GR, et al. (MOVES).', _pmid: '29392455', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-erc', title: 'ERC — regulação emocional (cuidador)', short_title: 'ERC (referência)',
+      emoji: '🎭', domain: 'Regulação emocional', age_band: '6–12 anos', age_min_months: 72, age_max_months: 156,
+      official_url: '', _citation: 'Shields A, Cicchetti D. (Emotion Regulation Checklist).', _pmid: '15212574', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-smq', title: 'SMQ — mutismo seletivo (pais)', short_title: 'SMQ (referência)',
+      emoji: '🤐', domain: 'Mutismo seletivo', age_band: '3–11 anos', age_min_months: 36, age_max_months: 132,
+      official_url: '', _citation: 'Bergman RL, et al. (Selective Mutism Questionnaire).', _pmid: '33995539', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-essenceq', title: 'ESSENCE-Q — rastreio precoce de neurodesenvolvimento (Suécia)', short_title: 'ESSENCE-Q (referência)',
+      emoji: '🇸🇪', domain: 'Neurodesenvolvimento (rastreio precoce)', age_band: '0–5 anos', age_min_months: 0, age_max_months: 60,
+      official_url: 'https://www.gu.se/en/gnc/gncs-resources/screening-questionnaires', _citation: 'Gillberg C, et al. (ESSENCE-Q). Gillberg Neuropsychiatry Centre, Suécia.', _pmid: '27478377', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-ftf515', title: '5-15 (FTF) — neurodesenvolvimento amplo (Nórdico)', short_title: '5-15 / FTF (referência)',
+      emoji: '🇪🇺', domain: 'Neurodesenvolvimento amplo', age_band: '5–15 anos', age_min_months: 60, age_max_months: 180,
+      official_url: '', _citation: 'Kadesjö B, Gillberg C, et al. Eur Child Adolesc Psychiatry. 2004 (questionário 5-15/FTF, países nórdicos).', _pmid: '', license_status: 'livre'
+    },
+    {
+      id: 'ofc3-kdst', title: 'K-DST — triagem nacional do desenvolvimento (Coreia do Sul)', short_title: 'K-DST (referência)',
+      emoji: '🇰🇷', domain: 'Triagem do desenvolvimento', age_band: '0–6 anos', age_min_months: 4, age_max_months: 71,
+      official_url: '', _citation: 'Korean Developmental Screening Test (K-DST), Coreia do Sul — triagem nacional pública.', _pmid: '32683817', license_status: 'livre'
+    }
+  ];
+
+  // Bandeira de origem (proveniência visível).
+  var ORIGIN = {
+    'ofc3-qchat': '🇬🇧', 'ofc3-aq10': '🇬🇧', 'ofc3-cries8': '🇬🇧',
+    'ofc3-scared': '🇺🇸', 'ofc3-mfq': '🇺🇸', 'ofc3-cshq': '🇺🇸', 'ofc3-snap-iv': '🇺🇸',
+    'ofc3-ocicv': '🇺🇸', 'ofc3-moves': '🇺🇸', 'ofc3-erc': '🇺🇸', 'ofc3-smq': '🇺🇸',
+    'ofc3-fpsr': '🌍', 'ofc3-kidscreen10': '🇪🇺', 'ofc3-ftf515': '🇪🇺',
+    'ofc3-essenceq': '🇸🇪', 'ofc3-kdst': '🇰🇷', 'ofc3-ndds': '🇨🇦', 'ofc3-irdi': '🇧🇷'
+  };
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  var ids = {}; base.forEach(function (x) { if (x && x.id) ids[x.id] = 1; });
+  var add = [];
+  ITEMS.forEach(function (it) {
+    if (ids[it.id]) return;
+    add.push({
+      id: it.id, title: it.emoji + ' ' + it.title, short_title: it.short_title, emoji: it.emoji,
+      audience: 'familia', audience_label: 'Família/Clínico',
+      age_band: it.age_band, age_min_months: it.age_min_months, age_max_months: it.age_max_months,
+      domain: it.domain,
+      official_catalog: true, official_url: it.official_url,
+      plain_questions: [],            // preenchidas (autorais) por scales-official-questions.js
+      applicable: false,
+      license_status: it.license_status,
+      _origin: ORIGIN[it.id] || '🌍',
+      _citation: it._citation, _pmid: it._pmid, _intl_curated: true
+    });
+  });
+  window.NEUROPED_EDITORIAL_SCALES = add.concat(base);
+  window.NEUROPED_INTL_LIVRES = add;
+})();
