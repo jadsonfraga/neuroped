@@ -86,7 +86,7 @@
     { ic: '🩺', lbl: 'Consulta', href: './consulta.html' },
     { ic: '📋', lbl: 'Escalas',  href: './filtro-escalas.html' },
     { ic: '💬', lbl: 'CAA',      href: './comunicacao-alternativa.html' },
-    { ic: '🌿', lbl: 'Família',  href: './portal-familia-livre.html' }
+    { ic: '📚', lbl: 'Educativo',  href: './portal-familia-livre.html' }
   ];
   function ensureBottomNav(){
     if (document.getElementById('npFrameNav')) return;
