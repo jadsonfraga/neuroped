@@ -157,7 +157,7 @@ assertIncludes('filtro-escalas.html', 'NEUROPED_EDITORIAL_SCALES', 'engine roda 
 assertNotIncludes('filtro-escalas.html', 'const SEARCH_DATA', 'engine não usa mais a lista hardcoded de 4 escalas do protótipo');
 assertIncludes('filtro-escalas.html', 'function score', 'engine pontua a queixa por relevância sobre os metadados');
 assertIncludes('filtro-escalas.html', 'ageMonthsFromText', 'engine detecta a idade no texto livre (gate de faixa etária)');
-assertIncludes('filtro-escalas.html', 'top.slice(0,3)', 'engine destaca as 3 sugestões preditivas');
+assertIncludes('filtro-escalas.html', '.slice(0,3)', 'engine destaca as 3 indicações Ouro');
 assertIncludes('filtro-escalas.html', 'id="searchInput"', 'busca semântica por texto livre (idade + queixa)');
 assertIncludes('filtro-escalas.html', 'id="contextChips"', 'chips de contexto (queixas comuns) injetam na busca');
 assertIncludes('filtro-escalas.html', 'np_cie_q', 'engine persiste a última busca em localStorage');
@@ -289,6 +289,12 @@ assertIncludes('app-polish-mobile.css', '.np-empty', 'estado vazio institucional
 assertIncludes('filtro-escalas.html', 'Carregando catálogo', 'filtro mostra estado de carregamento do catálogo');
 assertIncludes('filtro-escalas.html', 'function skeleton', 'filtro mostra skeletons (CIE) enquanto o catálogo carrega');
 assertIncludes('filtro-escalas.html', 'id="searchClear"', 'filtro tem botão de limpar busca');
+// Obra-prima: medalhas Ouro/Prata/Bronze + dimensão "quem responde"
+assertIncludes('filtro-escalas.html', 'function tierOf', 'filtro classifica em medalha (Ouro/Prata/Bronze) por relevância×idade×respondente');
+assertIncludes('filtro-escalas.html', 'Ouro clínico', 'filtro destaca a indicação Ouro');
+assertIncludes('filtro-escalas.html', 'sc-medal', 'cards do filtro exibem a medalha');
+assertIncludes('filtro-escalas.html', 'id="respChips"', 'filtro tem o seletor "quem responde" (criança/pais/escola)');
+assertIncludes('filtro-escalas.html', 'function respMatch', 'medalha pondera o respondente (audience do instrumento)');
 // Limpeza do styles.css órfão (1139→81): páginas não-consumidoras não o carregam mais
 assertNotIncludes('setup.html', 'href="styles.css"', 'setup.html não carrega o styles.css órfão');
 assertNotIncludes('verificar.html', 'href="styles.css"', 'verificar.html não carrega o styles.css órfão');
@@ -317,7 +323,7 @@ assertFile('logo-jadson.jpg');
 assertIncludes('app-polish-mobile.js', 'function brandMark', 'logo do Dr. Jadson presente em toda tela (marca)');
 assertIncludes('app-polish-mobile.js', './logo-jadson.jpg', 'selo de marca usa a logo oficial');
 assertIncludes('sw.js', './logo-jadson.jpg', 'logo no precache (marca disponível offline)');
-assertIncludes('filtro-escalas.html', 'Sugestões preditivas', 'filtro destaca as sugestões preditivas (top 3)');
+assertIncludes('filtro-escalas.html', 'Mais indicados', 'filtro destaca os mais indicados (Ouro, top 3)');
 assertIncludes('filtro-escalas.html', 'function evidenceFor', 'filtro resolve a evidência curada por instrumento');
 assertIncludes('escala.html', 'Próxima recomendada', 'runner encadeia a próxima escala recomendada (triagem em sequência)');
 assertIncludes('diario-escola-terapias-v2.html', 'aria-label="Novo registro"', 'diário tem aria-label nos botões só-ícone');
