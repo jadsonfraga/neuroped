@@ -31,12 +31,13 @@ function readBaseline() {
 }
 
 // Arquivos canonicos do design system (fonte da verdade)
-const TOKEN_FILES = new Set(['tokens.css', 'components.css']);
+const TOKEN_FILES = new Set(['tokens.css', 'components.css', 'np-tokens.css', 'np-foundation.css', 'np-components.css']);
 
 // Arquivos a ignorar (assets/build, configs)
 const IGNORE_DIRS = new Set(['node_modules', '.git', '.cache', 'dist', 'build', 'assets']);
 const IGNORE_FILES = new Set([
   'tokens.css', 'components.css',
+  'np-tokens.css', 'np-foundation.css', 'np-components.css',  // design system canonico (Apple-grade)
   'design-system-premium.css',  // legado, sera migrado
   'safe-public-layer.css',       // overlay especifico, ok
 ]);

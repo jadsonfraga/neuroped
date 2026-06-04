@@ -16,6 +16,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Clinical Intelligence Engine — NeuroPed SDG">
 <meta name="twitter:image" content="https://jadsonfraga.github.io/neuroped/icon-512.png">
+<link rel="stylesheet" href="./np-tokens.css">
+<link rel="stylesheet" href="./np-foundation.css">
 <link rel="stylesheet" href="./tokens.css">
 <link rel="stylesheet" href="./components.css">
 <link rel="stylesheet" href="./np-cards.css">
@@ -232,6 +234,7 @@
 <script src="./scales-questions.js"></script>
 <script src="./scales-preconsulta-gate.js"></script>
 <script src="./np-store.js"></script>
+<script src="./np-motion.js"></script>
 <script>
 (function(){
   'use strict';
@@ -671,7 +674,9 @@
     var target=(rec&&rec.style.display!=='none')?rec.querySelector('.section-label'):document.getElementById('allResults');
     if(target){ target.setAttribute('tabindex','-1'); try{ target.focus({preventScroll:false}); }catch(e){ try{target.focus();}catch(_){} } }
   }
-  function submitSearch(){ pushHist(inp.value); run(); renderRecent(); focusResults(); }
+  function submitSearch(){ pushHist(inp.value); run(); renderRecent(); focusResults(); if(window.NPMotion)NPMotion.haptic([4,12,4]); }
+  // Microinteração Apple-grade (np-motion): press spring + haptic no botão primário.
+  if(window.NPMotion){ NPMotion.pressable(document.getElementById('searchGo')); }
   inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSearch(); } });
   document.getElementById('searchGo').addEventListener('click',submitSearch);
   clr.addEventListener('click',function(){ inp.value=''; toggleClear(); inp.focus(); document.querySelectorAll('#qchips .chip.active,#contextChips .chip.active').forEach(function(b){b.classList.remove('active');}); run(); });

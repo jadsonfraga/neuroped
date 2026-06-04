@@ -1,0 +1,90 @@
+/* ============================================================================
+   np-tokens.css — Design System canônico NeuroPed (SUPERNEUROPED · Apple-grade)
+   ----------------------------------------------------------------------------
+   Fonte ÚNICA de verdade dos tokens. Substitui gradualmente tokens.css.
+   Especificação: Dr. Jadson Fraga — PROMPT MESTRE 7.8→9.8, §3.1 e §3.6.
+   Regra: nenhuma cor/raio/sombra/motion fora daqui em CSS de feature.
+   ============================================================================ */
+:root {
+  /* PALETA — não usar nada além disso, jamais */
+  --np-ink:        #0B0B1A;   /* fundo absoluto */
+  --np-ink-1:      #0F0F22;   /* card base */
+  --np-ink-2:      #15152E;   /* card elevado */
+  --np-edge:       rgba(255,255,255,0.06);   /* hairline */
+  --np-edge-hi:    rgba(255,255,255,0.10);
+  --np-text:       #F5F3FF;
+  --np-text-mute:  #A8A5C8;
+  --np-text-low:   #6E6B8F;
+  --np-accent:     #7C79FF;   /* iris violet — único acento de ação */
+  --np-accent-hi:  #9D9BFF;
+  --np-gold:       #E7C98B;   /* somente honra-CRM, footer, laudos */
+  --np-success:    #4ADE80;
+  --np-warn:       #FBBF24;
+  --np-danger:     #F87171;
+
+  /* TIPOGRAFIA — duas fontes, no máximo */
+  --np-font-display: "Fraunces", "Playfair Display", Georgia, serif;
+  --np-font-text:    "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+
+  /* ESCALA TIPOGRÁFICA — modular 1.250 (major third) */
+  --np-fs-xs:   0.75rem;   /* 12 */
+  --np-fs-sm:   0.875rem;  /* 14 */
+  --np-fs-base: 1rem;      /* 16 */
+  --np-fs-md:   1.125rem;  /* 18 */
+  --np-fs-lg:   1.375rem;  /* 22 */
+  --np-fs-xl:   1.75rem;   /* 28 */
+  --np-fs-2xl:  2.25rem;   /* 36 */
+  --np-fs-3xl:  3rem;      /* 48 */
+  --np-fs-4xl:  4rem;      /* 64 */
+
+  /* ESPAÇAMENTO — múltiplos de 4 (8-pt grid Apple) */
+  --np-s-1: 4px;
+  --np-s-2: 8px;
+  --np-s-3: 12px;
+  --np-s-4: 16px;
+  --np-s-5: 24px;
+  --np-s-6: 32px;
+  --np-s-7: 48px;
+  --np-s-8: 64px;
+  --np-s-9: 96px;
+
+  /* RAIOS — 4 valores. ponto. */
+  --np-r-1: 8px;     /* chip, badge */
+  --np-r-2: 14px;    /* button, input */
+  --np-r-3: 20px;    /* card */
+  --np-r-4: 28px;    /* hero, modal */
+  --np-r-pill: 999px;
+
+  /* ELEVAÇÃO — sombra Apple cinematográfica */
+  --np-shadow-1: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.45);
+  --np-shadow-2: 0 1px 0 rgba(255,255,255,0.05) inset, 0 8px 24px rgba(0,0,0,0.4);
+  --np-shadow-3: 0 1px 0 rgba(255,255,255,0.06) inset, 0 24px 60px rgba(0,0,0,0.55);
+
+  /* MOTION — somente curvas Apple */
+  --np-ease-out:    cubic-bezier(0.16, 1, 0.3, 1);          /* SwiftUI default */
+  --np-ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
+  --np-ease-spring: cubic-bezier(0.32, 0.72, 0, 1);         /* iOS button press */
+  --np-dur-1: 120ms;
+  --np-dur-2: 200ms;
+  --np-dur-3: 320ms;
+  --np-dur-4: 520ms;
+  --np-dur-stagger: 60ms;
+
+  /* BLUR — três tiers, com fallback */
+  --np-blur-sm: saturate(180%) blur(8px);
+  --np-blur-md: saturate(180%) blur(20px);
+  --np-blur-lg: saturate(180%) blur(40px);
+}
+
+/* MODO CLARO — apple-grade também (data-theme="light") */
+[data-theme="light"] {
+  --np-ink:        #FAFAFB;
+  --np-ink-1:      #FFFFFF;
+  --np-ink-2:      #F4F4F8;
+  --np-edge:       rgba(11,11,26,0.08);
+  --np-edge-hi:    rgba(11,11,26,0.14);
+  --np-text:       #0B0B1A;
+  --np-text-mute:  #4A4860;
+  --np-text-low:   #8A87A8;
+  --np-accent:     #5A57F0;
+}
