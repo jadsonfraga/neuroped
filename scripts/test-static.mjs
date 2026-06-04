@@ -41,17 +41,10 @@ assertIncludes('sw.js', 'CACHE_NAME', 'sw.js define CACHE_NAME');
 assertIncludes('sw.js', 'patchPdfLibEncoder', 'SW torna o encoder do pdf-lib tolerante a emoji (laudo PDF não quebra)');
 assertIncludes('sw.js', 'PDFButton-', 'SW remenda o chunk-núcleo do pdf-lib (cobre todos os geradores de PDF)');
 // SEO: páginas públicas têm og:image + canonical + twitter (compartilhamento/busca)
-for (const p of ['escalas.html','sobre-dr-jadson.html','filtro-escalas.html','mapa-escalas.html','neuroped-pro.html']) {
+for (const p of ['escalas.html','central-atalhos.html','sobre-dr-jadson.html','filtro-escalas.html','mapa-escalas.html','neuroped-pro.html','portal-familia-livre.html']) {
   assertIncludes(p, 'property="og:image"', p+' tem og:image (compartilhamento)');
   assertIncludes(p, 'rel="canonical"', p+' tem canonical (SEO)');
   assertIncludes(p, 'name="twitter:card"', p+' tem twitter card');
-}
-// Páginas aposentadas (casca antiga): central-atalhos / portal-familia / area-filho
-// viraram redirecionamentos para o SPA (home única). Garantia anti-regressão.
-for (const p of ['central-atalhos.html','portal-familia-livre.html','area-filho.html']) {
-  assertIncludes(p, 'location.replace', p+' é stub que redireciona para o app (SPA)');
-  assertIncludes(p, './index.html', p+' redireciona para a home do SPA');
-  assertIncludes(p, 'noindex', p+' aposentada é noindex');
 }
 assertIncludes('sitemap.xml', '<lastmod>', 'sitemap tem lastmod');
 // Consolidação P0: política de privacidade com fonte única
@@ -165,7 +158,7 @@ assertIncludes('filtro-escalas.html', '@keyframes npBounce', 'chip faz bounce ao
 assertIncludes('filtro-escalas.html', '@keyframes npWiggle', 'carinha do chip ativo balança (vivo)');
 // Integração ao app: topbar coesa com voltar + marca (não parece página solta)
 assertIncludes('filtro-escalas.html', 'class="topbar"', 'filtro tem topbar do app (integrado, não página solta)');
-assertIncludes('filtro-escalas.html', 'href="./index.html"', 'topbar do filtro volta ao app (home/SPA)');
+assertIncludes('filtro-escalas.html', 'central-atalhos.html', 'topbar do filtro volta ao app (hub)');
 // Relevância do filtro: queixa casa por token (não substring frouxa) e sem tema derruba
 assertIncludes('filtro-escalas.html', 'inalcançável pela não-temática', 'scoreScale usa patamar: escala temática sempre acima da irrelevante');
 // Filtro redesenhado: entrada 100% por clique (idade+queixa) e saída = só as 3 mais indicadas
@@ -199,26 +192,9 @@ assertIncludes('app-polish-mobile.css', '.np-sheet', 'polish CSS define bottom s
 assertIncludes('app-polish-mobile.css', 'prefers-reduced-motion', 'polish CSS respeita prefers-reduced-motion');
 assertIncludes('app-polish-mobile.js', 'npToast', 'polish JS expoe window.npToast');
 assertIncludes('app-polish-mobile.js', 'npConfirm', 'polish JS expoe window.npConfirm');
-for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','banco-escalas.html','comunicacao-alternativa.html','secretaria.html']) {
+for (const p of ['index.html','consulta.html','filtro-escalas.html','instrumento.html','banco-escalas.html','comunicacao-alternativa.html','portal-familia-livre.html','secretaria.html']) {
   assertIncludes(p, 'app-polish-mobile.css', p + ' carrega app-polish-mobile.css');
   assertIncludes(p, 'app-polish-mobile.js',  p + ' carrega app-polish-mobile.js');
-}
-
-// ===== Design System — Movimento 1: ponte de variáveis (coerência cromática) =====
-// ds-bridge.css mapeia vocabulário legado (--teal/--cream/--ink…) → tokens canônicos,
-// colapsando os violetas divergentes no --primary único. Sem reescrever markup.
-assertFile('ds-bridge.css');
-assertIncludes('ds-bridge.css', 'var(--primary)', 'bridge aponta --teal para o --primary canônico (unifica violetas)');
-assertIncludes('ds-bridge.css', '--teal:', 'bridge cobre o vocabulário legado de cor');
-assertIncludes('ds-bridge.css', 'var(--accent-gold)', 'bridge preserva ouro como ouro (semântico)');
-assertIncludes('sw.js', './ds-bridge.css', 'ds-bridge no precache (offline)');
-// As 6 telas-âncora carregam o bridge como ÚLTIMO stylesheet (vence o :root inline)
-for (const p of ['index.html','perfil-crianca.html','filtro-escalas.html','intake.html','clinical-trajetoria.html','secretaria.html']) {
-  assertIncludes(p, './ds-bridge.css', p + ' carrega a ponte do Design System (âncora do Movimento 1)');
-  const c = file(p);
-  (c.lastIndexOf('tokens.css') < c.lastIndexOf('ds-bridge.css'))
-    ? pass(p + ': ds-bridge carrega depois de tokens.css (cascata correta)')
-    : fail(p + ': ds-bridge deve vir DEPOIS de tokens.css', 'ordem de cascata invertida');
 }
 
 // Identidade premium: tipografia institucional + capa do hub
@@ -227,6 +203,7 @@ assertIncludes('app-polish-mobile.css', '--np-font-display', 'fonte display inst
 assertIncludes('index.html', 'fonts.googleapis.com', 'CSP permite Google Fonts (style-src)');
 // Unificação visual: cards glassmorphism coesos (mesmo padrão premium do filtro)
 assertNotIncludes('escalas.html', 'background:linear-gradient(135deg,#ffffff', 'escalas.html sem cards de fundo branco (destoavam)');
+assertIncludes('central-atalhos.html', 'backdrop-filter', 'central-atalhos usa glassmorphism (visual unificado)');
 assertFile('np-cards.css');
 // Perfil da Criança (espinha de dados — conecta filtro/escalas/histórico)
 assertFile('np-store.js');
@@ -249,12 +226,23 @@ assertNotIncludes('perfil-crianca.html', 'scales-enhance.js', 'perfil não carre
 assertIncludes('filtro-escalas.html', 'NPStore.ageBand', 'filtro pré-seleciona a idade da criança ativa (conexão real, não só nome)');
 assertIncludes('diario-escola-terapias-v2.html', 'np-store.js', 'diário carrega a espinha de dados (Perfil)');
 assertIncludes('diario-escola-terapias-v2.html', 'window.NPStore.active', 'diário semeia a criança do Perfil (fim do cadastro duplicado)');
-// Hub antigo (central-atalhos) aposentado: discoverability migrou para o SPA + filtro.
-// O índice (escalas.html) agora redireciona direto para a home (SPA).
-assertIncludes('escalas.html', "location.replace('./index.html')", 'escalas.html redireciona para a home (SPA)');
+assertIncludes('central-atalhos.html', 'perfil-crianca.html', 'hub linka o Perfil da Criança');
+assertIncludes('central-atalhos.html', 'class="featured"', 'hub tem faixa de destaques (hierarquia de produto)');
+assertIncludes('central-atalhos.html', 'IntersectionObserver', 'hub revela seções ao rolar (ritmo/transição)');
+assertIncludes('central-atalhos.html', 'id="activeChild"', 'hub mostra a criança ativa (indicador de uso / personalização)');
+assertIncludes('central-atalhos.html', 'np-store.js', 'hub integra a espinha de dados (criança ativa)');
+assertIncludes('central-atalhos.html', 'class="fmeta"', 'destaques do hub têm indicadores de uso vivos (arquitetura de atenção)');
+assertIncludes('central-atalhos.html', 'paintMeta', 'hub popula indicadores de uso com estado real da plataforma');
+// Landing UX (v6.23): busca, recentes, skip-link
+// Landing UX consolidada: o índice (escalas.html) foi absorvido pela Central (porta única)
+assertIncludes('escalas.html', "location.replace('./central-atalhos.html')", 'escalas.html redireciona para a landing única (Central)');
+assertIncludes('central-atalhos.html', 'np-skip', 'a Central (landing única) tem skip-link (WCAG)');
+assertIncludes('central-atalhos.html', 'Pular para o conteúdo', 'skip-link rotulado em pt-BR na Central');
+assertIncludes('central-atalhos.html', 'aria-live', 'Central anuncia estados dinâmicos ao leitor de tela');
 // CONSOLIDAÇÃO: mapa-escalas foi ABSORVIDO pelo Filtro (porta única) → agora redireciona
 assertIncludes('mapa-escalas.html', "location.replace('./filtro-escalas.html')", 'mapa-escalas redireciona para a porta única (filtro)');
 assertNotIncludes('mapa-escalas.html', 'background:#dcfce7', 'mapa-escalas sem badges de fundo claro (destoavam)');
+assertIncludes('area-filho.html', 'backdrop-filter', 'area-filho usa glassmorphism (visual unificado)');
 assertIncludes('secretaria.html', 'backdrop-filter', 'secretaria usa glassmorphism (visual unificado)');
 // Estética J26 nos 6 bancos de escalas (sidebar com avatar+sigla+emoji)
 assertFile('escalas-card-premium.css');
@@ -265,6 +253,9 @@ for (const b of ['banco-escalas.html','banco-escalas-lote1.html','banco-escalas-
   assertIncludes(b, 'escalas-card-premium.css', b+' carrega o CSS premium dos cards');
   assertIncludes(b, 'escalas-card-premium.js', b+' carrega o decorator J26');
 }
+assertIncludes('central-atalhos.html', 'Da triagem ao encaminhamento', 'hub tem capa institucional (posicionamento)');
+assertIncludes('central-atalhos.html', 'CRM-PE 25227', 'hub exibe credenciais do profissional');
+assertNotIncludes('central-atalhos.html', 'reservada por PIN', 'hub não descreve biblioteca como reservada (já é aberta)');
 
 // Polimento: skeletons, estados vazios, selo de qualidade, acessibilidade
 assertIncludes('app-polish-mobile.css', '.np-skel', 'skeleton loaders definidos (sensação de app)');
@@ -281,10 +272,12 @@ assertIncludes('app-polish-mobile.js', "'consulta.html': function", 'guia cobre 
 assertIncludes('app-polish-mobile.js', 'function onboarding', 'onboarding de primeiro uso guiado em 3 passos (Camada I — ativação)');
 assertIncludes('app-polish-mobile.js', 'np_onboarded', 'onboarding aparece só na 1ª visita (não repete)');
 // Amadurecimento contínuo: continuidade no ponto de entrada + micro-tema premium
+assertIncludes('central-atalhos.html', 'Continuar o caso', 'hub retoma o caso no próximo passo certo (continuidade / descoberta automática)');
 assertIncludes('app-polish-mobile.js', '::selection', 'micro-tema premium universal (seleção/scrollbar temáticas)');
 assertIncludes('perfil-crianca.html', 'tl-redo', 'histórico permite reaplicar a mesma escala em 1 toque (reavaliação → comparador)');
 assertIncludes('perfil-crianca.html', './escala.html?id=', 'reaplicar abre o runner com o mesmo instrumento (reuso/continuidade)');
 assertIncludes('filtro-escalas.html', 'function stateKey', 'filtro lembra queixa/idade POR CRIANÇA (descoberta automática, sem herdar contexto)');
+assertIncludes('central-atalhos.html', 'impacto-medicacao.html', 'hub linka o Impacto da Medicação (deixa de ser funcionalidade escondida)');
 // Camada D — consistência: tipografia de exibição (Fraunces) unificada nas telas-ramo
 assertIncludes('diario-escola-terapias-v2.html', 'Fraunces', 'diário usa a fonte de exibição unificada (Fraunces)');
 assertIncludes('consulta.html', 'Fraunces', 'consulta usa a fonte de exibição unificada (Fraunces)');
@@ -333,6 +326,7 @@ assertIncludes('neuroped-pro.html', 'og:title', 'landing Pro tem Open Graph para
 assertIncludes('app-polish-mobile.js', 'referralWidget', 'widget de indicação pai-para-pai (crescimento)');
 assertIncludes('sitemap.xml', 'sobre-dr-jadson.html', 'sitemap inclui a página de autoridade');
 assertIncludes('sitemap.xml', 'neuroped-pro.html', 'sitemap inclui a landing Pro');
+assertIncludes('central-atalhos.html', 'sobre-dr-jadson.html', 'hub linka a página de autoridade');
 
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
@@ -381,6 +375,8 @@ for (const f of NPM_FILES) {
 assertIncludes('neuroped-master-vitrine.html', './neuroped-master-vitrine-data.js', 'vitrine carrega o catálogo (data.js)');
 assertIncludes('neuroped-master-vitrine.html', 'Direitos reservados', 'vitrine declara direitos reservados');
 assertIncludes('neuroped-master-vitrine-data.js', 'NEUROPED_MASTER', 'data.js expõe catálogo NEUROPED_MASTER');
+assertIncludes('central-atalhos.html', './neuroped-master-vitrine.html', 'central-atalhos tem card da vitrine NeuroPed Master');
+assertIncludes('central-atalhos.html', './solicitar-neuroped-master.html', 'central-atalhos tem card de solicitação');
 assertIncludes('routes.config.js', 'neuroped-master-vitrine.html', 'routes.config registra a vitrine');
 assertIncludes('routes.config.js', 'solicitar-neuroped-master.html', 'routes.config registra a solicitação');
 
@@ -397,6 +393,7 @@ assertIncludes('neuroped-master-biblioteca-data.js', 'NEUROPED_MASTER_LIB', 'dat
 assertIncludes('neuroped-master-protegido-data.js', 'NEUROPED_MASTER_PRO', 'data reservado expõe NEUROPED_MASTER_PRO');
 assertIncludes('neuroped-master-biblioteca.html', './master-access-policy.js', 'biblioteca carrega a política de PIN master');
 assertIncludes('neuroped-master-biblioteca.js', 'NeuroPedMasterAccess', 'biblioteca usa o gate de PIN master para a área reservada');
+assertIncludes('central-atalhos.html', './neuroped-master-biblioteca.html', 'central-atalhos tem card da Biblioteca Master');
 assertIncludes('routes.config.js', 'neuroped-master-biblioteca.html', 'routes.config registra a Biblioteca');
 
 // Gerador de Cards (conteúdo educacional com marca)
@@ -404,6 +401,7 @@ for (const f of ['gerador-cards.html','gerador-cards.js']) assertFile(f);
 assertNotIncludes('gerador-cards.js', 'NEUROPED_MASTER_PRO.farmaco', 'gerador NÃO usa farmacoterapia (sensível) — só conteúdo educacional');
 assertIncludes('gerador-cards.js', 'CRM-PE 25227', 'gerador imprime a marca/credenciais do autor');
 assertIncludes('gerador-cards.html', './gerador-cards.js', 'gerador-cards carrega o script');
+assertIncludes('central-atalhos.html', './gerador-cards.html', 'central-atalhos tem card do Gerador');
 assertIncludes('routes.config.js', 'gerador-cards.html', 'routes.config registra o Gerador');
 
 // App shell — hub dinâmico (chrome persistente, conteúdo em quadro)
@@ -421,6 +419,7 @@ assertIncludes('filtro-escalas.html', './np-frame.js', 'filtro abre o runner em 
 assertIncludes('filtro-escalas.html', 'id="allScales"', 'filtro é porta única: "Todas as escalas" foca a busca (sem sair do fluxo)');
 assertNotIncludes('filtro-escalas.html', 'href="./mapa-escalas.html"', 'filtro não puxa o usuário para fora do fluxo (mapa via hub)');
 assertIncludes('perfil-crianca.html', './np-frame.js', 'perfil abre runner/reaplicar em overlay (fluxo contínuo)');
+assertIncludes('central-atalhos.html', './np-frame.js', 'hub abre ferramentas em overlay (jornada contínua)');
 // S1 (roadmap 9.9): README na versão canônica + sem vazamentos/divergências
 assertNotIncludes('README.md', 'v5.1', 'README não está mais na versão defasada (v5.1)');
 assertNotIncludes('README.md', 'REMOVIDO', 'README não expõe PIN em texto claro (S12)');
@@ -430,7 +429,7 @@ assertIncludes('README.md', 'wa.me/5587991097371', 'README traz o WhatsApp canô
 assertIncludes('README.md', 'Soli Deo Gloria', 'README traz o fechamento institucional');
 assertIncludes('app-shell.html', 'comunicacao-alternativa.html', 'app-shell roteia a CAA');
 assertIncludes('app-shell.html', 'neuroped-master-biblioteca.html', 'app-shell roteia a Biblioteca');
-assertIncludes('manifest.json', './index.html', 'manifest aponta o PWA para a home (SPA)');
+assertIncludes('manifest.json', './app-shell.html', 'manifest aponta o PWA para a casca dinâmica');
 assertIncludes('sw.js', './app-shell.html', 'sw precache inclui a casca');
 assertIncludes('app-polish-mobile.js', 'EMBEDDED', 'app-polish suprime chrome próprio quando embutido na casca');
 // Catálogo de escalas: ligação dos geradores + abertura interativa real
@@ -550,6 +549,7 @@ assertIncludes('neuroped-pro.html', 'id="depoimentos"', 'landing Pro tem estrutu
   /id="depoimentos"[^>]*\shidden/.test(c) ? pass('depoimentos ocultos por padrão (sem prova social falsa)') : fail('depoimentos deveriam nascer ocultos');
 }
 assertIncludes('neuroped-pro.html', 'acesso vitalício', 'landing Pro tem âncora de valor honesta (vitalício)');
+assertIncludes('portal-familia-livre.html', 'neuroped-pro.html', 'portal da família expõe o NeuroPed Pro (descoberta = vendas)');
 assertIncludes('sobre-dr-jadson.html', 'neuroped-pro.html', 'página de autoridade leva ao Pro (funil tráfego→oferta)');
 // Inteligência clínica: sinais de alerta (red flags) no filtro de escalas
 assertFile('scales-red-flags.js');
@@ -569,6 +569,7 @@ assertIncludes('diario-escola-terapias-v2.html', 'apoio à observação, não di
 assertIncludes('neuroped-pro.html', 'id="buyBar"', 'landing tem barra de compra fixa (reduz abandono no mobile)');
 assertIncludes('neuroped-pro.html', 'data-no-bottom-nav', 'landing de vendas sem nav competindo (foco em 1 ação)');
 assertIncludes('app-polish-mobile.js', 'data-no-bottom-nav', 'app-polish suporta opt-out de nav por página');
+assertIncludes('central-atalhos.html', 'guia-lancamento.html', 'hub linka o guia de lançamento');
 // telas de triagem/escala mantêm aviso ético (não substitui avaliação)
 for (const f of ['escalas.html','mapa-escalas.html']) {
   const c = file(f);
@@ -637,7 +638,7 @@ assertIncludes('app-polish-mobile.js', 'prefers-reduced-motion:no-preference', '
 assertFile('neuroped-shell.css');
 assertIncludes('neuroped-shell.css', 'data-ns-shell', 'shell escopa estilos por data-ns-shell (não invasivo)');
 assertIncludes('neuroped-shell.css', 'ns-fade-in', 'shell tem animação de entrada');
-for (const p of ['sobre-dr-jadson.html','comunicacao-alternativa.html','diario-escola-terapias-v2.html','guia-lancamento.html']) {
+for (const p of ['central-atalhos.html','portal-familia-livre.html','sobre-dr-jadson.html','area-filho.html','comunicacao-alternativa.html','diario-escola-terapias-v2.html','guia-lancamento.html']) {
   assertIncludes(p, 'neuroped-shell.css', p+' carrega o shell unificado');
   assertIncludes(p, 'data-ns-shell', p+' ativa o shell no body');
 }
