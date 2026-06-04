@@ -29,7 +29,10 @@
   .wrap{max-width:1060px;margin:0 auto;padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px))}
   .back{display:inline-flex;align-items:center;gap:7px;color:#a9a4ff;text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 2px}
   /* Header */
-  .engine-header{padding:20px 0 14px;text-align:center}
+  .engine-header{padding:6px 0 14px;text-align:center}
+  .astro{width:90px;height:90px;display:block;margin:0 auto 6px;filter:drop-shadow(0 14px 22px rgba(91,84,232,.4));animation:astroFloat 4.6s ease-in-out infinite}
+  @keyframes astroFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+  @media(prefers-reduced-motion:reduce){.astro{animation:none}}
   .engine-title{font:700 clamp(24px,5vw,34px)/1.05 "Fraunces",Georgia,serif;margin:0 0 6px;
     background:linear-gradient(135deg,#fff 10%,#9b7bff 70%,#7c79ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .engine-header p{margin:0;color:var(--text-muted,#b6b2e6);font-size:14px}
@@ -66,7 +69,8 @@
   .detected b{color:#a7f3d0}
   .section-label{display:flex;align-items:center;gap:9px;font:800 12px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--primary-light,#a9a4ff);margin:18px 2px 10px}
   .section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(169,164,255,.3),transparent)}
-  .np-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:13px}
+  .np-cards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media(max-width:360px){.np-cards-grid{grid-template-columns:1fr}}
   /* Card (premium, sobre np-cards.css/base) */
   .sc-card{position:relative;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--text,#ECEAFF);overflow:hidden;
     background:linear-gradient(180deg,rgba(124,118,210,.13),rgba(124,118,210,.045));border:1px solid rgba(169,164,255,.16);
@@ -110,6 +114,19 @@
 <main class="wrap">
   <a class="back" href="./index.html">‹ Início</a>
   <header class="engine-header">
+    <svg class="astro" viewBox="0 0 120 120" role="img" aria-label="Astronauta NeuroPed" fill="none">
+      <defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9b7bff"/><stop offset="1" stop-color="#4f46e5"/></linearGradient></defs>
+      <ellipse cx="60" cy="104" rx="24" ry="8" fill="rgba(124,118,210,.20)"/>
+      <rect x="28" y="60" width="14" height="30" rx="7" fill="url(#ag)" stroke="#cfc6ff" stroke-width="2"/>
+      <rect x="78" y="60" width="14" height="30" rx="7" fill="url(#ag)" stroke="#cfc6ff" stroke-width="2"/>
+      <rect x="40" y="56" width="40" height="44" rx="18" fill="url(#ag)" stroke="#cfc6ff" stroke-width="2"/>
+      <circle cx="60" cy="76" r="5" fill="#e7c98b"/>
+      <circle cx="60" cy="42" r="26" fill="#1b1842" stroke="#cfc6ff" stroke-width="2.5"/>
+      <path d="M45 40a15 12 0 0 1 30 0a15 12 0 0 1-30 0Z" fill="#0e0e22"/>
+      <ellipse cx="52" cy="36" rx="6" ry="4" fill="rgba(231,201,139,.7)"/>
+      <path d="M97 24l2.2 5 5 2.2-5 2.2-2.2 5-2.2-5-5-2.2 5-2.2z" fill="#e7c98b"/>
+      <circle cx="22" cy="34" r="2.4" fill="#a9a4ff"/><circle cx="101" cy="70" r="2" fill="#a9a4ff"/>
+    </svg>
     <h1 class="engine-title">Clinical Intelligence Engine</h1>
     <p>Descreva <strong>idade + queixa</strong> — a busca prioriza os instrumentos certos do catálogo, com evidência curada quando houver.</p>
   </header>
