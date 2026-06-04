@@ -78,8 +78,10 @@
   /* ---------- Modal de consentimento (1ª vez) ---------- */
   function gate() {
     if (document.getElementById('np-lgpd-gate')) return;
+    // SEM backdrop-filter: no iOS Safari um pai com backdrop-filter faz os FILHOS
+    // não renderizarem — a caixa do consentimento sumia e a tela travava borrada.
     var scrim = el('div', 'position:fixed;inset:0;z-index:2147483630;display:grid;place-items:center;padding:18px;' +
-      'background:rgba(3,2,16,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)');
+      'background:rgba(3,2,16,.9)');
     scrim.id = 'np-lgpd-gate'; scrim.setAttribute('role', 'dialog'); scrim.setAttribute('aria-modal', 'true'); scrim.setAttribute('aria-labelledby', 'np-lgpd-h');
     var box = el('div', 'max-width:560px;width:100%;max-height:88vh;overflow:auto;border-radius:20px;padding:22px 20px;' +
       'background:#0f1223;color:#E5E7EB;border:1px solid rgba(169,164,255,.22);box-shadow:0 30px 80px rgba(0,0,0,.6);' +
@@ -121,8 +123,8 @@
     if (document.getElementById('np-lgpd-shield') || !document.body) return;
     var b = el('button', 'position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99984;' +
       'width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:18px;cursor:pointer;' +
-      'background:rgba(20,19,46,.66);color:#ECEAFF;border:1px solid rgba(169,164,255,.28);' +
-      'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 30px -12px rgba(4,3,18,.7)');
+      'background:#14132e;color:#ECEAFF;border:1px solid rgba(169,164,255,.28);' +
+      'box-shadow:0 12px 30px -12px rgba(4,3,18,.7)');
     b.id = 'np-lgpd-shield'; b.type = 'button'; b.textContent = '🛡️';
     b.title = 'Privacidade e meus dados'; b.setAttribute('aria-label', 'Privacidade e meus dados');
     b.addEventListener('click', sheet);
@@ -131,7 +133,7 @@
   function sheet() {
     if (document.getElementById('np-lgpd-sheet')) return;
     var scrim = el('div', 'position:fixed;inset:0;z-index:2147483631;display:flex;align-items:flex-end;justify-content:center;' +
-      'background:rgba(3,2,16,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)');
+      'background:rgba(3,2,16,.82)');
     scrim.id = 'np-lgpd-sheet';
     var box = el('div', 'max-width:520px;width:100%;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));' +
       'background:#0f1223;color:#E5E7EB;border:1px solid rgba(169,164,255,.22);box-shadow:0 -20px 60px rgba(0,0,0,.5);font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif');
