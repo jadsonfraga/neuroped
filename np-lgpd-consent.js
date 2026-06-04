@@ -78,47 +78,33 @@
   /* ---------- Modal de consentimento (1ª vez) ---------- */
   function gate() {
     if (document.getElementById('np-lgpd-gate')) return;
-    // SEM backdrop-filter: no iOS Safari um pai com backdrop-filter faz os FILHOS
-    // não renderizarem — a caixa do consentimento sumia e a tela travava borrada.
-    var scrim = el('div', 'position:fixed;inset:0;z-index:2147483630;background:rgba(3,2,16,.82)');
-    scrim.id = 'np-lgpd-gate';
-    // Caixa com posicionamento FIXO próprio (não depende de grid/flex do pai, que o
-    // iOS às vezes quebra) e z ACIMA do scrim — garante visível e centrada no iOS.
-    var box = el('div', 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483631;' +
-      'width:calc(100% - 32px);max-width:560px;max-height:86vh;overflow:auto;border-radius:20px;padding:22px 20px;' +
-      'background:#0f1223;color:#E5E7EB;border:1px solid rgba(169,164,255,.22);box-shadow:0 30px 80px rgba(0,0,0,.6);' +
-      'font:15px/1.55 -apple-system,Segoe UI,Roboto,sans-serif');
-    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'np-lgpd-h');
+    // Aviso NÃO-BLOQUEANTE: faixa fixa no RODAPÉ. Sem scrim de tela cheia, sem
+    // travar o scroll, sem prender foco — elimina qualquer "tela bloqueada"
+    // (inclusive bugs de iOS com overlay). Fundo sólido = sempre visível/clicável.
+    var scrim = null;
+    var box = el('div', 'position:fixed;left:0;right:0;bottom:0;z-index:2147483630;max-height:82vh;overflow:auto;' +
+      'padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(169,164,255,.28);' +
+      'background:#0f1223;color:#E5E7EB;box-shadow:0 -18px 50px rgba(0,0,0,.55);' +
+      'font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif');
+    box.id = 'np-lgpd-gate'; box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Aviso de privacidade');
     box.innerHTML =
-      '<h2 id="np-lgpd-h" style="margin:0 0 6px;font:700 19px Georgia,serif;color:#f2dca6">Privacidade e natureza da ferramenta</h2>' +
-      '<p style="margin:0 0 10px;color:#cfd3e6"><b>O NeuroPed EDJ é uma ferramenta educativa e de triagem.</b> Os instrumentos autorais são de triagem <b>não normatizada</b> e <b>não substituem</b> avaliação, diagnóstico ou conduta de um profissional.</p>' +
-      '<div style="background:rgba(124,118,210,.10);border:1px solid rgba(169,164,255,.16);border-radius:14px;padding:12px 14px;margin:0 0 12px">' +
-        '<p style="margin:0 0 8px"><b>Sobre seus dados (LGPD):</b></p>' +
-        '<ul style="margin:0;padding-left:18px;color:#cfd3e6">' +
-          '<li>São dados de <b>saúde</b> (sensíveis), frequentemente de <b>crianças</b>.</li>' +
-          '<li>Ficam <b>armazenados localmente neste aparelho/navegador</b> — não em servidor, por padrão.</li>' +
-          '<li>Finalidade: apoio educativo e organização clínica. Base legal: <b>seu consentimento</b>.</li>' +
-          '<li>Você pode <b>exportar</b> (portabilidade) ou <b>apagar</b> (eliminação) seus dados a qualquer momento, pelo botão 🛡️ no canto da tela.</li>' +
-        '</ul>' +
-      '</div>' +
-      '<p style="margin:0 0 14px;font-size:13px;color:#94A3B8">Leia a <a href="' + POLICY + '" target="_blank" rel="noopener" style="color:#a9a4ff">Política de Privacidade</a> e os <a href="' + TERMS + '" target="_blank" rel="noopener" style="color:#a9a4ff">Termos de Uso</a>.</p>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-        '<button id="np-lgpd-ok" style="flex:1;min-width:160px;border:0;border-radius:12px;padding:13px 16px;font:800 14px system-ui;cursor:pointer;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5)">Li e concordo — continuar</button>' +
-        '<button id="np-lgpd-no" style="border:1px solid rgba(169,164,255,.3);border-radius:12px;padding:13px 16px;font:700 14px system-ui;cursor:pointer;color:#cfd3e6;background:transparent">Recusar</button>' +
+      '<div style="max-width:820px;margin:0 auto;display:flex;gap:12px 16px;align-items:center;flex-wrap:wrap;justify-content:space-between">' +
+        '<div style="flex:1;min-width:220px;font-size:13px;color:#cfd3e6">' +
+          '<b style="color:#f2dca6">Privacidade · ferramenta educativa.</b> Triagem <b>não normatizada</b> — não substitui avaliação médica. Dados de saúde ficam <b>só neste aparelho</b> (LGPD); exporte/apague pelo 🛡️. ' +
+          '<a href="' + POLICY + '" target="_blank" rel="noopener" style="color:#a9a4ff">Política</a> · ' +
+          '<a href="' + TERMS + '" target="_blank" rel="noopener" style="color:#a9a4ff">Termos</a>.' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button id="np-lgpd-ok" style="border:0;border-radius:11px;padding:11px 18px;font:800 13px system-ui;cursor:pointer;color:#fff;background:linear-gradient(135deg,#7C3AED,#4F46E5)">Li e concordo</button>' +
+          '<button id="np-lgpd-no" style="border:1px solid rgba(169,164,255,.3);border-radius:11px;padding:11px 14px;font:700 13px system-ui;cursor:pointer;color:#cfd3e6;background:transparent">Recusar</button>' +
+        '</div>' +
       '</div>';
-    document.body.appendChild(scrim);
     document.body.appendChild(box);
-    document.documentElement.style.overflow = 'hidden';
     var okBtn = box.querySelector('#np-lgpd-ok');
     var noBtn = box.querySelector('#np-lgpd-no');
     function declineMsg() { window.alert('Sem o consentimento não é possível usar as áreas que guardam dados pessoais. Você pode fechar a página ou ler a Política de Privacidade.'); }
-    // foco preso no diálogo; Esc não fecha à força (exibe a explicação de recusa)
-    var release = trapFocus(box, function () { try { noBtn.focus(); } catch (e) {} declineMsg(); });
-    okBtn.addEventListener('click', function () {
-      setConsent(); document.documentElement.style.overflow = ''; release(); scrim.remove(); box.remove(); mountShield();
-    });
-    noBtn.addEventListener('click', declineMsg);
-    setTimeout(function () { try { okBtn.focus(); } catch (e) {} }, 30); // foco no botão primário
+    okBtn.addEventListener('click', function () { setConsent(); box.remove(); mountShield(); });
+    if (noBtn) noBtn.addEventListener('click', declineMsg);
   }
 
   /* ---------- Botão sempre disponível: direitos do titular ---------- */
