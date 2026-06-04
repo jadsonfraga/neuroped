@@ -27,8 +27,9 @@
     'assinatura-digital.html': 1, 'perfil-laudo.html': 1,
     // Administração / secretaria / financeiro
     'secretaria.html': 1, 'agenda-financeiro.html': 1,
-    // Monetização / licenças / acesso pago
+    // Monetização (REMOVIDA): Pro + e-book + licenças + passe pago
     'gerar-licencas-pro.html': 1, 'neuroped-pro.html': 1,
+    'neuroped-master-vitrine.html': 1, 'solicitar-neuroped-master.html': 1,
     'ativar-passe-familiar.html': 1, 'politica-acesso-familiar.html': 1,
     // Auditoria / dev / teste / demonstração interna / status
     'auditoria-ontologia.html': 1, 'auditoria-operacional.html': 1,

@@ -404,7 +404,9 @@ assertIncludes('sobre-dr-jadson.html', 'substitui consulta', 'página de autorid
 assertIncludes('neuroped-pro.html', 'og:title', 'landing Pro tem Open Graph para compartilhamento profissional');
 assertIncludes('app-polish-mobile.js', 'referralWidget', 'widget de indicação pai-para-pai (crescimento)');
 assertIncludes('sitemap.xml', 'sobre-dr-jadson.html', 'sitemap inclui a página de autoridade');
-assertIncludes('sitemap.xml', 'neuroped-pro.html', 'sitemap inclui a landing Pro');
+// Decisão do autor: NADA de Pro por enquanto → fora do sitemap (e do deploy).
+assertNotIncludes('sitemap.xml', 'neuroped-pro.html', 'sitemap NÃO lista a landing Pro (Pro removido)');
+assertIncludes('scripts/strip-private.mjs', 'neuroped-pro.html', 'strip remove o tier Pro do deploy público');
 
 // Backend Supabase opcional (coexiste com D1)
 assertFile('db/supabase-schema.sql');
@@ -453,8 +455,10 @@ for (const f of NPM_FILES) {
 assertIncludes('neuroped-master-vitrine.html', './neuroped-master-vitrine-data.js', 'vitrine carrega o catálogo (data.js)');
 assertIncludes('neuroped-master-vitrine.html', 'Direitos reservados', 'vitrine declara direitos reservados');
 assertIncludes('neuroped-master-vitrine-data.js', 'NEUROPED_MASTER', 'data.js expõe catálogo NEUROPED_MASTER');
-assertIncludes('routes.config.js', 'neuroped-master-vitrine.html', 'routes.config registra a vitrine');
-assertIncludes('routes.config.js', 'solicitar-neuroped-master.html', 'routes.config registra a solicitação');
+// Decisão do autor: monetização (Pro + e-book) REMOVIDA do público.
+assertNotIncludes('routes.config.js', 'neuroped-master-vitrine.html', 'routes.config NÃO registra a vitrine (e-book removido)');
+assertNotIncludes('routes.config.js', 'solicitar-neuroped-master.html', 'routes.config NÃO registra a solicitação (e-book removido)');
+assertIncludes('scripts/strip-private.mjs', 'neuroped-master-vitrine.html', 'strip remove o e-book do deploy público');
 
 // NeuroPed Master — Biblioteca (catálogo público + área reservada por PIN)
 const NPM_BIB_FILES = ['neuroped-master-biblioteca.html','neuroped-master-biblioteca.css','neuroped-master-biblioteca.js','neuroped-master-biblioteca-data.js','neuroped-master-protegido-data.js'];
