@@ -209,9 +209,11 @@
       var s = document.createElement('style'); s.id = 'np-premium-nav-style';
       s.textContent =
         'html{scroll-behavior:smooth}' +
-        // fade + leve subida ao entrar na página (respeitando reduced-motion)
-        '@keyframes npPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
-        '@media(prefers-reduced-motion:no-preference){body{animation:npPageIn .42s cubic-bezier(.22,.9,.25,1) both}}' +
+        // fade ao entrar na página — SÓ OPACIDADE. transform no body cria containing-block
+        // p/ fixed/100vh e distorce a home (SPA) logo após o splash (bug "zoom"). Mesmo
+        // motivo que a saída abaixo já evitava transform.
+        '@keyframes npPageIn{from{opacity:0}to{opacity:1}}' +
+        '@media(prefers-reduced-motion:no-preference){body{animation:npPageIn .42s ease both}}' +
         // saída suave ao navegar (fluxo guiado app-wide): só opacidade — nunca quebra
         // sticky/fixed (transform criaria containing block). Fade rápido pra não pesar.
         '@media(prefers-reduced-motion:no-preference){body.np-leaving{opacity:0;transition:opacity .19s ease}}' +
@@ -292,7 +294,7 @@
     seal.style.cssText = 'text-align:center;font-size:11px;color:rgba(182,178,230,.6);padding:18px 12px calc(18px + var(--np-safe-bottom));letter-spacing:.02em';
     seal.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px">'
       + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a9a4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M12 2 4 5v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V5z"/><path d="m9 12 2 2 4-4"/></svg>'
-      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.45.1') + '</span>'
+      + 'NeuroPed · plataforma verificada · v' + (window.__NP_VERSION || '6.45.2') + '</span>'
       + '<div style="margin:6px auto 0;max-width:540px;font-size:10.5px;line-height:1.55;color:rgba(182,178,230,.55)">'
       + '<a href="./sobre-natureza.html" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Ferramenta <strong>educacional de apoio</strong></a> — não é diagnóstico e não substitui avaliação profissional. '
       + 'Os dados ficam só neste aparelho.</div>';
