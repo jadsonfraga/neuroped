@@ -540,6 +540,18 @@ assertIncludes('instrumento-autoral.html', 'level005', 'autoral classifica risco
 assertIncludes('instrumento-autoral.html', 'sentinel', 'autoral trata pergunta-sentinela (004→005)');
 assertIncludes('instrumento-autoral.html', 'differential', 'autoral trata diferencial dislexia×global (011)');
 assertIncludes('scales-bundle.js', 'scales-autorais-npe.js', 'filtro liga os autorais NPE-BR');
+
+// Perfil Sensorial NeuroPed (PSN) — triagem sensorial autoral por faixa etária
+assertFile('scales-sensorial-perfil.js');
+assertIncludes('scales-sensorial-perfil.js', 'sens-psn-0-2', 'PSN cobre a faixa 0–2 anos');
+assertIncludes('scales-sensorial-perfil.js', 'sens-psn-12-17', 'PSN cobre a faixa 12–17 anos');
+for (const sys of ['Tátil', 'Auditivo', 'Visual', 'Gustativo / Olfativo', 'Vestibular', 'Proprioceptivo', 'Interoceptivo']) {
+  assertIncludes('scales-sensorial-perfil.js', sys, 'PSN varre o sistema sensorial: ' + sys);
+}
+assertIncludes('scales-sensorial-perfil.js', 'not_normative_disclaimer', 'PSN declara natureza não-normatizada');
+assertIncludes('scales-bundle.js', 'scales-sensorial-perfil.js', 'filtro liga o Perfil Sensorial (PSN)');
+assertIncludes('instrumento-autoral.html', 'scales-sensorial-perfil.js', 'renderizador autoral carrega o Perfil Sensorial (PSN)');
+
 assertIncludes('instrumento.html', '#0e0e22', 'instrumento.html no tema índigo (coesão)');
 // Coesão de paleta: abas centrais no mesmo tema índigo escuro (sem salto)
 for (const p of ['comunicacao-alternativa.html','portal-familia-livre.html','area-filho.html','diario-escola-terapias-v2.html','consulta.html','secretaria.html']) {
