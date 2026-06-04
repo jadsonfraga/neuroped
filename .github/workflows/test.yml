@@ -1,0 +1,28 @@
+# Gate de testes — roda em todo PR e push (exceto main, que já roda no deploy).
+# Trava regressões ANTES do merge: estático (test-static), smoke E2E e o
+# teste do motor de pré-consulta (gate de diários/clínicos + medalhas).
+name: Tests — pre-merge gate
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Static checks (test-static)
+        run: node scripts/test-static.mjs
+      - name: Smoke E2E
+        run: node scripts/smoke.mjs
+      - name: Motor de pré-consulta (gate + ranking)
+        run: node scripts/test-preconsulta-engine.mjs

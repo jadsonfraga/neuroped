@@ -325,6 +325,16 @@ assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro anunciam 
 assertIncludes('filtro-escalas.html', "s.kind==='diário'", 'filtro exclui diários do catálogo (sinal factual kind==="diário")');
 assertIncludes('filtro-escalas.html', 'monitoramento longitud', 'filtro exclui registros longitudinais/monitoramento da pré-consulta');
 assertNotIncludes('filtro-escalas.html', 'if(/invent[áa]rio|inventory/i.test(t)) return false', 'removida a guarda que deixava diários titulados "Inventário" vazarem');
+// Definição ÚNICA de pré-consulta + gate de aplicação clínica + painel-guia
+assertFile('scales-preconsulta-gate.js');
+assertIncludes('scales-preconsulta-gate.js', 'function isClinicalOnly', 'gate único define o que é aplicação clínica (fora da pré-consulta)');
+assertIncludes('scales-preconsulta-gate.js', 'NeuroPedPreConsultaGate', 'gate exposto como módulo único (filtro + intake + testes)');
+assertIncludes('filtro-escalas.html', 'scales-preconsulta-gate.js', 'filtro usa a definição única de pré-consulta');
+assertIncludes('filtro-escalas.html', 'isClinicalOnly', 'filtro barra instrumentos de aplicação clínica (C-SSRS, GMFCS…)');
+assertIncludes('intake.html', 'isClinicalOnly', 'intake barra instrumentos de aplicação clínica');
+assertIncludes('filtro-escalas.html', 'scales-questions.js', 'filtro carrega as perguntas-guia (o que observar em casa)');
+assertIncludes('filtro-escalas.html', 'id="guidePanel"', 'filtro tem o painel-guia "o que observar em casa"');
+assertIncludes('filtro-escalas.html', 'function renderGuide', 'filtro renderiza as perguntas-guia da queixa detectada');
 assertNotIncludes('filtro-escalas.html', 'position:sticky', 'busca/chips não usam sticky (evita sobreposição dos cards no mobile)');
 // Limpeza do styles.css órfão (1139→81): páginas não-consumidoras não o carregam mais
 assertNotIncludes('setup.html', 'href="styles.css"', 'setup.html não carrega o styles.css órfão');
