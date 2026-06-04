@@ -61,6 +61,17 @@ assertNotIncludes('terms-of-use.html', 'privacy-policy.html', 'termos apontam pa
 assertFile('scales-bundle.js');
 assertIncludes('index.html', 'modulepreload', 'index pré-carrega o módulo da SPA (perf)');
 assertIncludes('app-polish-mobile.js', 'np_lgpd_ack', 'banner LGPD (1ª visita) — só localStorage, sem cookies');
+// Posicionamento MVP educacional: enquadramento honesto em TODA tela (rodapé global) + banner
+assertIncludes('app-polish-mobile.js', 'educacional de apoio', 'rodapé global declara natureza educacional (não diagnóstico) em toda tela');
+assertIncludes('app-polish-mobile.js', 'não substitui avaliação profissional', 'disclaimer global: não substitui avaliação profissional');
+// Página "Natureza da ferramenta" (MVP educacional) + smoke funcional
+assertFile('sobre-natureza.html');
+assertIncludes('sobre-natureza.html', 'Não é diagnóstico', 'página de natureza declara: não é diagnóstico');
+assertIncludes('sobre-natureza.html', 'apenas neste aparelho', 'página de natureza explica dados locais');
+assertIncludes('app-polish-mobile.js', './sobre-natureza.html', 'rodapé global linka a página de natureza da ferramenta');
+assertIncludes('sw.js', './sobre-natureza.html', 'sobre-natureza no precache (offline)');
+assertFile('scripts/smoke.mjs');
+assertIncludes('package.json', '"smoke"', 'npm run smoke configurado (E2E funcional em Node)');
 assertIncludes('neuroped-pro.html', 'FAQPage', 'landing pro tem FAQ schema (SEO/rich result)');
 assertIncludes('neuroped-pro.html', '"Service"', 'landing pro tem Service schema com preço');
 assertIncludes('filtro-escalas.html', 'aria-live="polite"', 'filtro anuncia resultado ao leitor de tela');
@@ -100,6 +111,15 @@ assertNotIncludes('caa-hotfix.js', "+t+'</button>'", 'caa-hotfix não concatena 
 assertIncludes('master-access-policy.js', 'eligible', 'master-access filtra inputs elegíveis (sem textareas)');
 assertIncludes('master-access-policy.js', "addEventListener('storage'", 'master-access escuta storage event (sync cross-tab)');
 assertIncludes('master-access-policy.js', 'aria-live', 'toast master tem aria-live para leitores de tela');
+// PIN master REMOVIDO do app (sniffer global + badge + painel da família desligados; API mantida p/ tools do autor)
+assertNotIncludes('master-access-policy.js', 'watchInputs();decorate()', 'PIN master: sniffer global de inputs desligado (PIN fora do app)');
+assertNotIncludes('master-access-policy.js', "textContent='🔓 Master ativo'", 'PIN master: sem badge flutuante no app');
+assertIncludes('master-access-policy.js', 'unlockIfPin', 'API de desbloqueio preservada p/ ferramentas do autor (gerador de licenças)');
+// Portal da família REMOVIDO da navegação do app
+assertNotIncludes('app-polish-mobile.js', "label: 'Família'", 'bottom nav sem Família (portal removido)');
+assertNotIncludes('app-shell.html', "label:'Família'", 'app-shell sem a aba Família');
+assertIncludes('portal-familia-livre.html', "location.replace('./index.html')", 'portal-familia-livre redireciona à home (removido)');
+assertIncludes('area-filho.html', "location.replace('./index.html')", 'area-filho redireciona à home (removido)');
 assertIncludes('app-shell.js', 'aria-label', 'app-shell anota acessibilidade na navegação');
 assertIncludes('app-shell.js', 'aria-current', 'app-shell marca página atual com aria-current');
 assertIncludes('app-shell.css', 'aria-current="page"', 'app-shell.css destaca página atual visualmente');
@@ -229,7 +249,7 @@ assertIncludes('filtro-escalas.html', 'id="allResults"', 'filtro-escalas tem o g
 assertFile('np-sound.js');
 assertIncludes('np-sound.js', 'AudioContext', 'np-sound usa Web Audio sintetizado (sem assets, offline)');
 assertIncludes('np-sound.js', "localStorage.getItem(KEY)", 'np-sound persiste a preferência do usuário');
-assertIncludes('np-sound.js', "enabled = false", 'np-sound nasce DESLIGADO (opt-in — contexto clínico)');
+assertIncludes('np-sound.js', "enabled = true", 'np-sound nasce LIGADO por padrão (sons 8-bit retrô; opt-out via toggle de mudo)');
 assertIncludes('np-sound.js', "prefers-reduced-motion", 'np-sound respeita prefers-reduced-motion no pulso visual');
 assertIncludes('np-sound.js', "np:celebrate", 'np-sound reage ao evento de celebração');
 assertIncludes('app-polish-mobile.js', './np-sound.js', 'polish injeta a camada de som globalmente');

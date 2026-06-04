@@ -1,0 +1,264 @@
+/* ============================================================
+   NeuroPed EDJ — retro-arcade.css · Camada estética "video game retrô"
+   ============================================================
+
+   OBJETIVO (pedido do Dr. Jadson):
+     - Uniformizar TODAS as telas auxiliares com a tela inicial (base navy
+       premium dos tokens) e, POR CIMA dela, evocar video games antigos
+       (Super Mario Bros): fonte pixel ("Press Start 2P"), cores dos
+       personagens (vermelho/azul/amarelo/verde Mario), moedas e estrelas
+       animadas, brilho 8-bit e leve scanline de CRT.
+
+   FILOSOFIA:
+     - CAMADA ELEGANTE, não reskin total: preserva a base navy/aurora dos
+       tokens (DNA do app), apenas adiciona sabor arcade nos acentos,
+       títulos curtos, botões e elementos decorativos.
+     - Tudo é escopado em html[data-retro] (ligado pelo retro-arcade.js),
+       então é 100% aditivo e reversível — remover o atributo desliga.
+     - Respeita prefers-reduced-motion (sem flicker/animação intrusiva).
+     - Carrega via retro-arcade.js (injeção global em todas as páginas).
+   ============================================================ */
+
+html[data-retro] {
+  /* ---------- Paleta dos personagens (Super Mario Bros) ---------- */
+  --mario-red:    #E52521;  /* boné/macacão do Mario */
+  --mario-red-dk: #B81B17;
+  --mario-blue:   #049CD8;  /* macacão/overalls */
+  --mario-blue-dk:#0B6FCB;
+  --mario-yellow: #FBD000;  /* botões/estrela */
+  --coin:         #FFD93B;  /* moeda */
+  --coin-dk:      #E0A106;
+  --mario-green:  #43B047;  /* Luigi / cano */
+  --pipe-green:   #00A651;
+  --mario-brown:  #C9682E;  /* tijolo */
+  --brick:        #C84C0C;
+  --mario-sky:    #5C94FC;  /* céu clássico */
+  --star:         #FCE94F;
+
+  /* Fonte pixel só para textos CURTOS (títulos, rótulos, botões, badges) */
+  --font-pixel: 'Press Start 2P', 'VT323', ui-monospace, monospace;
+
+  /* Sombra "bloco" 8-bit (degraus em vez de blur) para acentos retrô */
+  --retro-block: 0 4px 0 var(--coin-dk), 0 8px 14px rgba(0,0,0,.45);
+}
+
+/* ============================================================
+   1) TÍTULOS / RÓTULOS EM FONTE PIXEL (curtos)
+   Aplicado a títulos editoriais, eyebrows, badges e rótulos de aba.
+   Tamanho reduzido + permitir quebra para não estourar em PT-BR.
+   ============================================================ */
+html[data-retro] h1,
+html[data-retro] .view-title,
+html[data-retro] .hero h1,
+html[data-retro] .cover h1,
+html[data-retro] .display {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.45 !important;
+  font-size: clamp(15px, 4.2vw, 26px) !important;
+  text-shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 14px rgba(124,92,255,.35);
+  word-break: break-word;
+  -webkit-font-smoothing: none;     /* pixel crisp */
+}
+html[data-retro] h2,
+html[data-retro] .h2 {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.5 !important;
+  font-size: clamp(12px, 3vw, 17px) !important;
+  text-shadow: 0 2px 0 rgba(0,0,0,.45);
+}
+
+/* Eyebrows, badges, pílulas, rótulos de aba: pixel pequeno e legível */
+html[data-retro] .eyebrow,
+html[data-retro] .badge,
+html[data-retro] .np-badge,
+html[data-retro] .pill,
+html[data-retro] .chip,
+html[data-retro] .sh-tab span,
+html[data-retro] .nav-label,
+html[data-retro] .tb-pill {
+  font-family: var(--font-pixel) !important;
+  font-size: 9px !important;
+  letter-spacing: .5px !important;
+  line-height: 1.6 !important;
+  text-transform: uppercase;
+}
+
+/* Botões: rótulo em fonte pixel + relevo "bloco" + afundar ao clicar */
+html[data-retro] .np-btn,
+html[data-retro] button.btn,
+html[data-retro] .btn,
+html[data-retro] .acts a,
+html[data-retro] .feat,
+html[data-retro] a.open {
+  font-family: var(--font-pixel) !important;
+  font-size: 10px !important;
+  letter-spacing: .3px !important;
+  text-transform: uppercase;
+  border-radius: 12px;
+  transition: transform .07s steps(2), box-shadow .12s, filter .12s;
+}
+html[data-retro] .np-btn:active,
+html[data-retro] button.btn:active,
+html[data-retro] .btn:active,
+html[data-retro] .feat:active {
+  transform: translateY(3px) !important;
+  filter: saturate(1.15) brightness(1.05);
+}
+
+/* CTA primário ganha contorno "coin" dourado ao focar (acessível + arcade) */
+html[data-retro] .np-btn--primary:focus-visible,
+html[data-retro] .btn-primary:focus-visible,
+html[data-retro] button[type="submit"]:focus-visible {
+  outline: 3px solid var(--coin) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(251,208,0,.25), var(--retro-block) !important;
+}
+
+/* ============================================================
+   2) SELEÇÃO / SCROLLBAR / FOCO em cores de personagem
+   ============================================================ */
+html[data-retro] ::selection { background: var(--mario-yellow); color: #1a1300; }
+html[data-retro] a:focus-visible,
+html[data-retro] button:focus-visible,
+html[data-retro] input:focus-visible,
+html[data-retro] select:focus-visible,
+html[data-retro] textarea:focus-visible {
+  outline: 3px solid var(--mario-yellow) !important;
+  outline-offset: 2px;
+}
+@media (min-width: 761px) {
+  html[data-retro]::-webkit-scrollbar-thumb {
+    background:
+      repeating-linear-gradient(45deg, var(--mario-red) 0 6px, var(--coin) 6px 12px) !important;
+    background-clip: content-box !important;
+  }
+}
+
+/* ============================================================
+   3) DECORAÇÃO 8-BIT (gerada pelo retro-arcade.js)
+   - Faixa "chão/tijolo" fina no rodapé (atrás de tudo)
+   - Moedas/estrelas flutuando sutis ao fundo
+   - Scanline/vinheta de CRT bem leve
+   Todos pointer-events:none e abaixo do conteúdo.
+   ============================================================ */
+
+/* Scanlines + vinheta CRT — estático (sem flicker), bem sutil */
+#np-retro-crt {
+  position: fixed; inset: 0; z-index: 2147483600;
+  pointer-events: none; opacity: .10;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.6) 2px 3px),
+    radial-gradient(120% 120% at 50% 50%, transparent 64%, rgba(0,0,0,.35) 100%);
+}
+
+/* Camada de moedas/estrelas flutuando — sutil, por cima da UI (como partículas),
+   pointer-events:none, abaixo do CRT e dos pop-ups de clique. */
+#np-retro-sky {
+  position: fixed; inset: 0; z-index: 2147483590;
+  pointer-events: none; overflow: hidden;
+}
+.np-retro-coin {
+  position: absolute; width: 15px; height: 15px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c2, var(--coin) 45%, var(--coin-dk) 100%);
+  box-shadow: 0 0 10px rgba(251,208,0,.6), inset 0 0 0 2px rgba(255,255,255,.35);
+  opacity: .0; will-change: transform, opacity;
+  animation: npCoinFloat linear infinite;
+}
+.np-retro-star {
+  position: absolute; width: 14px; height: 14px; opacity: .0;
+  background: var(--star); will-change: transform, opacity;
+  clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  filter: drop-shadow(0 0 6px rgba(252,233,79,.7));
+  animation: npStarTwinkle ease-in-out infinite;
+}
+@keyframes npCoinFloat {
+  0%   { transform: translateY(18px) scale(.9) rotateY(0deg); opacity: 0; }
+  12%  { opacity: .3; }
+  88%  { opacity: .3; }
+  100% { transform: translateY(-110vh) scale(1) rotateY(360deg); opacity: 0; }
+}
+@keyframes npStarTwinkle {
+  0%,100% { opacity: 0; transform: scale(.6) rotate(0deg); }
+  50%     { opacity: .34; transform: scale(1) rotate(20deg); }
+}
+
+/* Faixa "chão" pixel fina no rodapé — decorativa, bem fina pra não cobrir nav */
+#np-retro-ground {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 4px; z-index: 0;
+  pointer-events: none; opacity: .5;
+  background:
+    repeating-linear-gradient(90deg, var(--brick) 0 14px, var(--mario-brown) 14px 16px);
+  box-shadow: 0 -1px 0 rgba(0,0,0,.5);
+}
+
+/* Moeda que "salta" no ponto do clique (criada via JS) */
+.np-coin-pop {
+  position: fixed; z-index: 2147483640; width: 20px; height: 20px; border-radius: 50%;
+  pointer-events: none; will-change: transform, opacity;
+  background: radial-gradient(circle at 35% 30%, #fff6c2, var(--coin) 45%, var(--coin-dk) 100%);
+  box-shadow: 0 0 12px rgba(251,208,0,.8), inset 0 0 0 2px rgba(255,255,255,.4);
+  animation: npCoinPop .52s cubic-bezier(.25,.9,.3,1) forwards;
+}
+@keyframes npCoinPop {
+  0%   { transform: translate(-50%, -50%) scale(.4); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translate(-50%, -150%) scale(1.1); opacity: 0; }
+}
+
+/* "+1UP" / pontinho de texto que sobe junto da moeda (opcional via JS) */
+.np-score-float {
+  position: fixed; z-index: 2147483640; pointer-events: none;
+  font-family: var(--font-pixel); font-size: 11px; color: var(--coin);
+  text-shadow: 0 2px 0 rgba(0,0,0,.6);
+  animation: npScoreFloat .8s ease-out forwards;
+}
+@keyframes npScoreFloat {
+  0%   { transform: translate(-50%, 0) scale(.8); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(-50%, -42px) scale(1); opacity: 0; }
+}
+
+/* ============================================================
+   4) ACABAMENTOS — cards com brilho arcade discreto no hover,
+   linhas-cano nos divisores, e botão de som com cara de "bloco ?".
+   ============================================================ */
+html[data-retro] .np-card:hover,
+html[data-retro] .card:hover,
+html[data-retro] .scale-card:hover {
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.45),
+    0 0 0 1px rgba(251,208,0,.25),
+    0 0 22px rgba(229,37,33,.12) !important;
+}
+
+/* Toggle de som (np-sound) ganha cara de bloco "?" do Mario */
+html[data-retro] #np-sound-toggle {
+  border-radius: 10px !important;
+  border: 2px solid rgba(0,0,0,.55) !important;
+  background:
+    linear-gradient(180deg, #ffcf3f, #f0a800) !important;
+  color: #4a2d00 !important;
+  box-shadow: 0 4px 0 #a06b00, 0 8px 16px rgba(0,0,0,.45) !important;
+}
+html[data-retro] #np-sound-toggle:active { transform: translateY(3px) scale(.96) !important; }
+
+/* Respeita quem prefere menos movimento: corta animações decorativas */
+@media (prefers-reduced-motion: reduce) {
+  html[data-retro] .np-retro-coin,
+  html[data-retro] .np-retro-star,
+  html[data-retro] .np-coin-pop,
+  html[data-retro] .np-score-float { animation: none !important; opacity: 0 !important; }
+  html[data-retro] #np-retro-crt { opacity: .08; }
+}
+
+/* Em impressão (laudos/PDF), nada de arcade. */
+@media print {
+  #np-retro-crt, #np-retro-sky, #np-retro-ground,
+  .np-coin-pop, .np-score-float { display: none !important; }
+  html[data-retro] h1, html[data-retro] h2,
+  html[data-retro] .np-btn, html[data-retro] .btn {
+    font-family: Georgia, serif !important; text-shadow: none !important;
+  }
+}
