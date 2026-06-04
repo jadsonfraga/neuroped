@@ -315,6 +315,7 @@ assertIncludes('filtro-escalas.html', 'Ouro clínico', 'filtro destaca a indica�
 assertIncludes('filtro-escalas.html', 'sc-medal', 'cards do filtro exibem a medalha');
 assertIncludes('filtro-escalas.html', 'id="respChips"', 'filtro tem o seletor "quem responde" (criança/pais/escola)');
 assertIncludes('filtro-escalas.html', 'function respMatch', 'medalha pondera o respondente (audience do instrumento)');
+assertIncludes('filtro-escalas.html', 'aria-pressed', 'chips do filtro anunciam estado (aria-pressed) p/ leitor de tela');
 assertNotIncludes('filtro-escalas.html', 'position:sticky', 'busca/chips não usam sticky (evita sobreposição dos cards no mobile)');
 // Limpeza do styles.css órfão (1139→81): páginas não-consumidoras não o carregam mais
 assertNotIncludes('setup.html', 'href="styles.css"', 'setup.html não carrega o styles.css órfão');
