@@ -1,0 +1,27 @@
+name: Design System — no-regression gate
+
+# Gate de NAO-REGRESSAO visual (Fase 0 da arquitetura do copiloto).
+# Falha se um PR/push aumentar o total de valores crus (hex/rgb/px/raio/sombra/
+# fonte/motion fora dos tokens) acima do baseline em scripts/design-audit-baseline.json.
+# A migracao (Ondas 1-4) so pode FAZER o baseline cair, nunca subir.
+# NAO e o --strict (esse so liga na Onda 4, quando o total chegar a 0).
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  design-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Design audit — gate de nao-regressao
+        run: node scripts/design-audit.mjs --check
