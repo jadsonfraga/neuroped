@@ -309,7 +309,7 @@
     var ls=s.license_status||(s.official_catalog?'verificar':'autoral');
     var LIC={livre:['🟢','Uso livre'],'livre-nc':['🟢','Livre não comercial'],'livre-reg':['🔵','Livre · registro'],verificar:['⚪','Verificar licença'],autoral:['🟢','Autoral NeuroPed']};
     var li=LIC[ls]||LIC.autoral, flag=s._origin||(ls==='autoral'?'🇧🇷':'');
-    var prov='<span class="sc-badge lic-'+ls+'" title="'+esc(s.license_note||'')+'">'+li[0]+' '+li[1]+'</span>'+(flag?'<span class="sc-badge orig">'+flag+'</span>':'');
+    var prov=(s.official_catalog?'<span class="sc-badge src" title="Instrumento oficial de terceiros — catalogado com proveniência e link à fonte.">📄 Fonte oficial</span>':'')+'<span class="sc-badge lic-'+ls+'" title="'+esc(s.license_note||'')+'">'+li[0]+' '+li[1]+'</span>'+(flag?'<span class="sc-badge orig">'+flag+'</span>':'');
     var badges='<span class="sc-badge age">'+esc(r.ageBand||s.age_band||'')+'</span>'+(aud?'<span class="sc-badge resp">'+aud+'</span>':'')+(s.domain?'<span class="sc-badge">'+esc(s.domain)+'</span>':'')+prov;
     return '<a class="sc-card'+(tier?' tier-'+tier:'')+(tier==='ouro'?' top':'')+'" href="./escala.html?id='+encodeURIComponent(s.id)+'">'
       +(tier?'<div class="sc-medalrow"><span class="sc-medal '+tier+'">'+MEDAL[tier]+'</span></div>':'')
