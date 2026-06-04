@@ -1,95 +1,98 @@
 /* ============================================================
-   NeuroPed — Componentes de card unificados (glassmorphism premium)
-   Padrão visual compartilhado: card de vidro fosco + ícone/sigla
-   colorida + badges. Reaproveita o que foi consolidado no filtro.
-
-   Como usar numa página:
-     <link rel="stylesheet" href="./np-cards.css">
-     <article class="np-card">
-       <div class="np-card-head">
-         <span class="np-sigla" style="--c1:#10b981;--c2:#059669">EM</span>
-         <div class="np-card-tt">
-           <h3>EMDI-J26</h3>
-           <span class="np-card-sub">Escala Médica do Desenvolvimento Infantil</span>
-         </div>
-       </div>
-       <div class="np-badges">
-         <span class="np-badge age">12m–8 anos</span>
-         <span class="np-badge">36 itens</span>
-         <span class="np-badge">8 domínios</span>
-       </div>
-     </article>
-
-   Tokens (com fallback): funciona mesmo sem :root da página.
+   NeuroPed — Componentes de card unificados (Glassmorphism 2.0)
+   Apple-Class Clinical Experience
    ============================================================ */
-.np-cards-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:16px;
-}
-.np-card{
-  position:relative;overflow:hidden;
-  background:linear-gradient(180deg,rgba(124,118,210,.12),rgba(124,118,210,.06));
-  border:1px solid var(--line,rgba(160,154,255,.16));
-  border-radius:22px;
-  padding:20px;
-  box-shadow:0 14px 38px -18px rgba(2,2,12,.7);
-  backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);
-  transition:transform .22s cubic-bezier(.22,.9,.25,1),box-shadow .22s,border-color .22s;
-  text-decoration:none;color:inherit;display:block;
-}
-.np-card::before{
-  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:linear-gradient(180deg,var(--np-accent,#7c79ff),transparent);
-  opacity:.55;transition:opacity .25s;
-}
-.np-card:hover{
-  transform:translateY(-4px);
-  box-shadow:0 26px 60px -22px rgba(91,84,232,.55);
-  border-color:var(--line2,rgba(160,154,255,.28));
-}
-.np-card:hover::before{opacity:1}
-
-.np-card-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
-.np-sigla{
-  flex:0 0 auto;width:46px;height:46px;border-radius:14px;
-  display:grid;place-items:center;
-  font:800 16px/1 "Fraunces","Georgia",serif;letter-spacing:.01em;color:#fff;
-  background:linear-gradient(140deg,var(--c1,#7c79ff),var(--c2,#5b54e8));
-  box-shadow:0 10px 22px -10px var(--c1,#7c79ff);
-}
-.np-card-tt{min-width:0}
-.np-card-tt h3{
-  margin:0 0 3px;font:800 18px/1.15 "Fraunces","Georgia",serif;
-  color:var(--ink,#F2F0FF);letter-spacing:-.01em;
-}
-.np-card-sub{
-  display:block;font-size:13px;line-height:1.4;
-  color:var(--muted,#a9a4d8);
+.np-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5, 20px);
 }
 
-.np-badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
-.np-badge{
-  display:inline-flex;align-items:center;
-  font-size:11px;font-weight:800;letter-spacing:.01em;
-  padding:5px 10px;border-radius:8px;
-  background:rgba(124,118,210,.14);
-  border:1px solid var(--line,rgba(160,154,255,.18));
-  color:var(--muted,#c8c4ee);
-}
-.np-badge.age{
-  background:rgba(96,165,250,.14);border-color:rgba(96,165,250,.3);color:#9ec5fb;
-}
-.np-badge.gold{
-  background:rgba(231,201,139,.14);border-color:rgba(231,201,139,.32);color:#e7c98b;
+.np-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-glass, rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-lg, 22px);
+  padding: var(--space-6, 24px);
+  box-shadow: var(--shadow-card);
+  transition: 
+    transform var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease),
+    border-color var(--motion-base) var(--motion-ease);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
 }
 
-/* paletas de sigla prontas (use a classe ou defina --c1/--c2 inline) */
-.np-sigla.teal{--c1:#10b981;--c2:#059669}
-.np-sigla.indigo{--c1:#7c79ff;--c2:#5b54e8}
-.np-sigla.amber{--c1:#f59e0b;--c2:#d97706}
-.np-sigla.violet{--c1:#a78bfa;--c2:#7c3aed}
-.np-sigla.rose{--c1:#fb7185;--c2:#e11d48}
-.np-sigla.gold{--c1:#e7c98b;--c2:#caa56a;color:#241a05}
+.np-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent);
+  pointer-events: none;
+}
 
-@media(prefers-reduced-motion:reduce){.np-card{transition:none}}
+.np-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--primary-light, rgba(255, 255, 255, 0.2));
+}
+
+.np-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+}
+
+.np-sigla {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--c1, #7c79ff), var(--c2, #4f46e5));
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2);
+}
+
+.np-card-tt h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.np-card-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.np-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.np-badge {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.np-badge.age {
+  background: var(--primary-tint);
+  color: var(--primary);
+  border-color: transparent;
+}

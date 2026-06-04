@@ -1,15 +1,15 @@
 /* =====================================================================
-   NeuroPed EDJ — Premium Motion  ·  troca de rota fluida ("app interligado")
-   Reanima suavemente a view principal a cada mudança de rota (hash),
-   dando a sensação de app que flui em vez de páginas estáticas.
-   Defensivo: respeita prefers-reduced-motion, tudo em try/catch,
-   nunca interfere se a estrutura esperada não existir.
+   NeuroPed EDJ — Premium Motion 2.0 (Apple-Class)
+   Físicas de mola, transições elásticas e continuidade espacial.
    ===================================================================== */
 (function () {
   "use strict";
   try {
-    if (window.__npPremiumMotion) return;
-    window.__npPremiumMotion = true;
+    if (window.__npPremiumMotionV2) return;
+    window.__npPremiumMotionV2 = true;
+
+    const APPLE_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+    const SPRING_EASE = 'cubic-bezier(0.4, 0, 0.2, 1.4)';
 
     var mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
     if (mq && mq.matches) return;
@@ -17,7 +17,6 @@
     function viewNode() {
       var root = document.getElementById('root');
       if (!root) return null;
-      // alvo preferencial: <main>; senão, o maior contêiner de conteúdo
       return root.querySelector('main') || root.firstElementChild;
     }
 
@@ -25,19 +24,45 @@
       try {
         var node = viewNode();
         if (!node) return;
-        node.style.animation = 'none';
-        // força reflow para reiniciar a animação
-        void node.offsetWidth;
-        node.style.animation = 'npPageIn .42s cubic-bezier(.22,.8,.2,1)';
+        
+        node.style.opacity = '0';
+        node.style.transform = 'translateY(12px) scale(0.99)';
+        node.style.transition = 'none';
+
+        requestAnimationFrame(() => {
+          node.style.transition = `opacity 400ms ${APPLE_EASE}, transform 500ms ${APPLE_EASE}`;
+          node.style.opacity = '1';
+          node.style.transform = 'translateY(0) scale(1)';
+        });
       } catch (e) { /* no-op */ }
     }
+
+    // Interceptar cliques em links para feedback tátil visual
+    document.addEventListener('mousedown', function(e) {
+      const btn = e.target.closest('.np-btn, .np-card, button');
+      if (btn) {
+        btn.style.transform = 'scale(0.97)';
+        btn.style.transition = 'transform 80ms ease-out';
+      }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+      const btn = e.target.closest('.np-btn, .np-card, button');
+      if (btn) {
+        btn.style.transform = '';
+        btn.style.transition = `transform 400ms ${SPRING_EASE}`;
+      }
+    });
 
     var last = location.hash;
     window.addEventListener('hashchange', function () {
       if (location.hash === last) return;
       last = location.hash;
-      // aguarda o React pintar a nova rota antes de animar
       requestAnimationFrame(function () { setTimeout(animateView, 0); });
     }, { passive: true });
-  } catch (e) { /* falha silenciosa: jamais quebrar o app */ }
+
+    // Inicialização
+    animateView();
+
+  } catch (e) { /* falha silenciosa */ }
 })();
