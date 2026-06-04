@@ -1937,6 +1937,21 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       { emoji: '✏️', titulo: 'Ditado', instrucao: 'Dite: casa, bola, janela, prato. Depois a frase: "A menina gosta de ler."', observar: 'Trocas, omissões e organização na linha.', faixa: [72, 215] },
       { emoji: '🔢', titulo: 'Matemática rápida', instrucao: 'Resolva junto: 8+5, 14−6, 3 grupos de 4, metade de 10.', observar: 'Estratégia (conta nos dedos?) e acertos.', faixa: [72, 215] }
     ],
+    cognicao: [
+      { emoji: '🧠', titulo: 'Memória visual imediata', instrucao: 'Mostre 4 figuras por 5 segundos, cubra e peça para lembrar quais eram.', observar: 'Quantas recorda e se usa estratégia (nomear, agrupar).', faixa: [48, 215] },
+      { emoji: '🔗', titulo: 'Semelhanças (raciocínio)', instrucao: 'Pergunte: "No que banana e maçã se parecem? E cachorro e gato?"', observar: 'Se abstrai a categoria (frutas, animais) ou fica no concreto.', faixa: [60, 215] },
+      { emoji: '🧩', titulo: 'Sequência lógica', instrucao: 'Conte uma historinha em 3 partes fora de ordem e peça para ordenar o que vem antes/depois.', observar: 'Noção de antes/depois, causa e efeito.', faixa: [54, 215] },
+      { emoji: '⚡', titulo: 'Velocidade de processamento', instrucao: 'Peça para nomear o mais rápido possível 8 cores/figuras conhecidas em sequência.', observar: 'Ritmo, pausas e travas; compare com o esperado para a idade.', faixa: [60, 215] },
+      { emoji: '🔢', titulo: 'Memória de trabalho', instrucao: 'Peça para repetir números na ordem (4-8-2) e de trás pra frente (5-2-9).', observar: 'Maior sequência correta direta e inversa.', faixa: [60, 215] }
+    ],
+    visual: [
+      { emoji: '🔷', titulo: 'Reconhecimento de formas', instrucao: 'Mostre formas e peça para nomear: círculo, quadrado, triângulo, estrela.', observar: 'Quantas reconhece e nomeia.', faixa: [36, 144] },
+      { emoji: '🎨', titulo: 'Reconhecimento de cores', instrucao: 'Aponte objetos e pergunte a cor; depois peça "me dê o que é azul".', observar: 'Nomeia e seleciona cores corretamente?', faixa: [36, 120] },
+      { emoji: '🔍', titulo: 'Discriminação visual', instrucao: 'Mostre 4 figuras quase iguais e 1 diferente: "Qual é a diferente?"', observar: 'Percebe pequenos detalhes que mudam.', faixa: [48, 168] },
+      { emoji: '🖼️', titulo: 'Figura-fundo', instrucao: 'Numa cena cheia, peça para achar um objeto específico ("ache o gato").', observar: 'Isola a figura do fundo sem se perder.', faixa: [48, 168] },
+      { emoji: '✏️', titulo: 'Cópia de figura', instrucao: 'Desenhe um quadrado, um triângulo e uma cruz e peça para copiar.', observar: 'Proporção, linhas e organização da cópia (visomotor).', faixa: [48, 168] },
+      { emoji: '🧠', titulo: 'Memória visual de figuras', instrucao: 'Mostre 3 figuras, esconda e, depois de uma distração curta, pergunte quais eram.', observar: 'Retém a imagem após intervalo.', faixa: [48, 215] }
+    ],
     sensorial: [
       { emoji: '✨', titulo: 'Termômetro sensorial', instrucao: '"De 0 a 5, quanto incomoda: barulho de liquidificador? etiqueta na roupa? luz forte?"', observar: 'Reações e quais estímulos pesam mais.' },
       { emoji: '🖐️', titulo: 'Tolerância gradual', instrucao: 'Ofereça olhar → tocar → cheirar um item novo, sem forçar.', observar: 'Até onde aceita e o que ajuda a regular.' }
@@ -1966,8 +1981,10 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
   var MAP = {
     linguagem: ['linguagem'],
     social: ['social'], rigidez: ['social'],
-    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao'],
-    escola: ['escola'],
+    atencao: ['atencao'], hiperatividade: ['atencao'], executiva: ['atencao', 'cognicao'],
+    cognicao: ['cognicao'], memoria: ['cognicao'], raciocinio: ['cognicao'], cognitivo: ['cognicao'],
+    visual: ['visual'], percepcao: ['visual'], visomotor: ['visual'],
+    escola: ['escola', 'visual'], aprendizagem: ['escola', 'cognicao'],
     sensorial: ['sensorial'], alimentacao: ['sensorial'],
     humor: ['emocional'], ansiedade: ['emocional'], regulacao: ['emocional'], risco: ['emocional'], substancias: ['emocional'],
     motor: ['motor'], motorfino: ['motor'],
@@ -2062,6 +2079,20 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
       complaints: ['escola', 'aprendizagem', 'leitura', 'escrita', 'letras', 'alfabetização', 'dislexia', 'discalculia', 'matemática', 'reconhecimento visual', 'não lê', 'não escreve', 'pedagógico'],
       symptoms: ['confunde letras (b/d, p/q)', 'não lê para a série', 'troca letras na escrita', 'dificuldade em matemática']
     },
+    cognicao: {
+      id: 'td-cognicao', emoji: '🧠',
+      title: 'Sondagem cognitiva direta — memória · raciocínio · velocidade · memória de trabalho',
+      short: 'Cognitivo (teste direto)', domain: 'Cognição', age: [48, 215],
+      complaints: ['cognição', 'cognitivo', 'memória', 'raciocínio', 'inteligência', 'lentidão', 'esquece', 'aprende devagar', 'atenção', 'executiva', 'processamento'],
+      symptoms: ['esquece o que acabou de ver/ouvir', 'pensa de forma muito concreta', 'lento para responder', 'dificuldade em sequência lógica']
+    },
+    visual: {
+      id: 'td-visual', emoji: '🔍',
+      title: 'Sondagem de reconhecimento visual — formas · cores · discriminação · figura-fundo · cópia',
+      short: 'Reconhecimento visual (teste direto)', domain: 'Percepção visual', age: [36, 168],
+      complaints: ['visual', 'percepção', 'reconhecimento visual', 'formas', 'cores', 'discriminação visual', 'figura-fundo', 'visomotor', 'cópia', 'não reconhece letras', 'desenho'],
+      symptoms: ['não nomeia formas/cores esperadas', 'não acha o diferente', 'cópia desorganizada', 'perde-se em cena cheia']
+    },
     sensorial: {
       id: 'td-sensorial', emoji: '✨',
       title: 'Sondagem sensorial direta — reatividade e tolerância gradual',
@@ -2130,6 +2161,61 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
   var ids = new Set(base.map(function (x) { return x && x.id; }));
   window.NEUROPED_EDITORIAL_SCALES = out.filter(function (x) { return !ids.has(x.id); }).concat(base);
   window.NEUROPED_DIRECT_TESTS = out;
+})();
+
+
+/* ===== scales-med-eficacia.js ===== */
+/* NeuroPed EDJ — Eficácia da medicação (relato pré-consulta)
+ * ----------------------------------------------------------
+ * Instrumento AUTORAL para pacientes/famílias que usam medicação responderem
+ * ANTES da consulta: a medicação está sendo eficaz? Há efeitos? Adesão? O médico
+ * recebe um resumo estruturado para decidir manter, ajustar ou trocar.
+ * Apoio ao acompanhamento; NÃO substitui avaliação médica nem orienta mudar dose
+ * por conta própria.
+ */
+(function () {
+  'use strict';
+  if (window.NEUROPED_MED_EFICACIA_LOADED) return;
+  window.NEUROPED_MED_EFICACIA_LOADED = true;
+
+  var inst = {
+    id: 'jf-med-eficacia-preconsulta',
+    title: '💊 Eficácia da medicação — relato pré-consulta',
+    short_title: 'Eficácia da medicação (pré-consulta)',
+    emoji: '💊',
+    audience: 'familia',
+    audience_label: 'Família/Paciente',
+    age_band: '0–18+ anos',
+    age_min_months: 0,
+    age_max_months: 960,
+    domain: 'Resposta à medicação',
+    complaints: ['medicacao', 'medicação', 'remédio', 'remedio', 'eficácia', 'eficacia', 'resposta', 'efeito colateral', 'dose', 'tratamento', 'metilfenidato', 'ritalina', 'risperidona', 'melhora', 'piora', 'ajuste'],
+    symptoms: ['medicação em uso', 'dúvida sobre eficácia', 'efeito colateral', 'adesão'],
+    keywords: ['medicacao', 'eficacia', 'resposta a medicacao', 'efeito colateral', 'adesao', 'pre-consulta', 'farmacoterapia', 'dose'],
+    plain_questions: [
+      'Qual(is) medicação(ões) a criança usa hoje, com dose e horário?',
+      'Há quanto tempo está usando nesta dose?',
+      'Desde que começou, houve melhora no problema-alvo (atenção, comportamento, humor, sono, crises…)?',
+      'A melhora aparece o dia todo ou só em parte do dia (ex.: só de manhã, "efeito acaba à tarde")?',
+      'A medicação está sendo tomada todos os dias, no horário combinado?',
+      'Surgiu algum efeito indesejado (apetite, sono, humor, dor de cabeça, tiques, irritabilidade…)?',
+      'A escola percebeu alguma mudança, para melhor ou pior?',
+      'No geral, de 0 a 10, quanto você está satisfeito(a) com o resultado da medicação?',
+      'Na sua percepção, a medicação está sendo eficaz, mais ou menos, ou não está ajudando?',
+      'Há alguma dúvida, dificuldade ou preocupação com a medicação que você quer falar na consulta?'
+    ],
+    clinical_use: 'Relato estruturado, respondido ANTES da consulta, sobre eficácia, adesão e efeitos da medicação — qualifica a decisão de manter, ajustar ou trocar.',
+    differentiator: 'Foco em EFICÁCIA + adesão + efeitos colaterais + impacto funcional (casa/escola), no formato pré-consulta — economiza tempo e dá ao médico um panorama objetivo.',
+    not_normative_disclaimer: 'Instrumento autoral de acompanhamento; não substitui avaliação médica e NÃO orienta iniciar, mudar ou suspender dose por conta própria.',
+    page: 'instrumento.html',
+    priority: 210
+  };
+
+  var base = Array.isArray(window.NEUROPED_EDITORIAL_SCALES) ? window.NEUROPED_EDITORIAL_SCALES : [];
+  if (!base.some(function (x) { return x && x.id === inst.id; })) {
+    window.NEUROPED_EDITORIAL_SCALES = [inst].concat(base);
+  }
+  window.NEUROPED_MED_EFICACIA = inst;
 })();
 
 
