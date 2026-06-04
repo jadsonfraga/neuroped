@@ -8,6 +8,7 @@
   "use strict";
   if (window.__npTour) return; window.__npTour = true;
   var DONE_KEY = 'np_tour_v1_done';
+  var INTRO_KEY = 'np_tour_intro_v1';   // destaque grande do botão só na 1ª visita
 
   var css = ''
     + '.npt-back{position:fixed;inset:0;z-index:99998;background:rgba(8,8,20,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);opacity:0;transition:opacity .3s ease}'
@@ -30,6 +31,9 @@
     + '.npt-next{background:linear-gradient(180deg,hsl(243 82% 64%),hsl(250 76% 56%));color:#fff;box-shadow:0 8px 20px -6px hsl(243 85% 55% / .7)}'
     + '.npt-help{position:fixed;z-index:99990;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(180deg,hsl(243 82% 64%),hsl(250 76% 56%));color:#fff;font:800 20px system-ui;cursor:pointer;box-shadow:0 10px 28px -6px hsl(243 85% 55% / .7);opacity:.9;transition:transform .2s}'
     + '.npt-help:hover{transform:scale(1.08);opacity:1}'
+    + '.npt-help.npt-intro{width:auto;height:60px;padding:0 22px 0 18px;border-radius:30px;font:800 16px system-ui;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;opacity:1;box-shadow:0 18px 44px -8px hsl(243 85% 55% / .9),0 0 0 7px hsl(243 85% 62% / .18);animation:nptIntroPulse 1.15s ease-in-out infinite}'
+    + '@keyframes nptIntroPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}'
+    + '@media(prefers-reduced-motion:reduce){.npt-help.npt-intro{animation:none}}'
     + '@media(prefers-reduced-motion:reduce){.npt-back,.npt-hole,.npt-card{transition:none}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -97,7 +101,14 @@
     if (!card.__escBound){ card.__escBound = true; document.addEventListener('keydown', function onEsc(ev){ if(ev.key==='Escape'){ document.removeEventListener('keydown', onEsc); finish(); } }); }
   }
 
-  function ensureHelp(){ if (document.querySelector('.npt-help')) return; var h = el('button','npt-help','?'); h.setAttribute('aria-label','Rever tour do app'); h.title='Rever tour'; h.onclick = function(){ show(0); }; document.body.appendChild(h); }
+  function ensureHelp(){ if (document.querySelector('.npt-help')) return; var h = el('button','npt-help','?'); h.setAttribute('aria-label','Rever tour do app'); h.title='Rever tour'; h.onclick = function(){ show(0); }; document.body.appendChild(h);
+    // 1ª visita (por aparelho): destaca o botão BEM GRANDE por 5s, depois encolhe.
+    var seen=false; try{ seen = localStorage.getItem(INTRO_KEY)==='1'; }catch(e){}
+    if(!seen){ try{ localStorage.setItem(INTRO_KEY,'1'); }catch(e){}
+      h.classList.add('npt-intro'); h.innerHTML='🧭 Tour do app';
+      setTimeout(function(){ h.classList.remove('npt-intro'); h.innerHTML='?'; }, 5000);
+    }
+  }
 
   function ready(){ var r = document.getElementById('root'); if(!r) return false; var t = (document.body.innerText||''); return r.children.length>0 && r.innerText.trim().length>60 && t.indexOf('143 Medicações')<0; }
   function boot(){
