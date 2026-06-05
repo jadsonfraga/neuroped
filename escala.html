@@ -408,11 +408,32 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
         var q=JSON.parse(localStorage.getItem('np:reco')||'[]');
         if(Array.isArray(q)&&q.length){
           var idx=-1; for(var k=0;k<q.length;k++){if(q[k]&&q[k].id===id){idx=k;break;}}
+          if(idx>-1){
+            // Posição na REGRA DE OURO: a aplicação deixa de ser uma tela solta e vira
+            // uma jornada guiada (pódio → teste direto → escola). Mostra "Etapa X de N",
+            // a medalha desta etapa e um trilho de pontos clicáveis.
+            var kick=document.querySelector('.hero .kick');
+            if(kick){ kick.innerHTML='🧭 Etapa '+(idx+1)+' de '+q.length+(q[idx]&&q[idx].tierLabel?(' · '+esc(q[idx].tierLabel)):''); }
+            var hero=document.querySelector('.hero');
+            if(hero && !document.getElementById('recoRail')){
+              var rail=document.createElement('div'); rail.id='recoRail';
+              rail.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-top:14px';
+              rail.innerHTML=q.map(function(it,i){
+                var on=(i===idx), done=(i<idx);
+                var tip=esc((it.tierLabel||('Etapa '+(i+1)))+' — '+(it.title||''));
+                var bg=on?'linear-gradient(90deg,var(--teal),var(--gold))':(done?'rgba(124,118,210,.5)':'rgba(124,118,210,.18)');
+                var base='height:7px;border-radius:999px;flex:1 1 0;min-width:26px;text-decoration:none;background:'+bg+(on?';box-shadow:0 0 0 2px rgba(231,201,139,.35)':'');
+                return i===idx ? '<span title="'+tip+'" style="'+base+'"></span>'
+                               : '<a href="./escala.html?id='+encodeURIComponent(it.id)+'" title="'+tip+'" aria-label="Ir para '+tip+'" style="'+base+'"></a>';
+              }).join('');
+              hero.appendChild(rail);
+            }
+          }
           if(idx>-1&&q[idx+1]){
             var nxt=q[idx+1], db=document.getElementById('doneBanner');
             if(db){var a=document.createElement('a');a.className='dlink';a.style.display='block';
               a.href='./escala.html?id='+encodeURIComponent(nxt.id);
-              a.textContent='▶ Próxima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
+              a.textContent='▶ Próxima recomendada · '+esc(nxt.tierLabel||('etapa '+(idx+2)))+': '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
               db.appendChild(a);}
           }
         }

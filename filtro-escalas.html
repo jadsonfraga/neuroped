@@ -552,6 +552,9 @@
     if(!cat.length){ all.innerHTML='<div class="empty">Carregando catálogo… toque em Buscar em instantes.</div>'; return; }
     all.setAttribute('aria-busy','false');
     try{ localStorage.setItem('np_cie_q', q); }catch(e){}
+    // limpa a fila da regra de ouro a cada busca; só é regravada quando há pódio
+    // (ramos "sem queixa"/"só idade" não devem encadear uma sequência obsoleta).
+    try{ localStorage.removeItem('np:reco'); }catch(e){}
     var gp=document.getElementById('guidePanel');
     if(!q){ // sem query → catálogo em destaque
       det.hidden=true; rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
@@ -602,6 +605,17 @@
     var fixed=medals.concat(directPick?[directPick]:[], schoolPick?[schoolPick]:[]);
     rec.style.display=fixed.length?'block':'none';
     recR.innerHTML=fixed.map(function(r){return card(r);}).join('');
+    // Fila da REGRA DE OURO: grava a sequência (pódio → teste direto → escola) para
+    // o runner (escala.html) encadear "▶ Próxima recomendada" sem voltar ao filtro.
+    // Cada item carrega a posição/medalha p/ o runner mostrar "Etapa X de N".
+    try{
+      if(fixed.length){
+        var TIERLB={ouro:'🥇 Pódio · 1ª',prata:'🥈 Pódio · 2ª',bronze:'🥉 Pódio · 3ª',direto:'🧒 Teste direto',escola:'🏫 Escola'};
+        localStorage.setItem('np:reco', JSON.stringify(fixed.map(function(r){
+          return { id:r.s.id, title:(r.s.short_title||r.s.title||''), tier:r.tier, tierLabel:(TIERLB[r.tier]||'') };
+        })));
+      } else { localStorage.removeItem('np:reco'); }
+    }catch(e){}
     var an=document.getElementById('applyNow');
     var lead=medals[0]||fixed[0];
     if(an){ if(lead){ var t1=lead.s; an.hidden=false; an.textContent='▶ Aplicar “'+(t1.short_title||t1.title||'1ª escala').slice(0,28)+'” agora'; an.setAttribute('href','./escala.html?id='+encodeURIComponent(t1.id)); } else { an.hidden=true; } }

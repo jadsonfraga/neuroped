@@ -1092,6 +1092,64 @@ assertIncludes('scales-sensitivity.js', 'PMID.test', 'sensibilidade só vale com
   } catch (e) { fail('scales-sensitivity.js não pôde ser exercitado', e.message); }
 }
 
+// ── Motor de ranking (scales-smart-rank.js): a INTELIGÊNCIA da seleção de
+//    instrumentos. Exercita a LÓGICA (não só presença de string): expansão
+//    leiga→construto, negação, tolerância a typo, fit etário, fórmula de fit e
+//    casamento preciso de termos. Esta é a rede que protege o cérebro do filtro.
+{
+  try {
+    const require = createRequire(import.meta.url);
+    const SR = require(join(root, 'scales-smart-rank.js'));
+    const has = (arr, k) => Array.isArray(arr) && arr.indexOf(k) >= 0;
+    const cons = (q) => SR.constructsOf(q);
+    const eq = (name, got, want) => (String(got) === String(want)) ? pass(name) : fail(name, `obteve ${got}, esperava ${want}`);
+    const truthy = (name, v) => v ? pass(name) : fail(name, 'falso');
+    const falsy = (name, v) => !v ? pass(name) : fail(name, 'verdadeiro');
+
+    eq('smart-rank: versão publicada 1.5.0', SR.version, '1.5.0');
+    // Expansão leiga → construto (frases do dia a dia que a família realmente usa)
+    truthy('smart-rank: "vive no mundo da lua" → tdah', has(cons('meu filho vive no mundo da lua'), 'tdah'));
+    truthy('smart-rank: "balança as mãos e não faz contato visual" → tea', has(cons('balança as mãos e não faz contato visual'), 'tea'));
+    truthy('smart-rank: "vai mal na escola e troca letras" → aprendizagem', has(cons('vai mal na escola e troca letras'), 'aprendizagem'));
+    truthy('smart-rank: "não forma frase, fala pouco para a idade" → linguagem', has(cons('não forma frase e fala pouco para a idade'), 'linguagem'));
+    truthy('smart-rank: "range os dentes e demora para dormir" → sono', has(cons('range os dentes e demora para dormir'), 'sono'));
+    truthy('smart-rank: "não obedece e responde mal" → comportamento', has(cons('não obedece e responde mal'), 'comportamento'));
+    truthy('smart-rank: "caligrafia ruim e derruba tudo" → motor', has(cons('caligrafia ruim e derruba tudo'), 'motor'));
+    truthy('smart-rank: "não toma banho sozinho, depende para tudo" → adaptativo', has(cons('não toma banho sozinho e depende para tudo'), 'adaptativo'));
+    // Corroboração por 2 gatilhos fracos (1 ambíguo sozinho NÃO ativa)
+    truthy('smart-rank: 2 fracos de ansiedade (rói as unhas + dor de barriga antes) ativam', has(cons('rói as unhas e sente dor de barriga antes da escola'), 'ansiedade'));
+    // Typos comuns não quebram a triagem
+    truthy('smart-rank: typo "deslexia" → aprendizagem', has(cons('suspeita de deslexia'), 'aprendizagem'));
+    truthy('smart-rank: "déficit de atenção" → tdah', has(cons('tem déficit de atenção'), 'tdah'));
+    truthy('smart-rank: typo "tdha" → tdah', has(cons('laudo de tdha'), 'tdah'));
+    // Negação explícita não deve ativar o construto negado (mas preserva "não fala")
+    falsy('smart-rank: "sem autismo" NÃO ativa tea', has(cons('paciente sem autismo, investigar fala'), 'tea'));
+    falsy('smart-rank: "descartado TDAH" NÃO ativa tdah', has(cons('descartado tdah'), 'tdah'));
+    truthy('smart-rank: "não fala" (negação preservada) ativa linguagem', has(cons('criança não fala'), 'linguagem'));
+    // Casamento preciso de termo (anti-falso-positivo)
+    falsy('smart-rank: tokenMatches "dor" não casa "dormir"', SR.tokenMatches('dor', 'dificuldade para dormir'));
+    truthy('smart-rank: tokenMatches "impulsiv" casa "impulsivo"', SR.tokenMatches('impulsiv', 'crianca impulsivo'));
+    falsy('smart-rank: tokenMatches "tod" não casa "todos"', SR.tokenMatches('tod', 'todos os dias'));
+    // Fit etário pela BORDA da faixa (não pelo ponto-médio)
+    truthy('smart-rank: ageFit dentro da faixa → inBand', SR.ageFit(60, 36, 72).inBand);
+    eq('smart-rank: ageFit dentro da faixa → 26 pontos', SR.ageFit(60, 36, 72).points, 26);
+    eq('smart-rank: ageFit 8m acima da borda → axis parcial', SR.ageFit(80, 36, 72).axis, 'partial');
+    eq('smart-rank: ageFit idade desconhecida → 14 pontos neutros', SR.ageFit(null, 36, 72).points, 14);
+    // Fórmula de fit única + rótulo de confiança
+    eq('smart-rank: scoreFit máximo (forte+idade+responde+oficial+destaque) = 98', SR.scoreFit({ qStrong: true, agePoints: 26, respChosen: true, respMatch: true, official: true, featured: true }), 98);
+    eq('smart-rank: confOf(98) = alta', SR.confOf(98), 'alta');
+    eq('smart-rank: confOf(50) = boa', SR.confOf(50), 'boa');
+    eq('smart-rank: confOf(30) = parcial', SR.confOf(30), 'parcial');
+  } catch (e) { fail('scales-smart-rank.js não pôde ser exercitado', e.message); }
+}
+
+// ── filtro-escalas.html: encadeamento da REGRA DE OURO via fila np:reco
+//    (o runner escala.html consome; sem este writer o "Próxima recomendada" era morto).
+assertIncludes('filtro-escalas.html', "localStorage.setItem('np:reco'", 'filtro grava a fila np:reco (pódio→direto→escola)');
+assertIncludes('filtro-escalas.html', "localStorage.removeItem('np:reco')", 'filtro limpa np:reco quando não há pódio (sem sequência obsoleta)');
+assertIncludes('escala.html', "getItem('np:reco')", 'runner consome a fila np:reco');
+assertIncludes('escala.html', 'recoRail', 'runner mostra o trilho da sequência (Etapa X de N)');
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');
