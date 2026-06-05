@@ -1,10 +1,6 @@
 {
   "name": "neuroped-edj",
-<<<<<<< claude/repo-activity-audit-yF1eI
-  "version": "6.45.12",
-=======
   "version": "6.46.0",
->>>>>>> main
   "description": "NeuroPed SDG — plataforma clínica de neuropediatria do Dr. Jadson Fraga Araújo Júnior",
   "private": true,
   "scripts": {
