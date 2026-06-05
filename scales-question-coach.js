@@ -308,12 +308,35 @@
         'Ter uma rotina que não seja só de cuidados'
       ],
       tip: 'Observe o impacto global no bem-estar e na participação, além dos sintomas isolados.'
+    },
+    toc: {
+      emoji: '🔁',
+      kw: ['obsess', 'compuls', 'ritual', 'verifica', 'conferir', 'lavar as mao', 'lava as mao', 'simetria', 'contamina', 'intrusiv', 'pensamento repeti', 'mania de repetir'],
+      examples: [
+        'Pensamentos que voltam e incomodam, mesmo sem querer',
+        'Repetir ações (lavar, conferir, organizar) para aliviar a aflição',
+        'Precisar que as coisas fiquem "certas" ou simétricas',
+        'Ficar muito aflito quando é impedido de fazer o ritual'
+      ],
+      tip: 'Veja quanto tempo isso toma e o quanto atrapalha a rotina — tempo gasto e aflição importam.'
+    },
+    tiques: {
+      emoji: '😬',
+      kw: ['tique', 'tics', 'tourette', 'pigarro', 'movimento involuntario', 'piscar repeti', 'estalo', 'careta', 'vocaliza'],
+      examples: [
+        'Movimentos rápidos e repetidos (piscar, caretas, balançar a cabeça)',
+        'Sons repetidos (pigarro, estalos, fungadas)',
+        'Pioram com cansaço ou ansiedade e diminuem ao se distrair',
+        'Mudam de forma ao longo do tempo'
+      ],
+      tip: 'Repare se variam com o estado emocional e se atrapalham a escola, o sono ou a convivência.'
     }
   };
 
   /* Ordem de prioridade na ROTEAGEM (segurança e especificidade primeiro). */
   var ORDER = [
     'risco', 'substancias', 'epilepsia', 'dor', 'sono', 'alimentacao', 'sensorial',
+    'toc', 'tiques',
     'social', 'rigidez', 'linguagem', 'atencao', 'hiperatividade',
     'executiva', 'escola', 'motorfino', 'motor', 'regulacao',
     'ansiedade', 'humor', 'fadiga', 'autonomia', 'bullying',
@@ -380,7 +403,7 @@
   }
 
   window.NeuroPedCoach = {
-    version: '1.0.0',
+    version: '1.1.0',
     forItem: forItem,
     themeOf: themeOf,
     THEMES: THEMES

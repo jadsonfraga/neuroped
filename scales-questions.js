@@ -185,6 +185,72 @@
       q('📝', 'Você consegue descrever horário, duração e como foi a recuperação?',
         'Detalhes do evento orientam a investigação; um vídeo ajuda muito.',
         ['quanto durou', 'o que fazia antes', 'como ficou depois'], ['casa'], 0)
+    ],
+    desenvolvimento: [
+      q('📈', 'Ele alcançou os marcos esperados para a idade (sentar, andar, falar)?',
+        'Comparar a trajetória com o esperado ajuda a identificar atraso global.',
+        ['sentou/andou no tempo', 'primeiras palavras na idade', 'brinca como os colegas'], ['casa'], 0, 72),
+      q('↩️', 'Ele já chegou a perder habilidades que tinha (regressão)?',
+        'Perda de habilidades adquiridas é sinal de alerta e pede avaliação.',
+        ['parou de falar palavras que dizia', 'deixou de brincar como antes'], ['casa'], 0, 72),
+      q('🧭', 'Em quais áreas você percebe mais o atraso (fala, motor, social)?',
+        'Mapear as áreas afetadas orienta os encaminhamentos.',
+        ['mais na fala', 'mais no motor', 'mais no social/brincar'], ['casa', 'escola'], 0)
+    ],
+    dor: [
+      q('🤕', 'Com que frequência a dor aparece e quanto ela atrapalha?',
+        'Frequência e impacto funcional importam mais que a intensidade isolada.',
+        ['faz parar de brincar/estudar', 'falta à escola', 'acorda à noite com dor'], ['casa', 'escola'], 36),
+      q('🔎', 'A dor vem junto de outros sinais (náusea, luz/barulho, vômito)?',
+        'Sinais associados ajudam a caracterizar o tipo de dor (ex.: enxaqueca).',
+        ['enjoa junto', 'incomoda com luz/som', 'fica pálido'], ['casa'], 36),
+      q('📝', 'Você percebe gatilhos ou mudança recente no padrão da dor?',
+        'Anotar gatilhos e mudanças recentes orienta a investigação.',
+        ['piora com jejum/sono ruim', 'mais em dias de prova', 'mudou nas últimas semanas'], ['casa', 'escola'], 48)
+    ],
+    toc: [
+      q('🔁', 'Ele tem pensamentos que voltam e incomodam, mesmo sem querer?',
+        'Obsessões: ideias/imagens intrusivas que geram aflição.',
+        ['medo de germe/sujeira', 'medo de que algo ruim aconteça', 'precisa que fique "certo"'], ['casa'], 60),
+      q('🧼', 'Repete ações ou rituais para aliviar o desconforto (lavar, conferir, ordenar)?',
+        'Compulsões: comportamentos repetidos para reduzir a aflição.',
+        ['lava as mãos demais', 'confere várias vezes', 'precisa de simetria/ordem'], ['casa', 'escola'], 60),
+      q('⏱️', 'Isso toma muito tempo ou atrapalha a rotina dele?',
+        'O tempo gasto e o prejuízo funcional definem a relevância.',
+        ['atrasa para sair', 'fica aflito se impedido', 'evita lugares por causa disso'], ['casa', 'escola'], 60)
+    ],
+    tiques: [
+      q('😬', 'Ele faz movimentos ou sons repetidos, rápidos, que parecem involuntários?',
+        'Tiques motores (piscar, caretas) ou vocais (pigarro, estalos).',
+        ['pisca/franze muito', 'balança a cabeça', 'pigarro ou estalos repetidos'], ['casa', 'escola'], 36),
+      q('🔀', 'Os tiques mudam de forma, aumentam com estresse ou somem ao se distrair?',
+        'Variar com o tempo e com o estado emocional é característico.',
+        ['piora cansado/ansioso', 'troca o tipo de tique', 'some quando concentrado'], ['casa'], 36),
+      q('📚', 'Os tiques atrapalham a escola, o sono ou a convivência?',
+        'O impacto funcional orienta a necessidade de conduta.',
+        ['atrapalha escrever', 'colegas comentam', 'incomoda para dormir'], ['escola', 'social'], 36)
+    ],
+    regulacao: [
+      q('🎭', 'Quando fica bravo ou frustrado, qual a intensidade da reação?',
+        'Desregulação: a resposta emocional é maior do que a situação pede.',
+        ['explode por pouco', 'passa de 0 a 100 rápido', 'não consegue "baixar a guarda"'], ['casa', 'escola'], 24),
+      q('🧯', 'Quanto tempo leva — e o que ajuda — para ele se acalmar?',
+        'A recuperação e os apoios que funcionam orientam o manejo.',
+        ['acalma com colo/pausa', 'precisa de muito tempo', 'melhora ao tirar o gatilho'], ['casa'], 24),
+      q('🔋', 'Existe um horário ou contexto que piora (fome, sono, transições)?',
+        'Padrões de contexto ajudam a antecipar e prevenir as crises.',
+        ['pior no fim do dia', 'nas transições', 'com fome/sono'], ['casa', 'escola'], 24)
+    ],
+    mutismo: [
+      q('🤐', 'Ele fala normalmente em casa, mas trava em alguns lugares (escola)?',
+        'Mutismo seletivo: fala num ambiente e silencia em outro, de forma consistente.',
+        ['conversa solto em casa', 'não fala na escola', 'não responde a estranhos'], ['casa', 'escola', 'social'], 36),
+      q('⏳', 'Isso já dura mais de um mês e não é só timidez do início?',
+        'Persistência ajuda a separar de uma adaptação inicial esperada.',
+        ['começou há meses', 'não melhorou com o tempo', 'mesmo já conhecendo o local'], ['escola', 'social'], 36),
+      q('🚪', 'O silêncio atrapalha o aprendizado ou a convivência dele?',
+        'O prejuízo funcional orienta a necessidade de apoio.',
+        ['não tira dúvidas', 'não faz amigos', 'evita atividades que exigem falar'], ['escola', 'social'], 36)
     ]
   };
 

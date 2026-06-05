@@ -104,6 +104,18 @@
   .sc-card.tier-escola::before{background:linear-gradient(90deg,#38bdf8,#0ea5e9)}
   .sc-card:hover{transform:translateY(-2px);border-color:var(--cie-edge-2);box-shadow:0 28px 64px -28px rgba(91,84,232,.5)}
   .sc-card.top{border-color:var(--cie-gold-ln);box-shadow:0 0 0 1px var(--cie-gold-ln),0 26px 60px -26px var(--cie-gold-ln)}
+  /* Revelação coreografada (Apple-grade): os cards sobem em cascata curta. */
+  .np-cards-grid .sc-card:nth-child(1){animation-delay:.02s}
+  .np-cards-grid .sc-card:nth-child(2){animation-delay:.07s}
+  .np-cards-grid .sc-card:nth-child(3){animation-delay:.12s}
+  .np-cards-grid .sc-card:nth-child(4){animation-delay:.17s}
+  .np-cards-grid .sc-card:nth-child(5){animation-delay:.22s}
+  .np-cards-grid .sc-card:nth-child(n+6){animation-delay:.26s}
+  /* Brilho que percorre o card Ouro — sinal premium discreto, 1x a cada ~5s. */
+  .sc-card.top::after{content:"";position:absolute;top:0;left:-65%;width:55%;height:100%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-18deg);
+    animation:scSheen 5s ease-in-out 1.4s infinite}
+  @keyframes scSheen{0%,74%{left:-65%}88%{left:130%}100%{left:130%}}
   .sc-medalrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   /* Pílula de confiança: quantifica o "fit" 0–100 do ranking (transparência) */
   .sc-conf{margin-left:auto;font:800 10px system-ui;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:3px 9px;align-self:center;white-space:nowrap}
@@ -164,7 +176,7 @@
   .search-input:focus-visible{outline:2px solid var(--cie-accent);outline-offset:2px;border-radius:8px}
   /* foco programático (pós-busca) no cabeçalho/grade não mostra anel persistente */
   .section-label[tabindex]:focus:not(:focus-visible),#allResults[tabindex]:focus:not(:focus-visible){outline:none}
-  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}.astro{animation:none}}
+  @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.sc-card.top::after{animation:none;display:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}.astro{animation:none}}
   .trust{display:flex;flex-wrap:wrap;justify-content:center;gap:7px 16px;margin-top:10px;font:600 10px/1 system-ui;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft,#8b86b8)}
   .trust span{position:relative}.trust span+span::before{content:"";position:absolute;left:-9px;top:50%;width:3px;height:3px;border-radius:50%;background:var(--cie-edge-2);transform:translateY(-50%)}
   [data-theme="light"] body{--cie-ok:#0a8a5b;--cie-warn:#b45309;--cie-bad:#be123c;--cie-gold:#8a6a2c;--cie-info:#1d6fd0}
@@ -615,7 +627,7 @@
   // Aproveita o GUIDE curado (scales-questions.js) para, na PRÉ-CONSULTA, orientar
   // a família/secretária sobre o que observar — antes mesmo de escolher a escala.
   // Construtos do SmartRank → tag do GUIDE (alias linguagem→fala etc.).
-  var GUIDE_ALIAS={linguagem:'fala',paralisiacerebral:'motor',desenvolvimento:'',substancias:'',risco:''};
+  var GUIDE_ALIAS={linguagem:'fala',paralisiacerebral:'motor',desenvolvimento:'desenvolvimento',substancias:'',risco:''};
   function guideTagFor(q, tokens, top){
     if(!window.NeuroPedQuestions||!NeuroPedQuestions.GUIDE) return '';
     var G=NeuroPedQuestions.GUIDE, k, i;
@@ -686,6 +698,9 @@
     if(!cat.length){ all.innerHTML='<div class="empty">Carregando catálogo… toque em Buscar em instantes.</div>'; return; }
     all.setAttribute('aria-busy','false');
     try{ localStorage.setItem('np_cie_q', q); }catch(e){}
+    // limpa a fila da regra de ouro a cada busca; só é regravada quando há pódio
+    // (ramos "sem queixa"/"só idade" não devem encadear uma sequência obsoleta).
+    try{ localStorage.removeItem('np:reco'); }catch(e){}
     var gp=document.getElementById('guidePanel');
     if(!q){ // sem query → catálogo em destaque
       det.hidden=true; rec.style.display='none'; if(gp){gp.hidden=true;gp.innerHTML='';}
@@ -736,6 +751,17 @@
     var fixed=medals.concat(directPick?[directPick]:[], schoolPick?[schoolPick]:[]);
     rec.style.display=fixed.length?'block':'none';
     recR.innerHTML=fixed.map(function(r){return card(r);}).join('');
+    // Fila da REGRA DE OURO: grava a sequência (pódio → teste direto → escola) para
+    // o runner (escala.html) encadear "▶ Próxima recomendada" sem voltar ao filtro.
+    // Cada item carrega a posição/medalha p/ o runner mostrar "Etapa X de N".
+    try{
+      if(fixed.length){
+        var TIERLB={ouro:'🥇 Pódio · 1ª',prata:'🥈 Pódio · 2ª',bronze:'🥉 Pódio · 3ª',direto:'🧒 Teste direto',escola:'🏫 Escola'};
+        localStorage.setItem('np:reco', JSON.stringify(fixed.map(function(r){
+          return { id:r.s.id, title:(r.s.short_title||r.s.title||''), tier:r.tier, tierLabel:(TIERLB[r.tier]||'') };
+        })));
+      } else { localStorage.removeItem('np:reco'); }
+    }catch(e){}
     var an=document.getElementById('applyNow');
     var lead=medals[0]||fixed[0];
     if(an){ if(lead){ var t1=lead.s; an.hidden=false; an.textContent='▶ Aplicar “'+(t1.short_title||t1.title||'1ª escala').slice(0,28)+'” agora'; an.setAttribute('href','./escala.html?id='+encodeURIComponent(t1.id)); } else { an.hidden=true; } }
@@ -762,10 +788,12 @@
   // Quem responde? — seletor (single-select). Eixo que muda a medalha: ao escolher,
   // instrumentos cujo respondente não casa deixam de ser Ouro/Prata (viram alternativa).
   (function(){ var box=document.getElementById('respChips'); if(!box) return;
-    box.innerHTML=RESP_OPTS.map(function(o,i){return '<button class="chip resp'+(i===0?' active':'')+'" type="button" aria-pressed="'+(i===0?'true':'false')+'" data-resp="'+esc(o.val)+'">'+(o.val?esc(o.icon)+' ':'')+esc(o.label)+'</button>';}).join('');
+    // lembra a escolha do respondente entre visitas (consistente com a busca salva)
+    try{ var saved=localStorage.getItem('np_cie_resp'); if(saved!=null) RESP=saved; }catch(e){}
+    box.innerHTML=RESP_OPTS.map(function(o){var on=(o.val===RESP);return '<button class="chip resp'+(on?' active':'')+'" type="button" aria-pressed="'+(on?'true':'false')+'" data-resp="'+esc(o.val)+'">'+(o.val?esc(o.icon)+' ':'')+esc(o.label)+'</button>';}).join('');
     box.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click',function(){
       box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
-      b.classList.add('active'); b.setAttribute('aria-pressed','true'); RESP=b.getAttribute('data-resp')||''; run();
+      b.classList.add('active'); b.setAttribute('aria-pressed','true'); RESP=b.getAttribute('data-resp')||''; try{localStorage.setItem('np_cie_resp',RESP);}catch(e){} run();
     });});
   })();
 

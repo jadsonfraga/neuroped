@@ -289,7 +289,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
       var on=(String(val)===String(li))?' checked':'';
       return '<label><input type="radio" name="q-'+key+'" value="'+li+'"'+on+' onchange="__mark(\''+key+'\','+li+')"><span class="b">'+esc(lab)+'</span></label>';
     }).join('');
-    return '<div class="item'+ans+'"><p class="q"><span class="n">'+(f.ii+1)+'.</span>'+emoji+esc(f.item)+'</p>'+coachHtml(key,c)+'<div class="opts">'+opts+'</div></div>';
+    return '<div class="item'+ans+'"><p class="q"><span class="n">'+(f.ii+1)+'.</span>'+emoji+esc(f.item)+'</p>'+coachHtml(key,c)+'<div class="opts" role="radiogroup" aria-label="Resposta — '+esc(f.item)+'">'+opts+'</div></div>';
   }
   function blockNavHtml(p,start,end){
     var n=p.length, slice=flat().slice(start,end), tot=slice.length, ans=0;
@@ -315,7 +315,27 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
-  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveProgress(); renderDetail(); if(wasNew)setTimeout(advance,70); };
+  window.__mark=function(key,li){
+    var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveProgress();
+    // Atualização CIRÚRGICA: marca só o item respondido, sem re-render do bloco
+    // inteiro — elimina o "flash" da lista a cada toque e preserva a rolagem e os
+    // coaches abertos (sensação Apple-grade). Recompõe apenas a navegação de blocos
+    // (dots + contador). Fallback para renderDetail se o nó do item não for achado.
+    var input=document.querySelector('#detail input[name="q-'+key+'"]');
+    var itemEl=input?input.closest('.item'):null;
+    if(itemEl){
+      itemEl.classList.add('answered');
+      var sel=itemEl.querySelector('input[value="'+li+'"]'); if(sel) sel.checked=true;   // reflete seleção (inclui teclado)
+      updateProgress();
+      if(blocksOn()){
+        var bn=document.querySelector('#detail .blocknav');
+        if(bn){ var p=plan(); bn.outerHTML=blockNavHtml(p, p[CURRENT_BLOCK].from, p[CURRENT_BLOCK].to); }
+      }
+    } else {
+      renderDetail();
+    }
+    if(wasNew) setTimeout(advance,70);
+  };
 
   // TESTES DIRETOS sugeridos: tarefas aplicadas na criança, roteadas pelo
   // domínio/keywords da escala e pela faixa etária do instrumento.
@@ -408,17 +428,59 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
         var q=JSON.parse(localStorage.getItem('np:reco')||'[]');
         if(Array.isArray(q)&&q.length){
           var idx=-1; for(var k=0;k<q.length;k++){if(q[k]&&q[k].id===id){idx=k;break;}}
+          if(idx>-1){
+            // Posição na REGRA DE OURO: a aplicação deixa de ser uma tela solta e vira
+            // uma jornada guiada (pódio → teste direto → escola). Mostra "Etapa X de N",
+            // a medalha desta etapa e um trilho de pontos clicáveis.
+            var kick=document.querySelector('.hero .kick');
+            if(kick){ kick.innerHTML='🧭 Etapa '+(idx+1)+' de '+q.length+(q[idx]&&q[idx].tierLabel?(' · '+esc(q[idx].tierLabel)):''); }
+            var hero=document.querySelector('.hero');
+            if(hero && !document.getElementById('recoRail')){
+              var rail=document.createElement('div'); rail.id='recoRail';
+              rail.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-top:14px';
+              rail.innerHTML=q.map(function(it,i){
+                var on=(i===idx), done=(i<idx);
+                var tip=esc((it.tierLabel||('Etapa '+(i+1)))+' — '+(it.title||''));
+                var bg=on?'linear-gradient(90deg,var(--teal),var(--gold))':(done?'rgba(124,118,210,.5)':'rgba(124,118,210,.18)');
+                var base='height:7px;border-radius:999px;flex:1 1 0;min-width:26px;text-decoration:none;background:'+bg+(on?';box-shadow:0 0 0 2px rgba(231,201,139,.35)':'');
+                return i===idx ? '<span title="'+tip+'" style="'+base+'"></span>'
+                               : '<a href="./escala.html?id='+encodeURIComponent(it.id)+'" title="'+tip+'" aria-label="Ir para '+tip+'" style="'+base+'"></a>';
+              }).join('');
+              hero.appendChild(rail);
+            }
+          }
           if(idx>-1&&q[idx+1]){
             var nxt=q[idx+1], db=document.getElementById('doneBanner');
             if(db){var a=document.createElement('a');a.className='dlink';a.style.display='block';
               a.href='./escala.html?id='+encodeURIComponent(nxt.id);
-              a.textContent='▶ Próxima recomendada: '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
+              a.textContent='▶ Próxima recomendada · '+esc(nxt.tierLabel||('etapa '+(idx+2)))+': '+esc(String(nxt.title||'escala').slice(0,30))+' ›';
               db.appendChild(a);}
           }
         }
       }catch(e){}
     });
   }
+  // PRODUTIVIDADE (teclado): em telas com teclado físico, as teclas 1–N respondem
+  // o PRIMEIRO item ainda sem resposta (mesma rota do clique → __mark → auto-avanço).
+  // Ignorada quando o foco está num campo de texto. Acelera muito a aplicação em consultório.
+  (function(){
+    var fine=false; try{ fine=window.matchMedia&&window.matchMedia('(pointer:fine)').matches; }catch(e){}
+    if(fine){ var pr=document.getElementById('prog'); if(pr&&!document.getElementById('kbdHint')){ var h=document.createElement('p'); h.id='kbdHint'; h.textContent='⌨️ Dica: teclas 1–4 respondem o próximo item'; h.style.cssText='margin:6px 2px 0;font-size:11.5px;color:var(--soft);text-align:right'; pr.insertAdjacentElement('afterend',h); } }
+    document.addEventListener('keydown',function(e){
+      if(e.metaKey||e.ctrlKey||e.altKey) return;
+      var ae=document.activeElement,tn=(ae&&ae.tagName||'').toLowerCase();
+      if(tn==='input'||tn==='textarea'||tn==='select'||(ae&&ae.isContentEditable)) return;
+      var n=parseInt(e.key,10);
+      if(!(n>=1&&n<=9)||!INST||!INST.labels||n>INST.labels.length) return;
+      var items=document.querySelectorAll('#detail .item'),target=null;
+      for(var i=0;i<items.length;i++){ if(!items[i].classList.contains('answered')){ target=items[i]; break; } }
+      if(!target) return;
+      var radio=target.querySelector('input[type=radio]'); if(!radio) return;
+      e.preventDefault();
+      var want=target.querySelector('input[value="'+(n-1)+'"]'); if(want) want.checked=true;
+      window.__mark(radio.name.replace(/^q-/,''), n-1);
+    });
+  })();
   window.addEventListener('np-child-change',paintWho);
   boot();
 })();

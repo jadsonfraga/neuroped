@@ -32,44 +32,44 @@
   // os fracos ficam de fora para não puxar instrumentos irrelevantes.
   var CONSTRUCTS = {
     tea: {
-      strong: ['tea', 'autismo', 'autista', 'espectro', 'nao aponta', 'brinca sozinho', 'ecolalia', 'nao responde ao nome', 'nao responde nome', 'gira objetos', 'enfileira', 'faz de conta', 'interesse restrito', 'contato visual'],
-      weak: ['nao olha', 'pouco olho', 'repete', 'rigidez', 'rotina', 'isolado', 'sozinho', 'restrito']
+      strong: ['tea', 'autismo', 'autista', 'espectro', 'nao aponta', 'brinca sozinho', 'ecolalia', 'nao responde ao nome', 'nao responde nome', 'gira objetos', 'enfileira', 'faz de conta', 'interesse restrito', 'contato visual', 'balanca as maos', 'sacode as maos', 'flapping', 'anda na ponta dos pes', 'nao interage', 'nao brinca com outras', 'alinha objetos', 'hiperfoco', 'nao faz contato visual'],
+      weak: ['nao olha', 'pouco olho', 'repete', 'rigidez', 'rotina', 'isolado', 'sozinho', 'restrito', 'nao imita', 'nao chama', 'mundo proprio']
     },
     tdah: {
-      strong: ['tdah', 'desatento', 'desatencao', 'hiperativo', 'hiperatividade', 'impulsiv', 'nao termina', 'nao para quieto', 'aereo', 'avoado', 'desorganizado'],
-      weak: ['atencao', 'agitado', 'inquieto', 'nao para', 'levanta', 'distrai', 'esquece']
+      strong: ['tdah', 'desatento', 'desatencao', 'hiperativo', 'hiperatividade', 'impulsiv', 'nao termina', 'nao para quieto', 'aereo', 'avoado', 'desorganizado', 'mundo da lua', 'cabeca nas nuvens', 'nao foca', 'nao consegue prestar atencao', 'vive perdendo', 'perde o material', 'sonha acordado', 'nao consegue se concentrar', 'deficit de atencao'],
+      weak: ['atencao', 'agitado', 'inquieto', 'nao para', 'levanta', 'distrai', 'esquece', 'voa', 'nao escuta', 'disperso']
     },
     linguagem: {
-      strong: ['nao fala', 'atraso de fala', 'atraso fala', 'troca sons', 'troca som', 'gagueira', 'gagueja', 'disfluencia', 'nao monta frase', 'so aponta', 'fala enrolada'],
-      weak: ['fala', 'linguagem', 'vocabulario', 'fala pouco']
+      strong: ['nao fala', 'atraso de fala', 'atraso fala', 'troca sons', 'troca som', 'gagueira', 'gagueja', 'disfluencia', 'nao monta frase', 'so aponta', 'fala enrolada', 'nao forma frase', 'vocabulario pobre', 'fala pouco para a idade', 'poucas palavras', 'nao nomeia', 'demora para falar', 'fala so o necessario'],
+      weak: ['fala', 'linguagem', 'vocabulario', 'fala pouco', 'enrolado']
     },
     aprendizagem: {
-      strong: ['dislexia', 'discalculia', 'nao le', 'nao escreve', 'troca letras', 'dificuldade escolar', 'alfabetiza', 'soletra', 'reprovou', 'rendimento escolar'],
-      weak: ['escola', 'escolar', 'leitura', 'escrita', 'matematica', 'letras', 'copia']
+      strong: ['dislexia', 'discalculia', 'nao le', 'nao escreve', 'troca letras', 'dificuldade escolar', 'alfabetiza', 'soletra', 'reprovou', 'rendimento escolar', 'vai mal na escola', 'nota baixa', 'nao aprende', 'dificuldade de aprendizagem', 'repete de ano', 'nao acompanha a turma', 'nao copia do quadro', 'inverte letras'],
+      weak: ['escola', 'escolar', 'leitura', 'escrita', 'matematica', 'letras', 'copia', 'nao gosta de ler']
     },
     ansiedade: {
-      strong: ['ansiedade', 'ansioso', 'panico', 'fobia', 'separacao', 'medo', 'preocupa demais', 'aflito'],
-      weak: ['preocupa', 'tenso', 'timido', 'evita', 'nervoso']
+      strong: ['ansiedade', 'ansioso', 'panico', 'fobia', 'separacao', 'medo', 'preocupa demais', 'aflito', 'nao quer ir a escola por medo', 'crise de ansiedade'],
+      weak: ['preocupa', 'tenso', 'timido', 'evita', 'nervoso', 'roi as unhas', 'dor de barriga antes', 'apreensivo']
     },
     humor: {
-      strong: ['depress', 'deprimido', 'tristeza', 'triste', 'anedonia', 'sem vontade', 'desanimo'],
-      weak: ['irritado', 'irritabilidade', 'choro', 'chora', 'isolado', 'desinteresse']
+      strong: ['depress', 'deprimido', 'tristeza', 'triste', 'anedonia', 'sem vontade', 'desanimo', 'sem animo', 'nao tem vontade de nada', 'sem energia'],
+      weak: ['irritado', 'irritabilidade', 'choro', 'chora', 'isolado', 'desinteresse', 'chora a toa', 'desmotivado']
     },
     sono: {
-      strong: ['sono', 'insonia', 'nao dorme', 'pesadelo', 'terror noturno', 'ronca', 'sonambulismo'],
-      weak: ['dorme', 'acorda', 'sonolento', 'cansado']
+      strong: ['sono', 'insonia', 'nao dorme', 'pesadelo', 'terror noturno', 'ronca', 'sonambulismo', 'bruxismo', 'range os dentes', 'demora para dormir', 'acorda varias vezes', 'sono agitado'],
+      weak: ['dorme', 'acorda', 'sonolento', 'cansado', 'soneca']
     },
     sensorial: {
-      strong: ['sensorial', 'tapa ouvido', 'seletividade', 'hipersensiv', 'defensivo sensorial'],
-      weak: ['barulho', 'textura', 'etiqueta', 'luz', 'seletivo', 'tato']
+      strong: ['sensorial', 'tapa ouvido', 'tapa os ouvidos', 'seletividade', 'hipersensiv', 'defensivo sensorial', 'nao gosta de ser tocado', 'incomoda com roupa', 'nao gosta de etiqueta'],
+      weak: ['barulho', 'textura', 'etiqueta', 'luz', 'seletivo', 'tato', 'cheiro']
     },
     motor: {
-      strong: ['coordenacao', 'motricidade', 'desajeitado', 'tdc', 'anda na ponta', 'desengoncado', 'descoordenado'],
-      weak: ['motor', 'equilibrio', 'cai', 'tropeca', 'lapis']
+      strong: ['coordenacao', 'motricidade', 'desajeitado', 'tdc', 'anda na ponta', 'desengoncado', 'descoordenado', 'caligrafia ruim', 'letra feia', 'nao pega no lapis', 'derruba tudo', 'tropeca muito'],
+      weak: ['motor', 'equilibrio', 'cai', 'tropeca', 'lapis', 'desastrado']
     },
     comportamento: {
-      strong: ['oposic', 'opositor', 'desafia', 'tod', 'agressiv', 'explos', 'birra', 'desobedece', 'conduta'],
-      weak: ['comportamento', 'bate', 'morde', 'limite', 'teimoso']
+      strong: ['oposic', 'opositor', 'desafia', 'tod', 'agressiv', 'explos', 'birra', 'desobedece', 'conduta', 'nao obedece', 'responde mal', 'bate nos colegas', 'quebra as coisas', 'nao aceita nao', 'perde o controle'],
+      weak: ['comportamento', 'bate', 'morde', 'limite', 'teimoso', 'briga muito']
     },
     risco: {
       strong: ['suicid', 'se machucar', 'se cortar', 'autoagress', 'nao querer viver', 'tirar a vida', 'morrer', 'sumir', 'cortar'],
@@ -80,8 +80,8 @@
       weak: []
     },
     adaptativo: {
-      strong: ['autonomia', 'vida diaria', 'avd', 'nao se veste', 'depende para', 'come sozinho', 'autocuidado'],
-      weak: ['independencia', 'veste', 'banheiro', 'depende']
+      strong: ['autonomia', 'vida diaria', 'avd', 'nao se veste', 'depende para', 'come sozinho', 'autocuidado', 'nao toma banho sozinho', 'nao come sozinho', 'nao se troca sozinho', 'depende para tudo', 'nao consegue se cuidar'],
+      weak: ['independencia', 'veste', 'banheiro', 'depende', 'imaturo para a idade']
     },
     epilepsia: {
       strong: ['epilepsia', 'convuls', 'ausencia', 'olhar parado', 'crise epil', 'abala'],
@@ -142,9 +142,10 @@
   function activeConstructs(text) {
     var t = ' ' + norm(text) + ' ';
     // tolerância a erros de digitação comuns (não quebra a busca por um typo)
-    t = t.replace(/anciedade|ansiozo|ansioza/g, 'ansiedade').replace(/\biperativ/g, 'hiperativ')
-      .replace(/autizmo|altismo|autismo /g, 'autismo ').replace(/dislesia|dislexico|dislecia/g, 'dislexia')
-      .replace(/iscalculia|descalculia/g, 'discalculia').replace(/\btdh\b|\btda\b/g, 'tdah');
+    t = t.replace(/anciedade|ansiozo|ansioza|ansiedde/g, 'ansiedade').replace(/\biperativ/g, 'hiperativ')
+      .replace(/autizmo|altismo|autizta|autismo /g, 'autismo ').replace(/dislesia|dislexico|dislecia|deslexia/g, 'dislexia')
+      .replace(/iscalculia|descalculia/g, 'discalculia').replace(/\btdh\b|\btda\b|\btdha\b/g, 'tdah')
+      .replace(/deficit de atencao|defice de atencao/g, 'tdah desatencao');
     var active = {};
     Object.keys(CONSTRUCTS).forEach(function (k) {
       var c = CONSTRUCTS[k];
@@ -328,7 +329,7 @@
     { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
   ];
 
-  var api = { version: '1.4.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, ageFit: ageFit, scoreFit: scoreFit, confOf: confOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  var api = { version: '1.5.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, ageFit: ageFit, scoreFit: scoreFit, confOf: confOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);
