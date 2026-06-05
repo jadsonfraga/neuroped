@@ -289,7 +289,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
       var on=(String(val)===String(li))?' checked':'';
       return '<label><input type="radio" name="q-'+key+'" value="'+li+'"'+on+' onchange="__mark(\''+key+'\','+li+')"><span class="b">'+esc(lab)+'</span></label>';
     }).join('');
-    return '<div class="item'+ans+'"><p class="q"><span class="n">'+(f.ii+1)+'.</span>'+emoji+esc(f.item)+'</p>'+coachHtml(key,c)+'<div class="opts">'+opts+'</div></div>';
+    return '<div class="item'+ans+'"><p class="q"><span class="n">'+(f.ii+1)+'.</span>'+emoji+esc(f.item)+'</p>'+coachHtml(key,c)+'<div class="opts" role="radiogroup" aria-label="Resposta — '+esc(f.item)+'">'+opts+'</div></div>';
   }
   function blockNavHtml(p,start,end){
     var n=p.length, slice=flat().slice(start,end), tot=slice.length, ans=0;

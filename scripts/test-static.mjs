@@ -1151,6 +1151,49 @@ assertIncludes('escala.html', "getItem('np:reco')", 'runner consome a fila np:re
 assertIncludes('escala.html', 'recoRail', 'runner mostra o trilho da sequência (Etapa X de N)');
 assertIncludes('filtro-escalas.html', 'np_cie_resp', 'filtro lembra o respondente (quem responde) entre visitas');
 assertIncludes('escala.html', 'kbdHint', 'runner: atalho de teclado 1–4 responde o próximo item (produtividade)');
+assertIncludes('filtro-escalas.html', "desenvolvimento:'desenvolvimento'", 'filtro: painel-guia destravado para "desenvolvimento"');
+assertIncludes('escala.html', 'role="radiogroup"', 'runner: opções agrupadas como radiogroup (a11y de leitor de tela)');
+
+// ── Painel-guia "o que observar em casa" (scales-questions.js): cobertura curada
+//    por construto. Exercita a LÓGICA guide() + presença das entradas novas.
+{
+  try {
+    const require = createRequire(import.meta.url);
+    const Q = require(join(root, 'scales-questions.js'));
+    const curated = (name, tag) => (Q.GUIDE && Array.isArray(Q.GUIDE[tag]) && Q.GUIDE[tag].length && Q.guide(tag).length)
+      ? pass(name) : fail(name, `sem guia curado para ${tag}`);
+    curated('guide: cobertura nova — desenvolvimento (atraso/regressão)', 'desenvolvimento');
+    curated('guide: cobertura nova — dor (cefaleia)', 'dor');
+    curated('guide: cobertura nova — toc', 'toc');
+    curated('guide: cobertura nova — tiques', 'tiques');
+    curated('guide: cobertura nova — regulacao', 'regulacao');
+    curated('guide: cobertura nova — mutismo', 'mutismo');
+    // adaptação por idade nunca esvazia o painel
+    (Q.guide('tdah', 36).length >= 1) ? pass('guide: adaptação por idade não esvazia (tdah @36m)') : fail('guide: tdah @36m vazio');
+    // tag desconhecida cai no fallback honesto (genérico), nunca quebra
+    (Q.guide('inexistente_xyz').length >= 1) ? pass('guide: tag desconhecida usa fallback honesto') : fail('guide: fallback vazio');
+  } catch (e) { fail('scales-questions.js não pôde ser exercitado', e.message); }
+}
+
+// ── Question Coach (scales-question-coach.js): roteamento de tema por item.
+//    O módulo referencia `window` direto e não exporta — shim global p/ a lógica.
+{
+  try {
+    const require = createRequire(import.meta.url);
+    globalThis.window = globalThis.window || {};
+    require(join(root, 'scales-question-coach.js'));
+    const C = globalThis.window.NeuroPedCoach;
+    const themeEq = (name, item, want) => (C && C.themeOf(item, '', []) === want) ? pass(name) : fail(name, `obteve ${C && C.themeOf(item, '', [])}, esperava ${want}`);
+    (C && C.version === '1.1.0') ? pass('coach: versão publicada 1.1.0') : fail('coach: versão != 1.1.0', String(C && C.version));
+    themeEq('coach: segurança primeiro — "pensa em se machucar" → risco', 'às vezes pensa em se machucar', 'risco');
+    themeEq('coach: "lava as mãos repetidamente" → toc', 'lava as mãos repetidamente para se sentir limpo', 'toc');
+    themeEq('coach: "caretas e pigarro repetidos" → tiques', 'faz caretas e pigarro de forma repetida e involuntaria', 'tiques');
+    themeEq('coach: "manter a atenção na tarefa" → atencao', 'consegue manter a atencao na tarefa ate o fim', 'atencao');
+    themeEq('coach: "demora para pegar no sono" → sono', 'demora muito para pegar no sono e acorda a noite', 'sono');
+    // item sem tema mapeável → genérico (forItem usa GENERIC, theme 'geral')
+    (C && C.forItem({ itemText: 'zzqq blarg flomp neutro' }).theme === 'geral') ? pass('coach: item sem gatilho → tema geral (fallback)') : fail('coach: fallback de tema falhou');
+  } catch (e) { fail('scales-question-coach.js não pôde ser exercitado', e.message); }
+}
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
