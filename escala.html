@@ -315,7 +315,27 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     window.scales=[INST]; window.activeId=INST.id; window.answers={}; window.answers[INST.id]=ANSWERS;
     updateProgress();
   }
-  window.__mark=function(key,li){ var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveProgress(); renderDetail(); if(wasNew)setTimeout(advance,70); };
+  window.__mark=function(key,li){
+    var wasNew=(ANSWERS[key]==null); ANSWERS[key]=li; saveProgress();
+    // Atualização CIRÚRGICA: marca só o item respondido, sem re-render do bloco
+    // inteiro — elimina o "flash" da lista a cada toque e preserva a rolagem e os
+    // coaches abertos (sensação Apple-grade). Recompõe apenas a navegação de blocos
+    // (dots + contador). Fallback para renderDetail se o nó do item não for achado.
+    var input=document.querySelector('#detail input[name="q-'+key+'"]');
+    var itemEl=input?input.closest('.item'):null;
+    if(itemEl){
+      itemEl.classList.add('answered');
+      var sel=itemEl.querySelector('input[value="'+li+'"]'); if(sel) sel.checked=true;   // reflete seleção (inclui teclado)
+      updateProgress();
+      if(blocksOn()){
+        var bn=document.querySelector('#detail .blocknav');
+        if(bn){ var p=plan(); bn.outerHTML=blockNavHtml(p, p[CURRENT_BLOCK].from, p[CURRENT_BLOCK].to); }
+      }
+    } else {
+      renderDetail();
+    }
+    if(wasNew) setTimeout(advance,70);
+  };
 
   // TESTES DIRETOS sugeridos: tarefas aplicadas na criança, roteadas pelo
   // domínio/keywords da escala e pela faixa etária do instrumento.

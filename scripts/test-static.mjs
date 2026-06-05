@@ -1153,6 +1153,7 @@ assertIncludes('filtro-escalas.html', 'np_cie_resp', 'filtro lembra o respondent
 assertIncludes('escala.html', 'kbdHint', 'runner: atalho de teclado 1–4 responde o próximo item (produtividade)');
 assertIncludes('filtro-escalas.html', "desenvolvimento:'desenvolvimento'", 'filtro: painel-guia destravado para "desenvolvimento"');
 assertIncludes('escala.html', 'role="radiogroup"', 'runner: opções agrupadas como radiogroup (a11y de leitor de tela)');
+assertIncludes('escala.html', "itemEl.classList.add('answered')", 'runner: atualização cirúrgica do item (sem flash de re-render a cada resposta)');
 
 // ── Painel-guia "o que observar em casa" (scales-questions.js): cobertura curada
 //    por construto. Exercita a LÓGICA guide() + presença das entradas novas.
