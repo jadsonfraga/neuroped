@@ -2804,7 +2804,20 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     }
   };
 
-  // Um construto ATIVA se: ≥1 gatilho forte, OU ≥2 gatilhos fracos (corroboração).
+  // Negadores EXPLÍCITOS que negam o construto SEGUINTE ("sem autismo",
+  // "descartado TDAH", "afastada dislexia"). NÃO inclui "não" de propósito —
+  // protege gatilhos legítimos que começam com "não" ("não fala", "não aponta").
+  // Texto já normalizado (sem acentos). Só negamos gatilhos FORTES (diagnósticos):
+  // os fracos são ambíguos demais ("sem limites" = problema, não ausência).
+  var NEG_BEFORE = /(?:\bsem|\bdescartad\w*|\bexcluid\w*|\bafastad\w*|\bnega(?:r|ou|do|da)?|ausencia de|sem suspeita de|sem sinais de|sem indicio\w*)\s+(?:de\s+|da\s+|do\s+|hipotese de\s+)?$/;
+  function negatedAt(t, idx) { return NEG_BEFORE.test(t.slice(Math.max(0, idx - 28), idx)); }
+  function presentUnnegated(t, w) { // true se o gatilho aparece ao menos 1x NÃO negado
+    var i = t.indexOf(w);
+    while (i >= 0) { if (!negatedAt(t, i)) return true; i = t.indexOf(w, i + 1); }
+    return false;
+  }
+
+  // Um construto ATIVA se: ≥1 gatilho forte (não negado), OU ≥2 gatilhos fracos (corroboração).
   function activeConstructs(text) {
     var t = ' ' + norm(text) + ' ';
     // tolerância a erros de digitação comuns (não quebra a busca por um typo)
@@ -2814,7 +2827,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     var active = {};
     Object.keys(CONSTRUCTS).forEach(function (k) {
       var c = CONSTRUCTS[k];
-      var strong = (c.strong || []).filter(function (w) { return t.indexOf(w) >= 0; });
+      var strong = (c.strong || []).filter(function (w) { return presentUnnegated(t, w); });
       var weak = (c.weak || []).filter(function (w) { return t.indexOf(w) >= 0; });
       if (strong.length >= 1 || weak.length >= 2) active[k] = strong;
     });
@@ -2862,6 +2875,41 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     }
     return re.test(blob);
   }
+
+  // ageFit(ageMonths, amin, amax): aderência etária pela BORDA mais próxima da
+  // faixa (clinicamente correto), NÃO pelo ponto-médio — uma idade logo acima de
+  // amax está "perto", não importa quão larga seja a faixa. Pura e testável.
+  // Retorna { inBand, edgeDist, points, axis, known }:
+  //   points  → contribuição ao fit 0–100 (dentro=26 · ≤6m=18 · ≤18m=10 · longe=0 · idade?=14)
+  //   axis    → estado do eixo 🎂 do card ('ok' | 'partial' | 'no')
+  function ageFit(age, amin, amax) {
+    amin = +amin || 0; amax = (amax == null ? 240 : (+amax || 240));
+    if (age == null) return { inBand: false, edgeDist: null, points: 14, axis: 'partial', known: false };
+    var inBand = age >= amin && age <= amax;
+    var edgeDist = inBand ? 0 : Math.min(Math.abs(age - amin), Math.abs(age - amax));
+    var points = inBand ? 26 : (edgeDist <= 6 ? 18 : (edgeDist <= 18 ? 10 : 0));
+    var axis = inBand ? 'ok' : (edgeDist <= 18 ? 'partial' : 'no');
+    return { inBand: inBand, edgeDist: edgeDist, points: points, axis: axis, known: true };
+  }
+
+  // scoreFit(parts): combina os eixos no fit 0–100 — fonte ÚNICA da fórmula de
+  // pontuação (espelhada pelo decorate() do filtro, agora testável de ponta a ponta):
+  //   queixa  → 40 (forte) · 24 (casa) · 0
+  //   idade   → agePoints de ageFit() (26/18/10/0 · 14 se idade desconhecida)
+  //   responde→ 22 (escolhido e casa) · 0 (escolhido e não casa) · 12 (neutro)
+  //   official(+6) · featured(+4) → desempate de proveniência/destaque
+  function scoreFit(p) {
+    p = p || {};
+    var fit = 0;
+    fit += p.qStrong ? 40 : (p.qOK ? 24 : 0);
+    fit += (typeof p.agePoints === 'number' ? p.agePoints : 14);
+    fit += p.respChosen ? (p.respMatch ? 22 : 0) : 12;
+    if (p.official) fit += 6;
+    if (p.featured) fit += 4;
+    return fit;
+  }
+  // confOf(fit): rótulo de correspondência exibido nos cards (transparência).
+  function confOf(fit) { return fit >= 70 ? 'alta' : (fit >= 48 ? 'boa' : 'parcial'); }
 
   function modalityOf(s) {
     if (!s) return 'escala';
@@ -2959,7 +3007,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
   ];
 
-  var api = { version: '1.2.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  var api = { version: '1.4.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, ageFit: ageFit, scoreFit: scoreFit, confOf: confOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);

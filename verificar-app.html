@@ -10,6 +10,8 @@
   pre#log { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); white-space: pre-wrap; overflow: auto; font: var(--weight-regular) var(--t-mono-size)/1.5 var(--font-mono); }
 </style>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <script src="./np-version-tag.js" defer></script>
+    <script src="./np-honesty.js" defer></script>
 </head><body><main class="wrap">
 <section class="np-card">
   <h1 class="np-t-display" style="margin:0 0 var(--space-2)">Verificar app</h1>
@@ -29,7 +31,11 @@ async function ok(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no
 async function txt(path){try{return await fetch(path+'?ts='+Date.now(),{cache:'no-store'}).then(r=>r.text())}catch(e){return ''}}
 async function check(){
   const out=[];function log(x){out.push(x);document.getElementById('log').textContent=out.join('\n')}
+<<<<<<< claude/repo-activity-audit-yF1eI
   const VERSAO='6.45.12';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
+=======
+  const VERSAO='6.46.0';const CACHE_ESPERADO='neuroped-edj-v'+VERSAO;
+>>>>>>> main
   log('Versão canônica esperada: '+VERSAO);
   const pkg=await txt('./package.json');let pkgV='';try{pkgV=(JSON.parse(pkg||'{}').version)||''}catch(e){}
   log(pkgV?('OK: package.json em '+pkgV+(pkgV===VERSAO?' (alinhado)':' — Atenção: diverge de '+VERSAO)):'Atenção: versão do package.json não identificada');

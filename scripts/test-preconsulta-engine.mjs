@@ -97,6 +97,63 @@ assert(TM('tod', 'todos os dias falta na escola') === false, 'tokenMatches: "tod
 assert(TM('tdah', 'quadro compativel com tdah') === true, 'tokenMatches: "tdah" (palavra exata) casa');
 assert(TM('contato visual', 'mantem pouco contato visual') === true, 'tokenMatches: frase casa por substring');
 
+// 2c) SMARTRANK — ADERÊNCIA ETÁRIA (ageFit: borda vs. ponto-médio) ----------
+const AF = Smart.ageFit;
+assert(typeof AF === 'function', 'SmartRank expõe ageFit()');
+assert(AF(60, 36, 72).inBand === true && AF(60, 36, 72).points === 26 && AF(60, 36, 72).axis === 'ok',
+  'ageFit: idade DENTRO da faixa → inBand, 26 pts, eixo ok');
+assert(AF(78, 36, 72).edgeDist === 6 && AF(78, 36, 72).points === 18 && AF(78, 36, 72).axis === 'partial',
+  'ageFit: 6m acima da borda → edgeDist 6, 18 pts, eixo partial');
+assert(AF(90, 36, 72).edgeDist === 18 && AF(90, 36, 72).points === 10,
+  'ageFit: 18m fora da borda → edgeDist 18, 10 pts');
+assert(AF(120, 36, 72).points === 0 && AF(120, 36, 72).axis === 'no',
+  'ageFit: muito longe (48m fora) → 0 pts, eixo no');
+// O CORAÇÃO DA CORREÇÃO: faixa LARGA é pontuada pela BORDA, não pelo ponto-médio.
+// Faixa 0–60m, criança 66m: borda = 6m (perto). O cálculo antigo (|66-30| = 36) diria "longe".
+assert(AF(66, 0, 60).points === 18 && AF(66, 0, 60).axis === 'partial',
+  'ageFit: faixa larga 0–60m + idade 66m → perto pela BORDA (18 pts), não longe pelo ponto-médio');
+assert(AF(null, 36, 72).known === false && AF(null, 36, 72).points === 14 && AF(null, 36, 72).axis === 'partial',
+  'ageFit: idade desconhecida → neutro (14 pts, eixo partial)');
+
+// 2d) SMARTRANK — GUARDA DE NEGAÇÃO (precisão: "sem/descartado X" não ativa X) --
+assert(!Smart.constructsOf('crianca sem autismo, investigar tdah').includes('tea'),
+  'negação: "sem autismo" NÃO ativa TEA');
+assert(Smart.constructsOf('crianca sem autismo, investigar tdah').includes('tdah'),
+  'negação: o construto não-negado (tdah) segue ativo na mesma frase');
+assert(!Smart.constructsOf('hipotese de tdah descartada').includes('tdah') ||
+       !Smart.constructsOf('descartado tdah').includes('tdah'),
+  'negação: "descartado tdah" NÃO ativa TDAH');
+// REGRESSÃO (caça-bruxas): "não" legítimo de queixa NÃO é tratado como negador
+assert(Smart.constructsOf('crianca nao fala e nao aponta').includes('linguagem'),
+  'negação NÃO quebra "não fala" → linguagem segue ativa');
+assert(Smart.constructsOf('crianca nao fala e nao aponta').includes('tea'),
+  'negação NÃO quebra "não aponta" → TEA segue ativo');
+assert(Smart.constructsOf('sem vontade de nada, muito triste').includes('humor'),
+  'negação NÃO quebra "sem vontade" (gatilho legítimo de humor)');
+
+// 2e) SMARTRANK — FÓRMULA DE FIT ÚNICA (scoreFit/confOf, 0–100) --------------
+const SF = Smart.scoreFit, CF = Smart.confOf;
+assert(typeof SF === 'function' && typeof CF === 'function', 'SmartRank expõe scoreFit() e confOf()');
+assert(SF({ qStrong: true, agePoints: 26 }) === 78 && CF(78) === 'alta',
+  'scoreFit: queixa forte + na faixa + responde neutro = 78 → confiança alta');
+assert(SF({ qOK: true, agePoints: 14, respChosen: true, respMatch: true }) === 60 && CF(60) === 'boa',
+  'scoreFit: queixa casa + idade? + responde casa = 60 → confiança boa');
+assert(SF({ qOK: true, agePoints: 0 }) === 36 && CF(36) === 'parcial',
+  'scoreFit: queixa fraca + fora da faixa = 36 → confiança parcial');
+assert(SF({ qStrong: true, agePoints: 26, respChosen: true, respMatch: false, official: true, featured: true }) === 76,
+  'scoreFit: responde escolhido e NÃO casa zera o eixo (40+26+0+6+4 = 76)');
+
+// 2f) NP-MOTION — sistema de movimento Apple-grade (carrega em Node; no-op sem DOM)
+const NPM = require(join(root, 'np-motion.js'));
+assert(NPM && typeof NPM.animate === 'function' && typeof NPM.stagger === 'function' &&
+  typeof NPM.pressable === 'function' && typeof NPM.haptic === 'function' && typeof NPM.countUp === 'function',
+  'NPMotion expõe animate/stagger/pressable/haptic/countUp');
+assert(NPM.EASE.spring === 'cubic-bezier(0.32, 0.72, 0, 1)', 'NPMotion: curva spring = iOS button press (token)');
+assert(NPM.animate(null, []) === null, 'NPMotion.animate é no-op seguro sem elemento/DOM');
+assert((function () { try { NPM.countUp(null, 10); NPM.haptic(8); NPM.stagger(null); return true; } catch (e) { return false; } })(),
+  'NPMotion: countUp/haptic/stagger são defensivos (não lançam fora do browser)');
+assert(typeof NPM.reduced() === 'boolean', 'NPMotion.reduced() retorna boolean');
+
 // 3) PERGUNTAS-GUIA — queixas completadas respondem -------------------------
 const guideTags = ['alimentacao', 'adaptativo', 'agressividade', 'epilepsia'];
 let guideBad = 0;

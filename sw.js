@@ -6,7 +6,11 @@
    - API/Supabase: network-first
    =========================================================== */
 
+<<<<<<< claude/repo-activity-audit-yF1eI
 const CACHE_NAME = 'neuroped-edj-v6.45.12';
+=======
+const CACHE_NAME = 'neuroped-edj-v6.46.0';
+>>>>>>> main
 const SHELL = [
   './',
   './app-shell.html',
@@ -32,7 +36,10 @@ const SHELL = [
   './clinical-explainability.js','./clinical-normalization.js','./clinical-timeline-engine.js','./phenotype-engine.js','./therapeutic-burden-engine.js','./response-engine.js','./contradiction-engine.js','./clinical-decision-support.js','./clinical-visual-schema.js','./clinical-config.example.js','./clinical-config.js','./clinical-config-adapter.js','./clinical-trajectory-explain.js','./clinical-trajetoria.html','./clinical-trajetoria-demo.html',
   './scales-evidence-panel.js','./curated-evidence/instruments.json',
   './ds-tokens.css','./ds-pilot.html',
-  './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js'
+  './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js',
+  './escalas-hero.css','./escalas-hero.js','./scales-sensitivity.js',
+  // Design system Apple-grade (np-*): tokens/fundo/skin/tema/motion + componentes/catálogo — offline-first.
+  './np-tokens.css','./np-foundation.css','./np-skin.css','./np-theme.js','./np-motion.js','./np-components.css','./np-catalog.css'
 ];
 
 self.addEventListener('install', e => {

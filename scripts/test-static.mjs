@@ -1028,6 +1028,68 @@ assertIncludes('filtro-escalas.html', 'clinical-meta.js', 'filtro carrega a meta
 assertIncludes('filtro-escalas.html', 'NeuroPedMeta.evidence', 'filtro mostra 📚 Evidência (citação + PMID) quando o instrumento tem fonte curada');
 assertIncludes('clinical-meta.js', 'api.load()', 'clinical-meta auto-carrega o registry no browser');
 
+// ── Regra de ouro do filtro: 5 posições FIXAS (pódio + teste direto + escola) ──
+assertIncludes('filtro-escalas.html', 'function pickDirect', 'filtro garante o 4º slot — teste direto na criança');
+assertIncludes('filtro-escalas.html', 'function pickSchool', 'filtro garante o 5º slot — questionário escolar');
+assertIncludes('filtro-escalas.html', 'function isDirectTest', 'filtro distingue teste direto (4º) do pódio');
+assertIncludes('filtro-escalas.html', 'function isSchoolQ', 'filtro distingue questionário escolar (5º) do pódio');
+assertIncludes('filtro-escalas.html', "['ouro','prata','bronze']", 'pódio 1–3 recebe medalha por POSIÇÃO (mais sensível = Ouro)');
+assertIncludes('filtro-escalas.html', "directPick.tier='direto'", 'o 4º recebe o selo de teste direto');
+assertIncludes('filtro-escalas.html', "schoolPick.tier='escola'", 'o 5º recebe o selo de questionário escolar');
+assertIncludes('filtro-escalas.html', "direto:'🧒", 'MEDAL tem o selo de teste direto');
+assertIncludes('filtro-escalas.html', "escola:'🏫", 'MEDAL tem o selo de questionário escolar');
+
+// ── Skin super-herói premium + som agradável (escalas-hero) ──
+assertFile('escalas-hero.css');
+assertFile('escalas-hero.js');
+assertIncludes('filtro-escalas.html', './escalas-hero.css', 'filtro carrega a skin super-herói (CSS)');
+assertIncludes('filtro-escalas.html', './escalas-hero.js', 'filtro carrega a camada hero (som + FX)');
+assertIncludes('filtro-escalas.html', 'family=Bangers', 'filtro carrega a fonte cômic Bangers do título');
+assertIncludes('escalas-hero.js', 'np_sound_v1', 'som do hero honra a preferência global de som');
+assertIncludes('escalas-hero.js', 'createOscillator', 'som agradável sintetizado em Web Audio (0 assets, offline)');
+assertNotIncludes('escalas-hero.js', '987.77', 'som do hero NÃO é a moeda 8-bit (B5 da moeda do np-sound)');
+assertIncludes('escalas-hero.css', 'prefers-reduced-motion', 'skin hero respeita prefers-reduced-motion');
+assertIncludes('retro-arcade.js', 'escalas-hero.js', 'retro-arcade documenta que o filtro tem som próprio (sem duplicar a moeda)');
+
+// ── Acessibilidade: controles rotulados (WCAG 1.3.1/4.1.2) ──
+assertIncludes('banco-escalas.html', 'aria-label="Filtrar escalas por tipo"', 'banco-escalas: <select> de filtro rotulado');
+assertIncludes('agenda-financeiro.html', 'aria-label="Excluir lançamento"', 'agenda-financeiro: botão-lixeira rotulado');
+assertIncludes('auditoria-ontologia.html', 'aria-label="Filtrar por fonte"', 'auditoria-ontologia: <select> de fonte rotulado');
+assertIncludes('neuroped-diary-engine.js', 'aria-label="${f.label}"', 'diários: <select> dinâmico rotulado pelo label do campo');
+
+// ── Skin hero consistente nas telas vizinhas de escalas ──
+assertIncludes('escala.html', './escalas-hero.css', 'escala.html herda a skin hero (CSS)');
+assertIncludes('escala.html', './escalas-hero.js', 'escala.html herda a camada hero (som + FX)');
+assertIncludes('banco-escalas.html', './escalas-hero.css', 'banco-escalas herda a skin hero (CSS)');
+assertIncludes('banco-escalas.html', './escalas-hero.js', 'banco-escalas herda a camada hero (som + FX)');
+assertIncludes('banco-escalas.html', 'data-hero-title', 'banco-escalas marca o título para o tratamento cômic');
+assertIncludes('banco-escalas.html', 'family=Bangers', 'banco-escalas carrega a fonte cômic Bangers');
+assertIncludes('escalas-hero.js', "'.engine-title,[data-hero-title]'", 'hero aplica o título em qualquer tela marcada');
+assertIncludes('escalas-hero.css', 'body.eh-on::before', 'backdrop hero só liga quando o JS marca eh-on');
+
+// ── Sensibilidade CITADA (sourced; anti-fabricação) ──
+assertFile('scales-sensitivity.js');
+assertIncludes('filtro-escalas.html', './scales-sensitivity.js', 'filtro carrega a camada de sensibilidade citada');
+assertIncludes('filtro-escalas.html', 'NeuroPedSensitivity', 'filtro lê a sensibilidade curada para o selo + desempate');
+assertIncludes('filtro-escalas.html', 'sc-sens', 'card mostra o selo de sensibilidade quando há fonte');
+assertIncludes('filtro-escalas.html', 'function sensBoost', 'pódio usa a sensibilidade citada como desempate real');
+assertIncludes('scales-sensitivity.js', 'PMID.test', 'sensibilidade só vale com PMID rastreável (sem fabricação)');
+{ // funcional: parse extrai o número; sem fonte → null; registro vivo confere
+  const require = createRequire(import.meta.url);
+  try {
+    const S = require(join(root, 'scales-sensitivity.js'));
+    (S.parse('sensibilidade 96,9% (IC95% 91,3–99,4)') === 96.9)
+      ? pass('sensitivity.parse extrai "96,9%" → 96.9') : fail('sensitivity.parse não extraiu o número');
+    (S.parse('afirmação qualitativa sem número') === null)
+      ? pass('sensitivity.parse ignora afirmação sem número (não fabrica)') : fail('sensitivity.parse inventou número');
+    const reg = JSON.parse(file('evidence-registry.json') || '{}');
+    const asq = ((reg.instruments || {})['ofc-asq'] || {}).validation_sources || [];
+    const found = asq.map(s => S.parse(s && s.statement)).find(v => v != null);
+    (found === 96.9) ? pass('registro vivo: ofc-asq → sensibilidade 96,9% (PMID curado)')
+                     : warn('registro vivo: ofc-asq sem 96,9% parseável', String(found));
+  } catch (e) { fail('scales-sensitivity.js não pôde ser exercitado', e.message); }
+}
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');

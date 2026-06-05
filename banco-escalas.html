@@ -19,13 +19,26 @@
   .rawx{margin-top:14px;border:1px solid var(--line,rgba(169,164,255,.16));border-radius:var(--radius-md);background:rgba(124,118,210,.05)}.rawx>summary{cursor:pointer;padding:11px 14px;font-size:12.5px;font-weight:800;color:var(--muted,var(--text-muted));list-style:none;user-select:none}.rawx>summary::-webkit-details-marker{display:none}.rawx>summary::before{content:"▸ ";color:var(--teal,var(--primary))}.rawx[open]>summary::before{content:"▾ "}.rawx .result{margin:0 14px 14px}</style>
 <link rel="stylesheet" href="./app-polish-mobile.css">
 <link rel="stylesheet" href="./escalas-card-premium.css"><link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="./escalas-hero.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <script src="./np-version-tag.js" defer></script>
+    <script src="./np-honesty.js" defer></script>
 </head>
 <body>
   <main class="wrap">
+<aside id="tier-legenda" style="margin:16px 0 24px;padding:16px 20px;background:rgba(15,15,34,.6);border:1px solid rgba(255,255,255,.08);border-radius:14px;font:13px/1.5 'Inter',system-ui,sans-serif;color:#F5F3FF;">
+  <strong style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#7C79FF;display:block;margin-bottom:10px;">Como ler esta lista</strong>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+    <div><span style="display:inline-block;width:10px;height:10px;background:linear-gradient(135deg,#FFD89B,#E7C98B);border-radius:50%;vertical-align:middle;margin-right:6px;"></span><strong>Gold-standard</strong> — validado internacionalmente (SNAP-IV, Vanderbilt, M-CHAT-R/F)</div>
+    <div><span style="display:inline-block;width:10px;height:10px;background:linear-gradient(135deg,#9D9BFF,#7C79FF);border-radius:50%;vertical-align:middle;margin-right:6px;"></span><strong>Autoral NeuroPed</strong> — instrumento operacional do Dr. Jadson (não normatizado)</div>
+    <div><span style="display:inline-block;width:10px;height:10px;background:#FBBF24;border-radius:50%;vertical-align:middle;margin-right:6px;"></span><strong>Licenciada</strong> — proprietária, requer autorização do titular</div>
+  </div>
+</aside>
+
     <section class="hero">
       <div class="kicker">NeuroPed SDG · Banco seguro de instrumentos</div>
-      <h1>Escalas e inventários por extenso</h1>
+      <h1 data-hero-title>Escalas e inventários por extenso</h1>
       <p>Camada estática para integrar, uma a uma, as escalas realmente preenchíveis. As escalas autorais/operacionais podem aparecer por extenso. Escalas proprietárias ou licenciadas ficam travadas até inserção local com autorização/licença.</p>
     </section>
 
@@ -148,6 +161,7 @@ renderList();renderDetail();
 <script src="./escalas-card-premium.js" defer></script><script src="./app-frame.js" defer></script>
 <script src="./ambient-effects.js" defer></script>
     <script src="./retro-arcade.js" defer></script>
+    <script src="./escalas-hero.js" defer></script>
     <script src="./np-lgpd-consent.js" defer></script>
 </body>
 </html>
