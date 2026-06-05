@@ -72,7 +72,16 @@
   }
   function toast(msg) {
     try { if (typeof window.npToast === 'function') { window.npToast(msg); return; } } catch (e) {}
-    try { console.log('[NeuroPed]', msg); } catch (e) {}
+    // Fallback autossuficiente (0 console em produção): toast efêmero no DOM,
+    // visível ao usuário (o console.log anterior não era). Não depende do DS.
+    try {
+      var el = document.createElement('div');
+      el.setAttribute('role', 'status');
+      el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2147483647;max-width:90vw;padding:10px 14px;border-radius:12px;background:#15152e;color:#f5f3ff;font:500 13px system-ui;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+      el.textContent = String(msg);
+      (document.body || document.documentElement).appendChild(el);
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 4000);
+    } catch (e) {}
   }
 
   /* ---------- Modal de consentimento (1ª vez) ---------- */

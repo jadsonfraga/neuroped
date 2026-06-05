@@ -12,6 +12,7 @@
     "engine": "node scripts/test-preconsulta-engine.mjs",
     "version:check": "node scripts/check-version.mjs",
     "conflicts:check": "node scripts/check-no-conflicts.mjs",
+    "audit": "node scripts/audit-report.mjs",
     "verify": "node scripts/check-no-conflicts.mjs && node scripts/check-version.mjs && node scripts/test-static.mjs && node scripts/smoke.mjs && node scripts/test-preconsulta-engine.mjs && node tests/run-clinical-tests.mjs"
   },
   "dependencies": {
