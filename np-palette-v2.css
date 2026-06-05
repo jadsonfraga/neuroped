@@ -25,10 +25,10 @@
   /* ===== TEXTO off-white frio neutro ===== */
   --np-text:       #EAECF4;
   --np-text-mute:  #9CA2B0;
-  --np-text-low:   #5A6075;
+  --np-text-low:   #868CA1;   /* AA ≥4.5 sobre o fundo escuro (era 2.97) */
 
   /* ===== ACENTO violet-blue (Linear/Anthropic) ===== */
-  --np-accent:     #6066F0;
+  --np-accent:     #7177F3;   /* leve clareada p/ link AA ≥4.5 no escuro (era 4.11) */
   --np-accent-hi:  #8B91FF;
   --np-accent-low: #4046C8;
 
@@ -51,8 +51,12 @@
   --np-edge-hi:    rgba(11, 13, 23, 0.14);
   --np-text:       #0A0D17;
   --np-text-mute:  #4B5060;
-  --np-text-low:   #8A8FA0;
+  --np-text-low:   #6B7186;   /* AA ≥4.5 sobre branco */
   --np-accent:     #4046C8;
   --np-accent-hi:  #2E33A6;
-  --np-gold:       #A88F5B;
+  --np-gold:       #7C6A38;   /* AA ≥4.5 sobre branco (champagne escuro) */
+  /* Semânticas escurecidas p/ AA em fundo CLARO (o :root v2 deixa bright = ilegível) */
+  --np-success:    #0A7C50;
+  --np-warn:       #B45309;
+  --np-danger:     #BE123C;
 }

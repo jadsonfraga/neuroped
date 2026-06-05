@@ -11,17 +11,29 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const strict = process.argv.includes('--strict');
-const css = readFileSync(join(process.cwd(), 'np-tokens.css'), 'utf8');
 
-function block(re) { const m = css.match(re); return m ? m[1] : ''; }
+// Lê a PALETA EFETIVA na ordem real da cascata. np-palette-v2.css é carregado
+// DEPOIS de np-tokens.css em todas as páginas e sobrescreve os tokens — então
+// medir só np-tokens dava contraste FALSO. Camadas (última vence):
+//   dark  = np-tokens:root → palette-v2:root
+//   light = np-tokens:root → np-tokens[light] → palette-v2:root → palette-v2[light]
+function read(f) { try { return readFileSync(join(process.cwd(), f), 'utf8'); } catch { return ''; } }
+function blk(src, re) { const m = src.match(re); return m ? m[1] : ''; }
 function vars(src) {
   const out = {};
   for (const m of src.matchAll(/--(np-[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\s*;/g)) out[m[1]] = m[2];
   return out;
 }
-const dark = vars(block(/:root\s*\{([\s\S]*?)\}/));
-const lightOverride = vars(block(/\[data-theme="light"\]\s*\{([\s\S]*?)\}/));
-const light = { ...dark, ...lightOverride };   // light herda dark onde não sobrescreve
+const FILES = ['np-tokens.css', 'np-palette-v2.css'];
+const layersDark = [], layersLight = [];
+for (const f of FILES) { const s = read(f); if (!s) continue;
+  const root = vars(blk(s, /:root\s*\{([\s\S]*?)\}/));
+  const lt = vars(blk(s, /\[data-theme="light"\]\s*\{([\s\S]*?)\}/));
+  layersDark.push(root);
+  layersLight.push(root, lt);   // cascata REAL: por arquivo, :root depois [light]
+}
+const dark = Object.assign({}, ...layersDark);
+const light = Object.assign({}, ...layersLight);
 
 function hexToRgb(h) {
   h = h.replace('#', '');
