@@ -128,6 +128,47 @@ assert(top.length >= 1 && top.length <= 3, `pickTop devolve top-3 (${top.length}
 const ids = top.map(r => r.s.id);
 assert(new Set(ids).size === ids.length, 'pickTop não repete instrumento no topo');
 
+// 5) SMARTRANK — funções puras (unidade de lógica, não só fiação) -----------
+assert(Smart.modalityOf(null) === 'escala', 'modalityOf(null) → escala (default seguro)');
+assert(Smart.modalityOf({ direct_test: true }) === 'direto', 'modalityOf: direct_test → direto');
+assert(Smart.modalityOf({ kind: 'teste_direto' }) === 'direto', 'modalityOf: kind teste_direto → direto');
+assert(Smart.modalityOf({ audience: 'familia' }) === 'familia', 'modalityOf: audience familia → familia');
+assert(Smart.modalityOf({ audience: 'escola' }) === 'escola', 'modalityOf: audience escola → escola');
+assert(Smart.modalityOf({ audience: 'clinico' }) === 'escala', 'modalityOf: audience desconhecido → escala (fallback)');
+
+const sA = { domain: 'TDAH', age_band: '6-12', audience: 'familia' };
+const sB = { domain: 'TDAH', age_band: '6-12', audience: 'escola' };
+assert(Smart.sig(sA) === Smart.sig({ ...sA }), 'sig: instrumentos equivalentes → mesma assinatura');
+assert(Smart.sig(sA) !== Smart.sig(sB), 'sig: respondente diferente → assinatura diferente');
+
+const dd = Smart.dedupAll([{ s: { id: 'a', ...sA }, sc: 3 }, { s: { id: 'b', ...sA }, sc: 2 }, { s: { id: 'c', ...sB }, sc: 1 }]);
+assert(dd.length === 2 && dd[0].s.id === 'a', 'dedupAll: colapsa variante quase idêntica e mantém a 1ª (maior score)');
+
+const mixRows = [
+  { s: { id: 'e1', domain: 'd1', age_band: 'x', audience: 'clinico' }, sc: 9 },
+  { s: { id: 'e2', domain: 'd2', age_band: 'x', audience: 'clinico' }, sc: 8 },
+  { s: { id: 'dt', domain: 'd3', age_band: 'x', direct_test: true }, sc: 5 },
+  { s: { id: 'fm', domain: 'd4', age_band: 'x', audience: 'familia' }, sc: 4 }];
+const mixMods = Smart.pickTop(mixRows, 3).map(r => Smart.modalityOf(r.s));
+assert(mixMods.includes('direto') && mixMods.includes('familia'),
+  `pickTop mistura modalidades quando há de cada (1 direto + 1 família): [${mixMods.join(',')}]`);
+
+assert(Smart.constructsOf('autismo').includes('tea'), 'constructsOf: "autismo" → construto tea');
+assert(Smart.constructsOf('adolescente muito ansioso e com medo').includes('ansiedade'), 'constructsOf: queixa de ansiedade → construto ansiedade');
+assert(Array.isArray(Smart.expand('')) && Array.isArray(Smart.expand('   ')), 'expand("") / espaços não quebram (retornam array)');
+const gib = Smart.expand('xyzqwk zzzz');
+assert(Array.isArray(gib) && !gib.includes('tdah') && !gib.includes('tea'), 'expand(gibberish) não inventa construto clínico');
+
+// 6) SEGURANÇA — instrumentos de risco NUNCA chegam à família/secretaria -----
+// Invariante crítico: rastreio/avaliação de suicídio ou autolesão exige
+// profissional treinado e juízo de risco ao vivo; jamais é auto-aplicado na
+// sala de espera. Pega regressão como o ASQ vazando por ID desatualizado.
+const riskRe = /suic[ií]d|autoexterm|se machucar|automutila|autoles[ãa]o|idea[çc][ãa]o suicida|risco de vida/i;
+const riskItems = cat.filter(s => riskRe.test([s.title, s.short_title, s.domain].join(' ')));
+const riskLeak = riskItems.filter(s => Gate.allow(s));
+assert(riskItems.length === 0 || riskLeak.length === 0,
+  `instrumentos de risco (suicídio/autolesão) barrados da pré-consulta (${riskItems.length} no catálogo, ${riskLeak.length} vazando${riskLeak.length ? ': ' + riskLeak.map(s => s.id).join(',') : ''})`);
+
 // ── Relatório ──
 console.log(oks.join('\n'));
 if (fails.length) {

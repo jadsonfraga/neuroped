@@ -45,10 +45,13 @@
   // 3) APLICAÇÃO CLÍNICA — gate conservador: o catálogo não traz duração/training,
   // então cruzamos uma blocklist de IDs conhecidos + padrão de nome (cirúrgico).
   var CLINICAL_BLOCK = {
-    'ofc-cssrs': 1, 'ofc-asq-suicide': 1, 'ofc-gmfcs-er': 1, 'ofc-gmfcs': 1,
+    'ofc-cssrs': 1, 'ofc-asq': 1, 'ofc-asq-suicide': 1, 'ofc-gmfcs-er': 1, 'ofc-gmfcs': 1,
     'ofc-cars-2': 1, 'ofc-vineland-3': 1, 'ofc-conners-3': 1, 'ofc-cbcl': 1
   };
-  var CLINICAL_RE = /entrevista (clinic|estrutur|diagnost|semiestrut)|observacao clinica estrutur|\bados\b|\badi-?r\b|\bcars\b|vineland|conners|c-?ssrs|columbia.*(suic|risco|ideac)|escala de inteligenc|\bwisc\b|\bwais\b|\bwppsi\b|gmfcs/;
+  // 'suicid' casa PT (suicídio/suicida → suicidio/suicida) E EN (suicide, pois
+  // contém 'suicid'); rede de segurança: rastreio de risco NUNCA é auto-aplicado
+  // pela família/secretaria na sala de espera, qualquer que seja o ID.
+  var CLINICAL_RE = /entrevista (clinic|estrutur|diagnost|semiestrut)|observacao clinica estrutur|\bados\b|\badi-?r\b|\bcars\b|vineland|conners|c-?ssrs|columbia.*(suic|risco|ideac)|suicid|autoexterm|automutila|autolesao|ideacao suicida|risco de vida|escala de inteligenc|\bwisc\b|\bwais\b|\bwppsi\b|gmfcs/;
   function isClinicalOnly(s) {
     if (!s) return false;
     if (CLINICAL_BLOCK[s.id]) return true;
