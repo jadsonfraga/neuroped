@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html data-theme="dark" lang="pt-BR">
 <head>
 <script src="./public-mode.js"></script>
 <meta charset="utf-8">
@@ -11,8 +11,12 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <script src="./np-version-tag.js" defer></script>
     <script src="./np-honesty.js" defer></script>
+    <link rel="stylesheet" href="./np-tokens.css">
+    <link rel="stylesheet" href="./np-foundation.css">
+    <link rel="stylesheet" href="./np-components.css">
+    <script src="./np-backend-flag.js" defer></script>
 </head>
-<body><main class="wrap"><section class="hero"><h1>Smoke Test Operacional</h1><p class="muted">Teste de rotas, manifest, cache, PIN master e portal da família livre.</p><div class="row"><button onclick="runTests()">Executar testes</button><button class="ghost" onclick="copyResults()">Copiar resultado</button><a class="btn ghost" href="./escalas.html">Voltar ao índice</a></div></section><section id="summary" class="card warn" style="margin-top:16px">Aguardando execução.</section><section id="results" class="grid"></section><h2>Relatório copiável</h2><pre id="log">Sem resultados.</pre></main>
+<body class="np-stage np-skin"><main class="wrap"><section class="hero"><h1>Smoke Test Operacional</h1><p class="muted">Teste de rotas, manifest, cache, PIN master e portal da família livre.</p><div class="row"><button onclick="runTests()">Executar testes</button><button class="ghost" onclick="copyResults()">Copiar resultado</button><a class="btn ghost" href="./escalas.html">Voltar ao índice</a></div></section><section id="summary" class="card warn" style="margin-top:16px">Aguardando execução.</section><section id="results" class="grid"></section><h2>Relatório copiável</h2><pre id="log">Sem resultados.</pre></main>
 <script>
 const tests=[];function add(name,fn){tests.push({name,fn})}async function getText(url){const r=await fetch(url,{cache:'no-store'});const text=await r.text();return{ok:r.ok,status:r.status,text}}function expect(text,needle){return String(text).includes(needle)}
 add('Rota index.html carrega',async()=>{const r=await getText('./index.html');return r.ok&&expect(r.text,'master-access-policy.js')});

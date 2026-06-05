@@ -1,0 +1,21 @@
+name: smoke-prod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "13 7 * * *"   # diário 07h13 UTC = ~04h13 BRT
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Aguarda GitHub Pages reconstruir
+        run: sleep 90
+      - name: Smoke
+        run: node scripts/smoke-prod.mjs

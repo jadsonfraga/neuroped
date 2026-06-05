@@ -1,21 +1,23 @@
-# CODEOWNERS — NeuroPed SDG
-# Documentação: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# CODEOWNERS · MP9.0 WS5 — Confiabilidade / Processo
+# Cada PR que toca os arquivos abaixo requer review do owner correspondente.
 
-# Owner padrão para todo o repositório
-* @jadsonfraga
+# Engines clínicas — não merge sem o Dr.
+/clinical-*.js                   @jadsonfraga
+/neuroped-*-engine.js            @jadsonfraga
+/neuroped-canonical-instruments.js @jadsonfraga
+/neuroped-preconsulta-filter.js  @jadsonfraga
+/QA_FILTRO_15.md                 @jadsonfraga
+/MIGRATION_BACKEND.md            @jadsonfraga
 
-# Política e segurança
-/SECURITY.md @jadsonfraga
-/LICENSE @jadsonfraga
-/privacidade.html @jadsonfraga
-/acessibilidade.html @jadsonfraga
-/terms-of-use.html @jadsonfraga
+# Design system — tokens canônicos
+/np-tokens.css                   @jadsonfraga
+/np-foundation.css               @jadsonfraga
+/np-components.css               @jadsonfraga
+/np-motion.js                    @jadsonfraga
 
-# Workflows e configurações sensíveis
-/.github/ @jadsonfraga
-/_headers @jadsonfraga
-/_redirects @jadsonfraga
+# Workflows CI
+/.github/workflows/              @jadsonfraga
 
-# Manifesto e service worker (mudanças impactam usuários instalados)
-/manifest.json @jadsonfraga
-/sw.js @jadsonfraga
+# Scripts de auditoria/teste
+/scripts/                        @jadsonfraga
+/tests/                          @jadsonfraga
