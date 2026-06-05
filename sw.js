@@ -33,7 +33,9 @@ const SHELL = [
   './scales-evidence-panel.js','./curated-evidence/instruments.json',
   './ds-tokens.css','./ds-pilot.html',
   './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js',
-  './escalas-hero.css','./escalas-hero.js','./scales-sensitivity.js'
+  './escalas-hero.css','./escalas-hero.js','./scales-sensitivity.js',
+  // Design system Apple-grade (np-*): tokens/fundo/skin/tema/motion + componentes/catálogo — offline-first.
+  './np-tokens.css','./np-foundation.css','./np-skin.css','./np-theme.js','./np-motion.js','./np-components.css','./np-catalog.css'
 ];
 
 self.addEventListener('install', e => {
