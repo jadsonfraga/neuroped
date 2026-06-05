@@ -27,8 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-<style>
-  body{--cie-accent:var(--np-accent);--cie-edge:color-mix(in srgb,var(--np-accent) 20%,transparent);--cie-edge-2:color-mix(in srgb,var(--np-accent) 34%,transparent);--cie-fill:color-mix(in srgb,var(--np-accent) 13%,transparent);--cie-fill-soft:color-mix(in srgb,var(--np-accent) 7%,transparent);--cie-glass:color-mix(in srgb,var(--np-ink-2) 80%,transparent);background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);min-height:100vh;font-family:var(--font-sans,system-ui)}
+<style>body{--cie-accent:var(--np-accent);--cie-edge:color-mix(in srgb,var(--np-accent) 20%,transparent);--cie-edge-2:color-mix(in srgb,var(--np-accent) 34%,transparent);--cie-fill:color-mix(in srgb,var(--np-accent) 13%,transparent);--cie-fill-soft:color-mix(in srgb,var(--np-accent) 7%,transparent);--cie-glass:color-mix(in srgb,var(--np-ink-2) 80%,transparent);--cie-ok:var(--np-success);--cie-ok-fl:color-mix(in srgb,var(--np-success) 14%,transparent);--cie-ok-ln:color-mix(in srgb,var(--np-success) 30%,transparent);--cie-warn:var(--np-warn);--cie-warn-fl:color-mix(in srgb,var(--np-warn) 14%,transparent);--cie-warn-ln:color-mix(in srgb,var(--np-warn) 32%,transparent);--cie-bad:var(--np-danger);--cie-bad-fl:color-mix(in srgb,var(--np-danger) 13%,transparent);--cie-bad-ln:color-mix(in srgb,var(--np-danger) 32%,transparent);--cie-gold:var(--np-gold);--cie-gold-fl:color-mix(in srgb,var(--np-gold) 12%,transparent);--cie-gold-ln:color-mix(in srgb,var(--np-gold) 28%,transparent);--cie-mut:var(--np-text-mute);--cie-mut-fl:color-mix(in srgb,var(--np-text-mute) 14%,transparent);--cie-mut-ln:color-mix(in srgb,var(--np-text-mute) 32%,transparent);--cie-info:#60a5fa;--cie-info-fl:color-mix(in srgb,#60a5fa 14%,transparent);--cie-info-ln:color-mix(in srgb,#60a5fa 30%,transparent);background:var(--bg,#0a0a16);color:var(--text,#ECEAFF);min-height:100vh;font-family:var(--font-sans,system-ui)}
   .wrap{max-width:1060px;margin:0 auto;padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px))}
   .back{display:inline-flex;align-items:center;gap:7px;color:var(--cie-accent);text-decoration:none;font-weight:700;font-size:14px;margin:4px 0 2px}
   /* Header */
@@ -58,16 +57,16 @@
   .chip.qcat small{opacity:.6;font-size:10px;margin-left:3px}
   .chip.qcat.active{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border-color:transparent}
   .qchips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
-  .actnote{max-width:760px;margin:8px auto 0;font-size:12.5px;text-align:center;color:#a7f3d0;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:7px 11px}
-  .actnote button{background:none;border:0;color:#fda4af;font-weight:700;cursor:pointer;margin-left:8px;font-size:12px}
+  .actnote{max-width:760px;margin:8px auto 0;font-size:12.5px;text-align:center;color:var(--cie-ok);background:var(--cie-ok-fl);border:1px solid var(--cie-ok-ln);border-radius:10px;padding:7px 11px}
+  .actnote button{background:none;border:0;color:var(--cie-bad);font-weight:700;cursor:pointer;margin-left:8px;font-size:12px}
   .recent{max-width:760px;margin:10px auto 0;display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:center}
   .recent .rlb{font:800 11px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted,#94A3B8)}
   .chip.rchip{font-size:12px;padding:5px 11px;background:var(--cie-fill-soft)}
-  .chip.rclear{font-size:11px;padding:5px 9px;color:#fda4af;background:transparent;border-color:rgba(244,63,94,.25)}
-  .chip.dchip{font-size:12px;padding:5px 11px;background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.28)}
+  .chip.rclear{font-size:11px;padding:5px 9px;color:var(--cie-bad);background:transparent;border-color:var(--cie-bad-ln)}
+  .chip.dchip{font-size:12px;padding:5px 11px;background:var(--cie-ok-fl);color:var(--cie-ok);border-color:var(--cie-ok-ln)}
   .dhint{font-size:11px;color:var(--text-soft,#8b86b8)}
   .rec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .applynow{display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;font:800 12.5px system-ui;color:#fff;border-radius:12px;padding:8px 14px;background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 10px 22px -10px rgba(231,201,139,.6)}
+  .applynow{display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;font:800 12.5px system-ui;color:#fff;border-radius:12px;padding:8px 14px;background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 10px 22px -10px var(--cie-gold-ln)}
   .applynow:active{transform:scale(.97)}
   .chip{padding:7px 14px;border-radius:999px;font:700 13px system-ui;cursor:pointer;color:var(--text);
     background:var(--cie-fill);border:1px solid var(--cie-edge);transition:transform .16s,border-color .18s,background .18s,box-shadow .18s}
@@ -79,15 +78,15 @@
   .chip.resp.active{background:linear-gradient(135deg,#7C3AED,#4F46E5)}
   .legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:11px auto 0;font-size:11.5px;color:var(--text-muted,#94A3B8)}
   .sc-medal{display:inline-flex;align-items:center;gap:5px;font:800 11.5px system-ui;border-radius:999px;padding:5px 12px;letter-spacing:.01em}
-  .sc-medal.ouro{background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 8px 18px -8px rgba(231,201,139,.65)}
+  .sc-medal.ouro{background:linear-gradient(135deg,#e7c98b,#caa56a);color:#241a05;box-shadow:0 8px 18px -8px var(--cie-gold-ln)}
   .sc-medal.prata{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#1e293b}
   .sc-medal.bronze{background:linear-gradient(135deg,rgba(205,127,80,.55),rgba(146,90,56,.55));color:#f3e3d6;border:1px solid rgba(205,127,80,.45)}
   .sc-medal.direto{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 8px 18px -8px rgba(124,58,237,.6)}
   .sc-medal.escola{background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#05223a;box-shadow:0 8px 18px -8px rgba(14,165,233,.55)}
-  .sc-badge.resp{background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.26)}
+  .sc-badge.resp{background:var(--cie-ok-fl);color:var(--cie-ok);border-color:var(--cie-ok-ln)}
   /* Seções + grid */
   .detected{max-width:760px;margin:0 auto 6px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center}
-  .detected b{color:#a7f3d0}
+  .detected b{color:var(--cie-ok)}
   .section-label{display:flex;align-items:center;gap:9px;font:800 12px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--primary-light,var(--cie-accent));margin:18px 2px 10px}
   .section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--cie-edge-2),transparent)}
   .np-cards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -104,13 +103,13 @@
   .sc-card.tier-direto::before{background:linear-gradient(90deg,#a78bfa,#7c3aed)}
   .sc-card.tier-escola::before{background:linear-gradient(90deg,#38bdf8,#0ea5e9)}
   .sc-card:hover{transform:translateY(-2px);border-color:var(--cie-edge-2);box-shadow:0 28px 64px -28px rgba(91,84,232,.5)}
-  .sc-card.top{border-color:rgba(231,201,139,.4);box-shadow:0 0 0 1px rgba(231,201,139,.3),0 26px 60px -26px rgba(231,201,139,.28)}
+  .sc-card.top{border-color:var(--cie-gold-ln);box-shadow:0 0 0 1px var(--cie-gold-ln),0 26px 60px -26px var(--cie-gold-ln)}
   .sc-medalrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   /* Pílula de confiança: quantifica o "fit" 0–100 do ranking (transparência) */
   .sc-conf{margin-left:auto;font:800 10px system-ui;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:3px 9px;align-self:center;white-space:nowrap}
-  .sc-conf.alta{background:rgba(16,185,129,.16);color:#6ee7b7;border:1px solid rgba(16,185,129,.32)}
-  .sc-conf.boa{background:rgba(245,158,11,.14);color:#fcd34d;border:1px solid rgba(245,158,11,.32)}
-  .sc-conf.parcial{background:rgba(148,163,184,.14);color:var(--text-muted);border:1px solid rgba(148,163,184,.32)}
+  .sc-conf.alta{background:var(--cie-ok-fl);color:var(--cie-ok);border:1px solid var(--cie-ok-ln)}
+  .sc-conf.boa{background:var(--cie-warn-fl);color:var(--cie-warn);border:1px solid var(--cie-warn-ln)}
+  .sc-conf.parcial{background:var(--cie-mut-fl);color:var(--text-muted);border:1px solid var(--cie-mut-ln)}
   .sc-head{display:flex;align-items:center;gap:12px}
   .sc-sigla{width:44px;height:44px;flex:0 0 auto;border-radius:14px;display:grid;place-items:center;font:800 15px "Fraunces",Georgia,serif;color:#fff;
     background:linear-gradient(140deg,var(--c1,#7c79ff),var(--c2,#4f46e5));box-shadow:0 10px 22px -10px var(--c1,#7c79ff)}
@@ -119,28 +118,28 @@
   .sc-sub{font-size:12px;color:var(--text-muted,#b6b2e6)}
   .sc-badges{display:flex;flex-wrap:wrap;gap:6px}
   .sc-badge{font:700 10.5px system-ui;border-radius:999px;padding:4px 9px;background:var(--cie-fill);color:var(--text);border:1px solid var(--cie-edge)}
-  .sc-badge.age{background:rgba(16,185,129,.14);color:#6ee7b7;border-color:rgba(16,185,129,.28)}
-  .sc-badge.lic-livre,.sc-badge.lic-livre-nc,.sc-badge.lic-autoral{background:rgba(16,185,129,.14);color:#6ee7b7;border-color:rgba(16,185,129,.3)}
-  .sc-badge.lic-livre-reg{background:rgba(96,165,250,.14);color:#93c5fd;border-color:rgba(96,165,250,.3)}
-  .sc-badge.lic-verificar{background:rgba(148,163,184,.14);color:var(--text-muted);border-color:rgba(148,163,184,.32)}
-  .sc-badge.lic-restrito{background:rgba(244,63,94,.14);color:#fda4af;border-color:rgba(244,63,94,.32)}
+  .sc-badge.age{background:var(--cie-ok-fl);color:var(--cie-ok);border-color:var(--cie-ok-ln)}
+  .sc-badge.lic-livre,.sc-badge.lic-livre-nc,.sc-badge.lic-autoral{background:var(--cie-ok-fl);color:var(--cie-ok);border-color:var(--cie-ok-ln)}
+  .sc-badge.lic-livre-reg{background:var(--cie-info-fl);color:var(--cie-info);border-color:var(--cie-info-ln)}
+  .sc-badge.lic-verificar{background:var(--cie-mut-fl);color:var(--text-muted);border-color:var(--cie-mut-ln)}
+  .sc-badge.lic-restrito{background:var(--cie-bad-fl);color:var(--cie-bad);border-color:var(--cie-bad-ln)}
   .sc-badge.orig{background:transparent;border:0;padding:4px 2px;font-size:13px}
-  .sc-ev{font-size:11.5px;color:var(--text-muted);background:rgba(231,201,139,.10);border:1px solid rgba(231,201,139,.24);border-radius:10px;padding:7px 10px;line-height:1.45}
-  .sc-ev b{color:#e8dcc2}
+  .sc-ev{font-size:11.5px;color:var(--text-muted);background:var(--cie-gold-fl);border:1px solid var(--cie-gold-ln);border-radius:10px;padding:7px 10px;line-height:1.45}
+  .sc-ev b{color:var(--cie-gold)}
   .sc-why{font-size:12px;color:var(--text-muted,#94A3B8);line-height:1.4}
   .sc-why b{color:var(--text-muted)}
   /* Eixos da medalha (queixa · idade · quem responde) — explicabilidade */
   .sc-axes{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
   .sc-ax{display:inline-flex;align-items:center;gap:4px;font:800 10.5px system-ui;border-radius:8px;padding:3px 8px;background:var(--cie-fill-soft);border:1px solid var(--cie-edge);color:var(--text);white-space:nowrap}
-  .sc-ax.ok{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.32);color:#6ee7b7}
-  .sc-ax.partial{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32);color:#fcd34d}
-  .sc-ax.no{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#fca5a5}
+  .sc-ax.ok{background:var(--cie-ok-fl);border-color:var(--cie-ok-ln);color:var(--cie-ok)}
+  .sc-ax.partial{background:var(--cie-warn-fl);border-color:var(--cie-warn-ln);color:var(--cie-warn)}
+  .sc-ax.no{background:var(--cie-bad-fl);border-color:var(--cie-bad-ln);color:var(--cie-bad)}
   /* Painel-guia "o que observar em casa" (perguntas-guia por queixa) */
   #guidePanel{max-width:760px;margin:0 auto 6px}
   .guide{border:1px solid var(--cie-edge);border-radius:14px;background:linear-gradient(180deg,var(--cie-fill-soft),var(--cie-fill-soft));overflow:hidden}
   .guide>summary{cursor:pointer;list-style:none;padding:11px 14px;font:800 12.5px system-ui;color:var(--text);display:flex;align-items:center;gap:8px}
   .guide>summary::-webkit-details-marker{display:none}
-  .guide .gtag{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:#a7f3d0;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.28);border-radius:999px;padding:2px 8px}
+  .guide .gtag{font:800 10px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--cie-ok);background:var(--cie-ok-fl);border:1px solid var(--cie-ok-ln);border-radius:999px;padding:2px 8px}
   .guide .glist{padding:2px 14px 10px;display:grid;gap:9px}
   .gq{border-left:2px solid var(--cie-edge-2);padding-left:10px}
   .gqh{font:700 13px system-ui;color:var(--text,#ECEAFF);line-height:1.35}
@@ -166,6 +165,9 @@
   /* foco programático (pós-busca) no cabeçalho/grade não mostra anel persistente */
   .section-label[tabindex]:focus:not(:focus-visible),#allResults[tabindex]:focus:not(:focus-visible){outline:none}
   @media(prefers-reduced-motion:reduce){.sc-card{animation:none;transition:none}.search-box{transition:none}.chip{transition:none}.sc-skel::after{animation:none}.astro{animation:none}}
+  .trust{display:flex;flex-wrap:wrap;justify-content:center;gap:7px 16px;margin-top:10px;font:600 10px/1 system-ui;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft,#8b86b8)}
+  .trust span{position:relative}.trust span+span::before{content:"";position:absolute;left:-9px;top:50%;width:3px;height:3px;border-radius:50%;background:var(--cie-edge-2);transform:translateY(-50%)}
+  [data-theme="light"] body{--cie-ok:#0a8a5b;--cie-warn:#b45309;--cie-bad:#be123c;--cie-gold:#8a6a2c;--cie-info:#1d6fd0}
 </style>
 <link rel="stylesheet" href="./escalas-hero.css">
     <script src="./clinical-lgpd-consent.js" defer></script>
@@ -200,6 +202,7 @@
     </svg>
     <h1 class="engine-title">Clinical Intelligence Engine</h1>
     <p>Descreva <strong>idade + queixa</strong> — a busca prioriza os instrumentos certos do catálogo, com evidência curada quando houver.</p>
+    <div class="trust" aria-label="Rigor clínico"><span>Protocolos integrados</span><span>Fluxos estruturados</span><span>Revisão contínua</span><span>Arquitetura assistiva</span></div>
   </header>
 
   <div class="search-container">
