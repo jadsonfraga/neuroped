@@ -294,9 +294,17 @@ export async function onRequestPost({ request, env }) {
       };
     } else {
       // === MODO AVANÇADO (sem ICP-Brasil) ===
+      // Fail-closed: sem SIGNING_SECRET configurado NÃO assinamos. O fallback
+      // antigo usava uma chave de dev conhecida ('NEUROPED_DEV_KEY') → qualquer
+      // um reproduziria o HMAC e forjaria a assinatura. Melhor erro explícito do
+      // que documento "assinado" com chave pública. Configure SIGNING_SECRET
+      // (Secret no Cloudflare Pages) ou habilite o certificado ICP-Brasil.
+      if (!env.SIGNING_SECRET) {
+        return json({ ok: false, error: 'signing_not_configured' }, 503);
+      }
       const sigKey = await crypto.subtle.importKey(
         'raw',
-        new TextEncoder().encode(env.SIGNING_SECRET || 'NEUROPED_DEV_KEY'),
+        new TextEncoder().encode(env.SIGNING_SECRET),
         { name: 'HMAC', hash: 'SHA-256' },
         false, ['sign']
       );
