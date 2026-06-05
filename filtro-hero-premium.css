@@ -13,15 +13,15 @@
   font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--np-text-mute, #A8A5C8);
   padding: 7px 14px; border-radius: 999px;
-  background: linear-gradient(135deg, rgba(124,121,255,.10), rgba(231,201,139,.06));
-  border: 1px solid rgba(124,121,255,.22);
+  background: linear-gradient(135deg, rgba(96,102,240,.09), rgba(207,180,124,.05));
+  border: 1px solid rgba(96,102,240,.20);
   margin-bottom: 32px;
   backdrop-filter: saturate(160%) blur(10px);
 }
 .np-hero-cie__eyebrow::before {
   content: ""; width: 6px; height: 6px;
-  background: var(--np-accent, #7C79FF); border-radius: 50%;
-  box-shadow: 0 0 12px var(--np-accent, #7C79FF);
+  background: var(--np-accent, #6066F0); border-radius: 50%;
+  box-shadow: 0 0 12px var(--np-accent, #6066F0);
   animation: np-hero-cie-pulse 2.4s ease-out infinite;
 }
 @keyframes np-hero-cie-pulse {
@@ -39,9 +39,9 @@
 }
 .np-hero-cie__t1 {
   display: block; font-style: italic;
-  background: linear-gradient(180deg, #F5F3FF 0%, #C9C5FF 35%, #7C79FF 75%, #5A57F0 100%);
+  background: linear-gradient(180deg, #EAECF4 0%, #B8BCFF 35%, #6066F0 75%, #4046C8 100%);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 80px rgba(124,121,255,.18);
+  text-shadow: 0 0 80px rgba(96,102,240,.20);
 }
 .np-hero-cie__t2 {
   display: block; margin-top: 4px;
@@ -54,16 +54,16 @@
   content: ""; position: absolute; left: 50%; bottom: -14px;
   transform: translateX(-50%);
   width: clamp(60px, 14%, 140px); height: 2px;
-  background: linear-gradient(90deg, transparent, var(--np-gold, #E7C98B), transparent);
+  background: linear-gradient(90deg, transparent, var(--np-gold, #CFB47C), transparent);
   border-radius: 2px; opacity: .75;
 }
 
 .np-hero-cie__halo {
   position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background:
-    radial-gradient(720px 360px at 50% 38%, rgba(124,121,255,.28), transparent 60%),
-    radial-gradient(540px 280px at 30% 20%, rgba(157,155,255,.18), transparent 65%),
-    radial-gradient(620px 280px at 70% 30%, rgba(231,201,139,.12), transparent 65%);
+    radial-gradient(720px 360px at 50% 38%, rgba(96,102,240,.26), transparent 60%),
+    radial-gradient(540px 280px at 30% 20%, rgba(139,145,255,.16), transparent 65%),
+    radial-gradient(620px 280px at 70% 30%, rgba(207,180,124,.10), transparent 65%);
   filter: blur(8px);
   animation: np-hero-cie-breath 6s ease-in-out infinite;
 }
@@ -83,11 +83,11 @@
   40%      { opacity: .7; transform: scale(1.1)rotate(180deg); }
   70%      { opacity: 0;  transform: scale(1.2)rotate(340deg); }
 }
-.np-hero-cie__spark--1 { top: 10%; left: 8%;   width: 32px; height: 32px; animation-delay: 0s;   color: var(--np-accent-hi, #9D9BFF); }
-.np-hero-cie__spark--2 { top: 24%; right: 12%; width: 24px; height: 24px; animation-delay: 1.4s; color: var(--np-gold, #E7C98B); }
-.np-hero-cie__spark--3 { top: 70%; left: 22%;  width: 18px; height: 18px; animation-delay: 2.6s; color: var(--np-accent, #7C79FF); }
-.np-hero-cie__spark--4 { top: 50%; right: 4%;  width: 28px; height: 28px; animation-delay: 3.2s; color: var(--np-accent-hi, #9D9BFF); }
-.np-hero-cie__spark--5 { top: 86%; left: 50%;  width: 20px; height: 20px; animation-delay: 4.1s; color: var(--np-gold, #E7C98B); }
+.np-hero-cie__spark--1 { top: 10%; left: 8%;   width: 32px; height: 32px; animation-delay: 0s;   color: var(--np-accent-hi, #8B91FF); }
+.np-hero-cie__spark--2 { top: 24%; right: 12%; width: 24px; height: 24px; animation-delay: 1.4s; color: var(--np-gold, #CFB47C); }
+.np-hero-cie__spark--3 { top: 70%; left: 22%;  width: 18px; height: 18px; animation-delay: 2.6s; color: var(--np-accent, #6066F0); }
+.np-hero-cie__spark--4 { top: 50%; right: 4%;  width: 28px; height: 28px; animation-delay: 3.2s; color: var(--np-accent-hi, #8B91FF); }
+.np-hero-cie__spark--5 { top: 86%; left: 50%;  width: 20px; height: 20px; animation-delay: 4.1s; color: var(--np-gold, #CFB47C); }
 
 .np-hero-cie__sub {
   margin: 56px auto 0; max-width: 620px;
@@ -97,7 +97,7 @@
   letter-spacing: -0.005em;
 }
 .np-hero-cie__sub strong { color: var(--np-text, #F5F3FF); font-weight: 600; }
-.np-hero-cie__sub em { color: var(--np-accent-hi, #9D9BFF); font-style: normal; font-weight: 500; }
+.np-hero-cie__sub em { color: var(--np-accent-hi, #8B91FF); font-style: normal; font-weight: 500; }
 
 .np-hero-cie__stats {
   display: flex; justify-content: center; gap: 36px;
@@ -115,7 +115,7 @@
 .np-hero-cie__stat-n {
   font-family: var(--np-font-display, Georgia, serif); font-weight: 500;
   font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.04em; line-height: 1;
-  background: linear-gradient(180deg, var(--np-gold, #E7C98B), #C9A96B);
+  background: linear-gradient(180deg, var(--np-gold, #CFB47C), #A88F5B);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   font-variant-numeric: tabular-nums; font-feature-settings: "tnum" on;
 }

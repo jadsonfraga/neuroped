@@ -1,0 +1,58 @@
+/* =====================================================================
+   NeuroPed · np-palette-v2.css · MP9.1
+   Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756
+   ---------------------------------------------------------------------
+   Refinamento da paleta para editorial clínico premium. Override
+   carregado APÓS np-tokens.css. Para reverter, basta remover o link.
+
+   Mudança de DNA:
+     · violet "techno" #7C79FF -> violet-blue Linear/Anthropic #6066F0
+     · gold "flash" #E7C98B   -> champagne terroso #CFB47C
+     · text "hint violet"      -> off-white frio neutro #EAECF4
+     · success/warn dessaturados (menos "Spotify/Snapchat")
+   ===================================================================== */
+
+:root {
+  /* ===== BASE (carbon frio) ===== */
+  --np-ink:        #0A0D17;
+  --np-ink-1:      #0F131F;
+  --np-ink-2:      #161B2A;
+
+  /* ===== EDGE refinado ===== */
+  --np-edge:       rgba(255, 255, 255, 0.06);
+  --np-edge-hi:    rgba(255, 255, 255, 0.12);
+
+  /* ===== TEXTO off-white frio neutro ===== */
+  --np-text:       #EAECF4;
+  --np-text-mute:  #9CA2B0;
+  --np-text-low:   #5A6075;
+
+  /* ===== ACENTO violet-blue (Linear/Anthropic) ===== */
+  --np-accent:     #6066F0;
+  --np-accent-hi:  #8B91FF;
+  --np-accent-low: #4046C8;
+
+  /* ===== HONRA champagne terroso (CRM/footer/laudo) ===== */
+  --np-gold:       #CFB47C;
+  --np-gold-deep:  #A88F5B;
+
+  /* ===== SEMÂNTICAS dessaturadas ===== */
+  --np-success:    #3DD4A0;
+  --np-warn:       #F4B33A;
+  --np-danger:     #F47171;
+}
+
+/* ===== MODO CLARO refinado ===== */
+[data-theme="light"] {
+  --np-ink:        #FAFAFC;
+  --np-ink-1:      #FFFFFF;
+  --np-ink-2:      #F3F4F8;
+  --np-edge:       rgba(11, 13, 23, 0.08);
+  --np-edge-hi:    rgba(11, 13, 23, 0.14);
+  --np-text:       #0A0D17;
+  --np-text-mute:  #4B5060;
+  --np-text-low:   #8A8FA0;
+  --np-accent:     #4046C8;
+  --np-accent-hi:  #2E33A6;
+  --np-gold:       #A88F5B;
+}
