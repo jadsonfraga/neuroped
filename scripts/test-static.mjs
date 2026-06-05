@@ -1149,6 +1149,8 @@ assertIncludes('filtro-escalas.html', "localStorage.setItem('np:reco'", 'filtro 
 assertIncludes('filtro-escalas.html', "localStorage.removeItem('np:reco')", 'filtro limpa np:reco quando não há pódio (sem sequência obsoleta)');
 assertIncludes('escala.html', "getItem('np:reco')", 'runner consome a fila np:reco');
 assertIncludes('escala.html', 'recoRail', 'runner mostra o trilho da sequência (Etapa X de N)');
+assertIncludes('filtro-escalas.html', 'np_cie_resp', 'filtro lembra o respondente (quem responde) entre visitas');
+assertIncludes('escala.html', 'kbdHint', 'runner: atalho de teclado 1–4 responde o próximo item (produtividade)');
 
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
