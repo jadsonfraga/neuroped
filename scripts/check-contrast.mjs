@@ -61,8 +61,8 @@ function run(name, map) {
     const r = ratio(map[fg], map[bg]);
     rows.push({ label: `${fg} / ${bg}`, tipo, lim, r, ok: r >= lim });
   }
-  // texto do botão primário: #fff sobre --np-accent
-  if (map['np-accent']) { const r = ratio(WHITE, map['np-accent']); rows.push({ label: '#fff / np-accent (botão)', tipo: 'texto', lim: 4.5, r, ok: r >= 4.5 }); }
+  // texto branco sobre as SUPERFÍCIES de acento (botão primário / chip ativo)
+  if (map['np-accent-strong']) { const r = ratio(WHITE, map['np-accent-strong']); rows.push({ label: '#fff / np-accent-strong (botão/chip)', tipo: 'texto', lim: 4.5, r, ok: r >= 4.5 }); }
   return rows;
 }
 
@@ -70,7 +70,7 @@ function run(name, map) {
 // mas ficam visíveis. O texto branco sobre o iris-violet do botão dá 3.48:1 (AA pede
 // 4.5): corrigir exige escurecer o accent (muda a identidade) ou aumentar/encorpar a
 // fonte do botão. Decisão do Dr. — ver docs/PROMPT_ESPELHO_8.md M1.
-const KNOWN = new Set(['#fff / np-accent (botão)@DARK']);
+const KNOWN = new Set();   // botão/chip agora usam --np-accent-strong → passam AA de verdade
 
 let fails = 0, exc = 0;
 for (const [theme, map] of [['DARK', dark], ['LIGHT', light]]) {

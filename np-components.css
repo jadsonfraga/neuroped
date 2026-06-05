@@ -203,7 +203,7 @@
 }
 .np-chip:hover { border-color: var(--np-edge-hi); transform: translateY(-1px); }
 .np-chip[aria-pressed="true"], .np-chip.is-active {
-  background: var(--np-accent); color: #fff; border-color: var(--np-accent);
+  background: var(--np-accent-strong); color: #fff; border-color: var(--np-accent-strong);
   transform: scale(1.03);
 }
 @media (max-width: 720px) {
@@ -236,8 +236,10 @@
 .np-btn:hover { transform: translateY(-1px); border-color: var(--np-edge-hi); box-shadow: var(--np-shadow-2); }
 .np-btn:active { transform: scale(0.97); transition-duration: 80ms; transition-timing-function: var(--np-ease-spring); }
 .np-btn--primary {
-  background: var(--np-accent); border-color: var(--np-accent); color: #fff;
+  background: var(--np-accent-strong); border-color: var(--np-accent-strong); color: #fff;
 }
-.np-btn--primary:hover { background: var(--np-accent-hi); border-color: var(--np-accent-hi); }
+/* hover mantém AA (não clareia p/ accent-hi, que reprovava o texto branco); o realce
+   vem do translateY + sombra herdados de .np-btn:hover. */
+.np-btn--primary:hover { background: var(--np-accent-strong); border-color: var(--np-accent-strong); }
 .np-btn--ghost { background: transparent; border-color: var(--np-edge); }
 .np-btn--pill  { border-radius: var(--np-r-pill); padding: 0 var(--np-s-6); height: 56px; font-size: var(--np-fs-base); }
