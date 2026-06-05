@@ -65,7 +65,7 @@
   --np-ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
   --np-ease-spring: cubic-bezier(0.32, 0.72, 0, 1);         /* iOS button press */
   --np-dur-1: 120ms;
-  --np-dur-2: 200ms;
+  --np-dur-2: 180ms;
   --np-dur-3: 320ms;
   --np-dur-4: 520ms;
   --np-dur-stagger: 60ms;

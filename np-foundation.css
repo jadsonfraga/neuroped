@@ -63,3 +63,7 @@
 @media (forced-colors: active) {
   .np-stage::before { display: none; }
 }
+
+/* Ritmo editorial: equilíbrio óptico de títulos e parágrafos (Apple-grade, progressive). */
+.np-skin :is(h1,h2,h3), .np-type :is(h1,h2,h3), .np-display { text-wrap: balance; }
+.np-skin p, .np-type p { text-wrap: pretty; }
