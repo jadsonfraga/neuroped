@@ -25,6 +25,8 @@ jobs:
         run: node scripts/check-no-conflicts.mjs
       - name: Versão única (package.json = sw.js)
         run: node scripts/check-version.mjs
+      - name: Contraste WCAG AA (tokens)
+        run: node scripts/check-contrast.mjs --strict
       - name: Static checks (test-static)
         run: node scripts/test-static.mjs
       - name: Smoke E2E

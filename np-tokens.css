@@ -14,7 +14,7 @@
   --np-edge-hi:    rgba(255,255,255,0.10);
   --np-text:       #F5F3FF;
   --np-text-mute:  #A8A5C8;
-  --np-text-low:   #6E6B8F;
+  --np-text-low:   #847FAC;   /* AA: clareado p/ ≥4.5:1 sobre o fundo escuro */
   --np-accent:     #7C79FF;   /* iris violet — único acento de ação */
   --np-accent-hi:  #9D9BFF;
   --np-gold:       #E7C98B;   /* somente honra-CRM, footer, laudos */
@@ -92,6 +92,12 @@
   --np-edge-hi:    rgba(11,11,26,0.14);
   --np-text:       #0B0B1A;
   --np-text-mute:  #4A4860;
-  --np-text-low:   #8A87A8;
+  --np-text-low:   #6B6890;   /* AA: escurecido p/ ≥4.5:1 sobre branco */
   --np-accent:     #5A57F0;
+  /* Semânticas escurecidas p/ contraste AA em fundo claro (eram bright = ilegíveis) */
+  --np-accent-hi:  #5A57F0;
+  --np-success:    #0A7C50;
+  --np-warn:       #B45309;
+  --np-danger:     #BE123C;
+  --np-gold:       #8A6A2C;
 }
