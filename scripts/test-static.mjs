@@ -216,7 +216,9 @@ assertIncludes('sw.js', './ds-bridge.css', 'ds-bridge no precache (offline)');
 for (const p of ['index.html','perfil-crianca.html','filtro-escalas.html','intake.html','clinical-trajetoria.html','secretaria.html']) {
   assertIncludes(p, './ds-bridge.css', p + ' carrega a ponte do Design System (âncora do Movimento 1)');
   const c = file(p);
-  (c.lastIndexOf('tokens.css') < c.lastIndexOf('ds-bridge.css'))
+  // match PRECISO: './tokens.css' não casa './np-tokens.css' (substring) — senão
+  // adicionar np-tokens.css depois do bridge dá falso-positivo de cascata invertida.
+  (c.lastIndexOf('./tokens.css') < c.lastIndexOf('./ds-bridge.css'))
     ? pass(p + ': ds-bridge carrega depois de tokens.css (cascata correta)')
     : fail(p + ': ds-bridge deve vir DEPOIS de tokens.css', 'ordem de cascata invertida');
 }
