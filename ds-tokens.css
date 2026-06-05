@@ -22,28 +22,10 @@
    ============================================================ */
 
 :root {
-  /* ---------- 1) Aliases semânticos --ds-* (namespace canônico) ---------- */
-  --ds-bg:            var(--bg);
-  --ds-surface:       var(--surface);
-  --ds-surface-muted: var(--surface-muted);
-  --ds-border:        var(--border);
-  --ds-border-strong: var(--border-strong);
-  --ds-text:          var(--text);
-  --ds-text-strong:   var(--text-strong);
-  --ds-text-muted:    var(--text-muted);
-  --ds-text-soft:     var(--text-soft);
-  --ds-primary:       var(--primary);
-  --ds-primary-tint:  var(--primary-tint);
-  --ds-accent-gold:   var(--accent-gold);
-  --ds-success:       var(--success);
-  --ds-warning:       var(--warning);
-  --ds-danger:        var(--danger);
-  --ds-info:          var(--info);
-  --ds-radius-card:   var(--radius-lg);
-  --ds-radius-btn:    var(--radius-md);
-  --ds-radius-input:  var(--radius-sm);
-  --ds-shadow-card:   var(--shadow-2);
-  --ds-shadow-pop:    var(--shadow-3);
+  /* ---------- 1) Aliases semânticos --ds-* — REMOVIDOS (M3) ----------
+     O namespace --ds-* tinha 0 consumidores em todo o repo (html/css/js).
+     Era código morto; removido na consolidação. Se voltar a precisar de um
+     namespace estável de migração, prefira os tokens --np-* canônicos. */
 
   /* ---------- 2) PONTE de variáveis legadas → tokens canônicos ----------
      (mapeamento documentado em docs/ds-recon.md §3). Só preenche onde a
