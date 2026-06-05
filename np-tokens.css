@@ -15,8 +15,9 @@
   --np-text:       #F5F3FF;
   --np-text-mute:  #A8A5C8;
   --np-text-low:   #847FAC;   /* AA: clareado p/ ≥4.5:1 sobre o fundo escuro */
-  --np-accent:     #7C79FF;   /* iris violet — único acento de ação */
+  --np-accent:     #7C79FF;   /* iris violet — texto/links/bordas sobre fundo escuro */
   --np-accent-hi:  #9D9BFF;
+  --np-accent-strong: #5B4FD6; /* iris profundo — SUPERFÍCIE com texto BRANCO (botão/chip ativo): #fff ≥ 4.5:1 AA */
   --np-gold:       #E7C98B;   /* somente honra-CRM, footer, laudos */
   --np-success:    #4ADE80;
   --np-warn:       #FBBF24;
