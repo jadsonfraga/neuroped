@@ -9,22 +9,17 @@ on:
 jobs:
   integrity:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
-      - name: Install runtime deps
-        run: |
-          npm install --no-save puppeteer@^22 http-server@^14
-      - name: Run NeuroPedTests
-        env:
-          HEADLESS: 'true'
-          TIMEOUT_MS: '45000'
-        run: |
-          node tests/run-clinical-tests.mjs
+          node-version: '22'   # CustomEvent/Blob/EventTarget globais (testes V4 dependem)
+      # Driver Node puro (sem browser): nenhuma página do app carrega a suíte, então
+      # o caminho Puppeteer→testes-diretos.html dava timeout. Aqui a suíte é carregada
+      # explicitamente e exige 100%. Ver tests/run-clinical-tests.mjs.
+      - name: NeuroPedTests.runAll (V3.2 + V4) — exige 100%
+        run: node tests/run-clinical-tests.mjs
 
   lighthouse:
     runs-on: ubuntu-latest
