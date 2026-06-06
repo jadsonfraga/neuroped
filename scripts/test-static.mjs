@@ -1196,6 +1196,38 @@ assertIncludes('escala.html', "itemEl.classList.add('answered')", 'runner: atual
   } catch (e) { fail('scales-question-coach.js não pôde ser exercitado', e.message); }
 }
 
+// ── Auth real (clinical-auth-supabase.js): ESQUELETO de autenticação por
+//    Supabase Auth (magic link). Não é carregado por nenhuma página ainda —
+//    aqui exercitamos as funções PURAS (parsing de token, expiração, corpo do
+//    OTP) e a trava de segurança (desligado por padrão). Sem rede.
+{
+  try {
+    const require = createRequire(import.meta.url);
+    const A = require(join(root, 'clinical-auth-supabase.js'));
+    const ok = (name, v) => v ? pass(name) : fail(name, 'falso');
+    const eqA = (name, got, want) => (String(got) === String(want)) ? pass(name) : fail(name, `obteve ${got}, esperava ${want}`);
+
+    eqA('auth-supabase: versão scaffold', A.version, '0.1.0-scaffold');
+    ok('auth-supabase: DESLIGADO por padrão (sem config) — seguro', A.isEnabled() === false);
+    // parseAuthHash: retorno do magic link no #hash
+    const p = A.parseAuthHash('#access_token=abc&refresh_token=ref&expires_in=3600&token_type=bearer');
+    eqA('auth-supabase: parseAuthHash extrai access_token', p && p.access_token, 'abc');
+    eqA('auth-supabase: parseAuthHash extrai refresh_token', p && p.refresh_token, 'ref');
+    ok('auth-supabase: parseAuthHash calcula expires_at no futuro', p && p.expires_at > Date.now());
+    ok('auth-supabase: parseAuthHash sem access_token → null', A.parseAuthHash('#foo=bar') === null);
+    ok('auth-supabase: parseAuthHash vazio → null', A.parseAuthHash('') === null);
+    // isExpired
+    ok('auth-supabase: isExpired(null) → true', A.isExpired(null) === true);
+    ok('auth-supabase: isExpired sessão futura → false', A.isExpired({ expires_at: Date.now() + 3600000 }) === false);
+    ok('auth-supabase: isExpired sessão vencida → true', A.isExpired({ expires_at: Date.now() - 1000 }) === true);
+    // buildOtpBody: normaliza e-mail + create_user; redirect opcional
+    const b = A.buildOtpBody('  Pai@Exemplo.COM ');
+    eqA('auth-supabase: buildOtpBody normaliza e-mail', b.email, 'pai@exemplo.com');
+    ok('auth-supabase: buildOtpBody create_user=true', b.create_user === true);
+    ok('auth-supabase: buildOtpBody com redirect → options.email_redirect_to', A.buildOtpBody('a@b.com', 'https://x/y').options.email_redirect_to === 'https://x/y');
+  } catch (e) { fail('clinical-auth-supabase.js não pôde ser exercitado', e.message); }
+}
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');
