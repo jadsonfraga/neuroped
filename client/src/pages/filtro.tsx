@@ -138,7 +138,7 @@ const syn: Record<string, string[]> = {
   "superdotado": ["cognicao", "ahsd", "altas habilidades", "genio", "inteligente"],
   "trauma": ["trauma", "tept", "abuso", "violencia"],
   "se machuca": ["suicidio", "autolesao", "autoagressao", "se corta", "cutting"],
-  "dor cabeca": ["dor", "cefaleia", "enxaqueca", "migranea"],
+  "dor-cabeca": ["dor", "cefaleia", "enxaqueca", "migranea"],
   // Termos diretos
   "tdah": ["deficit", "atencao", "hiperatividade", "adhd", "f90", "agitado", "desatento"],
   "tea": ["autismo", "autista", "espectro", "f84", "asperger"],

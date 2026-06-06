@@ -158,7 +158,7 @@ export default function ConnersPage() {
           scaleName="Conners Abreviada"
           scaleFullName="Conners Rating Scales — Abbreviated"
           totalScore={totalScore}
-          maxScore={30}
+          maxScore={84}
           classification={result.classification}
           description={result.description}
           items={connersQuestions.map((q, i) => ({ question: q, answer: connersLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}

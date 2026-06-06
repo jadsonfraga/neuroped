@@ -19,7 +19,7 @@ export default function AbcPage() {
         abcDomains.forEach((domain, di) => {
           let sum = 0;
           domain.items.forEach((_item, ii) => {
-            sum += answers[`${di}-${ii}`] || 0;
+            sum += answers[`${di}-${ii}`] ?? 0;
           });
           domainScores[domain.name] = sum;
         });

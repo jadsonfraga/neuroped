@@ -81,26 +81,25 @@ export function classifySdq(scores: Record<string, number>): {
 
   const subscaleClassifications: Record<string, { classification: string; color: string }> = {};
 
-  // Pontos de corte por subescala
+  // Pontos de corte por subescala (borderline, abnormal)
   const cutoffs: Record<string, [number, number]> = {
     emotional: [4, 5],
     conduct: [3, 4],
     hyperactivity: [6, 7],
     peer: [3, 4],
-    prosocial: [5, 4], // invertido: menor = pior
   };
+
+  // Prosocial: escala invertida — maior score = melhor
+  const prosocialScore = scores["prosocial"];
+  if (prosocialScore >= 6) subscaleClassifications["prosocial"] = { classification: "Normal", color: "text-emerald-600 dark:text-emerald-400" };
+  else if (prosocialScore >= 5) subscaleClassifications["prosocial"] = { classification: "Limítrofe", color: "text-amber-600 dark:text-amber-400" };
+  else subscaleClassifications["prosocial"] = { classification: "Anormal", color: "text-red-600 dark:text-red-400" };
 
   for (const [key, [borderline, abnormal]] of Object.entries(cutoffs)) {
     const score = scores[key];
-    if (key === "prosocial") {
-      if (score >= 6) subscaleClassifications[key] = { classification: "Normal", color: "text-emerald-600 dark:text-emerald-400" };
-      else if (score >= 5) subscaleClassifications[key] = { classification: "Limítrofe", color: "text-amber-600 dark:text-amber-400" };
-      else subscaleClassifications[key] = { classification: "Anormal", color: "text-red-600 dark:text-red-400" };
-    } else {
-      if (score < borderline) subscaleClassifications[key] = { classification: "Normal", color: "text-emerald-600 dark:text-emerald-400" };
-      else if (score <= abnormal) subscaleClassifications[key] = { classification: "Limítrofe", color: "text-amber-600 dark:text-amber-400" };
-      else subscaleClassifications[key] = { classification: "Anormal", color: "text-red-600 dark:text-red-400" };
-    }
+    if (score < borderline) subscaleClassifications[key] = { classification: "Normal", color: "text-emerald-600 dark:text-emerald-400" };
+    else if (score <= abnormal) subscaleClassifications[key] = { classification: "Limítrofe", color: "text-amber-600 dark:text-amber-400" };
+    else subscaleClassifications[key] = { classification: "Anormal", color: "text-red-600 dark:text-red-400" };
   }
 
   return { total, classification, description, color, subscaleClassifications };

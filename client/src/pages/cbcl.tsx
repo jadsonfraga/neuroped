@@ -18,7 +18,7 @@ export default function CbclPage() {
         let intScore = 0, extScore = 0, socScore = 0;
         cbclDomains.forEach((domain, di) => {
           domain.items.forEach((_item, ii) => {
-            const val = answers[`${di}-${ii}`] || 0;
+            const val = answers[`${di}-${ii}`] ?? 0;
             if (di === 0) intScore += val;
             else if (di === 1) extScore += val;
             else socScore += val;

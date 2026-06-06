@@ -246,6 +246,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             <div className={`w-3 h-3 rounded-full ${
               domain.color.includes("red") ? "bg-red-500" :
               domain.color.includes("blue") ? "bg-blue-500" :
+              domain.color.includes("emerald") ? "bg-emerald-500" :
               domain.color.includes("green") ? "bg-green-500" :
               domain.color.includes("purple") ? "bg-purple-500" :
               domain.color.includes("orange") ? "bg-orange-500" :

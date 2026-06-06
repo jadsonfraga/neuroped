@@ -613,13 +613,23 @@ export const abcDomains = [
   },
 ];
 export const abcLabels = ["Não é problema", "Problema leve", "Problema moderado", "Problema grave"];
+
+// Cutoffs por subescala baseados em Aman et al. (1985) e adaptações para populações com DI/TEA
+const abcDomainCutoffs: Record<string, [number, number]> = {
+  "Irritabilidade/Agitação":        [9,  15], // max 45
+  "Letargia/Retraimento Social":    [4,  9],  // max 30
+  "Comportamento Estereotipado":    [3,  6],  // max 21
+  "Hiperatividade/Não conformidade":[12, 20], // max 24
+  "Fala Inadequada":                [4,  8],  // max 12
+};
+
 export function classifyAbc(domainScores: Record<string, number>) {
-  return Object.entries(domainScores).map(([domain, score]) => ({
-    domain,
-    score,
-    level: score <= 5 ? "Baixo" : score <= 15 ? "Moderado" : "Elevado",
-    color: score <= 5 ? "emerald" : score <= 15 ? "amber" : "red",
-  }));
+  return Object.entries(domainScores).map(([domain, score]) => {
+    const [modCut, elevCut] = abcDomainCutoffs[domain] ?? [5, 15];
+    const level = score < modCut ? "Baixo" : score <= elevCut ? "Moderado" : "Elevado";
+    const color = score < modCut ? "emerald" : score <= elevCut ? "amber" : "red";
+    return { domain, score, level, color };
+  });
 }
 
 // --- PedsQL (Pediatric Quality of Life Inventory — triagem) ---
