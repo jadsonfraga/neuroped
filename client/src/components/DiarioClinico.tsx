@@ -92,7 +92,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
   useEffect(() => {
     try {
       localStorage.setItem(config.storageKey, JSON.stringify(entries));
-    } catch {}
+    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, [entries, config.storageKey]);
 
   const Icon = config.icon;
