@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,15 +53,18 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showResult, setShowResult] = useState(false);
 
-  const allItems = config.domains.flatMap((d, di) =>
-    d.items.map((item, ii) => ({ key: `${di}-${ii}`, text: item, domain: d.name, domainIdx: di, color: d.color }))
-  );
+  const allItems = useMemo(() =>
+    config.domains.flatMap((d, di) =>
+      d.items.map((item, ii) => ({ key: `${di}-${ii}`, text: item, domain: d.name, domainIdx: di, color: d.color })),
+    ),
+  [config.domains]);
   const total = allItems.length;
   const answered = Object.keys(answers).length;
-  const progress = (answered / total) * 100;
-  const allAnswered = answered === total;
+  const progress = total > 0 ? (answered / total) * 100 : 0;
+  const allAnswered = total > 0 && answered === total;
 
   function handleSubmit() {
+    if (!allAnswered) return;
     softSuccess();
     haptic.success();
     celebrate();
@@ -274,7 +277,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                     onValueChange={(val) => {
                       softTick();
                       haptic.select();
-                      setAnswers({ ...answers, [key]: parseInt(val) });
+                      setAnswers((current) => ({ ...current, [key]: Number.parseInt(val, 10) }));
                     }}
                     className="flex flex-wrap gap-2"
                   >
@@ -316,7 +319,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         size="lg"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
+        {total === 0 ? "Escala sem itens configurados" : allAnswered ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
       </Button>
 
       {config.scaleId && <ScaleReference scaleId={config.scaleId} />}

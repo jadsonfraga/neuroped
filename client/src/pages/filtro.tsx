@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { allScales, filterScales, type ScaleEntry } from "@/data/scaleFilter";
+import { allScales, filterScales, type Prioridade, type Respondente, type ScaleEntry } from "@/data/scaleFilter";
 import { pharmCategories, type PharmCategory, type Drug } from "@/data/farmacologia";
 import { motion } from "framer-motion";
 import { softTap, softTick, softHover } from "@/lib/softSounds";
@@ -186,6 +186,88 @@ const q2cat: Record<string, string[]> = {
   "linguagem": ["tea"], "trauma": ["tept"],
 };
 
+
+const objetivoPriorityMap: Record<string, Prioridade[]> = {
+  triagem: ["triagem"],
+  acompanhamento: ["monitorizacao", "triagem"],
+  relatorio: ["diagnostica", "triagem", "monitorizacao"],
+  escola: ["triagem", "monitorizacao", "diagnostica"],
+  familia: ["triagem", "monitorizacao"],
+  consulta: ["diagnostica", "triagem"],
+  pesquisa: ["diagnostica", "monitorizacao", "triagem"],
+};
+
+const contextoRespondenteMap: Record<string, Respondente[]> = {
+  consultorio: ["clinico", "pais", "autoaplicavel"],
+  escola: ["professor"],
+  familia: ["pais", "crianca", "autoaplicavel"],
+  teleatendimento: ["autoaplicavel", "pais", "crianca"],
+};
+
+function uniqueScales(scales: ScaleEntry[]): ScaleEntry[] {
+  const seen = new Set<string>();
+  return scales.filter((scale) => {
+    if (seen.has(scale.id)) return false;
+    seen.add(scale.id);
+    return true;
+  });
+}
+
+function prioritizeGuidedScales(
+  scales: ScaleEntry[],
+  objetivo: string | null,
+  contexto: string | null,
+): ScaleEntry[] {
+  const priorities = objetivo ? objetivoPriorityMap[objetivo] ?? [] : [];
+  const respondents = contexto ? contextoRespondenteMap[contexto] ?? [] : [];
+
+  return uniqueScales(scales).sort((a, b) => {
+    const aPrio = priorities.length > 0 ? priorities.indexOf(a.prioridade) : -1;
+    const bPrio = priorities.length > 0 ? priorities.indexOf(b.prioridade) : -1;
+    if (aPrio !== bPrio) {
+      if (aPrio === -1) return 1;
+      if (bPrio === -1) return -1;
+      return aPrio - bPrio;
+    }
+
+    const aResp = respondents.some((respondent) => a.respondente.includes(respondent));
+    const bResp = respondents.some((respondent) => b.respondente.includes(respondent));
+    if (aResp !== bResp) return aResp ? -1 : 1;
+
+    if (a.appRoute && !b.appRoute) return -1;
+    if (!a.appRoute && b.appRoute) return 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function guidedScalePool(
+  selectedQueixas: string[],
+  ageRange: { min: number; max: number } | null,
+  objetivo: string | null,
+  contexto: string | null,
+): ScaleEntry[] {
+  const base = selectedQueixas.length > 0 || ageRange !== null
+    ? filterScales(selectedQueixas, ageRange)
+    : [...allScales];
+  const priorities = objetivo ? objetivoPriorityMap[objetivo] ?? [] : [];
+  const respondents = contexto ? contextoRespondenteMap[contexto] ?? [] : [];
+
+  let narrowed = base;
+  if (priorities.length > 0) {
+    const byPriority = narrowed.filter((scale) => priorities.includes(scale.prioridade));
+    if (byPriority.length > 0) narrowed = byPriority;
+  }
+
+  if (respondents.length > 0) {
+    const byRespondent = narrowed.filter((scale) =>
+      respondents.some((respondent) => scale.respondente.includes(respondent)),
+    );
+    if (byRespondent.length > 0) narrowed = byRespondent;
+  }
+
+  return prioritizeGuidedScales(narrowed, objetivo, contexto);
+}
+
 const prioConfig = {
   triagem: { label: "Triagem", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
   diagnostica: { label: "Diagnóstica", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
@@ -293,8 +375,10 @@ export default function FiltroPage() {
     const hasText = search.trim().length >= 2;
     const hasQ = techQ.length > 0;
     const hasAge = ageRange !== null;
+    const hasObjective = objetivo !== null;
+    const hasContext = contexto !== null;
 
-    if (!hasText && !hasQ && !hasAge) return { scales: [] as ScaleEntry[], pharm: [] as { cat: PharmCategory; drug: Drug }[], tools: [] as ExtraTool[] };
+    if (!hasText && !hasQ && !hasAge && !hasObjective && !hasContext) return { scales: [] as ScaleEntry[], pharm: [] as { cat: PharmCategory; drug: Drug }[], tools: [] as ExtraTool[] };
 
     let resultScales: ScaleEntry[] = [];
     let resultPharm: { cat: PharmCategory; drug: Drug }[] = [];
@@ -308,11 +392,12 @@ export default function FiltroPage() {
 
       // Se tem filtros de queixa/idade, boost quem bate com ambos
       if (hasQ || hasAge) {
-        const baseIds = new Set(filterScales(techQ, ageRange).map(s => s.id));
+        const guidedPool = guidedScalePool(techQ, ageRange, objetivo, contexto);
+        const baseIds = new Set(guidedPool.map(s => s.id));
         const boosted = resultScales.map(s => ({ s, inFilter: baseIds.has(s.id) }));
         // Adicionar escalas do filtro que não apareceram no texto
         const textIds = new Set(resultScales.map(s => s.id));
-        const extraFromFilter = filterScales(techQ, ageRange).filter(s => !textIds.has(s.id));
+        const extraFromFilter = guidedPool.filter(s => !textIds.has(s.id));
         resultScales = [
           ...boosted.filter(b => b.inFilter).map(b => b.s),
           ...boosted.filter(b => !b.inFilter).map(b => b.s),
@@ -320,7 +405,7 @@ export default function FiltroPage() {
         ];
       }
     } else {
-      resultScales = filterScales(techQ, ageRange);
+      resultScales = guidedScalePool(techQ, ageRange, objetivo, contexto);
       // Medicações por queixa
       if (hasQ) {
         const catIds = new Set<string>();
@@ -341,15 +426,10 @@ export default function FiltroPage() {
       );
     }
 
-    // Escalas com rota primeiro
-    resultScales.sort((a, b) => {
-      if (a.appRoute && !b.appRoute) return -1;
-      if (!a.appRoute && b.appRoute) return 1;
-      return 0;
-    });
+    resultScales = prioritizeGuidedScales(resultScales, objetivo, contexto);
 
     return { scales: resultScales, pharm: resultPharm, tools: resultTools };
-  }, [techQ, ageRange, search]);
+  }, [techQ, ageRange, search, objetivo, contexto]);
 
   const toggleQ = (id: string) => setSelQueixas(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const hasFilters = selQueixas.length > 0 || selIdade !== null || objetivo !== null || contexto !== null || search.trim().length >= 2;
