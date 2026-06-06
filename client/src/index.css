@@ -594,3 +594,22 @@
   z-index: 0;
 }
 .np-bloom:hover::after { opacity: 1; }
+
+/* ============================================================
+   C4 — Rede de segurança global de movimento reduzido (WCAG 2.3.3).
+   Catch-all: neutraliza QUALQUER animação/transição CSS (confetti, float,
+   shimmer, bounce, glow, sparkle, drift, etc.) quando o usuário pede
+   movimento reduzido, inclusive animações futuras que esqueçam de optar.
+   As animações JS (framer-motion, canvas-confetti, sons) já respeitam a
+   preferência na origem (lib/motion.ts, lib/confetti.ts, lib/softSounds.ts).
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
