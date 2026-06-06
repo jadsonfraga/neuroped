@@ -1,0 +1,10 @@
+{
+  "_comment": "Catraca de CI (Bloco A2). Valores de referência que NÃO podem regredir. Regenere conscientemente ao subir números reais; check-baseline.mjs falha se um valor atual ficar abaixo do baseline. Lighthouse/axe ficam como null porque ainda não há browser headless no CI — medidos manualmente (ver docs/BRANCH_PROTECTION.md).",
+  "typescriptErrors": 0,
+  "clinicalCasesMin": 150,
+  "catalogInstruments": 565,
+  "catalogWithFonte": 98,
+  "lighthousePerformance": null,
+  "lighthouseAccessibility": null,
+  "axeSeriousCriticalViolations": null
+}

@@ -1,0 +1,39 @@
+name: Verify (catraca)
+
+# Catraca de CI (Bloco A2 do plano NeuroPed 8.0/9.0).
+# Gate DURO: roda `npm run verify` em todo PR e push para main.
+# verify = tsc --noEmit && validate-catalog && testes clínicos && check-baseline
+# Se qualquer etapa falhar, o job falha (sem continue-on-error).
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    name: tsc + catálogo + testes clínicos + baseline
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verify (catraca completa)
+        run: npm run verify
