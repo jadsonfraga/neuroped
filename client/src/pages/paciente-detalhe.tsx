@@ -65,6 +65,80 @@ export default function PacienteDetalhePage() {
   const [pinError, setPinError] = useState(false);
   const [pinChecking, setPinChecking] = useState(false);
 
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
+  const [, params] = useRoute("/paciente/:id");
+  const patientId = params?.id || "";
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formBirth, setFormBirth] = useState("");
+  const [formNotes, setFormNotes] = useState("");
+  const [selectedScale, setSelectedScale] = useState("");
+  const [doctorName, setDoctorName] = useState("Dr. Jadson Fraga");
+  const [specialty, setSpecialty] = useState("Neuropediatra");
+
+  const { data: patient } = useQuery<any>({
+    queryKey: [`/api/patients/${patientId}`],
+    enabled: internalAuth && !!patientId,
+  });
+
+  const { data: results = [] } = useQuery<any[]>({
+    queryKey: [`/api/patients/${patientId}/results`],
+    enabled: internalAuth && !!patientId,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("PATCH", `/api/patients/${patientId}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}`] });
+      setEditOpen(false);
+      toast({ title: "Paciente atualizado!" });
+    },
+  });
+
+  const deleteResultMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/results/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/results`] });
+      toast({ title: "Avaliação removida." });
+    },
+  });
+
+  const scaleGroups = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    results.forEach((r: any) => {
+      if (!groups[r.scaleName]) groups[r.scaleName] = [];
+      groups[r.scaleName].push(r);
+    });
+    return groups;
+  }, [results]);
+
+  const scalesWithMultiple = Object.keys(scaleGroups).filter(k => scaleGroups[k].length >= 2);
+
+  const chartData = useMemo(() => {
+    if (!selectedScale || !scaleGroups[selectedScale]) return [];
+    return scaleGroups[selectedScale].map((r: any) => ({
+      date: fmtDateShort(r.createdAt),
+      score: r.totalScore,
+      classification: r.classification,
+      fullDate: fmtDate(r.createdAt),
+    }));
+  }, [selectedScale, scaleGroups]);
+
+  const evolutionSummary = useMemo(() => {
+    if (chartData.length < 2) return null;
+    const first = chartData[0].score;
+    const last = chartData[chartData.length - 1].score;
+    const delta = last - first;
+    return { first, last, delta };
+  }, [chartData]);
+
   async function handlePinSubmit() {
     if (!pin) return;
     setPinChecking(true);
@@ -137,81 +211,6 @@ export default function PacienteDetalhePage() {
       </motion.div>
     );
   }
-
-  const { toast } = useToast();
-  const [, navigate] = useLocation();
-  const [, params] = useRoute("/paciente/:id");
-  const patientId = params?.id || "";
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [formBirth, setFormBirth] = useState("");
-  const [formNotes, setFormNotes] = useState("");
-  const [selectedScale, setSelectedScale] = useState("");
-  const [doctorName, setDoctorName] = useState("Dr. Jadson Fraga");
-  const [specialty, setSpecialty] = useState("Neuropediatra");
-
-  const { data: patient } = useQuery<any>({
-    queryKey: [`/api/patients/${patientId}`],
-    enabled: !!patientId,
-  });
-
-  const { data: results = [] } = useQuery<any[]>({
-    queryKey: [`/api/patients/${patientId}/results`],
-    enabled: !!patientId,
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest("PATCH", `/api/patients/${patientId}`, data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}`] });
-      setEditOpen(false);
-      toast({ title: "Paciente atualizado!" });
-    },
-  });
-
-  const deleteResultMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/results/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/results`] });
-      toast({ title: "Avaliação removida." });
-    },
-  });
-
-  // Scale groups for evolution tab
-  const scaleGroups = useMemo(() => {
-    const groups: Record<string, any[]> = {};
-    results.forEach((r: any) => {
-      if (!groups[r.scaleName]) groups[r.scaleName] = [];
-      groups[r.scaleName].push(r);
-    });
-    return groups;
-  }, [results]);
-
-  const scalesWithMultiple = Object.keys(scaleGroups).filter(k => scaleGroups[k].length >= 2);
-
-  const chartData = useMemo(() => {
-    if (!selectedScale || !scaleGroups[selectedScale]) return [];
-    return scaleGroups[selectedScale].map((r: any) => ({
-      date: fmtDateShort(r.createdAt),
-      score: r.totalScore,
-      classification: r.classification,
-      fullDate: fmtDate(r.createdAt),
-    }));
-  }, [selectedScale, scaleGroups]);
-
-  const evolutionSummary = useMemo(() => {
-    if (chartData.length < 2) return null;
-    const first = chartData[0].score;
-    const last = chartData[chartData.length - 1].score;
-    const delta = last - first;
-    return { first, last, delta };
-  }, [chartData]);
 
   function openEditDialog() {
     if (!patient) return;
