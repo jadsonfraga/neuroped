@@ -456,6 +456,39 @@ function SectionAccent({ color, Icon, title, count, open }: { color: string; Ico
   );
 }
 
+
+/* ─── PRIMARY ACTIONS ───────────────────────────────────────── */
+
+function PrimaryAction({ href, title, description, Icon, color }: { href: string; title: string; description: string; Icon: any; color: string }) {
+  return (
+    <Link href={href}>
+      <motion.div
+        whileHover={{ y: -3 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.18, ease: easing.smooth }}
+        onMouseEnter={() => softHover()}
+        onClick={() => { softTap(); haptic.tap(); }}
+        className="group card-premium min-h-[132px] p-4 cursor-pointer border-primary/10 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary/30"
+        role="link"
+        aria-label={`${title}: ${description}`}
+      >
+        <div className="flex items-start gap-3">
+          <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center shadow-sm shrink-0`}>
+            <Icon className="w-5 h-5 text-white" strokeWidth={1.85} aria-hidden="true" />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <h2 className="text-base font-black text-foreground group-hover:text-primary transition-colors">{title}</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary">
+          Começar agora <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+        </div>
+      </motion.div>
+    </Link>
+  );
+}
+
 /* ─── QUICK ACCESS LINK ───────────────────────────────────────── */
 
 function QuickLink({ href, label, Icon, color }: { href: string; label: string; Icon: any; color: string }) {
@@ -627,6 +660,29 @@ export default function HomePage() {
         </div>
       </motion.div>
 
+      {!isSearching && (
+        <section className="space-y-3" aria-labelledby="acoes-principais">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Fluxo clínico principal</p>
+              <h2 id="acoes-principais" className="text-lg font-black text-foreground">Escolha um caminho em até 10 segundos</h2>
+            </div>
+            <Badge variant="outline" className="hidden sm:inline-flex text-[10px]">4 CTAs dominantes</Badge>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <PrimaryAction href="/filtro" title="Encontrar escala" description="Fluxo guiado por idade, queixa, objetivo e contexto clínico." Icon={Filter} color="bg-gradient-to-br from-primary to-chart-2" />
+            <PrimaryAction href="/mchat" title="Aplicar teste" description="Abra uma escala implementada e acompanhe pontuação/interpretação." Icon={ClipboardCheck} color="bg-gradient-to-br from-violet-600 to-purple-700" />
+            <PrimaryAction href="/pacientes" title="Meus pacientes" description="Cadastre, acompanhe histórico e organize relatórios por paciente." Icon={Users} color="bg-gradient-to-br from-blue-500 to-indigo-600" />
+            <PrimaryAction href="/calculadora-dose" title="Calculadora de doses" description="Cálculo rápido por peso/idade com alertas de dose máxima." Icon={Calculator} color="bg-gradient-to-br from-amber-500 to-yellow-600" />
+          </div>
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-relaxed">
+              <strong>Uso responsável:</strong> escalas orientam rastreio e acompanhamento, mas não fecham diagnóstico isoladamente. Confirme a adequação do instrumento, consentimento e contexto clínico antes de salvar ou exportar dados.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* ── MASCOTE DE BOAS-VINDAS ───────────────────────────── */}
       {!isSearching && (
         <div className="flex justify-center">
@@ -651,20 +707,31 @@ export default function HomePage() {
           {/* ── FAVORITOS E RECENTES (D3) ────────────────────── */}
           <FavoritesRecents />
 
-          {/* ── QUICK ACCESS BAR ─────────────────────────────── */}
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Acesso Rápido</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-              <QuickLink href="/filtro" label="Filtro" Icon={Filter} color="bg-gradient-to-br from-primary to-chart-2" />
-              <QuickLink href="/prontuario" label="Prontuário" Icon={ClipboardList} color="bg-gradient-to-br from-violet-600 to-purple-700" />
-              <QuickLink href="/satisfacao-medicacao" label="Medicação" Icon={Pill} color="bg-gradient-to-br from-emerald-600 to-cyan-600" />
-              <QuickLink href="/testes-reconhecimento" label="Testes" Icon={GraduationCap} color="bg-gradient-to-br from-pink-500 to-rose-500" />
-              <QuickLink href="/inventarios-escola" label="Escola" Icon={School} color="bg-gradient-to-br from-emerald-500 to-teal-600" />
-              <QuickLink href="/pacientes" label="Pacientes" Icon={Users} color="bg-gradient-to-br from-blue-500 to-indigo-600" />
-              <QuickLink href="/fluxogramas" label="Fluxogramas" Icon={GitBranch} color="bg-gradient-to-br from-cyan-500 to-blue-600" />
-              <QuickLink href="/marcos-desenvolvimento" label="Marcos" Icon={Milestone} color="bg-gradient-to-br from-emerald-500 to-green-600" />
-              <QuickLink href="/valores-referencia" label="Referência" Icon={Thermometer} color="bg-gradient-to-br from-red-500 to-orange-600" />
-              <QuickLink href="/calculadora-dose" label="Doses" Icon={Calculator} color="bg-gradient-to-br from-amber-500 to-yellow-600" />
+          {/* ── SECONDARY GROUPED ACCESS ──────────────────────── */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border bg-card/70 p-3 space-y-2">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ferramentas rápidas</p>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <QuickLink href="/prontuario" label="Prontuário" Icon={ClipboardList} color="bg-gradient-to-br from-violet-600 to-purple-700" />
+                <QuickLink href="/satisfacao-medicacao" label="Medicação" Icon={Pill} color="bg-gradient-to-br from-emerald-600 to-cyan-600" />
+                <QuickLink href="/testes-reconhecimento" label="Testes" Icon={GraduationCap} color="bg-gradient-to-br from-pink-500 to-rose-500" />
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card/70 p-3 space-y-2">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Biblioteca</p>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <QuickLink href="/inventarios-escola" label="Escola" Icon={School} color="bg-gradient-to-br from-emerald-500 to-teal-600" />
+                <QuickLink href="/fluxogramas" label="Fluxos" Icon={GitBranch} color="bg-gradient-to-br from-cyan-500 to-blue-600" />
+                <QuickLink href="/marcos-desenvolvimento" label="Marcos" Icon={Milestone} color="bg-gradient-to-br from-emerald-500 to-green-600" />
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card/70 p-3 space-y-2">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Referência</p>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <QuickLink href="/valores-referencia" label="Valores" Icon={Thermometer} color="bg-gradient-to-br from-red-500 to-orange-600" />
+                <QuickLink href="/farmacologia" label="Fármacos" Icon={Pill} color="bg-gradient-to-br from-emerald-600 to-cyan-600" />
+                <QuickLink href="/ajuda" label="Ajuda" Icon={Lightbulb} color="bg-gradient-to-br from-amber-500 to-orange-500" />
+              </div>
             </div>
           </div>
 
@@ -673,13 +740,13 @@ export default function HomePage() {
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Nosso Universo</p>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
               <div className="shrink-0 w-64 h-36 rounded-xl overflow-hidden shadow-md">
-                <img src={childDevImg} alt="Marcos do Desenvolvimento" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                <img src={childDevImg} alt="Marcos do Desenvolvimento" loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
               </div>
               <div className="shrink-0 w-48 h-36 rounded-xl overflow-hidden shadow-md">
-                <img src={heroBrainImg} alt="Cérebro Infantil" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                <img src={heroBrainImg} alt="Cérebro Infantil" loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
               </div>
               <div className="shrink-0 w-64 h-36 rounded-xl overflow-hidden shadow-md">
-                <img src={mentalHealthImg} alt="Saúde Mental Infantil" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                <img src={mentalHealthImg} alt="Saúde Mental Infantil" loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
               </div>
             </div>
           </div>

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar,
+  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, ShieldCheck, Download, Upload,
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
@@ -172,7 +172,7 @@ export default function PacientesPage() {
           >
             Meus Pacientes
           </h1>
-          <p className="text-xs text-muted-foreground italic">Cadastre e acompanhe seus pacientes</p>
+          <p className="text-xs text-muted-foreground italic">Cadastro, histórico e exportação com aviso de privacidade visível</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogTrigger asChild>
@@ -193,28 +193,40 @@ export default function PacientesPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-2">
-              <Input
-                placeholder="Nome completo *"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                data-testid="input-patient-name"
-              />
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Data de nascimento</label>
+                <label htmlFor="patient-name" className="text-xs text-muted-foreground">Nome completo *</label>
                 <Input
+                  id="patient-name"
+                  placeholder="Nome completo *"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  data-testid="input-patient-name"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="patient-birth" className="text-xs text-muted-foreground">Data de nascimento</label>
+                <Input
+                  id="patient-birth"
                   type="date"
                   value={formBirth}
                   onChange={(e) => setFormBirth(e.target.value)}
                   data-testid="input-patient-birth"
                 />
               </div>
-              <Textarea
-                placeholder="Observações (opcional)"
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
-                rows={3}
-                data-testid="input-patient-notes"
-              />
+              <div className="space-y-1">
+                <label htmlFor="patient-notes" className="text-xs text-muted-foreground">Observações</label>
+                <Textarea
+                  id="patient-notes"
+                  placeholder="Observações (opcional)"
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  rows={3}
+                  data-testid="input-patient-notes"
+                />
+              </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+                <strong>Consentimento e dados:</strong> registre apenas dados necessários, confirme autorização do responsável e exporte backup antes de excluir informações clínicas.
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -229,6 +241,26 @@ export default function PacientesPage() {
           </DialogContent>
         </Dialog>
       </motion.div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="border-primary/15 bg-primary/5 sm:col-span-2">
+          <CardContent className="p-3 flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-foreground">Dados clínicos sob responsabilidade profissional</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">A API de pacientes não é cacheada pelo service worker. Use PIN, confirme consentimento, exporte backup quando necessário e evite registrar dados excessivos.</p>
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="h-full min-h-[52px] flex-col gap-1" disabled title="Exportação em lote pendente de integração com backend">
+            <Download className="w-4 h-4" /> Backup
+          </Button>
+          <Button variant="outline" size="sm" className="h-full min-h-[52px] flex-col gap-1" disabled title="Importação pendente de integração com backend">
+            <Upload className="w-4 h-4" /> Importar
+          </Button>
+        </div>
+      </div>
 
       {/* Search */}
       <div className="relative">
