@@ -4,50 +4,50 @@
 > Não edite à mão — rode `npm run verify` para regenerar.
 
 - **Total de instrumentos:** 565
-- **Com fonte declarada:** 98
-- **Pendentes de validação/fonte:** 467
+- **Com fonte declarada:** 135
+- **Pendentes de validação/fonte:** 430
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
-| `abas3` | ABAS-3 | — | sim |
+| `abas3` | ABAS-3 | Harrison PL, Oakland T, 2015 | não |
 | `abc` | ABC | — | sim |
 | `abfw-fono` | ABFW Fonologia | — | sim |
 | `ace` | ACE | — | sim |
-| `adir` | ADI-R | — | sim |
+| `adir` | ADI-R | Rutter M et al., 2003 | não |
 | `adl3` | ADL-3 | — | sim |
-| `ados2` | ADOS-2 | — | sim |
+| `ados2` | ADOS-2 | Lord C et al., 2012 | não |
 | `aims` | AIMS | — | sim |
 | `aims-efeitos` | AIMS | — | sim |
 | `apgar` | APGAR | — | sim |
 | `ashworth` | Ashworth Modificada | — | sim |
 | `asq-suicide` | ASQ | — | sim |
 | `asq3` | ASQ-3 | — | sim |
-| `assq` | ASSQ | — | sim |
+| `assq` | ASSQ | Ehlers S et al., 1999 | não |
 | `atec` | ATEC | — | sim |
 | `auquei` | AUQUEI | — | sim |
 | `ballard` | Ballard | — | sim |
 | `barkley` | Barkley | — | sim |
 | `bars` | BARS | — | sim |
-| `bayley` | Bayley-III | — | sim |
-| `bears` | BEARS | — | sim |
-| `bears-new` | BEARS | — | sim |
+| `bayley` | Bayley-III | Bayley N, 2019 (Bayley-4) | não |
+| `bears` | BEARS | Owens JA, Dalzell V, 2005 | não |
+| `bears-new` | BEARS | Owens JA, Dalzell V, 2005 | não |
 | `beery-vmi` | Beery VMI | — | sim |
 | `bisq` | BISQ | — | sim |
 | `bladder-diary` | Diário Vesical Pediátrico | — | sim |
 | `bot2` | BOT-2 | — | sim |
 | `bprsc` | BPRS-C | — | sim |
-| `brief2` | BRIEF-2 | — | sim |
+| `brief2` | BRIEF-2 | Gioia GA et al., 2015 | não |
 | `bristol-stool` | Bristol Stool Scale | — | sim |
 | `brown-add` | Brown ADD | — | sim |
-| `cars` | CARS-2 | — | sim |
+| `cars` | CARS-2 | Schopler E et al., 2010 | não |
 | `casi` | CASI | — | sim |
-| `cast` | CAST | — | sim |
+| `cast` | CAST | Scott FJ et al., 2002 | não |
 | `catclams` | CAT/CLAMS | — | sim |
 | `cats` | CATS | — | sim |
-| `cbcl` | CBCL | — | sim |
+| `cbcl` | CBCL | Achenbach TM, Rescorla LA, 2001 (6-18) / 2000 (1.5-5) | não |
 | `cdi-macarthur` | CDI MacArthur | — | sim |
 | `cdi-screen-trauma` | CDI Trauma Screen | — | sim |
-| `cdi2` | CDI-2 | — | sim |
+| `cdi2` | CDI-2 | Kovacs M, 2011 | não |
 | `cdrsr` | CDRS-R | — | sim |
 | `cefaleia-calendario` | Calendário de Cefaleia | — | sim |
 | `celf5` | CELF-5 | — | sim |
@@ -58,7 +58,7 @@
 | `chq-pf50` | CHQ-PF50 | — | sim |
 | `comfort-b` | COMFORT-B | — | sim |
 | `confias` | CONFIAS | — | sim |
-| `conners` | Conners 3 | — | sim |
+| `conners` | Conners 3 | Conners CK, 2008 | não |
 | `copm` | COPM | — | sim |
 | `cpss-v` | CPSS-V | — | sim |
 | `cpt3` | CPT-3 | — | sim |
@@ -67,7 +67,7 @@
 | `cries` | CRIES | — | sim |
 | `cries13` | CRIES-13 | — | sim |
 | `csbi` | CSBI | — | sim |
-| `cshq` | CSHQ | — | sim |
+| `cshq` | CSHQ | Owens JA et al., 2000 | não |
 | `cssrs` | C-SSRS | — | sim |
 | `ctopp2` | CTOPP-2 | — | sim |
 | `cybocs` | CY-BOCS | — | sim |
@@ -103,10 +103,10 @@
 | `fas-pr` | FAS-PR | — | sim |
 | `flacc` | FLACC | — | sim |
 | `flacc-new` | FLACC | — | sim |
-| `gad7ped` | GAD-7 Pediátrico | — | sim |
+| `gad7ped` | GAD-7 Pediátrico | Spitzer RL et al., 2006 | não |
 | `gars3` | GARS-3 | — | sim |
 | `gas` | GAS | — | sim |
-| `gma` | GMA | — | sim |
+| `gma` | GMA | Prechtl HFR et al. | não |
 | `gmfcs` | GMFCS | — | sim |
 | `gmfm` | GMFM-88/66 | — | sim |
 | `griffiths` | Griffiths III | — | sim |
@@ -383,18 +383,18 @@
 | `leiter3-ext` | Leiter-3 | — | sim |
 | `life-h` | LIFE-H | — | sim |
 | `lsss` | LSSS | — | sim |
-| `mabc2` | MABC-2 | — | sim |
+| `mabc2` | MABC-2 | Henderson SE et al., 2007 | não |
 | `macs` | MACS | — | sim |
-| `masc2` | MASC-2 | — | sim |
-| `mchat` | M-CHAT-R/F | — | sim |
+| `masc2` | MASC-2 | March JS, 2013 | não |
+| `mchat` | M-CHAT-R/F | Robins DL et al., 2014, Pediatrics | não |
 | `mfq` | MFQ | — | sim |
 | `napi` | NAPI | — | sim |
-| `nbas` | NBAS | — | sim |
+| `nbas` | NBAS | Brazelton TB, Nugent JK, 1995 | não |
 | `nddi-e-new` | NDDI-E | — | sim |
 | `nddie` | NDDI-E | — | sim |
-| `nepsy2` | NEPSY-II | — | sim |
+| `nepsy2` | NEPSY-II | Korkman M et al., 2007 | não |
 | `nips` | NIPS | — | sim |
-| `nnns` | NNNS | — | sim |
+| `nnns` | NNNS | Lester BM et al., 2004 | não |
 | `oci-cv` | OCI-CV | — | sim |
 | `panss-ped` | PANSS Pediátrico | — | sim |
 | `pant` | PANT | — | sim |
@@ -501,13 +501,13 @@
 | `pdae` | PDAE | — | sim |
 | `pdms2` | PDMS-2 | — | sim |
 | `pedi` | PEDI | — | sim |
-| `pedi-cat` | PEDI-CAT | — | sim |
-| `pedicat` | PEDI-CAT | — | sim |
+| `pedi-cat` | PEDI-CAT | Haley SM et al., 2012 | não |
+| `pedicat` | PEDI-CAT | Haley SM et al., 2012 | não |
 | `pedmidas` | PedMIDAS | — | sim |
 | `peds` | PEDS | — | sim |
 | `pedsql` | PedsQL | — | sim |
 | `pedsql-epilepsia` | PedsQL Epilepsia | — | sim |
-| `phqa` | PHQ-A | — | sim |
+| `phqa` | PHQ-A | Johnson JG et al., 2002 | não |
 | `pls5` | PLS-5 | — | sim |
 | `ppp` | PPP | — | sim |
 | `ppvt4` | PPVT-4 | — | sim |
@@ -520,7 +520,7 @@
 | `psqi-ped` | PSQI Pediátrico | — | sim |
 | `qolie-ad` | QOLIE-AD-48 | — | sim |
 | `qolie-ad48` | QOLIE-AD-48 | — | sim |
-| `qolie31` | QOLIE-31 | — | sim |
+| `qolie31` | QOLIE-31 | Cramer JA et al. | não |
 | `qvce50` | QVCE-50 | — | sim |
 | `rads2` | RADS-2 | — | sim |
 | `raven` | Raven Colorido | — | sim |
@@ -531,21 +531,21 @@
 | `rey-figure` | Figura de Rey | — | sim |
 | `rflacc` | r-FLACC | — | sim |
 | `sb5` | Stanford-Binet 5 | — | sim |
-| `scared` | SCARED | — | sim |
+| `scared` | SCARED | Birmaher B et al., 1997 | não |
 | `scared-r` | SCARED Revisada | — | sim |
 | `scas` | SCAS | — | sim |
-| `scq` | SCQ | — | sim |
-| `sdq` | SDQ | — | sim |
-| `sdsc` | SDSC | — | sim |
-| `sdsc-new` | SDSC | — | sim |
+| `scq` | SCQ | Rutter M et al., 2003 | não |
+| `sdq` | SDQ | Goodman R, 1997 | não |
+| `sdsc` | SDSC | Bruni O et al., 1996 | não |
+| `sdsc-new` | SDSC | Bruni O et al., 1996 | não |
 | `sfa` | SFA | — | sim |
 | `sips` | SIPS/SOPS | — | sim |
 | `siqjr` | SIQ-Jr | — | sim |
-| `snap` | SNAP-IV | — | sim |
+| `snap` | SNAP-IV | Swanson JM et al. | não |
 | `snappe2` | SNAPPE-II | — | sim |
 | `snk-gaze-soc-geo` | Preferência Visual Social × Geométrica | Pierce 2011 (Arch Gen Psychiatry); Pierce 2016 (Biol Psychiatry); Wen 2022 (Sci Rep) — implementação SuperNeuroKids v25 | sim |
 | `soma` | SOMA | — | sim |
-| `srs2` | SRS-2 | — | sim |
+| `srs2` | SRS-2 | Constantino JN, Gruber CP, 2012 | não |
 | `staic` | STAIC | — | sim |
 | `stroop` | Stroop | — | sim |
 | `tde` | TDE | — | sim |
@@ -562,12 +562,12 @@
 | `ucla-ptsd` | UCLA PTSD-RI | — | sim |
 | `uku` | UKU | — | sim |
 | `vanderbilt` | Vanderbilt | — | sim |
-| `vineland` | Vineland-3 | — | sim |
+| `vineland` | Vineland-3 | Sparrow SS et al., 2016 | não |
 | `wcst` | WCST | — | sim |
-| `weefim` | WeeFIM | — | sim |
+| `weefim` | WeeFIM | Msall ME et al., 1994 | não |
 | `whoqol-ped` | WHOQOL-BREF Pediátrico | — | sim |
-| `wisc5` | WISC-V | — | sim |
-| `wisc5-ext` | WISC-V | — | sim |
+| `wisc5` | WISC-V | Wechsler D, 2014 | não |
+| `wisc5-ext` | WISC-V | Wechsler D, 2014 | não |
 | `wong-baker-new` | Wong-Baker FACES | — | sim |
 | `wongbaker` | Wong-Baker FACES | — | sim |
 | `wppsi` | WPPSI-IV | — | sim |
