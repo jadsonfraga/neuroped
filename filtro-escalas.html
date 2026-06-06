@@ -87,6 +87,9 @@
   /* Seções + grid */
   .detected{max-width:760px;margin:0 auto 6px;font-size:12.5px;color:var(--text-muted,#94A3B8);text-align:center}
   .detected b{color:var(--cie-ok)}
+  .cie-diff{margin:9px auto 0;max-width:680px;font-size:12px;line-height:1.5;color:var(--text-muted,#94A3B8);text-align:left;
+    background:var(--cie-info-fl);border:1px solid var(--cie-info-ln);border-radius:10px;padding:8px 12px}
+  .cie-diff b{color:var(--cie-info)}
   .section-label{display:flex;align-items:center;gap:9px;font:800 12px system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--primary-light,var(--cie-accent));margin:18px 2px 10px}
   .section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--cie-edge-2),transparent)}
   .np-cards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -729,7 +732,11 @@
     var cons=(window.NeuroPedSmartRank&&NeuroPedSmartRank.constructsOf)?NeuroPedSmartRank.constructsOf(q):[];
     var ageStr=(age!=null?(age%12===0?(age/12+' anos'):(age+' meses')):'idade não informada');
     var consHtml=cons.slice(0,4).map(function(k){return '<button class="chip dchip" type="button" data-foc="'+esc(CFOCUS[k]||k)+'">'+esc(CLABEL[k]||k)+'</button>';}).join(' ');
-    det.innerHTML='✅ <b>Entendi:</b> '+(consHtml||'<i>queixa livre</i>')+' · 🎂 <b>'+esc(ageStr)+'</b>'+(RESP?(' · 🙋 <b>'+esc(RESP_LABEL[RESP]||RESP)+'</b>'):'')+(cons.length?' <span class="dhint">— não é isso? toque para focar</span>':'');
+    // Diferencial clínico: quando a queixa ativa 2+ construtos que coexistem/se
+    // confundem, orienta o raciocínio (apoio, não diagnóstico).
+    var diffs=(window.NeuroPedSmartRank&&NeuroPedSmartRank.differentials)?NeuroPedSmartRank.differentials(q):[];
+    var diffHtml=diffs.length?('<div class="cie-diff">⚖️ <b>Diferencial clínico:</b> '+diffs.map(function(d){return esc(d.note);}).join('<br>')+'</div>'):'';
+    det.innerHTML='✅ <b>Entendi:</b> '+(consHtml||'<i>queixa livre</i>')+' · 🎂 <b>'+esc(ageStr)+'</b>'+(RESP?(' · 🙋 <b>'+esc(RESP_LABEL[RESP]||RESP)+'</b>'):'')+(cons.length?' <span class="dhint">— não é isso? toque para focar</span>':'')+diffHtml;
     det.querySelectorAll('.dchip').forEach(function(b){ b.addEventListener('click',function(){ inp.value=b.getAttribute('data-foc')||''; if(typeof toggleClear==='function')toggleClear(); run(); }); });
     cnt.textContent='· '+top.length;
     renderGuide(q, tokens, top, age);
