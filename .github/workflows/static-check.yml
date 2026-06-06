@@ -13,51 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Validate published PWA files
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          import sys
-
-          required = [
-              'index.html',
-              'manifest.json',
-              'sw.js',
-              '404.html',
-              'icon-192.png',
-              'icon-512.png',
-              '.nojekyll',
-          ]
-
-          missing = [p for p in required if not Path(p).exists()]
-          if missing:
-              print('Missing required files:', ', '.join(missing))
-              sys.exit(1)
-
-          index = Path('index.html').read_text(encoding='utf-8-sig')
-
-          forbidden = [
-              'Perplexity Computer',
-              'data-pplx-inline-edit',
-              'INLINE_EDIT_CAPTURE_REQUEST',
-          ]
-          found = [term for term in forbidden if term in index]
-          if found:
-              print('Forbidden production metadata found:', ', '.join(found))
-              sys.exit(1)
-
-          refs = re.findall(r'(?:src|href)="\.\/([^"#?]+)', index)
-          missing_refs = [ref for ref in refs if not Path(ref).exists() and not ref.startswith('data:')]
-          if missing_refs:
-              print('Broken local references:', ', '.join(missing_refs))
-              sys.exit(1)
-
-          manifest = Path('manifest.json').read_text(encoding='utf-8-sig')
-          if '"start_url"' not in manifest or '"scope"' not in manifest:
-              print('Manifest missing start_url or scope')
-              sys.exit(1)
-
-          print('Static checks passed.')
-          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify static PWA, scorecard and E2E guards
+        run: npm run verify

@@ -1,0 +1,15 @@
+{
+  "name": "neuroped-static-audit",
+  "version": "0.9.0-sdg",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/guards/static-check.mjs",
+    "lint": "node scripts/guards/lint-static.mjs",
+    "build": "node scripts/guards/build-static.mjs",
+    "scorecard": "node scripts/guards/scorecard.mjs",
+    "verify": "npm run check && npm run lint && npm run build && npm run test:e2e && npm run scorecard",
+    "test:e2e": "node scripts/e2e/static-e2e.mjs"
+  },
+  "devDependencies": {}
+}
