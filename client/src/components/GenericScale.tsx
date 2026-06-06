@@ -10,6 +10,8 @@ import { RotateCcw, AlertTriangle, CheckCircle2, Info, type LucideIcon } from "l
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import { Mascote } from "@/components/Mascote";
+import { celebrate } from "@/lib/confetti";
 import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
@@ -62,6 +64,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   function handleSubmit() {
     softSuccess();
     haptic.success();
+    celebrate();
     setShowResult(true);
   }
 
@@ -100,6 +103,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             <p className="text-xs text-muted-foreground italic">Avaliação concluída</p>
           </div>
         </div>
+
+        <Mascote
+          contexto="resultado"
+          size="sm"
+          fala="Avaliação concluída! Use este resultado como apoio à conversa clínica — ele não substitui o julgamento profissional."
+        />
 
         <Card className="border-card-border overflow-hidden">
           {result.total !== undefined && (
