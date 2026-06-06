@@ -586,6 +586,27 @@ export async function registerRoutes(
       });
       try {
         const parsed = schema.parse(req.body);
+        // Destinatário travado: só o e-mail do próprio profissional autenticado
+        // ou o endereço institucional. Um `to` arbitrário transformaria o SMTP
+        // da clínica em relay aberto de spam/phishing para qualquer endereço.
+        const allowedRecipients = new Set(
+          [req.user!.email, PROFESSIONAL_REPORT_EMAIL]
+            .filter(Boolean)
+            .map((e) => e.toLowerCase()),
+        );
+        if (parsed.to && !allowedRecipients.has(parsed.to.toLowerCase())) {
+          await logAudit({
+            eventType: "lgpd.access",
+            context: ctx,
+            metadata: { action: "send_report", reason: "recipient_not_allowed" },
+            success: false,
+          });
+          return res.status(403).json({
+            error:
+              "Destinatário não permitido. Relatórios só podem ser enviados para o seu próprio e-mail ou para o endereço institucional.",
+            code: "RECIPIENT_NOT_ALLOWED",
+          });
+        }
         const recipient = parsed.to || PROFESSIONAL_REPORT_EMAIL;
         const result = await sendEmail({
           to: recipient,
