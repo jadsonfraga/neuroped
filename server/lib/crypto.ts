@@ -1,27 +1,24 @@
 /**
  * Criptografia simetrica AES-256-GCM para campos sensiveis em repouso.
  *
- * Convencoes:
- *  - Algoritmo: AES-256-GCM (autenticado).
- *  - Chave: 32 bytes (256 bits) derivados de NEUROPED_MASTER_KEY via PBKDF2-SHA256.
- *  - IV: 12 bytes aleatorios por mensagem (NIST recomendacao para GCM).
- *  - Auth tag: 16 bytes anexado ao payload.
- *  - Formato de saida: base64( salt(16) | iv(12) | tag(16) | ciphertext(N) ).
+ * Formato novo (v1):  0x01 | IV(12) | TAG(16) | CT(N)  — chave derivada uma vez na inicializacao.
+ * Formato legado:     SALT(16) | IV(12) | TAG(16) | CT(N) — PBKDF2 por chamada (compatibilidade leitura).
  *
- * Cada chamada de encrypt usa um salt novo. PBKDF2 e re-executado a cada chamada
- * (custo: ~100k iteracoes). Em ambiente de alta carga, considerar cache de
- * chaves derivadas em memoria por (salt -> key).
+ * A chave de instancia e derivada via PBKDF2-SHA256 com salt fixo (sha256 da master key)
+ * uma unica vez ao primeiro uso. Isso elimina o bloqueio do event loop causado por
+ * 100k iteracoes PBKDF2 em cada chamada de encrypt/decrypt.
  */
 
 import crypto from "node:crypto";
 
 const ALGO = "aes-256-gcm";
-const KEY_LEN = 32; // 256 bits
-const IV_LEN = 12; // 96 bits para GCM
-const TAG_LEN = 16; // 128 bits
-const SALT_LEN = 16; // 128 bits
+const KEY_LEN = 32;
+const IV_LEN = 12;
+const TAG_LEN = 16;
+const SALT_LEN = 16;
 const PBKDF2_ITERATIONS = 100_000;
 const PBKDF2_DIGEST = "sha256";
+const VERSION_V1 = 0x01;
 
 export class CryptoConfigurationError extends Error {
   constructor(message: string) {
@@ -64,52 +61,61 @@ function getMasterKey(): Buffer {
   return Buffer.from(raw, "utf8");
 }
 
-function deriveKey(salt: Buffer): Buffer {
-  return crypto.pbkdf2Sync(
-    getMasterKey(),
-    salt,
-    PBKDF2_ITERATIONS,
-    KEY_LEN,
-    PBKDF2_DIGEST,
-  );
+// Chave de instancia: derivada uma vez e armazenada em memoria.
+let _instanceKey: Buffer | null = null;
+
+function getInstanceKey(): Buffer {
+  if (_instanceKey) return _instanceKey;
+  const masterKey = getMasterKey();
+  // Salt fixo e determinístico: primeiros 16 bytes do SHA-256 da master key.
+  const fixedSalt = crypto.createHash("sha256").update(masterKey).digest().subarray(0, SALT_LEN);
+  _instanceKey = crypto.pbkdf2Sync(masterKey, fixedSalt, PBKDF2_ITERATIONS, KEY_LEN, PBKDF2_DIGEST);
+  return _instanceKey;
 }
 
 /**
  * Criptografa uma string e retorna payload em base64 pronto para gravar.
  * Retorna null para entrada nula/vazia (politica de minimizacao).
+ * Formato: 0x01 | IV(12) | TAG(16) | CT(N).
  */
 export function encrypt(plaintext: string | null | undefined): string | null {
   if (plaintext == null || plaintext === "") return null;
 
-  const salt = crypto.randomBytes(SALT_LEN);
+  const key = getInstanceKey();
   const iv = crypto.randomBytes(IV_LEN);
-  const key = deriveKey(salt);
 
   const cipher = crypto.createCipheriv(ALGO, key, iv);
   const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
 
-  return Buffer.concat([salt, iv, tag, ct]).toString("base64");
+  return Buffer.concat([Buffer.from([VERSION_V1]), iv, tag, ct]).toString("base64");
 }
 
 /**
- * Descriptografa um payload produzido por encrypt(). Lanca CryptoIntegrityError
- * se o auth tag nao bater (indica adulteracao ou chave incorreta).
+ * Descriptografa um payload produzido por encrypt() ou pelo formato legado.
+ * Detecta o formato pelo primeiro byte: 0x01 = novo, outro valor = legado.
  */
 export function decrypt(payload: string | null | undefined): string | null {
   if (payload == null || payload === "") return null;
 
   const buf = Buffer.from(payload, "base64");
-  if (buf.length < SALT_LEN + IV_LEN + TAG_LEN + 1) {
-    throw new CryptoIntegrityError("Payload criptografado muito curto");
+
+  if (buf.length >= 1 + IV_LEN + TAG_LEN + 1 && buf[0] === VERSION_V1) {
+    return _decryptV1(buf);
   }
 
-  const salt = buf.subarray(0, SALT_LEN);
-  const iv = buf.subarray(SALT_LEN, SALT_LEN + IV_LEN);
-  const tag = buf.subarray(SALT_LEN + IV_LEN, SALT_LEN + IV_LEN + TAG_LEN);
-  const ct = buf.subarray(SALT_LEN + IV_LEN + TAG_LEN);
+  if (buf.length >= SALT_LEN + IV_LEN + TAG_LEN + 1) {
+    return _decryptLegacy(buf);
+  }
 
-  const key = deriveKey(salt);
+  throw new CryptoIntegrityError("Payload criptografado muito curto");
+}
+
+function _decryptV1(buf: Buffer): string {
+  const iv = buf.subarray(1, 1 + IV_LEN);
+  const tag = buf.subarray(1 + IV_LEN, 1 + IV_LEN + TAG_LEN);
+  const ct = buf.subarray(1 + IV_LEN + TAG_LEN);
+  const key = getInstanceKey();
 
   try {
     const decipher = crypto.createDecipheriv(ALGO, key, iv);
@@ -117,6 +123,28 @@ export function decrypt(payload: string | null | undefined): string | null {
     const pt = Buffer.concat([decipher.update(ct), decipher.final()]);
     return pt.toString("utf8");
   } catch (_e) {
+    // Guarda: se o primeiro byte do salt legado era 0x01 por acaso, tenta formato legado.
+    if (buf.length >= SALT_LEN + IV_LEN + TAG_LEN + 1) {
+      return _decryptLegacy(buf);
+    }
+    throw new CryptoIntegrityError(
+      "Falha ao decriptar (auth tag invalido). Possivel adulteracao do dado ou chave mestra alterada.",
+    );
+  }
+}
+
+function _decryptLegacy(buf: Buffer): string {
+  const salt = buf.subarray(0, SALT_LEN);
+  const iv = buf.subarray(SALT_LEN, SALT_LEN + IV_LEN);
+  const tag = buf.subarray(SALT_LEN + IV_LEN, SALT_LEN + IV_LEN + TAG_LEN);
+  const ct = buf.subarray(SALT_LEN + IV_LEN + TAG_LEN);
+  const key = crypto.pbkdf2Sync(getMasterKey(), salt, PBKDF2_ITERATIONS, KEY_LEN, PBKDF2_DIGEST);
+
+  try {
+    const decipher = crypto.createDecipheriv(ALGO, key, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(ct), decipher.final()]).toString("utf8");
+  } catch {
     throw new CryptoIntegrityError(
       "Falha ao decriptar (auth tag invalido). Possivel adulteracao do dado ou chave mestra alterada.",
     );
@@ -126,9 +154,6 @@ export function decrypt(payload: string | null | undefined): string | null {
 /**
  * Hash determinístico para busca de campos sensiveis sem expor o plaintext.
  * Usa HMAC-SHA256 com a chave mestra como segredo.
- *
- * Util para criar indice pesquisavel de CPF: armazena cpfEncrypted (AES-GCM,
- * nao pesquisavel) + cpfHash (HMAC, pesquisavel mas nao reversivel).
  */
 export function deterministicHash(input: string | null | undefined): string | null {
   if (input == null || input === "") return null;
