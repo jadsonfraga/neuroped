@@ -163,6 +163,23 @@ const navSections: NavSection[] = [
       { href: "/ajuda", label: "Ajuda / FAQ", icon: HelpCircle },
     ],
   },
+  {
+    title: "Família",
+    items: [
+      { href: "/portal-familia", label: "Portal da Família", icon: Users },
+      { href: "/portal-familia/novidades", label: "Novidades & Artigos", icon: Newspaper },
+      { href: "/portal-familia/acesso", label: "Política de Acesso", icon: KeyRound },
+    ],
+  },
+  {
+    title: "Sobre",
+    items: [
+      { href: "/sobre-neuroped", label: "Natureza da Ferramenta", icon: Sparkles },
+      { href: "/glossario", label: "Glossário", icon: BookMarked },
+      { href: "/acessibilidade", label: "Acessibilidade", icon: Accessibility },
+      { href: "/qualidade", label: "Qualidade", icon: ShieldCheck },
+    ],
+  },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

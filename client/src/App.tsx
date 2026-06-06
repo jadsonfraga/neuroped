@@ -103,6 +103,12 @@ const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
+const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades"));
+const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
+const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
+const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
+const GlossarioPage = lazy(() => import("@/pages/glossario"));
+const QualidadePage = lazy(() => import("@/pages/qualidade"));
 
 function LoadingSpinner() {
   return (
@@ -262,6 +268,14 @@ function AppRouter() {
 
           {/* ----- Portal da Família (acesso público restrito a documentos liberados) ----- */}
           <Route path="/portal-familia" component={PortalFamiliaPage} />
+          <Route path="/portal-familia/novidades" component={PortalNovidadesPage} />
+          <Route path="/portal-familia/acesso" component={PortalAcessoPage} />
+
+          {/* ----- Páginas informativas (sobre/legais) ----- */}
+          <Route path="/acessibilidade" component={AcessibilidadePage} />
+          <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
+          <Route path="/glossario" component={GlossarioPage} />
+          <Route path="/qualidade" component={QualidadePage} />
 
           {/* ----- Catch-all ----- */}
           <Route component={NotFound} />
