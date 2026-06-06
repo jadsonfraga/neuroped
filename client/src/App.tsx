@@ -16,6 +16,7 @@ import { PreferencesPanel } from "@/components/PreferencesPanel";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
+import { WelcomeTour } from "@/components/WelcomeTour";
 
 // ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
@@ -332,6 +333,7 @@ function App() {
             </Router>
             <InstallPrompt />
             <PreferencesPanel />
+            {splashComplete && <WelcomeTour />}
           </ToastProvider>
         </TooltipProvider>
       </AuthProvider>
