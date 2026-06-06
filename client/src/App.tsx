@@ -69,6 +69,7 @@ const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
 const DiarioEscolaPage = lazy(() => import("@/pages/diario-escola"));
+const AssinaturaDigitalPage = lazy(() => import("@/pages/assinatura-digital"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -185,6 +186,7 @@ function AppRouter() {
           <Route path="/diario-sono" component={DiarioSonoPage} />
           <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
           <Route path="/diario-escola" component={DiarioEscolaPage} />
+          <Route path="/assinatura-digital" component={AssinaturaDigitalPage} />
           <Route path="/sobre" component={SobrePage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />
