@@ -35,7 +35,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .prog{position:sticky;top:64px;z-index:20;margin:16px 0 4px;background:rgba(12,11,26,.7);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:12px}
 .prog .bar{flex:1;height:8px;border-radius:999px;background:rgba(124,118,210,.16);overflow:hidden}
 .prog .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .3s cubic-bezier(.22,.9,.25,1)}
-.prog .pc{font:800 13px system-ui;color:var(--wine);min-width:62px;text-align:right}
+.prog .pc{font:800 13px system-ui;color:var(--wine);min-width:62px;text-align:right;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" on}
 .prog.done{border-color:rgba(231,201,139,.45);box-shadow:0 0 0 1px rgba(231,201,139,.3)}
 .prog.done .bar i{background:linear-gradient(90deg,var(--gold),#fff3d6)}
 .prog.done .pc{color:var(--gold)}
@@ -167,13 +167,13 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     <a class="who" id="whoChip" href="./perfil-crianca.html" hidden></a>
   </section>
 
-  <div class="prog" id="prog" hidden><div class="bar"><i id="progBar"></i></div><div class="pc" id="progPc">0%</div></div>
+  <div class="prog" id="prog" role="status" aria-live="polite" aria-label="Progresso do preenchimento" hidden><div class="bar"><i id="progBar"></i></div><div class="pc" id="progPc">0%</div></div>
 
   <!-- #detail: o scales-enhance.js observa este nó e injeta a barra de laudo/PDF -->
   <section id="detail"></section>
   <p class="miss" id="miss">Responda todos os itens para um laudo completo (itens sem resposta saem marcados no PDF).</p>
   <section id="directTasks" hidden></section>
-  <div class="done" id="doneBanner"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
+  <div class="done" id="doneBanner" role="status" aria-live="polite"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
   <div class="toolbar"></div>
 
   <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica ou pedagógica. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756.</p>
