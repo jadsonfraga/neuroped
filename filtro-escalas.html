@@ -817,15 +817,19 @@ body.eh-on::after{
   function asResult(s, tokens, age){ return decorate(score(s, tokens||[], age) || {s:s, hits:[]}, age); }
   // melhor de um conjunto: maior fit, depois nº de termos da queixa, depois prioridade.
   function bestOf(list){ return list.slice().sort(function(a,b){ return (b.fit-a.fit)||(b.hits.length-a.hits.length)||((b.s.priority||0)-(a.s.priority||0)); })[0]||null; }
-  // 4º slot — teste direto na criança (idade+queixa) com fallback "sempre".
+  // 4º slot — teste direto na criança (idade+queixa). GARANTIDO: fallback por idade quando
+  // a queixa não casa. Nota: [] (array vazio) é truthy em JS — precisa de verificação de
+  // comprimento para não bloquear o fallback secundário.
   function pickDirect(matched, tokens, age){
     var hit=matched.filter(function(r){return isDirectTest(r.s)&&ageFits(r.s,age);});
     if(hit.length) return bestOf(hit);
-    var pool=window.NEUROPED_DIRECT_TESTS||(window.NEUROPED_EDITORIAL_SCALES||[]).filter(isDirectTest);
+    var dtCat=window.NEUROPED_DIRECT_TESTS;
+    var pool=(dtCat&&dtCat.length)?dtCat:(window.NEUROPED_EDITORIAL_SCALES||[]).filter(isDirectTest);
+    if(!pool.length) pool=(window.NEUROPED_EDITORIAL_SCALES||[]).filter(isDirectTest);
     var fit=pool.filter(function(s){return ageFits(s,age);});
     return bestOf((fit.length?fit:pool).map(function(s){return asResult(s,tokens,age);}));
   }
-  // 5º slot — questionário para a escola (idade+queixa) com fallback "sempre".
+  // 5º slot — questionário para a escola (idade+queixa). GARANTIDO: fallback por idade.
   function pickSchool(matched, tokens, age, skipId){
     var ok=function(s){return isSchoolQ(s)&&s.id!==skipId&&!isDiary(s)&&!isBank(s)&&!isClinicalOnly(s);};
     var hit=matched.filter(function(r){return ok(r.s)&&ageFits(r.s,age);});
@@ -833,6 +837,20 @@ body.eh-on::after{
     var pool=(window.NEUROPED_EDITORIAL_SCALES||[]).filter(ok);
     var fit=pool.filter(function(s){return ageFits(s,age);});
     return bestOf((fit.length?fit:pool).map(function(s){return asResult(s,tokens,age);}));
+  }
+  // fillMedals(): preenche prata/bronze quando o pódio ficou incompleto (query muito
+  // específica). Usa os instrumentos de maior destaque do catálogo que ainda não
+  // estão em fixed — sempre não-diário, não-banco, não-clínico.
+  function fillMedals(medals, fixedIds, tokens, age){
+    if(medals.length>=3) return;
+    var used={}; fixedIds.forEach(function(id){used[id]=1;}); medals.forEach(function(r){used[r.s.id]=1;});
+    var pool=(window.NEUROPED_EDITORIAL_SCALES||[])
+      .filter(function(s){return s&&s.id&&!isDirectTest(s)&&!isSchoolQ(s)&&!isDiary(s)&&!isBank(s)&&!isClinicalOnly(s)&&!used[s.id];})
+      .sort(function(a,b){return ((b.featured_rank||0)-(a.featured_rank||0))||((b.priority||0)-(a.priority||0));});
+    while(medals.length<3&&pool.length){
+      medals.push(asResult(pool.shift(),tokens,age));
+    }
+    medals.forEach(function(r,i){r.tier=['ouro','prata','bronze'][i];r.rank=3-i;});
   }
 
   function run(){
@@ -895,6 +913,10 @@ body.eh-on::after{
     medalPool.sort(function(a,b){ return ((b.fit+sensBoost(b))-(a.fit+sensBoost(a)))||(b.hits.length-a.hits.length); });
     var medals=medalPool.slice(0,3);
     medals.forEach(function(r,i){ r.tier=['ouro','prata','bronze'][i]; r.rank=3-i; });
+    // Garante prata e bronze: se menos de 3 casaram, completa com os mais destacados
+    // do catálogo para o pódio nunca ficar incompleto.
+    var fixedSkipIds=[]; if(directPick)fixedSkipIds.push(directPick.s.id); if(schoolPick)fixedSkipIds.push(schoolPick.s.id);
+    fillMedals(medals, fixedSkipIds, tokens, age);
     if(directPick) directPick.tier='direto';
     if(schoolPick) schoolPick.tier='escola';
     var fixed=medals.concat(directPick?[directPick]:[], schoolPick?[schoolPick]:[]);
