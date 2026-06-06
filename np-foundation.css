@@ -67,3 +67,68 @@
 /* Ritmo editorial: equilíbrio óptico de títulos e parágrafos (Apple-grade, progressive). */
 .np-skin :is(h1,h2,h3), .np-type :is(h1,h2,h3), .np-display { text-wrap: balance; }
 .np-skin p, .np-type p { text-wrap: pretty; }
+
+/* ============================================================================
+   §3.4 — REFINOS GLOBAIS (universais, NÃO opt-in) · "Lovable/Apple-grade"
+   ----------------------------------------------------------------------------
+   Valem em toda página que carrega esta foundation (71/71). Só polimento de
+   sistema e interação — NENHUMA mudança de cor de conteúdo, nada que possa
+   "ficar feio". Onde poderia conflitar com estilo de página, uso :where()
+   (especificidade 0) → o CSS da própria tela sempre vence.
+   ============================================================================ */
+
+/* Controles/scrollbar/caret nativos do navegador acompanham o tema. */
+:root { color-scheme: dark; }
+[data-theme="light"] { color-scheme: light; }
+
+/* Acento da marca em checkbox/radio/range/progress nativos — on-brand num passe. */
+:root { accent-color: var(--np-accent); caret-color: var(--np-accent); }
+
+/* Texto cristalino em TODO o app (antes só nas telas com skin) + toque limpo no mobile. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+
+/* Seleção de texto na cor da marca (contraste AA: branco sobre o iris profundo). */
+::selection { background: var(--np-accent-strong); color: #fff; }
+
+/* Scrollbar fina e temada — premium discreto (Firefox + WebKit). */
+* { scrollbar-width: thin; scrollbar-color: var(--np-edge-hi) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--np-edge-hi); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--np-text-low); }
+
+/* Foco visível como BASELINE consistente (telas com estilo próprio sobrescrevem). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--np-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Rolagem suave + âncoras que não grudam sob headers sticky (respeita reduced-motion). */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+:where(h1, h2, h3, [id]) { scroll-margin-top: 84px; }
+
+/* Mídia não estoura o container (polimento de layout, evita scroll horizontal). */
+img { max-width: 100%; }
+
+/* ============================================================================
+   §3.5 — MICRO-INTERAÇÕES (tátil universal, à prova de layout)
+   ----------------------------------------------------------------------------
+   Feedback de hover/press em TODO elemento clicável, com a curva de mola do iOS.
+   Usa filter:brightness (NÃO transform) de propósito: brilho não causa reflow
+   nem quebra position:sticky/backdrop-filter — impossível "desmontar" um layout
+   que eu não consigo ver. :where() = especificidade 0 → estilo de página vence.
+   Só com movimento permitido (prefers-reduced-motion: no-preference).
+   ============================================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, [role="button"], .np-btn, .chip, summary, a.applynow):not(:disabled) {
+    transition: filter var(--np-dur-1) var(--np-ease-spring), box-shadow var(--np-dur-2) var(--np-ease-out);
+    will-change: filter;
+  }
+  :where(button, [role="button"], .np-btn, .chip, a.applynow):not(:disabled):hover { filter: brightness(1.06); }
+  :where(button, [role="button"], .np-btn, .chip, a.applynow):not(:disabled):active { filter: brightness(0.93); }
+}
+/* Cursor coerente: elemento clicável mostra a mãozinha; desabilitado some o feedback. */
+:where(button, [role="button"], .np-btn, summary):not(:disabled) { cursor: pointer; }
+:where(button, .np-btn):disabled { cursor: not-allowed; opacity: .55; }
