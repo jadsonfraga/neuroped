@@ -23,6 +23,7 @@ export const BUNDLE_ORDER = [
   'scales-direct-tests-catalog.js',  // promove as tarefas a instrumentos filtráveis (top-3 pré-consulta)
   'scales-med-eficacia.js',          // escala autoral de eficácia da medicação (pré-consulta)
   'scales-intl-livres.js',           // curadoria de instrumentos internacionais de licença livre (referência)
+  'scales-intl-livres-lote2.js',     // LOTE 2: +50 instrumentos gratuitos (PubMed/NICE/AAP/OMS) como referência
   'scales-autoral-funcional.js',     // autorais Dr. Jadson: autonomia, risco cognitivo, risco de dislexia
   'scales-estudo-restrito.js',       // proprietários como REFERÊNCIA DE ESTUDO (senha, não clínico)
   'scales-smart-rank.js',            // motor de seleção inteligente (expansão por construto + mix de modalidade)
