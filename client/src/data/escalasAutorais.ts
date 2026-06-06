@@ -7,7 +7,9 @@
 
 import { ScaleEntry } from "./scaleFilter";
 
-export const escalasAutoraisDrJadson: ScaleEntry[] = [
+// Lote autoral bruto (J26-001 a J26-260). A proveniência autoral é injetada
+// abaixo via map não destrutivo (Bloco 1.4 — Consolidação 9.0).
+const escalasAutoraisRaw: ScaleEntry[] = [
 
   // =====================================================================
   // CATEGORIA 1 — TRIAGEM DO NEURODESENVOLVIMENTO (J26-001 a J26-015)
@@ -3244,3 +3246,14 @@ export const escalasAutoraisDrJadson: ScaleEntry[] = [
     description: "Checklist de quais exames pedir pra cada medicação psicotrópica — e quando pedir. Organizado por medicamento: metilfenidato, valproato, carbamazepina, risperidona, aripiprazol, fluoxetina. Marca o que já foi feito, o que está pendente e quando repetir. Evita que o acompanhamento fique incompleto.",
   },
 ];
+
+// Bloco 1.4 — Proveniência clínica dos instrumentos autorais (J26).
+// Todos os protocolos do lote são autoria do Dr. Jadson Fraga (NeuroPed).
+// O map é NÃO destrutivo: se um item já trouxer `fonte`/`licencaUso` inline,
+// esses valores prevalecem ({ ...defaults, ...s }).
+export const escalasAutoraisDrJadson: ScaleEntry[] = escalasAutoraisRaw.map((s) => ({
+  fonte: "Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26)",
+  licencaUso: "autoral" as const,
+  pubmedId: null,
+  ...s,
+}));

@@ -44,12 +44,14 @@ function PhotoCarousel() {
       </div>
       <button
         onClick={prev}
+        aria-label="Foto anterior"
         className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
       <button
         onClick={next}
+        aria-label="Próxima foto"
         className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <ChevronRight className="w-5 h-5" />
@@ -59,6 +61,7 @@ function PhotoCarousel() {
           <button
             key={i}
             onClick={() => setCurrent(i)}
+            aria-label={`Ir para a foto ${i + 1}`}
             className={`h-1.5 rounded-full transition-all ${i === current ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30"}`}
           />
         ))}

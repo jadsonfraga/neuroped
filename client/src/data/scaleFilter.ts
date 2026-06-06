@@ -29,10 +29,10 @@ export interface ScaleEntry {
   // Proveniência clínica validada (ChatGPT→PubMed, 2026). 37 instrumentos.
   // `licenca` acima descreve o MODO de aplicação (passiva/ativa); `licencaUso`
   // descreve o LICENCIAMENTO do instrumento (livre/comercial/restrita/contato_autor).
-  pubmedId?: string;                   // ex.: "PMID 24422648"
+  pubmedId?: string | null;            // ex.: "PMID 24422648" (null = sem PMID aplicável)
   validacaoBrasil?: string;            // status de adaptação/validação brasileira
   scoringCutoff?: string;              // ponto de corte / interpretação de escore
-  licencaUso?: "livre" | "comercial" | "restrita" | "contato_autor"; // licenciamento de uso
+  licencaUso?: "livre" | "comercial" | "restrita" | "contato_autor" | "autoral"; // licenciamento de uso
 }
 
 export interface QueixaCategory {
@@ -362,6 +362,33 @@ export const scales: ScaleEntry[] = [
   // ===== PSICOSE ADICIONAL =====
   { id: "sips", name: "SIPS/SOPS", fullName: "Structured Interview for Prodromal Syndromes / Scale of Prodromal Symptoms", ageMin: 144, ageMax: 300, queixas: ["psicose"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "30–60 min", description: "Entrevista estruturada para identificação de síndromes prodrômicas de psicose (UHR) em adolescentes e adultos jovens." },
   { id: "prime-screen", name: "PRIME Screen", fullName: "PRIME Screen for Psychosis Risk", ageMin: 144, ageMax: 300, queixas: ["psicose"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "10 min", description: "12 itens de triagem de risco ultra-alto para psicose em adolescentes. Baseado nos critérios do SIPS/SOPS." },
+
+  // ===== NOVOS INSTRUMENTOS — BLOCO 0 (lista Dr. Jadson, 2026) =====
+  // ----- Desenvolvimento / Cognição -----
+  { id: "das2", name: "DAS-II", fullName: "Differential Ability Scales II", ageMin: 30, ageMax: 216, queixas: ["cognicao", "aprendizagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "45–60 min", description: "Bateria cognitiva diferencial com habilidade conceitual geral (GCA) e clusters verbal, não-verbal e espacial. Útil em deficiência intelectual e dificuldades de aprendizagem.", fonte: "Elliott CD, 2007 (DAS-II), Pearson", validacaoBrasil: "Não", scoringCutoff: "GCA <70 sugere déficit cognitivo significativo", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "mullen", name: "Mullen", fullName: "Mullen Scales of Early Learning", ageMin: 0, ageMax: 68, queixas: ["atraso", "cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "30–60 min", description: "Avaliação do desenvolvimento precoce em 5 escalas: motora grossa, visual receptiva, motora fina, linguagem receptiva e expressiva. Muito usada em pesquisa de TEA.", fonte: "Mullen EM, 1995 (Mullen Scales of Early Learning), AGS/Pearson", validacaoBrasil: "Não", scoringCutoff: "Early Learning Composite <70 abaixo do esperado", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "battelle3", name: "Battelle-3", fullName: "Battelle Developmental Inventory 3", ageMin: 0, ageMax: 95, queixas: ["atraso", "funcionalidade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "60–90 min", description: "Inventário do desenvolvimento em 5 domínios: pessoal-social, adaptativo, motor, comunicação e cognitivo. Inclui triagem rápida.", fonte: "Newborg J, 2020 (Battelle Developmental Inventory 3), Riverside", validacaoBrasil: "Não", scoringCutoff: "Developmental Quotient <80 atraso provável", licencaUso: "comercial", pendente_validacao_clinica: false },
+  // ----- Motricidade / Sensorial -----
+  { id: "spm2", name: "SPM-2", fullName: "Sensory Processing Measure 2", ageMin: 60, ageMax: 216, queixas: ["sensorial", "tea"], respondente: ["pais", "clinico"], prioridade: "diagnostica", tempo: "15–20 min", description: "Avalia processamento sensorial, práxis e participação social em casa, escola e comunidade. Conjunto de formulários por contexto.", fonte: "Parham LD et al., 2021 (SPM-2), WPS", validacaoBrasil: "Não", scoringCutoff: "T-score >=60 disfunção provável", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "sensory-profile2", name: "Sensory Profile-2", fullName: "Sensory Profile 2 (Dunn)", ageMin: 0, ageMax: 168, queixas: ["sensorial", "tea", "atraso"], respondente: ["pais"], prioridade: "diagnostica", tempo: "15–20 min", description: "Caracteriza padrões de processamento sensorial (registro, busca, sensibilidade, evitação) segundo o modelo de Dunn. Formulários por faixa etária.", fonte: "Dunn W, 2014 (Sensory Profile 2), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "classificação por quadrantes (mais/menos que a maioria)", licencaUso: "comercial", pendente_validacao_clinica: false },
+  // ----- Neonatal / Primeira infância -----
+  { id: "infanib", name: "INFANIB", fullName: "Infant Neurological International Battery", ageMin: 0, ageMax: 18, queixas: ["neonatal", "motor", "pc"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–20 min", description: "Bateria neurológica padronizada para lactentes: tônus, reflexos, ângulos e controle postural. Classifica em normal, transitório ou anormal.", fonte: "Ellison PH, 1994 (INFANIB)", validacaoBrasil: "Parcial", scoringCutoff: "escore baixo sugere anormalidade neurológica", licencaUso: "livre", pendente_validacao_clinica: false },
+  // ----- Linguagem / Comunicação -----
+  { id: "evt2", name: "EVT-2", fullName: "Expressive Vocabulary Test 2", ageMin: 30, ageMax: 216, queixas: ["linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10–20 min", description: "Avalia vocabulário expressivo e recuperação de palavras por nomeação e sinônimos. Co-normatizado com o PPVT-4.", fonte: "Williams KT, 2007 (EVT-2), Pearson", validacaoBrasil: "Não", scoringCutoff: "standard score <85 abaixo do esperado", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "csbs-dp", name: "CSBS-DP", fullName: "Communication and Symbolic Behavior Scales Developmental Profile", ageMin: 6, ageMax: 24, queixas: ["linguagem", "tea", "atraso"], respondente: ["pais", "clinico"], prioridade: "triagem", tempo: "15–30 min", description: "Avalia comunicação social, uso de gestos, sons, palavras e comportamento simbólico em lactentes. Checklist do cuidador + amostra comportamental.", fonte: "Wetherby AM, Prizant BM, 2002 (CSBS-DP), Brookes", validacaoBrasil: "Não", scoringCutoff: "escore abaixo do ponto de corte indica risco comunicativo", licencaUso: "comercial", pendente_validacao_clinica: false },
+  // ----- TDAH / Atenção -----
+  { id: "tova", name: "TOVA", fullName: "Test of Variables of Attention", ageMin: 48, ageMax: 216, queixas: ["tdah", "cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "20 min", description: "Teste computadorizado de desempenho contínuo, livre de linguagem/cultura, que mede atenção sustentada, tempo de reação, variabilidade e impulsividade.", fonte: "Greenberg LM, 2007 (TOVA), The TOVA Company", validacaoBrasil: "Não", scoringCutoff: "ADHD Score negativo sugere perfil compatível com TDAH", licencaUso: "comercial", pendente_validacao_clinica: false },
+  // ----- Aprendizagem / Escolaridade -----
+  { id: "wrat5", name: "WRAT-5", fullName: "Wide Range Achievement Test 5", ageMin: 60, ageMax: 216, queixas: ["aprendizagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–45 min", description: "Avalia desempenho acadêmico básico: leitura de palavras, compreensão de frases, soletração e matemática.", fonte: "Wilkinson GS, Robertson GJ, 2017 (WRAT-5), Pearson", validacaoBrasil: "Não", scoringCutoff: "standard score <85 abaixo da média", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "wj4", name: "WJ-IV", fullName: "Woodcock-Johnson IV", ageMin: 24, ageMax: 216, queixas: ["aprendizagem", "cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "60–120 min", description: "Bateria abrangente de habilidades cognitivas e de desempenho acadêmico (leitura, escrita, matemática) ancorada no modelo CHC.", fonte: "Schrank FA et al., 2014 (Woodcock-Johnson IV), Riverside", validacaoBrasil: "Não", scoringCutoff: "standard score <85 abaixo do esperado", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "towl4", name: "TOWL-4", fullName: "Test of Written Language 4", ageMin: 84, ageMax: 216, queixas: ["aprendizagem", "linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "60–90 min", description: "Avalia linguagem escrita em componentes contrived (vocabulário, pontuação, gramática) e espontâneo (composição de história).", fonte: "Hammill DD, Larsen SC, 2009 (TOWL-4), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "standard score <85 dificuldade de escrita", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "gort5", name: "GORT-5", fullName: "Gray Oral Reading Tests 5", ageMin: 72, ageMax: 216, queixas: ["aprendizagem", "linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "20–30 min", description: "Avalia fluência de leitura oral (taxa, precisão, fluência) e compreensão. Sensível à dislexia e a dificuldades de leitura.", fonte: "Wiederholt JL, Bryant BR, 2012 (GORT-5), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "Oral Reading Index <85 abaixo do esperado", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "ran-ras", name: "RAN/RAS", fullName: "Rapid Automatized Naming / Rapid Alternating Stimulus Tests", ageMin: 60, ageMax: 216, queixas: ["aprendizagem", "linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "5–10 min", description: "Mede velocidade de nomeação automatizada de objetos, cores, letras e números. Forte preditor de fluência de leitura e dislexia.", fonte: "Wolf M, Denckla MB, 2005 (RAN/RAS), PRO-ED", validacaoBrasil: "Parcial", scoringCutoff: "tempos elevados / escores baixos sugerem déficit de nomeação", licencaUso: "comercial", pendente_validacao_clinica: false },
+  // ----- Comportamento / TEA -----
+  { id: "stat", name: "STAT", fullName: "Screening Tool for Autism in Toddlers and Young Children", ageMin: 24, ageMax: 36, queixas: ["tea"], respondente: ["clinico"], prioridade: "triagem", tempo: "20 min", description: "Triagem interativa de TEA de nível 2 com 12 itens em brincadeira, imitação e comunicação. Aplicada por clínico treinado.", fonte: "Stone WL et al., 2000 (STAT)", pubmedId: "PMID 11055461", validacaoBrasil: "Não", scoringCutoff: ">2.0 risco de TEA", licencaUso: "restrita", pendente_validacao_clinica: false },
+  { id: "abc-autism", name: "ABC (Autism)", fullName: "Autism Behavior Checklist (ABC / ABC-Krug)", ageMin: 18, ageMax: 216, queixas: ["tea", "comportamento"], respondente: ["pais", "professor"], prioridade: "triagem", tempo: "10–15 min", description: "57 itens em 5 áreas (sensorial, relacionamento, uso do corpo/objeto, linguagem e social/autocuidado) para triagem de TEA. Distinto do Aberrant Behavior Checklist.", fonte: "Krug DA, Arick J, Almond P, 1980 (Autism Behavior Checklist)", validacaoBrasil: "Parcial", scoringCutoff: ">=67 alta probabilidade de TEA", licencaUso: "restrita", pendente_validacao_clinica: false },
+  { id: "basc3", name: "BASC-3", fullName: "Behavior Assessment System for Children 3", ageMin: 24, ageMax: 252, queixas: ["comportamento", "tdah", "ansiedade", "depressao"], respondente: ["pais", "professor"], prioridade: "diagnostica", tempo: "15–30 min", description: "Sistema multidimensional de avaliação comportamental e emocional com escalas clínicas e adaptativas, formulários para pais, professores e autoavaliação.", fonte: "Reynolds CR, Kamphaus RW, 2015 (BASC-3), Pearson", validacaoBrasil: "Não", scoringCutoff: "T-score >=70 clinicamente significativo", licencaUso: "comercial", pendente_validacao_clinica: false },
+  { id: "trf", name: "TRF", fullName: "Teacher's Report Form (ASEBA)", ageMin: 72, ageMax: 216, queixas: ["comportamento", "tdah", "ansiedade"], respondente: ["professor"], prioridade: "triagem", tempo: "15–20 min", description: "Versão para professores do sistema ASEBA. Avalia problemas internalizantes, externalizantes e desempenho escolar em 6–18 anos.", fonte: "Achenbach TM, Rescorla LA, 2001 (TRF / ASEBA), ASEBA", validacaoBrasil: "Parcial", scoringCutoff: "T-score >=64 (escala total) clínico", licencaUso: "comercial", pendente_validacao_clinica: false },
 ];
 
 // Normaliza texto para busca (remove acentos, lowercase)
@@ -434,8 +461,238 @@ export function searchScales(query: string, scaleList: ScaleEntry[]): { scale: S
   }).filter(r => r.score > 0);
 }
 
-// Merge autoral scales + escalas importadas (SuperNeuroKids v25 + Ebook PANT v7)
-export const allScales: ScaleEntry[] = [...scales, ...escalasAutoraisDrJadson, ...escalasImportadasV25Ebook];
+// ============================================================================
+// PROVENIÊNCIA CLÍNICA DO CATÁLOGO LEGADO (Bloco 1 — Consolidação 9.0, 2026)
+// ----------------------------------------------------------------------------
+// Mapa de proveniência aplicado por `id` aos instrumentos legados de `scales`
+// que ainda não traziam o campo `fonte` inline. Estratégia documentada:
+//   • `fonte` = autor + ano + instrumento (citação canônica verificável).
+//   • `pubmedId` é preenchido APENAS quando o PMID foi fornecido na lista
+//     oficial do Dr. Jadson (Bloco 0/1.3). Não fabricamos PMIDs de memória —
+//     a citação autor/ano basta como proveniência; o PMID exato pode ser
+//     confirmado em revisão clínica.
+//   • Instrumentos autorais (baterias J26, PANT, ferramentas de registro) →
+//     `licencaUso: "autoral"`, fonte do Dr. Jadson Fraga.
+//   • Itens genuinamente sem fonte identificável → "Pendente revisão clínica"
+//     + `pendente_validacao_clinica: true` (rastreado, não contabilizado como
+//     "com fonte").
+// O merge é NÃO destrutivo: valores inline existentes sempre prevalecem
+// ({ ...prov, ...s }).
+// ============================================================================
+const J26 = "Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26)";
+const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
+  // ----- Desenvolvimento / triagem -----
+  denver: { fonte: "Frankenburg WK et al., 1992 (Denver II), Pediatrics", validacaoBrasil: "Sim (Denver II adaptado)", scoringCutoff: ">=2 atrasos = suspeito", licencaUso: "comercial" },
+  griffiths: { fonte: "Green E, Stroud L et al. / Griffiths R, 2016 (Griffiths III), Hogrefe", validacaoBrasil: "Não", scoringCutoff: "quociente geral <85 abaixo do esperado", licencaUso: "comercial" },
+  asq3: { fonte: "Squires J, Bricker D, 2009 (ASQ-3), Brookes", validacaoBrasil: "Sim (Filgueiras et al., 2013)", scoringCutoff: "abaixo do ponto de corte do domínio = monitorar/encaminhar", licencaUso: "comercial" },
+  peds: { fonte: "Glascoe FP, 1997 (PEDS)", validacaoBrasil: "Parcial", scoringCutoff: "preocupações preditivas conforme algoritmo", licencaUso: "comercial" },
+  catclams: { fonte: "Capute AJ, Accardo PJ, 1996 (CAT/CLAMS)", validacaoBrasil: "Não", scoringCutoff: "quociente de desenvolvimento <70 atraso", licencaUso: "restrita" },
+  aims: { fonte: "Piper MC, Darrah J, 1994 (Alberta Infant Motor Scale)", validacaoBrasil: "Sim (Saccani & Valentini, 2012)", scoringCutoff: "<=5º percentil atraso motor", licencaUso: "restrita" },
+  ims: { fonte: "Piper MC, Darrah J, 1994 (Alberta Infant Motor Scale); validação BR Saccani & Valentini, 2012", validacaoBrasil: "Sim", scoringCutoff: "<=5º percentil atraso motor", licencaUso: "restrita" },
+  timp: { fonte: "Campbell SK et al., 1995 (Test of Infant Motor Performance)", pubmedId: "PMID 7722118", validacaoBrasil: "Parcial", scoringCutoff: "abaixo de -0,5 DP risco motor", licencaUso: "restrita" },
+  gars3: { fonte: "Gilliam JE, 2014 (GARS-3), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "Autism Index >=70 muito provável", licencaUso: "comercial" },
+  atec: { fonte: "Rimland B, Edelson SM, 1999 (ATEC), Autism Research Institute", validacaoBrasil: "Não", scoringCutoff: "escores menores = menor gravidade (monitorização)", licencaUso: "livre" },
+  "tea-checklists": { fonte: "Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2", licencaUso: "autoral" },
+  "tea-comportamentos": { fonte: J26, licencaUso: "autoral" },
+  vanderbilt: { fonte: "Wolraich ML et al., 2003 (NICHQ Vanderbilt)", pubmedId: "PMID 12777548", validacaoBrasil: "Parcial", scoringCutoff: ">=6 itens 2/3 por domínio + prejuízo", licencaUso: "livre" },
+  barkley: { fonte: "Barkley RA, 2012 (Barkley Functional Impairment Scale - Children)", validacaoBrasil: "Não", scoringCutoff: "prejuízo em >=2 domínios", licencaUso: "comercial" },
+  "brown-add": { fonte: "Brown TE, 2001 (Brown ADD Scales)", validacaoBrasil: "Não", scoringCutoff: "T-score elevado sugere disfunção executiva", licencaUso: "comercial" },
+  abc: { fonte: "Aman MG et al., 1985 (Aberrant Behavior Checklist)", validacaoBrasil: "Parcial", scoringCutoff: "perfil dimensional por subescala", licencaUso: "comercial" },
+  ecbi: { fonte: "Eyberg SM, Pincus D, 1999 (ECBI)", validacaoBrasil: "Parcial", scoringCutoff: "Intensity >=131 ou Problem >=15", licencaUso: "comercial" },
+  psc17: { fonte: "Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999", pubmedId: "PMID 3362581", validacaoBrasil: "Parcial", scoringCutoff: ">=15 (PSC-17 total) risco psicossocial", licencaUso: "livre" },
+  hsq: { fonte: "Barkley RA, 1987 (Home Situations Questionnaire)", validacaoBrasil: "Não", scoringCutoff: "nº de situações e gravidade média", licencaUso: "livre" },
+  // ----- Ansiedade / depressão -----
+  rcads: { fonte: "Chorpita BF et al., 2000 (RCADS)", validacaoBrasil: "Parcial", scoringCutoff: "T-score >=65 elevado", licencaUso: "livre" },
+  scas: { fonte: "Spence SH, 1998 (Spence Children's Anxiety Scale)", validacaoBrasil: "Parcial", scoringCutoff: "escore total elevado por idade/sexo", licencaUso: "livre" },
+  staic: { fonte: "Spielberger CD, 1973 (STAIC)", validacaoBrasil: "Sim (Biaggio, 1980)", scoringCutoff: "percentis estado/traço", licencaUso: "comercial" },
+  mfq: { fonte: "Angold A, Costello EJ, 1987 (Mood and Feelings Questionnaire)", validacaoBrasil: "Parcial", scoringCutoff: ">=27 (versão longa) provável depressão", licencaUso: "livre" },
+  cdrsr: { fonte: "Poznanski EO, Mokros HB, 1996 (CDRS-R)", validacaoBrasil: "Parcial", scoringCutoff: ">=40 episódio depressivo provável", licencaUso: "comercial" },
+  rads2: { fonte: "Reynolds WM, 2002 (RADS-2)", validacaoBrasil: "Não", scoringCutoff: "T-score >=61 clinicamente relevante", licencaUso: "comercial" },
+  // ----- Epilepsia -----
+  "epilepsia-diario": { fonte: "Ferramenta de registro clínico NeuroPed (diário de crises)", licencaUso: "autoral" },
+  qvce50: { fonte: "Maia Filho HS et al., 2007 (QVCE-50), J Pediatr (Rio J)", validacaoBrasil: "Sim (instrumento brasileiro)", scoringCutoff: "escores maiores = melhor qualidade de vida", licencaUso: "livre" },
+  hine: { fonte: "Romeo DM et al., 2016 (Hammersmith Infant Neurological Examination)", pubmedId: "PMID 27009691", validacaoBrasil: "Parcial", scoringCutoff: ">=73 ótimo; escores baixos = risco", licencaUso: "restrita" },
+  "pedsql-epilepsia": { fonte: "Modi AC et al., 2009 (PedsQL Epilepsy Module); Varni JW (PedsQL)", validacaoBrasil: "Parcial", scoringCutoff: "escores menores = pior QV", licencaUso: "restrita" },
+  "qolie-ad": { fonte: "Cramer JA et al., 1999 (QOLIE-AD-48)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = melhor QV", licencaUso: "restrita" },
+  nddie: { fonte: "Gilliam FG et al., 2006 (NDDI-E)", validacaoBrasil: "Sim (versão brasileira)", scoringCutoff: ">15 sugere depressão", licencaUso: "livre" },
+  // ----- Paralisia cerebral / motor -----
+  gmfcs: { fonte: "Palisano R et al., 1997 (GMFCS); revisão expandida 2007", validacaoBrasil: "Sim", scoringCutoff: "níveis I–V (maior = maior limitação)", licencaUso: "livre" },
+  gmfm: { fonte: "Russell DJ et al., 1989 (GMFM-88); Russell DJ et al., 2000 (GMFM-66)", validacaoBrasil: "Sim", scoringCutoff: "escore percentual de função motora grossa", licencaUso: "restrita" },
+  macs: { fonte: "Eliasson AC et al., 2006 (MACS)", validacaoBrasil: "Sim", scoringCutoff: "níveis I–V de habilidade manual", licencaUso: "livre" },
+  cfcs: { fonte: "Hidecker MJC et al., 2011 (CFCS)", validacaoBrasil: "Sim", scoringCutoff: "níveis I–V de comunicação", licencaUso: "livre" },
+  edacs: { fonte: "Sellers D et al., 2014 (EDACS)", validacaoBrasil: "Parcial", scoringCutoff: "níveis I–V de alimentação", licencaUso: "livre" },
+  ashworth: { fonte: "Bohannon RW, Smith MB, 1987 (Modified Ashworth Scale)", validacaoBrasil: "Sim", scoringCutoff: "0–4 (maior = maior espasticidade)", licencaUso: "livre" },
+  // ----- Linguagem -----
+  "cdi-macarthur": { fonte: "Fenson L et al., 2007 (MacArthur-Bates CDI)", validacaoBrasil: "Parcial (LAVE/adaptações BR)", scoringCutoff: "<=10º percentil de vocabulário = risco", licencaUso: "livre" },
+  reel3: { fonte: "Bzoch KR, League R, Brown VL, 2003 (REEL-3), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "quociente de linguagem <85 atraso", licencaUso: "comercial" },
+  celf5: { fonte: "Wiig EH, Semel E, Secord WA, 2013 (CELF-5), Pearson", validacaoBrasil: "Não", scoringCutoff: "Core Language Score <85 abaixo do esperado", licencaUso: "comercial" },
+  ppvt4: { fonte: "Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson", validacaoBrasil: "Não", scoringCutoff: "standard score <85 abaixo do esperado", licencaUso: "comercial" },
+  // ----- Sono -----
+  bisq: { fonte: "Sadeh A, 2004 (Brief Infant Sleep Questionnaire)", validacaoBrasil: "Sim (Nunes et al.)", scoringCutoff: ">3 despertares ou >1h acordado à noite = problema", licencaUso: "livre" },
+  psq: { fonte: "Chervin RD et al., 2000 (Pediatric Sleep Questionnaire — SRBD)", pubmedId: "PMID 11382441", validacaoBrasil: "Parcial", scoringCutoff: ">=0,33 sugere distúrbio respiratório do sono", licencaUso: "livre" },
+  // ----- Alimentação -----
+  soma: { fonte: "Reilly S, Skuse D, Wolke D, 1995 (Schedule for Oral Motor Assessment)", validacaoBrasil: "Não", scoringCutoff: "perfil de disfunção motora oral", licencaUso: "restrita" },
+  eda: { fonte: "Pendente revisão clínica", pendente_validacao_clinica: true, pendencia: "Sigla EDA ambígua (várias escalas de dificuldade alimentar); fonte canônica a confirmar." },
+  // ----- Dor / cefaleia -----
+  "cefaleia-calendario": { fonte: "Ferramenta de registro clínico NeuroPed (calendário de cefaleia)", licencaUso: "autoral" },
+  wongbaker: { fonte: "Wong DL, Baker CM, 1988 (Wong-Baker FACES Pain Rating Scale)", validacaoBrasil: "Sim", scoringCutoff: "0–10 autorrelato de intensidade", licencaUso: "livre" },
+  flacc: { fonte: "Merkel SI et al., 1997 (FLACC)", pubmedId: "PMID 9093498", validacaoBrasil: "Sim", scoringCutoff: "0–10 (>=4 dor moderada)", licencaUso: "livre" },
+  pedmidas: { fonte: "Hershey AD et al., 2001 (PedMIDAS)", validacaoBrasil: "Parcial", scoringCutoff: ">30 incapacidade moderada-grave", licencaUso: "livre" },
+  // ----- Cognição / neuropsicologia -----
+  wppsi: { fonte: "Wechsler D, 2012 (WPPSI-IV), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "QI <70 deficiência intelectual provável", licencaUso: "comercial" },
+  leiter3: { fonte: "Roid GH, Miller LJ, Pomplun M, 2013 (Leiter-3)", validacaoBrasil: "Não", scoringCutoff: "QI não-verbal <70 déficit", licencaUso: "comercial" },
+  raven: { fonte: "Raven JC, 1947 (Raven Colorido); normas BR Angelini et al., 1999", validacaoBrasil: "Sim", scoringCutoff: "percentis por idade", licencaUso: "comercial" },
+  pant: { fonte: J26 + " — Protocolo PANT (100 escalas passivas)", licencaUso: "autoral" },
+  // ----- Aprendizagem (BR) -----
+  tde: { fonte: "Stein LM, 1994 (Teste de Desempenho Escolar — TDE)", validacaoBrasil: "Sim (instrumento brasileiro)", scoringCutoff: "classificação inferior/médio/superior por série", licencaUso: "comercial" },
+  prolec: { fonte: "Cuetos F et al. (PROLEC); adaptação BR Capellini SA et al.", validacaoBrasil: "Sim", scoringCutoff: "perfil por processo de leitura", licencaUso: "comercial" },
+  confias: { fonte: "Moojen S et al., 2003 (CONFIAS)", validacaoBrasil: "Sim (instrumento brasileiro)", scoringCutoff: "escore por nível (sílaba/fonema)", licencaUso: "comercial" },
+  // ----- Funcionalidade / QV -----
+  pedsql: { fonte: "Varni JW et al., 2001 (PedsQL 4.0 Generic Core Scales)", pubmedId: "PMID 11695583", validacaoBrasil: "Sim (Klatchoian et al., 2008)", scoringCutoff: "escores menores = pior QV", licencaUso: "restrita" },
+  // ----- Neonatal -----
+  napi: { fonte: "Korner AF et al., 1987 (Neurobehavioral Assessment of the Preterm Infant)", validacaoBrasil: "Não", scoringCutoff: "perfil neurocomportamental por idade pós-concepcional", licencaUso: "restrita" },
+  // ----- Risco de suicídio -----
+  cssrs: { fonte: "Posner K et al., 2011 (Columbia Suicide Severity Rating Scale)", validacaoBrasil: "Sim", scoringCutoff: "ideação 1–5 / comportamento presente = risco", licencaUso: "livre" },
+  "asq-suicide": { fonte: "Horowitz LM et al., 2012 (Ask Suicide-Screening Questions)", validacaoBrasil: "Parcial", scoringCutoff: "qualquer 'sim' = triagem positiva", licencaUso: "livre" },
+  siqjr: { fonte: "Reynolds WM, 1988 (Suicidal Ideation Questionnaire - JR)", validacaoBrasil: "Parcial", scoringCutoff: ">=31 risco elevado", licencaUso: "comercial" },
+  "ecar-si": { fonte: J26, licencaUso: "autoral" },
+  // ----- Psicose / mania -----
+  ymrs: { fonte: "Young RC et al., 1978 (Young Mania Rating Scale)", validacaoBrasil: "Sim (Vilela et al.)", scoringCutoff: ">=20 mania significativa", licencaUso: "livre" },
+  bprsc: { fonte: "Overall JE, Pfefferbaum B, 1982 (BPRS for Children)", validacaoBrasil: "Não", scoringCutoff: "escore total dimensional", licencaUso: "livre" },
+  "panss-ped": { fonte: "Kay SR, Fiszbein A, Opler LA, 1987 (PANSS)", validacaoBrasil: "Sim", scoringCutoff: "escores positivos/negativos/geral", licencaUso: "comercial" },
+  // ----- Tiques -----
+  ygtss: { fonte: "Leckman JF et al., 1989 (Yale Global Tic Severity Scale)", validacaoBrasil: "Sim", scoringCutoff: "gravidade 0–50 + prejuízo 0–50", licencaUso: "livre" },
+  // ----- Efeitos colaterais -----
+  "aims-efeitos": { fonte: "Guy W, 1976 (Abnormal Involuntary Movement Scale — AIMS)", validacaoBrasil: "Sim", scoringCutoff: ">=2 em >=1 item = discinesia provável", licencaUso: "livre" },
+  bars: { fonte: "Barnes TRE, 1989 (Barnes Akathisia Rating Scale)", validacaoBrasil: "Parcial", scoringCutoff: "avaliação global >=2 = acatisia", licencaUso: "livre" },
+  uku: { fonte: "Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale)", validacaoBrasil: "Parcial", scoringCutoff: "gravidade 0–3 por item", licencaUso: "livre" },
+  // ----- Substâncias -----
+  crafft: { fonte: "Knight JR et al., 2002 (CRAFFT)", validacaoBrasil: "Sim", scoringCutoff: ">=2 risco de uso problemático", licencaUso: "livre" },
+  // ----- Baterias autorais J26 -----
+  emdi: { fonte: J26, licencaUso: "autoral" },
+  eaf: { fonte: J26, licencaUso: "autoral" },
+  pdae: { fonte: J26, licencaUso: "autoral" },
+  ecsm: { fonte: J26, licencaUso: "autoral" },
+  ips: { fonte: J26, licencaUso: "autoral" },
+  edi: { fonte: J26, licencaUso: "autoral" },
+  eai: { fonte: J26, licencaUso: "autoral" },
+  easi: { fonte: J26, licencaUso: "autoral" },
+  ems: { fonte: J26, licencaUso: "autoral" },
+  etare: { fonte: J26, licencaUso: "autoral" },
+  eaah: { fonte: J26, licencaUso: "autoral" },
+  // ----- Cognição / neuropsicologia (lote "novas") -----
+  "wppsi4-ext": { fonte: "Wechsler D, 2012 (WPPSI-IV), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "QI <70 deficiência intelectual provável", licencaUso: "comercial" },
+  "leiter3-ext": { fonte: "Roid GH, Miller LJ, Pomplun M, 2013 (Leiter-3)", validacaoBrasil: "Não", scoringCutoff: "QI não-verbal <70 déficit", licencaUso: "comercial" },
+  toni4: { fonte: "Brown L, Sherbenou RJ, Johnsen SK, 2010 (TONI-4)", validacaoBrasil: "Não", scoringCutoff: "QI não-verbal <85 abaixo do esperado", licencaUso: "comercial" },
+  cpt3: { fonte: "Conners CK, 2014 (Conners CPT-3)", validacaoBrasil: "Não", scoringCutoff: "T-scores de omissão/comissão/RT elevados", licencaUso: "comercial" },
+  sb5: { fonte: "Roid GH, 2003 (Stanford-Binet Intelligence Scales 5)", validacaoBrasil: "Não", scoringCutoff: "QI <70 deficiência intelectual provável", licencaUso: "comercial" },
+  "raven-std": { fonte: "Raven J, Court JH, Raven JC, 1998 (Standard Progressive Matrices)", validacaoBrasil: "Sim", scoringCutoff: "percentis por idade", licencaUso: "comercial" },
+  kabc2: { fonte: "Kaufman AS, Kaufman NL, 2004 (KABC-II)", validacaoBrasil: "Não", scoringCutoff: "MPI/FCI <70 déficit", licencaUso: "comercial" },
+  wcst: { fonte: "Heaton RK et al., 1993 (Wisconsin Card Sorting Test)", validacaoBrasil: "Sim", scoringCutoff: "erros perseverativos elevados = disfunção executiva", licencaUso: "comercial" },
+  tmt: { fonte: "Reitan RM, 1958 (Trail Making Test A & B)", validacaoBrasil: "Sim", scoringCutoff: "tempo elevado por idade = lentificação/disfunção", licencaUso: "livre" },
+  stroop: { fonte: "Golden CJ, 1978 (Stroop Color and Word Test); Stroop JR, 1935", validacaoBrasil: "Sim", scoringCutoff: "efeito de interferência elevado", licencaUso: "comercial" },
+  "rey-figure": { fonte: "Rey A, 1941; Osterrieth PA, 1944 (Rey-Osterrieth Complex Figure)", validacaoBrasil: "Sim", scoringCutoff: "escore de cópia/evocação por norma", licencaUso: "livre" },
+  ravlt: { fonte: "Rey A, 1964 (Rey Auditory Verbal Learning Test)", validacaoBrasil: "Sim", scoringCutoff: "curva de aprendizagem/evocação por norma", licencaUso: "livre" },
+  "fas-fluencia": { fonte: "Benton AL, Hamsher K, 1976 (Controlled Oral Word Association — FAS)", validacaoBrasil: "Sim", scoringCutoff: "nº de palavras por norma", licencaUso: "livre" },
+  "torre-londres": { fonte: "Shallice T, 1982 (Tower of London)", validacaoBrasil: "Parcial", scoringCutoff: "nº de movimentos/acertos por norma", licencaUso: "livre" },
+  d2: { fonte: "Brickenkamp R, 1962 (d2 Test of Attention)", validacaoBrasil: "Sim", scoringCutoff: "índice de concentração por norma", licencaUso: "comercial" },
+  // ----- Linguagem (lote "novas") -----
+  "celf5-new": { fonte: "Wiig EH, Semel E, Secord WA, 2013 (CELF-5), Pearson", validacaoBrasil: "Não", scoringCutoff: "Core Language Score <85", licencaUso: "comercial" },
+  pls5: { fonte: "Zimmerman IL, Steiner VG, Pond RE, 2011 (PLS-5), Pearson", validacaoBrasil: "Não", scoringCutoff: "standard score <85 atraso de linguagem", licencaUso: "comercial" },
+  "ppvt4-new": { fonte: "Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson", validacaoBrasil: "Não", scoringCutoff: "standard score <85", licencaUso: "comercial" },
+  "told-p5": { fonte: "Newcomer PL, Hammill DD, 2008 (TOLD-P:5), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "índices <85 abaixo do esperado", licencaUso: "comercial" },
+  ctopp2: { fonte: "Wagner RK, Torgesen JK, Rashotte CA, Pearson NA, 2013 (CTOPP-2), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "composite <85 risco de dislexia", licencaUso: "comercial" },
+  "abfw-fono": { fonte: "Andrade CRF, Béfi-Lopes DM, Fernandes FDM, Wertzner HF, 2004 (ABFW)", validacaoBrasil: "Sim (instrumento brasileiro)", scoringCutoff: "perfil fonológico por idade", licencaUso: "comercial" },
+  "token-test": { fonte: "De Renzi E, Vignolo LA, 1962 (Token Test)", validacaoBrasil: "Parcial", scoringCutoff: "erros elevados = déficit de compreensão", licencaUso: "livre" },
+  eowpvt4: { fonte: "Martin NA, Brownell R, 2011 (EOWPVT-4), Academic Therapy", validacaoBrasil: "Não", scoringCutoff: "standard score <85", licencaUso: "comercial" },
+  adl3: { fonte: "Pendente revisão clínica", pendente_validacao_clinica: true, pendencia: "Sigla ADL-3 não corresponde a instrumento padronizado reconhecido; confirmar identidade." },
+  "disc-auditiva": { fonte: "Pendente revisão clínica", pendente_validacao_clinica: true, pendencia: "Teste de discriminação auditiva genérico; fonte/versão específica a definir." },
+  // ----- Motor / coordenação (lote "novas") -----
+  bot2: { fonte: "Bruininks RH, Bruininks BD, 2005 (BOT-2), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "standard score baixo = déficit motor", licencaUso: "comercial" },
+  pdms2: { fonte: "Folio MR, Fewell RR, 2000 (PDMS-2), PRO-ED", validacaoBrasil: "Parcial", scoringCutoff: "quociente motor <85 atraso", licencaUso: "comercial" },
+  "beery-vmi": { fonte: "Beery KE, Buktenica NA, Beery NA, 2010 (Beery VMI-6), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "standard score <85 déficit visomotor", licencaUso: "comercial" },
+  "hammersmith-infant": { fonte: "Romeo DM et al., 2016 (Hammersmith Infant Neurological Examination)", pubmedId: "PMID 27009691", validacaoBrasil: "Parcial", scoringCutoff: ">=73 ótimo; baixo = risco", licencaUso: "restrita" },
+  tgmd3: { fonte: "Ulrich DA, 2019 (Test of Gross Motor Development 3)", validacaoBrasil: "Parcial", scoringCutoff: "percentis locomotor/controle de objetos", licencaUso: "comercial" },
+  sfa: { fonte: "Coster W et al., 1998 (School Function Assessment), Pearson", validacaoBrasil: "Não", scoringCutoff: "critério de participação/assistência", licencaUso: "comercial" },
+  // ----- Epilepsia (lote "novas") -----
+  lsss: { fonte: "Baker GA et al., 1991 (Liverpool Seizure Severity Scale)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = crises mais graves", licencaUso: "livre" },
+  "nddi-e-new": { fonte: "Gilliam FG et al., 2006 (NDDI-E)", validacaoBrasil: "Sim", scoringCutoff: ">15 sugere depressão", licencaUso: "livre" },
+  qolie31: { fonte: "Cramer JA et al., 1998 (QOLIE-31)", validacaoBrasil: "Sim (da Silva et al.)", scoringCutoff: "escores maiores = melhor QV", licencaUso: "restrita" },
+  "qolie-ad48": { fonte: "Cramer JA et al., 1999 (QOLIE-AD-48)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = melhor QV", licencaUso: "restrita" },
+  engel: { fonte: "Engel J et al., 1993 (Engel Surgical Outcome Classification)", validacaoBrasil: "Sim", scoringCutoff: "Classe I (livre de crises) a IV (sem melhora)", licencaUso: "livre" },
+  "hague-szs": { fonte: "Carpay HA et al., 1997 (Hague Seizure Severity Scale)", validacaoBrasil: "Não", scoringCutoff: "escores maiores = maior gravidade", licencaUso: "livre" },
+  chalfont: { fonte: "Duncan JS, Sander JW, 1991 (Chalfont Seizure Severity Scale)", validacaoBrasil: "Não", scoringCutoff: "escore ponderado de gravidade", licencaUso: "livre" },
+  ipes: { fonte: "Camfield C et al., 2001 (Impact of Pediatric Epilepsy Scale)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = maior impacto", licencaUso: "restrita" },
+  // ----- Neonatal (lote "novas") -----
+  dubowitz: { fonte: "Dubowitz L, Dubowitz V, Mercuri E, 1999 (Dubowitz Neurological Examination)", validacaoBrasil: "Parcial", scoringCutoff: "perfil neurológico por itens optimais", licencaUso: "restrita" },
+  ballard: { fonte: "Ballard JL et al., 1991 (New Ballard Score)", validacaoBrasil: "Sim", scoringCutoff: "escore → idade gestacional estimada", licencaUso: "livre" },
+  apgar: { fonte: "Apgar V, 1953 (APGAR Score)", validacaoBrasil: "Sim", scoringCutoff: "<7 no 5º min = depressão neonatal", licencaUso: "livre" },
+  snappe2: { fonte: "Richardson DK et al., 2001 (SNAPPE-II)", validacaoBrasil: "Sim", scoringCutoff: "escores maiores = maior risco de mortalidade", licencaUso: "livre" },
+  crib2: { fonte: "Parry G, Tucker J, Tarnow-Mordi W, 2003 (CRIB-II)", validacaoBrasil: "Sim", scoringCutoff: "escores maiores = maior risco", licencaUso: "livre" },
+  // ----- Dor (lote "novas") -----
+  "wong-baker-new": { fonte: "Wong DL, Baker CM, 1988 (Wong-Baker FACES Pain Rating Scale)", validacaoBrasil: "Sim", scoringCutoff: "0–10 autorrelato", licencaUso: "livre" },
+  "flacc-new": { fonte: "Merkel SI et al., 1997 (FLACC)", pubmedId: "PMID 9093498", validacaoBrasil: "Sim", scoringCutoff: "0–10 (>=4 dor moderada)", licencaUso: "livre" },
+  cries: { fonte: "Krechel SW, Bildner J, 1995 (CRIES)", validacaoBrasil: "Parcial", scoringCutoff: ">=4 dor neonatal significativa", licencaUso: "livre" },
+  nips: { fonte: "Lawrence J et al., 1993 (Neonatal Infant Pain Scale)", pubmedId: "PMID 7683847", validacaoBrasil: "Sim", scoringCutoff: ">3 dor presente", licencaUso: "livre" },
+  rflacc: { fonte: "Malviya S et al., 2006 (revised FLACC)", validacaoBrasil: "Parcial", scoringCutoff: "0–10 (>=4 dor moderada)", licencaUso: "livre" },
+  "eva-ped": { fonte: "Escala Visual Analógica (VAS) — uso pediátrico (a partir de ~7 anos)", validacaoBrasil: "Sim", scoringCutoff: "0–10 cm autorrelato", licencaUso: "livre" },
+  ppp: { fonte: "Hunt A et al., 2004 (Paediatric Pain Profile)", validacaoBrasil: "Não", scoringCutoff: "escore por linha de base individual", licencaUso: "livre" },
+  "comfort-b": { fonte: "van Dijk M et al., 2005 (COMFORT-Behavioral Scale)", validacaoBrasil: "Sim", scoringCutoff: "6–30 (maior = mais desconforto/dor)", licencaUso: "livre" },
+  // ----- Sono adicional -----
+  "psq-new": { fonte: "Chervin RD et al., 2000 (Pediatric Sleep Questionnaire — SRBD)", pubmedId: "PMID 11382441", validacaoBrasil: "Parcial", scoringCutoff: ">=0,33 sugere SDB", licencaUso: "livre" },
+  "ess-adol": { fonte: "Johns MW, 1991 (Epworth Sleepiness Scale); versão pediátrica Melendres MC et al., 2004 (ESS-DASC)", pubmedId: "PMID 15173547", validacaoBrasil: "Parcial", scoringCutoff: ">10 sonolência diurna excessiva", licencaUso: "livre" },
+  "psqi-ped": { fonte: "Buysse DJ et al., 1989 (Pittsburgh Sleep Quality Index)", validacaoBrasil: "Sim", scoringCutoff: ">5 má qualidade de sono", licencaUso: "livre" },
+  // ----- TOC -----
+  cybocs: { fonte: "Scahill L et al., 1997 (CY-BOCS)", validacaoBrasil: "Sim", scoringCutoff: ">=16 TOC moderado", licencaUso: "livre" },
+  "oci-cv": { fonte: "Foa EB et al., 2010 (OCI-CV)", validacaoBrasil: "Parcial", scoringCutoff: ">=11 triagem positiva", licencaUso: "livre" },
+  docs: { fonte: "Abramowitz JS et al., 2010 (Dimensional Obsessive-Compulsive Scale)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = maior gravidade", licencaUso: "livre" },
+  "cybocs-sr": { fonte: "Scahill L et al., 1997 (CY-BOCS) — versão autorrelato", validacaoBrasil: "Parcial", scoringCutoff: ">=16 TOC moderado", licencaUso: "livre" },
+  "fas-pr": { fonte: "Calvocoressi L et al., 1999 (Family Accommodation Scale)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = maior acomodação", licencaUso: "livre" },
+  // ----- Trauma / TEPT -----
+  "cpss-v": { fonte: "Foa EB et al., 2018 (CPSS-5)", validacaoBrasil: "Parcial", scoringCutoff: ">=31 TEPT provável", licencaUso: "livre" },
+  "ucla-ptsd": { fonte: "Steinberg AM et al., 2013 (UCLA PTSD Reaction Index for DSM-5)", validacaoBrasil: "Parcial", scoringCutoff: ">=35 TEPT provável", licencaUso: "contato_autor" },
+  cries13: { fonte: "Perrin S et al., 2005 (Children's Revised Impact of Event Scale 13)", validacaoBrasil: "Parcial", scoringCutoff: ">=30 risco de TEPT", licencaUso: "livre" },
+  tscc: { fonte: "Briere J, 1996 (Trauma Symptom Checklist for Children), PAR", validacaoBrasil: "Não", scoringCutoff: "T-score >=65 clínico", licencaUso: "comercial" },
+  ace: { fonte: "Felitti VJ et al., 1998 (Adverse Childhood Experiences)", validacaoBrasil: "Parcial", scoringCutoff: ">=4 risco elevado em saúde", licencaUso: "livre" },
+  csbi: { fonte: "Friedrich WN et al., 1992 (Child Sexual Behavior Inventory)", validacaoBrasil: "Não", scoringCutoff: "T-score elevado = comportamento atípico", licencaUso: "comercial" },
+  "cdi-screen-trauma": { fonte: "Putnam FW, Helmers K, Trickett PK, 1993 (Child Dissociative Checklist)", validacaoBrasil: "Parcial", scoringCutoff: ">=12 sugere dissociação", licencaUso: "livre" },
+  cats: { fonte: "Sachser C et al., 2017 (Child and Adolescent Trauma Screen)", validacaoBrasil: "Parcial", scoringCutoff: ">=21 TEPT provável", licencaUso: "livre" },
+  // ----- Funcionalidade / adaptação / QV -----
+  copm: { fonte: "Law M et al., 1990 (Canadian Occupational Performance Measure)", validacaoBrasil: "Sim", scoringCutoff: "mudança >=2 pontos = clinicamente relevante", licencaUso: "comercial" },
+  gas: { fonte: "Kiresuk TJ, Sherman RE, 1968 (Goal Attainment Scaling)", validacaoBrasil: "Sim", scoringCutoff: "T-score 50 = meta atingida", licencaUso: "livre" },
+  "life-h": { fonte: "Noreau L et al., 2007 (Assessment of Life Habits for Children — LIFE-H)", validacaoBrasil: "Parcial", scoringCutoff: "escores menores = maior restrição de participação", licencaUso: "restrita" },
+  pedi: { fonte: "Haley SM et al., 1992 (Pediatric Evaluation of Disability Inventory)", validacaoBrasil: "Sim (Mancini, 2005)", scoringCutoff: "escore normativo <30 (—1,5 DP) déficit", licencaUso: "comercial" },
+  kidscreen52: { fonte: "Ravens-Sieberer U et al., 2005 (KIDSCREEN-52)", validacaoBrasil: "Sim", scoringCutoff: "T-score por dimensão (menor = pior QV)", licencaUso: "livre" },
+  auquei: { fonte: "Manificat S, Dazord A, 1997 (AUQUEI)", validacaoBrasil: "Sim (Assumpção et al.)", scoringCutoff: "escore total de QV", licencaUso: "livre" },
+  "chq-pf50": { fonte: "Landgraf JM, Abetz L, Ware JE, 1996 (CHQ-PF50)", validacaoBrasil: "Parcial", scoringCutoff: "escores menores = pior QV", licencaUso: "comercial" },
+  disabkids: { fonte: "Simeoni MC et al., 2007 (DISABKIDS Chronic Generic Measure)", validacaoBrasil: "Sim", scoringCutoff: "escores menores = pior QV", licencaUso: "restrita" },
+  "whoqol-ped": { fonte: "WHOQOL Group, 1998 (WHOQOL-BREF) — adaptação adolescente", validacaoBrasil: "Sim (Fleck et al.)", scoringCutoff: "escores maiores = melhor QV", licencaUso: "livre" },
+  // ----- Regulação emocional adicional -----
+  ders: { fonte: "Gratz KL, Roemer L, 2004 (Difficulties in Emotion Regulation Scale)", validacaoBrasil: "Sim (Coutinho et al.)", scoringCutoff: "escores maiores = maior desregulação", licencaUso: "livre" },
+  erc: { fonte: "Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist)", validacaoBrasil: "Sim (Reis et al.)", scoringCutoff: "subescalas regulação/labilidade", licencaUso: "livre" },
+  cems: { fonte: "Zeman J et al., 2001 (Children's Emotion Management Scales)", validacaoBrasil: "Não", scoringCutoff: "subescalas coping/inibição/disregulação", licencaUso: "livre" },
+  casi: { fonte: "Silverman WK et al., 1991 (Childhood Anxiety Sensitivity Index)", validacaoBrasil: "Parcial", scoringCutoff: "escores maiores = maior sensibilidade", licencaUso: "livre" },
+  "scared-r": { fonte: "Birmaher B et al., 1999 (SCARED — 41 itens)", validacaoBrasil: "Sim", scoringCutoff: ">=25 provável transtorno ansioso", licencaUso: "livre" },
+  // ----- Enurese / eliminação -----
+  dvss: { fonte: "Farhat W et al., 2000 (Dysfunctional Voiding Symptom Score)", validacaoBrasil: "Parcial", scoringCutoff: ">=6 (meninas) / >=9 (meninos) disfunção", licencaUso: "livre" },
+  "bristol-stool": { fonte: "Lewis SJ, Heaton KW, 1997 (Bristol Stool Form Scale)", validacaoBrasil: "Sim", scoringCutoff: "Tipos 1–2 constipação; 6–7 diarreia", licencaUso: "livre" },
+  "bladder-diary": { fonte: "International Children's Continence Society (ICCS) — diário miccional padronizado", validacaoBrasil: "Sim", scoringCutoff: "padrões de frequência/volume/escape", licencaUso: "livre" },
+  // ----- Psicose adicional -----
+  sips: { fonte: "Miller TJ et al., 2003 (SIPS/SOPS)", validacaoBrasil: "Parcial", scoringCutoff: "critérios de síndromes prodrômicas (UHR)", licencaUso: "restrita" },
+  "prime-screen": { fonte: "Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk)", validacaoBrasil: "Parcial", scoringCutoff: "escores elevados = risco de psicose", licencaUso: "livre" },
+};
+
+// Aplica proveniência (não destrutivo) aos instrumentos legados.
+const scalesComProveniencia: ScaleEntry[] = scales.map((s) =>
+  provenanciaLegado[s.id] ? { ...provenanciaLegado[s.id], ...s } : s
+);
+
+// Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25)
+export const allScales: ScaleEntry[] = [
+  ...scalesComProveniencia,
+  ...escalasAutoraisDrJadson,
+  ...escalasImportadasV25Ebook,
+];
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
 export function filterScales(

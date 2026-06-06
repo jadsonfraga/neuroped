@@ -1,10 +1,12 @@
 {
-  "_comment": "Catraca de CI (Bloco A2). Valores de referência que NÃO podem regredir. Regenere conscientemente ao subir números reais; check-baseline.mjs falha se um valor atual ficar abaixo do baseline. Lighthouse/axe ficam como null porque ainda não há browser headless no CI — medidos manualmente (ver docs/BRANCH_PROTECTION.md).",
+  "_comment": "Catraca de CI (Bloco A2). Valores de referência que NÃO podem regredir. Regenere conscientemente ao subir números reais; check-baseline.mjs falha se um valor atual ficar abaixo do baseline. bundleMaxGzipKb e axeSeriousCriticalViolations são gates de teto (não podem AUMENTAR) — ver audit-bundle.mjs e audit-a11y.mjs. Lighthouse fica como null quando não há browser headless no ambiente.",
   "typescriptErrors": 0,
   "clinicalCasesMin": 150,
-  "catalogInstruments": 565,
-  "catalogWithFonte": 138,
+  "catalogInstruments": 583,
+  "catalogWithFonte": 577,
   "lighthousePerformance": null,
   "lighthouseAccessibility": null,
-  "axeSeriousCriticalViolations": null
+  "axeSeriousCriticalViolations": 0,
+  "bundleMaxGzipKb": 250,
+  "designRawValues": 253
 }
