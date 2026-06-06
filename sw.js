@@ -18,7 +18,6 @@ const SHELL = [
   './logo-jadson.jpg',
   './assets/index-CCN60Z39.js',
   './assets/index-CYKyYC_X.css',
-  './premium-override.css',
   './premium-motion.js',
   './tour.js',
   './splash-premium.js',
@@ -33,7 +32,7 @@ const SHELL = [
   './scales-evidence-panel.js','./curated-evidence/instruments.json',
   './ds-pilot.html',
   './retro-arcade.css','./retro-arcade.js','./np-lgpd-consent.js','./public-mode.js',
-  './escalas-hero.css','./escalas-hero.js','./scales-sensitivity.js',
+  './escalas-hero.js','./scales-sensitivity.js',
   // Design system Apple-grade (np-*): tokens/fundo/skin/tema/motion + componentes/catálogo — offline-first.
   './np-tokens.css','./np-foundation.css','./np-skin.css','./np-theme.js','./np-motion.js','./np-components.css','./np-catalog.css'
 ];

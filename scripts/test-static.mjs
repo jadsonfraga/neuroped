@@ -1041,16 +1041,15 @@ assertIncludes('filtro-escalas.html', "schoolPick.tier='escola'", 'o 5º recebe 
 assertIncludes('filtro-escalas.html', "direto:'🧒", 'MEDAL tem o selo de teste direto');
 assertIncludes('filtro-escalas.html', "escola:'🏫", 'MEDAL tem o selo de questionário escolar');
 
-// ── Skin super-herói premium + som agradável (escalas-hero) ──
-assertFile('escalas-hero.css');
+// ── Skin super-herói premium + som agradável (escalas-hero inlined) ──
 assertFile('escalas-hero.js');
-assertIncludes('filtro-escalas.html', './escalas-hero.css', 'filtro carrega a skin super-herói (CSS)');
+assertIncludes('filtro-escalas.html', 'body.eh-on::before', 'filtro tem a skin super-herói (CSS inlined)');
 assertIncludes('filtro-escalas.html', './escalas-hero.js', 'filtro carrega a camada hero (som + FX)');
 assertIncludes('filtro-escalas.html', 'family=Bangers', 'filtro carrega a fonte cômic Bangers do título');
 assertIncludes('escalas-hero.js', 'np_sound_v1', 'som do hero honra a preferência global de som');
 assertIncludes('escalas-hero.js', 'createOscillator', 'som agradável sintetizado em Web Audio (0 assets, offline)');
 assertNotIncludes('escalas-hero.js', '987.77', 'som do hero NÃO é a moeda 8-bit (B5 da moeda do np-sound)');
-assertIncludes('escalas-hero.css', 'prefers-reduced-motion', 'skin hero respeita prefers-reduced-motion');
+assertIncludes('filtro-escalas.html', 'prefers-reduced-motion', 'skin hero respeita prefers-reduced-motion');
 assertIncludes('retro-arcade.js', 'escalas-hero.js', 'retro-arcade documenta que o filtro tem som próprio (sem duplicar a moeda)');
 
 // ── Acessibilidade: controles rotulados (WCAG 1.3.1/4.1.2) ──
@@ -1060,14 +1059,14 @@ assertIncludes('auditoria-ontologia.html', 'aria-label="Filtrar por fonte"', 'au
 assertIncludes('neuroped-diary-engine.js', 'aria-label="${f.label}"', 'diários: <select> dinâmico rotulado pelo label do campo');
 
 // ── Skin hero consistente nas telas vizinhas de escalas ──
-assertIncludes('escala.html', './escalas-hero.css', 'escala.html herda a skin hero (CSS)');
+assertIncludes('escala.html', 'body.eh-on::before', 'escala.html tem a skin hero (CSS inlined)');
 assertIncludes('escala.html', './escalas-hero.js', 'escala.html herda a camada hero (som + FX)');
-assertIncludes('banco-escalas.html', './escalas-hero.css', 'banco-escalas herda a skin hero (CSS)');
+assertIncludes('banco-escalas.html', 'body.eh-on::before', 'banco-escalas tem a skin hero (CSS inlined)');
 assertIncludes('banco-escalas.html', './escalas-hero.js', 'banco-escalas herda a camada hero (som + FX)');
 assertIncludes('banco-escalas.html', 'data-hero-title', 'banco-escalas marca o título para o tratamento cômic');
 assertIncludes('banco-escalas.html', 'family=Bangers', 'banco-escalas carrega a fonte cômic Bangers');
 assertIncludes('escalas-hero.js', "'.engine-title,[data-hero-title]'", 'hero aplica o título em qualquer tela marcada');
-assertIncludes('escalas-hero.css', 'body.eh-on::before', 'backdrop hero só liga quando o JS marca eh-on');
+assertIncludes('filtro-escalas.html', 'body.eh-on::before', 'backdrop hero só liga quando o JS marca eh-on');
 
 // ── Sensibilidade CITADA (sourced; anti-fabricação) ──
 assertFile('scales-sensitivity.js');

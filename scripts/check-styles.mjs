@@ -37,9 +37,9 @@ const CANON = new Set([
 // crítico da própria página). Teto desceu de 11 → 9.
 const BASELINE_LEGACY = new Set([
   'components.css', 'ds-bridge.css',
-  'tokens.css', 'escalas-hero.css', 'escalas-card-premium.css',
-  'premium-override.css',
-  // eliminados: ds-tokens.css, design-system-premium.css (FASE 1), app-skin.css (FASE 2)
+  'tokens.css', 'escalas-card-premium.css',
+  // eliminados: ds-tokens.css, design-system-premium.css (FASE 1),
+  //   app-skin.css (FASE 2), escalas-hero.css, premium-override.css (FASE 2b)
 ]);
 const MAX_LEGACY = BASELINE_LEGACY.size;   // teto atual; abaixe ao remover
 
