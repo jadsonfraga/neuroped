@@ -257,7 +257,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
           {sorted.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Nenhum registro ainda. Clique em "Novo registro".
+                Nenhum registro ainda. Clique em “Novo registro”.
               </CardContent>
             </Card>
           ) : (

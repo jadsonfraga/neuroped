@@ -374,7 +374,7 @@ export default function PlanoTerapeuticoPage() {
             </p>
             <div className="rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 p-4 text-center">
               <p className="text-sm font-semibold text-rose-800 dark:text-rose-300 italic">
-                "O que queremos e podemos fazer para este paciente?"
+                “O que queremos e podemos fazer para este paciente?”
               </p>
             </div>
             <div className="grid grid-cols-1 gap-3">

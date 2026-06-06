@@ -222,7 +222,7 @@ export default function BateriaJadsonPage() {
             <h2 className="text-sm font-bold text-foreground">Modelo de Conclusão Clínica</h2>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed italic">
-            "A aplicação da Bateria Autoral Dr. Jadson – Versão 2026 evidenciou perfil de desenvolvimento heterogêneo, com maior comprometimento nos eixos de __________, __________ e __________, ao passo que se observam melhores recursos relativos em __________, __________ e __________. O conjunto dos achados sugere repercussão funcional em contexto de vida diária, interação social, aprendizagem e/ou regulação comportamental, devendo os resultados ser interpretados em correlação com anamnese, exame clínico, observação comportamental, relatórios multiprofissionais e evolução longitudinal."
+            “A aplicação da Bateria Autoral Dr. Jadson – Versão 2026 evidenciou perfil de desenvolvimento heterogêneo, com maior comprometimento nos eixos de __________, __________ e __________, ao passo que se observam melhores recursos relativos em __________, __________ e __________. O conjunto dos achados sugere repercussão funcional em contexto de vida diária, interação social, aprendizagem e/ou regulação comportamental, devendo os resultados ser interpretados em correlação com anamnese, exame clínico, observação comportamental, relatórios multiprofissionais e evolução longitudinal.”
           </p>
         </CardContent>
       </Card>
@@ -288,7 +288,7 @@ export default function BateriaJadsonPage() {
             <h2 className="text-sm font-bold text-foreground">Modelo de Conclusão Clínica — Regulação Emocional</h2>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed italic">
-            "A aplicação das escalas de regulação emocional e psiquiatria infantil (Bateria Dr. Jadson – 2026) evidenciou perfil clínico com indicadores significativos nos eixos de __________, __________ e __________, enquanto se observam fatores protetores relativos em __________. O escore de risco global e os alarmes clínicos identificados sugerem necessidade de __________, devendo os resultados ser interpretados em correlação com anamnese, exame clínico, observação comportamental, contexto familiar e escolar, relatórios multiprofissionais e evolução longitudinal."
+            “A aplicação das escalas de regulação emocional e psiquiatria infantil (Bateria Dr. Jadson – 2026) evidenciou perfil clínico com indicadores significativos nos eixos de __________, __________ e __________, enquanto se observam fatores protetores relativos em __________. O escore de risco global e os alarmes clínicos identificados sugerem necessidade de __________, devendo os resultados ser interpretados em correlação com anamnese, exame clínico, observação comportamental, contexto familiar e escolar, relatórios multiprofissionais e evolução longitudinal.”
           </p>
         </CardContent>
       </Card>

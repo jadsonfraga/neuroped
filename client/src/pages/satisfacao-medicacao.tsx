@@ -330,7 +330,7 @@ export default function SatisfacaoMedicacaoPage() {
               {obsLivre && (
                 <div className="pt-2 border-t">
                   <p className="text-xs text-muted-foreground">Observações da família:</p>
-                  <p className="text-xs text-foreground mt-1 italic">"{obsLivre}"</p>
+                  <p className="text-xs text-foreground mt-1 italic">“{obsLivre}”</p>
                 </div>
               )}
             </CardContent>

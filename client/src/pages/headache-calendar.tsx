@@ -246,7 +246,7 @@ export default function HeadacheCalendarPage() {
           <CardContent className="p-8 text-center space-y-3">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground">Nenhum episódio registrado ainda.</p>
-            <p className="text-xs text-muted-foreground">Clique em "Novo Episódio" para começar o registro.</p>
+            <p className="text-xs text-muted-foreground">Clique em “Novo Episódio” para começar o registro.</p>
           </CardContent>
         </Card>
       )}

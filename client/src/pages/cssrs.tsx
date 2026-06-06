@@ -103,7 +103,7 @@ export default function CssrsPage() {
       </div>
       <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
         <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
-          <strong>Instruções:</strong> Pergunte ao paciente cada questão. Se a resposta for "Sim", prossiga com as perguntas seguintes. Cada nível escala a gravidade da ideação/comportamento suicida.
+          <strong>Instruções:</strong> Pergunte ao paciente cada questão. Se a resposta for “Sim”, prossiga com as perguntas seguintes. Cada nível escala a gravidade da ideação/comportamento suicida.
         </p>
       </div>
       {cssrsQuestions.map((q) => (

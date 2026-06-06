@@ -1101,7 +1101,7 @@ export default function ProntuarioPage() {
                 <CardContent className="p-8 flex flex-col items-center gap-2">
                   <Pill className="w-8 h-8 text-violet-300 dark:text-violet-700" />
                   <p className="text-sm text-muted-foreground text-center">Nenhuma medicação adicionada ainda.</p>
-                  <p className="text-xs text-muted-foreground text-center">Clique em "Adicionar medicação" para começar.</p>
+                  <p className="text-xs text-muted-foreground text-center">Clique em “Adicionar medicação” para começar.</p>
                 </CardContent>
               </Card>
             )}

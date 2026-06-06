@@ -102,7 +102,7 @@ export default function SobrePage() {
             <div className="text-center sm:text-left space-y-1.5">
               <h2 className="text-lg font-bold text-foreground">Neurologista Infantil / Neuropediatra</h2>
               <p className="text-sm text-primary font-semibold">O SuperNeuroPed</p>
-              <p className="text-xs text-muted-foreground italic">"Cada criança é um universo. Meu papel é decifrar esse universo com ciência, empatia e respeito."</p>
+              <p className="text-xs text-muted-foreground italic">“Cada criança é um universo. Meu papel é decifrar esse universo com ciência, empatia e respeito.”</p>
             </div>
           </div>
 
@@ -311,7 +311,7 @@ export default function SobrePage() {
               { text: "Profissional excepcional. Conduziu a investigação do meu filho com rigor científico e muita empatia. Recomendo de olhos fechados.", author: "Mãe de paciente" },
             ].map((dep, i) => (
               <div key={i} className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/30">
-                <p className="text-xs text-foreground italic leading-relaxed">"{dep.text}"</p>
+                <p className="text-xs text-foreground italic leading-relaxed">“{dep.text}”</p>
                 <p className="text-[10px] text-muted-foreground mt-1.5">— {dep.author}</p>
               </div>
             ))}
