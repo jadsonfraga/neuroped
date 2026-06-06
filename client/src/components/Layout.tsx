@@ -10,7 +10,8 @@ import {
   Puzzle, Calendar, Fingerprint, Menu, X, GraduationCap,
   Stethoscope, Waves, Flame, VolumeX, UtensilsCrossed, AlertTriangle, Pill,
   Filter, User, BrainCog, Ear, School, ClipboardPlus, SmilePlus, HelpCircle,
-  Target, Lightbulb, Calculator, TrendingUp, GitBranch
+  Target, Lightbulb, Calculator, TrendingUp, GitBranch,
+  MessageCircle, FileSignature, BookMarked, ShieldCheck, Newspaper, KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
@@ -39,6 +40,8 @@ const navSections: NavSection[] = [
       { href: "/prontuario", label: "Prontuário Clínico", icon: ClipboardPlus },
       { href: "/pacientes", label: "Meus Pacientes", icon: Users },
       { href: "/satisfacao-medicacao", label: "Satisfação Medicação", icon: SmilePlus },
+      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
+      { href: "/assinatura-digital", label: "Assinatura Digital", icon: FileSignature },
     ],
   },
   {
@@ -90,6 +93,9 @@ const navSections: NavSection[] = [
   {
     title: "Diários Clínicos",
     items: [
+      { href: "/diario-sono", label: "Diário do Sono", icon: Moon },
+      { href: "/diario-alimentar", label: "Diário Alimentar", icon: UtensilsCrossed },
+      { href: "/diario-escola", label: "Diário Escolar", icon: School },
       { href: "/epilepsia", label: "Diário Epilepsia", icon: Zap },
       { href: "/cefaleia", label: "Calendário Cefaleia", icon: Calendar },
     ],
@@ -155,6 +161,23 @@ const navSections: NavSection[] = [
       { href: "/plano-intervencao", label: "Intervenção por Habilidades", icon: Lightbulb },
       { href: "/sobre", label: "Sobre Dr. Jadson", icon: User },
       { href: "/ajuda", label: "Ajuda / FAQ", icon: HelpCircle },
+    ],
+  },
+  {
+    title: "Família",
+    items: [
+      { href: "/portal-familia", label: "Portal da Família", icon: Users },
+      { href: "/portal-familia/novidades", label: "Novidades & Artigos", icon: Newspaper },
+      { href: "/portal-familia/acesso", label: "Política de Acesso", icon: KeyRound },
+    ],
+  },
+  {
+    title: "Sobre",
+    items: [
+      { href: "/sobre-neuroped", label: "Natureza da Ferramenta", icon: Sparkles },
+      { href: "/glossario", label: "Glossário", icon: BookMarked },
+      { href: "/acessibilidade", label: "Acessibilidade", icon: Accessibility },
+      { href: "/qualidade", label: "Qualidade", icon: ShieldCheck },
     ],
   },
 ];

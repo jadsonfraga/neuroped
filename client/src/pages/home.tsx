@@ -22,6 +22,7 @@ import mentalHealthImg from "@assets/images/mental-health-child.png";
 import { softHover, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
+import { Mascote } from "@/components/Mascote";
 
 interface ScaleCard {
   href: string;
@@ -572,7 +573,7 @@ export default function HomePage() {
             <img
               src={drJadsonLogo}
               alt="Dr. Jadson Fraga"
-              className="w-16 h-16 object-cover rounded-2xl shadow-md ring-2 ring-primary/20"
+              className="w-16 h-16 object-cover rounded-2xl shadow-md ring-2 ring-primary/20 np-anim-glow"
               data-testid="img-dr-jadson-logo"
             />
           </motion.div>
@@ -624,6 +625,13 @@ export default function HomePage() {
           </p>
         </div>
       </motion.div>
+
+      {/* ── MASCOTE DE BOAS-VINDAS ───────────────────────────── */}
+      {!isSearching && (
+        <div className="flex justify-center">
+          <Mascote contexto="home" size="md" />
+        </div>
+      )}
 
       {/* ── SEARCH RESULTS ───────────────────────────────────── */}
       {isSearching ? (

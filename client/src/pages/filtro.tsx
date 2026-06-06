@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import {
   Baby, Puzzle, Zap, Flame, AlertTriangle, CloudRain, Activity,
@@ -18,6 +18,8 @@ import { motion } from "framer-motion";
 import { softTap, softTick, softHover } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
+import { Mascote } from "@/components/Mascote";
+import { celebrate } from "@/lib/confetti";
 
 const iconMap: Record<string, any> = {
   baby: Baby, puzzle: Puzzle, zap: Zap, flame: Flame,
@@ -334,6 +336,15 @@ export default function FiltroPage() {
   const hasFilters = selQueixas.length > 0 || selIdade !== null || search.trim().length >= 2;
   const total = results.scales.length + results.pharm.length + results.tools.length;
 
+  // Confetti quando o filtro passa a apresentar resultados (transição 0 → >0)
+  const prevTotal = useRef(0);
+  useEffect(() => {
+    if (hasFilters && total > 0 && prevTotal.current === 0) {
+      celebrate();
+    }
+    prevTotal.current = hasFilters ? total : 0;
+  }, [total, hasFilters]);
+
   // Escala ideal (destaque dourado)
   const idealResult = useMemo(() => getIdealScale(techQ, ageRange), [techQ, ageRange]);
   const idealId = idealResult?.id || null;
@@ -476,6 +487,13 @@ export default function FiltroPage() {
         </div>
       ) : (
         <div className="space-y-3">
+          {total > 0 && (
+            <Mascote
+              contexto="resultado"
+              size="sm"
+              fala={`Encontrei ${total} recurso${total !== 1 ? "s" : ""} para esse perfil. Confira abaixo.`}
+            />
+          )}
           {/* Tabs */}
           <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
             {[

@@ -65,6 +65,11 @@ const EmsPage = lazy(() => import("@/pages/ems"));
 const EtarePage = lazy(() => import("@/pages/etare"));
 const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
+const CaaPage = lazy(() => import("@/pages/caa"));
+const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
+const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
+const DiarioEscolaPage = lazy(() => import("@/pages/diario-escola"));
+const AssinaturaDigitalPage = lazy(() => import("@/pages/assinatura-digital"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -98,6 +103,12 @@ const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
+const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades"));
+const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
+const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
+const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
+const GlossarioPage = lazy(() => import("@/pages/glossario"));
+const QualidadePage = lazy(() => import("@/pages/qualidade"));
 
 function LoadingSpinner() {
   return (
@@ -177,6 +188,11 @@ function AppRouter() {
           <Route path="/etare" component={EtarePage} />
           <Route path="/eaah" component={EaahPage} />
           <Route path="/filtro" component={FiltroPage} />
+          <Route path="/caa" component={CaaPage} />
+          <Route path="/diario-sono" component={DiarioSonoPage} />
+          <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
+          <Route path="/diario-escola" component={DiarioEscolaPage} />
+          <Route path="/assinatura-digital" component={AssinaturaDigitalPage} />
           <Route path="/sobre" component={SobrePage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />
@@ -252,6 +268,14 @@ function AppRouter() {
 
           {/* ----- Portal da Família (acesso público restrito a documentos liberados) ----- */}
           <Route path="/portal-familia" component={PortalFamiliaPage} />
+          <Route path="/portal-familia/novidades" component={PortalNovidadesPage} />
+          <Route path="/portal-familia/acesso" component={PortalAcessoPage} />
+
+          {/* ----- Páginas informativas (sobre/legais) ----- */}
+          <Route path="/acessibilidade" component={AcessibilidadePage} />
+          <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
+          <Route path="/glossario" component={GlossarioPage} />
+          <Route path="/qualidade" component={QualidadePage} />
 
           {/* ----- Catch-all ----- */}
           <Route component={NotFound} />

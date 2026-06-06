@@ -16,6 +16,7 @@
  */
 
 import { useState } from "react";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { LoadingState, EmptyState, ErrorState } from "@/components/ui/VisualStates";
 import {
   Users, FileText, AlertTriangle, Eye, Calendar, ShieldCheck, Lock, Info,
+  Newspaper, KeyRound,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -138,6 +140,28 @@ export default function PortalFamiliaPage() {
           <h1 className="text-lg font-bold text-foreground">Portal da Família</h1>
           <p className="text-xs text-muted-foreground">Documentos liberados pelo médico responsável</p>
         </div>
+      </div>
+
+      {/* ── Atalhos do Portal ── */}
+      <div className="grid grid-cols-2 gap-2">
+        <Link href="/portal-familia/novidades">
+          <Button variant="outline" className="w-full justify-start gap-2 h-auto py-2.5">
+            <Newspaper className="w-4 h-4 text-primary" />
+            <span className="text-left text-xs">
+              <span className="block font-semibold">Novidades &amp; Artigos</span>
+              <span className="block text-muted-foreground">conteúdo para famílias</span>
+            </span>
+          </Button>
+        </Link>
+        <Link href="/portal-familia/acesso">
+          <Button variant="outline" className="w-full justify-start gap-2 h-auto py-2.5">
+            <KeyRound className="w-4 h-4 text-primary" />
+            <span className="text-left text-xs">
+              <span className="block font-semibold">Política de Acesso</span>
+              <span className="block text-muted-foreground">o que é livre e protegido</span>
+            </span>
+          </Button>
+        </Link>
       </div>
 
       {/* ── Busca por ID do paciente ── */}
