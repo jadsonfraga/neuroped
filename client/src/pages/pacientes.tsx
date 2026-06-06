@@ -3,18 +3,16 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { verifyPin } from "@/lib/pinAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, Lock, UserPlus,
+  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar,
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
@@ -22,6 +20,7 @@ import { haptic } from "@/lib/haptic";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState, LoadingState } from "@/components/ui/VisualStates";
 import { easing, duration } from "@/lib/motion";
+import { PinGate } from "@/components/PinGate";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -34,84 +33,10 @@ function calcAge(birthDate: string | null | undefined): string | null {
 }
 
 export default function PacientesPage() {
+  // Todos os hooks são chamados de forma incondicional (regra rules-of-hooks).
+  // O portão de PIN é um componente isolado (PinGate); enquanto não autenticado,
+  // as queries ficam desabilitadas (enabled: internalAuth) para não buscar dados.
   const [internalAuth, setInternalAuth] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState(false);
-  const [pinChecking, setPinChecking] = useState(false);
-
-  async function handlePinSubmit() {
-    if (!pin) return;
-    setPinChecking(true);
-    softTap();
-    haptic.tap();
-    const ok = await verifyPin(pin);
-    setPinChecking(false);
-    if (ok) {
-      softSuccess();
-      haptic.success();
-      setInternalAuth(true);
-    } else {
-      softError();
-      haptic.error();
-      setPinError(true);
-      setTimeout(() => setPinError(false), 3000);
-    }
-  }
-
-  if (!internalAuth) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="flex flex-col items-center justify-center py-20 space-y-6"
-      >
-        <motion.div
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: duration.normal, ease: easing.spring }}
-          className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg"
-        >
-          <Lock className="w-8 h-8 text-white" strokeWidth={1.75} />
-        </motion.div>
-        <div className="text-center space-y-1">
-          <h2
-            className="text-2xl text-foreground"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-          >
-            Área Restrita
-          </h2>
-          <p className="text-xs text-muted-foreground italic">Acesso exclusivo do Dr. Jadson</p>
-        </div>
-        <div className="w-full max-w-xs space-y-3">
-          <Input
-            type="password"
-            placeholder="PIN de acesso..."
-            value={pin}
-            onChange={(e) => { setPin(e.target.value); setPinError(false); }}
-            onKeyDown={(e) => { if (e.key === "Enter") handlePinSubmit(); }}
-            className={`text-center h-12 text-lg ${pinError ? "border-red-400" : ""}`}
-            data-testid="input-pin-pacientes"
-          />
-          {pinError && (
-            <p className="text-xs text-red-500 text-center">PIN incorreto. Tente novamente.</p>
-          )}
-          <Button
-            className="w-full btn-glow"
-            onClick={handlePinSubmit}
-            disabled={!pin || pinChecking}
-            data-testid="button-acessar-prontuarios"
-          >
-            {pinChecking ? "Verificando..." : "Acessar Prontuários"}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground text-center max-w-xs">
-          Dados protegidos localmente. Modo demonstração — não inserir dados reais de pacientes.
-        </p>
-      </motion.div>
-    );
-  }
-
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -123,6 +48,7 @@ export default function PacientesPage() {
 
   const { data: patients = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/patients"],
+    enabled: internalAuth,
   });
 
   const createMutation = useMutation({
@@ -215,6 +141,17 @@ export default function PacientesPage() {
         (p.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)
       )
     : patients;
+
+  if (!internalAuth) {
+    return (
+      <PinGate
+        onUnlock={() => setInternalAuth(true)}
+        inputTestId="input-pin-pacientes"
+        buttonTestId="button-acessar-prontuarios"
+        buttonClassName="w-full btn-glow"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
