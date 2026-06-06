@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Brain, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PasswordGate } from "@/components/PasswordGate";
 
 const SENSITIVE_ROUTES = [
   "/pacientes",
@@ -44,25 +45,10 @@ export function RouteGuard({
     );
   }
 
+  // Área protegida = SÓ o PIN mestre do médico (VITE_PIN_HASH). Sem email/CPF/senha
+  // de servidor: o PasswordGate desbloqueia com o PIN e libera o conteúdo na sessão.
   if (!isAuthenticated) {
-    return (
-      <div className="max-w-md mx-auto py-12 px-4 text-center space-y-5">
-        <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-          <Lock className="w-6 h-6 text-amber-500" />
-        </div>
-        <h1 className="text-xl font-bold">Area profissional restrita</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Este modulo envolve dados clinicos, prontuario, prescricao ou informacoes identificaveis. Faca
-          login com suas credenciais profissionais para acessar.
-        </p>
-        <div className="flex flex-col gap-2">
-          <Button onClick={() => setLocation("/login")}>Fazer login</Button>
-          <Button variant="ghost" onClick={() => setLocation("/")}>
-            Voltar a area educativa
-          </Button>
-        </div>
-      </div>
-    );
+    return <PasswordGate>{children}</PasswordGate>;
   }
 
   if (roles && roles.length > 0 && user && !roles.includes(user.role)) {

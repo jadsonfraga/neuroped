@@ -30,50 +30,47 @@ interface PasswordGateProps {
 }
 
 export function PasswordGate({ children }: PasswordGateProps) {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState(() => {
+    try { return sessionStorage.getItem("neuroped:pin-ok") === "1"; } catch { return false; }
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | false>(false);
   const [shaking, setShaking] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  function unlock() {
+    try { sessionStorage.setItem("neuroped:pin-ok", "1"); } catch { /* sessão volátil */ }
+    setAuthenticated(true);
+    playFlagPole();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const hash = await sha256hex(password);
-
     try {
-      // Tenta validar PIN no servidor para obter JWT real
-      const res = await fetch("/api/auth/verify-pin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pinHash: hash }),
-        signal: AbortSignal.timeout(5000),
-      });
+      const hash = await sha256hex(password);
 
-      if (res.ok) {
-        const data = await res.json();
-        // Persiste o access token na sessão via authClient
-        if (data.accessToken) {
-          (window as any).__neuroped_pin_token = data.accessToken;
-          sessionStorage.setItem("neuroped:access", data.accessToken);
-        }
-        setAuthenticated(true);
-        playFlagPole();
-        return;
-      }
-
-      // Servidor retornou erro de autenticação
-      throw new Error("invalid");
-    } catch (err: any) {
-      if (err?.name === "AbortError" || err?.name === "TypeError") {
-        // Servidor indisponível — fallback offline com validação local
-        if (LOCAL_HASH && hash === LOCAL_HASH) {
-          setAuthenticated(true);
-          playFlagPole();
+      // 1) Servidor (quando publicado) → JWT real. Se ausente/404 (deploy
+      //    estático), o catch/else cai para a verificação local — sem travar.
+      try {
+        const res = await fetch("/api/auth/verify-pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pinHash: hash }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.accessToken) sessionStorage.setItem("neuroped:access", data.accessToken);
+          unlock();
           return;
         }
-      }
+      } catch { /* servidor indisponível — segue para o PIN mestre local */ }
+
+      // 2) PIN mestre local (hash em VITE_PIN_HASH) — funciona no deploy estático.
+      if (LOCAL_HASH && hash === LOCAL_HASH) { unlock(); return; }
+
       // PIN incorreto
       setError("Senha incorreta. Tente novamente.");
       setShaking(true);
