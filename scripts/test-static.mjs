@@ -1160,6 +1160,8 @@ assertIncludes('filtro-escalas.html', "desenvolvimento:'desenvolvimento'", 'filt
 assertIncludes('filtro-escalas.html', 'NeuroPedSmartRank.differentials', 'filtro: mostra diferencial clínico quando 2+ construtos ativam');
 assertIncludes('escala.html', 'role="radiogroup"', 'runner: opções agrupadas como radiogroup (a11y de leitor de tela)');
 assertIncludes('escala.html', "itemEl.classList.add('answered')", 'runner: atualização cirúrgica do item (sem flash de re-render a cada resposta)');
+assertIncludes('escala.html', 'reviewPanel', 'runner: painel de revisão das respostas antes do laudo');
+assertIncludes('escala.html', 'function renderReview', 'runner: revisão lista pergunta × resposta com "editar"');
 
 // ── Painel-guia "o que observar em casa" (scales-questions.js): cobertura curada
 //    por construto. Exercita a LÓGICA guide() + presença das entradas novas.
