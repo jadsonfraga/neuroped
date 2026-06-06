@@ -168,3 +168,74 @@ O app já tinha módulos úteis, mas ainda parecia conjunto de páginas soltas. 
 ### Próximo passo sugerido
 
 Separar formalmente o shell em `app-shell.js/css`, criar `secretaria.js` separado e corrigir `consulta.html` na origem quando o conector permitir substituição segura do arquivo completo.
+
+---
+
+## Registro v42 — Auditoria Completa da Stack | Baseline v6.46.0
+
+Data: 2026-06-06
+
+### Escopo auditado
+
+- Suite estática completa (`npm test`)
+- Smoke tests (sintaxe, contratos DOM, lógica)
+- Lockstep de versão (`package.json` ↔ `sw.js`)
+- Contraste WCAG AA
+- Cascata de tema (token → palette)
+- Motor pré-consulta (engine clínica)
+- Sistema de estilos (sprawl)
+- Scorecard 7,0 → 9,0
+
+### Resultado dos testes
+
+| Check | Resultado | Meta |
+|---|---|---|
+| Asserções estáticas (`npm test`) | **915 OK, 0 falhas** | 0 falhas |
+| Smoke (sintaxe + DOM + lógica) | **14 OK, 0 falhas** | 0 falhas |
+| Motor pré-consulta | **48 OK, 0 falhas** | 0 falhas |
+| Lockstep de versão | **✓ v6.46.0 sincronizado** | coerente |
+| Contraste WCAG AA | **todos os pares passam** | AA |
+| Cascata de tema | **✓ 72 páginas válidas** | todas as páginas |
+| APIs órfãs (SPA→404) | **0** | 0 |
+| `console.log/.debug` em prod | **0** | 0 |
+| Marcadores de conflito git | **0** | 0 |
+| Cobertura skin `np-skin` | **96% (69/72)** | ≥60% |
+| Scorecard geral | **4/5 métricas no alvo** | 5/5 |
+
+### Destaques positivos (novos desde v41)
+
+- **Lote 2 de instrumentos internacionais livres:** 52 instrumentos integrados ao bundle de escalas. Zero IDs duplicados, todos com proveniência e faixas etárias válidas.
+- **Scaffold `auth-supabase`:** 15 asserções cobrindo `parseAuthHash`, `isExpired` e `buildOtpBody` — todas passando. Módulo permanece **desligado por padrão** (sem risco de ativação acidental).
+- **`clinical-trajetoria.html`** adicionada ao smoke (2 blocos inline + 3 âncoras DOM verificadas).
+- Total de asserções estáticas cresceu de ~780 para **915** sem nenhuma regressão.
+
+### Déficit persistente
+
+**Sistemas de estilo:** 8 arquivos canônicos + 9 legados ativos (meta final ≤ 3).
+
+```
+tokens.css, np-tokens.css, ds-tokens.css,
+app-skin.css, np-skin.css, escalas-hero.css,
+premium-override.css, design-system.css
+```
+
+Inventário **congelado** (nenhum novo sistema adicionado desde v41). Consolidação progressiva prevista em `docs/PLANO_7_PARA_9.md` — Ondas 1–4.
+
+### Limites mantidos
+
+- PIN frontend é controle de interface, não segurança de produção.
+- Dados clínicos reais permanecem proibidos (ver `GO_LIVE_CHECKLIST.md`).
+- QR/código local não é assinatura digital ICP-Brasil.
+- `auth-supabase` é scaffold; autenticação real requer backend configurado.
+- CRM válido: **CRM-PE 25227 / RQE 17756** (nenhuma referência a CRM-BA no código).
+
+### Arquivos verificados (integridade)
+
+`routes.config.js`, `sw.js` (v6.46.0), `package.json`, `manifest.json`, `cloud-config.js` (Supabase desligado), `master-access-policy.js`, `clinical-engines.js`, `scales-bundle.js`, `np-lgpd-consent.js`, `clinical-trajetoria.html`, `secretaria.html`.
+
+### Próximos passos
+
+1. **Onda 1 de estilos:** Fundir `np-tokens.css` + `ds-tokens.css` → `tokens.css` (única fonte de tokens).
+2. **Onda 2 de estilos:** Unificar `app-skin.css` e `np-skin.css` → `np-skin.css` canônico.
+3. Corrigir `consulta.html` na origem (remover marcação PIN legada, eliminar dependência de `consulta-pin-fix.js`).
+4. Formalizar shell em `app-shell.js/css` separando responsabilidade de `premium-experience.js`.
