@@ -1,4 +1,4 @@
-import { BookOpen, ChevronDown } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -109,7 +109,7 @@ export default function ClassificacoesPage() {
                   <div className="ml-3 text-muted-foreground space-y-0.5">
                     <p>Motor: tônico-clônica, espasmo epiléptico</p>
                     <p>Não-motor: parada comportamental</p>
-                    <p className="text-muted-foreground italic">Classificar como "não classificada" quando informações insuficientes</p>
+                    <p className="text-muted-foreground italic">Classificar como &quot;não classificada&quot; quando informações insuficientes</p>
                   </div>
                 </div>
               </div>
@@ -118,8 +118,8 @@ export default function ClassificacoesPage() {
                 <p className="font-medium text-red-800 dark:text-red-300 mb-1">Notas clínicas importantes:</p>
                 <ul className="list-disc ml-4 space-y-0.5 text-red-700 dark:text-red-400">
                   <li>Consciência se refere à consciência de si e do ambiente durante a crise</li>
-                  <li>A nova classificação substituiu "simples" e "complexo" da terminologia anterior</li>
-                  <li>O termo "parcial" foi substituído por "focal"</li>
+                  <li>A nova classificação substituiu &quot;simples&quot; e &quot;complexo&quot; da terminologia anterior</li>
+                  <li>O termo &quot;parcial&quot; foi substituído por &quot;focal&quot;</li>
                 </ul>
               </div>
             </div>

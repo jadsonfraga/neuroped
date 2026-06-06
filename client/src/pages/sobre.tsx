@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import {
   Brain, MapPin, Phone, Mail, Globe, Instagram, Clock,
-  GraduationCap, Award, Heart, Stethoscope, Star, Users,
-  Shield, BookOpen, MessageCircle, ChevronLeft, ChevronRight,
-  Zap, Sparkles, Calendar, ExternalLink
+  GraduationCap, Award, Heart, Stethoscope, Star,
+  Shield, MessageCircle, ChevronLeft, ChevronRight,
+  Zap, Sparkles, Calendar
 } from "lucide-react";
-import drJadsonLogo from "@assets/dr-jadson-logo.jpeg";
 import neuralAbstractImg from "@assets/images/neural-abstract.png";
 import drSelfie from "@assets/images/dr-jadson-selfie.jpeg";
 import drBatman from "@assets/images/dr-jadson-consultorio-batman.jpeg";
@@ -102,7 +101,7 @@ export default function SobrePage() {
             <div className="text-center sm:text-left space-y-1.5">
               <h2 className="text-lg font-bold text-foreground">Neurologista Infantil / Neuropediatra</h2>
               <p className="text-sm text-primary font-semibold">O SuperNeuroPed</p>
-              <p className="text-xs text-muted-foreground italic">"Cada criança é um universo. Meu papel é decifrar esse universo com ciência, empatia e respeito."</p>
+              <p className="text-xs text-muted-foreground italic">&quot;Cada criança é um universo. Meu papel é decifrar esse universo com ciência, empatia e respeito.&quot;</p>
             </div>
           </div>
 
@@ -311,7 +310,7 @@ export default function SobrePage() {
               { text: "Profissional excepcional. Conduziu a investigação do meu filho com rigor científico e muita empatia. Recomendo de olhos fechados.", author: "Mãe de paciente" },
             ].map((dep, i) => (
               <div key={i} className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/30">
-                <p className="text-xs text-foreground italic leading-relaxed">"{dep.text}"</p>
+                <p className="text-xs text-foreground italic leading-relaxed">&quot;{dep.text}&quot;</p>
                 <p className="text-[10px] text-muted-foreground mt-1.5">— {dep.author}</p>
               </div>
             ))}

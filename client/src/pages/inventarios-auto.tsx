@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Brain, Heart, Zap, ShieldAlert, Moon, Apple, Users, BookOpen,
+  Heart, Zap, ShieldAlert, Moon, Apple, Users, BookOpen,
   RotateCcw, ChevronRight, ChevronLeft, CheckCircle2, AlertTriangle,
   AlertCircle, Info, BarChart3, ClipboardList
 } from "lucide-react";
@@ -582,7 +582,7 @@ export default function InventariosAutoPage() {
             {INVENTORIES.map(inv => {
               const cnt = getAnsweredCount(inv.id);
               const done = cnt === inv.items.length;
-              const accent = INVENTORY_ACCENT[inv.id];
+              const _accent = INVENTORY_ACCENT[inv.id];
               const Icon = inv.icon;
               return (
                 <button
@@ -815,7 +815,7 @@ export default function InventariosAutoPage() {
                   <div className="space-y-2">
                     {results
                       .filter(r => r.classification.level === "alto" || r.classification.level === "moderado")
-                      .map(({ inv, score, classification }) => {
+                      .map(({ inv, score: _score, classification }) => {
                         const colors = LEVEL_COLORS[classification.level];
                         const Icon = inv.icon;
                         return (

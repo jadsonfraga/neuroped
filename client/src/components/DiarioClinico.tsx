@@ -92,7 +92,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
   useEffect(() => {
     try {
       localStorage.setItem(config.storageKey, JSON.stringify(entries));
-    } catch {}
+    } catch { /* intentional */ }
   }, [entries, config.storageKey]);
 
   const Icon = config.icon;
@@ -257,7 +257,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
           {sorted.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Nenhum registro ainda. Clique em "Novo registro".
+                Nenhum registro ainda. Clique em &quot;Novo registro&quot;.
               </CardContent>
             </Card>
           ) : (

@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import {
-  User, Users, Baby, Phone, Mail, Stethoscope, FileText, PlusCircle, Trash2,
-  Activity, Brain, MessageSquare, BookOpen, Pill, Dumbbell, FlaskConical,
-  Printer, Copy, CheckCircle2, ChevronRight, AlertTriangle, Clock,
-  TrendingUp, Zap, Heart, School, Calendar, ClipboardList, MoreHorizontal
+  User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
+  Activity, MessageSquare, Pill, Dumbbell, FlaskConical,
+  Printer, Copy, CheckCircle2, AlertTriangle, Clock,
+  TrendingUp, Heart, School, ClipboardList
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -152,7 +152,7 @@ const statusColors: Record<MilestoneStatus, { dot: string; bg: string; text: str
   missing:    { dot: "bg-gray-300",     bg: "bg-gray-50 dark:bg-gray-900/30",       text: "text-gray-400",                          label: "—"         },
 };
 
-const domainColors: Record<string, string> = {
+const _domainColors: Record<string, string> = {
   "Motor":            "from-blue-500 to-cyan-500",
   "Linguagem":        "from-violet-500 to-purple-500",
   "Social/Adaptativo":"from-pink-500 to-rose-500",
@@ -1101,7 +1101,7 @@ export default function ProntuarioPage() {
                 <CardContent className="p-8 flex flex-col items-center gap-2">
                   <Pill className="w-8 h-8 text-violet-300 dark:text-violet-700" />
                   <p className="text-sm text-muted-foreground text-center">Nenhuma medicação adicionada ainda.</p>
-                  <p className="text-xs text-muted-foreground text-center">Clique em "Adicionar medicação" para começar.</p>
+                  <p className="text-xs text-muted-foreground text-center">Clique em &quot;Adicionar medicação&quot; para começar.</p>
                 </CardContent>
               </Card>
             )}

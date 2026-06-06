@@ -104,7 +104,7 @@ export function decrypt(payload: string | null | undefined): string | null {
     decipher.setAuthTag(tag);
     const pt = Buffer.concat([decipher.update(ct), decipher.final()]);
     return pt.toString("utf8");
-  } catch (e) {
+  } catch {
     throw new CryptoIntegrityError(
       "Falha ao decriptar (auth tag invalido). Possivel adulteracao do dado ou chave mestra alterada.",
     );

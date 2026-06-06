@@ -19,11 +19,8 @@ import {
   timestamp,
   uuid,
   index,
-  primaryKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { z } from "zod";
-import { createInsertSchema } from "drizzle-zod";
 
 export const userRoles = ["admin", "professional", "reader", "operator"] as const;
 export type UserRole = (typeof userRoles)[number];

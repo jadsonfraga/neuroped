@@ -454,7 +454,7 @@ export default function PacPage() {
             </p>
             <div className="grid grid-cols-1 gap-2">
               {sinaisAlerta.map((sinal, i) => {
-                const Icon = sinal.icon;
+                const _Icon = sinal.icon;
                 return (
                   <div
                     key={i}

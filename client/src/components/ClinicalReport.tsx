@@ -6,7 +6,7 @@ import { FileText, Mail, Copy, CheckCircle2, Loader2, Printer, Home, RotateCcw }
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { play1Up, playFireball, playCoin, playPowerUp } from "@/lib/sounds";
+import { play1Up } from "@/lib/sounds";
 import { softSuccess, softTap, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { RadarChart } from "@/components/RadarChart";
@@ -32,7 +32,7 @@ async function sendEmail(
       toast({ title: "\u2709\ufe0f Enviado", description: `Relat\u00f3rio enviado para ${EMAIL_TO}` });
       return;
     }
-  } catch {}
+  } catch { /* intentional */ }
 
   // Fallback: abrir cliente de email com mailto
   try {
@@ -179,7 +179,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
     if (autoSentRef.current) return;
     autoSentRef.current = true;
     sendEmail(props.scaleName, reportText, setSent, toast);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCopy() {
     try {

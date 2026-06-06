@@ -113,7 +113,7 @@ export function WelcomeTour() {
         const t = setTimeout(() => setIntroHighlight(false), 6000);
         return () => clearTimeout(t);
       }
-    } catch {}
+    } catch { /* intentional */ }
   }, []);
 
   const recompute = useCallback((stepIdx: number) => {
@@ -152,7 +152,7 @@ export function WelcomeTour() {
     setOpen(false);
     try {
       localStorage.setItem(DONE_KEY, "1");
-    } catch {}
+    } catch { /* intentional */ }
   }
 
   function next() {

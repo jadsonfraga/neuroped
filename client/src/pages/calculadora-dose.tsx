@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Calculator, AlertTriangle, CheckCircle, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { Calculator, AlertTriangle, CheckCircle, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

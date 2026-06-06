@@ -249,7 +249,7 @@ export const connersSubscales = {
   hyperactivity: { name: "Índice de Hiperatividade", items: [24, 25, 26, 27], color: "text-pink-600 dark:text-pink-400" },
 };
 
-export function classifyConners(total: number, subscaleScores: Record<string, number>): {
+export function classifyConners(total: number, _subscaleScores: Record<string, number>): {
   classification: string;
   description: string;
   color: string;

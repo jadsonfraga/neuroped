@@ -38,7 +38,7 @@ function writeToken(key: string, value: string | null): void {
   try {
     if (value === null) sessionStorage.removeItem(key);
     else sessionStorage.setItem(key, value);
-  } catch {}
+  } catch { /* intentional */ }
 }
 
 export function getAccessToken(): string | null {

@@ -3,7 +3,7 @@ import {
   School, Eye, Puzzle, BookOpen, Brain,
   CheckCircle2, AlertTriangle, AlertCircle,
   RotateCcw, Printer, ClipboardList, Users,
-  MessageSquare, Zap, Info, ChevronDown,
+  MessageSquare, Info,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -4,8 +4,6 @@ import {
   getStoredUser,
   loginRequest,
   logoutRequest,
-  refreshTokenRequest,
-  clearAuth,
   authFetch,
 } from "@/lib/authClient";
 
@@ -35,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const fresh = await r.json();
           if (!cancelled) setUser(fresh);
         }
-      } catch {}
+      } catch { /* intentional */ }
       finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -66,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const r = await authFetch("/api/auth/me");
       if (r.ok) setUser(await r.json());
-    } catch {}
+    } catch { /* intentional */ }
   }
 
   return (

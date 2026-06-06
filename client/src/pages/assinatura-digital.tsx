@@ -81,7 +81,7 @@ export default function AssinaturaDigitalPage() {
   useEffect(() => {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(regs.slice(0, 80)));
-    } catch {}
+    } catch { /* intentional */ }
   }, [regs]);
 
   // Gera QR sempre que houver um registro gerado

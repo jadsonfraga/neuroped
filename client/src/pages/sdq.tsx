@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import {
-  sdqQuestions, sdqLabels, sdqSubscales, sdqReversedItems,
+  sdqQuestions, sdqLabels, sdqSubscales,
   scoreSdqItem, classifySdq
 } from "@/data/newScales";
 import { Button } from "@/components/ui/button";

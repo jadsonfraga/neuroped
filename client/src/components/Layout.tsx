@@ -203,14 +203,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle("dark", dark);
     try {
       localStorage.setItem("neuroped:theme", dark ? "dark" : "light");
-    } catch {}
+    } catch { /* intentional */ }
   }, [dark]);
 
   // D6: persiste o estado recolhido da barra lateral.
   useEffect(() => {
     try {
       localStorage.setItem("neuroped:sidebar-collapsed", collapsed ? "1" : "0");
-    } catch {}
+    } catch { /* intentional */ }
   }, [collapsed]);
 
   // Close mobile menu on navigation + scroll to top + som sutil

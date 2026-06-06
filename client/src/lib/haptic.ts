@@ -31,14 +31,14 @@ export function isHapticEnabled(): boolean {
 export function setHapticEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
-  } catch {}
+  } catch { /* intentional */ }
 }
 
 function vibrate(pattern: number | number[]): void {
   if (!isHapticEnabled()) return;
   try {
     navigator.vibrate(pattern);
-  } catch {}
+  } catch { /* intentional */ }
 }
 
 export const haptic = {

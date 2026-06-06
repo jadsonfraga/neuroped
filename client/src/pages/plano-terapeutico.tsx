@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
   Target, Users, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
-  Printer, Mail, RotateCcw, FileText, Info, Stethoscope, Star,
-  Baby, Brain, ChevronDown, ChevronUp, Plus, Trash2, ClipboardList
+  Printer, Mail, RotateCcw, Info, Stethoscope, Star,
+  ClipboardList
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -156,7 +156,7 @@ async function sendPtiEmail(
       toast({ title: "✉️ Enviado", description: `PTI enviado para ${EMAIL_TO}` });
       return;
     }
-  } catch { }
+  } catch { /* intentional */ }
 
   try {
     const truncated = body.length > 1800 ? body.slice(0, 1800) + "\n\n[...PTI truncado — use Imprimir para versão completa]" : body;
@@ -374,7 +374,7 @@ export default function PlanoTerapeuticoPage() {
             </p>
             <div className="rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 p-4 text-center">
               <p className="text-sm font-semibold text-rose-800 dark:text-rose-300 italic">
-                "O que queremos e podemos fazer para este paciente?"
+                &quot;O que queremos e podemos fazer para este paciente?&quot;
               </p>
             </div>
             <div className="grid grid-cols-1 gap-3">

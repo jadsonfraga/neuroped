@@ -6,12 +6,11 @@ import {
   BarChart3, ShieldAlert, ClipboardList, Users, FileText, CloudRain, HeartPulse,
   Wine, ListChecks, Zap, BrainCircuit, Gauge, Heart, Accessibility, Sparkles,
   Puzzle, Calendar, Moon, Eye, Search, X, GraduationCap, Waves,
-  AlertTriangle, Flame, VolumeX, UtensilsCrossed, Pill, Filter, User,
+  AlertTriangle, Flame, VolumeX, UtensilsCrossed, Pill, Filter,
   BrainCog, Ear, School, ChevronDown, ChevronUp, Target, Lightbulb,
   GitBranch, Ruler, Thermometer, Calculator, LineChart, MessageCircle,
-  Syringe, Scale, Milestone,
+  Scale, Milestone,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import drJadsonLogo from "@assets/dr-jadson-logo.jpeg";
@@ -493,7 +492,7 @@ function StatCounter({ value, label }: { value: string; label: string }) {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const totalInstruments = neurodevScales.length + behaviorScales.length + mentalHealthScales.length + otherScales.length + diaries.length + regulacaoEmocionalScales.length + 5 + 5 + 6;
+  const _totalInstruments = neurodevScales.length + behaviorScales.length + mentalHealthScales.length + otherScales.length + diaries.length + regulacaoEmocionalScales.length + 5 + 5 + 6;
 
   const isSearching = searchQuery.trim().length > 0;
   const filteredCards = useMemo(() => {

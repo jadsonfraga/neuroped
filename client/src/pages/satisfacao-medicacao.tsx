@@ -8,15 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Pill, RotateCcw, Printer, CheckCircle2, AlertTriangle, Info,
-  ThumbsUp, ThumbsDown, Minus, Clock, Weight, Droplets, Smile,
-  Frown, Meh, TrendingUp, TrendingDown, Minus as MinusIcon,
+  Pill, RotateCcw, AlertTriangle, Info,
+  Minus, Weight, Droplets, Smile,
+  Frown, Meh, TrendingUp, TrendingDown,
   Heart, Brain, Moon, Zap, UtensilsCrossed, Eye, Activity
 } from "lucide-react";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { motion } from "framer-motion";
-import { softTap, softTick, softSuccess } from "@/lib/softSounds";
+import { softSuccess } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 
@@ -151,7 +151,7 @@ export default function SatisfacaoMedicacaoPage() {
     // Calcular scores
     const efeitosPresentes = efeitosAdversos.filter(e => (efeitosResp[e.id] ?? 0) >= 2);
     const efeitosGraves = efeitosAdversos.filter(e => (efeitosResp[e.id] ?? 0) >= 3);
-    const eficaciaMedia = respondidosEficacia > 0
+    const _eficaciaMedia = respondidosEficacia > 0
       ? Object.values(eficaciaAreas).reduce((s, v) => s + v, 0) / respondidosEficacia
       : 0;
     const formaMedia = respondidosForma > 0
@@ -187,7 +187,7 @@ export default function SatisfacaoMedicacaoPage() {
       desc = "Efeitos adversos significativos e/ou ausência de benefício clínico. Considerar suspensão gradual e troca por alternativa terapêutica.";
     }
 
-    const totalScore = compostoScore;
+    const _totalScore = compostoScore;
 
     return (
       <motion.div
@@ -330,7 +330,7 @@ export default function SatisfacaoMedicacaoPage() {
               {obsLivre && (
                 <div className="pt-2 border-t">
                   <p className="text-xs text-muted-foreground">Observações da família:</p>
-                  <p className="text-xs text-foreground mt-1 italic">"{obsLivre}"</p>
+                  <p className="text-xs text-foreground mt-1 italic">&quot;{obsLivre}&quot;</p>
                 </div>
               )}
             </CardContent>

@@ -18,9 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Pencil, Trash2, Calendar, TrendingUp, TrendingDown,
-  Minus, FileText, Copy, Download, ClipboardList, Users, Lock,
+  Minus, Copy, Download, ClipboardList, Users, Lock,
 } from "lucide-react";
-import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
+import { softTap, softSuccess, softError } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import {
@@ -66,7 +66,7 @@ export default function PacienteDetalhePage() {
   const [pinChecking, setPinChecking] = useState(false);
 
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const [, _navigate] = useLocation();
   const [, params] = useRoute("/paciente/:id");
   const patientId = params?.id || "";
 

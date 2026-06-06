@@ -2,7 +2,7 @@ import {
   BrainCog, CheckCircle2, AlertCircle, BookOpen, Clock, Users, Target,
   Layers, Zap, MessageSquare, Eye, Hand, Gauge, Lightbulb, Heart,
   FileText, BarChart2, ArrowRight, HelpCircle, School, RefreshCw,
-  Stethoscope, ClipboardList, Star, Info, ChevronRight, TrendingUp,
+  Stethoscope, ClipboardList, Star, Info, TrendingUp,
   Activity, Puzzle, Search
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

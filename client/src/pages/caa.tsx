@@ -56,17 +56,17 @@ export default function CaaPage() {
   useEffect(() => {
     try {
       localStorage.setItem(LS_BOARD, JSON.stringify(board));
-    } catch {}
+    } catch { /* intentional */ }
   }, [board]);
   useEffect(() => {
     try {
       localStorage.setItem(LS_FAVS, JSON.stringify(favs));
-    } catch {}
+    } catch { /* intentional */ }
   }, [favs]);
   useEffect(() => {
     try {
       localStorage.setItem(LS_HIST, JSON.stringify(hist.slice(0, 30)));
-    } catch {}
+    } catch { /* intentional */ }
   }, [hist]);
 
   const allItems = useMemo(

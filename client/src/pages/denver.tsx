@@ -69,7 +69,7 @@ export default function DenverPage() {
       {/* Instruction */}
       <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">
         <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-          <strong>Instruções:</strong> Selecione a idade da criança e avalie cada marco do desenvolvimento como "Passou", "Falhou" ou "Sem oportunidade". Marcos são exibidos conforme a faixa etária selecionada.
+          <strong>Instruções:</strong> Selecione a idade da criança e avalie cada marco do desenvolvimento como &quot;Passou&quot;, &quot;Falhou&quot; ou &quot;Sem oportunidade&quot;. Marcos são exibidos conforme a faixa etária selecionada.
         </p>
       </div>
 

@@ -6,7 +6,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
-import { Brain } from "lucide-react";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { Onboarding } from "@/components/Onboarding";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -305,14 +304,14 @@ function App() {
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);
-    } catch {}
+    } catch { /* intentional */ }
   }, [splashComplete]);
 
   function dismissOnboarding() {
     setShowOnboarding(false);
     try {
       localStorage.setItem("neuroped:onboarding-seen", "1");
-    } catch {}
+    } catch { /* intentional */ }
   }
 
   return (

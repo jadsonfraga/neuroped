@@ -8,13 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, Lock, UserPlus,
+  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, Lock,
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";

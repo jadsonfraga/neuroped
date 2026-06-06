@@ -600,7 +600,7 @@ export default function TeaChecklistsPage() {
                       </li>
                     ))}
                   </ul>
-                  <p className={`text-xs italic ${colors.text}`}>"{entry.motto}"</p>
+                  <p className={`text-xs italic ${colors.text}`}>&quot;{entry.motto}&quot;</p>
                 </div>
               );
             })}

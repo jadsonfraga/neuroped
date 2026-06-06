@@ -9,12 +9,12 @@
  *  - Email transacional: substituido execSync Perplexity por SMTP via nodemailer.
  */
 
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 import { type Server } from "http";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, storage } from "./storage.js";
-import { patients, scaleResults, consents, dataRequests, patientApiSchema, insertScaleResultSchema, insertConsentSchema } from "@shared/schema";
+import { patients, consents, dataRequests, patientApiSchema, insertScaleResultSchema, insertConsentSchema } from "@shared/schema";
 import { requireAuth, requireProfessional, optionalAuth } from "./middleware/auth.js";
 import { writeRateLimit, emailRateLimit } from "./middleware/security.js";
 import { patientToStorage, patientToPlaintext } from "./lib/patientCrypto.js";

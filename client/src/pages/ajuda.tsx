@@ -1,9 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  HelpCircle, Brain, Search, ClipboardCheck, Pill, Users,
-  Printer, Mail, Moon, Sun, ChevronDown, Shield,
-  Smartphone, Monitor, Wifi, WifiOff, BookOpen, Filter,
+  HelpCircle, Brain, ClipboardCheck, Pill, Users,
+  Printer, Mail, Shield,
+  Smartphone, Monitor, WifiOff, BookOpen, Filter,
   Baby, GraduationCap, Stethoscope, FileText, Lightbulb
 } from "lucide-react";
 import {
@@ -127,8 +127,8 @@ export default function AjudaPage() {
               <ol className="text-xs text-muted-foreground space-y-1 pl-4">
                 <li>1. Abra o link no Safari</li>
                 <li>2. Toque no ícone de Compartilhar (↑)</li>
-                <li>3. Selecione "Adicionar à Tela de Início"</li>
-                <li>4. Confirme com "Adicionar"</li>
+                <li>3. Selecione &quot;Adicionar à Tela de Início&quot;</li>
+                <li>4. Confirme com &quot;Adicionar&quot;</li>
               </ol>
             </div>
             <div className="space-y-2">
@@ -139,7 +139,7 @@ export default function AjudaPage() {
               <ol className="text-xs text-muted-foreground space-y-1 pl-4">
                 <li>1. Abra o link no Chrome</li>
                 <li>2. Toque no menu (⋮)</li>
-                <li>3. Selecione "Instalar app"</li>
+                <li>3. Selecione &quot;Instalar app&quot;</li>
                 <li>4. Confirme a instalação</li>
               </ol>
             </div>
@@ -151,7 +151,7 @@ export default function AjudaPage() {
               <ol className="text-xs text-muted-foreground space-y-1 pl-4">
                 <li>1. Abra o link no Chrome</li>
                 <li>2. Clique no ícone (⊕) na barra de endereço</li>
-                <li>3. Ou Menu → "Instalar NeuroPed"</li>
+                <li>3. Ou Menu → &quot;Instalar NeuroPed&quot;</li>
                 <li>4. O app abre em janela própria</li>
               </ol>
             </div>

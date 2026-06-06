@@ -4,7 +4,7 @@ import {
   Baby, Puzzle, Zap, Flame, AlertTriangle, CloudRain, Activity,
   Accessibility, MessageCircle, Moon, UtensilsCrossed, HeartPulse,
   Brain, GraduationCap, Users, ShieldAlert, Sparkles, Pill,
-  Search, X, Filter, ArrowRight, Clock, UserCheck, CheckCircle2,
+  Search, X, Filter, ArrowRight, Clock, CheckCircle2,
   Droplet, Move, Lightbulb, Stethoscope, BookOpen, School,
   ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target
 } from "lucide-react";
@@ -260,7 +260,7 @@ export default function FiltroPage() {
   const [tab, setTab] = useState<"tudo" | "escalas" | "meds" | "tools">("tudo");
 
   const idade = idades.find(i => i.id === selIdade);
-  const ageRange = idade ? { min: idade.min, max: idade.max } : null;
+  const ageRange = useMemo(() => idade ? { min: idade.min, max: idade.max } : null, [selIdade]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const techQ = useMemo(() => {
     const ids = new Set<string>();
@@ -331,7 +331,7 @@ export default function FiltroPage() {
     });
 
     return { scales: resultScales, pharm: resultPharm, tools: resultTools };
-  }, [techQ, ageRange, search]);
+  }, [techQ, ageRange, search, selQueixas]);
 
   const toggleQ = (id: string) => setSelQueixas(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const hasFilters = selQueixas.length > 0 || selIdade !== null || search.trim().length >= 2;

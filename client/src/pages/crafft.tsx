@@ -13,7 +13,7 @@ export default function CrafftPage() {
   const [partBAnswers, setPartBAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
 
-  const anyPartAYes = Object.values(partAAnswers).some((v) => v === true);
+  const _anyPartAYes = Object.values(partAAnswers).some((v) => v === true);
   const partAComplete = Object.keys(partAAnswers).length === crafftPartA.length;
   const partBComplete = Object.keys(partBAnswers).length === crafftPartB.length;
   const allDone = partAComplete && partBComplete;

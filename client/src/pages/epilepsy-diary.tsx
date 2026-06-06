@@ -219,7 +219,7 @@ export default function EpilepsyDiaryPage() {
           <CardContent className="p-8 text-center space-y-3">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground">Nenhuma crise registrada ainda.</p>
-            <p className="text-xs text-muted-foreground">Clique em "Nova Crise" para começar o registro.</p>
+            <p className="text-xs text-muted-foreground">Clique em &quot;Nova Crise&quot; para começar o registro.</p>
           </CardContent>
         </Card>
       )}

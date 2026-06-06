@@ -43,7 +43,7 @@ export function isSoundEnabled(): boolean {
 export function setSoundEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
-  } catch {}
+  } catch { /* intentional */ }
 }
 
 function play(spec: {
@@ -81,7 +81,7 @@ function play(spec: {
 
     const now = ctx.currentTime;
     const attack = spec.attack ?? 0.005;
-    const release = spec.release ?? spec.duration * 0.6;
+    const _release = spec.release ?? spec.duration * 0.6;
     const peak = spec.volume ?? 0.06;
 
     gain.gain.setValueAtTime(0, now);
@@ -98,7 +98,7 @@ function play(spec: {
 
     osc.start(now);
     osc.stop(now + spec.duration + 0.05);
-  } catch {}
+  } catch { /* intentional */ }
 }
 
 /** Toque suave em botao primario / clique de CTA. ~80ms warm. */
@@ -193,5 +193,5 @@ export function softMuteHint(): void {
     osc.frequency.exponentialRampToValueAtTime(440, now + 0.13);
     osc.start(now);
     osc.stop(now + 0.18);
-  } catch {}
+  } catch { /* intentional */ }
 }

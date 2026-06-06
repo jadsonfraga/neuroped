@@ -509,7 +509,7 @@ export default function OrientacaoParentalPage() {
         ))}
         {filtered.length === 0 && (
           <div className="text-center py-10 text-sm text-muted-foreground">
-            Nenhum resultado para "{search}".
+            Nenhum resultado para &quot;{search}&quot;.
           </div>
         )}
       </div>

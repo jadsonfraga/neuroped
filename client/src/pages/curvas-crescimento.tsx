@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { TrendingUp, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 // WHO simplified reference data (percentiles: P3, P10, P25, P50, P75, P90, P97)

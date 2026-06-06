@@ -12,8 +12,6 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertCircle,
-  XCircle,
-  Printer,
   Star,
   User,
   ArrowLeft,
@@ -597,7 +595,7 @@ export default function TestesReconhecimentoPage() {
     );
   }, [ageGroup, scores]);
 
-  const classification = results ? getClassification(results.totalPct) : null;
+  const _classification = results ? getClassification(results.totalPct) : null;
 
   function handleReset() {
     setStep(1);
@@ -1071,7 +1069,7 @@ export default function TestesReconhecimentoPage() {
                     </Badge>
                   </div>
                   <div className="space-y-1.5">
-                    {dom.items.map((item, idx) => {
+                    {dom.items.map((item, _idx) => {
                       const val = scores[item.id] ?? 0;
                       return (
                         <div
