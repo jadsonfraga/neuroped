@@ -65,10 +65,10 @@ export default function Cdi2Page() {
           scaleName="CDI-2"
           scaleFullName="Children's Depression Inventory 2"
           totalScore={sum}
-          maxScore={cdi2Items.length * 2}
+          maxScore={cdi2Questions.length * 2}
           classification={result.classification}
           description={result.description}
-          items={cdi2Items.map((item, i) => ({ question: item.options[0], answer: item.options[answers[i] ?? 0], value: answers[i] ?? 0 }))}
+          items={cdi2Questions.map((q, i) => ({ question: q, answer: cdi2Labels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
           patientAge="7-17 anos"
         />
         <SaveToPatient

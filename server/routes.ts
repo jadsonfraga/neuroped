@@ -18,6 +18,7 @@ import { patients, scaleResults, consents, dataRequests, patientApiSchema, inser
 import { requireAuth, requireProfessional, optionalAuth } from "./middleware/auth.js";
 import { writeRateLimit, emailRateLimit } from "./middleware/security.js";
 import { patientToStorage, patientToPlaintext } from "./lib/patientCrypto.js";
+import { oneParam } from "./lib/http.js";
 import { logAudit, getAuditContextFromRequest } from "./lib/audit.js";
 import { sendEmail } from "./lib/email.js";
 import { registerAuthRoutes } from "./auth/routes.js";
@@ -74,7 +75,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/patients/:id", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
-    const row = db.select().from(patients).where(eq(patients.id, req.params.id)).get();
+    const row = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
     if (!row) return res.status(404).json({ error: "Paciente nao encontrado" });
     await logAudit({
       eventType: "patient.read",
@@ -89,7 +90,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const ctx = getAuditContextFromRequest(req);
     try {
       const parsed = patientApiSchema.partial().parse(req.body);
-      const existing = db.select().from(patients).where(eq(patients.id, req.params.id)).get();
+      const existing = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
       if (!existing) return res.status(404).json({ error: "Paciente nao encontrado" });
 
       const merged = patientToStorage({
@@ -104,7 +105,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const updated = db
         .update(patients)
         .set({ ...merged, updatedAt: new Date().toISOString() })
-        .where(eq(patients.id, req.params.id))
+        .where(eq(patients.id, oneParam(req.params.id)))
         .returning()
         .get();
 
@@ -125,13 +126,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.delete("/api/patients/:id", requireAuth, requireProfessional, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
-    const ok = storage.deletePatient(req.params.id);
+    const ok = storage.deletePatient(oneParam(req.params.id));
     if (!ok) return res.status(404).json({ error: "Paciente nao encontrado" });
     await logAudit({
       eventType: "patient.delete",
       context: ctx,
       targetType: "patient",
-      targetId: req.params.id,
+      targetId: oneParam(req.params.id),
     });
     return res.json({ ok: true });
   });
@@ -166,26 +167,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.get("/api/results/:id", requireAuth, (req, res) => {
-    const r = storage.getResult(req.params.id);
+    const r = storage.getResult(oneParam(req.params.id));
     if (!r) return res.status(404).json({ error: "Nao encontrado" });
     return res.json(r);
   });
 
   app.delete("/api/results/:id", requireAuth, requireProfessional, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
-    const ok = storage.deleteResult(req.params.id);
+    const ok = storage.deleteResult(oneParam(req.params.id));
     if (!ok) return res.status(404).json({ error: "Nao encontrado" });
     await logAudit({
       eventType: "result.delete",
       context: ctx,
       targetType: "scale_result",
-      targetId: req.params.id,
+      targetId: oneParam(req.params.id),
     });
     return res.json({ ok: true });
   });
 
   app.get("/api/patients/:id/results", requireAuth, (req, res) => {
-    res.json(storage.getResultsByPatient(req.params.id));
+    res.json(storage.getResultsByPatient(oneParam(req.params.id)));
   });
 
   // =========================================================================

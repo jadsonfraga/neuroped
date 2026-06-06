@@ -11,9 +11,10 @@ import {
   Stethoscope, Waves, Flame, VolumeX, UtensilsCrossed, AlertTriangle, Pill,
   Filter, User, BrainCog, Ear, School, ClipboardPlus, SmilePlus, HelpCircle,
   Target, Lightbulb, Calculator, TrendingUp, GitBranch,
-  MessageCircle, FileSignature, BookMarked, ShieldCheck, Newspaper, KeyRound
+  MessageCircle, FileSignature, BookMarked, ShieldCheck, Newspaper, KeyRound, Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { openCommandPalette } from "@/components/CommandPalette";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
@@ -192,7 +193,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     if (saved === "light") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("neuroped:sidebar-collapsed") === "1";
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -201,6 +205,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       localStorage.setItem("neuroped:theme", dark ? "dark" : "light");
     } catch {}
   }, [dark]);
+
+  // D6: persiste o estado recolhido da barra lateral.
+  useEffect(() => {
+    try {
+      localStorage.setItem("neuroped:sidebar-collapsed", collapsed ? "1" : "0");
+    } catch {}
+  }, [collapsed]);
 
   // Close mobile menu on navigation + scroll to top + som sutil
   useEffect(() => {
@@ -237,6 +248,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="px-2"
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              openCommandPalette();
+            }}
+            data-testid="button-command-palette-mobile"
+            aria-label="Buscar (atalho Ctrl+K)"
+          >
+            <Search className="w-4 h-4" aria-hidden="true" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -341,6 +366,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </Button>
+        </div>
+
+        {/* Busca / Command palette (D2) */}
+        <div className="px-2 pt-2">
+          <button
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              openCommandPalette();
+            }}
+            onMouseEnter={() => softHover()}
+            data-testid="button-command-palette"
+            aria-label="Buscar escalas e páginas (atalho Ctrl+K)"
+            className={`flex items-center gap-2 w-full min-h-[40px] rounded-lg border border-sidebar-border bg-sidebar-accent/40 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors ${
+              collapsed ? "md:justify-center md:px-0 px-3" : "px-3"
+            }`}
+          >
+            <Search className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+            {!collapsed && (
+              <>
+                <span className="text-xs">Buscar…</span>
+                <kbd className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-background/50">
+                  Ctrl K
+                </kbd>
+              </>
+            )}
+            {collapsed && <span className="text-xs md:hidden">Buscar…</span>}
+          </button>
         </div>
 
         {/* Navigation */}

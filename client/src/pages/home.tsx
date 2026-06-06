@@ -23,6 +23,7 @@ import { softHover, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { Mascote } from "@/components/Mascote";
+import { FavoritesRecents } from "@/components/FavoritesRecents";
 
 interface ScaleCard {
   href: string;
@@ -647,6 +648,9 @@ export default function HomePage() {
         </div>
       ) : (
         <>
+          {/* ── FAVORITOS E RECENTES (D3) ────────────────────── */}
+          <FavoritesRecents />
+
           {/* ── QUICK ACCESS BAR ─────────────────────────────── */}
           <div className="space-y-2">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Acesso Rápido</p>

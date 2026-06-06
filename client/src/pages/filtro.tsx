@@ -20,6 +20,7 @@ import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { Mascote } from "@/components/Mascote";
 import { celebrate } from "@/lib/confetti";
+import { useFavorites } from "@/hooks/useFavorites";
 
 const iconMap: Record<string, any> = {
   baby: Baby, puzzle: Puzzle, zap: Zap, flame: Flame,
@@ -486,7 +487,7 @@ export default function FiltroPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados do filtro inteligente">
           {total > 0 && (
             <Mascote
               contexto="resultado"
@@ -811,6 +812,28 @@ function getIdealScale(queixas: string[], ageRange: { min: number; max: number }
 function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean }) {
   const prio = prioConfig[scale.prioridade];
   const hasRoute = !!scale.appRoute;
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(scale.id);
+
+  const favButton = (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        softTick();
+        haptic.tap();
+        toggle(scale.id);
+      }}
+      data-testid={`fav-${scale.id}`}
+      aria-pressed={fav}
+      aria-label={fav ? `Remover ${scale.name} dos favoritos` : `Adicionar ${scale.name} aos favoritos`}
+      title={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
+    >
+      <Star className={`w-3.5 h-3.5 transition-colors ${fav ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+    </button>
+  );
 
   const inner = (
     <Card className={`relative transition-all ${isIdeal ? "golden-glow border-2 border-amber-400 bg-gradient-to-r from-amber-50/80 to-yellow-50/50 dark:from-amber-950/30 dark:to-yellow-950/20 shadow-lg shadow-amber-200/30 dark:shadow-amber-900/20 ring-2 ring-amber-400/50 mt-3" : `border-card-border ${hasRoute ? "hover:shadow-md hover:border-primary/20" : "opacity-80"}`} ${hasRoute ? "cursor-pointer group card-hover" : ""}`}>
@@ -841,7 +864,10 @@ function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean })
             </Badge>
           </div>
         </div>
-        {hasRoute && <ArrowRight className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0" />}
+        <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
+          {favButton}
+          {hasRoute && <ArrowRight className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
+        </div>
       </CardContent>
     </Card>
   );

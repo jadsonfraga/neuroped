@@ -15,6 +15,9 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
+import { AmbientEffects } from "@/components/AmbientEffects";
+import { WelcomeTour } from "@/components/WelcomeTour";
+import { CommandPalette } from "@/components/CommandPalette";
 
 // ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
@@ -317,6 +320,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <ToastProvider>
+            <AmbientEffects />
             <Toaster />
             <SplashScreen
               awaiting={!appReady}
@@ -330,6 +334,8 @@ function App() {
             </Router>
             <InstallPrompt />
             <PreferencesPanel />
+            <CommandPalette />
+            {splashComplete && <WelcomeTour />}
           </ToastProvider>
         </TooltipProvider>
       </AuthProvider>

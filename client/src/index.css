@@ -527,3 +527,89 @@
   padding-top: 8px;
   margin-top: 14px;
 }
+
+/* ============================================================
+   Camada de efeitos ambiente — portada de ambient-effects.js
+   (aurora que "respira" + ruído cinematográfico + partículas de glow).
+   Decorativa, não captura ponteiro, respeita prefers-reduced-motion e print.
+   ============================================================ */
+@keyframes npBreathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.04); }
+}
+@keyframes npDrift {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(12px, -18px); }
+  100% { transform: translate(0, 0); }
+}
+.np-ambient-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.np-ambient-aurora {
+  background:
+    radial-gradient(900px 540px at 12% 6%, rgba(124, 92, 255, 0.14), transparent 60%),
+    radial-gradient(800px 500px at 92% 12%, rgba(56, 189, 248, 0.08), transparent 56%),
+    radial-gradient(900px 600px at 50% 110%, rgba(34, 211, 238, 0.06), transparent 60%);
+  opacity: 0.85;
+  animation: npBreathe 14s ease-in-out infinite;
+}
+.np-ambient-noise {
+  background-size: 180px 180px;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+}
+.np-ambient-particles { overflow: hidden; }
+.np-particle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: npDrift 20s ease-in-out infinite;
+}
+/* Conteúdo principal acima da camada ambiente (sidebar/headers já têm z maior). */
+#main-content { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .np-ambient-aurora, .np-particle { animation: none !important; }
+}
+@media print {
+  .np-ambient-layer { display: none !important; }
+}
+
+/* Bloom suave reativo a hover em cards (opt-in via classe .np-bloom). */
+.np-bloom { position: relative; isolation: isolate; }
+.np-bloom::after {
+  content: "";
+  position: absolute;
+  inset: auto -20% -40% -20%;
+  height: 60%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.18), transparent 60%);
+  filter: blur(40px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.np-bloom:hover::after { opacity: 1; }
+
+/* ============================================================
+   C4 — Rede de segurança global de movimento reduzido (WCAG 2.3.3).
+   Catch-all: neutraliza QUALQUER animação/transição CSS (confetti, float,
+   shimmer, bounce, glow, sparkle, drift, etc.) quando o usuário pede
+   movimento reduzido, inclusive animações futuras que esqueçam de optar.
+   As animações JS (framer-motion, canvas-confetti, sons) já respeitam a
+   preferência na origem (lib/motion.ts, lib/confetti.ts, lib/softSounds.ts).
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

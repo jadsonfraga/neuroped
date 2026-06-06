@@ -31,6 +31,7 @@ import {
   CloudStorageConfigError,
 } from "../lib/cloudStorage.js";
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
+import { oneParam } from "../lib/http.js";
 
 // IMPORTACAO CONDICIONAL DO SCHEMA — usa schema.ts (sqlite) ou schema-pg.ts conforme provider.
 // Em producao com Postgres, alterar este import para "@shared/schema-pg".
@@ -172,7 +173,7 @@ export function registerFileRoutes(app: Express): void {
   app.post("/api/files/:id/confirm", requireAuth, async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
     try {
-      const file = db.select().from(filesTable).where(eq(filesTable.id, req.params.id)).get();
+      const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();
       if (!file) return res.status(404).json({ error: "Arquivo nao encontrado" });
       if (file.ownerUserId !== req.user!.id && req.user!.role !== "admin") {
         return res.status(403).json({ error: "Sem permissao" });
@@ -227,7 +228,7 @@ export function registerFileRoutes(app: Express): void {
   app.get("/api/files/:id", requireAuth, async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
     try {
-      const file = db.select().from(filesTable).where(eq(filesTable.id, req.params.id)).get();
+      const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();
       if (!file || file.isDeleted) return res.status(404).json({ error: "Arquivo nao encontrado" });
       if (file.ownerUserId !== req.user!.id && req.user!.role !== "admin") {
         return res.status(403).json({ error: "Sem permissao" });
@@ -293,7 +294,7 @@ export function registerFileRoutes(app: Express): void {
   app.delete("/api/files/:id", requireAuth, requireProfessional, async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
     try {
-      const file = db.select().from(filesTable).where(eq(filesTable.id, req.params.id)).get();
+      const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();
       if (!file || file.isDeleted) return res.status(404).json({ error: "Arquivo nao encontrado" });
       if (file.ownerUserId !== req.user!.id && req.user!.role !== "admin") {
         return res.status(403).json({ error: "Sem permissao" });

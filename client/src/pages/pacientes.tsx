@@ -418,7 +418,7 @@ export default function PacientesPage() {
       <ConfirmDialog
         open={!!confirmingDelete}
         onClose={() => setConfirmingDelete(null)}
-        onConfirm={() => confirmingDelete && deleteMutation.mutate(confirmingDelete.id)}
+        onConfirm={() => { if (confirmingDelete) deleteMutation.mutate(confirmingDelete.id); }}
         title={`Remover ${confirmingDelete?.name ?? "paciente"}?`}
         description="Esta ação remove o paciente e todos os resultados associados. Não pode ser desfeita."
         confirmLabel="Remover"

@@ -157,11 +157,11 @@ export default function MchatPage() {
 
       {/* Progress */}
       <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
           <span>{answered} de {total} respondidas</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={progress} className="h-2" aria-label={`Progresso: ${answered} de ${total} perguntas respondidas`} />
       </div>
 
       {/* Instruction */}

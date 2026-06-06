@@ -277,7 +277,7 @@ export default function DenverPage() {
               scaleName="Denver II"
               totalScore={passCount}
               classification={classification}
-              answers={statuses as Record<string, number>}
+              answers={statuses}
             />
             <ClinicalReport
               scaleName="Denver II"
