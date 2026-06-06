@@ -111,3 +111,24 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 
 /* Mídia não estoura o container (polimento de layout, evita scroll horizontal). */
 img { max-width: 100%; }
+
+/* ============================================================================
+   §3.5 — MICRO-INTERAÇÕES (tátil universal, à prova de layout)
+   ----------------------------------------------------------------------------
+   Feedback de hover/press em TODO elemento clicável, com a curva de mola do iOS.
+   Usa filter:brightness (NÃO transform) de propósito: brilho não causa reflow
+   nem quebra position:sticky/backdrop-filter — impossível "desmontar" um layout
+   que eu não consigo ver. :where() = especificidade 0 → estilo de página vence.
+   Só com movimento permitido (prefers-reduced-motion: no-preference).
+   ============================================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, [role="button"], .np-btn, .chip, summary, a.applynow):not(:disabled) {
+    transition: filter var(--np-dur-1) var(--np-ease-spring), box-shadow var(--np-dur-2) var(--np-ease-out);
+    will-change: filter;
+  }
+  :where(button, [role="button"], .np-btn, .chip, a.applynow):not(:disabled):hover { filter: brightness(1.06); }
+  :where(button, [role="button"], .np-btn, .chip, a.applynow):not(:disabled):active { filter: brightness(0.93); }
+}
+/* Cursor coerente: elemento clicável mostra a mãozinha; desabilitado some o feedback. */
+:where(button, [role="button"], .np-btn, summary):not(:disabled) { cursor: pointer; }
+:where(button, .np-btn):disabled { cursor: not-allowed; opacity: .55; }
