@@ -1,8 +1,11 @@
 // Filtro Inteligente — Banco de escalas por queixa, idade, respondente e prioridade
 import { escalasAutoraisDrJadson } from "./escalasAutorais";
+import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 export type Respondente = "pais" | "crianca" | "clinico" | "professor" | "autoaplicavel";
+
+export type Licenca = "passiva" | "ativa" | "mista";
 
 export interface ScaleEntry {
   id: string;
@@ -16,6 +19,13 @@ export interface ScaleEntry {
   tempo: string;        // tempo estimado
   appRoute?: string;    // rota no app (se implementada)
   description: string;
+  // Campos opcionais de proveniência/curadoria (não usados pelas escalas legadas).
+  // Introduzidos na importação SuperNeuroKids v25 + Ebook PANT v7 (2026).
+  fonte?: string;                      // citação/origem (PubMed/NICE/AAP/OMS ou ebook)
+  licenca?: Licenca;                   // passiva | ativa | mista
+  tipo?: string;                       // natureza do instrumento
+  pendente_validacao_clinica?: boolean; // true quando algum campo foi inferido/ficou ausente
+  pendencia?: string;                  // descrição do que está pendente/inferido
 }
 
 export interface QueixaCategory {
@@ -417,8 +427,8 @@ export function searchScales(query: string, scaleList: ScaleEntry[]): { scale: S
   }).filter(r => r.score > 0);
 }
 
-// Merge autoral scales
-export const allScales: ScaleEntry[] = [...scales, ...escalasAutoraisDrJadson];
+// Merge autoral scales + escalas importadas (SuperNeuroKids v25 + Ebook PANT v7)
+export const allScales: ScaleEntry[] = [...scales, ...escalasAutoraisDrJadson, ...escalasImportadasV25Ebook];
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
 export function filterScales(
