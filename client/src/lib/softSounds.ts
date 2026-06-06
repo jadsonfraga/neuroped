@@ -43,7 +43,7 @@ export function isSoundEnabled(): boolean {
 export function setSoundEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
-  } catch {}
+  } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
 }
 
 function play(spec: {
@@ -98,7 +98,7 @@ function play(spec: {
 
     osc.start(now);
     osc.stop(now + spec.duration + 0.05);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 /** Toque suave em botao primario / clique de CTA. ~80ms warm. */
@@ -193,5 +193,5 @@ export function softMuteHint(): void {
     osc.frequency.exponentialRampToValueAtTime(440, now + 0.13);
     osc.start(now);
     osc.stop(now + 0.18);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }

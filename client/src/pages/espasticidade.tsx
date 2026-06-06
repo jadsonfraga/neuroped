@@ -191,7 +191,7 @@ function AshworthTab() {
       if (res.ok) {
         setSent(true); toast({ title: "Enviado", description: `Relatório enviado para ${EMAIL_TO}` }); setSending(false); return;
       }
-    } catch {}
+    } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
     window.open(`mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.slice(0, 1800))}`, "_blank");
     setSent(true); toast({ title: "Email aberto", description: "Seu app de email foi aberto." }); setSending(false);
   }
@@ -353,7 +353,7 @@ function TardieuTab() {
       if (res.ok) {
         setSent(true); toast({ title: "Enviado", description: `Relatório enviado para ${EMAIL_TO}` }); setSending(false); return;
       }
-    } catch {}
+    } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
     window.open(`mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.slice(0, 1800))}`, "_blank");
     setSent(true); toast({ title: "Email aberto", description: "Seu app de email foi aberto." }); setSending(false);
   }

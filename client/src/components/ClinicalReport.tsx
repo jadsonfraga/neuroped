@@ -32,7 +32,7 @@ async function sendEmail(
       toast({ title: "\u2709\ufe0f Enviado", description: `Relat\u00f3rio enviado para ${EMAIL_TO}` });
       return;
     }
-  } catch {}
+  } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
 
   // Fallback: abrir cliente de email com mailto
   try {

@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const fresh = await r.json();
           if (!cancelled) setUser(fresh);
         }
-      } catch {}
+      } catch { /* sessão não validada (offline/sem backend) — mantém usuário local */ }
       finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const r = await authFetch("/api/auth/me");
       if (r.ok) setUser(await r.json());
-    } catch {}
+    } catch { /* sessão não validada (offline/sem backend) — mantém usuário atual */ }
   }
 
   return (

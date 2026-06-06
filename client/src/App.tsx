@@ -305,14 +305,14 @@ function App() {
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);
-    } catch {}
+    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, [splashComplete]);
 
   function dismissOnboarding() {
     setShowOnboarding(false);
     try {
       localStorage.setItem("neuroped:onboarding-seen", "1");
-    } catch {}
+    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }
 
   return (

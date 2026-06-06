@@ -156,7 +156,7 @@ async function sendPtiEmail(
       toast({ title: "✉️ Enviado", description: `PTI enviado para ${EMAIL_TO}` });
       return;
     }
-  } catch { }
+  } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
 
   try {
     const truncated = body.length > 1800 ? body.slice(0, 1800) + "\n\n[...PTI truncado — use Imprimir para versão completa]" : body;

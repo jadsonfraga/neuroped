@@ -25,7 +25,7 @@ export function playCoin() {
     osc.frequency.setValueAtTime(1319, ctx.currentTime + 0.07); // E6
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.15);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── POWER-UP (completar escala, resultado positivo) ── escalada ascendente
@@ -46,7 +46,7 @@ export function playPowerUp() {
       osc.start(t);
       osc.stop(t + 0.08);
     });
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── 1-UP (envio de email com sucesso) ── melodia alegre
@@ -75,7 +75,7 @@ export function play1Up() {
       osc.stop(t + n.d + 0.01);
       t += n.d;
     });
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── JUMP (clicar botão, abrir seção) ── sweep ascendente rápido
@@ -93,7 +93,7 @@ export function playJump() {
     osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.1);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.12);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── BUMP (erro, senha errada) ── tom grave descendente
@@ -111,7 +111,7 @@ export function playBump() {
     osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.15);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.2);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── FIREBALL (gerar PDF) ── whoosh
@@ -129,7 +129,7 @@ export function playFireball() {
     osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.12);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.15);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── PIPE (navegação entre páginas) ── tom tubular
@@ -148,7 +148,7 @@ export function playPipe() {
     osc.frequency.setValueAtTime(220, ctx.currentTime + 0.12);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.18);
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }
 
 // ── FLAG POLE (login com sucesso) ── fanfarra de vitória
@@ -177,5 +177,5 @@ export function playFlagPole() {
       osc.stop(t + n.d + 0.01);
       t += n.d;
     });
-  } catch {}
+  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
 }

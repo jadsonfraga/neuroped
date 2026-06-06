@@ -82,6 +82,9 @@ export default [
       // React 17+ JSX transform: import React não é necessário
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
+      // cmdk-input-wrapper é atributo exigido pela lib cmdk (shadcn/ui Command);
+      // seu CSS interno seleciona [cmdk-input-wrapper]. Não é prop desconhecida.
+      "react/no-unknown-property": ["error", { ignore: ["cmdk-input-wrapper"] }],
     },
   },
 ];

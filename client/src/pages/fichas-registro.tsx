@@ -370,7 +370,7 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
         setSending(false);
         return;
       }
-    } catch {}
+    } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
     const truncated = body.length > 1800 ? body.slice(0, 1800) + "\n[truncado]" : body;
     window.open(`mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(truncated)}`, "_blank");
     setSent(true);

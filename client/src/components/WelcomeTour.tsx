@@ -113,7 +113,7 @@ export function WelcomeTour() {
         const t = setTimeout(() => setIntroHighlight(false), 6000);
         return () => clearTimeout(t);
       }
-    } catch {}
+    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, []);
 
   const recompute = useCallback((stepIdx: number) => {
@@ -152,7 +152,7 @@ export function WelcomeTour() {
     setOpen(false);
     try {
       localStorage.setItem(DONE_KEY, "1");
-    } catch {}
+    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }
 
   function next() {
