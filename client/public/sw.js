@@ -1,5 +1,5 @@
 /**
- * NeuroPed Service Worker — v5
+ * NeuroPed Service Worker — v6
  * Estratégia de cache auditada e corrigida (sessão 2 — 2026-05-08)
  *
  * ESTRATÉGIAS:
@@ -11,13 +11,14 @@
  * LGPD: este SW NÃO cacheia nenhum dado de paciente ou resposta de API.
  */
 
-const CACHE_NAME = "neuroped-v5";
+const CACHE_NAME = "neuroped-v6";
 
 // App shell — apenas recursos estáticos sem dados clínicos
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./offline.html",
   "./icon-192.png",
   "./icon-512.png",
 ];
@@ -161,6 +162,9 @@ async function staleWhileRevalidate(request) {
   if (response) return response;
 
   // Fallback offline: serve index.html para navegação SPA
+  const offlinePage = await cache.match("./offline.html");
+  if (offlinePage && request.mode === "navigate") return offlinePage;
+
   const fallback = await cache.match("./index.html");
   if (fallback) return fallback;
 

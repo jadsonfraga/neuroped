@@ -6,7 +6,7 @@ import {
   Brain, GraduationCap, Users, ShieldAlert, Sparkles, Pill,
   Search, X, Filter, ArrowRight, Clock, UserCheck, CheckCircle2,
   Droplet, Move, Lightbulb, Stethoscope, BookOpen, School,
-  ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target
+  ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target, RotateCcw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -101,12 +101,28 @@ const queixas = [
 ];
 
 const idades = [
-  { id: "0-1", label: "0–1a", min: 0, max: 12 },
-  { id: "1-3", label: "1–3a", min: 12, max: 36 },
-  { id: "3-6", label: "3–6a", min: 36, max: 72 },
-  { id: "6-10", label: "6–10a", min: 72, max: 120 },
-  { id: "10-14", label: "10–14a", min: 120, max: 168 },
-  { id: "14-18", label: "14–18a", min: 168, max: 216 },
+  { id: "0-2", label: "0–2 anos", min: 0, max: 24 },
+  { id: "2-5", label: "2–5 anos", min: 24, max: 60 },
+  { id: "6-12", label: "6–12 anos", min: 72, max: 144 },
+  { id: "13-17", label: "13–17 anos", min: 156, max: 216 },
+  { id: "18-25", label: "Adulto jovem", min: 216, max: 300 },
+];
+
+const objetivos = [
+  { id: "triagem", label: "Triagem", hint: "primeira avaliação" },
+  { id: "acompanhamento", label: "Acompanhamento", hint: "comparar evolução" },
+  { id: "relatorio", label: "Relatório", hint: "documentar achados" },
+  { id: "escola", label: "Escola", hint: "interface pedagógica" },
+  { id: "familia", label: "Família", hint: "orientação simples" },
+  { id: "consulta", label: "Consulta médica", hint: "decisão clínica" },
+  { id: "pesquisa", label: "Pesquisa/estudo", hint: "uso educacional" },
+];
+
+const contextos = [
+  { id: "consultorio", label: "Consultório" },
+  { id: "escola", label: "Escola" },
+  { id: "familia", label: "Família" },
+  { id: "teleatendimento", label: "Teleatendimento" },
 ];
 
 function norm(t: string) {
@@ -257,6 +273,8 @@ export default function FiltroPage() {
   const [selQueixas, setSelQueixas] = useState<string[]>([]);
   const [selIdade, setSelIdade] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [objetivo, setObjetivo] = useState<string | null>(null);
+  const [contexto, setContexto] = useState<string | null>(null);
   const [tab, setTab] = useState<"tudo" | "escalas" | "meds" | "tools">("tudo");
 
   const idade = idades.find(i => i.id === selIdade);
@@ -334,7 +352,7 @@ export default function FiltroPage() {
   }, [techQ, ageRange, search]);
 
   const toggleQ = (id: string) => setSelQueixas(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-  const hasFilters = selQueixas.length > 0 || selIdade !== null || search.trim().length >= 2;
+  const hasFilters = selQueixas.length > 0 || selIdade !== null || objetivo !== null || contexto !== null || search.trim().length >= 2;
   const total = results.scales.length + results.pharm.length + results.tools.length;
 
   // Confetti quando o filtro passa a apresentar resultados (transição 0 → >0)
@@ -370,9 +388,22 @@ export default function FiltroPage() {
           >
             Filtro Inteligente
           </h1>
-          <p className="text-xs text-muted-foreground italic">Escalas, testes, medicações e ferramentas</p>
+          <p className="text-xs text-muted-foreground italic">Fluxo guiado: idade → queixa → objetivo → contexto → instrumentos</p>
         </div>
       </motion.div>
+
+      <div className="rounded-2xl border bg-card/80 p-3 space-y-2" aria-label="Etapas do filtro clínico guiado">
+        <div className="grid grid-cols-5 gap-1 text-center text-[10px] font-semibold">
+          {["1 Idade", "2 Queixa", "3 Objetivo", "4 Contexto", "5 Sugestões"].map((step, index) => (
+            <div key={step} className={`rounded-lg px-1 py-1.5 ${index === 4 && total > 0 ? "bg-primary text-primary-foreground" : index === 0 && selIdade ? "bg-primary/10 text-primary" : index === 1 && selQueixas.length ? "bg-primary/10 text-primary" : index === 2 && objetivo ? "bg-primary/10 text-primary" : index === 3 && contexto ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+              {step}
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Não é necessário conhecer siglas: descreva a queixa ou escolha botões clínicos para receber opções priorizadas com idade, tempo, indicação, limitações e ação direta.
+        </p>
+      </div>
 
       {/* Busca */}
       <div className="relative">
@@ -449,12 +480,62 @@ export default function FiltroPage() {
         </div>
       </div>
 
+      {/* Objetivo clínico */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Objetivo clínico</p>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          {objetivos.map(o => (
+            <button
+              key={o.id}
+              onMouseEnter={() => softHover()}
+              onClick={() => {
+                softTick();
+                haptic.select();
+                setObjetivo(objetivo === o.id ? null : o.id);
+              }}
+              className={`rounded-xl border px-2 py-2 text-left transition-all ${objetivo === o.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"}`}
+            >
+              <span className="block text-xs font-bold">{o.label}</span>
+              <span className={`block text-[10px] ${objetivo === o.id ? "text-white/80" : "text-muted-foreground"}`}>{o.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Contexto */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Contexto de aplicação</p>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          {contextos.map(c => (
+            <button
+              key={c.id}
+              onMouseEnter={() => softHover()}
+              onClick={() => {
+                softTick();
+                haptic.select();
+                setContexto(contexto === c.id ? null : c.id);
+              }}
+              className={`rounded-xl border px-2 py-2 text-xs font-bold transition-all ${contexto === c.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"}`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Resumo */}
       {hasFilters && (
-        <div className="flex items-center justify-between bg-primary/5 rounded-xl px-3 py-2 border border-primary/10">
-          <p className="text-xs">
-            <strong className="text-primary text-sm">{total}</strong> resultado{total !== 1 ? "s" : ""}
-          </p>
+        <div className="flex flex-col gap-2 bg-primary/5 rounded-xl px-3 py-2 border border-primary/10 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs">
+              <strong className="text-primary text-sm">{total}</strong> resultado{total !== 1 ? "s" : ""}
+            </p>
+            <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
+              {idade && <span className="rounded-full bg-background px-2 py-0.5 border">Idade: {idade.label}</span>}
+              {objetivo && <span className="rounded-full bg-background px-2 py-0.5 border">Objetivo: {objetivos.find(o => o.id === objetivo)?.label}</span>}
+              {contexto && <span className="rounded-full bg-background px-2 py-0.5 border">Contexto: {contextos.find(c => c.id === contexto)?.label}</span>}
+            </div>
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -464,11 +545,13 @@ export default function FiltroPage() {
               setSelQueixas([]);
               setSelIdade(null);
               setSearch("");
+              setObjetivo(null);
+              setContexto(null);
               setTab("tudo");
             }}
-            className="text-xs h-7 gap-1"
+            className="text-xs h-8 gap-1 self-start sm:self-auto"
           >
-            <X className="w-3 h-3" /> Limpar
+            <RotateCcw className="w-3 h-3" /> Limpar filtros
           </Button>
         </div>
       )}
@@ -477,7 +560,7 @@ export default function FiltroPage() {
       {!hasFilters ? (
         <div className="rounded-2xl border-2 border-dashed border-primary/15 p-6 text-center space-y-3">
           <Lightbulb className="w-7 h-7 text-primary mx-auto opacity-50" />
-          <p className="text-sm text-muted-foreground">Selecione <strong>queixa</strong>, <strong>idade</strong> ou <strong>busque</strong></p>
+          <p className="text-sm text-muted-foreground">Selecione <strong>idade</strong>, <strong>queixa</strong>, <strong>objetivo</strong> e <strong>contexto</strong> — ou busque em linguagem natural.</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {["agitado", "desatento", "autismo", "estudo", "pedagógico", "risperidona", "escola"].map(s => (
               <button key={s} onClick={() => setSearch(s)} className="px-2.5 py-1 rounded-lg text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
@@ -854,15 +937,30 @@ function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean })
               </Badge>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-1">{scale.description}</p>
-          <div className="flex gap-1">
+          <p className="text-[11px] text-muted-foreground leading-relaxed">{scale.fullName}</p>
+          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{scale.description}</p>
+          <div className="flex gap-1 flex-wrap">
             <Badge variant="outline" className="text-[9px] h-4 px-1 gap-0.5">
               <Clock className="w-2 h-2" /> {scale.tempo}
             </Badge>
             <Badge variant="outline" className="text-[9px] h-4 px-1">
               {ageStr(scale.ageMin)}–{ageStr(scale.ageMax)}
             </Badge>
+            <Badge variant="outline" className="text-[9px] h-4 px-1">
+              {scale.respondente.join("/")}
+            </Badge>
           </div>
+          <div className="mt-2 grid gap-1 text-[10px] text-muted-foreground sm:grid-cols-2">
+            <span><strong>Quando usar:</strong> {scale.prioridade === "triagem" ? "primeira triagem ou rastreio" : scale.prioridade === "diagnostica" ? "avaliação clínica estruturada" : "monitorar resposta/evolução"}.</span>
+            <span><strong>Evitar:</strong> uso isolado como diagnóstico definitivo.</span>
+          </div>
+          {hasRoute && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className="rounded-lg bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground">Aplicar agora</span>
+              <span className="rounded-lg border px-2 py-1 text-[10px] font-medium text-muted-foreground">Ver detalhes</span>
+              <span className="rounded-lg border px-2 py-1 text-[10px] font-medium text-muted-foreground">Salvar favorito</span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
           {favButton}

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, Home, ClipboardCheck, Baby, Activity,
-  Moon, Sun, ChevronLeft, ChevronRight, BookOpen,
+  Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, BookOpen,
   BarChart3, ShieldAlert, ClipboardList, Users, FileText,
   CloudRain, HeartPulse, Wine, ListChecks, Zap,
   BrainCircuit, Gauge, Heart, Accessibility, Sparkles,
@@ -198,6 +198,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return localStorage.getItem("neuroped:sidebar-collapsed") === "1";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
+    Ferramentas: true,
+    Neurodesenvolvimento: true,
+    "Comportamento e TDAH": true,
+    "Saúde Mental": false,
+    Prontuário: true,
+  }));
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -397,59 +404,75 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav id="sidebar-nav" className="flex-1 py-2 px-2 space-y-1 overflow-y-auto" aria-label="Navegação principal">
-          {navSections.map((section, si) => (
-            <div key={si}>
-              {section.title && !collapsed && (
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.12em] px-3 pt-3 pb-1">
-                  {section.title}
-                </p>
-              )}
-              {collapsed && section.title && (
-                <div className="border-t border-sidebar-border my-1 hidden md:block" />
-              )}
-              {section.items.map((item) => {
-                const active = location === item.href;
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <div
-                      data-testid={`nav-${item.label}`}
-                      onMouseEnter={() => softHover()}
-                      onClick={() => {
-                        softTap();
-                        haptic.select();
-                      }}
-                      className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
-                        active
-                          ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
-                      } ${collapsed ? "md:justify-center" : ""}`}
-                    >
-                      <item.icon
-                        className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                          active ? "text-primary scale-110" : ""
-                        }`}
-                        strokeWidth={active ? 2 : 1.75}
-                      />
-                      {!collapsed && (
-                        <span className="text-xs truncate">{item.label}</span>
-                      )}
-                      {collapsed && (
-                        <span className="text-xs truncate md:hidden">{item.label}</span>
-                      )}
-                      {active && !collapsed && (
-                        <motion.div
-                          layoutId="nav-active-dot"
-                          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-                          transition={{ duration: 0.2, ease: easing.smooth }}
-                        />
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+        <nav id="sidebar-nav" className="flex-1 py-2 px-2 space-y-1 overflow-y-auto" aria-label="Navegação principal em grupos recolhíveis">
+          {navSections.map((section, si) => {
+            const sectionKey = section.title || "principal";
+            const sectionOpen = !section.title || collapsed || (openSections[sectionKey] ?? false);
+            return (
+              <div key={sectionKey || si} className="space-y-1">
+                {section.title && !collapsed && (
+                  <button
+                    type="button"
+                    onClick={() => setOpenSections((prev) => ({ ...prev, [sectionKey]: !(prev[sectionKey] ?? false) }))}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 pt-3 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-expanded={sectionOpen}
+                    aria-controls={`nav-section-${si}`}
+                  >
+                    <span className="flex-1 truncate">{section.title}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${sectionOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                  </button>
+                )}
+                {collapsed && section.title && (
+                  <div className="border-t border-sidebar-border my-1 hidden md:block" />
+                )}
+                {sectionOpen && (
+                  <div id={`nav-section-${si}`} className="space-y-1">
+                    {section.items.map((item) => {
+                      const active = location === item.href;
+                      return (
+                        <Link key={`${sectionKey}-${item.href}-${item.label}`} href={item.href}>
+                          <div
+                            data-testid={`nav-${item.label}`}
+                            onMouseEnter={() => softHover()}
+                            onClick={() => {
+                              softTap();
+                              haptic.select();
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
+                              active
+                                ? "bg-primary/10 text-primary font-semibold shadow-sm"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
+                            } ${collapsed ? "md:justify-center" : ""}`}
+                          >
+                            <item.icon
+                              className={`w-4 h-4 flex-shrink-0 transition-transform ${
+                                active ? "text-primary scale-110" : ""
+                              }`}
+                              strokeWidth={active ? 2 : 1.75}
+                              aria-hidden="true"
+                            />
+                            {!collapsed && (
+                              <span className="text-xs truncate">{item.label}</span>
+                            )}
+                            {collapsed && (
+                              <span className="text-xs truncate md:hidden">{item.label}</span>
+                            )}
+                            {active && !collapsed && (
+                              <motion.div
+                                layoutId="nav-active-dot"
+                                className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                                transition={{ duration: 0.2, ease: easing.smooth }}
+                              />
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom controls */}
@@ -519,6 +542,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
           {children}
         </div>
+        <footer className="mx-auto max-w-4xl px-4 pb-6 text-center text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a href="./privacy-policy.html" className="hover:text-primary underline-offset-4 hover:underline">Política de Privacidade</a>
+            <a href="./terms-of-use.html" className="hover:text-primary underline-offset-4 hover:underline">Termos de Uso</a>
+            <Link href="/consentimento-lgpd"><span className="hover:text-primary underline-offset-4 hover:underline cursor-pointer">Consentimento LGPD</span></Link>
+            <Link href="/sobre-neuroped"><span className="hover:text-primary underline-offset-4 hover:underline cursor-pointer">Aviso clínico</span></Link>
+          </div>
+          <p className="mt-2">Ferramenta educacional/profissional: não substitui avaliação médica individualizada nem aplicação padronizada por profissional habilitado.</p>
+        </footer>
         <PerplexityAttribution />
       </main>
     </div>
