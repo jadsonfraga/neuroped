@@ -127,8 +127,8 @@ export default function AjudaPage() {
               <ol className="text-xs text-muted-foreground space-y-1 pl-4">
                 <li>1. Abra o link no Safari</li>
                 <li>2. Toque no ícone de Compartilhar (↑)</li>
-                <li>3. Selecione "Adicionar à Tela de Início"</li>
-                <li>4. Confirme com "Adicionar"</li>
+                <li>3. Selecione “Adicionar à Tela de Início”</li>
+                <li>4. Confirme com “Adicionar”</li>
               </ol>
             </div>
             <div className="space-y-2">
@@ -139,7 +139,7 @@ export default function AjudaPage() {
               <ol className="text-xs text-muted-foreground space-y-1 pl-4">
                 <li>1. Abra o link no Chrome</li>
                 <li>2. Toque no menu (⋮)</li>
-                <li>3. Selecione "Instalar app"</li>
+                <li>3. Selecione “Instalar app”</li>
                 <li>4. Confirme a instalação</li>
               </ol>
             </div>
@@ -151,7 +151,7 @@ export default function AjudaPage() {
               <ol className="text-xs text-muted-foreground space-y-1 pl-4">
                 <li>1. Abra o link no Chrome</li>
                 <li>2. Clique no ícone (⊕) na barra de endereço</li>
-                <li>3. Ou Menu → "Instalar NeuroPed"</li>
+                <li>3. Ou Menu → “Instalar NeuroPed”</li>
                 <li>4. O app abre em janela própria</li>
               </ol>
             </div>

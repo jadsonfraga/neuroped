@@ -70,7 +70,7 @@ function ScaleSelector({ onSelect }: { onSelect: (s: AutismScale) => void }) {
                 <Badge className="bg-primary/10 text-primary text-xs font-bold">{b.scale}</Badge>
                 <span className="text-xs text-foreground font-medium">{b.strength}</span>
               </div>
-              <p className="text-xs text-muted-foreground italic">"{b.motto}"</p>
+              <p className="text-xs text-muted-foreground italic">“{b.motto}”</p>
               <div className="flex flex-wrap gap-1">
                 {b.picks.map((p) => (
                   <span key={p} className="text-xs bg-muted/50 px-2 py-0.5 rounded-full text-muted-foreground">{p}</span>

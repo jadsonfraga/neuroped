@@ -167,7 +167,7 @@ export default function MchatPage() {
       {/* Instruction */}
       <div className="rounded-xl bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800/40 p-4">
         <p className="text-xs text-pink-800 dark:text-pink-300 leading-relaxed">
-          <strong>Instruções:</strong> Responda sim ou não para cada pergunta sobre o comportamento da criança. Considere o comportamento habitual. Se viu o comportamento poucas vezes, responda "Não".
+          <strong>Instruções:</strong> Responda sim ou não para cada pergunta sobre o comportamento da criança. Considere o comportamento habitual. Se viu o comportamento poucas vezes, responda “Não”.
         </p>
       </div>
 
