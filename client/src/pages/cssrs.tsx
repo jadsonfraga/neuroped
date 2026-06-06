@@ -76,7 +76,7 @@ export default function CssrsPage() {
           maxScore={6}
           classification={result.classification}
           description={result.description}
-          items={cssrsQuestions.map((q, i) => ({ question: q, answer: answers[i] ? "Sim" : "Não", value: answers[i] ? 1 : 0 }))}
+          items={cssrsQuestions.map((q, i) => ({ question: q.text, answer: answers[i] ? "Sim" : "Não", value: answers[i] ? 1 : 0 }))}
           patientAge="≥ 6 anos"
         />
         <SaveToPatient

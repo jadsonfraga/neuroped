@@ -147,7 +147,7 @@ export default function SdqPage() {
           maxScore={40}
           classification={result.classification}
           description={result.description}
-          domainResults={result.subscales.map(s => ({ domain: s.name, score: s.score, classification: s.classification }))}
+          domainResults={Object.entries(sdqSubscales).map(([key, sub]) => ({ domain: sub.name, score: scores[key] ?? 0, classification: result.subscaleClassifications[key]?.classification ?? "—" }))}
           items={sdqQuestions.map((q, i) => ({ question: q, answer: sdqLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
           patientAge="4-17 anos"
         />

@@ -172,8 +172,8 @@ export default function VinelandPage() {
         <ClinicalReport
           scaleName="Vineland-3"
           scaleFullName="Vineland Adaptive Behavior Scales — Third Edition"
-          totalScore={totalScore}
-          classification={result.classification}
+          totalScore={Object.values(domainScores).reduce((s, d) => s + d.score, 0)}
+          classification={result.overallClassification}
           description={result.description}
           domainResults={Object.entries(domainScores).map(([name, d]) => ({ domain: name, score: d.score, classification: d.score >= d.maxScore * 0.7 ? "Adequado" : d.score >= d.maxScore * 0.4 ? "Moderadamente Baixo" : "Baixo" }))}
           items={vinelandDomains.flatMap(d => d.subdomains.flatMap(sub => sub.items.map((item, i) => ({ question: `[${d.name}/${sub.name}] ${item}`, answer: vinelandScoreLabels[answers[`${d.name}-${sub.name}-${i}`] ?? 0], value: answers[`${d.name}-${sub.name}-${i}`] ?? 0 }))))}

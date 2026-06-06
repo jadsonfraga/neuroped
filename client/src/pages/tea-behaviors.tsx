@@ -247,7 +247,7 @@ function AgeGroupEvaluation({ group, onBack }: { group: TeaAgeGroup; onBack: () 
           answers={answers}
         />
         <ClinicalReport
-          scaleName={`Comport. Atípicos TEA — ${group.label ?? group.title}`}
+          scaleName={`Comport. Atípicos TEA — ${group.title}`}
           totalScore={result.present}
           maxScore={result.total}
           classification={result.classification}

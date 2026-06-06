@@ -238,7 +238,7 @@ interface SavingIndicatorProps {
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
-  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link";
+  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
 }
 
 export function SavingButton({

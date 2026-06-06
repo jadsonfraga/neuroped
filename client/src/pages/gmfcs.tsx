@@ -61,14 +61,14 @@ export default function GmfcsPage() {
         </Card>
         <SaveToPatient
           scaleName="GMFCS"
-          totalScore={level.level}
+          totalScore={selected + 1}
           classification={level.title}
           answers={{ selected }}
         />
         <ClinicalReport
           scaleName="GMFCS"
           scaleFullName="Gross Motor Function Classification System"
-          totalScore={level.level}
+          totalScore={selected + 1}
           maxScore={5}
           classification={level.title}
           description={level.description}

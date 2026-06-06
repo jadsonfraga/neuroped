@@ -83,7 +83,7 @@ export default function YgtssPage() {
           totalScore={result.globalScore}
           maxScore={100}
           classification={result.severity}
-          description={result.description}
+          description={`Escore global YGTSS de ${result.globalScore}/100 (tics motores ${result.motorScore}, vocais ${result.vocalScore}, prejuízo ${result.impairment}) — gravidade ${result.severity}.`}
           domainResults={[
             { domain: "Tics Motores", score: result.motorScore, classification: result.motorScore <= 10 ? "Leve" : result.motorScore <= 20 ? "Moderado" : "Grave" },
             { domain: "Tics Vocais", score: result.vocalScore, classification: result.vocalScore <= 10 ? "Leve" : result.vocalScore <= 20 ? "Moderado" : "Grave" },
