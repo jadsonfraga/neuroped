@@ -36,9 +36,10 @@ const CANON = new Set([
 // scales-ui-premium.css → instrumento.html (estilo bespoke de 1 página vira CSS
 // crítico da própria página). Teto desceu de 11 → 9.
 const BASELINE_LEGACY = new Set([
-  'app-skin.css', 'components.css', 'ds-bridge.css', 'ds-tokens.css',
+  'app-skin.css', 'components.css', 'ds-bridge.css',
   'tokens.css', 'escalas-hero.css', 'escalas-card-premium.css',
-  'design-system-premium.css', 'premium-override.css',
+  'premium-override.css',
+  // eliminados na consolidação FASE 1: ds-tokens.css, design-system-premium.css
 ]);
 const MAX_LEGACY = BASELINE_LEGACY.size;   // teto atual; abaixe ao remover
 

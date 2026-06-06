@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-06-04T03:45:01.415Z",
-  "files_scanned": 86,
-  "files_with_findings": 76,
-  "max_total_findings": 9068,
+  "generated_at": "2026-06-06T09:42:20.484Z",
+  "files_scanned": 91,
+  "files_with_findings": 81,
+  "max_total_findings": 8674,
   "note": "Gate de nao-regressao. design-audit --check falha se o total subir acima deste numero. A migracao (Ondas 1-4) so pode FAZER cair este teto, nunca subir. Atualize com --update-baseline DEPOIS de migrar uma tela."
 }

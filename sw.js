@@ -31,7 +31,7 @@ const SHELL = [
   './intake.html','./testes-diretos.html','./testes-diretos-engine.js','./instrumento-celebrations.js','./diarios.html','./entrevista-autismo-adir.html','./sobre-natureza.html',
   './clinical-explainability.js','./clinical-normalization.js','./clinical-timeline-engine.js','./phenotype-engine.js','./therapeutic-burden-engine.js','./response-engine.js','./contradiction-engine.js','./clinical-decision-support.js','./clinical-visual-schema.js','./clinical-config.example.js','./clinical-config.js','./clinical-config-adapter.js','./clinical-trajectory-explain.js','./clinical-trajetoria.html','./clinical-trajetoria-demo.html',
   './scales-evidence-panel.js','./curated-evidence/instruments.json',
-  './ds-tokens.css','./ds-pilot.html',
+  './ds-pilot.html',
   './retro-arcade.css','./retro-arcade.js','./app-skin.css','./np-lgpd-consent.js','./public-mode.js',
   './escalas-hero.css','./escalas-hero.js','./scales-sensitivity.js',
   // Design system Apple-grade (np-*): tokens/fundo/skin/tema/motion + componentes/catálogo — offline-first.

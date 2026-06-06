@@ -226,3 +226,30 @@ html { font-family: var(--font-sans); }
     --motion-slow: 0ms;
   }
 }
+
+/* === aliases-ponte migrados de ds-tokens.css (eliminado na consolidação FASE 1) ===
+   Mapeia nomes legados para os tokens canônicos. Só preenche onde a página
+   não define o nome inline; não sobrescreve definições locais. */
+:root {
+  --teal:     var(--primary);
+  --teal2:    var(--primary-light);
+  --indigo:   var(--primary-deep);
+  --ink:      var(--text-strong);
+  --muted:    var(--text-muted);
+  --soft:     var(--text-soft);
+  --soft-ink: var(--text-soft);
+  --wine:     var(--accent-gold);
+  --gold:     var(--accent-gold);
+  --gold2:    var(--accent-gold-dark);
+  --line:     var(--border);
+  --line2:    var(--border-strong);
+  --glass:    var(--surface-glass);
+  --glass2:   var(--surface-muted);
+  --bg2:      var(--bg-2);
+  --ok:       var(--success);
+  --okbg:     var(--success-tint);
+  --blue:     var(--info);
+  --bluebg:   var(--info-tint);
+  --shadow:   var(--shadow-card);
+  --radius:   var(--radius-lg);
+}

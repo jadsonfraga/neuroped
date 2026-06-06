@@ -2,7 +2,7 @@
 <script src="./public-mode.js"></script><meta charset="utf-8">
 <meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030712"><title>Auditoria Operacional — NeuroPed SDG</title>
 <!-- Migrado para o Design System canônico (Fase 4): tokens.css + components.css (.np-*) + ponte. Ver docs/ds-recon.md. -->
-<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./ds-tokens.css"><link rel="stylesheet" href="./app-polish-mobile.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
+<link rel="stylesheet" href="./tokens.css"><link rel="stylesheet" href="./components.css"><link rel="stylesheet" href="./app-polish-mobile.css"><link rel="stylesheet" href="./app-skin.css"><link rel="stylesheet" href="./animations.css">
 <style>
   body { margin: 0; background: var(--aurora-base); color: var(--text); font-family: var(--font-sans); min-height: 100vh; }
   .wrap { max-width: var(--content-max); margin: auto; padding: var(--space-8) var(--space-4) var(--space-16); }
@@ -59,7 +59,7 @@ async function runAudit(){
   add('Service Worker',swTag?'ok':'fail',swTag||'versão não identificada');
   add('Cache inclui auditoria',sw.includes('auditoria-operacional.html')?'ok':'fail','auditoria-operacional.html no precache');
   add('Cache inclui passe familiar',sw.includes('family-pass.js')&&sw.includes('family-pass-generator.js')&&sw.includes('ativar-passe-familiar.html')?'ok':'fail','family-pass, generator e ativação no precache');
-  add('Cache inclui visual premium',sw.includes('design-system-premium.css')&&sw.includes('editorial-impact.css')?'ok':'fail','design system e camada editorial');
+  add('Cache inclui visual premium',sw.includes('premium-override.css')&&sw.includes('np-skin.css')?'ok':'fail','premium-override e np-skin no precache');
   const consulta=await txt('./consulta.html');
   add('Consulta exige PIN',consulta.includes('PIN master obrigatório')&&consulta.includes('MASTER_HASH')?'ok':'fail','Tela de PIN e hash master presentes');
   add('Consulta abre se master já ativo',consulta.includes('if(masterActive()){openApp()')||consulta.includes('if(masterActive()){openApp();')?'ok':'fail','Evita sensação de aba morta quando PIN já está ativo');
