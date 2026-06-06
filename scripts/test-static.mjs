@@ -807,11 +807,11 @@ assertIncludes(  'tokens.css', '[data-theme="light"]', 'tokens definem light via
 assertIncludes(  'tokens.css', '--accent-gold:', 'tokens preservam o realce dourado da marca');
 assertIncludes(  'tokens.css', '--bg:            #030712', 'fundo padrão = navy profundo (DNA SuperNeuroPed)');
 assertIncludes(  'tokens.css', '--primary-gradient:', 'tokens definem gradient violeta-azul CTA');
-assertFile('app-skin.css');
+assertFile('np-skin.css');
 assertFile('animations.css');
 assertFile('app-frame.js');
-assertIncludes('app-skin.css', 'backdrop-filter', 'app-skin usa glassmorphism (backdrop-filter)');
-assertIncludes('app-skin.css', 'safe-area-inset', 'app-skin respeita safe-area iOS/Android');
+assertIncludes('np-skin.css', 'backdrop-filter', 'np-skin usa glassmorphism (backdrop-filter)');
+assertIncludes('np-skin.css', 'safe-area-inset', 'np-skin respeita safe-area iOS/Android');
 assertIncludes('animations.css', '@keyframes np-fade-up', 'animations define fade-up');
 assertIncludes('animations.css', '@keyframes np-shimmer', 'animations define shimmer skeleton');
 assertIncludes('app-frame.js', 'npFrameHeader', 'app-frame injeta header brand universal');
