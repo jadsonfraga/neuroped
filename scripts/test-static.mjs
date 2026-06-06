@@ -1106,7 +1106,12 @@ assertIncludes('scales-sensitivity.js', 'PMID.test', 'sensibilidade só vale com
     const truthy = (name, v) => v ? pass(name) : fail(name, 'falso');
     const falsy = (name, v) => !v ? pass(name) : fail(name, 'verdadeiro');
 
-    eq('smart-rank: versão publicada 1.5.0', SR.version, '1.5.0');
+    eq('smart-rank: versão publicada 1.6.0', SR.version, '1.6.0');
+    // Diferencial clínico: queixa com 2 construtos que coexistem → nota; 1 só → vazio
+    const dTeaTdah = SR.differentials('autismo e muito hiperativo, não para quieto');
+    truthy('smart-rank: diferencial TEA+TDAH aparece quando ambos ativam', dTeaTdah.length >= 1 && dTeaTdah.some(d => d.pair.indexOf('tea') >= 0 && d.pair.indexOf('tdah') >= 0));
+    truthy('smart-rank: diferencial vazio com um único construto (autismo)', SR.differentials('apenas autismo').length === 0);
+    truthy('smart-rank: diferencial ansiedade+humor', SR.differentials('triste, desanimado e muito ansioso com medo').some(d => d.pair.indexOf('ansiedade') >= 0 && d.pair.indexOf('humor') >= 0));
     // Expansão leiga → construto (frases do dia a dia que a família realmente usa)
     truthy('smart-rank: "vive no mundo da lua" → tdah', has(cons('meu filho vive no mundo da lua'), 'tdah'));
     truthy('smart-rank: "balança as mãos e não faz contato visual" → tea', has(cons('balança as mãos e não faz contato visual'), 'tea'));
@@ -1152,6 +1157,7 @@ assertIncludes('escala.html', 'recoRail', 'runner mostra o trilho da sequência 
 assertIncludes('filtro-escalas.html', 'np_cie_resp', 'filtro lembra o respondente (quem responde) entre visitas');
 assertIncludes('escala.html', 'kbdHint', 'runner: atalho de teclado 1–4 responde o próximo item (produtividade)');
 assertIncludes('filtro-escalas.html', "desenvolvimento:'desenvolvimento'", 'filtro: painel-guia destravado para "desenvolvimento"');
+assertIncludes('filtro-escalas.html', 'NeuroPedSmartRank.differentials', 'filtro: mostra diferencial clínico quando 2+ construtos ativam');
 assertIncludes('escala.html', 'role="radiogroup"', 'runner: opções agrupadas como radiogroup (a11y de leitor de tela)');
 assertIncludes('escala.html', "itemEl.classList.add('answered')", 'runner: atualização cirúrgica do item (sem flash de re-render a cada resposta)');
 

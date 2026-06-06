@@ -2858,6 +2858,35 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
   // Quais construtos a queixa ativou (para "por que apareceu" e diferenciais).
   function constructsOf(text) { return Object.keys(activeConstructs(text)); }
 
+  // DIFERENCIAIS / COMORBIDADE: quando a queixa ativa 2+ construtos que comumente
+  // coexistem ou se confundem, oferece uma nota curta de diferencial — apoio ao
+  // raciocínio clínico (não diagnóstico). Pares mais frequentes na neuroped.
+  var DIFFERENTIALS = [
+    { pair: ['tea', 'tdah'], note: 'TEA e TDAH coexistem com frequência: diferencie dificuldade de interação social (TEA) de desatenção/impulsividade (TDAH) — e considere a coocorrência. Triangule escola × casa.' },
+    { pair: ['tea', 'linguagem'], note: 'Atraso de linguagem pode integrar o TEA ou ser isolado: avalie atenção compartilhada e reciprocidade social, não só a fala.' },
+    { pair: ['tea', 'sensorial'], note: 'Alterações sensoriais são comuns no TEA: avalie em conjunto com a comunicação social.' },
+    { pair: ['tdah', 'aprendizagem'], note: 'TDAH e transtornos de aprendizagem coexistem: separe desatenção de dificuldade específica de leitura/escrita/matemática.' },
+    { pair: ['tdah', 'ansiedade'], note: 'Desatenção pode vir de TDAH ou de ansiedade: observe o contexto (preocupação/evitação vs. dispersão).' },
+    { pair: ['tdah', 'comportamento'], note: 'Oposição/conduta acompanha o TDAH com frequência: diferencie impulsividade de desafio intencional.' },
+    { pair: ['tdah', 'humor'], note: 'Irritabilidade pode ser desregulação do TDAH ou do humor: observe duração, desânimo e perda de interesse.' },
+    { pair: ['ansiedade', 'humor'], note: 'Ansiedade e depressão coexistem: observe evitação (ansiedade) vs. anedonia/tristeza persistente (humor).' },
+    { pair: ['linguagem', 'aprendizagem'], note: 'Dificuldades de linguagem oral podem preceder dificuldades de leitura: avalie a base fonológica.' },
+    { pair: ['tea', 'regulacao'], note: 'Desregulação emocional é comum no TEA: avalie gatilhos sensoriais e de rotina junto às crises.' },
+    { pair: ['ansiedade', 'mutismo'], note: 'Mutismo seletivo costuma ser do espectro ansioso: avalie a ansiedade subjacente e a evitação social.' }
+  ];
+  // differentials(text) → notas dos pares ATIVOS (até 3). Vazio se <2 construtos.
+  function differentials(text) {
+    var active = activeConstructs(text), set = {};
+    Object.keys(active).forEach(function (k) { set[k] = 1; });
+    if (Object.keys(set).length < 2) return [];
+    var out = [];
+    for (var i = 0; i < DIFFERENTIALS.length && out.length < 3; i++) {
+      var d = DIFFERENTIALS[i];
+      if (set[d.pair[0]] && set[d.pair[1]]) out.push(d);
+    }
+    return out;
+  }
+
   // tokenMatches(tk, blob): casamento PRECISO de um termo da queixa contra o blob
   // (já normalizado) de um instrumento. Regras anti-falso-positivo:
   //   • frase (tem espaço): substring — específica o bastante.
@@ -3008,7 +3037,7 @@ if (!window.NEUROPED_OFICIAIS_LOTE2_LOADED && document.readyState === 'loading')
     { label: '🎭 Desregulação emocional', q: 'desregulação descontrole emocional explosão emocional' }
   ];
 
-  var api = { version: '1.5.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, expand: expand, constructsOf: constructsOf, tokenMatches: tokenMatches, ageFit: ageFit, scoreFit: scoreFit, confOf: confOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
+  var api = { version: '1.6.0', CONSTRUCTS: CONSTRUCTS, QUEIXAS: QUEIXAS, DIFFERENTIALS: DIFFERENTIALS, expand: expand, constructsOf: constructsOf, differentials: differentials, tokenMatches: tokenMatches, ageFit: ageFit, scoreFit: scoreFit, confOf: confOf, modalityOf: modalityOf, pickTop: pickTop, dedupAll: dedupAll, sig: sig };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NeuroPedSmartRank = api;
 })(typeof window !== 'undefined' ? window : null);
