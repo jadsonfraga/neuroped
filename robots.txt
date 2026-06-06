@@ -1,11 +1,23 @@
 User-agent: *
 Allow: /
+
+# Áreas internas / sensíveis
 Disallow: /restricted.html
+Disallow: /consulta.html
+Disallow: /secretaria.html
+Disallow: /agenda-financeiro.html
 Disallow: /teste-ouro-pin.html
 Disallow: /gerar-licencas-pro.html
-Disallow: /agenda-financeiro.html
-Disallow: /consulta.html
+
+# Dev / QA / showcase / auditoria (artefatos internos, já noindex)
 Disallow: /qa-smoke-test.html
 Disallow: /teste-e2e-manual.html
+Disallow: /ds-pilot.html
+Disallow: /np-components.html
+Disallow: /np-showcase.html
+Disallow: /scale-engine-demo.html
+Disallow: /auditoria-ontologia.html
+Disallow: /auditoria-operacional.html
+Disallow: /guia-lancamento.html
 
 Sitemap: https://jadsonfraga.github.io/neuroped/sitemap.xml
