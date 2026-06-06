@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "neuroped-v7";
+const CACHE_NAME = "neuroped-v8-honest-api";
 
 // ─── MEDICATION ALARM SYSTEM ───────────────────────────────────────────────
 let medicationAlarms = []; // { id, medicamento, dose, horario, diasSemana, ativo }
@@ -28,7 +28,7 @@ function scheduleAlarmCheck() {
     medicationAlarms.forEach((alarm) => {
       if (alarm.ativo && alarm.horario === currentTime && alarm.diasSemana.includes(currentDay)) {
         // Show notification
-        self.registration.showNotification("💊 Hora da Medicação!", {
+        self.registration.showNotification("Hora da medicação", {
           body: `${alarm.medicamento} — ${alarm.dose}\nHorário: ${alarm.horario}`,
           icon: "./icon-192.png",
           badge: "./icon-192.png",
@@ -36,8 +36,8 @@ function scheduleAlarmCheck() {
           requireInteraction: true, // Stay visible until user interacts
           vibrate: [200, 100, 200, 100, 200], // Vibration pattern
           actions: [
-            { action: "taken", title: "✅ Tomei" },
-            { action: "snooze", title: "⏰ Adiar 30min" }
+            { action: "taken", title: "Tomei" },
+            { action: "snooze", title: "Adiar 30 min" }
           ]
         }).catch(() => {});
       }
@@ -88,7 +88,7 @@ self.addEventListener("activate", (event) => {
 // Fetch strategy:
 // - JS/CSS assets: cache-first (immutable hashed filenames)
 // - HTML/manifest: stale-while-revalidate (show cached instantly, update in background)
-// - API calls: network-first with timeout, fallback to mailto
+// - API calls: network-first with honest public fallback
 // - Fonts/images: cache-first
 // - Everything else: stale-while-revalidate
 self.addEventListener("fetch", (event) => {
@@ -97,8 +97,12 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET
   if (event.request.method !== "GET") return;
   
-  // API calls: network only (email sending needs live connection)
-  if (url.pathname.includes("/api/")) return;
+  // API calls: network-first with honest public fallback.
+  // The static public build has no guaranteed backend; never let /api 404 fail silently.
+  if (url.pathname.includes("/api/")) {
+    event.respondWith(apiNetworkFirst(event.request));
+    return;
+  }
 
   // JS/CSS chunks (hashed names — immutable): cache-first
   if (url.pathname.match(/\/assets\/.*\.(js|css)$/)) {
@@ -125,6 +129,25 @@ self.addEventListener("fetch", (event) => {
 });
 
 // === STRATEGIES ===
+
+
+async function apiNetworkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.status !== 404) return response;
+  } catch {
+    // Backend público ausente ou indisponível: tratado abaixo com estado honesto.
+  }
+
+  return new Response(JSON.stringify({
+    ok: false,
+    code: "BACKEND_IN_DEPLOYMENT",
+    message: "Este recurso está em implantação no ambiente público."
+  }), {
+    status: 503,
+    headers: { "Content-Type": "application/json; charset=utf-8" }
+  });
+}
 
 // Cache-first: return from cache immediately, fetch only if not cached
 async function cacheFirst(request) {
