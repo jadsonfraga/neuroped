@@ -71,7 +71,7 @@ export function InstallPrompt() {
               <p className="text-xs text-muted-foreground">Use como app no seu computador</p>
             </div>
           </div>
-          <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground p-1">
+          <button onClick={handleDismiss} aria-label="Dispensar convite de instalação" className="text-muted-foreground hover:text-foreground p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
