@@ -487,7 +487,7 @@ export default function FiltroPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados do filtro inteligente">
           {total > 0 && (
             <Mascote
               contexto="resultado"
