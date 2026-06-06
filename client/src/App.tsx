@@ -65,6 +65,10 @@ const EmsPage = lazy(() => import("@/pages/ems"));
 const EtarePage = lazy(() => import("@/pages/etare"));
 const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
+const CaaPage = lazy(() => import("@/pages/caa"));
+const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
+const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
+const DiarioEscolaPage = lazy(() => import("@/pages/diario-escola"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -177,6 +181,10 @@ function AppRouter() {
           <Route path="/etare" component={EtarePage} />
           <Route path="/eaah" component={EaahPage} />
           <Route path="/filtro" component={FiltroPage} />
+          <Route path="/caa" component={CaaPage} />
+          <Route path="/diario-sono" component={DiarioSonoPage} />
+          <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
+          <Route path="/diario-escola" component={DiarioEscolaPage} />
           <Route path="/sobre" component={SobrePage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />

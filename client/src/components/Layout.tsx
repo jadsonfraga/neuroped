@@ -10,7 +10,8 @@ import {
   Puzzle, Calendar, Fingerprint, Menu, X, GraduationCap,
   Stethoscope, Waves, Flame, VolumeX, UtensilsCrossed, AlertTriangle, Pill,
   Filter, User, BrainCog, Ear, School, ClipboardPlus, SmilePlus, HelpCircle,
-  Target, Lightbulb, Calculator, TrendingUp, GitBranch
+  Target, Lightbulb, Calculator, TrendingUp, GitBranch,
+  MessageCircle, FileSignature, BookMarked, ShieldCheck, Newspaper, KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
@@ -39,6 +40,8 @@ const navSections: NavSection[] = [
       { href: "/prontuario", label: "Prontuário Clínico", icon: ClipboardPlus },
       { href: "/pacientes", label: "Meus Pacientes", icon: Users },
       { href: "/satisfacao-medicacao", label: "Satisfação Medicação", icon: SmilePlus },
+      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
+      { href: "/assinatura-digital", label: "Assinatura Digital", icon: FileSignature },
     ],
   },
   {
@@ -90,6 +93,9 @@ const navSections: NavSection[] = [
   {
     title: "Diários Clínicos",
     items: [
+      { href: "/diario-sono", label: "Diário do Sono", icon: Moon },
+      { href: "/diario-alimentar", label: "Diário Alimentar", icon: UtensilsCrossed },
+      { href: "/diario-escola", label: "Diário Escolar", icon: School },
       { href: "/epilepsia", label: "Diário Epilepsia", icon: Zap },
       { href: "/cefaleia", label: "Calendário Cefaleia", icon: Calendar },
     ],
