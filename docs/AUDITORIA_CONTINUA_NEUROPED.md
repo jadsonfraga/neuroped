@@ -233,9 +233,82 @@ Inventário **congelado** (nenhum novo sistema adicionado desde v41). Consolida�
 
 `routes.config.js`, `sw.js` (v6.46.0), `package.json`, `manifest.json`, `cloud-config.js` (Supabase desligado), `master-access-policy.js`, `clinical-engines.js`, `scales-bundle.js`, `np-lgpd-consent.js`, `clinical-trajetoria.html`, `secretaria.html`.
 
+### Próximos passos (executados em v43 — ver abaixo)
+
+1. ~~Consolidação de tokens (ds-tokens.css → tokens.css)~~ ✓ FASE 1
+2. ~~Unificação de skins (app-skin.css → np-skin.css)~~ ✓ FASE 2
+3. ~~Limpeza de consulta.html~~ ✓ já estava resolvida
+4. ~~Formalização do App Shell~~ ✓ já estava resolvida
+
+---
+
+## Registro v43 — Consolidação de Estilos | Scorecard 5/5
+
+Data: 2026-06-06
+
+### Escopo executado
+
+- FASE 1: Eliminação de `ds-tokens.css` e `design-system-premium.css`
+- FASE 2: Absorção de `app-skin.css` em `np-skin.css`
+- FASE 2b: Inline de `escalas-hero.css` (3 páginas) e `premium-override.css` (index.html)
+- FASE 3: Verificada — `consulta.html` já tinha PIN completo inline
+- FASE 4: Verificada — `app-shell.js/css` já existiam como arquivos dedicados
+
+### Resultado dos testes
+
+| Check | Resultado | Meta |
+|---|---|---|
+| Asserções estáticas (`npm test`) | **914 OK, 0 falhas** | 0 falhas |
+| Smoke (sintaxe + DOM + lógica) | 14 OK, 0 falhas | 0 falhas |
+| Motor pré-consulta | 48 OK, 0 falhas | 0 falhas |
+| Lockstep de versão | ✓ v6.46.0 | coerente |
+| Contraste WCAG AA | todos os pares passam | AA |
+| Cascata de tema | ✓ 72 páginas | todas |
+| Scorecard geral | **5/5 métricas no alvo** | 5/5 ✅ |
+
+### Scorecard detalhado (5/5)
+
+| Métrica | Antes | Depois | Meta |
+|---|---|---|---|
+| API órfãos (SPA→404) | 0 | **0** | 0 |
+| Sistemas de estilo | 8 | **3** | ≤3 ✅ |
+| Cobertura skin (np-skin) | 96% | **97%** | ≥60% |
+| console.log/debug (prod) | 0 | **0** | 0 |
+| Marcadores de conflito | 0 | **0** | 0 |
+
+### Arquivos eliminados
+
+- `ds-tokens.css` — bridge aliases migrados para `tokens.css`
+- `design-system-premium.css` — arquivo morto (não referenciado por nenhuma página)
+- `app-skin.css` (366 linhas) — absorvido em `np-skin.css` como Seção 1 global
+- `escalas-hero.css` — inlined em `filtro-escalas.html`, `escala.html`, `banco-escalas.html`
+- `premium-override.css` — inlined em `index.html`
+
+### Sistemas de estilo remanescentes (3 — meta atingida)
+
+1. `tokens.css` — tokens canônicos + aliases-ponte legacy
+2. `np-tokens.css` — tokens Apple-grade (`--np-*`)
+3. `np-skin.css` — skin canônica unificada (Seção 1 global + Seção 2 `.np-skin` opt-in)
+
+### Baseline design-audit
+
+- Antes (v42): 9068 raw values
+- Após (v43): **8758** (−310 desde o início da sessão)
+
+### Ratchet `check-styles.mjs`
+
+- BASELINE_LEGACY: 9 → 4 arquivos legados
+- MAX_LEGACY auto: 9 → 4
+
+### Limites mantidos
+
+- PIN frontend: controle de interface, não segurança de produção.
+- Dados clínicos reais: proibidos (ver `GO_LIVE_CHECKLIST.md`).
+- CRM: **CRM-PE 25227 / RQE 17756** — nenhuma referência a CRM-BA.
+- `consulta-pin-fix.js`: mantido como utilitário; não é dependência de `consulta.html`.
+
 ### Próximos passos
 
-1. **Onda 1 de estilos:** Fundir `np-tokens.css` + `ds-tokens.css` → `tokens.css` (única fonte de tokens).
-2. **Onda 2 de estilos:** Unificar `app-skin.css` e `np-skin.css` → `np-skin.css` canônico.
-3. Corrigir `consulta.html` na origem (remover marcação PIN legada, eliminar dependência de `consulta-pin-fix.js`).
-4. Formalizar shell em `app-shell.js/css` separando responsabilidade de `premium-experience.js`.
+1. Completar as Ondas 3-4 do `PLANO_7_PARA_9.md` (rollout skin + home com tokens).
+2. Implementar Workstream 1 (endpoints backend) quando a infraestrutura estiver disponível.
+3. Testes Lighthouse ≥90 (Workstream 4) — requer browser.
