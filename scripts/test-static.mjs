@@ -1236,6 +1236,37 @@ assertIncludes('escala.html', 'function renderReview', 'runner: revisão lista p
   } catch (e) { fail('clinical-auth-supabase.js não pôde ser exercitado', e.message); }
 }
 
+// ── Lote 2 de instrumentos GRATUITOS (scales-intl-livres-lote2.js): ≥50
+//    instrumentos de referência com proveniência honesta. Valida quantidade,
+//    unicidade de id, proveniência (URL/citação), faixa etária e license_status.
+{
+  try {
+    const require = createRequire(import.meta.url);
+    globalThis.window = { NEUROPED_EDITORIAL_SCALES: [] };
+    require(join(root, 'scales-intl-livres-lote2.js'));
+    const L2 = globalThis.window.NEUROPED_INTL_LIVRES2 || [];
+    (L2.length >= 50) ? pass(`intl-livres-lote2: ≥50 instrumentos gratuitos de referência (${L2.length})`) : fail('intl-livres-lote2: menos de 50', String(L2.length));
+    const idset = {}; const LIC = { 'livre': 1, 'livre-nc': 1, 'livre-reg': 1, 'verificar': 1 };
+    let dup = 0, badPrefix = 0, noProv = 0, badAge = 0, badLic = 0, noKw = 0;
+    L2.forEach(s => {
+      if (idset[s.id]) dup++; idset[s.id] = 1;
+      if (!/^ofc4-/.test(s.id)) badPrefix++;
+      if (!s.official_url && !s._citation) noProv++;
+      if (!(s.age_min_months >= 0 && s.age_max_months > s.age_min_months)) badAge++;
+      if (!LIC[s.license_status]) badLic++;
+      if (!Array.isArray(s.keywords) || !s.keywords.length) noKw++;
+    });
+    (dup === 0) ? pass('intl-livres-lote2: 0 IDs duplicados') : fail('intl-livres-lote2: IDs duplicados', String(dup));
+    (badPrefix === 0) ? pass('intl-livres-lote2: todos com prefixo ofc4- (sem colisão)') : fail('intl-livres-lote2: prefixo', String(badPrefix));
+    (noProv === 0) ? pass('intl-livres-lote2: todos com proveniência (URL ou citação)') : fail('intl-livres-lote2: sem proveniência', String(noProv));
+    (badAge === 0) ? pass('intl-livres-lote2: faixas etárias válidas (min<max)') : fail('intl-livres-lote2: faixa etária inválida', String(badAge));
+    (badLic === 0) ? pass('intl-livres-lote2: license_status honesto (livre/-nc/-reg/verificar)') : fail('intl-livres-lote2: license_status inválido', String(badLic));
+    (noKw === 0) ? pass('intl-livres-lote2: todos com keywords (casam no filtro)') : fail('intl-livres-lote2: sem keywords', String(noKw));
+  } catch (e) { fail('scales-intl-livres-lote2.js não pôde ser exercitado', e.message); }
+}
+assertIncludes('scripts/build-scales-bundle.mjs', 'scales-intl-livres-lote2.js', 'lote 2 entra no bundle de escalas');
+assertIncludes('scales-bundle.js', 'NEUROPED_INTL_LIVRES2', 'bundle inclui os instrumentos do lote 2');
+
 // ── Sumário (no FIM: garante que TODAS as asserções, inclusive as do design
 //    system, sejam contadas e que uma falha aqui faça o CI falhar) ──
 console.log('\nNeuroPed static quality check');
