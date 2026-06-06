@@ -1,0 +1,8 @@
+# ============================================================
+# NeuroPed EDJ — Configuração Nixpacks
+# Garante que devDependencies sejam instaladas na fase de build
+# (necessário para tsx, vite, esbuild)
+# ============================================================
+
+[phases.install]
+cmds = ["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --include=dev"]

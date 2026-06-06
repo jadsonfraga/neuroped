@@ -1,0 +1,60 @@
+# wrangler.toml.example — NeuroPed EDJ
+# Copie para wrangler.toml e configure com seus valores.
+# NUNCA commite wrangler.toml com tokens reais.
+# Referência: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "neuroped-edj"
+main = "functions/_worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Cloudflare Pages (frontend) ────────────────────────────────────
+# O build do frontend vai para a pasta dist/public
+# Configure no Cloudflare Dashboard: Pages > Project > Settings > Build
+
+# ── D1 — Banco de Dados SQLite na Borda ───────────────────────────
+# Alternativa ao PostgreSQL — 100% gratuito no plano Workers Free
+# Limite: 5GB armazenamento, 5M leituras/dia, 100k escritas/dia
+[[d1_databases]]
+binding = "DB"
+database_name = "neuroped-prod"
+database_id = "__SEU_DATABASE_ID__"
+# Para criar: wrangler d1 create neuroped-prod
+
+# ── KV — Cache de Dados Não Sensíveis ─────────────────────────────
+# Use APENAS para dados não sensíveis (configurações, templates, etc.)
+# NUNCA armazene dados de pacientes em KV sem criptografia
+[[kv_namespaces]]
+binding = "CACHE"
+id = "__SEU_KV_NAMESPACE_ID__"
+# Para criar: wrangler kv:namespace create CACHE
+
+# ── Variables de Ambiente ──────────────────────────────────────────
+# Secrets devem ser configurados via: wrangler secret put NOME_DO_SECRET
+# Nunca coloque secrets diretamente aqui
+[vars]
+NODE_ENV = "production"
+APP_VERSION = "2.0.0"
+CORS_ORIGINS = "https://neuroped.pages.dev,https://seudominio.com.br"
+
+# Secrets (configurar via CLI, não neste arquivo):
+# wrangler secret put NEUROPED_MASTER_KEY
+# wrangler secret put NEUROPED_JWT_SECRET
+# wrangler secret put VITE_PIN_HASH
+
+# ── Workers AI (para embeddings — plano gratuito) ─────────────────
+# 10.000 neurônios/dia gratuito
+# [ai]
+# binding = "AI"
+
+# ── Vectorize (para busca semântica — plano pago $0.01/1k vetores) ─
+# [[vectorize]]
+# binding = "VECTORIZE"
+# index_name = "neuroped-memory"
+# dimensions = 768
+# metric = "cosine"
+
+# ── Routes ────────────────────────────────────────────────────────
+# [[routes]]
+# pattern = "seudominio.com.br/api/*"
+# zone_name = "seudominio.com.br"

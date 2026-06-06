@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: neuroped-api
+    runtime: node
+    region: oregon
+
+    # O script de build unificado já compila frontend + backend via tsx script/build.ts
+    # No Render, compilamos apenas o servidor (frontend vai para GitHub Pages)
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.cjs
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 10000
+
+      # PIN_HASH: hash SHA-256 do PIN profissional
+      # Configure em: Render Dashboard > neuroped-api > Environment
+      - key: PIN_HASH
+        sync: false
+
+      # JWT_SECRET: string aleatória longa (mínimo 64 chars)
+      # Gere com: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+      - key: JWT_SECRET
+        sync: false
+
+      # DATABASE_URL: string de conexão PostgreSQL (Neon, Supabase, etc.)
+      # Exemplo: postgresql://user:pass@host/dbname?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+
+      # FRONTEND_URL: URL do GitHub Pages para configurar CORS
+      - key: FRONTEND_URL
+        value: https://jadsonfraga.github.io
+
+    healthCheckPath: /api/health
+
+    # Plano gratuito — pode ter cold start de ~30s após inatividade
+    plan: free
+
+    # Auto-deploy a cada push para main
+    autoDeploy: yes

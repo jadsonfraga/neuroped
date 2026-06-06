@@ -1,70 +1,217 @@
-# Deploy NeuroPed na Cloudflare
+# Deploy
 
-Guia operacional para colocar o app em produção via **Cloudflare Pages + Pages Functions + D1**.
+> Passos de deploy em diferentes provedores. Pre-requisito: leia [HOSPEDAGEM.md](./HOSPEDAGEM.md) primeiro para escolher provedor.
 
-## Pré-requisitos
+## Pre-deploy checklist
 
-- Conta Cloudflare com permissão para Pages, Workers e D1.
-- Node 22+ e npm 10+ locais.
-- `wrangler` autenticado: `npx wrangler login` (ou `CLOUDFLARE_API_TOKEN` em CI).
+- [ ] `npm install` sem erros
+- [ ] `npm run build` sem erros
+- [ ] `npm run check` (TypeScript) sem erros
+- [ ] Variaveis em `.env` configuradas (use `.env.example` como base)
+- [ ] `NEUROPED_MASTER_KEY` gerada e armazenada com seguranca
+- [ ] `NEUROPED_JWT_SECRET` gerada e armazenada com seguranca
+- [ ] SMTP configurado e testado
+- [ ] DNS apontando para o provedor escolhido
 
-## Caminho 1 — Deploy automatico via GitHub Actions (recomendado)
+## Gerar segredos
 
-1. Adicione no painel **Settings > Secrets and variables > Actions**:
-   - `CLOUDFLARE_API_TOKEN` (Pages: Edit, D1: Edit, Account: Read)
-   - `CLOUDFLARE_ACCOUNT_ID`
-2. Mergeie qualquer commit em `main`. O workflow `.github/workflows/deploy-cloudflare.yml`:
-   - npm install + `npm test` (static + typecheck)
-   - resolve/cria D1 `neuroped-db` via API CF
-   - patcha `wrangler.toml` em runtime com o id real
-   - aplica `schema.sql` (idempotente)
-   - `wrangler pages deploy . --project-name neuroped`
-   - configura `APP_TOKEN` como secret do projeto Pages (se ainda nao existir)
+```bash
+# Master key (criptografia AES) - 48 bytes em base64
+node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 
-## Caminho 2 — Deploy manual local
+# JWT secret - 64 bytes em base64
+node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
 
-```sh
-npm install
-npm test                                        # static + typecheck
-npx wrangler login                              # autentica wrangler
-npx wrangler d1 create neuroped-db              # anote o database_id
-# cole o id em wrangler.toml -> d1_databases[0].database_id
-npm run db:schema                               # aplica schema no D1 remoto
-npx wrangler pages secret put APP_TOKEN --project-name neuroped   # cole openssl rand -hex 32
-npm run deploy
+# Senha admin temporaria (24 bytes) - trocar no primeiro login
+node -e "console.log(require('crypto').randomBytes(18).toString('base64'))"
 ```
 
-## Validacao pos-deploy
+Armazene esses valores em gerenciador de segredos (1Password, AWS Secrets Manager, etc.). Nao envie por email/Slack/WhatsApp.
 
-Substitua `<URL>` pela URL atribuida (`<projeto>.pages.dev` ou dominio proprio).
+## Deploy: Render (recomendado)
 
-```sh
-curl -sIL https://<URL>/ | head -10
-curl -s https://<URL>/api/health
-# esperado: {"ok":true,"service":"NeuroPed SDG Backend",...}
-
-curl -s https://<URL>/api/scales
-# esperado: {"ok":true,"total":507,...}
-
-curl -i -s https://<URL>/api/submissions
-# esperado: 401 Nao autorizado.
-
-curl -s -H "X-Clinic-Token: <APP_TOKEN>" https://<URL>/api/submissions
-# esperado: 200 com lista
-
-curl -i -s -X POST https://<URL>/api/submissions \
-  -H "Origin: https://exemplo-malicioso.com" \
-  -H "Content-Type: application/json" -d '{}'
-# esperado: 403 Origem nao autorizada.
+```bash
+# 1. Criar conta em render.com
+# 2. New -> Web Service -> Conectar repo
+# 3. Configurar:
+#    Build: npm ci && npm run build
+#    Start: npm start
+# 4. New -> Postgres
+# 5. Conectar DATABASE_URL no Web Service
+# 6. Settings -> Environment -> adicionar todas as vars do .env
+# 7. Manual Deploy -> Deploy latest commit
+# 8. Acompanhar logs ate ver: "NeuroPed EDJ rodando em ..."
 ```
 
-## Pendencias conhecidas
+Apos primeiro deploy bem-sucedido, REMOVA `ADMIN_INITIAL_PASSWORD` das env vars do Render.
 
-- O bundle SPA em `assets/` chama `/api/patients`, `/api/portal/diary`, `/api/portal/messages`, `/api/results`, `/api/certificado`, `/api/laudo/salvar` — esses endpoints **nao existem** em `functions/api/`. Telas dependentes recebem 404. Implementar antes de exigir.
-- `agenda-financeiro.html` chama `https://api.npoint.io/...` (3rd-party, bloqueado pelo CSP). Migrar para D1 antes de uso real.
-- `.github/workflows/deploy.yml` deploya para GitHub Pages; coexiste com Cloudflare. Decidir destino canonico.
-- O PIN master antigo foi exposto previamente em histórico público. Usar apenas hash atualizado, evitar registrar PIN em texto claro e considerar reescrita do historico antes de uso real.
+## Deploy: Fly.io (servidor Sao Paulo)
 
-## Rollback
+```bash
+# Login
+flyctl auth login
 
-**Pages > Deployments** lista todas as versoes. Clique em uma anterior > **Rollback to this deployment**.
+# Criar app
+flyctl launch --region gru --name neuroped-edj --no-deploy
+
+# Editar fly.toml gerado se necessario (porta 5000, auto-stop opcional)
+
+# Postgres
+flyctl postgres create --region gru --name neuroped-db
+flyctl postgres attach neuroped-db --app neuroped-edj
+
+# Secrets
+flyctl secrets set NEUROPED_MASTER_KEY="$(node -e "console.log(require('crypto').randomBytes(48).toString('base64'))")" --app neuroped-edj
+flyctl secrets set NEUROPED_JWT_SECRET="$(node -e "console.log(require('crypto').randomBytes(64).toString('base64'))")" --app neuroped-edj
+flyctl secrets set ADMIN_EMAIL=admin@drjadsonfraga.com.br --app neuroped-edj
+flyctl secrets set ADMIN_NAME="Dr. Jadson Fraga" --app neuroped-edj
+flyctl secrets set ADMIN_INITIAL_PASSWORD="__senha_forte__" --app neuroped-edj
+flyctl secrets set SMTP_HOST=smtp-relay.brevo.com SMTP_PORT=587 --app neuroped-edj
+flyctl secrets set SMTP_USER=__user__ SMTP_PASSWORD=__pass__ --app neuroped-edj
+flyctl secrets set SMTP_FROM="NeuroPed EDJ <noreply@drjadsonfraga.com.br>" --app neuroped-edj
+flyctl secrets set CORS_ORIGINS="https://neuroped.drjadsonfraga.com.br" --app neuroped-edj
+
+# Deploy
+flyctl deploy --app neuroped-edj
+
+# Acompanhar
+flyctl logs --app neuroped-edj
+```
+
+## Deploy: VPS Locaweb (servidor BR)
+
+```bash
+ssh root@__seu_ip__
+
+# 1. Atualizar SO
+apt update && apt upgrade -y
+
+# 2. Instalar Node 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+# 3. Postgres + nginx + certbot
+apt install -y postgresql postgresql-contrib nginx certbot python3-certbot-nginx ufw
+
+# 4. Configurar Postgres
+sudo -u postgres psql <<EOF
+CREATE DATABASE neuroped;
+CREATE USER neuroped WITH ENCRYPTED PASSWORD '__senha_db__';
+GRANT ALL PRIVILEGES ON DATABASE neuroped TO neuroped;
+EOF
+
+# 5. Clonar repo
+cd /opt
+git clone https://github.com/jadsonfraga/neuroped.git
+cd neuroped
+
+# 6. Configurar .env
+cp .env.example .env
+nano .env  # editar com valores reais
+
+# 7. Instalar deps + build
+npm ci
+npm run build
+
+# 8. PM2
+npm install -g pm2
+pm2 start npm --name neuroped -- start
+pm2 startup systemd
+pm2 save
+
+# 9. nginx (criar /etc/nginx/sites-available/neuroped)
+cat > /etc/nginx/sites-available/neuroped <<EOF
+server {
+    listen 80;
+    server_name neuroped.drjadsonfraga.com.br;
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF
+ln -s /etc/nginx/sites-available/neuroped /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+
+# 10. SSL
+certbot --nginx -d neuroped.drjadsonfraga.com.br
+
+# 11. Firewall
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
+
+# 12. Validar
+curl https://neuroped.drjadsonfraga.com.br/api/health
+```
+
+## Configurar dominio
+
+1. Comprar dominio em Registro.br (R$ 40/ano para .com.br)
+2. Apontar DNS:
+   - **Render/Fly:** seguir instrucoes do painel
+   - **VPS:** A record para IP do servidor
+3. Adicionar dominio na env `CORS_ORIGINS`
+
+## Pos-deploy: primeiro login
+
+1. Abrir `https://__seu_dominio__/#/login`
+2. Logar com `ADMIN_EMAIL` + `ADMIN_INITIAL_PASSWORD`
+3. Sistema vai exigir troca de senha (`mustChangePassword: true`)
+4. Trocar senha em `/configuracoes/alterar-pin`
+5. **Voltar ao painel do provedor e REMOVER `ADMIN_INITIAL_PASSWORD`**
+6. Criar usuarios profissionais via `/api/auth/register` (POST com auth admin)
+
+## Monitoring (recomendado)
+
+- **Uptime:** UptimeRobot (gratuito) ou BetterStack
+- **Errors:** Sentry (free tier 5k events/mes)
+- **Logs:** Datadog Free, LogTail, ou Render/Fly nativo
+
+## Backup
+
+### Postgres (Render/Railway/Fly)
+
+Provedor faz backup automatico. Validar restore mensalmente.
+
+### SQLite (VPS)
+
+```bash
+# Cron diario
+0 3 * * * sqlite3 /opt/neuroped/neuroped.db ".backup '/var/backups/neuroped-$(date +\%Y\%m\%d).db'" && find /var/backups -name "neuroped-*.db" -mtime +30 -delete
+```
+
+## Troubleshooting
+
+### App nao sobe: "NEUROPED_MASTER_KEY ausente"
+Configure a variavel de ambiente no provedor.
+
+### Login nao funciona: "Senha invalida"
+- Verificar se admin foi criado: olhar logs por `[bootstrap] Usuario admin criado`
+- Resetar via DB se necessario:
+  ```sql
+  UPDATE users SET password_hash = '$2b$12$...' WHERE email = 'admin@...';
+  ```
+  (gere o hash com `node -e "console.log(require('bcrypt').hashSync('nova_senha', 12))"`)
+
+### Cripto: "Falha ao decriptar (auth tag invalido)"
+A `NEUROPED_MASTER_KEY` foi alterada. **Nao trocar a master key sem re-encrypt** dos dados existentes. Restaurar a key original ou re-encrypt todos os dados.
+
+### Email nao envia
+Validar SMTP via:
+```bash
+curl -v telnet://smtp-relay.brevo.com:587
+```
+Se conectar mas autenticar falhar, verificar SMTP_USER/SMTP_PASSWORD.
+
+---
+
+Atualizado: 2026-05-07.

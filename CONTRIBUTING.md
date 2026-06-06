@@ -1,81 +1,112 @@
-# Contribuindo com o NeuroPed SDG
+# Contribuindo
 
-Obrigado pelo interesse em contribuir. Esta é uma ferramenta clínica de uso profissional, então as contribuições passam por critério mais rigoroso do que repositórios genéricos.
+Software medico exige rigor maior que projetos genericos. Leia tudo antes de abrir PR.
 
 ## Quem pode contribuir
 
-- **Profissionais de saúde** com registro ativo no respectivo conselho, para revisão de conteúdo clínico
-- **Desenvolvedores** convidados pelo titular do projeto
-- **Pacientes/responsáveis** podem reportar problemas de UX e bugs via canal de contato
+- Profissionais de saude com registro ativo (revisao clinica)
+- Desenvolvedores convidados pelo CODEOWNER
+- Pesquisadores da area de saude digital
 
-Pull requests externos não solicitados são revisados, mas o merge depende do alinhamento estratégico com o produto e da aprovação do CODEOWNER.
+## Setup dev
 
-## Tipos de contribuição
+```bash
+git clone <repo>
+cd "NeuroPed Escalas de Neuropedia"
+cp .env.example .env
+# Editar .env com valores de dev
+npm install
+npm run dev
+```
 
-### 1. Correção de conteúdo clínico
+## Branch model
 
-Contribuições de correção de escalas, doses, classificações ou referências bibliográficas devem incluir:
+- `main` — producao, protegida
+- `feat/<descricao>` — feature em desenvolvimento
+- `fix/<descricao>` — correcao
+- `chore/<descricao>` — manutencao
+- `docs/<descricao>` — apenas documentacao
 
-- Citação da fonte primária (PMID, DOI ou guideline oficial)
-- Versão da escala
-- Justificativa clínica
-- Identificação do contribuidor (nome completo + registro profissional)
+## Commit convention
 
-### 2. Correção de bugs
+Inspirado em Conventional Commits:
 
-- Descrever passos para reproduzir
-- Navegador, versão, sistema operacional
-- Screenshot se aplicável
-- Comportamento esperado vs observado
+- `feat:` nova feature
+- `fix:` correcao
+- `chore:` manutencao
+- `docs:` documentacao
+- `refactor:` refatoracao sem mudanca funcional
+- `test:` testes
+- `security:` correcao de seguranca (descreva privadamente antes)
 
-### 3. Melhorias de UX/visual
+Exemplos:
+- `feat: add LGPD export request endpoint`
+- `fix: prevent timing attack in password verify`
+- `security: rotate JWT secret on every deploy`
 
-- Mockup ou descrição clara do problema
-- Justificativa em termos de usabilidade clínica
-
-### 4. Segurança
-
-Use o canal privado descrito em [SECURITY.md](./SECURITY.md). **Não abra issue pública.**
-
-## Regras técnicas
+## PR checklist
 
 Todo PR precisa:
 
-1. Passar pelo workflow de qualidade (lint, build, testes)
-2. Manter cobertura mínima de testes em código clínico
-3. Incluir JSDoc/TSDoc com `@clinical-source` em funções clínicas novas
-4. Manter zero dependências CDN externas em runtime
-5. Manter conformidade com paleta WarmMinimalism PANT (creme, teal, ouro, bordô, plum, dark)
-6. Não introduzir bibliotecas com licenças incompatíveis (avaliar SPDX)
+- [ ] Build passa (`npm run build`)
+- [ ] TypeScript sem erros (`npm run check`)
+- [ ] Lint sem warnings
+- [ ] Sem segredos commitados (git secrets ou similar)
+- [ ] Sem dados de paciente reais (anonimizar testes)
+- [ ] Documentacao atualizada se mudou API publica
+- [ ] CHANGELOG atualizado se mudanca user-facing
+- [ ] Audit log adicionado se evento sensivel novo
 
-## Critérios de revisão
+## Codigo clinico
 
-PRs serão avaliados por:
+Funcoes que calculam scores ou interpretam escalas DEVEM ter:
 
-| Critério | Peso |
-|----------|------|
-| Correção clínica | Crítico |
-| Segurança e LGPD | Crítico |
-| Acessibilidade WCAG 2.2 AA | Alto |
-| Performance (bundle size, Web Vitals) | Alto |
-| Cobertura de testes | Médio |
-| Coerência visual com PANT | Médio |
-| Qualidade do código | Médio |
+```ts
+/**
+ * @clinical-source <citacao primaria>
+ * @scale-version <versao>
+ * @last-clinical-review <data>
+ */
+```
 
-## Código de conduta
+Sem isso, o PR sera bloqueado.
 
-- Respeito mútuo
-- Foco em fatos clínicos e técnicos
-- Discordâncias resolvidas com referências, não com afirmação
-- Confidencialidade absoluta sobre qualquer dado de paciente que apareça em logs ou screenshots compartilhados
+## Seguranca
 
-## Canal de comunicação
+- Nunca commitar `.env`, segredos, tokens
+- Nunca log de senha, mesmo em desenvolvimento
+- Validar entrada com Zod antes de qualquer operacao
+- Escapar saida em templates (React faz por padrao)
+- Adicionar audit log para qualquer endpoint que toque dado sensivel
 
-Para dúvidas sobre processo de contribuição:
+Se descobrir vulnerabilidade, NAO abra PR publica. Use o canal privado em SECURITY.md.
 
-- WhatsApp: (87) 9 9109-7371
-- GitHub: abrir issue marcando `@jadsonfraga`
+## Estilo
+
+- Prettier config oficial
+- ESLint config oficial
+- TypeScript strict
+- Imports ordenados (auto via Prettier)
+
+## Testes
+
+Cobertura minima:
+- 90% em codigo de cripto, auth, audit
+- 70% global
+
+Rode `npm run test` antes de abrir PR.
+
+## Deploy
+
+PRs em main disparam deploy automatico (em producao). PRs em branches feature criam preview environments (se provedor suportar).
+
+## Contato
+
+- Code review: marcar @jadsonfraga
+- Duvidas tecnicas: abrir issue
+- Duvidas clinicas: contato direto
+- Seguranca: ver SECURITY.md
 
 ---
 
-Última atualização: 2026-05-07.
+Atualizado: 2026-05-07.

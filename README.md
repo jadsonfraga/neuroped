@@ -1,92 +1,166 @@
-# NeuroPed SDG — v6.45.9
+# NeuroPed EDJ — Plataforma Fullstack
 
-**Plataforma educacional e demonstrativa de neuropediatria — local-first (PWA)**
+[![Build e Deploy NeuroPed](https://github.com/jadsonfraga/neuroped/actions/workflows/deploy.yml/badge.svg)](https://github.com/jadsonfraga/neuroped/actions/workflows/deploy.yml)
 
-Dr. Jadson Fraga Araújo Júnior · **CRM-PE 25227 · RQE 17756** · Neuropediatria
-Rua Raimundo Lacerda, Casa 01 — Bairro São José, Petrolina-PE · CEP 56302-470
+> Aplicativo clinico de neuropediatria com backend real, autenticacao, criptografia AES-GCM, conformidade LGPD substantiva e route guards. Construido para uso profissional do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756).
 
----
+> ⚠️ **Uso clínico restrito.** Este sistema processa dados de saúde de crianças. Operar em conformidade com LGPD e normas do CFM. URL de produção: https://jadsonfraga.github.io/neuroped/
 
-> ⚠️ **AMBIENTE DEMONSTRATIVO / EDUCACIONAL**
-> Demonstração técnica honesta. Os instrumentos autorais são de **triagem orientadora**, não diagnóstico. Não inserir dados reais de pacientes. Laudos/documentos gerados trazem carimbo de demonstração e **não** têm valor jurídico até as etapas de `GO_LIVE_CHECKLIST.md` estarem completas.
+## Visao geral
 
----
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | React 18 + Vite 7 + Tailwind + Radix UI + wouter |
+| Backend | Express 5 + TypeScript via tsx |
+| ORM | Drizzle |
+| Banco | SQLite (better-sqlite3) em dev, Postgres em producao |
+| Auth | JWT (HS256) access + opaque refresh com rotacao + bcrypt |
+| Cripto | AES-256-GCM com chave derivada via PBKDF2 |
+| Email | nodemailer com SMTP (Brevo/Resend/SES recomendado) |
+| Seguranca | helmet + rate-limit + CORS restrito + audit logs |
 
-## Arquitetura (estado real)
+## Estrutura
 
-PWA estática (HTML/CSS/JS), **local-first**, sem backend obrigatório. Publica via **GitHub Pages** a partir de `main` em `jadsonfraga.github.io/neuroped/`. O PWA instalado abre por `app-shell.html` (`start_url`).
-
-Camadas centrais:
-
-- **`np-store.js`** — espinha de dados local (namespace `np:*`): múltiplas crianças, criança **ativa**, `resultsFor`, `medLogFor`, `diarySummary`, `exportAll`/`importAll` (mescla por id, nunca apaga). 100% no dispositivo.
-- **`scales-enhance.js`** (`window.NeuroPedScales`) — motor de escala: pontua, gera **laudo PDF com respostas item-a-item**, salva histórico. Concatenado em `scales-bundle.js`.
-- **`escala.html?id=<id>`** — runner unificado: responde **qualquer** escala do catálogo com fluxo guiado (auto-avanço, conclusão, skeleton); laudo amarrado à criança ativa.
-- **`filtro-escalas.html`** — clique idade+queixa → 3 mais indicadas → runner; memória de queixa **por criança**.
-- **`perfil-crianca.html`** — CRUD criança, linha do tempo, comparador longitudinal, **síntese do caso** (escalas × medicação × diário) + PDF, documentos prontos, reaplicar escala.
-- **`central-atalhos.html`** — hub com faixa de destaque, indicadores de uso e "Continuar o caso".
-- **`app-polish-mobile.js`** — camada universal (toda página): transições, **guia de jornada** (próximo passo contextual), prefetch preditivo, onboarding, marca em toda tela.
-- **`app-shell.html`** — casca persistente (topo + abas + `<iframe>`) para experiência de moldura única.
-
-Qualidade: `scripts/test-static.mjs` (**780+ asserções estáticas**, 0 falhas como gate de commit/CI), `scripts/build-scales-bundle.mjs` (frescor do bundle) e **`design-audit --check`** (gate de não-regressão visual). Todo PR roda esses gates no GitHub Actions antes do merge/deploy.
-
-### Por que sem framework (escolha deliberada, não amadorismo)
-HTML/CSS/JS direto é intencional para um produto clínico **local-first** que precisa durar: **zero build obrigatório**, auditável linha a linha, **offline real** via Service Worker, carga leve em aparelho de família e **sem cadeia de dependências** para envelhecer/quebrar. A disciplina vem dos **gates de teste + CI**, não do framework. Onde compila (o `index` é um bundle Vite), o artefato fica versionado e servido estático.
-
-## O que esta versão FAZ
-
-- Filtro de escalas por idade/queixa → 3 instrumentos indicados.
-- Runner que responde a escala e gera **laudo PDF com as respostas**, salvo no histórico da criança ativa.
-- Perfil longitudinal: linha do tempo, comparador (delta entre reavaliações), síntese do caso, documentos prontos (declaração escolar, relatório a terapeuta, atestado de acompanhamento).
-- Diário de escola/terapias e inventário de **resposta à medicação** (família × escola).
-- CAA gratuita (pictogramas + voz pt-BR) e materiais educativos para famílias.
-- PWA instalável, funciona **offline** após a primeira visita.
-
-## O que esta versão NÃO faz (limitações honestas)
-
-- ❌ Não autentica médicos profissionalmente (PIN local **não** é autenticação).
-- ❌ Não armazena em banco seguro com RLS por padrão (dados ficam no dispositivo).
-- ❌ Não emite documentos com assinatura digital ICP-Brasil.
-- ❌ Não processa cobranças/assinaturas reais (checkout a configurar).
-- ❌ Não oferece telemedicina.
-
-Detalhes em `KNOWN_LIMITATIONS.md` e `GO_LIVE_CHECKLIST.md`.
-
-## Versão e disciplina de release
-
-Versão canônica sincronizada em **4 carimbos**: `package.json`, `sw.js` (`CACHE_NAME`), `app-polish-mobile.js` (`__NP_VERSION`) e `verificar-app.html`. Antes de cada commit: `node scripts/test-static.mjs` deve retornar **0 falhas** e o nº de asserções não pode diminuir.
-
-```bash
-# servir localmente
-python3 -m http.server 8080   # abrir http://localhost:8080/app-shell.html
-# checagem estática (gate de commit)
-node scripts/test-static.mjs
-# refazer o bundle de escalas (se tocar módulos de escala)
-node scripts/build-scales-bundle.mjs
+```
+.
+|- server/
+|  |- index.ts            # Entry Express
+|  |- routes.ts           # Rotas /api/*
+|  |- storage.ts          # Drizzle + bootstrap admin
+|  |- static.ts           # Servidor estatico em prod
+|  |- vite.ts             # Vite dev integration
+|  |- auth/
+|  |  |- routes.ts        # /api/auth/* (register/login/refresh/logout/me)
+|  |- middleware/
+|  |  |- auth.ts          # requireAuth, requireRole
+|  |  |- security.ts      # helmet, cors, rate-limit
+|  |- lib/
+|     |- crypto.ts        # AES-GCM encrypt/decrypt + HMAC + tokens
+|     |- password.ts      # bcrypt + lockout
+|     |- jwt.ts           # access/refresh tokens
+|     |- audit.ts         # log de auditoria
+|     |- email.ts         # nodemailer SMTP
+|     |- patientCrypto.ts # camada de cripto para Patient
+|- client/src/
+|  |- App.tsx             # Router com RouteGuard nas rotas sensiveis
+|  |- contexts/
+|  |  |- AuthContext.tsx
+|  |- components/
+|  |  |- RouteGuard.tsx
+|  |- lib/
+|  |  |- authClient.ts    # fetch wrapper + refresh automatico
+|  |- pages/
+|     |- login.tsx
+|     |- session-expired.tsx
+|     |- lgpd-consent.tsx
+|     |- ... (75+ paginas de escalas)
+|- shared/
+|  |- schema.ts           # Drizzle schemas + Zod validators
+|- .env.example
+|- package.json
+|- README.md
+|- DEPLOY.md
+|- LGPD.md
+|- SECURITY.md
+|- CONTRIBUTING.md
+|- HOSPEDAGEM.md          # comparativo Brasil
 ```
 
-## Acesso ao modo profissional (demo)
+## Setup local
 
-A área profissional (`consulta.html`) é **demonstrativa** e exige um PIN master. O PIN **não** está em texto claro no bundle: a verificação usa **hash SHA-256** (`master-access-policy.js`), **rotacionável** via `window.NEUROPED_MASTER_PIN_HASH`. É proteção de UX contra exposição acidental, **não** mecanismo de segurança. Endurecimento (sessão com expiração, rate-limit, cifragem em repouso) está mapeado no roteiro de segurança/LGPD.
+### 1. Pre-requisitos
 
-### Modelo Pro (honesto, por design)
-O desbloqueio Pro valida um **hash** do código no cliente (`pro-license.js` / `pro-hashes.js`) — sem backend. Como em qualquer infoproduto, isso significa que um código pode ser usado em mais de um aparelho; é **aceitável e revogável** (basta remover o hash do lote e republicar). Não é cofre criptográfico, e não precisa ser: o valor está no conteúdo curado, não em DRM.
+- Node.js >= 20
+- npm >= 10
+- Git
 
-## Aviso clínico
+### 2. Instalar dependencias
 
-Os instrumentos autorais são recursos de **triagem operacional**. Não substituem avaliação médica, exame clínico ou instrumentos normatizados quando formalmente indicados. A decisão diagnóstica é sempre do médico responsável.
+```bash
+cd "NeuroPed Escalas de Neuropedia"
+npm install
+```
 
-## Contato
+### 3. Configurar ambiente
 
-- WhatsApp: **(87) 9 9109-7371** — `https://wa.me/5587991097371`
-- Petrolina-PE
+```bash
+cp .env.example .env
+# Edite .env e preencha:
+#   NEUROPED_MASTER_KEY  (gere com: node -e "console.log(require('crypto').randomBytes(48).toString('base64'))")
+#   NEUROPED_JWT_SECRET  (gere com: node -e "console.log(require('crypto').randomBytes(64).toString('base64'))")
+#   ADMIN_EMAIL, ADMIN_NAME, ADMIN_INITIAL_PASSWORD
+#   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+```
 
-## Licença
+### 4. Rodar dev
 
-- Conteúdo educacional e instrumentos autorais: CC-BY-NC do Dr. Jadson Fraga.
-- Pictogramas/ícones: emoji Unicode (uso livre).
+```bash
+npm run dev
+```
+
+O servidor sobe em `http://localhost:5000` (frontend + backend juntos via Vite middleware).
+
+### 5. Login inicial
+
+Apos primeiro `npm run dev`, o usuario admin e criado automaticamente com email/senha de `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD`. Faca login e troque a senha imediatamente em `/configuracoes`.
+
+**IMPORTANTE:** apos primeiro login, REMOVA `ADMIN_INITIAL_PASSWORD` do `.env` para evitar recriar admin acidentalmente.
+
+## Build de producao
+
+```bash
+npm run build
+NODE_ENV=production npm start
+```
+
+Para deploy completo, ver `DEPLOY.md`.
+
+## Documentos relacionados
+
+- [DEPLOY.md](./DEPLOY.md) — passos de deploy em diferentes provedores
+- [HOSPEDAGEM.md](./HOSPEDAGEM.md) — comparativo de hospedagem brasileira
+- [LGPD.md](./LGPD.md) — conformidade LGPD substantiva
+- [SECURITY.md](./SECURITY.md) — politica e checklist de seguranca
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — regras de contribuicao
+
+## API resumo
+
+### Auth
+- `POST /api/auth/login` — credentials, devolve access + refresh
+- `POST /api/auth/refresh` — rotaciona refresh
+- `POST /api/auth/logout` — revoga refresh
+- `GET  /api/auth/me` — info do usuario logado
+- `POST /api/auth/change-password`
+
+### Pacientes (campos sensiveis criptografados)
+- `POST   /api/patients` — protegido (admin/professional)
+- `GET    /api/patients` — protegido
+- `GET    /api/patients/:id` — protegido
+- `PATCH  /api/patients/:id` — protegido (admin/professional)
+- `DELETE /api/patients/:id` — protegido (admin/professional)
+
+### Resultados de escalas
+- `POST   /api/results` — protegido
+- `GET    /api/results` — protegido
+- `GET    /api/results/:id` — protegido
+- `DELETE /api/results/:id` — protegido (admin/professional)
+
+### LGPD
+- `POST /api/consents` — registra consentimento (com IP/UA/timestamp)
+- `GET  /api/consents` — lista consentimentos do usuario
+- `POST /api/lgpd/export-request` — solicita exportacao art. 18
+- `POST /api/lgpd/delete-request` — solicita exclusao art. 18
+
+### Email
+- `POST /api/send-report` — envia relatorio via SMTP (rate-limited)
+
+## Suporte
+
+Para questoes tecnicas: abra issue no repositorio.
+Para questoes clinicas: contato direto com Dr. Jadson Fraga.
 
 ---
 
-© 2026 NeuroPed SDG · Dr. Jadson Fraga Araújo Júnior · CRM-PE 25227 · RQE 17756 · Neuropediatria — Petrolina-PE
+**Conteudo educativo e de apoio clinico. Nao substitui consulta medica.**
 
-**Soli Deo Gloria.**
+© 2026 Dr. Jadson Fraga Araujo Junior. Todos os direitos reservados.

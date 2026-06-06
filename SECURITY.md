@@ -1,142 +1,147 @@
-# SECURITY — NeuroPed SDG
+# Security Policy & Checklist
 
-**Versão:** v5.1-truth-pass
-**Última revisão:** 2026-05-28
-**Status de segurança:** **DEMO — não usar dados reais**
+## Reportar vulnerabilidade
 
----
+Use o canal privado:
+- WhatsApp: (87) 9 9109-7371
+- Endereco: Rua Raimundo Lacerda, 001 — Sao Jose, Petrolina/PE — 56302-470
 
-## 1. Postura geral
+**NAO** abra issue publica para vulnerabilidades.
 
-Esta build é uma demonstração premium. Não há autenticação profissional, não há proteção criptográfica para dados em repouso, não há trilha de auditoria, não há controle de sessão server-side. Qualquer pessoa com acesso ao link público pode visualizar todo o conteúdo educacional e desbloquear os módulos profissionais demo com um PIN local.
+SLA:
+- Confirmacao de recebimento: 72h
+- Avaliacao inicial: 7 dias
+- Patch critico: 14 dias
+- Patch alto: 30 dias
+- Patch medio/baixo: 90 dias
+- Confidencialidade pre-disclosure: 90 dias apos patch
 
-**Não inserir dados de pacientes reais nesta versão.**
+## Histórico de Correções Críticas
 
----
-
-## 2. Modelo de ameaças (T)
-
-| Ator | Capacidade | Impacto |
-|---|---|---|
-| Visitante anônimo | Lê código-fonte e descobre PIN MASTER | Acessa módulos demo (sem dados reais → sem impacto) |
-| Atacante curioso | Abre DevTools e lê localStorage | Vê estado da sessão; se houver dados reais, vazamento |
-| Atacante avançado | Modifica `app.js` localmente para bypass de RLS | Sem RLS server-side, qualquer payload é aceito pelo backend (se houver) |
-| Familiar curioso | Acessa dispositivo do médico | Vê pacientes salvos localmente |
-| Médico distraído | Insere dados reais por engano | Dados ficam em localStorage não criptografado |
-
----
-
-## 3. Controles implementados (limitados)
-
-| Controle | Status | Comentário |
-|---|---|---|
-| HTTPS obrigatório | ✓ | GitHub Pages força TLS |
-| Service Worker scope | ✓ | Apenas escopo do app |
-| Banner de demonstração | ✓ | Visível na primeira sessão |
-| Marcação visível de dados demo | ✓ | Pacientes `[DEMO]` |
-| PDF com carimbo "DEMONSTRAÇÃO" | ✓ | Aviso no rodapé |
-| Demo banner persistente | ✓ | Reaparece a cada sessão |
-| Modo profissional gated por PIN | ⚠ parcial | PIN em texto claro no JS — apenas barreira de UX, não segurança |
-| Authentication | ✗ | Não implementada |
-| MFA | ✗ | Não implementado |
-| RLS no banco | ✗ | Sem banco real |
-| Audit log | ✗ | Não implementado |
-| Sentry/monitoramento | ✗ | Não implementado |
-| Rate limiting | ✗ | Não implementado |
-| Criptografia em repouso | ✗ | localStorage é texto claro |
+| Data | Severidade | Arquivo(s) | Problema | Correção |
+|------|-----------|------------|----------|----------|
+| 2026-05-08 | 🔴 CRÍTICO | `PasswordGate.tsx`, `pacientes.tsx`, `paciente-detalhe.tsx` | PIN `260756` hardcoded em plain text no código frontend | Removido. Substituído por `VITE_PIN_HASH` (SHA-256) + utilitário `client/src/lib/pinAuth.ts` |
+| 2026-05-08 | 🟠 ALTO | `PasswordGate.tsx` | `simpleHash()` trivialmente reversível usado para autenticação | Substituído por `crypto.subtle.digest("SHA-256")` nativo do browser |
 
 ---
 
-## 4. Controles obrigatórios para evolução a MVP clínico
+## Checklist de seguranca
 
-### 4.1 Autenticação real
-- Supabase Auth com magic link OU OTP via SMS
-- Email verificado obrigatoriamente
-- Senha NÃO armazenada pelo app (Supabase gerencia bcrypt)
-- Logout limpa todos os tokens
+### Codigo
 
-### 4.2 MFA obrigatório para perfis sensíveis
-- `admin` e `medico` exigem MFA TOTP
-- Recuperação via backup codes (não SMS, suscetível a SIM swap)
-- MFA não é opcional após primeira ativação
+- [x] Senhas com bcrypt cost 12, nunca em texto puro
+- [x] JWT HS256 com `NEUROPED_JWT_SECRET` minimo 32 chars
+- [x] Refresh token com hash SHA-256 em DB
+- [x] Rotacao de refresh com deteccao de reuso
+- [x] Lockout: 5 falhas = 15 min de bloqueio
+- [x] Validacao Zod em toda entrada
+- [x] Audit log em todo evento sensivel
+- [x] Erros de auth genericos (nao vazam se email existe)
+- [x] PBKDF2 100k iteracoes para derivacao de chave AES
+- [x] AES-256-GCM com IV aleatorio por mensagem
+- [x] HMAC-SHA256 para hash determinístico (CPF pesquisavel)
+- [x] CSP restritiva (default-src 'self', frame-ancestors 'none')
+- [x] HSTS preload
+- [x] X-Frame-Options DENY
+- [x] X-Content-Type-Options nosniff
+- [x] Referrer-Policy strict-origin-when-cross-origin
+- [x] Permissions-Policy bloqueando camera/mic/geo/payment
 
-### 4.3 Controle de acesso baseado em papel (RBAC)
-Tabela `profiles` com coluna `role`. Roles iniciais:
-- `admin` — todas operações
-- `medico` — pacientes, consultas, instrumentos, laudos
-- `secretaria` — agenda, cobrança, comunicação básica; **sem** prontuário
-- `terapeuta` — apenas pacientes vinculados a si, com restrições
-- `familia` — apenas o paciente autorizado e questionários liberados
+### Rate limiting
 
-### 4.4 Row Level Security
-- Toda tabela com dados de paciente DEVE ter RLS ligada
-- Sem exceções "para o admin via service_role"
-- Testes automatizados de RLS antes de cada deploy
+- [x] /api/* global: 100 req/min
+- [x] /api/auth/login: 5 / 15min (skipSuccessfulRequests)
+- [x] /api/send-report: 10 / hora
+- [x] /api/* writes: 30 / min
 
-### 4.5 Trilha de auditoria
-Logar em `audit_log` (imutável, append-only):
-- Login / logout / falhas de login
-- Criação, leitura sensível (PII), alteração, exclusão de paciente
-- Geração de laudo
-- Compartilhamento de passe familiar
-- Mudança de configuração de segurança
-- Acesso ao painel administrativo
+### CORS
 
-### 4.6 Proteção de segredos
-- Nenhuma chave secreta no frontend (`app.js`, `data.js`)
-- `SUPABASE_ANON_KEY` é a única chave segura para frontend
-- Webhooks de pagamento: validar assinatura HMAC obrigatoriamente
-- Variáveis de ambiente em Cloudflare Pages, nunca em commit
+- [x] Restrito a origens explicitas via `CORS_ORIGINS`
+- [x] credentials: true requer origem na whitelist
+- [x] Methods explicitos (sem wildcard)
 
-### 4.7 Política de senhas / passwordless
-- Magic link com expiração de 15 min
-- Single use
-- Rate limit: 3 magic links por hora por IP
-- Bloqueio após 5 tentativas inválidas de MFA
+### Cookies
 
-### 4.8 Gestão de sessão
-- JWT com expiração de 1h
-- Refresh token rotativo
-- Revogação em logout
-- Bloqueio de sessões antigas em mudança de senha
+- [x] cookie-parser configurado
+- [ ] httpOnly flag (TODO: migrar tokens para cookies httpOnly em producao)
+- [ ] Secure flag em producao (HTTPS only)
+- [ ] SameSite Strict ou Lax conforme caso de uso
+
+### Banco de dados
+
+- [x] Foreign keys habilitadas (`PRAGMA foreign_keys = ON`)
+- [x] WAL mode para concorrencia
+- [x] Indexes em colunas de busca (email, role, eventType)
+- [x] Cascade delete onde apropriado
+- [x] `set null` em FKs para audit logs (preserva historico)
+- [ ] Migracao para Postgres em producao (TODO)
+- [ ] Backup automatico (TODO via provedor)
+- [ ] Encryption at rest no nivel do disco (provedor)
+
+### Dependencies
+
+- [ ] `npm audit` sem high/critical (rodar antes de cada deploy)
+- [ ] Renovacao trimestral de dependencias
+- [ ] Lockfile committed
+
+### Secrets
+
+- [x] `.env` no gitignore
+- [x] `.env.example` documenta todas as vars necessarias
+- [x] Validacao em runtime: faltar var crash imediato
+- [ ] Vault/Key Management Service em producao (TODO)
+- [x] Rotacao de chave: documentada (mas implica re-encrypt)
+
+### Logs
+
+- [x] Audit log com IP, UA, user, timestamp
+- [x] Redacao de campos sensiveis (password, token, cpf) em metadata
+- [x] Sem dados sensiveis em stdout em producao
+
+### Monitoring (recomendado em producao)
+
+- [ ] Sentry ou Honeybadger para errors
+- [ ] Uptime check (UptimeRobot, BetterStack)
+- [ ] Alerta de tentativas de login falhas em massa
+
+### Web
+
+- [x] HTTPS obrigatorio (configurar no provedor)
+- [x] HSTS preload list
+- [x] Service Worker com cache controlado
+- [x] Headers de seguranca via helmet
+
+### Frontend
+
+- [x] sessionStorage para tokens (volatil ao fechar aba)
+- [x] Refresh automatico em 401
+- [x] Evento `auth:expired` para redirecionar
+- [x] RouteGuard em rotas sensiveis
+- [x] Role-based UI (esconder admin features se nao admin)
+
+## Threat model resumido
+
+| Ameaca | Mitigacao |
+|--------|-----------|
+| Credential stuffing | Lockout + rate limit + bcrypt cost 12 |
+| Brute force JWT | HS256 com secret 32+ chars + rotacao |
+| Token theft (XSS) | sessionStorage volatil; CSP restritiva |
+| CSRF | SameSite + verificacao Origin |
+| SQL injection | ORM Drizzle (parametrized) |
+| Data tampering | AES-GCM auth tag + HMAC integrity |
+| Insider threat | Audit log imutavel + role separation |
+| Replay attack | Refresh token rotation + JTI em access |
+| Denial of service | Rate limit + Cloudflare em front |
+| Data leak | Field-level encryption + redacao de logs |
+
+## Lista de portas/servicos
+
+- 5000 (HTTP local) — proxy reverso (nginx/caddy) deve servir 443 em producao
+- 587/465 (SMTP outbound) — para envio de email
+- 5432 (Postgres) — apenas se usar Postgres direto em producao (preferir socket interno)
+
+Bloquear todas as outras portas no firewall.
 
 ---
 
-## 5. Testes obrigatórios antes de marcar "seguro"
-
-| Cenário | Esperado |
-|---|---|
-| Acessar paciente de outra clínica via URL direta | 403 |
-| Acessar paciente de outro médico (mesma clínica) sem autorização | 403 |
-| Reutilizar passe familiar expirado | 401 |
-| Tentar editar consulta de outro médico via curl | 403 |
-| Acessar `/api/admin/*` como `secretaria` | 403 |
-| Acessar `/api/admin/*` sem MFA | 403 |
-| Tentar SQL injection nos campos do paciente | sanitizado |
-| Tentar XSS nos campos de mensagem | sanitizado |
-| Logout em uma aba invalida sessão em todas | sim |
-| Backup local após logout | apagado |
-
-Nenhum desses testes pode passar com sucesso de bypass. Falha = bloqueador de produção.
-
----
-
-## 6. Resposta a incidentes (futuro)
-
-| Evento | Ação |
-|---|---|
-| Suspeita de credencial vazada | Revogar sessões + forçar reset |
-| Acesso indevido confirmado | Notificar ANPD em 72h conforme LGPD art. 48 |
-| Bug de segurança reportado | Resposta em 24h, correção em 7 dias |
-| Vazamento de dados sensíveis | Notificar titular + ANPD + medidas mitigatórias |
-
----
-
-## 7. Limitações conhecidas desta versão (transparência)
-
-- PIN MASTER `REMOVIDO` está em texto claro no `app.js`. **Qualquer pessoa com DevTools consegue descobrir.**
-- O propósito do PIN nesta versão é apenas evitar exposição acidental dos módulos demo a quem só quer conteúdo educacional. **Não é mecanismo de segurança.**
-- Não há registro de quem acessou os módulos profissionais demo.
-- Dados em localStorage podem ser inspecionados/alterados por extensões do navegador.
-
-Esta documentação foi escrita para ser **lida e respeitada** antes de qualquer evolução do produto.
+Documento atualizado em 2026-05-07. Revisar a cada release significativa.

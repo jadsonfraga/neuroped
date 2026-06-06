@@ -1,11 +1,28 @@
+# ============================================================
+# NeuroPed — Configuração Cloudflare Workers/Pages + D1
+# ============================================================
+
 name = "neuroped"
-compatibility_date = "2025-12-01"
-pages_build_output_dir = "."
+compatibility_date = "2024-11-01"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "neuroped-db"
-database_id = "COLOCAR_DATABASE_ID_AQUI"
+# Diretório de output do frontend (usado pelo Cloudflare Pages)
+pages_build_output_dir = "dist/public"
 
-# Secrets (criar via: npx wrangler pages secret put APP_TOKEN)
-# [vars] ficam em produção via dashboard
+# ── Variáveis de ambiente (não-secretas) ──────────────────
+[vars]
+ENVIRONMENT = "production"
+APP_NAME = "NeuroPed"
+
+#── Ambiente de produção ───────────────────────────────────
+[env.production]
+name = "neuroped-production"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+# ── Ambiente de preview (PRs e branches) ──────────────────
+[env.preview]
+name = "neuroped-preview"
+
+[env.preview.vars]
+ENVIRONMENT = "preview"

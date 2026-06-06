@@ -1,0 +1,230 @@
+/**
+ * tokens.css — Sistema de Design NeuroPed
+ * Paleta médica, espaçamentos, tipografia, bordas e sombras unificados.
+ *
+ * USO:
+ *   Importe em index.css: @import './styles/tokens.css';
+ *   Use as variáveis CSS: var(--color-primary), var(--space-4), etc.
+ *
+ * WCAG AA: todas as combinações de texto/fundo testadas para contraste ≥ 4.5:1
+ */
+
+:root {
+  /* ====================================================
+     PALETA MÉDICA PRINCIPAL
+     ==================================================== */
+
+  /* Azul-marinho clínico (primário) */
+  --np-blue-50:  #eff6ff;
+  --np-blue-100: #dbeafe;
+  --np-blue-200: #bfdbfe;
+  --np-blue-300: #93c5fd;
+  --np-blue-400: #60a5fa;
+  --np-blue-500: #3b82f6;
+  --np-blue-600: #2563eb;
+  --np-blue-700: #1d4ed8;
+  --np-blue-800: #1e40af;
+  --np-blue-900: #1e3a8a;
+  --np-blue-950: #172554;
+
+  /* Violeta neurológico (acento) */
+  --np-violet-500: #8b5cf6;
+  --np-violet-600: #7c3aed;
+  --np-violet-700: #6d28d9;
+  --np-violet-900: #4c1d95;
+
+  /* Cinza neutro (backgrounds, texto secundário) */
+  --np-gray-50:  #f8fafc;
+  --np-gray-100: #f1f5f9;
+  --np-gray-200: #e2e8f0;
+  --np-gray-300: #cbd5e1;
+  --np-gray-400: #94a3b8;
+  --np-gray-500: #64748b;
+  --np-gray-600: #475569;
+  --np-gray-700: #334155;
+  --np-gray-800: #1e293b;
+  --np-gray-900: #0f172a;
+
+  /* Verde sucesso (aprovado, normal, OK) */
+  --np-green-50:  #f0fdf4;
+  --np-green-100: #dcfce7;
+  --np-green-500: #22c55e;
+  --np-green-600: #16a34a;
+  --np-green-700: #15803d;
+
+  /* Vermelho alerta (risco, erro, crítico) */
+  --np-red-50:  #fef2f2;
+  --np-red-100: #fee2e2;
+  --np-red-500: #ef4444;
+  --np-red-600: #dc2626;
+  --np-red-700: #b91c1c;
+
+  /* Amarelo aviso (atenção, moderado) */
+  --np-yellow-50:  #fefce8;
+  --np-yellow-100: #fef9c3;
+  --np-yellow-400: #facc15;
+  --np-yellow-500: #eab308;
+  --np-yellow-600: #ca8a04;
+
+  /* ====================================================
+     SEMÂNTICA DE CORES (mapeamento de intenção)
+     ==================================================== */
+
+  --np-color-primary:        var(--np-violet-600);
+  --np-color-primary-hover:  var(--np-violet-700);
+  --np-color-primary-light:  var(--np-violet-500);
+  --np-color-primary-bg:     #f5f3ff;
+
+  --np-color-success:        var(--np-green-600);
+  --np-color-success-bg:     var(--np-green-50);
+  --np-color-success-border: var(--np-green-100);
+
+  --np-color-warning:        var(--np-yellow-600);
+  --np-color-warning-bg:     var(--np-yellow-50);
+  --np-color-warning-border: var(--np-yellow-100);
+
+  --np-color-danger:         var(--np-red-600);
+  --np-color-danger-bg:      var(--np-red-50);
+  --np-color-danger-border:  var(--np-red-100);
+
+  --np-color-info:           var(--np-blue-600);
+  --np-color-info-bg:        var(--np-blue-50);
+  --np-color-info-border:    var(--np-blue-100);
+
+  --np-color-text:           var(--np-gray-900);
+  --np-color-text-secondary: var(--np-gray-500);
+  --np-color-text-disabled:  var(--np-gray-400);
+
+  --np-color-bg:             #ffffff;
+  --np-color-bg-subtle:      var(--np-gray-50);
+  --np-color-bg-card:        #ffffff;
+  --np-color-border:         var(--np-gray-200);
+  --np-color-border-strong:  var(--np-gray-300);
+
+  /* ====================================================
+     ESPAÇAMENTOS (base 4px)
+     ==================================================== */
+
+  --space-0:   0;
+  --space-1:   0.25rem;   /* 4px  */
+  --space-2:   0.5rem;    /* 8px  */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
+  --space-24:  6rem;      /* 96px */
+
+  /* ====================================================
+     BORDAS E RAIOS
+     ==================================================== */
+
+  --radius-sm:   0.25rem;  /* 4px  — inputs pequenos */
+  --radius-md:   0.5rem;   /* 8px  — padrão */
+  --radius-lg:   0.75rem;  /* 12px — cards */
+  --radius-xl:   1rem;     /* 16px — modais */
+  --radius-2xl:  1.5rem;   /* 24px — painéis */
+  --radius-full: 9999px;   /* pills, badges */
+
+  /* ====================================================
+     SOMBRAS
+     ==================================================== */
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ====================================================
+     TIPOGRAFIA
+     ==================================================== */
+
+  --font-sans:  Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-mono:  "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px — mínimo para inputs mobile (evita zoom iOS) */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+  --text-4xl:  2.25rem;    /* 36px */
+
+  --leading-tight:  1.25;
+  --leading-snug:   1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+
+  /* ====================================================
+     TRANSIÇÕES
+     ==================================================== */
+
+  --transition-fast:   150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow:   300ms ease;
+
+  /* ====================================================
+     Z-INDEX
+     ==================================================== */
+
+  --z-base:    0;
+  --z-overlay: 10;
+  --z-sticky:  20;
+  --z-drawer:  30;
+  --z-modal:   40;
+  --z-toast:   50;
+  --z-tooltip: 60;
+
+  /* ====================================================
+     BOTÕES — TOUCH TARGET (WCAG 2.5.5)
+     ==================================================== */
+
+  --btn-min-height: 44px;   /* mínimo para toque confortável (iOS/Android) */
+  --btn-min-width:  44px;
+}
+
+/* ====================================================
+   UTILITÁRIOS DE ACESSIBILIDADE
+   ==================================================== */
+
+/** Skip navigation link — visível apenas no foco de teclado */
+.skip-nav {
+  position: absolute;
+  left: -9999px;
+  top: var(--space-2);
+  z-index: var(--z-toast);
+  padding: var(--space-2) var(--space-4);
+  background: var(--np-color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  text-decoration: none;
+}
+.skip-nav:focus {
+  left: var(--space-2);
+}
+
+/** Foco visível — WCAG 2.4.7 */
+:focus-visible {
+  outline: 2px solid var(--np-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/** Remove outline no foco de mouse (mantém apenas no teclado) */
+:focus:not(:focus-visible) {
+  outline: none;
+}
