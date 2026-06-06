@@ -52,6 +52,19 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
 .done button:hover{transform:translateY(-2px);filter:brightness(1.05)}
 .done .dlink{display:inline-block;margin-top:11px;color:var(--muted);text-decoration:none;font-weight:700;font-size:13px;border-bottom:1px solid var(--line2)}
 .done .dlink:hover{color:var(--ink)}
+/* ── Revisão das respostas (revisão clínica antes do laudo) ── */
+#reviewPanel{display:none;margin:16px 0;border:1px solid var(--line2);border-radius:18px;background:linear-gradient(180deg,var(--glass2),var(--glass));padding:16px}
+#reviewPanel.show{display:block;animation:donePop .35s cubic-bezier(.22,.9,.25,1)}
+.rvh{font:700 15px "Fraunces",Georgia,serif;color:var(--wine);margin:0 0 4px}
+.rvsub{font-size:12px;color:var(--soft);margin:0 0 12px}
+.rvrow{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.rvrow:last-child{border-bottom:0}
+.rvq{font-size:13px;color:#ece9ff;line-height:1.4;flex:1}
+.rvq b{color:var(--teal);margin-right:5px}
+.rva{flex-shrink:0;text-align:right;font-size:12.5px;font-weight:700;color:var(--gold);max-width:42%}
+.rvedit{display:block;margin-top:3px;border:0;background:none;color:var(--soft);font:600 11px inherit;cursor:pointer;text-decoration:underline;padding:0}
+.rvedit:hover{color:var(--teal)}
+.rvmiss{color:#ffb3c6;font-weight:700}
 .domain{margin:18px 0 6px}
 .domain h2{font:700 13px system-ui;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 10px}
 .item{border:1px solid var(--line);background:linear-gradient(180deg,var(--glass2),var(--glass));border-radius:18px;padding:15px;margin:11px 0;transition:border-color .2s,box-shadow .2s}
@@ -173,7 +186,8 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
   <section id="detail"></section>
   <p class="miss" id="miss">Responda todos os itens para um laudo completo (itens sem resposta saem marcados no PDF).</p>
   <section id="directTasks" hidden></section>
-  <div class="done" id="doneBanner" role="status" aria-live="polite"><b>✓ Tudo respondido</b><p>Gere o laudo em PDF com as respostas — fica salvo no histórico da criança.</p><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
+  <div class="done" id="doneBanner" role="status" aria-live="polite"><b>✓ Tudo respondido</b><p>Revise as respostas e gere o laudo em PDF — fica salvo no histórico da criança.</p><button type="button" id="reviewBtn" style="background:rgba(124,118,210,.16);color:var(--wine);border:1px solid var(--line2);box-shadow:none;margin-right:8px">📋 Revisar respostas</button><button type="button" id="doneCta">📄 Gerar laudo agora</button><a class="dlink" href="./perfil-crianca.html#synthSec">Depois, acompanhar no Perfil ›</a></div>
+  <section id="reviewPanel" hidden></section>
   <div class="toolbar"></div>
 
   <p class="foot">Instrumento autoral/operacional de triagem e acompanhamento. Não substitui avaliação médica, fonoaudiológica, psicológica ou pedagógica. A decisão é do médico responsável. Dr. Jadson Fraga · CRM-PE 25227 · RQE 17756.</p>
@@ -350,6 +364,32 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     el.innerHTML='<details class="dtask"><summary>🎯 Testes diretos sugeridos para aplicar com a criança<span class="ca">›</span></summary><div class="dbody"><p class="dnote">Tarefas práticas para observar a criança ao vivo — complementam o questionário. Proponha como brincadeira e <b>pare se a criança cansar</b>. Apoio à observação clínica, não é teste normatizado.</p>'+rows+'</div></details>';
     el.hidden=false;
   }
+  // REVISÃO DAS RESPOSTAS: lista read-only pergunta × resposta (itens sem resposta
+  // destacados) antes do laudo; "editar" volta ao item (troca de bloco se preciso).
+  function renderReview(){
+    var el=document.getElementById('reviewPanel'); if(!el||!INST)return;
+    var all=flat(), miss=0;
+    var rows=all.map(function(f){
+      var v=ANSWERS[f.key], has=(v!=null&&INST.labels[v]!=null);
+      if(!has)miss++;
+      var ans=has?esc(INST.labels[v]):'<span class="rvmiss">— sem resposta</span>';
+      return '<div class="rvrow"><div class="rvq"><b>'+(f.ii+1)+'.</b> '+esc(f.item)+'</div><div class="rva">'+ans+'<button type="button" class="rvedit" data-key="'+esc(f.key)+'">editar</button></div></div>';
+    }).join('');
+    el.innerHTML='<h2 class="rvh">📋 Revisão das respostas</h2><p class="rvsub">'+(all.length-miss)+' de '+all.length+' respondidas'+(miss?(' · <span class="rvmiss">'+miss+' sem resposta</span>'):'')+' — confira antes de gerar o laudo.</p>'+rows;
+    el.querySelectorAll('.rvedit').forEach(function(b){ b.addEventListener('click',function(){ jumpToItem(b.getAttribute('data-key')); }); });
+  }
+  function jumpToItem(key){
+    var all=flat(), idx=-1, i; for(i=0;i<all.length;i++){ if(all[i].key===key){ idx=i; break; } }
+    if(idx<0)return;
+    if(blocksOn()){ var p=plan(); for(var b=0;b<p.length;b++){ if(idx>=p[b].from&&idx<p[b].to){ CURRENT_BLOCK=b; break; } } renderDetail(); }
+    var rp=document.getElementById('reviewPanel'); if(rp){ rp.classList.remove('show'); rp.hidden=true; }
+    setTimeout(function(){ var input=document.querySelector('#detail input[name="q-'+key+'"]'); var item=input?input.closest('.item'):null; if(item){ item.scrollIntoView({behavior:'smooth',block:'center'}); item.style.outline='2px solid var(--gold)'; item.style.outlineOffset='3px'; setTimeout(function(){ item.style.outline=''; item.style.outlineOffset=''; },1600); } },70);
+  }
+  function toggleReview(){
+    var rp=document.getElementById('reviewPanel'); if(!rp)return;
+    if(rp.hidden){ renderReview(); rp.hidden=false; rp.classList.add('show'); rp.scrollIntoView({behavior:'smooth',block:'start'}); }
+    else { rp.classList.remove('show'); rp.hidden=true; }
+  }
   function paintWho(){
     var el=document.getElementById('whoChip'); if(!el)return;
     var c=null; try{c=window.NPStore&&window.NPStore.active();}catch(e){}
@@ -377,6 +417,7 @@ h1{margin:13px 0 6px;font:700 clamp(22px,4.6vw,32px)/1.1 "Fraunces","Georgia",se
     // skeleton enquanto o catálogo carrega (sensação de app, sem tela em branco)
     document.getElementById('detail').innerHTML='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
     var dc=document.getElementById('doneCta'); if(dc)dc.onclick=function(){var b=document.getElementById('npScalesPrint'); if(b)b.click(); else alert('Role até a barra de laudo para gerar o PDF.');};
+    var rb=document.getElementById('reviewBtn'); if(rb)rb.onclick=toggleReview;
     catalog(function(map){
       var raw=map[id]; if(!raw){showEmpty('Instrumento "'+id+'" não está no catálogo.');return;}
       INST=normalize(raw);
