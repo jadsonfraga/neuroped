@@ -15,6 +15,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
+import { AmbientEffects } from "@/components/AmbientEffects";
 
 // ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
@@ -317,6 +318,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <ToastProvider>
+            <AmbientEffects />
             <Toaster />
             <SplashScreen
               awaiting={!appReady}
