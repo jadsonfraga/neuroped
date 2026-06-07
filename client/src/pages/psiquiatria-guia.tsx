@@ -10,6 +10,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
+import { brandAssets } from "@/components/BrandAssets";
 import {
   Accordion,
   AccordionContent,
@@ -187,6 +189,14 @@ export default function PsiquiatriaGuiaPage() {
           </Badge>
         </div>
       </div>
+
+      <PremiumVisualPanel
+        src={brandAssets.illustrations.mentalHealthChild}
+        badge="Saúde mental infantil"
+        title="Imagem clínica para contextualizar ansiedade, humor e comportamento."
+        subtitle="O painel visual entra como respiro editorial antes da busca, sem modificar a navegação nem o conteúdo técnico."
+        className="min-h-44"
+      />
 
       {/* Search Bar */}
       <div className="relative" data-testid="search-container">
