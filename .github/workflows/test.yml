@@ -1,27 +1,19 @@
-name: Verify (catraca)
+name: Verify Legacy Manual
 
-# Catraca de CI (Bloco A2 do plano NeuroPed 8.0/9.0).
-# Gate DURO: roda `npm run verify` em todo PR e push para main.
-# verify = tsc --noEmit && validate-catalog && testes clínicos && check-baseline
-# Se qualquer etapa falhar, o job falha (sem continue-on-error).
+# Workflow legado preservado apenas para execução manual.
+# A catraca canônica de push/PR agora é `.github/workflows/verify.yml`.
+# Deploys seguem protegidos por `.github/workflows/deploy.yml` e `.github/workflows/deploy-cloudflare.yml`.
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: verify-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  verify:
+  verify-legacy:
     runs-on: ubuntu-latest
-    name: tsc + catálogo + testes clínicos + baseline
+    name: verify completo manual
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +26,9 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
 
-      - name: Verify (catraca completa)
+      - name: Verify manual completo
         run: npm run verify
