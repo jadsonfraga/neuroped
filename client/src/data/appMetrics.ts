@@ -2,6 +2,7 @@ import { pharmCategories } from "@/data/farmacologia";
 import { allScales } from "@/data/scaleFilter";
 import { mergeFilterableCatalog, supplementalFilterableInstruments } from "@/data/filterableCatalog";
 import { navigablePages } from "@/data/navigation";
+import { novidadesConteudoStats } from "@/data/novidadesConteudoAmpliado";
 
 const uniquePages = new Set(navigablePages.map((page) => page.href));
 const allFilterable = mergeFilterableCatalog(allScales);
@@ -14,7 +15,7 @@ export const appMetrics = {
   medicationCount: pharmCategories.reduce((total, category) => total + category.drugs.length, 0),
   medicationCategoryCount: pharmCategories.length,
   pageCount: uniquePages.size,
-  parentEducationCount: 8,
+  parentEducationCount: novidadesConteudoStats.artigosTotal,
 } as const;
 
 export function metricLabel(value: number, suffix = "") {
