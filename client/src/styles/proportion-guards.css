@@ -1,0 +1,114 @@
+/*
+ * NeuroPed — Guardas globais de zoom, viewport e proporção
+ * Objetivo: impedir cortes, zoom visual inesperado, overflow horizontal e distorção
+ * de imagens/mascotes sem redesenhar a identidade do app.
+ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+body,
+#root {
+  min-width: 320px;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+* {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.proportion-safe-page {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+  overflow-x: clip;
+}
+
+.viewport-stable-shell {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  overflow-x: clip;
+}
+
+.media-proportion-box,
+.asset-proportion-box,
+.mascot-proportion-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.media-proportion-box img,
+.asset-proportion-box img,
+.mascot-proportion-box img,
+.no-zoom-media {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: none !important;
+}
+
+.asset-proportion-box.cover-soft img,
+.cover-soft.no-zoom-media {
+  object-fit: cover;
+  object-position: center;
+}
+
+.text-overlay-safe,
+.elementos-texto {
+  pointer-events: none;
+  z-index: 2;
+}
+
+.emoji,
+.emotion,
+.asset-emoji,
+[class*="emoji"] {
+  line-height: normal;
+  vertical-align: -0.08em;
+}
+
+.aspect-square-safe {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-card-safe {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-wide-safe {
+  aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 420px) {
+  .proportion-safe-page,
+  .viewport-stable-shell {
+    width: 100%;
+  }
+
+  .hide-on-tiny {
+    display: none !important;
+  }
+}
