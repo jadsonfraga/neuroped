@@ -59,3 +59,18 @@ Assim que o ambiente tiver um remote Git/autenticação ou `wrangler` disponíve
 - push para `main`, acionando os workflows `.github/workflows/deploy.yml` e `.github/workflows/deploy-cloudflare.yml`; ou
 - `wrangler pages deploy dist/public --project-name neuroped --branch main`.
 
+---
+
+# Deploy acionado — 2026-06-07
+
+Deploy acionado diretamente na branch `main` para publicar todos os commits já integrados no ramo principal.
+
+## Método
+
+- Commit operacional mínimo em documentação para gerar evento `push` em `main`.
+- O workflow `.github/workflows/deploy-cloudflare.yml` está configurado para executar em `push` na branch `main` e também por `workflow_dispatch`.
+- O build de produção usa `npx vite build` e publica `dist/public` no projeto Cloudflare Pages `neuroped`.
+
+## Resolução de conflitos
+
+Os PRs #365, #366, #367, #368, #369 e #370 foram identificados como abertos. A resolução passou a preservar as melhorias clínicas, visuais e operacionais sem apagar o conteúdo já integrado em `main`.
