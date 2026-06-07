@@ -95,6 +95,22 @@ A logica nao inventa pontuacao clinica: ela usa correspondencia por texto, queix
 | Testes npm locais | Nao testado neste ambiente |
 | Validacao visual em browser | Nao testado neste ambiente |
 
+## Deploy acionado
+
+Deploy acionado por commit operacional em `main` em 2026-06-07, para publicar o nucleo inicial CORE 9: gate global, home em 5 fluxos, menu em camadas e filtro com ranking obrigatorio.
+
+### Metodo
+
+- Commit de rastreabilidade em documentacao.
+- Push direto para `main`.
+- Publicacao esperada pelo workflow/deploy configurado para eventos de push em `main`.
+
+### Estado honesto
+
+- Deploy: acionado.
+- CI/build remoto: aguardando verificacao pelo provedor.
+- Testes locais npm: nao executados neste ambiente.
+
 ## Proximo passo recomendado
 
 Verificar GitHub Actions apos o push para `main` e corrigir eventuais falhas de TypeScript/build apontadas pelo CI. Nao declarar nota 9.0 final sem CI verde e revisao visual em navegador real.
