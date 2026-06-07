@@ -315,7 +315,7 @@ export function MiniShield({ className = "" }: { className?: string }) {
 export function BrandWatermark({ className = "" }: { className?: string }) {
   return (
     <div className={`pointer-events-none absolute opacity-[0.055] dark:opacity-[0.075] ${className}`} aria-hidden="true">
-      <SafeAssetImage src={brandAssets.masterShield} alt="" className="h-full w-full object-contain" />
+      <SafeAssetImage src={brandAssets.masterShield} alt="" className="h-full w-full object-contain no-zoom-media" />
     </div>
   );
 }
@@ -326,5 +326,64 @@ export function ClinicalBrandIcon({ className = "" }: { className?: string }) {
       <Brain className="h-5 w-5 text-amber-200" strokeWidth={1.75} aria-hidden="true" />
       <Zap className="absolute -right-1 -bottom-1 h-5 w-5 text-amber-400/80" strokeWidth={2.25} aria-hidden="true" />
     </div>
+  );
+}
+
+type AssetShowcaseVariant = "clinical" | "family" | "mascots" | "all";
+
+const showcaseIds: Record<AssetShowcaseVariant, string[]> = {
+  clinical: ["child-assessment", "team-multiprofessional", "mental-health-child", "hero-brain", "dr-consultorio-superman", "neural-abstract"],
+  family: ["child-development", "team-multiprofessional", "dr-selfie", "mental-health-child", "child-assessment", "dr-arte"],
+  mascots: ["dr-superdoctor", "dr-consultorio-superman", "dr-arte", "dr-selfie", "dr-batman", "dr-consultorio-full"],
+  all: visualAssetRegistry.map((asset) => asset.id),
+};
+
+interface AssetShowcaseProps {
+  variant?: AssetShowcaseVariant;
+  title?: string;
+  subtitle?: string;
+  max?: number;
+  compact?: boolean;
+  className?: string;
+}
+
+export function AssetShowcase({
+  variant = "clinical",
+  title = "Biblioteca visual NeuroPed",
+  subtitle = "Mascotes e ilustrações oficiais reaproveitados com proporção preservada.",
+  max = 6,
+  compact = false,
+  className = "",
+}: AssetShowcaseProps) {
+  const allowed = new Set(showcaseIds[variant]);
+  const assets = visualAssetRegistry.filter((asset) => allowed.has(asset.id)).slice(0, max);
+
+  return (
+    <section className={`overflow-hidden rounded-3xl border border-border/70 bg-card/80 p-4 shadow-sm ${className}`} aria-label={title}>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">assets oficiais</p>
+          <h2 className="text-base font-black text-foreground">{title}</h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{subtitle}</p>
+        </div>
+        <span className="hidden rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-primary sm:inline-flex">
+          {assets.length} usados
+        </span>
+      </div>
+      <div className={`grid gap-2 ${compact ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
+        {assets.map((asset) => (
+          <div key={asset.id} className="group overflow-hidden rounded-2xl border border-border/70 bg-background/60 p-2">
+            <div className="asset-proportion-box aspect-card-safe rounded-xl bg-muted/40">
+              <SafeAssetImage src={asset.src} alt={asset.name} className="no-zoom-media h-full w-full rounded-xl object-contain" />
+            </div>
+            {!compact && (
+              <p className="mt-2 line-clamp-2 text-[10px] font-semibold leading-tight text-muted-foreground group-hover:text-foreground">
+                {asset.name}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
