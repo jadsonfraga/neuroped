@@ -10,13 +10,11 @@ import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
 import { navSections, getNavigationMatch } from "@/data/navigation";
-import { lockApp } from "@/lib/localUnlock";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
-    // Respeita preferência salva ou system
     const saved = localStorage.getItem("neuroped:theme");
     if (saved === "dark") return true;
     if (saved === "light") return false;
@@ -28,11 +26,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
-    Essenciais: true,
-    "Avaliação Clínica": true,
-    "Escalas e Inventários": false,
-    "Documentos e Receitas": true,
-    Administração: false,
+    principal: true,
+    "Fluxo clínico": true,
+    Escalas: false,
+    Pacientes: false,
+    "Pais / Psicoeducação": true,
+    Documentos: false,
+    Medicamentos: false,
+    "Ferramentas clínicas": false,
+    "Configurações / Ajuda": false,
   }));
 
   useEffect(() => {
@@ -42,14 +44,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, [dark]);
 
-  // D6: persiste o estado recolhido da barra lateral.
   useEffect(() => {
     try {
       localStorage.setItem("neuroped:sidebar-collapsed", collapsed ? "1" : "0");
     } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, [collapsed]);
 
-  // Close mobile menu on navigation + scroll to top + som sutil
   useEffect(() => {
     setMobileOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -63,8 +63,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   function handleLocalLock() {
     softTap();
     haptic.tap();
-    lockApp();
-    window.location.hash = "/";
+    try {
+      sessionStorage.removeItem("neuroped:pin-ok");
+      sessionStorage.removeItem("neuroped:access");
+      sessionStorage.removeItem("neuroped:local-unlocked");
+      localStorage.removeItem("neuroped:local-unlocked-persistent");
+    } catch { /* storage indisponível — recarregar ainda força rechecagem do gate */ }
+    window.location.hash = "#/";
+    window.location.reload();
   }
 
   return (
@@ -360,18 +366,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="sm"
-            className={`w-full hidden md:flex ${collapsed ? "justify-center px-0" : "justify-start"}`}
+            className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
             onClick={() => {
               softTap();
               haptic.tap();
               setCollapsed(!collapsed);
             }}
-            data-testid="button-collapse-sidebar"
-            aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-            aria-expanded={!collapsed}
+            data-testid="button-sidebar-toggle"
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           >
-            {collapsed ? <ChevronRight className="w-4 h-4" aria-hidden="true" /> : <ChevronLeft className="w-4 h-4" aria-hidden="true" />}
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             {!collapsed && <span className="ml-2 text-sm">Recolher</span>}
+            {collapsed && <span className="ml-2 text-sm md:hidden">Expandir</span>}
           </Button>
         </div>
       </aside>
@@ -379,77 +385,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main
         id="main-content"
-        className={`flex-1 transition-all duration-300 ${
-          collapsed ? "md:ml-16" : "md:ml-64"
-        } ml-0 pt-14 md:pt-0`}
-        tabIndex={-1}
+        className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
       >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 page-enter">
-          {location !== "/" && (
-            <button
-              onClick={() => {
-                softTap();
-                haptic.tap();
-                window.history.back();
-              }}
-              onMouseEnter={() => softHover()}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4 transition-colors group"
-              data-testid="button-breadcrumb-back"
-            >
-              <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-              Voltar
-            </button>
-          )}
-          {showClinicalFlow && (
-            <section
-              className="mb-5 rounded-2xl border border-border/70 bg-card/75 p-3 shadow-sm backdrop-blur sm:p-4"
-              aria-label="Fluxo clínico NeuroPed"
-              data-testid="clinical-flow-context"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Onde estou
-                  </p>
-                  <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <ClipboardList className="h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
-                    <span className="truncate">{activeNavigation?.item.label ?? "Área clínica"}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {activeNavigation?.section.title || "Navegação principal"} · fluxo único: do paciente ao histórico.
-                  </p>
-                </div>
-                <div className="rounded-xl bg-primary/10 px-3 py-2 text-xs text-muted-foreground sm:max-w-[18rem]">
-                  <span className="font-semibold text-foreground">Próximo passo:</span>{" "}
-                  registrar resultado, gerar documento e manter histórico recuperável.
-                </div>
-              </div>
-              <ol className="mt-3 flex gap-2 overflow-x-auto pb-1 text-[11px]" aria-label="Paciente, queixa, escala, aplicação, resultado, documento e histórico">
-                {flowSteps.map((step, index) => (
-                  <li
-                    key={step}
-                    className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-background/80 px-2.5 py-1 text-muted-foreground"
-                  >
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                      {index + 1}
-                    </span>
+        {showClinicalFlow && (
+          <div className="sticky top-14 md:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
+            <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-muted-foreground">
+              <ClipboardList className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="shrink-0 font-semibold text-foreground">Fluxo clínico</span>
+              {flowSteps.map((step, index) => {
+                const active = activeNavigation?.item.label.toLowerCase().includes(step.toLowerCase()) || (index === 1 && location === "/filtro");
+                return (
+                  <span key={step} className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/40 bg-primary/10 text-primary" : "border-border bg-card/60"}`}>
                     {step}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
           {children}
         </div>
-        <footer className="mx-auto max-w-4xl px-4 pb-6 text-center text-[11px] text-muted-foreground">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a href="./privacy-policy.html" className="hover:text-primary underline-offset-4 hover:underline">Política de Privacidade</a>
-            <a href="./terms-of-use.html" className="hover:text-primary underline-offset-4 hover:underline">Termos de Uso</a>
-            <Link href="/consentimento-lgpd"><span className="hover:text-primary underline-offset-4 hover:underline cursor-pointer">Consentimento LGPD</span></Link>
-            <Link href="/sobre-neuroped"><span className="hover:text-primary underline-offset-4 hover:underline cursor-pointer">Aviso clínico</span></Link>
-          </div>
-          <p className="mt-2">Ferramenta educacional/profissional: não substitui avaliação médica individualizada nem aplicação padronizada por profissional habilitado.</p>
-        </footer>
       </main>
     </div>
   );
