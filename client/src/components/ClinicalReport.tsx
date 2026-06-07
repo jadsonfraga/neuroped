@@ -184,31 +184,31 @@ function buildPrintableReport(props: ClinicalReportProps): string {
   <style>
     @page { margin: 2cm; size: A4; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
-    .header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid #6d28d9; padding-bottom: 14px; margin-bottom: 20px; gap: 16px; }
-    .doc-title { font-size: 15pt; font-weight: bold; color: #6d28d9; line-height: 1.2; }
-    .doc-subtitle { font-size: 10pt; color: #444; margin-top: 2px; }
-    .doc-crm { font-size: 8.5pt; color: #666; margin-top: 6px; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: black; }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid rebeccapurple; padding-bottom: 14px; margin-bottom: 20px; gap: 16px; }
+    .doc-title { font-size: 15pt; font-weight: bold; color: rebeccapurple; line-height: 1.2; }
+    .doc-subtitle { font-size: 10pt; color: dimgray; margin-top: 2px; }
+    .doc-crm { font-size: 8.5pt; color: dimgray; margin-top: 6px; }
     .header-right { text-align: right; flex-shrink: 0; }
-    .scale-name { font-size: 11pt; font-weight: bold; color: #1a1a1a; }
-    .scale-meta { font-size: 9pt; color: #666; margin-top: 2px; }
+    .scale-name { font-size: 11pt; font-weight: bold; color: black; }
+    .scale-meta { font-size: 9pt; color: dimgray; margin-top: 2px; }
     .section { margin-bottom: 18px; page-break-inside: avoid; }
-    .section h2 { font-size: 12pt; color: #6d28d9; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .result-box { background: #f3f0ff; border-left: 4px solid #6d28d9; padding: 12px 16px; border-radius: 4px; margin-bottom: 14px; }
-    .score { font-size: 20pt; font-weight: bold; color: #6d28d9; }
-    .label { font-size: 9pt; color: #555; }
-    .classification { font-size: 12pt; font-weight: bold; color: #1a1a1a; margin-top: 4px; }
+    .section h2 { font-size: 12pt; color: rebeccapurple; border-bottom: 1px solid gainsboro; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .result-box { background: lavender; border-left: 4px solid rebeccapurple; padding: 12px 16px; border-radius: 4px; margin-bottom: 14px; }
+    .score { font-size: 20pt; font-weight: bold; color: rebeccapurple; }
+    .label { font-size: 9pt; color: dimgray; }
+    .classification { font-size: 12pt; font-weight: bold; color: black; margin-top: 4px; }
     .domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .domain-item { background: #faf9ff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 12px; }
+    .domain-item { background: ghostwhite; border: 1px solid gainsboro; border-radius: 4px; padding: 8px 12px; }
     .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; page-break-inside: auto; }
-    .items-table th { background: #6d28d9; color: white; padding: 6px 10px; text-align: left; }
-    .items-table td { padding: 5px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .items-table th { background: rebeccapurple; color: white; padding: 6px 10px; text-align: left; }
+    .items-table td { padding: 5px 10px; border-bottom: 1px solid gainsboro; vertical-align: top; }
     .items-table tr { page-break-inside: avoid; page-break-after: auto; }
-    .items-table tr:nth-child(even) { background: #faf9ff; }
-    .items-table .high { background: #fef3c7; font-weight: bold; }
+    .items-table tr:nth-child(even) { background: ghostwhite; }
+    .items-table .high { background: lemonchiffon; font-weight: bold; }
     .narrative { text-align: justify; }
-    .footer { margin-top: 30px; border-top: 2px solid #6d28d9; padding-top: 12px; font-size: 8.5pt; color: #555; display: flex; justify-content: space-between; gap: 12px; }
-    .print-note { margin: 0 0 14px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 9pt; color: #475569; }
+    .footer { margin-top: 30px; border-top: 2px solid rebeccapurple; padding-top: 12px; font-size: 8.5pt; color: dimgray; display: flex; justify-content: space-between; gap: 12px; }
+    .print-note { margin: 0 0 14px; padding: 8px 12px; background: whitesmoke; border: 1px solid gainsboro; border-radius: 6px; font-size: 9pt; color: dimgray; }
     @media print { .print-note { display: none; } }
   </style>
 </head>
