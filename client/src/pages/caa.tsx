@@ -18,6 +18,28 @@ const LS_HIST = "neuroped:caa:hist:v1";
 
 type Board = Record<string, CaaCategory>;
 type Token = { icon: string; label: string; text: string };
+type UsageMode = "crianca" | "familia" | "terapeuta";
+
+const usageModes: Record<UsageMode, { label: string; badge: string; description: string; hint: string }> = {
+  crianca: {
+    label: "Criança",
+    badge: "uso direto",
+    description: "Cartões maiores, frase visível e fala imediata para favorecer participação da criança.",
+    hint: "Toque nas figurinhas para montar a frase e ouvir a voz.",
+  },
+  familia: {
+    label: "Família",
+    badge: "rotina de casa",
+    description: "Ajuda responsáveis a registrar palavras úteis da rotina e salvar cartões próprios da família.",
+    hint: "Use o campo “Cartão da família” para adaptar a prancha à rotina da criança.",
+  },
+  terapeuta: {
+    label: "Terapeuta",
+    badge: "apoio clínico",
+    description: "Organiza busca, favoritos e histórico para observar preferências comunicativas durante a sessão.",
+    hint: "Favoritos e histórico ajudam a revisar quais cartões foram mais funcionais.",
+  },
+};
 
 function clone<T>(o: T): T {
   return JSON.parse(JSON.stringify(o)) as T;
@@ -46,6 +68,7 @@ export default function CaaPage() {
   const [hist, setHist] = useState<string[]>(() => load<string[]>(LS_HIST, []));
   const [cat, setCat] = useState<string>(() => Object.keys(CAA_CATEGORIES)[0]);
   const [mode, setMode] = useState<"cat" | "fav" | "hist">("cat");
+  const [usageMode, setUsageMode] = useState<UsageMode>("crianca");
   const [search, setSearch] = useState("");
   const [phrase, setPhrase] = useState<Token[]>([]);
   const [rate, setRate] = useState(0.84);
@@ -68,6 +91,8 @@ export default function CaaPage() {
       localStorage.setItem(LS_HIST, JSON.stringify(hist.slice(0, 30)));
     } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, [hist]);
+
+  const activeUsage = usageModes[usageMode];
 
   const allItems = useMemo(
     () =>
@@ -181,6 +206,40 @@ export default function CaaPage() {
           busca, favoritos e montagem de frases por combinação de cartões. Recurso
           educacional local — não substitui avaliação fonoaudiológica.
         </p>
+
+        <div className="mt-4 rounded-2xl border border-border/70 bg-background/65 p-3 backdrop-blur">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Modo de uso
+              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
+                {activeUsage.label} · <span className="text-muted-foreground">{activeUsage.badge}</span>
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {activeUsage.description}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Selecionar modo de uso da CAA">
+              {(Object.keys(usageModes) as UsageMode[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={usageMode === key}
+                  onClick={() => setUsageMode(key)}
+                  className={`rounded-xl border px-2.5 py-2 text-xs font-semibold transition-colors ${
+                    usageMode === key
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-muted/60 text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {usageModes[key].label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-2 mt-3">
           <Button size="sm" variant="secondary" onClick={() => speak("Olá. Eu posso falar com figurinhas.", rate)}>
             <Volume2 className="w-4 h-4 mr-1" /> Testar voz
@@ -191,8 +250,9 @@ export default function CaaPage() {
       {/* Frase montada */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-sm font-bold">Minha frase</h2>
+            <span className="text-[11px] text-muted-foreground">{activeUsage.hint}</span>
           </div>
           <div className="min-h-[72px] flex flex-wrap gap-2 items-center rounded-2xl border-2 border-dashed border-amber-400/60 bg-muted/40 p-3">
             {phrase.length === 0 ? (
@@ -234,10 +294,15 @@ export default function CaaPage() {
         </CardContent>
       </Card>
 
-      <div className="grid md:grid-cols-[280px_1fr] gap-4">
+      <div className="grid gap-4 md:grid-cols-[280px_1fr]">
         {/* Sidebar: busca + categorias + controles */}
         <Card className="h-fit">
           <CardContent className="p-4 space-y-3">
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 p-3 text-xs leading-relaxed text-muted-foreground">
+              <strong className="block text-foreground">Orientação rápida</strong>
+              {activeUsage.hint}
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="caa-search" className="text-xs">Buscar figurinha</Label>
               <div className="relative">
@@ -337,7 +402,7 @@ export default function CaaPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {visibleItems.map(({ item }, i) => {
                 const isFav = favs.includes(symKey(item));
                 return (
@@ -345,7 +410,7 @@ export default function CaaPage() {
                     key={item[1] + i}
                     onClick={() => tap(item)}
                     aria-label={"Falar " + item[1]}
-                    className="relative min-h-[150px] flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-amber-400/30 bg-gradient-to-b from-card to-muted/40 p-3 text-center shadow-sm transition-transform active:scale-95 hover:border-primary/50"
+                    className="relative flex min-h-[132px] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-amber-400/30 bg-gradient-to-b from-card to-muted/40 p-3 text-center shadow-sm transition-transform hover:border-primary/50 active:scale-95 sm:min-h-[150px]"
                   >
                     <span
                       role="button"
@@ -393,8 +458,8 @@ export default function CaaPage() {
       <p className="text-[11px] text-muted-foreground border-t border-border pt-3">
         <strong>CAA Gratuita NeuroPed</strong> · recurso educacional local. Não substitui
         avaliação fonoaudiológica nem prescrição individualizada de CAA. As figurinhas usam
-        emojis nativos do sistema, sem banco proprietário. · Dr. Jadson Fraga Araújo Júnior ·
-        Neuropediatria · CRM-PE 25227 · RQE 17756
+        emojis nativos do sistema, sem banco proprietário. Os ajustes da prancha ficam neste
+        dispositivo. · Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756
       </p>
     </div>
   );
