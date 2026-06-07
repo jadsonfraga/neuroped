@@ -176,3 +176,5 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
   }
   return undefined;
 }
+
+export const getNavigationMatch = findNavigationMatch;
