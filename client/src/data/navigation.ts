@@ -67,6 +67,7 @@ export const navSections: NavSection[] = [
     title: "Fluxo clínico",
     items: [
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
+      { href: "/escalas-neuropsiquiatria", label: "100 escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "Aplicar escala", icon: ClipboardCheck },
       { href: "/prontuario", label: "Prontuário clínico", icon: ClipboardPlus },
       { href: "/pacientes", label: "Pacientes", icon: Users },
@@ -76,6 +77,7 @@ export const navSections: NavSection[] = [
   {
     title: "Escalas",
     items: [
+      { href: "/escalas-neuropsiquiatria", label: "100 escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "M-CHAT-R/F", icon: Baby },
       { href: "/cars", label: "CARS-2", icon: ClipboardCheck },
       { href: "/denver", label: "Denver II", icon: BookOpen },
