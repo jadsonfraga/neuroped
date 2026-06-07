@@ -148,7 +148,7 @@ function AppRouter() {
           <Route path="/scared" component={ScaredPage} />
           <Route path="/conners" component={ConnersPage} />
           <Route path="/vineland" component={VinelandPage} />
-          <Route path="/pant" component={PantPage} />
+          <Route path="/pant"><Protected roles={["admin", "professional"]}><PantPage /></Protected></Route>
           <Route path="/cdi2" component={Cdi2Page} />
           <Route path="/phqa" component={PhqaPage} />
           <Route path="/cssrs" component={CssrsPage} />
@@ -189,7 +189,7 @@ function AppRouter() {
           <Route path="/diario-sono" component={DiarioSonoPage} />
           <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
           <Route path="/diario-escola" component={DiarioEscolaPage} />
-          <Route path="/assinatura-digital" component={AssinaturaDigitalPage} />
+          <Route path="/assinatura-digital"><Protected roles={["admin", "professional"]}><AssinaturaDigitalPage /></Protected></Route>
           <Route path="/sobre" component={SobrePage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />
