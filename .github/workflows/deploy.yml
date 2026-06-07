@@ -43,11 +43,30 @@ jobs:
       - name: Validar catálogo clínico
         run: npm run validate:catalog
 
+      - name: Auditar política de acesso
+        run: npm run audit:access
+
       - name: Auditar assets visuais
         run: npm run audit:assets
 
       - name: Testes clínicos
         run: npm run test:clinical
+
+      - name: Criar sentinela de deploy
+        run: |
+          mkdir -p client/public
+          cat > client/public/deploy-check.json <<EOF
+          {
+            "app": "NeuroPed",
+            "provider": "github-pages",
+            "branch": "${GITHUB_REF_NAME}",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat client/public/deploy-check.json
 
       - name: Compilar frontend para Pages
         env:
@@ -59,6 +78,9 @@ jobs:
         run: |
           echo "=== dist/public ==="
           ls -la dist/public/
+          echo "=== deploy-check ==="
+          test -f dist/public/deploy-check.json
+          cat dist/public/deploy-check.json
           echo "=== assets ==="
           ls -la dist/public/assets/ | head -20
 
