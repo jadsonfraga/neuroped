@@ -17,7 +17,6 @@ import {
   FileText,
   Filter,
   Gauge,
-  GraduationCap,
   HeartHandshake,
   HeartPulse,
   HelpCircle,
@@ -68,6 +67,8 @@ export const navSections: NavSection[] = [
   {
     title: "Fluxo clínico",
     items: [
+      { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
+      { href: "/recepcao", label: "Recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
       { href: "/escalas-neuropsiquiatria", label: "100 escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "Aplicar escala", icon: ClipboardCheck },
