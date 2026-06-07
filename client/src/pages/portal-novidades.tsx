@@ -5,15 +5,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Newspaper, Clock, ChevronLeft, Users } from "lucide-react";
 import {
-  NOVIDADES_ARTIGOS, NOVIDADES_CATEGORIAS, type NovidadeArtigo,
-} from "@/data/novidadesArtigos";
+  NOVIDADES_ARTIGOS_AMPLIADOS,
+  NOVIDADES_CATEGORIAS_AMPLIADAS,
+  novidadesConteudoStats,
+} from "@/data/novidadesConteudoAmpliado";
+import type { NovidadeArtigo } from "@/data/novidadesArtigos";
 
 export default function PortalNovidadesPage() {
   const [cat, setCat] = useState("todos");
   const [open, setOpen] = useState<NovidadeArtigo | null>(null);
 
   const filtered = useMemo(
-    () => (cat === "todos" ? NOVIDADES_ARTIGOS : NOVIDADES_ARTIGOS.filter((a) => a.cat === cat)),
+    () => (cat === "todos" ? NOVIDADES_ARTIGOS_AMPLIADOS : NOVIDADES_ARTIGOS_AMPLIADOS.filter((a) => a.cat === cat)),
     [cat],
   );
 
@@ -55,8 +58,7 @@ export default function PortalNovidadesPage() {
         </div>
         <h1 className="text-2xl font-black">Saúde &amp; Desenvolvimento</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Artigos e orientações baseadas em evidências sobre neurodesenvolvimento infantil,
-          em linguagem para famílias.
+          Biblioteca ampliada com {novidadesConteudoStats.artigosTotal} artigos educativos em {novidadesConteudoStats.categoriasTotal - 1} trilhas: neurodesenvolvimento, escola, sono, comportamento, medicação, terapias, segurança e rotina familiar.
         </p>
         <Link href="/portal-familia">
           <Button variant="outline" size="sm" className="mt-3 gap-1">
@@ -67,7 +69,7 @@ export default function PortalNovidadesPage() {
 
       {/* Filtros de categoria */}
       <div className="flex flex-wrap gap-1.5">
-        {NOVIDADES_CATEGORIAS.map((c) => (
+        {NOVIDADES_CATEGORIAS_AMPLIADAS.map((c) => (
           <button
             key={c.key}
             onClick={() => setCat(c.key)}
