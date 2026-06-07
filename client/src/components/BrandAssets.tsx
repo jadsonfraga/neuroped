@@ -1,5 +1,7 @@
-import { Brain, ShieldCheck, Zap } from "lucide-react";
+import { useState } from "react";
+import { Brain, ImageOff, ShieldCheck, Zap } from "lucide-react";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
+import drJadsonLogoFile from "@assets/dr-jadson-logo.jpeg";
 import neuroPedLegacyLogo from "@assets/neuroped-logo.png";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
 import drConsultorioHero from "@assets/images/dr-jadson-consultorio-superman.jpeg";
@@ -16,6 +18,7 @@ import teamMultiprofessional from "@assets/images/team-multiprofessional.png";
 
 export const brandAssets = {
   masterShield: drJadsonMasterShieldLogo,
+  masterShieldFile: drJadsonLogoFile,
   legacyNeuroPedSymbol: neuroPedLegacyLogo,
   mascots: {
     superDoctor: drSuperMascot,
@@ -35,19 +38,168 @@ export const brandAssets = {
   },
 } as const;
 
-export const assetInventory = [
-  { group: "Logo mestre", name: "Escudo Dr. Jadson Fraga — vermelho/dourado", status: "A — premium e principal", usage: "marca principal em home, menu, splash, login, onboarding e micro branding" },
-  { group: "Logo histórica", name: "Símbolo NeuroPed roxo", status: "A — premium e reutilizável", usage: "asset secundário/legado, usado apenas como textura ou acento do ecossistema" },
-  { group: "Mascote", name: "Dr. Jadson SuperNeuroPed", status: "A — premium e reutilizável", usage: "boas-vindas e telas vazias" },
-  { group: "Mascote", name: "Dr. Jadson no consultório Superman", status: "A — premium e reutilizável", usage: "resultados e recomendações clínicas" },
-  { group: "Mascote", name: "Arte Dr. Jadson", status: "A — premium e reutilizável", usage: "celebração, conclusão e exportações" },
-  { group: "Mascote", name: "Selfie Dr. Jadson", status: "B — aceitável", usage: "apoio humano e estados neutros" },
-  { group: "Mascote", name: "Consultório Batman", status: "B — aceitável", usage: "conteúdo pediátrico/superpoder com uso pontual" },
-  { group: "Ilustração", name: "Cérebro infantil", status: "A — premium e reutilizável", usage: "background clínico e telas de bloqueio" },
-  { group: "Ilustração", name: "Avaliação infantil", status: "A — premium e reutilizável", usage: "onboarding, ferramenta de filtro e telas vazias" },
-  { group: "Ilustração", name: "Equipe multiprofissional", status: "A — premium e reutilizável", usage: "fluxos familiares, PDFs e acompanhamento" },
-  { group: "Background", name: "Neural abstract", status: "A — premium e reutilizável", usage: "hero institucional e cards premium" },
-] as const;
+export type VisualAssetStatus = "ativo" | "secundario" | "apoio";
+
+export interface VisualAssetRegistryItem {
+  id: string;
+  group: string;
+  name: string;
+  path: string;
+  src: string;
+  status: VisualAssetStatus;
+  usage: string;
+  auditRoute: string;
+}
+
+export const visualAssetRegistry: VisualAssetRegistryItem[] = [
+  {
+    id: "dr-jadson-logo-file",
+    group: "Logo mestre",
+    name: "Escudo Dr. Jadson Fraga — arquivo original",
+    path: "attached_assets/dr-jadson-logo.jpeg",
+    src: brandAssets.masterShieldFile,
+    status: "ativo",
+    usage: "registro físico do escudo mestre; auditado em /qualidade para garantir carregamento do arquivo do repositório",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "neuroped-legacy-logo",
+    group: "Logo histórica",
+    name: "Símbolo NeuroPed roxo",
+    path: "attached_assets/neuroped-logo.png",
+    src: brandAssets.legacyNeuroPedSymbol,
+    status: "secundario",
+    usage: "marca secundária/legado, acento histórico e apoio visual discreto",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-superdoctor",
+    group: "Mascote",
+    name: "Dr. Jadson SuperNeuroPed",
+    path: "attached_assets/images/dr-jadson-logo-super.jpeg",
+    src: brandAssets.mascots.superDoctor,
+    status: "ativo",
+    usage: "boas-vindas, home e estados vazios por meio do Mascote e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-consultorio-superman",
+    group: "Mascote",
+    name: "Dr. Jadson no consultório Superman",
+    path: "attached_assets/images/dr-jadson-consultorio-superman.jpeg",
+    src: brandAssets.mascots.consultorioSuperman,
+    status: "ativo",
+    usage: "resultados, recomendações clínicas e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-arte",
+    group: "Mascote",
+    name: "Arte Dr. Jadson",
+    path: "attached_assets/images/dr-jadson-arte.jpeg",
+    src: brandAssets.mascots.celebrationArt,
+    status: "ativo",
+    usage: "celebração, conclusão de fluxos, exportações e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-selfie",
+    group: "Mascote",
+    name: "Selfie Dr. Jadson",
+    path: "attached_assets/images/dr-jadson-selfie.jpeg",
+    src: brandAssets.mascots.doctorSelfie,
+    status: "apoio",
+    usage: "apoio humano, estados neutros e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-batman",
+    group: "Mascote",
+    name: "Consultório Batman",
+    path: "attached_assets/images/dr-jadson-consultorio-batman.jpeg",
+    src: brandAssets.mascots.consultorioBatman,
+    status: "apoio",
+    usage: "uso pediátrico pontual, superpoder infantil controlado e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-consultorio-full",
+    group: "Mascote",
+    name: "Consultório completo Dr. Jadson",
+    path: "attached_assets/images/dr-jadson-consultorio-full.jpeg",
+    src: brandAssets.mascots.consultorioFull,
+    status: "apoio",
+    usage: "conteúdo institucional, sobre a clínica e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "hero-brain",
+    group: "Ilustração",
+    name: "Cérebro infantil",
+    path: "attached_assets/images/hero-brain.png",
+    src: brandAssets.illustrations.heroBrain,
+    status: "ativo",
+    usage: "login, splash secundário, bloqueio clínico e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "child-assessment",
+    group: "Ilustração",
+    name: "Avaliação infantil",
+    path: "attached_assets/images/child-assessment.png",
+    src: brandAssets.illustrations.childAssessment,
+    status: "ativo",
+    usage: "onboarding, filtro clínico, estados vazios e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "child-development",
+    group: "Ilustração",
+    name: "Desenvolvimento infantil",
+    path: "attached_assets/images/child-development.png",
+    src: brandAssets.illustrations.childDevelopment,
+    status: "ativo",
+    usage: "educação familiar, desenvolvimento e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "mental-health-child",
+    group: "Ilustração",
+    name: "Saúde mental infantil",
+    path: "attached_assets/images/mental-health-child.png",
+    src: brandAssets.illustrations.mentalHealthChild,
+    status: "ativo",
+    usage: "saúde mental pediátrica, psiquiatria e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "neural-abstract",
+    group: "Background",
+    name: "Neural abstract",
+    path: "attached_assets/images/neural-abstract.png",
+    src: brandAssets.illustrations.neuralAbstract,
+    status: "ativo",
+    usage: "hero institucional, fundos premium discretos e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "team-multiprofessional",
+    group: "Ilustração",
+    name: "Equipe multiprofissional",
+    path: "attached_assets/images/team-multiprofessional.png",
+    src: brandAssets.illustrations.teamMultiprofessional,
+    status: "ativo",
+    usage: "fluxos multiprofissionais, família, PDFs e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+];
+
+export const assetInventory = visualAssetRegistry.map((asset) => ({
+  group: asset.group,
+  name: asset.name,
+  status: asset.status === "ativo" ? "A — ativo e auditado" : asset.status === "secundario" ? "A — secundário e auditado" : "B — apoio e auditado",
+  usage: asset.usage,
+})) as ReadonlyArray<{ group: string; name: string; status: string; usage: string }>;
 
 const sizeClasses = {
   xs: "w-8 h-8",
@@ -56,6 +208,58 @@ const sizeClasses = {
   lg: "w-24 h-24",
   xl: "w-32 h-32",
 } as const;
+
+interface SafeAssetImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  fallbackClassName?: string;
+  onLoadStateChange?: (loaded: boolean) => void;
+}
+
+export function SafeAssetImage({
+  src,
+  alt,
+  className = "",
+  fallbackClassName = "",
+  onLoadStateChange,
+}: SafeAssetImageProps) {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (failed) {
+    return (
+      <div
+        className={`flex h-full min-h-[96px] w-full items-center justify-center rounded-2xl border border-destructive/40 bg-destructive/10 text-destructive ${fallbackClassName}`}
+        role="img"
+        aria-label={`Imagem indisponível: ${alt}`}
+      >
+        <div className="flex flex-col items-center gap-2 text-center text-xs font-semibold">
+          <ImageOff className="h-5 w-5" />
+          <span>Imagem não abriu</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={`${className} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-200`}
+      onLoad={() => {
+        setLoaded(true);
+        onLoadStateChange?.(true);
+      }}
+      onError={() => {
+        setFailed(true);
+        onLoadStateChange?.(false);
+      }}
+    />
+  );
+}
 
 interface BrandMarkProps {
   size?: keyof typeof sizeClasses;
@@ -80,10 +284,11 @@ export function BrandMark({
     <div className={`flex items-center ${compact ? "gap-2" : "gap-3"} ${className}`}>
       <div className="relative flex-shrink-0">
         <div className="absolute inset-0 rounded-[1.35rem] bg-amber-400/25 blur-md" aria-hidden="true" />
-        <img
+        <SafeAssetImage
           src={brandAssets.masterShield}
           alt="Escudo Dr. Jadson Fraga — logo mestre NeuroPed"
           className={`${sizeClasses[size]} relative rounded-[1.2rem] object-cover bg-white shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
+          fallbackClassName={sizeClasses[size]}
         />
         <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-md ring-1 ring-white/70 dark:ring-black/40" aria-hidden="true">
           <Zap className="h-3 w-3" strokeWidth={2.5} />
@@ -110,7 +315,7 @@ export function MiniShield({ className = "" }: { className?: string }) {
 export function BrandWatermark({ className = "" }: { className?: string }) {
   return (
     <div className={`pointer-events-none absolute opacity-[0.055] dark:opacity-[0.075] ${className}`} aria-hidden="true">
-      <img src={brandAssets.masterShield} alt="" className="h-full w-full object-contain" />
+      <SafeAssetImage src={brandAssets.masterShield} alt="" className="h-full w-full object-contain" />
     </div>
   );
 }
