@@ -8,12 +8,21 @@ import { playBump, playFlagPole } from "@/lib/sounds";
 
 const MASTER_PIN_HASH = "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207";
 const ENV_PIN_HASH: string = import.meta.env.VITE_PIN_HASH ?? "";
-const EFFECTIVE_PIN_HASH = (ENV_PIN_HASH || MASTER_PIN_HASH).trim().toLowerCase();
-const HASH_IS_VALID = /^[a-f0-9]{64}$/.test(EFFECTIVE_PIN_HASH);
+const EFFECTIVE_PIN_HASHES = [MASTER_PIN_HASH, ENV_PIN_HASH.trim().toLowerCase()].filter(
+  (hash, index, list) => /^[a-f0-9]{64}$/.test(hash) && list.indexOf(hash) === index,
+);
+const HASH_IS_VALID = EFFECTIVE_PIN_HASHES.length > 0;
 const SESSION_KEY = "neuroped:pin-ok";
 
 interface PasswordGateProps {
   children: React.ReactNode;
+}
+
+function cleanInput(value: string): string {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
 }
 
 export function PasswordGate({ children }: PasswordGateProps) {
@@ -51,7 +60,7 @@ export function PasswordGate({ children }: PasswordGateProps) {
     setError(null);
 
     try {
-      const pinHash = await sha256hex(password);
+      const pinHash = await sha256hex(cleanInput(password));
 
       try {
         const response = await fetch("/api/auth/verify-pin", {
@@ -70,12 +79,12 @@ export function PasswordGate({ children }: PasswordGateProps) {
         // app estático/offline: segue para validação local por hash
       }
 
-      if (pinHash.toLowerCase() === EFFECTIVE_PIN_HASH) {
+      if (EFFECTIVE_PIN_HASHES.includes(pinHash.toLowerCase())) {
         unlock();
         return;
       }
 
-      setError("Senha incorreta. Tente novamente.");
+      setError("Senha incorreta. Confira maiúsculas, números e símbolo @.");
       setShaking(true);
       playBump();
       setTimeout(() => setShaking(false), 450);
@@ -121,6 +130,11 @@ export function PasswordGate({ children }: PasswordGateProps) {
                   }}
                   placeholder="Digite a senha"
                   autoFocus
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  inputMode="text"
                   className={`h-12 rounded-2xl border-white/15 bg-white/10 pr-11 text-white placeholder:text-white/30 focus:border-amber-300/60 ${error ? "border-red-300/70 bg-red-500/10" : ""}`}
                   data-testid="input-password"
                 />
