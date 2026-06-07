@@ -134,3 +134,19 @@ Post-deploy routes to verify:
 - public: `https://jadsonfraga.github.io/neuroped/#/portal-familia`
 - PIN master: `https://jadsonfraga.github.io/neuroped/#/pacientes`
 - PIN master: `https://jadsonfraga.github.io/neuroped/#/prontuario`
+
+## 2026-06-07 — Filtro PR260 visual guard deployment trigger
+
+Requested deployment after restoring the protected visual behavior of the scale filter according to PR #260.
+
+Included in current `main`:
+
+- `client/src/pages/filtro.tsx` uses `container-filtro`, `filter-260-shell`, `filter-260-grid`, `filter-260-card`, `filter-260-medalrow`, `filter-260-medal`, `filter-260-head` and related classes;
+- result cards follow the PR #260 hierarchy: medal row, visual symbol, title/subtitle, reason/evidence, status and action;
+- tier cards have top color strips for ouro/prata/bronze;
+- `client/src/index.css` adds the golden CSS guard for image proportion, overlay text, flex centering, aspect-ratio and emoji/medal line-height;
+- `docs/GOLDEN_RULE_FILTRO_PR260.md` records the rule: the scale filter visual behavior cannot be changed without explicit authorization.
+
+Post-deploy route to verify:
+
+- `https://jadsonfraga.github.io/neuroped/#/filtro`
