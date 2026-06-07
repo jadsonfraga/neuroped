@@ -97,3 +97,21 @@ Post-deploy route to verify:
 
 - `https://jadsonfraga.github.io/neuroped/#/recepcao`
 - `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
+
+## 2026-06-07 — LGPD non-blocking consent deployment trigger
+
+Requested deployment after changing the LGPD consent flow so it no longer blocks screen access.
+
+Included in current `main`:
+
+- `/consentimento-lgpd` is public and no longer wrapped by `Protected`;
+- the consent page now presents a non-blocking notice;
+- users can choose `Ir para o app`, `Continuar sem registrar agora`, or `Registrar consentimento`;
+- when the backend is unavailable, consent can be stored locally and the app remains usable;
+- sensitive clinical areas remain protected by the local clinical unlock/route guard.
+
+Post-deploy routes to verify:
+
+- `https://jadsonfraga.github.io/neuroped/#/consentimento-lgpd`
+- `https://jadsonfraga.github.io/neuroped/#/filtro`
+- `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
