@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { LocalUnlockGate } from "@/components/LocalUnlockGate";
 import { hasClinicalUnlock } from "@/lib/localUnlock";
 
-const SENSITIVE_ROUTES = [
+export const SENSITIVE_ROUTES = [
+  "/pant",
+  "/assinatura-digital",
   "/pacientes",
   "/paciente/",
   "/prontuario",
@@ -18,7 +20,7 @@ const SENSITIVE_ROUTES = [
   "/plano-intervencao",
   "/avaliacao-multiprofissional",
   "/fichas-registro",
-];
+] as const;
 
 export function isRouteSensitive(path: string): boolean {
   return SENSITIVE_ROUTES.some((p) => path.startsWith(p));
@@ -42,7 +44,7 @@ export function RouteGuard({
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center animate-pulse">
             <Brain className="w-5 h-5 text-white" />
           </div>
-          <p className="text-xs text-muted-foreground">Verificando sessao...</p>
+          <p className="text-xs text-muted-foreground">Verificando sessão...</p>
         </div>
       </div>
     );
@@ -58,9 +60,9 @@ export function RouteGuard({
         <div className="w-14 h-14 mx-auto rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
           <Lock className="w-6 h-6 text-red-500" />
         </div>
-        <h1 className="text-xl font-bold">Permissao insuficiente</h1>
+        <h1 className="text-xl font-bold">Permissão insuficiente</h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Seu papel ({user.role}) nao tem acesso a este modulo. Contate um administrador.
+          Seu papel ({user.role}) não tem acesso a este módulo. Contate um administrador.
         </p>
         <Button onClick={() => setLocation("/")}>Voltar</Button>
       </div>
