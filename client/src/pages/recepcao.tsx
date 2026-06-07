@@ -72,8 +72,8 @@ export default function RecepcaoPage() {
       <PremiumVisualPanel
         src={brandAssets.illustrations.teamMultiprofessional}
         badge="Recepção organizada"
-        title="Equipe, família e médico alinhados antes da consulta."
-        subtitle="A arte multiprofissional entra como reforço de processo, com opacidade controlada e sem competir com os dados."
+        title="Família, equipe e médico chegam à consulta falando a mesma língua."
+        subtitle="O painel reúne o que foi respondido antes da entrada no consultório e transforma a espera em informação útil."
         className="min-h-44"
       />
 
