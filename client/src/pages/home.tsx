@@ -8,6 +8,7 @@ import {
   FileText,
   Filter,
   LineChart,
+  Pill,
   Search,
   Stethoscope,
   Users,
@@ -19,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
+import { appMetrics } from "@/data/appMetrics";
+import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { navigablePages } from "@/data/navigation";
 import { allScales } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
@@ -34,6 +37,8 @@ interface ClinicalFlow {
   icon: LucideIcon;
   emphasis: "primary" | "gold" | "teal" | "blue" | "slate";
 }
+
+const homeSearchCatalog = mergeFilterableCatalog(allScales);
 
 const clinicalFlows: ClinicalFlow[] = [
   {
@@ -91,6 +96,13 @@ const emphasisClasses: Record<ClinicalFlow["emphasis"], string> = {
   slate: "from-slate-700 via-slate-800 to-slate-950 text-slate-50 ring-slate-300/30",
 };
 
+const metricCards = [
+  { label: "Escalas no catálogo", value: appMetrics.scaleCount, icon: ClipboardCheck },
+  { label: "Itens filtráveis", value: appMetrics.filterableInstrumentCount, icon: Filter },
+  { label: "Medicações", value: appMetrics.medicationCount, icon: Pill },
+  { label: "Rotas/páginas", value: appMetrics.pageCount, icon: FileText },
+];
+
 function normalize(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -147,7 +159,7 @@ export default function HomePage() {
     const pages = navigablePages
       .filter((page) => normalize(`${page.label} ${page.href}`).includes(q))
       .map((page) => ({ href: page.href, title: page.label, detail: "Página do app" }));
-    const scales = allScales
+    const scales = homeSearchCatalog
       .filter((scale) => normalize(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")}`).includes(q))
       .slice(0, 8)
       .map((scale) => ({ href: scale.appRoute || "/filtro", title: scale.name, detail: scale.fullName }));
@@ -164,20 +176,31 @@ export default function HomePage() {
           <div className="space-y-4">
             <BrandMark size="md" showWordmark subtitle="Cockpit clínico NeuroPed" />
             <div className="max-w-2xl space-y-2">
-              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">App médico premium · fluxo guiado</Badge>
+              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">App médico premium · números dinâmicos</Badge>
               <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl" data-testid="text-page-title">
                 Painel clínico de decisão
               </h1>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Escolha o caminho da consulta: aplicar escala, encontrar instrumento, abrir paciente, gerar documento ou acompanhar evolução. Menos ruído; mais decisão clínica.
+                Escolha o caminho da consulta: aplicar escala, encontrar instrumento, abrir paciente, gerar documento ou acompanhar evolução. Os números exibidos vêm do catálogo real do app.
               </p>
+            </div>
+            <div className="grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Métricas reais do app">
+              {metricCards.map((metric) => {
+                const Icon = metric.icon;
+                return (
+                  <div key={metric.label} className="rounded-2xl border border-border/70 bg-background/60 p-3">
+                    <div className="flex items-center gap-2 text-primary"><Icon className="h-4 w-4" /><span className="text-xl font-black text-foreground">{metric.value}</span></div>
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{metric.label}</p>
+                  </div>
+                );
+              })}
             </div>
             <div className="relative max-w-xl" data-testid="search-container">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala, página, paciente, documento..."
+                placeholder="Buscar escala, questionário, inventário, página..."
                 className="h-11 rounded-2xl border-border/80 bg-background/70 pl-10 pr-10 text-sm"
                 data-testid="input-search"
               />
