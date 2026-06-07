@@ -1,5 +1,5 @@
 import { Brain, ShieldCheck, Zap } from "lucide-react";
-import drJadsonShield from "@assets/dr-jadson-logo.jpeg";
+import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import neuroPedLegacyLogo from "@assets/neuroped-logo.png";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
 import drConsultorioHero from "@assets/images/dr-jadson-consultorio-superman.jpeg";
@@ -15,7 +15,7 @@ import neuralAbstract from "@assets/images/neural-abstract.png";
 import teamMultiprofessional from "@assets/images/team-multiprofessional.png";
 
 export const brandAssets = {
-  masterShield: drJadsonShield,
+  masterShield: drJadsonMasterShieldLogo,
   legacyNeuroPedSymbol: neuroPedLegacyLogo,
   mascots: {
     superDoctor: drSuperMascot,
@@ -36,7 +36,7 @@ export const brandAssets = {
 } as const;
 
 export const assetInventory = [
-  { group: "Logo mestre", name: "Escudo Dr. Jadson Fraga", status: "A — premium e reutilizável", usage: "marca principal em home, menu, splash, login, onboarding e micro branding" },
+  { group: "Logo mestre", name: "Escudo Dr. Jadson Fraga — vermelho/dourado", status: "A — premium e principal", usage: "marca principal em home, menu, splash, login, onboarding e micro branding" },
   { group: "Logo histórica", name: "Símbolo NeuroPed roxo", status: "A — premium e reutilizável", usage: "asset secundário/legado, usado apenas como textura ou acento do ecossistema" },
   { group: "Mascote", name: "Dr. Jadson SuperNeuroPed", status: "A — premium e reutilizável", usage: "boas-vindas e telas vazias" },
   { group: "Mascote", name: "Dr. Jadson no consultório Superman", status: "A — premium e reutilizável", usage: "resultados e recomendações clínicas" },
