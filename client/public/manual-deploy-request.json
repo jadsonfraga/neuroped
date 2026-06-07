@@ -1,0 +1,13 @@
+{
+  "app": "NeuroPed",
+  "request": "manual deployment trigger",
+  "requested_at_utc": "2026-06-07T19:45:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild from main after bug hunt fixes",
+  "verify_routes": [
+    "#/pre-retorno",
+    "#/recepcao",
+    "#/pant",
+    "#/assinatura-digital",
+    "#/filtro"
+  ]
+}
