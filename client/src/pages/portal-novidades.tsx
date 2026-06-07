@@ -11,15 +11,45 @@ import {
 } from "@/data/novidadesConteudoAmpliado";
 import type { NovidadeArtigo } from "@/data/novidadesArtigos";
 
+const BLOCKED_ARTICLE_TAGS = "script|style|iframe|object|embed|form|input|button|textarea|select|link|meta";
+const BLOCKED_TAG_PAIR_RE = new RegExp(
+  `<\\s*(${BLOCKED_ARTICLE_TAGS})[^>]*>[\\s\\S]*?<\\s*\\/\\s*\\1\\s*>`,
+  "gi",
+);
+const BLOCKED_TAG_RE = new RegExp(
+  `<\\s*(${BLOCKED_ARTICLE_TAGS})[^>]*\\/?>`,
+  "gi",
+);
+const EVENT_HANDLER_RE = new RegExp(
+  `\\s+on[a-z]+\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
+  "gi",
+);
+const STYLE_RE = new RegExp(
+  `\\s+style\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
+  "gi",
+);
+const ID_RE = new RegExp(
+  `\\s+id\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
+  "gi",
+);
+const JAVASCRIPT_HREF_RE = new RegExp(
+  `\\s+href\\s*=\\s*(["'])\\s*javascript:[\\s\\S]*?\\1`,
+  "gi",
+);
+const SRC_RE = new RegExp(
+  `\\s+src\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
+  "gi",
+);
+
 function sanitizeArticleHtml(html: string): string {
   return html
-    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select|link|meta)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
-    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select|link|meta)[^>]*\/?>/gi, "")
-    .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/\s+style\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/\s+id\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/\s+href\s*=\s*(["'])\s*javascript:[\s\S]*?\1/gi, ' href="#"')
-    .replace(/\s+src\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    .replace(BLOCKED_TAG_PAIR_RE, "")
+    .replace(BLOCKED_TAG_RE, "")
+    .replace(EVENT_HANDLER_RE, "")
+    .replace(STYLE_RE, "")
+    .replace(ID_RE, "")
+    .replace(JAVASCRIPT_HREF_RE, ' href="#"')
+    .replace(SRC_RE, "");
 }
 
 export default function PortalNovidadesPage() {
