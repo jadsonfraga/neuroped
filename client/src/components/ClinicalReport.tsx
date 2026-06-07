@@ -368,28 +368,6 @@ export function ClinicalReport(props: ClinicalReportProps) {
     const copiedFullReport = await copyReportToClipboard(reportText);
 
     try {
-      const nav = navigator as Navigator & {
-        share?: (data: { title?: string; text?: string }) => Promise<void>;
-      };
-      if (nav.share) {
-        await nav.share({
-          title: `NeuroPed — ${props.scaleName}`,
-          text: reportText,
-        });
-        softSuccess();
-        haptic.success();
-        toast({
-          title: "Compartilhamento aberto",
-          description: "Escolha WhatsApp para encaminhar o relatório completo.",
-        });
-        setSharingWhatsApp(false);
-        return;
-      }
-    } catch {
-      // Se o usuário cancelar ou o navegador bloquear, segue para fallback por wa.me.
-    }
-
-    try {
       window.open(buildWhatsappUrl(reportText), "_blank");
       softSuccess();
       haptic.success();
