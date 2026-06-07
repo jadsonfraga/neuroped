@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { SafeImage } from "@/components/SafeImage";
 import drSuper from "@assets/images/dr-jadson-logo-super.jpeg";
 import drSuperman from "@assets/images/dr-jadson-consultorio-superman.jpeg";
 import drArte from "@assets/images/dr-jadson-arte.jpeg";
@@ -16,6 +17,7 @@ interface MascoteData {
   src: string;
   alt: string;
   fala: string;
+  fit: "cover" | "contain";
 }
 
 const MASCOTES: Record<MascoteContexto, MascoteData> = {
@@ -23,21 +25,25 @@ const MASCOTES: Record<MascoteContexto, MascoteData> = {
     src: drSuper,
     alt: "Dr. Jadson — SuperNeuroPed",
     fala: "Bem-vindo! Vamos cuidar do desenvolvimento com leveza e ciência.",
+    fit: "contain",
   },
   resultado: {
     src: drSuperman,
     alt: "Dr. Jadson no consultório",
     fala: "Ótimo! Use este resultado como ponto de partida para a conversa clínica.",
+    fit: "cover",
   },
   celebracao: {
     src: drArte,
     alt: "Dr. Jadson — celebração",
     fala: "Parabéns por concluir! Cada passo conta. 🎉",
+    fit: "contain",
   },
   vazio: {
     src: drSelfie,
     alt: "Dr. Jadson Fraga",
     fala: "Comece escolhendo uma ferramenta no menu ao lado.",
+    fit: "cover",
   },
 };
 
@@ -69,7 +75,13 @@ export function Mascote({
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
         className={`${dim} flex-shrink-0 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-lg bg-white`}
       >
-        <img src={data.src} alt={data.alt} aria-hidden="true" className="w-full h-full object-cover" />
+        <SafeImage
+          src={data.src}
+          alt={data.alt}
+          aria-hidden="true"
+          className={`h-full w-full ${data.fit === "contain" ? "object-contain p-1" : "object-cover"}`}
+          fallbackLabel="Mascote NeuroPed"
+        />
       </motion.div>
       {message && (
         <div className="relative rounded-2xl rounded-bl-sm bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-foreground max-w-xs">
