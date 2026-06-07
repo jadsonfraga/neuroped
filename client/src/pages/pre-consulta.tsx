@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
+import { brandAssets } from "@/components/BrandAssets";
 import {
   buildPreConsultaSummary,
   createPreConsultaRecord,
@@ -103,6 +105,14 @@ export default function PreConsultaPage() {
                 <Input type="number" min={0} max={11} value={meses} onChange={(event) => setMeses(event.target.value)} />
               </label>
             </div>
+
+            <PremiumVisualPanel
+              src={brandAssets.illustrations.childAssessment}
+              badge="Triagem com propósito"
+              title="A imagem entra como apoio visual, não como decoração."
+              subtitle="A pré-consulta continua objetiva, mas com sinal visual de avaliação pediátrica organizada."
+              className="min-h-40"
+            />
 
             <div className="space-y-2">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa principal</span>
