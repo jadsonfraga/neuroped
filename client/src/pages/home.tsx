@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
+import { BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
@@ -172,6 +172,7 @@ export default function HomePage() {
     <div className="page-enter space-y-6 pb-8">
       <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur sm:p-7">
         <BrandWatermark className="right-4 top-4 h-40 w-40" />
+        <img src={brandAssets.legacyNeuroPedSymbol} alt="" aria-hidden="true" className="pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl object-contain opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" />
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
           <div className="space-y-4">
             <BrandMark size="md" showWordmark subtitle="Cockpit clínico NeuroPed" />
