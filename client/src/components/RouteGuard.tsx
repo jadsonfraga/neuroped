@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Brain, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PasswordGate } from "@/components/PasswordGate";
+import { LocalUnlockGate } from "@/components/LocalUnlockGate";
+import { hasClinicalUnlock } from "@/lib/localUnlock";
 
 const SENSITIVE_ROUTES = [
   "/pacientes",
@@ -31,6 +33,7 @@ export function RouteGuard({
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const [locallyUnlocked, setLocallyUnlocked] = useState(() => hasClinicalUnlock());
 
   if (isLoading) {
     return (
@@ -45,10 +48,8 @@ export function RouteGuard({
     );
   }
 
-  // Área protegida = SÓ o PIN mestre do médico (VITE_PIN_HASH). Sem email/CPF/senha
-  // de servidor: o PasswordGate desbloqueia com o PIN e libera o conteúdo na sessão.
-  if (!isAuthenticated) {
-    return <PasswordGate>{children}</PasswordGate>;
+  if (!isAuthenticated && !locallyUnlocked) {
+    return <LocalUnlockGate onUnlocked={() => setLocallyUnlocked(true)} />;
   }
 
   if (roles && roles.length > 0 && user && !roles.includes(user.role)) {
