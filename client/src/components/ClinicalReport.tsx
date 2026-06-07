@@ -11,6 +11,7 @@ import {
   Printer,
   Home,
   RotateCcw,
+  MessageCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -23,6 +24,7 @@ import { motion } from "framer-motion";
 import { easing, duration } from "@/lib/motion";
 
 const EMAIL_TO = "jadsonfraga@hotmail.com";
+const WHATSAPP_URL_LIMIT = 6500;
 
 interface DomainResult {
   domain: string;
@@ -166,67 +168,15 @@ function generateInterpretation(props: ClinicalReportProps): string {
   return text;
 }
 
-export function ClinicalReport(props: ClinicalReportProps) {
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
-  const reportText = generateInterpretation(props);
-  const reportReady = Boolean(
-    props.scaleName &&
-      props.classification &&
-      props.description &&
-      props.items.length > 0,
-  );
+function buildPrintableReport(props: ClinicalReportProps): string {
+  const dateStr = new Date().toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+  const maxVal = Math.max(2, ...props.items.map((it) => it.value));
 
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(reportText);
-      setCopied(true);
-      softSuccess();
-      haptic.success();
-      toast({
-        title: "Copiado!",
-        description: "Relatório copiado para a área de transferência.",
-      });
-      setTimeout(() => setCopied(false), 3000);
-    } catch {
-      toast({
-        title: "Erro",
-        description: "Não foi possível copiar. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  }
-
-  function handlePrint() {
-    if (!reportReady) {
-      toast({
-        title: "Relatório incompleto",
-        description: "Responda a escala e gere uma interpretação antes de imprimir.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const dateStr = new Date().toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-    const maxVal = Math.max(2, ...props.items.map((it) => it.value));
-
-    const htmlContent = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -234,32 +184,36 @@ export function ClinicalReport(props: ClinicalReportProps) {
   <style>
     @page { margin: 2cm; size: A4; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
-    .header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid #6d28d9; padding-bottom: 14px; margin-bottom: 20px; gap: 16px; }
-    .doc-title { font-size: 15pt; font-weight: bold; color: #6d28d9; line-height: 1.2; }
-    .doc-subtitle { font-size: 10pt; color: #444; margin-top: 2px; }
-    .doc-crm { font-size: 8.5pt; color: #666; margin-top: 6px; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: black; }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid rebeccapurple; padding-bottom: 14px; margin-bottom: 20px; gap: 16px; }
+    .doc-title { font-size: 15pt; font-weight: bold; color: rebeccapurple; line-height: 1.2; }
+    .doc-subtitle { font-size: 10pt; color: dimgray; margin-top: 2px; }
+    .doc-crm { font-size: 8.5pt; color: dimgray; margin-top: 6px; }
     .header-right { text-align: right; flex-shrink: 0; }
-    .scale-name { font-size: 11pt; font-weight: bold; color: #1a1a1a; }
-    .scale-meta { font-size: 9pt; color: #666; margin-top: 2px; }
-    .section { margin-bottom: 18px; }
-    .section h2 { font-size: 12pt; color: #6d28d9; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .result-box { background: #f3f0ff; border-left: 4px solid #6d28d9; padding: 12px 16px; border-radius: 4px; margin-bottom: 14px; }
-    .score { font-size: 20pt; font-weight: bold; color: #6d28d9; }
-    .label { font-size: 9pt; color: #555; }
-    .classification { font-size: 12pt; font-weight: bold; color: #1a1a1a; margin-top: 4px; }
+    .scale-name { font-size: 11pt; font-weight: bold; color: black; }
+    .scale-meta { font-size: 9pt; color: dimgray; margin-top: 2px; }
+    .section { margin-bottom: 18px; page-break-inside: avoid; }
+    .section h2 { font-size: 12pt; color: rebeccapurple; border-bottom: 1px solid gainsboro; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .result-box { background: lavender; border-left: 4px solid rebeccapurple; padding: 12px 16px; border-radius: 4px; margin-bottom: 14px; }
+    .score { font-size: 20pt; font-weight: bold; color: rebeccapurple; }
+    .label { font-size: 9pt; color: dimgray; }
+    .classification { font-size: 12pt; font-weight: bold; color: black; margin-top: 4px; }
     .domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .domain-item { background: #faf9ff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 12px; }
-    .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-    .items-table th { background: #6d28d9; color: white; padding: 6px 10px; text-align: left; }
-    .items-table td { padding: 5px 10px; border-bottom: 1px solid #eee; }
-    .items-table tr:nth-child(even) { background: #faf9ff; }
-    .items-table .high { background: #fef3c7; font-weight: bold; }
+    .domain-item { background: ghostwhite; border: 1px solid gainsboro; border-radius: 4px; padding: 8px 12px; }
+    .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; page-break-inside: auto; }
+    .items-table th { background: rebeccapurple; color: white; padding: 6px 10px; text-align: left; }
+    .items-table td { padding: 5px 10px; border-bottom: 1px solid gainsboro; vertical-align: top; }
+    .items-table tr { page-break-inside: avoid; page-break-after: auto; }
+    .items-table tr:nth-child(even) { background: ghostwhite; }
+    .items-table .high { background: lemonchiffon; font-weight: bold; }
     .narrative { text-align: justify; }
-    .footer { margin-top: 30px; border-top: 2px solid #6d28d9; padding-top: 12px; font-size: 8.5pt; color: #555; display: flex; justify-content: space-between; gap: 12px; }
+    .footer { margin-top: 30px; border-top: 2px solid rebeccapurple; padding-top: 12px; font-size: 8.5pt; color: dimgray; display: flex; justify-content: space-between; gap: 12px; }
+    .print-note { margin: 0 0 14px; padding: 8px 12px; background: whitesmoke; border: 1px solid gainsboro; border-radius: 6px; font-size: 9pt; color: dimgray; }
+    @media print { .print-note { display: none; } }
   </style>
 </head>
 <body>
+  <div class="print-note">Use a opção "Salvar como PDF" no diálogo de impressão para gerar o arquivo em PDF. Este relatório inclui todas as respostas registradas.</div>
   <div class="header">
     <div>
       <div class="doc-title">Dr. Jadson Fraga Araújo Júnior</div>
@@ -292,7 +246,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
   </div>` : ""}
 
   <div class="section">
-    <h2>Detalhamento das Respostas</h2>
+    <h2>Detalhamento de Todas as Respostas</h2>
     <table class="items-table">
       <thead><tr><th>#</th><th>Item</th><th>Resposta</th><th>Valor</th></tr></thead>
       <tbody>
@@ -315,15 +269,147 @@ export function ClinicalReport(props: ClinicalReportProps) {
   </div>
 </body>
 </html>`;
+}
 
-    printWindow.document.write(htmlContent);
+async function copyReportToClipboard(reportText: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(reportText);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function buildWhatsappUrl(reportText: string): string {
+  const text = reportText.length > WHATSAPP_URL_LIMIT
+    ? `${reportText.slice(0, WHATSAPP_URL_LIMIT)}\n\n[Relatório completo copiado para a área de transferência. Cole no WhatsApp para encaminhar todas as respostas.]`
+    : reportText;
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
+export function ClinicalReport(props: ClinicalReportProps) {
+  const [sending, setSending] = useState(false);
+  const [sharingWhatsApp, setSharingWhatsApp] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  const reportText = generateInterpretation(props);
+  const reportReady = Boolean(
+    props.scaleName &&
+      props.classification &&
+      props.description &&
+      props.items.length > 0,
+  );
+
+  async function handleCopy() {
+    const ok = await copyReportToClipboard(reportText);
+    if (ok) {
+      setCopied(true);
+      softSuccess();
+      haptic.success();
+      toast({
+        title: "Copiado!",
+        description: "Relatório completo copiado, incluindo todas as respostas.",
+      });
+      setTimeout(() => setCopied(false), 3000);
+      return;
+    }
+    toast({
+      title: "Erro",
+      description: "Não foi possível copiar. Tente novamente.",
+      variant: "destructive",
+    });
+  }
+
+  function handlePrint() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description: "Responda a escala e gere uma interpretação antes de imprimir.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    printWindow.document.write(buildPrintableReport(props));
     printWindow.document.close();
     printWindow.onload = () => {
       printWindow.print();
     };
     softBell();
     haptic.notify();
-    toast({ title: "Impressão", description: "Janela de impressão aberta." });
+    toast({
+      title: "PDF / Impressão",
+      description: "Janela aberta. Escolha imprimir ou Salvar como PDF; todas as respostas estão incluídas.",
+    });
+  }
+
+  async function handleSendWhatsApp() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description: "Não há respostas suficientes para encaminhar pelo WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSharingWhatsApp(true);
+    const copiedFullReport = await copyReportToClipboard(reportText);
+
+    try {
+      const nav = navigator as Navigator & {
+        share?: (data: { title?: string; text?: string }) => Promise<void>;
+      };
+      if (nav.share) {
+        await nav.share({
+          title: `NeuroPed — ${props.scaleName}`,
+          text: reportText,
+        });
+        softSuccess();
+        haptic.success();
+        toast({
+          title: "Compartilhamento aberto",
+          description: "Escolha WhatsApp para encaminhar o relatório completo.",
+        });
+        setSharingWhatsApp(false);
+        return;
+      }
+    } catch {
+      // Se o usuário cancelar ou o navegador bloquear, segue para fallback por wa.me.
+    }
+
+    try {
+      window.open(buildWhatsappUrl(reportText), "_blank");
+      softSuccess();
+      haptic.success();
+      toast({
+        title: "WhatsApp aberto",
+        description: copiedFullReport
+          ? "O relatório completo também foi copiado para colar no WhatsApp, se necessário."
+          : "WhatsApp aberto com o relatório. Se faltar texto, use Copiar Texto.",
+      });
+    } catch {
+      toast({
+        title: "Não foi possível abrir o WhatsApp",
+        description: copiedFullReport
+          ? "O relatório completo foi copiado. Cole manualmente no WhatsApp."
+          : "Use o botão Copiar Texto e cole manualmente no WhatsApp.",
+        variant: "destructive",
+      });
+    } finally {
+      setSharingWhatsApp(false);
+    }
   }
 
   async function handleSendEmail() {
@@ -368,6 +454,10 @@ export function ClinicalReport(props: ClinicalReportProps) {
             )}
           </div>
 
+          <p className="rounded-lg border border-border/70 bg-background/70 p-3 text-[11px] leading-relaxed text-muted-foreground">
+            Ao finalizar a escala, este bloco gera relatório com <strong className="text-foreground">todas as respostas</strong>. Para PDF, escolha <strong className="text-foreground">Salvar como PDF</strong> na janela de impressão. Para WhatsApp, use o botão Zap/WhatsApp abaixo.
+          </p>
+
           {props.domainResults && props.domainResults.length >= 3 && (
             <div className="py-2">
               <p className="text-[11px] text-muted-foreground text-center mb-2">
@@ -403,7 +493,22 @@ export function ClinicalReport(props: ClinicalReportProps) {
             data-testid="button-print-report"
           >
             <Printer className="w-5 h-5" />
-            Gerar PDF / Imprimir Relatório
+            Gerar PDF / Imprimir com Todas as Respostas
+          </Button>
+
+          <Button
+            onClick={handleSendWhatsApp}
+            variant="outline"
+            className="w-full h-11 gap-3 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
+            disabled={!reportReady || sharingWhatsApp}
+            data-testid="button-whatsapp-report"
+          >
+            {sharingWhatsApp ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <MessageCircle className="w-5 h-5" />
+            )}
+            {sharingWhatsApp ? "Preparando WhatsApp..." : "Encaminhar pelo WhatsApp / Zap"}
           </Button>
 
           <div className="grid grid-cols-2 gap-2">
