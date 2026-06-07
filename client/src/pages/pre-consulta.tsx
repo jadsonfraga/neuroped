@@ -108,9 +108,9 @@ export default function PreConsultaPage() {
 
             <PremiumVisualPanel
               src={brandAssets.illustrations.childAssessment}
-              badge="Triagem com propósito"
-              title="A imagem entra como apoio visual, não como decoração."
-              subtitle="A pré-consulta continua objetiva, mas com sinal visual de avaliação pediátrica organizada."
+              badge="Triagem organizada"
+              title="Antes da consulta, a história já começa a ficar mais clara."
+              subtitle="A recepção registra idade, queixa e contexto; o médico recebe um resumo objetivo para abrir melhor a conversa."
               className="min-h-40"
             />
 
