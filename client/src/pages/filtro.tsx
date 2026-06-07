@@ -1,6 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, Award, BookOpen, ClipboardCheck, Filter, Medal, RotateCcw, School, Search, ShieldAlert, Star, X } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  Award,
+  Baby,
+  BookOpen,
+  Brain,
+  ClipboardCheck,
+  Filter,
+  GraduationCap,
+  HeartPulse,
+  Medal,
+  MessageCircle,
+  Moon,
+  Pill,
+  RotateCcw,
+  School,
+  Search,
+  ShieldAlert,
+  Star,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,6 +152,28 @@ function icon(slot: Slot) {
   return <School className="h-5 w-5" />;
 }
 
+interface ScaleVisual {
+  label: string;
+  Icon: LucideIcon;
+  tone: string;
+}
+
+function getScaleVisual(scale: ScaleEntry): ScaleVisual {
+  const t = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")}`);
+
+  if (/tea|autis|social|assq|m-chat|q-chat|cast|aq/.test(t)) return { label: "TEA / social", Icon: Brain, tone: "from-violet-600 via-purple-700 to-slate-950" };
+  if (/tdah|adhd|snap|vanderbilt|aten|weiss|wfirs/.test(t)) return { label: "atenção", Icon: Activity, tone: "from-amber-500 via-orange-600 to-red-800" };
+  if (/linguagem|fala|comunic|language|speech/.test(t)) return { label: "linguagem", Icon: MessageCircle, tone: "from-cyan-600 via-blue-700 to-slate-950" };
+  if (/school|professor|teacher|aprendiz|leitura|escrita|aritmet|academ/.test(t)) return { label: "escola", Icon: GraduationCap, tone: "from-emerald-600 via-teal-700 to-slate-950" };
+  if (/sono|sleep|bears|psq|cshq/.test(t)) return { label: "sono", Icon: Moon, tone: "from-indigo-700 via-blue-900 to-slate-950" };
+  if (/ansiedade|depress|humor|mood|phq|gad|scared|rcads|scas/.test(t)) return { label: "humor", Icon: HeartPulse, tone: "from-rose-600 via-red-700 to-slate-950" };
+  if (/desenvolvimento|milestone|cdc|swyc|atraso|motor|gmfcs/.test(t)) return { label: "desenvolvimento", Icon: Baby, tone: "from-blue-600 via-indigo-700 to-slate-950" };
+  if (/medic|dose|farmaco|risperidona|metilfenidato/.test(t)) return { label: "medicação", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
+  if (/pais|parent|cuidador|family/.test(t)) return { label: "família", Icon: Users, tone: "from-slate-600 via-slate-800 to-slate-950" };
+
+  return { label: "clínico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
+}
+
 export default function FiltroPage() {
   const [search, setSearch] = useState("");
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
@@ -223,7 +268,7 @@ export default function FiltroPage() {
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
       </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
 
-      <section className="rounded-3xl border border-border/70 bg-card/70 p-4"><div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{rankedPool.slice(0, 24).map((s) => <div key={s.id} className="rounded-2xl border border-border/70 bg-background/70 p-3"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-black text-foreground">{s.name}</p><p className="line-clamp-2 text-xs text-muted-foreground">{s.fullName}</p></div>{s.id.startsWith("world-") && <Badge variant="outline" className="shrink-0 text-[10px]">mundial</Badge>}</div><p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p></div>)}</div></section>
+      <section className="rounded-3xl border border-border/70 bg-card/70 p-4"><div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return <div key={s.id} className="rounded-2xl border border-border/70 bg-background/70 p-3 transition hover:border-primary/30 hover:bg-background"><div className="flex items-start gap-3"><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${visual.tone} text-white shadow-sm`}><Icon className="h-4.5 w-4.5" strokeWidth={1.9} /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-black text-foreground">{s.name}</p><p className="line-clamp-2 text-xs text-muted-foreground">{s.fullName}</p></div><div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="text-[10px]">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="text-[10px]">mundial</Badge>}</div></div><p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p></div></div></div>; })}</div></section>
     </div>
   );
 }
