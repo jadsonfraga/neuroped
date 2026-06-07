@@ -70,6 +70,7 @@ const EtarePage = lazy(() => import("@/pages/etare"));
 const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
+const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const EscalasNeuropsiquiatriaPage = lazy(() => import("@/pages/escalas-neuropsiquiatria"));
 const CaaPage = lazy(() => import("@/pages/caa"));
@@ -125,13 +126,7 @@ function LoadingSpinner() {
   );
 }
 
-function Protected({
-  children,
-  roles,
-}: {
-  children: React.ReactNode;
-  roles?: Array<"admin" | "professional" | "reader" | "operator">;
-}) {
+function Protected({ children, roles }: { children: React.ReactNode; roles?: Array<"admin" | "professional" | "reader" | "operator"> }) {
   return <RouteGuard roles={roles}>{children}</RouteGuard>;
 }
 
@@ -187,6 +182,7 @@ function AppRouter() {
           <Route path="/eaah" component={EaahPage} />
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
+          <Route path="/pre-retorno" component={PreRetornoPage} />
           <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
