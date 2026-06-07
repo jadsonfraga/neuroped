@@ -22,6 +22,7 @@ interface PreRetornoRecord {
   comunicacao: string;
   crises: string;
   medicacao: string;
+  sintomasTratamento: string;
   duvida: string;
   prioridade: string;
   observacoes: string;
@@ -62,6 +63,7 @@ function listAlertas(record: PreRetornoRecord) {
     record.comportamento === "piorou" || record.comportamento === "oscilando" ? "Oscilação ou piora comportamental relatada." : "",
     record.crises === "aumentou" || record.crises === "mudou padrão" ? "Mudança no padrão de crises relatada." : "",
     record.medicacao.includes("suspendeu") || record.medicacao.includes("mudou") || record.medicacao.includes("efeitos") ? "Há ponto de atenção envolvendo uso de medicação." : "",
+    record.sintomasTratamento.trim() ? "Família descreveu sintomas ou efeitos percebidos durante o tratamento." : "",
   ].filter(Boolean);
   return alertas.length ? alertas.slice(0, 3) : ["Sem alerta crítico informado no formulário.", "Confirmar contexto escolar/terapêutico.", "Correlacionar relato com avaliação clínica."];
 }
@@ -79,7 +81,7 @@ function listPositivos(record: PreRetornoRecord) {
 function buildResumo(record: PreRetornoRecord) {
   const alertas = listAlertas(record);
   const positivos = listPositivos(record);
-  return `RESUMO PRÉ-RETORNO\n\nPaciente: ${record.paciente || "Não informado"}\nIdade: ${record.idade || "Não informada"}\nÚltima consulta: ${record.ultimaConsulta || "Não informada"}\nMotivo do retorno: ${record.motivo || "Não informado"}\n\nEvolução geral: ${record.evolucao}\nSono: ${record.sono}\nComportamento: ${record.comportamento}\nEscola: ${record.escola}\nAlimentação: ${record.alimentacao}\nComunicação: ${record.comunicacao}\nCrises, se aplicável: ${record.crises}\nMedicação: ${record.medicacao}\n\nDúvida principal da família: ${record.duvida || "Não informada"}\nPrioridade da consulta de hoje: ${record.prioridade || "Não informada"}\n\nPontos de alerta:\n1. ${alertas[0] || "Revisar relato."}\n2. ${alertas[1] || "Correlacionar com contexto escolar/terapêutico."}\n3. ${alertas[2] || "Confirmar em consulta."}\n\nPontos positivos:\n1. ${positivos[0] || "Registro familiar organizado."}\n2. ${positivos[1] || "Família engajada."}\n3. ${positivos[2] || "Consulta pode iniciar com prioridade clara."}\n\nPerguntas estratégicas para o médico:\n1. Qual é a maior preocupação da família hoje?\n2. O que mais atrapalha a rotina em casa, escola ou terapias?\n\nInterpretação prudente:\n- relato familiar pré-consulta;\n- não substitui avaliação médica;\n- correlacionar com exame clínico e contexto escolar/terapêutico.\n\nObservações livres:\n${record.observacoes || "- Sem observações adicionais."}`;
+  return `RESUMO PRÉ-RETORNO\n\nPaciente: ${record.paciente || "Não informado"}\nIdade: ${record.idade || "Não informada"}\nÚltima consulta: ${record.ultimaConsulta || "Não informada"}\nMotivo do retorno: ${record.motivo || "Não informado"}\n\nEvolução geral: ${record.evolucao}\nSono: ${record.sono}\nComportamento: ${record.comportamento}\nEscola: ${record.escola}\nAlimentação: ${record.alimentacao}\nComunicação: ${record.comunicacao}\nCrises, se aplicável: ${record.crises}\nMedicação: ${record.medicacao}\nSintomas/efeitos percebidos pela família: ${record.sintomasTratamento || "Não informado"}\n\nDúvida principal da família: ${record.duvida || "Não informada"}\nPrioridade da consulta de hoje: ${record.prioridade || "Não informada"}\n\nPontos de alerta:\n1. ${alertas[0] || "Revisar relato."}\n2. ${alertas[1] || "Correlacionar com contexto escolar/terapêutico."}\n3. ${alertas[2] || "Confirmar em consulta."}\n\nPontos positivos:\n1. ${positivos[0] || "Registro familiar organizado."}\n2. ${positivos[1] || "Família engajada."}\n3. ${positivos[2] || "Consulta pode iniciar com prioridade clara."}\n\nPerguntas estratégicas para o médico:\n1. Qual é a maior preocupação da família hoje?\n2. O que mais atrapalha a rotina em casa, escola ou terapias?\n\nInterpretação prudente:\n- relato familiar pré-consulta;\n- não substitui avaliação médica;\n- não define causalidade de sintomas relatados;\n- não orienta ajuste de dose sem avaliação médica;\n- correlacionar com exame clínico e contexto escolar/terapêutico.\n\nObservações livres:\n${record.observacoes || "- Sem observações adicionais."}`;
 }
 
 function FieldSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) {
@@ -106,16 +108,17 @@ export default function PreRetornoPage() {
   const [comunicacao, setComunicacao] = useState("igual");
   const [crises, setCrises] = useState("não tem");
   const [medicacao, setMedicacao] = useState("sem medicação");
+  const [sintomasTratamento, setSintomasTratamento] = useState("");
   const [duvida, setDuvida] = useState("");
   const [prioridade, setPrioridade] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [saved, setSaved] = useState<PreRetornoRecord | null>(null);
 
-  const draft = useMemo(() => buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, duvida, prioridade, observacoes }), [paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, duvida, prioridade, observacoes]);
+  const draft = useMemo(() => buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes }), [paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes]);
   const resumo = useMemo(() => buildResumo(saved || draft), [saved, draft]);
 
   function salvar() {
-    const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, duvida, prioridade, observacoes });
+    const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
     saveRecords([record, ...loadRecords()].slice(0, 50));
     setSaved(record);
   }
@@ -155,6 +158,7 @@ export default function PreRetornoPage() {
             <FieldSelect label="Medicação" value={medicacao} onChange={setMedicacao} options={opcoesMedicacao} />
           </div>
 
+          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sintomas ou efeitos percebidos pela família</span><textarea value={sintomasTratamento} onChange={(e) => setSintomasTratamento(e.target.value)} className="min-h-20 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato livre. Não altera conduta automaticamente; será revisado pelo médico." /></label>
           <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dúvida principal da família</span><Input value={duvida} onChange={(e) => setDuvida(e.target.value)} /></label>
           <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Prioridade de hoje</span><Input value={prioridade} onChange={(e) => setPrioridade(e.target.value)} /></label>
           <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
