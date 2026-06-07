@@ -1,7 +1,5 @@
-import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import { PasswordGate } from "@/components/PasswordGate";
 import "./index.css";
 
 try {
@@ -17,21 +15,4 @@ if (!window.location.hash) {
   window.location.hash = "#/";
 }
 
-function GateCompat({ children }: { children: ReactNode }) {
-  try {
-    if (sessionStorage.getItem("neuroped:pin-ok") === "1") {
-      sessionStorage.setItem("neuroped:local-unlocked", "1");
-    }
-  } catch {
-    // storage indisponível: o PasswordGate segue controlando o acesso principal
-  }
-  return <>{children}</>;
-}
-
-createRoot(document.getElementById("root")!).render(
-  <PasswordGate>
-    <GateCompat>
-      <App />
-    </GateCompat>
-  </PasswordGate>,
-);
+createRoot(document.getElementById("root")!).render(<App />);
