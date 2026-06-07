@@ -11,96 +11,15 @@ import {
 } from "@/data/novidadesConteudoAmpliado";
 import type { NovidadeArtigo } from "@/data/novidadesArtigos";
 
-const ALLOWED_ARTICLE_TAGS = new Set([
-  "p",
-  "strong",
-  "em",
-  "b",
-  "i",
-  "u",
-  "h2",
-  "h3",
-  "h4",
-  "ul",
-  "ol",
-  "li",
-  "div",
-  "span",
-  "br",
-  "blockquote",
-  "a",
-]);
-
-const ALLOWED_ARTICLE_CLASSES = new Set([
-  "tip-box",
-  "tip-title",
-  "source-note",
-  "warning-box",
-  "info-box",
-]);
-
-function isSafeHref(value: string): boolean {
-  return /^(https?:|mailto:|tel:|#|\/)/i.test(value.trim());
-}
-
-function unwrapElement(element: Element) {
-  const parent = element.parentNode;
-  if (!parent) return;
-  while (element.firstChild) parent.insertBefore(element.firstChild, element);
-  parent.removeChild(element);
-}
-
-function cleanArticleElement(element: Element) {
-  Array.from(element.children).forEach(cleanArticleElement);
-
-  const tagName = element.tagName.toLowerCase();
-  if (!ALLOWED_ARTICLE_TAGS.has(tagName)) {
-    unwrapElement(element);
-    return;
-  }
-
-  Array.from(element.attributes).forEach((attribute) => {
-    const name = attribute.name.toLowerCase();
-    const value = attribute.value;
-
-    if (name.startsWith("on") || name === "style" || name === "id") {
-      element.removeAttribute(attribute.name);
-      return;
-    }
-
-    if (name === "href") {
-      if (tagName !== "a" || !isSafeHref(value)) element.removeAttribute(attribute.name);
-      return;
-    }
-
-    if (name === "target" || name === "rel") {
-      if (tagName !== "a") element.removeAttribute(attribute.name);
-      return;
-    }
-
-    if (name === "class") {
-      const safeClasses = value
-        .split(/\s+/)
-        .filter((className) => ALLOWED_ARTICLE_CLASSES.has(className));
-      if (safeClasses.length) element.setAttribute("class", safeClasses.join(" "));
-      else element.removeAttribute("class");
-      return;
-    }
-
-    element.removeAttribute(attribute.name);
-  });
-
-  if (tagName === "a") {
-    element.setAttribute("rel", "noopener noreferrer");
-  }
-}
-
 function sanitizeArticleHtml(html: string): string {
-  if (typeof document === "undefined") return "";
-  const template = document.createElement("template");
-  template.innerHTML = html;
-  Array.from(template.content.children).forEach(cleanArticleElement);
-  return template.innerHTML;
+  return html
+    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select|link|meta)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select|link|meta)[^>]*\/?>/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/\s+style\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/\s+id\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/\s+href\s*=\s*(["'])\s*javascript:[\s\S]*?\1/gi, ' href="#"')
+    .replace(/\s+src\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 }
 
 export default function PortalNovidadesPage() {
