@@ -3,6 +3,13 @@ const SESSION_KEY = "neuroped:local-unlocked";
 const REMEMBER_KEY = "neuroped:local-unlocked-persistent";
 const LOCK_EVENT = "neuroped:local-lock-changed";
 
+function sanitizeUnlockInput(value: string): string {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(value);
@@ -14,7 +21,7 @@ async function sha256Hex(value: string): Promise<string> {
 
 export async function verifyUnlockPassword(input: string): Promise<boolean> {
   if (!input || typeof crypto === "undefined" || !crypto.subtle) return false;
-  const normalized = input.trim();
+  const normalized = sanitizeUnlockInput(input);
   const candidateHash = await sha256Hex(normalized);
   return candidateHash === UNLOCK_HASH;
 }
@@ -50,4 +57,4 @@ export function isAppUnlocked(): boolean {
 export const localUnlockEventName = LOCK_EVENT;
 
 export const localUnlockSecurityNote =
-  "Bloqueio local leve para app estático/frontend/local-first. Não substitui autenticação robusta com backend para dados médicos.";
+  "Bloqueio local leve para app estático/frontend/local-first. Não substitui autenticação robusta com backend para dados médicos sensíveis.";
