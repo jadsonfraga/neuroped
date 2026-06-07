@@ -193,8 +193,8 @@ export default function PsiquiatriaGuiaPage() {
       <PremiumVisualPanel
         src={brandAssets.illustrations.mentalHealthChild}
         badge="Saúde mental infantil"
-        title="Imagem clínica para contextualizar ansiedade, humor e comportamento."
-        subtitle="O painel visual entra como respiro editorial antes da busca, sem modificar a navegação nem o conteúdo técnico."
+        title="Ansiedade, humor e comportamento precisam de leitura clínica cuidadosa."
+        subtitle="Use a busca para revisar critérios, diferenciais e condutas com linguagem sintética e prudente."
         className="min-h-44"
       />
 
