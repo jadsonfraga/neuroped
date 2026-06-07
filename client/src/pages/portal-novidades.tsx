@@ -11,45 +11,16 @@ import {
 } from "@/data/novidadesConteudoAmpliado";
 import type { NovidadeArtigo } from "@/data/novidadesArtigos";
 
-const BLOCKED_ARTICLE_TAGS = "script|style|iframe|object|embed|form|input|button|textarea|select|link|meta";
-const BLOCKED_TAG_PAIR_RE = new RegExp(
-  `<\\s*(${BLOCKED_ARTICLE_TAGS})[^>]*>[\\s\\S]*?<\\s*\\/\\s*\\1\\s*>`,
-  "gi",
-);
-const BLOCKED_TAG_RE = new RegExp(
-  `<\\s*(${BLOCKED_ARTICLE_TAGS})[^>]*\\/?>`,
-  "gi",
-);
-const EVENT_HANDLER_RE = new RegExp(
-  `\\s+on[a-z]+\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
-  "gi",
-);
-const STYLE_RE = new RegExp(
-  `\\s+style\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
-  "gi",
-);
-const ID_RE = new RegExp(
-  `\\s+id\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
-  "gi",
-);
-const JAVASCRIPT_HREF_RE = new RegExp(
-  `\\s+href\\s*=\\s*(["'])\\s*javascript:[\\s\\S]*?\\1`,
-  "gi",
-);
-const SRC_RE = new RegExp(
-  `\\s+src\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`,
-  "gi",
-);
+const ARTICLE_BREAK_RE = new RegExp("<\\s*br\\s*\\/?>|<\\s*\\/\\s*(p|li|h2|h3|h4|div)\\s*>", "gi");
+const ARTICLE_TAG_RE = new RegExp("<[^>]+>", "g");
 
-function sanitizeArticleHtml(html: string): string {
+function articleHtmlToParagraphs(html: string): string[] {
   return html
-    .replace(BLOCKED_TAG_PAIR_RE, "")
-    .replace(BLOCKED_TAG_RE, "")
-    .replace(EVENT_HANDLER_RE, "")
-    .replace(STYLE_RE, "")
-    .replace(ID_RE, "")
-    .replace(JAVASCRIPT_HREF_RE, ' href="#"')
-    .replace(SRC_RE, "");
+    .replace(ARTICLE_BREAK_RE, "\n")
+    .replace(ARTICLE_TAG_RE, "")
+    .split(/\n+/)
+    .map((part) => part.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
 }
 
 export default function PortalNovidadesPage() {
@@ -61,8 +32,8 @@ export default function PortalNovidadesPage() {
     [cat],
   );
 
-  const safeOpenContent = useMemo(
-    () => (open ? sanitizeArticleHtml(open.content) : ""),
+  const safeOpenParagraphs = useMemo(
+    () => (open ? articleHtmlToParagraphs(open.content) : []),
     [open],
   );
 
@@ -82,10 +53,13 @@ export default function PortalNovidadesPage() {
             <span>{open.date}</span>
             <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> {open.readTime}</span>
           </div>
-          <div
-            className="novidade-prose prose prose-sm dark:prose-invert max-w-none mt-4"
-            dangerouslySetInnerHTML={{ __html: safeOpenContent }}
-          />
+          <div className="novidade-prose prose prose-sm dark:prose-invert max-w-none mt-4 space-y-3">
+            {safeOpenParagraphs.map((paragraph, index) => (
+              <p key={`${open.id}-${index}`} className="text-sm leading-relaxed text-foreground/90">
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </article>
         <p className="text-[11px] text-muted-foreground border-t border-border pt-3">
           Conteúdo educativo — não substitui avaliação profissional. Em caso de dúvida, procure
