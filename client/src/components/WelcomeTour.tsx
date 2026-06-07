@@ -1,27 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HelpCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { appMetrics } from "@/data/appMetrics";
 import { softTap } from "@/lib/softSounds";
 
 /**
- * Tour guiado de boas-vindas — porta de `tour.js` (app legado) para React.
+ * Tour guiado de boas-vindas.
  *
- * Não abre sozinho: um botão "?" flutuante (canto inferior direito) abre o
- * tour a qualquer momento. Na 1ª visita o botão aparece com destaque maior por
- * alguns segundos. O Onboarding (modal de 1º acesso) é separado deste tour.
- *
- * Cada passo pode apontar para um elemento da UI (via seletor); se o alvo não
- * estiver visível (ex.: sidebar recolhida no mobile), o cartão é centralizado
- * sem spotlight. Acessível: ESC fecha, foco inicial no cartão, aria-labels.
+ * Versao atualizada para explicar: filtro ampliado, numeros reais, aba dos pais,
+ * politica de acesso e separacao entre conteudo familiar nao sensivel e dados
+ * clinicos individualizados.
  */
 
-const DONE_KEY = "np_tour_v1_done";
-const INTRO_KEY = "np_tour_intro_v1";
+const DONE_KEY = "np_tour_v2_done";
+const INTRO_KEY = "np_tour_intro_v2";
 
 interface TourStep {
   emoji: string;
   title: string;
   body: string;
-  /** Seletor CSS do alvo do spotlight (opcional). */
   target?: string;
 }
 
@@ -29,47 +25,54 @@ const STEPS: TourStep[] = [
   {
     emoji: "👋",
     title: "Bem-vindo ao NeuroPed",
-    body: "Em um minutinho mostro o essencial da plataforma de neuropediatria do Dr. Jadson Fraga. Vamos juntos?",
+    body: `O app agora mostra numeros derivados do catalogo real: ${appMetrics.scaleCount} escalas, ${appMetrics.filterableInstrumentCount} itens filtraveis e ${appMetrics.medicationCount} medicacoes cadastradas.`,
   },
   {
     emoji: "🔎",
-    title: "Filtro Inteligente",
-    body: "Descreva uma queixa — autismo, sono, TDAH — e o app sugere as escalas e ferramentas certas por faixa etária.",
-    target: '[data-testid="nav-Filtro Inteligente"]',
+    title: "Filtro Clínico Inteligente",
+    body: "Digite uma queixa ou selecione idade. Toda busca devolve Ouro, Prata, Bronze, Teste Direto e Questionário Escolar — sem inventar pontuação clínica.",
+    target: '[data-testid="nav-Filtro Clínico Inteligente"]',
   },
   {
-    emoji: "📊",
-    title: "Banco de escalas",
-    body: "Centenas de instrumentos validados, organizados por domínio. O PANT reúne uma grande coletânea pronta para uso.",
-    target: '[data-testid="nav-PANT (100 Escalas)"]',
-  },
-  {
-    emoji: "🧒",
-    title: "Testes com a criança",
-    body: "Testes diretos e lúdicos — reconhecimento, leitura/escrita, autoavaliação — com mascotes e feedback por idade.",
-    target: '[data-testid="nav-Cores/Letras/Animais/Corpo"]',
-  },
-  {
-    emoji: "💬",
-    title: "CAA · Vou Falar",
-    body: "Comunicação alternativa com voz em português, cartões grandes por categoria e montagem de frases.",
-    target: '[data-testid="nav-CAA · Vou Falar"]',
+    emoji: "📚",
+    title: "Escalas, questionários e inventários",
+    body: "O filtro inclui escalas do catálogo, instrumentos suplementares aplicáveis, inventários escolares, autoavaliações e 100 escalas mundiais sem custo quando disponíveis.",
+    target: '[data-testid="nav-100 escalas mundiais"]',
   },
   {
     emoji: "👨‍👩‍👧",
-    title: "Portal da Família",
-    body: "Conteúdo educativo: novidades, orientações e política de acesso para as famílias acompanharem o cuidado.",
-    target: '[data-testid="nav-Portal da Família"]',
+    title: "Aba dos pais / psicoeducação",
+    body: "Informações não sensíveis ficam concentradas no Portal dos pais: orientações gerais, rotina, escola, novidades, CAA e política de acesso.",
+    target: '[data-testid="nav-Portal dos pais"]',
   },
   {
-    emoji: "🔒",
-    title: "Seus dados, no seu dispositivo",
-    body: "Os registros das ferramentas ficam no navegador. Exporte (CSV/relatório) para levar à consulta quando quiser.",
+    emoji: "🧭",
+    title: "Orientação parental",
+    body: "A orientação parental traz conteúdo educativo por tema, com linguagem familiar e sem expor prontuário, dados médicos individualizados ou documentos restritos.",
+    target: '[data-testid="nav-Orientação parental"]',
+  },
+  {
+    emoji: "📰",
+    title: "Novidades para famílias",
+    body: "Artigos e explicações gerais podem ser consultados pela família sem acessar áreas clínicas sensíveis.",
+    target: '[data-testid="nav-Novidades para famílias"]',
+  },
+  {
+    emoji: "🔐",
+    title: "Política de acesso",
+    body: "Documentos, prescrições, prontuário e dados de paciente só aparecem quando liberados pelo profissional ou protegidos por fluxo clínico. O app não deve misturar isso com psicoeducação aberta.",
+    target: '[data-testid="nav-Política de acesso"]',
+  },
+  {
+    emoji: "🏫",
+    title: "Questionário escolar",
+    body: "A área escolar permanece filtrável e também aparece para a família como ponte com professores, sem substituir avaliação médica.",
+    target: '[data-testid="nav-Questionário escolar"]',
   },
   {
     emoji: "✨",
-    title: "Tudo pronto!",
-    body: "Toque no botão “?” no canto da tela sempre que quiser rever este guia. Bom trabalho!",
+    title: "Tudo pronto",
+    body: "Toque no botão '?' sempre que quiser rever o guia. O tour cobre filtro, números reais e todos os pontos principais disponíveis para pais.",
   },
 ];
 
@@ -104,7 +107,6 @@ export function WelcomeTour() {
   const [introHighlight, setIntroHighlight] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // 1ª visita: destaca o botão "?" por alguns segundos (não abre o tour sozinho).
   useEffect(() => {
     try {
       if (localStorage.getItem(INTRO_KEY) !== "1") {
@@ -113,7 +115,7 @@ export function WelcomeTour() {
         const t = setTimeout(() => setIntroHighlight(false), 6000);
         return () => clearTimeout(t);
       }
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
+    } catch { /* storage indisponivel — silencioso */ }
   }, []);
 
   const recompute = useCallback((stepIdx: number) => {
@@ -152,7 +154,7 @@ export function WelcomeTour() {
     setOpen(false);
     try {
       localStorage.setItem(DONE_KEY, "1");
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
+    } catch { /* storage indisponivel — silencioso */ }
   }
 
   function next() {
@@ -172,7 +174,6 @@ export function WelcomeTour() {
 
   const step = STEPS[idx];
 
-  // Posição do cartão: abaixo do alvo, ou centralizado se não houver alvo.
   const cardStyle: React.CSSProperties = rect
     ? {
         left: Math.min(Math.max(14, rect.left), Math.max(14, window.innerWidth - 358)),
@@ -185,7 +186,6 @@ export function WelcomeTour() {
 
   return (
     <>
-      {/* Botão flutuante "?" */}
       <button
         onClick={start}
         aria-label="Rever o tour guiado do app"
@@ -209,10 +209,8 @@ export function WelcomeTour() {
 
       {open && (
         <div className="fixed inset-0 z-[99998]" role="dialog" aria-modal="true" aria-label="Tour guiado">
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-[rgba(8,8,20,0.55)] backdrop-blur-[2px]" onClick={finish} />
 
-          {/* Spotlight (buraco) sobre o alvo */}
           {rect && (
             <div
               aria-hidden="true"
@@ -228,7 +226,6 @@ export function WelcomeTour() {
             />
           )}
 
-          {/* Cartão */}
           <div
             ref={cardRef}
             tabIndex={-1}
