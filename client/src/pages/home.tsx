@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
+import { AssetShowcase, BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
@@ -169,10 +169,12 @@ export default function HomePage() {
   const isSearching = q.length >= 2;
 
   return (
-    <div className="page-enter space-y-6 pb-8">
+    <div className="page-enter proportion-safe-page space-y-6 pb-8">
       <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur sm:p-7">
         <BrandWatermark className="right-4 top-4 h-40 w-40" />
-        <img src={brandAssets.legacyNeuroPedSymbol} alt="" aria-hidden="true" className="pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl object-contain opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" />
+        <div className="asset-proportion-box pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" aria-hidden="true">
+          <img src={brandAssets.legacyNeuroPedSymbol} alt="" className="no-zoom-media h-full w-full rounded-2xl object-contain" />
+        </div>
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
           <div className="space-y-4">
             <BrandMark size="md" showWordmark subtitle="Cockpit clínico NeuroPed" />
@@ -268,6 +270,13 @@ export default function HomePage() {
               {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
             </div>
           </section>
+
+          <AssetShowcase
+            variant="clinical"
+            title="Mascotes e figuras clínicas em uso"
+            subtitle="As imagens oficiais do repositório aparecem com proporção preservada, sem zoom forçado nem cortes agressivos."
+            max={6}
+          />
 
           <section className="grid gap-3 lg:grid-cols-[1fr_0.8fr]">
             <Card className="border-amber-200/60 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20">
