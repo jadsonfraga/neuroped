@@ -1,5 +1,6 @@
 import { Brain, ShieldCheck, Zap } from "lucide-react";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
+import { SafeImage } from "@/components/SafeImage";
 import neuroPedLegacyLogo from "@assets/neuroped-logo.png";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
 import drConsultorioHero from "@assets/images/dr-jadson-consultorio-superman.jpeg";
@@ -80,10 +81,11 @@ export function BrandMark({
     <div className={`flex items-center ${compact ? "gap-2" : "gap-3"} ${className}`}>
       <div className="relative flex-shrink-0">
         <div className="absolute inset-0 rounded-[1.35rem] bg-amber-400/25 blur-md" aria-hidden="true" />
-        <img
+        <SafeImage
           src={brandAssets.masterShield}
           alt="Escudo Dr. Jadson Fraga — logo mestre NeuroPed"
-          className={`${sizeClasses[size]} relative rounded-[1.2rem] object-cover bg-white shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
+          fallbackLabel="Logo NeuroPed"
+          className={`${sizeClasses[size]} relative rounded-[1.2rem] object-contain bg-white p-0.5 shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
         />
         <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-md ring-1 ring-white/70 dark:ring-black/40" aria-hidden="true">
           <Zap className="h-3 w-3" strokeWidth={2.5} />
@@ -110,7 +112,7 @@ export function MiniShield({ className = "" }: { className?: string }) {
 export function BrandWatermark({ className = "" }: { className?: string }) {
   return (
     <div className={`pointer-events-none absolute opacity-[0.055] dark:opacity-[0.075] ${className}`} aria-hidden="true">
-      <img src={brandAssets.masterShield} alt="" className="h-full w-full object-contain" />
+      <SafeImage src={brandAssets.masterShield} alt="" className="h-full w-full object-contain" />
     </div>
   );
 }
