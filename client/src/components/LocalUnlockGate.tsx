@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { Eye, EyeOff, LockKeyhole, ShieldCheck, AlertTriangle } from "lucide-react";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
+import { SafeImage } from "@/components/SafeImage";
 import { localUnlockSecurityNote, unlockApp, verifyUnlockPassword } from "@/lib/localUnlock";
 
 interface LocalUnlockGateProps {
@@ -66,7 +67,12 @@ export function LocalUnlockGate({ onUnlocked }: LocalUnlockGateProps) {
 
       <section className="relative w-full max-w-md rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl sm:p-7">
         <div className="flex items-center gap-3 border-b border-white/10 pb-5">
-          <img src={drJadsonMasterShieldLogo} alt="Dr. Jadson Fraga" className="h-14 w-14 rounded-2xl object-cover ring-2 ring-amber-300/30" />
+          <SafeImage
+            src={drJadsonMasterShieldLogo}
+            alt="Dr. Jadson Fraga"
+            fallbackLabel="Logo NeuroPed"
+            className="h-14 w-14 rounded-2xl object-contain bg-white p-0.5 ring-2 ring-amber-300/30"
+          />
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">NeuroPed EDJ</p>
             <h1 className="text-xl font-black tracking-tight">Acesso Clínico NeuroPed</h1>
