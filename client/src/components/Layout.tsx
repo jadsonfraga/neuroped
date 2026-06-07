@@ -37,7 +37,7 @@ const navSections: NavSection[] = [
   {
     title: "Ferramentas",
     items: [
-      { href: "/filtro", label: "Filtro Inteligente", icon: Filter },
+      { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
       { href: "/prontuario", label: "Prontuário Clínico", icon: ClipboardPlus },
       { href: "/pacientes", label: "Meus Pacientes", icon: Users },
       { href: "/satisfacao-medicacao", label: "Satisfação Medicação", icon: SmilePlus },
@@ -186,12 +186,12 @@ const navSections: NavSection[] = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    // Respeita preferência salva ou system
+    if (typeof window === "undefined") return true;
+    // Respeita preferência salva; sem escolha explícita, NeuroPed abre no modo noturno.
     const saved = localStorage.getItem("neuroped:theme");
     if (saved === "dark") return true;
     if (saved === "light") return false;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return true;
   });
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;

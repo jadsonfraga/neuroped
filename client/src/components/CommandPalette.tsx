@@ -40,7 +40,7 @@ interface PageItem {
 
 const PAGES: PageItem[] = [
   { href: "/", label: "Início", icon: Home },
-  { href: "/filtro", label: "Filtro Inteligente", icon: Filter },
+  { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
   { href: "/prontuario", label: "Prontuário Clínico", icon: ClipboardPlus },
   { href: "/pacientes", label: "Meus Pacientes", icon: Users },
   { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },

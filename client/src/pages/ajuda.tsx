@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/accordion";
 
 const guiaRapido = [
-  { icon: Filter, title: "Filtro Inteligente", desc: "Digite a queixa (agitado, desatento, autismo...) ou selecione idade. O filtro mostra escalas e medicações recomendadas.", color: "from-primary to-chart-2" },
+  { icon: Filter, title: "Filtro Clínico Inteligente", desc: "Digite a queixa (agitado, desatento, autismo...) ou selecione idade. O filtro prioriza instrumentos clínicos adequados.", color: "from-primary to-chart-2" },
   { icon: ClipboardCheck, title: "Aplicar Escala", desc: "Abra a escala, responda os itens e veja o resultado com interpretação clínica detalhada.", color: "from-blue-500 to-indigo-600" },
   { icon: Mail, title: "Enviar por Email", desc: "Cada escala tem botão 'Enviar por Email' que manda o relatório COMPLETO (todas as respostas por extenso) para jadsonfraga@hotmail.com.", color: "from-emerald-500 to-teal-600" },
   { icon: Printer, title: "Imprimir", desc: "O botão 'Imprimir' gera uma versão formatada em A4 com cabeçalho profissional do Dr. Jadson Fraga.", color: "from-amber-500 to-orange-500" },
@@ -33,7 +33,7 @@ const secoes = [
 ];
 
 const faqs = [
-  { q: "Como encontrar a escala certa?", a: "Use o Filtro Inteligente (🔍). Digite a queixa da criança em termos simples (agitado, não fala, irritado, desatento, atrasado) e selecione a idade. O filtro mostra as escalas mais indicadas com prioridade: triagem primeiro, depois diagnóstica, depois acompanhamento." },
+  { q: "Como encontrar a escala certa?", a: "Use o Filtro Clínico Inteligente (🔍). Digite a queixa da criança em termos simples (agitado, não fala, irritado, desatento, atrasado) e selecione a idade. O filtro prioriza escalas por triagem, avaliação diagnóstica e acompanhamento." },
   { q: "As respostas ficam salvas?", a: "Os resultados das escalas podem ser salvos vinculados a um paciente (botão 'Salvar no Paciente' no resultado). Pacientes e resultados ficam salvos no servidor enquanto o app estiver rodando. Para registro permanente, use o botão 'Enviar por Email' que manda o relatório completo." },
   { q: "O email envia só o resultado ou tudo?", a: "O email envia o relatório COMPLETO: todas as perguntas, todas as respostas por extenso (não só números), interpretação clínica detalhada, resultados por domínio, itens com pontuação elevada e áreas preservadas." },
   { q: "Posso usar offline no celular?", a: "Sim. Abra o app no navegador, depois: iPhone → Safari → Compartilhar → 'Adicionar à Tela de Início'. Android → Chrome → Menu (⋮) → 'Instalar app'. O app funciona como aplicativo nativo e funciona offline após o primeiro acesso." },

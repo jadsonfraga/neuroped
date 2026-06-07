@@ -90,7 +90,7 @@ const steps = [
         {[
           {
             icon: Filter, gradient: "from-primary to-chart-2",
-            title: "Filtro Inteligente",
+            title: "Filtro Clínico Inteligente",
             desc: "Digite a queixa (agitado, autismo, desatento) ou selecione idade. A escala ideal aparece em dourado."
           },
           {

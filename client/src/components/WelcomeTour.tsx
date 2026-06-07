@@ -33,9 +33,9 @@ const STEPS: TourStep[] = [
   },
   {
     emoji: "🔎",
-    title: "Filtro Inteligente",
+    title: "Filtro Clínico Inteligente",
     body: "Descreva uma queixa — autismo, sono, TDAH — e o app sugere as escalas e ferramentas certas por faixa etária.",
-    target: '[data-testid="nav-Filtro Inteligente"]',
+    target: '[data-testid="nav-Filtro Clínico Inteligente"]',
   },
   {
     emoji: "📊",

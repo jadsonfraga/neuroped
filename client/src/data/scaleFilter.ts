@@ -1,4 +1,4 @@
-// Filtro Inteligente — Banco de escalas por queixa, idade, respondente e prioridade
+// Filtro Clínico Inteligente — Banco de escalas por queixa, idade, respondente e prioridade
 import { escalasAutoraisDrJadson } from "./escalasAutorais";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 

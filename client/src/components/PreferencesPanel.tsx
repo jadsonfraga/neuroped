@@ -89,7 +89,7 @@ export function PreferencesPanel() {
                 <PrefRow
                   icon={Vibrate}
                   label="Vibração tátil"
-                  description="Feedback no celular (se disponível)"
+                  description="Ligada por padrão; respeita sua escolha neste dispositivo"
                   on={hapticOn}
                   onToggle={toggleHaptic}
                 />
@@ -97,7 +97,7 @@ export function PreferencesPanel() {
 
               <div className="p-3 border-t border-card-border">
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Configurações salvas neste dispositivo. Você pode alterá-las a qualquer momento.
+                  A vibração tátil fica ligada por padrão e pode ser desligada manualmente neste dispositivo.
                 </p>
               </div>
             </motion.div>

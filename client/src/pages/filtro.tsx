@@ -4,7 +4,7 @@ import {
   Baby, Puzzle, Zap, Flame, AlertTriangle, CloudRain, Activity,
   Accessibility, MessageCircle, Moon, UtensilsCrossed, HeartPulse,
   Brain, GraduationCap, Users, ShieldAlert, Sparkles, Pill,
-  Search, X, Filter, ArrowRight, Clock, UserCheck, CheckCircle2,
+  Search, X, ArrowRight, Clock, UserCheck, CheckCircle2,
   Droplet, Move, Lightbulb, Stethoscope, BookOpen, School,
   ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target, RotateCcw
 } from "lucide-react";
@@ -18,7 +18,6 @@ import { motion } from "framer-motion";
 import { softTap, softTick, softHover } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
-import { Mascote } from "@/components/Mascote";
 import { celebrate } from "@/lib/confetti";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -68,17 +67,17 @@ const extraTools: ExtraTool[] = [
 
 const queixas = [
   { id: "agitado", label: "Agitado", emoji: "⚡", q: ["tdah"] },
-  { id: "desatento", label: "Desatento", emoji: "💭", q: ["tdah", "cognicao"] },
-  { id: "agressivo", label: "Agressivo", emoji: "👊", q: ["comportamento", "tea"] },
+  { id: "desatento", label: "TDAH / atenção", emoji: "🎯", q: ["tdah", "cognicao"] },
+  { id: "agressivo", label: "Comportamento", emoji: "👥", q: ["comportamento", "tea"] },
   { id: "irritado", label: "Irritado / Birra", emoji: "😤", q: ["comportamento", "depressao"] },
-  { id: "autismo", label: "Autismo / TEA", emoji: "🧩", q: ["tea"] },
-  { id: "nao-fala", label: "Não fala", emoji: "🤐", q: ["linguagem", "atraso", "tea"] },
+  { id: "autismo", label: "TEA / autismo", emoji: "🧩", q: ["tea"] },
+  { id: "nao-fala", label: "Linguagem", emoji: "💬", q: ["linguagem", "atraso", "tea"] },
   { id: "atrasado", label: "Atrasado", emoji: "🐢", q: ["atraso", "cognicao"] },
-  { id: "estudo", label: "Estudo / Escola", emoji: "📉", q: ["aprendizagem", "tdah", "cognicao"] },
+  { id: "estudo", label: "Aprendizagem", emoji: "📚", q: ["aprendizagem", "tdah", "cognicao"] },
   { id: "ansioso", label: "Ansioso", emoji: "😰", q: ["ansiedade"] },
   { id: "triste", label: "Triste", emoji: "😢", q: ["depressao"] },
   { id: "convulsao", label: "Convulsão", emoji: "⚡", q: ["epilepsia"] },
-  { id: "nao-dorme", label: "Não dorme", emoji: "🌙", q: ["sono"] },
+  { id: "nao-dorme", label: "Sono", emoji: "🌙", q: ["sono"] },
   { id: "nao-anda", label: "Não anda", emoji: "🚶", q: ["motor", "pc", "atraso"] },
   { id: "nao-come", label: "Não come", emoji: "🍽️", q: ["alimentacao"] },
   { id: "xixi", label: "Xixi na cama", emoji: "💧", q: ["enurese"] },
@@ -93,11 +92,28 @@ const queixas = [
   { id: "trauma", label: "Trauma", emoji: "🛡️", q: ["trauma"] },
   { id: "substancias", label: "Drogas / Álcool", emoji: "🍷", q: ["substancias"] },
   { id: "sensorial", label: "Sensorial", emoji: "🖐️", q: ["sensorial"] },
-  { id: "coordenacao", label: "Desajeitado", emoji: "🤸", q: ["motor", "pc"] },
+  { id: "coordenacao", label: "Motricidade", emoji: "🤸", q: ["motor", "pc"] },
   { id: "independencia", label: "Dependente", emoji: "🏠", q: ["autonomia", "funcionalidade"] },
   { id: "social-isolado", label: "Sem amigos", emoji: "😶", q: ["social", "tea"] },
   { id: "evolucao", label: "Reavaliação", emoji: "📈", q: ["evolucao"] },
   { id: "pos-tratamento", label: "Pós-tratamento", emoji: "🔄", q: ["evolucao", "efeitos"] },
+];
+
+
+const primaryQueixaIds = new Set([
+  "autismo",
+  "desatento",
+  "nao-fala",
+  "estudo",
+  "agressivo",
+  "nao-dorme",
+  "sensorial",
+  "coordenacao",
+]);
+
+const orderedQueixas = [
+  ...queixas.filter(q => primaryQueixaIds.has(q.id)),
+  ...queixas.filter(q => !primaryQueixaIds.has(q.id)),
 ];
 
 const idades = [
@@ -296,8 +312,8 @@ function expandTokens(tokens: string[]): string[][] {
   });
 }
 
-// ── Busca inteligente ──
-function smartSearch(query: string) {
+// ── Busca clínica ──
+function clinicalSearch(query: string) {
   const raw = norm(query);
   if (!raw || raw.length < 2) return { inScales: [] as ScaleEntry[], inPharm: [] as { cat: PharmCategory; drug: Drug }[], inTools: [] as ExtraTool[] };
   const tokens = raw.split(/\s+/).filter(t => t.length >= 1);
@@ -385,7 +401,7 @@ export default function FiltroPage() {
     let resultTools: ExtraTool[] = [];
 
     if (hasText) {
-      const sr = smartSearch(search);
+      const sr = clinicalSearch(search);
       resultScales = sr.inScales;
       resultPharm = sr.inPharm;
       resultTools = sr.inTools;
@@ -450,57 +466,61 @@ export default function FiltroPage() {
   const idealReason = idealResult?.reason || "";
 
   return (
-    <div className="space-y-4 page-enter">
+    <div className="space-y-3 page-enter">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="flex items-center gap-3"
+        className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/10 via-card to-chart-2/10 p-4 shadow-sm"
       >
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-md">
-          <Filter className="w-5 h-5 text-white" strokeWidth={1.75} />
-        </div>
-        <div>
-          <h1
-            className="text-xl text-foreground leading-tight"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-          >
-            Filtro Inteligente
-          </h1>
-          <p className="text-xs text-muted-foreground italic">Fluxo guiado: idade → queixa → objetivo → contexto → instrumentos</p>
+        <div className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-primary/10 blur-2xl" aria-hidden="true" />
+        <div className="relative flex items-start gap-3">
+          <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-sm ring-1 ring-white/10">
+            <Brain className="w-5 h-5 text-white" strokeWidth={1.75} />
+            <Search className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full bg-background p-0.5 text-primary shadow-sm" strokeWidth={2} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">Busca guiada NeuroPed</p>
+            <h1
+              className="text-xl text-foreground leading-tight sm:text-2xl"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 650 }}
+            >
+              Filtro Clínico Inteligente
+            </h1>
+            <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              Encontre a escala certa por idade, queixa e objetivo clínico.
+            </p>
+          </div>
         </div>
       </motion.div>
 
-      <div className="rounded-2xl border bg-card/80 p-3 space-y-2" aria-label="Etapas do filtro clínico guiado">
-        <div className="grid grid-cols-5 gap-1 text-center text-[10px] font-semibold">
-          {["1 Idade", "2 Queixa", "3 Objetivo", "4 Contexto", "5 Sugestões"].map((step, index) => (
-            <div key={step} className={`rounded-lg px-1 py-1.5 ${index === 4 && total > 0 ? "bg-primary text-primary-foreground" : index === 0 && selIdade ? "bg-primary/10 text-primary" : index === 1 && selQueixas.length ? "bg-primary/10 text-primary" : index === 2 && objetivo ? "bg-primary/10 text-primary" : index === 3 && contexto ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-              {step}
-            </div>
-          ))}
-        </div>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Não é necessário conhecer siglas: descreva a queixa ou escolha botões clínicos para receber opções priorizadas com idade, tempo, indicação, limitações e ação direta.
-        </p>
-      </div>
-
       {/* Busca */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
         <Input
           type="text"
-          placeholder="agitado, autismo, risperidona, SNAP, pedagógico, escola..."
+          placeholder="Informe idade, queixa ou contexto: TEA, ecolalia, SNAP, escola..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="pl-10 pr-10 h-12 rounded-xl text-sm"
+          className="pl-10 pr-10 h-12 rounded-2xl border-primary/15 bg-card/90 text-sm shadow-sm focus-visible:ring-primary/30"
           data-testid="input-search"
         />
         {search && (
-          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors">
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
+            aria-label="Limpar busca"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-primary/10 bg-card/70 p-3 shadow-sm" aria-label="Orientação do filtro clínico guiado">
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Informe idade, queixa e contexto clínico para priorizar instrumentos mais adequados. A recomendação auxilia a escolha, sem substituir julgamento clínico.
+        </p>
       </div>
 
       {/* Idade */}
@@ -529,15 +549,15 @@ export default function FiltroPage() {
       {/* Queixas */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Queixa</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Categorias clínicas</p>
           {selQueixas.length > 0 && (
             <button onClick={() => setSelQueixas([])} className="text-[11px] text-primary hover:underline">
               Limpar ({selQueixas.length})
             </button>
           )}
         </div>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-          {queixas.map(q => {
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          {orderedQueixas.map(q => {
             const sel = selQueixas.includes(q.id);
             return (
               <button
@@ -548,12 +568,17 @@ export default function FiltroPage() {
                   haptic.select();
                   toggleQ(q.id);
                 }}
-                className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-xl text-[10px] font-medium border transition-all ${
-                  sel ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"
+                className={`flex items-center gap-2 px-2.5 py-2 rounded-xl text-left text-[11px] font-semibold border transition-all ${
+                  sel ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/15" : "bg-card/90 text-foreground border-border hover:bg-muted hover:border-primary/40"
                 }`}
               >
-                <span className="text-base leading-none">{q.emoji}</span>
-                <span className="truncate w-full text-center">{q.label}</span>
+                <span className="text-sm leading-none" aria-hidden="true">{q.emoji}</span>
+                <span className="min-w-0 flex-1 truncate">{q.label}</span>
+                {primaryQueixaIds.has(q.id) && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${sel ? "bg-white/15 text-white" : "bg-primary/10 text-primary"}`}>
+                    guia
+                  </span>
+                )}
               </button>
             );
           })}
@@ -650,13 +675,14 @@ export default function FiltroPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados do filtro inteligente">
+        <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados do filtro clínico inteligente">
           {total > 0 && (
-            <Mascote
-              contexto="resultado"
-              size="sm"
-              fala={`Encontrei ${total} recurso${total !== 1 ? "s" : ""} para esse perfil. Confira abaixo.`}
-            />
+            <div className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
+              <span>
+                {total} recurso{total !== 1 ? "s" : ""} priorizado{total !== 1 ? "s" : ""} para o perfil informado.
+              </span>
+            </div>
           )}
           {/* Tabs */}
           <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
