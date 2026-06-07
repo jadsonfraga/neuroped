@@ -16,8 +16,21 @@ if (!window.location.hash) {
   window.location.hash = "#/";
 }
 
+function GateCompat({ children }: { children: React.ReactNode }) {
+  try {
+    if (sessionStorage.getItem("neuroped:pin-ok") === "1") {
+      sessionStorage.setItem("neuroped:local-unlocked", "1");
+    }
+  } catch {
+    // storage indisponível: o PasswordGate segue controlando o acesso principal
+  }
+  return <>{children}</>;
+}
+
 createRoot(document.getElementById("root")!).render(
   <PasswordGate>
-    <App />
+    <GateCompat>
+      <App />
+    </GateCompat>
   </PasswordGate>,
 );
