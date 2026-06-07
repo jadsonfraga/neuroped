@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { getAccessLevel } from "@/security/accessPolicy";
 import { LocalUnlockGate } from "@/components/LocalUnlockGate";
-import { isAppUnlocked, localUnlockEventName } from "@/lib/localUnlock";
+import { hasClinicalUnlock, localUnlockEventName } from "@/lib/localUnlock";
 
 interface SensitiveRouteGateProps {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ interface SensitiveRouteGateProps {
 
 export function SensitiveRouteGate({ children }: SensitiveRouteGateProps) {
   const [location] = useLocation();
-  const [unlocked, setUnlocked] = useState(() => isAppUnlocked());
+  const [unlocked, setUnlocked] = useState(() => hasClinicalUnlock());
   const accessLevel = getAccessLevel(location);
 
   useEffect(() => {
