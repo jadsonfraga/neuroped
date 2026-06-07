@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { SafeImage } from "@/components/SafeImage";
 
 interface PremiumVisualPanelProps {
   src: string;
@@ -19,7 +20,7 @@ export function PremiumVisualPanel({
 }: PremiumVisualPanelProps) {
   return (
     <aside className={`relative overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/85 shadow-sm backdrop-blur ${className}`}>
-      <img
+      <SafeImage
         src={src}
         alt=""
         aria-hidden="true"
