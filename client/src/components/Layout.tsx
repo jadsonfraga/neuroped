@@ -1,16 +1,16 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList } from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/components/CommandPalette";
-import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
 import { navSections, getNavigationMatch } from "@/data/navigation";
+import { lockApp } from "@/lib/localUnlock";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -28,11 +28,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
-    Ferramentas: true,
-    Neurodesenvolvimento: true,
-    "Comportamento e TDAH": true,
-    "Saúde Mental": false,
-    Prontuário: true,
+    Essenciais: true,
+    "Avaliação Clínica": true,
+    "Escalas e Inventários": false,
+    "Documentos e Receitas": true,
+    Administração: false,
   }));
 
   useEffect(() => {
@@ -59,6 +59,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const activeNavigation = getNavigationMatch(location);
   const showClinicalFlow = location !== "/" && location !== "/login" && location !== "/sessao-expirada";
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
+
+  function handleLocalLock() {
+    softTap();
+    haptic.tap();
+    lockApp();
+    window.location.hash = "/";
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -98,7 +105,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               openCommandPalette();
             }}
             data-testid="button-command-palette-mobile"
-            aria-label="Buscar (atalho Ctrl+K)"
+            aria-label="Buscar escala, teste ou módulo"
           >
             <Search className="w-4 h-4" aria-hidden="true" />
           </Button>
@@ -187,7 +194,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 NeuroPed
               </h1>
               <p className="text-[11px] text-muted-foreground leading-tight italic">
-                Escalas de Neuropediatria
+                App clínico guiado
               </p>
             </div>
           )}
@@ -208,8 +215,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
-        {/* Busca / Command palette (D2) */}
-        <div className="px-2 pt-2">
+        {/* Busca / Command palette */}
+        <div className="px-2 pt-2 space-y-2">
           <button
             onClick={() => {
               softTap();
@@ -218,7 +225,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }}
             onMouseEnter={() => softHover()}
             data-testid="button-command-palette"
-            aria-label="Buscar escalas e páginas (atalho Ctrl+K)"
+            aria-label="Buscar escala, teste ou módulo"
             className={`flex items-center gap-2 w-full min-h-[40px] rounded-lg border border-sidebar-border bg-sidebar-accent/40 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors ${
               collapsed ? "md:justify-center md:px-0 px-3" : "px-3"
             }`}
@@ -226,14 +233,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Search className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             {!collapsed && (
               <>
-                <span className="text-xs">Buscar…</span>
-                <kbd className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-background/50">
+                <span className="text-xs">Buscar escala, teste ou módulo</span>
+                <kbd className="ml-auto hidden text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-background/50 md:inline-flex">
                   Ctrl K
                 </kbd>
               </>
             )}
-            {collapsed && <span className="text-xs md:hidden">Buscar…</span>}
+            {collapsed && <span className="text-xs md:hidden">Buscar escala, teste ou módulo</span>}
           </button>
+          {!collapsed && (
+            <Link href="/filtro">
+              <div className="flex min-h-[38px] cursor-pointer items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15">
+                <Filter className="h-4 w-4" aria-hidden="true" />
+                Filtrar por idade e queixa
+              </div>
+            </Link>
+          )}
         </div>
 
         {/* Navigation */}
@@ -333,6 +348,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="sm"
+            className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
+            onClick={handleLocalLock}
+            data-testid="button-local-lock"
+            aria-label="Bloquear acesso local"
+          >
+            <KeyRound className="w-4 h-4" />
+            {!collapsed && <span className="ml-2 text-sm">Bloquear acesso</span>}
+            {collapsed && <span className="ml-2 text-sm md:hidden">Bloquear acesso</span>}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             className={`w-full hidden md:flex ${collapsed ? "justify-center px-0" : "justify-start"}`}
             onClick={() => {
               softTap();
@@ -423,7 +450,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <p className="mt-2">Ferramenta educacional/profissional: não substitui avaliação médica individualizada nem aplicação padronizada por profissional habilitado.</p>
         </footer>
-        <PerplexityAttribution />
       </main>
     </div>
   );
