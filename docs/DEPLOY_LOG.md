@@ -49,3 +49,19 @@ Deployment trigger commit: force GitHub Actions workflows on `push` to `main` af
 
 - `.github/workflows/deploy.yml` — GitHub Pages build and deploy.
 - `.github/workflows/deploy-cloudflare.yml` — Cloudflare Pages build and deploy.
+
+## 2026-06-07 — Main deployment trigger
+
+Requested deployment of the current `main` code state after registering `/pre-retorno` in `App.tsx` and navigation. This commit exists only to force push-based deployment workflows:
+
+- GitHub Pages: `.github/workflows/deploy.yml`
+- Cloudflare Pages: `.github/workflows/deploy-cloudflare.yml`
+
+Post-deploy routes to verify:
+
+- `#/pre-retorno`
+- `#/portal-familia`
+- `#/filtro`
+- `#/recepcao`
+- `#/pacientes`
+- `#/prontuario`
