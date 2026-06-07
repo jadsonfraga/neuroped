@@ -141,15 +141,55 @@ function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: st
     state: scale?.appRoute ? "Rota direta disponível." : restricted ? "Ficha clínica; não embutir itens/escore sem permissão formal." : "Catálogo filtrável; aplicação direta ainda não implementada.",
     source: scale?.fonte,
     tone,
+    ageLabel: scale ? `${Math.round(scale.ageMin / 12)}–${Math.round(scale.ageMax / 12)} anos` : "idade a definir",
+    respondentLabel: scale ? scale.respondente.join(" · ") : "respondente a definir",
+    domainLabel: scale ? scale.queixas.slice(0, 2).join(" · ") : "refinar busca",
+    licenseLabel: scale?.licencaUso === "livre" ? "uso livre" : restricted ? "permissão" : "catálogo",
   };
 }
 
 function icon(slot: Slot) {
-  if (slot === "Ouro") return <Award className="h-5 w-5" />;
-  if (slot === "Prata") return <Medal className="h-5 w-5" />;
-  if (slot === "Bronze") return <Star className="h-5 w-5" />;
-  if (slot === "Teste Direto") return <ClipboardCheck className="h-5 w-5" />;
-  return <School className="h-5 w-5" />;
+  if (slot === "Ouro") return <Award className="h-4 w-4" />;
+  if (slot === "Prata") return <Medal className="h-4 w-4" />;
+  if (slot === "Bronze") return <Star className="h-4 w-4" />;
+  if (slot === "Teste Direto") return <ClipboardCheck className="h-4 w-4" />;
+  return <School className="h-4 w-4" />;
+}
+
+function slotChrome(slot: Slot) {
+  if (slot === "Ouro") {
+    return {
+      bar: "bg-gradient-to-r from-[#e7c98b] to-[#caa56a]",
+      medal: "border-transparent bg-gradient-to-r from-[#e7c98b] to-[#caa56a] text-[#241a05] shadow-[0_8px_18px_-8px_rgba(231,201,139,.65)]",
+      card: "border-[#e7c98b]/40 shadow-[0_0_0_1px_rgba(231,201,139,.22),0_26px_60px_-30px_rgba(231,201,139,.35)]",
+    };
+  }
+  if (slot === "Prata") {
+    return {
+      bar: "bg-gradient-to-r from-slate-200 to-slate-400",
+      medal: "border-transparent bg-gradient-to-r from-slate-200 to-slate-400 text-slate-900",
+      card: "border-slate-300/25",
+    };
+  }
+  if (slot === "Bronze") {
+    return {
+      bar: "bg-gradient-to-r from-orange-400/80 to-amber-800/75",
+      medal: "border-orange-300/35 bg-gradient-to-r from-orange-400/35 to-amber-800/35 text-orange-100",
+      card: "border-orange-400/25",
+    };
+  }
+  if (slot === "Teste Direto") {
+    return {
+      bar: "bg-gradient-to-r from-blue-500 to-indigo-500",
+      medal: "border-blue-400/35 bg-blue-500/15 text-blue-100",
+      card: "border-blue-400/20",
+    };
+  }
+  return {
+    bar: "bg-gradient-to-r from-emerald-500 to-teal-500",
+    medal: "border-emerald-400/35 bg-emerald-500/15 text-emerald-100",
+    card: "border-emerald-400/20",
+  };
 }
 
 interface ScaleVisual {
@@ -263,7 +303,57 @@ export default function FiltroPage() {
       {hasSearch ? <section className="space-y-3">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {ranking.map((item) => <Link key={item.slot} href={item.route}><Card className="group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg"><CardContent className="flex h-full flex-col gap-3 p-4"><div className="flex items-start gap-3"><div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.tone} text-white shadow-md`}>{icon(item.slot)}</div><div className="min-w-0 flex-1"><Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.14em]">{item.slot}</Badge><h3 className="truncate text-sm font-black text-foreground group-hover:text-primary">{item.title}</h3><p className="line-clamp-2 text-xs text-muted-foreground">{item.subtitle}</p></div></div><div className="space-y-2 rounded-2xl bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground"><p><strong className="text-foreground">Motivo:</strong> {item.reason}</p><p><strong className="text-foreground">Estado:</strong> {item.state}</p>{item.source && <p><strong className="text-foreground">Fonte:</strong> {item.source}</p>}</div><div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div></CardContent></Card></Link>)}
+          {ranking.map((item) => {
+            const chrome = slotChrome(item.slot);
+            return (
+              <Link key={item.slot} href={item.route} className="block h-full">
+                <Card className={`group relative h-full cursor-pointer overflow-hidden rounded-[18px] border bg-gradient-to-b from-card/95 to-card/70 text-foreground shadow-[0_18px_48px_-28px_rgba(3,2,16,.82)] transition hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_28px_64px_-28px_rgba(91,84,232,.50)] ${chrome.card}`}>
+                  <div className={`absolute inset-x-0 top-0 h-[3px] ${chrome.bar}`} aria-hidden="true" />
+                  <CardContent className="flex h-full flex-col gap-3 p-4 pt-5">
+                    <div className="flex">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black leading-none tracking-[0.01em] ${chrome.medal}`}>
+                        {icon(item.slot)}
+                        <span>{item.slot}</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br ${item.tone} text-[13px] font-black text-white shadow-[0_10px_22px_-10px_rgba(124,121,255,.85)]`}>
+                        {item.title.slice(0, 4).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-[15px] font-black leading-tight text-foreground group-hover:text-primary">{item.title}</h3>
+                        <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">{item.subtitle}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge variant="outline" className="rounded-full border-emerald-400/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-300">{item.ageLabel}</Badge>
+                      <Badge variant="outline" className="rounded-full border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">{item.respondentLabel}</Badge>
+                      <Badge variant="outline" className="rounded-full border-border/70 bg-background/60 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">{item.domainLabel}</Badge>
+                      <Badge variant="outline" className="rounded-full border-border/70 bg-background/60 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">{item.licenseLabel}</Badge>
+                    </div>
+
+                    <div className="space-y-2 text-[11.5px] leading-relaxed text-muted-foreground">
+                      <p><strong className="text-foreground">Por que:</strong> {item.reason}</p>
+                      <p><strong className="text-foreground">Estado:</strong> {item.state}</p>
+                    </div>
+
+                    {item.source && (
+                      <div className="rounded-[10px] border border-[#e7c98b]/25 bg-[#e7c98b]/10 px-3 py-2 text-[11.5px] leading-relaxed text-slate-200">
+                        <strong className="text-[#e8dcc2]">Evidência:</strong> {item.source}
+                      </div>
+                    )}
+
+                    <div className="mt-auto flex items-center justify-between pt-1 text-xs font-black text-primary">
+                      <span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span>
+                      <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
       </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
