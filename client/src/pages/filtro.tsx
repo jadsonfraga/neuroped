@@ -35,6 +35,7 @@ import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
 type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar";
+type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
 const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
@@ -130,10 +131,18 @@ function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], s
     .map((x) => x.scale);
 }
 
+function tierFromSlot(slot: Slot): Tier | null {
+  if (slot === "Ouro") return "ouro";
+  if (slot === "Prata") return "prata";
+  if (slot === "Bronze") return "bronze";
+  return null;
+}
+
 function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string) {
   const restricted = scale?.licencaUso === "restrita" || scale?.licencaUso === "comercial" || scale?.licencaUso === "contato_autor";
   return {
     slot,
+    tier: tierFromSlot(slot),
     route: scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
     title: scale?.name || "Sem escala ideal",
     subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
@@ -217,14 +226,14 @@ export default function FiltroPage() {
   };
 
   return (
-    <div className="page-enter space-y-5 pb-8">
+    <div className="page-enter container-filtro filter-260-shell space-y-5 pb-8">
       <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-5 w-5" /></div>
+          <div className="filter-260-iconbox flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-5 w-5" /></div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">ranking obrigatório · escalas + questionários + inventários</Badge>
             <h1 className="text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Agora o filtro cruza idade, queixa, respondente, rota direta, fonte e licença usando a base interna, instrumentos suplementares e 100 escalas mundiais sem custo.</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Cruza idade, queixa, respondente, rota direta, fonte e licença usando a base interna, instrumentos suplementares e 100 escalas mundiais sem custo.</p>
           </div>
         </div>
       </header>
@@ -238,7 +247,7 @@ export default function FiltroPage() {
       <section className="space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: autismo, TDAH, atraso, escola, ansiedade, trauma, sono, PROMIS..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: autismo, TDAH, atraso, escola, ansiedade, trauma, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
           {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 
@@ -262,13 +271,54 @@ export default function FiltroPage() {
 
       {hasSearch ? <section className="space-y-3">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {ranking.map((item) => <Link key={item.slot} href={item.route}><Card className="group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg"><CardContent className="flex h-full flex-col gap-3 p-4"><div className="flex items-start gap-3"><div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.tone} text-white shadow-md`}>{icon(item.slot)}</div><div className="min-w-0 flex-1"><Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.14em]">{item.slot}</Badge><h3 className="truncate text-sm font-black text-foreground group-hover:text-primary">{item.title}</h3><p className="line-clamp-2 text-xs text-muted-foreground">{item.subtitle}</p></div></div><div className="space-y-2 rounded-2xl bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground"><p><strong className="text-foreground">Motivo:</strong> {item.reason}</p><p><strong className="text-foreground">Estado:</strong> {item.state}</p>{item.source && <p><strong className="text-foreground">Fonte:</strong> {item.source}</p>}</div><div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div></CardContent></Card></Link>)}
+        <div className="filter-260-grid">
+          {ranking.map((item) => (
+            <Link key={item.slot} href={item.route} className="block h-full">
+              <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
+                <CardContent className="filter-260-card-content">
+                  <div className="filter-260-medalrow">
+                    <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
+                  </div>
+                  <div className="filter-260-head">
+                    <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
+                      <p className="filter-260-subtitle">{item.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
+                  <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
+                  {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
+                  <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
       </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
 
-      <section className="rounded-3xl border border-border/70 bg-card/70 p-4"><div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return <div key={s.id} className="rounded-2xl border border-border/70 bg-background/70 p-3 transition hover:border-primary/30 hover:bg-background"><div className="flex items-start gap-3"><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${visual.tone} text-white shadow-sm`}><Icon className="h-4.5 w-4.5" strokeWidth={1.9} /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-black text-foreground">{s.name}</p><p className="line-clamp-2 text-xs text-muted-foreground">{s.fullName}</p></div><div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="text-[10px]">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="text-[10px]">mundial</Badge>}</div></div><p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p></div></div></div>; })}</div></section>
+      <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
+        <div className="filter-260-grid compact">
+          {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
+            <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
+              <div className="filter-260-card-content compact">
+                <div className="filter-260-head">
+                  <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
+                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}</div>
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ); })}
+        </div>
+      </section>
     </div>
   );
 }
