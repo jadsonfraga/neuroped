@@ -69,6 +69,8 @@ const EmsPage = lazy(() => import("@/pages/ems"));
 const EtarePage = lazy(() => import("@/pages/etare"));
 const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
+const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
+const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const EscalasNeuropsiquiatriaPage = lazy(() => import("@/pages/escalas-neuropsiquiatria"));
 const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
@@ -123,7 +125,6 @@ function LoadingSpinner() {
   );
 }
 
-/** Wrapper para rotas sensiveis: exige auth + opcionalmente role. */
 function Protected({
   children,
   roles,
@@ -139,19 +140,11 @@ function AppRouter() {
     <Layout>
       <Suspense fallback={<LoadingSpinner />}>
         <Switch>
-          {/* ----- Auth & LGPD ----- */}
           <Route path="/login" component={LoginPage} />
           <Route path="/sessao-expirada" component={SessionExpiredPage} />
-          <Route path="/consentimento-lgpd">
-            <Protected>
-              <LgpdConsentPage />
-            </Protected>
-          </Route>
+          <Route path="/consentimento-lgpd"><Protected><LgpdConsentPage /></Protected></Route>
 
-          {/* ----- Home publica após desbloqueio local ----- */}
           <Route path="/" component={HomePage} />
-
-          {/* ----- Escalas educativas ----- */}
           <Route path="/mchat" component={MchatPage} />
           <Route path="/cars" component={CarsPage} />
           <Route path="/snap" component={SnapPage} />
@@ -193,6 +186,8 @@ function AppRouter() {
           <Route path="/etare" component={EtarePage} />
           <Route path="/eaah" component={EaahPage} />
           <Route path="/filtro" component={FiltroPage} />
+          <Route path="/pre-consulta" component={PreConsultaPage} />
+          <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
           <Route path="/diario-sono" component={DiarioSonoPage} />
@@ -220,70 +215,24 @@ function AppRouter() {
           <Route path="/marcos-desenvolvimento" component={MarcosDesenvolvimentoPage} />
           <Route path="/valores-referencia" component={ValoresReferenciaPage} />
 
-          {/* ----- Rotas SENSIVEIS (requerem auth profissional) ----- */}
-          <Route path="/farmacologia">
-            <Protected roles={["admin", "professional"]}>
-              <FarmacologiaPage />
-            </Protected>
-          </Route>
-          <Route path="/pacientes">
-            <Protected roles={["admin", "professional"]}>
-              <PacientesPage />
-            </Protected>
-          </Route>
-          <Route path="/paciente/:id">
-            <Protected roles={["admin", "professional"]}>
-              <PacienteDetalhePage />
-            </Protected>
-          </Route>
-          <Route path="/prontuario">
-            <Protected roles={["admin", "professional"]}>
-              <ProntuarioPage />
-            </Protected>
-          </Route>
-          <Route path="/calculadora-dose">
-            <Protected roles={["admin", "professional"]}>
-              <CalculadoraDosePage />
-            </Protected>
-          </Route>
-          <Route path="/satisfacao-medicacao">
-            <Protected roles={["admin", "professional"]}>
-              <SatisfacaoMedicacaoPage />
-            </Protected>
-          </Route>
-          <Route path="/avaliacao-multiprofissional">
-            <Protected roles={["admin", "professional"]}>
-              <AvaliacaoMultiprofissionalPage />
-            </Protected>
-          </Route>
-          <Route path="/plano-terapeutico">
-            <Protected roles={["admin", "professional"]}>
-              <PlanoTerapeuticoPage />
-            </Protected>
-          </Route>
-          <Route path="/plano-intervencao">
-            <Protected roles={["admin", "professional"]}>
-              <PlanoIntervencaoPage />
-            </Protected>
-          </Route>
-          <Route path="/fichas-registro">
-            <Protected roles={["admin", "professional"]}>
-              <FichasRegistroPage />
-            </Protected>
-          </Route>
+          <Route path="/farmacologia"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
+          <Route path="/pacientes"><Protected roles={["admin", "professional"]}><PacientesPage /></Protected></Route>
+          <Route path="/paciente/:id"><Protected roles={["admin", "professional"]}><PacienteDetalhePage /></Protected></Route>
+          <Route path="/prontuario"><Protected roles={["admin", "professional"]}><ProntuarioPage /></Protected></Route>
+          <Route path="/calculadora-dose"><Protected roles={["admin", "professional"]}><CalculadoraDosePage /></Protected></Route>
+          <Route path="/satisfacao-medicacao"><Protected roles={["admin", "professional"]}><SatisfacaoMedicacaoPage /></Protected></Route>
+          <Route path="/avaliacao-multiprofissional"><Protected roles={["admin", "professional"]}><AvaliacaoMultiprofissionalPage /></Protected></Route>
+          <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
+          <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
+          <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>
 
-          {/* ----- Portal da Família (acesso público restrito a documentos liberados) ----- */}
           <Route path="/portal-familia" component={PortalFamiliaPage} />
           <Route path="/portal-familia/novidades" component={PortalNovidadesPage} />
           <Route path="/portal-familia/acesso" component={PortalAcessoPage} />
-
-          {/* ----- Páginas informativas (sobre/legais) ----- */}
           <Route path="/acessibilidade" component={AcessibilidadePage} />
           <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/qualidade" component={QualidadePage} />
-
-          {/* ----- Catch-all ----- */}
           <Route component={NotFound} />
         </Switch>
       </Suspense>
@@ -297,13 +246,11 @@ function App() {
   const [appReady, setAppReady] = useState(false);
   const [localUnlocked, setLocalUnlocked] = useState(() => isAppUnlocked());
 
-  // Marca app como pronto apos primeiro render. SplashScreen aguarda esse flag.
   useEffect(() => {
     const t = setTimeout(() => setAppReady(true), 50);
     return () => clearTimeout(t);
   }, []);
 
-  // Sincroniza bloqueio local entre componentes sem expor senha.
   useEffect(() => {
     function handleLockEvent(event: Event) {
       const detail = (event as CustomEvent<{ unlocked?: boolean }>).detail;
@@ -314,7 +261,6 @@ function App() {
     return () => window.removeEventListener(localUnlockEventName, handleLockEvent);
   }, []);
 
-  // Mostra onboarding apenas no primeiro acesso desbloqueado (controlado por localStorage)
   useEffect(() => {
     if (!splashComplete || !localUnlocked) return;
     try {
@@ -337,20 +283,13 @@ function App() {
           <ToastProvider>
             <AmbientEffects />
             <Toaster />
-            <SplashScreen
-              awaiting={!appReady}
-              onComplete={() => setSplashComplete(true)}
-            />
+            <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
             {splashComplete && !localUnlocked ? (
               <LocalUnlockGate onUnlocked={() => setLocalUnlocked(true)} />
             ) : (
               <>
-                {splashComplete && showOnboarding && (
-                  <Onboarding onComplete={dismissOnboarding} />
-                )}
-                <Router hook={useHashLocation}>
-                  <AppRouter />
-                </Router>
+                {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
+                <Router hook={useHashLocation}><AppRouter /></Router>
                 <InstallPrompt />
                 <PreferencesPanel />
                 <CommandPalette />
