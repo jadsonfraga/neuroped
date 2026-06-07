@@ -4,10 +4,8 @@ import {
   CommandGroup, CommandItem, CommandShortcut,
 } from "@/components/ui/command";
 import { useRecents } from "@/hooks/useFavorites";
-import {
-  Filter, ClipboardPlus, Users, MessageCircle, FileSignature,
-  Home, Newspaper, HelpCircle, Stethoscope, Clock, Search,
-} from "lucide-react";
+import { navigablePages } from "@/data/navigation";
+import { Clock, Search } from "lucide-react";
 
 /**
  * CommandPalette — Bloco D2.
@@ -31,25 +29,6 @@ interface NavScale {
   fullName: string;
   appRoute?: string;
 }
-
-interface PageItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const PAGES: PageItem[] = [
-  { href: "/", label: "Início", icon: Home },
-  { href: "/filtro", label: "Filtro Inteligente", icon: Filter },
-  { href: "/prontuario", label: "Prontuário Clínico", icon: ClipboardPlus },
-  { href: "/pacientes", label: "Meus Pacientes", icon: Users },
-  { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
-  { href: "/assinatura-digital", label: "Assinatura Digital", icon: FileSignature },
-  { href: "/bateria-jadson", label: "Bateria Dr. Jadson", icon: Stethoscope },
-  { href: "/portal-familia", label: "Portal da Família", icon: Users },
-  { href: "/portal-familia/novidades", label: "Novidades & Artigos", icon: Newspaper },
-  { href: "/ajuda", label: "Ajuda / FAQ", icon: HelpCircle },
-];
 
 /** Realça (negrito) as ocorrências do termo no texto. */
 function Highlight({ text, query }: { text: string; query: string }) {
@@ -172,7 +151,7 @@ export function CommandPalette() {
         </CommandGroup>
 
         <CommandGroup heading="Páginas">
-          {PAGES.map((p) => (
+          {navigablePages.map((p) => (
             <CommandItem key={`page-${p.href}`} value={`pagina ${p.label}`} onSelect={() => goPage(p.href)}>
               <p.icon className="mr-2 h-4 w-4 text-muted-foreground" />
               <Highlight text={p.label} query={search} />
