@@ -17,6 +17,8 @@ import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { CommandPalette } from "@/components/CommandPalette";
+import { LocalUnlockGate } from "@/components/LocalUnlockGate";
+import { isAppUnlocked, localUnlockEventName } from "@/lib/localUnlock";
 
 // ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
@@ -145,10 +147,10 @@ function AppRouter() {
             </Protected>
           </Route>
 
-          {/* ----- Home publica ----- */}
+          {/* ----- Home publica após desbloqueio local ----- */}
           <Route path="/" component={HomePage} />
 
-          {/* ----- Escalas educativas (publicas) ----- */}
+          {/* ----- Escalas educativas ----- */}
           <Route path="/mchat" component={MchatPage} />
           <Route path="/cars" component={CarsPage} />
           <Route path="/snap" component={SnapPage} />
@@ -291,6 +293,7 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  const [localUnlocked, setLocalUnlocked] = useState(() => isAppUnlocked());
 
   // Marca app como pronto apos primeiro render. SplashScreen aguarda esse flag.
   useEffect(() => {
@@ -298,14 +301,25 @@ function App() {
     return () => clearTimeout(t);
   }, []);
 
-  // Mostra onboarding apenas no primeiro acesso (controlado por localStorage)
+  // Sincroniza bloqueio local entre componentes sem expor senha.
   useEffect(() => {
-    if (!splashComplete) return;
+    function handleLockEvent(event: Event) {
+      const detail = (event as CustomEvent<{ unlocked?: boolean }>).detail;
+      setLocalUnlocked(Boolean(detail?.unlocked));
+    }
+
+    window.addEventListener(localUnlockEventName, handleLockEvent);
+    return () => window.removeEventListener(localUnlockEventName, handleLockEvent);
+  }, []);
+
+  // Mostra onboarding apenas no primeiro acesso desbloqueado (controlado por localStorage)
+  useEffect(() => {
+    if (!splashComplete || !localUnlocked) return;
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);
     } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [splashComplete]);
+  }, [splashComplete, localUnlocked]);
 
   function dismissOnboarding() {
     setShowOnboarding(false);
@@ -325,16 +339,22 @@ function App() {
               awaiting={!appReady}
               onComplete={() => setSplashComplete(true)}
             />
-            {splashComplete && showOnboarding && (
-              <Onboarding onComplete={dismissOnboarding} />
+            {splashComplete && !localUnlocked ? (
+              <LocalUnlockGate onUnlocked={() => setLocalUnlocked(true)} />
+            ) : (
+              <>
+                {splashComplete && showOnboarding && (
+                  <Onboarding onComplete={dismissOnboarding} />
+                )}
+                <Router hook={useHashLocation}>
+                  <AppRouter />
+                </Router>
+                <InstallPrompt />
+                <PreferencesPanel />
+                <CommandPalette />
+                {splashComplete && <WelcomeTour />}
+              </>
             )}
-            <Router hook={useHashLocation}>
-              <AppRouter />
-            </Router>
-            <InstallPrompt />
-            <PreferencesPanel />
-            <CommandPalette />
-            {splashComplete && <WelcomeTour />}
           </ToastProvider>
         </TooltipProvider>
       </AuthProvider>
