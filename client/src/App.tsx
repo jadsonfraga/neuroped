@@ -17,8 +17,6 @@ import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { CommandPalette } from "@/components/CommandPalette";
-import { LocalUnlockGate } from "@/components/LocalUnlockGate";
-import { isAppUnlocked, localUnlockEventName } from "@/lib/localUnlock";
 
 // ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
@@ -99,7 +97,7 @@ const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
 const MarcosDesenvolvimentoPage = lazy(() => import("@/pages/marcos-desenvolvimento"));
 const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
 
-// ----- Lazy: paginas SENSIVEIS (requerem auth) -----
+// ----- Lazy: paginas SENSIVEIS (requerem auth ou PIN master local) -----
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
@@ -240,7 +238,6 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
   const [appReady, setAppReady] = useState(false);
-  const [localUnlocked, setLocalUnlocked] = useState(() => isAppUnlocked());
 
   useEffect(() => {
     const t = setTimeout(() => setAppReady(true), 50);
@@ -248,22 +245,12 @@ function App() {
   }, []);
 
   useEffect(() => {
-    function handleLockEvent(event: Event) {
-      const detail = (event as CustomEvent<{ unlocked?: boolean }>).detail;
-      setLocalUnlocked(Boolean(detail?.unlocked));
-    }
-
-    window.addEventListener(localUnlockEventName, handleLockEvent);
-    return () => window.removeEventListener(localUnlockEventName, handleLockEvent);
-  }, []);
-
-  useEffect(() => {
-    if (!splashComplete || !localUnlocked) return;
+    if (!splashComplete) return;
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);
     } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [splashComplete, localUnlocked]);
+  }, [splashComplete]);
 
   function dismissOnboarding() {
     setShowOnboarding(false);
@@ -280,18 +267,12 @@ function App() {
             <AmbientEffects />
             <Toaster />
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
-            {splashComplete && !localUnlocked ? (
-              <LocalUnlockGate onUnlocked={() => setLocalUnlocked(true)} />
-            ) : (
-              <>
-                {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
-                <Router hook={useHashLocation}><AppRouter /></Router>
-                <InstallPrompt />
-                <PreferencesPanel />
-                <CommandPalette />
-                {splashComplete && <WelcomeTour />}
-              </>
-            )}
+            {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
+            <Router hook={useHashLocation}><AppRouter /></Router>
+            <InstallPrompt />
+            <PreferencesPanel />
+            <CommandPalette />
+            {splashComplete && <WelcomeTour />}
           </ToastProvider>
         </TooltipProvider>
       </AuthProvider>
