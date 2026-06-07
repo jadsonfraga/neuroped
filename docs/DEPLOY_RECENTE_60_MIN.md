@@ -74,4 +74,5 @@ Deploy acionado diretamente na branch `main` para publicar todos os commits ja i
 ## Resolucao de conflitos
 
 - Conflito documental do PR #366 consolidado no `main`.
-- PRs #365, #367, #368, #369 e #370 permanecem em avaliacao para integracao funcional e visual controlada.
+- PR #366 sincronizado em branch separada com o mesmo conteudo consolidado.
+- PRs #365, #367, #368, #369 e #370 seguem como conflitos funcionais/visuais a consolidar.
