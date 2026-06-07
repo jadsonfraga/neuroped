@@ -6,7 +6,9 @@ import {
   Brain, GraduationCap, Users, ShieldAlert, Sparkles, Pill,
   Search, X, Filter, ArrowRight, Clock, UserCheck, CheckCircle2,
   Droplet, Move, Lightbulb, Stethoscope, BookOpen, School,
-  ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target, RotateCcw
+  ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target, RotateCcw,
+  Eye, Repeat, Repeat2, Hand, Apple, Headphones, Rocket, BookMarked,
+  CloudSun, Smile, MessageSquare, Footprints, FlaskConical, Wine, Shield
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -279,6 +281,82 @@ function ageStr(m: number) {
   const y = Math.floor(m / 12);
   const r = m % 12;
   return r === 0 ? `${y}a` : `${y}a${r}m`;
+}
+
+type ScaleVisual = {
+  Icon: any;
+  label: string;
+  gradient: string;
+  bg: string;
+  text: string;
+  ring: string;
+};
+
+const scaleVisuals: Record<string, ScaleVisual> = {
+  linguagem: { Icon: MessageCircle, label: "Linguagem", gradient: "from-sky-500 to-blue-500", bg: "bg-sky-50 dark:bg-sky-950/30", text: "text-sky-600 dark:text-sky-300", ring: "ring-sky-200/70 dark:ring-sky-800/40" },
+  comunicacao: { Icon: MessageSquare, label: "Comunicação", gradient: "from-blue-500 to-cyan-500", bg: "bg-blue-50 dark:bg-blue-950/30", text: "text-blue-600 dark:text-blue-300", ring: "ring-blue-200/70 dark:ring-blue-800/40" },
+  social: { Icon: Users, label: "Social", gradient: "from-teal-500 to-cyan-500", bg: "bg-teal-50 dark:bg-teal-950/30", text: "text-teal-600 dark:text-teal-300", ring: "ring-teal-200/70 dark:ring-teal-800/40" },
+  contato_visual: { Icon: Eye, label: "Contato visual", gradient: "from-cyan-500 to-sky-500", bg: "bg-cyan-50 dark:bg-cyan-950/30", text: "text-cyan-600 dark:text-cyan-300", ring: "ring-cyan-200/70 dark:ring-cyan-800/40" },
+  tea: { Icon: Puzzle, label: "TEA / Comunicação social", gradient: "from-fuchsia-500 to-purple-600", bg: "bg-fuchsia-50 dark:bg-fuchsia-950/30", text: "text-fuchsia-600 dark:text-fuchsia-300", ring: "ring-fuchsia-200/70 dark:ring-fuchsia-800/40" },
+  repetitivos: { Icon: Repeat2, label: "Comportamentos repetitivos", gradient: "from-violet-500 to-purple-600", bg: "bg-violet-50 dark:bg-violet-950/30", text: "text-violet-600 dark:text-violet-300", ring: "ring-violet-200/70 dark:ring-violet-800/40" },
+  atencao: { Icon: Target, label: "Atenção", gradient: "from-amber-500 to-yellow-500", bg: "bg-amber-50 dark:bg-amber-950/30", text: "text-amber-700 dark:text-amber-300", ring: "ring-amber-200/70 dark:ring-amber-800/40" },
+  tdah: { Icon: Zap, label: "TDAH", gradient: "from-orange-500 to-amber-500", bg: "bg-orange-50 dark:bg-orange-950/30", text: "text-orange-600 dark:text-orange-300", ring: "ring-orange-200/70 dark:ring-orange-800/40" },
+  ansiedade: { Icon: CloudSun, label: "Ansiedade", gradient: "from-indigo-400 to-sky-500", bg: "bg-indigo-50 dark:bg-indigo-950/30", text: "text-indigo-600 dark:text-indigo-300", ring: "ring-indigo-200/70 dark:ring-indigo-800/40" },
+  depressao: { Icon: Smile, label: "Humor", gradient: "from-rose-400 to-pink-500", bg: "bg-rose-50 dark:bg-rose-950/30", text: "text-rose-600 dark:text-rose-300", ring: "ring-rose-200/70 dark:ring-rose-800/40" },
+  sono: { Icon: Moon, label: "Sono", gradient: "from-slate-700 to-blue-900", bg: "bg-slate-50 dark:bg-slate-950/40", text: "text-slate-700 dark:text-slate-300", ring: "ring-slate-200/70 dark:ring-slate-700/50" },
+  alimentacao: { Icon: Apple, label: "Alimentação", gradient: "from-lime-500 to-emerald-600", bg: "bg-lime-50 dark:bg-lime-950/30", text: "text-lime-700 dark:text-lime-300", ring: "ring-lime-200/70 dark:ring-lime-800/40" },
+  motor: { Icon: Footprints, label: "Motricidade", gradient: "from-teal-500 to-emerald-500", bg: "bg-teal-50 dark:bg-teal-950/30", text: "text-teal-600 dark:text-teal-300", ring: "ring-teal-200/70 dark:ring-teal-800/40" },
+  coordenacao: { Icon: Hand, label: "Coordenação", gradient: "from-emerald-500 to-green-600", bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-600 dark:text-emerald-300", ring: "ring-emerald-200/70 dark:ring-emerald-800/40" },
+  sensorial: { Icon: Headphones, label: "Sensorial", gradient: "from-purple-500 to-fuchsia-600", bg: "bg-purple-50 dark:bg-purple-950/30", text: "text-purple-600 dark:text-purple-300", ring: "ring-purple-200/70 dark:ring-purple-800/40" },
+  aprendizagem: { Icon: BookMarked, label: "Aprendizagem", gradient: "from-emerald-500 to-teal-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", ring: "ring-emerald-200/70 dark:ring-emerald-800/40" },
+  executivo: { Icon: BrainCog, label: "Funções executivas", gradient: "from-cyan-700 to-blue-800", bg: "bg-cyan-50 dark:bg-cyan-950/30", text: "text-cyan-700 dark:text-cyan-300", ring: "ring-cyan-200/70 dark:ring-cyan-800/40" },
+  cognicao: { Icon: Brain, label: "Cognição", gradient: "from-cyan-800 to-teal-700", bg: "bg-cyan-50 dark:bg-cyan-950/30", text: "text-cyan-800 dark:text-cyan-300", ring: "ring-cyan-200/70 dark:ring-cyan-800/40" },
+  autonomia: { Icon: Rocket, label: "Autonomia", gradient: "from-sky-500 to-indigo-500", bg: "bg-sky-50 dark:bg-sky-950/30", text: "text-sky-700 dark:text-sky-300", ring: "ring-sky-200/70 dark:ring-sky-800/40" },
+  epilepsia: { Icon: Activity, label: "Epilepsia", gradient: "from-violet-500 to-indigo-600", bg: "bg-violet-50 dark:bg-violet-950/30", text: "text-violet-600 dark:text-violet-300", ring: "ring-violet-200/70 dark:ring-violet-800/40" },
+  dor: { Icon: HeartPulse, label: "Dor / Cefaleia", gradient: "from-red-500 to-rose-600", bg: "bg-red-50 dark:bg-red-950/30", text: "text-red-600 dark:text-red-300", ring: "ring-red-200/70 dark:ring-red-800/40" },
+  enurese: { Icon: Droplet, label: "Enurese", gradient: "from-blue-500 to-cyan-500", bg: "bg-blue-50 dark:bg-blue-950/30", text: "text-blue-600 dark:text-blue-300", ring: "ring-blue-200/70 dark:ring-blue-800/40" },
+  trauma: { Icon: Shield, label: "Trauma", gradient: "from-slate-500 to-zinc-700", bg: "bg-slate-50 dark:bg-slate-950/30", text: "text-slate-700 dark:text-slate-300", ring: "ring-slate-200/70 dark:ring-slate-700/50" },
+  substancias: { Icon: Wine, label: "Substâncias", gradient: "from-red-600 to-orange-600", bg: "bg-red-50 dark:bg-red-950/30", text: "text-red-600 dark:text-red-300", ring: "ring-red-200/70 dark:ring-red-800/40" },
+  efeitos: { Icon: FlaskConical, label: "Efeitos / Medicação", gradient: "from-violet-500 to-purple-600", bg: "bg-violet-50 dark:bg-violet-950/30", text: "text-violet-600 dark:text-violet-300", ring: "ring-violet-200/70 dark:ring-violet-800/40" },
+  evolucao: { Icon: Repeat, label: "Evolução", gradient: "from-blue-500 to-indigo-600", bg: "bg-blue-50 dark:bg-blue-950/30", text: "text-blue-600 dark:text-blue-300", ring: "ring-blue-200/70 dark:ring-blue-800/40" },
+  atraso: { Icon: Baby, label: "Desenvolvimento", gradient: "from-amber-500 to-orange-500", bg: "bg-amber-50 dark:bg-amber-950/30", text: "text-amber-700 dark:text-amber-300", ring: "ring-amber-200/70 dark:ring-amber-800/40" },
+  default: { Icon: ClipboardCheck, label: "Escala clínica", gradient: "from-primary to-chart-2", bg: "bg-primary/5 dark:bg-primary/10", text: "text-primary", ring: "ring-primary/20" },
+};
+
+function getScaleVisual(scale: ScaleEntry): ScaleVisual {
+  const hay = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")}`);
+  const has = (value: string) => scale.queixas.includes(value) || hay.includes(value);
+
+  if (hay.includes("ecolalia")) return scaleVisuals.linguagem;
+  if (hay.includes("contato visual") || hay.includes("olhar") || hay.includes("eye contact")) return scaleVisuals.contato_visual;
+  if (hay.includes("estereotip") || hay.includes("repetitiv") || hay.includes("rigidez") || hay.includes("tiques")) return scaleVisuals.repetitivos;
+  if (hay.includes("funcao executiva") || hay.includes("funcoes executivas") || hay.includes("executiv")) return scaleVisuals.executivo;
+  if (hay.includes("atencao") || hay.includes("concentr")) return scaleVisuals.atencao;
+  if (has("tdah") || hay.includes("hiperatividade") || hay.includes("desatencao")) return scaleVisuals.tdah;
+  if (has("linguagem")) return hay.includes("comunic") ? scaleVisuals.comunicacao : scaleVisuals.linguagem;
+  if (has("social")) return scaleVisuals.social;
+  if (has("tea")) return scaleVisuals.tea;
+  if (has("ansiedade") || has("toc")) return scaleVisuals.ansiedade;
+  if (has("depressao")) return scaleVisuals.depressao;
+  if (has("sono")) return scaleVisuals.sono;
+  if (has("alimentacao")) return scaleVisuals.alimentacao;
+  if (has("sensorial")) return scaleVisuals.sensorial;
+  if (has("aprendizagem")) return scaleVisuals.aprendizagem;
+  if (has("cognicao") || hay.includes("qi") || hay.includes("inteligencia")) return scaleVisuals.cognicao;
+  if (has("motor") || has("pc") || hay.includes("motric") || hay.includes("paralisia cerebral")) {
+    return hay.includes("coord") || hay.includes("manual") || hay.includes("fine motor") ? scaleVisuals.coordenacao : scaleVisuals.motor;
+  }
+  if (has("funcionalidade") || has("autonomia") || hay.includes("adaptativ")) return scaleVisuals.autonomia;
+  if (has("epilepsia")) return scaleVisuals.epilepsia;
+  if (has("dor") || hay.includes("cefaleia")) return scaleVisuals.dor;
+  if (has("enurese")) return scaleVisuals.enurese;
+  if (has("trauma")) return scaleVisuals.trauma;
+  if (has("substancias")) return scaleVisuals.substancias;
+  if (has("efeitos")) return scaleVisuals.efeitos;
+  if (has("evolucao")) return scaleVisuals.evolucao;
+  if (has("atraso")) return scaleVisuals.atraso;
+
+  return scaleVisuals.default;
 }
 
 // ── Expandir tokens com sinônimos ──
@@ -768,8 +846,11 @@ function ToolCard({ tool }: { tool: ExtraTool }) {
     <Link href={tool.route}>
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent cursor-pointer hover:shadow-md group transition-all card-hover">
         <CardContent className="p-3 flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-            <Icon className="w-5 h-5 text-white" />
+          <div className="relative flex-shrink-0">
+            <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${tool.gradient} opacity-25 blur-md scale-125`} />
+            <div className={`relative w-10 h-10 rounded-full bg-gradient-to-br ${tool.gradient} flex items-center justify-center shadow-sm ring-1 ring-white/40 group-hover:scale-105 transition-transform`}>
+              <Icon className="w-5 h-5 text-white" strokeWidth={1.9} />
+            </div>
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-foreground">{tool.name}</h3>
@@ -975,6 +1056,8 @@ function getIdealScale(queixas: string[], ageRange: { min: number; max: number }
 function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean }) {
   const prio = prioConfig[scale.prioridade];
   const hasRoute = !!scale.appRoute;
+  const visual = getScaleVisual(scale);
+  const Icon = visual.Icon;
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(scale.id);
 
@@ -1000,13 +1083,19 @@ function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean })
 
   const inner = (
     <Card className={`relative transition-all ${isIdeal ? "golden-glow border-2 border-amber-400 bg-gradient-to-r from-amber-50/80 to-yellow-50/50 dark:from-amber-950/30 dark:to-yellow-950/20 shadow-lg shadow-amber-200/30 dark:shadow-amber-900/20 ring-2 ring-amber-400/50 mt-3" : `border-card-border ${hasRoute ? "hover:shadow-md hover:border-primary/20" : "opacity-80"}`} ${hasRoute ? "cursor-pointer group card-hover" : ""}`}>
-      <CardContent className="p-3 flex items-start gap-2.5">
+      <CardContent className="p-3 flex items-start gap-3">
         {isIdeal && (
           <div className="absolute -top-2.5 right-3 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 text-[10px] font-bold rounded-full shadow-sm flex items-center gap-1">
             <Star className="w-3 h-3 fill-amber-400" /> SELO DE OURO
           </div>
         )}
-        <div className={`w-1.5 rounded-full self-stretch flex-shrink-0 ${isIdeal ? "bg-amber-400" : scale.prioridade === "triagem" ? "bg-blue-400" : scale.prioridade === "diagnostica" ? "bg-purple-400" : "bg-green-400"}`} />
+        <div className="relative mt-0.5 flex-shrink-0" title={visual.label} aria-label={visual.label}>
+          <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${visual.gradient} opacity-25 blur-md scale-125`} />
+          <div className={`relative w-10 h-10 rounded-full ${visual.bg} ring-1 ${visual.ring} flex items-center justify-center shadow-sm transition-transform group-hover:scale-105`}>
+            <div className={`absolute inset-1 rounded-full bg-gradient-to-br ${visual.gradient} opacity-10`} />
+            <Icon className={`relative w-5 h-5 ${visual.text}`} strokeWidth={1.9} />
+          </div>
+        </div>
         <div className="flex-1 min-w-0 space-y-0.5">
           <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="text-sm font-bold text-foreground">{scale.name}</h3>
@@ -1016,6 +1105,9 @@ function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean })
                 <CheckCircle2 className="w-2.5 h-2.5" /> Aplicar
               </Badge>
             )}
+            <Badge variant="outline" className={`text-[10px] h-4 px-1.5 border-transparent ${visual.bg} ${visual.text}`}>
+              {visual.label}
+            </Badge>
           </div>
           <p className="text-[11px] text-muted-foreground leading-relaxed">{scale.fullName}</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{scale.description}</p>

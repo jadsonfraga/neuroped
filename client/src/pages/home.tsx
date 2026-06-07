@@ -337,8 +337,12 @@ function ScaleCardItem({ scale }: { scale: ScaleCard }) {
         onClick={() => { softTap(); haptic.select(); }}
         className="card-premium group cursor-pointer flex items-start gap-3 p-3"
       >
-        <div className={`shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br ${scale.gradient} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
-          <Icon className="w-3.5 h-3.5 text-white" strokeWidth={1.75} />
+        <div className="relative shrink-0">
+          <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${scale.gradient} opacity-25 blur-md scale-125`} />
+          <div className={`relative w-9 h-9 rounded-full ${scale.bgLight} ring-1 ring-card-border flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
+            <div className={`absolute inset-1 rounded-full bg-gradient-to-br ${scale.gradient} opacity-[0.12]`} />
+            <Icon className={`relative w-4 h-4 ${scale.iconColor}`} strokeWidth={1.9} />
+          </div>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
