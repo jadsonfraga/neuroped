@@ -115,3 +115,22 @@ Post-deploy routes to verify:
 - `https://jadsonfraga.github.io/neuroped/#/consentimento-lgpd`
 - `https://jadsonfraga.github.io/neuroped/#/filtro`
 - `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
+
+## 2026-06-07 — Public app shell with PIN only on sensitive routes
+
+Requested deployment after removing the global app-shell lock behavior. The public NeuroPed shell must open for all users, while sensitive clinical areas continue to require the PIN master through `RouteGuard`.
+
+Included in current `main`:
+
+- `isAppUnlocked()` now always returns `true`, preventing the global root gate from blocking public access;
+- `hasClinicalUnlock()` remains unchanged and continues to control sensitive routes;
+- `RouteGuard` still shows `LocalUnlockGate` for protected modules when there is no authenticated user or local clinical unlock;
+- protected modules remain wrapped in `Protected`, including `/pacientes`, `/paciente/:id`, `/prontuario`, `/calculadora-dose`, `/farmacologia`, `/satisfacao-medicacao`, `/avaliacao-multiprofissional`, `/plano-terapeutico`, `/plano-intervencao` and `/fichas-registro`.
+
+Post-deploy routes to verify:
+
+- public: `https://jadsonfraga.github.io/neuroped/#/`
+- public: `https://jadsonfraga.github.io/neuroped/#/filtro`
+- public: `https://jadsonfraga.github.io/neuroped/#/portal-familia`
+- PIN master: `https://jadsonfraga.github.io/neuroped/#/pacientes`
+- PIN master: `https://jadsonfraga.github.io/neuroped/#/prontuario`
