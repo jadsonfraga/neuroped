@@ -44,6 +44,22 @@ jobs:
       - name: Testes clínicos
         run: npm run test:clinical
 
+      - name: Criar sentinela de deploy
+        run: |
+          mkdir -p client/public
+          cat > client/public/deploy-check.json <<EOF
+          {
+            "app": "NeuroPed",
+            "provider": "cloudflare-pages",
+            "branch": "${GITHUB_REF_NAME}",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat client/public/deploy-check.json
+
       - name: Compilar frontend para Cloudflare Pages
         env:
           NODE_ENV: production
@@ -51,7 +67,10 @@ jobs:
         run: npm run build:client
 
       - name: Verificar output do build
-        run: ls -la dist/public/
+        run: |
+          ls -la dist/public/
+          test -f dist/public/deploy-check.json
+          cat dist/public/deploy-check.json
 
       - name: Garantir projeto Cloudflare Pages (cria se não existir)
         env:
@@ -66,3 +85,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler@3 pages deploy dist/public --project-name neuroped --branch main
+
+      - name: Verificar publicação pública no Cloudflare
+        run: |
+          echo "Aguardando propagação curta do Cloudflare Pages..."
+          sleep 20
+          curl -fsSL https://neuroped.pages.dev/deploy-check.json -o /tmp/cloudflare-deploy-check.json
+          cat /tmp/cloudflare-deploy-check.json
+          grep "${GITHUB_SHA}" /tmp/cloudflare-deploy-check.json
