@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { PasswordGate } from "@/components/PasswordGate";
@@ -16,7 +17,7 @@ if (!window.location.hash) {
   window.location.hash = "#/";
 }
 
-function GateCompat({ children }: { children: React.ReactNode }) {
+function GateCompat({ children }: { children: ReactNode }) {
   try {
     if (sessionStorage.getItem("neuroped:pin-ok") === "1") {
       sessionStorage.setItem("neuroped:local-unlocked", "1");
