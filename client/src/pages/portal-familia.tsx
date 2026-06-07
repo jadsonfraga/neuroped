@@ -140,8 +140,8 @@ export default function PortalFamiliaPage() {
       <PremiumVisualPanel
         src={brandAssets.illustrations.childDevelopment}
         badge="Família e desenvolvimento"
-        title="Orientação visualmente acolhedora, sem abrir dados sensíveis."
-        subtitle="A arte de desenvolvimento infantil reforça que esta área é educativa, prática e segura para pais."
+        title="Orientação clara para a rotina, a escola e os próximos passos."
+        subtitle="Conteúdos educativos ficam acessíveis aos pais; documentos individuais aparecem apenas quando liberados pelo médico."
         className="min-h-44"
       />
 
