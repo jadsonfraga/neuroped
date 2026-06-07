@@ -41,6 +41,9 @@ jobs:
       - name: Validar catálogo clínico
         run: npm run validate:catalog
 
+      - name: Auditar política de acesso
+        run: npm run audit:access
+
       - name: Auditar assets visuais
         run: npm run audit:assets
 
