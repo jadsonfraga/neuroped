@@ -1,112 +1,142 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { authFetch } from "@/lib/authClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  ShieldCheck, Loader2, FileText, Lock, Heart,
-  ArrowRight, ArrowLeft, Check,
+  ShieldCheck,
+  Loader2,
+  FileText,
+  Lock,
+  Heart,
+  Check,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import { softTap, softSuccess, softError, softTick } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
-import {
-  fadeIn, slideRightFadeIn, slideUpFadeIn,
-  duration, easing,
-} from "@/lib/motion";
+import { fadeIn, slideUpFadeIn } from "@/lib/motion";
 
 const CONSENT_VERSION = "2026-05-08-v1";
+const LOCAL_CONSENT_KEY = "neuroped:lgpd-consent";
+const LOCAL_POSTPONE_KEY = "neuroped:lgpd-postponed";
 
 const CONSENT_BLOCKS = [
   {
     type: "termo_uso" as const,
     icon: FileText,
-    color: "from-blue-500 to-cyan-500",
-    title: "Termo de Uso",
-    short: "Como usar a plataforma",
-    text: `O NeuroPed EDJ é ferramenta clínica do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756). É destinada exclusivamente a profissionais de saúde habilitados e seus pacientes em acompanhamento. As escalas e instrumentos disponíveis não substituem julgamento clínico, avaliação individualizada nem diagnóstico médico formal. O uso é por sua conta e risco.`,
+    title: "Termo de uso",
+    short: "O NeuroPed é ferramenta clínica de apoio; não substitui julgamento médico.",
+    text: "O NeuroPed EDJ é ferramenta clínica do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756), destinada ao apoio de profissionais de saúde habilitados e pacientes em acompanhamento.",
     legalBasis: "Art. 7º, V — execução de contrato",
     purpose: "Disponibilização da plataforma para uso profissional",
   },
   {
     type: "politica_privacidade" as const,
     icon: Lock,
-    color: "from-emerald-500 to-teal-500",
-    title: "Privacidade dos Dados",
-    short: "Como protegemos suas informações",
-    text: `Os dados que você informar (nome, dados clínicos, respostas de escalas) serão armazenados em servidor controlado pelo Dr. Jadson Fraga. Campos sensíveis são criptografados em repouso (AES-256-GCM). Não compartilhamos seus dados com terceiros sem sua autorização explícita ou ordem judicial. Você pode exportar ou apagar seus dados a qualquer momento via /configuracoes.`,
-    legalBasis: "Art. 7º, II — cumprimento de obrigação legal",
+    title: "Privacidade",
+    short: "Dados informados devem ser usados apenas para finalidade clínica e operacional.",
+    text: "Dados clínicos e respostas de escalas devem ser tratados com sigilo, controle de acesso e finalidade definida. Quando houver backend disponível, os registros seguem o fluxo seguro da plataforma.",
+    legalBasis: "Art. 7º, II — obrigação legal / Art. 7º, V",
     purpose: "Operação do serviço e direitos do titular",
   },
   {
     type: "tratamento_dados_saude" as const,
     icon: Heart,
-    color: "from-rose-500 to-pink-500",
-    title: "Dados Sensíveis de Saúde",
-    short: "Tratamento especial conforme LGPD art. 11",
-    text: `Autorizo o tratamento dos meus dados de saúde (ou do paciente sob minha responsabilidade) para finalidade exclusiva de avaliação, acompanhamento, prescrição e suporte clínico. Estou ciente de que dados de saúde são classificados como sensíveis (LGPD art. 5º, II) e que o tratamento ampara-se no art. 11, II, alínea "f" (proteção da saúde por profissional habilitado).`,
-    legalBasis: "Art. 11, II, f — proteção da saúde por profissional",
+    title: "Dados de saúde",
+    short: "Dados de saúde são sensíveis e exigem cuidado adicional.",
+    text: "O tratamento de dados de saúde deve ocorrer apenas para avaliação, acompanhamento, prescrição, documentação clínica e suporte assistencial, sob responsabilidade profissional.",
+    legalBasis: "Art. 11, II, f — proteção da saúde por profissional habilitado",
     purpose: "Cuidado clínico individualizado",
   },
 ];
 
+type ConsentType = (typeof CONSENT_BLOCKS)[number]["type"];
+
 export default function LgpdConsentPage() {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState(0);
-  const [granted, setGranted] = useState<Record<string, boolean>>({});
+  const [granted, setGranted] = useState<Record<ConsentType, boolean>>({
+    termo_uso: false,
+    politica_privacidade: false,
+    tratamento_dados_saude: false,
+  });
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
-  const block = CONSENT_BLOCKS[step];
-  const isLast = step === CONSENT_BLOCKS.length - 1;
   const allGranted = CONSENT_BLOCKS.every((b) => granted[b.type]);
 
-  function nextStep() {
+  function goHome() {
     softTap();
     haptic.tap();
-    if (step < CONSENT_BLOCKS.length - 1) {
-      setStep(step + 1);
-    }
+    setLocation("/");
   }
 
-  function prevStep() {
+  function postpone() {
     softTap();
     haptic.tap();
-    if (step > 0) setStep(step - 1);
+    try {
+      localStorage.setItem(
+        LOCAL_POSTPONE_KEY,
+        JSON.stringify({ postponedAt: new Date().toISOString(), version: CONSENT_VERSION }),
+      );
+    } catch {
+      // Sem localStorage: apenas segue para o app.
+    }
+    setLocation("/");
   }
 
   async function onSubmit() {
     softTap();
     haptic.tap();
     setError(null);
+    setMessage(null);
     setSubmitting(true);
+
+    const acceptedAt = new Date().toISOString();
+    const payload = {
+      version: CONSENT_VERSION,
+      acceptedAt,
+      consents: CONSENT_BLOCKS.map((b) => ({
+        consentType: b.type,
+        consentVersion: CONSENT_VERSION,
+        consentText: b.text,
+        granted: true,
+        legalBasis: b.legalBasis,
+        purpose: b.purpose,
+      })),
+    };
+
     try {
-      for (const b of CONSENT_BLOCKS) {
-        if (!granted[b.type]) continue;
+      for (const item of payload.consents) {
         const r = await authFetch("/api/consents", {
           method: "POST",
-          body: JSON.stringify({
-            consentType: b.type,
-            consentVersion: CONSENT_VERSION,
-            consentText: b.text,
-            granted: true,
-            legalBasis: b.legalBasis,
-            purpose: b.purpose,
-          }),
+          body: JSON.stringify(item),
         });
-        if (!r.ok) throw new Error("Falha ao registrar consentimento");
+        if (!r.ok) throw new Error("Backend indisponível para registro remoto.");
+      }
+      try {
+        localStorage.setItem(LOCAL_CONSENT_KEY, JSON.stringify(payload));
+      } catch {
+        // Registro remoto foi suficiente.
       }
       softSuccess();
       haptic.success();
-      setSuccess(true);
-      setTimeout(() => setLocation("/"), 1500);
-    } catch (e: any) {
-      softError();
-      haptic.error();
-      setError(e.message);
+      setMessage("Consentimento registrado. Você pode continuar usando o app normalmente.");
+    } catch {
+      try {
+        localStorage.setItem(LOCAL_CONSENT_KEY, JSON.stringify({ ...payload, localOnly: true }));
+        softSuccess();
+        haptic.success();
+        setMessage("Consentimento salvo localmente neste dispositivo. O app continua liberado.");
+      } catch {
+        softError();
+        haptic.error();
+        setError("Não foi possível registrar agora. Mesmo assim, o acesso ao app não será bloqueado.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -117,215 +147,107 @@ export default function LgpdConsentPage() {
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-      className="min-h-screen flex items-center justify-center px-4 py-8"
-      style={{
-        background: "radial-gradient(ellipse at top, hsl(var(--sidebar)) 0%, hsl(var(--background)) 70%)",
-      }}
+      className="page-enter mx-auto w-full max-w-4xl space-y-5 pb-8"
     >
-      <motion.div variants={slideUpFadeIn} className="w-full max-w-2xl space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <motion.div
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: duration.normal, ease: easing.spring }}
-            className="inline-flex w-14 h-14 rounded-2xl items-center justify-center shadow-xl"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--chart-3)), hsl(var(--primary)))",
-              boxShadow: "0 12px 40px hsl(var(--chart-3) / 0.3)",
-            }}
-          >
-            <ShieldCheck className="w-7 h-7 text-white" strokeWidth={1.5} />
-          </motion.div>
-          <h1
-            className="text-2xl"
-            style={{
-              fontFamily: "Cormorant Garamond, Georgia, serif",
-              fontWeight: 600,
-            }}
-          >
-            Consentimento LGPD
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Para usar o NeuroPed EDJ com segurança legal, leia e aceite os três termos abaixo.
-          </p>
-        </div>
-
-        {/* Progress steps */}
-        <div className="flex items-center justify-center gap-3">
-          {CONSENT_BLOCKS.map((b, i) => (
-            <div key={b.type} className="flex items-center">
-              <motion.div
-                animate={{
-                  scale: i === step ? 1.15 : 1,
-                  opacity: i <= step ? 1 : 0.4,
-                }}
-                transition={{ duration: 0.2 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                style={{
-                  background:
-                    granted[b.type]
-                      ? "hsl(var(--primary))"
-                      : i === step
-                      ? "hsl(var(--card))"
-                      : "hsl(var(--muted))",
-                  color: granted[b.type] ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
-                  border:
-                    i === step && !granted[b.type]
-                      ? "2px solid hsl(var(--primary))"
-                      : "1px solid hsl(var(--border))",
-                }}
-              >
-                {granted[b.type] ? <Check className="w-4 h-4" /> : i + 1}
-              </motion.div>
-              {i < CONSENT_BLOCKS.length - 1 && (
-                <div
-                  className="w-12 h-px mx-1"
-                  style={{
-                    background: i < step ? "hsl(var(--primary))" : "hsl(var(--border))",
-                  }}
-                />
-              )}
+      <motion.header
+        variants={slideUpFadeIn}
+        className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
+              <ShieldCheck className="h-6 w-6" strokeWidth={1.8} />
             </div>
-          ))}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                LGPD · aviso não bloqueante
+              </p>
+              <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">
+                Privacidade e consentimento
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Este aviso explica o uso de dados no NeuroPed. Ele não deve impedir a navegação: você pode registrar o consentimento agora ou continuar para o app e revisar depois.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" onClick={goHome} className="gap-2 sm:shrink-0">
+            <Home className="h-4 w-4" /> Ir para o app
+          </Button>
         </div>
+      </motion.header>
 
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -8, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: -8, height: 0 }}
-            >
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            </motion.div>
-          )}
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <Alert>
-                <AlertDescription>
-                  Consentimentos registrados. Redirecionando...
-                </AlertDescription>
-              </Alert>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {message && (
+        <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-100">
+          <Check className="h-4 w-4" />
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* Bloco atual com transicao */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            variants={slideRightFadeIn}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            <Card className="overflow-hidden border-card-border shadow-lg">
-              <div
-                className="h-1.5 w-full bg-gradient-to-r"
-                style={{
-                  background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--chart-2)))`,
-                }}
-              />
-              <CardContent className="p-6 sm:p-8 space-y-5">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-md"
-                    style={{
-                      background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))`,
-                    }}
-                  >
-                    <block.icon className="w-6 h-6 text-white" strokeWidth={1.5} />
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <section className="grid gap-3 md:grid-cols-3">
+        {CONSENT_BLOCKS.map((block) => {
+          const Icon = block.icon;
+          return (
+            <Card key={block.type} className="border-border/70 bg-card/90">
+              <CardContent className="flex h-full flex-col gap-4 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold">{block.title}</h2>
-                    <p className="text-xs text-muted-foreground">{block.short}</p>
+                    <h2 className="text-sm font-black text-foreground">{block.title}</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{block.short}</p>
                   </div>
                 </div>
 
-                <p className="text-sm leading-relaxed text-foreground/90">{block.text}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{block.text}</p>
 
-                <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-card-border">
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      Base legal
-                    </p>
-                    <p className="text-xs">{block.legalBasis}</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      Finalidade
-                    </p>
-                    <p className="text-xs">{block.purpose}</p>
-                  </div>
+                <div className="mt-auto space-y-2 rounded-2xl bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
+                  <p><strong className="text-foreground">Base:</strong> {block.legalBasis}</p>
+                  <p><strong className="text-foreground">Finalidade:</strong> {block.purpose}</p>
                 </div>
 
-                <label
-                  className="flex items-center gap-3 p-3 rounded-lg border border-card-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onMouseEnter={() => softTick()}
-                >
+                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border/70 bg-background/70 p-3 text-xs font-semibold text-foreground transition hover:border-primary/40">
                   <Checkbox
-                    checked={granted[block.type] || false}
+                    checked={granted[block.type]}
                     onCheckedChange={(v) => {
-                      const newVal = !!v;
-                      setGranted((prev) => ({ ...prev, [block.type]: newVal }));
-                      if (newVal) {
+                      setGranted((prev) => ({ ...prev, [block.type]: Boolean(v) }));
+                      if (v) {
                         softTick();
                         haptic.select();
                       }
                     }}
                     data-testid={`checkbox-consent-${block.type}`}
                   />
-                  <span className="text-sm font-medium">Li e concordo com este termo</span>
+                  <span>Li e concordo com este item</span>
                 </label>
               </CardContent>
             </Card>
-          </motion.div>
-        </AnimatePresence>
+          );
+        })}
+      </section>
 
-        {/* Navegacao */}
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            onClick={prevStep}
-            disabled={step === 0 || submitting}
-            className="gap-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" /> Anterior
-          </Button>
-
-          <p className="text-xs text-muted-foreground">
-            {step + 1} de {CONSENT_BLOCKS.length}
+      <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20">
+        <CardContent className="space-y-4 p-4">
+          <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+            <strong>Importante:</strong> este fluxo não deve travar o app. Caso o backend esteja offline, o aceite é salvo localmente neste dispositivo e o usuário continua navegando. Áreas sensíveis continuam protegidas pelo bloqueio clínico local.
           </p>
-
-          {!isLast ? (
-            <Button onClick={nextStep} disabled={!granted[block.type] || submitting} className="gap-1.5">
-              Próximo <ArrowRight className="w-4 h-4" />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button variant="ghost" onClick={postpone} className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Continuar sem registrar agora
             </Button>
-          ) : (
-            <Button onClick={onSubmit} disabled={!allGranted || submitting} className="gap-1.5">
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Registrando
-                </>
-              ) : (
-                <>
-                  Aceitar e continuar <Check className="w-4 h-4" />
-                </>
-              )}
+            <Button onClick={onSubmit} disabled={!allGranted || submitting} className="gap-2">
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {submitting ? "Registrando..." : "Registrar consentimento"}
             </Button>
-          )}
-        </div>
-
-        <p className="text-[11px] text-center text-muted-foreground/80">
-          Você pode revogar qualquer consentimento em <code className="px-1.5 py-0.5 rounded bg-muted text-foreground/80">/configuracoes</code>. A revogação não afeta o tratamento já realizado, mas interrompe o tratamento futuro.
-        </p>
-      </motion.div>
+          </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }
