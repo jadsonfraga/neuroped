@@ -150,3 +150,22 @@ Included in current `main`:
 Post-deploy route to verify:
 
 - `https://jadsonfraga.github.io/neuroped/#/filtro`
+
+## 2026-06-07 — Visual asset audit and usage deployment trigger
+
+Requested deployment after adding a formal guard to ensure official repository images are registered, non-empty and rendered inside the app.
+
+Included in current `main`:
+
+- `client/src/components/BrandAssets.tsx` exports `visualAssetRegistry` with 14 official image assets;
+- `SafeAssetImage` renders images with visible fallback when an image does not open;
+- `/qualidade` renders every registered image in an audit panel and shows loaded/failed counts;
+- `scripts/guards/audit-visual-assets.mjs` checks existence, size, registry and audit-page rendering;
+- `npm run audit:assets` was added to `package.json`;
+- `npm run verify`, `.github/workflows/verify.yml`, `.github/workflows/deploy.yml` and `.github/workflows/deploy-cloudflare.yml` now include the visual asset audit before deploy/build completion.
+
+Post-deploy routes to verify:
+
+- `https://jadsonfraga.github.io/neuroped/#/qualidade`
+- `https://jadsonfraga.github.io/neuroped/#/`
+- `https://jadsonfraga.github.io/neuroped/#/portal-familia`
