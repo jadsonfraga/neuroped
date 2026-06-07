@@ -1,0 +1,148 @@
+import type { ScaleEntry } from "@/data/scaleFilter";
+
+/**
+ * Itens aplicaveis que existem como paginas/ferramentas do app, mas nao estavam
+ * necessariamente dentro de `allScales`. Mantem tudo filtravel sem apagar o
+ * catalogo clinico principal.
+ */
+export const supplementalFilterableInstruments: ScaleEntry[] = [
+  {
+    id: "inventarios-escola",
+    name: "Inventários para Escola",
+    fullName: "Questionários para professores — comportamento, TEA, alfabetização e funções executivas",
+    ageMin: 36,
+    ageMax: 216,
+    queixas: ["aprendizagem", "tdah", "tea", "comportamento", "social", "funcionalidade"],
+    respondente: ["professor"],
+    prioridade: "triagem",
+    tempo: "10–20 min",
+    appRoute: "/inventarios-escola",
+    description: "Conjunto de questionários aplicáveis no contexto escolar, com foco em observação do professor e interface clínica-escola.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "testes-reconhecimento",
+    name: "Testes de Reconhecimento",
+    fullName: "Cores, letras, animais e partes do corpo por faixa etária",
+    ageMin: 24,
+    ageMax: 84,
+    queixas: ["atraso", "linguagem", "cognicao", "aprendizagem"],
+    respondente: ["clinico", "crianca"],
+    prioridade: "triagem",
+    tempo: "5–10 min",
+    appRoute: "/testes-reconhecimento",
+    description: "Testes diretos e lúdicos de reconhecimento infantil para rastreio rápido durante a consulta.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "testes-academicos",
+    name: "Testes Acadêmicos",
+    fullName: "Leitura, escrita e aritmética por faixa etária",
+    ageMin: 60,
+    ageMax: 168,
+    queixas: ["aprendizagem", "tdah", "cognicao"],
+    respondente: ["clinico", "crianca", "professor"],
+    prioridade: "triagem",
+    tempo: "10–20 min",
+    appRoute: "/testes-academicos",
+    description: "Aplicação direta de tarefas acadêmicas para rastreio de dificuldades escolares.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "inventarios-auto",
+    name: "Inventários de Autoavaliação",
+    fullName: "Humor, ansiedade, atenção, sono, alimentação, social, escola e comportamento",
+    ageMin: 96,
+    ageMax: 216,
+    queixas: ["ansiedade", "depressao", "tdah", "sono", "alimentacao", "social", "comportamento"],
+    respondente: ["crianca", "autoaplicavel"],
+    prioridade: "triagem",
+    tempo: "10–15 min",
+    appRoute: "/inventarios-auto",
+    description: "Autoavaliações para crianças maiores e adolescentes, úteis em triagem e seguimento.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "tde2-adaptado",
+    name: "TDE-2 Adaptado",
+    fullName: "Teste de desempenho escolar — leitura, escrita e aritmética",
+    ageMin: 48,
+    ageMax: 168,
+    queixas: ["aprendizagem", "cognicao", "tdah"],
+    respondente: ["clinico", "professor"],
+    prioridade: "triagem",
+    tempo: "15–25 min",
+    appRoute: "/tde2",
+    description: "Rastreio estruturado de desempenho escolar no app.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "ahsd-tea-triagem",
+    name: "Triagem AH/SD × TEA",
+    fullName: "Altas habilidades/superdotação com diferencial para perfil autista",
+    ageMin: 72,
+    ageMax: 216,
+    queixas: ["cognicao", "tea", "social", "aprendizagem"],
+    respondente: ["professor", "clinico"],
+    prioridade: "triagem",
+    tempo: "10–20 min",
+    appRoute: "/ahsd-tea",
+    description: "Questionário de triagem para perfis de altas habilidades com sobreposição de TEA.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "satisfacao-medicacao-universal",
+    name: "Escala de Satisfação com Medicação",
+    fullName: "Eficácia percebida, efeitos adversos, adesão e perda de efeito",
+    ageMin: 0,
+    ageMax: 216,
+    queixas: ["efeitos", "tdah", "tea", "epilepsia", "ansiedade", "depressao", "sono"],
+    respondente: ["pais", "autoaplicavel", "clinico"],
+    prioridade: "monitorizacao",
+    tempo: "3–5 min",
+    appRoute: "/satisfacao-medicacao",
+    description: "Instrumento rápido para monitorar satisfação, tolerabilidade e resposta medicamentosa.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "orientacao-parental",
+    name: "Orientação Parental",
+    fullName: "Psicoeducação não sensível para famílias por diagnóstico e queixa",
+    ageMin: 0,
+    ageMax: 216,
+    queixas: ["tdah", "tea", "ansiedade", "depressao", "epilepsia", "linguagem", "sono", "comportamento"],
+    respondente: ["pais"],
+    prioridade: "monitorizacao",
+    tempo: "Leitura guiada",
+    appRoute: "/orientacao-parental",
+    description: "Conteúdo educativo para pais, sem dados individualizados de prontuário.",
+    licencaUso: "autoral",
+  },
+  {
+    id: "portal-familia-psicoeducacao",
+    name: "Portal da Família / Psicoeducação",
+    fullName: "Área dos pais com informações não sensíveis e documentos liberados",
+    ageMin: 0,
+    ageMax: 216,
+    queixas: ["funcionalidade", "tdah", "tea", "ansiedade", "depressao", "epilepsia", "aprendizagem", "sono"],
+    respondente: ["pais"],
+    prioridade: "monitorizacao",
+    tempo: "Leitura guiada",
+    appRoute: "/portal-familia",
+    description: "Aba familiar para conteúdo educativo geral, política de acesso e documentos expressamente liberados.",
+    licencaUso: "autoral",
+  },
+];
+
+function uniqueById(items: ScaleEntry[]): ScaleEntry[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
+  return uniqueById([...primary, ...supplementalFilterableInstruments]);
+}
