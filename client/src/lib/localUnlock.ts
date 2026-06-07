@@ -1,5 +1,3 @@
-import { getAccessLevel } from "@/security/accessPolicy";
-
 const UNLOCK_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
 const SESSION_KEY = "neuroped:local-unlocked";
 const REMEMBER_KEY = "neuroped:local-unlocked-persistent";
@@ -19,12 +17,6 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function currentRoutePath(): string {
-  if (typeof window === "undefined") return "/";
-  const hashPath = window.location.hash?.replace(/^#/, "");
-  return hashPath || window.location.pathname || "/";
 }
 
 function emitUnlockState(): void {
@@ -68,16 +60,12 @@ export function hasClinicalUnlock(): boolean {
 }
 
 export function isAppUnlocked(): boolean {
-  if (getAccessLevel(currentRoutePath()) !== "clinical") return true;
-  return hasClinicalUnlock();
-}
-
-if (typeof window !== "undefined") {
-  window.addEventListener("hashchange", emitUnlockState);
-  window.addEventListener("popstate", emitUnlockState);
+  // O app público deve abrir para todos. O PIN master fica reservado
+  // exclusivamente às rotas sensíveis via RouteGuard + hasClinicalUnlock().
+  return true;
 }
 
 export const localUnlockEventName = LOCK_EVENT;
 
 export const localUnlockSecurityNote =
-  "Bloqueio local leve para app estático/frontend/local-first. Não substitui autenticação robusta com backend para dados médicos sensíveis.";
+  "Bloqueio local leve para rotas clínicas sensíveis em app estático/frontend/local-first. Não substitui autenticação robusta com backend para dados médicos sensíveis.";
