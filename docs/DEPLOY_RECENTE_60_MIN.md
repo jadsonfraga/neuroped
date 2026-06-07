@@ -97,3 +97,25 @@ Commit operacional minimo para gerar novo evento `push` em `main` apos o merge d
 - `.github/workflows/test.yml` — Verify (catraca).
 - `.github/workflows/deploy.yml` — GitHub Pages.
 - `.github/workflows/deploy-cloudflare.yml` — Cloudflare Pages.
+
+---
+
+# Deploy acionado apos PR #394 — 2026-06-07
+
+Commit operacional minimo para gerar novo evento `push` em `main` apos a entrada do recurso de relatorio final das escalas.
+
+## Escopo
+
+- Publicar o bloco final das escalas com PDF/impressao contendo todas as respostas.
+- Publicar o botao de encaminhamento pelo WhatsApp/Zap.
+- Manter a fila de PRs limpa apos fechamento da PR duplicada #395.
+
+## Commit-alvo da correcao
+
+- `8933eb139dbca7ca331245030854ef4242f4710c` — `feat(scales): PDF completo e WhatsApp estaveis (#394)`.
+
+## Workflows esperados
+
+- `.github/workflows/test.yml` — Verify (catraca).
+- `.github/workflows/deploy.yml` — GitHub Pages.
+- `.github/workflows/deploy-cloudflare.yml` — Cloudflare Pages.
