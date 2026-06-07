@@ -1,13 +1,3 @@
-/**
- * portal-familia.tsx
- * Portal da Família — NeuroPed EDJ
- *
- * A aba dos pais concentra conteúdo não sensível: psicoeducação geral,
- * orientação parental, novidades, questionários escolares e política de acesso.
- * Dados médicos individualizados só aparecem quando explicitamente liberados pelo
- * profissional como documento visível para família.
- */
-
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/VisualStates";
+import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
+import { brandAssets } from "@/components/BrandAssets";
 import {
   AlertTriangle,
   BookOpen,
@@ -145,6 +137,14 @@ export default function PortalFamiliaPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 py-4">
+      <PremiumVisualPanel
+        src={brandAssets.illustrations.childDevelopment}
+        badge="Família e desenvolvimento"
+        title="Orientação visualmente acolhedora, sem abrir dados sensíveis."
+        subtitle="A arte de desenvolvimento infantil reforça que esta área é educativa, prática e segura para pais."
+        className="min-h-44"
+      />
+
       <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-950/20">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         <div className="space-y-1 text-sm">
