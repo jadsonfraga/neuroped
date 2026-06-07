@@ -9,7 +9,6 @@ on:
       - main
   workflow_dispatch:
 
-# Evita deploys concorrentes para o Cloudflare
 concurrency:
   group: cloudflare-pages
   cancel-in-progress: false
@@ -36,11 +35,20 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
-      - name: Compilar frontend (Vite)
+      - name: TypeScript check
+        run: npm run check
+
+      - name: Validar catálogo clínico
+        run: npm run validate:catalog
+
+      - name: Testes clínicos
+        run: npm run test:clinical
+
+      - name: Compilar frontend para Cloudflare Pages
         env:
           NODE_ENV: production
           VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: npx vite build
+        run: npm run build:client
 
       - name: Verificar output do build
         run: ls -la dist/public/
