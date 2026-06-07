@@ -76,3 +76,24 @@ Deploy acionado diretamente na branch `main` para publicar todos os commits ja i
 - Conflito documental do PR #366 consolidado no `main`.
 - PR #366 sincronizado em branch separada com o mesmo conteudo consolidado.
 - PRs #365, #367, #368, #369 e #370 seguem como conflitos funcionais/visuais a consolidar.
+
+---
+
+# Deploy acionado apos PR #381 — 2026-06-07
+
+Commit operacional minimo para gerar novo evento `push` em `main` apos o merge da PR #381.
+
+## Escopo
+
+- Publicar a correcao de PWA/subpath do GitHub Pages.
+- Garantir que `manifest.json`, icones e `sw.js` passem a usar caminhos relativos no artefato publicado.
+
+## Commit-alvo da correcao
+
+- `815e04d6c1432ce11f6e6e20f8b578052b40fbfc` — `fix(pwa): use relative asset paths for GitHub Pages (#381)`.
+
+## Workflows esperados
+
+- `.github/workflows/test.yml` — Verify (catraca).
+- `.github/workflows/deploy.yml` — GitHub Pages.
+- `.github/workflows/deploy-cloudflare.yml` — Cloudflare Pages.
