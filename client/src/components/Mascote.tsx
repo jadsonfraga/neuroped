@@ -1,8 +1,5 @@
 import { motion } from "framer-motion";
-import drSuper from "@assets/images/dr-jadson-logo-super.jpeg";
-import drSuperman from "@assets/images/dr-jadson-consultorio-superman.jpeg";
-import drArte from "@assets/images/dr-jadson-arte.jpeg";
-import drSelfie from "@assets/images/dr-jadson-selfie.jpeg";
+import { MiniShield, brandAssets } from "@/components/BrandAssets";
 
 /**
  * Mascote contextual do Dr. Jadson — reaproveita os assets de marca já existentes
@@ -20,22 +17,22 @@ interface MascoteData {
 
 const MASCOTES: Record<MascoteContexto, MascoteData> = {
   home: {
-    src: drSuper,
+    src: brandAssets.mascots.superDoctor,
     alt: "Dr. Jadson — SuperNeuroPed",
     fala: "Bem-vindo! Vamos cuidar do desenvolvimento com leveza e ciência.",
   },
   resultado: {
-    src: drSuperman,
+    src: brandAssets.mascots.consultorioSuperman,
     alt: "Dr. Jadson no consultório",
     fala: "Ótimo! Use este resultado como ponto de partida para a conversa clínica.",
   },
   celebracao: {
-    src: drArte,
+    src: brandAssets.mascots.celebrationArt,
     alt: "Dr. Jadson — celebração",
     fala: "Parabéns por concluir! Cada passo conta. 🎉",
   },
   vazio: {
-    src: drSelfie,
+    src: brandAssets.mascots.doctorSelfie,
     alt: "Dr. Jadson Fraga",
     fala: "Comece escolhendo uma ferramenta no menu ao lado.",
   },
@@ -67,12 +64,13 @@ export function Mascote({
       <motion.div
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-        className={`${dim} flex-shrink-0 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-lg bg-white`}
+        className={`${dim} relative flex-shrink-0 rounded-2xl overflow-hidden border-2 border-amber-300/60 shadow-lg bg-white dark:border-amber-400/40`}
       >
         <img src={data.src} alt={data.alt} aria-hidden="true" className="w-full h-full object-cover" />
+        <MiniShield className="absolute -bottom-0.5 -right-0.5 h-5 w-5" />
       </motion.div>
       {message && (
-        <div className="relative rounded-2xl rounded-bl-sm bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-foreground max-w-xs">
+        <div className="relative rounded-2xl rounded-bl-sm bg-gradient-to-br from-amber-50 to-white border border-amber-200 shadow-sm dark:from-red-950/30 dark:to-slate-950/40 dark:border-amber-400/20 px-3 py-2 text-xs text-foreground max-w-xs">
           {message}
         </div>
       )}

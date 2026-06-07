@@ -17,6 +17,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Mascote } from "@/components/Mascote";
+import { MiniShield } from "@/components/BrandAssets";
 
 // ====================================================
 // LOADING STATE
@@ -109,9 +111,11 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-4">
+    <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl py-16 px-4 text-center space-y-4">
+      <div className="absolute right-6 top-6 opacity-20" aria-hidden="true"><MiniShield /></div>
+      <Mascote contexto="vazio" size="md" fala="Ainda não há conteúdo aqui. Quando houver dados, o NeuroPed organiza tudo para você." />
       <div
-        className="w-14 h-14 rounded-full bg-muted flex items-center justify-center"
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-50 to-red-50 border border-amber-200 flex items-center justify-center dark:from-red-950/30 dark:to-slate-950 dark:border-amber-400/20"
         aria-hidden="true"
       >
         {icon ?? <Inbox className="w-7 h-7 text-muted-foreground" />}

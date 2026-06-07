@@ -19,6 +19,7 @@ import { softTap, softTick, softHover } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { Mascote } from "@/components/Mascote";
+import { BrandMark, BrandWatermark, ClinicalBrandIcon, MiniShield, brandAssets } from "@/components/BrandAssets";
 import { celebrate } from "@/lib/confetti";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -456,23 +457,27 @@ export default function FiltroPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="flex items-center gap-3"
+        className="relative overflow-hidden rounded-3xl border border-amber-200/70 bg-gradient-to-br from-card via-amber-50/50 to-red-50/40 p-4 shadow-sm dark:border-amber-400/20 dark:from-card dark:via-red-950/20 dark:to-slate-950/40"
       >
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-md">
-          <Filter className="w-5 h-5 text-white" strokeWidth={1.75} />
-        </div>
-        <div>
-          <h1
-            className="text-xl text-foreground leading-tight"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-          >
-            Filtro Inteligente
-          </h1>
-          <p className="text-xs text-muted-foreground italic">Fluxo guiado: idade → queixa → objetivo → contexto → instrumentos</p>
+        <img src={brandAssets.illustrations.childAssessment} alt="" className="absolute inset-y-0 right-0 h-full w-36 object-cover opacity-10 dark:opacity-15" />
+        <BrandWatermark className="right-16 top-2 h-28 w-28" />
+        <div className="relative flex items-center gap-3">
+          <BrandMark size="sm" />
+          <ClinicalBrandIcon className="h-11 w-11" />
+          <div>
+            <p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300"><MiniShield /> Filtro clínico inteligente</p>
+            <h1
+              className="text-xl text-foreground leading-tight"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+            >
+              Encontrar o instrumento certo
+            </h1>
+            <p className="text-xs text-muted-foreground italic">Fluxo guiado: idade → queixa → objetivo → contexto → instrumentos</p>
+          </div>
         </div>
       </motion.div>
 
-      <div className="rounded-2xl border bg-card/80 p-3 space-y-2" aria-label="Etapas do filtro clínico guiado">
+      <div className="relative overflow-hidden rounded-2xl border bg-card/80 p-3 space-y-2" aria-label="Etapas do filtro clínico guiado">
         <div className="grid grid-cols-5 gap-1 text-center text-[10px] font-semibold">
           {["1 Idade", "2 Queixa", "3 Objetivo", "4 Contexto", "5 Sugestões"].map((step, index) => (
             <div key={step} className={`rounded-lg px-1 py-1.5 ${index === 4 && total > 0 ? "bg-primary text-primary-foreground" : index === 0 && selIdade ? "bg-primary/10 text-primary" : index === 1 && selQueixas.length ? "bg-primary/10 text-primary" : index === 2 && objetivo ? "bg-primary/10 text-primary" : index === 3 && contexto ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
@@ -639,6 +644,7 @@ export default function FiltroPage() {
       {/* Resultados */}
       {!hasFilters ? (
         <div className="rounded-2xl border-2 border-dashed border-primary/15 p-6 text-center space-y-3">
+          <Mascote contexto="vazio" size="md" className="justify-center" fala="Escolha alguns dados e eu priorizo os instrumentos mais adequados." />
           <Lightbulb className="w-7 h-7 text-primary mx-auto opacity-50" />
           <p className="text-sm text-muted-foreground">Selecione <strong>idade</strong>, <strong>queixa</strong>, <strong>objetivo</strong> e <strong>contexto</strong> — ou busque em linguagem natural.</p>
           <div className="flex flex-wrap justify-center gap-1.5">
@@ -747,8 +753,9 @@ export default function FiltroPage() {
           )}
 
           {total === 0 && (
-            <div className="text-center py-8">
-              <Search className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
+            <div className="rounded-2xl border border-dashed border-amber-300/50 bg-amber-50/40 p-5 text-center dark:bg-amber-950/10">
+              <Mascote contexto="vazio" size="sm" className="justify-center" fala="Nenhum resultado para esse perfil. Ajuste idade, queixa ou termo de busca." />
+              <Search className="w-6 h-6 text-muted-foreground mx-auto mb-2 mt-3" />
               <p className="text-sm text-muted-foreground">Nenhum resultado. Tente outro termo.</p>
             </div>
           )}

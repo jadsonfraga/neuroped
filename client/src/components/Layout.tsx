@@ -21,6 +21,7 @@ import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
+import { BrandMark, MiniShield } from "@/components/BrandAssets";
 
 interface NavSection {
   title: string;
@@ -239,20 +240,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: duration.normal, ease: easing.spring }}
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
-              boxShadow: "0 4px 14px hsl(var(--primary) / 0.3)",
-            }}
           >
-            <Brain className="w-4 h-4 text-white" strokeWidth={1.75} />
+            <BrandMark size="xs" showWordmark compact subtitle="Dr. Jadson Fraga" />
           </motion.div>
-          <span
-            className="text-base tracking-tight text-sidebar-foreground"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-          >
-            NeuroPed
-          </span>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -335,29 +325,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Logo + close button on mobile */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-          <div
-            className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
-              boxShadow: "0 4px 14px hsl(var(--primary) / 0.35)",
-            }}
-          >
-            <Brain className="w-5 h-5 text-white" strokeWidth={1.75} />
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden flex-1">
-              <h1
-                className="text-base tracking-tight text-sidebar-foreground leading-tight"
-                style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-              >
-                NeuroPed
-              </h1>
-              <p className="text-[11px] text-muted-foreground leading-tight italic">
-                Escalas de Neuropediatria
-              </p>
-            </div>
-          )}
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border bg-gradient-to-r from-red-950/[0.03] via-amber-500/[0.04] to-transparent dark:from-red-950/30 dark:via-amber-400/5">
+          <BrandMark
+            size="sm"
+            showWordmark={!collapsed}
+            compact
+            subtitle="Ecossistema clínico"
+            titleClassName="text-sidebar-foreground leading-tight"
+          />
           {/* Mobile close button */}
           <Button
             variant="ghost"
@@ -458,11 +433,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               <span className="text-xs truncate md:hidden">{item.label}</span>
                             )}
                             {active && !collapsed && (
-                              <motion.div
-                                layoutId="nav-active-dot"
-                                className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-                                transition={{ duration: 0.2, ease: easing.smooth }}
-                              />
+                              <motion.div layoutId="nav-active-dot" className="ml-auto" transition={{ duration: 0.2, ease: easing.smooth }}>
+                                <MiniShield className="h-4 w-4" />
+                              </motion.div>
                             )}
                           </div>
                         </Link>

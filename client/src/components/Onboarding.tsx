@@ -6,9 +6,7 @@ import {
   ArrowRight, ArrowLeft, Sparkles, Stethoscope, Filter,
   Printer, Mail, Smartphone,
 } from "lucide-react";
-import neuropedLogo from "@assets/neuroped-logo.png";
-import childAssessmentImg from "@assets/images/child-assessment.png";
-import teamImg from "@assets/images/team-multiprofessional.png";
+import { BrandMark, brandAssets } from "@/components/BrandAssets";
 import { softTap, softTick, softSuccess, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import {
@@ -23,7 +21,7 @@ interface OnboardingProps {
 const steps = [
   {
     title: "Bem-vindo ao NeuroPed",
-    subtitle: "Escalas e instrumentos de neuropediatria",
+    subtitle: "Ecossistema clínico Dr. Jadson Fraga",
     content: (
       <div className="space-y-5">
         <motion.div
@@ -32,16 +30,16 @@ const steps = [
           transition={{ duration: duration.normal, ease: easing.smooth }}
           className="w-full h-32 rounded-2xl overflow-hidden mx-auto mb-2 shadow-md"
         >
-          <img src={childAssessmentImg} alt="" className="w-full h-full object-cover" />
+          <img src={brandAssets.illustrations.childAssessment} alt="" className="w-full h-full object-cover" />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.15, duration: duration.normal, ease: easing.spring }}
-          className="mx-auto w-20 h-20"
+          className="flex justify-center"
         >
-          <img src={neuropedLogo} alt="NeuroPed" className="w-20 h-20 object-contain drop-shadow-md" />
+          <BrandMark size="lg" />
         </motion.div>
 
         <p
@@ -139,7 +137,7 @@ const steps = [
           transition={{ duration: duration.normal, ease: easing.smooth }}
           className="w-full h-28 rounded-2xl overflow-hidden mx-auto mb-1 shadow-md"
         >
-          <img src={teamImg} alt="" className="w-full h-full object-cover" />
+          <img src={brandAssets.illustrations.teamMultiprofessional} alt="" className="w-full h-full object-cover" />
         </motion.div>
         {[
           {

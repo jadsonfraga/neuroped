@@ -14,7 +14,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import drJadsonLogo from "@assets/dr-jadson-logo.jpeg";
 import neuralAbstractImg from "@assets/images/neural-abstract.png";
 import childDevImg from "@assets/images/child-development.png";
 import heroBrainImg from "@assets/images/hero-brain.png";
@@ -24,6 +23,7 @@ import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
+import { BrandMark, BrandWatermark, MiniShield } from "@/components/BrandAssets";
 
 interface ScaleCard {
   href: string;
@@ -597,19 +597,16 @@ export default function HomePage() {
           <img src={neuralAbstractImg} alt="" className="w-full h-full object-cover opacity-15 dark:opacity-25" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
         </div>
+        <BrandWatermark className="right-4 top-4 h-40 w-40" />
         <div className="relative text-center space-y-4 pt-9 pb-7 px-4">
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: duration.normal, ease: easing.spring }}
             className="flex justify-center"
+            data-testid="img-dr-jadson-logo"
           >
-            <img
-              src={drJadsonLogo}
-              alt="Dr. Jadson Fraga"
-              className="w-16 h-16 object-cover rounded-2xl shadow-md ring-2 ring-primary/20 np-anim-glow"
-              data-testid="img-dr-jadson-logo"
-            />
+            <BrandMark size="lg" />
           </motion.div>
           <div>
             <h1
@@ -619,7 +616,7 @@ export default function HomePage() {
             >
               NeuroPed
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 italic">Escalas de Neuropediatria</p>
+            <p className="text-sm text-muted-foreground mt-1 italic">Ecossistema clínico premium Dr. Jadson Fraga</p>
           </div>
 
           {/* Stat counters */}
@@ -664,7 +661,7 @@ export default function HomePage() {
         <section className="space-y-3" aria-labelledby="acoes-principais">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Fluxo clínico principal</p>
+              <p className="text-[11px] font-semibold text-primary uppercase tracking-wider flex items-center gap-1"><MiniShield /> Fluxo clínico principal</p>
               <h2 id="acoes-principais" className="text-lg font-black text-foreground">Escolha um caminho em até 10 segundos</h2>
             </div>
             <Badge variant="outline" className="hidden sm:inline-flex text-[10px]">4 CTAs dominantes</Badge>
@@ -675,7 +672,7 @@ export default function HomePage() {
             <PrimaryAction href="/pacientes" title="Meus pacientes" description="Cadastre, acompanhe histórico e organize relatórios por paciente." Icon={Users} color="bg-gradient-to-br from-blue-500 to-indigo-600" />
             <PrimaryAction href="/calculadora-dose" title="Calculadora de doses" description="Cálculo rápido por peso/idade com alertas de dose máxima." Icon={Calculator} color="bg-gradient-to-br from-amber-500 to-yellow-600" />
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50/80 via-white/70 to-red-50/50 p-3 dark:border-amber-900/40 dark:from-amber-950/20 dark:via-red-950/10 dark:to-slate-950/20">
             <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-relaxed">
               <strong>Uso responsável:</strong> escalas orientam rastreio e acompanhamento, mas não fecham diagnóstico isoladamente. Confirme a adequação do instrumento, consentimento e contexto clínico antes de salvar ou exportar dados.
             </p>
@@ -880,11 +877,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="flex items-center justify-center gap-2 py-2">
-              <img
-                src={drJadsonLogo}
-                alt="Dr. Jadson Fraga"
-                className="w-6 h-6 rounded-lg object-cover"
-              />
+              <MiniShield className="h-6 w-6" />
               <span className="text-xs text-muted-foreground font-medium">Dr. Jadson Fraga Araújo Júnior — Neuropediatra</span>
             </div>
             <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground/50">

@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Brain, Stethoscope } from "lucide-react";
+import { Stethoscope } from "lucide-react";
 import { duration, easing } from "@/lib/motion";
+import { BrandMark } from "@/components/BrandAssets";
 
 interface SplashScreenProps {
   /** Tempo minimo de exibicao (ms). Default 900ms. */
@@ -17,7 +18,7 @@ interface SplashScreenProps {
  *
  * Animacao em 3 atos:
  *  1. Backdrop fade-in com gradiente warm
- *  2. Logo (cerebro) escala + pulse
+ *  2. Escudo Dr. Jadson Fraga escala + pulse
  *  3. Tipografia editorial entra com slide-up suave
  *  4. Subtitulo + credenciais aparecem em sequencia
  *  5. Loader sutil indica progresso enquanto awaiting=true
@@ -76,13 +77,13 @@ export function SplashScreen({
                 style={{ background: "hsl(var(--primary) / 0.3)" }}
               />
               <div
-                className="relative w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl"
+                className="relative rounded-[1.75rem] p-1 shadow-2xl"
                 style={{
-                  background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 100%)",
-                  boxShadow: "0 20px 60px hsl(var(--primary) / 0.35), 0 8px 24px hsl(var(--primary) / 0.25)",
+                  background: "linear-gradient(135deg, hsl(43 86% 61%) 0%, hsl(0 72% 36%) 54%, hsl(199 65% 18%) 100%)",
+                  boxShadow: "0 20px 60px hsl(0 72% 36% / 0.32), 0 8px 24px hsl(43 86% 61% / 0.2)",
                 }}
               >
-                <Brain className="w-12 h-12 text-white" strokeWidth={1.5} />
+                <BrandMark size="lg" imageClassName="rounded-[1.45rem]" />
               </div>
             </motion.div>
 
@@ -102,13 +103,13 @@ export function SplashScreen({
                   color: "hsl(var(--foreground))",
                 }}
               >
-                NeuroPed <span className="opacity-60">EDJ</span>
+                NeuroPed <span className="text-amber-500">EDJ</span>
               </h1>
               <p
                 className="text-xs uppercase tracking-[0.2em]"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                Plataforma Clínica de Neuropediatria
+                Ecossistema Clínico Dr. Jadson Fraga
               </p>
             </motion.div>
 

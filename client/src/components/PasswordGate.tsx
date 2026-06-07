@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Brain, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { playFlagPole, playBump } from "@/lib/sounds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import neuropedLogo from "@assets/neuroped-logo.png";
-import heroBrainImg from "@assets/images/hero-brain.png";
+import { BrandMark, brandAssets } from "@/components/BrandAssets";
 import { sha256hex } from "@/lib/pinAuth";
 
 /**
@@ -87,7 +86,7 @@ export function PasswordGate({ children }: PasswordGateProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950 flex items-center justify-center p-4 animate-gradient">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-red-950 to-cyan-950 flex items-center justify-center p-4 animate-gradient">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 -left-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
@@ -97,26 +96,19 @@ export function PasswordGate({ children }: PasswordGateProps) {
 
       {/* Decorative brain illustration */}
       <div className="absolute top-8 left-1/2 -translate-x-1/2 w-32 h-32 opacity-10 pointer-events-none">
-        <img src={heroBrainImg} alt="" className="w-full h-full object-contain animate-pulse" style={{ animationDuration: '4s' }} />
+        <img src={brandAssets.illustrations.heroBrain} alt="" className="w-full h-full object-contain animate-pulse" style={{ animationDuration: '4s' }} />
       </div>
 
       <div className={`relative w-full max-w-sm transition-transform ${shaking ? "animate-shake" : ""}`}>
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl space-y-6">
           {/* Logo + Branding */}
           <div className="text-center space-y-4">
-            <div className="relative mx-auto w-20 h-20">
-              <img
-                src={neuropedLogo}
-                alt="NeuroPed"
-                className="w-20 h-20 rounded-2xl object-contain shadow-lg"
-              />
-              <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gradient-to-br from-primary to-chart-2 rounded-lg flex items-center justify-center shadow-lg">
-                <Brain className="w-4 h-4 text-white" />
-              </div>
+            <div className="flex justify-center">
+              <BrandMark size="lg" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white tracking-tight">NeuroPed</h1>
-              <p className="text-xs text-white/50 mt-0.5">Escalas de Neuropediatria</p>
+              <p className="text-xs text-white/50 mt-0.5">Ecossistema clínico premium</p>
               <p className="text-[10px] text-white/30 mt-1">Dr. Jadson Fraga Araújo Júnior</p>
             </div>
           </div>
@@ -162,7 +154,7 @@ export function PasswordGate({ children }: PasswordGateProps) {
             <Button
               type="submit"
               disabled={!password || loading}
-              className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-chart-2 hover:from-primary/90 hover:to-chart-2/90 text-white font-semibold shadow-lg shadow-primary/20 transition-all gap-2"
+              className="w-full h-11 rounded-xl bg-gradient-to-r from-red-800 via-red-700 to-amber-600 hover:from-red-700 hover:via-red-600 hover:to-amber-500 text-white font-semibold shadow-lg shadow-primary/20 transition-all gap-2"
               data-testid="button-login"
               aria-busy={loading}
             >
