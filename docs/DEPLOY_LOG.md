@@ -65,3 +65,20 @@ Post-deploy routes to verify:
 - `#/recepcao`
 - `#/pacientes`
 - `#/prontuario`
+
+## 2026-06-07 — Pre-return treatment field deployment trigger
+
+Requested deployment after strengthening `/pre-retorno` with a dedicated free-text field for family-reported treatment symptoms/effects. This is the safe in-route substitute for the still-unregistered `/efeitos-colaterais` page while connector restrictions persist.
+
+Included in current `main`:
+
+- `/pre-retorno` registered in `App.tsx`;
+- `/pre-retorno` visible in navigation;
+- local storage key `neuroped:pre-retornos`;
+- copy and WhatsApp helpers;
+- treatment symptom/effect narrative field;
+- prudent summary language: family report, no automatic causality, no dose-adjustment instruction.
+
+Post-deploy route to verify first:
+
+- `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
