@@ -11,6 +11,98 @@ import {
 } from "@/data/novidadesConteudoAmpliado";
 import type { NovidadeArtigo } from "@/data/novidadesArtigos";
 
+const ALLOWED_ARTICLE_TAGS = new Set([
+  "p",
+  "strong",
+  "em",
+  "b",
+  "i",
+  "u",
+  "h2",
+  "h3",
+  "h4",
+  "ul",
+  "ol",
+  "li",
+  "div",
+  "span",
+  "br",
+  "blockquote",
+  "a",
+]);
+
+const ALLOWED_ARTICLE_CLASSES = new Set([
+  "tip-box",
+  "tip-title",
+  "source-note",
+  "warning-box",
+  "info-box",
+]);
+
+function isSafeHref(value: string): boolean {
+  return /^(https?:|mailto:|tel:|#|\/)/i.test(value.trim());
+}
+
+function unwrapElement(element: Element) {
+  const parent = element.parentNode;
+  if (!parent) return;
+  while (element.firstChild) parent.insertBefore(element.firstChild, element);
+  parent.removeChild(element);
+}
+
+function cleanArticleElement(element: Element) {
+  Array.from(element.children).forEach(cleanArticleElement);
+
+  const tagName = element.tagName.toLowerCase();
+  if (!ALLOWED_ARTICLE_TAGS.has(tagName)) {
+    unwrapElement(element);
+    return;
+  }
+
+  Array.from(element.attributes).forEach((attribute) => {
+    const name = attribute.name.toLowerCase();
+    const value = attribute.value;
+
+    if (name.startsWith("on") || name === "style" || name === "id") {
+      element.removeAttribute(attribute.name);
+      return;
+    }
+
+    if (name === "href") {
+      if (tagName !== "a" || !isSafeHref(value)) element.removeAttribute(attribute.name);
+      return;
+    }
+
+    if (name === "target" || name === "rel") {
+      if (tagName !== "a") element.removeAttribute(attribute.name);
+      return;
+    }
+
+    if (name === "class") {
+      const safeClasses = value
+        .split(/\s+/)
+        .filter((className) => ALLOWED_ARTICLE_CLASSES.has(className));
+      if (safeClasses.length) element.setAttribute("class", safeClasses.join(" "));
+      else element.removeAttribute("class");
+      return;
+    }
+
+    element.removeAttribute(attribute.name);
+  });
+
+  if (tagName === "a") {
+    element.setAttribute("rel", "noopener noreferrer");
+  }
+}
+
+function sanitizeArticleHtml(html: string): string {
+  if (typeof document === "undefined") return "";
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  Array.from(template.content.children).forEach(cleanArticleElement);
+  return template.innerHTML;
+}
+
 export default function PortalNovidadesPage() {
   const [cat, setCat] = useState("todos");
   const [open, setOpen] = useState<NovidadeArtigo | null>(null);
@@ -18,6 +110,11 @@ export default function PortalNovidadesPage() {
   const filtered = useMemo(
     () => (cat === "todos" ? NOVIDADES_ARTIGOS_AMPLIADOS : NOVIDADES_ARTIGOS_AMPLIADOS.filter((a) => a.cat === cat)),
     [cat],
+  );
+
+  const safeOpenContent = useMemo(
+    () => (open ? sanitizeArticleHtml(open.content) : ""),
+    [open],
   );
 
   if (open) {
@@ -38,7 +135,7 @@ export default function PortalNovidadesPage() {
           </div>
           <div
             className="novidade-prose prose prose-sm dark:prose-invert max-w-none mt-4"
-            dangerouslySetInnerHTML={{ __html: open.content }}
+            dangerouslySetInnerHTML={{ __html: safeOpenContent }}
           />
         </article>
         <p className="text-[11px] text-muted-foreground border-t border-border pt-3">
