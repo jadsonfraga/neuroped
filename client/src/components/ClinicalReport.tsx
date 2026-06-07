@@ -23,6 +23,7 @@ import { motion } from "framer-motion";
 import { easing, duration } from "@/lib/motion";
 
 const EMAIL_TO = "jadsonfraga@hotmail.com";
+const WHATSAPP_URL_LIMIT = 6500;
 
 interface DomainResult {
   domain: string;
@@ -166,6 +167,11 @@ function generateInterpretation(props: ClinicalReportProps): string {
   return text;
 }
 
+function buildWhatsAppText(reportText: string): string {
+  if (reportText.length <= WHATSAPP_URL_LIMIT) return reportText;
+  return `${reportText.slice(0, WHATSAPP_URL_LIMIT)}\n\n[Relatório completo copiado para a área de transferência. Cole manualmente no WhatsApp para encaminhar todas as respostas.]`;
+}
+
 export function ClinicalReport(props: ClinicalReportProps) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -187,7 +193,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
       haptic.success();
       toast({
         title: "Copiado!",
-        description: "Relatório copiado para a área de transferência.",
+        description: "Relatório completo copiado, incluindo todas as respostas.",
       });
       setTimeout(() => setCopied(false), 3000);
     } catch {
@@ -292,7 +298,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
   </div>` : ""}
 
   <div class="section">
-    <h2>Detalhamento das Respostas</h2>
+    <h2>Detalhamento de Todas as Respostas</h2>
     <table class="items-table">
       <thead><tr><th>#</th><th>Item</th><th>Resposta</th><th>Valor</th></tr></thead>
       <tbody>
@@ -323,7 +329,31 @@ export function ClinicalReport(props: ClinicalReportProps) {
     };
     softBell();
     haptic.notify();
-    toast({ title: "Impressão", description: "Janela de impressão aberta." });
+    toast({
+      title: "PDF / Impressão",
+      description: "Janela de impressão aberta. Escolha Salvar como PDF para gerar o arquivo com todas as respostas.",
+    });
+  }
+
+  function handleSendWhatsApp() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description: "Finalize a escala antes de encaminhar pelo WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    navigator.clipboard.writeText(reportText).catch(() => undefined);
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(buildWhatsAppText(reportText))}`;
+    window.open(whatsappUrl, "_blank");
+    softSuccess();
+    haptic.success();
+    toast({
+      title: "WhatsApp / Zap",
+      description: "Relatório preparado. Se o texto vier cortado, cole o conteúdo copiado manualmente.",
+    });
   }
 
   async function handleSendEmail() {
@@ -368,6 +398,10 @@ export function ClinicalReport(props: ClinicalReportProps) {
             )}
           </div>
 
+          <p className="rounded-lg border border-border/70 bg-background/70 p-3 text-[11px] leading-relaxed text-muted-foreground">
+            Ao finalizar a escala, este bloco permite gerar PDF, imprimir, copiar ou encaminhar pelo WhatsApp o relatório com <strong className="text-foreground">todas as respostas</strong>.
+          </p>
+
           {props.domainResults && props.domainResults.length >= 3 && (
             <div className="py-2">
               <p className="text-[11px] text-muted-foreground text-center mb-2">
@@ -403,7 +437,18 @@ export function ClinicalReport(props: ClinicalReportProps) {
             data-testid="button-print-report"
           >
             <Printer className="w-5 h-5" />
-            Gerar PDF / Imprimir Relatório
+            Gerar PDF / Imprimir com Todas as Respostas
+          </Button>
+
+          <Button
+            onClick={handleSendWhatsApp}
+            variant="outline"
+            className="w-full h-11 gap-3 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
+            disabled={!reportReady}
+            data-testid="button-whatsapp-report"
+          >
+            <Mail className="w-5 h-5" />
+            Encaminhar pelo WhatsApp / Zap
           </Button>
 
           <div className="grid grid-cols-2 gap-2">
