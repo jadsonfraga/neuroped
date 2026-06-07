@@ -82,3 +82,18 @@ Included in current `main`:
 Post-deploy route to verify first:
 
 - `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
+
+## 2026-06-07 — Reception pre-return shortcut deployment trigger
+
+Requested deployment after adding a direct `Pré-retorno` shortcut to the reception panel. This closes another high-value workflow gap without redesigning the panel.
+
+Included in current `main`:
+
+- `/recepcao` has direct `Pré-consulta` and `Pré-retorno` actions;
+- `/pre-retorno` remains the active family-facing route for return updates and symptoms/effects perceived by the family;
+- no global CSS/palette/sidebar redesign was introduced.
+
+Post-deploy route to verify:
+
+- `https://jadsonfraga.github.io/neuroped/#/recepcao`
+- `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
