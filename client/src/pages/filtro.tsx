@@ -16,7 +16,6 @@ import {
   Search,
   Sparkles,
   Star,
-  Stethoscope,
   X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -116,7 +115,7 @@ function buildRanking(query: string, selectedQueixas: string[], selectedAge: str
   const firstSchool = pool.find((scale) => scale.respondente.includes("professor"));
   const schoolRoute = firstSchool?.appRoute || "/inventarios-escola";
 
-  const base = [
+  return [
     makeRecommendation("Ouro", pool[0], {
       slot: "Ouro",
       route: "/filtro",
@@ -173,8 +172,6 @@ function buildRanking(query: string, selectedQueixas: string[], selectedAge: str
       tone: "from-emerald-600 via-teal-700 to-slate-950",
     },
   ];
-
-  return base;
 }
 
 function RankingCard({ item }: { item: RankedRecommendation }) {
