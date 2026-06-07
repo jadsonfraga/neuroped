@@ -22,7 +22,7 @@ interface PreRetornoRecord {
   comunicacao: string;
   crises: string;
   medicacao: string;
-  sintomasTratamento: string;
+  sintomasTratamento?: string;
   duvida: string;
   prioridade: string;
   observacoes: string;
@@ -58,12 +58,13 @@ function buildRecord(data: Omit<PreRetornoRecord, "id" | "createdAt">): PreRetor
 }
 
 function listAlertas(record: PreRetornoRecord) {
+  const sintomasTratamento = record.sintomasTratamento || "";
   const alertas = [
     record.evolucao === "piorou" ? "Evolução geral relatada como piora." : "",
     record.comportamento === "piorou" || record.comportamento === "oscilando" ? "Oscilação ou piora comportamental relatada." : "",
     record.crises === "aumentou" || record.crises === "mudou padrão" ? "Mudança no padrão de crises relatada." : "",
     record.medicacao.includes("suspendeu") || record.medicacao.includes("mudou") || record.medicacao.includes("efeitos") ? "Há ponto de atenção envolvendo uso de medicação." : "",
-    record.sintomasTratamento.trim() ? "Família descreveu sintomas ou efeitos percebidos durante o tratamento." : "",
+    sintomasTratamento.trim() ? "Família descreveu sintomas ou efeitos percebidos durante o tratamento." : "",
   ].filter(Boolean);
   return alertas.length ? alertas.slice(0, 3) : ["Sem alerta crítico informado no formulário.", "Confirmar contexto escolar/terapêutico.", "Correlacionar relato com avaliação clínica."];
 }
