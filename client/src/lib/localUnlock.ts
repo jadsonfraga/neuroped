@@ -1,3 +1,5 @@
+import { getAccessLevel } from "@/security/accessPolicy";
+
 const UNLOCK_HASH = "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207";
 const SESSION_KEY = "neuroped:local-unlocked";
 const REMEMBER_KEY = "neuroped:local-unlocked-persistent";
@@ -17,6 +19,12 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function currentRoutePath(): string {
+  if (typeof window === "undefined") return "/";
+  const hashPath = window.location.hash?.replace(/^#/, "");
+  return hashPath || window.location.pathname || "/";
 }
 
 export async function verifyUnlockPassword(input: string): Promise<boolean> {
@@ -46,12 +54,17 @@ export function lockApp(): void {
   window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: false } }));
 }
 
-export function isAppUnlocked(): boolean {
+export function hasClinicalUnlock(): boolean {
   try {
     return sessionStorage.getItem(SESSION_KEY) === "1" || localStorage.getItem(REMEMBER_KEY) === "1";
   } catch {
     return false;
   }
+}
+
+export function isAppUnlocked(): boolean {
+  if (getAccessLevel(currentRoutePath()) !== "clinical") return true;
+  return hasClinicalUnlock();
 }
 
 export const localUnlockEventName = LOCK_EVENT;
