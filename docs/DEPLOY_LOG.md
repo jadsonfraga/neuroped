@@ -11,3 +11,7 @@ Rebuild trigger after access-flow review. Full route-level access refactor must 
 ## 2026-06-07 — Visual premium consolidation
 
 Rebuild trigger after consolidating the premium visual asset cycle: new master shield logo, controlled image usage, `PremiumVisualPanel`, refined copy for pre-consultation, reception, parent portal and psychiatry guide, and documented asset governance.
+
+## 2026-06-07 — Forced build/deploy trigger
+
+Manual rebuild trigger requested after visual consolidation. Expected GitHub Actions workflow: `Deploy NeuroPed` on push to `main`, running `npm ci`, `npx vite build`, artifact upload and GitHub Pages deploy.
