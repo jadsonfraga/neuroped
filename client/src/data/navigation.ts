@@ -68,6 +68,7 @@ export const navSections: NavSection[] = [
     title: "Recepção e pré-consulta",
     items: [
       { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
+      { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
       { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
     ],
