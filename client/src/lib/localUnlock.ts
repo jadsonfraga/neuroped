@@ -27,6 +27,11 @@ function currentRoutePath(): string {
   return hashPath || window.location.pathname || "/";
 }
 
+function emitUnlockState(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: isAppUnlocked() } }));
+}
+
 export async function verifyUnlockPassword(input: string): Promise<boolean> {
   if (!input || typeof crypto === "undefined" || !crypto.subtle) return false;
   const normalized = sanitizeUnlockInput(input);
@@ -41,7 +46,7 @@ export function unlockApp(rememberDevice = false): void {
   } catch {
     // Storage pode estar indisponível em modo privado; o estado em memória cobre a sessão atual.
   }
-  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: true } }));
+  emitUnlockState();
 }
 
 export function lockApp(): void {
@@ -51,7 +56,7 @@ export function lockApp(): void {
   } catch {
     // Falha de storage não deve quebrar o bloqueio visual local.
   }
-  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: false } }));
+  emitUnlockState();
 }
 
 export function hasClinicalUnlock(): boolean {
@@ -65,6 +70,11 @@ export function hasClinicalUnlock(): boolean {
 export function isAppUnlocked(): boolean {
   if (getAccessLevel(currentRoutePath()) !== "clinical") return true;
   return hasClinicalUnlock();
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("hashchange", emitUnlockState);
+  window.addEventListener("popstate", emitUnlockState);
 }
 
 export const localUnlockEventName = LOCK_EVENT;
