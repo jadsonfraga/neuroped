@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
@@ -14,6 +15,7 @@ type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escola
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
 const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
+const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
 
 function norm(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -147,7 +149,7 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  const catalog = useMemo(() => unique([...allScales, ...world]), [world]);
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
   const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
@@ -175,9 +177,9 @@ export default function FiltroPage() {
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-5 w-5" /></div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">ranking obrigatório · 100 escalas mundiais</Badge>
+            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">ranking obrigatório · escalas + questionários + inventários</Badge>
             <h1 className="text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Agora o filtro cruza idade, queixa, respondente, rota direta, fonte e licença usando a base interna + 100 escalas mundiais sem custo.</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Agora o filtro cruza idade, queixa, respondente, rota direta, fonte e licença usando a base interna, instrumentos suplementares e 100 escalas mundiais sem custo.</p>
           </div>
         </div>
       </header>
@@ -219,7 +221,7 @@ export default function FiltroPage() {
           {ranking.map((item) => <Link key={item.slot} href={item.route}><Card className="group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg"><CardContent className="flex h-full flex-col gap-3 p-4"><div className="flex items-start gap-3"><div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.tone} text-white shadow-md`}>{icon(item.slot)}</div><div className="min-w-0 flex-1"><Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.14em]">{item.slot}</Badge><h3 className="truncate text-sm font-black text-foreground group-hover:text-primary">{item.title}</h3><p className="line-clamp-2 text-xs text-muted-foreground">{item.subtitle}</p></div></div><div className="space-y-2 rounded-2xl bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground"><p><strong className="text-foreground">Motivo:</strong> {item.reason}</p><p><strong className="text-foreground">Estado:</strong> {item.state}</p>{item.source && <p><strong className="text-foreground">Fonte:</strong> {item.source}</p>}</div><div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div></CardContent></Card></Link>)}
         </div>
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
-      </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
+      </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
 
       <section className="rounded-3xl border border-border/70 bg-card/70 p-4"><div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{rankedPool.slice(0, 24).map((s) => <div key={s.id} className="rounded-2xl border border-border/70 bg-background/70 p-3"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-black text-foreground">{s.name}</p><p className="line-clamp-2 text-xs text-muted-foreground">{s.fullName}</p></div>{s.id.startsWith("world-") && <Badge variant="outline" className="shrink-0 text-[10px]">mundial</Badge>}</div><p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p></div>)}</div></section>
     </div>
