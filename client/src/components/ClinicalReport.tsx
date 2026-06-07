@@ -1,12 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Mail, Copy, CheckCircle2, Loader2, Printer, Home, RotateCcw } from "lucide-react";
+import {
+  FileText,
+  Mail,
+  Copy,
+  CheckCircle2,
+  Loader2,
+  Printer,
+  Home,
+  RotateCcw,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { play1Up, playFireball, playCoin, playPowerUp } from "@/lib/sounds";
+import { play1Up } from "@/lib/sounds";
 import { softSuccess, softTap, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { RadarChart } from "@/components/RadarChart";
@@ -19,30 +28,51 @@ async function sendEmail(
   scaleName: string,
   reportText: string,
   setSent: (v: boolean) => void,
-  toast: (opts: any) => void
+  toast: (opts: any) => void,
 ) {
   const subject = `[NeuroPed] ${scaleName} \u2014 ${new Date().toLocaleDateString("pt-BR")}`;
-  
+
   // Tentar via backend primeiro
   try {
-    const res = await apiRequest("POST", "/api/send-report", { subject, body: reportText });
+    const res = await apiRequest("POST", "/api/send-report", {
+      subject,
+      body: reportText,
+    });
     if (res.ok) {
       setSent(true);
       play1Up();
-      toast({ title: "\u2709\ufe0f Enviado", description: `Relat\u00f3rio enviado para ${EMAIL_TO}` });
+      toast({
+        title: "\u2709\ufe0f Enviado",
+        description: `Relat\u00f3rio enviado para ${EMAIL_TO}`,
+      });
       return;
     }
-  } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
+  } catch {
+    /* envio via API falhou — cai no fallback mailto abaixo */
+  }
 
   // Fallback: abrir cliente de email com mailto
   try {
-    const truncated = reportText.length > 1800 ? reportText.slice(0, 1800) + "\n\n[...relat\u00f3rio completo truncado por limite de mailto — use Copiar Texto para obter o relat\u00f3rio inteiro]" : reportText;
+    const truncated =
+      reportText.length > 1800
+        ? reportText.slice(0, 1800) +
+          "\n\n[...relat\u00f3rio completo truncado por limite de mailto — use Copiar Texto para obter o relat\u00f3rio inteiro]"
+        : reportText;
     const mailtoUrl = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(truncated)}`;
     window.open(mailtoUrl, "_blank");
     setSent(true);
-    toast({ title: "\u2709\ufe0f Email aberto", description: "Seu app de email foi aberto com o relat\u00f3rio. Envie para completar." });
+    toast({
+      title: "\u2709\ufe0f Email aberto",
+      description:
+        "Seu app de email foi aberto com o relat\u00f3rio. Envie para completar.",
+    });
   } catch {
-    toast({ title: "Copie o texto", description: "N\u00e3o foi poss\u00edvel enviar. Use o bot\u00e3o Copiar e cole no email.", variant: "destructive" });
+    toast({
+      title: "Copie o texto",
+      description:
+        "N\u00e3o foi poss\u00edvel enviar. Use o bot\u00e3o Copiar e cole no email.",
+      variant: "destructive",
+    });
   }
 }
 
@@ -65,9 +95,23 @@ interface ClinicalReportProps {
 }
 
 function generateInterpretation(props: ClinicalReportProps): string {
-  const { scaleName, scaleFullName, totalScore, maxScore, classification, description, domainResults, items, patientAge } = props;
+  const {
+    scaleName,
+    scaleFullName,
+    totalScore,
+    maxScore,
+    classification,
+    description,
+    domainResults,
+    items,
+    patientAge,
+  } = props;
   const now = new Date();
-  const dateStr = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const dateStr = now.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
   let text = "";
   text += `RELATÓRIO DE AVALIAÇÃO CLÍNICA\n`;
@@ -84,7 +128,7 @@ function generateInterpretation(props: ClinicalReportProps): string {
 
   if (domainResults && domainResults.length > 0) {
     text += `RESULTADOS POR DOMÍNIO\n`;
-    domainResults.forEach(dr => {
+    domainResults.forEach((dr) => {
       text += `- ${dr.domain}: ${dr.score} pontos — ${dr.classification}\n`;
     });
     text += `\n`;
@@ -109,16 +153,32 @@ function generateInterpretation(props: ClinicalReportProps): string {
 
   if (domainResults && domainResults.length > 0) {
     text += `Na análise por domínios, observou-se o seguinte perfil:\n\n`;
-    domainResults.forEach(dr => {
+    domainResults.forEach((dr) => {
       text += `No domínio "${dr.domain}", a pontuação obtida foi de ${dr.score} pontos, classificada como "${dr.classification}". `;
       const severity = dr.classification.toLowerCase();
-      if (severity.includes("normal") || severity.includes("típic") || severity.includes("baixo risco") || severity.includes("adequad")) {
+      if (
+        severity.includes("normal") ||
+        severity.includes("típic") ||
+        severity.includes("baixo risco") ||
+        severity.includes("adequad")
+      ) {
         text += `Este resultado sugere funcionamento dentro dos parâmetros esperados para este domínio, sem indicativos de comprometimento significativo. `;
-      } else if (severity.includes("leve") || severity.includes("borderline") || severity.includes("limítrofe") || severity.includes("risco")) {
+      } else if (
+        severity.includes("leve") ||
+        severity.includes("borderline") ||
+        severity.includes("limítrofe") ||
+        severity.includes("risco")
+      ) {
         text += `Este resultado sugere a presença de dificuldades leves a moderadas neste domínio, que merecem acompanhamento e reavaliação. Recomenda-se monitorização clínica e eventual encaminhamento para avaliação complementar. `;
       } else if (severity.includes("moderado") || severity.includes("moder")) {
         text += `Este resultado indica comprometimento moderado neste domínio, sugerindo necessidade de intervenção terapêutica direcionada e acompanhamento especializado. `;
-      } else if (severity.includes("grave") || severity.includes("alto") || severity.includes("clínico") || severity.includes("significativ") || severity.includes("elevad")) {
+      } else if (
+        severity.includes("grave") ||
+        severity.includes("alto") ||
+        severity.includes("clínico") ||
+        severity.includes("significativ") ||
+        severity.includes("elevad")
+      ) {
         text += `Este resultado indica comprometimento significativo neste domínio, sinalizando necessidade de intervenção imediata e acompanhamento multidisciplinar intensivo. `;
       }
       text += `\n`;
@@ -127,15 +187,15 @@ function generateInterpretation(props: ClinicalReportProps): string {
   }
 
   // Highlight items with high scores
-  const highItems = items.filter(it => {
-    const maxVal = Math.max(2, ...items.map(i => i.value));
+  const highItems = items.filter((it) => {
+    const maxVal = Math.max(2, ...items.map((i) => i.value));
     return it.value >= maxVal * 0.75 && it.value > 0;
   });
 
   if (highItems.length > 0) {
     text += `ITENS COM PONTUAÇÃO ELEVADA\n\n`;
     text += `Os seguintes itens receberam pontuação elevada, indicando áreas de maior preocupação clínica:\n\n`;
-    highItems.forEach(item => {
+    highItems.forEach((item) => {
       text += `- "${item.question}" — Resposta: ${item.answer} (${item.value} pontos)\n`;
     });
     text += `\n`;
@@ -143,14 +203,15 @@ function generateInterpretation(props: ClinicalReportProps): string {
   }
 
   // Zero/low items
-  const lowItems = items.filter(it => it.value === 0);
+  const lowItems = items.filter((it) => it.value === 0);
   if (lowItems.length > 0 && lowItems.length < items.length) {
     text += `ÁREAS DE FUNCIONAMENTO PRESERVADO\n\n`;
     text += `${lowItems.length} de ${items.length} itens receberam pontuação zero, sugerindo funcionamento preservado nas seguintes áreas:\n`;
-    lowItems.slice(0, 10).forEach(item => {
+    lowItems.slice(0, 10).forEach((item) => {
       text += `- "${item.question}"\n`;
     });
-    if (lowItems.length > 10) text += `  ... e mais ${lowItems.length - 10} itens.\n`;
+    if (lowItems.length > 10)
+      text += `  ... e mais ${lowItems.length - 10} itens.\n`;
     text += `\n`;
   }
 
@@ -170,16 +231,13 @@ export function ClinicalReport(props: ClinicalReportProps) {
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const autoSentRef = useRef(false);
-
   const reportText = generateInterpretation(props);
-
-  // Envio automático ao montar (quando resultado é exibido)
-  useEffect(() => {
-    if (autoSentRef.current) return;
-    autoSentRef.current = true;
-    sendEmail(props.scaleName, reportText, setSent, toast);
-  }, []);
+  const reportReady = Boolean(
+    props.scaleName &&
+    props.classification &&
+    props.description &&
+    props.items.length > 0,
+  );
 
   async function handleCopy() {
     try {
@@ -187,26 +245,60 @@ export function ClinicalReport(props: ClinicalReportProps) {
       setCopied(true);
       softSuccess();
       haptic.success();
-      toast({ title: "Copiado!", description: "Relatório copiado para a área de transferência." });
+      toast({
+        title: "Copiado!",
+        description: "Relatório copiado para a área de transferência.",
+      });
       setTimeout(() => setCopied(false), 3000);
     } catch {
-      toast({ title: "Erro", description: "Não foi possível copiar. Tente novamente.", variant: "destructive" });
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar. Tente novamente.",
+        variant: "destructive",
+      });
     }
   }
 
+  function escapeHtml(value: string | number | undefined) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
   function handlePrint() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description:
+          "Responda a escala e gere uma interpretação antes de imprimir.",
+        variant: "destructive",
+      });
+      return;
+    }
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      toast({ title: "Erro", description: "Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.", variant: "destructive" });
+      toast({
+        title: "Erro",
+        description:
+          "Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.",
+        variant: "destructive",
+      });
       return;
     }
     const now = new Date();
-    const dateStr = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+    const dateStr = now.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
     const htmlContent = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatório ${props.scaleName} — ${dateStr}</title>
+  <title>Relatório ${escapeHtml(props.scaleName)} — ${dateStr}</title>
   <style>
     @page {
       margin: 2cm;
@@ -286,53 +378,63 @@ export function ClinicalReport(props: ClinicalReportProps) {
       <div class="doc-crm">CRM-PE 25227 &nbsp;|&nbsp; CRM-BA 23384 &nbsp;|&nbsp; RQE 17756 / 14499 / 13119</div>
     </div>
     <div class="header-right">
-      <div class="scale-name">${props.scaleName}${props.scaleFullName ? ` (${props.scaleFullName})` : ""}</div>
+      <div class="scale-name">${escapeHtml(props.scaleName)}${props.scaleFullName ? ` (${escapeHtml(props.scaleFullName)})` : ""}</div>
       <div class="scale-meta">Data: ${dateStr}</div>
-      ${props.patientAge ? `<div class="scale-meta">Faixa etária: ${props.patientAge}</div>` : ""}
+      ${props.patientAge ? `<div class="scale-meta">Faixa etária: ${escapeHtml(props.patientAge)}</div>` : ""}
     </div>
   </div>
 
   <div class="section">
     <h2>Resultado Geral</h2>
     <div class="result-box">
-      <span class="score">${props.totalScore}</span>
+      <span class="score">${escapeHtml(props.totalScore)}</span>
       <span class="label">${props.maxScore ? ` / ${props.maxScore} pontos` : " pontos"}</span>
-      <div class="classification">${props.classification}</div>
+      <div class="classification">${escapeHtml(props.classification)}</div>
     </div>
-    <p class="narrative">${props.description}</p>
+    <p class="narrative">${escapeHtml(props.description)}</p>
   </div>
 
-  ${props.domainResults && props.domainResults.length > 0 ? `
+  ${
+    props.domainResults && props.domainResults.length > 0
+      ? `
   <div class="section">
     <h2>Resultados por Domínio</h2>
     <div class="domain-grid">
-      ${props.domainResults.map(dr => `
+      ${props.domainResults
+        .map(
+          (dr) => `
         <div class="domain-item">
-          <div class="name">${dr.domain}</div>
-          <div class="detail">${dr.score} pts — ${dr.classification}</div>
+          <div class="name">${escapeHtml(dr.domain)}</div>
+          <div class="detail">${escapeHtml(dr.score)} pts — ${escapeHtml(dr.classification)}</div>
         </div>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </div>
-  </div>` : ""}
+  </div>`
+      : ""
+  }
 
   <div class="section">
     <h2>Detalhamento das Respostas</h2>
     <table class="items-table">
       <thead><tr><th>#</th><th>Item</th><th>Resposta</th><th>Valor</th></tr></thead>
       <tbody>
-        ${props.items.map((item, i) => {
-          const maxVal = Math.max(2, ...props.items.map(it => it.value));
-          const isHigh = item.value >= maxVal * 0.75 && item.value > 0;
-          return `<tr class="${isHigh ? "high" : ""}"><td>${i + 1}</td><td>${item.question}</td><td>${item.answer}</td><td>${item.value}</td></tr>`;
-        }).join("")}
+        ${props.items
+          .map((item, i) => {
+            const maxVal = Math.max(2, ...props.items.map((it) => it.value));
+            const isHigh = item.value >= maxVal * 0.75 && item.value > 0;
+            return `<tr class="${isHigh ? "high" : ""}"><td>${i + 1}</td><td>${escapeHtml(item.question)}</td><td>${escapeHtml(item.answer)}</td><td>${escapeHtml(item.value)}</td></tr>`;
+          })
+          .join("")}
       </tbody>
     </table>
   </div>
 
   <div class="section">
     <h2>Interpretação Clínica Detalhada</h2>
-    <p class="narrative">${props.description}</p>
-    ${props.domainResults && props.domainResults.length > 0 ? `<p class="narrative" style="margin-top:10px;">Na análise por domínios: ${props.domainResults.map(dr => `${dr.domain} obteve ${dr.score} pontos (${dr.classification})`).join("; ")}.` : ""}
+    <p class="narrative">${escapeHtml(props.description)}</p>
+    ${props.domainResults && props.domainResults.length > 0 ? `<p class="narrative" style="margin-top:10px;">Na análise por domínios: ${props.domainResults.map((dr) => `${escapeHtml(dr.domain)} obteve ${escapeHtml(dr.score)} pontos (${escapeHtml(dr.classification)})`).join("; ")}.` : ""}
   </div>
 
   <div class="section">
@@ -363,6 +465,14 @@ export function ClinicalReport(props: ClinicalReportProps) {
   }
 
   async function handleSendEmail() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description: "Não há conteúdo clínico suficiente para enviar.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSending(true);
     await sendEmail(props.scaleName, reportText, setSent, toast);
     setSending(false);
@@ -372,125 +482,167 @@ export function ClinicalReport(props: ClinicalReportProps) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: duration.normal, ease: easing.smooth, delay: 0.1 }}
+      transition={{
+        duration: duration.normal,
+        ease: easing.smooth,
+        delay: 0.1,
+      }}
     >
-    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-chart-2/5 dark:from-primary/10 dark:to-chart-2/10 overflow-hidden">
-      <div className="h-1 w-full bg-gradient-to-r from-primary via-chart-2 to-chart-3" />
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary" strokeWidth={1.75} />
-          <h3
-            className="text-base text-foreground"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-          >
-            Relatório Clínico Completo
-          </h3>
-          {sent && <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Enviado</Badge>}
-        </div>
-
-        {/* Gráfico Radar — visível quando há resultados por domínio */}
-        {props.domainResults && props.domainResults.length >= 3 && (
-          <div className="py-2">
-            <p className="text-[11px] text-muted-foreground text-center mb-2">Perfil por Domínio</p>
-            <RadarChart
-              labels={props.domainResults.map(d => d.domain)}
-              values={props.domainResults.map(d => {
-                const maxPossible = props.maxScore ? (props.maxScore / props.domainResults!.length) : 30;
-                return Math.min(100, Math.round((d.score / maxPossible) * 100));
-              })}
-              color="#7c3aed"
-              size={220}
-            />
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-chart-2/5 dark:from-primary/10 dark:to-chart-2/10 overflow-hidden">
+        <div className="h-1 w-full bg-gradient-to-r from-primary via-chart-2 to-chart-3" />
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" strokeWidth={1.75} />
+            <h3
+              className="text-base text-foreground"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+            >
+              Relatório Clínico Completo
+            </h3>
+            {sent && (
+              <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                Email preparado
+              </Badge>
+            )}
           </div>
-        )}
 
-        {/* PDF / Print — botão principal grande */}
-        <Button
-          onClick={handlePrint}
-          className="w-full h-12 gap-3 bg-gradient-to-r from-primary to-chart-2 hover:from-primary/90 hover:to-chart-2/90 text-white shadow-lg shadow-primary/20 text-sm font-semibold"
-          data-testid="button-print-report"
-        >
-          <Printer className="w-5 h-5" />
-          Gerar PDF / Imprimir Relatório
-        </Button>
+          {/* Gráfico Radar — visível quando há resultados por domínio */}
+          {props.domainResults && props.domainResults.length >= 3 && (
+            <div className="py-2">
+              <p className="text-[11px] text-muted-foreground text-center mb-2">
+                Perfil por Domínio
+              </p>
+              <RadarChart
+                labels={props.domainResults.map((d) => d.domain)}
+                values={props.domainResults.map((d) => {
+                  const maxPossible = props.maxScore
+                    ? props.maxScore / props.domainResults!.length
+                    : 30;
+                  return Math.min(
+                    100,
+                    Math.round((d.score / maxPossible) * 100),
+                  );
+                })}
+                color="#7c3aed"
+                size={220}
+              />
+            </div>
+          )}
 
-        {/* Ações secundárias */}
-        <div className="grid grid-cols-2 gap-2">
+          {!reportReady && (
+            <div
+              className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+              role="alert"
+            >
+              Relatório não será gerado sem escala, classificação, interpretação
+              e respostas.
+            </div>
+          )}
+
+          {/* PDF / Print — botão principal grande */}
           <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-            className="gap-2 h-9"
-            data-testid="button-copy-report"
+            onClick={handlePrint}
+            className="w-full h-12 gap-3 bg-gradient-to-r from-primary to-chart-2 hover:from-primary/90 hover:to-chart-2/90 text-white shadow-lg shadow-primary/20 text-sm font-semibold"
+            disabled={!reportReady}
+            data-testid="button-print-report"
           >
-            {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Copiado" : "Copiar Texto"}
+            <Printer className="w-5 h-5" />
+            Gerar PDF / Imprimir Relatório
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSendEmail}
-            disabled={sending || sent}
-            className="gap-2 h-9"
-            data-testid="button-send-email"
-          >
-            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : sent ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Mail className="w-4 h-4" />}
-            {sending ? "Enviando..." : sent ? "Enviado" : "Email"}
-          </Button>
-        </div>
 
-        {/* Preview colapsável */}
-        <details className="group">
-          <summary className="text-xs text-primary cursor-pointer hover:underline">Ver relatório em texto</summary>
-          <div className="mt-2 max-h-48 overflow-y-auto rounded-lg bg-background/80 border border-border p-3">
-            <pre className="text-[11px] text-foreground whitespace-pre-wrap font-sans leading-relaxed">
-              {reportText}
-            </pre>
+          {/* Ações secundárias */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              className="gap-2 h-9"
+              data-testid="button-copy-report"
+            >
+              {copied ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              {copied ? "Copiado" : "Copiar Texto"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSendEmail}
+              disabled={sending || sent || !reportReady}
+              className="gap-2 h-9"
+              data-testid="button-send-email"
+            >
+              {sending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : sent ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Mail className="w-4 h-4" />
+              )}
+              {sending ? "Preparando..." : sent ? "Preparado" : "Email"}
+            </Button>
           </div>
-        </details>
 
-        {sent && (
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 text-center">
-            Relatório enviado para jadsonfraga@hotmail.com
-          </p>
-        )}
+          {/* Preview colapsável */}
+          <details className="group">
+            <summary className="text-xs text-primary cursor-pointer hover:underline">
+              Ver relatório em texto
+            </summary>
+            <div className="mt-2 max-h-48 overflow-y-auto rounded-lg bg-background/80 border border-border p-3">
+              <pre className="text-[11px] text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                {reportText}
+              </pre>
+            </div>
+          </details>
 
-        {/* Navegação pós-avaliação */}
-        <div className="flex gap-2 pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 gap-2 h-9"
-            onClick={() => window.history.back()}
-            data-testid="button-back"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Refazer
-          </Button>
-          <Link href="/">
+          {sent && (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 text-center">
+              Email preparado para jadsonfraga@hotmail.com; confirme o envio no
+              aplicativo de email.
+            </p>
+          )}
+
+          {/* Navegação pós-avaliação */}
+          <div className="flex gap-2 pt-1">
             <Button
               variant="outline"
               size="sm"
               className="flex-1 gap-2 h-9"
-              data-testid="button-home"
+              onClick={() => window.history.back()}
+              data-testid="button-back"
             >
-              <Home className="w-3.5 h-3.5" />
-              Início
+              <RotateCcw className="w-3.5 h-3.5" />
+              Refazer
             </Button>
-          </Link>
-          <Link href="/filtro">
-            <Button
-              size="sm"
-              onClick={() => { softTap(); haptic.tap(); }}
-              className="flex-1 gap-2 h-9 bg-gradient-to-r from-primary to-chart-2 text-white"
-              data-testid="button-goto-filter"
-            >
-              Próxima Escala
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+            <Link href="/">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2 h-9"
+                data-testid="button-home"
+              >
+                <Home className="w-3.5 h-3.5" />
+                Início
+              </Button>
+            </Link>
+            <Link href="/filtro">
+              <Button
+                size="sm"
+                onClick={() => {
+                  softTap();
+                  haptic.tap();
+                }}
+                className="flex-1 gap-2 h-9 bg-gradient-to-r from-primary to-chart-2 text-white"
+                data-testid="button-goto-filter"
+              >
+                Próxima Escala
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }

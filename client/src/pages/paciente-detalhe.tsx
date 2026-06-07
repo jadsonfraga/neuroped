@@ -8,18 +8,45 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Pencil, Trash2, Calendar, TrendingUp, TrendingDown,
-  Minus, Copy, Download, ClipboardList, Users,
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Copy,
+  Download,
+  ClipboardList,
+  Users,
 } from "lucide-react";
 import { PinGate } from "@/components/PinGate";
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
 } from "recharts";
 import { differenceInYears, parseISO, format } from "date-fns";
 import html2canvas from "html2canvas";
@@ -87,7 +114,9 @@ export default function PacienteDetalhePage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/patients/${patientId}`],
+      });
       setEditOpen(false);
       toast({ title: "Paciente atualizado!" });
     },
@@ -98,7 +127,9 @@ export default function PacienteDetalhePage() {
       await apiRequest("DELETE", `/api/results/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/results`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/patients/${patientId}/results`],
+      });
       toast({ title: "Avaliação removida." });
     },
   });
@@ -113,7 +144,9 @@ export default function PacienteDetalhePage() {
     return groups;
   }, [results]);
 
-  const scalesWithMultiple = Object.keys(scaleGroups).filter(k => scaleGroups[k].length >= 2);
+  const scalesWithMultiple = Object.keys(scaleGroups).filter(
+    (k) => scaleGroups[k].length >= 2,
+  );
 
   const chartData = useMemo(() => {
     if (!selectedScale || !scaleGroups[selectedScale]) return [];
@@ -152,7 +185,10 @@ export default function PacienteDetalhePage() {
   async function exportAsImage() {
     const el = document.getElementById("report-content");
     if (!el) return;
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+    });
     const link = document.createElement("a");
     link.download = `relatorio-${patient?.name || "paciente"}-${new Date().toISOString().slice(0, 10)}.png`;
     link.href = canvas.toDataURL();
@@ -169,8 +205,9 @@ export default function PacienteDetalhePage() {
     if (patient.notes) text += `Observações: ${patient.notes}\n`;
     text += `\nAVALIAÇÕES:\n`;
 
-    const sorted = [...results].sort((a: any, b: any) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const sorted = [...results].sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
     sorted.forEach((r: any) => {
       text += `- ${fmtDate(r.createdAt)} | ${r.scaleName} | Score: ${r.totalScore} | ${r.classification}\n`;
@@ -178,7 +215,7 @@ export default function PacienteDetalhePage() {
 
     if (scalesWithMultiple.length > 0) {
       text += `\nEVOLUÇÃO:\n`;
-      scalesWithMultiple.forEach(scale => {
+      scalesWithMultiple.forEach((scale) => {
         const items = scaleGroups[scale];
         const first = items[0];
         const last = items[items.length - 1];
@@ -188,7 +225,10 @@ export default function PacienteDetalhePage() {
     }
 
     navigator.clipboard.writeText(text);
-    toast({ title: "Copiado!", description: "Relatório copiado para a área de transferência." });
+    toast({
+      title: "Copiado!",
+      description: "Relatório copiado para a área de transferência.",
+    });
   }
 
   if (!internalAuth) {
@@ -211,8 +251,9 @@ export default function PacienteDetalhePage() {
   }
 
   const age = calcAge(patient.birthDate);
-  const sortedResultsDesc = [...results].sort((a: any, b: any) =>
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const sortedResultsDesc = [...results].sort(
+    (a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
   return (
@@ -238,29 +279,60 @@ export default function PacienteDetalhePage() {
               {results.length} avaliação{results.length !== 1 ? "ões" : ""}
             </Badge>
           </div>
-          {patient.notes && <p className="text-xs text-muted-foreground mt-2">{patient.notes}</p>}
+          {patient.notes && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {patient.notes}
+            </p>
+          )}
         </div>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={openEditDialog} data-testid="button-edit-patient">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={openEditDialog}
+              data-testid="button-edit-patient"
+            >
               <Pencil className="w-3 h-3" /> Editar
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Editar Paciente</DialogTitle>
-              <DialogDescription>Atualize os dados do paciente.</DialogDescription>
+              <DialogDescription>
+                Atualize os dados do paciente.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-2">
-              <Input placeholder="Nome *" value={formName} onChange={(e) => setFormName(e.target.value)} />
+              <Input
+                placeholder="Nome *"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+              />
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Data de nascimento</label>
-                <Input type="date" value={formBirth} onChange={(e) => setFormBirth(e.target.value)} />
+                <label className="text-xs text-muted-foreground">
+                  Data de nascimento
+                </label>
+                <Input
+                  type="date"
+                  value={formBirth}
+                  onChange={(e) => setFormBirth(e.target.value)}
+                />
               </div>
-              <Textarea placeholder="Observações" value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={3} />
+              <Textarea
+                placeholder="Observações"
+                value={formNotes}
+                onChange={(e) => setFormNotes(e.target.value)}
+                rows={3}
+              />
             </div>
             <DialogFooter>
-              <Button onClick={handleUpdate} disabled={!formName.trim() || updateMutation.isPending} className="w-full">
+              <Button
+                onClick={handleUpdate}
+                disabled={!formName.trim() || updateMutation.isPending}
+                className="w-full"
+              >
                 {updateMutation.isPending ? "Salvando..." : "Atualizar"}
               </Button>
             </DialogFooter>
@@ -281,8 +353,12 @@ export default function PacienteDetalhePage() {
           {sortedResultsDesc.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <ClipboardList className="w-8 h-8 mx-auto text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
-              <p className="text-xs text-muted-foreground">Aplique uma escala e vincule o resultado a este paciente.</p>
+              <p className="text-sm text-muted-foreground">
+                Nenhuma avaliação registrada.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Aplique uma escala e vincule o resultado a este paciente.
+              </p>
             </div>
           ) : (
             sortedResultsDesc.map((r: any) => (
@@ -290,12 +366,20 @@ export default function PacienteDetalhePage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-bold text-foreground">{r.scaleName}</p>
-                      <p className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</p>
+                      <p className="text-sm font-bold text-foreground">
+                        {r.scaleName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtDate(r.createdAt)}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{r.totalScore} pts</Badge>
-                      <Badge variant="secondary" className="text-xs">{r.classification}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {r.totalScore} pts
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {r.classification}
+                      </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -318,8 +402,12 @@ export default function PacienteDetalhePage() {
           {scalesWithMultiple.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <TrendingUp className="w-8 h-8 mx-auto text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">Dados insuficientes para evolução.</p>
-              <p className="text-xs text-muted-foreground">São necessárias pelo menos 2 avaliações da mesma escala.</p>
+              <p className="text-sm text-muted-foreground">
+                Dados insuficientes para evolução.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                São necessárias pelo menos 2 avaliações da mesma escala.
+              </p>
             </div>
           ) : (
             <>
@@ -328,8 +416,10 @@ export default function PacienteDetalhePage() {
                   <SelectValue placeholder="Selecione a escala..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {scalesWithMultiple.map(s => (
-                    <SelectItem key={s} value={s}>{s} ({scaleGroups[s].length} avaliações)</SelectItem>
+                  {scalesWithMultiple.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s} ({scaleGroups[s].length} avaliações)
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -340,7 +430,10 @@ export default function PacienteDetalhePage() {
                     <CardContent className="p-4">
                       <ResponsiveContainer width="100%" height={250}>
                         <LineChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            className="stroke-muted"
+                          />
                           <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                           <YAxis tick={{ fontSize: 11 }} />
                           <Tooltip
@@ -351,7 +444,9 @@ export default function PacienteDetalhePage() {
                                 <div className="bg-card border border-border rounded-lg p-2 shadow-md text-xs">
                                   <p className="font-bold">{d.fullDate}</p>
                                   <p>Score: {d.score}</p>
-                                  <p className="text-muted-foreground">{d.classification}</p>
+                                  <p className="text-muted-foreground">
+                                    {d.classification}
+                                  </p>
                                 </div>
                               );
                             }}
@@ -373,22 +468,37 @@ export default function PacienteDetalhePage() {
                     <div className="grid grid-cols-3 gap-3">
                       <Card className="border-card-border">
                         <CardContent className="p-3 text-center">
-                          <p className="text-xs text-muted-foreground">Primeira</p>
-                          <p className="text-lg font-bold">{evolutionSummary.first}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Primeira
+                          </p>
+                          <p className="text-lg font-bold">
+                            {evolutionSummary.first}
+                          </p>
                         </CardContent>
                       </Card>
                       <Card className="border-card-border">
                         <CardContent className="p-3 text-center">
-                          <p className="text-xs text-muted-foreground">Última</p>
-                          <p className="text-lg font-bold">{evolutionSummary.last}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Última
+                          </p>
+                          <p className="text-lg font-bold">
+                            {evolutionSummary.last}
+                          </p>
                         </CardContent>
                       </Card>
-                      <Card className={`border-card-border ${
-                        evolutionSummary.delta < 0 ? "bg-emerald-50/50 dark:bg-emerald-950/20" :
-                        evolutionSummary.delta > 0 ? "bg-red-50/50 dark:bg-red-950/20" : ""
-                      }`}>
+                      <Card
+                        className={`border-card-border ${
+                          evolutionSummary.delta < 0
+                            ? "bg-emerald-50/50 dark:bg-emerald-950/20"
+                            : evolutionSummary.delta > 0
+                              ? "bg-red-50/50 dark:bg-red-950/20"
+                              : ""
+                        }`}
+                      >
                         <CardContent className="p-3 text-center">
-                          <p className="text-xs text-muted-foreground">Variação</p>
+                          <p className="text-xs text-muted-foreground">
+                            Variação
+                          </p>
                           <div className="flex items-center justify-center gap-1">
                             {evolutionSummary.delta < 0 ? (
                               <TrendingDown className="w-4 h-4 text-emerald-600" />
@@ -397,11 +507,17 @@ export default function PacienteDetalhePage() {
                             ) : (
                               <Minus className="w-4 h-4 text-muted-foreground" />
                             )}
-                            <p className={`text-lg font-bold ${
-                              evolutionSummary.delta < 0 ? "text-emerald-600" :
-                              evolutionSummary.delta > 0 ? "text-red-600" : ""
-                            }`}>
-                              {evolutionSummary.delta >= 0 ? "+" : ""}{evolutionSummary.delta}
+                            <p
+                              className={`text-lg font-bold ${
+                                evolutionSummary.delta < 0
+                                  ? "text-emerald-600"
+                                  : evolutionSummary.delta > 0
+                                    ? "text-red-600"
+                                    : ""
+                              }`}
+                            >
+                              {evolutionSummary.delta >= 0 ? "+" : ""}
+                              {evolutionSummary.delta}
                             </p>
                           </div>
                         </CardContent>
@@ -429,79 +545,131 @@ export default function PacienteDetalhePage() {
             />
           </div>
 
-          {/* Report preview */}
-          <Card className="border-card-border overflow-hidden">
-            <div id="report-content" className="bg-white p-6 space-y-4 text-black">
-              {/* Header */}
-              <div className="border-b-2 border-purple-600 pb-3">
-                <h2 className="text-base font-bold text-purple-700">{doctorName}</h2>
-                <p className="text-xs text-gray-500">{specialty}</p>
-              </div>
-
-              {/* Patient info */}
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold">Paciente: {patient.name}</h3>
-                {age && <p className="text-xs text-gray-600">Idade: {age}</p>}
-                {patient.notes && <p className="text-xs text-gray-600">Obs: {patient.notes}</p>}
-                <p className="text-xs text-gray-400">Data do relatório: {format(new Date(), "dd/MM/yyyy")}</p>
-              </div>
-
-              {/* Evaluations table */}
-              {sortedResultsDesc.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">Avaliações Realizadas</h4>
-                  <table className="w-full text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-1 font-semibold text-gray-700">Data</th>
-                        <th className="text-left py-1 font-semibold text-gray-700">Escala</th>
-                        <th className="text-center py-1 font-semibold text-gray-700">Score</th>
-                        <th className="text-left py-1 font-semibold text-gray-700">Classificação</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedResultsDesc.map((r: any) => (
-                        <tr key={r.id} className="border-b border-gray-100">
-                          <td className="py-1 text-gray-600">{fmtDate(r.createdAt)}</td>
-                          <td className="py-1 font-medium">{r.scaleName}</td>
-                          <td className="py-1 text-center">{r.totalScore}</td>
-                          <td className="py-1 text-gray-600">{r.classification}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Evolution summary */}
-              {scalesWithMultiple.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">Evolução</h4>
-                  {scalesWithMultiple.map(scale => {
-                    const items = scaleGroups[scale];
-                    const first = items[0];
-                    const last = items[items.length - 1];
-                    const delta = last.totalScore - first.totalScore;
-                    return (
-                      <p key={scale} className="text-xs text-gray-600">
-                        {scale}: {first.totalScore} → {last.totalScore} ({delta >= 0 ? "+" : ""}{delta})
-                      </p>
-                    );
-                  })}
-                </div>
-              )}
+          {sortedResultsDesc.length === 0 ? (
+            <div
+              className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+              role="alert"
+            >
+              Nenhum documento será gerado sem avaliações salvas. Aplique uma
+              escala, salve no paciente e retorne para exportar.
             </div>
-          </Card>
+          ) : (
+            <Card className="border-card-border overflow-hidden">
+              <div
+                id="report-content"
+                className="bg-white p-6 space-y-4 text-black"
+              >
+                {/* Header */}
+                <div className="border-b-2 border-purple-600 pb-3">
+                  <h2 className="text-base font-bold text-purple-700">
+                    {doctorName}
+                  </h2>
+                  <p className="text-xs text-gray-500">{specialty}</p>
+                </div>
+
+                {/* Patient info */}
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold">
+                    Paciente: {patient.name}
+                  </h3>
+                  {age && <p className="text-xs text-gray-600">Idade: {age}</p>}
+                  {patient.notes && (
+                    <p className="text-xs text-gray-600">
+                      Obs: {patient.notes}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    Data do relatório: {format(new Date(), "dd/MM/yyyy")}
+                  </p>
+                </div>
+
+                {/* Evaluations table */}
+                {sortedResultsDesc.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+                      Avaliações Realizadas
+                    </h4>
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-1 font-semibold text-gray-700">
+                            Data
+                          </th>
+                          <th className="text-left py-1 font-semibold text-gray-700">
+                            Escala
+                          </th>
+                          <th className="text-center py-1 font-semibold text-gray-700">
+                            Score
+                          </th>
+                          <th className="text-left py-1 font-semibold text-gray-700">
+                            Classificação
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortedResultsDesc.map((r: any) => (
+                          <tr key={r.id} className="border-b border-gray-100">
+                            <td className="py-1 text-gray-600">
+                              {fmtDate(r.createdAt)}
+                            </td>
+                            <td className="py-1 font-medium">{r.scaleName}</td>
+                            <td className="py-1 text-center">{r.totalScore}</td>
+                            <td className="py-1 text-gray-600">
+                              {r.classification}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Evolution summary */}
+                {scalesWithMultiple.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+                      Evolução
+                    </h4>
+                    {scalesWithMultiple.map((scale) => {
+                      const items = scaleGroups[scale];
+                      const first = items[0];
+                      const last = items[items.length - 1];
+                      const delta = last.totalScore - first.totalScore;
+                      return (
+                        <p key={scale} className="text-xs text-gray-600">
+                          {scale}: {first.totalScore} → {last.totalScore} (
+                          {delta >= 0 ? "+" : ""}
+                          {delta})
+                        </p>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Export buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button onClick={exportAsImage} variant="outline" className="gap-2" data-testid="button-export-image">
-              <Download className="w-4 h-4" /> Exportar Imagem
-            </Button>
-            <Button onClick={copyReportText} variant="outline" className="gap-2" data-testid="button-copy-text">
-              <Copy className="w-4 h-4" /> Copiar Texto
-            </Button>
-          </div>
+          {sortedResultsDesc.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={exportAsImage}
+                variant="outline"
+                className="gap-2"
+                data-testid="button-export-image"
+              >
+                <Download className="w-4 h-4" /> Exportar Imagem
+              </Button>
+              <Button
+                onClick={copyReportText}
+                variant="outline"
+                className="gap-2"
+                data-testid="button-copy-text"
+              >
+                <Copy className="w-4 h-4" /> Copiar Texto
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
