@@ -1,6 +1,6 @@
 import { getAccessLevel } from "@/security/accessPolicy";
 
-const UNLOCK_HASH = "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207";
+const UNLOCK_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
 const SESSION_KEY = "neuroped:local-unlocked";
 const REMEMBER_KEY = "neuroped:local-unlocked-persistent";
 const LOCK_EVENT = "neuroped:local-lock-changed";
