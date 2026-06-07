@@ -1,60 +1,60 @@
 # Deploy recente — janela de 60 minutos
 
-Registro operacional da consolidação solicitada em 2026-06-06 para os commits recentes na branch `work`.
+Registro operacional da consolidacao solicitada em 2026-06-06 para os commits recentes na branch `work`.
 
-## Escopo incluído
+## Escopo incluido
 
-Commits encontrados nos 60 minutos anteriores à validação local:
+Commits encontrados nos 60 minutos anteriores a validacao local:
 
 - `e1cfef2` — feat: improve NeuroPed clinical UX audit flow (#362)
 - `781bf2d` — chore(scorecard): reconhece gate real de API e specs E2E (#361)
 
 ## Resultado do merge
 
-A branch `work` já continha os commits recentes listados acima no `HEAD` local. Não havia remotes configurados no repositório local, portanto não foi possível buscar ou integrar alterações externas adicionais.
+A branch `work` ja continha os commits recentes listados acima no `HEAD` local. Nao havia remotes configurados no repositorio local, portanto nao foi possivel buscar ou integrar alteracoes externas adicionais.
 
 ## Resultado do deploy local
 
-O deploy foi validado por build local de produção com `npm run build`. O pacote gerado em `dist/` confirma que os commits recentes estão prontos para publicação pelo provedor configurado.
+O deploy foi validado por build local de producao com `npm run build`. O pacote gerado em `dist/` confirma que os commits recentes estao prontos para publicacao pelo provedor configurado.
 
-## Observações
+## Observacoes
 
-- Sem remotes Git configurados, o envio para GitHub/Render/Railway/Fly/VPS não pode ser executado a partir deste ambiente.
-- Para deploy automático externo, configure um remote Git e o provedor para publicar o último commit da branch `work`.
+- Sem remotes Git configurados, o envio para GitHub/Render/Railway/Fly/VPS nao pode ser executado a partir deste ambiente.
+- Para deploy automatico externo, configure um remote Git e o provedor para publicar o ultimo commit da branch `work`.
 
 ---
 
 # Deploy dos PRs prontos — 2026-06-07
 
-Registro operacional da solicitação “Deploy os PRs que estão prontos” em 2026-06-07, executada na branch local `work`.
+Registro operacional da solicitacao "Deploy os PRs que estao prontos" em 2026-06-07, executada na branch local `work`.
 
 ## PRs/commits considerados prontos
 
-A fila local continha o histórico já consolidado até `HEAD`:
+A fila local continha o historico ja consolidado ate `HEAD`:
 
-- `0d011c4` — `fix: corrige filtro guiado e endurece aplicação de escalas`
+- `0d011c4` — `fix: corrige filtro guiado e endurece aplicacao de escalas`
 - `7c1a20c` — `chore: registra deploy dos commits recentes (#363)`
 - `e1cfef2` — `feat: improve NeuroPed clinical UX audit flow (#362)`
 - `781bf2d` — `chore(scorecard): reconhece gate real de API e specs E2E (#361)`
 
-## Validação executada
+## Validacao executada
 
-- `npm run build` concluído com sucesso, gerando `dist/public/` e `dist/index.cjs`.
-- `npm run check && npm run test:clinical` concluído com sucesso; o teste clínico reportou 347 casos, 141.314 assertivas e 583 escalas.
+- `npm run build` concluido com sucesso, gerando `dist/public/` e `dist/index.cjs`.
+- `npm run check && npm run test:clinical` concluido com sucesso; o teste clinico reportou 347 casos, 141.314 assertivas e 583 escalas.
 
-## Tentativa de publicação externa
+## Tentativa de publicacao externa
 
-A publicação direta no Cloudflare Pages foi tentada com:
+A publicacao direta no Cloudflare Pages foi tentada com:
 
 ```bash
 npx wrangler@3 pages deploy dist/public --project-name neuroped --branch work
 ```
 
-O ambiente bloqueou a obtenção do pacote `wrangler` no npm (`403 Forbidden`) e o repositório local continua sem remote Git configurado. Portanto, nesta execução, o deploy externo não pôde ser acionado a partir do container; o artefato de produção ficou validado localmente e pronto para publicação pelo provedor configurado.
+O ambiente bloqueou a obtencao do pacote `wrangler` no npm (`403 Forbidden`) e o repositorio local continua sem remote Git configurado. Portanto, nesta execucao, o deploy externo nao pode ser acionado a partir do container; o artefato de producao ficou validado localmente e pronto para publicacao pelo provedor configurado.
 
-## Próximo acionamento possível
+## Proximo acionamento possivel
 
-Assim que o ambiente tiver um remote Git/autenticação ou `wrangler` disponível com credenciais Cloudflare, publicar o artefato validado com uma das rotas abaixo:
+Assim que o ambiente tiver um remote Git/autenticacao ou `wrangler` disponivel com credenciais Cloudflare, publicar o artefato validado com uma das rotas abaixo:
 
 - push para `main`, acionando os workflows `.github/workflows/deploy.yml` e `.github/workflows/deploy-cloudflare.yml`; ou
 - `wrangler pages deploy dist/public --project-name neuroped --branch main`.
@@ -63,14 +63,15 @@ Assim que o ambiente tiver um remote Git/autenticação ou `wrangler` disponíve
 
 # Deploy acionado — 2026-06-07
 
-Deploy acionado diretamente na branch `main` para publicar todos os commits já integrados no ramo principal.
+Deploy acionado diretamente na branch `main` para publicar todos os commits ja integrados no ramo principal.
 
-## Método
+## Metodo
 
-- Commit operacional mínimo em documentação para gerar evento `push` em `main`.
-- O workflow `.github/workflows/deploy-cloudflare.yml` está configurado para executar em `push` na branch `main` e também por `workflow_dispatch`.
-- O build de produção usa `npx vite build` e publica `dist/public` no projeto Cloudflare Pages `neuroped`.
+- Commit operacional minimo em documentacao para gerar evento `push` em `main`.
+- O workflow `.github/workflows/deploy-cloudflare.yml` esta configurado para executar em `push` na branch `main` e tambem por `workflow_dispatch`.
+- O build de producao usa `npx vite build` e publica `dist/public` no projeto Cloudflare Pages `neuroped`.
 
-## Resolução de conflitos
+## Resolucao de conflitos
 
-Os PRs #365, #366, #367, #368, #369 e #370 foram identificados como abertos. A resolução passou a preservar as melhorias clínicas, visuais e operacionais sem apagar o conteúdo já integrado em `main`.
+- Conflito documental do PR #366 consolidado no `main`.
+- PRs #365, #367, #368, #369 e #370 permanecem em avaliacao para integracao funcional e visual controlada.
