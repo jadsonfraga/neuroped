@@ -1,210 +1,52 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import {
-  Baby, Puzzle, Zap, Flame, AlertTriangle, CloudRain, Activity,
-  Accessibility, MessageCircle, Moon, UtensilsCrossed, HeartPulse,
-  Brain, GraduationCap, Users, ShieldAlert, Sparkles, Pill,
-  Search, X, Filter, ArrowRight, Clock, UserCheck, CheckCircle2,
-  Droplet, Move, Lightbulb, Stethoscope, BookOpen, School,
-  ClipboardCheck, BrainCog, Ear, SmilePlus, Star, ChevronRight, Target, RotateCcw
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { allScales, filterScales, type Prioridade, type Respondente, type ScaleEntry } from "@/data/scaleFilter";
-import { pharmCategories, type PharmCategory, type Drug } from "@/data/farmacologia";
 import { motion } from "framer-motion";
-import { softTap, softTick, softHover } from "@/lib/softSounds";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  CheckCircle2,
+  ClipboardCheck,
+  Filter,
+  GraduationCap,
+  Medal,
+  RotateCcw,
+  School,
+  Search,
+  Sparkles,
+  Star,
+  Stethoscope,
+  X,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { allScales, faixasEtarias, filterScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
-import { Mascote } from "@/components/Mascote";
-import { celebrate } from "@/lib/confetti";
-import { useFavorites } from "@/hooks/useFavorites";
+import { softHover, softTap, softTick } from "@/lib/softSounds";
 
-const iconMap: Record<string, any> = {
-  baby: Baby, puzzle: Puzzle, zap: Zap, flame: Flame,
-  "alert-triangle": AlertTriangle, "cloud-rain": CloudRain,
-  activity: Activity, accessibility: Accessibility,
-  "message-circle": MessageCircle, moon: Moon,
-  "utensils-crossed": UtensilsCrossed, "heart-pulse": HeartPulse,
-  brain: Brain, "graduation-cap": GraduationCap, users: Users,
-  "shield-alert": ShieldAlert, sparkles: Sparkles, pill: Pill,
-  droplet: Droplet, move: Move,
-};
+type RankingSlot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar";
 
-// ══════════════════════════════════════════════════════════
-// FERRAMENTAS EXTRAS (páginas que não estão no scaleFilter)
-// ══════════════════════════════════════════════════════════
-interface ExtraTool {
-  id: string;
-  name: string;
-  description: string;
+interface RankedRecommendation {
+  slot: RankingSlot;
+  scale?: ScaleEntry;
   route: string;
-  icon: any;
-  gradient: string;
-  tags: string[];
+  title: string;
+  subtitle: string;
+  reason: string;
+  honestState: string;
+  icon: LucideIcon;
+  tone: string;
 }
 
-const extraTools: ExtraTool[] = [
-  { id: "testes-reconhecimento", name: "Reconhecimento (2-7a)", description: "Cores, letras, animais e partes do corpo por faixa etária", route: "/testes-reconhecimento", icon: Baby, gradient: "from-pink-500 to-rose-500", tags: ["pedagogico", "teste", "reconhecimento", "cores", "letras", "animais", "corpo", "crianca", "menor", "2 anos", "3 anos", "4 anos", "5 anos", "atraso"] },
-  { id: "testes-academicos", name: "Acadêmico (5-14a)", description: "Leitura, escrita e aritmética por faixa etária", route: "/testes-academicos", icon: GraduationCap, gradient: "from-blue-500 to-indigo-600", tags: ["pedagogico", "teste", "leitura", "escrita", "aritmetica", "matematica", "escola", "estudo", "academico", "tde", "aprendizagem", "nota", "reprovado"] },
-  { id: "inventarios-auto", name: "Autoavaliação (8-17a)", description: "8 inventários: humor, ansiedade, atenção, sono, alimentação, social, escola, comportamento", route: "/inventarios-auto", icon: ClipboardCheck, gradient: "from-violet-500 to-purple-600", tags: ["autoaplicavel", "inventario", "humor", "ansiedade", "atencao", "sono", "alimentacao", "social", "escola", "comportamento", "crianca", "adolescente"] },
-  { id: "inventarios-escola", name: "Inventários p/ Escola", description: "4 questionários para professores: comportamento, TEA, alfabetização, funções executivas", route: "/inventarios-escola", icon: School, gradient: "from-emerald-500 to-teal-600", tags: ["escola", "professor", "pedagogico", "comportamento", "tea", "autismo", "alfabetizacao", "funcoes executivas", "inventario", "questionario"] },
-  { id: "tde2", name: "TDE-2 Adaptado Dr. Jadson", description: "Teste de desempenho escolar: leitura, escrita, aritmética (4-14 anos)", route: "/tde2", icon: BookOpen, gradient: "from-cyan-500 to-blue-600", tags: ["tde", "pedagogico", "leitura", "escrita", "aritmetica", "desempenho", "escola", "estudo", "teste", "academico", "nota"] },
-  { id: "ahsd-tea", name: "Triagem AH/SD × TEA", description: "50 itens — diagnóstico diferencial superdotação vs autismo (resposta da professora)", route: "/ahsd-tea", icon: Sparkles, gradient: "from-amber-500 to-yellow-500", tags: ["ahsd", "superdotado", "superdotacao", "tea", "autismo", "professor", "escola", "inteligente", "genio", "altas habilidades"] },
-  { id: "satisfacao-medicacao", name: "Satisfação com Medicação", description: "Eficácia, efeitos adversos, dose, forma de administrar — resposta dos pais", route: "/satisfacao-medicacao", icon: SmilePlus, gradient: "from-emerald-500 to-green-600", tags: ["medicacao", "medicamento", "efeito", "adverso", "dose", "eficacia", "remedio", "risperidona", "metilfenidato", "ritalina", "satisfacao"] },
-  { id: "prontuario", name: "Prontuário Clínico", description: "Anamnese, marcos, medicações, terapias, exames — gera relatório completo", route: "/prontuario", icon: Stethoscope, gradient: "from-violet-500 to-purple-600", tags: ["prontuario", "anamnese", "consulta", "relatorio", "marcos", "desenvolvimento", "medicacao", "terapia", "exame"] },
-  { id: "neuropsicologia", name: "Avaliação Neuropsicológica", description: "Guia didático: o que é, quando pedir, testes, como interpretar", route: "/neuropsicologia", icon: BrainCog, gradient: "from-indigo-500 to-violet-600", tags: ["neuropsicologico", "neuropsicologia", "cognicao", "memoria", "atencao", "funcao executiva", "qi", "wisc", "avaliacao"] },
-  { id: "pac", name: "Processamento Auditivo", description: "PAC: habilidades auditivas, avaliação, diferencial com TDAH", route: "/pac", icon: Ear, gradient: "from-fuchsia-500 to-purple-600", tags: ["pac", "auditivo", "processamento", "ouvir", "troca letra", "nao entende", "fala errado", "audiologia"] },
-  { id: "avaliacao-multiprofissional", name: "Avaliação Multiprofissional", description: "Guia de instrumentos por faixa etária: linguagem, cognição, inteligência, TEA, aprendizagem", route: "/avaliacao-multiprofissional", icon: ClipboardCheck, gradient: "from-emerald-500 to-teal-600", tags: ["avaliacao", "multiprofissional", "instrumento", "protocolo", "wisc", "son-r", "denver", "portage", "tde", "fono", "psicologo", "neuropsicologico", "to"] },
-  { id: "plano-terapeutico", name: "Plano Terapêutico (PTI)", description: "Gerador de plano terapêutico individualizado multiprofissional", route: "/plano-terapeutico", icon: Target, gradient: "from-rose-500 to-pink-600", tags: ["plano", "terapeutico", "intervencao", "objetivo", "estrategia", "multiprofissional", "pti", "tratamento", "metas"] },
-  { id: "plano-intervencao", name: "Intervenção por Habilidades", description: "Como intervir em 7 áreas: social, cognitiva, linguagem, matemática, atenção, sensorial, inclusão", route: "/plano-intervencao", icon: Lightbulb, gradient: "from-amber-500 to-orange-500", tags: ["intervencao", "habilidade", "social", "cognitivo", "linguagem", "matematica", "atencao", "sensorial", "inclusao", "estrategia", "atividade"] },
-];
-
-// ══════════════════════════════════════════════════════════
-// QUEIXAS — termos coloquiais
-// ══════════════════════════════════════════════════════════
-
-const queixas = [
-  { id: "agitado", label: "Agitado", emoji: "⚡", q: ["tdah"] },
-  { id: "desatento", label: "Desatento", emoji: "💭", q: ["tdah", "cognicao"] },
-  { id: "agressivo", label: "Agressivo", emoji: "👊", q: ["comportamento", "tea"] },
-  { id: "irritado", label: "Irritado / Birra", emoji: "😤", q: ["comportamento", "depressao"] },
-  { id: "autismo", label: "Autismo / TEA", emoji: "🧩", q: ["tea"] },
-  { id: "nao-fala", label: "Não fala", emoji: "🤐", q: ["linguagem", "atraso", "tea"] },
-  { id: "atrasado", label: "Atrasado", emoji: "🐢", q: ["atraso", "cognicao"] },
-  { id: "estudo", label: "Estudo / Escola", emoji: "📉", q: ["aprendizagem", "tdah", "cognicao"] },
-  { id: "ansioso", label: "Ansioso", emoji: "😰", q: ["ansiedade"] },
-  { id: "triste", label: "Triste", emoji: "😢", q: ["depressao"] },
-  { id: "convulsao", label: "Convulsão", emoji: "⚡", q: ["epilepsia"] },
-  { id: "nao-dorme", label: "Não dorme", emoji: "🌙", q: ["sono"] },
-  { id: "nao-anda", label: "Não anda", emoji: "🚶", q: ["motor", "pc", "atraso"] },
-  { id: "nao-come", label: "Não come", emoji: "🍽️", q: ["alimentacao"] },
-  { id: "xixi", label: "Xixi na cama", emoji: "💧", q: ["enurese"] },
-  { id: "tiques", label: "Tiques", emoji: "😜", q: ["tiques"] },
-  { id: "teimoso", label: "Teimoso", emoji: "🚫", q: ["comportamento"] },
-  { id: "preguicoso", label: "Preguiçoso", emoji: "😴", q: ["depressao", "tdah"] },
-  { id: "pedagogico", label: "Pedagógico", emoji: "📝", q: ["aprendizagem", "cognicao"] },
-  { id: "dor-cabeca", label: "Dor de cabeça", emoji: "🤕", q: ["dor"] },
-  { id: "se-machuca", label: "Autolesão", emoji: "🆘", q: ["suicidio"] },
-  { id: "isolado", label: "Isolado", emoji: "🙈", q: ["tea", "ansiedade"] },
-  { id: "superdotado", label: "Superdotado", emoji: "⭐", q: ["cognicao"] },
-  { id: "trauma", label: "Trauma", emoji: "🛡️", q: ["trauma"] },
-  { id: "substancias", label: "Drogas / Álcool", emoji: "🍷", q: ["substancias"] },
-  { id: "sensorial", label: "Sensorial", emoji: "🖐️", q: ["sensorial"] },
-  { id: "coordenacao", label: "Desajeitado", emoji: "🤸", q: ["motor", "pc"] },
-  { id: "independencia", label: "Dependente", emoji: "🏠", q: ["autonomia", "funcionalidade"] },
-  { id: "social-isolado", label: "Sem amigos", emoji: "😶", q: ["social", "tea"] },
-  { id: "evolucao", label: "Reavaliação", emoji: "📈", q: ["evolucao"] },
-  { id: "pos-tratamento", label: "Pós-tratamento", emoji: "🔄", q: ["evolucao", "efeitos"] },
-];
-
-const idades = [
-  { id: "0-2", label: "0–2 anos", min: 0, max: 24 },
-  { id: "2-5", label: "2–5 anos", min: 24, max: 60 },
-  { id: "6-12", label: "6–12 anos", min: 72, max: 144 },
-  { id: "13-17", label: "13–17 anos", min: 156, max: 216 },
-  { id: "18-25", label: "Adulto jovem", min: 216, max: 300 },
-];
-
-const objetivos = [
-  { id: "triagem", label: "Triagem", hint: "primeira avaliação" },
-  { id: "acompanhamento", label: "Acompanhamento", hint: "comparar evolução" },
-  { id: "relatorio", label: "Relatório", hint: "documentar achados" },
-  { id: "escola", label: "Escola", hint: "interface pedagógica" },
-  { id: "familia", label: "Família", hint: "orientação simples" },
-  { id: "consulta", label: "Consulta médica", hint: "decisão clínica" },
-  { id: "pesquisa", label: "Pesquisa/estudo", hint: "uso educacional" },
-];
-
-const contextos = [
-  { id: "consultorio", label: "Consultório" },
-  { id: "escola", label: "Escola" },
-  { id: "familia", label: "Família" },
-  { id: "teleatendimento", label: "Teleatendimento" },
-];
-
-function norm(t: string) {
-  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+function normalize(text: string) {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
-// ── Sinônimos coloquiais → clínicos ──
-const syn: Record<string, string[]> = {
-  "agitado": ["tdah", "hiperatividade", "hiperativo", "eletrico", "nao para", "inquieto", "pilha"],
-  "desatento": ["tdah", "desatencao", "distraido", "avoado", "nao presta atencao", "nao se concentra"],
-  "agressivo": ["comportamento", "agressividade", "bate", "morde", "briga", "tod"],
-  "irritado": ["comportamento", "irritabilidade", "birra", "nervoso", "birrento", "explosivo", "tod"],
-  "autismo": ["tea", "autista", "espectro", "asd", "asperger", "f84", "nao olha", "nao brinca", "mundo dele"],
-  "nao fala": ["linguagem", "atraso", "fala", "mudo", "fala errado", "fala pouco", "demora pra falar"],
-  "atrasado": ["atraso", "lento", "desenvolvimento", "cognicao", "motor", "linguagem"],
-  "estudo": ["aprendizagem", "escola", "pedagogico", "leitura", "escrita", "nota", "reprovado", "prova", "tde", "academico"],
-  "pedagogico": ["aprendizagem", "escola", "tde", "alfabetizacao", "inventario", "teste", "professor", "leitura", "escrita"],
-  "ansioso": ["ansiedade", "medo", "fobia", "panico", "nervoso", "medroso", "timido"],
-  "triste": ["depressao", "humor", "choro", "apatico", "desanimado", "sem vontade"],
-  "convulsao": ["epilepsia", "crise", "ausencia", "desliga", "tonico", "clonico", "g40"],
-  "nao dorme": ["sono", "insonia", "dormir", "pesadelo", "acorda"],
-  "nao anda": ["motor", "pc", "paralisia", "hipotonia", "espasticidade", "desajeitado", "cai muito"],
-  "nao come": ["alimentacao", "seletividade", "recusa alimentar", "engasga"],
-  "xixi": ["enurese", "cama", "fralda", "noturno"],
-  "tiques": ["tiques", "tourette", "piscar", "grunhir", "careta"],
-  "teimoso": ["comportamento", "tod", "oposicao", "desafiador", "desobediente", "rebelde"],
-  "preguicoso": ["depressao", "tdah", "desatencao", "apatico", "motivacao", "desanimado"],
-  "isolado": ["tea", "ansiedade", "social", "nao brinca"],
-  "superdotado": ["cognicao", "ahsd", "altas habilidades", "genio", "inteligente"],
-  "trauma": ["trauma", "tept", "abuso", "violencia"],
-  "se machuca": ["suicidio", "autolesao", "autoagressao", "se corta", "cutting"],
-  "dor cabeca": ["dor", "cefaleia", "enxaqueca", "migranea"],
-  // Termos diretos
-  "tdah": ["deficit", "atencao", "hiperatividade", "adhd", "f90", "agitado", "desatento"],
-  "tea": ["autismo", "autista", "espectro", "f84", "asperger"],
-  "epilepsia": ["convulsao", "crise", "g40", "anticonvulsivante"],
-  "depressao": ["depressivo", "triste", "humor", "f32", "f33"],
-  "ansiedade": ["ansioso", "medo", "fobia", "panico", "f41", "f40"],
-  "aprendizagem": ["escola", "estudo", "leitura", "escrita", "dislexia", "discalculia", "f81", "pedagogico", "tde", "academico"],
-  "comportamento": ["agressividade", "birra", "tod", "f91", "irritado", "agressivo", "teimoso"],
-  "linguagem": ["fala", "comunicacao", "fonologia", "gagueira", "f80", "troca letra"],
-  "sono": ["insonia", "dormir", "pesadelo", "melatonina", "g47"],
-  "motor": ["paralisia", "coordenacao", "hipotonia", "gmfcs", "g80"],
-  "cognicao": ["intelectual", "qi", "neuropsicologico", "memoria", "funcao executiva"],
-  // Medicações comuns
-  "risperidona": ["antipsicotico", "irritabilidade", "tea"],
-  "metilfenidato": ["ritalina", "concerta", "tdah"],
-  "carbamazepina": ["tegretol", "epilepsia"],
-  "valproato": ["depakene", "epilepsia", "valproico"],
-  "fluoxetina": ["prozac", "depressao", "ansiedade"],
-};
-
-const q2cat: Record<string, string[]> = {
-  "tea": ["tea"], "tdah": ["tdah"], "comportamento": ["tod", "comportamento"],
-  "ansiedade": ["ansiedade-separacao", "ansiedade-social", "tag", "ansiedade"],
-  "depressao": ["depressao"], "sono": ["sono"], "epilepsia": ["epilepsia", "crise-febril"],
-  "pc": ["paralisia-cerebral"], "tiques": ["tiques"], "enurese": ["enurese"],
-  "dor": ["cefaleia", "dor-neuropatica"], "suicidio": ["depressao"],
-  "alimentacao": ["transtorno-alimentar"], "cognicao": ["di"],
-  "atraso": ["di"], "motor": ["movimento", "paralisia-cerebral"],
-  "linguagem": ["tea"], "trauma": ["tept"],
-};
-
-
-const objetivoPriorityMap: Record<string, Prioridade[]> = {
-  triagem: ["triagem"],
-  acompanhamento: ["monitorizacao", "triagem"],
-  relatorio: ["diagnostica", "triagem", "monitorizacao"],
-  escola: ["triagem", "monitorizacao", "diagnostica"],
-  familia: ["triagem", "monitorizacao"],
-  consulta: ["diagnostica", "triagem"],
-  pesquisa: ["diagnostica", "monitorizacao", "triagem"],
-};
-
-const contextoRespondenteMap: Record<string, Respondente[]> = {
-  consultorio: ["clinico", "pais", "autoaplicavel"],
-  escola: ["professor"],
-  familia: ["pais", "crianca", "autoaplicavel"],
-  teleatendimento: ["autoaplicavel", "pais", "crianca"],
-};
-
-function uniqueScales(scales: ScaleEntry[]): ScaleEntry[] {
+function uniqueById(scales: ScaleEntry[]) {
   const seen = new Set<string>();
   return scales.filter((scale) => {
     if (seen.has(scale.id)) return false;
@@ -213,864 +55,312 @@ function uniqueScales(scales: ScaleEntry[]): ScaleEntry[] {
   });
 }
 
-function prioritizeGuidedScales(
-  scales: ScaleEntry[],
-  objetivo: string | null,
-  contexto: string | null,
-): ScaleEntry[] {
-  const priorities = objetivo ? objetivoPriorityMap[objetivo] ?? [] : [];
-  const respondents = contexto ? contextoRespondenteMap[contexto] ?? [] : [];
+function scoreScale(scale: ScaleEntry, query: string, selectedQueixas: string[]) {
+  const haystack = normalize(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")}`);
+  const tokens = normalize(query).split(/\s+/).filter(Boolean);
+  let score = 0;
 
-  return uniqueScales(scales).sort((a, b) => {
-    const aPrio = priorities.length > 0 ? priorities.indexOf(a.prioridade) : -1;
-    const bPrio = priorities.length > 0 ? priorities.indexOf(b.prioridade) : -1;
-    if (aPrio !== bPrio) {
-      if (aPrio === -1) return 1;
-      if (bPrio === -1) return -1;
-      return aPrio - bPrio;
-    }
-
-    const aResp = respondents.some((respondent) => a.respondente.includes(respondent));
-    const bResp = respondents.some((respondent) => b.respondente.includes(respondent));
-    if (aResp !== bResp) return aResp ? -1 : 1;
-
-    if (a.appRoute && !b.appRoute) return -1;
-    if (!a.appRoute && b.appRoute) return 1;
-    return a.name.localeCompare(b.name);
-  });
-}
-
-function guidedScalePool(
-  selectedQueixas: string[],
-  ageRange: { min: number; max: number } | null,
-  objetivo: string | null,
-  contexto: string | null,
-): ScaleEntry[] {
-  const base = selectedQueixas.length > 0 || ageRange !== null
-    ? filterScales(selectedQueixas, ageRange)
-    : [...allScales];
-  const priorities = objetivo ? objetivoPriorityMap[objetivo] ?? [] : [];
-  const respondents = contexto ? contextoRespondenteMap[contexto] ?? [] : [];
-
-  let narrowed = base;
-  if (priorities.length > 0) {
-    const byPriority = narrowed.filter((scale) => priorities.includes(scale.prioridade));
-    if (byPriority.length > 0) narrowed = byPriority;
+  for (const token of tokens) {
+    if (haystack.includes(token)) score += normalize(scale.name).includes(token) ? 6 : 2;
   }
-
-  if (respondents.length > 0) {
-    const byRespondent = narrowed.filter((scale) =>
-      respondents.some((respondent) => scale.respondente.includes(respondent)),
-    );
-    if (byRespondent.length > 0) narrowed = byRespondent;
+  for (const queixa of selectedQueixas) {
+    if (scale.queixas.includes(queixa)) score += 5;
   }
-
-  return prioritizeGuidedScales(narrowed, objetivo, contexto);
+  if (scale.appRoute) score += 3;
+  if (scale.prioridade === "triagem") score += 2;
+  if (scale.respondente.includes("professor")) score += 1;
+  return score;
 }
 
-const prioConfig = {
-  triagem: { label: "Triagem", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  diagnostica: { label: "Diagnóstica", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
-  monitorizacao: { label: "Acompanhamento", color: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" },
-};
+function bestScalePool(query: string, selectedQueixas: string[], selectedAge: string | null) {
+  const age = faixasEtarias.find((item) => item.id === selectedAge);
+  const ageRange = age ? { min: age.min, max: age.max } : null;
+  const base = selectedQueixas.length || ageRange ? filterScales(selectedQueixas, ageRange) : allScales;
+  const scored = base
+    .map((scale) => ({ scale, score: scoreScale(scale, query, selectedQueixas) }))
+    .filter((item) => item.score > 0 || selectedQueixas.length > 0 || Boolean(ageRange))
+    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
+    .map((item) => item.scale);
 
-function ageStr(m: number) {
-  if (m < 12) return `${m}m`;
-  const y = Math.floor(m / 12);
-  const r = m % 12;
-  return r === 0 ? `${y}a` : `${y}a${r}m`;
+  const fallback = allScales
+    .map((scale) => ({ scale, score: scoreScale(scale, query, selectedQueixas) }))
+    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
+    .map((item) => item.scale);
+
+  return uniqueById([...scored, ...fallback, ...allScales]);
 }
 
-// ── Expandir tokens com sinônimos ──
-function expandTokens(tokens: string[]): string[][] {
-  return tokens.map(tk => {
-    const set = new Set([tk]);
-    for (const [key, vals] of Object.entries(syn)) {
-      const nk = norm(key);
-      if (nk.includes(tk) || tk.includes(nk) || vals.some(v => norm(v).includes(tk) || tk.includes(norm(v)))) {
-        set.add(nk);
-        vals.forEach(v => set.add(norm(v)));
-      }
-    }
-    return [...set];
-  });
-}
-
-// ── Busca inteligente ──
-function smartSearch(query: string) {
-  const raw = norm(query);
-  if (!raw || raw.length < 2) return { inScales: [] as ScaleEntry[], inPharm: [] as { cat: PharmCategory; drug: Drug }[], inTools: [] as ExtraTool[] };
-  const tokens = raw.split(/\s+/).filter(t => t.length >= 1);
-  if (tokens.length === 0) return { inScales: [], inPharm: [], inTools: [] };
-
-  const expanded = expandTokens(tokens);
-
-  // Escalas
-  const scaleResults = allScales.map(s => {
-    const hay = norm(`${s.name} ${s.fullName} ${s.description} ${s.queixas.join(" ")}`);
-    let score = 0;
-    for (const group of expanded) {
-      if (group.some(t => hay.includes(t))) {
-        score += group.some(t => norm(s.name).includes(t)) ? 5 : group.some(t => norm(s.fullName).includes(t)) ? 3 : 1;
-      }
-    }
-    if (score > 0 && s.appRoute) score += 2;
-    return { s, score };
-  }).filter(r => r.score > 0).sort((a, b) => b.score - a.score);
-
-  // Medicações
-  const pharmResults: { cat: PharmCategory; drug: Drug; score: number }[] = [];
-  for (const cat of pharmCategories) {
-    for (const drug of cat.drugs) {
-      const hay = norm(`${drug.name} ${drug.dose} ${drug.comment} ${cat.title} ${(drug.alerts || []).join(" ")}`);
-      let score = 0;
-      for (const group of expanded) {
-        if (group.some(t => hay.includes(t))) {
-          score += group.some(t => norm(drug.name).includes(t)) ? 5 : 1;
-        }
-      }
-      if (score > 0) pharmResults.push({ cat, drug, score });
-    }
-  }
-  pharmResults.sort((a, b) => b.score - a.score);
-
-  // Ferramentas extras
-  const toolResults = extraTools.filter(tool => {
-    const hay = norm(`${tool.name} ${tool.description} ${tool.tags.join(" ")}`);
-    return expanded.some(group => group.some(t => hay.includes(t)));
-  });
-
+function makeRecommendation(
+  slot: RankingSlot,
+  scale: ScaleEntry | undefined,
+  fallback: RankedRecommendation,
+  reason: string,
+): RankedRecommendation {
+  if (!scale) return fallback;
   return {
-    inScales: scaleResults.map(r => r.s),
-    inPharm: pharmResults.map(r => ({ cat: r.cat, drug: r.drug })),
-    inTools: toolResults,
+    ...fallback,
+    scale,
+    route: scale.appRoute || "/filtro",
+    title: scale.name,
+    subtitle: scale.fullName,
+    reason,
+    honestState: scale.appRoute
+      ? "Teste implementado no app ou rota direta disponível."
+      : "Melhor aproximação clínica no catálogo; aplicação direta ainda não está implementada.",
   };
 }
 
-// ══════════════════════════════════════════════════════════
-// COMPONENTE
-// ══════════════════════════════════════════════════════════
+function buildRanking(query: string, selectedQueixas: string[], selectedAge: string | null): RankedRecommendation[] {
+  const pool = bestScalePool(query, selectedQueixas, selectedAge);
+  const firstDirect = pool.find((scale) => Boolean(scale.appRoute));
+  const firstSchool = pool.find((scale) => scale.respondente.includes("professor"));
+  const schoolRoute = firstSchool?.appRoute || "/inventarios-escola";
 
-export default function FiltroPage() {
-  const [selQueixas, setSelQueixas] = useState<string[]>([]);
-  const [selIdade, setSelIdade] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [objetivo, setObjetivo] = useState<string | null>(null);
-  const [contexto, setContexto] = useState<string | null>(null);
-  const [tab, setTab] = useState<"tudo" | "escalas" | "meds" | "tools">("tudo");
+  const base = [
+    makeRecommendation("Ouro", pool[0], {
+      slot: "Ouro",
+      route: "/filtro",
+      title: "Sem escala perfeita",
+      subtitle: "Refine idade, queixa ou termo pesquisado",
+      reason: "O sistema não encontrou correspondência forte; exibe a melhor aproximação disponível.",
+      honestState: "Parcial: depende de mais dados clínicos.",
+      icon: Award,
+      tone: "from-amber-500 via-yellow-600 to-red-800",
+    }, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade."),
+    makeRecommendation("Prata", pool[1] || pool[0], {
+      slot: "Prata",
+      route: "/filtro",
+      title: "Alternativa clínica",
+      subtitle: "Instrumento complementar",
+      reason: "Alternativa para ampliar leitura clínica quando a primeira opção não for suficiente.",
+      honestState: "Parcial: usar como complemento.",
+      icon: Medal,
+      tone: "from-slate-400 via-slate-500 to-slate-700",
+    }, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível."),
+    makeRecommendation("Bronze", pool[2] || pool[1] || pool[0], {
+      slot: "Bronze",
+      route: "/filtro",
+      title: "Terceira opção",
+      subtitle: "Uso de apoio",
+      reason: "Opção de apoio quando há limitação de tempo, idade ou respondente.",
+      honestState: "Parcial: menor prioridade.",
+      icon: Star,
+      tone: "from-orange-500 via-amber-700 to-stone-800",
+    }, "Terceira opção para apoio, triagem secundária ou contexto menos ideal."),
+    makeRecommendation("Teste Direto", firstDirect || pool[0], {
+      slot: "Teste Direto",
+      route: "/filtro",
+      title: "Nenhum teste direto localizado",
+      subtitle: "Usar catálogo e julgamento clínico",
+      reason: "Não há rota direta implementada para este perfil; a recomendação continua disponível como referência.",
+      honestState: "Não testado no app como aplicação direta.",
+      icon: ClipboardCheck,
+      tone: "from-blue-600 via-indigo-700 to-slate-950",
+    }, "Prioriza instrumento que já possui rota de aplicação dentro do app."),
+    {
+      slot: "Questionário Escolar",
+      scale: firstSchool,
+      route: schoolRoute,
+      title: firstSchool?.name || "Inventários para Escola",
+      subtitle: firstSchool?.fullName || "Questionários para professores e contexto pedagógico",
+      reason: firstSchool
+        ? "Inclui professor como respondente ou interface útil com escola."
+        : "Não há escala escolar perfeita para o filtro; encaminha para inventários escolares disponíveis.",
+      honestState: firstSchool?.appRoute
+        ? "Rota direta disponível."
+        : "Aproximação escolar honesta por módulo de inventários.",
+      icon: School,
+      tone: "from-emerald-600 via-teal-700 to-slate-950",
+    },
+  ];
 
-  const idade = idades.find(i => i.id === selIdade);
-  const ageRange = idade ? { min: idade.min, max: idade.max } : null;
-
-  const techQ = useMemo(() => {
-    const ids = new Set<string>();
-    selQueixas.forEach(qid => {
-      const q = queixas.find(x => x.id === qid);
-      if (q) q.q.forEach(id => ids.add(id));
-    });
-    return [...ids];
-  }, [selQueixas]);
-
-  const results = useMemo(() => {
-    const hasText = search.trim().length >= 2;
-    const hasQ = techQ.length > 0;
-    const hasAge = ageRange !== null;
-    const hasObjective = objetivo !== null;
-    const hasContext = contexto !== null;
-
-    if (!hasText && !hasQ && !hasAge && !hasObjective && !hasContext) return { scales: [] as ScaleEntry[], pharm: [] as { cat: PharmCategory; drug: Drug }[], tools: [] as ExtraTool[] };
-
-    let resultScales: ScaleEntry[] = [];
-    let resultPharm: { cat: PharmCategory; drug: Drug }[] = [];
-    let resultTools: ExtraTool[] = [];
-
-    if (hasText) {
-      const sr = smartSearch(search);
-      resultScales = sr.inScales;
-      resultPharm = sr.inPharm;
-      resultTools = sr.inTools;
-
-      // Se tem filtros de queixa/idade, boost quem bate com ambos
-      if (hasQ || hasAge) {
-        const guidedPool = guidedScalePool(techQ, ageRange, objetivo, contexto);
-        const baseIds = new Set(guidedPool.map(s => s.id));
-        const boosted = resultScales.map(s => ({ s, inFilter: baseIds.has(s.id) }));
-        // Adicionar escalas do filtro que não apareceram no texto
-        const textIds = new Set(resultScales.map(s => s.id));
-        const extraFromFilter = guidedPool.filter(s => !textIds.has(s.id));
-        resultScales = [
-          ...boosted.filter(b => b.inFilter).map(b => b.s),
-          ...boosted.filter(b => !b.inFilter).map(b => b.s),
-          ...extraFromFilter,
-        ];
-      }
-    } else {
-      resultScales = guidedScalePool(techQ, ageRange, objetivo, contexto);
-      // Medicações por queixa
-      if (hasQ) {
-        const catIds = new Set<string>();
-        techQ.forEach(q => (q2cat[q] || []).forEach(id => catIds.add(id)));
-        for (const cat of pharmCategories) {
-          if ([...catIds].some(id => norm(cat.id).includes(norm(id)) || norm(cat.title).includes(norm(id)))) {
-            cat.drugs.forEach(drug => resultPharm.push({ cat, drug }));
-          }
-        }
-      }
-      // Ferramentas extras por queixa
-      const qTexts = selQueixas.flatMap(qid => {
-        const q = queixas.find(x => x.id === qid);
-        return q ? [q.id, q.label, ...q.q] : [];
-      });
-      resultTools = extraTools.filter(tool =>
-        tool.tags.some(tag => qTexts.some(qt => norm(tag).includes(norm(qt)) || norm(qt).includes(norm(tag))))
-      );
-    }
-
-    resultScales = prioritizeGuidedScales(resultScales, objetivo, contexto);
-
-    return { scales: resultScales, pharm: resultPharm, tools: resultTools };
-  }, [techQ, ageRange, search, objetivo, contexto]);
-
-  const toggleQ = (id: string) => setSelQueixas(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-  const hasFilters = selQueixas.length > 0 || selIdade !== null || objetivo !== null || contexto !== null || search.trim().length >= 2;
-  const total = results.scales.length + results.pharm.length + results.tools.length;
-
-  // Confetti quando o filtro passa a apresentar resultados (transição 0 → >0)
-  const prevTotal = useRef(0);
-  useEffect(() => {
-    if (hasFilters && total > 0 && prevTotal.current === 0) {
-      celebrate();
-    }
-    prevTotal.current = hasFilters ? total : 0;
-  }, [total, hasFilters]);
-
-  // Escala ideal (destaque dourado)
-  const idealResult = useMemo(() => getIdealScale(techQ, ageRange), [techQ, ageRange]);
-  const idealId = idealResult?.id || null;
-  const idealReason = idealResult?.reason || "";
-
-  return (
-    <div className="space-y-4 page-enter">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="flex items-center gap-3"
-      >
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-md">
-          <Filter className="w-5 h-5 text-white" strokeWidth={1.75} />
-        </div>
-        <div>
-          <h1
-            className="text-xl text-foreground leading-tight"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-          >
-            Filtro Inteligente
-          </h1>
-          <p className="text-xs text-muted-foreground italic">Fluxo guiado: idade → queixa → objetivo → contexto → instrumentos</p>
-        </div>
-      </motion.div>
-
-      <div className="rounded-2xl border bg-card/80 p-3 space-y-2" aria-label="Etapas do filtro clínico guiado">
-        <div className="grid grid-cols-5 gap-1 text-center text-[10px] font-semibold">
-          {["1 Idade", "2 Queixa", "3 Objetivo", "4 Contexto", "5 Sugestões"].map((step, index) => (
-            <div key={step} className={`rounded-lg px-1 py-1.5 ${index === 4 && total > 0 ? "bg-primary text-primary-foreground" : index === 0 && selIdade ? "bg-primary/10 text-primary" : index === 1 && selQueixas.length ? "bg-primary/10 text-primary" : index === 2 && objetivo ? "bg-primary/10 text-primary" : index === 3 && contexto ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-              {step}
-            </div>
-          ))}
-        </div>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Não é necessário conhecer siglas: descreva a queixa ou escolha botões clínicos para receber opções priorizadas com idade, tempo, indicação, limitações e ação direta.
-        </p>
-      </div>
-
-      {/* Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="agitado, autismo, risperidona, SNAP, pedagógico, escola..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-10 pr-10 h-12 rounded-xl text-sm"
-          data-testid="input-search"
-        />
-        {search && (
-          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* Idade */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Idade</p>
-        <div className="flex gap-1.5">
-          {idades.map(f => (
-            <button
-              key={f.id}
-              onMouseEnter={() => softHover()}
-              onClick={() => {
-                softTick();
-                haptic.select();
-                setSelIdade(selIdade === f.id ? null : f.id);
-              }}
-              className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all ${
-                selIdade === f.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Queixas */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Queixa</p>
-          {selQueixas.length > 0 && (
-            <button onClick={() => setSelQueixas([])} className="text-[11px] text-primary hover:underline">
-              Limpar ({selQueixas.length})
-            </button>
-          )}
-        </div>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-          {queixas.map(q => {
-            const sel = selQueixas.includes(q.id);
-            return (
-              <button
-                key={q.id}
-                onMouseEnter={() => softHover()}
-                onClick={() => {
-                  softTick();
-                  haptic.select();
-                  toggleQ(q.id);
-                }}
-                className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-xl text-[10px] font-medium border transition-all ${
-                  sel ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"
-                }`}
-              >
-                <span className="text-base leading-none">{q.emoji}</span>
-                <span className="truncate w-full text-center">{q.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Objetivo clínico */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Objetivo clínico</p>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          {objetivos.map(o => (
-            <button
-              key={o.id}
-              onMouseEnter={() => softHover()}
-              onClick={() => {
-                softTick();
-                haptic.select();
-                setObjetivo(objetivo === o.id ? null : o.id);
-              }}
-              className={`rounded-xl border px-2 py-2 text-left transition-all ${objetivo === o.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"}`}
-            >
-              <span className="block text-xs font-bold">{o.label}</span>
-              <span className={`block text-[10px] ${objetivo === o.id ? "text-white/80" : "text-muted-foreground"}`}>{o.hint}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Contexto */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Contexto de aplicação</p>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          {contextos.map(c => (
-            <button
-              key={c.id}
-              onMouseEnter={() => softHover()}
-              onClick={() => {
-                softTick();
-                haptic.select();
-                setContexto(contexto === c.id ? null : c.id);
-              }}
-              className={`rounded-xl border px-2 py-2 text-xs font-bold transition-all ${contexto === c.id ? "bg-primary text-white border-primary shadow-md" : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/30"}`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Resumo */}
-      {hasFilters && (
-        <div className="flex flex-col gap-2 bg-primary/5 rounded-xl px-3 py-2 border border-primary/10 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs">
-              <strong className="text-primary text-sm">{total}</strong> resultado{total !== 1 ? "s" : ""}
-            </p>
-            <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
-              {idade && <span className="rounded-full bg-background px-2 py-0.5 border">Idade: {idade.label}</span>}
-              {objetivo && <span className="rounded-full bg-background px-2 py-0.5 border">Objetivo: {objetivos.find(o => o.id === objetivo)?.label}</span>}
-              {contexto && <span className="rounded-full bg-background px-2 py-0.5 border">Contexto: {contextos.find(c => c.id === contexto)?.label}</span>}
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              softTap();
-              haptic.tap();
-              setSelQueixas([]);
-              setSelIdade(null);
-              setSearch("");
-              setObjetivo(null);
-              setContexto(null);
-              setTab("tudo");
-            }}
-            className="text-xs h-8 gap-1 self-start sm:self-auto"
-          >
-            <RotateCcw className="w-3 h-3" /> Limpar filtros
-          </Button>
-        </div>
-      )}
-
-      {/* Resultados */}
-      {!hasFilters ? (
-        <div className="rounded-2xl border-2 border-dashed border-primary/15 p-6 text-center space-y-3">
-          <Lightbulb className="w-7 h-7 text-primary mx-auto opacity-50" />
-          <p className="text-sm text-muted-foreground">Selecione <strong>idade</strong>, <strong>queixa</strong>, <strong>objetivo</strong> e <strong>contexto</strong> — ou busque em linguagem natural.</p>
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {["agitado", "desatento", "autismo", "estudo", "pedagógico", "risperidona", "escola"].map(s => (
-              <button key={s} onClick={() => setSearch(s)} className="px-2.5 py-1 rounded-lg text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados do filtro inteligente">
-          {total > 0 && (
-            <Mascote
-              contexto="resultado"
-              size="sm"
-              fala={`Encontrei ${total} recurso${total !== 1 ? "s" : ""} para esse perfil. Confira abaixo.`}
-            />
-          )}
-          {/* Tabs */}
-          <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
-            {[
-              { key: "tudo" as const, label: `Tudo (${total})` },
-              { key: "escalas" as const, label: `Escalas (${results.scales.length})` },
-              ...(results.pharm.length > 0 ? [{ key: "meds" as const, label: `Medicações (${results.pharm.length})` }] : []),
-              ...(results.tools.length > 0 ? [{ key: "tools" as const, label: `Ferramentas (${results.tools.length})` }] : []),
-            ].map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`flex-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${tab === t.key ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Fluxograma de recomendação */}
-          {idealId && tab === "tudo" && (() => {
-            const idealScaleEntry = results.scales.find(s => s.id === idealId);
-            if (!idealScaleEntry) return null;
-            const mainQueixa = selQueixas[0];
-            const qLabel = queixas.find(q => q.id === mainQueixa)?.label || mainQueixa;
-            return (
-              <div className="rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 border-2 border-amber-300/50 p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-500" />
-                  <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Recomendação para: {qLabel}</p>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="px-2 py-1 rounded-lg bg-primary/10 text-primary font-medium">{qLabel}</span>
-                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                  <span className="px-2 py-1 rounded-lg bg-amber-200/60 dark:bg-amber-800/40 text-amber-800 dark:text-amber-200 font-bold">{idealScaleEntry.name}</span>
-                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                  <span className="px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">Resultado</span>
-                </div>
-                {idealReason && (
-                  <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 italic">{idealReason}</p>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Ferramentas extras (sempre no topo quando tab = tudo) */}
-          {(tab === "tudo" || tab === "tools") && results.tools.length > 0 && (
-            <div className="space-y-2">
-              {tab === "tudo" && <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Ferramentas</p>}
-              <div className="stagger-in space-y-2">
-                {results.tools.map(tool => <ToolCard key={tool.id} tool={tool} />)}
-              </div>
-            </div>
-          )}
-
-          {/* Escalas */}
-          {(tab === "tudo" || tab === "escalas") && results.scales.length > 0 && (
-            <div className="space-y-2">
-              {tab === "tudo" && <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Escalas</p>}
-              <div className="space-y-1.5">
-                {results.scales.slice(0, tab === "tudo" ? 10 : undefined).map(s => (
-                  <ScaleCard key={s.id} scale={s} isIdeal={s.id === idealId} />
-                ))}
-                {tab === "tudo" && results.scales.length > 10 && (
-                  <button onClick={() => setTab("escalas")} className="w-full text-xs text-primary hover:underline py-2">
-                    Ver todas {results.scales.length} escalas →
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Medicações */}
-          {(tab === "tudo" || tab === "meds") && results.pharm.length > 0 && (
-            <div className="space-y-2">
-              {tab === "tudo" && <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Medicações</p>}
-              <div className="space-y-1.5">
-                {results.pharm.slice(0, tab === "tudo" ? 8 : undefined).map((r, i) => (
-                  <MedCard key={`${r.cat.id}-${r.drug.name}-${i}`} cat={r.cat} drug={r.drug} />
-                ))}
-                {tab === "tudo" && results.pharm.length > 8 && (
-                  <button onClick={() => setTab("meds")} className="w-full text-xs text-primary hover:underline py-2">
-                    Ver todas {results.pharm.length} medicações →
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {total === 0 && (
-            <div className="text-center py-8">
-              <Search className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum resultado. Tente outro termo.</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return base;
 }
 
-// ═══════════════════════════════════════════════════════════
-// CARDS
-// ═══════════════════════════════════════════════════════════
-
-function ToolCard({ tool }: { tool: ExtraTool }) {
-  const Icon = tool.icon;
+function RankingCard({ item }: { item: RankedRecommendation }) {
+  const Icon = item.icon;
   return (
-    <Link href={tool.route}>
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent cursor-pointer hover:shadow-md group transition-all card-hover">
-        <CardContent className="p-3 flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-            <Icon className="w-5 h-5 text-white" />
+    <Link href={item.route}>
+      <Card className="group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg">
+        <CardContent className="flex h-full flex-col gap-3 p-4">
+          <div className="flex items-start gap-3">
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.tone} text-white shadow-md`}>
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.14em]">{item.slot}</Badge>
+              <h3 className="truncate text-sm font-black text-foreground group-hover:text-primary">{item.title}</h3>
+              <p className="line-clamp-2 text-xs text-muted-foreground">{item.subtitle}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-foreground">{tool.name}</h3>
-            <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
+          <div className="space-y-2 rounded-2xl bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
+            <p><strong className="text-foreground">Motivo:</strong> {item.reason}</p>
+            <p><strong className="text-foreground">Estado:</strong> {item.honestState}</p>
           </div>
-          <ArrowRight className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+          <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary">
+            <span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span>
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </div>
         </CardContent>
       </Card>
     </Link>
   );
 }
 
-// ═══════════════════════════════════════════════════════════
-// FLUXOGRAMA CLÍNICO DE RECOMENDAÇÃO DOURADA
-// Sistema de scoring multi-critério — Dr. Jadson J26
-// ═══════════════════════════════════════════════════════════
+export default function FiltroPage() {
+  const [search, setSearch] = useState("");
+  const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
+  const [selectedAge, setSelectedAge] = useState<string | null>(null);
 
-interface GoldRule {
-  queixas: string[];      // queixas que ativam esta regra (OR)
-  ageMin?: number;        // meses — se omitido, qualquer idade
-  ageMax?: number;        // meses — se omitido, qualquer idade
-  scaleId: string;        // ID da escala recomendada
-  score: number;          // prioridade (maior = mais específico)
-  reason: string;         // justificativa clínica (exibida ao usuário)
-}
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
+  const ranking = useMemo(() => buildRanking(search, selectedQueixas, selectedAge), [search, selectedQueixas, selectedAge]);
 
-// Regras organizadas da MAIS ESPECÍFICA para a MAIS GENÉRICA
-// O sistema seleciona a regra com maior score que corresponde ao perfil
-const goldRules: GoldRule[] = [
-  // ── TEA por faixa etária (altamente específicas) ──
-  { queixas: ["tea"], ageMin: 16, ageMax: 30, scaleId: "mchat", score: 100, reason: "M-CHAT-R/F é padrão-ouro de triagem de TEA entre 16-30 meses" },
-  { queixas: ["tea"], ageMin: 0, ageMax: 15, scaleId: "j26-005", score: 95, reason: "Antes de 16 meses: triagem de regulação sensorial e marcos precoces" },
-  { queixas: ["tea"], ageMin: 31, ageMax: 72, scaleId: "cars", score: 98, reason: "CARS-2 é referência para classificar gravidade de TEA em pré-escolares" },
-  { queixas: ["tea"], ageMin: 73, ageMax: 144, scaleId: "srs2", score: 95, reason: "SRS-2 quantifica responsividade social — ideal em escolares" },
-  { queixas: ["tea"], ageMin: 145, ageMax: 216, scaleId: "assq", score: 90, reason: "ASSQ detecta TEA de alto funcionamento em adolescentes" },
+  const toggleQueixa = (id: string) => {
+    softTick();
+    haptic.select();
+    setSelectedQueixas((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  };
 
-  // ── TDAH por faixa etária ──
-  { queixas: ["tdah"], ageMin: 72, ageMax: 144, scaleId: "snap", score: 100, reason: "SNAP-IV é o instrumento de triagem mais validado para TDAH escolar" },
-  { queixas: ["tdah"], ageMin: 72, ageMax: 216, scaleId: "vanderbilt", score: 90, reason: "Vanderbilt NICHQ — triagem com domínios de desatenção e hiperatividade" },
-  { queixas: ["tdah"], ageMin: 36, ageMax: 71, scaleId: "sdq", score: 85, reason: "SDQ cobre hiperatividade em pré-escolares quando SNAP-IV não se aplica" },
-  { queixas: ["tdah"], ageMin: 145, ageMax: 216, scaleId: "conners", score: 95, reason: "Conners-3 é mais completo para adolescentes com suspeita de TDAH" },
+  const clearAll = () => {
+    softTap();
+    haptic.tap();
+    setSearch("");
+    setSelectedAge(null);
+    setSelectedQueixas([]);
+  };
 
-  // ── Ansiedade por faixa etária ──
-  { queixas: ["ansiedade"], ageMin: 96, ageMax: 216, scaleId: "scared", score: 100, reason: "SCARED é padrão-ouro para triagem de ansiedade a partir de 8 anos" },
-  { queixas: ["ansiedade"], ageMin: 48, ageMax: 95, scaleId: "scas", score: 90, reason: "SCAS cobre ansiedade em crianças mais novas (4-7 anos)" },
-  { queixas: ["ansiedade"], ageMin: 36, ageMax: 47, scaleId: "eai", score: 85, reason: "EAI-J26 para triagem de ansiedade em crianças pequenas" },
-
-  // ── Depressão por faixa etária ──
-  { queixas: ["depressao"], ageMin: 84, ageMax: 144, scaleId: "cdi2", score: 100, reason: "CDI-2 é o inventário padrão de depressão para crianças de 7-12 anos" },
-  { queixas: ["depressao"], ageMin: 132, ageMax: 216, scaleId: "phqa", score: 98, reason: "PHQ-A é validado para depressão em adolescentes a partir de 11 anos" },
-  { queixas: ["depressao"], ageMin: 48, ageMax: 83, scaleId: "edi", score: 90, reason: "EDI-J26 adaptado para triagem de depressão em pré-escolares e escolares iniciais" },
-
-  // ── Atraso do desenvolvimento ──
-  { queixas: ["atraso"], ageMin: 0, ageMax: 72, scaleId: "denver", score: 100, reason: "Denver II é o triagem clássico de marcos do desenvolvimento até 6 anos" },
-  { queixas: ["atraso"], ageMin: 1, ageMax: 60, scaleId: "asq3", score: 95, reason: "ASQ-3 triagem com questionário para pais — 5 domínios" },
-  { queixas: ["atraso"], ageMin: 0, ageMax: 12, scaleId: "j26-001", score: 92, reason: "Protocolo de triagem motora precoce para o primeiro ano" },
-
-  // ── Comportamento ──
-  { queixas: ["comportamento"], ageMin: 48, ageMax: 204, scaleId: "sdq", score: 100, reason: "SDQ é a triagem comportamental mais rápida e validada" },
-  { queixas: ["comportamento"], ageMin: 48, ageMax: 216, scaleId: "cbcl", score: 90, reason: "CBCL é o padrão-ouro para avaliação abrangente de problemas comportamentais" },
-
-  // ── Epilepsia ──
-  { queixas: ["epilepsia"], scaleId: "epilepsia-diario", score: 100, reason: "Diário de crises é essencial para quantificar e caracterizar episódios" },
-  { queixas: ["epilepsia"], scaleId: "chalfont", score: 85, reason: "Escala de gravidade de crises de Chalfont para monitorização" },
-
-  // ── Sono ──
-  { queixas: ["sono"], ageMin: 48, ageMax: 120, scaleId: "cshq", score: 100, reason: "CSHQ é o questionário mais completo para hábitos de sono em crianças" },
-  { queixas: ["sono"], ageMin: 0, ageMax: 47, scaleId: "bisq", score: 90, reason: "BISQ para triagem rápida de sono em lactentes" },
-  { queixas: ["sono"], ageMin: 121, ageMax: 216, scaleId: "j26-130", score: 88, reason: "Protocolo de higiene do sono para adolescentes" },
-
-  // ── Linguagem ──
-  { queixas: ["linguagem"], ageMin: 0, ageMax: 36, scaleId: "cdi-macarthur", score: 100, reason: "CDI MacArthur é padrão para vocabulário e gestos em lactentes" },
-  { queixas: ["linguagem"], ageMin: 37, ageMax: 72, scaleId: "pls5", score: 95, reason: "PLS-5 avalia linguagem receptiva e expressiva em pré-escolares" },
-  { queixas: ["linguagem"], ageMin: 73, ageMax: 216, scaleId: "celf5", score: 90, reason: "CELF-5 para avaliação abrangente de linguagem em escolares" },
-
-  // ── Motor ──
-  { queixas: ["motor", "pc"], ageMin: 0, ageMax: 216, scaleId: "gmfcs", score: 100, reason: "GMFCS classifica função motora grossa na paralisia cerebral" },
-  { queixas: ["motor"], ageMin: 36, ageMax: 144, scaleId: "mabc2", score: 88, reason: "MABC-2 avalia coordenação motora em crianças escolares" },
-  { queixas: ["motor"], ageMin: 0, ageMax: 18, scaleId: "aims", score: 92, reason: "AIMS avalia motricidade em lactentes de risco" },
-
-  // ── Aprendizagem ──
-  { queixas: ["aprendizagem"], ageMin: 72, ageMax: 168, scaleId: "tde", score: 100, reason: "TDE-II é o teste padronizado brasileiro de desempenho escolar" },
-  { queixas: ["aprendizagem"], ageMin: 72, ageMax: 144, scaleId: "prolec", score: 88, reason: "PROLEC avalia processos de leitura — triagem de dislexia" },
-
-  // ── Cognição / QI ──
-  { queixas: ["cognicao"], ageMin: 72, ageMax: 192, scaleId: "wisc5", score: 100, reason: "WISC-V é padrão-ouro para avaliação de inteligência em escolares" },
-  { queixas: ["cognicao"], ageMin: 30, ageMax: 84, scaleId: "wppsi", score: 95, reason: "WPPSI-IV para avaliação de inteligência em pré-escolares" },
-  { queixas: ["cognicao"], ageMin: 48, ageMax: 144, scaleId: "raven", score: 85, reason: "Raven Colorido como triagem rápida de raciocínio não-verbal" },
-
-  // ── Tiques ──
-  { queixas: ["tiques"], scaleId: "ygtss", score: 100, reason: "YGTSS é o padrão-ouro para gravidade de tiques motores e vocais" },
-
-  // ── Suicídio / Autolesão ──
-  { queixas: ["suicidio"], scaleId: "cssrs", score: 100, reason: "C-SSRS é o padrão mundial para avaliação de risco suicida" },
-  { queixas: ["suicidio"], scaleId: "ecar-si", score: 90, reason: "ECAR-SI J26 para avaliação expandida de autoagressão em crianças" },
-
-  // ── TOC ──
-  { queixas: ["toc"], scaleId: "cybocs", score: 100, reason: "CY-BOCS é padrão-ouro para gravidade de TOC em crianças" },
-  { queixas: ["toc"], scaleId: "oci-cv", score: 85, reason: "OCI-CV triagem rápida de sintomas obsessivo-compulsivos" },
-
-  // ── Trauma ──
-  { queixas: ["trauma"], scaleId: "ucla-ptsd", score: 100, reason: "UCLA PTSD-RI é referência para TEPT em crianças e adolescentes" },
-  { queixas: ["trauma"], scaleId: "cats", score: 85, reason: "CATS triagem de exposição e resposta traumática" },
-
-  // ── Alimentação ──
-  { queixas: ["alimentacao"], ageMin: 0, ageMax: 60, scaleId: "soma", score: 100, reason: "SOMA avalia função motora oral durante alimentação" },
-  { queixas: ["alimentacao"], ageMin: 24, ageMax: 216, scaleId: "etare", score: 90, reason: "ETARE-J26 para triagem de transtorno alimentar restritivo evitativo" },
-
-  // ── Funcionalidade ──
-  { queixas: ["funcionalidade"], scaleId: "vineland", score: 100, reason: "Vineland-3 é referência para comportamento adaptativo" },
-  { queixas: ["funcionalidade"], scaleId: "eaf", score: 85, reason: "EAF-J26 para adaptação funcional em contextos diários" },
-
-  // ── Dor ──
-  { queixas: ["dor"], scaleId: "cefaleia-calendario", score: 100, reason: "Calendário de cefaleia para registro e acompanhamento" },
-  { queixas: ["dor"], ageMin: 0, ageMax: 36, scaleId: "flacc", score: 95, reason: "FLACC para avaliação de dor em crianças pré-verbais" },
-  { queixas: ["dor"], ageMin: 84, ageMax: 216, scaleId: "eva-ped", score: 88, reason: "EVA pediátrica para autoavaliação de dor" },
-
-  // ── Substâncias ──
-  { queixas: ["substancias"], scaleId: "crafft", score: 100, reason: "CRAFFT é o triagem padrão de uso de substâncias em adolescentes" },
-
-  // ── Neonatal ──
-  { queixas: ["neonatal"], scaleId: "apgar", score: 100, reason: "APGAR Score para avaliação imediata do recém-nascido" },
-  { queixas: ["neonatal"], scaleId: "gma", score: 92, reason: "GMA para avaliação de movimentos generalizados — preditor precoce de PC" },
-
-  // ── Psicose ──
-  { queixas: ["psicose"], scaleId: "prime-screen", score: 100, reason: "PRIME Screen para triagem de risco ultra-alto de psicose" },
-
-  // ── Enurese ──
-  { queixas: ["enurese"], scaleId: "dvss", score: 100, reason: "DVSS para avaliação de disfunção miccional" },
-  { queixas: ["enurese"], scaleId: "bladder-diary", score: 90, reason: "Diário vesical pediátrico para registro de padrão urinário" },
-
-  // ── Efeitos colaterais ──
-  { queixas: ["efeitos"], scaleId: "uku", score: 100, reason: "UKU para monitorização abrangente de efeitos colaterais" },
-
-  // ── Sensorial ──
-  { queixas: ["sensorial"], scaleId: "ips", score: 100, reason: "IPS-J26 para perfil de processamento sensorial" },
-  { queixas: ["sensorial"], scaleId: "j26-118", score: 85, reason: "Protocolo de processamento tátil Dr. Jadson" },
-
-  // ── Social ──
-  { queixas: ["social"], scaleId: "ecsm", score: 100, reason: "ECSM-J26 para cognição social e mentalização" },
-  { queixas: ["social"], scaleId: "easi", score: 88, reason: "EASI-J26 para ansiedade social infantil" },
-
-  // ── Autonomia ──
-  { queixas: ["autonomia"], scaleId: "vineland", score: 100, reason: "Vineland-3 para habilidades adaptativas e autonomia" },
-  { queixas: ["autonomia"], scaleId: "eaf", score: 90, reason: "EAF-J26 para adaptação funcional em AVDs" },
-
-  // ── Evolução / Reavaliação ──
-  { queixas: ["evolucao", "tea"], scaleId: "j26-211", score: 100, reason: "Registro evolutivo de comunicação social em TEA — compara com consulta anterior" },
-  { queixas: ["evolucao", "tdah"], scaleId: "j26-219", score: 100, reason: "SNAP-IV de monitorização — compara pré e pós-medicação" },
-  { queixas: ["evolucao", "epilepsia"], scaleId: "j26-227", score: 100, reason: "Diário de frequência de crises — acompanhamento mensal" },
-  { queixas: ["evolucao", "linguagem"], scaleId: "j26-233", score: 100, reason: "Evolução de vocabulário expressivo — acompanhamento trimestral" },
-  { queixas: ["evolucao", "motor"], scaleId: "j26-238", score: 100, reason: "Evolução de classificação motora GMFCS" },
-  { queixas: ["evolucao", "pc"], scaleId: "j26-238", score: 100, reason: "Evolução motora em paralisia cerebral" },
-  { queixas: ["evolucao", "aprendizagem"], scaleId: "j26-244", score: 100, reason: "Evolução de leitura e fluência — acompanhamento escolar" },
-  { queixas: ["evolucao", "ansiedade"], scaleId: "j26-249", score: 100, reason: "Monitorização de ansiedade pós-tratamento" },
-  { queixas: ["evolucao", "depressao"], scaleId: "j26-250", score: 100, reason: "Evolução de sintomas depressivos — comparação sequencial" },
-  { queixas: ["evolucao", "efeitos"], scaleId: "j26-255", score: 100, reason: "Monitorização metabólica de antipsicóticos" },
-  { queixas: ["evolucao"], scaleId: "j26-259", score: 80, reason: "CGI — Impressão Clínica Global de gravidade e melhora" },
-];
-
-function getIdealScale(queixas: string[], ageRange: { min: number; max: number } | null): { id: string; reason: string } | null {
-  if (queixas.length === 0) return null;
-
-  // Calcula a idade média da faixa selecionada (em meses)
-  const ageMid = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
-
-  let bestRule: GoldRule | null = null;
-  let bestScore = -1;
-
-  for (const rule of goldRules) {
-    // Verifica se a queixa corresponde
-    const matchesQueixa = rule.queixas.some(rq => queixas.includes(rq));
-    if (!matchesQueixa) continue;
-
-    // Verifica idade (se a regra e o filtro especificam)
-    if (ageMid !== null && rule.ageMin !== undefined && rule.ageMax !== undefined) {
-      if (ageMid < rule.ageMin || ageMid > rule.ageMax) continue;
-    }
-
-    // Calcula score composto
-    let compositeScore = rule.score;
-
-    // Bonus: queixa é a primeira selecionada (principal)
-    if (rule.queixas.includes(queixas[0])) compositeScore += 10;
-
-    // Bonus: regra tem faixa etária E idade foi selecionada (mais específica)
-    if (ageMid !== null && rule.ageMin !== undefined) compositeScore += 5;
-
-    // Bonus: match de múltiplas queixas
-    const matchCount = rule.queixas.filter(rq => queixas.includes(rq)).length;
-    if (matchCount > 1) compositeScore += 15;
-
-    if (compositeScore > bestScore) {
-      bestScore = compositeScore;
-      bestRule = rule;
-    }
-  }
-
-  if (!bestRule) return null;
-  return { id: bestRule.scaleId, reason: bestRule.reason };
-}
-
-function ScaleCard({ scale, isIdeal }: { scale: ScaleEntry; isIdeal?: boolean }) {
-  const prio = prioConfig[scale.prioridade];
-  const hasRoute = !!scale.appRoute;
-  const { isFavorite, toggle } = useFavorites();
-  const fav = isFavorite(scale.id);
-
-  const favButton = (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        softTick();
-        haptic.tap();
-        toggle(scale.id);
-      }}
-      data-testid={`fav-${scale.id}`}
-      aria-pressed={fav}
-      aria-label={fav ? `Remover ${scale.name} dos favoritos` : `Adicionar ${scale.name} aos favoritos`}
-      title={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-      className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
-    >
-      <Star className={`w-3.5 h-3.5 transition-colors ${fav ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
-    </button>
-  );
-
-  const inner = (
-    <Card className={`relative transition-all ${isIdeal ? "golden-glow border-2 border-amber-400 bg-gradient-to-r from-amber-50/80 to-yellow-50/50 dark:from-amber-950/30 dark:to-yellow-950/20 shadow-lg shadow-amber-200/30 dark:shadow-amber-900/20 ring-2 ring-amber-400/50 mt-3" : `border-card-border ${hasRoute ? "hover:shadow-md hover:border-primary/20" : "opacity-80"}`} ${hasRoute ? "cursor-pointer group card-hover" : ""}`}>
-      <CardContent className="p-3 flex items-start gap-2.5">
-        {isIdeal && (
-          <div className="absolute -top-2.5 right-3 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 text-[10px] font-bold rounded-full shadow-sm flex items-center gap-1">
-            <Star className="w-3 h-3 fill-amber-400" /> SELO DE OURO
+  return (
+    <div className="page-enter space-y-5 pb-8">
+      <motion.header
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
+            <Filter className="h-5 w-5" />
           </div>
-        )}
-        <div className={`w-1.5 rounded-full self-stretch flex-shrink-0 ${isIdeal ? "bg-amber-400" : scale.prioridade === "triagem" ? "bg-blue-400" : scale.prioridade === "diagnostica" ? "bg-purple-400" : "bg-green-400"}`} />
-        <div className="flex-1 min-w-0 space-y-0.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className="text-sm font-bold text-foreground">{scale.name}</h3>
-            <Badge className={`text-[10px] h-4 px-1.5 ${prio.color}`}>{prio.label}</Badge>
-            {hasRoute && (
-              <Badge className="text-[10px] h-4 px-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 gap-0.5">
-                <CheckCircle2 className="w-2.5 h-2.5" /> Aplicar
-              </Badge>
-            )}
+          <div className="min-w-0 flex-1">
+            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">ranking obrigatório</Badge>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Toda busca retorna cinco saídas: Ouro, Prata, Bronze, Teste Direto e Questionário Escolar. Quando não houver encaixe perfeito, o app sinaliza aproximação.
+            </p>
           </div>
-          <p className="text-[11px] text-muted-foreground leading-relaxed">{scale.fullName}</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{scale.description}</p>
-          <div className="flex gap-1 flex-wrap">
-            <Badge variant="outline" className="text-[9px] h-4 px-1 gap-0.5">
-              <Clock className="w-2 h-2" /> {scale.tempo}
-            </Badge>
-            <Badge variant="outline" className="text-[9px] h-4 px-1">
-              {ageStr(scale.ageMin)}–{ageStr(scale.ageMax)}
-            </Badge>
-            <Badge variant="outline" className="text-[9px] h-4 px-1">
-              {scale.respondente.join("/")}
-            </Badge>
-          </div>
-          <div className="mt-2 grid gap-1 text-[10px] text-muted-foreground sm:grid-cols-2">
-            <span><strong>Quando usar:</strong> {scale.prioridade === "triagem" ? "primeira triagem ou rastreio" : scale.prioridade === "diagnostica" ? "avaliação clínica estruturada" : "monitorar resposta/evolução"}.</span>
-            <span><strong>Evitar:</strong> uso isolado como diagnóstico definitivo.</span>
-          </div>
-          {hasRoute && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <span className="rounded-lg bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground">Aplicar agora</span>
-              <span className="rounded-lg border px-2 py-1 text-[10px] font-medium text-muted-foreground">Ver detalhes</span>
-              <span className="rounded-lg border px-2 py-1 text-[10px] font-medium text-muted-foreground">Salvar favorito</span>
-            </div>
+        </div>
+      </motion.header>
+
+      <section className="space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Ex.: autismo, TDAH, atraso, escola, ansiedade, sono..."
+            className="h-11 rounded-2xl pl-10 pr-10"
+            data-testid="input-search"
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca">
+              <X className="h-4 w-4" />
+            </button>
           )}
         </div>
-        <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
-          {favButton}
-          {hasRoute && <ArrowRight className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
-        </div>
-      </CardContent>
-    </Card>
-  );
 
-  if (hasRoute) return <Link href={scale.appRoute!}>{inner}</Link>;
-  return inner;
-}
-
-function MedCard({ cat, drug }: { cat: PharmCategory; drug: Drug }) {
-  const Icon = iconMap[cat.iconName] || Pill;
-  return (
-    <Card className="border-card-border">
-      <CardContent className="p-3 flex items-start gap-2.5">
-        <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${cat.gradient} flex items-center justify-center flex-shrink-0`}>
-          <Icon className="w-3.5 h-3.5 text-white" />
-        </div>
-        <div className="flex-1 min-w-0 space-y-0.5">
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-bold text-foreground">{drug.name}</h3>
-            <Badge variant="outline" className="text-[9px] h-4 px-1">{cat.title}</Badge>
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {faixasEtarias.map((age) => (
+              <button
+                key={age.id}
+                onMouseEnter={() => softHover()}
+                onClick={() => setSelectedAge((current) => current === age.id ? null : age.id)}
+                className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+              >
+                {age.label}
+              </button>
+            ))}
           </div>
-          <p className="text-[11px] text-primary font-mono">{drug.dose}</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{drug.comment}</p>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa clínica</p>
+            {hasSearch && (
+              <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs">
+                <RotateCcw className="h-3.5 w-3.5" /> limpar
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {queixas.slice(0, 20).map((queixa) => {
+              const selected = selectedQueixas.includes(queixa.id);
+              return (
+                <button
+                  key={queixa.id}
+                  onMouseEnter={() => softHover()}
+                  onClick={() => toggleQueixa(queixa.id)}
+                  className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selected ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
+                >
+                  {queixa.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {hasSearch ? (
+        <section className="space-y-3" aria-label="Ranking obrigatório de recomendações">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p>
+              <h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2>
+            </div>
+            <Badge variant="outline" className="hidden sm:inline-flex">5 blocos</Badge>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {ranking.map((item) => <RankingCard key={item.slot} item={item} />)}
+          </div>
+          <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+              <strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca aproximações quando a rota direta ou o respondente ideal não existem.
+            </CardContent>
+          </Card>
+        </section>
+      ) : (
+        <section className="grid gap-3 md:grid-cols-3">
+          <Card className="border-dashed">
+            <CardContent className="space-y-2 p-4">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h2 className="text-sm font-black text-foreground">Digite ou selecione</h2>
+              <p className="text-xs leading-relaxed text-muted-foreground">Informe queixa, idade ou termo clínico para gerar o ranking obrigatório.</p>
+            </CardContent>
+          </Card>
+          <Card className="border-dashed">
+            <CardContent className="space-y-2 p-4">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              <h2 className="text-sm font-black text-foreground">Escola sempre aparece</h2>
+              <p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar nunca fica ausente; se não houver escala perfeita, usa inventário escolar.</p>
+            </CardContent>
+          </Card>
+          <Card className="border-dashed">
+            <CardContent className="space-y-2 p-4">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <h2 className="text-sm font-black text-foreground">Sem simulação</h2>
+              <p className="text-xs leading-relaxed text-muted-foreground">A recomendação mostra estado real: rota direta, aproximação ou catálogo sem aplicação direta.</p>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <BookOpen className="h-4 w-4 text-primary" />
+          <span>Catálogo carregado: {allScales.length} instrumentos. Lógica clínica separada da camada visual via `scaleFilter`.</span>
+        </div>
+      </section>
+    </div>
   );
 }
