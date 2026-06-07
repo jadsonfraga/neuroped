@@ -19,8 +19,6 @@
 const STORAGE_KEY = "neuroped:haptic";
 
 export function isHapticEnabled(): boolean {
-  if (typeof navigator === "undefined") return false;
-  if (typeof navigator.vibrate !== "function") return false;
   try {
     return localStorage.getItem(STORAGE_KEY) !== "off";
   } catch {
@@ -36,6 +34,8 @@ export function setHapticEnabled(enabled: boolean): void {
 
 function vibrate(pattern: number | number[]): void {
   if (!isHapticEnabled()) return;
+  if (typeof navigator === "undefined") return;
+  if (typeof navigator.vibrate !== "function") return;
   try {
     navigator.vibrate(pattern);
   } catch { /* Vibration API ausente/bloqueada — silencioso */ }
