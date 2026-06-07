@@ -18,6 +18,7 @@ import {
   Filter,
   Gauge,
   GraduationCap,
+  HeartHandshake,
   HeartPulse,
   HelpCircle,
   Home,
@@ -26,6 +27,7 @@ import {
   ListChecks,
   MessageCircle,
   Moon,
+  Newspaper,
   Pill,
   Puzzle,
   Ruler,
@@ -107,7 +109,17 @@ export const navSections: NavSection[] = [
       { href: "/diario-sono", label: "Diário do sono", icon: Moon },
       { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
       { href: "/diario-escola", label: "Diário escolar", icon: School },
-      { href: "/portal-familia", label: "Portal família", icon: MessageCircle },
+    ],
+  },
+  {
+    title: "Pais / Psicoeducação",
+    items: [
+      { href: "/portal-familia", label: "Portal dos pais", icon: HeartHandshake },
+      { href: "/orientacao-parental", label: "Orientação parental", icon: Users },
+      { href: "/portal-familia/novidades", label: "Novidades para famílias", icon: Newspaper },
+      { href: "/portal-familia/acesso", label: "Política de acesso", icon: KeyRound },
+      { href: "/inventarios-escola", label: "Questionário escolar", icon: School },
+      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
     ],
   },
   {
@@ -138,7 +150,6 @@ export const navSections: NavSection[] = [
       { href: "/curvas-crescimento", label: "Curvas de crescimento", icon: LineChart },
       { href: "/espasticidade", label: "Espasticidade", icon: Ruler },
       { href: "/classificacoes", label: "Classificações", icon: Scale },
-      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
     ],
   },
   {
