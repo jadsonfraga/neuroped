@@ -66,7 +66,7 @@ export default function RecepcaoPage() {
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">total</p><p className="text-2xl font-black text-foreground">{items.length}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-black text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-black text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
-        <Card><CardContent className="flex h-full items-center gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Iniciar</Link></Button></CardContent></Card>
+        <Card><CardContent className="flex h-full flex-col gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Pré-consulta</Link></Button><Button asChild variant="outline" className="w-full gap-2"><Link href="/pre-retorno"><ClipboardCheck className="h-4 w-4" />Pré-retorno</Link></Button></CardContent></Card>
       </section>
 
       <PremiumVisualPanel
@@ -86,7 +86,7 @@ export default function RecepcaoPage() {
             </div>
             {items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-                Nenhuma pré-consulta salva neste dispositivo. Clique em “Iniciar”.
+                Nenhuma pré-consulta salva neste dispositivo. Clique em “Pré-consulta”.
               </div>
             ) : (
               <div className="space-y-2">
