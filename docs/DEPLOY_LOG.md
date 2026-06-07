@@ -169,3 +169,20 @@ Post-deploy routes to verify:
 - `https://jadsonfraga.github.io/neuroped/#/qualidade`
 - `https://jadsonfraga.github.io/neuroped/#/`
 - `https://jadsonfraga.github.io/neuroped/#/portal-familia`
+
+## 2026-06-07 — Bug hunt fixes deployment trigger
+
+Requested deployment after focused bug hunt and correction.
+
+Fixed in current `main`:
+
+- `/pant` is no longer public; it is wrapped by `Protected` and requires clinical unlock/authenticated professional access.
+- `/assinatura-digital` is no longer public; it is wrapped by `Protected` and requires clinical unlock/authenticated professional access.
+- `SensitiveRouteGate` now checks `hasClinicalUnlock()` instead of `isAppUnlocked()`, preventing a latent future bug where a route-level clinical gate could be bypassed after the public shell was intentionally opened.
+- `/pre-retorno` tolerates older localStorage records that do not have the newer `sintomasTratamento` field, preventing runtime crashes from `.trim()` on undefined.
+
+Post-deploy routes to verify:
+
+- public: `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
+- protected: `https://jadsonfraga.github.io/neuroped/#/pant`
+- protected: `https://jadsonfraga.github.io/neuroped/#/assinatura-digital`
