@@ -30,3 +30,22 @@ Current deploy trigger records the latest safe `main` state after the NeuroPed 9
 - `/efeitos-colaterais` placeholder created but not yet registered due connector safety blocks.
 
 Next required local step: resolve PR conflicts in Codex/Cursor, then rerun build/check/catalog/clinical tests before merging visual PRs.
+
+## 2026-06-07 — PRs 365–370 resolved by consolidation
+
+Resolved the blocked PR set by safe consolidation instead of blind conflict merges.
+
+Merged into `main`:
+
+- #376: consolidated the functional clinical-flow core from #365 (`GenericScale.tsx`, `SaveToPatient.tsx`).
+- #377: consolidated semantic visual cards in the clinical filter from #368.
+- #378: hardened clinical report generation from #365 (`ClinicalReport.tsx`), removing auto-send and preventing empty PDF/email output.
+
+Closed as superseded:
+
+- #365, #367, #368, #369 and #370.
+
+Deployment trigger commit: force GitHub Actions workflows on `push` to `main` after the consolidation sequence. Expected workflows:
+
+- `.github/workflows/deploy.yml` — GitHub Pages build and deploy.
+- `.github/workflows/deploy-cloudflare.yml` — Cloudflare Pages build and deploy.
