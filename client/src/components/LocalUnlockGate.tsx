@@ -83,7 +83,12 @@ export function LocalUnlockGate({ onUnlocked }: LocalUnlockGateProps) {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="text"
+                enterKeyHint="done"
                 className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 pl-10 pr-12 text-sm text-white outline-none ring-0 transition placeholder:text-slate-500 focus:border-amber-300/50 focus:bg-black/40 focus:ring-2 focus:ring-amber-300/20"
                 placeholder="••••••••••••"
                 disabled={status === "checking" || (!!lockedUntil && Date.now() < lockedUntil)}
@@ -113,7 +118,7 @@ export function LocalUnlockGate({ onUnlocked }: LocalUnlockGateProps) {
           {status === "error" && (
             <div className="flex items-start gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
               <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-              <span>Senha incorreta. Verifique e tente novamente.</span>
+              <span>Senha incorreta. Toque no olho para conferir maiúsculas, números e símbolo antes de tentar novamente.</span>
             </div>
           )}
 
