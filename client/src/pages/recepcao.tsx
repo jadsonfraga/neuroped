@@ -4,6 +4,8 @@ import { ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, Users } from "luc
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
+import { brandAssets } from "@/components/BrandAssets";
 import { buildPreConsultaSummary, loadPreConsultas, savePreConsultas, type PreConsultaRecord, type PreConsultaStatus } from "@/lib/preConsultaCore";
 
 const statusLabels: Record<PreConsultaStatus, string> = {
@@ -66,6 +68,14 @@ export default function RecepcaoPage() {
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-black text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
         <Card><CardContent className="flex h-full items-center gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Iniciar</Link></Button></CardContent></Card>
       </section>
+
+      <PremiumVisualPanel
+        src={brandAssets.illustrations.teamMultiprofessional}
+        badge="Recepção organizada"
+        title="Equipe, família e médico alinhados antes da consulta."
+        subtitle="A arte multiprofissional entra como reforço de processo, com opacidade controlada e sem competir com os dados."
+        className="min-h-44"
+      />
 
       <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Card>
