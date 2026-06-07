@@ -10,6 +10,7 @@ import neuropedLogo from "@assets/neuroped-logo.png";
 import childAssessmentImg from "@assets/images/child-assessment.png";
 import teamImg from "@assets/images/team-multiprofessional.png";
 import { appMetrics } from "@/data/appMetrics";
+import { SafeImage } from "@/components/SafeImage";
 import { softTap, softTick, softSuccess, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import {
@@ -31,9 +32,9 @@ const steps = [
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: duration.normal, ease: easing.smooth }}
-          className="w-full h-32 rounded-2xl overflow-hidden mx-auto mb-2 shadow-md"
+          className="w-full h-32 rounded-2xl overflow-hidden mx-auto mb-2 shadow-md bg-muted/40"
         >
-          <img src={childAssessmentImg} alt="" className="w-full h-full object-cover" />
+          <SafeImage src={childAssessmentImg} alt="" aria-hidden="true" className="w-full h-full object-contain p-2" />
         </motion.div>
 
         <motion.div
@@ -42,7 +43,7 @@ const steps = [
           transition={{ delay: 0.15, duration: duration.normal, ease: easing.spring }}
           className="mx-auto w-20 h-20"
         >
-          <img src={neuropedLogo} alt="NeuroPed" className="w-20 h-20 object-contain drop-shadow-md" />
+          <SafeImage src={neuropedLogo} alt="NeuroPed" fallbackLabel="NeuroPed" className="w-20 h-20 object-contain drop-shadow-md" />
         </motion.div>
 
         <p className="text-sm text-center text-muted-foreground leading-relaxed max-w-sm mx-auto text-cozy">
@@ -129,9 +130,9 @@ const steps = [
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: duration.normal, ease: easing.smooth }}
-          className="w-full h-28 rounded-2xl overflow-hidden mx-auto mb-1 shadow-md"
+          className="w-full h-28 rounded-2xl overflow-hidden mx-auto mb-1 shadow-md bg-muted/40"
         >
-          <img src={teamImg} alt="" className="w-full h-full object-cover" />
+          <SafeImage src={teamImg} alt="" aria-hidden="true" className="w-full h-full object-contain p-2" />
         </motion.div>
         {[
           {
