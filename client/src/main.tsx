@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "./styles/proportion-guards.css";
 
 try {
   const savedTheme = window.localStorage.getItem("neuroped:theme");
