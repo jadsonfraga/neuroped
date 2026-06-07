@@ -137,7 +137,7 @@ function AppRouter() {
         <Switch>
           <Route path="/login" component={LoginPage} />
           <Route path="/sessao-expirada" component={SessionExpiredPage} />
-          <Route path="/consentimento-lgpd"><Protected><LgpdConsentPage /></Protected></Route>
+          <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
           <Route path="/" component={HomePage} />
           <Route path="/mchat" component={MchatPage} />
