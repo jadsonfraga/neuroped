@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/VisualStates";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
-import { brandAssets } from "@/components/BrandAssets";
+import { AssetShowcase, brandAssets } from "@/components/BrandAssets";
 import {
   AlertTriangle,
   BookOpen,
@@ -136,13 +136,21 @@ export default function PortalFamiliaPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 py-4">
+    <div className="proportion-safe-page mx-auto max-w-3xl space-y-6 py-4">
       <PremiumVisualPanel
         src={brandAssets.illustrations.childDevelopment}
         badge="Família e desenvolvimento"
         title="Orientação clara para a rotina, a escola e os próximos passos."
         subtitle="Conteúdos educativos ficam acessíveis aos pais; documentos individuais aparecem apenas quando liberados pelo médico."
         className="min-h-44"
+      />
+
+      <AssetShowcase
+        variant="family"
+        title="Figuras de apoio para famílias"
+        subtitle="Imagens e mascotes oficiais usados com proporção estável, sem corte agressivo em celular."
+        max={6}
+        compact
       />
 
       <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-950/20">
@@ -261,40 +269,27 @@ export default function PortalFamiliaPage() {
                             {fmtDate(doc.created_at)}
                           </span>
                         </div>
-                        <CardTitle className="text-sm font-semibold text-foreground">{doc.title}</CardTitle>
+                        <h2 className="text-base font-semibold text-foreground">{doc.title}</h2>
                       </div>
-                      <FileText className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setExpandedId(expandedId === doc.id ? null : doc.id)}
+                      >
+                        <FileText className="mr-1 h-4 w-4" />
+                        {expandedId === doc.id ? "Ocultar" : "Ver"}
+                      </Button>
                     </div>
                   </CardHeader>
-
-                  {doc.content && (
+                  {expandedId === doc.id && (
                     <CardContent className="p-4 pt-0">
-                      <button
-                        className="mb-2 text-xs text-primary hover:underline"
-                        onClick={() => setExpandedId(expandedId === doc.id ? null : doc.id)}
-                        aria-expanded={expandedId === doc.id}
-                        aria-controls={`doc-content-${doc.id}`}
-                      >
-                        {expandedId === doc.id ? "Ocultar conteúdo" : "Ver conteúdo"}
-                      </button>
-                      {expandedId === doc.id && (
-                        <div
-                          id={`doc-content-${doc.id}`}
-                          className="mt-2 whitespace-pre-wrap rounded-lg border border-border bg-muted/30 p-3 text-sm leading-relaxed text-foreground"
-                          role="region"
-                          aria-label={`Conteúdo do documento: ${doc.title}`}
-                        >
-                          {doc.content}
-                        </div>
-                      )}
+                      <div className="whitespace-pre-wrap rounded-xl bg-muted p-4 text-sm leading-relaxed text-foreground">
+                        {doc.content || "Documento sem conteúdo textual disponível."}
+                      </div>
                     </CardContent>
                   )}
                 </Card>
               ))}
-
-              <p className="pb-2 text-center text-xs text-muted-foreground">
-                Em caso de dúvidas, entre em contato com o consultório do Dr. Jadson Fraga.
-              </p>
             </div>
           )}
         </>
