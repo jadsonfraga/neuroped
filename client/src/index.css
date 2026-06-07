@@ -1,54 +1,54 @@
+/* Design System NeuroPed — tokens de cor, espaçamento e tipografia */
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Design System NeuroPed — tokens de cor, espaçamento e tipografia */
-@import './styles/tokens.css';
-
-/* LIGHT MODE — Lúdico / Colorido / Neuropediatria */
+/* LIGHT MODE — SaaS médico premium / petróleo, grafite, cinza suave */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 30 50% 98%;
-  --foreground: 260 30% 15%;
-  --border: 30 20% 88%;
-  --card: 30 40% 99%;
-  --card-foreground: 260 30% 15%;
-  --card-border: 30 20% 91%;
-  --sidebar: 260 30% 97%;
-  --sidebar-foreground: 260 30% 15%;
-  --sidebar-border: 260 20% 90%;
-  --sidebar-primary: 260 60% 55%;
+  --background: 210 24% 98%;
+  --foreground: 215 36% 13%;
+  --border: 214 22% 89%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 36% 13%;
+  --card-border: 214 22% 91%;
+  --sidebar: 213 33% 97%;
+  --sidebar-foreground: 215 36% 13%;
+  --sidebar-border: 214 22% 90%;
+  --sidebar-primary: 194 73% 27%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 260 30% 93%;
-  --sidebar-accent-foreground: 260 30% 15%;
-  --sidebar-ring: 260 60% 55%;
-  --popover: 30 40% 97%;
-  --popover-foreground: 260 30% 15%;
-  --popover-border: 30 20% 88%;
-  --primary: 260 60% 55%;
+  --sidebar-accent: 203 28% 92%;
+  --sidebar-accent-foreground: 215 36% 13%;
+  --sidebar-ring: 194 73% 27%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 36% 13%;
+  --popover-border: 214 22% 89%;
+  --primary: 194 73% 27%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 170 50% 92%;
-  --secondary-foreground: 170 50% 20%;
-  --muted: 30 20% 93%;
-  --muted-foreground: 260 10% 45%;
-  --accent: 30 40% 93%;
-  --accent-foreground: 260 30% 15%;
+  --secondary: 204 32% 92%;
+  --secondary-foreground: 197 70% 20%;
+  --muted: 214 28% 94%;
+  --muted-foreground: 215 14% 45%;
+  --accent: 202 30% 93%;
+  --accent-foreground: 215 36% 13%;
   --destructive: 0 72% 50%;
   --destructive-foreground: 0 0% 100%;
-  --input: 260 15% 78%;
-  --ring: 260 60% 55%;
-  --chart-1: 260 60% 55%;
-  --chart-2: 330 65% 55%;
-  --chart-3: 170 55% 42%;
-  --chart-4: 42 80% 55%;
-  --chart-5: 15 80% 55%;
+  --input: 214 20% 78%;
+  --ring: 194 73% 27%;
+  --chart-1: 194 73% 27%;
+  --chart-2: 188 74% 35%;
+  --chart-3: 160 52% 38%;
+  --chart-4: 38 80% 52%;
+  --chart-5: 9 70% 52%;
   --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
-  --font-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', Menlo, monospace;
   --radius: .625rem;
   --shadow-2xs: 0px 1px 0px 0px hsl(260 30% 15% / 0.02);
@@ -194,15 +194,15 @@
     animation: glowPulse 2s ease-in-out infinite;
   }
   @keyframes glowPulse {
-    0%, 100% { box-shadow: 0 0 0 0 hsl(260 60% 55% / 0.2); }
-    50% { box-shadow: 0 0 0 8px hsl(260 60% 55% / 0); }
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.16); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
   }
 
   /* Smooth scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: hsl(260 10% 70% / 0.3); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(260 10% 60% / 0.5); }
+  ::-webkit-scrollbar-thumb { background: hsl(215 14% 62% / 0.28); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(215 14% 52% / 0.45); }
   .dark ::-webkit-scrollbar-thumb { background: hsl(260 10% 30% / 0.4); }
 
   /* Number counter animation */
@@ -216,7 +216,7 @@
 
   /* Gradient text */
   .text-gradient {
-    background: linear-gradient(135deg, hsl(260 60% 55%), hsl(330 65% 55%));
+    background: linear-gradient(135deg, hsl(var(--foreground)), hsl(var(--primary)) 58%, hsl(var(--chart-2)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -316,7 +316,7 @@
 
   /* Selection color */
   ::selection {
-    background: hsl(260 60% 55% / 0.2);
+    background: hsl(var(--primary) / 0.16);
     color: hsl(var(--foreground));
   }
 
@@ -347,19 +347,21 @@
     padding-bottom: 2px;
   }
 
-  /* Card premium com borda sutil e glow no hover */
+  /* Card premium com borda sutil, densidade confortável e glow silencioso */
   .card-premium {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--card-border));
-    border-radius: 14px;
-    transition: transform .22s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow .22s cubic-bezier(0.22, 1, 0.36, 1),
-                border-color .22s ease;
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.35rem;
+    border: 1px solid hsl(var(--border) / 0.72);
+    background: linear-gradient(180deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.9));
+    box-shadow: 0 1px 2px hsl(215 36% 13% / 0.04), 0 12px 32px -28px hsl(215 36% 13% / 0.36);
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
   }
   .card-premium:hover {
     transform: translateY(-2px);
-    border-color: hsl(var(--primary) / 0.35);
-    box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.18);
+    border-color: hsl(var(--primary) / 0.28);
+    box-shadow: 0 1px 2px hsl(215 36% 13% / 0.04), 0 18px 42px -28px hsl(var(--primary) / 0.42);
+    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--card) / 0.94));
   }
 
   /* Botão com leve glow ambient */

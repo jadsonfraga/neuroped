@@ -6,23 +6,18 @@ import {
   BarChart3, ShieldAlert, ClipboardList, Users, FileText, CloudRain, HeartPulse,
   Wine, ListChecks, Zap, BrainCircuit, Gauge, Heart, Accessibility, Sparkles,
   Puzzle, Calendar, Moon, Eye, Search, X, GraduationCap, Waves,
-  AlertTriangle, Flame, VolumeX, UtensilsCrossed, Pill, Filter, User,
+  AlertTriangle, Flame, VolumeX, UtensilsCrossed, Pill, Filter,
   BrainCog, Ear, School, ChevronDown, ChevronUp, Target, Lightbulb,
   GitBranch, Ruler, Thermometer, Calculator, LineChart, MessageCircle,
-  Syringe, Scale, Milestone,
+  Scale, Milestone,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import drJadsonLogo from "@assets/dr-jadson-logo.jpeg";
 import neuralAbstractImg from "@assets/images/neural-abstract.png";
-import childDevImg from "@assets/images/child-development.png";
-import heroBrainImg from "@assets/images/hero-brain.png";
-import mentalHealthImg from "@assets/images/mental-health-child.png";
 import { softHover, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
-import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 
 interface ScaleCard {
@@ -335,18 +330,18 @@ function ScaleCardItem({ scale }: { scale: ScaleCard }) {
       <div
         onMouseEnter={() => softHover()}
         onClick={() => { softTap(); haptic.select(); }}
-        className="card-premium group cursor-pointer flex items-start gap-3 p-3"
+        className="card-premium group cursor-pointer flex items-start gap-3 p-4 min-h-[118px]"
       >
-        <div className={`shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br ${scale.gradient} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
-          <Icon className="w-3.5 h-3.5 text-white" strokeWidth={1.75} />
+        <div className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${scale.gradient} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
+          <Icon className="w-4 h-4 text-white" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-semibold text-foreground leading-tight">{scale.title}</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">{scale.ageRange}</Badge>
+            <span className="text-[15px] font-semibold text-foreground leading-snug tracking-[-0.01em]">{scale.title}</span>
+            <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 shrink-0 bg-background/70">{scale.ageRange}</Badge>
           </div>
-          <p className={`text-[11px] font-medium mt-0.5 ${scale.iconColor} leading-tight`}>{scale.subtitle}</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{scale.description}</p>
+          <p className={`text-xs font-medium mt-1 ${scale.iconColor} leading-tight`}>{scale.subtitle}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed mt-2 line-clamp-2">{scale.description}</p>
         </div>
         <ArrowRight className="shrink-0 w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all mt-0.5" />
       </div>
@@ -368,24 +363,24 @@ interface SectionProps {
 function CollapsibleSection({ title, icon: Icon, accentColor, count, children, defaultOpen = false }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 group"
+        className="w-full flex items-center gap-3 group rounded-xl px-1 py-1"
         aria-expanded={open}
       >
         <div className={`w-1 h-6 rounded-full ${accentColor} shrink-0`} />
         <div className={`w-7 h-7 rounded-lg ${accentColor.replace("bg-", "bg-").replace("bg-", "")} flex items-center justify-center`}>
           <Icon className="w-3.5 h-3.5 text-white" />
         </div>
-        <h2 className="text-sm font-bold text-foreground flex-1 text-left group-hover:text-primary transition-colors">{title}</h2>
+        <h2 className="text-sm font-semibold tracking-[-0.01em] text-foreground flex-1 text-left group-hover:text-primary transition-colors">{title}</h2>
         <Badge variant="secondary" className="text-xs font-medium">{count}</Badge>
         {open
           ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
           : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
       {open && (
-        <div className="stagger-in grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 pl-4">
+        <div className="stagger-in grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {children}
         </div>
       )}
@@ -411,21 +406,21 @@ function ExpandableSection({ title, icon, accentColor, items, previewCount = 4, 
   const hasMore = items.length > previewCount;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 group"
+        className="w-full flex items-center gap-3 group rounded-xl px-1 py-1"
         aria-expanded={open}
       >
         <SectionAccent color={accentColor} Icon={icon} title={title} count={items.length} open={open} />
       </button>
       {open && (
         <>
-          <div className="stagger-in grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 pl-4">
+          <div className="stagger-in grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {visibleItems.map(s => <ScaleCardItem key={s.href} scale={s} />)}
           </div>
           {hasMore && (
-            <div className="pl-4">
+            <div className="pt-1">
               <button
                 onClick={() => setExpanded(v => !v)}
                 className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
@@ -449,7 +444,7 @@ function SectionAccent({ color, Icon, title, count, open }: { color: string; Ico
       <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center`}>
         <Icon className="w-3.5 h-3.5 text-white" />
       </div>
-      <h2 className="text-sm font-bold text-foreground flex-1 text-left group-hover:text-primary transition-colors">{title}</h2>
+      <h2 className="text-sm font-semibold tracking-[-0.01em] text-foreground flex-1 text-left group-hover:text-primary transition-colors">{title}</h2>
       <Badge variant="secondary" className="text-xs font-medium">{count}</Badge>
       {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
     </>
@@ -468,20 +463,20 @@ function PrimaryAction({ href, title, description, Icon, color }: { href: string
         transition={{ duration: 0.18, ease: easing.smooth }}
         onMouseEnter={() => softHover()}
         onClick={() => { softTap(); haptic.tap(); }}
-        className="group card-premium min-h-[132px] p-4 cursor-pointer border-primary/10 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary/30"
+        className="group card-premium min-h-[168px] p-5 cursor-pointer border-primary/10 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary/30"
         role="link"
         aria-label={`${title}: ${description}`}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center shadow-sm shrink-0`}>
             <Icon className="w-5 h-5 text-white" strokeWidth={1.85} aria-hidden="true" />
           </div>
-          <div className="min-w-0 space-y-1">
-            <h2 className="text-base font-black text-foreground group-hover:text-primary transition-colors">{title}</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+          <div className="min-w-0 space-y-2">
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground group-hover:text-primary transition-colors">{title}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary">
+        <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-primary">
           Começar agora <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
         </div>
       </motion.div>
@@ -500,7 +495,7 @@ function QuickLink({ href, label, Icon, color }: { href: string; label: string; 
         transition={{ duration: 0.18, ease: easing.smooth }}
         onMouseEnter={() => softHover()}
         onClick={() => { softTap(); haptic.tap(); }}
-        className="card-premium shimmer flex flex-col items-center gap-1.5 px-4 py-3 cursor-pointer shrink-0 min-w-[88px]"
+        className="card-premium flex flex-col items-center gap-2 px-4 py-3 cursor-pointer shrink-0 min-w-[94px]"
       >
         <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center shadow-sm`}>
           <Icon className="w-4 h-4 text-white" strokeWidth={1.75} />
@@ -516,8 +511,8 @@ function QuickLink({ href, label, Icon, color }: { href: string; label: string; 
 function StatCounter({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <span className="count-up text-lg font-black text-foreground leading-none">{value}</span>
-      <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
+      <span className="count-up text-lg font-semibold text-foreground leading-none tracking-[-0.02em]">{value}</span>
+      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-[0.08em]">{label}</span>
     </div>
   );
 }
@@ -526,8 +521,6 @@ function StatCounter({ value, label }: { value: string; label: string }) {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const totalInstruments = neurodevScales.length + behaviorScales.length + mentalHealthScales.length + otherScales.length + diaries.length + regulacaoEmocionalScales.length + 5 + 5 + 6;
-
   const isSearching = searchQuery.trim().length > 0;
   const filteredCards = useMemo(() => {
     if (!isSearching) return [];
@@ -591,13 +584,13 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="relative overflow-hidden rounded-3xl mb-6"
+        className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/70 shadow-xl shadow-slate-950/[0.04] mb-6"
       >
         <div className="absolute inset-0">
-          <img src={neuralAbstractImg} alt="" className="w-full h-full object-cover opacity-15 dark:opacity-25" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+          <img src={neuralAbstractImg} alt="" className="w-full h-full object-cover opacity-10 dark:opacity-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.12),transparent_42%),linear-gradient(180deg,hsl(var(--background)/0.84),hsl(var(--background)/0.96))]" />
         </div>
-        <div className="relative text-center space-y-4 pt-9 pb-7 px-4">
+        <div className="relative text-center space-y-5 px-5 py-8 sm:px-8 sm:py-10">
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -607,23 +600,23 @@ export default function HomePage() {
             <img
               src={drJadsonLogo}
               alt="Dr. Jadson Fraga"
-              className="w-16 h-16 object-cover rounded-2xl shadow-md ring-2 ring-primary/20 np-anim-glow"
+              className="w-16 h-16 object-cover rounded-2xl shadow-lg shadow-slate-950/10 ring-1 ring-primary/15"
               data-testid="img-dr-jadson-logo"
             />
           </motion.div>
           <div>
             <h1
-              className="text-4xl text-gradient tracking-tight"
-              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              className="text-4xl text-gradient tracking-[-0.04em] sm:text-5xl"
+              style={{ fontFamily: "var(--font-sans)", fontWeight: 650 }}
               data-testid="text-page-title"
             >
               NeuroPed
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 italic">Escalas de Neuropediatria</p>
+            <p className="text-sm text-muted-foreground mt-2">Cockpit de escalas, pacientes e documentos em neuropediatria</p>
           </div>
 
           {/* Stat counters */}
-          <div className="flex items-center justify-center gap-6 py-2">
+          <div className="mx-auto flex max-w-xl flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/70 bg-background/65 px-4 py-3">
             <StatCounter value="75+" label="Páginas" />
             <div className="w-px h-8 bg-border" />
             <StatCounter value="495+" label="Escalas" />
@@ -641,7 +634,7 @@ export default function HomePage() {
               placeholder="Buscar escala, área ou faixa etária..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 h-10 rounded-xl bg-muted/50 border-border text-sm"
+              className="pl-10 pr-10 h-11 rounded-2xl bg-background/80 border-border/80 text-sm shadow-sm"
               data-testid="input-search"
             />
             {isSearching && (
@@ -655,39 +648,33 @@ export default function HomePage() {
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Ferramenta educacional — Para estudantes, médicos e profissionais terapeutas
+            Ferramenta educacional para uso profissional responsável
           </p>
         </div>
       </motion.div>
 
       {!isSearching && (
-        <section className="space-y-3" aria-labelledby="acoes-principais">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Fluxo clínico principal</p>
-              <h2 id="acoes-principais" className="text-lg font-black text-foreground">Escolha um caminho em até 10 segundos</h2>
+        <section className="space-y-5 rounded-[2rem] border border-border/70 bg-card/80 p-4 shadow-lg shadow-slate-950/[0.04] sm:p-6" aria-labelledby="acoes-principais">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-primary uppercase tracking-[0.18em]">Cockpit clínico</p>
+              <h2 id="acoes-principais" className="text-2xl font-semibold tracking-[-0.03em] text-foreground">Quatro caminhos essenciais</h2>
+              <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">A home prioriza as decisões que sustentam a consulta: aplicar escala, localizar paciente, acompanhar evolução e preparar documentos.</p>
             </div>
-            <Badge variant="outline" className="hidden sm:inline-flex text-[10px]">4 CTAs dominantes</Badge>
+            <Badge variant="outline" className="hidden sm:inline-flex text-[10px] bg-background/70">Foco assistencial</Badge>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <PrimaryAction href="/filtro" title="Encontrar escala" description="Fluxo guiado por idade, queixa, objetivo e contexto clínico." Icon={Filter} color="bg-gradient-to-br from-primary to-chart-2" />
-            <PrimaryAction href="/mchat" title="Aplicar teste" description="Abra uma escala implementada e acompanhe pontuação/interpretação." Icon={ClipboardCheck} color="bg-gradient-to-br from-violet-600 to-purple-700" />
-            <PrimaryAction href="/pacientes" title="Meus pacientes" description="Cadastre, acompanhe histórico e organize relatórios por paciente." Icon={Users} color="bg-gradient-to-br from-blue-500 to-indigo-600" />
-            <PrimaryAction href="/calculadora-dose" title="Calculadora de doses" description="Cálculo rápido por peso/idade com alertas de dose máxima." Icon={Calculator} color="bg-gradient-to-br from-amber-500 to-yellow-600" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <PrimaryAction href="/filtro" title="Aplicar Escala" description="Escolha o instrumento por idade, queixa, objetivo e contexto clínico." Icon={ClipboardCheck} color="bg-gradient-to-br from-primary to-cyan-700" />
+            <PrimaryAction href="/pacientes" title="Pacientes" description="Acesse cadastro, histórico e resultados vinculados ao prontuário." Icon={Users} color="bg-gradient-to-br from-slate-700 to-slate-950" />
+            <PrimaryAction href="/pacientes" title="Evolução" description="Revise tendências longitudinais e compare resultados de escalas salvas." Icon={LineChart} color="bg-gradient-to-br from-teal-600 to-cyan-700" />
+            <PrimaryAction href="/prontuario" title="Documentos" description="Prepare anamnese, relatório clínico e materiais para impressão." Icon={FileText} color="bg-gradient-to-br from-blue-700 to-slate-900" />
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
-            <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-relaxed">
-              <strong>Uso responsável:</strong> escalas orientam rastreio e acompanhamento, mas não fecham diagnóstico isoladamente. Confirme a adequação do instrumento, consentimento e contexto clínico antes de salvar ou exportar dados.
+          <div className="rounded-2xl border border-amber-200/70 bg-amber-50/60 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+              <strong className="font-semibold">Uso responsável:</strong> escalas orientam rastreio e acompanhamento, mas não fecham diagnóstico isoladamente. Confirme a adequação do instrumento, consentimento e contexto clínico antes de salvar ou exportar dados.
             </p>
           </div>
         </section>
-      )}
-
-      {/* ── MASCOTE DE BOAS-VINDAS ───────────────────────────── */}
-      {!isSearching && (
-        <div className="flex justify-center">
-          <Mascote contexto="home" size="md" />
-        </div>
       )}
 
       {/* ── SEARCH RESULTS ───────────────────────────────────── */}
@@ -708,8 +695,8 @@ export default function HomePage() {
           <FavoritesRecents />
 
           {/* ── SECONDARY GROUPED ACCESS ──────────────────────── */}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border bg-card/70 p-3 space-y-2">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-card/65 p-4 space-y-3 shadow-sm">
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ferramentas rápidas</p>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 <QuickLink href="/prontuario" label="Prontuário" Icon={ClipboardList} color="bg-gradient-to-br from-violet-600 to-purple-700" />
@@ -717,7 +704,7 @@ export default function HomePage() {
                 <QuickLink href="/testes-reconhecimento" label="Testes" Icon={GraduationCap} color="bg-gradient-to-br from-pink-500 to-rose-500" />
               </div>
             </div>
-            <div className="rounded-2xl border bg-card/70 p-3 space-y-2">
+            <div className="rounded-2xl border border-border/70 bg-card/65 p-4 space-y-3 shadow-sm">
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Biblioteca</p>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 <QuickLink href="/inventarios-escola" label="Escola" Icon={School} color="bg-gradient-to-br from-emerald-500 to-teal-600" />
@@ -725,7 +712,7 @@ export default function HomePage() {
                 <QuickLink href="/marcos-desenvolvimento" label="Marcos" Icon={Milestone} color="bg-gradient-to-br from-emerald-500 to-green-600" />
               </div>
             </div>
-            <div className="rounded-2xl border bg-card/70 p-3 space-y-2">
+            <div className="rounded-2xl border border-border/70 bg-card/65 p-4 space-y-3 shadow-sm">
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Referência</p>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 <QuickLink href="/valores-referencia" label="Valores" Icon={Thermometer} color="bg-gradient-to-br from-red-500 to-orange-600" />
@@ -735,27 +722,11 @@ export default function HomePage() {
             </div>
           </div>
 
-                   {/* ── IMAGE SHOWCASE STRIP ──────────────────────────── */}
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Nosso Universo</p>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
-              <div className="shrink-0 w-64 h-36 rounded-xl overflow-hidden shadow-md">
-                <img src={childDevImg} alt="Marcos do Desenvolvimento" loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="shrink-0 w-48 h-36 rounded-xl overflow-hidden shadow-md">
-                <img src={heroBrainImg} alt="Cérebro Infantil" loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="shrink-0 w-64 h-36 rounded-xl overflow-hidden shadow-md">
-                <img src={mentalHealthImg} alt="Saúde Mental Infantil" loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-              </div>
-            </div>
-          </div>
-
  {/* ── SECTION DIVIDER ──────────────────────────────── */}
           <div className="h-px bg-border" />
 
           {/* ── CATEGORY SECTIONS ────────────────────────────── */}
-          <div className="space-y-4">
+          <div className="space-y-5">
 
             {/* 1 — Investigação Diagnóstica */}
             <ExpandableSection
