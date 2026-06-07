@@ -1,18 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Brain, Home, ClipboardCheck, Baby, Activity,
-  Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, BookOpen,
-  BarChart3, ShieldAlert, ClipboardList, Users, FileText,
-  CloudRain, HeartPulse, Wine, ListChecks, Zap,
-  BrainCircuit, Gauge, Heart, Accessibility, Sparkles,
-  Puzzle, Calendar, Fingerprint, Menu, X, GraduationCap,
-  Stethoscope, Waves, Flame, VolumeX, UtensilsCrossed, AlertTriangle, Pill,
-  Filter, User, BrainCog, Ear, School, ClipboardPlus, SmilePlus, HelpCircle,
-  Target, Lightbulb, Calculator, TrendingUp, GitBranch,
-  MessageCircle, FileSignature, BookMarked, ShieldCheck, Newspaper, KeyRound, Search
-} from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/components/CommandPalette";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
@@ -21,167 +10,7 @@ import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
-
-interface NavSection {
-  title: string;
-  items: { href: string; label: string; icon: any }[];
-}
-
-const navSections: NavSection[] = [
-  {
-    title: "",
-    items: [
-      { href: "/", label: "Início", icon: Home },
-    ],
-  },
-  {
-    title: "Ferramentas",
-    items: [
-      { href: "/filtro", label: "Filtro Inteligente", icon: Filter },
-      { href: "/prontuario", label: "Prontuário Clínico", icon: ClipboardPlus },
-      { href: "/pacientes", label: "Meus Pacientes", icon: Users },
-      { href: "/satisfacao-medicacao", label: "Satisfação Medicação", icon: SmilePlus },
-      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
-      { href: "/assinatura-digital", label: "Assinatura Digital", icon: FileSignature },
-    ],
-  },
-  {
-    title: "Neurodesenvolvimento",
-    items: [
-      { href: "/mchat", label: "M-CHAT-R/F", icon: Baby },
-      { href: "/cars", label: "CARS-2", icon: ClipboardCheck },
-      { href: "/denver", label: "Denver II", icon: BookOpen },
-      { href: "/asq3", label: "ASQ-3", icon: Baby },
-      { href: "/gmfcs", label: "GMFCS", icon: Accessibility },
-      { href: "/tea", label: "Checklists TEA", icon: Puzzle },
-      { href: "/tea-comportamentos", label: "Comport. TEA", icon: Fingerprint },
-    ],
-  },
-  {
-    title: "Comportamento e TDAH",
-    items: [
-      { href: "/snap", label: "SNAP-IV", icon: Activity },
-      { href: "/sdq", label: "SDQ", icon: BarChart3 },
-      { href: "/conners", label: "Conners", icon: ClipboardList },
-      { href: "/cbcl", label: "CBCL", icon: ListChecks },
-      { href: "/vanderbilt", label: "Vanderbilt", icon: Zap },
-      { href: "/brief2", label: "BRIEF-2", icon: BrainCircuit },
-      { href: "/abc", label: "ABC", icon: Gauge },
-      { href: "/vineland", label: "Vineland-3", icon: Users },
-    ],
-  },
-  {
-    title: "Saúde Mental",
-    items: [
-      { href: "/scared", label: "SCARED", icon: ShieldAlert },
-      { href: "/cdi2", label: "CDI-2", icon: CloudRain },
-      { href: "/phqa", label: "PHQ-A", icon: HeartPulse },
-      { href: "/cssrs", label: "C-SSRS", icon: ShieldAlert },
-      { href: "/crafft", label: "CRAFFT", icon: Wine },
-      { href: "/psc17", label: "PSC-17", icon: ClipboardList },
-      { href: "/gad7", label: "GAD-7", icon: AlertTriangle },
-      { href: "/aq10", label: "AQ-10 (TEA Adulto)", icon: Puzzle },
-    ],
-  },
-  {
-    title: "Sono e Qualidade de Vida",
-    items: [
-      { href: "/cshq", label: "CSHQ", icon: Moon },
-      { href: "/ygtss", label: "YGTSS", icon: Sparkles },
-      { href: "/pedsql", label: "PedsQL", icon: Heart },
-    ],
-  },
-  {
-    title: "Diários Clínicos",
-    items: [
-      { href: "/diario-sono", label: "Diário do Sono", icon: Moon },
-      { href: "/diario-alimentar", label: "Diário Alimentar", icon: UtensilsCrossed },
-      { href: "/diario-escola", label: "Diário Escolar", icon: School },
-      { href: "/epilepsia", label: "Diário Epilepsia", icon: Zap },
-      { href: "/cefaleia", label: "Calendário Cefaleia", icon: Calendar },
-    ],
-  },
-  {
-    title: "Bateria Dr. Jadson",
-    items: [
-      { href: "/bateria-jadson", label: "Bateria (Hub)", icon: Stethoscope },
-      { href: "/emdi", label: "EMDI", icon: Baby },
-      { href: "/eaf", label: "EAF", icon: Users },
-      { href: "/pdae", label: "PDAE", icon: GraduationCap },
-      { href: "/ecsm", label: "ECSM", icon: Brain },
-      { href: "/ips", label: "IPS", icon: Waves },
-    ],
-  },
-  {
-    title: "Regulação Emocional",
-    items: [
-      { href: "/ecar-si", label: "ECAR-SI", icon: ShieldAlert },
-      { href: "/edi", label: "EDI", icon: CloudRain },
-      { href: "/eai", label: "EAI", icon: AlertTriangle },
-      { href: "/easi", label: "EASI", icon: Users },
-      { href: "/ems", label: "EMS", icon: VolumeX },
-      { href: "/etare", label: "ETARE", icon: UtensilsCrossed },
-      { href: "/eaah", label: "EAAH", icon: Flame },
-    ],
-  },
-  {
-    title: "Testes Diretos (Criança)",
-    items: [
-      { href: "/testes-reconhecimento", label: "Cores/Letras/Animais/Corpo", icon: Baby },
-      { href: "/testes-academicos", label: "Leitura/Escrita/Aritmética", icon: GraduationCap },
-      { href: "/inventarios-auto", label: "Autoavaliação (8 áreas)", icon: ClipboardCheck },
-      { href: "/tde2", label: "TDE-2 Adaptado", icon: BookOpen },
-      { href: "/ahsd-tea", label: "Triagem AH/SD × TEA", icon: Sparkles },
-    ],
-  },
-  {
-    title: "Ferramentas Clínicas",
-    items: [
-      { href: "/calculadora-dose", label: "Calculadora de Dose", icon: Calculator },
-      { href: "/curvas-crescimento", label: "Curvas de Crescimento", icon: TrendingUp },
-      { href: "/orientacao-parental", label: "Orientação para Pais", icon: Heart },
-      { href: "/fichas-registro", label: "Fichas Comerciais", icon: FileText },
-      { href: "/espasticidade", label: "Espasticidade", icon: Activity },
-      { href: "/classificacoes", label: "Classificações", icon: BookOpen },
-      { href: "/fluxogramas", label: "Fluxogramas Clínicos", icon: GitBranch },
-      { href: "/marcos-desenvolvimento", label: "Marcos do Desenvolvimento", icon: Baby },
-      { href: "/valores-referencia", label: "Valores de Referência", icon: Activity },
-    ],
-  },
-  {
-    title: "Guias e Referências",
-    items: [
-      { href: "/neuropsicologia", label: "Avaliação Neuropsicológica", icon: BrainCog },
-      { href: "/pac", label: "Processamento Auditivo", icon: Ear },
-      { href: "/inventarios-escola", label: "Inventários p/ Escola", icon: School },
-      { href: "/psiquiatria", label: "Psiquiatria Infantil", icon: GraduationCap },
-      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      { href: "/pant", label: "PANT (100 Escalas)", icon: FileText },
-      { href: "/avaliacao-multiprofissional", label: "Avaliação Multiprofissional", icon: ClipboardCheck },
-      { href: "/plano-terapeutico", label: "Plano Terapêutico (PTI)", icon: Target },
-      { href: "/plano-intervencao", label: "Intervenção por Habilidades", icon: Lightbulb },
-      { href: "/sobre", label: "Sobre Dr. Jadson", icon: User },
-      { href: "/ajuda", label: "Ajuda / FAQ", icon: HelpCircle },
-    ],
-  },
-  {
-    title: "Família",
-    items: [
-      { href: "/portal-familia", label: "Portal da Família", icon: Users },
-      { href: "/portal-familia/novidades", label: "Novidades & Artigos", icon: Newspaper },
-      { href: "/portal-familia/acesso", label: "Política de Acesso", icon: KeyRound },
-    ],
-  },
-  {
-    title: "Sobre",
-    items: [
-      { href: "/sobre-neuroped", label: "Natureza da Ferramenta", icon: Sparkles },
-      { href: "/glossario", label: "Glossário", icon: BookMarked },
-      { href: "/acessibilidade", label: "Acessibilidade", icon: Accessibility },
-      { href: "/qualidade", label: "Qualidade", icon: ShieldCheck },
-    ],
-  },
-];
+import { navSections, getNavigationMatch } from "@/data/navigation";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -226,6 +55,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (location !== "/") softWhoosh();
   }, [location]);
+
+  const activeNavigation = getNavigationMatch(location);
+  const showClinicalFlow = location !== "/" && location !== "/login" && location !== "/sessao-expirada";
+  const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -539,6 +372,45 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
               Voltar
             </button>
+          )}
+          {showClinicalFlow && (
+            <section
+              className="mb-5 rounded-2xl border border-border/70 bg-card/75 p-3 shadow-sm backdrop-blur sm:p-4"
+              aria-label="Fluxo clínico NeuroPed"
+              data-testid="clinical-flow-context"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Onde estou
+                  </p>
+                  <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <ClipboardList className="h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
+                    <span className="truncate">{activeNavigation?.item.label ?? "Área clínica"}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {activeNavigation?.section.title || "Navegação principal"} · fluxo único: do paciente ao histórico.
+                  </p>
+                </div>
+                <div className="rounded-xl bg-primary/10 px-3 py-2 text-xs text-muted-foreground sm:max-w-[18rem]">
+                  <span className="font-semibold text-foreground">Próximo passo:</span>{" "}
+                  registrar resultado, gerar documento e manter histórico recuperável.
+                </div>
+              </div>
+              <ol className="mt-3 flex gap-2 overflow-x-auto pb-1 text-[11px]" aria-label="Paciente, queixa, escala, aplicação, resultado, documento e histórico">
+                {flowSteps.map((step, index) => (
+                  <li
+                    key={step}
+                    className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-background/80 px-2.5 py-1 text-muted-foreground"
+                  >
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </section>
           )}
           {children}
         </div>
