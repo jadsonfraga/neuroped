@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { RouteGuard } from "@/components/RouteGuard";
 import DocumentosPage from "./documentos";
 import EfeitosColateraisPage from "./efeitos-colaterais";
 
@@ -8,7 +9,13 @@ export default function NotFound() {
   const [location] = useLocation();
 
   // Ponte temporária: mantém itens funcionais mesmo antes da expansão completa do roteador.
-  if (location === "/documentos") return <DocumentosPage />;
+  if (location === "/documentos") {
+    return (
+      <RouteGuard roles={["admin", "professional"]}>
+        <DocumentosPage />
+      </RouteGuard>
+    );
+  }
   if (location === "/efeitos-colaterais") return <EfeitosColateraisPage />;
 
   return (
