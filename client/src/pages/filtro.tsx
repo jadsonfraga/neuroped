@@ -315,14 +315,15 @@ export default function FiltroPage() {
     softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]);
   };
 
-  const resultsSectionRef = useRef<HTMLDivElement>(null);
+  const resultsHeaderRef = useRef<HTMLDivElement>(null);
 
   // Scroll suavemente para resultados quando aparecem
   useEffect(() => {
-    if (hasSearch && resultsSectionRef.current) {
+    if (hasSearch && resultsHeaderRef.current) {
       setTimeout(() => {
-        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
+        const top = resultsHeaderRef.current?.getBoundingClientRect().top ?? 0;
+        window.scrollBy({ top: top - 100, behavior: "smooth" });
+      }, 150);
     }
   }, [hasSearch]);
 
@@ -381,8 +382,8 @@ export default function FiltroPage() {
         </div>
       </section>
 
-      {hasSearch ? <section ref={resultsSectionRef} className="space-y-3">
-        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+      {hasSearch ? <section className="space-y-3">
+        <div ref={resultsHeaderRef}><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
           {ranking.map((item) => {
             const reasons = getRecommendationReasons(
