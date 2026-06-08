@@ -5,6 +5,7 @@ const root = process.cwd();
 const appPath = join(root, "client/src/App.tsx");
 const routeGuardPath = join(root, "client/src/components/RouteGuard.tsx");
 const localUnlockPath = join(root, "client/src/lib/localUnlock.ts");
+const notFoundPath = join(root, "client/src/pages/not-found.tsx");
 
 function read(path) {
   return readFileSync(path, "utf8");
@@ -18,6 +19,7 @@ function fail(message) {
 const app = read(appPath);
 const guard = read(routeGuardPath);
 const unlock = read(localUnlockPath);
+const notFound = read(notFoundPath);
 
 const sensitiveRoutes = [
   "/pant",
@@ -33,6 +35,8 @@ const sensitiveRoutes = [
   "/avaliacao-multiprofissional",
   "/fichas-registro",
 ];
+
+const protectedBridgeRoutes = ["/documentos"];
 
 const publicRoutes = [
   "/",
@@ -77,9 +81,21 @@ for (const route of sensitiveRoutes) {
     continue;
   }
 
-  const routeSnippet = app.slice(routeIndex, routeIndex + 180);
+  const routeSnippet = app.slice(routeIndex, routeIndex + 220);
   if (!routeSnippet.includes("<Protected")) {
     fail(`Rota sensível sem wrapper Protected em App.tsx: ${appProtectedRoute}`);
+  }
+}
+
+for (const route of protectedBridgeRoutes) {
+  const routeIndex = notFound.indexOf(`location === "${route}"`);
+  if (routeIndex === -1) {
+    fail(`Ponte sensível ausente de not-found.tsx: ${route}`);
+    continue;
+  }
+  const routeSnippet = notFound.slice(routeIndex, routeIndex + 260);
+  if (!routeSnippet.includes("RouteGuard") && !routeSnippet.includes("<Protected")) {
+    fail(`Ponte sensível sem proteção em not-found.tsx: ${route}`);
   }
 }
 
@@ -102,6 +118,10 @@ if (!/export function isAppUnlocked\(\): boolean\s*{[\s\S]*return true;/.test(un
 
 if (!unlock.includes("export function hasClinicalUnlock")) {
   fail("hasClinicalUnlock() deve existir para proteger áreas sensíveis.");
+}
+
+if (!unlock.includes("detail: { unlocked: hasClinicalUnlock() }")) {
+  fail("Evento de lock/unlock deve emitir hasClinicalUnlock(), não isAppUnlocked().");
 }
 
 if (process.exitCode) {
