@@ -158,13 +158,18 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
   return value;
 }
 
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null) {
+function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: string | null = null) {
   // Filtro clínico: APENAS escalas que combinam
   let base = catalog.filter((s) => matchAge(s, selectedAge));
 
   // Se houver queixa selecionada, filtrar por ela
   if (selectedQueixas.length > 0) {
     base = base.filter((s) => s.queixas.some((q) => selectedQueixas.includes(q)));
+  }
+
+  // Se houver respondente selecionado, filtrar por ele
+  if (selectedRespondente) {
+    base = base.filter((s) => s.respondente.includes(selectedRespondente as any));
   }
 
   // Score e ordenar por score (respeitando ordem natural)
@@ -270,6 +275,7 @@ export default function FiltroPage() {
   const [search, setSearch] = useState("");
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
+  const [selectedRespondente, setSelectedRespondente] = useState<string | null>(null);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -287,8 +293,8 @@ export default function FiltroPage() {
   }, []);
 
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente);
+  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
 
   // GARANTIR que os slots principais usam só appRoute quando há queixa
   const withRoute = rankedPool.filter((s) => s.appRoute);
@@ -368,6 +374,16 @@ export default function FiltroPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {faixasEtarias.map((age) => <button key={age.id} onMouseEnter={() => softHover()} onClick={() => setSelectedAge((v) => v === age.id ? null : age.id)} className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>{age.label}</button>)}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de teste</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>🧒 Direto com criança</button>
+            <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>👨‍👩‍👧 Questionário pais</button>
+            <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>👨‍🏫 Questionário escola</button>
+            <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>👨‍⚕️ Teste clínico</button>
           </div>
         </div>
 
