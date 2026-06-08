@@ -52,7 +52,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMobileOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo(0, 0); // Instant scroll to top to avoid layout shift
     if (location !== "/") softWhoosh();
   }, [location]);
 
