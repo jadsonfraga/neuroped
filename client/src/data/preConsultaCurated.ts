@@ -13,9 +13,9 @@
 
 // Primeira linha por queixa isolada (rotas existentes no app, em ordem de prioridade).
 export const firstLineByQueixa: Record<string, string[]> = {
-  tea: ["/mchat", "/ips", "/cars", "/tea", "/vineland"],
+  tea: ["/mchat", "/ips", "/cars", "/tea", "/vineland", "/testes-diretos"],
   tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-diretos", "/testes-reconhecimento"],
-  ansiedade: ["/scared", "/sdq", "/cbcl"],
+  ansiedade: ["/scared", "/sdq", "/cbcl", "/testes-diretos"],
   depressao: ["/cdi2", "/phqa", "/cssrs", "/sdq"],
   suicidio: ["/cssrs", "/phqa"],
   aprendizagem: ["/pdae", "/tde2", "/testes-academicos", "/testes-diretos", "/testes-reconhecimento", "/inventarios-escola"],
@@ -85,5 +85,4 @@ export function clinicianOnlyPenalty(
   prioridade: string | undefined,
 ): number {
   if (appRoute) return 0;
-  const onlyClinico = respondente.length > 0 && respondente.every((r) => r === "clinico");
-  if (onlyC
+  const onlyClinico = respondente.length > 0 && respondente.ever

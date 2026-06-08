@@ -12,7 +12,9 @@ import {
   RotateCcw,
   ClipboardCheck,
   Baby,
+  ShieldAlert,
 } from "lucide-react";
+import { directDomains } from "@/data/directTasks";
 
 /**
  * Testes Diretos com a Criança — recuperados do app legado (pré-React) e
@@ -389,6 +391,51 @@ function Phonological({ onComplete }: { onComplete: (r: TestResult) => void }) {
   );
 }
 
+// ═══════════════════════ Sondagens guiadas por domínio ═══════════════════════
+function SondagensGuiadas() {
+  const [domId, setDomId] = useState(directDomains[0]?.id ?? "");
+  const dom = directDomains.find((d) => d.id === domId) ?? directDomains[0];
+  return (
+    <div className="space-y-4">
+      <p className="text-xs leading-relaxed text-muted-foreground">Roteiros de observação direta da criança, por domínio. A secretária/clínico aplica a tarefa e registra o que observou. Apoio à triagem — não é teste normatizado.</p>
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Domínio da sondagem">
+        {directDomains.map((d) => (
+          <button key={d.id} type="button" role="tab" aria-selected={d.id === domId} onClick={() => setDomId(d.id)} className={`flex min-h-[40px] items-center gap-1 rounded-2xl border px-3 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${d.id === domId ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground hover:border-primary/40"}`}>
+            <span aria-hidden="true">{d.emoji}</span> {d.label}
+          </button>
+        ))}
+      </div>
+      {dom && (
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="text-sm font-black text-foreground">{dom.emoji} {dom.domain}</h3>
+            <span className="text-[11px] text-muted-foreground">{Math.round(dom.age[0] / 12)}–{Math.round(dom.age[1] / 12)} anos</span>
+          </div>
+          {dom.tasks.map((t, i) => (
+            <Card key={i} className={t.risk ? "border-amber-300 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20" : "border-border/70"}>
+              <CardContent className="space-y-1.5 p-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl" aria-hidden="true">{t.emoji}</span>
+                  <h4 className="text-sm font-bold text-foreground">{t.titulo}</h4>
+                  {t.faixa && <Badge variant="outline" className="ml-auto text-[10px]">{Math.round(t.faixa[0] / 12)}–{Math.round(t.faixa[1] / 12)}a</Badge>}
+                </div>
+                <p className="text-xs leading-relaxed text-foreground"><strong>Faça:</strong> {t.instrucao}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground"><strong>Observe:</strong> {t.observar}</p>
+                {t.risk && (
+                  <div className="mt-1 flex items-start gap-1.5 rounded-lg bg-amber-100/60 p-2 text-[11px] text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+                    <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>Tarefa sensível: conduzir com acolhimento. Se houver risco, acionar protocolo — <strong>CVV 188</strong> · <strong>SAMU 192</strong>.</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ═══════════════════════ Página ═══════════════════════
 const TESTS = [
   { id: "digit-span", label: "Span de Dígitos", icon: Hash, hint: "Memória operacional" },
@@ -399,6 +446,7 @@ const TESTS = [
 ] as const;
 
 export default function TestesDiretosPage() {
+  const [mode, setMode] = useState<"interativos" | "sondagens">("interativos");
   const [active, setActive] = useState<string>("digit-span");
   const [ageStr, setAgeStr] = useState("");
   const [results, setResults] = useState<Record<string, TestResult>>({});
@@ -415,52 +463,4 @@ export default function TestesDiretosPage() {
     <div className="space-y-5 pb-8">
       <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Baby className="h-5 w-5" /></div>
-          <div className="min-w-0 flex-1">
-            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">testes diretos com a criança · pré-consulta</Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Testes Diretos</h1>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Mini-testes observacionais aplicados na criança (memória, atenção, inibição, fonologia). Apoio à triagem — não substitui avaliação formal. Rodam só no dispositivo.</p>
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <label htmlFor="idade-crianca" className="text-xs font-semibold text-muted-foreground">Idade (anos):</label>
-          <Input id="idade-crianca" inputMode="numeric" value={ageStr} onChange={(e) => setAgeStr(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))} placeholder="ex.: 6" className="h-9 w-20" />
-          <span className="text-xs text-muted-foreground">ajusta a referência clínica</span>
-        </div>
-      </header>
-
-      <nav className="grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Selecionar teste">
-        {TESTS.map((t) => {
-          const Icon = t.icon; const isActive = active === t.id; const done = Boolean(results[t.id]);
-          return (
-            <button key={t.id} type="button" onClick={() => setActive(t.id)} aria-pressed={isActive} className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border p-2 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-              <Icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-              <span className="text-[11px] font-bold leading-tight text-foreground">{t.label}</span>
-              {done && <span className="text-[10px] text-emerald-600 dark:text-emerald-400">✓ feito</span>}
-            </button>
-          );
-        })}
-      </nav>
-
-      <Card>
-        <CardContent className="p-5">
-          {active === "digit-span" && <DigitSpan age={age} onComplete={addResult} />}
-          {active === "picture-memory" && <PictureMemory onComplete={addResult} />}
-          {active === "visual-attention" && <VisualAttention onComplete={addResult} />}
-          {active === "day-night" && <DayNight onComplete={addResult} />}
-          {active === "phonological" && <Phonological onComplete={addResult} />}
-        </CardContent>
-      </Card>
-
-      {summaryText && (
-        <Card className="border-border/70 bg-muted/30">
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-primary" /><h2 className="text-sm font-black text-foreground">Resumo da sessão (para o laudo)</h2></div>
-            <pre className="whitespace-pre-wrap rounded-xl bg-background p-3 text-xs leading-relaxed text-foreground">{summaryText}</pre>
-            <Button variant="outline" size="sm" className="gap-1" onClick={() => { void navigator.clipboard?.writeText(summaryText); }}>Copiar resumo</Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Baby className="h-5 w-5

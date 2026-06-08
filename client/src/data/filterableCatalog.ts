@@ -8,16 +8,16 @@ import type { ScaleEntry } from "@/data/scaleFilter";
 export const supplementalFilterableInstruments: ScaleEntry[] = [
   {
     id: "testes-diretos",
-    name: "Testes Diretos (cognitivos)",
-    fullName: "Span de dígitos, memória de figuras, atenção visual, inibição (dia/noite) e consciência fonológica",
-    ageMin: 48,
-    ageMax: 144,
-    queixas: ["tdah", "aprendizagem", "cognicao", "linguagem"],
+    name: "Testes Diretos (criança)",
+    fullName: "Mini-testes interativos + sondagens guiadas por domínio (linguagem, social/TEA, atenção, pedagógico, cognição, visual, sensorial, emocional, motor)",
+    ageMin: 12,
+    ageMax: 216,
+    queixas: ["tdah", "aprendizagem", "cognicao", "linguagem", "tea", "social", "ansiedade", "depressao", "sensorial", "motor", "pc"],
     respondente: ["clinico", "crianca"],
     prioridade: "triagem",
-    tempo: "5–12 min",
+    tempo: "5–15 min",
     appRoute: "/testes-diretos",
-    description: "Mini-testes observacionais aplicados na criança (memória operacional/visual, atenção seletiva, controle inibitório e consciência fonológica). Apoio à triagem pré-consulta — não substitui avaliação formal. Roda só no dispositivo.",
+    description: "Avaliação direta da criança na pré-consulta: 5 mini-testes interativos (memória, atenção, inibição, fonologia) + sondagens guiadas por domínio com instrução lúdica e o que observar. Apoio à triagem — não substitui avaliação formal. Roda só no dispositivo.",
     fonte: "NeuroPed — bateria de testes diretos (recuperada do app legado)",
     licencaUso: "autoral",
   },
@@ -134,6 +134,4 @@ export const supplementalFilterableInstruments: ScaleEntry[] = [
     licencaUso: "autoral",
   },
   {
-    id: "portal-familia-psicoeducacao",
-    name: "Portal da Família / Psicoeducação",
-    fullName: "Área dos pais com informações não sensíveis e documentos liberados"
+    id: "portal-familia-psico
