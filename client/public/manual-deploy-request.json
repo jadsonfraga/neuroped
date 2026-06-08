@@ -1,12 +1,19 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after PR 394 merge",
-  "requested_at_utc": "2026-06-07T20:45:00Z",
-  "merged_pr": 394,
-  "merged_commit": "8933eb139dbca7ca331245030854ef4242f4710c",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild from main after PDF and WhatsApp report merge",
+  "request": "manual deployment trigger after bug hunt fixes",
+  "requested_at_utc": "2026-06-07T21:05:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after access, pre-return and effects route fixes",
+  "fixes": [
+    "protect pant route",
+    "protect assinatura-digital route",
+    "safe older pre-retorno localStorage records",
+    "SensitiveRouteGate uses hasClinicalUnlock",
+    "bridge /efeitos-colaterais route",
+    "add Efeitos colaterais to navigation"
+  ],
   "verify_routes": [
     "#/pre-retorno",
+    "#/efeitos-colaterais",
     "#/recepcao",
     "#/pant",
     "#/assinatura-digital",
