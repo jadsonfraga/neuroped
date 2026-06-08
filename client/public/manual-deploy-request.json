@@ -1,20 +1,25 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after bug hunt fixes",
-  "requested_at_utc": "2026-06-07T21:05:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after access, pre-return and effects route fixes",
+  "request": "manual deployment trigger after access bridge hardening",
+  "requested_at_utc": "2026-06-07T21:22:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after bug hunt fixes and access audit guard hardening",
   "fixes": [
     "protect pant route",
     "protect assinatura-digital route",
     "safe older pre-retorno localStorage records",
     "SensitiveRouteGate uses hasClinicalUnlock",
+    "local unlock events emit hasClinicalUnlock",
     "bridge /efeitos-colaterais route",
-    "add Efeitos colaterais to navigation"
+    "add Efeitos colaterais to navigation",
+    "protect /documentos not-found bridge",
+    "include /documentos in SENSITIVE_ROUTES",
+    "audit:access now guards documentos bridge and unlock event semantics"
   ],
   "verify_routes": [
     "#/pre-retorno",
     "#/efeitos-colaterais",
     "#/recepcao",
+    "#/documentos",
     "#/pant",
     "#/assinatura-digital",
     "#/filtro"
@@ -22,5 +27,7 @@
   "verify_static": [
     "/manual-deploy-request.json",
     "/deploy-check.json"
-  ]
+  ],
+  "cloudflare_domain": "https://neuroped.pages.dev",
+  "note": "Use the Cloudflare Pages root domain without www for deploy-check.json unless a custom www route is configured."
 }
