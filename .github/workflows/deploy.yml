@@ -46,6 +46,9 @@ jobs:
       - name: Auditar política de acesso
         run: npm run audit:access
 
+      - name: Auditar identidade institucional
+        run: npm run audit:identity
+
       - name: Auditar assets visuais
         run: npm run audit:assets
 
