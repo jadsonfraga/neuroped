@@ -181,6 +181,7 @@ function AppRouter() {
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
           <Route path="/pre-retorno" component={PreRetornoPage} />
+          <Route path="/efeitos-colaterais" component={PreRetornoPage} />
           <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
