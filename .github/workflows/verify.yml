@@ -52,8 +52,8 @@ jobs:
       - name: Run clinical tests
         run: npm run test:clinical
 
-      - name: Build application
-        run: npm run build
+      - name: Build client application
+        run: npm run build:client
 
       - name: Record verification summary
         if: always()
@@ -64,4 +64,4 @@ jobs:
           echo "- Access policy: npm run audit:access" >> "$GITHUB_STEP_SUMMARY"
           echo "- Visual assets: npm run audit:assets" >> "$GITHUB_STEP_SUMMARY"
           echo "- Clinical tests: npm run test:clinical" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Build: npm run build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Client build: npm run build:client" >> "$GITHUB_STEP_SUMMARY"

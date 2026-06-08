@@ -38,9 +38,18 @@ const publicRoutes = [
   "/",
   "/filtro",
   "/portal-familia",
+  "/portal-familia/novidades",
+  "/portal-familia/acesso",
   "/qualidade",
+  "/pre-consulta",
   "/pre-retorno",
+  "/recepcao",
   "/consentimento-lgpd",
+  "/orientacao-parental",
+  "/caa",
+  "/ajuda",
+  "/sobre",
+  "/glossario",
 ];
 
 console.log("🔐 Auditando política de acesso NeuroPed...");
@@ -63,6 +72,10 @@ if (!guard.includes("hasClinicalUnlock")) {
 
 if (!guard.includes("LocalUnlockGate")) {
   fail("RouteGuard.tsx deve renderizar LocalUnlockGate para rotas sensíveis quando necessário.");
+}
+
+if (!guard.includes("isRouteSensitive(location)") || !guard.includes("if (!routeIsSensitive)")) {
+  fail("RouteGuard.tsx deve liberar rotas públicas sem Protected/PIN, mesmo se houver wrapper acidental.");
 }
 
 for (const route of sensitiveRoutes) {

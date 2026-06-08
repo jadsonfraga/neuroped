@@ -7,25 +7,21 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { Onboarding } from "@/components/Onboarding";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RouteGuard } from "@/components/RouteGuard";
 import { SplashScreen } from "@/components/SplashScreen";
-import { PreferencesPanel } from "@/components/PreferencesPanel";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
-import { WelcomeTour } from "@/components/WelcomeTour";
-import { CommandPalette } from "@/components/CommandPalette";
 
-// ----- Eager: home, login, not-found -----
-import HomePage from "@/pages/home";
+// ----- Eager: login, not-found e LGPD pública -----
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import SessionExpiredPage from "@/pages/session-expired";
 import LgpdConsentPage from "@/pages/lgpd-consent";
 
-// ----- Lazy: paginas educativas (publicas) -----
+// ----- Lazy: home e paginas educativas (publicas) -----
+const HomePage = lazy(() => import("@/pages/home"));
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -96,6 +92,10 @@ const ClassificacoesPage = lazy(() => import("@/pages/classificacoes"));
 const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
 const MarcosDesenvolvimentoPage = lazy(() => import("@/pages/marcos-desenvolvimento"));
 const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
+const PreferencesPanel = lazy(() => import("@/components/PreferencesPanel").then((mod) => ({ default: mod.PreferencesPanel })));
+const Onboarding = lazy(() => import("@/components/Onboarding").then((mod) => ({ default: mod.Onboarding })));
+const CommandPalette = lazy(() => import("@/components/CommandPalette").then((mod) => ({ default: mod.CommandPalette })));
+const WelcomeTour = lazy(() => import("@/components/WelcomeTour").then((mod) => ({ default: mod.WelcomeTour })));
 
 // ----- Lazy: paginas SENSIVEIS (requerem auth ou PIN master local) -----
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
@@ -267,12 +267,24 @@ function App() {
             <AmbientEffects />
             <Toaster />
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
-            {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
+            {splashComplete && showOnboarding && (
+              <Suspense fallback={null}>
+                <Onboarding onComplete={dismissOnboarding} />
+              </Suspense>
+            )}
             <Router hook={useHashLocation}><AppRouter /></Router>
             <InstallPrompt />
-            <PreferencesPanel />
-            <CommandPalette />
-            {splashComplete && <WelcomeTour />}
+            <Suspense fallback={null}>
+              <PreferencesPanel />
+            </Suspense>
+            <Suspense fallback={null}>
+              <CommandPalette />
+            </Suspense>
+            {splashComplete && (
+              <Suspense fallback={null}>
+                <WelcomeTour />
+              </Suspense>
+            )}
           </ToastProvider>
         </TooltipProvider>
       </AuthProvider>

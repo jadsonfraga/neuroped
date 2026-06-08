@@ -82,6 +82,19 @@ img {
   z-index: 2;
 }
 
+.container-filtro {
+  position: relative;
+  z-index: 1;
+}
+
+.elementos-texto {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .emoji,
 .emotion,
 .asset-emoji,

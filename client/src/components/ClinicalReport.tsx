@@ -49,7 +49,7 @@ function escapeHtml(value: string | number | undefined) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("'", "\u0026\u0023039;");
 }
 
 async function sendEmail(
@@ -240,29 +240,29 @@ export function ClinicalReport(props: ClinicalReportProps) {
   <style>
     @page { margin: 2cm; size: A4; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
-    .header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid #6d28d9; padding-bottom: 14px; margin-bottom: 20px; gap: 16px; }
-    .doc-title { font-size: 15pt; font-weight: bold; color: #6d28d9; line-height: 1.2; }
-    .doc-subtitle { font-size: 10pt; color: #444; margin-top: 2px; }
-    .doc-crm { font-size: 8.5pt; color: #666; margin-top: 6px; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: hsl(0 0% 10%); }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid hsl(262 83% 51%); padding-bottom: 14px; margin-bottom: 20px; gap: 16px; }
+    .doc-title { font-size: 15pt; font-weight: bold; color: hsl(262 83% 51%); line-height: 1.2; }
+    .doc-subtitle { font-size: 10pt; color: hsl(0 0% 27%); margin-top: 2px; }
+    .doc-crm { font-size: 8.5pt; color: hsl(0 0% 40%); margin-top: 6px; }
     .header-right { text-align: right; flex-shrink: 0; }
-    .scale-name { font-size: 11pt; font-weight: bold; color: #1a1a1a; }
-    .scale-meta { font-size: 9pt; color: #666; margin-top: 2px; }
+    .scale-name { font-size: 11pt; font-weight: bold; color: hsl(0 0% 10%); }
+    .scale-meta { font-size: 9pt; color: hsl(0 0% 40%); margin-top: 2px; }
     .section { margin-bottom: 18px; }
-    .section h2 { font-size: 12pt; color: #6d28d9; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .result-box { background: #f3f0ff; border-left: 4px solid #6d28d9; padding: 12px 16px; border-radius: 4px; margin-bottom: 14px; }
-    .score { font-size: 20pt; font-weight: bold; color: #6d28d9; }
-    .label { font-size: 9pt; color: #555; }
-    .classification { font-size: 12pt; font-weight: bold; color: #1a1a1a; margin-top: 4px; }
+    .section h2 { font-size: 12pt; color: hsl(262 83% 51%); border-bottom: 1px solid hsl(220 13% 91%); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .result-box { background: hsl(251 100% 97%); border-left: 4px solid hsl(262 83% 51%); padding: 12px 16px; border-radius: 4px; margin-bottom: 14px; }
+    .score { font-size: 20pt; font-weight: bold; color: hsl(262 83% 51%); }
+    .label { font-size: 9pt; color: hsl(0 0% 33%); }
+    .classification { font-size: 12pt; font-weight: bold; color: hsl(0 0% 10%); margin-top: 4px; }
     .domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .domain-item { background: #faf9ff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 12px; }
+    .domain-item { background: hsl(260 100% 99%); border: 1px solid hsl(220 13% 91%); border-radius: 4px; padding: 8px 12px; }
     .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-    .items-table th { background: #6d28d9; color: white; padding: 6px 10px; text-align: left; }
-    .items-table td { padding: 5px 10px; border-bottom: 1px solid #eee; }
-    .items-table tr:nth-child(even) { background: #faf9ff; }
-    .items-table .high { background: #fef3c7; font-weight: bold; }
+    .items-table th { background: hsl(262 83% 51%); color: white; padding: 6px 10px; text-align: left; }
+    .items-table td { padding: 5px 10px; border-bottom: 1px solid hsl(0 0% 93%); }
+    .items-table tr:nth-child(even) { background: hsl(260 100% 99%); }
+    .items-table .high { background: hsl(48 96% 89%); font-weight: bold; }
     .narrative { text-align: justify; }
-    .footer { margin-top: 30px; border-top: 2px solid #6d28d9; padding-top: 12px; font-size: 8.5pt; color: #555; display: flex; justify-content: space-between; gap: 12px; }
+    .footer { margin-top: 30px; border-top: 2px solid hsl(262 83% 51%); padding-top: 12px; font-size: 8.5pt; color: hsl(0 0% 33%); display: flex; justify-content: space-between; gap: 12px; }
   </style>
 </head>
 <body>
@@ -415,7 +415,7 @@ export function ClinicalReport(props: ClinicalReportProps) {
                     : 30;
                   return Math.min(100, Math.round((d.score / maxPossible) * 100));
                 })}
-                color="#7c3aed"
+                color="hsl(262 83% 58%)"
                 size={220}
               />
             </div>
