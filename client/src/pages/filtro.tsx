@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import drJadsonConsultorio from "@/assets/images/dr-jadson-consultorio-superman.jpeg";
+import { brandAssets } from "@/components/BrandAssets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -359,19 +360,9 @@ export default function FiltroPage() {
   }, [hasSearch]);
 
   return (
-    <div className="page-enter container-filtro filter-260-shell space-y-3 sm:space-y-5 pb-4 sm:pb-8 relative">
-      {/* Mascote decorativo discreto */}
-      {!hasSearch && (
-        <div className="absolute -right-24 top-24 hidden lg:block opacity-30 pointer-events-none">
-          <img
-            src={drJadsonConsultorio}
-            alt="Dr. Jadson"
-            className="w-48 h-auto object-contain rounded-full shadow-lg"
-            loading="lazy"
-          />
-        </div>
-      )}
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-3 sm:p-5 shadow-sm backdrop-blur">
+    <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
+      {/* Full-width header */}
+      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-3 sm:p-5 shadow-sm backdrop-blur mb-3 sm:mb-5">
         <div className="flex items-start gap-2 sm:gap-3">
           <div className="filter-260-iconbox flex h-10 sm:h-12 w-10 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-4 sm:h-5 w-4 sm:w-5" /></div>
           <div className="min-w-0 flex-1">
@@ -382,13 +373,21 @@ export default function FiltroPage() {
         </div>
       </header>
 
-      <section className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-3">
+      {/* Stats — full width */}
+      <section className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-3 mb-4 sm:mb-6">
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">filtrável</p><p className="text-xl sm:text-2xl font-black text-foreground">{catalog.length}</p></CardContent></Card>
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-xl sm:text-2xl font-black text-foreground">{world.length}</p></CardContent></Card>
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="text-xl sm:text-2xl font-black text-foreground">{status}</p></CardContent></Card>
       </section>
 
-      <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
+      {/* Two-column grid: Controls (left) + Results (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
+
+        {/* LEFT COLUMN — Controls (Sticky on Desktop) */}
+        <div className="lg:col-span-1 space-y-3 sm:space-y-4 lg:sticky lg:top-5 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
+
+          {/* Search & Filters */}
+          <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Medicação, autismo, TDAH, ansiedade..." className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm" data-testid="input-search" />
@@ -429,7 +428,22 @@ export default function FiltroPage() {
         </div>
       </section>
 
-      {hasSearch ? <section ref={resultsSectionRef} className="space-y-3">
+          {/* Mascote Inteligente — muda com padrão detectado */}
+          {!hasSearch && (
+            <div className="flex justify-center mt-4">
+              <img
+                src={detectedPattern ? brandAssets.mascots.consultorioSuperman : brandAssets.mascots.superDoctor}
+                alt="Dr. Jadson — seu assistente de diagnóstico"
+                className="w-32 h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                loading="lazy"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN — Results (lg:col-span-2) */}
+        {hasSearch && (
+      <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
           {ranking.map((item) => {
@@ -468,7 +482,11 @@ export default function FiltroPage() {
           })}
         </div>
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
-      </section> : <section className="space-y-5">
+        </section>
+        )}
+
+        {!hasSearch && (
+        <section className="lg:col-span-2 space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
@@ -490,8 +508,12 @@ export default function FiltroPage() {
             </div>
           </CardContent>
         </Card>
-      </section>}
+        </section>
+        )}
 
+      </div>
+
+      {/* Catálogo resumido — Full Width */}
       <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
         <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
