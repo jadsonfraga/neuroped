@@ -7,6 +7,21 @@ import type { ScaleEntry } from "@/data/scaleFilter";
  */
 export const supplementalFilterableInstruments: ScaleEntry[] = [
   {
+    id: "testes-diretos",
+    name: "Testes Diretos (cognitivos)",
+    fullName: "Span de dígitos, memória de figuras, atenção visual, inibição (dia/noite) e consciência fonológica",
+    ageMin: 48,
+    ageMax: 144,
+    queixas: ["tdah", "aprendizagem", "cognicao", "linguagem"],
+    respondente: ["clinico", "crianca"],
+    prioridade: "triagem",
+    tempo: "5–12 min",
+    appRoute: "/testes-diretos",
+    description: "Mini-testes observacionais aplicados na criança (memória operacional/visual, atenção seletiva, controle inibitório e consciência fonológica). Apoio à triagem pré-consulta — não substitui avaliação formal. Roda só no dispositivo.",
+    fonte: "NeuroPed — bateria de testes diretos (recuperada do app legado)",
+    licencaUso: "autoral",
+  },
+  {
     id: "inventarios-escola",
     name: "Inventários para Escola",
     fullName: "Questionários para professores — comportamento, TEA, alfabetização e funções executivas",
@@ -121,28 +136,4 @@ export const supplementalFilterableInstruments: ScaleEntry[] = [
   {
     id: "portal-familia-psicoeducacao",
     name: "Portal da Família / Psicoeducação",
-    fullName: "Área dos pais com informações não sensíveis e documentos liberados",
-    ageMin: 0,
-    ageMax: 216,
-    queixas: ["funcionalidade", "tdah", "tea", "ansiedade", "depressao", "epilepsia", "aprendizagem", "sono"],
-    respondente: ["pais"],
-    prioridade: "monitorizacao",
-    tempo: "Leitura guiada",
-    appRoute: "/portal-familia",
-    description: "Aba familiar para conteúdo educativo geral, política de acesso e documentos expressamente liberados.",
-    licencaUso: "autoral",
-  },
-];
-
-function uniqueById(items: ScaleEntry[]): ScaleEntry[] {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
-}
-
-export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
-  return uniqueById([...primary, ...supplementalFilterableInstruments]);
-}
+    fullName: "Área dos pais com informações não sensíveis e documentos liberados"

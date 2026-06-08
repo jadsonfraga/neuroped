@@ -14,17 +14,17 @@
 // Primeira linha por queixa isolada (rotas existentes no app, em ordem de prioridade).
 export const firstLineByQueixa: Record<string, string[]> = {
   tea: ["/mchat", "/ips", "/cars", "/tea", "/vineland"],
-  tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-reconhecimento"],
+  tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-diretos", "/testes-reconhecimento"],
   ansiedade: ["/scared", "/sdq", "/cbcl"],
   depressao: ["/cdi2", "/phqa", "/cssrs", "/sdq"],
   suicidio: ["/cssrs", "/phqa"],
-  aprendizagem: ["/pdae", "/tde2", "/testes-academicos", "/testes-reconhecimento", "/inventarios-escola"],
-  linguagem: ["/asq3", "/denver", "/testes-reconhecimento"],
+  aprendizagem: ["/pdae", "/tde2", "/testes-academicos", "/testes-diretos", "/testes-reconhecimento", "/inventarios-escola"],
+  linguagem: ["/asq3", "/denver", "/testes-diretos", "/testes-reconhecimento"],
   atraso: ["/denver", "/asq3", "/vineland", "/pant"],
   comportamento: ["/sdq", "/cbcl", "/conners", "/vanderbilt", "/eaah"],
   sono: ["/cshq"],
   tiques: ["/ygtss", "/conners"],
-  cognicao: ["/testes-reconhecimento", "/testes-academicos", "/pant"],
+  cognicao: ["/testes-diretos", "/testes-reconhecimento", "/testes-academicos", "/pant"],
   funcionalidade: ["/vineland", "/gmfcs"],
 };
 
@@ -33,7 +33,7 @@ export const firstLineByQueixa: Record<string, string[]> = {
 export const firstLineByCrossed: Record<string, string[]> = {
   "tdah+tea": ["/mchat", "/snap", "/conners", "/vineland", "/sdq"],
   "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/cbcl"],
-  "aprendizagem+tdah": ["/snap", "/pdae", "/testes-academicos", "/tde2"],
+  "aprendizagem+tdah": ["/snap", "/pdae", "/testes-academicos", "/testes-diretos", "/tde2"],
   "ansiedade+depressao": ["/scared", "/cdi2", "/phqa", "/cssrs"],
   "depressao+suicidio": ["/cssrs", "/phqa", "/cdi2"],
   "linguagem+tea": ["/mchat", "/asq3", "/testes-reconhecimento"],
@@ -86,7 +86,4 @@ export function clinicianOnlyPenalty(
 ): number {
   if (appRoute) return 0;
   const onlyClinico = respondente.length > 0 && respondente.every((r) => r === "clinico");
-  if (onlyClinico && prioridade === "diagnostica") return -6;
-  if (onlyClinico) return -2;
-  return 0;
-}
+  if (onlyC
