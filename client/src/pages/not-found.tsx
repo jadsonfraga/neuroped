@@ -2,12 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import DocumentosPage from "./documentos";
+import EfeitosColateraisPage from "./efeitos-colaterais";
 
 export default function NotFound() {
   const [location] = useLocation();
 
-  // Ponte temporária: mantém o item /documentos funcional mesmo antes da expansão completa do roteador.
+  // Ponte temporária: mantém itens funcionais mesmo antes da expansão completa do roteador.
   if (location === "/documentos") return <DocumentosPage />;
+  if (location === "/efeitos-colaterais") return <EfeitosColateraisPage />;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
