@@ -49,6 +49,9 @@ jobs:
       - name: Audit institutional identity
         run: npm run audit:identity
 
+      - name: Auditar rotas de navegação
+        run: npm run audit:navigation
+
       - name: Audit visual assets
         run: npm run audit:assets
 

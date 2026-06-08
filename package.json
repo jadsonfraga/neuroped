@@ -21,12 +21,13 @@
     "audit:assets": "node scripts/guards/audit-visual-assets.mjs",
     "audit:access": "node scripts/guards/audit-access-policy.mjs",
     "audit:identity": "node scripts/guards/audit-institutional-identity.mjs",
-    "verify": "tsc --noEmit && tsx scripts/guards/validate-catalog.mjs && node scripts/guards/audit-access-policy.mjs && node scripts/guards/audit-institutional-identity.mjs && node scripts/guards/audit-visual-assets.mjs && tsx tests/clinical/test-clinical.mjs && node scripts/audit-a11y.mjs && node scripts/audit-design.mjs && node scripts/audit-lighthouse.mjs && tsx scripts/guards/check-baseline.mjs",
+    "verify": "tsc --noEmit && tsx scripts/guards/validate-catalog.mjs && node scripts/guards/audit-access-policy.mjs && node scripts/guards/audit-institutional-identity.mjs && node scripts/guards/audit-navigation-routes.mjs && node scripts/guards/audit-visual-assets.mjs && tsx tests/clinical/test-clinical.mjs && node scripts/audit-a11y.mjs && node scripts/audit-design.mjs && node scripts/audit-lighthouse.mjs && tsx scripts/guards/check-baseline.mjs",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "lint": "eslint . --ext ts,tsx --max-warnings=0",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "audit:inventory": "node scripts/guards/audit-inventory.mjs"
+    "audit:inventory": "node scripts/guards/audit-inventory.mjs",
+    "audit:navigation": "node scripts/guards/audit-navigation-routes.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",
@@ -40,6 +41,7 @@
     "@radix-ui/react-checkbox": "^1.1.5",
     "@radix-ui/react-collapsible": "^1.1.4",
     "@radix-ui/react-context-menu": "^2.2.7",
+    "@radix-ui/react-dropdown-menu": "^2.1.7",
     "@radix-ui/react-hover-card": "^1.1.7",
     "@radix-ui/react-label": "^2.1.3",
     "@radix-ui/react-menubar": "^1.1.7",
