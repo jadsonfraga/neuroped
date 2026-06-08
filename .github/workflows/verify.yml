@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   verify:
-    name: TypeScript, catalog, access, assets, clinical tests and build
+    name: TypeScript, catalog, access, identity, assets, clinical tests and build
     runs-on: ubuntu-latest
 
     steps:
@@ -46,6 +46,9 @@ jobs:
       - name: Audit access policy
         run: npm run audit:access
 
+      - name: Audit institutional identity
+        run: npm run audit:identity
+
       - name: Audit visual assets
         run: npm run audit:assets
 
@@ -54,14 +57,3 @@ jobs:
 
       - name: Build application
         run: npm run build
-
-      - name: Record verification summary
-        if: always()
-        run: |
-          echo "## Verify NeuroPed" >> "$GITHUB_STEP_SUMMARY"
-          echo "- TypeScript: npm run check" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Catalog: npm run validate:catalog" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Access policy: npm run audit:access" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Visual assets: npm run audit:assets" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Clinical tests: npm run test:clinical" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Build: npm run build" >> "$GITHUB_STEP_SUMMARY"
