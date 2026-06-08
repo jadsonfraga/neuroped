@@ -102,3 +102,14 @@ jobs:
           curl -fsSL https://neuroped.pages.dev/deploy-check.json -o /tmp/cloudflare-deploy-check.json
           cat /tmp/cloudflare-deploy-check.json
           grep "${GITHUB_SHA}" /tmp/cloudflare-deploy-check.json
+
+      - name: Registrar evidência no resumo
+        run: |
+          {
+            echo "## Deploy NeuroPed comprovado"
+            echo ""
+            echo "- Provider: Cloudflare Pages"
+            echo "- URL: https://neuroped.pages.dev/"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Sentinela: https://neuroped.pages.dev/deploy-check.json"
+          } >> "$GITHUB_STEP_SUMMARY"
