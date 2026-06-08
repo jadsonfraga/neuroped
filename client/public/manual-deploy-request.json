@@ -1,8 +1,8 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after access audit cleanup",
-  "requested_at_utc": "2026-06-07T21:52:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after PIN copy, route guard and access audit cleanup",
+  "request": "manual deployment trigger after bug hunt stabilization",
+  "requested_at_utc": "2026-06-07T22:04:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after PIN, access audit, route guard and TypeScript stabilization fixes",
   "fixes": [
     "neutral PIN error message without composition hints",
     "audit:access guards current PIN hash and rejects old hash",
@@ -12,8 +12,10 @@
     "protect /documentos not-found bridge",
     "include /documentos in SENSITIVE_ROUTES",
     "clean fallback route bridge comment wording",
-    "effects page has clinical copy without implementation placeholder"
+    "effects page has clinical copy without implementation placeholder",
+    "add radix dropdown-menu type shim for TypeScript stability"
   ],
+  "known_remaining_local_fix": "Add @radix-ui/react-dropdown-menu as a direct package.json dependency if local npm run check/build still reports module resolution issues.",
   "verify_routes": [
     "#/pre-retorno",
     "#/efeitos-colaterais",
