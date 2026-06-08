@@ -1,8 +1,8 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after logo and medication satisfaction scale update",
-  "requested_at_utc": "2026-06-08T12:05:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after inserting the uploaded Dr. Jadson shield logo and consolidating the medication satisfaction scale naming",
+  "request": "force Cloudflare Pages deploy after dependency hardening",
+  "requested_at_utc": "2026-06-08T12:18:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after adding the missing Radix dropdown dependency required by the current UI bundle",
   "fixes": [
     "master shield logo asset updated from uploaded Dr. Jadson Fraga shield",
     "navigation now exposes /eusm10 as Escala Satisfação Medicação",
@@ -10,6 +10,8 @@
     "filterable catalog now registers Escala Satisfação Medicação as EUSM-10 with route /eusm10",
     "EUSM-10 remains available as Escala Universal de Satisfação com Medicação with 10 items and total maximum 40 points",
     "app routes for /satisfacao-medicacao and /eusm10 are preserved",
+    "@radix-ui/react-dropdown-menu added to package.json to align with package-lock and prevent npm ci/build drift on Cloudflare",
+    "Cloudflare workflow already creates deploy-check.json before build and verifies the public SHA after deployment",
     "no redesign of PR260 filter, CAA, PANT or document flows"
   ],
   "verify_routes": [
@@ -30,6 +32,7 @@
     "/deploy-check.json"
   ],
   "cloudflare_domain": "https://neuroped.pages.dev",
+  "cloudflare_deploy_check": "https://neuroped.pages.dev/deploy-check.json",
   "github_pages_domain": "https://jadsonfraga.github.io/neuroped/",
-  "note": "Use this file plus deploy-check.json to confirm production has received the logo and Escala Satisfação Medicação updates."
+  "note": "Cloudflare deployment is considered proven only when deploy-check.json contains this final commit SHA from the current main branch."
 }
