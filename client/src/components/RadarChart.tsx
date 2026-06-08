@@ -118,9 +118,7 @@ export function RadarChart({ labels, values, maxLabel = "Máx", color = "#7c3aed
 
   if (labels.length < 3) return null;
 
-  return (
-    <div className="flex justify-center">
-      <canvas ref={canvasRef} style={{ width: size, height: size }} />
-    </div>
-  );
-}
+  const ariaSummary = labels
+    .map((label, i) => `${label}: ${Math.round(Math.min(100, Math.max(0, values[i] || 0)))}%`)
+    .join(", ");
+
