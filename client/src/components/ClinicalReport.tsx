@@ -77,6 +77,7 @@ async function sendEmail(
 
   try {
     const res = await apiRequest("POST", "/api/send-report", {
+      to: EMAIL_TO,
       subject,
       body: reportText,
     });
