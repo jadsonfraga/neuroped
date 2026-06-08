@@ -1,36 +1,29 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after clean merge and bug fixes",
-  "requested_at_utc": "2026-06-08T11:20:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after PR401 clean merge, navigation bug fix, clinical report email fallback fix and intensified Home visual layer",
-  "merged": [
-    {
-      "pr": 401,
-      "title": "test(filter): add PR260 golden-rule guard, wire CI audits and document rule",
-      "merge_commit": "4edff1e6d2e5815aa738be8556aa40ab91c9793e"
-    }
-  ],
+  "request": "manual deployment trigger after logo and medication satisfaction scale update",
+  "requested_at_utc": "2026-06-08T12:05:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after inserting the uploaded Dr. Jadson shield logo and consolidating the medication satisfaction scale naming",
   "fixes": [
-    "PR260 filter golden-rule audit merged cleanly",
-    "navigation item Efeitos percebidos now points to /pre-retorno instead of missing /efeitos-colaterais",
-    "clinical report email endpoint now defaults to the professional report address when no explicit recipient is provided",
-    "home opening uses larger Dr. Jadson logo with preserved image proportion",
-    "home includes a drawn boy astronaut built in TSX/Tailwind instead of a plain emoji",
-    "home includes layered mascot tiles around the main SuperNeuroPed mascot",
-    "home central mascot was enlarged and given stronger visual hierarchy",
-    "clinical search, metrics and five main flows were preserved",
-    "no changes were made to scales, PR260 filter behavior, PDF generation, CAA or backend architecture beyond the email fallback"
+    "master shield logo asset updated from uploaded Dr. Jadson Fraga shield",
+    "navigation now exposes /eusm10 as Escala Satisfação Medicação",
+    "existing /satisfacao-medicacao item renamed to Monitorização da medicação to avoid duplicate scale naming",
+    "filterable catalog now registers Escala Satisfação Medicação as EUSM-10 with route /eusm10",
+    "EUSM-10 remains available as Escala Universal de Satisfação com Medicação with 10 items and total maximum 40 points",
+    "app routes for /satisfacao-medicacao and /eusm10 are preserved",
+    "no redesign of PR260 filter, CAA, PANT or document flows"
   ],
   "verify_routes": [
     "#/",
     "#/filtro",
-    "#/pre-consulta",
+    "#/eusm10",
+    "#/satisfacao-medicacao",
     "#/pre-retorno",
     "#/recepcao",
     "#/portal-familia",
     "#/documentos",
     "#/pant",
-    "#/assinatura-digital"
+    "#/assinatura-digital",
+    "#/qualidade"
   ],
   "verify_static": [
     "/manual-deploy-request.json",
@@ -38,5 +31,5 @@
   ],
   "cloudflare_domain": "https://neuroped.pages.dev",
   "github_pages_domain": "https://jadsonfraga.github.io/neuroped/",
-  "note": "Use this file plus the deployed bundle timestamp/hash to confirm production has received the latest main branch state."
+  "note": "Use this file plus deploy-check.json to confirm production has received the logo and Escala Satisfação Medicação updates."
 }
