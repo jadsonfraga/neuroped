@@ -1,13 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { Award, Calendar, ChevronLeft, ChevronRight, Clock, Mail, MapPin, Phone, Shield, Sparkles, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import {
-  Brain, MapPin, Phone, Mail, Globe, Instagram, Clock,
-  GraduationCap, Award, Heart, Stethoscope, Star, Users,
-  Shield, BookOpen, MessageCircle, ChevronLeft, ChevronRight,
-  Zap, Sparkles, Calendar, ExternalLink
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import neuralAbstractImg from "@assets/images/neural-abstract.png";
 import drSelfie from "@assets/images/dr-jadson-selfie.jpeg";
@@ -30,32 +25,32 @@ function PhotoCarousel() {
   const next = () => setCurrent((c) => (c === photos.length - 1 ? 0 : c + 1));
 
   return (
-    <div className="relative group">
-      <div className="overflow-hidden rounded-2xl aspect-[4/3] bg-muted shadow-xl">
+    <div className="group relative">
+      <div className="asset-proportion-box aspect-[4/3] overflow-hidden rounded-2xl bg-muted shadow-xl">
         <img
           src={photos[current].src}
           alt={photos[current].alt}
-          className="w-full h-full object-cover transition-all duration-500"
+          className="no-zoom-media h-full w-full object-contain transition-all duration-500"
         />
-        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-          <p className="text-white text-sm font-medium">{photos[current].caption}</p>
+        <div className="text-overlay-safe absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+          <p className="text-sm font-medium text-white">{photos[current].caption}</p>
         </div>
       </div>
       <button
         onClick={prev}
         aria-label="Foto anterior"
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="h-5 w-5" />
       </button>
       <button
         onClick={next}
         aria-label="Próxima foto"
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="h-5 w-5" />
       </button>
-      <div className="flex justify-center gap-1.5 mt-3">
+      <div className="mt-3 flex justify-center gap-1.5">
         {photos.map((_, i) => (
           <button
             key={i}
@@ -71,122 +66,102 @@ function PhotoCarousel() {
 
 export default function SobrePage() {
   return (
-    <div className="space-y-8 pb-12">
-
-      {/* ═══ HERO BANNER ═══ */}
+    <div className="proportion-safe-page space-y-8 pb-12">
       <div className="relative overflow-hidden rounded-3xl">
-        <img src={neuralAbstractImg} alt="" className="w-full h-56 object-cover" />
+        <img src={neuralAbstractImg} alt="" className="h-56 w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-        <div className="absolute bottom-0 inset-x-0 p-6 flex items-end gap-4">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-background shadow-2xl flex-shrink-0">
-            <img src={drJadsonMasterShieldLogo} alt="Dr. Jadson Fraga" className="w-full h-full object-contain bg-white" />
+        <div className="absolute bottom-0 inset-x-0 flex items-end gap-4 p-6">
+          <div className="asset-proportion-box h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border-4 border-background bg-white shadow-2xl">
+            <img src={drJadsonMasterShieldLogo} alt="Dr. Jadson Fraga" className="no-zoom-media h-full w-full object-contain" />
           </div>
           <div>
-            <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 mb-1">
-              <Star className="w-3 h-3 mr-1" /> Neuropediatra Mais Recomendado de Petrolina
+            <Badge className="mb-1 border-amber-500/30 bg-amber-500/20 text-amber-600 dark:text-amber-400">
+              <Star className="mr-1 h-3 w-3" /> Neuropediatria infantil em Petrolina
             </Badge>
             <h1 className="text-xl font-black text-foreground">Dr. Jadson Fraga Araújo Júnior</h1>
           </div>
         </div>
       </div>
 
-      {/* ═══ IDENTITY CARD ═══ */}
-      <Card className="border-primary/20 shadow-lg overflow-hidden">
+      <Card className="overflow-hidden border-primary/20 shadow-lg">
         <div className="h-1.5 bg-gradient-to-r from-primary via-chart-2 to-primary" />
-        <CardContent className="p-6 space-y-5">
-          <div className="flex flex-col sm:flex-row items-center gap-5">
-            <div className="w-28 h-28 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 ring-2 ring-primary/20">
-              <img src={drSelfie} alt="Dr. Jadson Fraga" className="w-full h-full object-cover" />
+        <CardContent className="space-y-5 p-6">
+          <div className="flex flex-col items-center gap-5 sm:flex-row">
+            <div className="asset-proportion-box h-28 w-28 flex-shrink-0 overflow-hidden rounded-2xl bg-muted shadow-lg ring-2 ring-primary/20">
+              <img src={drSelfie} alt="Dr. Jadson Fraga" className="no-zoom-media h-full w-full object-contain" />
             </div>
-            <div className="text-center sm:text-left space-y-1.5">
+            <div className="space-y-1.5 text-center sm:text-left">
               <h2 className="text-lg font-bold text-foreground">Neurologista Infantil / Neuropediatra</h2>
-              <p className="text-sm text-primary font-semibold">O SuperNeuroPed</p>
-              <p className="text-xs text-muted-foreground italic">“Cada criança é um universo. Meu papel é decifrar esse universo com ciência, empatia e respeito.”</p>
+              <p className="text-sm font-semibold text-primary">O SuperNeuroPed</p>
+              <p className="text-xs italic text-muted-foreground">“Cada criança é um universo. Meu papel é decifrar esse universo com ciência, empatia e respeito.”</p>
             </div>
           </div>
 
-          {/* CRM / RQE */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-              <Shield className="w-4 h-4 text-primary" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2 rounded-xl border border-primary/10 bg-primary/5 p-3">
+              <Shield className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">CRM-PE</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">CRM-PE</p>
                 <p className="text-sm font-bold text-foreground">25227</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-              <Shield className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2 rounded-xl border border-amber-500/10 bg-amber-500/5 p-3">
+              <Award className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">CRM-BA</p>
-                <p className="text-sm font-bold text-foreground">23384</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-              <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">RQE</p>
-                <p className="text-sm font-bold text-foreground">17756 / 14499 / 13119</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">RQE</p>
+                <p className="text-sm font-bold text-foreground">17756</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* ═══ PHOTO GALLERY ═══ */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          Consultório e Bastidores
+        <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
+          <Sparkles className="h-4 w-4 text-amber-500" />
+          Consultório e bastidores
         </h2>
         <PhotoCarousel />
       </div>
 
-      {/* ═══ CONTATO E AGENDAMENTO ═══ */}
-      <Card className="border-emerald-500/20 shadow-lg overflow-hidden">
+      <Card className="overflow-hidden border-emerald-500/20 shadow-lg">
         <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
-        <CardContent className="p-6 space-y-4">
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Phone className="w-4 h-4 text-emerald-600" />
-            Agendamento e Contato
+        <CardContent className="space-y-4 p-6">
+          <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+            <Phone className="h-4 w-4 text-emerald-600" />
+            Agendamento e contato
           </h2>
 
           <div className="grid gap-3">
-            {/* Petrolina */}
-            <div className="p-4 rounded-xl bg-muted/50 border space-y-2">
+            <div className="space-y-2 rounded-xl border bg-muted/50 p-4">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
+                <MapPin className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Petrolina — PE</span>
                 <Badge variant="outline" className="text-[10px]">Principal</Badge>
               </div>
-              <p className="text-xs text-muted-foreground pl-6">Rua Raimundo Lacerda, 1 — CEP 56302-470</p>
-              <p className="text-xs text-muted-foreground pl-6 flex items-center gap-1.5">
-                <Clock className="w-3 h-3" /> Segunda a sexta, 8h às 16h
+              <p className="pl-6 text-xs text-muted-foreground">Rua Raimundo Lacerda, nº 001 — Bairro São José — CEP 56302-470</p>
+              <p className="flex items-center gap-1.5 pl-6 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" /> Segunda a sexta, 8h às 16h
               </p>
-            </div>
-
-            {/* Juazeiro */}
-            <div className="p-4 rounded-xl bg-muted/50 border space-y-2">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-chart-2" />
-                <span className="text-sm font-bold text-foreground">Juazeiro — BA</span>
-              </div>
-              <p className="text-xs text-muted-foreground pl-6">Rua do Paraíso, 409</p>
             </div>
           </div>
 
-          {/* Contact buttons */}
           <div className="grid grid-cols-2 gap-2">
-            <a href="tel:+558732013648">
+            <a href="tel:+5587991097371">
               <Button variant="outline" className="w-full gap-2">
-                <Phone className="w-4 h-4" /> Ligar
+                <Phone className="h-4 w-4" /> Ligar
               </Button>
             </a>
             <a href="mailto:drjadsonfraga@proton.me">
               <Button variant="outline" className="w-full gap-2">
-                <Mail className="w-4 h-4" /> E-mail
+                <Mail className="h-4 w-4" /> E-mail
               </Button>
             </a>
           </div>
+
+          <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" /> Dados institucionais revisados para uso público no NeuroPed.
+          </p>
         </CardContent>
       </Card>
     </div>
