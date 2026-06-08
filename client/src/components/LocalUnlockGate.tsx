@@ -118,7 +118,7 @@ export function LocalUnlockGate({ onUnlocked }: LocalUnlockGateProps) {
           {status === "error" && (
             <div className="flex items-start gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
               <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-              <span>Senha incorreta. Toque no olho para conferir maiúsculas, números e símbolo antes de tentar novamente.</span>
+              <span>Senha incorreta. Verifique e tente novamente.</span>
             </div>
           )}
 
