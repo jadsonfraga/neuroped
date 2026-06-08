@@ -9,7 +9,11 @@ import {
   Filter,
   LineChart,
   Pill,
+  Rocket,
   Search,
+  ShieldCheck,
+  Sparkles,
+  Star,
   Stethoscope,
   Users,
   X,
@@ -17,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AssetShowcase, BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
+import { AssetShowcase, BrandWatermark, SafeAssetImage, brandAssets } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
@@ -103,8 +107,210 @@ const metricCards = [
   { label: "Rotas/páginas", value: appMetrics.pageCount, icon: FileText },
 ];
 
+const openingSkeletonRows = [92, 76, 64] as const;
+
+const orbitAssets = [
+  {
+    id: "brain",
+    src: brandAssets.illustrations.heroBrain,
+    label: "Cérebro infantil",
+    position: "left-4 top-6",
+    delay: 0.1,
+  },
+  {
+    id: "assessment",
+    src: brandAssets.illustrations.childAssessment,
+    label: "Avaliação infantil",
+    position: "right-8 top-10",
+    delay: 0.22,
+  },
+  {
+    id: "team",
+    src: brandAssets.illustrations.teamMultiprofessional,
+    label: "Equipe multiprofissional",
+    position: "left-10 bottom-8",
+    delay: 0.34,
+  },
+] as const;
+
 function normalize(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (value: string) => void }) {
+  return (
+    <section className="relative overflow-hidden rounded-[2.25rem] border border-amber-200/30 bg-gradient-to-br from-slate-950 via-red-950 to-slate-900 p-4 text-white shadow-xl shadow-red-950/10 sm:p-6 lg:p-7">
+      <BrandWatermark className="right-0 top-0 h-56 w-56 opacity-[0.08] dark:opacity-[0.1]" />
+      <div className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-28 right-8 h-64 w-64 rounded-full bg-teal-300/15 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-x-6 top-6 h-px bg-gradient-to-r from-transparent via-amber-200/50 to-transparent" aria-hidden="true" />
+
+      <div className="relative grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="rounded-full border border-amber-200/20 bg-amber-300/15 text-amber-100 hover:bg-amber-300/15">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Abertura premium
+            </Badge>
+            <Badge className="rounded-full border border-teal-200/20 bg-teal-300/10 text-teal-50 hover:bg-teal-300/10">
+              <ShieldCheck className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              NeuroPed EDJ
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88, rotate: -3 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: duration.normal, ease: easing.smooth }}
+              className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28"
+            >
+              <div className="absolute inset-0 rounded-[2rem] bg-amber-300/35 blur-xl" aria-hidden="true" />
+              <SafeAssetImage
+                src={brandAssets.masterShield}
+                alt="Logo Dr. Jadson Fraga"
+                className="no-zoom-media relative h-full w-full rounded-[1.65rem] bg-white object-contain p-1.5 shadow-2xl ring-2 ring-amber-200/70"
+                fallbackClassName="h-full w-full"
+              />
+              <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-amber-300 text-red-950 shadow-lg ring-2 ring-white/60" aria-hidden="true">
+                <Star className="h-4 w-4 fill-current" />
+              </span>
+            </motion.div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-100/85">Dr. Jadson Fraga</p>
+              <h1 className="text-3xl font-black leading-none tracking-tight sm:text-5xl" data-testid="text-page-title">
+                NeuroPed
+              </h1>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-amber-50/80">
+                Cockpit clínico pediátrico com mascotes, figuras oficiais, busca rápida e visual de entrada mais forte — sem zoom forçado, sem corte agressivo e com proporção preservada.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Métricas reais do app">
+            {metricCards.map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="rounded-2xl border border-white/10 bg-white/8 p-3 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-amber-100">
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-xl font-black text-white">{metric.value}</span>
+                  </div>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-50/70">{metric.label}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="relative max-w-xl" data-testid="search-container">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-100/70" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Buscar escala, questionário, inventário, página..."
+              className="h-12 rounded-2xl border-white/15 bg-white/10 pl-10 pr-10 text-sm text-white placeholder:text-amber-50/55 focus-visible:ring-amber-200/60"
+              data-testid="input-search"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-100/70 hover:text-white"
+                aria-label="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="relative min-h-[330px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:min-h-[380px]">
+          <div className="absolute inset-4 rounded-[1.6rem] border border-dashed border-amber-200/20" aria-hidden="true" />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+            className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/15"
+            aria-hidden="true"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
+            className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/10"
+            aria-hidden="true"
+          />
+
+          {orbitAssets.map((asset) => (
+            <motion.div
+              key={asset.id}
+              initial={{ opacity: 0, y: 10, scale: 0.92 }}
+              animate={{ opacity: 1, y: [0, -7, 0], scale: 1 }}
+              transition={{ delay: asset.delay, duration: 3.8, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+              className={`asset-proportion-box absolute ${asset.position} hidden h-16 w-16 rounded-3xl border border-white/10 bg-white/90 p-2 shadow-lg sm:flex`}
+            >
+              <SafeAssetImage src={asset.src} alt={asset.label} className="no-zoom-media h-full w-full object-contain" />
+            </motion.div>
+          ))}
+
+          <div className="relative z-10 flex h-full min-h-[300px] flex-col items-center justify-center gap-5 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: duration.slow, ease: easing.smooth }}
+              className="relative"
+            >
+              <div className="absolute inset-0 rounded-full bg-amber-200/25 blur-2xl" aria-hidden="true" />
+              <div className="mascot-proportion-box relative h-40 w-40 rounded-[2rem] border border-amber-200/30 bg-white/95 p-3 shadow-2xl sm:h-48 sm:w-48">
+                <SafeAssetImage
+                  src={brandAssets.mascots.superDoctor}
+                  alt="Mascote Dr. Jadson SuperNeuroPed"
+                  className="no-zoom-media h-full w-full object-contain"
+                  fallbackClassName="h-full w-full"
+                />
+              </div>
+            </motion.div>
+
+            <motion.figure
+              initial={{ opacity: 0, x: 18, rotate: 5 }}
+              animate={{ opacity: 1, x: 0, y: [0, -6, 0], rotate: [2, -2, 2] }}
+              transition={{ delay: 0.2, duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-5 right-4 rounded-[1.5rem] border border-amber-200/25 bg-slate-950/60 px-3 py-2 text-left shadow-xl backdrop-blur"
+              aria-label="Menino astronauta explorando o NeuroPed"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-4xl leading-none" aria-hidden="true">👨‍🚀</span>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-100">modo exploração</p>
+                  <p className="text-[11px] text-amber-50/75">menino astronauta</p>
+                </div>
+              </div>
+            </motion.figure>
+
+            <div className="w-full max-w-xs rounded-3xl border border-white/10 bg-slate-950/45 p-3 text-left shadow-inner backdrop-blur">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">
+                  <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
+                  carregando cockpit
+                </div>
+                <span className="rounded-full bg-emerald-300/15 px-2 py-0.5 text-[10px] font-bold text-emerald-100">visual ok</span>
+              </div>
+              <div className="space-y-2" aria-hidden="true">
+                {openingSkeletonRows.map((width, index) => (
+                  <div key={width} className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${width}%` }}
+                      transition={{ delay: 0.25 + index * 0.08, duration: 0.55, ease: easing.smooth }}
+                      className="h-full rounded-full bg-gradient-to-r from-amber-200 via-yellow-400 to-teal-200"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
@@ -170,6 +376,8 @@ export default function HomePage() {
 
   return (
     <div className="page-enter proportion-safe-page space-y-6 pb-8">
+      <HomeOpeningVisual searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+
       <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur sm:p-7">
         <BrandWatermark className="right-4 top-4 h-40 w-40" />
         <div className="asset-proportion-box pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" aria-hidden="true">
@@ -177,46 +385,14 @@ export default function HomePage() {
         </div>
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
           <div className="space-y-4">
-            <BrandMark size="md" showWordmark subtitle="Cockpit clínico NeuroPed" />
             <div className="max-w-2xl space-y-2">
               <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">App médico premium · números dinâmicos</Badge>
-              <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl" data-testid="text-page-title">
+              <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
                 Painel clínico de decisão
-              </h1>
+              </h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Escolha o caminho da consulta: aplicar escala, encontrar instrumento, abrir paciente, gerar documento ou acompanhar evolução. Os números exibidos vêm do catálogo real do app.
               </p>
-            </div>
-            <div className="grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Métricas reais do app">
-              {metricCards.map((metric) => {
-                const Icon = metric.icon;
-                return (
-                  <div key={metric.label} className="rounded-2xl border border-border/70 bg-background/60 p-3">
-                    <div className="flex items-center gap-2 text-primary"><Icon className="h-4 w-4" /><span className="text-xl font-black text-foreground">{metric.value}</span></div>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{metric.label}</p>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="relative max-w-xl" data-testid="search-container">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala, questionário, inventário, página..."
-                className="h-11 rounded-2xl border-border/80 bg-background/70 pl-10 pr-10 text-sm"
-                data-testid="input-search"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label="Limpar busca"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
             </div>
           </div>
           <div className="hidden justify-center lg:flex">
