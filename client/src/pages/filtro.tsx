@@ -204,6 +204,17 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
   return { label: "clínico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
 }
 
+function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas: string[], selectedAge: string | null): string[] {
+  if (!scale) return [];
+  const reasons: string[] = [];
+  if (selectedQueixas.length > 0 && scale.queixas.some((q) => selectedQueixas.includes(q))) reasons.push("✓ Queixa");
+  if (selectedAge && matchAge(scale, selectedAge)) reasons.push("✓ Idade");
+  if (scale.appRoute) reasons.push("✓ Rota direta");
+  if (scale.prioridade === "triagem") reasons.push("✓ Triagem");
+  if (scale.respondente.includes("professor")) reasons.push("✓ Escola");
+  return reasons.length ? reasons : ["✓ Compatibilidade geral"];
+}
+
 export default function FiltroPage() {
   const [search, setSearch] = useState("");
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
@@ -285,7 +296,7 @@ export default function FiltroPage() {
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs"><RotateCcw className="h-3.5 w-3.5" /> limpar</Button>}
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.label}</button>)}
+            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition flex items-center gap-2 ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm">{q.emoji}</span>}{q.label}</button>)}
           </div>
         </div>
       </section>
@@ -293,28 +304,40 @@ export default function FiltroPage() {
       {hasSearch ? <section className="space-y-3">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
-          {ranking.map((item) => (
-            <Link key={item.slot} href={item.route} className="block h-full">
-              <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
-                <CardContent className="filter-260-card-content">
-                  <div className="filter-260-medalrow">
-                    <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
-                  </div>
-                  <div className="filter-260-head">
-                    <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
-                      <p className="filter-260-subtitle">{item.subtitle}</p>
+          {ranking.map((item) => {
+            const reasons = getRecommendationReasons(
+              item.title !== "Sem escala ideal" ? rankedPool.find(s => s.name === item.title) : undefined,
+              selectedQueixas,
+              selectedAge
+            );
+            return (
+              <Link key={item.slot} href={item.route} className="block h-full">
+                <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
+                  <CardContent className="filter-260-card-content">
+                    <div className="filter-260-medalrow">
+                      <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
                     </div>
-                  </div>
-                  <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
-                  <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
-                  {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
-                  <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                    <div className="filter-260-head">
+                      <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
+                        <p className="filter-260-subtitle">{item.subtitle}</p>
+                      </div>
+                    </div>
+                    {reasons.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
+                      </div>
+                    )}
+                    <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
+                    <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
+                    {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
+                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
       </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
