@@ -18,14 +18,12 @@ import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { CommandPalette } from "@/components/CommandPalette";
 
-// ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import SessionExpiredPage from "@/pages/session-expired";
 import LgpdConsentPage from "@/pages/lgpd-consent";
 
-// ----- Lazy: paginas educativas (publicas) -----
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -97,7 +95,6 @@ const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
 const MarcosDesenvolvimentoPage = lazy(() => import("@/pages/marcos-desenvolvimento"));
 const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
 
-// ----- Lazy: paginas SENSIVEIS (requerem auth ou PIN master local) -----
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
@@ -110,7 +107,7 @@ const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
-const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades"));
+const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
 const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
 const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
 const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
