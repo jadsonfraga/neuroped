@@ -113,3 +113,23 @@ jobs:
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Comprovar deploy público
+        run: |
+          echo "Deploy publicado em: ${{ steps.deployment.outputs.page_url }}"
+          echo "Aguardando propagação curta do GitHub Pages..."
+          sleep 20
+          curl -fsSL "${{ steps.deployment.outputs.page_url }}deploy-check.json" -o /tmp/github-pages-deploy-check.json
+          cat /tmp/github-pages-deploy-check.json
+          grep "${GITHUB_SHA}" /tmp/github-pages-deploy-check.json
+
+      - name: Registrar evidência no resumo
+        run: |
+          {
+            echo "## Deploy NeuroPed comprovado"
+            echo ""
+            echo "- Provider: GitHub Pages"
+            echo "- URL: ${{ steps.deployment.outputs.page_url }}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Sentinela: ${{ steps.deployment.outputs.page_url }}deploy-check.json"
+          } >> "$GITHUB_STEP_SUMMARY"
