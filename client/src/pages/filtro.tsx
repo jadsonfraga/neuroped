@@ -135,62 +135,84 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
 function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
   const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
   let value = 0;
-
-  // PRIORIDADE MÁXIMA: Ter rota implementada no app
+  for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
+  for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
+  if (selectedAge && matchAge(scale, selectedAge)) value += 3;
   if (scale.appRoute) value += 100;
-
-  // Match de queixa
-  for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 20;
-
-  // Match de idade
-  if (selectedAge && matchAge(scale, selectedAge)) value += 15;
-
-  // Busca por texto
-  for (const token of norm(query).split(/\s+/).filter(Boolean)) {
-    if (text.includes(token)) value += norm(scale.name).includes(token) ? 10 : 3;
-  }
-
-  // Prioridades menores
-  if (scale.prioridade === "triagem") value += 5;
-  if (scale.respondente.includes("professor")) value += 2;
-  if (scale.id.startsWith("world-")) value += 0.5;
-
+  if (scale.prioridade === "triagem") value += 2;
+  if (scale.respondente.includes("professor")) value += 1;
+  if (scale.id.startsWith("world-")) value += 0.8;
   return value;
 }
 
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: string | null = null) {
-  // Filtro clínico: APENAS escalas que combinam
-  let base = catalog.filter((s) => matchAge(s, selectedAge));
+// Padrões clínicos ouro: assinatura de sintomas → escala padrão-ouro
+interface ClinicalPattern {
+  name: string;
+  signature: string[]; // queixas que formam o padrão
+  goldStandard: string; // ID da escala ouro
+  reason: string;
+}
 
-  // Se houver queixa selecionada, filtrar por ela
-  if (selectedQueixas.length > 0) {
-    base = base.filter((s) => s.queixas.some((q) => selectedQueixas.includes(q)));
+const clinicalPatterns: ClinicalPattern[] = [
+  // TEA: traço social + comportamento + linguagem/atraso
+  { name: "Suspeita TEA (padrão social-comportamental)", signature: ["tea", "comportamento", "linguagem"], goldStandard: "ados2", reason: "ADOS-2 é padrão-ouro diagnóstico de TEA quando há combinação de déficit social, comportamento restritivo e comunicação" },
+  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%" },
+
+  // TDAH: desatenção + hiperatividade + impulsividade/comportamento
+  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", reason: "SNAP-IV é validado DSM-5 para triagem de TDAH com 18 itens diretos; responde pais/professor" },
+  { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional—funções prejudicadas no TDAH" },
+
+  // Desenvolvimento global
+  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
+  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", reason: "Denver II é rastreio padrão-ouro para marcos de desenvolvimento; 4 domínios, 30-45 itens" },
+
+  // Ansiedade infantil
+  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", reason: "SCARED é padrão-ouro para triagem de ansiedade em crianças; 41 itens, 5 subescalas (pânico, generalizada, separação, social, evitação escolar)" },
+  { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
+
+  // Comportamento disruptivo
+  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", reason: "CBCL é padrão-ouro para triagem de psicopatologia infantil; 100 itens, problemas internalizantes/externalizantes/sociais" },
+  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ é breve (25 itens) com versão criança/pais/professor; detecta problemas comportamentais e acadêmicos" },
+
+  // Linguagem/Comunicação
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
+];
+
+function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null): ClinicalPattern | null {
+  if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrão
+
+  // Busca padrão com melhor match (quantas queixas coincidem)
+  let bestMatch: { pattern: ClinicalPattern; score: number } | null = null;
+
+  for (const pattern of clinicalPatterns) {
+    const matchCount = pattern.signature.filter((s) => selectedQueixas.includes(s)).length;
+    const score = matchCount / pattern.signature.length; // % de match
+
+    if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { pattern, score };
+    }
   }
 
-  // Se houver respondente selecionado, filtrar por ele
-  if (selectedRespondente) {
-    base = base.filter((s) => s.respondente.includes(selectedRespondente as any));
-  }
+  return bestMatch?.pattern ?? null;
+}
 
-  // Score e ordenar por score (respeitando ordem natural)
-  const ranked = unique(base)
+function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null) {
+  const base = catalog.filter((s) => {
+    // Filtro de pré-consulta: apenas triagem/diagnóstico, não monitorização
+    if (s.prioridade === "monitorizacao") return false;
+    // Excluir queixas que são pós-consulta (reavaliação, efeitos colaterais, evolução)
+    const postConsultComplaints = ["efeitos", "evolucao"];
+    if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
+
+    const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
+    const matchesAge = matchAge(s, selectedAge);
+    const matchesRespondente = !selectedRespondente || s.respondente.includes(selectedRespondente);
+    return matchesQueixa && matchesAge && matchesRespondente;
+  });
+  return unique(base.length ? base : catalog)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
-    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name));
-
-  // PRIORIDADE: Mostrar APENAS com appRoute se houver queixa selecionada
-  if (selectedQueixas.length > 0) {
-    const withRoute = ranked.filter((x) => x.scale.appRoute);
-    const withoutRoute = ranked.filter((x) => !x.scale.appRoute);
-
-    // Se há com rota, mostrar só esses; senão, mostrar tudo
-    return (withRoute.length > 0 ? withRoute : ranked).map((x) => x.scale);
-  }
-
-  // Se nenhuma queixa: mostrar tudo, mas priorizando appRoute
-  const withRoute = ranked.filter((x) => x.scale.appRoute);
-  const withoutRoute = ranked.filter((x) => !x.scale.appRoute);
-
-  return [...withRoute, ...withoutRoute].map((x) => x.scale);
+    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
+    .map((x) => x.scale);
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -201,31 +223,16 @@ function tierFromSlot(slot: Slot): Tier | null {
 }
 
 function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string) {
-  if (!scale) {
-    return {
-      slot,
-      tier: tierFromSlot(slot),
-      route: "/filtro",
-      title: "Sem recomendação",
-      subtitle: "Refine idade, queixa ou termo pesquisado",
-      reason,
-      state: "Nenhum instrumento corresponde aos critérios.",
-      source: undefined,
-      tone,
-    };
-  }
-
-  const restricted = scale.licencaUso === "restrita" || scale.licencaUso === "comercial" || scale.licencaUso === "contato_autor";
-
+  const restricted = scale?.licencaUso === "restrita" || scale?.licencaUso === "comercial" || scale?.licencaUso === "contato_autor";
   return {
     slot,
     tier: tierFromSlot(slot),
-    route: scale.appRoute || "/escalas-neuropsiquiatria", // SÓ vai pro catálogo se não tiver rota
-    title: scale.name,
-    subtitle: scale.fullName,
+    route: scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
+    title: scale?.name || "Sem escala ideal",
+    subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
     reason,
-    state: scale.appRoute ? "✅ Rota direta disponível - clique para abrir" : restricted ? "📋 Ficha clínica; sem permissão formal para embutir." : "🔍 No catálogo filtrável",
-    source: scale.fonte,
+    state: scale?.appRoute ? "Rota direta disponível." : restricted ? "Ficha clínica; não embutir itens/escore sem permissão formal." : "Catálogo filtrável; aplicação direta ainda não implementada.",
+    source: scale?.fonte,
     tone,
   };
 }
@@ -275,7 +282,7 @@ export default function FiltroPage() {
   const [search, setSearch] = useState("");
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
-  const [selectedRespondente, setSelectedRespondente] = useState<string | null>(null);
+  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -296,21 +303,32 @@ export default function FiltroPage() {
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente);
   const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
 
-  // GARANTIR que os slots principais usam só appRoute quando há queixa
-  const withRoute = rankedPool.filter((s) => s.appRoute);
-  const topOuro = withRoute[0] || rankedPool[0];
-  const topPrata = withRoute[1] || withRoute[0] || rankedPool[0];
-  const topBronze = withRoute[2] || withRoute[1] || withRoute[0] || rankedPool[0];
-  const direct = withRoute[0] || rankedPool.find((s) => s.appRoute);
+  // Detecta padrão clínico ouro quando 2+ queixas selecionadas
+  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
+  const goldStandardScale = useMemo(() => {
+    if (!detectedPattern) return null;
+    return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
+  }, [detectedPattern, rankedPool]);
+
+  const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
 
-  const ranking = [
-    rec("Ouro", topOuro, "✅ Melhor match: implementado no app + compatível com idade/queixa.", "from-amber-500 via-yellow-600 to-red-800"),
-    rec("Prata", topPrata, "✅ Segunda opção implementada: alternativa complementar.", "from-slate-400 via-slate-500 to-slate-700"),
-    rec("Bronze", topBronze, "✅ Terceira opção: apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-    rec("Teste Direto", direct, "✅ Rota direta: clique para abrir e aplicar agora.", "from-blue-600 via-indigo-700 to-slate-950"),
-    rec("Questionário Escolar", school, "📋 Com respondente professor: para uso escolar/contextual.", "from-emerald-600 via-teal-700 to-slate-950"),
-  ];
+  // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
+  const ranking = goldStandardScale
+    ? [
+        rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || rankedPool[0], "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || rankedPool[0], "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
+      ]
+    : [
+        rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+      ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -318,18 +336,17 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null);
   };
 
-  const resultsHeaderRef = useRef<HTMLDivElement>(null);
+  const resultsSectionRef = useRef<HTMLDivElement>(null);
 
   // Scroll suavemente para resultados quando aparecem
   useEffect(() => {
-    if (hasSearch && resultsHeaderRef.current) {
+    if (hasSearch && resultsSectionRef.current) {
       setTimeout(() => {
-        const top = resultsHeaderRef.current?.getBoundingClientRect().top ?? 0;
-        window.scrollBy({ top: top - 100, behavior: "smooth" });
-      }, 150);
+        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     }
   }, [hasSearch]);
 
@@ -378,28 +395,31 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de teste</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>🧒 Direto com criança</button>
-            <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>👨‍👩‍👧 Questionário pais</button>
-            <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>👨‍🏫 Questionário escola</button>
-            <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>👨‍⚕️ Teste clínico</button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa clínica</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa clínica</p>
+              {detectedPattern && <span className="inline-block px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[10px] font-bold text-amber-900 dark:text-amber-200">🧠 {detectedPattern.name}</span>}
+            </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs"><RotateCcw className="h-3.5 w-3.5" /> limpar</Button>}
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-2xl border px-3 py-3 sm:px-3 sm:py-2 text-left text-xs font-bold transition flex items-center gap-2 min-h-12 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm flex-shrink-0">{q.emoji}</span>}<span className="truncate">{q.label}</span></button>)}
           </div>
         </div>
+
+        <div className="space-y-2 pt-2 border-t border-border/50">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de respondente</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold transition min-h-10 flex items-center gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🧒</span> Direto com criança</button>
+            <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold transition min-h-10 flex items-center gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍👩‍👧</span> Questionário pais</button>
+            <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold transition min-h-10 flex items-center gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍🏫</span> Questionário escola</button>
+            <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold transition min-h-10 flex items-center gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍⚕️</span> Teste clínico</button>
+          </div>
+        </div>
       </section>
 
-      {hasSearch ? <section className="space-y-3">
-        <div ref={resultsHeaderRef}><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+      {hasSearch ? <section ref={resultsSectionRef} className="space-y-3">
+        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
           {ranking.map((item) => {
             const reasons = getRecommendationReasons(
