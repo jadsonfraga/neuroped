@@ -41,6 +41,25 @@ type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "
 const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
 
+const EUSM10_FILTER_SCALE: ScaleEntry = {
+  id: "eusm10",
+  name: "EUSM-10",
+  fullName: "Escala Universal de Satisfação com Medicação",
+  ageMin: 0,
+  ageMax: 216,
+  queixas: ["efeitos", "evolucao"],
+  respondente: ["pais", "autoaplicavel", "clinico"],
+  prioridade: "monitorizacao",
+  tempo: "3–5 min",
+  appRoute: "/eusm10",
+  description: "Instrumento breve de 10 itens para acompanhar benefício percebido, tolerabilidade, adesão, segurança familiar e viabilidade prática de qualquer medicação nos últimos 7 a 14 dias. Útil quando há dúvida sobre efeitos colaterais, perda de eficácia, troca de dose, aceitação do paciente ou decisão compartilhada de manter a medicação.",
+  fonte: "Dr. Jadson Fraga, NeuroPed — EUSM-10 (2026)",
+  licencaUso: "autoral",
+  validacaoBrasil: "Autoral — uso clínico local",
+  scoringCutoff: "0–10 muito baixa; 11–20 baixa; 21–28 intermediária; 29–35 boa; 36–40 excelente",
+  pendente_validacao_clinica: false,
+};
+
 function norm(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
@@ -71,6 +90,8 @@ function guessQueixas(category: string, name: string) {
   if (/eat|scoff|aliment/.test(t)) set.add("alimentacao");
   if (/sono|sleep|psq|bears/.test(t)) set.add("sono");
   if (/pain|dor/.test(t)) set.add("dor");
+  if (/medic|remedio|farmaco|dose|efeito|side effect|adesao|tolerab|satisfacao/.test(t)) set.add("efeitos");
+  if (/evolu|monitor|retorno|follow/.test(t)) set.add("evolucao");
   if (/cogn|promis|toolbox|life|family|peer|relationship|mobility|upper/.test(t)) set.add("funcionalidade");
   if (/school|professor|teacher|aprendiz/.test(t)) set.add("aprendizagem");
   return set.size ? Array.from(set) : ["funcionalidade"];
@@ -177,7 +198,7 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
   if (/sono|sleep|bears|psq|cshq/.test(t)) return { label: "sono", Icon: Moon, tone: "from-indigo-700 via-blue-900 to-slate-950" };
   if (/ansiedade|depress|humor|mood|phq|gad|scared|rcads|scas/.test(t)) return { label: "humor", Icon: HeartPulse, tone: "from-rose-600 via-red-700 to-slate-950" };
   if (/desenvolvimento|milestone|cdc|swyc|atraso|motor|gmfcs/.test(t)) return { label: "desenvolvimento", Icon: Baby, tone: "from-blue-600 via-indigo-700 to-slate-950" };
-  if (/medic|dose|farmaco|risperidona|metilfenidato/.test(t)) return { label: "medicação", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
+  if (/eusm|medic|dose|farmaco|risperidona|metilfenidato|tolerab|adesao|efeito/.test(t)) return { label: "medicação", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
   if (/pais|parent|cuidador|family/.test(t)) return { label: "família", Icon: Users, tone: "from-slate-600 via-slate-800 to-slate-950" };
 
   return { label: "clínico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
@@ -203,7 +224,7 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]), [world]);
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
   const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
@@ -247,7 +268,7 @@ export default function FiltroPage() {
       <section className="space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: autismo, TDAH, atraso, escola, ansiedade, trauma, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: medicação, efeitos, satisfação, autismo, TDAH, escola, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
           {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 
