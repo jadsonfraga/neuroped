@@ -24,6 +24,8 @@ import { sendEmail } from "./lib/email.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerFileRoutes } from "./routes/files.js";
 
+const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
+
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // ----- Auth: register, login, refresh, logout, me, change-password -----
   registerAuthRoutes(app);
@@ -295,7 +297,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     });
     try {
       const parsed = schema.parse(req.body);
-      const recipient = parsed.to || req.user!.email;
+      const recipient = parsed.to || PROFESSIONAL_REPORT_EMAIL;
       const result = await sendEmail({
         to: recipient,
         subject: parsed.subject,
