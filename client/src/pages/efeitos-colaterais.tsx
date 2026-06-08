@@ -13,14 +13,19 @@ export default function EfeitosColateraisPage() {
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">relato familiar</Badge>
             <h1 className="text-2xl font-black tracking-tight text-foreground">Checklist de efeitos colaterais</h1>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Rota reservada para coleta estruturada de relatos antes da consulta.</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Registro inicial de sintomas percebidos pela família durante o tratamento.</p>
           </div>
         </div>
       </header>
 
       <Card>
         <CardContent className="space-y-3 p-4">
-          <p className="text-sm text-muted-foreground">Implementar aqui o formulário local-first de relatos familiares, mantendo linguagem prudente e sem orientar ajuste de conduta.</p>
+          <p className="text-sm text-muted-foreground">
+            Use o pré-retorno familiar para registrar sintomas ou efeitos percebidos. O relato não define causalidade e não orienta ajuste de dose sem avaliação médica.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Em caso de falta de ar, inchaço, febre, lesões extensas, piora rápida, palpitações, rigidez ou movimentos involuntários, a família deve procurar orientação médica individualizada.
+          </p>
         </CardContent>
       </Card>
     </div>
