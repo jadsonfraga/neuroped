@@ -35,7 +35,8 @@ export function RouteGuard({
   roles?: Array<"admin" | "professional" | "reader" | "operator">;
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const routeIsSensitive = isRouteSensitive(location);
   const [locallyUnlocked, setLocallyUnlocked] = useState(() => hasClinicalUnlock());
 
   useEffect(() => {
@@ -47,6 +48,10 @@ export function RouteGuard({
     window.addEventListener(localUnlockEventName, handleLockEvent);
     return () => window.removeEventListener(localUnlockEventName, handleLockEvent);
   }, []);
+
+  if (!routeIsSensitive) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (

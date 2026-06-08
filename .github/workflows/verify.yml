@@ -57,3 +57,19 @@ jobs:
 
       - name: Build application
         run: npm run build
+
+      - name: Build client application
+        run: npm run build:client
+
+      - name: Record verification summary
+        if: always()
+        run: |
+          echo "## NeuroPed verify" >> "$GITHUB_STEP_SUMMARY"
+          echo "- TypeScript: npm run check" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Catalog: npm run validate:catalog" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Access policy: npm run audit:access" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Identity: npm run audit:identity" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Visual assets: npm run audit:assets" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Clinical tests: npm run test:clinical" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Build: npm run build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Client build: npm run build:client" >> "$GITHUB_STEP_SUMMARY"

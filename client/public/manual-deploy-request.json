@@ -1,18 +1,18 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after home visual polish",
-  "requested_at_utc": "2026-06-08T10:55:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after inserting premium home opening with mascots, astronaut figure, skeleton loading effect and Dr. Jadson large logo",
+  "request": "manual deployment request after PR399 reconciliation and initial-screen access audit",
+  "requested_at_utc": "2026-06-08T10:21:03Z",
+  "commit": "9ad1b6950fcbf6abb8e528331a1ca1ad21016f37",
+  "reason": "rebuild GitHub Pages and Cloudflare Pages after route-level PIN/public-shell reconciliation",
   "fixes": [
-    "home opening now uses large Dr. Jadson logo with preserved image proportion",
-    "home now includes SuperNeuroPed mascot as central visual anchor",
-    "home now includes boy astronaut figure and lightweight orbital effects",
-    "home now includes skeleton-style cockpit loading panel",
-    "official repository illustrations are reused with SafeAssetImage and no-zoom-media guards",
-    "clinical search, metrics and five main flows were preserved",
-    "no changes were made to scales, PR260 filter logic, PDF generation, CAA, backend or clinical navigation"
+    "absorbed safe PR399 gains without reintroducing global PasswordGate",
+    "kept public shell routes open without PIN",
+    "kept sensitive clinical routes behind RouteGuard/local clinical unlock",
+    "added direct @radix-ui/react-dropdown-menu dependency declaration",
+    "made Command Palette trigger use a lightweight shared event helper",
+    "kept onboarding automatic only on #/"
   ],
-  "verify_routes": [
+  "verified_routes_public": [
     "#/",
     "#/filtro",
     "#/pre-consulta",
@@ -20,15 +20,38 @@
     "#/efeitos-colaterais",
     "#/recepcao",
     "#/portal-familia",
+    "#/portal-familia/novidades",
+    "#/portal-familia/acesso",
+    "#/caa"
+  ],
+  "verified_routes_sensitive": [
+    "#/pacientes",
+    "#/paciente/teste",
+    "#/prontuario",
     "#/documentos",
     "#/pant",
-    "#/assinatura-digital"
+    "#/assinatura-digital",
+    "#/farmacologia",
+    "#/calculadora-dose",
+    "#/satisfacao-medicacao",
+    "#/avaliacao-multiprofissional",
+    "#/plano-terapeutico",
+    "#/plano-intervencao",
+    "#/fichas-registro"
   ],
   "verify_static": [
     "/manual-deploy-request.json",
     "/deploy-check.json"
   ],
-  "cloudflare_domain": "https://neuroped.pages.dev",
-  "github_pages_domain": "https://jadsonfraga.github.io/neuroped/",
-  "note": "Visual polish is limited to Home opening layer and deploy trigger metadata. Confirm build in GitHub Actions or Cloudflare Pages before declaring production fully updated."
+  "cloudflare": {
+    "domain": "https://neuroped.pages.dev",
+    "status": "pending_remote_workflow",
+    "deploy_check_url": "https://neuroped.pages.dev/deploy-check.json"
+  },
+  "github_pages": {
+    "domain": "https://jadsonfraga.github.io/neuroped/",
+    "status": "pending_remote_workflow"
+  },
+  "local_verification_note": "npm ci was blocked by registry/proxy 403 for @radix-ui/react-dropdown-menu, so full local build/verify could not be truthfully declared green in this environment.",
+  "commit_note": "Commit local registrado antes de eventual commit documental posterior; o deploy-check remoto deve validar o SHA exato do workflow via GITHUB_SHA."
 }

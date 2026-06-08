@@ -186,3 +186,29 @@ Post-deploy routes to verify:
 - public: `https://jadsonfraga.github.io/neuroped/#/pre-retorno`
 - protected: `https://jadsonfraga.github.io/neuroped/#/pant`
 - protected: `https://jadsonfraga.github.io/neuroped/#/assinatura-digital`
+
+## 2026-06-08 — Reconciliação PR #399 e auditoria de acesso inicial
+
+Commit de reconciliação/documentação local registrado: `9ad1b6950fcbf6abb8e528331a1ca1ad21016f37`. Observação: o deploy remoto deve validar o SHA exato executado pelo workflow via `GITHUB_SHA`.
+
+Resumo:
+- PR #399 reconciliado manualmente sem merge cego.
+- Eventos da Command Palette extraídos para helper leve.
+- Componentes auxiliares do shell (`PreferencesPanel`, `Onboarding`, `CommandPalette`, `WelcomeTour`) carregados via lazy/Suspense sem fallback bloqueante.
+- `RouteGuard` reforçado para liberar rotas não sensíveis e manter PIN apenas em áreas clínicas.
+- `verify.yml` passa a exigir build completo e build client explícito.
+- Dependência direta `@radix-ui/react-dropdown-menu` declarada.
+
+Build/check local:
+- `npm ci`: falhou por bloqueio ambiental do registry/proxy ao baixar `@radix-ui/react-dropdown-menu` (`403 Forbidden`).
+- `npm ci --ignore-scripts --offline`: falhou porque o pacote não estava em cache local.
+- `npm run audit:access`: OK.
+- `npm run audit:identity`: OK.
+- `npm run audit:assets`: OK.
+- `npm run audit:design`: OK após corrigir o auditor para ignorar `client/src/styles/tokens.css`, que é o arquivo legítimo de design tokens.
+- `npm run check`, `validate:catalog`, `test:clinical`, `build:client` e `verify`: bloqueados pela instalação incompleta após a falha de `npm ci`.
+
+Deploy:
+- GitHub Pages: não confirmado nesta sessão; não há remote configurado para push.
+- Cloudflare Pages: não confirmado nesta sessão; não há remote/credenciais, e secrets não puderam ser verificados.
+- `https://neuroped.pages.dev/deploy-check.json`: pendente de workflow remoto com o SHA final.

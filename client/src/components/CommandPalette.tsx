@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/command";
 import { useRecents } from "@/hooks/useFavorites";
 import { navigablePages } from "@/data/navigation";
+import { commandPaletteOpenEventName } from "@/lib/commandPaletteEvents";
 import { Clock, Search } from "lucide-react";
 
 /**
@@ -15,12 +16,6 @@ import { Clock, Search } from "lucide-react";
  * teclado é nativa do cmdk (setas, Enter, Esc). Realça o termo buscado.
  */
 
-const OPEN_EVENT = "neuroped:open-command";
-
-/** Dispara a abertura da paleta de qualquer lugar (ex.: botão do header). */
-export function openCommandPalette() {
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(OPEN_EVENT));
-}
 
 /** Forma mínima usada pela paleta (evita import estático do catálogo pesado). */
 interface NavScale {
@@ -88,10 +83,10 @@ export function CommandPalette() {
     };
     const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    window.addEventListener(OPEN_EVENT, onOpen);
+    window.addEventListener(commandPaletteOpenEventName, onOpen);
     return () => {
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener(OPEN_EVENT, onOpen);
+      window.removeEventListener(commandPaletteOpenEventName, onOpen);
     };
   }, []);
 

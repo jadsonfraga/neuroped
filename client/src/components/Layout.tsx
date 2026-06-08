@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { openCommandPalette } from "@/components/CommandPalette";
+import { openCommandPalette } from "@/lib/commandPaletteEvents";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";

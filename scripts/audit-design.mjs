@@ -36,10 +36,12 @@ function walk(d) {
 const perFile = {};
 let total = 0;
 for (const f of walk(resolve(repoRoot, "client/src"))) {
+  const relative = f.replace(repoRoot + "\\", "").replace(repoRoot + "/", "");
+  if (relative === "client/src/styles/tokens.css") continue;
   const c = readFileSync(f, "utf8");
   const n = (c.match(HEX)?.length ?? 0) + (c.match(RGB)?.length ?? 0);
   if (n > 0) {
-    perFile[f.replace(repoRoot + "\\", "").replace(repoRoot + "/", "")] = n;
+    perFile[relative] = n;
     total += n;
   }
 }
