@@ -452,14 +452,54 @@
     line-height: 1.4;
   }
 
-  @media (max-width: 520px) {
+  /* Mobile-first responsive adjustments */
+  @media (max-width: 640px) {
     .filter-260-grid,
     .filter-260-grid.compact {
       grid-template-columns: 1fr;
+      gap: 8px;
     }
 
     .filter-260-card-content {
-      padding: 16px 14px 14px;
+      padding: 14px 12px 12px;
+      gap: 8px;
+    }
+
+    .filter-260-medal {
+      font-size: 10px;
+      padding: 4px 10px;
+    }
+
+    .filter-260-title {
+      font-size: 15px;
+    }
+
+    .filter-260-title.small {
+      font-size: 13px;
+    }
+
+    .filter-260-symbol {
+      width: 40px;
+      height: 40px;
+    }
+
+    .filter-260-symbol.small {
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  /* Tablet adjustments */
+  @media (min-width: 641px) and (max-width: 768px) {
+    .filter-260-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+  }
+
+  /* Ensure proper spacing at all zoom levels */
+  @media (prefers-reduced-motion: no-preference) {
+    .filter-260-card {
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     }
   }
 }
