@@ -88,12 +88,16 @@ for (const route of sensitiveRoutes) {
 }
 
 for (const route of protectedBridgeRoutes) {
+  if (!guard.includes(`"${route}"`)) {
+    fail(`Ponte sensível ausente do registro central RouteGuard.SENSITIVE_ROUTES: ${route}`);
+  }
+
   const routeIndex = notFound.indexOf(`location === "${route}"`);
   if (routeIndex === -1) {
     fail(`Ponte sensível ausente de not-found.tsx: ${route}`);
     continue;
   }
-  const routeSnippet = notFound.slice(routeIndex, routeIndex + 260);
+  const routeSnippet = notFound.slice(routeIndex, routeIndex + 320);
   if (!routeSnippet.includes("RouteGuard") && !routeSnippet.includes("<Protected")) {
     fail(`Ponte sensível sem proteção em not-found.tsx: ${route}`);
   }
