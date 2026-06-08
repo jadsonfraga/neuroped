@@ -107,7 +107,7 @@ const metricCards = [
   { label: "Rotas/páginas", value: appMetrics.pageCount, icon: FileText },
 ];
 
-const openingSkeletonRows = [92, 76, 64] as const;
+const openingSkeletonRows = [96, 82, 68] as const;
 
 const orbitAssets = [
   {
@@ -133,8 +133,53 @@ const orbitAssets = [
   },
 ] as const;
 
+const heroMascotTiles = [
+  {
+    id: "consultorio-superman",
+    src: brandAssets.mascots.consultorioSuperman,
+    label: "Mascote consultório",
+    className: "left-3 top-28 h-20 w-20 rotate-[-5deg]",
+    delay: 0.18,
+  },
+  {
+    id: "dr-arte",
+    src: brandAssets.mascots.celebrationArt,
+    label: "Mascote celebração",
+    className: "right-4 top-32 h-20 w-20 rotate-[5deg]",
+    delay: 0.32,
+  },
+] as const;
+
 function normalize(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function AstronautExplorer() {
+  return (
+    <motion.figure
+      initial={{ opacity: 0, x: 18, rotate: 5 }}
+      animate={{ opacity: 1, x: 0, y: [0, -7, 0], rotate: [2, -2, 2] }}
+      transition={{ delay: 0.2, duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute bottom-5 right-4 w-44 rounded-[1.5rem] border border-amber-200/25 bg-slate-950/65 px-3 py-2 text-left shadow-xl backdrop-blur"
+      aria-label="Menino astronauta explorando o NeuroPed"
+    >
+      <div className="flex items-center gap-3">
+        <div className="relative h-14 w-14 shrink-0" aria-hidden="true">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white via-slate-100 to-amber-100 shadow-lg ring-2 ring-amber-200/60" />
+          <div className="absolute left-2.5 top-3 h-8 w-9 rounded-full bg-gradient-to-br from-sky-200 via-slate-800 to-slate-950 ring-2 ring-white/70" />
+          <div className="absolute left-4 top-5 h-1.5 w-1.5 rounded-full bg-white/80" />
+          <div className="absolute -bottom-2 left-3.5 h-7 w-7 rounded-2xl bg-gradient-to-br from-white via-slate-100 to-amber-100 shadow-md ring-2 ring-amber-200/50" />
+          <div className="absolute -bottom-1 left-1 h-4 w-3 rounded-full bg-white shadow-sm" />
+          <div className="absolute -bottom-1 right-1 h-4 w-3 rounded-full bg-white shadow-sm" />
+          <Rocket className="absolute -right-2 -top-1 h-5 w-5 rotate-12 text-amber-300 drop-shadow" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-100">modo exploração</p>
+          <p className="text-[11px] leading-snug text-amber-50/80">menino astronauta guiando a entrada clínica</p>
+        </div>
+      </div>
+    </motion.figure>
+  );
 }
 
 function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (value: string) => void }) {
@@ -163,7 +208,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               initial={{ opacity: 0, scale: 0.88, rotate: -3 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: duration.normal, ease: easing.smooth }}
-              className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28"
+              className="relative h-28 w-28 shrink-0 sm:h-32 sm:w-32"
             >
               <div className="absolute inset-0 rounded-[2rem] bg-amber-300/35 blur-xl" aria-hidden="true" />
               <SafeAssetImage
@@ -182,7 +227,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
                 NeuroPed
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-amber-50/80">
-                Cockpit clínico pediátrico com mascotes, figuras oficiais, busca rápida e visual de entrada mais forte — sem zoom forçado, sem corte agressivo e com proporção preservada.
+                Um painel clínico pediátrico com identidade própria: mascotes, figuras lúdicas discretas, busca rápida e entrada visual mais nobre para iniciar a consulta com clareza.
               </p>
             </div>
           </div>
@@ -224,7 +269,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
           </div>
         </div>
 
-        <div className="relative min-h-[330px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:min-h-[380px]">
+        <div className="relative min-h-[380px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:min-h-[420px]">
           <div className="absolute inset-4 rounded-[1.6rem] border border-dashed border-amber-200/20" aria-hidden="true" />
           <motion.div
             animate={{ rotate: 360 }}
@@ -251,7 +296,19 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
             </motion.div>
           ))}
 
-          <div className="relative z-10 flex h-full min-h-[300px] flex-col items-center justify-center gap-5 text-center">
+          {heroMascotTiles.map((asset) => (
+            <motion.div
+              key={asset.id}
+              initial={{ opacity: 0, scale: 0.86 }}
+              animate={{ opacity: 1, y: [0, -5, 0], scale: 1 }}
+              transition={{ delay: asset.delay, duration: 4, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+              className={`mascot-proportion-box absolute z-10 hidden rounded-[1.35rem] border border-amber-200/25 bg-white/95 p-1.5 shadow-xl sm:flex ${asset.className}`}
+            >
+              <SafeAssetImage src={asset.src} alt={asset.label} className="no-zoom-media h-full w-full rounded-[1rem] object-contain" />
+            </motion.div>
+          ))}
+
+          <div className="relative z-10 flex h-full min-h-[350px] flex-col items-center justify-center gap-5 text-center">
             <motion.div
               initial={{ opacity: 0, y: 14, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -259,7 +316,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               className="relative"
             >
               <div className="absolute inset-0 rounded-full bg-amber-200/25 blur-2xl" aria-hidden="true" />
-              <div className="mascot-proportion-box relative h-40 w-40 rounded-[2rem] border border-amber-200/30 bg-white/95 p-3 shadow-2xl sm:h-48 sm:w-48">
+              <div className="mascot-proportion-box relative h-52 w-52 rounded-[2.25rem] border border-amber-200/30 bg-white/95 p-3 shadow-2xl sm:h-60 sm:w-60">
                 <SafeAssetImage
                   src={brandAssets.mascots.superDoctor}
                   alt="Mascote Dr. Jadson SuperNeuroPed"
@@ -269,29 +326,15 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               </div>
             </motion.div>
 
-            <motion.figure
-              initial={{ opacity: 0, x: 18, rotate: 5 }}
-              animate={{ opacity: 1, x: 0, y: [0, -6, 0], rotate: [2, -2, 2] }}
-              transition={{ delay: 0.2, duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute bottom-5 right-4 rounded-[1.5rem] border border-amber-200/25 bg-slate-950/60 px-3 py-2 text-left shadow-xl backdrop-blur"
-              aria-label="Menino astronauta explorando o NeuroPed"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-4xl leading-none" aria-hidden="true">👨‍🚀</span>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-100">modo exploração</p>
-                  <p className="text-[11px] text-amber-50/75">menino astronauta</p>
-                </div>
-              </div>
-            </motion.figure>
+            <AstronautExplorer />
 
             <div className="w-full max-w-xs rounded-3xl border border-white/10 bg-slate-950/45 p-3 text-left shadow-inner backdrop-blur">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">
                   <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
-                  carregando cockpit
+                  preparando consulta
                 </div>
-                <span className="rounded-full bg-emerald-300/15 px-2 py-0.5 text-[10px] font-bold text-emerald-100">visual ok</span>
+                <span className="rounded-full bg-emerald-300/15 px-2 py-0.5 text-[10px] font-bold text-emerald-100">pronto</span>
               </div>
               <div className="space-y-2" aria-hidden="true">
                 {openingSkeletonRows.map((width, index) => (
@@ -450,7 +493,7 @@ export default function HomePage() {
           <AssetShowcase
             variant="clinical"
             title="Mascotes e figuras clínicas em uso"
-            subtitle="As imagens oficiais do repositório aparecem com proporção preservada, sem zoom forçado nem cortes agressivos."
+            subtitle="Imagens oficiais do repositório integradas à experiência da Home com proporção estável, leitura limpa e função estética clara."
             max={6}
           />
 
