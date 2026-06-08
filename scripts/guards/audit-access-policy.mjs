@@ -69,6 +69,10 @@ if (!guard.includes("LocalUnlockGate")) {
   fail("RouteGuard.tsx deve renderizar LocalUnlockGate para rotas sensíveis quando necessário.");
 }
 
+if (!guard.includes("localUnlockEventName") || !guard.includes("addEventListener(localUnlockEventName")) {
+  fail("RouteGuard.tsx deve escutar localUnlockEventName para reagir a lockApp()/unlockApp().");
+}
+
 for (const route of sensitiveRoutes) {
   if (!guard.includes(`"${route}"`)) {
     fail(`Rota sensível ausente do registro central: ${route}`);
