@@ -21,7 +21,7 @@ async function sha256Hex(value: string): Promise<string> {
 
 function emitUnlockState(): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: isAppUnlocked() } }));
+  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: hasClinicalUnlock() } }));
 }
 
 export async function verifyUnlockPassword(input: string): Promise<boolean> {
