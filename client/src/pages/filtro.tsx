@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { curatedBoost, clinicianOnlyPenalty } from "@/data/preConsultaCurated";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -156,6 +157,10 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
   if (scale.prioridade === "triagem") value += 2;
   if (scale.respondente.includes("professor")) value += 1;
   if (scale.id.startsWith("world-")) value += 0.8;
+  // Curadoria clínica de pré-consulta: primeira linha por queixa/comorbidade
+  // domina o ranking; avaliações formais do médico (sem rota, só clínico) afundam.
+  value += curatedBoost(scale.appRoute, selectedQueixas);
+  value += clinicianOnlyPenalty(scale.appRoute, scale.respondente, scale.prioridade);
   return value;
 }
 
@@ -341,5 +346,4 @@ export default function FiltroPage() {
             </Link>
           ))}
         </div>
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
-      </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas ex
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóst
