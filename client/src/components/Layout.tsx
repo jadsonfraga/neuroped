@@ -249,9 +249,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </button>
           {!collapsed && (
             <Link href="/filtro">
-              <div className="flex min-h-[38px] cursor-pointer items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15">
-                <Filter className="h-4 w-4" aria-hidden="true" />
-                Filtrar por idade e queixa
+              <div
+                className="relative flex min-h-[48px] cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-300/20 via-primary/10 to-teal-400/10 px-3 py-2 text-primary shadow-sm ring-1 ring-amber-300/15 transition-colors hover:border-amber-300/70 hover:bg-amber-300/15"
+                data-testid="nav-golden-filter-shortcut"
+              >
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-300 via-yellow-500 to-teal-300" aria-hidden="true" />
+                <Filter className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-black leading-tight">Filtro Clínico Inteligente</p>
+                  <p className="truncate text-[10px] font-semibold text-muted-foreground">idade + queixa · PR260 protegido</p>
+                </div>
               </div>
             </Link>
           )}
@@ -283,6 +290,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <div id={`nav-section-${si}`} className="space-y-1">
                     {section.items.map((item) => {
                       const active = location === item.href;
+                      const isGoldenFilter = item.href === "/filtro";
                       return (
                         <Link key={`${sectionKey}-${item.href}-${item.label}`} href={item.href}>
                           <div
@@ -295,21 +303,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
                               active
                                 ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
+                                : isGoldenFilter
+                                  ? "border border-amber-300/30 bg-amber-300/10 text-sidebar-foreground hover:border-amber-300/60 hover:bg-amber-300/15 hover:translate-x-0.5"
+                                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
                             } ${collapsed ? "md:justify-center" : ""}`}
                           >
                             <item.icon
                               className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                                active ? "text-primary scale-110" : ""
+                                active ? "text-primary scale-110" : isGoldenFilter ? "text-amber-600 dark:text-amber-300" : ""
                               }`}
-                              strokeWidth={active ? 2 : 1.75}
+                              strokeWidth={active || isGoldenFilter ? 2 : 1.75}
                               aria-hidden="true"
                             />
                             {!collapsed && (
-                              <span className="text-xs truncate">{item.label}</span>
+                              <span className="min-w-0 flex-1 truncate text-xs">{item.label}</span>
                             )}
                             {collapsed && (
                               <span className="text-xs truncate md:hidden">{item.label}</span>
+                            )}
+                            {isGoldenFilter && !collapsed && !active && (
+                              <span className="ml-auto rounded-full bg-amber-300/20 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-amber-700 dark:text-amber-200">
+                                ouro
+                              </span>
                             )}
                             {active && !collapsed && (
                               <motion.div
