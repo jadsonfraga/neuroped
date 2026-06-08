@@ -10,6 +10,7 @@ import { hasClinicalUnlock } from "@/lib/localUnlock";
 export const SENSITIVE_ROUTES = [
   "/pant",
   "/assinatura-digital",
+  "/documentos",
   "/pacientes",
   "/paciente/",
   "/prontuario",
