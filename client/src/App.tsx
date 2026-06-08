@@ -235,6 +235,11 @@ function AppRouter() {
   );
 }
 
+function getCurrentHashPath(): string {
+  if (typeof window === "undefined") return "/";
+  return window.location.hash.replace(/^#/, "") || "/";
+}
+
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
@@ -247,6 +252,8 @@ function App() {
 
   useEffect(() => {
     if (!splashComplete) return;
+    const currentPath = getCurrentHashPath();
+    if (currentPath !== "/") return;
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);
