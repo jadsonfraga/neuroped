@@ -135,22 +135,52 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
 function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
   const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
   let value = 0;
-  for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
-  for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
-  if (selectedAge && matchAge(scale, selectedAge)) value += 3;
-  if (scale.appRoute) value += 3;
-  if (scale.prioridade === "triagem") value += 2;
-  if (scale.respondente.includes("professor")) value += 1;
-  if (scale.id.startsWith("world-")) value += 0.8;
+
+  // PRIORIDADE MÁXIMA: Ter rota implementada no app
+  if (scale.appRoute) value += 100;
+
+  // Match de queixa
+  for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 20;
+
+  // Match de idade
+  if (selectedAge && matchAge(scale, selectedAge)) value += 15;
+
+  // Busca por texto
+  for (const token of norm(query).split(/\s+/).filter(Boolean)) {
+    if (text.includes(token)) value += norm(scale.name).includes(token) ? 10 : 3;
+  }
+
+  // Prioridades menores
+  if (scale.prioridade === "triagem") value += 5;
+  if (scale.respondente.includes("professor")) value += 2;
+  if (scale.id.startsWith("world-")) value += 0.5;
+
   return value;
 }
 
 function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null) {
-  const base = catalog.filter((s) => (selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q))) && matchAge(s, selectedAge));
-  return unique(base.length ? base : catalog)
+  // Filtrar por critérios clínicos
+  const base = catalog.filter((s) =>
+    (selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q))) &&
+    matchAge(s, selectedAge)
+  );
+
+  // Se houver resultados, usar; senão retornar catálogo inteiro
+  const candidates = base.length ? base : catalog;
+
+  // Score e ordenar
+  const ranked = unique(candidates)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
-    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
-    .map((x) => x.scale);
+    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name));
+
+  // GARANTIR QUE OS 5 PRIMEIROS TÊÑEM appRoute quando possível
+  const withRoute = ranked.filter((x) => x.scale.appRoute);
+  const withoutRoute = ranked.filter((x) => !x.scale.appRoute);
+
+  return [
+    ...withRoute.slice(0, 5),
+    ...withoutRoute
+  ].map((x) => x.scale);
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -161,16 +191,31 @@ function tierFromSlot(slot: Slot): Tier | null {
 }
 
 function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string) {
-  const restricted = scale?.licencaUso === "restrita" || scale?.licencaUso === "comercial" || scale?.licencaUso === "contato_autor";
+  if (!scale) {
+    return {
+      slot,
+      tier: tierFromSlot(slot),
+      route: "/filtro",
+      title: "Sem recomendação",
+      subtitle: "Refine idade, queixa ou termo pesquisado",
+      reason,
+      state: "Nenhum instrumento corresponde aos critérios.",
+      source: undefined,
+      tone,
+    };
+  }
+
+  const restricted = scale.licencaUso === "restrita" || scale.licencaUso === "comercial" || scale.licencaUso === "contato_autor";
+
   return {
     slot,
     tier: tierFromSlot(slot),
-    route: scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
-    title: scale?.name || "Sem escala ideal",
-    subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
+    route: scale.appRoute || "/escalas-neuropsiquiatria", // SÓ vai pro catálogo se não tiver rota
+    title: scale.name,
+    subtitle: scale.fullName,
     reason,
-    state: scale?.appRoute ? "Rota direta disponível." : restricted ? "Ficha clínica; não embutir itens/escore sem permissão formal." : "Catálogo filtrável; aplicação direta ainda não implementada.",
-    source: scale?.fonte,
+    state: scale.appRoute ? "✅ Rota direta disponível - clique para abrir" : restricted ? "📋 Ficha clínica; sem permissão formal para embutir." : "🔍 No catálogo filtrável",
+    source: scale.fonte,
     tone,
   };
 }
