@@ -1,25 +1,31 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after intensified home hero polish",
-  "requested_at_utc": "2026-06-08T11:05:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after strengthening the Home opening visual layer with larger Dr. Jadson logo, drawn astronaut, layered mascots, premium skeleton panel and official asset composition",
+  "request": "manual deployment trigger after clean merge and bug fixes",
+  "requested_at_utc": "2026-06-08T11:20:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after PR401 clean merge, navigation bug fix, clinical report email fallback fix and intensified Home visual layer",
+  "merged": [
+    {
+      "pr": 401,
+      "title": "test(filter): add PR260 golden-rule guard, wire CI audits and document rule",
+      "merge_commit": "4edff1e6d2e5815aa738be8556aa40ab91c9793e"
+    }
+  ],
   "fixes": [
-    "home opening now uses a larger Dr. Jadson logo with preserved image proportion",
-    "home now includes a drawn boy astronaut built in TSX/Tailwind instead of a plain emoji",
-    "home now includes layered mascot tiles around the main SuperNeuroPed mascot",
+    "PR260 filter golden-rule audit merged cleanly",
+    "navigation item Efeitos percebidos now points to /pre-retorno instead of missing /efeitos-colaterais",
+    "clinical report email endpoint now defaults to the professional report address when no explicit recipient is provided",
+    "home opening uses larger Dr. Jadson logo with preserved image proportion",
+    "home includes a drawn boy astronaut built in TSX/Tailwind instead of a plain emoji",
+    "home includes layered mascot tiles around the main SuperNeuroPed mascot",
     "home central mascot was enlarged and given stronger visual hierarchy",
-    "home skeleton panel text was refined from technical loading language to clinical preparation language",
-    "hero copy was refined to sound more clinical and less implementation-oriented",
-    "official repository illustrations are reused with SafeAssetImage and no-zoom-media guards",
     "clinical search, metrics and five main flows were preserved",
-    "no changes were made to scales, PR260 filter logic, PDF generation, CAA, backend or clinical navigation"
+    "no changes were made to scales, PR260 filter behavior, PDF generation, CAA or backend architecture beyond the email fallback"
   ],
   "verify_routes": [
     "#/",
     "#/filtro",
     "#/pre-consulta",
     "#/pre-retorno",
-    "#/efeitos-colaterais",
     "#/recepcao",
     "#/portal-familia",
     "#/documentos",
@@ -32,5 +38,5 @@
   ],
   "cloudflare_domain": "https://neuroped.pages.dev",
   "github_pages_domain": "https://jadsonfraga.github.io/neuroped/",
-  "note": "Visual polish remains limited to Home opening layer and deploy trigger metadata. Confirm build in GitHub Actions or Cloudflare Pages before declaring production fully updated."
+  "note": "Use this file plus the deployed bundle timestamp/hash to confirm production has received the latest main branch state."
 }
