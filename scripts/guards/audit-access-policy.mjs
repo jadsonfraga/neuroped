@@ -5,6 +5,7 @@ const root = process.cwd();
 const appPath = join(root, "client/src/App.tsx");
 const routeGuardPath = join(root, "client/src/components/RouteGuard.tsx");
 const localUnlockPath = join(root, "client/src/lib/localUnlock.ts");
+const localUnlockGatePath = join(root, "client/src/components/LocalUnlockGate.tsx");
 const notFoundPath = join(root, "client/src/pages/not-found.tsx");
 
 function read(path) {
@@ -19,7 +20,13 @@ function fail(message) {
 const app = read(appPath);
 const guard = read(routeGuardPath);
 const unlock = read(localUnlockPath);
+const unlockGate = read(localUnlockGatePath);
 const notFound = read(notFoundPath);
+
+const CURRENT_PIN_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
+const OLD_PIN_HASHES = [
+  "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207",
+];
 
 const sensitiveRoutes = [
   "/pant",
@@ -55,6 +62,24 @@ if (app.includes("LocalUnlockGate")) {
 
 if (app.includes("isAppUnlocked") || app.includes("localUnlockEventName")) {
   fail("App.tsx não deve depender de isAppUnlocked/localUnlockEventName para abrir a casca pública.");
+}
+
+if (!unlock.includes(CURRENT_PIN_HASH)) {
+  fail("localUnlock.ts não contém o hash autorizado atual do PIN master.");
+}
+
+for (const oldHash of OLD_PIN_HASHES) {
+  if (unlock.includes(oldHash)) {
+    fail("localUnlock.ts ainda contém hash antigo de PIN master.");
+  }
+}
+
+if (/Clarice11@08|vasco1108/i.test(unlock) || /Clarice11@08|vasco1108/i.test(unlockGate)) {
+  fail("PIN master não deve aparecer em texto claro no código-fonte.");
+}
+
+if (/maiúsculas|maiusculas|símbolo|simbolo|números|numeros/i.test(unlockGate)) {
+  fail("Mensagem de senha incorreta não deve dar pistas sobre composição da senha.");
 }
 
 if (!guard.includes("export const SENSITIVE_ROUTES")) {
