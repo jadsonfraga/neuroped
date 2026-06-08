@@ -49,6 +49,12 @@ jobs:
       - name: Auditar identidade institucional
         run: npm run audit:identity
 
+      - name: Auditar navegação
+        run: npm run audit:navigation
+
+      - name: Auditar Filtro PR260
+        run: npm run audit:filter
+
       - name: Auditar assets visuais
         run: npm run audit:assets
 

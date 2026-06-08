@@ -1,58 +1,47 @@
-# NeuroPed — Filtro Clinico Inteligente: Regra de Ouro Intocavel
+# NeuroPed — Filtro Clínico Inteligente: Regra de Ouro Intocável
 
 Data: 2026-06-08
 
-## Decisao de produto
+## Decisão permanente de produto
 
-O Filtro Clinico Inteligente e area nobre do NeuroPed.
+O Filtro Clínico Inteligente é área nobre do NeuroPed.
 
-Ele deve permanecer destacado no app, mas sua estetica e sua forma de filtrar devem preservar o comportamento consolidado no PR #260.
+A estética e a forma de filtrar consolidadas no PR #260 são intocáveis, salvo ordem explícita do Dr. Jadson. Esta regra existe para impedir que ajustes de navegação, deploy, identidade visual ou manutenção técnica redesenhem indiretamente o filtro.
 
-## Regra principal
+## Escopo permitido
 
-Nao alterar a estetica, hierarquia, proporcao, medalhas, cards, fluxo de busca ou forma de filtragem do Filtro Clinico Inteligente sem ordem explicita do Dr. Jadson.
+Só é permitido destacar o acesso ao filtro no app, como atalho superior, selo discreto ou realce do item de navegação `/filtro`.
 
-## O que deve ser preservado
+Esse destaque deve respeitar a identidade premium discreta do NeuroPed, sem trocar paleta, sem criar zoom, sem criar corte visual e sem overlay bloqueando clique.
 
-- busca textual por termo clinico;
-- filtro por idade;
-- filtro por queixa clinica;
-- ranking obrigatorio com Ouro, Prata, Bronze, Teste Direto e Questionario Escolar;
-- cards em coluna com proporcao estavel;
-- medalha em linha propria;
-- faixa superior por tier;
-- classes `container-filtro` e `filter-260-*`;
-- responsividade mobile em coluna unica;
-- ausencia de zoom, corte visual ou overlay bloqueando clique.
+## Arquivo interno protegido
 
-## O que foi permitido nesta rodada
+Não redesenhar `client/src/pages/filtro.tsx`.
 
-Apenas destacar o acesso ao filtro no app:
+Qualquer alteração nesse arquivo deve ser tratada como exceção clínica/técnica objetiva, nunca como redesenho visual. Antes de tocar no arquivo, é obrigatório confirmar que a matriz PR260 permanece intacta.
 
-- atalho superior no menu lateral;
-- reforco visual do item `/filtro` no menu;
-- sinalizacao de que o PR260 esta protegido.
+## Elementos que devem ser preservados
 
-## O que nao foi alterado
+- Preservar o ranking Ouro/Prata/Bronze/Teste Direto/Questionário Escolar.
+- Preservar a busca textual.
+- Preservar o filtro por idade.
+- Preservar o filtro por queixa clínica.
+- Preservar as classes `container-filtro` e `filter-260-*`.
+- Preservar cards em coluna, gap vertical e medalha em linha própria.
+- Preservar a faixa superior por tier.
+- Preservar a hierarquia visual: medalha → símbolo → título/subtítulo → motivo/evidência → estado → ação.
+- Preservar a responsividade mobile em coluna única.
+- Preservar a proporção dos ícones com `object-fit: contain` e sem zoom/corte.
+- Preservar a ausência de overlay bloqueando clique.
 
-- `client/src/pages/filtro.tsx` nao foi redesenhado;
-- a logica de filtragem nao foi trocada;
-- a matriz visual PR260 nao foi substituida;
-- o comportamento Ouro/Prata/Bronze foi mantido.
+## Trava automatizada
 
-## Arquivos protegidos
+A auditoria `npm run audit:filter` deve reprovar quando tokens essenciais do PR260 desaparecerem de:
 
-- `client/src/pages/filtro.tsx`
-- `client/src/index.css`
-- `docs/GOLDEN_RULE_FILTRO_PR260.md`
+- `client/src/pages/filtro.tsx`;
+- `client/src/index.css`;
+- `docs/GOLDEN_RULE_FILTRO_PR260.md`.
 
 ## Critério de aceite
 
-Ao abrir `/filtro`:
-
-1. o filtro deve manter a mesma experiencia visual PR260;
-2. a busca por termo deve continuar funcionando;
-3. idade e queixa devem continuar filtrando;
-4. os cards de recomendacao devem manter medalha, hierarquia e proporcao;
-5. nada deve ficar cortado ou com zoom inesperado;
-6. o menu deve destacar o filtro como area nobre do app.
+Ao abrir `/filtro`, o usuário deve ver o Filtro Clínico Inteligente valorizado como área central do NeuroPed, mas com a estética, hierarquia, proporção e forma de filtragem do PR #260 preservadas integralmente.
