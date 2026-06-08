@@ -1,15 +1,16 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after initial-screen access audit",
-  "requested_at_utc": "2026-06-08T10:45:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after auditing and correcting initial-screen blocking behavior",
+  "request": "manual deployment trigger after home visual polish",
+  "requested_at_utc": "2026-06-08T10:55:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after inserting premium home opening with mascots, astronaut figure, skeleton loading effect and Dr. Jadson large logo",
   "fixes": [
-    "main.tsx confirmed without global PasswordGate",
-    "home, filtro, pre-consulta, pre-retorno, efeitos-colaterais, recepcao and portal-familia confirmed as public routes",
-    "onboarding now auto-opens only on Home and no longer covers direct public routes",
-    "audit:access now guards onboarding against direct-route blocking",
-    "splash remains time-limited and not PIN-based",
-    "clinical routes remain protected by RouteGuard and local clinical unlock"
+    "home opening now uses large Dr. Jadson logo with preserved image proportion",
+    "home now includes SuperNeuroPed mascot as central visual anchor",
+    "home now includes boy astronaut figure and lightweight orbital effects",
+    "home now includes skeleton-style cockpit loading panel",
+    "official repository illustrations are reused with SafeAssetImage and no-zoom-media guards",
+    "clinical search, metrics and five main flows were preserved",
+    "no changes were made to scales, PR260 filter logic, PDF generation, CAA, backend or clinical navigation"
   ],
   "verify_routes": [
     "#/",
@@ -28,5 +29,6 @@
     "/deploy-check.json"
   ],
   "cloudflare_domain": "https://neuroped.pages.dev",
-  "note": "Initial public/family screens should not request PIN or be covered by onboarding when opened directly. Use Cloudflare Pages root domain without www for deploy-check.json unless a custom www route is configured."
+  "github_pages_domain": "https://jadsonfraga.github.io/neuroped/",
+  "note": "Visual polish is limited to Home opening layer and deploy trigger metadata. Confirm build in GitHub Actions or Cloudflare Pages before declaring production fully updated."
 }
