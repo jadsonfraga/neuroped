@@ -24,6 +24,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import drJadsonConsultorio from "@/assets/images/dr-jadson-consultorio-superman.jpeg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -258,7 +259,18 @@ export default function FiltroPage() {
   };
 
   return (
-    <div className="page-enter container-filtro filter-260-shell space-y-5 pb-8">
+    <div className="page-enter container-filtro filter-260-shell space-y-5 pb-8 relative">
+      {/* Mascote decorativo discreto */}
+      {!hasSearch && (
+        <div className="absolute -right-24 top-24 hidden lg:block opacity-30 pointer-events-none">
+          <img
+            src={drJadsonConsultorio}
+            alt="Dr. Jadson"
+            className="w-48 h-auto object-contain rounded-full shadow-lg"
+            loading="lazy"
+          />
+        </div>
+      )}
       <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start gap-3">
           <div className="filter-260-iconbox flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-5 w-5" /></div>
@@ -296,7 +308,7 @@ export default function FiltroPage() {
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs"><RotateCcw className="h-3.5 w-3.5" /> limpar</Button>}
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition flex items-center gap-2 ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm">{q.emoji}</span>}{q.label}</button>)}
+            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-2xl border px-3 py-3 sm:px-3 sm:py-2 text-left text-xs font-bold transition flex items-center gap-2 min-h-12 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm flex-shrink-0">{q.emoji}</span>}<span className="truncate">{q.label}</span></button>)}
           </div>
         </div>
       </section>
