@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Brain, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LocalUnlockGate } from "@/components/LocalUnlockGate";
-import { hasClinicalUnlock } from "@/lib/localUnlock";
+import { hasClinicalUnlock, localUnlockEventName } from "@/lib/localUnlock";
 
 export const SENSITIVE_ROUTES = [
   "/pant",
@@ -37,6 +37,16 @@ export function RouteGuard({
   const { user, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [locallyUnlocked, setLocallyUnlocked] = useState(() => hasClinicalUnlock());
+
+  useEffect(() => {
+    function handleLockEvent(event: Event) {
+      const detail = (event as CustomEvent<{ unlocked?: boolean }>).detail;
+      setLocallyUnlocked(Boolean(detail?.unlocked));
+    }
+
+    window.addEventListener(localUnlockEventName, handleLockEvent);
+    return () => window.removeEventListener(localUnlockEventName, handleLockEvent);
+  }, []);
 
   if (isLoading) {
     return (
