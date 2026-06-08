@@ -1,19 +1,21 @@
 {
   "app": "NeuroPed",
-  "request": "manual deployment trigger after access bridge hardening",
-  "requested_at_utc": "2026-06-07T21:22:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after bug hunt fixes and access audit guard hardening",
+  "request": "manual deployment trigger after route guard bug hunt",
+  "requested_at_utc": "2026-06-07T21:38:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after additional route guard, documentos and efeitos-colaterais fixes",
   "fixes": [
     "protect pant route",
     "protect assinatura-digital route",
     "safe older pre-retorno localStorage records",
     "SensitiveRouteGate uses hasClinicalUnlock",
     "local unlock events emit hasClinicalUnlock",
+    "RouteGuard listens to lock/unlock events",
     "bridge /efeitos-colaterais route",
     "add Efeitos colaterais to navigation",
+    "remove implementation placeholder from effects page",
     "protect /documentos not-found bridge",
     "include /documentos in SENSITIVE_ROUTES",
-    "audit:access now guards documentos bridge and unlock event semantics"
+    "audit:access now guards documentos bridge, unlock event semantics and RouteGuard listener"
   ],
   "verify_routes": [
     "#/pre-retorno",
