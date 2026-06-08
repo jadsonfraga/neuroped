@@ -82,6 +82,7 @@ export const navSections: NavSection[] = [
       { href: "/plano-terapeutico", label: "Plano terapêutico", icon: Target },
       { href: "/plano-intervencao", label: "Plano de intervenção", icon: ClipboardPlus },
       { href: "/satisfacao-medicacao", label: "Evolução da medicação", icon: SmilePlus },
+      { href: "/eusm10", label: "EUSM-10 medicação", icon: ClipboardCheck },
     ],
   },
   {
