@@ -159,28 +159,33 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
 }
 
 function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null) {
-  // Filtrar por critérios clínicos
-  const base = catalog.filter((s) =>
-    (selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q))) &&
-    matchAge(s, selectedAge)
-  );
+  // Filtro clínico: APENAS escalas que combinam
+  let base = catalog.filter((s) => matchAge(s, selectedAge));
 
-  // Se houver resultados, usar; senão retornar catálogo inteiro
-  const candidates = base.length ? base : catalog;
+  // Se houver queixa selecionada, filtrar por ela
+  if (selectedQueixas.length > 0) {
+    base = base.filter((s) => s.queixas.some((q) => selectedQueixas.includes(q)));
+  }
 
-  // Score e ordenar
-  const ranked = unique(candidates)
+  // Score e ordenar por score (respeitando ordem natural)
+  const ranked = unique(base)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
     .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name));
 
-  // GARANTIR QUE OS 5 PRIMEIROS TÊÑEM appRoute quando possível
+  // PRIORIDADE: Mostrar APENAS com appRoute se houver queixa selecionada
+  if (selectedQueixas.length > 0) {
+    const withRoute = ranked.filter((x) => x.scale.appRoute);
+    const withoutRoute = ranked.filter((x) => !x.scale.appRoute);
+
+    // Se há com rota, mostrar só esses; senão, mostrar tudo
+    return (withRoute.length > 0 ? withRoute : ranked).map((x) => x.scale);
+  }
+
+  // Se nenhuma queixa: mostrar tudo, mas priorizando appRoute
   const withRoute = ranked.filter((x) => x.scale.appRoute);
   const withoutRoute = ranked.filter((x) => !x.scale.appRoute);
 
-  return [
-    ...withRoute.slice(0, 5),
-    ...withoutRoute
-  ].map((x) => x.scale);
+  return [...withRoute, ...withoutRoute].map((x) => x.scale);
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -284,14 +289,21 @@ export default function FiltroPage() {
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
   const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
-  const direct = rankedPool.find((s) => Boolean(s.appRoute));
+
+  // GARANTIR que os slots principais usam só appRoute quando há queixa
+  const withRoute = rankedPool.filter((s) => s.appRoute);
+  const topOuro = withRoute[0] || rankedPool[0];
+  const topPrata = withRoute[1] || withRoute[0] || rankedPool[0];
+  const topBronze = withRoute[2] || withRoute[1] || withRoute[0] || rankedPool[0];
+  const direct = withRoute[0] || rankedPool.find((s) => s.appRoute);
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
+
   const ranking = [
-    rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-    rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-    rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-    rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-    rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+    rec("Ouro", topOuro, "✅ Melhor match: implementado no app + compatível com idade/queixa.", "from-amber-500 via-yellow-600 to-red-800"),
+    rec("Prata", topPrata, "✅ Segunda opção implementada: alternativa complementar.", "from-slate-400 via-slate-500 to-slate-700"),
+    rec("Bronze", topBronze, "✅ Terceira opção: apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+    rec("Teste Direto", direct, "✅ Rota direta: clique para abrir e aplicar agora.", "from-blue-600 via-indigo-700 to-slate-950"),
+    rec("Questionário Escolar", school, "📋 Com respondente professor: para uso escolar/contextual.", "from-emerald-600 via-teal-700 to-slate-950"),
   ];
 
   const toggleQueixa = (id: string) => {
