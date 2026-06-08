@@ -69,6 +69,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
       { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
+      { href: "/efeitos-colaterais", label: "Efeitos colaterais", icon: Pill },
       { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
     ],
