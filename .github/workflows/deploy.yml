@@ -67,12 +67,19 @@ jobs:
           cat > client/public/deploy-check.json <<EOF
           {
             "app": "NeuroPed",
+            "deployed_commit": "${GITHUB_SHA}",
+            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "provider": "github-pages",
+            "provider_targets": [
+              "GitHub Pages",
+              "Cloudflare Pages"
+            ],
+            "published_provider": "GitHub Pages",
             "branch": "${GITHUB_REF_NAME}",
-            "commit": "${GITHUB_SHA}",
             "run_id": "${GITHUB_RUN_ID}",
             "run_number": "${GITHUB_RUN_NUMBER}",
-            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "status": "pending-public-verification",
+            "notes": "Só marcar verified após fetch público bem-sucedido. This artifact is validated by the post-deploy public curl step."
           }
           EOF
           cat client/public/deploy-check.json
@@ -121,7 +128,7 @@ jobs:
           sleep 20
           curl -fsSL "${{ steps.deployment.outputs.page_url }}deploy-check.json" -o /tmp/github-pages-deploy-check.json
           cat /tmp/github-pages-deploy-check.json
-          grep "${GITHUB_SHA}" /tmp/github-pages-deploy-check.json
+          node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync('/tmp/github-pages-deploy-check.json','utf8')); if (data.deployed_commit !== process.env.GITHUB_SHA) { console.error('deployed_commit ' + data.deployed_commit + ' != ' + process.env.GITHUB_SHA); process.exit(1); }"
 
       - name: Registrar evidência no resumo
         run: |
