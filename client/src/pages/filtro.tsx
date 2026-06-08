@@ -81,8 +81,18 @@ function norm(text: string) {
 }
 
 function unique(scales: ScaleEntry[]) {
-  const seen = new Set<string>();
-  return scales.filter((s) => seen.has(s.id) ? false : (seen.add(s.id), true));
+  // Dedup por id E por fullName: colapsa duplicatas reais (ex.: bears/bears-new,
+  // psq/psq-new) sem afetar instrumentos distintos de mesma sigla (ex.: as duas
+  // AIMS têm fullName diferente, então sobrevivem).
+  const seenId = new Set<string>();
+  const seenName = new Set<string>();
+  return scales.filter((s) => {
+    const key = (s.fullName || s.name || "").toLowerCase().trim();
+    if (seenId.has(s.id) || (key && seenName.has(key))) return false;
+    seenId.add(s.id);
+    if (key) seenName.add(key);
+    return true;
+  });
 }
 
 function ageMonths(range: string) {
@@ -258,8 +268,8 @@ export default function FiltroPage() {
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
   const ranking = [
     rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-    rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-    rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+    rec("Prata", rankedPool[1], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+    rec("Bronze", rankedPool[2], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
     rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
     rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
   ];
@@ -343,7 +353,4 @@ export default function FiltroPage() {
                   <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
                 </CardContent>
               </Card>
-            </Link>
-          ))}
-        </div>
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóst
+  
