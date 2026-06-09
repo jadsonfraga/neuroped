@@ -135,7 +135,7 @@ function rowToScale(row: Row): ScaleEntry {
 
 function matchAge(scale: ScaleEntry, selectedAge: string | null) {
   const age = faixasEtarias.find((a) => a.id === selectedAge);
-  return !age || (scale.ageMax >= age.min && scale.ageMin <= age.max);
+  return !age || (scale.ageMax > age.min && scale.ageMin < age.max);
 }
 
 function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
@@ -144,10 +144,12 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
   for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 3 : 2;
   for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
   if (selectedAge && matchAge(scale, selectedAge)) value += 3;
-  if (scale.appRoute) value += 100;
   if (scale.prioridade === "triagem") value += 2;
   if (scale.respondente.includes("professor")) value += 1;
   if (scale.id.startsWith("world-")) value += 0.8;
+  // appRoute bonus only for scales with relevant matches (prevents score overflow)
+  const hasRelevantMatch = selectedQueixas.length === 0 || value > 0;
+  if (scale.appRoute && hasRelevantMatch) value += 100;
   return value;
 }
 
@@ -217,7 +219,14 @@ function detectGoldStandard(selectedQueixas: string[], selectedAge: string | nul
     const score = matchCount / pattern.signature.length; // % de match
 
     if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
-      bestMatch = { pattern, score };
+      // Validate that gold standard scale exists and covers the selected age
+      const goldScale = allScales.find((s) => s.id === pattern.goldStandard);
+      if (goldScale) {
+        const ageIsValid = !selectedAge || matchAge(goldScale, selectedAge);
+        if (ageIsValid) {
+          bestMatch = { pattern, score };
+        }
+      }
     }
   }
 
@@ -351,21 +360,24 @@ export default function FiltroPage() {
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
 
+  // Guard against undefined when rankedPool is empty
+  const fallback = rankedPool[0];
+
   // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
   const ranking = goldStandardScale
     ? [
         rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
         rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || rankedPool[0], "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || rankedPool[0], "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Bronze", rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || fallback, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || fallback, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
       ]
     : [
-        rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Ouro", fallback, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", rankedPool[1] || fallback, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", rankedPool[2] || rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || fallback, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || fallback, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
       ];
 
   const toggleQueixa = (id: string) => {
