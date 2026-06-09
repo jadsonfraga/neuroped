@@ -8,34 +8,34 @@ import type { ScaleEntryWithClinicalMetadata } from "@/types/ClinicalScaleMetada
 
 export interface FilterContext {
   // Dados da criança
-  ageMonths: number;
-  canRead: boolean;
+  ageMonths?: number;
+  canRead?: boolean;
   readingLevel?: "basico" | "nivel2" | "nivel3" | "fluente";
-  canWrite: boolean;
+  canWrite?: boolean;
   writingLevel?: "copia" | "escreve_nome" | "escreve_palavras" | "escreve_espontaneo";
-  isVerbal: boolean;
-  understands SimpleCommands: boolean;
-  canPointOrSelect: boolean;
-  canNamingFigures: boolean;
-  hasMinimalCollaboration: boolean;
+  isVerbal?: boolean;
+  understands_simple_commands?: boolean;
+  canPointOrSelect?: boolean;
+  canNamingFigures?: boolean;
+  hasMinimalCollaboration?: boolean;
 
   // Contexto clínico
-  isFirstEvaluation: boolean;
-  mainComplaint: string;
-  primaryDomain: string;
-  suspectedConditions: string[];
+  isFirstEvaluation?: boolean;
+  mainComplaint?: string;
+  primaryDomain?: string;
+  suspectedConditions?: string[];
 
   // Informantes disponíveis
-  parentAvailable: boolean;
-  schoolAvailable: boolean;
-  teacherAvailable: boolean;
-  professionalAvailable: boolean;
+  parentAvailable?: boolean;
+  schoolAvailable?: boolean;
+  teacherAvailable?: boolean;
+  professionalAvailable?: boolean;
   professionalType?: "psicólogo" | "fonoaudiólogo" | "neuropediatra" | "TO" | "psicopedagogo" | "terapeuta" | "generalista";
 
   // Contexto operacional
-  timeAvailable: "rapido" | "normal" | "extenso"; // <5min, 5-30min, >30min
-  isClinicOrHome: "clinic" | "home";
-  followUpOnly: boolean; // É reavaliação?
+  timeAvailable?: "rapido" | "normal" | "extenso"; // <5min, 5-30min, >30min
+  isClinicOrHome?: "clinic" | "home";
+  followUpOnly?: boolean; // É reavaliação?
 }
 
 export interface BlockingDecision {
@@ -459,7 +459,7 @@ export function applyAllBlockingRules(
   context: FilterContext
 ): BlockingDecision {
   const allChecks = [
-    checkAgeCompatibility(scale, context.ageMonths),
+    ...(context.ageMonths !== undefined ? [checkAgeCompatibility(scale, context.ageMonths)] : []),
     checkParentAvailability(scale, context),
     checkSchoolAvailability(scale, context),
     checkProfessionalRequirement(scale, context),
@@ -472,7 +472,7 @@ export function applyAllBlockingRules(
     checkTimeRequirement(scale, context),
     checkScreeningVsDiagnostic(scale, context),
     checkNoSubjectiveQuestionsAsDirectTests(scale),
-  ];
+  ].filter(Boolean);
 
   // Coletar todos os bloqueios
   const allReasons: string[] = [];

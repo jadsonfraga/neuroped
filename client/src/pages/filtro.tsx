@@ -23,15 +23,19 @@ import {
   Users,
   X,
   type LucideIcon,
+  AlertTriangle,
 } from "lucide-react";
 import drJadsonConsultorio from "@/assets/images/dr-jadson-consultorio-superman.jpeg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { FilterContextForm } from "@/components/FilterContextForm";
+import { applyAllBlockingRules, type FilterContext } from "@/lib/blockingRulesSimple";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -352,6 +356,10 @@ export default function FiltroPage() {
   const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
+  const [filterContext, setFilterContext] = useState<Partial<FilterContext>>({
+    parentAvailable: true,
+    isVerbal: true,
+  });
 
   useEffect(() => {
     let alive = true;
@@ -492,6 +500,9 @@ export default function FiltroPage() {
         </div>
       </section>
 
+      {/* Contexto da Avaliação */}
+      <FilterContextForm onContextChange={setFilterContext} />
+
       {hasSearch ? <section className="space-y-3" aria-live="polite">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
@@ -558,17 +569,45 @@ export default function FiltroPage() {
       <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
         <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
-          {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-            <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
+          {rankedPool.slice(0, 24).map((s) => {
+            const visual = getScaleVisual(s);
+            const Icon = visual.Icon;
+            // Calcular idade em meses para o blocking check
+            const ageRange = selectedAge ? faixasEtarias.find(f => f.id === selectedAge) : null;
+            const ageMonthsForCheck = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : 60;
+
+            // Aplicar bloqueios
+            const blockingDecision = s.clinicalMetadata ? applyAllBlockingRules(s, {
+              ageMonths: ageMonthsForCheck,
+              ...filterContext
+            }) : null;
+
+            const isBlocked = blockingDecision?.isBlocked;
+            const blockType = blockingDecision?.blockType;
+            const blockReasons = blockingDecision?.reasons || [];
+
+            return (
+            <div key={s.id} className={`filter-260-card compact rounded-2xl border transition ${isBlocked && blockType === "hard" ? "opacity-50 border-red-300/50 bg-red-50/30" : "border-border/70 bg-background/70 hover:border-primary/30 hover:bg-background"}`}>
               <div className="filter-260-card-content compact">
                 <div className="filter-260-head">
                   <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}</div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>
+                        {s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}
+                        {isBlocked && blockType === "soft" && <Badge variant="outline" className="filter-260-badge text-amber-700 border-amber-300">⚠️ pendente</Badge>}
+                        {isBlocked && blockType === "hard" && <Badge variant="outline" className="filter-260-badge text-red-700 border-red-300">🚫 bloqueada</Badge>}
+                      </div>
                     </div>
                     <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
+                    {isBlocked && blockReasons.length > 0 && (
+                      <p className="mt-2 text-[10px] text-red-700 dark:text-red-400">🔒 {blockReasons[0]}</p>
+                    )}
+                    {s.clinicalMetadata?.misuseRisk && s.clinicalMetadata.misuseRisk !== "baixo" && (
+                      <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-400">⚠️ Risco: {s.clinicalMetadata.misuseRisk}</p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { escalasAutoraisDrJadson } from "./escalasAutorais";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 import { generateClinicalMetadata } from "@/lib/generateClinicalaMetadata";
+import type { ClinicalScaleMetadata } from "@/types/ClinicalScaleMetadata";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel";
@@ -35,6 +36,8 @@ export interface ScaleEntry {
   validacaoBrasil?: string;            // status de adaptação/validação brasileira
   scoringCutoff?: string;              // ponto de corte / interpretação de escore
   licencaUso?: "livre" | "comercial" | "restrita" | "contato_autor" | "autoral"; // licenciamento de uso
+  // Metadata clínica auto-gerada (Phase 8A)
+  clinicalMetadata?: ClinicalScaleMetadata;  // Tipo do instrumento, bloqueios, requisitos
 }
 
 export interface QueixaCategory {
@@ -716,7 +719,7 @@ export function filterScales(
   selectedQueixas: string[],
   ageRange: { min: number; max: number } | null
 ): ScaleEntry[] {
-  return allScales
+  return scalesWithMetadata
     .filter(s => {
       // Queixa: a escala deve ter pelo menos uma queixa selecionada
       const matchQueixa = selectedQueixas.length === 0 || s.queixas.some(q => selectedQueixas.includes(q));
