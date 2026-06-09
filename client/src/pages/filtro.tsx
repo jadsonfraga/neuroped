@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
@@ -445,6 +446,14 @@ export default function FiltroPage() {
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+
+        {/* Testes Diretos Recomendados */}
+        <DirectTestsRecommender
+          selectedQueixas={selectedQueixas}
+          selectedAge={selectedAge}
+          faixasEtarias={faixasEtarias}
+        />
+
         <div className="filter-260-grid">
           {ranking.map((item) => {
             const reasons = getRecommendationReasons(
