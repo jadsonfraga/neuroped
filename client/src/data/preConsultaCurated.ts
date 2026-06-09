@@ -85,4 +85,6 @@ export function clinicianOnlyPenalty(
   prioridade: string | undefined,
 ): number {
   if (appRoute) return 0;
-  const onlyClinico = respondente.length > 0 && respondente.ever
+  const onlyClinico = respondente.length > 0 && respondente.every((r) => r === "clinico");
+  return onlyClinico ? -25 : 0;
+}

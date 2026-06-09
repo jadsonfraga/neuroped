@@ -231,8 +231,8 @@ export function OverrideAuditLog({ overrides, auditLogs }: OverrideAuditLogProps
             <li>Todos os overrides são permanentemente registrados</li>
             <li>Supervisores devem revisar em até 7 dias</li>
             <li>Overrides aprovados informam refinamento de regras</li>
-            <li>Taxa de aprovação elevada (>90%) pode indicar regras muito restritivas</li>
-            <li>Taxa baixa (<50%) pode indicar julgamentos frágeis</li>
+            <li>Taxa de aprovação elevada (&gt;90%) pode indicar regras muito restritivas</li>
+            <li>Taxa baixa (&lt;50%) pode indicar julgamentos frágeis</li>
           </ul>
         </CardContent>
       </Card>
