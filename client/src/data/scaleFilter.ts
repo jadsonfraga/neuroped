@@ -2,6 +2,7 @@
 import { escalasAutoraisDrJadson } from "./escalasAutorais";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
+import { generateClinicalMetadata } from "@/lib/generateClinicalaMetadata";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel";
@@ -697,6 +698,13 @@ export const allScales: ScaleEntry[] = [
   ...escalasImportadasV25Ebook,
   ...scalasOpenAccessMundiais,
 ];
+
+// Estender escalas com metadata clínica gerada automaticamente
+// Fase 8A: Aplicar gerador a todas as 414+ escalas
+export const scalesWithMetadata = allScales.map(scale => ({
+  ...scale,
+  clinicalMetadata: generateClinicalMetadata(scale)
+}));
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
 export function filterScales(
