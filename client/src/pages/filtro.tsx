@@ -135,7 +135,7 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
 function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
   const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
   let value = 0;
-  for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
+  for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 3 : 2;
   for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
   if (selectedAge && matchAge(scale, selectedAge)) value += 3;
   if (scale.appRoute) value += 100;
@@ -209,7 +209,9 @@ function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], s
     const matchesRespondente = !selectedRespondente || s.respondente.includes(selectedRespondente);
     return matchesQueixa && matchesAge && matchesRespondente;
   });
-  return unique(base.length ? base : catalog)
+  const hasActiveFilters = selectedQueixas.length > 0 || selectedAge !== null || selectedRespondente !== null;
+  const results = base.length || !hasActiveFilters ? base : [];
+  return unique(results)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
     .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
     .map((x) => x.scale);
