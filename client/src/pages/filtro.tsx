@@ -174,21 +174,22 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", screening: "mchat", minAge: 16, reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%; se positivo, encaminhar para ADOS-2" },
 
   // TDAH: desatenção + hiperatividade + impulsividade/comportamento
-  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", screening: "snap", reason: "SNAP-IV para triagem DSM-5; para diagnóstico estruturado usar KSADS-ADHD ou CAPA em avaliação especializada" },
+  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", screening: "snap", reason: "SNAP-IV para triagem pais/professor; complementar com Vanderbilt para observação específica escolar" },
   { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional; essencial para avaliação diagnóstica" },
 
   // Desenvolvimento global
   { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 1, maxAge: 42, reason: "Bayley-III para atraso global em lactentes 1-42 meses; avalia cognição, linguagem, motor de forma integrada" },
   { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II é rastreio rápido (triagem); se sugestivo de atraso, usar Bayley-III para diagnóstico em <3a" },
-  { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE para exame neurológico padronizado de recém-nascidos; 26 itens, detecta anormalidades precoces" },
+  { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE clinician-administered para exame neurológico padronizado de recém-nascidos; 26 itens, detecta anormalidades precoces" },
 
   // Ansiedade infantil
-  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", reason: "SCARED para triagem rápida; RCADS para diagnóstico de 6 transtornos (TAG, pânico, social, separação, agorafobia)" },
+  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", minAge: 96, reason: "SCARED para triagem (qualquer idade); RCADS para diagnóstico em 8+; pré-escolares usar observação clínica" },
   { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
 
   // Comportamento disruptivo
   { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", screening: "cbcl", reason: "CBCL para triagem abrangente de psicopatologia infantil; 100 itens, 3 domínios (internalizante/externalizante/social)" },
-  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", diagnostic: "ecbi", reason: "SDQ para triagem rápida escolar; ECBI para avaliação específica de comportamento oposicional/desafiador" },
+  { name: "Transtorno Opositivo Desafiador (TOD)", signature: ["comportamento"], goldStandard: "ecbi", diagnostic: "ecbi", minAge: 24, reason: "ECBI para avaliação específica de desobediência/oposição; escalas de intensidade e problema" },
+  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ para triagem rápida de comportamento na escola; versão pais/professor disponível" },
 
   // Linguagem/Comunicação
   { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, maxAge: 36, reason: "CAT/CLAMS clinician-administered para lactentes 0-36m; avalia marcos cognitivos e linguísticos; 15-20 min" },
