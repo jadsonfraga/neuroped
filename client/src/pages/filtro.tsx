@@ -173,27 +173,27 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", screening: "mchat", minAge: 16, reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%; se positivo, encaminhar para ADOS-2" },
 
   // TDAH: desatenção + hiperatividade + impulsividade/comportamento
-  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", reason: "SNAP-IV é validado DSM-5 para triagem de TDAH com 18 itens diretos; responde pais/professor" },
-  { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional—funções prejudicadas no TDAH" },
+  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", screening: "snap", reason: "SNAP-IV para triagem DSM-5; para diagnóstico estruturado usar KSADS-ADHD ou CAPA em avaliação especializada" },
+  { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional; essencial para avaliação diagnóstica" },
 
   // Desenvolvimento global
   { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
   { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II é rastreio rápido (triagem); se sugestivo de atraso, usar Bayley-III para diagnóstico em <3a" },
 
   // Ansiedade infantil
-  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", reason: "SCARED é padrão-ouro para triagem de ansiedade em crianças; 41 itens, 5 subescalas (pânico, generalizada, separação, social, evitação escolar)" },
+  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", reason: "SCARED para triagem rápida; RCADS para diagnóstico de 6 transtornos (TAG, pânico, social, separação, agorafobia)" },
   { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
 
   // Comportamento disruptivo
-  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", reason: "CBCL é padrão-ouro para triagem de psicopatologia infantil; 100 itens, problemas internalizantes/externalizantes/sociais" },
-  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ é breve (25 itens) com versão criança/pais/professor; detecta problemas comportamentais e acadêmicos" },
+  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", screening: "cbcl", reason: "CBCL para triagem abrangente de psicopatologia infantil; 100 itens, 3 domínios (internalizante/externalizante/social)" },
+  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", diagnostic: "ecbi", reason: "SDQ para triagem rápida escolar; ECBI para avaliação específica de comportamento oposicional/desafiador" },
 
   // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes 0-36m; 15-20 min, simples, validado" },
 
   // Paralisia Cerebral / Motor
-  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", reason: "GMFM-88/66 é padrão-ouro para medir função motora na PC; 45-60 min, 88 itens em 5 dimensões" },
-  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", reason: "GMFCS classifica função motora grossa em PC (5 níveis); rápido, clinicamente sensível" },
+  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", reason: "GMFM-88/66 para motricidade grossa; considerar QUEST ou Ashworth para tone/espasticidade em avaliação complementar" },
+  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", minAge: 0, reason: "GMFCS para classificação rápida da função motora grossa (5 níveis); base para planejamento terapêutico" },
 
   // Epilepsia
   { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises é essencial para monitorar frequência, tipo e resposta ao tratamento em epilepsia" },
