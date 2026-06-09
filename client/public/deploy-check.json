@@ -1,0 +1,11 @@
+{
+  "app": "NeuroPed",
+  "deployed_commit": "pending-deploy-workflow",
+  "deployed_at_utc": "pending-deploy-workflow",
+  "provider_targets": [
+    "GitHub Pages",
+    "Cloudflare Pages"
+  ],
+  "status": "pending-public-verification",
+  "notes": "Static sentinel committed for auditability. The deployment workflows overwrite deployed_commit and deployed_at_utc with the exact GitHub Actions commit/time before publishing. Só marcar verified após fetch público bem-sucedido."
+}
