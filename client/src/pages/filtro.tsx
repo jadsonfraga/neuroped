@@ -199,7 +199,7 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, maxAge: 180, reason: "GMFCS (CLINICIAN-observed) triagem rápida 5 níveis; BASE para planejamento terapêutico; GMFM (>12m) mede mudança após terapia" },
 
   // Epilepsia
-  { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises para monitorar frequência/tipo/resposta; complementar com EEG/RM para diagnóstico de síndrome epiléptica" },
+  { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", screening: "epilepsia-diario", minAge: 0, maxAge: 216, reason: "Diário de crises (PARENTAL) monitorar frequência/tipo/resposta 0-18a; complementar com EEG/RM profissional para síndrome diagnóstico" },
 
   // Sono
   { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", minAge: 48, maxAge: 120, reason: "CSHQ para crianças 4-10 anos apenas (48-120m); adolescentes (120+ meses) usar BEARS ou PSQI em avaliação especializada" },
@@ -207,14 +207,23 @@ const clinicalPatterns: ClinicalPattern[] = [
   // Depressão isolada
   { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 para 7-17a; pré-escolares: observação clínica, entrevista parental (sem escala específica validada)" },
 
+  // Trauma e TEPT
+  { name: "Trauma e TEPT infantil", signature: ["trauma"], goldStandard: "cries", screening: "cries", diagnostic: "caps-ca", minAge: 48, maxAge: 216, reason: "CRIES (PARENTAL/CHILD) triagem TEPT 4-18a; CAPS-CA (CLINICIAN) diagnóstico definitivo; validada Brasil" },
+
   // Risco de suicídio
-  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", screening: "cssrs", diagnostic: "rfl-a", minAge: 84, reason: "C-SSRS para 7+; RFL-A para fatores protetores; <7a: riscos pediátricos geralmente associados a trauma/abuso" },
+  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", screening: "cssrs", diagnostic: "rfl-a", minAge: 84, maxAge: 216, reason: "C-SSRS (CHILD/PARENTAL) 7-18a; RFL-A fatores protetores; <7a riscos geralmente trauma/abuso associados" },
 
   // Problemas de aprendizagem
   { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", minAge: 72, reason: "TDE para avaliação de leitura/escrita/aritmética em escolares 6+; pré-escolares usar avaliação do desenvolvimento geral" },
 
   // Funcionalidade adaptativa
   { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 completa para diagnóstico; V-ABC (abreviada) para triagem; versão survey vs interview conforme contexto" },
+
+  // Dor e conforto
+  { name: "Avaliação de dor pediátrica", signature: ["dor"], goldStandard: "faces", screening: "faces", minAge: 36, maxAge: 216, reason: "Faces Pain Scale-Revised (CHILD 3+) triagem; FLACC (CLINICIAN <3a); complementar com avaliação funcional e impacto" },
+
+  // Alimentação detalhada
+  { name: "Transtorno alimentar/seletividade", signature: ["alimentacao"], goldStandard: "bpfas", screening: "bpfas", minAge: 24, maxAge: 168, reason: "BPFAS (PARENTAL) triagem problemas alimentação 2-14a; covers seletividade/recusa/inadequação nutricional" },
 ];
 
 function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null, catalog: ScaleEntry[]): ClinicalPattern | null {
