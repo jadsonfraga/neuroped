@@ -28,6 +28,36 @@ const MUSCLE_GROUPS = [
 const ASHWORTH_GRADES = ["0", "1", "1+", "2", "3", "4"];
 const TARDIEU_QUALITY = ["0", "1", "2", "3", "4", "5"];
 
+// Paleta única dos laudos imprimíveis (fonte de verdade — evita cores cruas repetidas).
+const PRINT_INK = "#1a1a1a";
+const PRINT_BRAND = "#6d28d9";
+const PRINT_SUB = "#555";
+const PRINT_FIELD_BG = "#f8f7ff";
+const PRINT_FIELD_BORDER = "#e5e7eb";
+const PRINT_LABEL = "#888";
+const PRINT_ROW_BORDER = "#eee";
+const PRINT_ROW_ALT = "#faf9ff";
+const PRINT_NOTE_BG = "#f3f0ff";
+
+const PRINT_STYLE = `
+  @page{margin:2cm;size:A4;}*{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:Arial,sans-serif;font-size:11pt;color:${PRINT_INK};}
+  .header{border-bottom:3px solid ${PRINT_BRAND};padding-bottom:12px;margin-bottom:16px;}
+  .header h1{font-size:15pt;color:${PRINT_BRAND};}
+  .header .sub{font-size:10pt;color:${PRINT_SUB};margin-top:4px;}
+  .pg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:10pt;}
+  .pg .f{background:${PRINT_FIELD_BG};border:1px solid ${PRINT_FIELD_BORDER};border-radius:4px;padding:6px 10px;}
+  .pg .f .l{font-size:8pt;color:${PRINT_LABEL};}.pg .f .v{font-weight:bold;}
+  table{width:100%;border-collapse:collapse;font-size:10pt;margin-top:10px;}
+  th{background:${PRINT_BRAND};color:white;padding:6px 10px;text-align:left;}
+  td{padding:5px 10px;border-bottom:1px solid ${PRINT_ROW_BORDER};}
+  tr:nth-child(even){background:${PRINT_ROW_ALT};}
+  .scale{background:${PRINT_NOTE_BG};border-left:4px solid ${PRINT_BRAND};padding:8px 12px;margin:12px 0;font-size:9pt;}
+  .footer{margin-top:24px;border-top:2px solid ${PRINT_BRAND};padding-top:10px;font-size:9pt;color:${PRINT_SUB};text-align:center;}
+  .footer .doc{font-size:10pt;font-weight:bold;color:${PRINT_INK};}
+  @media print{body{padding:0;}}
+`;
+
 interface AshworthRow {
   msd: string;
   mse: string;
@@ -130,24 +160,7 @@ function AshworthTab() {
       return `<tr><td>${g}</td><td style="text-align:center">${r.msd || "—"}</td><td style="text-align:center">${r.mse || "—"}</td><td style="text-align:center">${r.mid || "—"}</td><td style="text-align:center">${r.mie || "—"}</td></tr>`;
     }).join("");
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Ashworth Modificada</title>
-<style>
-  @page{margin:2cm;size:A4;}*{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;}
-  .header{border-bottom:3px solid #6d28d9;padding-bottom:12px;margin-bottom:16px;}
-  .header h1{font-size:15pt;color:#6d28d9;}
-  .header .sub{font-size:10pt;color:#555;margin-top:4px;}
-  .pg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:10pt;}
-  .pg .f{background:#f8f7ff;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;}
-  .pg .f .l{font-size:8pt;color:#888;}.pg .f .v{font-weight:bold;}
-  table{width:100%;border-collapse:collapse;font-size:10pt;margin-top:10px;}
-  th{background:#6d28d9;color:white;padding:6px 10px;text-align:left;}
-  td{padding:5px 10px;border-bottom:1px solid #eee;}
-  tr:nth-child(even){background:#faf9ff;}
-  .scale{background:#f3f0ff;border-left:4px solid #6d28d9;padding:8px 12px;margin:12px 0;font-size:9pt;}
-  .footer{margin-top:24px;border-top:2px solid #6d28d9;padding-top:10px;font-size:9pt;color:#555;text-align:center;}
-  .footer .doc{font-size:10pt;font-weight:bold;color:#1a1a1a;}
-  @media print{body{padding:0;}}
-</style></head><body>
+<style>${PRINT_STYLE}</style></head><body>
 <div class="header"><h1>🧠 NeuroPed — Escala de Ashworth Modificada</h1><div class="sub">Data: ${dateStr}</div></div>
 <div class="pg">
   <div class="f"><div class="l">Paciente</div><div class="v">${patient.nome || "—"}</div></div>
@@ -292,24 +305,7 @@ function TardieuTab() {
       return `<tr><td>${g}</td><td style="text-align:center">${r.r2 ? r.r2 + "°" : "—"}</td><td style="text-align:center">${r.r1 ? r.r1 + "°" : "—"}</td><td style="text-align:center">${getDynamic(g)}</td><td style="text-align:center">${r.quality || "—"}</td></tr>`;
     }).join("");
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Tardieu Modificada</title>
-<style>
-  @page{margin:2cm;size:A4;}*{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;}
-  .header{border-bottom:3px solid #6d28d9;padding-bottom:12px;margin-bottom:16px;}
-  .header h1{font-size:15pt;color:#6d28d9;}
-  .header .sub{font-size:10pt;color:#555;margin-top:4px;}
-  .pg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:10pt;}
-  .pg .f{background:#f8f7ff;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;}
-  .pg .f .l{font-size:8pt;color:#888;}.pg .f .v{font-weight:bold;}
-  table{width:100%;border-collapse:collapse;font-size:10pt;margin-top:10px;}
-  th{background:#6d28d9;color:white;padding:6px 10px;text-align:left;}
-  td{padding:5px 10px;border-bottom:1px solid #eee;}
-  tr:nth-child(even){background:#faf9ff;}
-  .scale{background:#f3f0ff;border-left:4px solid #6d28d9;padding:8px 12px;margin:12px 0;font-size:9pt;}
-  .footer{margin-top:24px;border-top:2px solid #6d28d9;padding-top:10px;font-size:9pt;color:#555;text-align:center;}
-  .footer .doc{font-size:10pt;font-weight:bold;color:#1a1a1a;}
-  @media print{body{padding:0;}}
-</style></head><body>
+<style>${PRINT_STYLE}</style></head><body>
 <div class="header"><h1>🧠 NeuroPed — Escala de Tardieu Modificada</h1><div class="sub">Data: ${dateStr}</div></div>
 <div class="pg">
   <div class="f"><div class="l">Paciente</div><div class="v">${patient.nome || "—"}</div></div>
