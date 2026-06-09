@@ -276,6 +276,47 @@
 }
 
 @layer components {
+  .np-ambient-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .np-ambient-aurora {
+    background:
+      radial-gradient(circle at 18% 20%, hsl(var(--primary) / 0.12), transparent 28rem),
+      radial-gradient(circle at 82% 18%, hsl(var(--chart-2) / 0.1), transparent 24rem),
+      radial-gradient(circle at 22% 86%, hsl(var(--chart-3) / 0.08), transparent 22rem);
+  }
+
+  .np-ambient-noise {
+    opacity: 0.035;
+    mix-blend-mode: soft-light;
+  }
+
+  .np-ambient-particles {
+    z-index: 0;
+  }
+
+  .np-particle {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(40px);
+    opacity: 0.45;
+    animation: floatAmbient 18s ease-in-out infinite alternate;
+  }
+
+  @keyframes floatAmbient {
+    from {
+      transform: translate3d(-2%, -1%, 0) scale(0.96);
+    }
+    to {
+      transform: translate3d(3%, 2%, 0) scale(1.04);
+    }
+  }
+
   /* REGRA DE OURO — Filtro de Escalas PR #260
      Não alterar a proporção, hierarquia, medalha, faixa superior ou comportamento
      visual do filtro sem autorização explícita. */
