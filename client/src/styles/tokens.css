@@ -33,6 +33,39 @@
   --np-violet-700: #6d28d9;
   --np-violet-900: #4c1d95;
 
+  /* Teal/Azul-petróleo clínico (novo primário institucional) */
+  --np-teal-50:   #f0fdfa;
+  --np-teal-100:  #ccfbf1;
+  --np-teal-200:  #99f6e4;
+  --np-teal-400:  #2dd4bf;
+  --np-teal-500:  #14b8a6;
+  --np-teal-600:  #0d9488;
+  --np-teal-700:  #0f766e;
+  --np-teal-800:  #134e4a;
+  --np-teal-900:  #0f4c3a;
+
+  /* Vinho/Marrom clínico (acento institucional) */
+  --np-wine-50:   #fdf2f8;
+  --np-wine-100:  #fce7f3;
+  --np-wine-200:  #fbcfe8;
+  --np-wine-400:  #f472b6;
+  --np-wine-500:  #ec4899;
+  --np-wine-600:  #db2777;
+  --np-wine-700:  #be185d;
+  --np-wine-800:  #9d174d;
+  --np-wine-900:  #831843;
+
+  /* Marinho/Azul escuro (sobriedade médica) */
+  --np-navy-50:   #f0f4f8;
+  --np-navy-100:  #d9e1e8;
+  --np-navy-200:  #b3c5d8;
+  --np-navy-400:  #3f5c7f;
+  --np-navy-500:  #1a2559;
+  --np-navy-600:  #142048;
+  --np-navy-700:  #0f1a36;
+  --np-navy-800:  #0a1123;
+  --np-navy-900:  #050812;
+
   /* Cinza neutro (backgrounds, texto secundário) */
   --np-gray-50:  #f8fafc;
   --np-gray-100: #f1f5f9;
@@ -70,10 +103,20 @@
      SEMÂNTICA DE CORES (mapeamento de intenção)
      ==================================================== */
 
-  --np-color-primary:        var(--np-violet-600);
-  --np-color-primary-hover:  var(--np-violet-700);
-  --np-color-primary-light:  var(--np-violet-500);
-  --np-color-primary-bg:     #f5f3ff;
+  /* Novo primário institucional: Teal + Vinho */
+  --np-color-primary:        var(--np-teal-600);
+  --np-color-primary-hover:  var(--np-teal-700);
+  --np-color-primary-light:  var(--np-teal-400);
+  --np-color-primary-bg:     var(--np-teal-50);
+
+  /* Acento secundário: Vinho/Wine para destaque clínico */
+  --np-color-secondary:      var(--np-wine-600);
+  --np-color-secondary-hover: var(--np-wine-700);
+  --np-color-secondary-light: var(--np-wine-400);
+  --np-color-secondary-bg:   var(--np-wine-50);
+
+  /* Suporta compatibilidade com violeta anterior */
+  --np-color-accent:         var(--np-teal-500);
 
   --np-color-success:        var(--np-green-600);
   --np-color-success-bg:     var(--np-green-50);

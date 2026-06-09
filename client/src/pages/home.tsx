@@ -127,22 +127,22 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
       >
         <div className="flex h-full flex-col gap-4">
           <div className="flex items-start gap-3">
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-md ring-1 ${emphasisClasses[flow.emphasis]}`}>
-              <Icon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
+            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg ring-1 ${emphasisClasses[flow.emphasis]}`} style={{ boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)" }}>
+              <Icon className="h-6 w-6" strokeWidth={1.8} aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.12em]">
+              <Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.12em] font-bold">
                 {flow.useCase}
               </Badge>
-              <h2 className="text-base font-black leading-tight text-foreground group-hover:text-primary">
+              <h2 className="text-lg font-black leading-snug text-foreground group-hover:text-primary transition-colors">
                 {flow.title}
               </h2>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{flow.subtitle}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{flow.subtitle}</p>
             </div>
           </div>
-          <div className="mt-auto flex items-center justify-between rounded-2xl bg-muted/50 px-3 py-2 text-xs font-bold text-primary">
+          <div className="mt-auto flex items-center justify-between rounded-2xl px-4 py-3 text-xs font-bold transition-all" style={{ background: "rgba(15, 148, 136, 0.08)", color: "var(--np-color-primary)" }}>
             <span>{flow.action}</span>
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </div>
         </div>
       </motion.div>
@@ -170,30 +170,55 @@ export default function HomePage() {
 
   return (
     <div className="page-enter proportion-safe-page space-y-6 pb-8">
-      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur sm:p-7">
+      {/* Hero section — Premium visual com gradiente clínico */}
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 p-5 shadow-md backdrop-blur sm:p-7" style={{
+        background: "linear-gradient(135deg, rgba(15, 148, 136, 0.08) 0%, rgba(61, 20, 40, 0.06) 100%)",
+        borderColor: "rgba(15, 148, 136, 0.2)",
+      }}>
         <BrandWatermark className="right-4 top-4 h-40 w-40" />
         <div className="asset-proportion-box pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" aria-hidden="true">
           <img src={brandAssets.legacyNeuroPedSymbol} alt="" className="no-zoom-media h-full w-full rounded-2xl object-contain" />
         </div>
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
-          <div className="space-y-4">
+          <div className="space-y-5">
             <BrandMark size="md" showWordmark subtitle="Cockpit clínico NeuroPed" />
-            <div className="max-w-2xl space-y-2">
-              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">App médico premium · números dinâmicos</Badge>
-              <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl" data-testid="text-page-title">
-                Painel clínico de decisão
+            <div className="max-w-2xl space-y-3">
+              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10 font-semibold">
+                🏥 Plataforma Clínica Premium · Integrada
+              </Badge>
+              <h1
+                className="text-4xl font-black tracking-tight sm:text-5xl leading-tight"
+                style={{
+                  fontFamily: "Cormorant Garamond, Georgia, serif",
+                  color: "hsl(var(--foreground))",
+                }}
+                data-testid="text-page-title"
+              >
+                Cockpit de Decisão Clínica
               </h1>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Escolha o caminho da consulta: aplicar escala, encontrar instrumento, abrir paciente, gerar documento ou acompanhar evolução. Os números exibidos vêm do catálogo real do app.
+                Navegue pelos 5 fluxos principais: aplicar escala de rastreio, encontrar instrumento ideal por queixa, gerenciar pacientes, gerar documentos clínicos ou acompanhar evolução terapêutica.
               </p>
             </div>
-            <div className="grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Métricas reais do app">
+            <div className="grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Métricas reais do app">
               {metricCards.map((metric) => {
                 const Icon = metric.icon;
                 return (
-                  <div key={metric.label} className="rounded-2xl border border-border/70 bg-background/60 p-3">
-                    <div className="flex items-center gap-2 text-primary"><Icon className="h-4 w-4" /><span className="text-xl font-black text-foreground">{metric.value}</span></div>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{metric.label}</p>
+                  <div
+                    key={metric.label}
+                    className="rounded-2xl border shadow-sm transition-all hover:shadow-md p-4"
+                    style={{
+                      borderColor: "rgba(15, 148, 136, 0.3)",
+                      background: "linear-gradient(135deg, rgba(15, 148, 136, 0.05) 0%, rgba(61, 20, 40, 0.02) 100%)",
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5 text-primary">
+                      <Icon className="h-5 w-5 text-teal-600" />
+                      <span className="text-2xl font-black text-foreground">{metric.value}</span>
+                    </div>
+                    <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      {metric.label}
+                    </p>
                   </div>
                 );
               })}
