@@ -33,6 +33,7 @@ import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scale
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { curatedBoost, clinicianOnlyPenalty } from "@/data/preConsultaCurated";
+import { isPreConsulta, dedupeScales, QUEIXAS_POS_CONSULTA } from "@/lib/preConsultaFilter";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -66,31 +67,8 @@ function norm(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
-function unique(scales: ScaleEntry[]) {
-  // Dedup por id E fullName: colapsa duplicatas reais (bears/bears-new, psq/psq-new…)
-  // sem afetar instrumentos distintos de mesma sigla (as duas AIMS têm fullName diferente).
-  const seenId = new Set<string>();
-  const seenName = new Set<string>();
-  return scales.filter((s) => {
-    const key = (s.fullName || s.name || "").toLowerCase().trim();
-    if (seenId.has(s.id) || (key && seenName.has(key))) return false;
-    seenId.add(s.id);
-    if (key) seenName.add(key);
-    return true;
-  });
-}
-
-// ── PRÉ-CONSULTA: o filtro só mostra instrumentos aplicáveis ANTES da consulta.
-// Instrumentos de acompanhamento (diários, qualidade de vida, monitorização de
-// medicação — prioridade "monitorizacao") e psicoeducação NÃO entram aqui; seguem
-// acessíveis em outras telas do app.
-const PSICOEDUCACAO_ROUTES = new Set<string>(["/orientacao-parental", "/portal-familia"]);
-const QUEIXAS_POS_CONSULTA = new Set<string>(["efeitos", "evolucao"]);
-function isPreConsulta(s: ScaleEntry): boolean {
-  if (s.prioridade === "monitorizacao") return false;
-  if (s.appRoute && PSICOEDUCACAO_ROUTES.has(s.appRoute)) return false;
-  return true;
-}
+// Dedup e exclusão de pré-consulta vivem em @/lib/preConsultaFilter (testável).
+const unique = dedupeScales;
 
 function ageMonths(range: string) {
   const m = range.replace(",", ".").match(/([0-9.]+)\s*[–-]\s*([0-9.]+)/);
@@ -589,4 +567,12 @@ export default function FiltroPage() {
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
             <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
-              <div cla
+              <div className="filter-260-card-content compact">
+                <div className="filter-260-head">
+                  <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
+                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}</div>
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
