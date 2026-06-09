@@ -164,6 +164,7 @@ interface ClinicalPattern {
   screening?: string; // ID escala de triagem (opcional)
   diagnostic?: string; // ID escala diagnóstica (opcional)
   minAge?: number; // idade mínima em meses (validação)
+  maxAge?: number; // idade máxima em meses (validação) - FIX BUG-051
   reason: string;
 }
 
@@ -177,8 +178,9 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional; essencial para avaliação diagnóstica" },
 
   // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
+  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 1, maxAge: 42, reason: "Bayley-III para atraso global em lactentes 1-42 meses; avalia cognição, linguagem, motor de forma integrada" },
   { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II é rastreio rápido (triagem); se sugestivo de atraso, usar Bayley-III para diagnóstico em <3a" },
+  { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE para exame neurológico padronizado de recém-nascidos; 26 itens, detecta anormalidades precoces" },
 
   // Ansiedade infantil
   { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", reason: "SCARED para triagem rápida; RCADS para diagnóstico de 6 transtornos (TAG, pânico, social, separação, agorafobia)" },
@@ -199,7 +201,7 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises é essencial para monitorar frequência, tipo e resposta ao tratamento em epilepsia" },
 
   // Sono
-  { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", minAge: 48, reason: "CSHQ para crianças 4-10 anos; adolescentes usar BEARS modificado ou PSQI (fora do escopo atual)" },
+  { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", minAge: 48, maxAge: 120, reason: "CSHQ para crianças 4-10 anos apenas (48-120m); adolescentes (120+ meses) usar BEARS ou PSQI em avaliação especializada" },
 
   // Depressão isolada
   { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 é padrão-ouro para triagem (7-17a); para diagnóstico estruturado usar CDRS-R ou KSADS-P em avaliação especializada" },
@@ -208,10 +210,10 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", reason: "C-SSRS é padrão-ouro para avaliar ideação suicida; 6 níveis de gravidade, sensibilidade clínica alta" },
 
   // Problemas de aprendizagem
-  { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", reason: "TDE é padrão-ouro brasileiro para avaliação de leitura, escrita e aritmética; padronizado e validado" },
+  { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", minAge: 72, reason: "TDE para avaliação de leitura/escrita/aritmética em escolares 6+; pré-escolares usar avaliação do desenvolvimento geral" },
 
   // Funcionalidade adaptativa
-  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", reason: "Vineland-3 é padrão-ouro para habilidades adaptativas; comunicação, vida diária, socialização, motricidade" },
+  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 para habilidades adaptativas (comunicação, vida diária, socialização, motricidade); desde lactentes" },
 ];
 
 function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null, catalog: ScaleEntry[]): ClinicalPattern | null {
