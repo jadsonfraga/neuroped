@@ -260,7 +260,7 @@ export function checkDomainCompatibility(
   scale: ScaleEntryWithClinicalMetadata,
   context: FilterContext
 ): BlockingDecision {
-  if (!scale.queixas.includes(context.primaryDomain) && context.isFirstEvaluation) {
+  if (context.primaryDomain && !scale.queixas.includes(context.primaryDomain) && context.isFirstEvaluation) {
     // Na primeira avaliação, permite screening geral
     if (scale.clinicalMetadata.isScreeningTool) {
       return { isBlocked: false, reasons: [] };

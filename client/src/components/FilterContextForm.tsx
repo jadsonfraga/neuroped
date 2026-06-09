@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import type { FilterContext } from "@/lib/blockingRules";
 
+type ProfessionalType = NonNullable<FilterContext["professionalType"]>;
+
 export interface FilterContextFormProps {
   onContextChange: (context: Partial<FilterContext>) => void;
 }
@@ -26,7 +28,7 @@ export function FilterContextForm({ onContextChange }: FilterContextFormProps) {
   const [parentAvailable, setParentAvailable] = useState(true);
   const [schoolAvailable, setSchoolAvailable] = useState(false);
   const [professionalAvailable, setProfessionalAvailable] = useState(false);
-  const [professionalType, setProfessionalType] = useState<string>();
+  const [professionalType, setProfessionalType] = useState<ProfessionalType>();
 
   const handleContextUpdate = () => {
     onContextChange({
@@ -194,7 +196,7 @@ export function FilterContextForm({ onContextChange }: FilterContextFormProps) {
                   Tipo de profissional:
                 </Label>
                 <Select value={professionalType || ""} onValueChange={(val: string) => {
-                  setProfessionalType(val);
+                  setProfessionalType(val as ProfessionalType);
                   handleContextUpdate();
                 }}>
                   <SelectTrigger id="professionalType" className="h-8 text-sm">

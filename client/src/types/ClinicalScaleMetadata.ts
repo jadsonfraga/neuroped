@@ -94,7 +94,8 @@ export interface BlockingRule {
 
   /** Tipo de bloqueio */
   blockType: "idade" | "requisito_informante" | "requisito_habilidade" |
-            "incompatibilidade_dominio" | "risco_mau_uso" | "profissional_apenas";
+            "incompatibilidade_dominio" | "risco_mau_uso" | "profissional_apenas" |
+            "hard" | "soft";
 
   /** Severeidade: se "hard", bloqueia; se "soft", marca como pendente */
   severity: "hard" | "soft";
