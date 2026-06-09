@@ -178,8 +178,8 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional; essencial para avaliação diagnóstica" },
 
   // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 1, maxAge: 42, reason: "Bayley-III para atraso global em lactentes 1-42 meses; avalia cognição, linguagem, motor de forma integrada" },
-  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II é rastreio rápido (triagem); se sugestivo de atraso, usar Bayley-III para diagnóstico em <3a" },
+  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 1, maxAge: 42, reason: "Bayley-III padrão-ouro (1-42m, comercial). Alternativa gratuita: Griffiths-III (acesso limitado no Brasil)" },
+  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II clinician para triagem; alternativa parental: ASQ-3 para pais sem acesso a clínico (gratuita, validada)" },
   { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE clinician-administered para exame neurológico padronizado de recém-nascidos; 26 itens, detecta anormalidades precoces" },
 
   // Ansiedade infantil
@@ -192,11 +192,11 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ para triagem rápida de comportamento na escola; versão pais/professor disponível" },
 
   // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, maxAge: 36, reason: "CAT/CLAMS clinician-administered para lactentes 0-36m; avalia marcos cognitivos e linguísticos; 15-20 min" },
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, maxAge: 36, reason: "CAT/CLAMS clinician para avaliação direta; alternativa parental: MacArthur CDI para vocabulário/gestos em 8-37m" },
 
   // Paralisia Cerebral / Motor
   { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", diagnostic: "gmfm", reason: "GMFM-88/66 diagnóstico de função motora; complementar com MRI para tipo de PC (espástica/discinética/atáxica)" },
-  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, reason: "GMFCS triagem rápida (5 níveis); GMFM para diagnóstico detalhado; MRI/neuroimagem essencial" },
+  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, reason: "GMFCS triagem rápida (5 níveis, sem score); é BASE para planejamento terapêutico; GMFM mede mudança após terapia" },
 
   // Epilepsia
   { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises para monitorar frequência/tipo/resposta; complementar com EEG/RM para diagnóstico de síndrome epiléptica" },
@@ -214,7 +214,7 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", minAge: 72, reason: "TDE para avaliação de leitura/escrita/aritmética em escolares 6+; pré-escolares usar avaliação do desenvolvimento geral" },
 
   // Funcionalidade adaptativa
-  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 padrão-ouro (45-60 min); alternativas breves: PEDI-CAT (computerizado) ou VABS-II Mobile para triagem rápida" },
+  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 completa para diagnóstico; V-ABC (abreviada) para triagem; versão survey vs interview conforme contexto" },
 ];
 
 function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null, catalog: ScaleEntry[]): ClinicalPattern | null {
