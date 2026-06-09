@@ -1,4 +1,4 @@
-import { allScales, faixasEtarias, type ScaleEntry } from "@/data/scaleFilter";
+import { allScales, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 
