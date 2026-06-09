@@ -147,6 +147,9 @@ export const navSections: NavSection[] = [
       { href: "/conhecimento-visual", label: "Conhecimento Visual", icon: Eye },
       { href: "/motricidade-teste", label: "Motricidade", icon: Accessibility },
       { href: "/conhecimentos-gerais", label: "Conhecimentos Gerais", icon: Sparkles },
+      { href: "/funcoes-executivas", label: "Funções Executivas", icon: BrainCog },
+      { href: "/atencao-concentracao", label: "Atenção e Concentração", icon: Brain },
+      { href: "/linguagem-fonologia", label: "Linguagem e Fonologia", icon: MessageCircle },
     ],
   },
   {

@@ -87,6 +87,9 @@ const EscritaDesenhoPage = lazy(() => import("@/pages/escrita-desenho"));
 const ConhecimentoVisualPage = lazy(() => import("@/pages/conhecimento-visual"));
 const MotricidadeTestePage = lazy(() => import("@/pages/motricidade-teste"));
 const ConhecimentosGeraisPage = lazy(() => import("@/pages/conhecimentos-gerais"));
+const FuncoesExecutivasPage = lazy(() => import("@/pages/funcoes-executivas"));
+const AtencaoConcentracaoPage = lazy(() => import("@/pages/atencao-concentracao"));
+const LinguagemFonologiaPage = lazy(() => import("@/pages/linguagem-fonologia"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -205,6 +208,9 @@ function AppRouter() {
           <Route path="/conhecimento-visual" component={ConhecimentoVisualPage} />
           <Route path="/motricidade-teste" component={MotricidadeTestePage} />
           <Route path="/conhecimentos-gerais" component={ConhecimentosGeraisPage} />
+          <Route path="/funcoes-executivas" component={FuncoesExecutivasPage} />
+          <Route path="/atencao-concentracao" component={AtencaoConcentracaoPage} />
+          <Route path="/linguagem-fonologia" component={LinguagemFonologiaPage} />
           <Route path="/inventarios-auto" component={InventariosAutoPage} />
           <Route path="/ajuda" component={AjudaPage} />
           <Route path="/curvas-crescimento" component={CurvasCrescimentoPage} />
