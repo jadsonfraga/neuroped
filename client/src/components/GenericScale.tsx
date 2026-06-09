@@ -357,13 +357,13 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       </motion.div>
 
       <div className="sticky top-0 z-20 -mx-1 rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur space-y-2">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-xs text-muted-foreground" aria-live="polite" aria-atomic="true">
           <span>
             {answered} de {total} respondidas
           </span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={progress} className="h-2" aria-label={`Progresso: ${answered} de ${total} respondidas`} />
         {answered > 0 && !showResult && (
           <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
             <Save className="h-3.5 w-3.5" /> Progresso salvo neste dispositivo
@@ -467,14 +467,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                           <RadioGroupItem
                             value={j.toString()}
                             id={`q-${key}-o${j}`}
-                            className="sr-only"
+                            className="peer sr-only"
                           />
                           <Label
                             htmlFor={`q-${key}-o${j}`}
-                            className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-200 ${
+                            className={`inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                               answers[key] === j
                                 ? selectedColor
-                                : "bg-card text-foreground border-border hover:bg-muted"
+                                : "bg-card text-foreground border-border hover:border-primary/40 hover:bg-muted"
                             }`}
                           >
                             {label}
@@ -505,16 +505,4 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
-        data-testid="button-submit"
-      >
-        {total === 0
-          ? "Escala sem itens configurados"
-          : allAnswered
-            ? "Ver Resultado"
-            : `Faltam ${missingCount} resposta${missingCount !== 1 ? "s" : ""}`}
-      </Button>
-
-      {config.scaleId && <ScaleReference scaleId={config.scaleId} />}
-    </div>
-  );
-}
+     

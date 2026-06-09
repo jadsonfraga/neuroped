@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Activity,
@@ -24,7 +24,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import drJadsonConsultorio from "@/assets/images/dr-jadson-consultorio-superman.jpeg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -138,77 +137,15 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
   for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
   for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
   if (selectedAge && matchAge(scale, selectedAge)) value += 3;
-  if (scale.appRoute) value += 100;
+  if (scale.appRoute) value += 3;
   if (scale.prioridade === "triagem") value += 2;
   if (scale.respondente.includes("professor")) value += 1;
   if (scale.id.startsWith("world-")) value += 0.8;
   return value;
 }
 
-// Padrões clínicos ouro: assinatura de sintomas → escala padrão-ouro
-interface ClinicalPattern {
-  name: string;
-  signature: string[]; // queixas que formam o padrão
-  goldStandard: string; // ID da escala ouro
-  reason: string;
-}
-
-const clinicalPatterns: ClinicalPattern[] = [
-  // TEA: traço social + comportamento + linguagem/atraso
-  { name: "Suspeita TEA (padrão social-comportamental)", signature: ["tea", "comportamento", "linguagem"], goldStandard: "ados2", reason: "ADOS-2 é padrão-ouro diagnóstico de TEA quando há combinação de déficit social, comportamento restritivo e comunicação" },
-  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%" },
-
-  // TDAH: desatenção + hiperatividade + impulsividade/comportamento
-  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", reason: "SNAP-IV é validado DSM-5 para triagem de TDAH com 18 itens diretos; responde pais/professor" },
-  { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional—funções prejudicadas no TDAH" },
-
-  // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
-  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", reason: "Denver II é rastreio padrão-ouro para marcos de desenvolvimento; 4 domínios, 30-45 itens" },
-
-  // Ansiedade infantil
-  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", reason: "SCARED é padrão-ouro para triagem de ansiedade em crianças; 41 itens, 5 subescalas (pânico, generalizada, separação, social, evitação escolar)" },
-  { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
-
-  // Comportamento disruptivo
-  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", reason: "CBCL é padrão-ouro para triagem de psicopatologia infantil; 100 itens, problemas internalizantes/externalizantes/sociais" },
-  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ é breve (25 itens) com versão criança/pais/professor; detecta problemas comportamentais e acadêmicos" },
-
-  // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
-];
-
-function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null): ClinicalPattern | null {
-  if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrão
-
-  // Busca padrão com melhor match (quantas queixas coincidem)
-  let bestMatch: { pattern: ClinicalPattern; score: number } | null = null;
-
-  for (const pattern of clinicalPatterns) {
-    const matchCount = pattern.signature.filter((s) => selectedQueixas.includes(s)).length;
-    const score = matchCount / pattern.signature.length; // % de match
-
-    if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
-      bestMatch = { pattern, score };
-    }
-  }
-
-  return bestMatch?.pattern ?? null;
-}
-
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null) {
-  const base = catalog.filter((s) => {
-    // Filtro de pré-consulta: apenas triagem/diagnóstico, não monitorização
-    if (s.prioridade === "monitorizacao") return false;
-    // Excluir queixas que são pós-consulta (reavaliação, efeitos colaterais, evolução)
-    const postConsultComplaints = ["efeitos", "evolucao"];
-    if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
-
-    const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
-    const matchesAge = matchAge(s, selectedAge);
-    const matchesRespondente = !selectedRespondente || s.respondente.includes(selectedRespondente);
-    return matchesQueixa && matchesAge && matchesRespondente;
-  });
+function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null) {
+  const base = catalog.filter((s) => (selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q))) && matchAge(s, selectedAge));
   return unique(base.length ? base : catalog)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
     .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
@@ -267,22 +204,10 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
   return { label: "clínico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
 }
 
-function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas: string[], selectedAge: string | null): string[] {
-  if (!scale) return [];
-  const reasons: string[] = [];
-  if (selectedQueixas.length > 0 && scale.queixas.some((q) => selectedQueixas.includes(q))) reasons.push("✓ Queixa");
-  if (selectedAge && matchAge(scale, selectedAge)) reasons.push("✓ Idade");
-  if (scale.appRoute) reasons.push("✓ Rota direta");
-  if (scale.prioridade === "triagem") reasons.push("✓ Triagem");
-  if (scale.respondente.includes("professor")) reasons.push("✓ Escola");
-  return reasons.length ? reasons : ["✓ Compatibilidade geral"];
-}
-
 export default function FiltroPage() {
   const [search, setSearch] = useState("");
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
-  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -300,35 +225,22 @@ export default function FiltroPage() {
   }, []);
 
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente);
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
-
-  // Detecta padrão clínico ouro quando 2+ queixas selecionadas
-  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
-  const goldStandardScale = useMemo(() => {
-    if (!detectedPattern) return null;
-    return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
-  }, [detectedPattern, rankedPool]);
-
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
+  const statusInfo = status === "loading"
+    ? { label: "carregando", dot: "bg-amber-400 animate-pulse" }
+    : status === "ok"
+      ? { label: "completo", dot: "bg-emerald-500" }
+      : { label: "base local", dot: "bg-muted-foreground" };
+  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
-
-  // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
-  const ranking = goldStandardScale
-    ? [
-        rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || rankedPool[0], "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || rankedPool[0], "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
-      ]
-    : [
-        rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
-      ];
+  const ranking = [
+    rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+    rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+    rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+    rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+    rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+  ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -336,172 +248,85 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]);
   };
 
-  const resultsSectionRef = useRef<HTMLDivElement>(null);
-
-  // Scroll suavemente para resultados quando aparecem
-  useEffect(() => {
-    if (hasSearch && resultsSectionRef.current) {
-      setTimeout(() => {
-        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [hasSearch]);
-
   return (
-    <div className="page-enter container-filtro filter-260-shell space-y-3 sm:space-y-5 pb-4 sm:pb-8 relative">
-      {/* Mascote decorativo discreto */}
-      {!hasSearch && (
-        <div className="absolute -right-24 top-24 hidden lg:block opacity-30 pointer-events-none">
-          <img
-            src={drJadsonConsultorio}
-            alt="Dr. Jadson"
-            className="w-48 h-auto object-contain rounded-full shadow-lg"
-            loading="lazy"
-          />
-        </div>
-      )}
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-3 sm:p-5 shadow-sm backdrop-blur">
-        <div className="flex items-start gap-2 sm:gap-3">
-          <div className="filter-260-iconbox flex h-10 sm:h-12 w-10 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-4 sm:h-5 w-4 sm:w-5" /></div>
+    <div className="page-enter container-filtro filter-260-shell space-y-5 pb-8">
+      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-start gap-3">
+          <div className="filter-260-iconbox flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-5 w-5" /></div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-1 sm:mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10 text-[10px] sm:text-xs">ranking · escalas + questionários</Badge>
-            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
-            <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm leading-relaxed text-muted-foreground">Cruza idade, queixa, respondente, rota direta e 100 escalas mundiais sem custo.</p>
+            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">ranking obrigatório · escalas + questionários + inventários</Badge>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Cruza idade, queixa, respondente, rota direta, fonte e licença usando a base interna, instrumentos suplementares e 100 escalas mundiais sem custo.</p>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-3">
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">filtrável</p><p className="text-xl sm:text-2xl font-black text-foreground">{catalog.length}</p></CardContent></Card>
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-xl sm:text-2xl font-black text-foreground">{world.length}</p></CardContent></Card>
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="text-xl sm:text-2xl font-black text-foreground">{status}</p></CardContent></Card>
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">catálogo filtrável</p><p className="text-2xl font-black tabular-nums text-foreground">{catalog.length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-2xl font-black tabular-nums text-foreground">{world.length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="mt-1 flex items-center gap-2 text-lg font-black text-foreground"><span className={`h-2.5 w-2.5 shrink-0 rounded-full ${statusInfo.dot}`} aria-hidden="true" />{statusInfo.label}</p></CardContent></Card>
       </section>
+      {status === "fallback" && <p className="-mt-2 px-1 text-[11px] leading-relaxed text-muted-foreground">Catálogo mundial online indisponível agora — usando a base local embutida, sem perda de função.</p>}
 
-      <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
+      <section className="space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Medicação, autismo, TDAH, ansiedade..." className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm" data-testid="input-search" />
-          {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: medicação, efeitos, satisfação, autismo, TDAH, escola, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
+          {search && <button type="button" onClick={() => setSearch("")} className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 
-        <div className="space-y-1.5 sm:space-y-2">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            {faixasEtarias.map((age) => <button key={age.id} onMouseEnter={() => softHover()} onClick={() => setSelectedAge((v) => v === age.id ? null : age.id)} className={`shrink-0 rounded-2xl border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>{age.label}</button>)}
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {faixasEtarias.map((age) => <button key={age.id} type="button" aria-pressed={selectedAge === age.id} onMouseEnter={() => softHover()} onClick={() => setSelectedAge((v) => v === age.id ? null : age.id)} className={`flex min-h-[44px] shrink-0 items-center rounded-2xl border px-3.5 py-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/50"}`}>{age.label}</button>)}
           </div>
         </div>
 
-        <div className="space-y-1.5 sm:space-y-2">
-          <div className="flex items-center justify-between gap-2 sm:gap-3">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">Queixa</p>
-              {detectedPattern && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 {detectedPattern.name.split('(')[0]}</span>}
-            </div>
-            {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa clínica</p>
+            {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs"><RotateCcw className="h-3.5 w-3.5" /> limpar</Button>}
           </div>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm flex-shrink-0">{q.emoji}</span>}<span className="truncate text-[11px] sm:text-xs">{q.label}</span></button>)}
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Respondente</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🧒</span> <span className="hidden sm:inline">Direto</span></button>
-            <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
-            <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍🏫</span> <span className="hidden sm:inline">Escola</span></button>
-            <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍⚕️</span> <span className="hidden sm:inline">Clínico</span></button>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {queixas.slice(0, 24).map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`flex min-h-[44px] items-center rounded-2xl border px-3 py-2 text-left text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.label}</button>)}
           </div>
         </div>
       </section>
 
-      {hasSearch ? <section ref={resultsSectionRef} className="space-y-3">
+      {hasSearch ? <section className="space-y-3">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
-          {ranking.map((item) => {
-            const reasons = getRecommendationReasons(
-              item.title !== "Sem escala ideal" ? rankedPool.find(s => s.name === item.title) : undefined,
-              selectedQueixas,
-              selectedAge
-            );
-            return (
-              <Link key={item.slot} href={item.route} className="block h-full">
-                <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
-                  <CardContent className="filter-260-card-content">
-                    <div className="filter-260-medalrow">
-                      <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
+          {ranking.map((item) => (
+            <Link key={item.slot} href={item.route} className="block h-full rounded-[18px] focus-visible:outline-none">
+              <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
+                <CardContent className="filter-260-card-content">
+                  <div className="filter-260-medalrow">
+                    <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
+                  </div>
+                  <div className="filter-260-head">
+                    <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
+                      <p className="filter-260-subtitle">{item.subtitle}</p>
                     </div>
-                    <div className="filter-260-head">
-                      <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
-                        <p className="filter-260-subtitle">{item.subtitle}</p>
-                      </div>
-                    </div>
-                    {reasons.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
-                      </div>
-                    )}
-                    <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
-                    <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
-                    {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
-                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+                  </div>
+                  <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
+                  <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
+                  {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
+                  <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
-      </section> : <section className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card>
-        </div>
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-6">
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-4">
-              <div className="text-5xl">🧠</div>
-              <div className="flex-1">
-                <h3 className="font-black text-foreground mb-2">Como usar o Filtro</h3>
-                <ol className="space-y-1 text-xs text-muted-foreground list-decimal list-inside">
-                  <li>Selecione a <strong>idade</strong> da criança</li>
-                  <li>Escolha os <strong>sinais e sintomas</strong> observados</li>
-                  <li>Veja as <strong>recomendações</strong> organizadas por prioridade</li>
-                  <li>Clique para <strong>abrir</strong> o instrumento escolhido</li>
-                </ol>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>}
+      </section> : <section className="grid gap-3 md:grid-cols-3"><Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card><Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card></section>}
 
       <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
         <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-            <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
-              <div className="filter-260-card-content compact">
-                <div className="filter-260-head">
-                  <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}</div>
-                    </div>
-                    <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ); })}
-        </div>
-      </section>
-    </div>
-  );
-}
+            <div key={s.id} className="filter-260-card co
