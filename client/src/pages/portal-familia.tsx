@@ -78,12 +78,6 @@ const parentResources = [
     icon: Newspaper,
   },
   {
-    href: "/inventarios-escola",
-    title: "Questionário escolar",
-    description: "Ponte com professores e escola quando o profissional solicitar observação pedagógica.",
-    icon: School,
-  },
-  {
     href: "/caa",
     title: "CAA · Vou Falar",
     description: "Comunicação alternativa e aumentativa para apoio familiar e terapêutico.",

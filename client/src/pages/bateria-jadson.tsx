@@ -33,18 +33,6 @@ const scales = [
     iconColor: "text-blue-600 dark:text-blue-400",
   },
   {
-    href: "/pdae",
-    title: "PDAE-J26",
-    subtitle: "Protocolo de Desempenho Acadêmico e Escolar",
-    ageRange: "Ed. Inf. final – 9º ano",
-    items: 24,
-    domains: 5,
-    icon: GraduationCap,
-    gradient: "from-amber-500 to-orange-600",
-    bgLight: "bg-amber-50 dark:bg-amber-950/30",
-    iconColor: "text-amber-600 dark:text-amber-400",
-  },
-  {
     href: "/ecsm",
     title: "ECSM-J26",
     subtitle: "Escala de Cognição Social e Mentalização",

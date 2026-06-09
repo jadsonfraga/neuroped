@@ -18,7 +18,7 @@ export const firstLineByQueixa: Record<string, string[]> = {
   ansiedade: ["/scared", "/sdq", "/cbcl", "/testes-diretos"],
   depressao: ["/cdi2", "/phqa", "/cssrs", "/sdq"],
   suicidio: ["/cssrs", "/phqa"],
-  aprendizagem: ["/pdae", "/tde2", "/testes-academicos", "/testes-diretos", "/testes-reconhecimento", "/inventarios-escola"],
+  aprendizagem: ["/tde2", "/testes-academicos", "/testes-diretos", "/testes-reconhecimento"],
   linguagem: ["/asq3", "/denver", "/testes-diretos", "/testes-reconhecimento"],
   atraso: ["/denver", "/asq3", "/vineland", "/pant"],
   comportamento: ["/sdq", "/cbcl", "/conners", "/vanderbilt", "/eaah"],
@@ -33,13 +33,13 @@ export const firstLineByQueixa: Record<string, string[]> = {
 export const firstLineByCrossed: Record<string, string[]> = {
   "tdah+tea": ["/mchat", "/snap", "/conners", "/vineland", "/sdq"],
   "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/cbcl"],
-  "aprendizagem+tdah": ["/snap", "/pdae", "/testes-academicos", "/testes-diretos", "/tde2"],
+  "aprendizagem+tdah": ["/snap", "/testes-academicos", "/testes-diretos", "/tde2"],
   "ansiedade+depressao": ["/scared", "/cdi2", "/phqa", "/cssrs"],
   "depressao+suicidio": ["/cssrs", "/phqa", "/cdi2"],
   "linguagem+tea": ["/mchat", "/asq3", "/testes-reconhecimento"],
   "atraso+tea": ["/mchat", "/denver", "/asq3", "/vineland"],
   "comportamento+tdah": ["/snap", "/conners", "/sdq", "/eaah"],
-  "aprendizagem+tea": ["/testes-academicos", "/pdae", "/vineland"],
+  "aprendizagem+tea": ["/testes-academicos", "/vineland"],
   "ansiedade+tea": ["/scared", "/sdq", "/cars"],
 };
 

@@ -95,10 +95,8 @@ export const navSections: NavSection[] = [
       { href: "/orientacao-parental", label: "Orientação parental", icon: Users },
       { href: "/portal-familia/novidades", label: "Novidades para famílias", icon: Newspaper },
       { href: "/portal-familia/acesso", label: "Política de acesso", icon: KeyRound },
-      { href: "/inventarios-escola", label: "Questionário escolar", icon: School },
       { href: "/diario-sono", label: "Diário do sono", icon: Moon },
       { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
-      { href: "/diario-escola", label: "Diário escolar", icon: School },
       { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
     ],
   },
@@ -173,7 +171,6 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/emdi", label: "EMDI", icon: ClipboardCheck },
       { href: "/eaf", label: "EAF", icon: ClipboardCheck },
-      { href: "/pdae", label: "PDAE", icon: ClipboardCheck },
       { href: "/ecsm", label: "ECSM", icon: ClipboardCheck },
       { href: "/ips", label: "IPS", icon: ClipboardCheck },
       { href: "/ecar-si", label: "ECAR-SI", icon: ClipboardCheck },

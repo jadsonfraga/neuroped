@@ -54,7 +54,6 @@ const PsiquiatriaGuiaPage = lazy(() => import("@/pages/psiquiatria-guia"));
 const BateriaJadsonPage = lazy(() => import("@/pages/bateria-jadson"));
 const EmdiPage = lazy(() => import("@/pages/emdi"));
 const EafPage = lazy(() => import("@/pages/eaf"));
-const PdaePage = lazy(() => import("@/pages/pdae"));
 const EcsmPage = lazy(() => import("@/pages/ecsm"));
 const IpsPage = lazy(() => import("@/pages/ips"));
 const EcarSiPage = lazy(() => import("@/pages/ecar-si"));
@@ -72,12 +71,10 @@ const EscalasNeuropsiquiatriaPage = lazy(() => import("@/pages/escalas-neuropsiq
 const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
-const DiarioEscolaPage = lazy(() => import("@/pages/diario-escola"));
 const AssinaturaDigitalPage = lazy(() => import("@/pages/assinatura-digital"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
-const InventariosEscolaPage = lazy(() => import("@/pages/inventarios-escola"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/testes-reconhecimento"));
@@ -176,7 +173,6 @@ function AppRouter() {
           <Route path="/bateria-jadson" component={BateriaJadsonPage} />
           <Route path="/emdi" component={EmdiPage} />
           <Route path="/eaf" component={EafPage} />
-          <Route path="/pdae" component={PdaePage} />
           <Route path="/ecsm" component={EcsmPage} />
           <Route path="/ips" component={IpsPage} />
           <Route path="/ecar-si" component={EcarSiPage} />
@@ -195,12 +191,10 @@ function AppRouter() {
           <Route path="/caa" component={CaaPage} />
           <Route path="/diario-sono" component={DiarioSonoPage} />
           <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
-          <Route path="/diario-escola" component={DiarioEscolaPage} />
           <Route path="/assinatura-digital"><Protected roles={["admin", "professional"]}><AssinaturaDigitalPage /></Protected></Route>
           <Route path="/sobre" component={SobrePage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />
-          <Route path="/inventarios-escola" component={InventariosEscolaPage} />
           <Route path="/ahsd-tea" component={AhsdTeaPage} />
           <Route path="/tde2" component={Tde2Page} />
           <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
