@@ -47,8 +47,8 @@ const homeSearchCatalog = mergeFilterableCatalog(allScales);
 const clinicalFlows: ClinicalFlow[] = [
   {
     href: "/mchat",
-    title: "Avaliar criança / Aplicar escala",
-    subtitle: "Abrir instrumento implementado e registrar resultado clínico.",
+    title: "Aplicar Escala Clínica",
+    subtitle: "Selecionar instrumento validado e registrar resultado da avaliação.",
     action: "Aplicar escala",
     useCase: "Consulta em andamento",
     icon: ClipboardCheck,
@@ -56,8 +56,8 @@ const clinicalFlows: ClinicalFlow[] = [
   },
   {
     href: "/filtro",
-    title: "Encontrar escala ideal",
-    subtitle: "Filtrar por idade, queixa, objetivo e contexto de aplicação.",
+    title: "Encontrar Instrumento Ideal",
+    subtitle: "Filtro inteligente por idade, sintomatologia, objetivo clínico e contexto.",
     action: "Usar filtro clínico",
     useCase: "Dúvida sobre melhor instrumento",
     icon: Filter,
@@ -65,17 +65,17 @@ const clinicalFlows: ClinicalFlow[] = [
   },
   {
     href: "/pacientes",
-    title: "Pacientes e prontuário",
-    subtitle: "Organizar histórico, consulta, documentos e acompanhamento por paciente.",
-    action: "Abrir pacientes",
+    title: "Gestão de Pacientes e Prontuário",
+    subtitle: "Histórico clínico, documentos, avaliações anteriores e acompanhamento longitudinal.",
+    action: "Abrir prontuário",
     useCase: "Gestão clínica longitudinal",
     icon: Users,
     emphasis: "blue",
   },
   {
     href: "/pant",
-    title: "Documentos médicos / PANT / Receita C1",
-    subtitle: "Acessar matrizes documentais e área preparada para assinatura externa.",
+    title: "Documentos Médicos e Prescrições",
+    subtitle: "Gerar laudo, relatório, receita e documentação com preparo para assinatura digital.",
     action: "Abrir documentos",
     useCase: "Laudo, relatório e prescrição",
     icon: FileText,
@@ -83,8 +83,8 @@ const clinicalFlows: ClinicalFlow[] = [
   },
   {
     href: "/satisfacao-medicacao",
-    title: "Evolução clínica / acompanhamento",
-    subtitle: "Monitorar resposta terapêutica, satisfação medicamentosa e mudanças funcionais.",
+    title: "Monitoramento de Evolução Clínica",
+    subtitle: "Acompanhar resposta terapêutica, tolerabilidade, adesão e mudanças funcionais.",
     action: "Acompanhar evolução",
     useCase: "Retorno e seguimento",
     icon: LineChart,
@@ -93,11 +93,11 @@ const clinicalFlows: ClinicalFlow[] = [
 ];
 
 const emphasisClasses: Record<ClinicalFlow["emphasis"], string> = {
-  primary: "from-red-800 via-red-700 to-slate-950 text-amber-100 ring-amber-300/40",
-  gold: "from-amber-500 via-yellow-600 to-red-800 text-white ring-amber-200/50",
-  teal: "from-teal-700 via-cyan-800 to-slate-950 text-cyan-50 ring-cyan-200/40",
-  blue: "from-blue-700 via-indigo-800 to-slate-950 text-blue-50 ring-blue-200/40",
-  slate: "from-slate-700 via-slate-800 to-slate-950 text-slate-50 ring-slate-300/30",
+  primary: "from-slate-800 via-slate-700 to-slate-950 text-white ring-slate-400/30 shadow-lg",
+  gold: "from-amber-600 via-amber-500 to-slate-900 text-white ring-amber-300/40 shadow-lg",
+  teal: "from-teal-600 via-teal-700 to-slate-900 text-white ring-teal-300/40 shadow-lg",
+  blue: "from-blue-600 via-blue-700 to-slate-900 text-white ring-blue-300/40 shadow-lg",
+  slate: "from-slate-600 via-slate-700 to-slate-900 text-white ring-slate-300/40 shadow-lg",
 };
 
 const metricCards = [
@@ -174,8 +174,8 @@ function AstronautExplorer() {
           <Rocket className="absolute -right-2 -top-1 h-5 w-5 rotate-12 text-amber-300 drop-shadow" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-100">modo exploração</p>
-          <p className="text-[11px] leading-snug text-amber-50/80">menino astronauta guiando a entrada clínica</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-100">Guia Interativo</p>
+          <p className="text-[11px] leading-snug text-amber-50/80">Assistente para navegação clínica</p>
         </div>
       </div>
     </motion.figure>
@@ -184,7 +184,7 @@ function AstronautExplorer() {
 
 function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (value: string) => void }) {
   return (
-    <section className="relative overflow-hidden rounded-[2.25rem] border border-amber-200/30 bg-gradient-to-br from-slate-950 via-red-950 to-slate-900 p-4 text-white shadow-xl shadow-red-950/10 sm:p-6 lg:p-7">
+    <section className="relative overflow-hidden rounded-[2.25rem] border border-amber-200/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-4 text-white shadow-2xl shadow-slate-950/40 sm:p-6 lg:p-7">
       <BrandWatermark className="right-0 top-0 h-56 w-56 opacity-[0.08] dark:opacity-[0.1]" />
       <div className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
       <div className="pointer-events-none absolute -bottom-28 right-8 h-64 w-64 rounded-full bg-teal-300/15 blur-3xl" aria-hidden="true" />
@@ -195,11 +195,11 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="rounded-full border border-amber-200/20 bg-amber-300/15 text-amber-100 hover:bg-amber-300/15">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-              Abertura premium
+              Experiência Premium
             </Badge>
-            <Badge className="rounded-full border border-teal-200/20 bg-teal-300/10 text-teal-50 hover:bg-teal-300/10">
+            <Badge className="rounded-full border border-emerald-200/20 bg-emerald-300/10 text-emerald-50 hover:bg-emerald-300/10">
               <ShieldCheck className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-              NeuroPed EDJ
+              Sistema Clínico Profissional
             </Badge>
           </div>
 
@@ -226,8 +226,8 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               <h1 className="text-3xl font-black leading-none tracking-tight sm:text-5xl" data-testid="text-page-title">
                 NeuroPed
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-amber-50/80">
-                Um painel clínico pediátrico com identidade própria: mascotes, figuras lúdicas discretas, busca rápida e entrada visual mais nobre para iniciar a consulta com clareza.
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-amber-50/85">
+                Sistema de apoio neuropediátrico com interface inteligente: filtro clínico adaptativo, escalas validadas, documentação integrada e painel executivo para decisão clínica em tempo real.
               </p>
             </div>
           </div>
@@ -332,9 +332,9 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">
                   <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
-                  preparando consulta
+                  Carregando módulos clínicos
                 </div>
-                <span className="rounded-full bg-emerald-300/15 px-2 py-0.5 text-[10px] font-bold text-emerald-100">pronto</span>
+                <span className="rounded-full bg-emerald-300/15 px-2 py-0.5 text-[10px] font-bold text-emerald-100">Pronto</span>
               </div>
               <div className="space-y-2" aria-hidden="true">
                 {openingSkeletonRows.map((width, index) => (
@@ -418,8 +418,12 @@ export default function HomePage() {
   const isSearching = q.length >= 2;
 
   return (
-    <div className="page-enter proportion-safe-page space-y-6 pb-8">
-      <HomeOpeningVisual searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+    <div className="page-enter proportion-safe-page flex flex-col min-h-[calc(100vh-3.5rem)] md:min-h-screen pb-8 space-y-6">
+      <div className="flex items-center justify-center flex-1 pt-0 md:pt-0">
+        <div className="w-full max-w-[1200px] px-3 sm:px-4 md:px-5">
+          <HomeOpeningVisual searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        </div>
+      </div>
 
       <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur sm:p-7">
         <BrandWatermark className="right-4 top-4 h-40 w-40" />
@@ -429,12 +433,12 @@ export default function HomePage() {
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
           <div className="space-y-4">
             <div className="max-w-2xl space-y-2">
-              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">App médico premium · números dinâmicos</Badge>
+              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">Fluxo Clínico Estruturado · Dados em Tempo Real</Badge>
               <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                Painel clínico de decisão
+                Painel de Decisão Clínica
               </h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Escolha o caminho da consulta: aplicar escala, encontrar instrumento, abrir paciente, gerar documento ou acompanhar evolução. Os números exibidos vêm do catálogo real do app.
+                Acesso estruturado aos fluxos principais: aplicação de escalas, recomendação de instrumentos, gestão de pacientes, documentação médica e acompanhamento longitudinal. Dados atualizados em tempo real.
               </p>
             </div>
           </div>
