@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Activity,
@@ -423,17 +423,6 @@ export default function FiltroPage() {
     softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null);
   };
 
-  const resultsSectionRef = useRef<HTMLDivElement>(null);
-
-  // Scroll suavemente para resultados quando aparecem
-  useEffect(() => {
-    if (hasSearch && resultsSectionRef.current) {
-      setTimeout(() => {
-        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [hasSearch]);
-
   return (
     <div className="page-enter container-filtro filter-260-shell space-y-3 sm:space-y-5 pb-4 sm:pb-8 relative">
       {/* Mascote decorativo discreto */}
@@ -503,7 +492,7 @@ export default function FiltroPage() {
         </div>
       </section>
 
-      {hasSearch ? <section ref={resultsSectionRef} className="space-y-3">
+      {hasSearch ? <section className="space-y-3" aria-live="polite">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
           {ranking.map((item) => {

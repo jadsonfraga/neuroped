@@ -248,10 +248,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {collapsed && <span className="text-xs md:hidden">Buscar escala, teste ou módulo</span>}
           </button>
           {!collapsed && (
-            <Link href="/filtro">
+            <a href="#/filtro">
               <div
                 className="relative flex min-h-[48px] cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-300/20 via-primary/10 to-teal-400/10 px-3 py-2 text-primary shadow-sm ring-1 ring-amber-300/15 transition-colors hover:border-amber-300/70 hover:bg-amber-300/15"
                 data-testid="nav-golden-filter-shortcut"
+                onClick={() => {
+                  softTap();
+                  haptic.select();
+                  setMobileOpen(false);
+                  window.location.hash = "#/filtro";
+                }}
               >
                 <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-300 via-yellow-500 to-teal-300" aria-hidden="true" />
                 <Filter className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
@@ -260,7 +266,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <p className="truncate text-[10px] font-semibold text-muted-foreground">idade + queixa · PR260 protegido</p>
                 </div>
               </div>
-            </Link>
+            </a>
           )}
         </div>
 

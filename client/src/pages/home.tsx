@@ -269,18 +269,18 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
           </div>
         </div>
 
-        <div className="relative min-h-[380px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:min-h-[420px]">
+        <div className="relative min-h-[300px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:min-h-[330px] lg:min-h-[360px]">
           <div className="absolute inset-4 rounded-[1.6rem] border border-dashed border-amber-200/20" aria-hidden="true" />
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-            className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/15"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/15 sm:h-60 sm:w-60"
             aria-hidden="true"
           />
           <motion.div
             animate={{ rotate: -360 }}
             transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
-            className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/10"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/10 sm:h-72 sm:w-72"
             aria-hidden="true"
           />
 
@@ -290,7 +290,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               initial={{ opacity: 0, y: 10, scale: 0.92 }}
               animate={{ opacity: 1, y: [0, -7, 0], scale: 1 }}
               transition={{ delay: asset.delay, duration: 3.8, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-              className={`asset-proportion-box absolute ${asset.position} hidden h-16 w-16 rounded-3xl border border-white/10 bg-white/90 p-2 shadow-lg sm:flex`}
+              className={`asset-proportion-box absolute ${asset.position} hidden h-14 w-14 rounded-3xl border border-white/10 bg-white/90 p-2 shadow-lg sm:flex`}
             >
               <SafeAssetImage src={asset.src} alt={asset.label} className="no-zoom-media h-full w-full object-contain" />
             </motion.div>
@@ -308,7 +308,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
             </motion.div>
           ))}
 
-          <div className="relative z-10 flex h-full min-h-[350px] flex-col items-center justify-center gap-5 text-center">
+          <div className="relative z-10 flex h-full min-h-[270px] flex-col items-center justify-center gap-4 text-center sm:min-h-[300px] lg:min-h-[320px]">
             <motion.div
               initial={{ opacity: 0, y: 14, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -316,7 +316,7 @@ function HomeOpeningVisual({ searchQuery, setSearchQuery }: { searchQuery: strin
               className="relative"
             >
               <div className="absolute inset-0 rounded-full bg-amber-200/25 blur-2xl" aria-hidden="true" />
-              <div className="mascot-proportion-box relative h-52 w-52 rounded-[2.25rem] border border-amber-200/30 bg-white/95 p-3 shadow-2xl sm:h-60 sm:w-60">
+              <div className="mascot-proportion-box relative h-40 w-40 rounded-[2rem] border border-amber-200/30 bg-white/95 p-3 shadow-2xl sm:h-44 sm:w-44 lg:h-48 lg:w-48">
                 <SafeAssetImage
                   src={brandAssets.mascots.superDoctor}
                   alt="Mascote Dr. Jadson SuperNeuroPed"
