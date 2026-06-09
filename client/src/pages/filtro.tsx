@@ -385,8 +385,14 @@ export default function FiltroPage() {
     return catalog.find((s) => s.id === detectedPattern.goldStandard) || null;
   }, [detectedPattern, rankedPool, catalog]);
 
-  const direct = rankedPool.find((s) => Boolean(s.appRoute));
-  const school = rankedPool.find((s) => s.respondente.includes("professor"));
+  const direct = rankedPool.find((s) => Boolean(s.appRoute)) || catalog.find((s) => {
+    const postConsultComplaints = ["efeitos", "evolucao"];
+    return s.appRoute && s.prioridade !== "monitorizacao" && !s.queixas.some((q) => postConsultComplaints.includes(q)) && matchAge(s, selectedAge);
+  });
+  const school = rankedPool.find((s) => s.respondente.includes("professor")) || catalog.find((s) => {
+    const postConsultComplaints = ["efeitos", "evolucao"];
+    return s.respondente.includes("professor") && s.prioridade !== "monitorizacao" && !s.queixas.some((q) => postConsultComplaints.includes(q)) && matchAge(s, selectedAge);
+  });
 
   // FIX BUG-003: Guard against undefined when rankedPool is empty
   const fallback = rankedPool[0] || undefined;

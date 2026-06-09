@@ -505,4 +505,16 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
-     
+        data-testid="button-submit"
+      >
+        {total === 0
+          ? "Escala sem itens configurados"
+          : allAnswered
+            ? "Ver Resultado"
+            : `Faltam ${missingCount} resposta${missingCount !== 1 ? "s" : ""}`}
+      </Button>
+
+      {config.scaleId && <ScaleReference scaleId={config.scaleId} />}
+    </div>
+  );
+}
