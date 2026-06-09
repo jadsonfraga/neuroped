@@ -18,14 +18,12 @@ import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { CommandPalette } from "@/components/CommandPalette";
 
-// ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import SessionExpiredPage from "@/pages/session-expired";
 import LgpdConsentPage from "@/pages/lgpd-consent";
 
-// ----- Lazy: paginas educativas (publicas) -----
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -69,8 +67,6 @@ const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
-const EfeitosColateraisPage = lazy(() => import("@/pages/efeitos-colaterais"));
-const DocumentosPage = lazy(() => import("@/pages/documentos"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const EscalasNeuropsiquiatriaPage = lazy(() => import("@/pages/escalas-neuropsiquiatria"));
 const CaaPage = lazy(() => import("@/pages/caa"));
@@ -86,7 +82,6 @@ const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/testes-reconhecimento"));
 const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
-const TestesDiretosPage = lazy(() => import("@/pages/testes-diretos"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -100,11 +95,11 @@ const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
 const MarcosDesenvolvimentoPage = lazy(() => import("@/pages/marcos-desenvolvimento"));
 const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
 
-// ----- Lazy: paginas SENSIVEIS (requerem auth ou PIN master local) -----
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const SatisfacaoMedicacaoPage = lazy(() => import("@/pages/satisfacao-medicacao"));
+const Eusm10Page = lazy(() => import("@/pages/eusm10"));
 const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const AvaliacaoMultiprofissionalPage = lazy(() => import("@/pages/avaliacao-multiprofissional"));
 const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
@@ -112,7 +107,7 @@ const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
-const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades"));
+const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
 const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
 const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
 const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
@@ -184,7 +179,7 @@ function AppRouter() {
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
           <Route path="/pre-retorno" component={PreRetornoPage} />
-          <Route path="/efeitos-colaterais" component={EfeitosColateraisPage} />
+          <Route path="/efeitos-colaterais" component={PreRetornoPage} />
           <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
@@ -200,7 +195,6 @@ function AppRouter() {
           <Route path="/tde2" component={Tde2Page} />
           <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
           <Route path="/testes-academicos" component={TestesAcademicosPage} />
-          <Route path="/testes-diretos" component={TestesDiretosPage} />
           <Route path="/inventarios-auto" component={InventariosAutoPage} />
           <Route path="/ajuda" component={AjudaPage} />
           <Route path="/curvas-crescimento" component={CurvasCrescimentoPage} />
@@ -220,11 +214,11 @@ function AppRouter() {
           <Route path="/prontuario"><Protected roles={["admin", "professional"]}><ProntuarioPage /></Protected></Route>
           <Route path="/calculadora-dose"><Protected roles={["admin", "professional"]}><CalculadoraDosePage /></Protected></Route>
           <Route path="/satisfacao-medicacao"><Protected roles={["admin", "professional"]}><SatisfacaoMedicacaoPage /></Protected></Route>
+          <Route path="/eusm10"><Protected roles={["admin", "professional"]}><Eusm10Page /></Protected></Route>
           <Route path="/avaliacao-multiprofissional"><Protected roles={["admin", "professional"]}><AvaliacaoMultiprofissionalPage /></Protected></Route>
           <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
           <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
           <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>
-          <Route path="/documentos"><Protected roles={["admin", "professional"]}><DocumentosPage /></Protected></Route>
 
           <Route path="/portal-familia" component={PortalFamiliaPage} />
           <Route path="/portal-familia/novidades" component={PortalNovidadesPage} />
@@ -240,6 +234,11 @@ function AppRouter() {
   );
 }
 
+function getCurrentHashPath(): string {
+  if (typeof window === "undefined") return "/";
+  return window.location.hash.replace(/^#/, "") || "/";
+}
+
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
@@ -252,6 +251,8 @@ function App() {
 
   useEffect(() => {
     if (!splashComplete) return;
+    const currentPath = getCurrentHashPath();
+    if (currentPath !== "/") return;
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);
@@ -273,4 +274,17 @@ function App() {
             <AmbientEffects />
             <Toaster />
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
-            {splas
+            {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
+            <Router hook={useHashLocation}><AppRouter /></Router>
+            <InstallPrompt />
+            <PreferencesPanel />
+            <CommandPalette />
+            {splashComplete && <WelcomeTour />}
+          </ToastProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

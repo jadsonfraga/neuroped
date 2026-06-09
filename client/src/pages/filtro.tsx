@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   Activity,
@@ -33,7 +33,6 @@ import { Input } from "@/components/ui/input";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
-import { curatedBoost, clinicianOnlyPenalty } from "@/data/preConsultaCurated";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -43,21 +42,6 @@ type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "
 
 const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
-
-// ── Filtro de PRÉ-CONSULTA ────────────────────────────────────────────────
-// Propósito: triagem ANTES da consulta (uso da secretaria) — questionários para
-// família/escola + testes diretos com a criança. Instrumentos de ACOMPANHAMENTO
-// não se aplicam aqui e são removidos do filtro (continuam acessíveis em outras
-// telas do app): diários, qualidade de vida/desfecho, monitorização de medicação
-// e efeitos colaterais (todos `prioridade: "monitorizacao"`) e psicoeducação.
-const PSICOEDUCACAO_ROUTES = new Set<string>(["/orientacao-parental", "/portal-familia"]);
-const QUEIXAS_POS_CONSULTA = new Set<string>(["efeitos", "evolucao"]);
-
-function isPreConsulta(s: ScaleEntry): boolean {
-  if (s.prioridade === "monitorizacao") return false;
-  if (s.appRoute && PSICOEDUCACAO_ROUTES.has(s.appRoute)) return false;
-  return true;
-}
 
 const EUSM10_FILTER_SCALE: ScaleEntry = {
   id: "eusm10",
@@ -83,18 +67,8 @@ function norm(text: string) {
 }
 
 function unique(scales: ScaleEntry[]) {
-  // Dedup por id E por fullName: colapsa duplicatas reais (ex.: bears/bears-new,
-  // psq/psq-new) sem afetar instrumentos distintos de mesma sigla (ex.: as duas
-  // AIMS têm fullName diferente, então sobrevivem).
-  const seenId = new Set<string>();
-  const seenName = new Set<string>();
-  return scales.filter((s) => {
-    const key = (s.fullName || s.name || "").toLowerCase().trim();
-    if (seenId.has(s.id) || (key && seenName.has(key))) return false;
-    seenId.add(s.id);
-    if (key) seenName.add(key);
-    return true;
-  });
+  const seen = new Set<string>();
+  return scales.filter((s) => seen.has(s.id) ? false : (seen.add(s.id), true));
 }
 
 function ageMonths(range: string) {
@@ -118,6 +92,8 @@ function guessQueixas(category: string, name: string) {
   if (/eat|scoff|aliment/.test(t)) set.add("alimentacao");
   if (/sono|sleep|psq|bears/.test(t)) set.add("sono");
   if (/pain|dor/.test(t)) set.add("dor");
+  if (/medic|remedio|farmaco|dose|efeito|side effect|adesao|tolerab|satisfacao/.test(t)) set.add("efeitos");
+  if (/evolu|monitor|retorno|follow/.test(t)) set.add("evolucao");
   if (/cogn|promis|toolbox|life|family|peer|relationship|mobility|upper/.test(t)) set.add("funcionalidade");
   if (/school|professor|teacher|aprendiz/.test(t)) set.add("aprendizagem");
   return set.size ? Array.from(set) : ["funcionalidade"];
@@ -144,7 +120,7 @@ function rowToScale(row: Row): ScaleEntry {
     ageMax: a.max,
     queixas: guessQueixas(categoria, `${sigla} ${nome}`),
     respondente: guessRespondente(respondente),
-    prioridade: "triagem",
+    prioridade: selo === "Bronze" ? "monitorizacao" : "triagem",
     tempo: "3–10 min",
     description: `Escala mundial sem custo. Política: ${politica}. Usar como triagem/monitoramento, nunca diagnóstico isolado.`,
     fonte: "Catálogo NeuroPed 100 escalas · verificar fonte oficial antes de embutir itens",
@@ -163,19 +139,77 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
   for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
   for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
   if (selectedAge && matchAge(scale, selectedAge)) value += 3;
-  if (scale.appRoute) value += 3;
+  if (scale.appRoute) value += 100;
   if (scale.prioridade === "triagem") value += 2;
   if (scale.respondente.includes("professor")) value += 1;
   if (scale.id.startsWith("world-")) value += 0.8;
-  // Curadoria clínica de pré-consulta: primeira linha por queixa/comorbidade
-  // domina o ranking; avaliações formais do médico (sem rota, só clínico) afundam.
-  value += curatedBoost(scale.appRoute, selectedQueixas);
-  value += clinicianOnlyPenalty(scale.appRoute, scale.respondente, scale.prioridade);
   return value;
 }
 
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null) {
-  const base = catalog.filter((s) => (selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q))) && matchAge(s, selectedAge));
+// Padrões clínicos ouro: assinatura de sintomas → escala padrão-ouro
+interface ClinicalPattern {
+  name: string;
+  signature: string[]; // queixas que formam o padrão
+  goldStandard: string; // ID da escala ouro
+  reason: string;
+}
+
+const clinicalPatterns: ClinicalPattern[] = [
+  // TEA: traço social + comportamento + linguagem/atraso
+  { name: "Suspeita TEA (padrão social-comportamental)", signature: ["tea", "comportamento", "linguagem"], goldStandard: "ados2", reason: "ADOS-2 é padrão-ouro diagnóstico de TEA quando há combinação de déficit social, comportamento restritivo e comunicação" },
+  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%" },
+
+  // TDAH: desatenção + hiperatividade + impulsividade/comportamento
+  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", reason: "SNAP-IV é validado DSM-5 para triagem de TDAH com 18 itens diretos; responde pais/professor" },
+  { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional—funções prejudicadas no TDAH" },
+
+  // Desenvolvimento global
+  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
+  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", reason: "Denver II é rastreio padrão-ouro para marcos de desenvolvimento; 4 domínios, 30-45 itens" },
+
+  // Ansiedade infantil
+  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", reason: "SCARED é padrão-ouro para triagem de ansiedade em crianças; 41 itens, 5 subescalas (pânico, generalizada, separação, social, evitação escolar)" },
+  { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
+
+  // Comportamento disruptivo
+  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", reason: "CBCL é padrão-ouro para triagem de psicopatologia infantil; 100 itens, problemas internalizantes/externalizantes/sociais" },
+  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ é breve (25 itens) com versão criança/pais/professor; detecta problemas comportamentais e acadêmicos" },
+
+  // Linguagem/Comunicação
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
+];
+
+function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null): ClinicalPattern | null {
+  if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrão
+
+  // Busca padrão com melhor match (quantas queixas coincidem)
+  let bestMatch: { pattern: ClinicalPattern; score: number } | null = null;
+
+  for (const pattern of clinicalPatterns) {
+    const matchCount = pattern.signature.filter((s) => selectedQueixas.includes(s)).length;
+    const score = matchCount / pattern.signature.length; // % de match
+
+    if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { pattern, score };
+    }
+  }
+
+  return bestMatch?.pattern ?? null;
+}
+
+function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null) {
+  const base = catalog.filter((s) => {
+    // Filtro de pré-consulta: apenas triagem/diagnóstico, não monitorização
+    if (s.prioridade === "monitorizacao") return false;
+    // Excluir queixas que são pós-consulta (reavaliação, efeitos colaterais, evolução)
+    const postConsultComplaints = ["efeitos", "evolucao"];
+    if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
+
+    const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
+    const matchesAge = matchAge(s, selectedAge);
+    const matchesRespondente = !selectedRespondente || s.respondente.includes(selectedRespondente);
+    return matchesQueixa && matchesAge && matchesRespondente;
+  });
   return unique(base.length ? base : catalog)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
     .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
@@ -201,8 +235,6 @@ function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: st
     state: scale?.appRoute ? "Rota direta disponível." : restricted ? "Ficha clínica; não embutir itens/escore sem permissão formal." : "Catálogo filtrável; aplicação direta ainda não implementada.",
     source: scale?.fonte,
     tone,
-    pending: scale?.pendente_validacao_clinica === true,
-    restricted,
   };
 }
 
@@ -230,16 +262,28 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
   if (/sono|sleep|bears|psq|cshq/.test(t)) return { label: "sono", Icon: Moon, tone: "from-indigo-700 via-blue-900 to-slate-950" };
   if (/ansiedade|depress|humor|mood|phq|gad|scared|rcads|scas/.test(t)) return { label: "humor", Icon: HeartPulse, tone: "from-rose-600 via-red-700 to-slate-950" };
   if (/desenvolvimento|milestone|cdc|swyc|atraso|motor|gmfcs/.test(t)) return { label: "desenvolvimento", Icon: Baby, tone: "from-blue-600 via-indigo-700 to-slate-950" };
-  if (/medic|dose|farmaco|risperidona|metilfenidato/.test(t)) return { label: "medicação", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
+  if (/eusm|medic|dose|farmaco|risperidona|metilfenidato|tolerab|adesao|efeito/.test(t)) return { label: "medicação", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
   if (/pais|parent|cuidador|family/.test(t)) return { label: "família", Icon: Users, tone: "from-slate-600 via-slate-800 to-slate-950" };
 
   return { label: "clínico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
+}
+
+function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas: string[], selectedAge: string | null): string[] {
+  if (!scale) return [];
+  const reasons: string[] = [];
+  if (selectedQueixas.length > 0 && scale.queixas.some((q) => selectedQueixas.includes(q))) reasons.push("✓ Queixa");
+  if (selectedAge && matchAge(scale, selectedAge)) reasons.push("✓ Idade");
+  if (scale.appRoute) reasons.push("✓ Rota direta");
+  if (scale.prioridade === "triagem") reasons.push("✓ Triagem");
+  if (scale.respondente.includes("professor")) reasons.push("✓ Escola");
+  return reasons.length ? reasons : ["✓ Compatibilidade geral"];
 }
 
 export default function FiltroPage() {
   const [search, setSearch] = useState("");
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
+  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -264,23 +308,36 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]).filter(isPreConsulta), [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
-  const statusInfo = status === "loading"
-    ? { label: "carregando", dot: "bg-amber-400 animate-pulse" }
-    : status === "ok"
-      ? { label: "completo", dot: "bg-emerald-500" }
-      : { label: "base local", dot: "bg-muted-foreground" };
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente);
+  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
+
+  // Detecta padrão clínico ouro quando 2+ queixas selecionadas
+  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
+  const goldStandardScale = useMemo(() => {
+    if (!detectedPattern) return null;
+    return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
+  }, [detectedPattern, rankedPool]);
+
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
-  const ranking = [
-    rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-    rec("Prata", rankedPool[1], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-    rec("Bronze", rankedPool[2], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-    rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-    rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
-  ];
+
+  // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
+  const ranking = goldStandardScale
+    ? [
+        rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || rankedPool[0], "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || rankedPool[0], "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
+      ]
+    : [
+        rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+      ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -288,8 +345,19 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null);
   };
+
+  const resultsSectionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll suavemente para resultados quando aparecem
+  useEffect(() => {
+    if (hasSearch && resultsSectionRef.current) {
+      setTimeout(() => {
+        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [hasSearch]);
 
   return (
     <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
@@ -311,7 +379,6 @@ export default function FiltroPage() {
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-xl sm:text-2xl font-black text-foreground">{world.length}</p></CardContent></Card>
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="text-xl sm:text-2xl font-black text-foreground">{status}</p></CardContent></Card>
       </section>
-      {status === "fallback" && <p className="-mt-2 px-1 text-[11px] leading-relaxed text-muted-foreground">Catálogo mundial online indisponível agora — usando a base local embutida, sem perda de função.</p>}
 
       {/* Two-column grid: Controls (left) + Results (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
@@ -462,17 +529,12 @@ export default function FiltroPage() {
                     </div>
                     <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
                   </div>
-                  <div className="filter-260-head">
-                    <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
-                      <p className="filter-260-subtitle">{item.subtitle}</p>
-                    </div>
-                  </div>
-                  <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
-                  <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
-                  {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
-                  <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
-                </CardContent>
-              </Card>
-  
+                </div>
+              </div>
+            </div>
+          ); })}
+        </div>
+      </section>
+    </div>
+  );
+}
