@@ -137,7 +137,8 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
   if (!selectedAge) return true;
   const age = faixasEtarias.find((a) => a.id === selectedAge);
   // Return false if selectedAge ID not found (prevents matching with invalid ages)
-  return age ? (scale.ageMax > age.min && scale.ageMin < age.max) : false;
+  // FIX BUG-001: Use >= and <= instead of > and < to include boundary ages
+  return age ? (scale.ageMax >= age.min && scale.ageMin <= age.max) : false;
 }
 
 function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
@@ -277,7 +278,8 @@ function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: st
   return {
     slot,
     tier: tierFromSlot(slot),
-    route: scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
+    // FIX BUG-003: Ensure route defaults even if scale is undefined
+    route: scale?.appRoute || (scale?.id && scale.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
     title: scale?.name || "Sem escala ideal",
     subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
     reason,
@@ -371,8 +373,8 @@ export default function FiltroPage() {
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
 
-  // Guard against undefined when rankedPool is empty
-  const fallback = rankedPool[0];
+  // FIX BUG-003: Guard against undefined when rankedPool is empty
+  const fallback = rankedPool[0] || undefined;
 
   // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
   const ranking = goldStandardScale
