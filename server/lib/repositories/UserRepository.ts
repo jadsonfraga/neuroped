@@ -1,0 +1,54 @@
+/**
+ * UserRepository — acesso a usuários com otimizações
+ * Índices em email, role
+ */
+
+import { eq } from "drizzle-orm";
+import type { BaseRepository, PaginatedResult, PaginationParams } from "./base";
+import { calculatePagination } from "./base";
+
+// Placeholder - implementação completa seria feita com a tabela users
+export class UserRepository implements BaseRepository<any, any> {
+  constructor(private db: any) {}
+
+  async findById(id: string): Promise<any | null> {
+    // TODO: implementar
+    return null;
+  }
+
+  async findByEmail(email: string): Promise<any | null> {
+    // TODO: implementar
+    return null;
+  }
+
+  async findAll(pagination?: PaginationParams): Promise<PaginatedResult<any>> {
+    const { page, limit } = calculatePagination(pagination?.page, pagination?.limit);
+    return {
+      data: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    };
+  }
+
+  async create(input: any): Promise<any> {
+    // TODO: implementar
+    throw new Error("Not implemented");
+  }
+
+  async update(id: string, input: Partial<any>): Promise<any | null> {
+    // TODO: implementar
+    return null;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    // TODO: implementar
+    return false;
+  }
+
+  async count(): Promise<number> {
+    // TODO: implementar
+    return 0;
+  }
+}
