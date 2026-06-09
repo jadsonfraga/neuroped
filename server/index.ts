@@ -115,7 +115,7 @@ app.use((req, res, next) => {
 
   const port = parseInt(process.env.PORT || "5000", 10);
   const host = process.env.HOST || "0.0.0.0";
-  httpServer.listen({ port, host, reusePort: true }, () => {
+  httpServer.listen({ port, host, reusePort: process.platform !== "win32" }, () => {
     log(`NeuroPed EDJ rodando em http://${host}:${port}`);
   });
 })();

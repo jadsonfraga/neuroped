@@ -32,9 +32,8 @@ import { Input } from "@/components/ui/input";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { buildFilterRanking, matchAge } from "@/data/filterPipeline";
 import {
-  clinicianOnlyPenalty,
-  curatedBoost,
   isPreConsulta,
   postConsultComplaints,
   protectedLicenseKinds,
@@ -43,7 +42,7 @@ import {
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
-type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "QuestionÃ¡rio Escolar" | "Questionário Escolar";
+type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "QuestionÃ¡rio Escolar" | "Questionário Escolar" | "Questionario Escolar";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -136,156 +135,6 @@ function rowToScale(row: Row): ScaleEntry {
   };
 }
 
-function matchAge(scale: ScaleEntry, selectedAge: string | null) {
-  if (!selectedAge) return true;
-  const age = faixasEtarias.find((a) => a.id === selectedAge);
-  // Return false if selectedAge ID not found (prevents matching with invalid ages)
-  // FIX BUG-001: Use >= and <= instead of > and < to include boundary ages
-  return age ? (scale.ageMax >= age.min && scale.ageMin <= age.max) : false;
-}
-
-function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
-  const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
-  let value = 0;
-  for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 3 : 2;
-  for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
-  if (selectedAge && matchAge(scale, selectedAge)) value += 3;
-  if (scale.prioridade === "triagem") value += 2;
-  if (scale.respondente.includes("professor")) value += 1;
-  if (scale.id.startsWith("world-")) value += 0.8;
-  if (scale.appRoute) value += 3;
-  value += curatedBoost(scale.appRoute, selectedQueixas);
-  value += clinicianOnlyPenalty(scale.appRoute, scale.respondente, scale.prioridade);
-  return value;
-}
-
-// PadrÃµes clÃ­nicos ouro: assinatura de sintomas â†’ escala padrÃ£o-ouro
-interface ClinicalPattern {
-  name: string;
-  signature: string[]; // queixas que formam o padrÃ£o
-  goldStandard: string; // ID da escala ouro (triagem ou diagnÃ³stico)
-  screening?: string; // ID escala de triagem (opcional)
-  diagnostic?: string; // ID escala diagnÃ³stica (opcional)
-  minAge?: number; // idade mÃ­nima em meses (validaÃ§Ã£o)
-  maxAge?: number; // idade mÃ¡xima em meses (validaÃ§Ã£o) - FIX BUG-051
-  reason: string;
-}
-
-const clinicalPatterns: ClinicalPattern[] = [
-  // TEA: traÃ§o social + comportamento + linguagem/atraso
-  { name: "Suspeita TEA (padrÃ£o social-comportamental)", signature: ["tea", "comportamento", "linguagem"], goldStandard: "ados2", reason: "ADOS-2 Ã© padrÃ£o-ouro diagnÃ³stico de TEA quando hÃ¡ combinaÃ§Ã£o de dÃ©ficit social, comportamento restritivo e comunicaÃ§Ã£o" },
-  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", screening: "mchat", minAge: 16, reason: "M-CHAT-R/F Ã© rastreio padrÃ£o-ouro para TEA entre 16-30 meses; sensibilidade 95%; se positivo, encaminhar para ADOS-2" },
-
-  // TDAH: desatenÃ§Ã£o + hiperatividade + impulsividade/comportamento
-  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", screening: "snap", minAge: 72, reason: "SNAP-IV para 6+ anos; prÃ©-escolares: escala comportamento geral (CBCL, SDQ) - TDAH puro nÃ£o Ã© diagnÃ³stico vÃ¡lido <6a" },
-  { name: "TDAH complexo (com funÃ§Ã£o executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibiÃ§Ã£o, flexibilidade, controle emocional; essencial para avaliaÃ§Ã£o diagnÃ³stica" },
-
-  // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 0, maxAge: 42, reason: "Bayley-III (CLINICIAN-administered) padrÃ£o-ouro 1-42m; NICU 0m: TIMP ou Dubowitz; Griffiths-III alternativa gratuita" },
-  { name: "Atraso dev. prÃ©-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, maxAge: 60, reason: "Denver II (CLINICIAN para triagem; ASQ-3 (PARENTAL) alternativa gratuita 1-60m sem acesso a clÃ­nico validada" },
-  { name: "AvaliaÃ§Ã£o neonatal (0-1 mÃªs)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE (CLINICIAN-administered) exame neurolÃ³gico padronizado recÃ©m-nascidos; 26 itens objetivos; detecta anormalidades precoces" },
-
-  // Ansiedade infantil
-  { name: "Transtorno de ansiedade (crianÃ§a)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", minAge: 96, reason: "SCARED (8+) ou SCARED-P (pais) para triagem; RCADS (8+) para diagnÃ³stico; <8a: observaÃ§Ã£o clÃ­nica" },
-  { name: "Ansiedade + depressÃ£o comÃ³rbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressÃ£o); distingue sintomas sobrepostos" },
-
-  // Comportamento disruptivo
-  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", screening: "cbcl", minAge: 18, maxAge: 216, reason: "CBCL (PARENTAL) triagem abrangente 18m-18a; 100 itens, 3 domÃ­nios; validada Brasil" },
-  { name: "Transtorno Opositivo Desafiador (TOD)", signature: ["comportamento"], goldStandard: "ecbi", diagnostic: "ecbi", minAge: 24, maxAge: 84, reason: "ECBI (PARENTAL) especÃ­fica 2-7a (desobediÃªncia/oposiÃ§Ã£o); intensidade + impacto problema" },
-  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", minAge: 48, maxAge: 180, reason: "SDQ (PARENTAL/PROFESSOR) triagem rÃ¡pida 4-15a; equivalente ECBI em contexto escolar" },
-
-  // Linguagem/ComunicaÃ§Ã£o
-  { name: "Atraso de linguagem/comunicaÃ§Ã£o", signature: ["linguagem", "atraso"], goldStandard: "catclams", screening: "cdi", minAge: 0, maxAge: 36, reason: "CAT/CLAMS (CLINICIAN-administered) para avaliaÃ§Ã£o direta 0-36m; MacArthur CDI (pais) alternativa para vocabulÃ¡rio 8-37m" },
-
-  // Paralisia Cerebral / Motor
-  { name: "Paralisia cerebral (funÃ§Ã£o motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", diagnostic: "gmfm", minAge: 12, reason: "GMFM-88/66 (CLINICIAN-observed) para classificaÃ§Ã£o funcional pÃ³s 12m; complementar com MRI para tipo de PC (espÃ¡stica/discinÃ©tica/atÃ¡xica)" },
-  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, maxAge: 180, reason: "GMFCS (CLINICIAN-observed) triagem rÃ¡pida 5 nÃ­veis; BASE para planejamento terapÃªutico; GMFM (>12m) mede mudanÃ§a apÃ³s terapia" },
-
-  // Epilepsia
-  { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", screening: "epilepsia-diario", minAge: 0, maxAge: 216, reason: "DiÃ¡rio de crises (PARENTAL) monitorar frequÃªncia/tipo/resposta 0-18a; complementar com EEG/RM profissional para sÃ­ndrome diagnÃ³stico" },
-
-  // Sono
-  { name: "DistÃºrbios do sono pediÃ¡trico", signature: ["sono"], goldStandard: "cshq", minAge: 48, maxAge: 120, reason: "CSHQ para crianÃ§as 4-10 anos apenas (48-120m); adolescentes (120+ meses) usar BEARS ou PSQI em avaliaÃ§Ã£o especializada" },
-
-  // DepressÃ£o isolada
-  { name: "DepressÃ£o infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 para 7-17a; prÃ©-escolares: observaÃ§Ã£o clÃ­nica, entrevista parental (sem escala especÃ­fica validada)" },
-
-  // Trauma e TEPT
-  { name: "Trauma e TEPT infantil", signature: ["trauma"], goldStandard: "cries", screening: "cries", diagnostic: "caps-ca", minAge: 48, maxAge: 216, reason: "CRIES (PARENTAL/CHILD) triagem TEPT 4-18a; CAPS-CA (CLINICIAN) diagnÃ³stico definitivo; validada Brasil" },
-
-  // Risco de suicÃ­dio
-  { name: "AvaliaÃ§Ã£o de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", screening: "cssrs", diagnostic: "rfl-a", minAge: 84, maxAge: 216, reason: "C-SSRS (CHILD/PARENTAL) 7-18a; RFL-A fatores protetores; <7a riscos geralmente trauma/abuso associados" },
-
-  // Problemas de aprendizagem
-  { name: "AvaliaÃ§Ã£o de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", minAge: 72, reason: "TDE para avaliaÃ§Ã£o de leitura/escrita/aritmÃ©tica em escolares 6+; prÃ©-escolares usar avaliaÃ§Ã£o do desenvolvimento geral" },
-
-  // Funcionalidade adaptativa
-  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 completa para diagnÃ³stico; V-ABC (abreviada) para triagem; versÃ£o survey vs interview conforme contexto" },
-
-  // Dor e conforto
-  { name: "AvaliaÃ§Ã£o de dor pediÃ¡trica", signature: ["dor"], goldStandard: "faces", screening: "faces", minAge: 36, maxAge: 216, reason: "Faces Pain Scale-Revised (CHILD 3+) triagem; FLACC (CLINICIAN <3a); complementar com avaliaÃ§Ã£o funcional e impacto" },
-
-  // AlimentaÃ§Ã£o detalhada
-  { name: "Transtorno alimentar/seletividade", signature: ["alimentacao"], goldStandard: "bpfas", screening: "bpfas", minAge: 24, maxAge: 168, reason: "BPFAS (PARENTAL) triagem problemas alimentaÃ§Ã£o 2-14a; covers seletividade/recusa/inadequaÃ§Ã£o nutricional" },
-];
-
-function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null, catalog: ScaleEntry[]): ClinicalPattern | null {
-  if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrÃ£o
-
-  // Build set of valid scale IDs for fast lookup
-  const validIds = new Set(catalog.map(s => s.id));
-
-  // Busca padrÃ£o com melhor match (quantas queixas coincidem)
-  let bestMatch: { pattern: ClinicalPattern; score: number } | null = null;
-
-  for (const pattern of clinicalPatterns) {
-    // Skip pattern if gold standard doesn't exist in catalog
-    if (!validIds.has(pattern.goldStandard)) {
-      console.warn(`[gold-standard] Pattern "${pattern.name}" references unknown gold standard: ${pattern.goldStandard}`);
-      continue;
-    }
-
-    const matchCount = pattern.signature.filter((s) => selectedQueixas.includes(s)).length;
-    const score = matchCount / pattern.signature.length; // % de match
-
-    if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
-      // Validate that gold standard scale exists and covers the selected age
-      const goldScale = catalog.find((s) => s.id === pattern.goldStandard);
-      if (goldScale) {
-        const ageIsValid = !selectedAge || matchAge(goldScale, selectedAge);
-        if (ageIsValid) {
-          bestMatch = { pattern, score };
-        }
-      }
-    }
-  }
-
-  return bestMatch?.pattern ?? null;
-}
-
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null) {
-  const base = catalog.filter((s) => {
-    // Filtro de prÃ©-consulta: apenas triagem/diagnÃ³stico, nÃ£o monitorizaÃ§Ã£o
-    if (s.prioridade === "monitorizacao") return false;
-    // Excluir queixas que sÃ£o pÃ³s-consulta (reavaliaÃ§Ã£o, efeitos colaterais, evoluÃ§Ã£o)
-    const postConsultComplaints = ["efeitos", "evolucao"];
-    if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
-
-    const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
-    const matchesAge = matchAge(s, selectedAge);
-    const matchesRespondente = !selectedRespondente
-      || s.respondente.includes(selectedRespondente)
-      || (selectedRespondente === "autoaplicavel" && s.respondente.includes("crianca"));
-    return matchesQueixa && matchesAge && matchesRespondente;
-  });
-  const hasActiveFilters = selectedQueixas.length > 0 || selectedAge !== null || selectedRespondente !== null;
-  const results = base.length || !hasActiveFilters ? base : [];
-  return unique(results)
-    .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
-    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
-    .map((x) => x.scale);
-}
-
 function tierFromSlot(slot: Slot): Tier | null {
   if (slot === "Ouro") return "ouro";
   if (slot === "Prata") return "prata";
@@ -303,19 +152,13 @@ function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: st
     title: scale?.name || "Sem escala ideal",
     subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
     reason,
-    state: scale?.appRoute ? "Rota direta disponÃ­vel." : restricted ? "Ficha clÃ­nica; nÃ£o embutir itens/escore sem permissÃ£o formal." : "CatÃ¡logo filtrÃ¡vel; aplicaÃ§Ã£o direta ainda nÃ£o implementada.",
+    state: restricted ? "Instrumento protegido - usar conforme licenca/autorizacao." : scale?.appRoute ? "Rota direta disponÃ­vel." : "CatÃ¡logo filtrÃ¡vel; aplicaÃ§Ã£o direta ainda nÃ£o implementada.",
     source: scale?.fonte,
     tone,
     pending: scale?.pendente_validacao_clinica === true,
     restricted,
     scale,
   };
-}
-
-function pickNext(rankedPool: ScaleEntry[], used: Set<string>, preferred?: ScaleEntry | null) {
-  const candidate = preferred && !used.has(preferred.id) ? preferred : rankedPool.find((scale) => !used.has(scale.id));
-  if (candidate) used.add(candidate.id);
-  return candidate;
 }
 
 function icon(slot: Slot) {
@@ -387,36 +230,19 @@ export default function FiltroPage() {
     : status === "ok"
       ? { label: "completo", dot: "bg-emerald-500" }
       : { label: "base local", dot: "bg-muted-foreground" };
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
-
-  // Detecta padrÃ£o clÃ­nico ouro quando 2+ queixas selecionadas
-  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge, catalog), [selectedQueixas, selectedAge, catalog]);
-  const goldStandardScale = useMemo(() => {
-    if (!detectedPattern) return null;
-    const inPool = rankedPool.find((s) => s.id === detectedPattern.goldStandard);
-    if (inPool) return inPool;
-    // Gold standard not in poolâ€”ensure it exists in full catalog before recommending
-    return catalog.find((s) => s.id === detectedPattern.goldStandard) || null;
-  }, [detectedPattern, rankedPool, catalog]);
-
-  const direct = rankedPool.find((s) => Boolean(s.appRoute));
-  const school = rankedPool.find((s) => s.respondente.includes("professor"));
-
-  // FIX BUG-003: Guard against undefined when rankedPool is empty
-  const fallback = rankedPool[0] || undefined;
-
-  // Se hÃ¡ padrÃ£o ouro detectado, mostra ele como Ouro; caso contrÃ¡rio, usa ranking normal
-  const usedTierIds = new Set<string>();
-  const ouro = pickNext(rankedPool, usedTierIds, goldStandardScale || fallback);
-  const prata = pickNext(rankedPool, usedTierIds);
-  const bronze = pickNext(rankedPool, usedTierIds);
-  const ranking = [
-    rec("Ouro", ouro, detectedPattern ? `PADRAO-OURO: ${detectedPattern.reason}` : "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-    rec("Prata", prata, "Alternativa complementar quando o instrumento ouro nao for suficiente ou disponivel.", "from-slate-400 via-slate-500 to-slate-700"),
-    rec("Bronze", bronze, "Terceira opcao para apoio ou triagem secundaria; nao repete Ouro nem Prata.", "from-orange-500 via-amber-700 to-stone-800"),
-    rec("Teste Direto", direct || fallback, "Prioriza instrumento que ja possui rota de aplicacao dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-    rec("Questionário Escolar", school || fallback, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
-  ];
+  const pipeline = useMemo(() => buildFilterRanking(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
+  const rankedPool = pipeline.pool;
+  const detectedPattern = pipeline.pattern;
+  const ranking = pipeline.recommendations.map((item) => rec(
+    item.slot,
+    item.scale,
+    item.reason,
+    item.slot === "Ouro" ? "from-amber-500 via-yellow-600 to-red-800"
+      : item.slot === "Prata" ? "from-slate-400 via-slate-500 to-slate-700"
+        : item.slot === "Bronze" ? "from-orange-500 via-amber-700 to-stone-800"
+          : item.slot === "Teste Direto" ? "from-blue-600 via-indigo-700 to-slate-950"
+            : "from-emerald-600 via-teal-700 to-slate-950",
+  ));
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -529,7 +355,7 @@ export default function FiltroPage() {
                       <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
                       <div className="min-w-0 flex-1">
                         <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
-                        <p className="filter-260-subtitle">{item.subtitle}</p>
+                        <p className="filter-260-subtitle line-clamp-2">{item.subtitle}</p>
                       </div>
                     </div>
                     {reasons.length > 0 && (
@@ -582,7 +408,7 @@ export default function FiltroPage() {
                   <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
+                        <div className="min-w-0"><p className="filter-260-title small line-clamp-2">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>
                         {s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}
@@ -590,7 +416,7 @@ export default function FiltroPage() {
                         {s.licencaUso && protectedLicenseKinds.has(s.licencaUso) && <Badge variant="outline" className="filter-260-badge border-primary/40 text-primary" title="Instrumento protegido - usar conforme licenca/autorizacao">protegida</Badge>}
                       </div>
                     </div>
-                    <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" Â· ")} Â· {Math.round(s.ageMin / 12)}â€“{Math.round(s.ageMax / 12)} anos</p>
+                    <p className="mt-2 line-clamp-2 text-[11px] text-muted-foreground">{s.respondente.join(" Â· ")} Â· {Math.round(s.ageMin / 12)}â€“{Math.round(s.ageMax / 12)} anos</p>
                   </div>
                 </div>
               </div>

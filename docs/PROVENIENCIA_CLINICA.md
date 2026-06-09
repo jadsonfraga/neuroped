@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 583
-- **Com fonte declarada:** 577
+- **Total de instrumentos:** 605
+- **Com fonte declarada:** 599
 - **Pendentes de validação/fonte:** 6
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -16,13 +16,13 @@
 | `ace` | ACE | Felitti VJ et al., 1998 (Adverse Childhood Experiences) | não |
 | `adir` | ADI-R | Rutter M et al., 2003 | não |
 | `adl3` | ADL-3 | Pendente revisão clínica | sim |
-| `ados2` | ADOS-2 | Lord C et al., 2012 | não |
-| `aims` | AIMS | Piper MC, Darrah J, 1994 (Alberta Infant Motor Scale) | não |
+| `ados2` | ADOS-2 | Lord C et al., 2012 - Western Psychological Services | não |
+| `aims` | AIMS | Piper MC & Darrah J, 1994 - University of Alberta | não |
 | `aims-efeitos` | AIMS | Guy W, 1976 (Abnormal Involuntary Movement Scale — AIMS) | não |
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não |
 | `ashworth` | Ashworth Modificada | Bohannon RW, Smith MB, 1987 (Modified Ashworth Scale) | não |
 | `asq-suicide` | ASQ | Horowitz LM et al., 2012 (Ask Suicide-Screening Questions) | não |
-| `asq3` | ASQ-3 | Squires J, Bricker D, 2009 (ASQ-3), Brookes | não |
+| `asq3` | ASQ-3 | Squires J & Bricker D, 2009 | não |
 | `assq` | ASSQ | Ehlers S et al., 1999 | não |
 | `atec` | ATEC | Rimland B, Edelson SM, 1999 (ATEC), Autism Research Institute | não |
 | `auquei` | AUQUEI | Manificat S, Dazord A, 1997 (AUQUEI) | não |
@@ -31,27 +31,31 @@
 | `bars` | BARS | Barnes TRE, 1989 (Barnes Akathisia Rating Scale) | não |
 | `basc3` | BASC-3 | Reynolds CR, Kamphaus RW, 2015 (BASC-3), Pearson | não |
 | `battelle3` | Battelle-3 | Newborg J, 2020 (Battelle Developmental Inventory 3), Riverside | não |
-| `bayley` | Bayley-III | Bayley N, 2019 (Bayley-4) | não |
-| `bears` | BEARS | Owens JA, Dalzell V, 2005 | não |
+| `bayley` | Bayley-III | Bayley N, 2006 - Pearson Clinical | não |
+| `bbd-checklist` | BBD Checklist | NIH-funded research | não |
+| `bears` | BEARS | Owens JA & Dalzell V, 2005 - Brown University | não |
 | `bears-new` | BEARS | Owens JA, Dalzell V, 2005 | não |
 | `beery-vmi` | Beery VMI | Beery KE, Buktenica NA, Beery NA, 2010 (Beery VMI-6), Pearson | não |
 | `bisq` | BISQ | Sadeh A, 2004 (Brief Infant Sleep Questionnaire) | não |
 | `bladder-diary` | Diário Vesical Pediátrico | International Children's Continence Society (ICCS) — diário miccional padronizado | não |
 | `bot2` | BOT-2 | Bruininks RH, Bruininks BD, 2005 (BOT-2), Pearson | não |
+| `bpfas` | BPFAS | NIH-funded research | não |
 | `bprsc` | BPRS-C | Overall JE, Pfefferbaum B, 1982 (BPRS for Children) | não |
 | `brief2` | BRIEF-2 | Gioia GA et al., 2015 | não |
 | `bristol-stool` | Bristol Stool Scale | Lewis SJ, Heaton KW, 1997 (Bristol Stool Form Scale) | não |
+| `bristol-stool-pediatric` | Bristol Stool | NHS (UK), University of Bristol, WHO | não |
 | `brown-add` | Brown ADD | Brown TE, 2001 (Brown ADD Scales) | não |
 | `cars` | CARS-2 | Schopler E et al., 2010 | não |
 | `casi` | CASI | Silverman WK et al., 1991 (Childhood Anxiety Sensitivity Index) | não |
 | `cast` | CAST | Scott FJ et al., 2002 | não |
-| `catclams` | CAT/CLAMS | Capute AJ, Accardo PJ, 1996 (CAT/CLAMS) | não |
+| `catclams` | CAT/CLAMS | Accardo PJ et al., 1992 | não |
 | `cats` | CATS | Sachser C et al., 2017 (Child and Adolescent Trauma Screen) | não |
-| `cbcl` | CBCL | Achenbach TM, Rescorla LA, 2001 (6-18) / 2000 (1.5-5) | não |
-| `cdi-macarthur` | CDI MacArthur | Fenson L et al., 2007 (MacArthur-Bates CDI) | não |
+| `cbcl` | CBCL | Achenbach TM & Rescorla LA, 2001 | não |
+| `cdi-macarthur` | CDI MacArthur | Fenson L et al., 2007 - Brookes Publishing | não |
 | `cdi-screen-trauma` | CDI Trauma Screen | Putnam FW, Helmers K, Trickett PK, 1993 (Child Dissociative Checklist) | não |
-| `cdi2` | CDI-2 | Kovacs M, 2011 | não |
+| `cdi2` | CDI-2 | Kovacs M, 2011 - Multi-Health Systems | não |
 | `cdrsr` | CDRS-R | Poznanski EO, Mokros HB, 1996 (CDRS-R) | não |
+| `cdss-c` | CDSS-C | University of Calgary, Canada | não |
 | `cefaleia-calendario` | Calendário de Cefaleia | Ferramenta de registro clínico NeuroPed (calendário de cefaleia) | não |
 | `celf5` | CELF-5 | Wiig EH, Semel E, Secord WA, 2013 (CELF-5), Pearson | não |
 | `celf5-new` | CELF-5 | Wiig EH, Semel E, Secord WA, 2013 (CELF-5), Pearson | não |
@@ -61,24 +65,25 @@
 | `chq-pf50` | CHQ-PF50 | Landgraf JM, Abetz L, Ware JE, 1996 (CHQ-PF50) | não |
 | `comfort-b` | COMFORT-B | van Dijk M et al., 2005 (COMFORT-Behavioral Scale) | não |
 | `confias` | CONFIAS | Moojen S et al., 2003 (CONFIAS) | não |
-| `conners` | Conners 3 | Conners CK, 2008 | não |
+| `conners` | Conners 3 | Conners CK, 2008 - Multi-Health Systems | não |
 | `copm` | COPM | Law M et al., 1990 (Canadian Occupational Performance Measure) | não |
 | `cpss-v` | CPSS-V | Foa EB et al., 2018 (CPSS-5) | não |
 | `cpt3` | CPT-3 | Conners CK, 2014 (Conners CPT-3) | não |
 | `crafft` | CRAFFT | Knight JR et al., 2002 (CRAFFT) | não |
 | `crib2` | CRIB-II | Parry G, Tucker J, Tarnow-Mordi W, 2003 (CRIB-II) | não |
-| `cries` | CRIES | Krechel SW, Bildner J, 1995 (CRIES) | não |
+| `cries` | CRIES | Krechel SW & Bildner J, 1995 | não |
 | `cries13` | CRIES-13 | Perrin S et al., 2005 (Children's Revised Impact of Event Scale 13) | não |
 | `csbi` | CSBI | Friedrich WN et al., 1992 (Child Sexual Behavior Inventory) | não |
 | `csbs-dp` | CSBS-DP | Wetherby AM, Prizant BM, 2002 (CSBS-DP), Brookes | não |
 | `cshq` | CSHQ | Owens JA et al., 2000 | não |
-| `cssrs` | C-SSRS | Posner K et al., 2011 (Columbia Suicide Severity Rating Scale) | não |
+| `cssrs` | C-SSRS | Posner K et al., 2011 | não |
 | `ctopp2` | CTOPP-2 | Wagner RK, Torgesen JK, Rashotte CA, Pearson NA, 2013 (CTOPP-2), PRO-ED | não |
+| `cy-bocs` | CY-BOCS | Yale University (Goodman et al., 1989) | não |
 | `cybocs` | CY-BOCS | Scahill L et al., 1997 (CY-BOCS) | não |
 | `cybocs-sr` | CY-BOCS-SR | Scahill L et al., 1997 (CY-BOCS) — versão autorrelato | não |
 | `d2` | d2 Cancelamento | Brickenkamp R, 1962 (d2 Test of Attention) | não |
 | `das2` | DAS-II | Elliott CD, 2007 (DAS-II), Pearson | não |
-| `denver` | Denver II | Frankenburg WK et al., 1992 (Denver II), Pediatrics | não |
+| `denver` | Denver II | Frankenburg WK et al., 1992 | não |
 | `ders` | DERS | Gratz KL, Roemer L, 2004 (Difficulties in Emotion Regulation Scale) | não |
 | `disabkids` | DISABKIDS | Simeoni MC et al., 2007 (DISABKIDS Chronic Generic Measure) | não |
 | `disc-auditiva` | Discriminação Auditiva | Pendente revisão clínica | sim |
@@ -90,7 +95,7 @@
 | `eai` | EAI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `easi` | EASI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `ecar-si` | ECAR-SI J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `ecbi` | ECBI | Eyberg SM, Pincus D, 1999 (ECBI) | não |
+| `ecbi` | ECBI | Eyberg SM & Ross AW, 1978 | não |
 | `ecsm` | ECSM | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `eda` | EDA | Pendente revisão clínica | sim |
 | `edacs` | EDACS | Sellers D et al., 2014 (EDACS) | não |
@@ -107,24 +112,27 @@
 | `evt2` | EVT-2 | Williams KT, 2007 (EVT-2), Pearson | não |
 | `fas-fluencia` | FAS Fluência Verbal | Benton AL, Hamsher K, 1976 (Controlled Oral Word Association — FAS) | não |
 | `fas-pr` | FAS-PR | Calvocoressi L et al., 1999 (Family Accommodation Scale) | não |
-| `flacc` | FLACC | Merkel SI et al., 1997 (FLACC) | não |
+| `flacc` | FLACC | Merkel SI et al., 1997 - University of Michigan | não |
 | `flacc-new` | FLACC | Merkel SI et al., 1997 (FLACC) | não |
+| `foci-c` | FOCI-C | Published research | não |
 | `gad7ped` | GAD-7 Pediátrico | Spitzer RL et al., 2006 | não |
 | `gars3` | GARS-3 | Gilliam JE, 2014 (GARS-3), PRO-ED | não |
 | `gas` | GAS | Kiresuk TJ, Sherman RE, 1968 (Goal Attainment Scaling) | não |
 | `gma` | GMA | Prechtl HFR et al. | não |
-| `gmfcs` | GMFCS | Palisano R et al., 1997 (GMFCS); revisão expandida 2007 | não |
-| `gmfm` | GMFM-88/66 | Russell DJ et al., 1989 (GMFM-88); Russell DJ et al., 2000 (GMFM-66) | não |
+| `gmfcs` | GMFCS | Palisano R et al., 2007 | não |
+| `gmfm` | GMFM-88/66 | Russell DJ et al., 2002 | não |
 | `gort5` | GORT-5 | Wiederholt JL, Bryant BR, 2012 (GORT-5), PRO-ED | não |
-| `griffiths` | Griffiths III | Green E, Stroud L et al. / Griffiths R, 2016 (Griffiths III), Hogrefe | não |
+| `griffiths` | Griffiths III | Griffiths R, 2006 (Griffiths-3) | não |
 | `hague-szs` | Hague Seizure Severity | Carpay HA et al., 1997 (Hague Seizure Severity Scale) | não |
 | `hammersmith-infant` | Hammersmith Infant | Romeo DM et al., 2016 (Hammersmith Infant Neurological Examination) | não |
-| `hine` | HINE | Romeo DM et al., 2016 (Hammersmith Infant Neurological Examination) | não |
+| `hine` | HINE | Dubowitz L et al., 2008 | não |
 | `hsq` | HSQ | Barkley RA, 1987 (Home Situations Questionnaire) | não |
+| `iccs-symptom` | ICCS | International Children's Continence Society (iccs.info) | não |
 | `ims` | IMS | Piper MC, Darrah J, 1994 (Alberta Infant Motor Scale); validação BR Saccani & Valentini, 2012 | não |
 | `infanib` | INFANIB | Ellison PH, 1994 (INFANIB) | não |
 | `ipes` | IPES | Camfield C et al., 2001 (Impact of Pediatric Epilepsy Scale) | não |
 | `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `isas` | ISAS | Klonsky & Glenn research | não |
 | `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (J26-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `j26-002` | Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (J26-002) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `j26-003` | Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (J26-003) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
@@ -390,11 +398,13 @@
 | `leiter3` | Leiter-3 | Roid GH, Miller LJ, Pomplun M, 2013 (Leiter-3) | não |
 | `leiter3-ext` | Leiter-3 | Roid GH, Miller LJ, Pomplun M, 2013 (Leiter-3) | não |
 | `life-h` | LIFE-H | Noreau L et al., 2007 (Assessment of Life Habits for Children — LIFE-H) | não |
+| `london-dysphagia` | London Dysphagia | NHS (UK), public domain | não |
 | `lsss` | LSSS | Baker GA et al., 1991 (Liverpool Seizure Severity Scale) | não |
 | `mabc2` | MABC-2 | Henderson SE et al., 2007 | não |
 | `macs` | MACS | Eliasson AC et al., 2006 (MACS) | não |
 | `masc2` | MASC-2 | March JS, 2013 | não |
-| `mchat` | M-CHAT-R/F | Robins DL et al., 2014, Pediatrics | não |
+| `mch-feeding` | MCH Feeding | Montreal Children's Hospital, Canada | não |
+| `mchat` | M-CHAT-R/F | Robins DL et al., 2014 - Pediatrics | não |
 | `mfq` | MFQ | Angold A, Costello EJ, 1987 (Mood and Feelings Questionnaire) | não |
 | `mullen` | Mullen | Mullen EM, 1995 (Mullen Scales of Early Learning), AGS/Pearson | não |
 | `napi` | NAPI | Korner AF et al., 1987 (Neurobehavioral Assessment of the Preterm Infant) | não |
@@ -404,6 +414,7 @@
 | `nepsy2` | NEPSY-II | Korkman M et al., 2007 | não |
 | `nips` | NIPS | Lawrence J et al., 1993 (Neonatal Infant Pain Scale) | não |
 | `nnns` | NNNS | Lester BM et al., 2004 | não |
+| `nssids` | NSSIDS | DSM-5 educational materials | não |
 | `oci-cv` | OCI-CV | Foa EB et al., 2010 (OCI-CV) | não |
 | `panss-ped` | PANSS Pediátrico | Kay SR, Fiszbein A, Opler LA, 1987 (PANSS) | não |
 | `pant` | PANT | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) — Protocolo PANT (100 escalas passivas) | não |
@@ -509,22 +520,27 @@
 | `pant-v7-100` | Potencial de aprendizagem e prognóstico dinâmico | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não |
 | `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `pdms2` | PDMS-2 | Folio MR, Fewell RR, 2000 (PDMS-2), PRO-ED | não |
+| `peat` | PEAT | Speech-language pathology journals (open-access) | não |
 | `pedi` | PEDI | Haley SM et al., 1992 (Pediatric Evaluation of Disability Inventory) | não |
 | `pedi-cat` | PEDI-CAT | Haley SM et al., 2012 | não |
+| `pediatric-feeding-q` | Pediatric Feeding Q | Published pediatric literature (open-access) | não |
 | `pedicat` | PEDI-CAT | Haley SM et al., 2012 | não |
 | `pedmidas` | PedMIDAS | Hershey AD et al., 2001 (PedMIDAS) | não |
-| `peds` | PEDS | Glascoe FP, 1997 (PEDS) | não |
-| `pedsql` | PedsQL | Varni JW et al., 2001 (PedsQL 4.0 Generic Core Scales) | não |
+| `peds` | PEDS | Glascoe FP, 1997 | não |
+| `pedsql` | PedsQL | Varni JW et al., 2001 | não |
 | `pedsql-epilepsia` | PedsQL Epilepsia | Modi AC et al., 2009 (PedsQL Epilepsy Module); Varni JW (PedsQL) | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não |
+| `pi-cv` | PI-CV | Published literature (open-access research) | não |
+| `pliksi` | PLIKSi | King's College London, British Journal of Psychiatry | não |
 | `pls5` | PLS-5 | Zimmerman IL, Steiner VG, Pond RE, 2011 (PLS-5), Pearson | não |
 | `ppp` | PPP | Hunt A et al., 2004 (Paediatric Pain Profile) | não |
 | `ppvt4` | PPVT-4 | Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson | não |
 | `ppvt4-new` | PPVT-4 Peabody | Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson | não |
+| `pq-b` | PQ-B | Nature (Loewy et al.), PubMed Central | não |
 | `prime-screen` | PRIME Screen | Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk) | não |
 | `prolec` | PROLEC-SE | Cuetos F et al. (PROLEC); adaptação BR Capellini SA et al. | não |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não |
-| `psq` | PSQ | Chervin RD et al., 2000 (Pediatric Sleep Questionnaire — SRBD) | não |
+| `psq` | PSQ | Chervin RD et al., 2000 - University of Michigan | não |
 | `psq-new` | PSQ | Chervin RD et al., 2000 (Pediatric Sleep Questionnaire — SRBD) | não |
 | `psqi-ped` | PSQI Pediátrico | Buysse DJ et al., 1989 (Pittsburgh Sleep Quality Index) | não |
 | `qolie-ad` | QOLIE-AD-48 | Cramer JA et al., 1999 (QOLIE-AD-48) | não |
@@ -536,23 +552,27 @@
 | `raven` | Raven Colorido | Raven JC, 1947 (Raven Colorido); normas BR Angelini et al., 1999 | não |
 | `raven-std` | Raven Matrizes | Raven J, Court JH, Raven JC, 1998 (Standard Progressive Matrices) | não |
 | `ravlt` | RAVLT | Rey A, 1964 (Rey Auditory Verbal Learning Test) | não |
-| `rcads` | RCADS | Chorpita BF et al., 2000 (RCADS) | não |
+| `rcads` | RCADS | Chorpita BF et al., 2000 - Journal of the American Academy of Child & Adolescent Psychiatry | não |
 | `reel3` | REEL-3 | Bzoch KR, League R, Brown VL, 2003 (REEL-3), PRO-ED | não |
 | `rey-figure` | Figura de Rey | Rey A, 1941; Osterrieth PA, 1944 (Rey-Osterrieth Complex Figure) | não |
+| `rfl-a` | RFL-A | Linehan research (open-access) | não |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não |
 | `sb5` | Stanford-Binet 5 | Roid GH, 2003 (Stanford-Binet Intelligence Scales 5) | não |
-| `scared` | SCARED | Birmaher B et al., 1997 | não |
+| `sbq-r` | SBQ-R | Psychological Assessment journal, PubMed Central | não |
+| `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não |
 | `scared-r` | SCARED Revisada | Birmaher B et al., 1999 (SCARED — 41 itens) | não |
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não |
 | `scq` | SCQ | Rutter M et al., 2003 | não |
-| `sdq` | SDQ | Goodman R, 1997 | não |
+| `sdq` | SDQ | Goodman R, 1997 - Cambridge University | não |
 | `sdsc` | SDSC | Bruni O et al., 1996 | não |
 | `sdsc-new` | SDSC | Bruni O et al., 1996 | não |
+| `sensory-profile-autism` | SP-Autism | Peer-reviewed research, PubMed Central | não |
 | `sensory-profile2` | Sensory Profile-2 | Dunn W, 2014 (Sensory Profile 2), Pearson | não |
+| `seq` | SEQ | University of Guelph, Canada | não |
 | `sfa` | SFA | Coster W et al., 1998 (School Function Assessment), Pearson | não |
 | `sips` | SIPS/SOPS | Miller TJ et al., 2003 (SIPS/SOPS) | não |
 | `siqjr` | SIQ-Jr | Reynolds WM, 1988 (Suicidal Ideation Questionnaire - JR) | não |
-| `snap` | SNAP-IV | Swanson JM et al. | não |
+| `snap` | SNAP-IV | Swanson JM et al., 2001 - University of California | não |
 | `snappe2` | SNAPPE-II | Richardson DK et al., 2001 (SNAPPE-II) | não |
 | `snk-gaze-soc-geo` | Preferência Visual Social × Geométrica | Pierce 2011 (Arch Gen Psychiatry); Pierce 2016 (Biol Psychiatry); Wen 2022 (Sci Rep) — implementação SuperNeuroKids v25 | sim |
 | `soma` | SOMA | Reilly S, Skuse D, Wolke D, 1995 (Schedule for Oral Motor Assessment) | não |
@@ -561,7 +581,7 @@
 | `staic` | STAIC | Spielberger CD, 1973 (STAIC) | não |
 | `stat` | STAT | Stone WL et al., 2000 (STAT) | não |
 | `stroop` | Stroop | Golden CJ, 1978 (Stroop Color and Word Test); Stroop JR, 1935 | não |
-| `tde` | TDE | Stein LM, 1994 (Teste de Desempenho Escolar — TDE) | não |
+| `tde` | TDE | Stein LM, 1994 | não |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não |
 | `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `tgmd3` | TGMD-3 | Ulrich DA, 2019 (Test of Gross Motor Development 3) | não |
@@ -575,6 +595,8 @@
 | `towl4` | TOWL-4 | Hammill DD, Larsen SC, 2009 (TOWL-4), PRO-ED | não |
 | `trf` | TRF | Achenbach TM, Rescorla LA, 2001 (TRF / ASEBA), ASEBA | não |
 | `tscc` | TSCC | Briere J, 1996 (Trauma Symptom Checklist for Children), PAR | não |
+| `tsi` | TSI | NIH-supported research | não |
+| `tsstd` | TSSTD | NIH PubMed Central | não |
 | `ucla-ptsd` | UCLA PTSD-RI | Steinberg AM et al., 2013 (UCLA PTSD Reaction Index for DSM-5) | não |
 | `uku` | UKU | Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale) | não |
 | `vanderbilt` | Vanderbilt | Wolraich ML et al., 2003 (NICHQ Vanderbilt) | não |
