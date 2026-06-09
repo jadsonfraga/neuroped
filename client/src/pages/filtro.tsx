@@ -375,52 +375,17 @@ export default function FiltroPage() {
   }, []);
 
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || selectedAge !== null || selectedRespondente !== null;
-  const statusInfo = status === "loading"
-    ? { label: "carregando", dot: "bg-amber-400 animate-pulse" }
-    : status === "ok"
-      ? { label: "completo", dot: "bg-emerald-500" }
-      : { label: "base local", dot: "bg-muted-foreground" };
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
-
-  // Detecta padrão clínico ouro quando 2+ queixas selecionadas
-  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge, catalog), [selectedQueixas, selectedAge, catalog]);
-  const goldStandardScale = useMemo(() => {
-    if (!detectedPattern) return null;
-    const inPool = rankedPool.find((s) => s.id === detectedPattern.goldStandard);
-    if (inPool) return inPool;
-    // Gold standard not in pool—ensure it exists in full catalog before recommending
-    return catalog.find((s) => s.id === detectedPattern.goldStandard) || null;
-  }, [detectedPattern, rankedPool, catalog]);
-
-  const direct = rankedPool.find((s) => Boolean(s.appRoute)) || catalog.find((s) => {
-    const postConsultComplaints = ["efeitos", "evolucao"];
-    return s.appRoute && s.prioridade !== "monitorizacao" && !s.queixas.some((q) => postConsultComplaints.includes(q)) && matchAge(s, selectedAge);
-  });
-  const school = rankedPool.find((s) => s.respondente.includes("professor")) || catalog.find((s) => {
-    const postConsultComplaints = ["efeitos", "evolucao"];
-    return s.respondente.includes("professor") && s.prioridade !== "monitorizacao" && !s.queixas.some((q) => postConsultComplaints.includes(q)) && matchAge(s, selectedAge);
-  });
-
-  // FIX BUG-003: Guard against undefined when rankedPool is empty
-  const fallback = rankedPool[0] || undefined;
-
-  // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
-  const ranking = goldStandardScale
-    ? [
-        rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || fallback, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || fallback, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
-      ]
-    : [
-        rec("Ouro", fallback, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[1] || fallback, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[2] || rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || fallback, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || fallback, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
-      ];
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge);
+  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge), [catalog, search, selectedQueixas, selectedAge]);
+  const direct = rankedPool.find((s) => Boolean(s.appRoute));
+  const school = rankedPool.find((s) => s.respondente.includes("professor"));
+  const ranking = [
+    rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+    rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+    rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+    rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+    rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+  ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -466,7 +431,7 @@ export default function FiltroPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: medicação, efeitos, satisfação, autismo, TDAH, escola, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
-          {search && <button type="button" onClick={() => setSearch("")} className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
+          {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 
         <div className="space-y-1.5 sm:space-y-2">
