@@ -122,3 +122,9 @@ export function RadarChart({ labels, values, maxLabel = "Máx", color = "#7c3aed
     .map((label, i) => `${label}: ${Math.round(Math.min(100, Math.max(0, values[i] || 0)))}%`)
     .join(", ");
 
+  return (
+    <div className="flex justify-center">
+      <canvas ref={canvasRef} style={{ width: size, height: size }} role="img" aria-label={`Gráfico radar dos domínios: ${ariaSummary}`} />
+    </div>
+  );
+}
