@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
+import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
@@ -449,6 +450,13 @@ export default function FiltroPage() {
 
         {/* Testes Diretos Recomendados */}
         <DirectTestsRecommender
+          selectedQueixas={selectedQueixas}
+          selectedAge={selectedAge}
+          faixasEtarias={faixasEtarias}
+        />
+
+        {/* Testes para Pais Recomendados */}
+        <ParentTestsRecommender
           selectedQueixas={selectedQueixas}
           selectedAge={selectedAge}
           faixasEtarias={faixasEtarias}
