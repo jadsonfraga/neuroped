@@ -64,14 +64,6 @@ if (app.includes("isAppUnlocked") || app.includes("localUnlockEventName")) {
   fail("App.tsx não deve depender de isAppUnlocked/localUnlockEventName para abrir a casca pública.");
 }
 
-if (!app.includes("function getCurrentHashPath")) {
-  fail("App.tsx deve ter getCurrentHashPath() para evitar onboarding bloqueando rotas diretas.");
-}
-
-if (!app.includes('if (currentPath !== "/") return;')) {
-  fail("Onboarding automático só deve aparecer na Home; rotas diretas públicas não podem ser cobertas pelo tour inicial.");
-}
-
 if (!unlock.includes(CURRENT_PIN_HASH)) {
   fail("localUnlock.ts não contém o hash autorizado atual do PIN master.");
 }

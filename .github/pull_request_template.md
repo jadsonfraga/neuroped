@@ -2,12 +2,6 @@
 
 Descreva objetivamente o que este PR altera.
 
-## Issue que será fechada
-
-Use obrigatoriamente uma palavra-chave de fechamento para o GitHub fechar a issue ao fazer merge.
-
-Closes #
-
 ## Tipo de mudança
 
 - [ ] Correção de bug
@@ -64,12 +58,6 @@ Marcar o que foi rodado.
 ## Evidência
 
 Cole logs, prints, links de deploy ou resumo do teste manual.
-
-## Merge, issues e deploy
-
-- [ ] Branch atualizada com a base e sem conflitos de merge.
-- [ ] Corpo do PR contém `Closes #...`, `Fixes #...` ou `Resolves #...` para fechamento automático da issue.
-- [ ] Deploy de produção/preview comprovado com link público e sentinela `deploy-check.json` quando aplicável.
 
 ## Riscos remanescentes
 

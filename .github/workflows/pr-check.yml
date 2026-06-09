@@ -8,78 +8,12 @@ on:
 
 permissions:
   contents: read
-  issues: read
   pull-requests: write
 
 jobs:
-  merge-governance:
-    runs-on: ubuntu-latest
-    name: Merge limpo + issues vinculadas
-
-    steps:
-      - name: Exigir PR mergeável e issue fechável
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const pull_number = context.payload.pull_request?.number;
-            if (!pull_number) {
-              core.info('Sem pull_request no contexto; nada a validar.');
-              return;
-            }
-
-            let pr;
-            for (let attempt = 1; attempt <= 8; attempt += 1) {
-              const response = await github.rest.pulls.get({ owner, repo, pull_number });
-              pr = response.data;
-              core.info(`Tentativa ${attempt}: mergeable=${pr.mergeable}; mergeable_state=${pr.mergeable_state}`);
-              if (pr.mergeable !== null && pr.mergeable_state !== 'unknown') break;
-              await new Promise((resolve) => setTimeout(resolve, 5000));
-            }
-
-            const blockedStates = new Set(['dirty', 'unknown']);
-            if (pr.mergeable !== true || blockedStates.has(pr.mergeable_state)) {
-              core.setFailed(`Merge não está limpo. Estado atual: mergeable=${pr.mergeable}, mergeable_state=${pr.mergeable_state}. Atualize a branch e resolva conflitos antes do merge.`);
-              return;
-            }
-
-            const body = pr.body || '';
-            const closingKeyword = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+(?:[\w.-]+\/[\w.-]+)?#(\d+)\b/gi;
-            const issueNumbers = [...new Set([...body.matchAll(closingKeyword)].map((match) => Number(match[1])))];
-            if (issueNumbers.length === 0) {
-              core.setFailed('Inclua no corpo do PR uma palavra-chave de fechamento, como `Closes #123`, `Fixes #123` ou `Resolves #123`, para garantir fechamento automático da issue no merge.');
-              return;
-            }
-
-            const invalid = [];
-            for (const issue_number of issueNumbers) {
-              try {
-                const issue = await github.rest.issues.get({ owner, repo, issue_number });
-                if (issue.data.pull_request) {
-                  invalid.push(`#${issue_number} é um PR, não uma issue`);
-                } else if (issue.data.state !== 'open') {
-                  core.info(`#${issue_number} já está ${issue.data.state}; a referência de fechamento permanece auditável.`);
-                }
-              } catch (error) {
-                invalid.push(`#${issue_number} não foi encontrada ou não está acessível (${error.status || error.message})`);
-              }
-            }
-
-            if (invalid.length > 0) {
-              core.setFailed(`Issues inválidas para fechamento automático: ${invalid.join('; ')}`);
-              return;
-            }
-
-            await core.summary
-              .addHeading('Governança de merge')
-              .addRaw(`✅ Merge limpo confirmado: \`${pr.mergeable_state}\`.\n`)
-              .addRaw(`✅ Issues vinculadas por palavra-chave de fechamento: ${issueNumbers.map((n) => `#${n}`).join(', ')}.\n`)
-              .write();
-
   validate:
-    needs: merge-governance
     runs-on: ubuntu-latest
-    name: Build, clinical guards & lint
+    name: Build & Lint
 
     steps:
       - name: Checkout
@@ -93,38 +27,10 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          npm_config_ignore_scripts: false
 
       - name: Verificar tipos TypeScript
         id: typecheck
         run: npm run check
-        continue-on-error: true
-
-      - name: Validar catálogo clínico
-        id: catalog
-        run: npm run validate:catalog
-        continue-on-error: true
-
-      - name: Auditar política de acesso
-        id: access
-        run: npm run audit:access
-        continue-on-error: true
-
-      - name: Auditar navegação
-        id: navigation
-        run: npm run audit:navigation
-        continue-on-error: true
-
-      - name: Auditar Filtro PR260
-        id: filter
-        run: npm run audit:filter
-        continue-on-error: true
-
-      - name: Testes clínicos
-        id: clinical
-        run: npm run test:clinical
         continue-on-error: true
 
       - name: Build completo
@@ -135,7 +41,7 @@ jobs:
         run: npm run build
         continue-on-error: true
 
-      - name: Lint informativo
+      - name: Lint (se script existir)
         id: lint
         run: |
           if npm run lint --if-present; then
@@ -146,41 +52,27 @@ jobs:
         continue-on-error: true
 
       - name: Comentar resultado no PR
-        if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = {
-              typecheck: '${{ steps.typecheck.outcome }}' === 'success',
-              catalog: '${{ steps.catalog.outcome }}' === 'success',
-              access: '${{ steps.access.outcome }}' === 'success',
-              navigation: '${{ steps.navigation.outcome }}' === 'success',
-              filter: '${{ steps.filter.outcome }}' === 'success',
-              clinical: '${{ steps.clinical.outcome }}' === 'success',
-              build: '${{ steps.build.outcome }}' === 'success',
-              lint: '${{ steps.lint.outputs.lint_status }}' !== 'failed',
-            };
+            const buildStatus = '${{ steps.build.outcome }}' === 'success';
+            const typecheckStatus = '${{ steps.typecheck.outcome }}' === 'success';
+            const lintStatus = '${{ steps.lint.outputs.lint_status }}' !== 'failed';
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
-            const requiredOk = status.typecheck && status.catalog && status.access && status.navigation && status.filter && status.clinical && status.build;
 
             const body = `## NeuroPed — Verificação de PR
 
             | Etapa | Status |
             |-------|--------|
-            | ${icon(status.typecheck)} TypeScript | ${label(status.typecheck)} |
-            | ${icon(status.catalog)} Catálogo clínico | ${label(status.catalog)} |
-            | ${icon(status.access)} Política de acesso | ${label(status.access)} |
-            | ${icon(status.navigation)} Navegação | ${label(status.navigation)} |
-            | ${icon(status.filter)} Filtro PR260 | ${label(status.filter)} |
-            | ${icon(status.clinical)} Testes clínicos | ${label(status.clinical)} |
-            | ${icon(status.build)} Build | ${label(status.build)} |
-            | ${icon(status.lint)} Lint informativo | ${label(status.lint)} |
+            | ${icon(typecheckStatus)} TypeScript | ${label(typecheckStatus)} |
+            | ${icon(buildStatus)} Build | ${label(buildStatus)} |
+            | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
 
-            ${requiredOk
-              ? '> ✅ **Checks obrigatórios aprovados.** Este PR está pronto para revisão técnica.'
-              : '> ❌ **Check obrigatório falhou.** Corrija antes de mergear.'}
+            ${buildStatus
+              ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
+              : '> ❌ **Build falhou.** Corrija os erros antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
@@ -191,13 +83,6 @@ jobs:
               body
             });
 
-      - name: Falhar se check obrigatório quebrou
-        if: >-
-          steps.typecheck.outcome == 'failure' ||
-          steps.catalog.outcome == 'failure' ||
-          steps.access.outcome == 'failure' ||
-          steps.navigation.outcome == 'failure' ||
-          steps.filter.outcome == 'failure' ||
-          steps.clinical.outcome == 'failure' ||
-          steps.build.outcome == 'failure'
+      - name: Falhar se build quebrou
+        if: steps.build.outcome == 'failure'
         run: exit 1

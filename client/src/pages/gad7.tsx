@@ -43,9 +43,8 @@ const config = {
         ? "Ansiedade Moderada"
         : "Ansiedade Grave";
 
-    // Severidade crescente usando o contrato de cores do GenericScale (emerald/amber/orange/red).
     const color =
-      total <= 4 ? "emerald" : total <= 9 ? "amber" : total <= 14 ? "orange" : "red";
+      total <= 4 ? "emerald" : total <= 9 ? "blue" : total <= 14 ? "amber" : "red";
 
     const description =
       total <= 4

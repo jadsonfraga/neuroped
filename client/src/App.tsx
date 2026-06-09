@@ -18,12 +18,14 @@ import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { CommandPalette } from "@/components/CommandPalette";
 
+// ----- Eager: home, login, not-found -----
 import HomePage from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import SessionExpiredPage from "@/pages/session-expired";
 import LgpdConsentPage from "@/pages/lgpd-consent";
 
+// ----- Lazy: paginas educativas (publicas) -----
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -95,11 +97,11 @@ const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
 const MarcosDesenvolvimentoPage = lazy(() => import("@/pages/marcos-desenvolvimento"));
 const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
 
+// ----- Lazy: paginas SENSIVEIS (requerem auth ou PIN master local) -----
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const SatisfacaoMedicacaoPage = lazy(() => import("@/pages/satisfacao-medicacao"));
-const Eusm10Page = lazy(() => import("@/pages/eusm10"));
 const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const AvaliacaoMultiprofissionalPage = lazy(() => import("@/pages/avaliacao-multiprofissional"));
 const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
@@ -107,7 +109,7 @@ const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
-const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
+const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades"));
 const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
 const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
 const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
@@ -179,7 +181,6 @@ function AppRouter() {
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
           <Route path="/pre-retorno" component={PreRetornoPage} />
-          <Route path="/efeitos-colaterais" component={PreRetornoPage} />
           <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
@@ -214,7 +215,6 @@ function AppRouter() {
           <Route path="/prontuario"><Protected roles={["admin", "professional"]}><ProntuarioPage /></Protected></Route>
           <Route path="/calculadora-dose"><Protected roles={["admin", "professional"]}><CalculadoraDosePage /></Protected></Route>
           <Route path="/satisfacao-medicacao"><Protected roles={["admin", "professional"]}><SatisfacaoMedicacaoPage /></Protected></Route>
-          <Route path="/eusm10"><Protected roles={["admin", "professional"]}><Eusm10Page /></Protected></Route>
           <Route path="/avaliacao-multiprofissional"><Protected roles={["admin", "professional"]}><AvaliacaoMultiprofissionalPage /></Protected></Route>
           <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
           <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
@@ -234,11 +234,6 @@ function AppRouter() {
   );
 }
 
-function getCurrentHashPath(): string {
-  if (typeof window === "undefined") return "/";
-  return window.location.hash.replace(/^#/, "") || "/";
-}
-
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
@@ -251,8 +246,6 @@ function App() {
 
   useEffect(() => {
     if (!splashComplete) return;
-    const currentPath = getCurrentHashPath();
-    if (currentPath !== "/") return;
     try {
       const seen = localStorage.getItem("neuroped:onboarding-seen");
       if (!seen) setShowOnboarding(true);

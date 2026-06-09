@@ -1,41 +1,35 @@
 {
   "app": "NeuroPed",
-  "request": "force deploy after PR gate bug hunt",
-  "requested_at_utc": "2026-06-08T12:32:00Z",
-  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after hardening the PR check workflow so TypeScript, catalog, access, navigation, PR260 filter, clinical tests and build regressions cannot be silently ignored",
+  "request": "manual deployment trigger after route guard bug hunt",
+  "requested_at_utc": "2026-06-07T21:38:00Z",
+  "reason": "force GitHub Pages and Cloudflare Pages to rebuild after additional route guard, documentos and efeitos-colaterais fixes",
   "fixes": [
-    "master shield logo asset updated from uploaded Dr. Jadson Fraga shield",
-    "navigation now exposes /eusm10 as Escala Satisfação Medicação",
-    "existing /satisfacao-medicacao item renamed to Monitorização da medicação to avoid duplicate scale naming",
-    "filterable catalog now registers Escala Satisfação Medicação as EUSM-10 with route /eusm10",
-    "EUSM-10 remains available as Escala Universal de Satisfação com Medicação with 10 items and total maximum 40 points",
-    "app routes for /satisfacao-medicacao and /eusm10 are preserved",
-    "@radix-ui/react-dropdown-menu added to package.json to align with package-lock and prevent npm ci/build drift on Cloudflare",
-    "PR check workflow now fails on TypeScript, catalog, access, navigation, PR260 filter, clinical test or build failure",
-    "lint remains informative because the repository still has preexisting warning debt documented separately",
-    "Cloudflare and GitHub Pages workflows create deploy-check.json before build and verify the public SHA after deployment",
-    "no redesign of PR260 filter, CAA, PANT or document flows"
+    "protect pant route",
+    "protect assinatura-digital route",
+    "safe older pre-retorno localStorage records",
+    "SensitiveRouteGate uses hasClinicalUnlock",
+    "local unlock events emit hasClinicalUnlock",
+    "RouteGuard listens to lock/unlock events",
+    "bridge /efeitos-colaterais route",
+    "add Efeitos colaterais to navigation",
+    "remove implementation placeholder from effects page",
+    "protect /documentos not-found bridge",
+    "include /documentos in SENSITIVE_ROUTES",
+    "audit:access now guards documentos bridge, unlock event semantics and RouteGuard listener"
   ],
   "verify_routes": [
-    "#/",
-    "#/filtro",
-    "#/eusm10",
-    "#/satisfacao-medicacao",
     "#/pre-retorno",
+    "#/efeitos-colaterais",
     "#/recepcao",
-    "#/portal-familia",
     "#/documentos",
     "#/pant",
     "#/assinatura-digital",
-    "#/qualidade"
+    "#/filtro"
   ],
   "verify_static": [
     "/manual-deploy-request.json",
     "/deploy-check.json"
   ],
   "cloudflare_domain": "https://neuroped.pages.dev",
-  "cloudflare_deploy_check": "https://neuroped.pages.dev/deploy-check.json",
-  "github_pages_domain": "https://jadsonfraga.github.io/neuroped/",
-  "github_pages_deploy_check": "https://jadsonfraga.github.io/neuroped/deploy-check.json",
-  "note": "Deployment is considered proven only when deploy-check.json on the public host contains the final commit SHA from the current main branch."
+  "note": "Use the Cloudflare Pages root domain without www for deploy-check.json unless a custom www route is configured."
 }

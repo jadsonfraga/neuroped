@@ -52,7 +52,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMobileOpen(false);
-    window.scrollTo(0, 0); // Instant scroll to top to avoid layout shift
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (location !== "/") softWhoosh();
   }, [location]);
 
@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background md:flex">
+    <div className="flex min-h-screen bg-background">
       <SkipNav />
       <OfflineBanner />
 
@@ -248,25 +248,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {collapsed && <span className="text-xs md:hidden">Buscar escala, teste ou módulo</span>}
           </button>
           {!collapsed && (
-            <a href="#/filtro">
-              <div
-                className="relative flex min-h-[48px] cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-300/20 via-primary/10 to-teal-400/10 px-3 py-2 text-primary shadow-sm ring-1 ring-amber-300/15 transition-colors hover:border-amber-300/70 hover:bg-amber-300/15"
-                data-testid="nav-golden-filter-shortcut"
-                onClick={() => {
-                  softTap();
-                  haptic.select();
-                  setMobileOpen(false);
-                  window.location.hash = "#/filtro";
-                }}
-              >
-                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-300 via-yellow-500 to-teal-300" aria-hidden="true" />
-                <Filter className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-black leading-tight">Filtro Clínico Inteligente</p>
-                  <p className="truncate text-[10px] font-semibold text-muted-foreground">idade + queixa · PR260 protegido</p>
-                </div>
+            <Link href="/filtro">
+              <div className="flex min-h-[38px] cursor-pointer items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15">
+                <Filter className="h-4 w-4" aria-hidden="true" />
+                Filtrar por idade e queixa
               </div>
-            </a>
+            </Link>
           )}
         </div>
 
@@ -296,7 +283,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <div id={`nav-section-${si}`} className="space-y-1">
                     {section.items.map((item) => {
                       const active = location === item.href;
-                      const isGoldenFilter = item.href === "/filtro";
                       return (
                         <Link key={`${sectionKey}-${item.href}-${item.label}`} href={item.href}>
                           <div
@@ -309,28 +295,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
                               active
                                 ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                                : isGoldenFilter
-                                  ? "border border-amber-300/30 bg-amber-300/10 text-sidebar-foreground hover:border-amber-300/60 hover:bg-amber-300/15 hover:translate-x-0.5"
-                                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
                             } ${collapsed ? "md:justify-center" : ""}`}
                           >
                             <item.icon
                               className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                                active ? "text-primary scale-110" : isGoldenFilter ? "text-amber-600 dark:text-amber-300" : ""
+                                active ? "text-primary scale-110" : ""
                               }`}
-                              strokeWidth={active || isGoldenFilter ? 2 : 1.75}
+                              strokeWidth={active ? 2 : 1.75}
                               aria-hidden="true"
                             />
                             {!collapsed && (
-                              <span className="min-w-0 flex-1 truncate text-xs">{item.label}</span>
+                              <span className="text-xs truncate">{item.label}</span>
                             )}
                             {collapsed && (
                               <span className="text-xs truncate md:hidden">{item.label}</span>
-                            )}
-                            {isGoldenFilter && !collapsed && !active && (
-                              <span className="ml-auto rounded-full bg-amber-300/20 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-amber-700 dark:text-amber-200">
-                                ouro
-                              </span>
                             )}
                             {active && !collapsed && (
                               <motion.div
@@ -406,7 +385,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main
         id="main-content"
-        className={`w-full flex-1 min-w-0 overflow-x-hidden transition-all duration-300 pt-14 md:w-auto md:overflow-x-visible md:pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
+        className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
       >
         {showClinicalFlow && (
           <div className="sticky top-14 md:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
@@ -424,7 +403,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
-        <div className="w-full max-w-[100vw] p-3 md:max-w-[1600px] md:p-5 md:mx-auto">
+        <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
           {children}
         </div>
       </main>

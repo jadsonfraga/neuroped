@@ -8,7 +8,7 @@ import EfeitosColateraisPage from "./efeitos-colaterais";
 export default function NotFound() {
   const [location] = useLocation();
 
-  // Compatibilidade para rotas ainda não promovidas ao roteador central.
+  // Ponte temporária: mantém itens funcionais mesmo antes da expansão completa do roteador.
   if (location === "/documentos") {
     return (
       <RouteGuard roles={["admin", "professional"]}>

@@ -7,6 +7,6 @@
   "lighthousePerformance": null,
   "lighthouseAccessibility": null,
   "axeSeriousCriticalViolations": 0,
-  "bundleMaxGzipKb": 290,
-  "designRawValues": 280
+  "bundleMaxGzipKb": 250,
+  "designRawValues": 253
 }

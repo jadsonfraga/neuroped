@@ -1,4 +1,4 @@
-import { allScales, type ScaleEntry } from "@/data/scaleFilter";
+import { allScales, faixasEtarias, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 
@@ -56,7 +56,7 @@ function uniqueById(items: ScaleEntry[]): ScaleEntry[] {
 
 function responseWeight(scale: ScaleEntry, respondente: PreConsultaRespondente) {
   if (respondente === "professor" && scale.respondente.includes("professor")) return 5;
-  if (respondente === "adolescente" && scale.respondente.includes("autoaplicavel")) return 5;
+  if (respondente === "adolescente" && (scale.respondente.includes("autoaplicavel") || scale.respondente.includes("crianca"))) return 5;
   if (respondente === "pais" && scale.respondente.includes("pais")) return 5;
   if (respondente === "secretaria" && (scale.respondente.includes("pais") || scale.respondente.includes("clinico"))) return 3;
   return 0;
