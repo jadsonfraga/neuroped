@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background md:flex">
       <SkipNav />
       <OfflineBanner />
 
@@ -406,7 +406,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main
         id="main-content"
-        className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
+        className={`w-full flex-1 min-w-0 overflow-x-hidden transition-all duration-300 pt-14 md:w-auto md:overflow-x-visible md:pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
       >
         {showClinicalFlow && (
           <div className="sticky top-14 md:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
@@ -424,7 +424,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
-        <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
+        <div className="w-full max-w-[100vw] p-3 md:max-w-[1600px] md:p-5 md:mx-auto">
           {children}
         </div>
       </main>
