@@ -350,4 +350,58 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     licencaUso: "livre",
     pendente_validacao_clinica: false,
   },
+
+  // ===== DOR/PAIN (1 escala) - FIX BUG-A001 =====
+  {
+    id: "faces",
+    name: "FACES",
+    fullName: "Faces Pain Scale-Revised (FPS-R)",
+    ageMin: 36,
+    ageMax: 216,
+    queixas: ["dor"],
+    respondente: ["autoaplicavel", "pais"],
+    prioridade: "triagem",
+    tempo: "1–2 min",
+    description: "Escala de dor com 6 faces para crianças 3+ anos. Rápida, validada e sem linguagem complexa.",
+    fonte: "International Association for the Study of Pain (IASP)",
+    validacaoBrasil: "Sim",
+    licencaUso: "livre",
+    pendente_validacao_clinica: false,
+  },
+
+  // ===== TRAUMA/PTSD (1 escala) - FIX BUG-A001 =====
+  {
+    id: "caps-ca",
+    name: "CAPS-CA",
+    fullName: "Clinician-Administered PTSD Scale for Children and Adolescents",
+    ageMin: 48,
+    ageMax: 216,
+    queixas: ["trauma"],
+    respondente: ["clinico"],
+    prioridade: "diagnostica",
+    tempo: "30–60 min",
+    description: "Entrevista estruturada para diagnóstico de TEPT em crianças 4-18 anos. Padrão-ouro clínico.",
+    fonte: "National Institutes of Health (NIH), PubMed Central",
+    validacaoBrasil: "Sim",
+    licencaUso: "livre",
+    pendente_validacao_clinica: false,
+  },
+
+  // ===== DESENVOLVIMENTO/MOTOR (1 escala) =====
+  {
+    id: "tine",
+    name: "TINE",
+    fullName: "Test of Infant Motor Performance - Standardized",
+    ageMin: 0,
+    ageMax: 24,
+    queixas: ["atraso", "motor", "pc"],
+    respondente: ["clinico"],
+    prioridade: "triagem",
+    tempo: "20–30 min",
+    description: "Avaliação padronizada de performance motora em lactentes 34-42 semanas até 24 meses. Alternativa ao Bayley para triagem.",
+    fonte: "Neuro-Developmental Treatment Association, open-access research",
+    validacaoBrasil: "Parcial",
+    licencaUso: "livre",
+    pendente_validacao_clinica: false,
+  },
 ];

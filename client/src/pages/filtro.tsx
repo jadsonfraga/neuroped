@@ -192,7 +192,7 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", minAge: 48, maxAge: 180, reason: "SDQ (PARENTAL/PROFESSOR) triagem rápida 4-15a; equivalente ECBI em contexto escolar" },
 
   // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", screening: "cdi", minAge: 0, maxAge: 36, reason: "CAT/CLAMS (CLINICIAN-administered) para avaliação direta 0-36m; MacArthur CDI (pais) alternativa para vocabulário 8-37m" },
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", screening: "cdi-macarthur", minAge: 0, maxAge: 36, reason: "CAT/CLAMS (CLINICIAN-administered) para avaliação direta 0-36m; MacArthur CDI (pais) alternativa para vocabulário 8-37m" },
 
   // Paralisia Cerebral / Motor
   { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", diagnostic: "gmfm", minAge: 12, reason: "GMFM-88/66 (CLINICIAN-observed) para classificação funcional pós 12m; complementar com MRI para tipo de PC (espástica/discinética/atáxica)" },
