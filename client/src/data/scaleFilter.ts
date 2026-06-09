@@ -746,7 +746,17 @@ function validateNoDuplicateIds(catalog: ScaleEntry[]): string[] {
   return duplicates;
 }
 
+// Validation: detect invalid age ranges (ageMin > ageMax)
+function validateAgeRanges(catalog: ScaleEntry[]): Array<{ id: string; ageMin: number; ageMax: number }> {
+  return catalog.filter(s => s.ageMin > s.ageMax);
+}
+
 const duplicateIds = validateNoDuplicateIds(allScales);
 if (duplicateIds.length > 0) {
   console.warn(`[scaleFilter] Duplicate scale IDs detected: ${duplicateIds.join(", ")}`);
+}
+
+const invalidRanges = validateAgeRanges(allScales);
+if (invalidRanges.length > 0) {
+  console.warn(`[scaleFilter] Invalid age ranges (ageMin > ageMax): ${invalidRanges.map(s => `${s.id} (${s.ageMin}-${s.ageMax})`).join(", ")}`);
 }

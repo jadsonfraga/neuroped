@@ -104,13 +104,19 @@ function guessRespondente(value: string): ScaleEntry["respondente"] {
   if (/pais|cuidador|parent|caregiver/.test(t)) set.add("pais");
   if (/professor|teacher|escola/.test(t)) set.add("professor");
   if (/clinico|entrevista|clinical/.test(t)) set.add("clinico");
-  if (/crianca|adolescente|paciente|auto/.test(t)) set.add("autoaplicavel");
+  if (/adolescente|paciente|auto/.test(t)) set.add("autoaplicavel");
   return set.size ? Array.from(set) : ["pais"];
 }
 
 function rowToScale(row: Row): ScaleEntry {
   const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
   const a = ageMonths(idade);
+  // Explicit priority mapping for world registry seals
+  const prioridadeMap: Record<string, "triagem" | "diagnostica" | "monitorizacao"> = {
+    "Ouro": "diagnostica",
+    "Prata": "diagnostica",
+    "Bronze": "monitorizacao",
+  };
   return {
     id: `world-registry-${String(n).padStart(3, "0")}`,
     name: sigla,
@@ -119,8 +125,8 @@ function rowToScale(row: Row): ScaleEntry {
     ageMax: a.max,
     queixas: guessQueixas(categoria, `${sigla} ${nome}`),
     respondente: guessRespondente(respondente),
-    prioridade: selo === "Bronze" ? "monitorizacao" : "triagem",
-    tempo: "3–10 min",
+    prioridade: prioridadeMap[selo] || "triagem",
+    tempo: "3–10 min", // TODO: Bug #20 — parse actual time values from source data instead of hardcoding
     description: `Escala mundial sem custo. Política: ${politica}. Usar como triagem/monitoramento, nunca diagnóstico isolado.`,
     fonte: "Catálogo NeuroPed 100 escalas · verificar fonte oficial antes de embutir itens",
     licencaUso: politica === "embed" ? "livre" : "restrita",
@@ -324,7 +330,7 @@ export default function FiltroPage() {
   }, []);
 
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || selectedAge !== null || selectedRespondente !== null;
   const statusInfo = status === "loading"
     ? { label: "carregando", dot: "bg-amber-400 animate-pulse" }
     : status === "ok"
