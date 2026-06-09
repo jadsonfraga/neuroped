@@ -174,16 +174,16 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", screening: "mchat", minAge: 16, reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%; se positivo, encaminhar para ADOS-2" },
 
   // TDAH: desatenção + hiperatividade + impulsividade/comportamento
-  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", screening: "snap", reason: "SNAP-IV para triagem pais/professor; complementar com Vanderbilt para observação específica escolar" },
+  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", screening: "snap", minAge: 72, reason: "SNAP-IV para 6+ anos; pré-escolares: escala comportamento geral (CBCL, SDQ) - TDAH puro não é diagnóstico válido <6a" },
   { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional; essencial para avaliação diagnóstica" },
 
   // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 1, maxAge: 42, reason: "Bayley-III padrão-ouro (1-42m, comercial). Alternativa gratuita: Griffiths-III (acesso limitado no Brasil)" },
+  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 0, maxAge: 42, reason: "Bayley-III padrão-ouro 1-42m; NICU 0m: TIMP ou Dubowitz (exame neurológico); Griffiths-III alternativa gratuita" },
   { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II clinician para triagem; alternativa parental: ASQ-3 para pais sem acesso a clínico (gratuita, validada)" },
   { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE clinician-administered para exame neurológico padronizado de recém-nascidos; 26 itens, detecta anormalidades precoces" },
 
   // Ansiedade infantil
-  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", minAge: 96, reason: "SCARED para triagem (qualquer idade); RCADS para diagnóstico em 8+; pré-escolares usar observação clínica" },
+  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", minAge: 96, reason: "SCARED (8+) ou SCARED-P (pais) para triagem; RCADS (8+) para diagnóstico; <8a: observação clínica" },
   { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
 
   // Comportamento disruptivo
@@ -205,10 +205,10 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", minAge: 48, maxAge: 120, reason: "CSHQ para crianças 4-10 anos apenas (48-120m); adolescentes (120+ meses) usar BEARS ou PSQI em avaliação especializada" },
 
   // Depressão isolada
-  { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 é padrão-ouro para triagem (7-17a); para diagnóstico estruturado usar CDRS-R ou KSADS-P em avaliação especializada" },
+  { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 para 7-17a; pré-escolares: observação clínica, entrevista parental (sem escala específica validada)" },
 
   // Risco de suicídio
-  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", screening: "cssrs", diagnostic: "rfl-a", reason: "C-SSRS para triagem de ideação (6 níveis); RFL-A para avaliar fatores protetores (complementa risco)" },
+  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", screening: "cssrs", diagnostic: "rfl-a", minAge: 84, reason: "C-SSRS para 7+; RFL-A para fatores protetores; <7a: riscos pediátricos geralmente associados a trauma/abuso" },
 
   // Problemas de aprendizagem
   { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", minAge: 72, reason: "TDE para avaliação de leitura/escrita/aritmética em escolares 6+; pré-escolares usar avaliação do desenvolvimento geral" },
