@@ -82,6 +82,11 @@ const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/testes-reconhecimento"));
 const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
+const AcademicoInterativoPage = lazy(() => import("@/pages/academico-interativo"));
+const EscritaDesenhoPage = lazy(() => import("@/pages/escrita-desenho"));
+const ConhecimentoVisualPage = lazy(() => import("@/pages/conhecimento-visual"));
+const MotricidadeTestePage = lazy(() => import("@/pages/motricidade-teste"));
+const ConhecimentosGeraisPage = lazy(() => import("@/pages/conhecimentos-gerais"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -195,6 +200,11 @@ function AppRouter() {
           <Route path="/tde2" component={Tde2Page} />
           <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
           <Route path="/testes-academicos" component={TestesAcademicosPage} />
+          <Route path="/academico-interativo" component={AcademicoInterativoPage} />
+          <Route path="/escrita-desenho" component={EscritaDesenhoPage} />
+          <Route path="/conhecimento-visual" component={ConhecimentoVisualPage} />
+          <Route path="/motricidade-teste" component={MotricidadeTestePage} />
+          <Route path="/conhecimentos-gerais" component={ConhecimentosGeraisPage} />
           <Route path="/inventarios-auto" component={InventariosAutoPage} />
           <Route path="/ajuda" component={AjudaPage} />
           <Route path="/curvas-crescimento" component={CurvasCrescimentoPage} />
