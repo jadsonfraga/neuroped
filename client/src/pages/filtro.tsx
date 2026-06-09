@@ -134,8 +134,10 @@ function rowToScale(row: Row): ScaleEntry {
 }
 
 function matchAge(scale: ScaleEntry, selectedAge: string | null) {
+  if (!selectedAge) return true;
   const age = faixasEtarias.find((a) => a.id === selectedAge);
-  return !age || (scale.ageMax > age.min && scale.ageMin < age.max);
+  // Return false if selectedAge ID not found (prevents matching with invalid ages)
+  return age ? (scale.ageMax > age.min && scale.ageMin < age.max) : false;
 }
 
 function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
@@ -208,19 +210,28 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", reason: "Vineland-3 é padrão-ouro para habilidades adaptativas; comunicação, vida diária, socialização, motricidade" },
 ];
 
-function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null): ClinicalPattern | null {
+function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null, catalog: ScaleEntry[]): ClinicalPattern | null {
   if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrão
+
+  // Build set of valid scale IDs for fast lookup
+  const validIds = new Set(catalog.map(s => s.id));
 
   // Busca padrão com melhor match (quantas queixas coincidem)
   let bestMatch: { pattern: ClinicalPattern; score: number } | null = null;
 
   for (const pattern of clinicalPatterns) {
+    // Skip pattern if gold standard doesn't exist in catalog
+    if (!validIds.has(pattern.goldStandard)) {
+      console.warn(`[gold-standard] Pattern "${pattern.name}" references unknown gold standard: ${pattern.goldStandard}`);
+      continue;
+    }
+
     const matchCount = pattern.signature.filter((s) => selectedQueixas.includes(s)).length;
     const score = matchCount / pattern.signature.length; // % de match
 
     if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
       // Validate that gold standard scale exists and covers the selected age
-      const goldScale = allScales.find((s) => s.id === pattern.goldStandard);
+      const goldScale = catalog.find((s) => s.id === pattern.goldStandard);
       if (goldScale) {
         const ageIsValid = !selectedAge || matchAge(goldScale, selectedAge);
         if (ageIsValid) {
@@ -348,7 +359,7 @@ export default function FiltroPage() {
   const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
 
   // Detecta padrão clínico ouro quando 2+ queixas selecionadas
-  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
+  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge, catalog), [selectedQueixas, selectedAge, catalog]);
   const goldStandardScale = useMemo(() => {
     if (!detectedPattern) return null;
     const inPool = rankedPool.find((s) => s.id === detectedPattern.goldStandard);
