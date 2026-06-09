@@ -7,6 +7,21 @@ import type { ScaleEntry } from "@/data/scaleFilter";
  */
 export const supplementalFilterableInstruments: ScaleEntry[] = [
   {
+    id: "testes-diretos",
+    name: "Testes Diretos",
+    fullName: "Sondagens diretas com a crianca por dominio clinico",
+    ageMin: 12,
+    ageMax: 216,
+    queixas: ["tdah", "aprendizagem", "cognicao", "linguagem", "tea", "social", "ansiedade", "depressao", "sensorial", "motor", "pc"],
+    respondente: ["clinico", "crianca"],
+    prioridade: "triagem",
+    tempo: "5-15 min",
+    appRoute: "/testes-diretos",
+    description: "Tarefas breves aplicadas diretamente com a crianca para linguagem, atencao, aprendizagem, cognicao, TEA/social, sensorial, emocional e motor. Apoio de pre-consulta, sem norma diagnostica isolada.",
+    fonte: "NeuroPed - bateria de testes diretos",
+    licencaUso: "autoral",
+  },
+  {
     id: "inventarios-escola",
     name: "Inventários para Escola",
     fullName: "Questionários para professores — comportamento, TEA, alfabetização e funções executivas",

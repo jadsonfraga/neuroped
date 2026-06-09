@@ -4,7 +4,7 @@ import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
-export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel";
+export type Respondente = "pais" | "crianca" | "clinico" | "professor" | "autoaplicavel";
 
 export type Licenca = "passiva" | "ativa" | "mista";
 

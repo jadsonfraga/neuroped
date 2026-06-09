@@ -471,7 +471,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                           />
                           <Label
                             htmlFor={`q-${key}-o${j}`}
-                            className={`inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                            className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                               answers[key] === j
                                 ? selectedColor
                                 : "bg-card text-foreground border-border hover:border-primary/40 hover:bg-muted"
@@ -505,4 +505,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
-     
+        data-testid="button-calculate"
+      >
+        Calcular resultado
+      </Button>
+    </div>
+  );
+}
+
+export type { ScaleConfig, ResultDomain };

@@ -69,4 +69,11 @@ const config = {
           classification,
           color,
         },
-      
+      ],
+    };
+  },
+};
+
+export default function Gad7Page() {
+  return <GenericScale config={config} />;
+}

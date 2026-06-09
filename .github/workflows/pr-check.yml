@@ -1,4 +1,4 @@
-name: PR Check
+﻿name: PR Check
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
     name: Merge limpo + issues vinculadas
 
     steps:
-      - name: Exigir PR mergeável e issue fechável
+      - name: Exigir PR mergeÃ¡vel e issue fechÃ¡vel
         uses: actions/github-script@v7
         with:
           script: |
@@ -39,7 +39,7 @@ jobs:
 
             const blockedStates = new Set(['dirty', 'unknown']);
             if (pr.mergeable !== true || blockedStates.has(pr.mergeable_state)) {
-              core.setFailed(`Merge não está limpo. Estado atual: mergeable=${pr.mergeable}, mergeable_state=${pr.mergeable_state}. Atualize a branch e resolva conflitos antes do merge.`);
+              core.setFailed(`Merge nÃ£o estÃ¡ limpo. Estado atual: mergeable=${pr.mergeable}, mergeable_state=${pr.mergeable_state}. Atualize a branch e resolva conflitos antes do merge.`);
               return;
             }
 
@@ -47,7 +47,7 @@ jobs:
             const closingKeyword = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+(?:[\w.-]+\/[\w.-]+)?#(\d+)\b/gi;
             const issueNumbers = [...new Set([...body.matchAll(closingKeyword)].map((match) => Number(match[1])))];
             if (issueNumbers.length === 0) {
-              core.setFailed('Inclua no corpo do PR uma palavra-chave de fechamento, como `Closes #123`, `Fixes #123` ou `Resolves #123`, para garantir fechamento automático da issue no merge.');
+              core.setFailed('Inclua no corpo do PR uma palavra-chave de fechamento, como `Closes #123`, `Fixes #123` ou `Resolves #123`, para garantir fechamento automÃ¡tico da issue no merge.');
               return;
             }
 
@@ -56,24 +56,24 @@ jobs:
               try {
                 const issue = await github.rest.issues.get({ owner, repo, issue_number });
                 if (issue.data.pull_request) {
-                  invalid.push(`#${issue_number} é um PR, não uma issue`);
+                  invalid.push(`#${issue_number} Ã© um PR, nÃ£o uma issue`);
                 } else if (issue.data.state !== 'open') {
-                  core.info(`#${issue_number} já está ${issue.data.state}; a referência de fechamento permanece auditável.`);
+                  core.info(`#${issue_number} jÃ¡ estÃ¡ ${issue.data.state}; a referÃªncia de fechamento permanece auditÃ¡vel.`);
                 }
               } catch (error) {
-                invalid.push(`#${issue_number} não foi encontrada ou não está acessível (${error.status || error.message})`);
+                invalid.push(`#${issue_number} nÃ£o foi encontrada ou nÃ£o estÃ¡ acessÃ­vel (${error.status || error.message})`);
               }
             }
 
             if (invalid.length > 0) {
-              core.setFailed(`Issues inválidas para fechamento automático: ${invalid.join('; ')}`);
+              core.setFailed(`Issues invÃ¡lidas para fechamento automÃ¡tico: ${invalid.join('; ')}`);
               return;
             }
 
             await core.summary
-              .addHeading('Governança de merge')
-              .addRaw(`✅ Merge limpo confirmado: \`${pr.mergeable_state}\`.\n`)
-              .addRaw(`✅ Issues vinculadas por palavra-chave de fechamento: ${issueNumbers.map((n) => `#${n}`).join(', ')}.\n`)
+              .addHeading('GovernanÃ§a de merge')
+              .addRaw(`âœ… Merge limpo confirmado: \`${pr.mergeable_state}\`.\n`)
+              .addRaw(`âœ… Issues vinculadas por palavra-chave de fechamento: ${issueNumbers.map((n) => `#${n}`).join(', ')}.\n`)
               .write();
 
   validate:
@@ -91,7 +91,7 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Instalar dependências
+      - name: Instalar dependÃªncias
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -102,17 +102,17 @@ jobs:
         run: npm run check
         continue-on-error: true
 
-      - name: Validar catálogo clínico
+      - name: Validar catÃ¡logo clÃ­nico
         id: catalog
         run: npm run validate:catalog
         continue-on-error: true
 
-      - name: Auditar política de acesso
+      - name: Auditar polÃ­tica de acesso
         id: access
         run: npm run audit:access
         continue-on-error: true
 
-      - name: Auditar navegação
+      - name: Auditar navegaÃ§Ã£o
         id: navigation
         run: npm run audit:navigation
         continue-on-error: true
@@ -122,9 +122,19 @@ jobs:
         run: npm run audit:filter
         continue-on-error: true
 
-      - name: Testes clínicos
+      - name: Testes clÃ­nicos
         id: clinical
         run: npm run test:clinical
+        continue-on-error: true
+
+      - name: Auditar contrato de cores das escalas
+        id: color
+        run: npm run audit:color
+        continue-on-error: true
+
+      - name: Testes unitarios
+        id: unit
+        run: npm run test:unit
         continue-on-error: true
 
       - name: Build completo
@@ -157,30 +167,34 @@ jobs:
               navigation: '${{ steps.navigation.outcome }}' === 'success',
               filter: '${{ steps.filter.outcome }}' === 'success',
               clinical: '${{ steps.clinical.outcome }}' === 'success',
+              color: '${{ steps.color.outcome }}' === 'success',
+              unit: '${{ steps.unit.outcome }}' === 'success',
               build: '${{ steps.build.outcome }}' === 'success',
               lint: '${{ steps.lint.outputs.lint_status }}' !== 'failed',
             };
 
-            const icon = (ok) => ok ? '✅' : '❌';
+            const icon = (ok) => ok ? 'âœ…' : 'âŒ';
             const label = (ok) => ok ? 'passou' : 'falhou';
-            const requiredOk = status.typecheck && status.catalog && status.access && status.navigation && status.filter && status.clinical && status.build;
+            const requiredOk = status.typecheck && status.catalog && status.access && status.navigation && status.filter && status.color && status.clinical && status.unit && status.build;
 
-            const body = `## NeuroPed — Verificação de PR
+            const body = `## NeuroPed â€” VerificaÃ§Ã£o de PR
 
             | Etapa | Status |
             |-------|--------|
             | ${icon(status.typecheck)} TypeScript | ${label(status.typecheck)} |
-            | ${icon(status.catalog)} Catálogo clínico | ${label(status.catalog)} |
-            | ${icon(status.access)} Política de acesso | ${label(status.access)} |
-            | ${icon(status.navigation)} Navegação | ${label(status.navigation)} |
+            | ${icon(status.catalog)} CatÃ¡logo clÃ­nico | ${label(status.catalog)} |
+            | ${icon(status.access)} PolÃ­tica de acesso | ${label(status.access)} |
+            | ${icon(status.navigation)} NavegaÃ§Ã£o | ${label(status.navigation)} |
             | ${icon(status.filter)} Filtro PR260 | ${label(status.filter)} |
-            | ${icon(status.clinical)} Testes clínicos | ${label(status.clinical)} |
+            | ${icon(status.color)} Contrato de cores | ${label(status.color)} |
+            | ${icon(status.clinical)} Testes clÃ­nicos | ${label(status.clinical)} |
+            | ${icon(status.unit)} Testes unitarios | ${label(status.unit)} |
             | ${icon(status.build)} Build | ${label(status.build)} |
             | ${icon(status.lint)} Lint informativo | ${label(status.lint)} |
 
             ${requiredOk
-              ? '> ✅ **Checks obrigatórios aprovados.** Este PR está pronto para revisão técnica.'
-              : '> ❌ **Check obrigatório falhou.** Corrija antes de mergear.'}
+              ? '> âœ… **Checks obrigatÃ³rios aprovados.** Este PR estÃ¡ pronto para revisÃ£o tÃ©cnica.'
+              : '> âŒ **Check obrigatÃ³rio falhou.** Corrija antes de mergear.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
@@ -191,7 +205,7 @@ jobs:
               body
             });
 
-      - name: Falhar se check obrigatório quebrou
+      - name: Falhar se check obrigatÃ³rio quebrou
         if: >-
           steps.typecheck.outcome == 'failure' ||
           steps.catalog.outcome == 'failure' ||
@@ -199,5 +213,7 @@ jobs:
           steps.navigation.outcome == 'failure' ||
           steps.filter.outcome == 'failure' ||
           steps.clinical.outcome == 'failure' ||
+          steps.color.outcome == 'failure' ||
+          steps.unit.outcome == 'failure' ||
           steps.build.outcome == 'failure'
         run: exit 1
