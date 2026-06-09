@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-06-09T18:10:00Z",
+  "action": "intelligent-pr-reconciliation-and-deploy",
+  "status": "triggered",
+  "description": "Automated deployment after PR reconciliation",
+  "all_prs_merged": true,
+  "fixes_included": [
+    "direct-tests-fallback",
+    "duplicate-snap-iv-removed",
+    "14-scales-deduplicated"
+  ]
+}
