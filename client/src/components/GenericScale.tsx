@@ -505,4 +505,13 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
-     
+           >
+        Enviar Respostas
+      </Button>
+
+      {result && (
+        <GenericScaleResult result={result} />
+      )}
+    </div>
+  );
+}
