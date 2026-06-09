@@ -90,6 +90,8 @@ const ConhecimentosGeraisPage = lazy(() => import("@/pages/conhecimentos-gerais"
 const FuncoesExecutivasPage = lazy(() => import("@/pages/funcoes-executivas"));
 const AtencaoConcentracaoPage = lazy(() => import("@/pages/atencao-concentracao"));
 const LinguagemFonologiaPage = lazy(() => import("@/pages/linguagem-fonologia"));
+const MemoriaTestePage = lazy(() => import("@/pages/memoria-teste"));
+const ProcessamentoVisuoauditivoPage = lazy(() => import("@/pages/processamento-visuoauditivo"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -211,6 +213,8 @@ function AppRouter() {
           <Route path="/funcoes-executivas" component={FuncoesExecutivasPage} />
           <Route path="/atencao-concentracao" component={AtencaoConcentracaoPage} />
           <Route path="/linguagem-fonologia" component={LinguagemFonologiaPage} />
+          <Route path="/memoria-teste" component={MemoriaTestePage} />
+          <Route path="/processamento-visuoauditivo" component={ProcessamentoVisuoauditivoPage} />
           <Route path="/inventarios-auto" component={InventariosAutoPage} />
           <Route path="/ajuda" component={AjudaPage} />
           <Route path="/curvas-crescimento" component={CurvasCrescimentoPage} />

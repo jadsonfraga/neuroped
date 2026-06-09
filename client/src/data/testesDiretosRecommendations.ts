@@ -125,6 +125,37 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
     razao: "Avaliação geral de cognição: avalia conhecimento factual, raciocínio lógico e consciência cultural. Útil como triagem rápida de função cognitiva.",
     icon: "Lightbulb",
   },
+<<<<<<< HEAD
+=======
+
+  // ===== MEMÓRIA: Processos de Memória =====
+  {
+    id: "memoria-teste",
+    name: "Memória",
+    route: "/memoria-teste",
+    queixas: ["aprendizagem", "atraso", "cognicao", "tdah"],
+    ageMin: 36,
+    ageMax: 144,
+    tempo: "20–30 min",
+    prioridade: "primaria",
+    razao: "Dificuldades de aprendizagem / atraso: avalia memória de curto prazo, memória de trabalho, memória episódica e curva de aprendizagem. Essencial para diferenciar TDAH (memória normal com atenção prejudicada) de déficit cognitivo (memória prejudicada).",
+    icon: "Brain",
+  },
+
+  // ===== PROCESSAMENTO AUDIOVISUAL: Integração Multissensorial =====
+  {
+    id: "processamento-visuoauditivo",
+    name: "Processamento Visual-Auditivo",
+    route: "/processamento-visuoauditivo",
+    queixas: ["linguagem", "aprendizagem", "cognicao"],
+    ageMin: 48,
+    ageMax: 144,
+    tempo: "20–30 min",
+    prioridade: "secundaria",
+    razao: "Atraso de linguagem / dificuldades sensoriais: avalia processamento auditivo puro, discriminação visual e integração audiovisual multissensorial. Importante para identificar déficit de processamento auditivo central (APD) e problemas de integração sensorial.",
+    icon: "Eye",
+  },
+>>>>>>> claude/audite-bd8dye
 ];
 
 // Algoritmo de recomendação inteligente por queixa + idade
@@ -175,18 +206,32 @@ export const clinicalPaths: ClinicalPath[] = [
   {
     queixa: "linguagem",
     label: "Investigação de Linguagem",
+<<<<<<< HEAD
     primaryTests: ["linguagem-fonologia"],
     duration: "15–20 min",
     description:
       "Protocolo: Fonologia + Vocabulário + Compreensão. Se atraso confirmado, complementar com CELF-5 ou avaliação fonoaudiológica formal.",
+=======
+    primaryTests: ["linguagem-fonologia", "processamento-visuoauditivo"],
+    duration: "35–50 min",
+    description:
+      "Protocolo: Fonologia + Vocabulário + Compreensão + Processamento Audiovisual. Se atraso confirmado, complementar com CELF-5 ou avaliação fonoaudiológica formal.",
+>>>>>>> claude/audite-bd8dye
   },
   {
     queixa: "aprendizagem",
     label: "Investigação de Aprendizagem",
+<<<<<<< HEAD
     primaryTests: ["academico-interativo", "linguagem-fonologia", "escrita-desenho"],
     duration: "40–60 min",
     description:
       "Protocolo: Habilidades acadêmicas (cálculo/problema/sequência) + Linguagem + Escrita/Desenho. Diferencia dislexia, disgrafia e discalculia.",
+=======
+    primaryTests: ["academico-interativo", "linguagem-fonologia", "memoria-teste", "escrita-desenho"],
+    duration: "55–85 min",
+    description:
+      "Protocolo: Habilidades acadêmicas (cálculo/problema/sequência) + Linguagem + Memória + Escrita/Desenho. Diferencia dislexia, disgrafia, discalculia e déficit de memória.",
+>>>>>>> claude/audite-bd8dye
   },
   {
     queixa: "motor",
@@ -199,18 +244,32 @@ export const clinicalPaths: ClinicalPath[] = [
   {
     queixa: "atraso",
     label: "Investigação de Atraso do Desenvolvimento",
+<<<<<<< HEAD
     primaryTests: ["motricidade-teste", "linguagem-fonologia", "conhecimento-visual"],
     duration: "50–75 min",
     description:
       "Protocolo: Motor (marco esperado) + Linguagem (marcos comunicativos) + Cognição (discriminação/sequência). Triagem abrangente para atraso global.",
+=======
+    primaryTests: ["motricidade-teste", "linguagem-fonologia", "memoria-teste", "conhecimento-visual"],
+    duration: "65–105 min",
+    description:
+      "Protocolo: Motor (marco esperado) + Linguagem (marcos comunicativos) + Memória + Cognição (discriminação/sequência). Triagem abrangente para atraso global.",
+>>>>>>> claude/audite-bd8dye
   },
   {
     queixa: "cognicao",
     label: "Investigação de Cognição",
+<<<<<<< HEAD
     primaryTests: ["funcoes-executivas", "conhecimento-visual", "academico-interativo"],
     duration: "45–60 min",
     description:
       "Protocolo: Funções executivas + Percepção visual + Acadêmico. Complementado com WISC-V ou Bayley se deficiência intelectual suspeita.",
+=======
+    primaryTests: ["funcoes-executivas", "memoria-teste", "conhecimento-visual", "academico-interativo"],
+    duration: "60–90 min",
+    description:
+      "Protocolo: Funções executivas + Memória + Percepção visual + Acadêmico. Complementado com WISC-V ou Bayley se deficiência intelectual suspeita.",
+>>>>>>> claude/audite-bd8dye
   },
 ];
 

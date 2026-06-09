@@ -13,6 +13,7 @@ import {
   ClipboardList,
   ClipboardPlus,
   CloudRain,
+  Ear,
   Eye,
   FileSignature,
   FileText,
@@ -150,6 +151,8 @@ export const navSections: NavSection[] = [
       { href: "/funcoes-executivas", label: "Funções Executivas", icon: BrainCog },
       { href: "/atencao-concentracao", label: "Atenção e Concentração", icon: Brain },
       { href: "/linguagem-fonologia", label: "Linguagem e Fonologia", icon: MessageCircle },
+      { href: "/memoria-teste", label: "Memória", icon: Brain },
+      { href: "/processamento-visuoauditivo", label: "Processamento Visual-Auditivo", icon: Ear },
     ],
   },
   {
