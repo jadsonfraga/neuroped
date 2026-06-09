@@ -176,6 +176,28 @@ const clinicalPatterns: ClinicalPattern[] = [
 
   // Linguagem/Comunicação
   { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
+
+  // Paralisia Cerebral / Motor
+  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", reason: "GMFM-88/66 é padrão-ouro para medir função motora na PC; 45-60 min, 88 itens em 5 dimensões" },
+  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", reason: "GMFCS classifica função motora grossa em PC (5 níveis); rápido, clinicamente sensível" },
+
+  // Epilepsia
+  { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises é essencial para monitorar frequência, tipo e resposta ao tratamento em epilepsia" },
+
+  // Sono
+  { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", reason: "CSHQ é padrão-ouro para triagem de distúrbios do sono infantil; 33 itens, 7 domínios" },
+
+  // Depressão isolada
+  { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", reason: "CDI-2 é padrão-ouro para triagem de depressão em crianças; 28 itens, validado internacionalmente" },
+
+  // Risco de suicídio
+  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", reason: "C-SSRS é padrão-ouro para avaliar ideação suicida; 6 níveis de gravidade, sensibilidade clínica alta" },
+
+  // Problemas de aprendizagem
+  { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", reason: "TDE é padrão-ouro brasileiro para avaliação de leitura, escrita e aritmética; padronizado e validado" },
+
+  // Funcionalidade adaptativa
+  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", reason: "Vineland-3 é padrão-ouro para habilidades adaptativas; comunicação, vida diária, socialização, motricidade" },
 ];
 
 function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null): ClinicalPattern | null {
@@ -314,8 +336,11 @@ export default function FiltroPage() {
   const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
   const goldStandardScale = useMemo(() => {
     if (!detectedPattern) return null;
-    return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
-  }, [detectedPattern, rankedPool]);
+    const inPool = rankedPool.find((s) => s.id === detectedPattern.goldStandard);
+    if (inPool) return inPool;
+    // Gold standard not in pool—ensure it exists in full catalog before recommending
+    return catalog.find((s) => s.id === detectedPattern.goldStandard) || null;
+  }, [detectedPattern, rankedPool, catalog]);
 
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));

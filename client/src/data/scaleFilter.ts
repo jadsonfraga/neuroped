@@ -78,13 +78,13 @@ export const queixas: QueixaCategory[] = [
 
 // Faixas etárias para o filtro (em meses)
 export const faixasEtarias = [
-  { id: "0-6m", label: "0–6 meses", min: 0, max: 6 },
-  { id: "6-12m", label: "6–12 meses", min: 6, max: 12 },
-  { id: "1-2a", label: "1–2 anos", min: 12, max: 24 },
-  { id: "2-4a", label: "2–4 anos", min: 24, max: 48 },
-  { id: "4-6a", label: "4–6 anos", min: 48, max: 72 },
-  { id: "6-12a", label: "6–12 anos", min: 72, max: 144 },
-  { id: "12-18a", label: "12–18 anos", min: 144, max: 216 },
+  { id: "0-6m", label: "0–6 meses", min: 0, max: 5.99 },
+  { id: "6-12m", label: "6–12 meses", min: 6, max: 11.99 },
+  { id: "1-2a", label: "1–2 anos", min: 12, max: 23.99 },
+  { id: "2-4a", label: "2–4 anos", min: 24, max: 47.99 },
+  { id: "4-6a", label: "4–6 anos", min: 48, max: 71.99 },
+  { id: "6-12a", label: "6–12 anos", min: 72, max: 143.99 },
+  { id: "12-18a", label: "12–18 anos", min: 144, max: 215.99 },
 ];
 
 export const scales: ScaleEntry[] = [
@@ -731,4 +731,22 @@ export function filterScales(
       return a.scale.name.localeCompare(b.scale.name);
     })
     .map(r => r.scale);
+}
+
+// Validation: detect duplicate scale IDs in catalog
+function validateNoDuplicateIds(catalog: ScaleEntry[]): string[] {
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  for (const scale of catalog) {
+    if (seen.has(scale.id)) {
+      duplicates.push(scale.id);
+    }
+    seen.add(scale.id);
+  }
+  return duplicates;
+}
+
+const duplicateIds = validateNoDuplicateIds(allScales);
+if (duplicateIds.length > 0) {
+  console.warn(`[scaleFilter] Duplicate scale IDs detected: ${duplicateIds.join(", ")}`);
 }
