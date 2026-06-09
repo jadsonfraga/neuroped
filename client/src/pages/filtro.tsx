@@ -160,14 +160,17 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
 interface ClinicalPattern {
   name: string;
   signature: string[]; // queixas que formam o padrão
-  goldStandard: string; // ID da escala ouro
+  goldStandard: string; // ID da escala ouro (triagem ou diagnóstico)
+  screening?: string; // ID escala de triagem (opcional)
+  diagnostic?: string; // ID escala diagnóstica (opcional)
+  minAge?: number; // idade mínima em meses (validação)
   reason: string;
 }
 
 const clinicalPatterns: ClinicalPattern[] = [
   // TEA: traço social + comportamento + linguagem/atraso
   { name: "Suspeita TEA (padrão social-comportamental)", signature: ["tea", "comportamento", "linguagem"], goldStandard: "ados2", reason: "ADOS-2 é padrão-ouro diagnóstico de TEA quando há combinação de déficit social, comportamento restritivo e comunicação" },
-  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%" },
+  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", screening: "mchat", minAge: 16, reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%; se positivo, encaminhar para ADOS-2" },
 
   // TDAH: desatenção + hiperatividade + impulsividade/comportamento
   { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", reason: "SNAP-IV é validado DSM-5 para triagem de TDAH com 18 itens diretos; responde pais/professor" },
@@ -175,7 +178,7 @@ const clinicalPatterns: ClinicalPattern[] = [
 
   // Desenvolvimento global
   { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
-  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", reason: "Denver II é rastreio padrão-ouro para marcos de desenvolvimento; 4 domínios, 30-45 itens" },
+  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II é rastreio rápido (triagem); se sugestivo de atraso, usar Bayley-III para diagnóstico em <3a" },
 
   // Ansiedade infantil
   { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", reason: "SCARED é padrão-ouro para triagem de ansiedade em crianças; 41 itens, 5 subescalas (pânico, generalizada, separação, social, evitação escolar)" },
@@ -196,10 +199,10 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises é essencial para monitorar frequência, tipo e resposta ao tratamento em epilepsia" },
 
   // Sono
-  { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", reason: "CSHQ é padrão-ouro para triagem de distúrbios do sono infantil; 33 itens, 7 domínios" },
+  { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", minAge: 48, reason: "CSHQ para crianças 4-10 anos; adolescentes usar BEARS modificado ou PSQI (fora do escopo atual)" },
 
   // Depressão isolada
-  { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", reason: "CDI-2 é padrão-ouro para triagem de depressão em crianças; 28 itens, validado internacionalmente" },
+  { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 é padrão-ouro para triagem (7-17a); para diagnóstico estruturado usar CDRS-R ou KSADS-P em avaliação especializada" },
 
   // Risco de suicídio
   { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", reason: "C-SSRS é padrão-ouro para avaliar ideação suicida; 6 níveis de gravidade, sensibilidade clínica alta" },
