@@ -67,6 +67,8 @@ const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
+const EfeitosColateraisPage = lazy(() => import("@/pages/efeitos-colaterais"));
+const DocumentosPage = lazy(() => import("@/pages/documentos"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const EscalasNeuropsiquiatriaPage = lazy(() => import("@/pages/escalas-neuropsiquiatria"));
 const CaaPage = lazy(() => import("@/pages/caa"));
@@ -82,6 +84,7 @@ const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/testes-reconhecimento"));
 const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
+const TestesDiretosPage = lazy(() => import("@/pages/testes-diretos"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -179,7 +182,7 @@ function AppRouter() {
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
           <Route path="/pre-retorno" component={PreRetornoPage} />
-          <Route path="/efeitos-colaterais" component={PreRetornoPage} />
+          <Route path="/efeitos-colaterais" component={EfeitosColateraisPage} />
           <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
@@ -195,6 +198,7 @@ function AppRouter() {
           <Route path="/tde2" component={Tde2Page} />
           <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
           <Route path="/testes-academicos" component={TestesAcademicosPage} />
+          <Route path="/testes-diretos" component={TestesDiretosPage} />
           <Route path="/inventarios-auto" component={InventariosAutoPage} />
           <Route path="/ajuda" component={AjudaPage} />
           <Route path="/curvas-crescimento" component={CurvasCrescimentoPage} />
@@ -219,6 +223,7 @@ function AppRouter() {
           <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
           <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
           <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>
+          <Route path="/documentos"><Protected roles={["admin", "professional"]}><DocumentosPage /></Protected></Route>
 
           <Route path="/portal-familia" component={PortalFamiliaPage} />
           <Route path="/portal-familia/novidades" component={PortalNovidadesPage} />
@@ -274,17 +279,4 @@ function App() {
             <AmbientEffects />
             <Toaster />
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
-            {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
-            <Router hook={useHashLocation}><AppRouter /></Router>
-            <InstallPrompt />
-            <PreferencesPanel />
-            <CommandPalette />
-            {splashComplete && <WelcomeTour />}
-          </ToastProvider>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
-export default App;
+            {splas

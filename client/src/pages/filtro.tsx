@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { curatedBoost, clinicianOnlyPenalty } from "@/data/preConsultaCurated";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -66,8 +67,29 @@ function norm(text: string) {
 }
 
 function unique(scales: ScaleEntry[]) {
-  const seen = new Set<string>();
-  return scales.filter((s) => seen.has(s.id) ? false : (seen.add(s.id), true));
+  // Dedup por id E fullName: colapsa duplicatas reais (bears/bears-new, psq/psq-new…)
+  // sem afetar instrumentos distintos de mesma sigla (as duas AIMS têm fullName diferente).
+  const seenId = new Set<string>();
+  const seenName = new Set<string>();
+  return scales.filter((s) => {
+    const key = (s.fullName || s.name || "").toLowerCase().trim();
+    if (seenId.has(s.id) || (key && seenName.has(key))) return false;
+    seenId.add(s.id);
+    if (key) seenName.add(key);
+    return true;
+  });
+}
+
+// ── PRÉ-CONSULTA: o filtro só mostra instrumentos aplicáveis ANTES da consulta.
+// Instrumentos de acompanhamento (diários, qualidade de vida, monitorização de
+// medicação — prioridade "monitorizacao") e psicoeducação NÃO entram aqui; seguem
+// acessíveis em outras telas do app.
+const PSICOEDUCACAO_ROUTES = new Set<string>(["/orientacao-parental", "/portal-familia"]);
+const QUEIXAS_POS_CONSULTA = new Set<string>(["efeitos", "evolucao"]);
+function isPreConsulta(s: ScaleEntry): boolean {
+  if (s.prioridade === "monitorizacao") return false;
+  if (s.appRoute && PSICOEDUCACAO_ROUTES.has(s.appRoute)) return false;
+  return true;
 }
 
 function ageMonths(range: string) {
@@ -153,6 +175,10 @@ function score(scale: ScaleEntry, query: string, selectedQueixas: string[], sele
   // appRoute bonus only for scales with relevant matches (prevents score overflow)
   const hasRelevantMatch = selectedQueixas.length === 0 || value > 0;
   if (scale.appRoute && hasRelevantMatch) value += 100;
+  // Curadoria de pré-consulta: primeira-linha por queixa/comorbidade sobe; avaliações
+  // formais do médico (sem rota, só clínico, diagnóstica) afundam. Complementa clinicalPatterns.
+  value += curatedBoost(scale.appRoute, selectedQueixas);
+  value += clinicianOnlyPenalty(scale.appRoute, scale.respondente, scale.prioridade);
   return value;
 }
 
@@ -366,7 +392,7 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]).filter(isPreConsulta), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || selectedAge !== null || selectedRespondente !== null;
   const statusInfo = status === "loading"
     ? { label: "carregando", dot: "bg-amber-400 animate-pulse" }
@@ -388,25 +414,23 @@ export default function FiltroPage() {
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
 
-  // FIX BUG-003: Guard against undefined when rankedPool is empty
-  const fallback = rankedPool[0] || undefined;
-
-  // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
-  const ranking = goldStandardScale
-    ? [
-        rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || fallback, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || fallback, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
-      ]
-    : [
-        rec("Ouro", fallback, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[1] || fallback, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[2] || rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || fallback, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || fallback, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
-      ];
+  // Ouro/Prata/Bronze devem ser instrumentos DISTINTOS — nunca repetir o mesmo card
+  // (bug em pool pequeno). Padrão-ouro detectado, quando existe, ocupa o Ouro.
+  const usedTier = new Set<string>();
+  const takeTier = (s: ScaleEntry | undefined): ScaleEntry | undefined => {
+    if (s && !usedTier.has(s.id)) { usedTier.add(s.id); return s; }
+    return undefined;
+  };
+  const ouroScale = takeTier(goldStandardScale ?? rankedPool[0]);
+  const prataScale = takeTier(rankedPool.find((s) => !usedTier.has(s.id)));
+  const bronzeScale = takeTier(rankedPool.find((s) => !usedTier.has(s.id)));
+  const ranking = [
+    rec("Ouro", ouroScale, goldStandardScale ? `PADRÃO-OURO: ${detectedPattern!.reason}` : "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+    rec("Prata", prataScale, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+    rec("Bronze", bronzeScale, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+    rec("Teste Direto", direct, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+    rec("Questionário Escolar", school, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+  ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -482,7 +506,7 @@ export default function FiltroPage() {
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.slice(0, 24).map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`flex min-h-[44px] items-center rounded-2xl border px-3 py-2 text-left text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm flex-shrink-0">{q.emoji}</span>}<span className="truncate text-[11px] sm:text-xs">{q.label}</span></button>)}
+            {queixas.filter((q) => !QUEIXAS_POS_CONSULTA.has(q.id)).slice(0, 24).map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`flex min-h-[44px] items-center rounded-2xl border px-3 py-2 text-left text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>{q.emoji && <span className="text-sm flex-shrink-0">{q.emoji}</span>}<span className="truncate text-[11px] sm:text-xs">{q.label}</span></button>)}
           </div>
         </div>
 
@@ -565,22 +589,4 @@ export default function FiltroPage() {
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
             <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
-              <div className="filter-260-card-content compact">
-                <div className="filter-260-head">
-                  <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}</div>
-                    </div>
-                    <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ); })}
-        </div>
-      </section>
-    </div>
-  );
-}
+              <div cla
