@@ -1,6 +1,7 @@
 // Filtro Inteligente — Banco de escalas por queixa, idade, respondente e prioridade
 import { escalasAutoraisDrJadson } from "./escalasAutorais";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
+import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel";
@@ -688,11 +689,12 @@ const scalesComProveniencia: ScaleEntry[] = scales.map((s) =>
   provenanciaLegado[s.id] ? { ...provenanciaLegado[s.id], ...s } : s
 );
 
-// Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25)
+// Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25) + open-access mundiais
 export const allScales: ScaleEntry[] = [
   ...scalesComProveniencia,
   ...escalasAutoraisDrJadson,
   ...escalasImportadasV25Ebook,
+  ...scalasOpenAccessMundiais,
 ];
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)

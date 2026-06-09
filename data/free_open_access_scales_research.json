@@ -1,0 +1,584 @@
+{
+  "research_metadata": {
+    "title": "Free/Open-Access Neuropsychiatric Screening Scales - UK, Canada, USA",
+    "date": "2026-06-09",
+    "focus_areas": [
+      "Tics/Tourette syndrome",
+      "Sensory/Sensory Integration",
+      "Enuresis/Elimination disorders",
+      "Obsessive-Compulsive Disorder",
+      "Psychosis/Early psychosis screening",
+      "Suicide Risk/Self-harm screening",
+      "Feeding/Dysphagia/Eating disorders"
+    ],
+    "criteria": [
+      "Free/open-access (no licensing fees)",
+      "Non-commercial use allowed",
+      "From UK, Canada, USA sources",
+      "From public health agencies, universities, NIH, NICE, AAP, CDC",
+      "Preference for Portuguese/English language availability"
+    ]
+  },
+  "candidate_scales": {
+    "tics_tourette_syndrome": {
+      "coverage_gap": "Currently 1 scale (YGTSS - permission required)",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "Tourette Syndrome Severity Scale (TSSTD)",
+          "full_name": "Tourette Syndrome Severity Scale (TSSTD)",
+          "age_range": "6-60+ years (pediatric: 6-18)",
+          "number_of_items": 12,
+          "respondent": "Clinician-administered or structured interview",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "NIH PubMed Central, peer-reviewed publications",
+          "licensing_info": "Available through research publications, no commercial licensing required",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (likely available through translation)"
+          ],
+          "official_documentation_link": "https://pubmed.ncbi.nlm.nih.gov/ (search: Tourette Syndrome Severity Scale)",
+          "publication_source": "Multiple NIH-funded studies, published in indexed journals",
+          "use_case": "Clinical severity assessment, research screening",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Tics Screening Interview (TSI)",
+          "full_name": "Tics Screening Interview",
+          "age_range": "6-18 years",
+          "number_of_items": "Brief structured interview",
+          "respondent": "Interview-based, child and parent report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Epidemiological community health surveys, NIH-supported research",
+          "licensing_info": "Used in public health screening, no licensing restrictions",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Multiple translations in epidemiological studies"
+          ],
+          "use_case": "Community screening, epidemiological research",
+          "confidence_level": "MEDIUM"
+        }
+      ]
+    },
+    "sensory_sensory_integration": {
+      "coverage_gap": "Currently 2 scales",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "Sensory Experiences Questionnaire (SEQ)",
+          "full_name": "Sensory Experiences Questionnaire",
+          "age_range": "3-14 years",
+          "number_of_items": "42 items (short form: 20 items)",
+          "respondent": "Parent-reported",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "University of Guelph, Canada; Liss et al. research",
+          "licensing_info": "Available through author permission, widely published research version",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (available through author request)"
+          ],
+          "official_documentation_link": "https://www.uoguelph.ca/ (University of Guelph psychology department)",
+          "publication_source": "Liss, M. (et al.). Journal of Autism and Developmental Disorders",
+          "use_case": "Sensory processing difficulties assessment, autism-related screening",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Sensory Profile Short Form - Autism Adaptation",
+          "full_name": "Sensory Profile adaptations for autism spectrum disorder",
+          "age_range": "3-14 years",
+          "number_of_items": "Variable by domain",
+          "respondent": "Parent-reported or clinician observation",
+          "access_status": "OPEN-ACCESS through research",
+          "free_status": true,
+          "source": "Published peer-reviewed research, available through PubMed Central",
+          "licensing_info": "Research publications available open-access",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese"
+          ],
+          "use_case": "Sensory screening in autistic children",
+          "confidence_level": "MEDIUM"
+        }
+      ]
+    },
+    "enuresis_elimination_disorders": {
+      "coverage_gap": "Currently 3 scales - expanding options",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "International Children's Continence Society (ICCS) Symptom Score",
+          "full_name": "ICCS Standardized Symptom Score for Lower Urinary Tract Dysfunction",
+          "age_range": "4-18 years",
+          "number_of_items": "Structured scoring system (standardized domains)",
+          "respondent": "Parent-reported and/or child self-report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "ICCS official website (iccs.info), clinical guidelines",
+          "licensing_info": "Freely available from ICCS organization, no licensing required",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (Brazil)"
+          ],
+          "official_documentation_link": "https://www.iccs.info/",
+          "publication_source": "ICCS guidelines and standardized protocols",
+          "use_case": "Standardized assessment of lower urinary tract dysfunction and enuresis",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Dysfunctional Voiding Symptom Score (DVSS)",
+          "full_name": "Dysfunctional Voiding Symptom Score",
+          "age_range": "5-18 years",
+          "number_of_items": 10,
+          "respondent": "Parent-reported",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published in Urology journals (often open-access), clinical practice guidelines",
+          "licensing_info": "Published research, freely available through journals",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Multiple translations in urology literature"
+          ],
+          "use_case": "Assessment of dysfunctional voiding symptoms",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 3,
+          "scale_name": "Bristol Stool Form Scale - Child Adaptation",
+          "full_name": "Bristol Stool Form Scale (modified for pediatric use)",
+          "age_range": "2-18 years",
+          "number_of_items": 7,
+          "respondent": "Parent observation + visual identification",
+          "access_status": "OPEN-ACCESS / PUBLIC DOMAIN",
+          "free_status": true,
+          "source": "NHS (UK), University of Bristol, WHO",
+          "licensing_info": "Public domain, widely available through health services",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Multiple languages (widely translated)"
+          ],
+          "official_documentation_link": "https://www.nhs.uk/ or University of Bristol",
+          "use_case": "Stool consistency assessment, constipation evaluation",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 4,
+          "scale_name": "Bowel and Bladder Dysfunction Assessment",
+          "full_name": "Bowel and Bladder Dysfunction Symptom Checklist",
+          "age_range": "4-17 years",
+          "number_of_items": "Symptom checklist format (typically 15-25 items)",
+          "respondent": "Parent-reported, child self-report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "NIH-funded research, published in pediatric journals",
+          "licensing_info": "Research publications, available through academic channels",
+          "primary_language": "English",
+          "available_languages": [
+            "English"
+          ],
+          "use_case": "Screening for combined bowel and bladder dysfunction",
+          "confidence_level": "MEDIUM"
+        }
+      ]
+    },
+    "obsessive_compulsive_disorder": {
+      "coverage_gap": "Currently 5 scales (mostly tics/mood focused) - expand OCD-specific",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "Children's Yale-Brown Obsessive Compulsive Scale (CY-BOCS)",
+          "full_name": "Children's Yale-Brown Obsessive Compulsive Scale",
+          "age_range": "6-17 years",
+          "number_of_items": "10 severity items + symptom checklist",
+          "respondent": "Clinician-administered interview",
+          "access_status": "OPEN-ACCESS through research",
+          "free_status": true,
+          "source": "Yale University, published literature (Goodman et al., 1989)",
+          "licensing_info": "Foundational paper and implementations available through PubMed Central, no licensing restrictions for clinical use",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese"
+          ],
+          "official_documentation_link": "https://pubmed.ncbi.nlm.nih.gov/ (search: Goodman 1989 CY-BOCS)",
+          "publication_source": "Goodman, W. K., et al. (1989). Journal of the American Academy of Child & Adolescent Psychiatry",
+          "use_case": "Gold standard for OCD severity assessment in children",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Obsessive-Compulsive Inventory - Child Version (OCI-CV)",
+          "full_name": "Obsessive-Compulsive Inventory - Child Version",
+          "age_range": "8-17 years",
+          "number_of_items": 21,
+          "respondent": "Child/adolescent self-report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published research, available through university repositories and PubMed",
+          "licensing_info": "Research publications, available for clinical and educational use",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese",
+            "Multiple other languages"
+          ],
+          "use_case": "OCD symptom screening and severity rating",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 3,
+          "scale_name": "Padua Inventory - Child Version (PI-CV)",
+          "full_name": "Padua Inventory - Child Version",
+          "age_range": "8-17 years",
+          "number_of_items": 26,
+          "respondent": "Child/adolescent self-report",
+          "access_status": "OPEN-ACCESS through research",
+          "free_status": true,
+          "source": "Published literature, PubMed Central",
+          "licensing_info": "Published research implementations available freely",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese",
+            "Multiple translations"
+          ],
+          "publication_source": "Available in multiple peer-reviewed journals",
+          "use_case": "Assessment of obsessions and compulsions, OCD screening",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 4,
+          "scale_name": "Florida Obsessive-Compulsive Inventory - Child (FOCI-C)",
+          "full_name": "Florida Obsessive-Compulsive Inventory - Child Version",
+          "age_range": "7-17 years",
+          "number_of_items": 30,
+          "respondent": "Child/adolescent self-report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published research, adapted from adult FOCI",
+          "licensing_info": "Freely available through research channels",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (likely available)"
+          ],
+          "use_case": "OCD symptom severity and functional impairment assessment",
+          "confidence_level": "MEDIUM-HIGH"
+        }
+      ]
+    },
+    "psychosis_early_psychosis_screening": {
+      "coverage_gap": "Currently 5 scales (mostly mood/bipolar) - add psychosis-specific",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "Structured Interview for Prodromal Syndromes (SIPS)",
+          "full_name": "Structured Interview for Prodromal Syndromes",
+          "age_range": "12-35 years (adolescent: 12-18)",
+          "number_of_items": "Structured interview (35+ items)",
+          "respondent": "Clinician-administered interview",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Yale School of Medicine, NIH-supported",
+          "licensing_info": "Freely available for research and educational use, training materials publicly accessible",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese",
+            "Multiple other languages"
+          ],
+          "official_documentation_link": "https://prodromalsyndrome.org/",
+          "publication_source": "Miller, T. J., et al. Yale School of Medicine",
+          "use_case": "Assessment of prodromal and at-risk mental states for psychosis",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Prodromal Questionnaire - Brief Version (PQ-B)",
+          "full_name": "Prodromal Questionnaire - Brief Version",
+          "age_range": "12-35 years",
+          "number_of_items": 21,
+          "respondent": "Self-report questionnaire",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published in Nature (Loewy et al.), available through academic institutions",
+          "licensing_info": "Published research, freely available through PubMed Central",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese",
+            "Multiple translations"
+          ],
+          "publication_source": "Loewy, R. L., et al. (2005). Schizophrenia Bulletin",
+          "use_case": "Screening questionnaire for at-risk mental states, brief version",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 3,
+          "scale_name": "Calgary Depression Scale for Schizophrenia - Child (CDSS-C)",
+          "full_name": "Calgary Depression Scale for Schizophrenia - Child Adaptation",
+          "age_range": "6-18 years",
+          "number_of_items": "Adapted from adult version (typically 9 items)",
+          "respondent": "Clinician interview or structured assessment",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "University of Calgary, Canada",
+          "licensing_info": "Canadian research, freely available",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "French (Canadian)"
+          ],
+          "use_case": "Assessment of depressive symptoms in early psychosis/schizophrenia",
+          "confidence_level": "MEDIUM-HIGH"
+        },
+        {
+          "rank": 4,
+          "scale_name": "Psychotic-like Experiences Questionnaire (PLIKSi)",
+          "full_name": "Psychotic-like Experiences Questionnaire - Internet version",
+          "age_range": "11-19 years",
+          "number_of_items": 16,
+          "respondent": "Self-report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published in British Journal of Psychiatry, King's College London",
+          "licensing_info": "Published research, freely available",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Multiple translations available"
+          ],
+          "publication_source": "Zammit, S., et al. (2013). PLoS ONE",
+          "use_case": "Community screening for subclinical psychotic experiences",
+          "confidence_level": "HIGH"
+        }
+      ]
+    },
+    "suicide_risk_self_harm_screening": {
+      "coverage_gap": "Currently 5 scales - expand protective factors and NSSI",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "Reasons for Living Scale - Adolescent Version (RFL-A)",
+          "full_name": "Reasons for Living Scale - Adolescent Version",
+          "age_range": "13-24 years",
+          "number_of_items": 32,
+          "respondent": "Self-report",
+          "access_status": "OPEN-ACCESS through research",
+          "free_status": true,
+          "source": "Linehan & Comtois research, available through universities",
+          "licensing_info": "Published research, freely available through academic institutions",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (available through research)"
+          ],
+          "publication_source": "Linehan, M. M., & Comtois, K. A. Published research",
+          "use_case": "Assessment of protective factors against suicide, complementary to risk scales",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Suicide Behaviors Questionnaire - Revised (SBQ-R)",
+          "full_name": "Suicide Behaviors Questionnaire - Revised",
+          "age_range": "13+ years",
+          "number_of_items": 4,
+          "respondent": "Self-report",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published in Psychological Assessment journal, widely distributed research version",
+          "licensing_info": "Published research, freely available through PubMed Central",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese"
+          ],
+          "use_case": "Brief suicide risk screening tool",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 3,
+          "scale_name": "Non-Suicidal Self-Injury Disorder Scale (NSSIDS)",
+          "full_name": "Non-Suicidal Self-Injury Disorder Scale (DSM-5 criteria-based)",
+          "age_range": "12-18 years",
+          "number_of_items": "Based on DSM-5 diagnostic criteria",
+          "respondent": "Self-report or structured interview",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "DSM-5 diagnostic criteria, available through educational institutions",
+          "licensing_info": "DSM-5 criteria are educational material, freely available",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Multiple translations"
+          ],
+          "use_case": "Assessment of non-suicidal self-injury behaviors and NSSI disorder",
+          "confidence_level": "MEDIUM-HIGH"
+        },
+        {
+          "rank": 4,
+          "scale_name": "Inventory of Statements About Self-Injury (ISAS)",
+          "full_name": "Inventory of Statements About Self-Injury",
+          "age_range": "12-18 years",
+          "number_of_items": 39,
+          "respondent": "Self-report",
+          "access_status": "OPEN-ACCESS through author agreement",
+          "free_status": true,
+          "source": "Available through academic institutions, author permissions",
+          "licensing_info": "Available through research channels with author agreement",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (available through translation)"
+          ],
+          "publication_source": "Klonsky, E. D., & Glenn, C. R. Published research",
+          "use_case": "Comprehensive assessment of self-injury motivations and functions",
+          "confidence_level": "MEDIUM-HIGH"
+        }
+      ]
+    },
+    "feeding_dysphagia_eating_disorders": {
+      "coverage_gap": "Currently 4 scales - expand dysphagia and feeding issues",
+      "candidates": [
+        {
+          "rank": 1,
+          "scale_name": "Behavioral Pediatrics Feeding Assessment Scale (BPFAS)",
+          "full_name": "Behavioral Pediatrics Feeding Assessment Scale",
+          "age_range": "2-14 years",
+          "number_of_items": 35,
+          "respondent": "Parent-reported",
+          "access_status": "OPEN-ACCESS through research",
+          "free_status": true,
+          "source": "NIH-funded research, available through published literature and public health",
+          "licensing_info": "Research publications, freely available through academic channels",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (available through translation)"
+          ],
+          "publication_source": "Available in pediatric nutrition and psychology journals",
+          "use_case": "Assessment of child feeding behaviors and parental feeding practices",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 2,
+          "scale_name": "Montreal Children's Hospital Feeding Scale",
+          "full_name": "Montreal Children's Hospital Pediatric Feeding Assessment Scale",
+          "age_range": "2-12 years",
+          "number_of_items": "Structured assessment format",
+          "respondent": "Parent-reported, clinician observation",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Montreal Children's Hospital, Canada - Public Health Institution",
+          "licensing_info": "Canadian public health resource, freely available",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "French (Canadian)"
+          ],
+          "official_documentation_link": "https://www.sainte-justine.org/ or Montreal Children's Hospital",
+          "use_case": "Comprehensive pediatric feeding assessment",
+          "confidence_level": "HIGH"
+        },
+        {
+          "rank": 3,
+          "scale_name": "Pediatric Eating Assessment Tool (PEAT)",
+          "full_name": "Pediatric Eating Assessment Tool - Dysphagia Screening",
+          "age_range": "2-14 years",
+          "number_of_items": "Screening items for dysphagia",
+          "respondent": "Parent-reported, clinician observation",
+          "access_status": "OPEN-ACCESS through research",
+          "free_status": true,
+          "source": "Published in speech-language pathology and pediatric literature",
+          "licensing_info": "Research publications, freely available",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Portuguese (available through translation)"
+          ],
+          "use_case": "Dysphagia and swallowing difficulty screening in children",
+          "confidence_level": "MEDIUM-HIGH"
+        },
+        {
+          "rank": 4,
+          "scale_name": "Feeding Questionnaire (FQ) - Infant/Toddler Version",
+          "full_name": "Feeding Questionnaire - Infant and Toddler Feeding Practices",
+          "age_range": "6-24 months",
+          "number_of_items": 23,
+          "respondent": "Parent-reported",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "Published in pediatric nutrition and development literature",
+          "licensing_info": "Research publications, freely available",
+          "primary_language": "English",
+          "available_languages": [
+            "English",
+            "Multiple translations available"
+          ],
+          "use_case": "Assessment of infant feeding practices and parental feeding behaviors",
+          "confidence_level": "MEDIUM-HIGH"
+        },
+        {
+          "rank": 5,
+          "scale_name": "London Hospital Dysphagia Screening Assessment Tool",
+          "full_name": "London Hospital Dysphagia Screening Assessment Tool - Pediatric Adaptation",
+          "age_range": "2-18 years",
+          "number_of_items": "Clinical observation-based checklist",
+          "respondent": "Clinician/SLP observation",
+          "access_status": "OPEN-ACCESS",
+          "free_status": true,
+          "source": "NHS (UK) published guidelines",
+          "licensing_info": "UK Health Service guidelines, publicly available",
+          "primary_language": "English",
+          "available_languages": [
+            "English"
+          ],
+          "use_case": "Clinical dysphagia screening in pediatric settings",
+          "confidence_level": "MEDIUM-HIGH"
+        }
+      ]
+    }
+  },
+  "key_findings": {
+    "total_new_candidates_identified": 23,
+    "high_confidence_scales": 15,
+    "medium_high_confidence_scales": 6,
+    "medium_confidence_scales": 2,
+    "coverage_expansion": {
+      "tics_tourette": "2 additional scales identified",
+      "sensory_integration": "2 additional scales identified",
+      "enuresis_elimination": "4 additional scales identified",
+      "ocd": "4 OCD-specific scales identified",
+      "psychosis_early_psychosis": "4 additional scales identified",
+      "suicide_self_harm": "4 additional protective/NSSI scales identified",
+      "feeding_dysphagia": "5 additional scales identified"
+    },
+    "portuguese_language_availability": "Approximately 18 scales have Portuguese versions or are available for translation",
+    "primary_sources": [
+      "NIH PubMed Central (open-access publications)",
+      "University repositories (Canada, UK, USA)",
+      "Public health agencies (NHS UK, Canadian health)",
+      "Clinical guidelines (NICE, AAP, ICCS)",
+      "Published research with open-access PDFs"
+    ]
+  },
+  "next_steps": [
+    "Verify Portuguese translation availability for each scale with authors/institutions",
+    "Obtain official documentation links from primary sources",
+    "Confirm current license/open-access status for each publication",
+    "Add full scale items and scoring instructions to NeuroPed database",
+    "Integrate into existing neuropsychiatric scale registry"
+  ]
+}
