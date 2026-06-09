@@ -191,14 +191,14 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", diagnostic: "ecbi", reason: "SDQ para triagem rápida escolar; ECBI para avaliação específica de comportamento oposicional/desafiador" },
 
   // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes 0-36m; 15-20 min, simples, validado" },
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, maxAge: 36, reason: "CAT/CLAMS clinician-administered para lactentes 0-36m; avalia marcos cognitivos e linguísticos; 15-20 min" },
 
   // Paralisia Cerebral / Motor
-  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", reason: "GMFM-88/66 para motricidade grossa; considerar QUEST ou Ashworth para tone/espasticidade em avaliação complementar" },
-  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", minAge: 0, reason: "GMFCS para classificação rápida da função motora grossa (5 níveis); base para planejamento terapêutico" },
+  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", diagnostic: "gmfm", reason: "GMFM-88/66 diagnóstico de função motora; complementar com MRI para tipo de PC (espástica/discinética/atáxica)" },
+  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, reason: "GMFCS triagem rápida (5 níveis); GMFM para diagnóstico detalhado; MRI/neuroimagem essencial" },
 
   // Epilepsia
-  { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises é essencial para monitorar frequência, tipo e resposta ao tratamento em epilepsia" },
+  { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises para monitorar frequência/tipo/resposta; complementar com EEG/RM para diagnóstico de síndrome epiléptica" },
 
   // Sono
   { name: "Distúrbios do sono pediátrico", signature: ["sono"], goldStandard: "cshq", minAge: 48, maxAge: 120, reason: "CSHQ para crianças 4-10 anos apenas (48-120m); adolescentes (120+ meses) usar BEARS ou PSQI em avaliação especializada" },
@@ -207,13 +207,13 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Depressão infantojuvenil", signature: ["depressao"], goldStandard: "cdi2", screening: "cdi2", minAge: 84, reason: "CDI-2 é padrão-ouro para triagem (7-17a); para diagnóstico estruturado usar CDRS-R ou KSADS-P em avaliação especializada" },
 
   // Risco de suicídio
-  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", reason: "C-SSRS é padrão-ouro para avaliar ideação suicida; 6 níveis de gravidade, sensibilidade clínica alta" },
+  { name: "Avaliação de risco suicida", signature: ["suicidio"], goldStandard: "cssrs", screening: "cssrs", diagnostic: "rfl-a", reason: "C-SSRS para triagem de ideação (6 níveis); RFL-A para avaliar fatores protetores (complementa risco)" },
 
   // Problemas de aprendizagem
   { name: "Avaliação de desempenho escolar", signature: ["aprendizagem"], goldStandard: "tde", minAge: 72, reason: "TDE para avaliação de leitura/escrita/aritmética em escolares 6+; pré-escolares usar avaliação do desenvolvimento geral" },
 
   // Funcionalidade adaptativa
-  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 para habilidades adaptativas (comunicação, vida diária, socialização, motricidade); desde lactentes" },
+  { name: "Habilidades adaptativas/funcionalidade", signature: ["funcionalidade"], goldStandard: "vineland", minAge: 0, reason: "Vineland-3 padrão-ouro (45-60 min); alternativas breves: PEDI-CAT (computerizado) ou VABS-II Mobile para triagem rápida" },
 ];
 
 function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null, catalog: ScaleEntry[]): ClinicalPattern | null {
