@@ -178,25 +178,25 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", diagnostic: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional; essencial para avaliação diagnóstica" },
 
   // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 0, maxAge: 42, reason: "Bayley-III padrão-ouro 1-42m; NICU 0m: TIMP ou Dubowitz (exame neurológico); Griffiths-III alternativa gratuita" },
-  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, reason: "Denver II clinician para triagem; alternativa parental: ASQ-3 para pais sem acesso a clínico (gratuita, validada)" },
-  { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE clinician-administered para exame neurológico padronizado de recém-nascidos; 26 itens, detecta anormalidades precoces" },
+  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", minAge: 0, maxAge: 42, reason: "Bayley-III (CLINICIAN-administered) padrão-ouro 1-42m; NICU 0m: TIMP ou Dubowitz; Griffiths-III alternativa gratuita" },
+  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", screening: "denver", diagnostic: "bayley", minAge: 0, maxAge: 60, reason: "Denver II (CLINICIAN para triagem; ASQ-3 (PARENTAL) alternativa gratuita 1-60m sem acesso a clínico validada" },
+  { name: "Avaliação neonatal (0-1 mês)", signature: ["neonatal"], goldStandard: "hine", minAge: 0, maxAge: 1, reason: "HINE (CLINICIAN-administered) exame neurológico padronizado recém-nascidos; 26 itens objetivos; detecta anormalidades precoces" },
 
   // Ansiedade infantil
   { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", screening: "scared", diagnostic: "rcads", minAge: 96, reason: "SCARED (8+) ou SCARED-P (pais) para triagem; RCADS (8+) para diagnóstico; <8a: observação clínica" },
   { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
 
   // Comportamento disruptivo
-  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", screening: "cbcl", reason: "CBCL para triagem abrangente de psicopatologia infantil; 100 itens, 3 domínios (internalizante/externalizante/social)" },
-  { name: "Transtorno Opositivo Desafiador (TOD)", signature: ["comportamento"], goldStandard: "ecbi", diagnostic: "ecbi", minAge: 24, reason: "ECBI para avaliação específica de desobediência/oposição; escalas de intensidade e problema" },
-  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ para triagem rápida de comportamento na escola; versão pais/professor disponível" },
+  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", screening: "cbcl", minAge: 18, maxAge: 216, reason: "CBCL (PARENTAL) triagem abrangente 18m-18a; 100 itens, 3 domínios; validada Brasil" },
+  { name: "Transtorno Opositivo Desafiador (TOD)", signature: ["comportamento"], goldStandard: "ecbi", diagnostic: "ecbi", minAge: 24, maxAge: 84, reason: "ECBI (PARENTAL) específica 2-7a (desobediência/oposição); intensidade + impacto problema" },
+  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", minAge: 48, maxAge: 180, reason: "SDQ (PARENTAL/PROFESSOR) triagem rápida 4-15a; equivalente ECBI em contexto escolar" },
 
   // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", minAge: 0, maxAge: 36, reason: "CAT/CLAMS clinician para avaliação direta; alternativa parental: MacArthur CDI para vocabulário/gestos em 8-37m" },
+  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", screening: "cdi", minAge: 0, maxAge: 36, reason: "CAT/CLAMS (CLINICIAN-administered) para avaliação direta 0-36m; MacArthur CDI (pais) alternativa para vocabulário 8-37m" },
 
   // Paralisia Cerebral / Motor
-  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", diagnostic: "gmfm", reason: "GMFM-88/66 diagnóstico de função motora; complementar com MRI para tipo de PC (espástica/discinética/atáxica)" },
-  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, reason: "GMFCS triagem rápida (5 níveis, sem score); é BASE para planejamento terapêutico; GMFM mede mudança após terapia" },
+  { name: "Paralisia cerebral (função motora grossa)", signature: ["pc", "motor"], goldStandard: "gmfm", diagnostic: "gmfm", minAge: 12, reason: "GMFM-88/66 (CLINICIAN-observed) para classificação funcional pós 12m; complementar com MRI para tipo de PC (espástica/discinética/atáxica)" },
+  { name: "Paralisia cerebral (triagem)", signature: ["pc"], goldStandard: "gmfcs", screening: "gmfcs", diagnostic: "gmfm", minAge: 0, maxAge: 180, reason: "GMFCS (CLINICIAN-observed) triagem rápida 5 níveis; BASE para planejamento terapêutico; GMFM (>12m) mede mudança após terapia" },
 
   // Epilepsia
   { name: "Epilepsia (controle de crises)", signature: ["epilepsia"], goldStandard: "epilepsia-diario", reason: "Diário de crises para monitorar frequência/tipo/resposta; complementar com EEG/RM para diagnóstico de síndrome epiléptica" },
