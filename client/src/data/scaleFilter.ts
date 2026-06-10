@@ -2,6 +2,8 @@
 import { escalasAutoraisDrJadson } from "./escalasAutorais";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
+import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
+import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel";
@@ -689,13 +691,25 @@ const scalesComProveniencia: ScaleEntry[] = scales.map((s) =>
   provenanciaLegado[s.id] ? { ...provenanciaLegado[s.id], ...s } : s
 );
 
-// Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25) + open-access mundiais
-export const allScales: ScaleEntry[] = [
+// Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25) + open-access mundiais + 230 complementares
+const allScalesBase: ScaleEntry[] = [
   ...scalesComProveniencia,
   ...escalasAutoraisDrJadson,
   ...escalasImportadasV25Ebook,
   ...scalasOpenAccessMundiais,
+  ...todasAsEscalasComplementares,
 ];
+
+// Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
+export const allScales: ScaleEntry[] = allScalesBase.map(escala => {
+  if (descricoesMelhoradas[escala.id]) {
+    return {
+      ...escala,
+      description: descricoesMelhoradas[escala.id],
+    };
+  }
+  return escala;
+});
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
 export function filterScales(
