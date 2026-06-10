@@ -267,6 +267,8 @@ function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], s
     // Excluir queixas que são pós-consulta (reavaliação, efeitos colaterais, evolução)
     const postConsultComplaints = ["efeitos", "evolucao"];
     if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
+    // VALIDAÇÃO CRÍTICA: Apenas escalas com appRoute implementado podem ser recomendadas
+    if (!s.appRoute) return false;
 
     const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
     const matchesAge = matchAge(s, selectedAge);
@@ -381,12 +383,12 @@ export default function FiltroPage() {
     if (!detectedPattern) return null;
     const inPool = rankedPool.find((s) => s.id === detectedPattern.goldStandard);
     if (inPool) return inPool;
-    // Gold standard not in pool—ensure it exists in full catalog before recommending
-    return catalog.find((s) => s.id === detectedPattern.goldStandard) || null;
+    // Gold standard not in pool—only recommend if it exists with valid appRoute
+    const candidate = catalog.find((s) => s.id === detectedPattern.goldStandard);
+    return candidate?.appRoute ? candidate : null;
   }, [detectedPattern, rankedPool, catalog]);
 
   const direct = rankedPool.find((s) => Boolean(s.appRoute));
-  const school = rankedPool.find((s) => s.respondente.includes("professor"));
 
   // FIX BUG-003: Guard against undefined when rankedPool is empty
   const fallback = rankedPool[0] || undefined;
