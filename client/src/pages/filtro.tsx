@@ -32,9 +32,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
+import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { getOPBRecommendations } from "@/data/filterRecommendationsOPB";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -447,6 +449,30 @@ export default function FiltroPage() {
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+
+        {/* Recomendações OPB Estruturadas (se queixa única + idade válida) */}
+        {(() => {
+          if (selectedQueixas.length === 1 && selectedAge) {
+            const ageRange = faixasEtarias.find(a => a.id === selectedAge);
+            const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
+            const opbRec = ageMonths ? getOPBRecommendations(selectedQueixas[0], ageMonths) : null;
+
+            if (opbRec) {
+              return (
+                <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 sm:p-6">
+                  <OPBRecommendationCards
+                    recommendations={opbRec}
+                    onSelectScale={(scaleId) => {
+                      // Usuário pode clicar no botão para selecionar a escala
+                      console.log("Selecionou escala:", scaleId);
+                    }}
+                  />
+                </div>
+              );
+            }
+          }
+          return null;
+        })()}
 
         {/* Testes Diretos Recomendados */}
         <DirectTestsRecommender
