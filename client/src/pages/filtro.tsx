@@ -84,16 +84,22 @@ function ageMonths(range: string) {
 function guessQueixas(category: string, name: string) {
   const t = norm(`${category} ${name}`);
   const set = new Set<string>();
-  if (/tea|autis|social|aq|cast|m-chat|assq|q-chat/.test(t)) set.add("tea");
-  if (/desenvolvimento|milestone|swyc|cdc|gmcd|atraso/.test(t)) set.add("atraso");
-  if (/tdah|adhd|snap|vanderbilt|weiss|wfirs|aten/.test(t)) set.add("tdah");
+  // TEA: be strict—only when TEA/autism explicitly mentioned or diagnostic tools (not generic "social")
+  if (/tea|autis|ados|m-chat|assq|q-chat|cast|aq-10|cat-q|3di/.test(t)) set.add("tea");
+  if (/desenvolvimento|milestone|swyc|cdc|gmcd|atraso|bayley|denver/.test(t)) set.add("atraso");
+  // TDAH: exclude from tics/psychosis domain
+  if (/tdah|adhd|snap(?!-)?|(?<!srs)vanderbilt|weiss|wfirs|aten|brief|conners/.test(t)) {
+    // Only add if NOT in tics/psychosis context
+    if (!/tic|tourette|psicos|mania|bipolar/.test(t)) set.add("tdah");
+  }
   if (/comport|external|agress|moas|nisonger|psc|sdq/.test(t)) set.add("comportamento");
   if (/ansiedade|anxiety|scared|scas|rcads|gad|pas/.test(t)) set.add("ansiedade");
   if (/depress|mood|phq|mfq|smfq|columbia depression/.test(t)) set.add("depressao");
   if (/suic|asq|c-ssrs|safe-t/.test(t)) set.add("suicidio");
   if (/trauma|tept|ptsd|cats|cries|cpss|tesi/.test(t)) set.add("trauma");
-  if (/tic|tourette|ygtss|puts|moves/.test(t)) set.add("tiques");
-  if (/mania|bipolar|cmrs|ymrs|pgbi|mdq|gbi/.test(t)) set.add("psicose");
+  if (/tic|tourette|ygtss|puts|moves|twstrs/.test(t)) set.add("tiques");
+  // Psicose: include mania/bipolar but NOT Vanderbilt/TDAH unless explicitly psychotic
+  if (/mania|bipolar|cmrs|ymrs|pgbi|mdq|gbi|psicos|delir|alucin/.test(t)) set.add("psicose");
   if (/eat|scoff|aliment/.test(t)) set.add("alimentacao");
   if (/sono|sleep|psq|bears/.test(t)) set.add("sono");
   if (/pain|dor/.test(t)) set.add("dor");
@@ -276,11 +282,44 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
 function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas: string[], selectedAge: string | null): string[] {
   if (!scale) return [];
   const reasons: string[] = [];
-  if (selectedQueixas.length > 0 && scale.queixas.some((q) => selectedQueixas.includes(q))) reasons.push("✓ Queixa");
-  if (selectedAge && matchAge(scale, selectedAge)) reasons.push("✓ Idade");
-  if (scale.appRoute) reasons.push("✓ Rota direta");
-  if (scale.prioridade === "triagem") reasons.push("✓ Triagem");
-  if (scale.respondente.includes("professor")) reasons.push("✓ Escola");
+
+  // Motivo contextual por idade
+  if (selectedAge && matchAge(scale, selectedAge)) {
+    if (scale.ageMin > 0) {
+      const minYears = Math.round(scale.ageMin / 12);
+      reasons.push(`✓ Recomendado a partir de ${minYears} anos`);
+    } else {
+      reasons.push("✓ Aplicável nesta faixa etária");
+    }
+  } else if (selectedAge && !matchAge(scale, selectedAge)) {
+    const minYears = Math.round(scale.ageMin / 12);
+    reasons.push(`⚠ Recomendado apenas a partir de ${minYears} anos`);
+  }
+
+  // Motivo contextual por queixa
+  if (selectedQueixas.length > 0) {
+    const matchedQueixas = scale.queixas.filter((q) => selectedQueixas.includes(q));
+    if (matchedQueixas.length > 0) {
+      if (matchedQueixas.length === 1) {
+        reasons.push(`✓ Cobre sintoma: ${matchedQueixas[0]}`);
+      } else {
+        reasons.push(`✓ Cobre ${matchedQueixas.length} sintomas selecionados`);
+      }
+    }
+  }
+
+  // Motivo contextual por respondente
+  if (scale.respondente.includes("professor")) {
+    reasons.push("✓ Respondente: Professor");
+  } else if (scale.respondente.includes("pais")) {
+    reasons.push("✓ Respondente: Pais/Cuidador");
+  } else if (scale.respondente.includes("clinico")) {
+    reasons.push("✓ Respondente: Clínico (observação direta)");
+  }
+
+  if (scale.appRoute) reasons.push("✓ Rota direta no app");
+  if (scale.prioridade === "triagem") reasons.push("✓ Padrão-ouro triagem");
+
   return reasons.length ? reasons : ["✓ Compatibilidade geral"];
 }
 
@@ -325,24 +364,34 @@ export default function FiltroPage() {
     return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
   }, [detectedPattern, rankedPool]);
 
-  const direct = rankedPool.find((s) => Boolean(s.appRoute));
+  const direct = rankedPool.find((s) => Boolean(s.appRoute) && s.respondente.includes("clinico"));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
+
+  // Função para evitar duplicatas nos slots Ouro/Prata/Bronze
+  const getUniqueSlots = () => {
+    const ouro = goldStandardScale || rankedPool[0];
+    const prata = rankedPool.find((s, i) => i > 0 && s.id !== ouro?.id);
+    const bronze = rankedPool.find((s, i) => i > 1 && s.id !== ouro?.id && s.id !== prata?.id);
+    return { ouro, prata, bronze };
+  };
+
+  const { ouro, prata, bronze } = getUniqueSlots();
 
   // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
   const ranking = goldStandardScale
     ? [
-        rec("Ouro", goldStandardScale, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || rankedPool[0], "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || rankedPool[0], "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Ouro", ouro, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", prata, "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || ouro, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || ouro, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
       ]
     : [
-        rec("Ouro", rankedPool[0], "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", rankedPool[1] || rankedPool[0], "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", rankedPool[2] || rankedPool[1] || rankedPool[0], "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || rankedPool[0], "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || rankedPool[0], "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Ouro", ouro, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
+        rec("Prata", prata || ouro, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
+        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
+        rec("Teste Direto", direct || ouro, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
+        rec("Questionário Escolar", school || ouro, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
       ];
 
   const toggleQueixa = (id: string) => {
