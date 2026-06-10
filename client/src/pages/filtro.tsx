@@ -208,7 +208,7 @@ function detectGoldStandard(selectedQueixas: string[], selectedAge: string | nul
   return bestMatch?.pattern ?? null;
 }
 
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null) {
+function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null, selectedCommunication?: "verbal" | "nonverbal" | null, selectedLiteracy?: "literate" | "preliterate" | null, selectedAssessmentType?: "diagnostic" | "monitoring" | null) {
   const base = catalog.filter((s) => {
     // Filtro de pré-consulta: apenas triagem/diagnóstico, não monitorização
     if (s.prioridade === "monitorizacao") return false;
@@ -219,7 +219,29 @@ function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], s
     const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
     const matchesAge = matchAge(s, selectedAge);
     const matchesRespondente = !selectedRespondente || s.respondente.includes(selectedRespondente);
-    return matchesQueixa && matchesAge && matchesRespondente;
+
+    // NEW: Comunicação verbal/não-verbal
+    let matchesCommunication = true;
+    if (selectedCommunication === "verbal" && s.verbal === false) matchesCommunication = false;
+    if (selectedCommunication === "nonverbal" && s.verbal !== false) matchesCommunication = false;
+
+    // NEW: Alfabetização
+    let matchesLiteracy = true;
+    if (selectedLiteracy === "literate" && s.alphabetic === false) matchesLiteracy = false;
+    if (selectedLiteracy === "preliterate" && s.alphabetic !== false) matchesLiteracy = false;
+
+    // NEW: Tipo de avaliação
+    let matchesAssessmentType = true;
+    if (selectedAssessmentType && s.assessment_type) {
+      if (s.assessment_type === "both") {
+        // "both" matches both "diagnostic" and "monitoring"
+        matchesAssessmentType = true;
+      } else if (s.assessment_type !== selectedAssessmentType) {
+        matchesAssessmentType = false;
+      }
+    }
+
+    return matchesQueixa && matchesAge && matchesRespondente && matchesCommunication && matchesLiteracy && matchesAssessmentType;
   });
   return unique(base.length ? base : catalog)
     .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
@@ -328,6 +350,9 @@ export default function FiltroPage() {
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
   const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
+  const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(null);
+  const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
+  const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
@@ -354,8 +379,8 @@ export default function FiltroPage() {
   }, []);
 
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente);
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente), [catalog, search, selectedQueixas, selectedAge, selectedRespondente]);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
+  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType), [catalog, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType]);
 
   // Detecta padrão clínico ouro quando 2+ queixas selecionadas
   const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
@@ -400,7 +425,7 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null);
   };
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
@@ -478,6 +503,30 @@ export default function FiltroPage() {
             <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
             <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍🏫</span> <span className="hidden sm:inline">Escola</span></button>
             <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍⚕️</span> <span className="hidden sm:inline">Clínico</span></button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Comunicação</p>
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
+            <button key="verbal" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "verbal" ? null : "verbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "verbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🗣️</span> <span className="hidden sm:inline">Fala</span></button>
+            <button key="nonverbal" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "nonverbal" ? null : "nonverbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "nonverbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🤐</span> <span className="hidden sm:inline">Não-Verbal</span></button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Alfabetização</p>
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
+            <button key="literate" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "literate" ? null : "literate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "literate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>📖</span> <span className="hidden sm:inline">Alfabetizada</span></button>
+            <button key="preliterate" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "preliterate" ? null : "preliterate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "preliterate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👶</span> <span className="hidden sm:inline">Pré-Alfab.</span></button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de Avaliação</p>
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
+            <button key="diagnostic" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "diagnostic" ? null : "diagnostic")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🔍</span> <span className="hidden sm:inline">Diagnóstico</span></button>
+            <button key="monitoring" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "monitoring" ? null : "monitoring")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>📊</span> <span className="hidden sm:inline">Monitorização</span></button>
           </div>
         </div>
       </section>
