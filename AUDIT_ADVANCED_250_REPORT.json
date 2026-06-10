@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-06-10T04:58:42.962Z",
+  "totalScales": 222,
+  "tests": [
+    {
+      "name": "Data Integrity",
+      "status": "PASSOU",
+      "issues": 0
+    },
+    {
+      "name": "Escalas Problemáticas",
+      "status": "PASSOU",
+      "issues": 0
+    },
+    {
+      "name": "Cobertura de Queixas",
+      "status": "PASSOU",
+      "count": 26
+    },
+    {
+      "name": "Cobertura de Respondentes",
+      "status": "FALHOU",
+      "minCoverage": 4
+    },
+    {
+      "name": "Combinações Críticas",
+      "status": "PASSOU",
+      "fails": 0
+    },
+    {
+      "name": "Duplicatas",
+      "status": "PASSOU",
+      "count": 0
+    }
+  ]
+}

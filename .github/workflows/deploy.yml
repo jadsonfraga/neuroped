@@ -1,35 +1,21 @@
-name: Deploy NeuroPed
+name: Deploy to Vercel + Railway
 
 on:
   push:
     branches:
       - main
-      - feat/auditoria-total-ui-backend-memoria
-
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout do repositório
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
 
       - name: Instalar dependências
         run: npm ci
@@ -64,7 +50,7 @@ jobs:
           cat > client/public/deploy-check.json <<EOF
           {
             "app": "NeuroPed",
-            "provider": "github-pages",
+            "provider": "multi-deploy",
             "branch": "${GITHUB_REF_NAME}",
             "commit": "${GITHUB_SHA}",
             "run_id": "${GITHUB_RUN_ID}",
@@ -99,14 +85,33 @@ jobs:
           path: dist/public
 
   deploy-frontend:
+    needs: build
     runs-on: ubuntu-latest
-    needs: build-and-test
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-vercel:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to Vercel
+        uses: vercel/action@master
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          production: true
+
+  deploy-railway:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to Railway
+        uses: railwayapp/deploy-action@v1
+        with:
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
+          service: neuroped
