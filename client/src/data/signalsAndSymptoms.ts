@@ -102,7 +102,7 @@ export const tdahSignals: QueixaSignalMap[] = [
     queixaLabel: "TDAH",
     ageRange: "12-18a",
     ageMin: 144,
-    ageMax: 215,
+    ageMax: 216,
     clusters: [
       {
         id: "tdah-atencao-adolescente",
@@ -174,7 +174,7 @@ export const teaSignals: QueixaSignalMap[] = [
         signals: [
           { id: "tea-repetitivo-movimentos", label: "Movimentos repetitivos", description: "Flapping (mexe mãos repetitivamente), alinhamento de brinquedos" },
           { id: "tea-fixacao-objetos", label: "Fixação em partes de objetos", description: "Apenas interessa as rodas do carro, não brinca com o todo" },
-          { id: "tea-sensorial-atipico", label: "Resposta sensorial atípica", description: "Coisa as mãos nos ouvidos, sniff de objetos, texto de texturas incomum" },
+          { id: "tea-sensorial-atipico", label: "Resposta sensorial atípica", description: "Cobre as mãos nos ouvidos, sniff de objetos, tato de texturas incomum" },
         ]
       }
     ]
