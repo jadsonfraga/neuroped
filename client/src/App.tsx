@@ -108,6 +108,21 @@ const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const SatisfacaoMedicacaoPage = lazy(() => import("@/pages/satisfacao-medicacao"));
 const Eusm10Page = lazy(() => import("@/pages/eusm10"));
 const GenericScalePage = lazy(() => import("@/pages/generic-scale"));
+const BayleyPage = lazy(() => import("@/pages/bayley"));
+const GriffithsPage = lazy(() => import("@/pages/griffiths"));
+const RcadsPage = lazy(() => import("@/pages/rcads"));
+const Masc2Page = lazy(() => import("@/pages/masc2"));
+const Leiter3Page = lazy(() => import("@/pages/leiter3"));
+const Nepsy2Page = lazy(() => import("@/pages/nepsy2"));
+const RavenPage = lazy(() => import("@/pages/raven"));
+const Wisc5Page = lazy(() => import("@/pages/wisc5"));
+const WppsiPage = lazy(() => import("@/pages/wppsi"));
+const PedicatPage = lazy(() => import("@/pages/pedicat"));
+const TdePage = lazy(() => import("@/pages/tde"));
+const ConfiasPage = lazy(() => import("@/pages/confias"));
+const PortagePage = lazy(() => import("@/pages/portage"));
+const VinelandCompletePage = lazy(() => import("@/pages/vineland"));
+const CbclInterativoPage = lazy(() => import("@/pages/cbcl-interativo"));
 const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const AvaliacaoMultiprofissionalPage = lazy(() => import("@/pages/avaliacao-multiprofissional"));
 const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
@@ -231,6 +246,21 @@ function AppRouter() {
           <Route path="/eusm10"><Protected roles={["admin", "professional"]}><Eusm10Page /></Protected></Route>
           <Route path="/avaliacao-multiprofissional"><Protected roles={["admin", "professional"]}><AvaliacaoMultiprofissionalPage /></Protected></Route>
           <Route path="/generic-scale/:id" component={GenericScalePage} />
+          <Route path="/bayley" component={BayleyPage} />
+          <Route path="/griffiths" component={GriffithsPage} />
+          <Route path="/rcads" component={RcadsPage} />
+          <Route path="/masc2" component={Masc2Page} />
+          <Route path="/leiter3" component={Leiter3Page} />
+          <Route path="/nepsy2" component={Nepsy2Page} />
+          <Route path="/raven" component={RavenPage} />
+          <Route path="/wisc5" component={Wisc5Page} />
+          <Route path="/wppsi" component={WppsiPage} />
+          <Route path="/pedicat" component={PedicatPage} />
+          <Route path="/tde" component={TdePage} />
+          <Route path="/confias" component={ConfiasPage} />
+          <Route path="/portage" component={PortagePage} />
+          <Route path="/vineland-completo" component={VinelandCompletePage} />
+          <Route path="/cbcl-interativo" component={CbclInterativoPage} />
           <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
           <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
           <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>

@@ -1,5 +1,5 @@
 // TEMPLATE - Copiar e adaptar para cada escala
-// Substitua: "vineland", "Vineland-3", "Vineland-3", etc.
+// Substitua: "bayley", "Bayley-III", "Bayley-III", etc.
 
 import { useLocation } from "wouter";
 import { ArrowLeft, Download, Copy } from "lucide-react";
@@ -9,9 +9,9 @@ import { useState } from "react";
 import { allScales } from "@/data/scaleFilter";
 
 const SCALE_CONFIG = {
-  id: ""vineland"", // ex: "bayley"
-  name: ""Vineland-3"", // ex: "Bayley-III"
-  fullName: ""Vineland-3"", // ex: "Bayley Scales of Infant Development III"
+  id: ""bayley"", // ex: "bayley"
+  name: ""Bayley-III"", // ex: "Bayley-III"
+  fullName: ""Bayley-III"", // ex: "Bayley Scales of Infant Development III"
   whenToUse: [
     "✅ Indicação 1",
     "✅ Indicação 2",
