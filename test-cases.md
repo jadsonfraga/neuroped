@@ -99,49 +99,52 @@
 
 ### Passos no Filtro
 1. ✅ Selecionar idade: **6-12 meses**
-2. ✅ Selecionar sintomas: **Atraso do Desenvolvimento** + **Motor** (se aparecer)
+2. ✅ Selecionar sintomas: **Atraso do Desenvolvimento** + **Motor** + **Linguagem/Comunicação** (3 queixas para ativar padrão-ouro)
 3. ✅ Selecionar respondente: **Clínico**
 4. ✅ Clicar em "Filtrar"
 
 ### Esperado
-- **Ouro:** Bayley-III → "Atraso desenvolvimento global"
-- **Prata:** Griffiths III
-- **Bronze:** Denver II
+- **Ouro:** Bayley-III → "PADRÃO-OURO: Atraso desenvolvimento global" (quando 3+ queixas)
+- **Prata:** Denver II (triagem) ou Griffiths III
+- **Bronze:** Outro instrumento de atraso
 - **Teste Direto:** Reconhecimento visual → Nível 1 (0-2 anos)
 - **5º Slot:** EUSM-10
 
 ### Validação
-- [ ] Bayley-III aparece como Ouro
-- [ ] Griffiths como Prata
+- [ ] Bayley-III aparece como Ouro (PADRÃO-OURO label)
+- [ ] Denver II ou Griffiths como Prata
 - [ ] Todos com appRoute funcionando
 - [ ] Dificuldade = Nível 1
+- [ ] EUSM-10 aparece como 5º slot
 
 ---
 
-## CASO 5: Monitorização de Medicação com Tolerabilidade Questionada (Medicação + Efeitos)
-**Objetivo:** Validar que EUSM-10 aparece como 5º slot de forma apropriada
+## CASO 5: Monitorização de Medicação com Tolerabilidade Questionada (TDAH + Comportamento)
+**Objetivo:** Validar padrão-ouro TDAH com EUSM-10 como 5º slot
 
 ### Dados do Paciente
 - **Nome:** Pedro G.
 - **Idade:** 9 anos (108 meses)
-- **Queixa Principal:** "Paciente em metilfenidato há 3 meses, ganhou peso, questionável adesão"
+- **Queixa Principal:** "Paciente em metilfenidato há 3 meses, ganhou peso, comportamento agressivo"
 
 ### Passos no Filtro
 1. ✅ Selecionar idade: **6-12 anos**
-2. ✅ Selecionar sintomas: **TDAH** (contexto atual)
-3. ✅ **Não selecionar queixa de "Efeitos Colaterais"** (foi removida)
+2. ✅ Selecionar sintomas: **TDAH** + **Comportamento/Externalizantes** (2 queixas para ativar padrão-ouro)
+3. ✅ **Opcional:** Respondente: **Professor** (para recomendações contextualizadas)
 4. ✅ Clicar em "Filtrar"
 
 ### Esperado
-- **Ouro:** SNAP-IV ou BRIEF-2
-- **Prata:** Conners
-- **Bronze:** Outro instrumento TDAH
+- **Ouro:** SNAP-IV ou BRIEF-2 → "PADRÃO-OURO: Suspeita TDAH (completo)" (com 2+ queixas)
+- **Prata:** BRIEF-2 ou SDQ
+- **Bronze:** Conners ou outro
 - **Teste Direto:** Teste de atenção → Nível 4 (9-11 anos)
 - **5º Slot (IMPORTANTE):** EUSM-10 → "Acompanhamento de benefício, tolerabilidade e adesão medicamentosa"
 
 ### Validação
+- [ ] SNAP-IV priorizado como Ouro (padrão detectado)
 - [ ] EUSM-10 sempre aparece como 5º slot
 - [ ] Descrição menciona "tolerabilidade" e "adesão"
+- [ ] Dificuldade = Nível 4
 - [ ] Clique abre a escala completa
 - [ ] **Validar que "Efeitos Colaterais" NÃO aparece mais**
 
