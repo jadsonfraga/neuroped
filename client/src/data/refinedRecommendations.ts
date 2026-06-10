@@ -380,7 +380,7 @@ export function getRecommendationsForSignalCluster(clusterId: string, ageMonths:
 }
 
 export function getRecommendationsForQueixaAndAge(queixaId: string, ageMonths: number): RefinedRecommendation[] {
-  const prefix = queixaId; // Clusters começam com queixaId-*
+  const prefix = `${queixaId}-`; // Clusters começam com queixaId-*
   return refinedRecommendations.filter(
     rec => rec.signalClusterId.startsWith(prefix) &&
     ageMonths >= rec.ageMin &&

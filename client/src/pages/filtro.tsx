@@ -434,38 +434,38 @@ export default function FiltroPage() {
         </div>
       </section>
 
-          {/* Mascote Inteligente — muda com padrão detectado */}
-          {!hasSearch && (
-            <div className="flex justify-center mt-4">
-              <img
-                src={detectedPattern ? brandAssets.mascots.consultorioSuperman : brandAssets.mascots.superDoctor}
-                alt="Dr. Jadson — seu assistente de diagnóstico"
-                className="w-32 h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform"
-                loading="lazy"
-              />
-            </div>
-          )}
+      {/* Mascote Inteligente — muda com padrão detectado */}
+      {!hasSearch && (
+        <div className="flex justify-center mt-4">
+          <img
+            src={detectedPattern ? brandAssets.mascots.consultorioSuperman : brandAssets.mascots.superDoctor}
+            alt="Dr. Jadson — seu assistente de diagnóstico"
+            className="w-32 h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform"
+            loading="lazy"
+          />
+        </div>
+      )}
 
-          {/* Refined Signal Selector — appears when 1 queixa + age selected */}
-          {selectedQueixas.length === 1 && selectedAge && (
-            <section className="rounded-2xl border border-teal-200/40 bg-gradient-to-br from-teal-50/50 to-cyan-50/50 dark:border-teal-800/40 dark:from-teal-950/20 dark:to-cyan-950/20 p-4 sm:p-5">
-              <RefinedSignalSelector
-                queixaId={selectedQueixas[0]}
-                queixaLabel={queixas.find(q => q.id === selectedQueixas[0])?.label || ""}
-                ageMonths={Math.round((faixasEtarias.find(f => f.id === selectedAge)?.min ?? 0 + faixasEtarias.find(f => f.id === selectedAge)?.max ?? 0) / 2)}
-                selectedSignalIds={selectedSignalIds}
-                onSignalToggle={(signalId) => {
-                  setSelectedSignalIds(prev =>
-                    prev.includes(signalId) ? prev.filter(x => x !== signalId) : [...prev, signalId]
-                  );
-                }}
-                onRecommendationSelect={(rec) => {
-                  softTick(); haptic.select();
-                  console.log("Recomendação selecionada:", rec);
-                }}
-              />
-            </section>
-          )}
+      {/* Refined Signal Selector — appears when 1 queixa + age selected */}
+      {selectedQueixas.length === 1 && selectedAge && (
+        <section className="rounded-2xl border border-teal-200/40 bg-gradient-to-br from-teal-50/50 to-cyan-50/50 dark:border-teal-800/40 dark:from-teal-950/20 dark:to-cyan-950/20 p-4 sm:p-5">
+          <RefinedSignalSelector
+            queixaId={selectedQueixas[0]}
+            queixaLabel={queixas.find(q => q.id === selectedQueixas[0])?.label || ""}
+            ageMonths={Math.round(((faixasEtarias.find(f => f.id === selectedAge)?.min ?? 0) + (faixasEtarias.find(f => f.id === selectedAge)?.max ?? 0)) / 2)}
+            selectedSignalIds={selectedSignalIds}
+            onSignalToggle={(signalId) => {
+              setSelectedSignalIds(prev =>
+                prev.includes(signalId) ? prev.filter(x => x !== signalId) : [...prev, signalId]
+              );
+            }}
+            onRecommendationSelect={(rec) => {
+              softTick(); haptic.select();
+              console.log("Recomendação selecionada:", rec);
+            }}
+          />
+        </section>
+      )}
         </div>
 
         {/* RIGHT COLUMN — Results (lg:col-span-2) */}

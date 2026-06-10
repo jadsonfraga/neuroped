@@ -193,7 +193,7 @@ export const teaSignals: QueixaSignalMap[] = [
           { id: "tea-linguagem-atrasada", label: "Linguagem expressiva atrasada ou ausente", description: "Poucas palavras aos 18m (esperado 50+); palavras desconexas sem contexto" },
           { id: "tea-nao-presta-atencao", label: "Não presta atenção quando chamado", description: "Parece 'desligado'; mesmo teste auditiva normal" },
           { id: "tea-ecolalia", label: "Ecolalia (repetição de palavras)", description: "Repete o que ouve exatamente; não usa linguagem funcionalmente" },
-          { id: "tea-gestos-funcionais", label: "Gestos funcionais ausentes", label: "Não aponta para pedir; não acena tchau; não cabeça para 'sim'" },
+          { id: "tea-gestos-funcionais", label: "Gestos funcionais ausentes", description: "Não aponta para pedir; não acena tchau; não cabeça para 'sim'" },
           { id: "tea-jogar-simbolico", label: "Ausência de jogo simbólico", description: "Não brinca de 'faz de conta'; não oferece boneca mamadeira imaginária" },
         ]
       },
