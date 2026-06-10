@@ -348,8 +348,28 @@
     pointer-events: none;
   }
 
-  .filter-260-card.tier-ouro::before { background: linear-gradient(90deg, #e7c98b, #caa56a); }
+  .filter-260-card.tier-ouro {
+    box-shadow: 0 0 0 2px rgba(231,201,139,.3), 0 2px 8px rgba(231,201,139,.15);
+    border-color: rgba(231,201,139,.4) !important;
+  }
+  .filter-260-card.tier-ouro::before {
+    height: 4px;
+    background: linear-gradient(90deg, #e7c98b, #caa56a);
+  }
+  .filter-260-card.tier-ouro:hover {
+    box-shadow: 0 0 0 2px rgba(231,201,139,.4), 0 8px 24px rgba(231,201,139,.2);
+  }
+
+  .filter-260-card.tier-prata {
+    box-shadow: 0 0 0 1.5px rgba(148,163,184,.2), 0 1px 4px rgba(148,163,184,.1);
+    border-color: rgba(148,163,184,.3) !important;
+  }
   .filter-260-card.tier-prata::before { background: linear-gradient(90deg, #e2e8f0, #94a3b8); }
+
+  .filter-260-card.tier-bronze {
+    box-shadow: 0 0 0 1px rgba(205,127,80,.2);
+    border-color: rgba(205,127,80,.3) !important;
+  }
   .filter-260-card.tier-bronze::before { background: linear-gradient(90deg, rgba(205,127,80,.75), rgba(146,90,56,.7)); }
 
   .filter-260-card-content {
@@ -382,10 +402,28 @@
     letter-spacing: .01em;
   }
 
-  .filter-260-medal.medal-ouro { background: linear-gradient(135deg,#e7c98b,#caa56a); color: #241a05; border-color: rgba(231,201,139,.4); }
-  .filter-260-medal.medal-prata { background: linear-gradient(135deg,#e2e8f0,#94a3b8); color: #1e293b; border-color: rgba(148,163,184,.45); }
-  .filter-260-medal.medal-bronze { background: linear-gradient(135deg,rgba(205,127,80,.55),rgba(146,90,56,.55)); color: #f3e3d6; border-color: rgba(205,127,80,.45); }
-  .filter-260-medal.medal-direto { background: hsl(var(--primary) / .10); color: hsl(var(--primary)); border-color: hsl(var(--primary) / .22); }
+  .filter-260-medal.medal-ouro {
+    background: linear-gradient(135deg,#e7c98b,#caa56a);
+    color: #241a05;
+    border-color: rgba(231,201,139,.4);
+    box-shadow: 0 4px 12px rgba(231,201,139,.2);
+    font-weight: 900;
+  }
+  .filter-260-medal.medal-prata {
+    background: linear-gradient(135deg,#e2e8f0,#94a3b8);
+    color: #1e293b;
+    border-color: rgba(148,163,184,.45);
+  }
+  .filter-260-medal.medal-bronze {
+    background: linear-gradient(135deg,rgba(205,127,80,.55),rgba(146,90,56,.55));
+    color: #f3e3d6;
+    border-color: rgba(205,127,80,.45);
+  }
+  .filter-260-medal.medal-direto {
+    background: linear-gradient(135deg, hsl(var(--primary) / .12), hsl(var(--primary) / .08));
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / .22);
+  }
 
   .filter-260-head {
     display: flex;

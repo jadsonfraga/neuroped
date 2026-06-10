@@ -17,6 +17,7 @@ import {
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import { WhatsAppShare } from "@/components/WhatsAppShare";
 import { Mascote } from "@/components/Mascote";
 import { celebrate } from "@/lib/confetti";
 import { softTick, softSuccess, softTap } from "@/lib/softSounds";
@@ -300,6 +301,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             answer: config.labels[answers[item.key] ?? 0] ?? "—",
             value: answers[item.key] ?? 0,
           }))}
+        />
+
+        <WhatsAppShare
+          scaleName={config.title}
+          reportText={`Escala: ${config.title}\n\nPontuação Total: ${result.total ?? "—"}\nClassificação: ${result.classification ?? result.description}\n\nDescrição: ${result.description}`}
+          totalScore={result.total}
         />
 
         <SaveToPatient
