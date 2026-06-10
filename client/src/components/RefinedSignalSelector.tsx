@@ -210,6 +210,7 @@ interface RecommendationPanelProps {
 
 function RecommendationPanel({
   clusterId,
+  queixaId,
   ageMonths,
   onSelect,
   isExpanded,

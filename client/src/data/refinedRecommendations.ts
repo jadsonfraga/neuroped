@@ -167,7 +167,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
 
   // TEA - Sinais Sociais em Toddlers (1-2 anos)
   {
-    signalClusterId: "tea-social-communicacao-6m",
+    signalClusterId: "tea-social-comunicacao-6m",
     signalClusterLabel: "Déficit Social e Comunicativo (6-12 meses)",
     ageRange: "6-12m",
     ageMin: 6,
