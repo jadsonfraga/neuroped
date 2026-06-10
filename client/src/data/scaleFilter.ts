@@ -36,6 +36,9 @@ export interface ScaleEntry {
   validacaoBrasil?: string;            // status de adaptação/validação brasileira
   scoringCutoff?: string;              // ponto de corte / interpretação de escore
   licencaUso?: "livre" | "comercial" | "restrita" | "contato_autor" | "autoral"; // licenciamento de uso
+  // RQ-01 e RQ-02: Suporte a níveis de dificuldade para testes de reconhecimento
+  isRecognitionTest?: boolean;         // verdadeiro para testes de reconhecimento (testes-diretos)
+  difficultyLevels?: ("nivel1" | "nivel2" | "nivel3" | "nivel4" | "nivel5" | "nivel6")[]; // níveis suportados
 }
 
 export interface QueixaCategory {

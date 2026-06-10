@@ -22,6 +22,7 @@ import {
   Star,
   Users,
   X,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import drJadsonConsultorio from "@/assets/images/dr-jadson-consultorio-superman.jpeg";
@@ -34,6 +35,8 @@ import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
+import { getDifficultyLevelByAge } from "@/data/difficulttyLevels";
+import { RecognitionTestDifficultySelector } from "@/components/RecognitionTestDifficultySelector";
 
 type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Satisfação Medicação";
 type Tier = "ouro" | "prata" | "bronze";
@@ -311,6 +314,7 @@ function icon(slot: Slot) {
   if (slot === "Prata") return <Medal className="h-5 w-5" />;
   if (slot === "Bronze") return <Star className="h-5 w-5" />;
   if (slot === "Teste Direto") return <ClipboardCheck className="h-5 w-5" />;
+  if (slot === "Satisfação Medicação") return <Pill className="h-5 w-5" />;
   return <School className="h-5 w-5" />;
 }
 
@@ -354,6 +358,7 @@ export default function FiltroPage() {
   const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
+  const [selectedRecognitionTest, setSelectedRecognitionTest] = useState<ScaleEntry | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -416,7 +421,7 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedRecognitionTest(null);
   };
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
@@ -508,6 +513,43 @@ export default function FiltroPage() {
               selectedQueixas,
               selectedAge
             );
+            const scale = item.title !== "Sem escala ideal" ? rankedPool.find(s => s.name === item.title) : undefined;
+            const isRecognitionTest = item.slot === "Teste Direto" && scale?.isRecognitionTest;
+
+            if (isRecognitionTest && scale) {
+              // Renderizar seletor de dificuldade para testes de reconhecimento
+              const ageMonthsMin = selectedAge
+                ? faixasEtarias.find(f => f.id === selectedAge)?.min
+                : null;
+              return (
+                <div key={item.slot} className="col-span-full">
+                  <Card className="border-blue-200/70 bg-blue-50/70 dark:border-blue-900/40 dark:bg-blue-950/20">
+                    <CardContent className="space-y-4 pt-6">
+                      <div>
+                        <Badge className="mb-3">{item.slot}</Badge>
+                        <div className="flex items-start gap-3 mb-4">
+                          <div className={`flex-shrink-0 h-10 w-10 rounded-lg bg-gradient-to-br ${item.tone} flex items-center justify-center`}>{icon(item.slot)}</div>
+                          <div className="flex-1">
+                            <h3 className="font-bold text-foreground">{item.title}</h3>
+                            <p className="text-sm text-muted-foreground">{item.subtitle}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <RecognitionTestDifficultySelector
+                        testName={item.title}
+                        patientAgeMonths={ageMonthsMin}
+                        supportedLevels={scale.difficultyLevels}
+                        onSelectDifficulty={(level) => {
+                          console.log(`Teste direto selecionado: ${item.title}, Nível: ${level}`);
+                          setSelectedRecognitionTest(scale);
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            }
+
             return (
               <Link key={item.slot} href={item.route} className="block h-full rounded-[18px] focus-visible:outline-none">
                 <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
@@ -541,7 +583,7 @@ export default function FiltroPage() {
       </section> : <section className="space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><Pill className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Acompanhamento medicamentoso</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco medicação acompanha tolerabilidade, benefício e adesão a medicações.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card>
         </div>
         <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-6">
