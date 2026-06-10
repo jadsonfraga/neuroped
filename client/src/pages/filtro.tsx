@@ -35,7 +35,7 @@ import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
-type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar";
+type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Satisfação Medicação";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -398,14 +398,14 @@ export default function FiltroPage() {
         rec("Prata", rankedPool[0], "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
         rec("Bronze", rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
         rec("Teste Direto", direct || fallback, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || fallback, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Satisfação Medicação", EUSM10_FILTER_SCALE, "Monitora satisfação e tolerabilidade da medicação atual.", "from-rose-600 via-red-700 to-slate-950"),
       ]
     : [
         rec("Ouro", fallback, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
         rec("Prata", rankedPool[1] || fallback, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
         rec("Bronze", rankedPool[2] || rankedPool[1] || fallback, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
         rec("Teste Direto", direct || fallback, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || fallback, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Satisfação Medicação", EUSM10_FILTER_SCALE, "Monitora satisfação e tolerabilidade da medicação atual.", "from-rose-600 via-red-700 to-slate-950"),
       ];
 
   const toggleQueixa = (id: string) => {
