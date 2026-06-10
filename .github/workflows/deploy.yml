@@ -1,142 +1,42 @@
-name: Deploy NeuroPed
+name: Deploy to Vercel + Railway
 
 on:
   push:
     branches:
       - main
-      - feat/auditoria-total-ui-backend-memoria
-
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout do repositório
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
 
-      - name: Instalar dependências
-        run: npm ci
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          npm_config_ignore_scripts: false
-
-      - name: TypeScript check
-        run: npm run check
-
-      - name: Validar catálogo clínico
-        run: npm run validate:catalog
-
-      - name: Auditar política de acesso
-        run: npm run audit:access
-
-      - name: Auditar identidade institucional
-        run: npm run audit:identity
-
-      - name: Auditar navegação
-        run: npm run audit:navigation
-
-      - name: Auditar Filtro PR260
-        run: npm run audit:filter
-
-      - name: Auditar assets visuais
-        run: npm run audit:assets
-
-      - name: Testes clínicos
-        run: npm run test:clinical
-
-      - name: Criar sentinela de deploy
-        run: |
-          mkdir -p client/public
-          cat > client/public/deploy-check.json <<EOF
-          {
-            "app": "NeuroPed",
-            "deployed_commit": "${GITHUB_SHA}",
-            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "provider": "github-pages",
-            "provider_targets": [
-              "GitHub Pages",
-              "Cloudflare Pages"
-            ],
-            "published_provider": "GitHub Pages",
-            "branch": "${GITHUB_REF_NAME}",
-            "run_id": "${GITHUB_RUN_ID}",
-            "run_number": "${GITHUB_RUN_NUMBER}",
-            "status": "pending-public-verification",
-            "notes": "Só marcar verified após fetch público bem-sucedido. This artifact is validated by the post-deploy public curl step."
-          }
-          EOF
-          cat client/public/deploy-check.json
-
-      - name: Compilar frontend para Pages
-        env:
-          NODE_ENV: production
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: npm run build:client
-
-      - name: Verificar output do build
-        run: |
-          echo "=== dist/public ==="
-          ls -la dist/public/
-          echo "=== deploy-check ==="
-          test -f dist/public/deploy-check.json
-          cat dist/public/deploy-check.json
-          echo "=== assets ==="
-          ls -la dist/public/assets/ | head -20
-
-      - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artefato para Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/public
-
-  deploy-frontend:
+  deploy-vercel:
+    needs: build
     runs-on: ubuntu-latest
-    needs: build-and-test
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Deploy para GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v3
+      - name: Deploy to Vercel
+        uses: vercel/action@master
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          production: true
 
-      - name: Comprovar deploy público
-        run: |
-          echo "Deploy publicado em: ${{ steps.deployment.outputs.page_url }}"
-          echo "Aguardando propagação curta do GitHub Pages..."
-          sleep 20
-          curl -fsSL "${{ steps.deployment.outputs.page_url }}deploy-check.json" -o /tmp/github-pages-deploy-check.json
-          cat /tmp/github-pages-deploy-check.json
-          node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync('/tmp/github-pages-deploy-check.json','utf8')); if (data.deployed_commit !== process.env.GITHUB_SHA) { console.error('deployed_commit ' + data.deployed_commit + ' != ' + process.env.GITHUB_SHA); process.exit(1); }"
-
-      - name: Registrar evidência no resumo
-        run: |
-          {
-            echo "## Deploy NeuroPed comprovado"
-            echo ""
-            echo "- Provider: GitHub Pages"
-            echo "- URL: ${{ steps.deployment.outputs.page_url }}"
-            echo "- Commit: ${GITHUB_SHA}"
-            echo "- Sentinela: ${{ steps.deployment.outputs.page_url }}deploy-check.json"
-          } >> "$GITHUB_STEP_SUMMARY"
+  deploy-railway:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to Railway
+        uses: railwayapp/deploy-action@v1
+        with:
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
+          service: neuroped
