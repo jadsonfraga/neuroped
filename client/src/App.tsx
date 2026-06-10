@@ -107,6 +107,7 @@ const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const SatisfacaoMedicacaoPage = lazy(() => import("@/pages/satisfacao-medicacao"));
 const Eusm10Page = lazy(() => import("@/pages/eusm10"));
+const GenericScalePage = lazy(() => import("@/pages/generic-scale"));
 const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const AvaliacaoMultiprofissionalPage = lazy(() => import("@/pages/avaliacao-multiprofissional"));
 const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
@@ -229,6 +230,7 @@ function AppRouter() {
           <Route path="/satisfacao-medicacao"><Protected roles={["admin", "professional"]}><SatisfacaoMedicacaoPage /></Protected></Route>
           <Route path="/eusm10"><Protected roles={["admin", "professional"]}><Eusm10Page /></Protected></Route>
           <Route path="/avaliacao-multiprofissional"><Protected roles={["admin", "professional"]}><AvaliacaoMultiprofissionalPage /></Protected></Route>
+          <Route path="/generic-scale/:id" component={GenericScalePage} />
           <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
           <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
           <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>
