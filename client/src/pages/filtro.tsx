@@ -41,7 +41,7 @@ import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
-type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar";
+type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Satisfação Medicação";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -215,6 +215,8 @@ function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], s
     // Excluir queixas que são pós-consulta (reavaliação, efeitos colaterais, evolução)
     const postConsultComplaints = ["efeitos", "evolucao"];
     if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
+    // VALIDAÇÃO CRÍTICA: Apenas escalas com appRoute implementado podem ser recomendadas
+    if (!s.appRoute) return false;
 
     const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
     const matchesAge = matchAge(s, selectedAge);
