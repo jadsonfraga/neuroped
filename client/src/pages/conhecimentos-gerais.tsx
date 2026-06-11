@@ -311,6 +311,14 @@ export default function ConhecimentosGerais() {
         <CardContent className="space-y-6">
           {items.map((item, idx) => (
             <div key={item.id} className="border-l-4 border-yellow-300 pl-4 py-2">
+              {/* Enunciado: o que esta pergunta avalia (para julgar a capacidade) */}
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-yellow-700 dark:text-yellow-500 mb-1">
+                🎯 Avalia: {item.type === "factual"
+                  ? "conhecimento factual — a criança sabe o fato perguntado?"
+                  : item.type === "reasoning"
+                  ? "raciocínio/senso comum — aplica lógica para chegar à resposta?"
+                  : "conhecimento cultural/geográfico — domina a informação cultural?"}
+              </p>
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <p className="font-semibold text-sm">{idx + 1}. {item.question}</p>

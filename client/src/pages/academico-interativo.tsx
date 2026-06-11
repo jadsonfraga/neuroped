@@ -175,6 +175,14 @@ export default function AcademicoInterativo() {
         <CardContent className="space-y-6">
           {items.map((item, idx) => (
             <div key={item.id} className="border-l-4 border-blue-300 pl-4 py-2">
+              {/* Enunciado: o que esta pergunta avalia (para julgar a capacidade) */}
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-1">
+                🎯 Avalia: {item.type === "calculo"
+                  ? "cálculo aritmético — a criança executa a operação corretamente?"
+                  : item.type === "problema"
+                  ? "resolução de problema — interpreta o enunciado e escolhe a operação certa?"
+                  : "raciocínio lógico — identifica o padrão e prevê o próximo termo?"}
+              </p>
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="font-semibold text-sm">{idx + 1}. {item.question}</p>
