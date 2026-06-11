@@ -5,6 +5,7 @@
 import { complementares230 } from "./scalasComplementares230";
 import { complementares230Bloco2 } from "./scalasComplementares230Bloco2";
 import { complementares230Bloco3 } from "./scalasComplementares230Bloco3";
+import type { Respondente } from "./scaleFilter";
 
 // ============ CONSOLIDAÇÃO ============
 
@@ -111,7 +112,7 @@ export function filtrarEscalasComplementares(filtros: {
     if (filtros.ageMax !== undefined && escala.ageMin > filtros.ageMax) return false;
 
     // Filtro por respondente
-    if (filtros.respondente && !escala.respondente.includes(filtros.respondente)) return false;
+    if (filtros.respondente && !escala.respondente.includes(filtros.respondente as Respondente)) return false;
 
     // Filtro por modo de app
     if (filtros.modoApp && escala.modoApp !== filtros.modoApp) return false;

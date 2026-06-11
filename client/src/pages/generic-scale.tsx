@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales } from "@/data/scaleFilter";
+import { getImplementationStatus, getImplementationLabel } from "@/data/advancedFilterLogic";
 
 export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
@@ -12,6 +13,7 @@ export default function GenericScalePage() {
 
   const scale = allScales.find(s => s.id === scaleId);
   const [copied, setCopied] = useState(false);
+  const implStatus = scale ? getImplementationStatus(scale) : null;
 
   if (!scale) {
     return (
@@ -50,6 +52,16 @@ export default function GenericScalePage() {
             Voltar ao Filtro
           </Button>
         </div>
+
+        {/* Banner honesto de status de implementação (req. clínico de honestidade) */}
+        {implStatus && implStatus !== "complete" && (
+          <Card className="bg-amber-900/20 border-amber-700 mb-6">
+            <CardContent className="pt-6 text-amber-100 text-sm font-semibold">
+              ⚠️ {getImplementationLabel(implStatus)} Esta página é uma <strong>ficha técnica/referência clínica</strong> —
+              não é a aplicação completa do instrumento (sem itens nem cálculo de escore embutidos).
+            </CardContent>
+          </Card>
+        )}
 
         {/* Escala Principal */}
         <Card className="bg-slate-800/80 border-slate-700 mb-6">

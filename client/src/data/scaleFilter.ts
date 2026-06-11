@@ -6,7 +6,41 @@ import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
-export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel" | "crianca";
+// "crianca" e "teste_direto_crianca" são tratados como aplicação direta com a criança.
+// "crianca" é mantido por compatibilidade com o catálogo legado.
+export type Respondente =
+  | "pais"
+  | "clinico"
+  | "professor"
+  | "autoaplicavel"
+  | "crianca"
+  | "teste_direto_crianca";
+
+// Modo concreto de aplicação do instrumento (quem responde e como).
+export type ApplicationMode =
+  | "questionario_pais"
+  | "questionario_professor"
+  | "autoquestionario_crianca_adolescente"
+  | "teste_direto_crianca"
+  | "observacional_clinico"
+  | "entrevista_clinica"
+  | "registro_clinico"
+  | "psicoeducacao";
+
+// Finalidade clínica do instrumento.
+export type AssessmentUse =
+  | "triagem"
+  | "diagnostico"
+  | "monitorizacao"
+  | "seguimento"
+  | "psicoeducacao";
+
+// Status real de implementação dentro do app (honestidade clínica).
+export type ImplementationStatus =
+  | "complete" // aplicação completa: itens + cálculo/interpretação + fluxo
+  | "metadata_only" // apenas ficha técnica/informativa
+  | "external_only" // instrumento externo/licenciado — não embutir itens/escore
+  | "not_implemented"; // recomendação clínica; sem aplicação no app
 
 export type Licenca = "passiva" | "ativa" | "mista";
 
@@ -37,10 +71,16 @@ export interface ScaleEntry {
   scoringCutoff?: string;              // ponto de corte / interpretação de escore
   licencaUso?: "livre" | "comercial" | "restrita" | "contato_autor" | "autoral"; // licenciamento de uso
   // Metadados clínicos consumidos pelo motor de filtragem avançada (advancedFilterLogic).
-  // Quando ausentes, o filtro de comunicação/alfabetização/tipo é tratado como permissivo.
-  verbal?: boolean;                    // exige resposta verbal da criança (false = aplicável a não-verbais)
-  alphabetic?: boolean;                // exige alfabetização (false = aplicável a pré-alfabetizados)
-  assessment_type?: "diagnostic" | "monitoring" | "both"; // finalidade clínica predominante
+  // Quando ausentes, o motor deriva um valor padrão a partir dos campos existentes
+  // (respondente, prioridade, appRoute, licença) — nunca assume aplicação completa.
+  verbalRequirement?: "indiferente" | "verbal" | "nao_verbal_compativel"; // exigência de linguagem verbal
+  literacyRequirement?: "indiferente" | "alfabetizado" | "pre_alfabetizado"; // exigência de alfabetização
+  assessmentUse?: AssessmentUse;       // finalidade clínica explícita (sobrepõe a derivação por prioridade)
+  applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
+  implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
+  // Proveniência do índice das 230 escalas complementares (curadoria interna).
+  modoApp?: string;                    // "aplicar" | "monitorar" (hint de uso da curadoria)
+  duplicataStatus?: string;            // "nova" | "possivel_duplicata" (controle de deduplicação)
 }
 
 export interface QueixaCategory {
@@ -51,6 +91,7 @@ export interface QueixaCategory {
   bgLight: string;
   iconColor: string;
   emoji?: string;       // unicode emoji for visual appeal
+  appRoute?: string;    // atalho opcional para a ficha/aplicação da categoria
 }
 
 export const queixas: QueixaCategory[] = [

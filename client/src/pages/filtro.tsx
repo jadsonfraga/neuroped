@@ -34,6 +34,7 @@ import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { getOPBRecommendations } from "@/data/filterRecommendationsOPB";
@@ -41,13 +42,15 @@ import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesIntelligently,
   generateContextualRecommendation,
+  getApplicationMode,
+  SAFE_EMPTY_MESSAGE,
   type FilterContext,
   type RefinedScaleMatch,
 } from "@/data/advancedFilterLogic";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
-type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Satisfação Medicação";
+type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar" | "Satisfação Medicação";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -73,10 +76,6 @@ const EUSM10_FILTER_SCALE: ScaleEntry = {
   pendente_validacao_clinica: false,
 };
 
-function norm(text: string) {
-  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-}
-
 function unique(scales: ScaleEntry[]) {
   const seen = new Set<string>();
   return scales.filter((s) => seen.has(s.id) ? false : (seen.add(s.id), true));
@@ -87,44 +86,6 @@ function ageMonths(range: string) {
   return m ? { min: Math.round(Number(m[1]) * 12), max: Math.round(Number(m[2]) * 12) } : { min: 0, max: 216 };
 }
 
-function guessQueixas(category: string, name: string) {
-  const t = norm(`${category} ${name}`);
-  const set = new Set<string>();
-  // TEA: be strict—only when TEA/autism explicitly mentioned or diagnostic tools (not generic "social")
-  if (/tea|autis|ados|m-chat|assq|q-chat|cast|aq-10|cat-q|3di/.test(t)) set.add("tea");
-  if (/desenvolvimento|milestone|swyc|cdc|gmcd|atraso|bayley|denver/.test(t)) set.add("atraso");
-  // TDAH: exclude from tics/psychosis domain
-  if (/tdah|adhd|snap(?!-)?|(?<!srs)vanderbilt|weiss|wfirs|aten|brief|conners/.test(t)) {
-    // Only add if NOT in tics/psychosis context
-    if (!/tic|tourette|psicos|mania|bipolar/.test(t)) set.add("tdah");
-  }
-  if (/comport|external|agress|moas|nisonger|psc|sdq/.test(t)) set.add("comportamento");
-  if (/ansiedade|anxiety|scared|scas|rcads|gad|pas/.test(t)) set.add("ansiedade");
-  if (/depress|mood|phq|mfq|smfq|columbia depression/.test(t)) set.add("depressao");
-  if (/suic|asq|c-ssrs|safe-t/.test(t)) set.add("suicidio");
-  if (/trauma|tept|ptsd|cats|cries|cpss|tesi/.test(t)) set.add("trauma");
-  if (/tic|tourette|ygtss|puts|moves|twstrs/.test(t)) set.add("tiques");
-  // Psicose: include mania/bipolar but NOT Vanderbilt/TDAH unless explicitly psychotic
-  if (/mania|bipolar|cmrs|ymrs|pgbi|mdq|gbi|psicos|delir|alucin/.test(t)) set.add("psicose");
-  if (/eat|scoff|aliment/.test(t)) set.add("alimentacao");
-  if (/sono|sleep|psq|bears/.test(t)) set.add("sono");
-  if (/pain|dor/.test(t)) set.add("dor");
-  if (/medic|remedio|farmaco|dose|efeito|side effect|adesao|tolerab|satisfacao/.test(t)) set.add("efeitos");
-  if (/evolu|monitor|retorno|follow/.test(t)) set.add("evolucao");
-  if (/cogn|promis|toolbox|life|family|peer|relationship|mobility|upper/.test(t)) set.add("funcionalidade");
-  if (/school|professor|teacher|aprendiz/.test(t)) set.add("aprendizagem");
-  return set.size ? Array.from(set) : ["funcionalidade"];
-}
-
-function guessRespondente(value: string): ScaleEntry["respondente"] {
-  const t = norm(value);
-  const set = new Set<ScaleEntry["respondente"][number]>();
-  if (/pais|cuidador|parent|caregiver/.test(t)) set.add("pais");
-  if (/professor|teacher|escola/.test(t)) set.add("professor");
-  if (/clinico|entrevista|clinical/.test(t)) set.add("clinico");
-  if (/crianca|adolescente|paciente|auto/.test(t)) set.add("autoaplicavel");
-  return set.size ? Array.from(set) : ["pais"];
-}
 
 function rowToScale(row: Row): ScaleEntry {
   const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
@@ -150,16 +111,15 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
   return !age || (scale.ageMax >= age.min && scale.ageMin <= age.max);
 }
 
-function score(scale: ScaleEntry, query: string, selectedQueixas: string[], selectedAge: string | null) {
+// Realce textual leve para a busca livre. NÃO decide pertinência clínica —
+// apenas reordena, dentro dos candidatos já validados pelo motor, os que casam
+// com o termo digitado. (A segurança/score clínico vem do advancedFilterLogic.)
+function searchBoost(scale: ScaleEntry, query: string) {
+  const tokens = norm(query).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return 0;
   const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
   let value = 0;
-  for (const token of norm(query).split(/\s+/).filter(Boolean)) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
-  for (const q of selectedQueixas) if (scale.queixas.includes(q)) value += 6;
-  if (selectedAge && matchAge(scale, selectedAge)) value += 3;
-  if (scale.appRoute) value += 100;
-  if (scale.prioridade === "triagem") value += 2;
-  if (scale.respondente.includes("professor")) value += 1;
-  if (scale.id.startsWith("world-")) value += 0.8;
+  for (const token of tokens) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
   return value;
 }
 
@@ -214,45 +174,16 @@ function detectGoldStandard(selectedQueixas: string[], selectedAge: string | nul
   return bestMatch?.pattern ?? null;
 }
 
-function pool(catalog: ScaleEntry[], query: string, selectedQueixas: string[], selectedAge: string | null, selectedRespondente: ScaleEntry["respondente"][number] | null, selectedCommunication?: "verbal" | "nonverbal" | null, selectedLiteracy?: "literate" | "preliterate" | null, selectedAssessmentType?: "diagnostic" | "monitoring" | null) {
-  const base = catalog.filter((s) => {
-    // Filtro de pré-consulta: apenas triagem/diagnóstico, não monitorização
-    if (s.prioridade === "monitorizacao") return false;
-    // Excluir queixas que são pós-consulta (reavaliação, efeitos colaterais, evolução)
-    const postConsultComplaints = ["efeitos", "evolucao"];
-    if (s.queixas.some((q) => postConsultComplaints.includes(q))) return false;
-
-    const matchesQueixa = selectedQueixas.length === 0 || s.queixas.some((q) => selectedQueixas.includes(q));
-    const matchesAge = matchAge(s, selectedAge);
-    const matchesRespondente = !selectedRespondente || s.respondente.includes(selectedRespondente);
-
-    // NEW: Comunicação verbal/não-verbal
-    let matchesCommunication = true;
-    if (selectedCommunication === "verbal" && s.verbal === false) matchesCommunication = false;
-    if (selectedCommunication === "nonverbal" && s.verbal !== false) matchesCommunication = false;
-
-    // NEW: Alfabetização
-    let matchesLiteracy = true;
-    if (selectedLiteracy === "literate" && s.alphabetic === false) matchesLiteracy = false;
-    if (selectedLiteracy === "preliterate" && s.alphabetic !== false) matchesLiteracy = false;
-
-    // NEW: Tipo de avaliação
-    let matchesAssessmentType = true;
-    if (selectedAssessmentType && s.assessment_type) {
-      if (s.assessment_type === "both") {
-        // "both" matches both "diagnostic" and "monitoring"
-        matchesAssessmentType = true;
-      } else if (s.assessment_type !== selectedAssessmentType) {
-        matchesAssessmentType = false;
-      }
-    }
-
-    return matchesQueixa && matchesAge && matchesRespondente && matchesCommunication && matchesLiteracy && matchesAssessmentType;
-  });
-  return unique(base.length ? base : catalog)
-    .map((scale) => ({ scale, score: score(scale, query, selectedQueixas, selectedAge) }))
-    .sort((a, b) => b.score - a.score || a.scale.name.localeCompare(b.scale.name))
-    .map((x) => x.scale);
+// Fonte ÚNICA de verdade: roda o motor clínico (advancedFilterLogic) sobre o
+// catálogo e, dentro dos candidatos seguros, aplica o realce de busca.
+// Pode retornar [] — NUNCA cai para o catálogo inteiro (sem fallback perigoso).
+function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): RefinedScaleMatch[] {
+  const matches = filterScalesIntelligently(unique(catalog), ctx);
+  if (!query.trim()) return matches;
+  return [...matches].sort(
+    (a, b) =>
+      b.relevanceScore + searchBoost(b.scale, query) - (a.relevanceScore + searchBoost(a.scale, query))
+  );
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -269,23 +200,33 @@ const CLINICAL_TIER_LABEL: Record<RefinedScaleMatch["tier"], string> = {
   conditional: "ajuste condicional",
 };
 
-function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string, match?: RefinedScaleMatch) {
-  const restricted = scale?.licencaUso === "restrita" || scale?.licencaUso === "comercial" || scale?.licencaUso === "contato_autor";
+function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
+  const scale = match?.scale;
+  // Estado HONESTO vindo do motor (req. 3): aplicação completa vs ficha vs externo.
+  const state = match
+    ? match.implementationLabel
+    : "Sem opção complementar segura para este perfil.";
   return {
     slot,
     tier: tierFromSlot(slot),
-    route: scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
-    title: scale?.name || "Sem escala ideal",
-    subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
+    // Só leva para a rota quando há aplicação completa; ficha/metadado abre a ficha técnica.
+    route:
+      match?.implementationStatus === "complete" && scale?.appRoute
+        ? scale.appRoute
+        : scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
+    title: scale?.name || "Sem escala segura",
+    subtitle: scale?.fullName || "Refine idade, queixa ou respondente",
     reason,
-    state: scale?.appRoute ? "Rota direta disponível." : restricted ? "Ficha clínica; não embutir itens/escore sem permissão formal." : "Catálogo filtrável; aplicação direta ainda não implementada.",
+    state,
     source: scale?.fonte,
     tone,
+    hasScale: Boolean(scale),
     // Saída do motor de filtragem avançada (advancedFilterLogic)
     clinicalTier: match ? CLINICAL_TIER_LABEL[match.tier] : null,
     confidence: match?.confidenceLevel ?? null,
     warnings: match?.warningFlags ?? [],
     clinicalReason: match?.clinicalReason ?? null,
+    implementationStatus: match?.implementationStatus ?? null,
   };
 }
 
@@ -398,80 +339,88 @@ export default function FiltroPage() {
 
   const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
-  const rankedPool = useMemo(() => pool(catalog, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType), [catalog, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType]);
 
-  // Detecta padrão clínico ouro quando 2+ queixas selecionadas
-  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
-  const goldStandardScale = useMemo(() => {
-    if (!detectedPattern) return null;
-    return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
-  }, [detectedPattern, rankedPool]);
-
-  // === MOTOR DE FILTRAGEM AVANÇADA ===
-  // Constrói o contexto clínico a partir dos filtros da tela e deixa o
-  // advancedFilterLogic pontuar cada candidato (tier, confiança, alertas de segurança).
+  // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
     const ageRange = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
     const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
     return {
       queixas: selectedQueixas,
       ageMonths,
-      respondente: selectedRespondente ?? undefined,
-      verbal: selectedCommunication === "verbal" ? true : selectedCommunication === "nonverbal" ? false : undefined,
-      alphabetic: selectedLiteracy === "literate" ? true : selectedLiteracy === "preliterate" ? false : undefined,
-      assessmentType: selectedAssessmentType ?? undefined,
+      respondente: selectedRespondente ?? null,
+      isVerbal: selectedCommunication === "verbal" ? true : selectedCommunication === "nonverbal" ? false : null,
+      isLiterate: selectedLiteracy === "literate" ? true : selectedLiteracy === "preliterate" ? false : null,
+      assessmentUse:
+        selectedAssessmentType === "diagnostic" ? "diagnostico" : selectedAssessmentType === "monitoring" ? "monitorizacao" : null,
       selectedSignals: selectedSignalIds,
     };
   }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
 
-  const refinedMatches = useMemo(() => filterScalesIntelligently(rankedPool, filterContext), [rankedPool, filterContext]);
+  // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
+  const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
   const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
+  const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
+  const hasSafeResults = refinedMatches.length > 0;
   const clinicalRecommendation = useMemo(() => generateContextualRecommendation(refinedMatches), [refinedMatches]);
 
-  // Ordenação clínica: relevância > tier > rota direta disponível (desempate por usabilidade).
-  const tierRank: Record<RefinedScaleMatch["tier"], number> = { gold: 0, silver: 1, bronze: 2, conditional: 3 };
-  const clinicalRanked = useMemo(() => {
-    const matches = [...refinedMatches].sort((a, b) => {
-      if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
-      if (tierRank[a.tier] !== tierRank[b.tier]) return tierRank[a.tier] - tierRank[b.tier];
-      return (b.scale.appRoute ? 1 : 0) - (a.scale.appRoute ? 1 : 0);
-    });
-    return matches.map((m) => m.scale);
-  }, [refinedMatches]);
+  // Padrão-ouro curado só vale se a escala for um candidato SEGURO neste contexto.
+  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
+  const goldStandardMatch = useMemo(
+    () => (detectedPattern ? refinedById.get(detectedPattern.goldStandard) ?? null : null),
+    [detectedPattern, refinedById]
+  );
 
-  // Pool de seleção dos pódios: usa a ordem clínica do motor; cai para o ranking
-  // textual antigo apenas se o motor não retornar candidatos.
-  const podiumPool = clinicalRanked.length ? clinicalRanked : rankedPool;
+  // === PÓDIO COMPLEMENTAR (req. 9): Ouro/Prata/Bronze nunca repetem o mesmo id ===
+  const podium = useMemo(() => {
+    const empty = { ouro: undefined, prata: undefined, bronze: undefined, direct: undefined, school: undefined } as Record<
+      "ouro" | "prata" | "bronze" | "direct" | "school",
+      RefinedScaleMatch | undefined
+    >;
+    if (!hasSafeResults) return empty;
 
-  const direct = rankedPool.find((s) => Boolean(s.appRoute) && s.respondente.includes("clinico"));
-  const school = rankedPool.find((s) => s.respondente.includes("professor"));
+    const used = new Set<string>();
+    const take = (pred: (m: RefinedScaleMatch) => boolean) => {
+      const found = refinedMatches.find((m) => !used.has(m.scale.id) && pred(m));
+      if (found) used.add(found.scale.id);
+      return found;
+    };
 
-  // Função para evitar duplicatas nos slots Ouro/Prata/Bronze
-  const getUniqueSlots = () => {
-    const ouro = goldStandardScale || podiumPool[0];
-    const prata = podiumPool.find((s) => s.id !== ouro?.id);
-    const bronze = podiumPool.find((s) => s.id !== ouro?.id && s.id !== prata?.id);
-    return { ouro, prata, bronze };
-  };
+    let ouro: RefinedScaleMatch | undefined;
+    if (goldStandardMatch && !used.has(goldStandardMatch.scale.id)) {
+      ouro = goldStandardMatch;
+      used.add(goldStandardMatch.scale.id);
+    } else {
+      ouro = take(() => true);
+    }
 
-  const { ouro, prata, bronze } = getUniqueSlots();
+    const ouroMode = ouro?.applicationMode ?? null;
+    const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
+    // Prata: complementar — modo de aplicação OU domínio diferente do Ouro; senão, próximo distinto.
+    const prata =
+      take((m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q))) ?? take(() => true);
+    const bronze = take(() => true);
 
-  // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
-  const ranking = goldStandardScale
-    ? [
-        rec("Ouro", ouro, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800", ouro && refinedById.get(ouro.id)),
-        rec("Prata", prata, "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700", prata && refinedById.get(prata.id)),
-        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800", (bronze || prata || ouro) && refinedById.get((bronze || prata || ouro)!.id)),
-        rec("Teste Direto", direct || ouro, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950", (direct || ouro) && refinedById.get((direct || ouro)!.id)),
-        rec("Questionário Escolar", school || ouro, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950", (school || ouro) && refinedById.get((school || ouro)!.id)),
-      ]
-    : [
-        rec("Ouro", ouro, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800", ouro && refinedById.get(ouro.id)),
-        rec("Prata", prata || ouro, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700", (prata || ouro) && refinedById.get((prata || ouro)!.id)),
-        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800", (bronze || prata || ouro) && refinedById.get((bronze || prata || ouro)!.id)),
-        rec("Teste Direto", direct || ouro, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950", (direct || ouro) && refinedById.get((direct || ouro)!.id)),
-        rec("Questionário Escolar", school || ouro, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950", (school || ouro) && refinedById.get((school || ouro)!.id)),
-      ];
+    // Slots categóricos (podem coincidir com o pódio — propósito distinto).
+    const direct = refinedMatches.find((m) => getApplicationMode(m.scale) === "teste_direto_crianca");
+    const school = refinedMatches.find((m) => getApplicationMode(m.scale) === "questionario_professor");
+    return { ouro, prata, bronze, direct, school };
+  }, [refinedMatches, hasSafeResults, goldStandardMatch]);
+
+  const isGoldPattern = Boolean(goldStandardMatch && podium.ouro?.scale.id === goldStandardMatch.scale.id);
+  const ranking = [
+    rec(
+      "Ouro",
+      podium.ouro,
+      isGoldPattern
+        ? `PADRÃO-OURO: ${detectedPattern!.reason}`
+        : "Melhor instrumento para idade, queixa, finalidade e respondente.",
+      "from-amber-500 via-yellow-600 to-red-800"
+    ),
+    rec("Prata", podium.prata, "Complementar: domínio ou modo de aplicação diferente do Ouro.", "from-slate-400 via-slate-500 to-slate-700"),
+    rec("Bronze", podium.bronze, "Apoio secundário ou triagem breve adicional.", "from-orange-500 via-amber-700 to-stone-800"),
+    rec("Teste Direto", podium.direct, "Instrumento aplicado diretamente com a criança.", "from-blue-600 via-indigo-700 to-slate-950"),
+    rec("Questionário Escolar", podium.school, "Questionário respondido por professor/contexto escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+  ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -670,16 +619,28 @@ export default function FiltroPage() {
           faixasEtarias={faixasEtarias}
         />
 
+        {!hasSafeResults ? (
+          <Card className="border-2 border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+            <CardContent className="flex items-start gap-3 p-5 text-sm font-bold text-amber-900 dark:text-amber-100">
+              <ShieldAlert className="h-5 w-5 shrink-0" />
+              <span>{SAFE_EMPTY_MESSAGE}</span>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="filter-260-grid">
           {ranking.map((item) => {
-            const reasons = getRecommendationReasons(
-              item.title !== "Sem escala ideal" ? rankedPool.find(s => s.name === item.title) : undefined,
-              selectedQueixas,
-              selectedAge
-            );
-            return (
-              <Link key={item.slot} href={item.route} className="block h-full">
-                <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
+            const reasons = item.hasScale
+              ? getRecommendationReasons(rankedPool.find((s) => s.name === item.title), selectedQueixas, selectedAge)
+              : [];
+            const ctaLabel = !item.hasScale
+              ? "—"
+              : item.implementationStatus === "complete"
+                ? "Abrir aplicação"
+                : item.route === "/filtro"
+                  ? "Ver no catálogo"
+                  : "Ver ficha técnica";
+            const cardInner = (
+                <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
                   <CardContent className="filter-260-card-content">
                     <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
@@ -702,16 +663,21 @@ export default function FiltroPage() {
                         {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
                       </div>
                     )}
-                    <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>
+                    {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}
                     <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
                     {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
-                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{item.route === "/filtro" ? "Ver no catálogo" : "Abrir"}</span><ArrowRight className="h-4 w-4" /></div>
+                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{ctaLabel}</span>{item.hasScale && <ArrowRight className="h-4 w-4" />}</div>
                   </CardContent>
                 </Card>
-              </Link>
+            );
+            return item.hasScale ? (
+              <Link key={item.slot} href={item.route} className="block h-full">{cardInner}</Link>
+            ) : (
+              <div key={item.slot} className="block h-full">{cardInner}</div>
             );
           })}
         </div>
+        )}
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
         </section>
         )}
