@@ -24,7 +24,7 @@ export const logger = pino({
     ? {
         // JSON for production logging aggregators
         formatters: {
-          level: (label) => {
+          level: (label: string) => {
             return { level: label };
           },
         },
@@ -104,7 +104,7 @@ export function createLoggerMiddleware(req: any, res: any, next: any) {
 /**
  * Wrapper para endpoints que precisam de request-scoped logging
  */
-export function withLogger(handler: (req: any, res: any, logger: typeof logger) => Promise<any>) {
+export function withLogger(handler: (req: any, res: any, log: import("pino").Logger) => Promise<any>) {
   return async (req: any, res: any) => {
     const childLogger = req.logger || logger.child({ requestId: crypto.randomUUID() });
     try {

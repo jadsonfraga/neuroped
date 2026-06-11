@@ -27,8 +27,8 @@ export class ScaleResultRepository implements BaseRepository<ScaleResult, Insert
     const results = await this.db
       .select()
       .from(scaleResults)
-      .where(eq(scaleResults.patient_id, patientId))
-      .orderBy(desc(scaleResults.created_at))
+      .where(eq(scaleResults.patientId, patientId))
+      .orderBy(desc(scaleResults.createdAt))
       .limit(limit)
       .offset(offset)
       .execute();
@@ -36,7 +36,7 @@ export class ScaleResultRepository implements BaseRepository<ScaleResult, Insert
     const countResult = await this.db
       .select({ count: this.db.fn.count() })
       .from(scaleResults)
-      .where(eq(scaleResults.patient_id, patientId))
+      .where(eq(scaleResults.patientId, patientId))
       .execute();
 
     const total = countResult[0]?.count || 0;
@@ -64,8 +64,8 @@ export class ScaleResultRepository implements BaseRepository<ScaleResult, Insert
     const results = await this.db
       .select()
       .from(scaleResults)
-      .where(and(eq(scaleResults.patient_id, patientId), eq(scaleResults.scale_name, scaleName)))
-      .orderBy(desc(scaleResults.created_at))
+      .where(and(eq(scaleResults.patientId, patientId), eq(scaleResults.scaleName, scaleName)))
+      .orderBy(desc(scaleResults.createdAt))
       .limit(limit)
       .offset(offset)
       .execute();
@@ -73,7 +73,7 @@ export class ScaleResultRepository implements BaseRepository<ScaleResult, Insert
     const countResult = await this.db
       .select({ count: this.db.fn.count() })
       .from(scaleResults)
-      .where(and(eq(scaleResults.patient_id, patientId), eq(scaleResults.scale_name, scaleName)))
+      .where(and(eq(scaleResults.patientId, patientId), eq(scaleResults.scaleName, scaleName)))
       .execute();
 
     const total = countResult[0]?.count || 0;
@@ -93,7 +93,7 @@ export class ScaleResultRepository implements BaseRepository<ScaleResult, Insert
     const results = await this.db
       .select()
       .from(scaleResults)
-      .orderBy(desc(scaleResults.created_at))
+      .orderBy(desc(scaleResults.createdAt))
       .limit(limit)
       .offset(offset)
       .execute();

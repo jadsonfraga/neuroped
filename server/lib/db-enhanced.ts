@@ -59,10 +59,9 @@ export async function initDb(): Promise<void> {
   // Pool configuration otimizado para produção
   _client = postgres(DATABASE_URL, {
     max: parseInt(process.env.DATABASE_POOL_MAX || "20", 10), // Aumentado para 20 (default Postgres)
-    min: parseInt(process.env.DATABASE_POOL_MIN || "2", 10),
     idle_timeout: 30, // 30 segundos
     connect_timeout: 10,
-    statement_timeout: 30000, // 30 segundos timeout nas queries
+    connection: { statement_timeout: 30000 }, // 30s timeout nas queries (parâmetro de conexão)
     ssl: process.env.NODE_ENV === "production" ? "require" : (process.env.DATABASE_SSL === "true" as any),
     prepare: false,
     backoff: (attempt: number) => 100 * Math.pow(2, attempt), // Exponential backoff

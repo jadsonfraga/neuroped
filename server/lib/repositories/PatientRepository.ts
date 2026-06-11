@@ -27,8 +27,8 @@ export class PatientRepository implements BaseRepository<Patient, Omit<Patient, 
     const results = await this.db
       .select()
       .from(patients)
-      .where(eq(patients.owner_user_id, ownerUserId))
-      .orderBy(patients.created_at)
+      .where(eq(patients.ownerUserId, ownerUserId))
+      .orderBy(patients.createdAt)
       .limit(limit)
       .offset(offset)
       .execute();
@@ -36,7 +36,7 @@ export class PatientRepository implements BaseRepository<Patient, Omit<Patient, 
     const countResult = await this.db
       .select({ count: this.db.fn.count() })
       .from(patients)
-      .where(eq(patients.owner_user_id, ownerUserId))
+      .where(eq(patients.ownerUserId, ownerUserId))
       .execute();
 
     const total = countResult[0]?.count || 0;
@@ -56,7 +56,7 @@ export class PatientRepository implements BaseRepository<Patient, Omit<Patient, 
     const results = await this.db
       .select()
       .from(patients)
-      .orderBy(patients.created_at)
+      .orderBy(patients.createdAt)
       .limit(limit)
       .offset(offset)
       .execute();
