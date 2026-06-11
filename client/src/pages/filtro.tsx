@@ -454,7 +454,7 @@ export default function FiltroPage() {
   }, [hasSearch]);
 
   return (
-    <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
+    <div className="page-enter container-filtro filter-260-shell mx-auto w-full max-w-4xl px-3 sm:px-4 pb-4 sm:pb-8">
       {/* Full-width header */}
       <header className="rounded-[2rem] border border-border/70 bg-card/90 p-3 sm:p-5 shadow-sm backdrop-blur mb-3 sm:mb-5">
         <div className="flex items-start gap-2 sm:gap-3">
@@ -474,11 +474,11 @@ export default function FiltroPage() {
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="text-xl sm:text-2xl font-black text-foreground">{status}</p></CardContent></Card>
       </section>
 
-      {/* Two-column grid: Controls (left) + Results (right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
+      {/* Layout centralizado de coluna única: controles em cima, resultados abaixo */}
+      <div className="space-y-4 sm:space-y-6">
 
-        {/* LEFT COLUMN — Controls (Sticky on Desktop) */}
-        <div className="lg:col-span-1 space-y-3 sm:space-y-4 lg:sticky lg:top-5 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
+        {/* Controles (largura total, centralizados) */}
+        <div className="space-y-3 sm:space-y-4">
 
           {/* Search & Filters */}
           <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
@@ -503,9 +503,10 @@ export default function FiltroPage() {
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
-              <span className="truncate text-[11px] sm:text-xs leading-tight">{q.label}</span>
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3">
+            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-[2.75rem] ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
+              {q.emoji && <span className="shrink-0 text-sm leading-none">{q.emoji}</span>}
+              <span className="leading-tight text-[11px] sm:text-xs line-clamp-2">{q.label}</span>
             </button>)}
           </div>
         </div>
@@ -581,7 +582,7 @@ export default function FiltroPage() {
 
         {/* RIGHT COLUMN — Results (lg:col-span-2) */}
         {hasSearch && (
-      <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
+      <section ref={resultsSectionRef} className="space-y-3">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
 
         {/* Síntese clínica do motor de filtragem avançada */}
@@ -699,7 +700,7 @@ export default function FiltroPage() {
         )}
 
         {!hasSearch && (
-        <section className="lg:col-span-2 space-y-5">
+        <section className="space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
