@@ -580,7 +580,7 @@ export default function FiltroPage() {
       )}
         </div>
 
-        {/* RIGHT COLUMN — Results (lg:col-span-2) */}
+        {/* Resultados (coluna única centralizada) */}
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
