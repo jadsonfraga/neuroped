@@ -30,7 +30,7 @@ const SCALE_CONFIG = {
 };
 
 export default function ScalePage() {
-  const [location, navigate] = useLocation();
+  const [_location, navigate] = useLocation();
   const [copied, setCopied] = useState(false);
 
   const scale = allScales.find(s => s.id === SCALE_CONFIG.id);

@@ -58,7 +58,7 @@ export function searchAdvanced(query: string): ScaleEntry[] {
   if (!query || query.length < 3) return [];
 
   const normalized = query.toLowerCase();
-  const results: ScaleEntry[] = [];
+  const _results: ScaleEntry[] = [];
   const scored: Array<[ScaleEntry, number]> = [];
 
   for (const scale of allScales) {

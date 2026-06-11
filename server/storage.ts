@@ -10,7 +10,6 @@
 import {
   patients,
   scaleResults,
-  type Patient,
   type ScaleResult,
   type InsertScaleResult,
 } from "@shared/schema";

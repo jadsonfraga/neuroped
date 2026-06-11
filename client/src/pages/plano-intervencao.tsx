@@ -1,8 +1,6 @@
 import {
-  Lightbulb, MessageSquare, BookOpen, MessageCircle, Calculator,
-  Brain, Activity, Layers, School, AlertCircle, Users, Heart,
-  Hand, Zap, GraduationCap, Puzzle, Target, Star, CheckCircle2,
-  ArrowRight, Info, Music, Gamepad2, Eye
+  Lightbulb, BookOpen, MessageCircle, Calculator,
+  Brain, Activity, Layers, School, AlertCircle, Users, CheckCircle2
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

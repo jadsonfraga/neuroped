@@ -12,12 +12,10 @@ import {
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   getSignalsForQueixaAndAge,
-  type SymptomCluster,
-  type Signal,
 } from "@/data/signalsAndSymptoms";
 import {
   getRecommendationsForSignalCluster,
@@ -210,7 +208,6 @@ interface RecommendationPanelProps {
 
 function RecommendationPanel({
   clusterId,
-  queixaId,
   ageMonths,
   onSelect,
   isExpanded,
@@ -386,7 +383,7 @@ function RecommendationCard({
                   Exemplo para Pais
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 italic">
-                  "{rec.parentExample}"
+                  &quot;{rec.parentExample}&quot;
                 </p>
               </div>
               <div>

@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { RotateCcw, AlertTriangle, CheckCircle2, Info, Sparkles } from "lucide-react";
+import { RotateCcw, Info, Sparkles } from "lucide-react";
 import { ygtssMotorTics, ygtssVocalTics, ygtssFrequencyLabels, classifyYgtss } from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";

@@ -26,10 +26,10 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      # Step 1: Lint — ADVISORY (não bloqueia; dívida de estilo pré-existente do repo)
+      # Step 1: Lint — GATE DURO (lint zerado; mantém limpo daqui pra frente)
       - name: Lint Code
         run: npm run lint
-        continue-on-error: true
+        continue-on-error: false
 
       # Step 2: Type Check — GATE DURO (precisa passar)
       - name: TypeScript Type Check

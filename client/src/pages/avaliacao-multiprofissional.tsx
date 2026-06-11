@@ -1,18 +1,15 @@
 import { useState } from "react";
 import {
-  ClipboardCheck, Users, BookOpen, Clock, ArrowRight, AlertCircle,
-  Baby, GraduationCap, Brain, Lightbulb, CheckCircle2, Info,
-  Stethoscope, Target, Layers, ChevronDown, ChevronUp, Star,
-  Activity, MessageSquare, Hand, Eye, Heart, Zap, Search
+  ClipboardCheck, Users, Clock, ArrowRight, AlertCircle,
+  Baby, Brain, CheckCircle2, Info,
+  Stethoscope, Layers, Star, MessageSquare, Eye, Search
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Tabs, TabsList, TabsTrigger, TabsContent
 } from "@/components/ui/tabs";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
+
 import teamImg from "@assets/images/team-multiprofessional.png";
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
@@ -265,7 +262,7 @@ const quandoEnvolver = [
 
 export default function AvaliacaoMultiprofissionalPage() {
   const [activeAge, setActiveAge] = useState<string>("18m-6a");
-  const [openPrincipios, setOpenPrincipios] = useState(false);
+  const [_openPrincipios, _setOpenPrincipios] = useState(false);
 
   return (
     <div className="space-y-8" data-testid="avaliacao-multiprofissional-page">

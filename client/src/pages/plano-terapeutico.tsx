@@ -1,8 +1,7 @@
 import { useState } from "react";
 import {
   Target, Users, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
-  Printer, Mail, RotateCcw, FileText, Info, Stethoscope, Star,
-  Baby, Brain, ChevronDown, ChevronUp, Plus, Trash2, ClipboardList
+  Printer, Mail, RotateCcw, Info, Stethoscope, Star, ClipboardList
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

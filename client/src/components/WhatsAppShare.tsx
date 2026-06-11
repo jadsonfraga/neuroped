@@ -3,7 +3,6 @@ import { MessageCircle, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
@@ -89,7 +88,7 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
         setPhone("");
         setSent(false);
       }, 3000);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erro ao enviar",
         description: "Tente novamente ou copie o relatório manualmente.",

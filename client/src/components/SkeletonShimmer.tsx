@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Brain, FileText, Users, FlaskConical } from "lucide-react";
+import { Brain } from "lucide-react";
 
 /**
  * Skeleton com efeito shimmer (gradiente animado).

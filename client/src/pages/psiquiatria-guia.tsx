@@ -4,10 +4,9 @@ import {
   Repeat, Droplets, AlertCircle, Coffee, RotateCcw, Scale, RefreshCw,
   Utensils, Frown, Flame, AlertTriangle, CloudRain, TrendingUp,
   HeartCrack, ZapOff, CloudLightning, RotateCw, Moon, Pill,
-  ClipboardList, AlertOctagon, Search, X, Stethoscope, BookMarked,
-  ChevronDown, Lightbulb, GitBranch, Syringe, GraduationCap, Clock
+  ClipboardList, AlertOctagon, Search, X, Stethoscope, BookMarked, Lightbulb, GitBranch, Syringe, GraduationCap, Clock
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";

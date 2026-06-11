@@ -1,14 +1,14 @@
 import { AlertTriangle, CheckCircle, Clock, User, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { ScaleOverride, OverrideAuditLog } from "./types";
+import type { ScaleOverride, OverrideAuditLog as OverrideAuditLogEntry } from "./types";
 
 interface OverrideAuditLogProps {
   overrides: ScaleOverride[];
-  auditLogs: OverrideAuditLog[];
+  auditLogs: OverrideAuditLogEntry[];
 }
 
-export function OverrideAuditLog({ overrides, auditLogs }: OverrideAuditLogProps) {
+export function OverrideAuditLog({ overrides }: OverrideAuditLogProps) {
   const formatDate = (date: Date) => {
     const d = new Date(date);
     return d.toLocaleDateString("pt-BR", {
@@ -215,7 +215,7 @@ export function OverrideAuditLog({ overrides, auditLogs }: OverrideAuditLogProps
               {override.additionalNotes && (
                 <div className="p-2 bg-white rounded border border-gray-200">
                   <p className="text-xs font-semibold text-gray-700 mb-1">Observações</p>
-                  <p className="text-sm text-gray-800 italic">"{override.additionalNotes}"</p>
+                  <p className="text-sm text-gray-800 italic">&quot;{override.additionalNotes}&quot;</p>
                 </div>
               )}
             </CardContent>

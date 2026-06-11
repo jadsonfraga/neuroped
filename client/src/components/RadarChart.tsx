@@ -8,7 +8,7 @@ interface RadarChartProps {
   size?: number;
 }
 
-export function RadarChart({ labels, values, maxLabel = "Máx", color = "#7c3aed", size = 240 }: RadarChartProps) {
+export function RadarChart({ labels, values, color = "#7c3aed", size = 240 }: RadarChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

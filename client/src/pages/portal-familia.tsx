@@ -22,7 +22,6 @@ import {
   Lock,
   MessageCircle,
   Newspaper,
-  School,
   ShieldCheck,
   Users,
 } from "lucide-react";

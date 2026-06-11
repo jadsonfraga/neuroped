@@ -1,13 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
-import { RotateCcw, CheckCircle2, Pen, Download } from "lucide-react";
+import { RotateCcw, CheckCircle2, Pen } from "lucide-react";
 
 type AgeGroup = "3-4" | "5-6" | "8-9" | "10-11";
 type TaskType = "desenho" | "copia" | "escrita";
@@ -59,7 +57,7 @@ const TASKS: Record<AgeGroup, Task[]> = {
     {
       id: "c1",
       type: "copia",
-      instruction: "Copie este traço: \_\_\_\_\_ (linha horizontal)",
+      instruction: "Copie este traço: _____ (linha horizontal)",
       criteria: ["Aproximadamente horizontal", "Contínuo"],
       rubric: { 0: "Não copia", 1: "Tenta mas desorganizado", 2: "Linha clara e direita" },
     },

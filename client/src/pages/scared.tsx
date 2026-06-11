@@ -171,7 +171,7 @@ export default function ScaredPage() {
   }
 
   // Group questions by subscale for better organization
-  const subscaleEntries = Object.entries(scaredSubscales);
+  const _subscaleEntries = Object.entries(scaredSubscales);
 
   return (
     <div className="space-y-6">

@@ -82,7 +82,7 @@ export function curatedBoost(route: string | undefined, selectedQueixas: string[
 export function clinicianOnlyPenalty(
   appRoute: string | undefined,
   respondente: string[],
-  prioridade: string | undefined,
+  _prioridade: string | undefined,
 ): number {
   if (appRoute) return 0;
   const onlyClinico = respondente.length > 0 && respondente.every((r) => r === "clinico");

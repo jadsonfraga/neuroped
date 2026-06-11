@@ -4,8 +4,6 @@ import {
   getStoredUser,
   loginRequest,
   logoutRequest,
-  refreshTokenRequest,
-  clearAuth,
   authFetch,
 } from "@/lib/authClient";
 

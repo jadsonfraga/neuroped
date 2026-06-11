@@ -1,6 +1,6 @@
 import { useParams, useLocation } from "wouter";
-import { useEffect, useState } from "react";
-import { ArrowLeft, ExternalLink, Download, Copy } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales } from "@/data/scaleFilter";
@@ -8,7 +8,7 @@ import { getImplementationStatus, getImplementationLabel } from "@/data/advanced
 
 export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
-  const [location, navigate] = useLocation();
+  const [_location, navigate] = useLocation();
   const scaleId = params?.id;
 
   const scale = allScales.find(s => s.id === scaleId);

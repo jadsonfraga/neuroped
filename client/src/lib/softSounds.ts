@@ -81,7 +81,7 @@ function play(spec: {
 
     const now = ctx.currentTime;
     const attack = spec.attack ?? 0.005;
-    const release = spec.release ?? spec.duration * 0.6;
+    const _release = spec.release ?? spec.duration * 0.6;
     const peak = spec.volume ?? 0.06;
 
     gain.gain.setValueAtTime(0, now);

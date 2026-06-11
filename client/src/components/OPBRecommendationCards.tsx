@@ -67,7 +67,7 @@ export function OPBRecommendationCards({ recommendations, onSelectScale }: OPBRe
               💬 Exemplo do que os pais responderão:
             </p>
             <p className="text-sm text-muted-foreground italic bg-white/50 dark:bg-black/20 p-2 rounded">
-              "{rec.parentExample}"
+              &quot;{rec.parentExample}&quot;
             </p>
           </div>
 

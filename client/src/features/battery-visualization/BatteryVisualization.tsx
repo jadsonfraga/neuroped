@@ -1,4 +1,4 @@
-import { Clock, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
+import { Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SuggestedBattery } from "../clinical-assistant/types";
@@ -55,7 +55,7 @@ export function BatteryVisualization({
         <div className="flex h-12 rounded-lg overflow-hidden border-2 border-gray-300 bg-white shadow-sm">
           {battery.phases.map((phase) => {
             const percentage = (phase.duration / totalDuration) * 100;
-            const phaseStart = currentTime;
+            const _phaseStart = currentTime;
             currentTime += phase.duration;
 
             const bgColors = {

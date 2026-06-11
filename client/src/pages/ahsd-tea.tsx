@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-  RotateCcw, Sparkles, Brain, AlertTriangle, CheckCircle2,
+  RotateCcw, Sparkles, Brain, AlertTriangle,
   Info, Printer, Star, Lightbulb, Target, Users, MessageCircle,
   Eye, ChevronDown, ChevronUp, ClipboardCheck
 } from "lucide-react";

@@ -21,7 +21,7 @@ export function LocalUnlockGate({ onUnlocked }: LocalUnlockGateProps) {
   const secondsRemaining = useMemo(() => {
     if (!lockedUntil) return 0;
     return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
-  }, [lockedUntil, status]);
+  }, [lockedUntil]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

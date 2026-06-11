@@ -1,7 +1,6 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { sql } from "drizzle-orm";
 
 /* =====================================================================
  * USERS — Profissionais e administradores do sistema

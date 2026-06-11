@@ -169,7 +169,7 @@ export function FatigueIntelligence({
                       <p className="text-xs text-gray-600 mt-1">
                         Remover: <strong>{alt.removedScaleName}</strong>
                       </p>
-                      <p className="text-xs text-gray-700 mt-1 italic">"{alt.reasoning}"</p>
+                      <p className="text-xs text-gray-700 mt-1 italic">&quot;{alt.reasoning}&quot;</p>
                     </div>
                   </div>
 

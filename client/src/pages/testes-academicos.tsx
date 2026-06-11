@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +10,6 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import {
   BookOpen,
-  PenLine,
-  Calculator,
   ChevronRight,
   ChevronLeft,
   RotateCcw,
@@ -305,7 +302,7 @@ function getDomainClassification(score: number): string {
 }
 
 // ── Score button ───────────────────────────────────────────────────────────
-interface ScoreButtonProps {
+interface _ScoreButtonProps {
   value: Score;
   selected: boolean;
   onClick: () => void;
@@ -507,9 +504,9 @@ export default function TestesAcademicosPage() {
   const [activeTab, setActiveTab] = useState("leitura");
 
   // ── Computed scores ──
-  const leituraItems = ageGroup ? LEITURA_ITEMS[ageGroup] : [];
-  const escritaItems = ageGroup ? ESCRITA_ITEMS[ageGroup] : [];
-  const aritmeticaItems = ageGroup ? ARITMETICA_ITEMS[ageGroup] : [];
+  const leituraItems = useMemo(() => (ageGroup ? LEITURA_ITEMS[ageGroup] : []), [ageGroup]);
+  const escritaItems = useMemo(() => (ageGroup ? ESCRITA_ITEMS[ageGroup] : []), [ageGroup]);
+  const aritmeticaItems = useMemo(() => (ageGroup ? ARITMETICA_ITEMS[ageGroup] : []), [ageGroup]);
 
   const leituraScore = leituraItems.reduce(
     (acc, _, i) => acc + (answers[`leitura-${i}`] ?? 0),
@@ -534,7 +531,7 @@ export default function TestesAcademicosPage() {
     return Object.values(answers).filter((v) => v !== null).length;
   }, [answers]);
 
-  const allAnswered = totalAnswered === 24;
+  const _allAnswered = totalAnswered === 24;
 
   // ── Clinical report items ──
   const reportItems = useMemo(() => {
@@ -603,7 +600,7 @@ export default function TestesAcademicosPage() {
     const domainHeader = (emoji: string, name: string, score: number, pct: number) =>
       `<tr style="background:#f3f0ff;"><td colspan="4" style="padding:8px 10px;font-weight:bold;font-size:10pt;color:#6d28d9;">${emoji} ${name} — ${score}/16 pts (${Math.round(pct)}%)</td></tr>`;
 
-    const itemRows = (items: AcademicItem[], domainKey: string, emoji: string) =>
+    const itemRows = (items: AcademicItem[], domainKey: string, _emoji: string) =>
       items
         .map((item, i) => {
           const v = answers[`${domainKey}-${i}`] ?? 0;

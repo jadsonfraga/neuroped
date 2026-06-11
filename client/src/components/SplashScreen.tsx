@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Brain, Stethoscope, Shield } from "lucide-react";
-import { duration, easing } from "@/lib/motion";
+import { Shield } from "lucide-react";
+import { easing } from "@/lib/motion";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 
 interface SplashScreenProps {

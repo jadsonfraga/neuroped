@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import {
-  Baby, Users, GraduationCap, Brain, Waves, ArrowRight, Stethoscope,
+  Baby, Users, Brain, Waves, ArrowRight, Stethoscope,
   ClipboardList, FileText, ShieldAlert, CloudRain, AlertTriangle, VolumeX,
   UtensilsCrossed, Flame
 } from "lucide-react";

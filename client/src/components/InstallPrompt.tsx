@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, X, Monitor, Smartphone, Chrome } from "lucide-react";
+import { Download, X, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {

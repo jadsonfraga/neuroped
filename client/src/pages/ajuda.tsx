@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, Brain, Search, ClipboardCheck, Pill, Users, Printer, Mail, Moon, Sun, ChevronDown, Shield, Smartphone, Monitor, Wifi, WifiOff, BookOpen, Filter, Baby, GraduationCap, Stethoscope, FileText, Lightbulb } from "lucide-react";
+import { HelpCircle, Brain, ClipboardCheck, Pill, Users, Printer, Mail, Moon, Sun, Smartphone, Monitor, WifiOff, BookOpen, Filter, GraduationCap, Stethoscope, FileText, Lightbulb } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { appMetrics } from "@/data/appMetrics";
 

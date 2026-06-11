@@ -214,7 +214,7 @@ export function LongitudinalChart({
                   </div>
                 </div>
                 {point.notes && (
-                  <p className="text-xs text-gray-600 mt-2 italic">"{point.notes}"</p>
+                  <p className="text-xs text-gray-600 mt-2 italic">&quot;{point.notes}&quot;</p>
                 )}
               </div>
             ))}

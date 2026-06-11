@@ -78,7 +78,7 @@ function inferAdministrationMode(
 /**
  * Detectar risco de mau uso baseado em nome e descrição
  */
-function inferMisuseRisk(id: string, name: string, description: string): MisuseRisk {
+function inferMisuseRisk(id: string, name: string, _description: string): MisuseRisk {
   const veryHighRiskIds = ["ados2", "adir", "wisc5", "wppsi", "sips", "sops"];
   const highRiskIds = ["nnns", "nbas", "napi", "leiter", "kabc2"];
 
@@ -145,7 +145,7 @@ function inferRequiresWriting(description: string): boolean {
 /**
  * Detectar habilidades motoras requeridas
  */
-function inferMotorRequirement(description: string, id: string): "nenhum" | "motor_grosso" | "motor_fino" | "ambos" {
+function inferMotorRequirement(description: string, _id: string): "nenhum" | "motor_grosso" | "motor_fino" | "ambos" {
   const fineMotorKeywords = [
     "apontar",
     "ponto",
@@ -271,7 +271,7 @@ export function generateClinicalMetadata(scale: ScaleEntry): ClinicalScaleMetada
  */
 function generateBlockingRules(
   scale: ScaleEntry,
-  instrumentType: InstrumentCategory
+  _instrumentType: InstrumentCategory
 ) {
   const rules = [];
 

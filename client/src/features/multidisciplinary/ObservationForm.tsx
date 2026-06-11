@@ -84,7 +84,7 @@ export function ObservationForm({
     setErrors([]);
   };
 
-  const profile = professionalProfiles[professionalType];
+  const _profile = professionalProfiles[professionalType];
 
   return (
     <Card className="border-2 border-blue-300 bg-blue-50">

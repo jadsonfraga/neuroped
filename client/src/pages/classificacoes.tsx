@@ -1,4 +1,4 @@
-import { BookOpen, ChevronDown } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import {
   Accordion,
   AccordionContent,

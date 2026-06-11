@@ -24,7 +24,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import drJadsonConsultorio from "@/assets/images/dr-jadson-consultorio-superman.jpeg";
 import { brandAssets } from "@/components/BrandAssets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -140,7 +139,7 @@ const clinicalPatterns: ClinicalPattern[] = [
   { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
 ];
 
-function detectGoldStandard(selectedQueixas: string[], selectedAge: string | null): ClinicalPattern | null {
+function detectGoldStandard(selectedQueixas: string[], _selectedAge: string | null): ClinicalPattern | null {
   if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrão
 
   // Busca padrão com melhor match (quantas queixas coincidem)
@@ -307,7 +306,7 @@ export default function FiltroPage() {
     try {
       localStorage.setItem("np_tour_v2_done", "1");
       localStorage.setItem("np_tour_intro_v2", "1");
-    } catch {}
+    } catch { /* tour é best-effort */ }
   }, []);
 
   useEffect(() => {

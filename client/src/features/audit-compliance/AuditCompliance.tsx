@@ -1,4 +1,4 @@
-import { FileCheck, Download, Calendar, User, Shield } from "lucide-react";
+import { FileCheck, Download, User, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,7 +165,7 @@ export function AuditCompliance({ patientId, auditLog, onExportReport }: AuditCo
                     <span>{entry.actor}</span>
                   </div>
 
-                  <p className="text-xs text-gray-700 italic">"{entry.details}"</p>
+                  <p className="text-xs text-gray-700 italic">&quot;{entry.details}&quot;</p>
                 </div>
               ))}
             </div>

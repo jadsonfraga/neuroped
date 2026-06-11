@@ -3,7 +3,6 @@
  * Índices em email, role
  */
 
-import { eq } from "drizzle-orm";
 import type { BaseRepository, PaginatedResult, PaginationParams } from "./base";
 import { calculatePagination } from "./base";
 
@@ -11,12 +10,12 @@ import { calculatePagination } from "./base";
 export class UserRepository implements BaseRepository<any, any> {
   constructor(private db: any) {}
 
-  async findById(id: string): Promise<any | null> {
+  async findById(_id: string): Promise<any | null> {
     // TODO: implementar
     return null;
   }
 
-  async findByEmail(email: string): Promise<any | null> {
+  async findByEmail(_email: string): Promise<any | null> {
     // TODO: implementar
     return null;
   }
@@ -32,17 +31,17 @@ export class UserRepository implements BaseRepository<any, any> {
     };
   }
 
-  async create(input: any): Promise<any> {
+  async create(_input: any): Promise<any> {
     // TODO: implementar
     throw new Error("Not implemented");
   }
 
-  async update(id: string, input: Partial<any>): Promise<any | null> {
+  async update(_id: string, _input: Partial<any>): Promise<any | null> {
     // TODO: implementar
     return null;
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(_id: string): Promise<boolean> {
     // TODO: implementar
     return false;
   }

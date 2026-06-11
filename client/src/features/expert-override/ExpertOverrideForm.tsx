@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { AlertTriangle, Shield, CheckCircle, X } from "lucide-react";
+import { AlertTriangle, Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import type { ScaleOverride, OverrideReason } from "./types";
 
 interface ExpertOverrideFormProps {

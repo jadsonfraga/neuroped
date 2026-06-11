@@ -4,6 +4,7 @@ import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
+import unusedImports from "eslint-plugin-unused-imports";
 
 // Este projeto lina apenas TypeScript/TSX (ver `npm run lint`). No flat config
 // do ESLint 9 a opção `--ext` é ignorada e um `js.configs.recommended` global
@@ -19,12 +20,23 @@ const tsBaseRules = {
   ...js.configs.recommended.rules,
   ...tsPlugin.configs.recommended.rules,
   "@typescript-eslint/no-explicit-any": "off",
-  "@typescript-eslint/no-unused-vars": [
-    "warn",
-    { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-  ],
-  // @typescript-eslint/no-unused-vars já cobre; a regra JS pura gera duplicata.
+  // Imports/variáveis não usados: tratados pelo plugin unused-imports, que
+  // AUTO-REMOVE imports não usados (--fix). Variáveis locais não usadas seguem
+  // como erro (devem ser removidas ou prefixadas com _).
+  "@typescript-eslint/no-unused-vars": "off",
   "no-unused-vars": "off",
+  "unused-imports/no-unused-imports": "error",
+  "unused-imports/no-unused-vars": [
+    "error",
+    {
+      vars: "all",
+      varsIgnorePattern: "^_",
+      args: "after-used",
+      argsIgnorePattern: "^_",
+      caughtErrors: "all",
+      caughtErrorsIgnorePattern: "^_",
+    },
+  ],
   // Drizzle e Cloudflare Functions usam require()/CJS em vários pontos.
   "@typescript-eslint/no-require-imports": "off",
   // no-undef é redundante e gera falsos positivos em TS: o próprio tsc
@@ -61,7 +73,7 @@ export default [
       },
       globals: { ...globals.node, ...globals.browser },
     },
-    plugins: { "@typescript-eslint": tsPlugin },
+    plugins: { "@typescript-eslint": tsPlugin, "unused-imports": unusedImports },
     rules: { ...tsBaseRules },
   },
 
