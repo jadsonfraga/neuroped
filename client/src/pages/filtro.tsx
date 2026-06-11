@@ -43,6 +43,8 @@ import {
   generateContextualRecommendation,
   getApplicationMode,
   getImplementationStatus,
+  getLiteracyRequirement,
+  getVerbalRequirement,
   SAFE_EMPTY_MESSAGE,
   type FilterContext,
   type RefinedScaleMatch,
@@ -183,6 +185,28 @@ const CLINICAL_TIER_LABEL: Record<RefinedScaleMatch["tier"], string> = {
   conditional: "ajuste condicional",
 };
 
+// Badges de metadados enriquecidos (modo de aplicação + requisitos derivados).
+const APP_MODE_BADGE: Record<string, string> = {
+  questionario_pais: "👨‍👩‍👧 pais",
+  questionario_professor: "👨‍🏫 professor",
+  autoquestionario_crianca_adolescente: "🧒 autorrelato",
+  teste_direto_crianca: "🎯 teste direto",
+  observacional_clinico: "👁️ observação",
+  entrevista_clinica: "🗒️ entrevista",
+  registro_clinico: "📈 registro",
+  psicoeducacao: "📚 psicoeducação",
+};
+function metaBadgesFor(scale: ScaleEntry): string[] {
+  const badges: string[] = [];
+  const mode = APP_MODE_BADGE[getApplicationMode(scale)];
+  if (mode) badges.push(mode);
+  const v = getVerbalRequirement(scale);
+  if (v === "nao_verbal_compativel") badges.push("🙅 não-verbal ok");
+  else if (v === "verbal") badges.push("🗣️ requer fala");
+  if (getLiteracyRequirement(scale) === "alfabetizado") badges.push("📖 requer leitura");
+  return badges;
+}
+
 function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
   const scale = match?.scale;
   // Estado HONESTO vindo do motor (req. 3): aplicação completa vs ficha vs externo.
@@ -210,6 +234,7 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
     warnings: match?.warningFlags ?? [],
     clinicalReason: match?.clinicalReason ?? null,
     implementationStatus: match?.implementationStatus ?? null,
+    metaBadges: scale ? metaBadgesFor(scale) : [],
   };
 }
 
@@ -647,6 +672,11 @@ export default function FiltroPage() {
                     {reasons.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
+                      </div>
+                    )}
+                    {item.metaBadges.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.metaBadges.map((mb) => <Badge key={mb} variant="outline" className="filter-260-badge text-[10px]">{mb}</Badge>)}
                       </div>
                     )}
                     {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}

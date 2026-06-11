@@ -29,6 +29,7 @@ const {
   filterScalesIntelligently,
   generateContextualRecommendation,
   getApplicationMode,
+  getAssessmentUse,
   getLiteracyRequirement,
   getVerbalRequirement,
   SAFE_EMPTY_MESSAGE,
@@ -187,6 +188,14 @@ head("H) Metadados derivados — comunicação e alfabetização");
   // Pictórico/visual-analógico autorrelato NÃO exige leitura (criança aponta)
   const eva = byId("eva-ped");
   if (eva) ok(getLiteracyRequirement(eva) === "indiferente", "EVA pictórica => alfabetização indiferente");
+
+  // assessmentUse: seguimento (reavaliação/evolução) vs override explícito
+  const segScale = { id: "x", name: "Reavaliação X", fullName: "", queixas: ["evolucao"], prioridade: "monitorizacao", respondente: ["clinico"] };
+  ok(getAssessmentUse(segScale) === "seguimento", "queixa evolução/reavaliação => seguimento");
+  const eusm = byId("eusm10");
+  if (eusm) ok(getAssessmentUse(eusm) === "monitorizacao", "EUSM-10 (override explícito) => monitorização");
+  const denver2 = byId("denver");
+  if (denver2) ok(getAssessmentUse(denver2) === "triagem", "Denver (triagem) => triagem");
 
   // Efeito no filtro: criança não-verbal não recebe instrumento que exige verbal,
   // mas recebe os não-verbais compatíveis.

@@ -99,10 +99,17 @@ export function getApplicationMode(scale: ScaleEntry): ApplicationMode {
   return "registro_clinico";
 }
 
-/** Finalidade clínica. Deriva da prioridade quando não declarada. */
+/** Finalidade clínica. Deriva da prioridade/queixa quando não declarada. */
 export function getAssessmentUse(scale: ScaleEntry): AssessmentUse {
   if (scale.assessmentUse) return scale.assessmentUse;
   if (scale.prioridade === "diagnostica") return "diagnostico";
+  // Seguimento (reavaliação/evolução) é distinto de monitorização contínua.
+  const text = `${scale.id} ${scale.name} ${scale.fullName}`.toLowerCase();
+  // NÃO usar "follow" aqui: aparece em nomes (ex.: M-CHAT-R/F "Follow-Up") e
+  // classificaria errado um instrumento de triagem como seguimento.
+  if (scale.queixas.includes("evolucao") || /reavalia[çc]|seguimento|evolu[çc][ãa]o/.test(text)) {
+    return "seguimento";
+  }
   if (scale.prioridade === "monitorizacao") return "monitorizacao";
   return "triagem";
 }
