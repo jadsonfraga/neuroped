@@ -43,8 +43,6 @@ import {
   generateContextualRecommendation,
   getApplicationMode,
   getImplementationStatus,
-  getLiteracyRequirement,
-  getVerbalRequirement,
   SAFE_EMPTY_MESSAGE,
   type FilterContext,
   type RefinedScaleMatch,
@@ -185,28 +183,6 @@ const CLINICAL_TIER_LABEL: Record<RefinedScaleMatch["tier"], string> = {
   conditional: "ajuste condicional",
 };
 
-// Badges de metadados enriquecidos (modo de aplicação + requisitos derivados).
-const APP_MODE_BADGE: Record<string, string> = {
-  questionario_pais: "👨‍👩‍👧 pais",
-  questionario_professor: "👨‍🏫 professor",
-  autoquestionario_crianca_adolescente: "🧒 autorrelato",
-  teste_direto_crianca: "🎯 teste direto",
-  observacional_clinico: "👁️ observação",
-  entrevista_clinica: "🗒️ entrevista",
-  registro_clinico: "📈 registro",
-  psicoeducacao: "📚 psicoeducação",
-};
-function metaBadgesFor(scale: ScaleEntry): string[] {
-  const badges: string[] = [];
-  const mode = APP_MODE_BADGE[getApplicationMode(scale)];
-  if (mode) badges.push(mode);
-  const v = getVerbalRequirement(scale);
-  if (v === "nao_verbal_compativel") badges.push("🙅 não-verbal ok");
-  else if (v === "verbal") badges.push("🗣️ requer fala");
-  if (getLiteracyRequirement(scale) === "alfabetizado") badges.push("📖 requer leitura");
-  return badges;
-}
-
 function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
   const scale = match?.scale;
   // Estado HONESTO vindo do motor (req. 3): aplicação completa vs ficha vs externo.
@@ -234,7 +210,6 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
     warnings: match?.warningFlags ?? [],
     clinicalReason: match?.clinicalReason ?? null,
     implementationStatus: match?.implementationStatus ?? null,
-    metaBadges: scale ? metaBadgesFor(scale) : [],
   };
 }
 
@@ -454,7 +429,7 @@ export default function FiltroPage() {
   }, [hasSearch]);
 
   return (
-    <div className="page-enter container-filtro filter-260-shell mx-auto w-full max-w-4xl px-3 sm:px-4 pb-4 sm:pb-8">
+    <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
       {/* Full-width header */}
       <header className="rounded-[2rem] border border-border/70 bg-card/90 p-3 sm:p-5 shadow-sm backdrop-blur mb-3 sm:mb-5">
         <div className="flex items-start gap-2 sm:gap-3">
@@ -474,11 +449,11 @@ export default function FiltroPage() {
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="text-xl sm:text-2xl font-black text-foreground">{status}</p></CardContent></Card>
       </section>
 
-      {/* Layout centralizado de coluna única: controles em cima, resultados abaixo */}
-      <div className="space-y-4 sm:space-y-6">
+      {/* Two-column grid: Controls (left) + Results (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
 
-        {/* Controles (largura total, centralizados) */}
-        <div className="space-y-3 sm:space-y-4">
+        {/* LEFT COLUMN — Controls (Sticky on Desktop) */}
+        <div className="lg:col-span-1 space-y-3 sm:space-y-4 lg:sticky lg:top-5 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
 
           {/* Search & Filters */}
           <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
@@ -503,10 +478,9 @@ export default function FiltroPage() {
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3">
-            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-[2.75rem] ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
-              {q.emoji && <span className="shrink-0 text-sm leading-none">{q.emoji}</span>}
-              <span className="leading-tight text-[11px] sm:text-xs line-clamp-2">{q.label}</span>
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {queixas.slice(0, 24).map((q) => <button key={q.id} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
+              <span className="truncate text-[11px] sm:text-xs leading-tight">{q.label}</span>
             </button>)}
           </div>
         </div>
@@ -514,7 +488,7 @@ export default function FiltroPage() {
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Respondente</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="teste_direto_crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "teste_direto_crianca" ? null : "teste_direto_crianca")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "teste_direto_crianca" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🧒</span> <span className="hidden sm:inline">Direto</span></button>
+            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🧒</span> <span className="hidden sm:inline">Direto</span></button>
             <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
             <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍🏫</span> <span className="hidden sm:inline">Escola</span></button>
             <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍⚕️</span> <span className="hidden sm:inline">Clínico</span></button>
@@ -580,9 +554,9 @@ export default function FiltroPage() {
       )}
         </div>
 
-        {/* Resultados (coluna única centralizada) */}
+        {/* RIGHT COLUMN — Results (lg:col-span-2) */}
         {hasSearch && (
-      <section ref={resultsSectionRef} className="space-y-3">
+      <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
 
         {/* Síntese clínica do motor de filtragem avançada */}
@@ -675,11 +649,6 @@ export default function FiltroPage() {
                         {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
                       </div>
                     )}
-                    {item.metaBadges.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {item.metaBadges.map((mb) => <Badge key={mb} variant="outline" className="filter-260-badge text-[10px]">{mb}</Badge>)}
-                      </div>
-                    )}
                     {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}
                     <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
                     {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
@@ -700,7 +669,7 @@ export default function FiltroPage() {
         )}
 
         {!hasSearch && (
-        <section className="space-y-5">
+        <section className="lg:col-span-2 space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
