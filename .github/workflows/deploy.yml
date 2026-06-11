@@ -1,10 +1,21 @@
-name: Deploy to Vercel + Railway
+name: Deploy GitHub Pages
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+
+# Necessário para o actions/deploy-pages (OIDC + publicação no Pages)
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita deploys concorrentes do Pages
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -87,31 +98,15 @@ jobs:
   deploy-frontend:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-  deploy-vercel:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to Vercel
-        uses: vercel/action@master
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          production: true
-
-  deploy-railway:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to Railway
-        uses: railwayapp/deploy-action@v1
-        with:
-          railway-token: ${{ secrets.RAILWAY_TOKEN }}
-          service: neuroped
+  # NOTA: jobs deploy-vercel e deploy-railway removidos — referenciavam actions
+  # inexistentes (vercel/action@master, railwayapp/deploy-action@v1) e falhavam
+  # sempre. O backend é publicado pelo Render (render.yaml autoDeploy) e o
+  # frontend pelo GitHub Pages (acima) + Cloudflare Pages (deploy-cloudflare.yml).
