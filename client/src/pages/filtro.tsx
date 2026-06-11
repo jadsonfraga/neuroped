@@ -59,6 +59,30 @@ const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/mai
 // duplicata. CORE_FILTERABLE_CATALOG já o inclui.
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
 
+// Conjunto canônico de ids que abrem como ficha técnica via catch-all
+// (/generic-scale/:id renderiza qualquer escala de allScales — página real).
+const ALL_SCALE_IDS = new Set(allScales.map((s) => s.id));
+
+/**
+ * Rota REAL para a qual uma escala abre (página renderizada de verdade):
+ *  1. appRoute dedicado (validado contra App.tsx pelo guard audit:data — ROUTE_404);
+ *  2. ficha técnica /generic-scale/:id quando o id existe em allScales (catch-all);
+ *  3. catálogo mundial /escalas-neuropsiquiatria para escalas "world-*".
+ * Retorna null quando a escala NÃO abre em lugar nenhum (deve sair do filtro).
+ */
+function resolveAppRoute(scale: ScaleEntry): string | null {
+  if (scale.appRoute) return scale.appRoute;
+  if (ALL_SCALE_IDS.has(scale.id)) return `/generic-scale/${scale.id}`;
+  if (scale.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
+  return null;
+}
+
+// Só permanecem no filtro escalas que ABREM (req. do usuário: "só deverão ficar
+// aquelas que abrem"). Qualquer escala sem rota real é removida do catálogo.
+function opensInApp(scale: ScaleEntry): boolean {
+  return resolveAppRoute(scale) !== null;
+}
+
 function unique(scales: ScaleEntry[]) {
   const seen = new Set<string>();
   return scales.filter((s) => seen.has(s.id) ? false : (seen.add(s.id), true));
@@ -192,11 +216,9 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
   return {
     slot,
     tier: tierFromSlot(slot),
-    // Só leva para a rota quando há aplicação completa; ficha/metadado abre a ficha técnica.
-    route:
-      match?.implementationStatus === "complete" && scale?.appRoute
-        ? scale.appRoute
-        : scale?.appRoute || (scale?.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
+    // Toda escala recomendada abre uma página real: aplicação completa, ficha
+    // técnica (/generic-scale/:id) ou catálogo mundial. Nunca mais o loop /filtro.
+    route: scale ? (resolveAppRoute(scale) ?? "/filtro") : "/filtro",
     title: scale?.name || "Sem escala segura",
     subtitle: scale?.fullName || "Refine idade, queixa ou respondente",
     reason,
@@ -322,7 +344,9 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]), [world]);
+  // Catálogo do filtro = só escalas que ABREM (têm rota real). Escalas sem
+  // destino renderizável são removidas — nunca recomendamos um beco sem saída.
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
@@ -701,7 +725,7 @@ export default function FiltroPage() {
         <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-            <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
+            <Link key={s.id} href={resolveAppRoute(s) ?? "/filtro"} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition cursor-pointer hover:border-primary/30 hover:bg-background">
               <div className="filter-260-card-content compact">
                 <div className="filter-260-head">
                   <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
@@ -714,7 +738,7 @@ export default function FiltroPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ); })}
         </div>
       </section>

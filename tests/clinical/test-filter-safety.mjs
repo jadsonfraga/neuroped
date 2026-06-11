@@ -25,6 +25,7 @@ const imp = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 
 const { allScales } = await imp("client/src/data/scaleFilter.ts");
 const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
+const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
 const {
   filterScalesIntelligently,
   generateContextualRecommendation,
@@ -229,6 +230,69 @@ head('I) "Direto" (teste_direto_crianca) — só testes diretos interativos');
   ok(
     direto.every((m) => getApplicationMode(m.scale) !== "questionario_pais"),
     "'Direto' NÃO traz questionário de pais"
+  );
+}
+
+// ---------- J) Toda escala do filtro ABRE (rota real) ----------
+head("J) Catálogo do filtro — toda escala abre uma página real");
+{
+  // Espelha resolveAppRoute/opensInApp de filtro.tsx: appRoute dedicado, ou
+  // ficha /generic-scale/:id (id ∈ allScales), ou /escalas-neuropsiquiatria (world-*).
+  const allIds = new Set(allScales.map((s) => s.id));
+  const resolveRoute = (s) =>
+    s.appRoute
+      ? s.appRoute
+      : allIds.has(s.id)
+        ? `/generic-scale/${s.id}`
+        : s.id.startsWith("world-")
+          ? "/escalas-neuropsiquiatria"
+          : null;
+
+  // Catálogo como o app monta (CORE + mundiais sem custo), já filtrado por "abre".
+  const seen = new Set();
+  const merged = [...mergeFilterableCatalog(allScales), ...noCostWorldScales].filter(
+    (s) => (seen.has(s.id) ? false : (seen.add(s.id), true))
+  );
+  const filtered = merged.filter((s) => resolveRoute(s) !== null);
+
+  const naoAbrem = filtered.filter((s) => resolveRoute(s) === null);
+  ok(naoAbrem.length === 0, `nenhuma escala do filtro sem rota real (${naoAbrem.length} violações)`);
+  ok(filtered.length > 0, "catálogo filtrado não pode ficar vazio");
+
+  // Simulação de 300 perfis: TODA recomendação do motor abre (nunca o loop /filtro).
+  const queixaPool = [
+    "tea", "tdah", "ansiedade", "depressao", "atraso", "linguagem", "sono",
+    "tique", "comportamento", "cognicao", "aprendizagem", "efeitos", "epilepsia",
+  ];
+  const ageMonthsPool = [3, 9, 18, 24, 36, 48, 60, 84, 108, 132, 156, 180, 204];
+  const respondentePool = [null, "pais", "professor", "clinico", "teste_direto_crianca"];
+  let seed = 1234567;
+  const rng = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const pick = (arr) => arr[Math.floor(rng() * arr.length)];
+
+  let recsComEscala = 0;
+  let recsQueAbrem = 0;
+  const naoAbrePorRec = new Set();
+  for (let i = 0; i < 300; i++) {
+    const nq = 1 + Math.floor(rng() * 2);
+    const qs = Array.from({ length: nq }, () => pick(queixaPool));
+    const matches = filterScalesIntelligently(filtered, {
+      queixas: [...new Set(qs)],
+      selectedSignals: [],
+      ageMonths: pick(ageMonthsPool),
+      respondente: pick(respondentePool),
+    });
+    for (const m of matches.slice(0, 5)) {
+      recsComEscala++;
+      const route = resolveRoute(m.scale);
+      if (route && route !== "/filtro") recsQueAbrem++;
+      else naoAbrePorRec.add(m.scale.id);
+    }
+  }
+  ok(recsComEscala > 0, "simulação 300 perfis deve gerar recomendações");
+  ok(
+    recsQueAbrem === recsComEscala,
+    `toda recomendação abre (${recsQueAbrem}/${recsComEscala}); não abrem: ${[...naoAbrePorRec].slice(0, 10).join(", ")}`
   );
 }
 
