@@ -77,162 +77,172 @@ const AGE_GROUPS: Record<AgeGroup, AgeGroupInfo> = {
 };
 
 // ── Item definitions ───────────────────────────────────────────────────────
-const LEITURA_ITEMS: Record<AgeGroup, string[]> = {
+// Cada item da avaliação acadêmica carrega:
+//  - hab: a habilidade/competência avaliada (frase-critério)
+//  - mat: o MATERIAL CONCRETO a apresentar à criança (texto, palavras, contas)
+//         OU a instrução de como aplicar/observar — para o examinador julgar
+//         diretamente se a criança é capaz (✅ / 🔶 / ❌).
+interface AcademicItem {
+  hab: string;
+  mat: string;
+}
+
+const LEITURA_ITEMS: Record<AgeGroup, AcademicItem[]> = {
   "5-6": [
-    "Reconhece o próprio nome escrito",
-    "Identifica as vogais (A, E, I, O, U)",
-    "Lê sílabas simples (MA, PA, BO)",
-    "Identifica a letra inicial de palavras (B de bola)",
-    "Diferencia letras de números",
-    "Reconhece palavras do cotidiano (PARE, SAÍDA)",
-    "Segue o texto com o dedo ao ouvir leitura",
-    "Reconta história ouvida com sequência lógica",
+    { hab: "Reconhece o próprio nome escrito", mat: "Escreva o nome da criança em letra de forma ao lado de outros 2 nomes e peça que aponte/leia o próprio nome." },
+    { hab: "Identifica as vogais (A, E, I, O, U)", mat: "Mostre e pergunte o nome de cada uma:\nA   E   I   O   U" },
+    { hab: "Lê sílabas simples (MA, PA, BO)", mat: "Peça que leia em voz alta:\nMA · PA · BO · LE · VI · TU · NA · FE" },
+    { hab: "Identifica a letra inicial de palavras (B de bola)", mat: "Pergunte com que letra começa cada palavra:\nBOLA · CASA · DADO · GATO" },
+    { hab: "Diferencia letras de números", mat: "Peça separar letras de números:\nA · 5 · M · 8 · P · 3 · R · 7" },
+    { hab: "Reconhece palavras do cotidiano (PARE, SAÍDA)", mat: "Peça que leia as placas:\nPARE · SAÍDA · BANHEIRO · ABERTO" },
+    { hab: "Segue o texto com o dedo ao ouvir leitura", mat: "Leia uma frase em voz alta e observe se a criança acompanha com o dedo, da esquerda para a direita." },
+    { hab: "Reconta história ouvida com sequência lógica", mat: "Conte: «O cachorro viu um osso, pegou o osso e enterrou no quintal.» Peça que reconte na ordem certa." },
   ],
   "7-8": [
-    "Lê palavras dissílabas (bola, gato)",
-    "Lê palavras trissílabas (banana, macaco)",
-    "Lê frases curtas com compreensão (O gato bebe leite)",
-    "Compreende o que leu — responde perguntas simples",
-    "Lê com fluência mínima (não soletra letra a letra)",
-    "Identifica singular e plural nas palavras lidas",
-    "Reconhece pontuação básica (ponto, interrogação, exclamação)",
-    "Lê texto de 3 linhas sem perder a linha",
+    { hab: "Lê palavras dissílabas (bola, gato)", mat: "Peça que leia:\nbola · gato · mesa · pato · dedo · sapo" },
+    { hab: "Lê palavras trissílabas (banana, macaco)", mat: "Peça que leia:\nbanana · macaco · cabeça · janela · sapato" },
+    { hab: "Lê frases curtas com compreensão (O gato bebe leite)", mat: "Peça que leia em voz alta:\nO gato bebe leite.\nA bola é azul.\nO pato nada no lago." },
+    { hab: "Compreende o que leu — responde perguntas simples", mat: "Após ler «O gato bebe leite», pergunte: O que o gato faz? O que ele bebe?" },
+    { hab: "Lê com fluência mínima (não soletra letra a letra)", mat: "Peça que leia: «A menina tem um cachorro pequeno.» Observe se lê por palavras, sem soletrar." },
+    { hab: "Identifica singular e plural nas palavras lidas", mat: "Pergunte qual indica «mais de um»:\ngato / gatos · flor / flores · casa / casas" },
+    { hab: "Reconhece pontuação básica (ponto, interrogação, exclamação)", mat: "Mostre e pergunte o que cada sinal indica:\nVocê viu?   Que legal!   Eu fui." },
+    { hab: "Lê texto de 3 linhas sem perder a linha", mat: "Peça que leia em voz alta:\nO sol apareceu no céu azul.\nOs pássaros cantaram na árvore.\nAs crianças foram brincar no parque." },
   ],
   "9-10": [
-    "Lê texto de 5+ linhas com fluência",
-    "Identifica a ideia principal do texto",
-    "Responde perguntas de inferência (o que não está explícito)",
-    "Lê palavras irregulares corretamente (hoje, homem, aquele)",
-    "Lê em voz alta com entonação adequada",
-    "Identifica personagens e cenário da história",
-    "Diferencia fato de opinião no texto",
-    "Resume com suas palavras o que leu",
+    { hab: "Lê texto de 5+ linhas com fluência", mat: "Peça que leia em voz alta, observando a fluência:\nEra uma manhã de sábado e o céu estava bem azul.\nPedro acordou cedo e foi andar de bicicleta.\nNo caminho, encontrou o seu amigo João.\nOs dois resolveram brincar na praça perto de casa.\nQuando bateu a fome, voltaram correndo para o almoço." },
+    { hab: "Identifica a ideia principal do texto", mat: "Sobre o texto acima, pergunte: «Do que fala a história?» (esperado: dois amigos que brincam num sábado de manhã)." },
+    { hab: "Responde perguntas de inferência (o que não está explícito)", mat: "Sobre o texto acima: Por que eles voltaram correndo? Em que período do dia a história acontece?" },
+    { hab: "Lê palavras irregulares corretamente (hoje, homem, aquele)", mat: "Peça que leia:\nhoje · homem · aquele · muito · também · exceção" },
+    { hab: "Lê em voz alta com entonação adequada", mat: "Peça que leia respeitando a pontuação:\nQue dia lindo! Vamos passear? Não esqueça o casaco." },
+    { hab: "Identifica personagens e cenário da história", mat: "Sobre o texto acima: Quem são os personagens? Onde a história acontece?" },
+    { hab: "Diferencia fato de opinião no texto", mat: "Peça classificar cada frase:\n«O céu estava azul» (fato) · «Sábado é o melhor dia» (opinião)" },
+    { hab: "Resume com suas palavras o que leu", mat: "Peça que conte o texto acima em 1–2 frases, com as próprias palavras." },
   ],
   "11-12": [
-    "Lê texto informativo com compreensão plena",
-    "Interpreta gráficos e tabelas simples",
-    "Identifica recursos de linguagem (ex.: metáfora)",
-    "Compara informações de fontes diferentes",
-    "Faz inferências complexas além do texto",
-    "Identifica argumento e contra-argumento em textos",
-    "Reconhece e usa vocabulário técnico da área",
-    "Resume texto longo de forma coerente",
+    { hab: "Lê texto informativo com compreensão plena", mat: "Peça que leia e explique:\nA água é essencial para a vida. Ela cobre a maior parte do planeta,\nmas só uma pequena parte é doce e própria para beber. Por isso,\nevitar o desperdício de água é importante para todos." },
+    { hab: "Interpreta gráficos e tabelas simples", mat: "Mostre uma tabela: Seg 10 · Ter 8 · Qua 15 livros lidos. Pergunte: Em que dia leram mais? Quantos a mais que na terça?" },
+    { hab: "Identifica recursos de linguagem (ex.: metáfora)", mat: "Pergunte o sentido de:\n«Ele é um leão na hora de competir.»" },
+    { hab: "Compara informações de fontes diferentes", mat: "Texto A: «choveu o dia todo». Texto B: «o sol apareceu à tarde». Pergunte o que há de diferente entre os dois." },
+    { hab: "Faz inferências complexas além do texto", mat: "«João pegou o guarda-chuva antes de sair.» Pergunte: como estava o tempo? Como você sabe?" },
+    { hab: "Identifica argumento e contra-argumento em textos", mat: "«Devemos usar menos o celular (argumento), mas ele ajuda a estudar (contra-argumento).» Peça que aponte cada um." },
+    { hab: "Reconhece e usa vocabulário técnico da área", mat: "Pergunte o significado de termos escolares: «fração», «sinônimo», «ecossistema»." },
+    { hab: "Resume texto longo de forma coerente", mat: "Após o texto informativo acima, peça um resumo de 2 frases mantendo a ideia central." },
   ],
   "13-14": [
-    "Lê texto argumentativo/jornalístico com compreensão",
-    "Identifica ironia e ambiguidade no texto",
-    "Analisa criticamente o conteúdo lido",
-    "Sintetiza informações de múltiplas fontes",
-    "Identifica o viés ou ponto de vista do autor",
-    "Compreende e usa vocabulário abstrato",
-    "Interpreta texto literário com linguagem figurada",
-    "Produz resumo escrito do texto com qualidade",
+    { hab: "Lê texto argumentativo/jornalístico com compreensão", mat: "Peça que leia e diga a tese:\nA leitura diária amplia o vocabulário e a capacidade de concentração.\nQuem lê com frequência compreende melhor o que estuda e se expressa\ncom mais clareza. Ler, portanto, deveria ser um hábito de todos." },
+    { hab: "Identifica ironia e ambiguidade no texto", mat: "Pergunte o sentido real de:\n«Que ótimo, mais lição de casa para o fim de semana...»" },
+    { hab: "Analisa criticamente o conteúdo lido", mat: "Sobre o texto acima: você concorda com a tese? Que outro argumento daria a favor ou contra?" },
+    { hab: "Sintetiza informações de múltiplas fontes", mat: "Dê 2 manchetes sobre o mesmo tema e peça uma frase que una as duas informações." },
+    { hab: "Identifica o viés ou ponto de vista do autor", mat: "Sobre o texto acima: o autor é a favor ou contra a leitura? Que palavras mostram isso?" },
+    { hab: "Compreende e usa vocabulário abstrato", mat: "Peça que explique com exemplo: «liberdade», «justiça», «responsabilidade»." },
+    { hab: "Interpreta texto literário com linguagem figurada", mat: "Pergunte o sentido de:\n«O tempo voou e a infância ficou para trás.»" },
+    { hab: "Produz resumo escrito do texto com qualidade", mat: "Após o texto acima, peça um resumo escrito de 3–4 linhas, com início, meio e fim." },
   ],
 };
 
-const ESCRITA_ITEMS: Record<AgeGroup, string[]> = {
+const ESCRITA_ITEMS: Record<AgeGroup, AcademicItem[]> = {
   "5-6": [
-    "Escreve o primeiro nome sem modelo",
-    "Copia letras de modelo com legibilidade",
-    "Escreve as vogais por ditado",
-    "Traça formas geométricas básicas (círculo, quadrado, cruz)",
-    "Segura o lápis corretamente (preensão trípode)",
-    "Escreve 5 letras por ditado corretamente",
-    "Separa palavras com espaço ao escrever",
-    "Copia palavra curta do quadro/cartão",
+    { hab: "Escreve o primeiro nome sem modelo", mat: "Peça que escreva o próprio nome numa folha em branco, sem copiar de nenhum modelo." },
+    { hab: "Copia letras de modelo com legibilidade", mat: "Mostre e peça que copie:\nA   M   S   O   E" },
+    { hab: "Escreve as vogais por ditado", mat: "Dite, uma a uma (sem mostrar): A · E · I · O · U" },
+    { hab: "Traça formas geométricas básicas (círculo, quadrado, cruz)", mat: "Peça que desenhe, copiando o modelo:  ○   □   +" },
+    { hab: "Segura o lápis corretamente (preensão trípode)", mat: "Observe a preensão do lápis durante as tarefas de escrita acima (pinça com 3 dedos)." },
+    { hab: "Escreve 5 letras por ditado corretamente", mat: "Dite (sem mostrar): P · L · T · M · B" },
+    { hab: "Separa palavras com espaço ao escrever", mat: "Dite a frase e observe os espaços: «o gato bebe leite»." },
+    { hab: "Copia palavra curta do quadro/cartão", mat: "Mostre num cartão e peça que copie: CASA" },
   ],
   "7-8": [
-    "Escreve o nome completo",
-    "Escreve palavras simples por ditado (bola, pato)",
-    "Diferencia e usa maiúscula/minúscula corretamente",
-    "Escreve frase curta por ditado",
-    "Usa ponto final ao terminar a frase",
-    "Copia texto curto sem erros graves",
-    "Escreve bilhete simples espontaneamente",
-    "Segmenta sílabas ao escrever (pa-to, bo-la)",
+    { hab: "Escreve o nome completo", mat: "Peça que escreva o nome e o sobrenome completos, sem modelo." },
+    { hab: "Escreve palavras simples por ditado (bola, pato)", mat: "Dite (sem mostrar):\nbola · pato · dado · fila · sapo" },
+    { hab: "Diferencia e usa maiúscula/minúscula corretamente", mat: "Dite e observe o uso de maiúscula: «Maria mora em Recife.»" },
+    { hab: "Escreve frase curta por ditado", mat: "Dite a frase completa: «O cachorro corre no parque.»" },
+    { hab: "Usa ponto final ao terminar a frase", mat: "Após o ditado acima, verifique se a criança colocou o ponto final." },
+    { hab: "Copia texto curto sem erros graves", mat: "Peça que copie:\n«Hoje o dia está bonito. Vamos brincar lá fora.»" },
+    { hab: "Escreve bilhete simples espontaneamente", mat: "Peça que escreva um bilhete curto avisando a mãe que foi à casa do amigo." },
+    { hab: "Segmenta sílabas ao escrever (pa-to, bo-la)", mat: "Dite devagar, por sílabas, e observe a segmentação: «ca-va-lo», «bo-ne-ca»." },
   ],
   "9-10": [
-    "Escreve texto narrativo de 5 frases com início, meio e fim",
-    "Usa vírgula e ponto adequadamente",
-    "Escreve palavras com dígrafos (ch, nh, lh) corretamente",
-    "Ortografia adequada em palavras de escrita regular",
-    "Produz texto com coerência e progressão temática",
-    "Organiza o texto em parágrafos",
-    "Acerta ≥70% em ditado de 10 palavras",
-    "Relê e revisa o próprio texto",
+    { hab: "Escreve texto narrativo de 5 frases com início, meio e fim", mat: "Tema: «Um dia na praia». Peça que escreva 5 frases com começo, meio e fim." },
+    { hab: "Usa vírgula e ponto adequadamente", mat: "Dite: «Comprei pão, leite e ovos. Depois voltei para casa.» Verifique vírgulas e pontos." },
+    { hab: "Escreve palavras com dígrafos (ch, nh, lh) corretamente", mat: "Dite (sem mostrar):\nchave · ninho · palha · chuva · banho · folha" },
+    { hab: "Ortografia adequada em palavras de escrita regular", mat: "Dite:\ncavalo · janela · sapato · pipoca · tomate" },
+    { hab: "Produz texto com coerência e progressão temática", mat: "Tema: «Meu animal preferido». Verifique se as frases se conectam e seguem o tema." },
+    { hab: "Organiza o texto em parágrafos", mat: "Após escrever o texto acima, verifique se há divisão em parágrafos." },
+    { hab: "Acerta ≥70% em ditado de 10 palavras", mat: "Dite as 10 palavras:\nbola · escola · amigo · cachorro · janela · livro · pássaro · feliz · trabalho · cidade" },
+    { hab: "Relê e revisa o próprio texto", mat: "Peça que releia o texto que escreveu e corrija o que achar errado. Observe se identifica erros." },
   ],
   "11-12": [
-    "Produz texto dissertativo com tema definido",
-    "Usa concordância verbal e nominal corretamente",
-    "Aplica acentuação gráfica corretamente",
-    "Organiza texto em introdução, desenvolvimento e conclusão",
-    "Usa conectivos adequados (porém, entretanto, portanto)",
-    "Escreve em registro formal quando solicitado",
-    "Produz 10+ linhas com coerência e coesão",
-    "Identifica e corrige erros no próprio texto",
+    { hab: "Produz texto dissertativo com tema definido", mat: "Tema: «A importância de ler livros». Peça um texto curto defendendo um ponto de vista." },
+    { hab: "Usa concordância verbal e nominal corretamente", mat: "Dite: «As crianças brincaram felizes no parque.» Verifique concordância (plural)." },
+    { hab: "Aplica acentuação gráfica corretamente", mat: "Dite:\ncafé · história · médico · sofá · lâmpada · você" },
+    { hab: "Organiza texto em introdução, desenvolvimento e conclusão", mat: "No texto dissertativo acima, verifique se há introdução, desenvolvimento e conclusão." },
+    { hab: "Usa conectivos adequados (porém, entretanto, portanto)", mat: "Peça que complete: «Estudei muito, ____ fui bem na prova.» (esperado: por isso/portanto)." },
+    { hab: "Escreve em registro formal quando solicitado", mat: "Peça que escreva um pedido formal ao diretor da escola solicitando uma quadra nova." },
+    { hab: "Produz 10+ linhas com coerência e coesão", mat: "Tema livre: peça um texto de pelo menos 10 linhas. Verifique se mantém o assunto e a ligação entre as ideias." },
+    { hab: "Identifica e corrige erros no próprio texto", mat: "Peça que releia e revise o texto, marcando e corrigindo erros de ortografia/pontuação." },
   ],
   "13-14": [
-    "Produz texto dissertativo-argumentativo",
-    "Apresenta tese e argumentos articulados",
-    "Mantém coesão textual ao longo do texto",
-    "Domina crase e acentuação com consistência",
-    "Mantém registro formal consistente",
-    "Faz revisão crítica e reescrita do texto",
-    "Produz resumo acadêmico de texto científico",
-    "Escreve 20+ linhas organizadas e coesas",
+    { hab: "Produz texto dissertativo-argumentativo", mat: "Tema: «As redes sociais fazem mais bem ou mal aos jovens?» Peça um texto com tese e argumentos." },
+    { hab: "Apresenta tese e argumentos articulados", mat: "No texto acima, verifique se há uma tese clara apoiada por pelo menos 2 argumentos." },
+    { hab: "Mantém coesão textual ao longo do texto", mat: "Verifique o uso de conectivos e a ligação entre parágrafos no texto produzido." },
+    { hab: "Domina crase e acentuação com consistência", mat: "Dite: «Fui à feira às oito horas e à tarde estudei história.» Verifique crase e acentos." },
+    { hab: "Mantém registro formal consistente", mat: "Verifique se o texto evita gírias/abreviações e mantém linguagem formal do início ao fim." },
+    { hab: "Faz revisão crítica e reescrita do texto", mat: "Peça que releia o próprio texto e reescreva ao menos um trecho para melhorá-lo." },
+    { hab: "Produz resumo acadêmico de texto científico", mat: "Dê um parágrafo informativo e peça um resumo objetivo em 2–3 frases, sem opinião pessoal." },
+    { hab: "Escreve 20+ linhas organizadas e coesas", mat: "Tema dissertativo: peça um texto de 20+ linhas, organizado em parágrafos coesos." },
   ],
 };
 
-const ARITMETICA_ITEMS: Record<AgeGroup, string[]> = {
+const ARITMETICA_ITEMS: Record<AgeGroup, AcademicItem[]> = {
   "5-6": [
-    "Conta até 20 em sequência sem erros",
-    "Reconhece numerais de 1 a 20",
-    "Correspondência número-quantidade até 10",
-    "Compara quantidades (mais/menos, maior/menor)",
-    "Classifica por tamanho (grande, médio, pequeno)",
-    "Completa sequência numérica (o que vem depois do 5?)",
-    "Realiza adição simples com dedos até 5",
-    "Reconhece formas geométricas básicas (círculo, quadrado, triângulo)",
+    { hab: "Conta até 20 em sequência sem erros", mat: "Peça que conte em voz alta de 1 até 20." },
+    { hab: "Reconhece numerais de 1 a 20", mat: "Aponte fora de ordem e pergunte o nome:\n3 · 7 · 12 · 15 · 9 · 20" },
+    { hab: "Correspondência número-quantidade até 10", mat: "Mostre 7 objetos (ou ●●●●●●●) e pergunte «quantos são?»." },
+    { hab: "Compara quantidades (mais/menos, maior/menor)", mat: "Mostre dois grupos: ●●● e ●●●●●. Pergunte qual tem mais." },
+    { hab: "Classifica por tamanho (grande, médio, pequeno)", mat: "Apresente 3 objetos de tamanhos diferentes e peça que ordene do menor ao maior." },
+    { hab: "Completa sequência numérica (o que vem depois do 5?)", mat: "Pergunte:\n1, 2, 3, 4, 5, ___   ·   8, 9, ___" },
+    { hab: "Realiza adição simples com dedos até 5", mat: "Pergunte (pode usar os dedos):\n2 + 1 = ?   ·   3 + 2 = ?" },
+    { hab: "Reconhece formas geométricas básicas (círculo, quadrado, triângulo)", mat: "Mostre e pergunte o nome:  ○   □   △" },
   ],
   "7-8": [
-    "Conta até 100 em sequência",
-    "Realiza adição simples até 20",
-    "Realiza subtração simples até 20",
-    "Resolve problemas orais simples de 1 etapa",
-    "Reconhece dezenas e unidades (23 = 2 dezenas e 3 unidades)",
-    "Completa sequência numérica até 100",
-    "Mede objetos com régua em centímetros",
-    "Identifica horas cheias no relógio analógico",
+    { hab: "Conta até 100 em sequência", mat: "Peça que conte de 10 em 10 até 100: 10, 20, 30..." },
+    { hab: "Realiza adição simples até 20", mat: "Peça que resolva:\n8 + 7 = ?   ·   14 + 5 = ?   ·   9 + 9 = ?" },
+    { hab: "Realiza subtração simples até 20", mat: "Peça que resolva:\n15 − 6 = ?   ·   20 − 8 = ?   ·   13 − 5 = ?" },
+    { hab: "Resolve problemas orais simples de 1 etapa", mat: "«Ana tinha 8 figurinhas e ganhou 5. Com quantas ficou?»" },
+    { hab: "Reconhece dezenas e unidades (23 = 2 dezenas e 3 unidades)", mat: "Pergunte quantas dezenas e unidades há em:\n23 · 47 · 60" },
+    { hab: "Completa sequência numérica até 100", mat: "Complete:\n45, 46, 47, ___   ·   30, 40, 50, ___" },
+    { hab: "Mede objetos com régua em centímetros", mat: "Dê uma régua e peça que meça o comprimento de um lápis em cm." },
+    { hab: "Identifica horas cheias no relógio analógico", mat: "Mostre um relógio marcando 3:00 e pergunte que horas são." },
   ],
   "9-10": [
-    "Domina a tabuada de 2, 3, 4 e 5",
-    "Realiza divisão simples com exatidão",
-    "Resolve problemas com 2 operações",
-    "Opera com números até 1000",
-    "Compreende frações simples (metade, terço, quarto)",
-    "Usa medidas de comprimento, peso e capacidade",
-    "Lê horas e minutos no relógio",
-    "Calcula perímetro de figuras simples",
+    { hab: "Domina a tabuada de 2, 3, 4 e 5", mat: "Pergunte:\n3 × 4 = ?   ·   5 × 6 = ?   ·   2 × 8 = ?   ·   4 × 7 = ?" },
+    { hab: "Realiza divisão simples com exatidão", mat: "Peça que resolva:\n12 ÷ 3 = ?   ·   20 ÷ 4 = ?   ·   18 ÷ 6 = ?" },
+    { hab: "Resolve problemas com 2 operações", mat: "«Comprei 3 pacotes com 6 balas cada e comi 4. Quantas sobraram?»" },
+    { hab: "Opera com números até 1000", mat: "Peça que resolva:\n345 + 278 = ?   ·   600 − 245 = ?" },
+    { hab: "Compreende frações simples (metade, terço, quarto)", mat: "Pergunte: quanto é a metade de 8? E 1/4 de 12?" },
+    { hab: "Usa medidas de comprimento, peso e capacidade", mat: "Pergunte: quantos centímetros há em 1 metro? Quantos gramas em 1 quilo?" },
+    { hab: "Lê horas e minutos no relógio", mat: "Mostre um relógio marcando 3:45 e pergunte que horas são." },
+    { hab: "Calcula perímetro de figuras simples", mat: "«Um quadrado tem lados de 5 cm. Qual é o perímetro (soma dos lados)?»" },
   ],
   "11-12": [
-    "Opera com frações (soma, subtração, multiplicação)",
-    "Opera com números decimais",
-    "Calcula porcentagem simples (10%, 25%, 50%)",
-    "Resolve problemas com múltiplas etapas",
-    "Interpreta gráfico de barras e tabelas",
-    "Calcula área de retângulo e quadrado",
-    "Calcula média aritmética de um conjunto",
-    "Opera com números negativos",
+    { hab: "Opera com frações (soma, subtração, multiplicação)", mat: "Peça que resolva:\n1/2 + 1/4 = ?   ·   3/5 − 1/5 = ?   ·   1/2 × 1/3 = ?" },
+    { hab: "Opera com números decimais", mat: "Peça que resolva:\n2,5 + 1,75 = ?   ·   10 − 3,4 = ?   ·   1,2 × 3 = ?" },
+    { hab: "Calcula porcentagem simples (10%, 25%, 50%)", mat: "Pergunte:\n10% de 200 = ?   ·   25% de 80 = ?   ·   50% de 50 = ?" },
+    { hab: "Resolve problemas com múltiplas etapas", mat: "«Um caderno custa R$ 8 e uma caneta R$ 3. Comprei 2 cadernos e 4 canetas. Quanto gastei?»" },
+    { hab: "Interpreta gráfico de barras e tabelas", mat: "Tabela de vendas: Seg 20 · Ter 35 · Qua 15. Pergunte: qual o total? E o dia de maior venda?" },
+    { hab: "Calcula área de retângulo e quadrado", mat: "«Um retângulo tem 6 cm de base e 4 cm de altura. Qual é a área (base × altura)?»" },
+    { hab: "Calcula média aritmética de um conjunto", mat: "«As notas foram 6, 8 e 10. Qual é a média?»" },
+    { hab: "Opera com números negativos", mat: "Peça que resolva:\n−5 + 8 = ?   ·   3 − 7 = ?   ·   −2 − 4 = ?" },
   ],
   "13-14": [
-    "Resolve equação de 1º grau",
-    "Aplica proporcionalidade e regra de três",
-    "Calcula área e perímetro de figuras variadas",
-    "Interpreta gráficos de setores e linhas",
-    "Realiza potenciação e radiciação básica",
-    "Resolve expressões numéricas com parênteses",
-    "Calcula probabilidade simples",
-    "Resolve problemas com porcentagem composta",
+    { hab: "Resolve equação de 1º grau", mat: "Peça que resolva:\n2x + 3 = 11   ·   5x − 10 = 0" },
+    { hab: "Aplica proporcionalidade e regra de três", mat: "«Se 3 cadernos custam R$ 12, quanto custam 5 cadernos?»" },
+    { hab: "Calcula área e perímetro de figuras variadas", mat: "«Um triângulo tem base 8 cm e altura 5 cm. Qual a área? (base × altura ÷ 2)»" },
+    { hab: "Interpreta gráficos de setores e linhas", mat: "Descreva um gráfico de pizza (50% futebol, 30% vôlei, 20% natação) e pergunte qual esporte é o preferido." },
+    { hab: "Realiza potenciação e radiciação básica", mat: "Pergunte:\n2³ = ?   ·   5² = ?   ·   √49 = ?   ·   √81 = ?" },
+    { hab: "Resolve expressões numéricas com parênteses", mat: "Peça que resolva:\n(8 + 2) × 3 = ?   ·   20 − (4 × 3) = ?" },
+    { hab: "Calcula probabilidade simples", mat: "«Num dado de 6 faces, qual a probabilidade de sair o número 4?»" },
+    { hab: "Resolve problemas com porcentagem composta", mat: "«Um produto de R$ 100 teve 10% de desconto e depois mais 10%. Qual o preço final?»" },
   ],
 };
 
@@ -377,7 +387,7 @@ function DomainTab({
   emoji,
 }: {
   domain: string;
-  items: string[];
+  items: AcademicItem[];
   answers: Answers;
   onChange: (key: string, value: Score) => void;
   domainKey: string;
@@ -445,7 +455,7 @@ function DomainTab({
                   : "border-card-border"
               }`}
             >
-              <CardContent className="p-3.5">
+              <CardContent className="p-3.5 space-y-2.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2.5 flex-1 min-w-0">
                     <span
@@ -461,7 +471,7 @@ function DomainTab({
                     >
                       {idx + 1}
                     </span>
-                    <p className="text-sm text-foreground leading-relaxed">{item}</p>
+                    <p className="text-sm font-medium text-foreground leading-relaxed">{item.hab}</p>
                   </div>
                   <div className="flex-shrink-0">
                     <ScoreButtons
@@ -470,6 +480,13 @@ function DomainTab({
                       itemKey={key}
                     />
                   </div>
+                </div>
+                {/* Material concreto a apresentar à criança (enunciado aplicável) */}
+                <div className="ml-8 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-primary mb-1">
+                    Aplicar / mostrar à criança
+                  </p>
+                  <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{item.mat}</p>
                 </div>
               </CardContent>
             </Card>
@@ -527,7 +544,7 @@ export default function TestesAcademicosPage() {
     leituraItems.forEach((item, i) => {
       const v = answers[`leitura-${i}`] ?? 0;
       items.push({
-        question: `[📖 Leitura] ${item}`,
+        question: `[📖 Leitura] ${item.hab}`,
         answer: v === 2 ? "✅ Correto" : v === 1 ? "🔶 Parcial" : "❌ Incorreto",
         value: v,
       });
@@ -535,7 +552,7 @@ export default function TestesAcademicosPage() {
     escritaItems.forEach((item, i) => {
       const v = answers[`escrita-${i}`] ?? 0;
       items.push({
-        question: `[✏️ Escrita] ${item}`,
+        question: `[✏️ Escrita] ${item.hab}`,
         answer: v === 2 ? "✅ Correto" : v === 1 ? "🔶 Parcial" : "❌ Incorreto",
         value: v,
       });
@@ -543,7 +560,7 @@ export default function TestesAcademicosPage() {
     aritmeticaItems.forEach((item, i) => {
       const v = answers[`aritmetica-${i}`] ?? 0;
       items.push({
-        question: `[🔢 Aritmética] ${item}`,
+        question: `[🔢 Aritmética] ${item.hab}`,
         answer: v === 2 ? "✅ Correto" : v === 1 ? "🔶 Parcial" : "❌ Incorreto",
         value: v,
       });
@@ -586,13 +603,13 @@ export default function TestesAcademicosPage() {
     const domainHeader = (emoji: string, name: string, score: number, pct: number) =>
       `<tr style="background:#f3f0ff;"><td colspan="4" style="padding:8px 10px;font-weight:bold;font-size:10pt;color:#6d28d9;">${emoji} ${name} — ${score}/16 pts (${Math.round(pct)}%)</td></tr>`;
 
-    const itemRows = (items: string[], domainKey: string, emoji: string) =>
+    const itemRows = (items: AcademicItem[], domainKey: string, emoji: string) =>
       items
         .map((item, i) => {
           const v = answers[`${domainKey}-${i}`] ?? 0;
           const ans = v === 2 ? "✅ Correto" : v === 1 ? "🔶 Parcial" : "❌ Incorreto";
           const bg = v === 2 ? "#f0fdf4" : v === 1 ? "#fffbeb" : "#fff1f2";
-          return `<tr style="background:${bg};"><td style="${rowStyle}">${i + 1}</td><td style="${rowStyle}">${item}</td><td style="${rowStyle}">${ans}</td><td style="${rowStyle}">${v}</td></tr>`;
+          return `<tr style="background:${bg};"><td style="${rowStyle}">${i + 1}</td><td style="${rowStyle}">${item.hab}</td><td style="${rowStyle}">${ans}</td><td style="${rowStyle}">${v}</td></tr>`;
         })
         .join("");
 
@@ -1052,7 +1069,7 @@ export default function TestesAcademicosPage() {
                       <span className="flex-shrink-0 text-sm">
                         {v === 2 ? "✅" : v === 1 ? "🔶" : "❌"}
                       </span>
-                      <span className="flex-1 text-foreground">{item}</span>
+                      <span className="flex-1 text-foreground">{item.hab}</span>
                       <span
                         className={`flex-shrink-0 font-bold ${
                           v === 2
