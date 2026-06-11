@@ -345,18 +345,49 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
       return;
     }
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast({ title: "Erro", description: "Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.", variant: "destructive" });
-      return;
+    const html = buildPrintHtml(props);
+
+    // Impressão via iframe OCULTO na própria página — não depende de window.open,
+    // que é bloqueado por pop-up blockers (sobretudo no celular) e era a causa de
+    // "a tela trava e não gera PDF". O diálogo nativo permite "Salvar como PDF".
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+
+    iframe.onload = () => {
+      const win = iframe.contentWindow;
+      if (!win) {
+        // Fallback raríssimo: nova aba (pode pedir liberação de pop-up).
+        const w = window.open("", "_blank");
+        if (w) { w.document.write(html); w.document.close(); w.onload = () => w.print(); }
+        iframe.remove();
+        return;
+      }
+      win.focus();
+      win.print();
+      // Remove o iframe depois que o diálogo de impressão é fechado.
+      const cleanup = () => setTimeout(() => iframe.remove(), 500);
+      win.onafterprint = cleanup;
+      setTimeout(cleanup, 60000); // garantia: remove mesmo se onafterprint não disparar
+    };
+
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
     }
 
-    printWindow.document.write(buildPrintHtml(props));
-    printWindow.document.close();
-    printWindow.onload = () => printWindow.print();
     softBell();
     haptic.notify();
-    toast({ title: "PDF / Impressão", description: "Janela de impressão aberta. Escolha Salvar como PDF para gerar o arquivo com todas as respostas." });
+    toast({ title: "PDF / Impressão", description: "Diálogo de impressão aberto. Escolha “Salvar como PDF” para gerar o arquivo com todas as respostas." });
   }
 
   function handleSendWhatsApp() {
