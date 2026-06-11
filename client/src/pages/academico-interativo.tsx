@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 type AgeGroup = "6-7" | "8-9" | "10-11" | "12-14";
-type Score = 0 | 1 | 2 | null;
+type Score = number | null;
 type Answers = Record<string, Score>;
 
 interface AgeGroupInfo {
@@ -119,7 +119,7 @@ export default function AcademicoInterativo() {
             { title: "Desempenho", content: `${score}/${items.length} acertos (${Math.round((score/items.length)*100)}%)` },
             { title: "Itens Respondidos", content: items.map((item, idx) => {
               const userAnswer = answers[item.id];
-              const isCorrect = userAnswer !== undefined && String(item.correct) === String(item.options?.[userAnswer]);
+              const isCorrect = userAnswer != null && String(item.correct) === String(item.options?.[userAnswer]);
               return `${idx+1}. ${item.question} → ${isCorrect ? '✅' : '❌'}`;
             }).join('\n') },
           ]}

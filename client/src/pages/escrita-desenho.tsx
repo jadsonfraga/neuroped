@@ -11,7 +11,7 @@ import { RotateCcw, CheckCircle2, Pen, Download } from "lucide-react";
 
 type AgeGroup = "3-4" | "5-6" | "8-9" | "10-11";
 type TaskType = "desenho" | "copia" | "escrita";
-type Score = 0 | 1 | 2 | null;
+type Score = number | null;
 
 interface AgeGroupInfo {
   label: string;
@@ -204,7 +204,7 @@ export default function EscritaDesenho() {
     link.click();
   };
 
-  const totalScore = Object.values(scores).reduce((sum, s) => (s ? sum + s : sum), 0);
+  const totalScore = Object.values(scores).reduce<number>((sum, s) => (s ? sum + s : sum), 0);
 
   if (showReport) {
     return (

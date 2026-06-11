@@ -38,7 +38,32 @@ interface DomainResult {
   classification: string;
 }
 
+interface ReportItem {
+  question: string;
+  answer: string;
+  value: number;
+}
+
+// API pública: aceita a forma canônica (scaleName/totalScore/items…) E a forma
+// legada de relatório seccionado (title/sections) usada pelas páginas de teste
+// direto. Os campos canônicos são opcionais; normalizeReportProps consolida.
 interface ClinicalReportProps {
+  scaleName?: string;
+  scaleFullName?: string;
+  totalScore?: number;
+  maxScore?: number;
+  classification?: string;
+  description?: string;
+  domainResults?: DomainResult[];
+  items?: ReportItem[];
+  patientAge?: string;
+  // Forma legada (relatório por seções):
+  title?: string;
+  sections?: { title: string; content: string }[];
+}
+
+// Forma interna garantidamente completa consumida pelo render e helpers.
+interface NormalizedReport {
   scaleName: string;
   scaleFullName?: string;
   totalScore: number;
@@ -46,8 +71,24 @@ interface ClinicalReportProps {
   classification: string;
   description: string;
   domainResults?: DomainResult[];
-  items: { question: string; answer: string; value: number }[];
+  items: ReportItem[];
   patientAge?: string;
+}
+
+function normalizeReportProps(p: ClinicalReportProps): NormalizedReport {
+  const items: ReportItem[] =
+    p.items ?? (p.sections ?? []).map((s) => ({ question: s.title, answer: s.content, value: 0 }));
+  return {
+    scaleName: p.scaleName ?? p.title ?? "Relatório",
+    scaleFullName: p.scaleFullName,
+    totalScore: p.totalScore ?? 0,
+    maxScore: p.maxScore,
+    classification: p.classification ?? "",
+    description: p.description ?? "",
+    domainResults: p.domainResults,
+    items,
+    patientAge: p.patientAge,
+  };
 }
 
 function escapeHtml(value: string | number | undefined) {
@@ -115,7 +156,7 @@ async function sendEmail(
   }
 }
 
-function generateInterpretation(props: ClinicalReportProps): string {
+function generateInterpretation(props: NormalizedReport): string {
   const {
     scaleName,
     scaleFullName,
@@ -181,7 +222,7 @@ function buildWhatsAppText(reportText: string): string {
   return `${reportText.slice(0, WHATSAPP_URL_LIMIT)}\n\n[Relatório completo copiado para a área de transferência. Cole manualmente no WhatsApp para encaminhar todas as respostas.]`;
 }
 
-function buildPrintHtml(props: ClinicalReportProps) {
+function buildPrintHtml(props: NormalizedReport) {
   const dateStr = formatDate();
   const maxVal = Math.max(2, ...props.items.map((it) => it.value));
 
@@ -276,15 +317,14 @@ function buildPrintHtml(props: ClinicalReportProps) {
 </html>`;
 }
 
-export function ClinicalReport(props: ClinicalReportProps) {
+export function ClinicalReport(rawProps: ClinicalReportProps) {
+  const props = normalizeReportProps(rawProps);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const reportText = generateInterpretation(props);
-  const reportReady = Boolean(
-    props.scaleName && props.classification && props.description && props.items.length > 0,
-  );
+  const reportReady = Boolean(props.scaleName && props.items.length > 0);
 
   async function handleCopy() {
     try {

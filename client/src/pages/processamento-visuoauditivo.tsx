@@ -11,7 +11,7 @@ import { RotateCcw, CheckCircle2, Ear } from "lucide-react";
 
 type AgeGroup = "4-5" | "6-7" | "8-9" | "10-12";
 type Difficulty = "facil" | "medio" | "dificil";
-type Score = 0 | 1 | null;
+type Score = number | null;
 type Answers = Record<string, Score>;
 
 interface AgeGroupInfo {

@@ -79,7 +79,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       mainQuestion: "Qual é o nível de desatenção e impulsividade em tarefa de atenção sustentada?",
       parentExample: "A criança verá uma tela com letras aparecendo. Quando vê a letra alvo, pressiona botão. Mede: quantas deixou passar (desatenção) e quantas pressionou errado (impulsividade).",
       whyUseful: "Mede atenção sustentada objetivamente; detecta desatenção mesmo em criança que consegue focar brevemente",
-      appRoute: "/cpt3"
+      appRoute: "/generic-scale/cpt3"
     },
     prata: {
       scaleId: "brief2",
@@ -130,7 +130,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       mainQuestion: "Quão frequentes e problemáticos são os comportamentos de desobediência e hiperatividade em casa?",
       parentExample: "Você marca 36 itens tipo: 'Meu filho é desafiador/brigão' (frequência 1-7) e se é 'problema' sim/não. Exemplos: 'não fica sentado', 'não obedece', 'brinca violentamente'.",
       whyUseful: "Diferencia desobediência opositiva de hiperatividade genuína; mede intensidade E impacto na família",
-      appRoute: "/ecbi"
+      appRoute: "/generic-scale/ecbi"
     },
     prata: {
       scaleId: "cbcl",
@@ -143,7 +143,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       whyUseful: "Visão ampla de comportamento; não apenas TDAH mas também ansiedade/depressão coexistentes"
     },
     bronze: {
-      scaleId: "psq-sono",
+      scaleId: "psq",
       scaleName: "PSQ",
       fullName: "Pediatric Sleep Questionnaire",
       respondente: "pais",
@@ -233,7 +233,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       mainQuestion: "Quanta frequência têm comportamentos de desobediência, agressão e desafio? Quanto afetam a família?",
       parentExample: "36 comportamentos listados: frequência (nunca a sempre) + se é problema. Ex: 'Se nega a fazer o que pede', 'Bate em adultos', 'Muito teimoso', 'Argumenta com tudo'.",
       whyUseful: "Diferencia TOD de defiantismo normal de 2-3 anos; mede impacto familiar (crucial para decisão terapêutica)",
-      appRoute: "/ecbi"
+      appRoute: "/generic-scale/ecbi"
     },
     prata: {
       scaleId: "cbcl",
@@ -335,7 +335,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       mainQuestion: "Qual é o nível preciso de desenvolvimento motor grosso? Há atraso ou risco para PC?",
       parentExample: "Clinician observa criança em diferentes posições (barriga, costas, sentada, pé). Marca marcos alcançados. Converte para percentil por idade.",
       whyUseful: "Padrão-ouro para triagem motor 0-18m; detecta atraso e sinais de risco neurológico",
-      appRoute: "/aims"
+      appRoute: "/generic-scale/aims"
     },
     prata: {
       scaleId: "bayley",

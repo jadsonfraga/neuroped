@@ -43,6 +43,7 @@ import {
   filterScalesIntelligently,
   generateContextualRecommendation,
   getApplicationMode,
+  getImplementationStatus,
   SAFE_EMPTY_MESSAGE,
   type FilterContext,
   type RefinedScaleMatch,
@@ -55,26 +56,9 @@ type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
 const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
+// EUSM-10 agora vive no catálogo canônico (filterableCatalog, id "eusm10") — sem
+// duplicata. CORE_FILTERABLE_CATALOG já o inclui.
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
-
-const EUSM10_FILTER_SCALE: ScaleEntry = {
-  id: "eusm10",
-  name: "EUSM-10",
-  fullName: "Escala Universal de Satisfação com Medicação",
-  ageMin: 0,
-  ageMax: 216,
-  queixas: ["efeitos", "evolucao"],
-  respondente: ["pais", "autoaplicavel", "clinico"],
-  prioridade: "monitorizacao",
-  tempo: "3–5 min",
-  appRoute: "/eusm10",
-  description: "Instrumento breve de 10 itens para acompanhar benefício percebido, tolerabilidade, adesão, segurança familiar e viabilidade prática de qualquer medicação nos últimos 7 a 14 dias. Útil quando há dúvida sobre efeitos colaterais, perda de eficácia, troca de dose, aceitação do paciente ou decisão compartilhada de manter a medicação.",
-  fonte: "Dr. Jadson Fraga, NeuroPed — EUSM-10 (2026)",
-  licencaUso: "autoral",
-  validacaoBrasil: "Autoral — uso clínico local",
-  scoringCutoff: "0–10 muito baixa; 11–20 baixa; 21–28 intermediária; 29–35 boa; 36–40 excelente",
-  pendente_validacao_clinica: false,
-};
 
 function unique(scales: ScaleEntry[]) {
   const seen = new Set<string>();
@@ -298,8 +282,10 @@ function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas
     reasons.push("✓ Respondente: Clínico (observação direta)");
   }
 
-  if (scale.appRoute) reasons.push("✓ Rota direta no app");
-  if (scale.prioridade === "triagem") reasons.push("✓ Padrão-ouro triagem");
+  if (scale.appRoute) {
+    reasons.push(getImplementationStatus(scale) === "complete" ? "✓ Aplicação completa no app" : "✓ Ficha técnica no app");
+  }
+  if (scale.prioridade === "triagem") reasons.push("✓ Instrumento de triagem");
 
   return reasons.length ? reasons : ["✓ Compatibilidade geral"];
 }
@@ -337,7 +323,7 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, EUSM10_FILTER_SCALE, ...world]), [world]);
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
@@ -347,6 +333,7 @@ export default function FiltroPage() {
     return {
       queixas: selectedQueixas,
       ageMonths,
+      ageBand: ageRange ? { min: ageRange.min, max: ageRange.max } : null,
       respondente: selectedRespondente ?? null,
       isVerbal: selectedCommunication === "verbal" ? true : selectedCommunication === "nonverbal" ? false : null,
       isLiterate: selectedLiteracy === "literate" ? true : selectedLiteracy === "preliterate" ? false : null,

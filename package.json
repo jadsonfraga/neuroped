@@ -13,6 +13,7 @@
     "check": "tsc --noEmit",
     "test:clinical": "tsx tests/clinical/test-clinical.mjs",
     "test:filter": "tsx tests/clinical/test-filter-safety.mjs",
+    "audit:data": "tsx scripts/guards/audit-data-integrity.mjs",
     "validate:catalog": "tsx scripts/guards/validate-catalog.mjs",
     "scorecard": "tsx scripts/guards/scorecard.mjs",
     "audit:bundle": "node scripts/audit-bundle.mjs",

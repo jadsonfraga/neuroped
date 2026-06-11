@@ -159,7 +159,7 @@ export function validateAbsoluteRule(
 
   // autorrelato MUST be pergunta (questionnaire-type), not performance test
   if (respondente === "autorrelato") {
-    if (tarefa_tipo === "teste-direto-desempenho") {
+    if (tarefa_tipo.includes("desempenho")) {
       return {
         valid: false,
         error: `VIOLAÇÃO: respondente 'autorrelato' não pode ser 'teste-direto-desempenho'`

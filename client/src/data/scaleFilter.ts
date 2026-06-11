@@ -123,6 +123,7 @@ export const queixas: QueixaCategory[] = [
   { id: "social", label: "Social / Relações", icon: "users", color: "from-blue-500 to-indigo-500", bgLight: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400", emoji: "🤝", appRoute: "/generic-scale/social"},
   { id: "autonomia", label: "Autonomia / AVDs", icon: "home", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-sky-400", emoji: "🏠", appRoute: "/generic-scale/autonomia"},
   { id: "evolucao", label: "Reavaliação / Evolução", icon: "trending-up", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📈", appRoute: "/generic-scale/evolucao"},
+  { id: "substancias", label: "Uso de Substâncias", icon: "wine", color: "from-rose-500 to-pink-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🍷", appRoute: "/generic-scale/substancias"},
 ];
 
 // Faixas etárias para o filtro (em meses)
@@ -178,6 +179,7 @@ export const scales: ScaleEntry[] = [
   { id: "ecbi", name: "ECBI", fullName: "Eyberg Child Behavior Inventory", ageMin: 24, ageMax: 192, queixas: ["comportamento"], respondente: ["pais"], prioridade: "triagem", tempo: "10 min", description: "36 itens de problemas de conduta com escalas de intensidade e problema.", fonte: "Eyberg SM & Ross AW, 1978", validacaoBrasil: "Sim", scoringCutoff: "Intensidade >131; Problema >11 = clínicamente significativo", licencaUso: "comercial", appRoute: "/generic-scale/ecbi"},
   { id: "psc17", name: "PSC-17", fullName: "Pediatric Symptom Checklist 17", ageMin: 48, ageMax: 192, queixas: ["comportamento", "ansiedade", "depressao"], respondente: ["pais"], prioridade: "triagem", tempo: "5 min", description: "Triagem breve de problemas psicossociais em pediatria.", appRoute: "/generic-scale/psc17"},
   { id: "hsq", name: "HSQ", fullName: "Home Situations Questionnaire", ageMin: 48, ageMax: 144, queixas: ["comportamento", "tdah"], respondente: ["pais"], prioridade: "monitorizacao", tempo: "5 min", description: "Avalia problemas de comportamento em 16 situações domésticas.", appRoute: "/generic-scale/hsq"},
+  { id: "psi", name: "PSI", fullName: "Parenting Stress Index", ageMin: 0, ageMax: 144, queixas: ["comportamento", "funcionalidade"], respondente: ["pais"], prioridade: "triagem", tempo: "12–15 min", description: "Mede o estresse parental no sistema pai-criança (domínios da criança, dos pais e situacional). Útil para planejar intervenção familiar.", fonte: "Abidin RR, 1995 (Parenting Stress Index)", validacaoBrasil: "Parcial", scoringCutoff: "percentil >=85 estresse clinicamente significativo", licencaUso: "comercial", appRoute: "/generic-scale/psi"},
 
   // ===== ANSIEDADE =====
   { id: "scared", name: "SCARED", fullName: "Screen for Child Anxiety Related Disorders", ageMin: 96, ageMax: 216, queixas: ["ansiedade"], respondente: ["pais", "autoaplicavel", "crianca"], prioridade: "triagem", tempo: "10 min", appRoute: "/scared", description: "Pânico, ansiedade generalizada, separação, fobia social e evitação escolar.", fonte: "Birmaher B et al., 1997 - University of Pittsburgh", pubmedId: "PMID 9136490", validacaoBrasil: "Sim", scoringCutoff: ">=25 sugere transtorno ansioso", licencaUso: "livre", pendente_validacao_clinica: false },
@@ -282,7 +284,7 @@ export const scales: ScaleEntry[] = [
   { id: "pant", name: "PANT", fullName: "Protocolo de Avaliação do Neurodesenvolvimento Típico — 100 Escalas", ageMin: 0, ageMax: 216, queixas: ["atraso", "funcionalidade", "tea"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "30–60 min", appRoute: "/pant", description: "100 escalas passivas em 5 macrodomínios: comunicação, linguagem, executiva, sensorial, emocional." },
   { id: "emdi", name: "EMDI", fullName: "Escala Médica do Desenvolvimento Infantil", ageMin: 12, ageMax: 72, queixas: ["atraso"], respondente: ["clinico"], prioridade: "triagem", tempo: "10 min", appRoute: "/emdi", description: "Triagem estruturada do desenvolvimento infantil — Bateria Dr. Jadson." },
   { id: "eaf", name: "EAF", fullName: "Escala de Adaptação Funcional", ageMin: 24, ageMax: 216, queixas: ["funcionalidade"], respondente: ["pais", "clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/eaf", description: "Adaptação funcional em contextos diários — Bateria Dr. Jadson." },
-  { id: "pdae", name: "PDAE", fullName: "Protocolo de Desempenho Acadêmico e Escolar", ageMin: 72, ageMax: 216, queixas: ["aprendizagem"], respondente: ["professor", "pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/pdae", description: "Desempenho acadêmico e escolar — Bateria Dr. Jadson." },
+  { id: "pdae", name: "PDAE", fullName: "Protocolo de Desempenho Acadêmico e Escolar", ageMin: 72, ageMax: 216, queixas: ["aprendizagem"], respondente: ["professor", "pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/generic-scale/pdae", description: "Desempenho acadêmico e escolar — Bateria Dr. Jadson." },
   { id: "ecsm", name: "ECSM", fullName: "Escala de Cognição Social e Mentalização", ageMin: 48, ageMax: 216, queixas: ["tea", "cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/ecsm", description: "Cognição social e metacognição — Bateria Dr. Jadson." },
   { id: "ips", name: "IPS", fullName: "Inventário de Processamento Sensorial", ageMin: 24, ageMax: 144, queixas: ["tea", "atraso"], respondente: ["pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/ips", description: "Processamento sensorial — Bateria Dr. Jadson." },
   { id: "edi", name: "EDI-J26", fullName: "Escala de Depressão Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["depressao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/edi", description: "24 itens de depressão infantil — Bateria de Regulação Emocional." },
@@ -378,7 +380,7 @@ export const scales: ScaleEntry[] = [
   { id: "ucla-ptsd", name: "UCLA PTSD-RI", fullName: "UCLA PTSD Reaction Index for DSM-5", ageMin: 84, ageMax: 216, queixas: ["trauma"], respondente: ["autoaplicavel", "clinico"], prioridade: "diagnostica", tempo: "20–30 min", description: "Instrumento estruturado para diagnóstico de TEPT em crianças e adolescentes com sequência de triagem de eventos traumáticos.", appRoute: "/generic-scale/ucla-ptsd"},
   { id: "cries13", name: "CRIES-13", fullName: "Children’s Revised Impact of Event Scale 13", ageMin: 96, ageMax: 216, queixas: ["trauma"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "5 min", description: "13 itens avaliando intrusão, evitação e exitação após eventos traumáticos em crianças.", appRoute: "/generic-scale/cries13"},
   { id: "tscc", name: "TSCC", fullName: "Trauma Symptom Checklist for Children", ageMin: 96, ageMax: 192, queixas: ["trauma"], respondente: ["autoaplicavel"], prioridade: "diagnostica", tempo: "15–20 min", description: "54 itens avaliando angúistia pós-traumática, depressão, ansiedade, raiva, dissociacião e preocupações sexuais.", appRoute: "/generic-scale/tscc"},
-  { id: "ace", name: "ACE", fullName: "Adverse Childhood Experiences Questionnaire", ageMin: 216, ageMax: 216, queixas: ["trauma"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "5 min", description: "10 categorias de experíncias adversas na infância relatadas retrospectivamente por adultos. Forte preditor de desfechos em saúde.", appRoute: "/generic-scale/ace"},
+  { id: "ace", name: "ACE", fullName: "Adverse Childhood Experiences Questionnaire", ageMin: 144, ageMax: 216, queixas: ["trauma"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "5 min", description: "10 categorias de experiências adversas na infância. Em pediatria, aplicável a adolescentes. Forte preditor de desfechos em saúde.", appRoute: "/generic-scale/ace"},
   { id: "csbi", name: "CSBI", fullName: "Child Sexual Behavior Inventory", ageMin: 24, ageMax: 144, queixas: ["trauma", "comportamento"], respondente: ["pais"], prioridade: "diagnostica", tempo: "15 min", description: "38 itens avaliando comportamentos sexuais em crianças de 2 a 12 anos. Identifica comportamentos fora do desenvolvimento normativo.", appRoute: "/generic-scale/csbi"},
   { id: "cdi-screen-trauma", name: "CDI Trauma Screen", fullName: "Child Dissociative Inventory — Screen for Trauma", ageMin: 96, ageMax: 216, queixas: ["trauma"], respondente: ["autoaplicavel", "pais"], prioridade: "triagem", tempo: "5 min", description: "Triagem rápida de sintomas dissociativos e traumáticos em crianças e adolescentes.", appRoute: "/generic-scale/cdi-screen-trauma"},
   { id: "cats", name: "CATS", fullName: "Child and Adolescent Trauma Screen", ageMin: 36, ageMax: 204, queixas: ["trauma"], respondente: ["autoaplicavel", "pais"], prioridade: "triagem", tempo: "5–10 min", description: "Triagem de exposição a traumas e sintomas de TEPT em crianças de 3 a 17 anos, com versões para pais e autoaplicada.", appRoute: "/generic-scale/cats"},
@@ -747,7 +749,7 @@ const allScalesBase: ScaleEntry[] = [
 ];
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
-export const allScales: ScaleEntry[] = allScalesBase.map(escala => {
+const allScalesComDescricoes: ScaleEntry[] = allScalesBase.map(escala => {
   if (descricoesMelhoradas[escala.id]) {
     return {
       ...escala,
@@ -756,6 +758,57 @@ export const allScales: ScaleEntry[] = allScalesBase.map(escala => {
   }
   return escala;
 });
+
+// Deduplicação por id E por nome. O merge de lotes de importação (legado + v25 +
+// open-access + 230 complementares) reintroduzia o MESMO instrumento com ids ou
+// nomes repetidos — gerando ids duplicados (erro estrutural) e cards repetidos no
+// filtro. Aqui consolidamos: mantém a primeira ocorrência e preenche campos
+// ausentes a partir das duplicatas (preferindo rota dedicada sobre /generic-scale).
+function mergeDuplicateScale(keep: ScaleEntry, dup: ScaleEntry): ScaleEntry {
+  const out: ScaleEntry = { ...keep };
+  for (const key of Object.keys(dup) as (keyof ScaleEntry)[]) {
+    const cur = out[key];
+    const isEmpty =
+      cur === undefined ||
+      cur === null ||
+      (typeof cur === "string" && cur.trim() === "") ||
+      (Array.isArray(cur) && cur.length === 0);
+    if (isEmpty) (out as unknown as Record<string, unknown>)[key] = dup[key];
+  }
+  // Preferir uma rota dedicada (aplicação real) sobre uma ficha /generic-scale.
+  if (
+    dup.appRoute &&
+    (!keep.appRoute || (keep.appRoute.startsWith("/generic-scale/") && !dup.appRoute.startsWith("/generic-scale/")))
+  ) {
+    out.appRoute = dup.appRoute;
+  }
+  return out;
+}
+
+function dedupeCatalog(items: ScaleEntry[]): ScaleEntry[] {
+  const result: ScaleEntry[] = [];
+  const idIndex = new Map<string, number>();
+  const nameIndex = new Map<string, number>();
+  for (const s of items) {
+    const nameKey = s.name.trim().toLowerCase();
+    const existing = idIndex.has(s.id) ? idIndex.get(s.id)! : nameIndex.get(nameKey);
+    if (existing !== undefined) {
+      result[existing] = mergeDuplicateScale(result[existing], s);
+      idIndex.set(result[existing].id, existing);
+      nameIndex.set(result[existing].name.trim().toLowerCase(), existing);
+      idIndex.set(s.id, existing);
+      nameIndex.set(nameKey, existing);
+    } else {
+      const idx = result.length;
+      result.push(s);
+      idIndex.set(s.id, idx);
+      nameIndex.set(nameKey, idx);
+    }
+  }
+  return result;
+}
+
+export const allScales: ScaleEntry[] = dedupeCatalog(allScalesComDescricoes);
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
 export function filterScales(

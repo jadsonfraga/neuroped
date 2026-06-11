@@ -10,7 +10,7 @@ import { SaveToPatient } from "@/components/SaveToPatient";
 import { RotateCcw, CheckCircle2, Move } from "lucide-react";
 
 type AgeGroup = "2-3" | "4-5" | "6-7" | "8-9";
-type Score = 0 | 1 | 2 | null;
+type Score = number | null;
 type Answers = Record<string, Score>;
 
 interface AgeGroupInfo {
@@ -174,7 +174,7 @@ export default function MotricidadeTeste() {
   const answered = Object.values(answers).filter(a => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
-  const totalScore = Object.values(answers).reduce((sum, s) => (s ? sum + s : sum), 0);
+  const totalScore = Object.values(answers).reduce<number>((sum, s) => (s ? sum + s : sum), 0);
   const maxScore = tasks.length * 2;
 
   const handleScore = (taskId: string, score: Score) => {

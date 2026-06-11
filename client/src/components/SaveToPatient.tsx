@@ -24,22 +24,26 @@ import {
 } from "lucide-react";
 
 interface SaveToPatientProps {
-  scaleName: string;
-  totalScore: number;
-  classification: string;
-  answers: any;
+  scaleName?: string;
+  totalScore?: number;
+  classification?: string;
+  answers?: any;
   domainScores?: any;
   patientAge?: string;
+  // Forma legada usada pelas páginas de teste direto:
+  testName?: string;
+  data?: any;
 }
 
-export function SaveToPatient({
-  scaleName,
-  totalScore,
-  classification,
-  answers,
-  domainScores,
-  patientAge,
-}: SaveToPatientProps) {
+export function SaveToPatient(rawProps: SaveToPatientProps) {
+  const data = rawProps.data ?? {};
+  const scaleName = rawProps.scaleName ?? rawProps.testName ?? "Teste";
+  const totalScore = rawProps.totalScore ?? data.score ?? data.totalScore ?? 0;
+  const classification = rawProps.classification ?? "";
+  const answers = rawProps.answers ?? data;
+  const domainScores = rawProps.domainScores;
+  const patientAge =
+    rawProps.patientAge ?? (data.ageGroup != null ? String(data.ageGroup) : undefined);
   const { toast } = useToast();
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [newPatientName, setNewPatientName] = useState("");

@@ -89,18 +89,26 @@ export const supplementalFilterableInstruments: ScaleEntry[] = [
     licencaUso: "autoral",
   },
   {
-    id: "escala-satisfacao-medicacao",
-    name: "Escala Satisfação Medicação",
-    fullName: "EUSM-10 — Escala Universal de Satisfação com Medicação",
+    // EUSM-10 canônico (fonte única). Substitui a antiga 'escala-satisfacao-medicacao'
+    // (que duplicava e usava a queixa inexistente "medicacao").
+    id: "eusm10",
+    name: "EUSM-10",
+    fullName: "Escala Universal de Satisfação com Medicação",
     ageMin: 0,
     ageMax: 216,
-    queixas: ["efeitos", "medicacao", "tdah", "tea", "epilepsia", "ansiedade", "depressao", "sono"],
+    queixas: ["efeitos", "evolucao"],
     respondente: ["pais", "autoaplicavel", "clinico"],
     prioridade: "monitorizacao",
     tempo: "3–5 min",
     appRoute: "/eusm10",
-    description: "Escala breve de 10 itens para monitorar benefício percebido, tolerabilidade, adesão, segurança familiar e continuidade da medicação.",
+    description:
+      "Instrumento breve de 10 itens para acompanhar benefício percebido, tolerabilidade, adesão, segurança familiar e viabilidade prática de qualquer medicação nos últimos 7 a 14 dias.",
+    fonte: "Dr. Jadson Fraga, NeuroPed — EUSM-10 (2026)",
     licencaUso: "autoral",
+    validacaoBrasil: "Autoral — uso clínico local",
+    scoringCutoff: "0–10 muito baixa; 11–20 baixa; 21–28 intermediária; 29–35 boa; 36–40 excelente",
+    assessmentUse: "monitorizacao",
+    implementationStatus: "complete",
   },
   {
     id: "orientacao-parental",

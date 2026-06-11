@@ -92,7 +92,7 @@ function DigitSpan({ age, onComplete }: { age: number | null; onComplete: (r: Te
         onComplete({
           id: "digit-span",
           label: "Span de Dígitos",
-          line: `Span direto ${mode === "forward" ? len : maxF} · inverso ${mode === "backward" ? Math.max(maxB, 0) : maxB} dígitos`,
+          line: `Span direto ${maxF} · inverso ${Math.max(maxB, 0)} dígitos`,
         });
       }
     }

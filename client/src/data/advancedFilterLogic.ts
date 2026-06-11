@@ -19,7 +19,8 @@ export const SAFE_EMPTY_MESSAGE =
 
 export interface FilterContext {
   queixas: string[];
-  ageMonths: number | null; // null = faixa etária não selecionada (sem restrição de idade)
+  ageMonths: number | null; // representativo (midpoint da faixa) — usado em score e limiares de bloqueio
+  ageBand?: { min: number; max: number } | null; // faixa selecionada em meses — usada para SOBREPOSIÇÃO de idade
   respondente?: Respondente | null;
   isVerbal?: boolean | null; // a criança é verbal?
   isLiterate?: boolean | null; // a criança é alfabetizada?
@@ -132,8 +133,13 @@ function isPsychosisInstrument(scale: ScaleEntry): boolean {
 export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string | null {
   const age = ctx.ageMonths;
 
-  // Idade fora do range declarado da escala (obrigatório quando idade informada).
-  if (age !== null && (age < scale.ageMin || age > scale.ageMax)) {
+  // Idade fora do range do instrumento. Com faixa (ageBand) usa SOBREPOSIÇÃO
+  // (a escala cobre algum ponto da faixa selecionada) — restaura a semântica
+  // correta e evita excluir escalas estreitas/neonatais que tangenciam a faixa.
+  if (ctx.ageBand) {
+    const overlaps = scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
+    if (!overlaps) return "Fora da faixa etária do instrumento";
+  } else if (age !== null && (age < scale.ageMin || age > scale.ageMax)) {
     return "Fora da faixa etária do instrumento";
   }
 

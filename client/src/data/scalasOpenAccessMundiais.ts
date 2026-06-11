@@ -11,7 +11,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     name: "TSSTD",
     fullName: "Tourette Syndrome Severity Scale",
     ageMin: 72,
-    ageMax: 1080,
+    ageMax: 216, // corrigido: app pediátrico (era 1080m = 90 anos)
     queixas: ["tiques"],
     respondente: ["clinico"],
     prioridade: "triagem",
@@ -171,7 +171,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     name: "PQ-B",
     fullName: "Prodromal Questionnaire-Brief",
     ageMin: 144,
-    ageMax: 420,
+    ageMax: 216, // corrigido: cap pediátrico (era 420m)
     queixas: ["psicose"],
     respondente: ["autoaplicavel"],
     prioridade: "triagem",
@@ -201,7 +201,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     name: "PLIKSi",
     fullName: "Prodromal Questionnaire - Including Schizotypal and Pervasive Patterns",
     ageMin: 132,
-    ageMax: 228,
+    ageMax: 216, // corrigido: cap pediátrico (era 228m)
     queixas: ["psicose"],
     respondente: ["autoaplicavel"],
     prioridade: "triagem",
@@ -218,7 +218,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     name: "RFL-A",
     fullName: "Reasons for Living Inventory - Adolescent Version",
     ageMin: 156,
-    ageMax: 288,
+    ageMax: 216, // corrigido: cap pediátrico (era 288m)
     queixas: ["suicidio"],
     respondente: ["autoaplicavel"],
     prioridade: "diagnostica",
@@ -233,7 +233,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     name: "SBQ-R",
     fullName: "Suicidal Behaviors Questionnaire-Revised",
     ageMin: 156,
-    ageMax: 600,
+    ageMax: 216, // corrigido: cap pediátrico (era 600m)
     queixas: ["suicidio"],
     respondente: ["autoaplicavel"],
     prioridade: "triagem",

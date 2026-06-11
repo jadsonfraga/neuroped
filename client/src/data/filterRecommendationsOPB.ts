@@ -120,7 +120,7 @@ export const recommendationsOPB: QueixaAgeRecommendations[] = [
     },
     prata: {
       seal: "prata",
-      scaleId: "cars2",
+      scaleId: "cars",
       scaleName: "CARS-2 (Parent Interview)",
       mainQuestion: "Como são as características autísticas em contexto de casa?",
       parentExample: 'Conversa estruturada sobre: "Como é a qualidade da interação com você?", "Tem padrões repetitivos?"',
@@ -154,7 +154,7 @@ export const recommendationsOPB: QueixaAgeRecommendations[] = [
     },
     prata: {
       seal: "prata",
-      scaleId: "cars2",
+      scaleId: "cars",
       scaleName: "CARS-2 (Entrevista)",
       mainQuestion: "Informações detalhadas sobre histórico de desenvolvimento e comportamentos autísticos?",
       parentExample: 'Perguntas sobre: "Quando você notou diferenças?", "Como ele brinca com outras crianças?", "Tem rotinas rígidas?"',
@@ -421,7 +421,7 @@ export const recommendationsOPB: QueixaAgeRecommendations[] = [
     ageMax: 72,
     ouro: {
       seal: "ouro",
-      scaleId: "tde2",
+      scaleId: "tde2-adaptado",
       scaleName: "TDE-2 (Teste de Desempenho Escolar)",
       mainQuestion: "Está atingindo marcos acadêmicos esperados para pré-escolar?",
       parentExample: 'Testes simples: "Consegue reconhecer letras?", "Copia triângulo/quadrado?", "Lê palavras simples?"',
@@ -455,7 +455,7 @@ export const recommendationsOPB: QueixaAgeRecommendations[] = [
     ageMax: 144,
     ouro: {
       seal: "ouro",
-      scaleId: "tde2",
+      scaleId: "tde2-adaptado",
       scaleName: "TDE-2",
       mainQuestion: "Qual é o padrão específico: dislexia, disgrafia ou discalculia?",
       parentExample: 'Avalia: leitura (reconhecimento de palavras), escrita (ditado), aritmética (cálculo)',
@@ -646,7 +646,7 @@ export const recommendationsOPB: QueixaAgeRecommendations[] = [
     },
     bronze: {
       seal: "bronze",
-      scaleId: "tde2",
+      scaleId: "tde2-adaptado",
       scaleName: "TDE-2",
       mainQuestion: "O problema motor está afetando escrita e acadêmicos?",
       parentExample: 'Subtestes de escrita: "Consegue escrever letras?", "Consegue copiar frases?", "Consegue fazer cálculos?"',
