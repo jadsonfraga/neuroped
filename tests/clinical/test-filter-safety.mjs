@@ -29,6 +29,8 @@ const {
   filterScalesIntelligently,
   generateContextualRecommendation,
   getApplicationMode,
+  getLiteracyRequirement,
+  getVerbalRequirement,
   SAFE_EMPTY_MESSAGE,
 } = await imp("client/src/data/advancedFilterLogic.ts");
 const { guessQueixas } = await imp("client/src/data/queixaMapping.ts");
@@ -158,6 +160,48 @@ head("G) ASQ — desenvolvimento vs suicídio");
 
   const asqAlone = guessQueixas("", "ASQ");
   ok(!asqAlone.includes("suicidio"), "'ASQ' isolado NÃO deve virar suicídio automaticamente");
+}
+
+// ---------- H) Metadados enriquecidos (verbal/alfabetização derivados) ----------
+head("H) Metadados derivados — comunicação e alfabetização");
+{
+  const byId = (id) => catalog.find((s) => s.id === id);
+  // Não-verbal compatível: testes cognitivos não-verbais
+  for (const id of ["leiter3", "raven", "toni4"]) {
+    const s = byId(id);
+    if (s) ok(getVerbalRequirement(s) === "nao_verbal_compativel", `${id} => não-verbal compatível`);
+  }
+  // Verbal: avaliação direta de linguagem expressiva/fluência
+  const fas = byId("fas-fluencia");
+  if (fas) ok(getVerbalRequirement(fas) === "verbal", "FAS (fluência verbal) => requer verbal");
+  // Autorrelato => requer alfabetização
+  for (const id of ["cdi2", "phqa"]) {
+    const s = byId(id);
+    if (s) ok(getLiteracyRequirement(s) === "alfabetizado", `${id} (autorrelato) => requer alfabetização`);
+  }
+  // Questionário de pais NÃO exige alfabetização da criança
+  for (const id of ["mchat", "cbcl", "scared"]) {
+    const s = byId(id);
+    if (s) ok(getLiteracyRequirement(s) === "indiferente", `${id} (pais) => alfabetização indiferente`);
+  }
+  // Pictórico/visual-analógico autorrelato NÃO exige leitura (criança aponta)
+  const eva = byId("eva-ped");
+  if (eva) ok(getLiteracyRequirement(eva) === "indiferente", "EVA pictórica => alfabetização indiferente");
+
+  // Efeito no filtro: criança não-verbal não recebe instrumento que exige verbal,
+  // mas recebe os não-verbais compatíveis.
+  const nonVerbalCog = run({ queixas: ["cognicao"], ageMonths: 96, isVerbal: false });
+  ok(
+    nonVerbalCog.every((m) => getVerbalRequirement(m.scale) !== "verbal"),
+    "criança não-verbal: nenhum instrumento que exige fala é recomendado"
+  );
+
+  // Efeito no filtro: criança pré-alfabetizada não recebe autorrelato que exige leitura.
+  const preLit = run({ queixas: ["depressao"], ageMonths: 108, isLiterate: false });
+  ok(
+    preLit.every((m) => getLiteracyRequirement(m.scale) !== "alfabetizado"),
+    "criança pré-alfabetizada: nenhum instrumento que exige leitura é recomendado"
+  );
 }
 
 // ---------- Resumo ----------

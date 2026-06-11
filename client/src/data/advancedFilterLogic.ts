@@ -107,6 +107,46 @@ export function getAssessmentUse(scale: ScaleEntry): AssessmentUse {
   return "triagem";
 }
 
+/**
+ * Exigência de alfabetização. Regra conservadora:
+ *  - autoquestionário (a criança lê e responde sozinha) => requer alfabetização,
+ *    EXCETO instrumentos pictóricos/de faces (a criança aponta figura);
+ *  - demais modos (pais/professor/clínico/teste direto observacional) => indiferente.
+ * Override explícito (scale.literacyRequirement) sempre tem prioridade.
+ */
+export function getLiteracyRequirement(scale: ScaleEntry): "indiferente" | "alfabetizado" | "pre_alfabetizado" {
+  if (scale.literacyRequirement) return scale.literacyRequirement;
+  const text = `${scale.id} ${scale.name} ${scale.fullName}`.toLowerCase();
+  const pictorial = /faces|wong|baker|visual.?anal|pict[óo]ric|figura|emoji|smiley|flacc/.test(text);
+  if (getApplicationMode(scale) === "autoquestionario_crianca_adolescente" && !pictorial) {
+    return "alfabetizado";
+  }
+  return "indiferente";
+}
+
+/**
+ * Exigência de linguagem verbal. Regra conservadora:
+ *  - testes cognitivos NÃO-verbais (Leiter/Raven/TONI/matrizes) => nao_verbal_compativel
+ *    (devem aparecer justamente para crianças não-verbais);
+ *  - avaliação DIRETA de linguagem expressiva/fala/nomeação => verbal
+ *    (a criança precisa falar);
+ *  - demais => indiferente.
+ * Override explícito (scale.verbalRequirement) sempre tem prioridade.
+ */
+export function getVerbalRequirement(scale: ScaleEntry): "indiferente" | "verbal" | "nao_verbal_compativel" {
+  if (scale.verbalRequirement) return scale.verbalRequirement;
+  const text = `${scale.id} ${scale.name} ${scale.fullName}`.toLowerCase();
+  if (/leiter|raven|toni|matriz|n[aã]o-?verbal|nonverbal|naglieri|\bwnv\b|pictorial/.test(text)) {
+    return "nao_verbal_compativel";
+  }
+  const mode = getApplicationMode(scale);
+  const childPerforms = mode === "teste_direto_crianca" || mode === "observacional_clinico" || mode === "autoquestionario_crianca_adolescente";
+  if (childPerforms && /flu[êe]ncia verbal|linguagem (expressiva|oral)|express[ãa]o oral|nomea[çc][ãa]o|vocabul[áa]rio expressivo|articula[çc]|fonol[óo]gic|narrativ|fala\b/.test(text)) {
+    return "verbal";
+  }
+  return "indiferente";
+}
+
 // ============ CLASSIFICAÇÃO CLÍNICA AUXILIAR ============
 
 function isSuicideInstrument(scale: ScaleEntry): boolean {
@@ -160,15 +200,14 @@ export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string
     return "Autoaplicável requer ≥ 8 anos";
   }
 
-  // Alfabetização obrigatória.
-  const litReq = scale.literacyRequirement ?? "indiferente";
-  if (litReq === "alfabetizado") {
+  // Alfabetização obrigatória (metadado derivado quando não declarado).
+  if (getLiteracyRequirement(scale) === "alfabetizado") {
     if (ctx.isLiterate === false) return "Requer criança alfabetizada";
     if (ctx.isLiterate == null && age !== null && age < 72) return "Requer alfabetização";
   }
 
-  // Linguagem verbal obrigatória.
-  if ((scale.verbalRequirement ?? "indiferente") === "verbal" && ctx.isVerbal === false) {
+  // Linguagem verbal obrigatória (metadado derivado quando não declarado).
+  if (getVerbalRequirement(scale) === "verbal" && ctx.isVerbal === false) {
     return "Requer linguagem verbal";
   }
 

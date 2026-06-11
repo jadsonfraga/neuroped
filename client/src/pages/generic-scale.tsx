@@ -4,7 +4,42 @@ import { ArrowLeft, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales } from "@/data/scaleFilter";
-import { getImplementationStatus, getImplementationLabel } from "@/data/advancedFilterLogic";
+import {
+  getImplementationStatus,
+  getImplementationLabel,
+  getApplicationMode,
+  getAssessmentUse,
+  getLiteracyRequirement,
+  getVerbalRequirement,
+} from "@/data/advancedFilterLogic";
+
+const APPLICATION_MODE_LABEL: Record<string, string> = {
+  questionario_pais: "Questionário — pais/cuidador",
+  questionario_professor: "Questionário — professor/escola",
+  autoquestionario_crianca_adolescente: "Autorrelato — criança/adolescente",
+  teste_direto_crianca: "Teste direto com a criança",
+  observacional_clinico: "Observação clínica",
+  entrevista_clinica: "Entrevista clínica",
+  registro_clinico: "Registro/monitorização clínica",
+  psicoeducacao: "Psicoeducação",
+};
+const ASSESSMENT_USE_LABEL: Record<string, string> = {
+  triagem: "Triagem",
+  diagnostico: "Apoio diagnóstico",
+  monitorizacao: "Monitorização",
+  seguimento: "Seguimento",
+  psicoeducacao: "Psicoeducação",
+};
+const LITERACY_LABEL: Record<string, string> = {
+  indiferente: "Indiferente",
+  alfabetizado: "Requer alfabetização",
+  pre_alfabetizado: "Pré-alfabetizada",
+};
+const VERBAL_LABEL: Record<string, string> = {
+  indiferente: "Indiferente",
+  verbal: "Requer linguagem verbal",
+  nao_verbal_compativel: "Compatível com não-verbal",
+};
 
 export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
@@ -176,6 +211,33 @@ export default function GenericScalePage() {
                 <p className="text-slate-400 italic">{scale.fonte}</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Aplicação — metadados clínicos (derivados quando não declarados) */}
+        <Card className="bg-slate-800/80 border-slate-700 mb-6">
+          <CardHeader className="border-b border-slate-700">
+            <CardTitle className="text-white">Aplicação</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Modo</p>
+                <p className="text-sm font-semibold text-slate-200">{APPLICATION_MODE_LABEL[getApplicationMode(scale)] ?? getApplicationMode(scale)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Finalidade</p>
+                <p className="text-sm font-semibold text-slate-200">{ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ?? getAssessmentUse(scale)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Comunicação</p>
+                <p className="text-sm font-semibold text-slate-200">{VERBAL_LABEL[getVerbalRequirement(scale)]}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Alfabetização</p>
+                <p className="text-sm font-semibold text-slate-200">{LITERACY_LABEL[getLiteracyRequirement(scale)]}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
