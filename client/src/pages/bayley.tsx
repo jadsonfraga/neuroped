@@ -9,9 +9,9 @@ import { useState } from "react";
 import { allScales } from "@/data/scaleFilter";
 
 const SCALE_CONFIG = {
-  id: ""bayley"", // ex: "bayley"
-  name: ""Bayley-III"", // ex: "Bayley-III"
-  fullName: ""Bayley-III"", // ex: "Bayley Scales of Infant Development III"
+  id: "bayley", // ex: "bayley"
+  name: "Bayley-III", // ex: "Bayley-III"
+  fullName: "Bayley-III", // ex: "Bayley Scales of Infant Development III"
   whenToUse: [
     "✅ Indicação 1",
     "✅ Indicação 2",

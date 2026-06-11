@@ -6,7 +6,7 @@ import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
-export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel";
+export type Respondente = "pais" | "clinico" | "professor" | "autoaplicavel" | "crianca";
 
 export type Licenca = "passiva" | "ativa" | "mista";
 
@@ -36,6 +36,11 @@ export interface ScaleEntry {
   validacaoBrasil?: string;            // status de adaptação/validação brasileira
   scoringCutoff?: string;              // ponto de corte / interpretação de escore
   licencaUso?: "livre" | "comercial" | "restrita" | "contato_autor" | "autoral"; // licenciamento de uso
+  // Metadados clínicos consumidos pelo motor de filtragem avançada (advancedFilterLogic).
+  // Quando ausentes, o filtro de comunicação/alfabetização/tipo é tratado como permissivo.
+  verbal?: boolean;                    // exige resposta verbal da criança (false = aplicável a não-verbais)
+  alphabetic?: boolean;                // exige alfabetização (false = aplicável a pré-alfabetizados)
+  assessment_type?: "diagnostic" | "monitoring" | "both"; // finalidade clínica predominante
 }
 
 export interface QueixaCategory {

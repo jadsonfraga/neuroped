@@ -5,7 +5,7 @@ import { type ScaleEntry } from "./scaleFilter";
 
 export interface FilterContext {
   queixas: string[];
-  ageMonths: number;
+  ageMonths: number | null; // null = faixa etária não selecionada (sem restrição de idade)
   respondente?: string;
   verbal?: boolean;
   alphabetic?: boolean;
@@ -22,64 +22,6 @@ export interface RefinedScaleMatch {
   tier: "gold" | "silver" | "bronze" | "conditional";
   confidenceLevel: number; // 0-100
 }
-
-// ============ HEURÍSTICAS CLÍNICAS ============
-
-const clinicalHeuristics = {
-  // TDAH patterns
-  tdah: {
-    essential: ["hiperatividade", "impulsividade", "desatenção"],
-    preferredScales: ["snap", "conners", "brief2"],
-    requiresAge: 72, // 6+ anos
-    noYoungerThan: "PRE-SCHOOL use general behavior scales",
-    excludeIfPresent: ["tics", "tourette", "psychosis"],
-  },
-
-  // TEA patterns
-  tea: {
-    essential: ["social-deficit", "communication-deficit", "repetitive-behavior"],
-    preferredScales: ["ados2", "mchat", "cars2"],
-    requiresAge: 16, // 16+ meses
-    goldStandard: {
-      age: "6-12m": "mchat",
-      age: "12-30m": "mchat",
-      age: "30m+": "ados2",
-    },
-    excludeIfPresent: ["global-delay-only"],
-  },
-
-  // Development Delay
-  atraso: {
-    essential: ["motor-delay", "cognitive-delay", "language-delay"],
-    preferredScales: ["bayley", "denver", "griffiths"],
-    requiresAge: 0,
-    maxAge: 72, // Usually for early intervention
-    alertIfPresent: ["autism-traits", "hearing-loss"],
-  },
-
-  // Anxiety
-  ansiedade: {
-    essential: ["worry", "avoidance", "panic-symptoms"],
-    preferredScales: ["scared", "rcads"],
-    requiresAge: 96, // 8+ anos
-    ageSpecific: {
-      "96-144": "screening-focused",
-      "144+": "diagnostic-preferred",
-    },
-  },
-
-  // Behavior/Conduct
-  comportamento: {
-    essential: ["aggression", "defiance", "rule-breaking"],
-    preferredScales: ["cbcl", "ecbi", "sdq"],
-    requiresAge: 18,
-    contextMatters: {
-      home: "ecbi",
-      school: "sdq",
-      general: "cbcl",
-    },
-  },
-};
 
 // ============ SCORING REFINADO ============
 
@@ -143,6 +85,11 @@ function calculateAgeScore(
   context: FilterContext
 ): { points: number; reason: string } {
   const { ageMonths } = context;
+
+  // Sem idade selecionada: pontuação neutra (não penaliza nem privilegia)
+  if (ageMonths === null) {
+    return { points: 25, reason: "Idade não especificada" };
+  }
 
   // Fora do range: 0 pontos
   if (ageMonths < scale.ageMin || ageMonths > scale.ageMax) {
@@ -222,15 +169,15 @@ function calculateClinicalAppropriatenesss(
   // Check contra-indicações clínicas
   const scaleId = scale.id.toLowerCase();
 
-  if (scaleId.includes("suicide") || scaleId.includes("ecar-si")) {
-    if (context.ageMonths < 96) {
+  if (scaleId.includes("suicide") || scaleId.includes("suicidio") || scaleId.includes("ecar-si")) {
+    if (context.ageMonths !== null && context.ageMonths < 96) {
       warning = "⚠️ Escala de suicídio requer 8+ anos";
       points -= 10;
     }
   }
 
-  if (scaleId.includes("psychosis") || scaleId.includes("sips") || scaleId.includes("panss")) {
-    if (context.ageMonths < 144) {
+  if (scaleId.includes("psychosis") || scaleId.includes("psicose") || scaleId.includes("sips") || scaleId.includes("panss")) {
+    if (context.ageMonths !== null && context.ageMonths < 144) {
       warning = "⚠️ Escala de psicose requer 12+ anos";
       points -= 10;
     }
@@ -247,7 +194,7 @@ function calculateRespondentFit(
     return { points: 5, reason: "Sem filtro de respondente" };
   }
 
-  if (scale.respondentes.includes(context.respondente)) {
+  if (scale.respondente.includes(context.respondente as ScaleEntry["respondente"][number])) {
     return { points: 10, reason: `Respondente: ${context.respondente}` };
   } else {
     return { points: 0, reason: `Respondente não disponível: ${context.respondente}` };
@@ -298,8 +245,8 @@ export function filterScalesIntelligently(
 ): RefinedScaleMatch[] {
   // 1. Basic filtering (must match)
   const candidates = scales.filter((scale) => {
-    // Must have age overlap
-    if (context.ageMonths < scale.ageMin || context.ageMonths > scale.ageMax) {
+    // Must have age overlap (idade não selecionada => sem restrição)
+    if (context.ageMonths !== null && (context.ageMonths < scale.ageMin || context.ageMonths > scale.ageMax)) {
       return false;
     }
 
@@ -311,7 +258,7 @@ export function filterScalesIntelligently(
     }
 
     // Must have respondent if specified
-    if (context.respondente && !scale.respondentes.includes(context.respondente)) {
+    if (context.respondente && !scale.respondente.includes(context.respondente as ScaleEntry["respondente"][number])) {
       return false;
     }
 

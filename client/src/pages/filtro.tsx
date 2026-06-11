@@ -38,6 +38,12 @@ import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { getOPBRecommendations } from "@/data/filterRecommendationsOPB";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
+import {
+  filterScalesIntelligently,
+  generateContextualRecommendation,
+  type FilterContext,
+  type RefinedScaleMatch,
+} from "@/data/advancedFilterLogic";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
@@ -256,7 +262,14 @@ function tierFromSlot(slot: Slot): Tier | null {
   return null;
 }
 
-function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string) {
+const CLINICAL_TIER_LABEL: Record<RefinedScaleMatch["tier"], string> = {
+  gold: "ajuste clínico ouro",
+  silver: "ajuste clínico prata",
+  bronze: "ajuste clínico bronze",
+  conditional: "ajuste condicional",
+};
+
+function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string, match?: RefinedScaleMatch) {
   const restricted = scale?.licencaUso === "restrita" || scale?.licencaUso === "comercial" || scale?.licencaUso === "contato_autor";
   return {
     slot,
@@ -268,6 +281,11 @@ function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: st
     state: scale?.appRoute ? "Rota direta disponível." : restricted ? "Ficha clínica; não embutir itens/escore sem permissão formal." : "Catálogo filtrável; aplicação direta ainda não implementada.",
     source: scale?.fonte,
     tone,
+    // Saída do motor de filtragem avançada (advancedFilterLogic)
+    clinicalTier: match ? CLINICAL_TIER_LABEL[match.tier] : null,
+    confidence: match?.confidenceLevel ?? null,
+    warnings: match?.warningFlags ?? [],
+    clinicalReason: match?.clinicalReason ?? null,
   };
 }
 
@@ -389,14 +407,50 @@ export default function FiltroPage() {
     return rankedPool.find((s) => s.id === detectedPattern.goldStandard);
   }, [detectedPattern, rankedPool]);
 
+  // === MOTOR DE FILTRAGEM AVANÇADA ===
+  // Constrói o contexto clínico a partir dos filtros da tela e deixa o
+  // advancedFilterLogic pontuar cada candidato (tier, confiança, alertas de segurança).
+  const filterContext = useMemo<FilterContext>(() => {
+    const ageRange = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
+    const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
+    return {
+      queixas: selectedQueixas,
+      ageMonths,
+      respondente: selectedRespondente ?? undefined,
+      verbal: selectedCommunication === "verbal" ? true : selectedCommunication === "nonverbal" ? false : undefined,
+      alphabetic: selectedLiteracy === "literate" ? true : selectedLiteracy === "preliterate" ? false : undefined,
+      assessmentType: selectedAssessmentType ?? undefined,
+      selectedSignals: selectedSignalIds,
+    };
+  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
+
+  const refinedMatches = useMemo(() => filterScalesIntelligently(rankedPool, filterContext), [rankedPool, filterContext]);
+  const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
+  const clinicalRecommendation = useMemo(() => generateContextualRecommendation(refinedMatches), [refinedMatches]);
+
+  // Ordenação clínica: relevância > tier > rota direta disponível (desempate por usabilidade).
+  const tierRank: Record<RefinedScaleMatch["tier"], number> = { gold: 0, silver: 1, bronze: 2, conditional: 3 };
+  const clinicalRanked = useMemo(() => {
+    const matches = [...refinedMatches].sort((a, b) => {
+      if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
+      if (tierRank[a.tier] !== tierRank[b.tier]) return tierRank[a.tier] - tierRank[b.tier];
+      return (b.scale.appRoute ? 1 : 0) - (a.scale.appRoute ? 1 : 0);
+    });
+    return matches.map((m) => m.scale);
+  }, [refinedMatches]);
+
+  // Pool de seleção dos pódios: usa a ordem clínica do motor; cai para o ranking
+  // textual antigo apenas se o motor não retornar candidatos.
+  const podiumPool = clinicalRanked.length ? clinicalRanked : rankedPool;
+
   const direct = rankedPool.find((s) => Boolean(s.appRoute) && s.respondente.includes("clinico"));
   const school = rankedPool.find((s) => s.respondente.includes("professor"));
 
   // Função para evitar duplicatas nos slots Ouro/Prata/Bronze
   const getUniqueSlots = () => {
-    const ouro = goldStandardScale || rankedPool[0];
-    const prata = rankedPool.find((s, i) => i > 0 && s.id !== ouro?.id);
-    const bronze = rankedPool.find((s, i) => i > 1 && s.id !== ouro?.id && s.id !== prata?.id);
+    const ouro = goldStandardScale || podiumPool[0];
+    const prata = podiumPool.find((s) => s.id !== ouro?.id);
+    const bronze = podiumPool.find((s) => s.id !== ouro?.id && s.id !== prata?.id);
     return { ouro, prata, bronze };
   };
 
@@ -405,18 +459,18 @@ export default function FiltroPage() {
   // Se há padrão ouro detectado, mostra ele como Ouro; caso contrário, usa ranking normal
   const ranking = goldStandardScale
     ? [
-        rec("Ouro", ouro, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", prata, "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || ouro, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || ouro, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Ouro", ouro, `PADRÃO-OURO: ${detectedPattern!.reason}`, "from-amber-500 via-yellow-600 to-red-800", ouro && refinedById.get(ouro.id)),
+        rec("Prata", prata, "Alternativa quando ouro indisponível ou insuficiente.", "from-slate-400 via-slate-500 to-slate-700", prata && refinedById.get(prata.id)),
+        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800", (bronze || prata || ouro) && refinedById.get((bronze || prata || ouro)!.id)),
+        rec("Teste Direto", direct || ouro, "Instrumento com rota direta no app.", "from-blue-600 via-indigo-700 to-slate-950", (direct || ouro) && refinedById.get((direct || ouro)!.id)),
+        rec("Questionário Escolar", school || ouro, "Instrumento com respondente professor.", "from-emerald-600 via-teal-700 to-slate-950", (school || ouro) && refinedById.get((school || ouro)!.id)),
       ]
     : [
-        rec("Ouro", ouro, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800"),
-        rec("Prata", prata || ouro, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700"),
-        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800"),
-        rec("Teste Direto", direct || ouro, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950"),
-        rec("Questionário Escolar", school || ouro, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
+        rec("Ouro", ouro, "Maior compatibilidade combinando queixa, idade, respondente, prioridade e disponibilidade.", "from-amber-500 via-yellow-600 to-red-800", ouro && refinedById.get(ouro.id)),
+        rec("Prata", prata || ouro, "Alternativa complementar quando o instrumento ouro não for suficiente ou disponível.", "from-slate-400 via-slate-500 to-slate-700", (prata || ouro) && refinedById.get((prata || ouro)!.id)),
+        rec("Bronze", bronze || prata || ouro, "Terceira opção para apoio ou triagem secundária.", "from-orange-500 via-amber-700 to-stone-800", (bronze || prata || ouro) && refinedById.get((bronze || prata || ouro)!.id)),
+        rec("Teste Direto", direct || ouro, "Prioriza instrumento que já possui rota de aplicação dentro do app.", "from-blue-600 via-indigo-700 to-slate-950", (direct || ouro) && refinedById.get((direct || ouro)!.id)),
+        rec("Questionário Escolar", school || ouro, "Prioriza instrumentos com professor como respondente ou utilidade escolar.", "from-emerald-600 via-teal-700 to-slate-950", (school || ouro) && refinedById.get((school || ouro)!.id)),
       ];
 
   const toggleQueixa = (id: string) => {
@@ -570,6 +624,14 @@ export default function FiltroPage() {
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
 
+        {/* Síntese clínica do motor de filtragem avançada */}
+        {refinedMatches.length > 0 && (
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-3 sm:p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">síntese clínica</p>
+            <p className="mt-1 text-sm font-bold text-foreground">{clinicalRecommendation}</p>
+          </div>
+        )}
+
         {/* Recomendações OPB Estruturadas (se queixa única + idade válida) */}
         {(() => {
           if (selectedQueixas.length === 1 && selectedAge) {
@@ -619,9 +681,15 @@ export default function FiltroPage() {
               <Link key={item.slot} href={item.route} className="block h-full">
                 <Card className={`filter-260-card group h-full cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-lg ${item.tier ? `tier-${item.tier}` : ""}`}>
                   <CardContent className="filter-260-card-content">
-                    <div className="filter-260-medalrow">
+                    <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
+                      {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}{item.confidence !== null ? ` · ${item.confidence}%` : ""}</Badge>}
                     </div>
+                    {item.warnings.length > 0 && (
+                      <div className="rounded-lg border border-red-300 bg-red-50 px-2 py-1.5 text-[11px] font-bold leading-snug text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                        {item.warnings.map((w) => <p key={w}>{w}</p>)}
+                      </div>
+                    )}
                     <div className="filter-260-head">
                       <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
                       <div className="min-w-0 flex-1">

@@ -9,9 +9,9 @@ import { useState } from "react";
 import { allScales } from "@/data/scaleFilter";
 
 const SCALE_CONFIG = {
-  id: ""wppsi"", // ex: "bayley"
-  name: ""WPPSI-IV"", // ex: "Bayley-III"
-  fullName: ""WPPSI-IV"", // ex: "Bayley Scales of Infant Development III"
+  id: "wppsi", // ex: "bayley"
+  name: "WPPSI-IV", // ex: "Bayley-III"
+  fullName: "WPPSI-IV", // ex: "Bayley Scales of Infant Development III"
   whenToUse: [
     "✅ Indicação 1",
     "✅ Indicação 2",
