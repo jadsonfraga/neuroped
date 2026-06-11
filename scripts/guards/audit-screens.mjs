@@ -58,13 +58,14 @@ const IGNORE_CONSOLE = /Failed to load resource|status of 503|net::ERR|favicon|D
 
 async function visit(route) {
   const page = await browser.newPage();
+  await page.addInitScript(() => { try { localStorage.setItem("neuroped:local-unlocked-persistent", "1"); } catch (e) { void e; } });
   const errors = [];
   const consoleErrs = [];
   page.on("pageerror", (e) => errors.push(String(e.message || e)));
   page.on("console", (m) => { if (m.type() === "error") { const t = m.text(); if (!IGNORE_CONSOLE.test(t)) consoleErrs.push(t.slice(0,160)); } });
   let blank = false;
   try {
-    await page.goto(BASE + route, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.goto(BASE + "/#" + route, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(900);
     const info = await page.evaluate(() => {
       const root = document.getElementById("root");
