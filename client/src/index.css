@@ -276,6 +276,57 @@
 }
 
 @layer components {
+  /* Camada de efeitos ambiente (AmbientEffects.tsx) — decorativa, FIXA, atrás
+     do conteúdo e fora do fluxo. CRÍTICO: sem position fixa as partículas
+     (com width/height explícitos) entram no fluxo e empurram toda a aplicação
+     para baixo (~1460px), jogando o conteúdo "lá embaixo" em vez do topo. */
+  .np-ambient-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .np-ambient-aurora {
+    background:
+      radial-gradient(60% 55% at 18% 12%, rgba(124, 92, 255, 0.10), transparent 70%),
+      radial-gradient(50% 45% at 85% 22%, rgba(56, 189, 248, 0.08), transparent 70%),
+      radial-gradient(55% 50% at 50% 92%, rgba(34, 211, 238, 0.06), transparent 70%);
+    animation: np-aurora-breathe 18s ease-in-out infinite alternate;
+  }
+  .np-ambient-noise {
+    opacity: 0.035;
+    background-repeat: repeat;
+    background-size: 180px 180px;
+    mix-blend-mode: overlay;
+  }
+  .np-particle {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(40px);
+    opacity: 0.5;
+    animation-name: np-particle-float;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    will-change: transform;
+  }
+  @keyframes np-aurora-breathe {
+    from { transform: scale(1); opacity: 0.85; }
+    to   { transform: scale(1.08); opacity: 1; }
+  }
+  @keyframes np-particle-float {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(0, -28px, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .np-ambient-aurora,
+    .np-particle { animation: none !important; }
+  }
+  @media print {
+    .np-ambient-layer { display: none !important; }
+  }
+
   /* REGRA DE OURO — Filtro de Escalas PR #260
      Não alterar a proporção, hierarquia, medalha, faixa superior ou comportamento
      visual do filtro sem autorização explícita. */
