@@ -239,9 +239,15 @@ function passesMandatoryFilters(scale: ScaleEntry, ctx: FilterContext): boolean 
     return false;
   }
 
-  // Respondente.
-  if (ctx.respondente && !scale.respondente.includes(ctx.respondente)) {
-    return false;
+  // Respondente. Caso especial "Direto": o filtro casa pelo MODO de aplicação
+  // (teste direto interativo com a criança), não pelo array de respondente —
+  // assim "Direto" traz só os testes diretos interativos.
+  if (ctx.respondente) {
+    if (ctx.respondente === "teste_direto_crianca") {
+      if (getApplicationMode(scale) !== "teste_direto_crianca") return false;
+    } else if (!scale.respondente.includes(ctx.respondente)) {
+      return false;
+    }
   }
 
   // Contexto de monitorização/seguimento (req. 7):

@@ -37,7 +37,7 @@ const {
 const { guessQueixas } = await imp("client/src/data/queixaMapping.ts");
 
 const catalog = mergeFilterableCatalog(allScales);
-const run = (ctx) => filterScalesIntelligently(catalog, { selectedSignals: [], ...ctx });
+const run = (ctx) => filterScalesIntelligently(catalog, { queixas: [], selectedSignals: [], ...ctx });
 
 let failures = 0;
 let checks = 0;
@@ -210,6 +210,25 @@ head("H) Metadados derivados — comunicação e alfabetização");
   ok(
     preLit.every((m) => getLiteracyRequirement(m.scale) !== "alfabetizado"),
     "criança pré-alfabetizada: nenhum instrumento que exige leitura é recomendado"
+  );
+}
+
+// ---------- I) Respondente "Direto" => só testes diretos interativos ----------
+head('I) "Direto" (teste_direto_crianca) — só testes diretos interativos');
+{
+  const direto = run({ respondente: "teste_direto_crianca", ageMonths: 96 });
+  ok(direto.length > 0, "'Direto' deve retornar candidatos");
+  ok(
+    direto.every((m) => getApplicationMode(m.scale) === "teste_direto_crianca"),
+    "'Direto' só retorna instrumentos de teste direto interativo"
+  );
+  ok(
+    direto.some((m) => m.scale.id === "academico-interativo"),
+    "'Direto' inclui os testes interativos (ex.: Acadêmico Interativo)"
+  );
+  ok(
+    direto.every((m) => getApplicationMode(m.scale) !== "questionario_pais"),
+    "'Direto' NÃO traz questionário de pais"
   );
 }
 
