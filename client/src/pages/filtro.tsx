@@ -35,6 +35,7 @@ import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
+import { interactiveScales } from "@/data/interactiveScales";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { getOPBRecommendations } from "@/data/filterRecommendationsOPB";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
@@ -362,7 +363,12 @@ export default function FiltroPage() {
     // (página dedicada registrada ou catálogo mundial), escondendo as fichas de
     // referência — inclusive as que apontam appRoute para /generic-scale/:id.
     return onlyApp
-      ? base.filter((s) => (s.appRoute && !s.appRoute.startsWith("/generic-scale/")) || s.id.startsWith("world-"))
+      ? base.filter(
+          (s) =>
+            (s.appRoute && !s.appRoute.startsWith("/generic-scale/")) ||
+            s.id.startsWith("world-") ||
+            Boolean(interactiveScales[s.id]) // escalas interativas dirigidas por dados também são apps completos
+        )
       : base;
   }, [world, onlyApp]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);

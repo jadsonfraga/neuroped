@@ -4,6 +4,8 @@ import { ArrowLeft, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales, queixas } from "@/data/scaleFilter";
+import { getInteractiveScale } from "@/data/interactiveScales";
+import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
 import {
   getImplementationStatus,
   getImplementationLabel,
@@ -134,6 +136,17 @@ export default function GenericScalePage() {
   const scale = allScales.find(s => s.id === scaleId);
   const [copied, setCopied] = useState(false);
   const implStatus = scale ? getImplementationStatus(scale) : null;
+
+  // Se a escala tem definição interativa, abre como APLICAÇÃO COMPLETA
+  // (itens + escore + relatório/PDF) em vez da ficha de referência.
+  const interactive = getInteractiveScale(scaleId);
+  if (interactive) {
+    return (
+      <div className="p-1">
+        <InteractiveScaleRunner def={interactive} />
+      </div>
+    );
+  }
 
   if (!scale) {
     return (
