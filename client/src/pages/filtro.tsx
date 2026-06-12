@@ -34,7 +34,6 @@ import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
-import { teiaSinais, teiaGrupos, parentsOf, boostedScaleIds } from "@/data/teiaQueixas";
 import { interactiveScales } from "@/data/interactiveScales";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { getOPBRecommendations } from "@/data/filterRecommendationsOPB";
@@ -195,11 +194,11 @@ function detectGoldStandard(selectedQueixas: string[], _selectedAge: string | nu
 // Fonte ÚNICA de verdade: roda o motor clínico (advancedFilterLogic) sobre o
 // catálogo e, dentro dos candidatos seguros, aplica o realce de busca.
 // Pode retornar [] — NUNCA cai para o catálogo inteiro (sem fallback perigoso).
-function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string, teiaBoost?: Set<string>): RefinedScaleMatch[] {
+function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): RefinedScaleMatch[] {
   const matches = filterScalesIntelligently(unique(catalog), ctx);
   const boost = (m: RefinedScaleMatch) =>
-    m.relevanceScore + searchBoost(m.scale, query) + (teiaBoost?.has(m.scale.id) ? 30 : 0);
-  if (!query.trim() && (!teiaBoost || teiaBoost.size === 0)) return matches;
+    m.relevanceScore + searchBoost(m.scale, query);
+  if (!query.trim()) return matches;
   return [...matches].sort((a, b) => boost(b) - boost(a));
 }
 
@@ -337,8 +336,6 @@ export default function FiltroPage() {
   const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
-  // TEIA de sinais e sintomas: cada sinal ativa queixas-mãe e reforça escalas diretas.
-  const [selectedTeia, setSelectedTeia] = useState<string[]>([]);
   // "Só aplicação completa": esconde as fichas de referência (/generic-scale),
   // deixando só escalas com página própria/usável no app. Reversível, por ora.
   // REGRA C (Dr. Jadson, 2026-06-12): o catálogo do filtro já exclui restritas/
@@ -380,16 +377,14 @@ export default function FiltroPage() {
       .filter((s) => isFullApp(s) || (s.licencaUso !== "restrita" && s.licencaUso !== "comercial"));
     return onlyApp ? base.filter(isFullApp) : base;
   }, [world, onlyApp]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || selectedTeia.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
     const ageRange = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
     const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
-    // Teia: sinais selecionados ativam suas queixas-mãe no motor clínico.
-    const queixasEfetivas = Array.from(new Set([...selectedQueixas, ...parentsOf(selectedTeia)]));
     return {
-      queixas: queixasEfetivas,
+      queixas: selectedQueixas,
       ageMonths,
       ageBand: ageRange ? { min: ageRange.min, max: ageRange.max } : null,
       respondente: selectedRespondente ?? null,
@@ -399,11 +394,10 @@ export default function FiltroPage() {
         selectedAssessmentType === "diagnostic" ? "diagnostico" : selectedAssessmentType === "monitoring" ? "monitorizacao" : null,
       selectedSignals: selectedSignalIds,
     };
-  }, [selectedQueixas, selectedTeia, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
+  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
-  const teiaBoost = useMemo(() => boostedScaleIds(selectedTeia), [selectedTeia]);
-  const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search, teiaBoost), [catalog, filterContext, search, teiaBoost]);
+  const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
   const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
   const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
   const hasSafeResults = refinedMatches.length > 0;
@@ -474,7 +468,7 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]); setSelectedTeia([]);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]);
   };
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
@@ -544,49 +538,6 @@ export default function FiltroPage() {
               <span className="truncate text-[11px] sm:text-xs leading-tight">{q.label}</span>
             </button>)}
           </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">🕸️ Teia de sinais e sintomas</p>
-            {selectedTeia.length > 0 && (
-              <button type="button" onClick={() => setSelectedTeia([])} className="text-[10px] sm:text-[11px] font-bold text-primary hover:underline">
-                limpar ({selectedTeia.length})
-              </button>
-            )}
-          </div>
-          <p className="text-[10px] sm:text-[11px] text-muted-foreground">Cada sinal puxa várias linhas de investigação ao mesmo tempo e reforça as escalas mais indicadas.</p>
-          {teiaGrupos.map((grupo) => (
-            <details key={grupo} className="group rounded-xl border border-border/60 bg-background/60" open={teiaSinais.some((t) => t.grupo === grupo && selectedTeia.includes(t.id))}>
-              <summary className="cursor-pointer select-none px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-foreground flex items-center justify-between gap-2">
-                <span>{grupo}</span>
-                <span className="text-[10px] font-semibold text-muted-foreground">
-                  {teiaSinais.filter((t) => t.grupo === grupo && selectedTeia.includes(t.id)).length > 0
-                    ? `${teiaSinais.filter((t) => t.grupo === grupo && selectedTeia.includes(t.id)).length} ativo(s)`
-                    : `${teiaSinais.filter((t) => t.grupo === grupo).length} sinais`}
-                </span>
-              </summary>
-              <div className="grid grid-cols-2 gap-1.5 p-2 pt-0 sm:grid-cols-3 lg:grid-cols-4">
-                {teiaSinais.filter((t) => t.grupo === grupo).map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    aria-pressed={selectedTeia.includes(t.id)}
-                    aria-label={t.label}
-                    onMouseEnter={() => softHover()}
-                    onClick={() => {
-                      softTick(); haptic.select();
-                      setSelectedTeia((prev) => prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id]);
-                    }}
-                    className={`rounded-xl border px-2 py-1.5 text-left text-[11px] font-semibold transition flex items-center gap-1.5 min-h-9 ${selectedTeia.includes(t.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
-                  >
-                    <span aria-hidden="true" className="shrink-0">{t.emoji}</span>
-                    <span className="truncate leading-tight">{t.label}</span>
-                  </button>
-                ))}
-              </div>
-            </details>
-          ))}
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
