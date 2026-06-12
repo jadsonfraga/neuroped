@@ -34,12 +34,12 @@ Este inventário consolida os assets premium reaproveitados na identidade atual,
 
 | Asset | Classificação | Reaproveitamento |
 | --- | --- | --- |
-| `attached_assets/images/neural-abstract.png` | A — premium e reutilizável | Hero institucional e fundos premium discretos; renderizado em `/qualidade`. |
-| `attached_assets/images/hero-brain.png` | A — premium e reutilizável | Login, splash secundário e clínica pediátrica; renderizado em `/qualidade`. |
-| `attached_assets/images/child-assessment.png` | A — premium e reutilizável | Onboarding, filtro clínico e telas vazias; renderizado em `/qualidade`. |
-| `attached_assets/images/child-development.png` | A — premium e reutilizável | Educação familiar e desenvolvimento; renderizado em `/qualidade`. |
-| `attached_assets/images/mental-health-child.png` | A — premium e reutilizável | Saúde mental pediátrica; renderizado em `/qualidade`. |
-| `attached_assets/images/team-multiprofessional.png` | A — premium e reutilizável | Fluxos multiprofissionais, PDFs e família; renderizado em `/qualidade`. |
+| `attached_assets/images/neural-abstract.webp` | A — premium e reutilizável | Hero institucional e fundos premium discretos; renderizado em `/qualidade`. |
+| `attached_assets/images/hero-brain.webp` | A — premium e reutilizável | Login, splash secundário e clínica pediátrica; renderizado em `/qualidade`. |
+| `attached_assets/images/child-assessment.webp` | A — premium e reutilizável | Onboarding, filtro clínico e telas vazias; renderizado em `/qualidade`. |
+| `attached_assets/images/child-development.webp` | A — premium e reutilizável | Educação familiar e desenvolvimento; renderizado em `/qualidade`. |
+| `attached_assets/images/mental-health-child.webp` | A — premium e reutilizável | Saúde mental pediátrica; renderizado em `/qualidade`. |
+| `attached_assets/images/team-multiprofessional.webp` | A — premium e reutilizável | Fluxos multiprofissionais, PDFs e família; renderizado em `/qualidade`. |
 
 ## Componentes de unificação implementados
 

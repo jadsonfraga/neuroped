@@ -9,12 +9,12 @@ import drArteMascot from "@assets/images/dr-jadson-arte.jpeg";
 import drSelfieMascot from "@assets/images/dr-jadson-selfie.jpeg";
 import drBatmanMascot from "@assets/images/dr-jadson-consultorio-batman.jpeg";
 import drConsultorioFull from "@assets/images/dr-jadson-consultorio-full.jpeg";
-import heroBrain from "@assets/images/hero-brain.png";
-import childAssessment from "@assets/images/child-assessment.png";
-import childDevelopment from "@assets/images/child-development.png";
-import mentalHealthChild from "@assets/images/mental-health-child.png";
-import neuralAbstract from "@assets/images/neural-abstract.png";
-import teamMultiprofessional from "@assets/images/team-multiprofessional.png";
+import heroBrain from "@assets/images/hero-brain.webp";
+import childAssessment from "@assets/images/child-assessment.webp";
+import childDevelopment from "@assets/images/child-development.webp";
+import mentalHealthChild from "@assets/images/mental-health-child.webp";
+import neuralAbstract from "@assets/images/neural-abstract.webp";
+import teamMultiprofessional from "@assets/images/team-multiprofessional.webp";
 
 export const brandAssets = {
   masterShield: drJadsonMasterShieldLogo,
@@ -136,7 +136,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "hero-brain",
     group: "Ilustração",
     name: "Cérebro infantil",
-    path: "attached_assets/images/hero-brain.png",
+    path: "attached_assets/images/hero-brain.webp",
     src: brandAssets.illustrations.heroBrain,
     status: "ativo",
     usage: "login, splash secundário, bloqueio clínico e painel de qualidade",
@@ -146,7 +146,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "child-assessment",
     group: "Ilustração",
     name: "Avaliação infantil",
-    path: "attached_assets/images/child-assessment.png",
+    path: "attached_assets/images/child-assessment.webp",
     src: brandAssets.illustrations.childAssessment,
     status: "ativo",
     usage: "onboarding, filtro clínico, estados vazios e painel de qualidade",
@@ -156,7 +156,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "child-development",
     group: "Ilustração",
     name: "Desenvolvimento infantil",
-    path: "attached_assets/images/child-development.png",
+    path: "attached_assets/images/child-development.webp",
     src: brandAssets.illustrations.childDevelopment,
     status: "ativo",
     usage: "educação familiar, desenvolvimento e painel de qualidade",
@@ -166,7 +166,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "mental-health-child",
     group: "Ilustração",
     name: "Saúde mental infantil",
-    path: "attached_assets/images/mental-health-child.png",
+    path: "attached_assets/images/mental-health-child.webp",
     src: brandAssets.illustrations.mentalHealthChild,
     status: "ativo",
     usage: "saúde mental pediátrica, psiquiatria e painel de qualidade",
@@ -176,7 +176,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "neural-abstract",
     group: "Background",
     name: "Neural abstract",
-    path: "attached_assets/images/neural-abstract.png",
+    path: "attached_assets/images/neural-abstract.webp",
     src: brandAssets.illustrations.neuralAbstract,
     status: "ativo",
     usage: "hero institucional, fundos premium discretos e painel de qualidade",
@@ -186,7 +186,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "team-multiprofessional",
     group: "Ilustração",
     name: "Equipe multiprofissional",
-    path: "attached_assets/images/team-multiprofessional.png",
+    path: "attached_assets/images/team-multiprofessional.webp",
     src: brandAssets.illustrations.teamMultiprofessional,
     status: "ativo",
     usage: "fluxos multiprofissionais, família, PDFs e painel de qualidade",
@@ -287,7 +287,7 @@ export function BrandMark({
         <SafeAssetImage
           src={brandAssets.masterShield}
           alt="Escudo Dr. Jadson Fraga — logo mestre NeuroPed"
-          className={`${sizeClasses[size]} relative rounded-[1.2rem] object-contain bg-white p-0.5 shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
+          className={`${sizeClasses[size]} relative rounded-[1.2rem] object-cover shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
           fallbackClassName={sizeClasses[size]}
         />
         <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-md ring-1 ring-white/70 dark:ring-black/40" aria-hidden="true">

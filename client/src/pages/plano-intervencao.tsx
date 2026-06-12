@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import childDevImg from "@assets/images/child-development.png";
+import childDevImg from "@assets/images/child-development.webp";
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
