@@ -216,6 +216,9 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
   return {
     slot,
     tier: tierFromSlot(slot),
+    // A própria escala (quando há match) — usada para derivar os motivos sem
+    // refazer busca frágil por nome no pool.
+    scale,
     // Toda escala recomendada abre uma página real: aplicação completa, ficha
     // técnica (/generic-scale/:id) ou catálogo mundial. Nunca mais o loop /filtro.
     route: scale ? (resolveAppRoute(scale) ?? "/filtro") : "/filtro",
@@ -643,7 +646,7 @@ export default function FiltroPage() {
         <div className="filter-260-grid">
           {ranking.map((item) => {
             const reasons = item.hasScale
-              ? getRecommendationReasons(rankedPool.find((s) => s.name === item.title), selectedQueixas, selectedAge)
+              ? getRecommendationReasons(item.scale, selectedQueixas, selectedAge)
               : [];
             const ctaLabel = !item.hasScale
               ? "—"
