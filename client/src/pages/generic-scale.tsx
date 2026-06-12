@@ -4,6 +4,8 @@ import { ArrowLeft, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales } from "@/data/scaleFilter";
+import { GenericScale } from "@/components/GenericScale";
+import { getInteractiveScale, makeInteractiveConfig } from "@/data/interactiveScaleItems";
 import {
   getImplementationStatus,
   getImplementationLabel,
@@ -63,6 +65,25 @@ export default function GenericScalePage() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Quando a escala já tem itens interativos cadastrados, renderiza a
+  // APLICAÇÃO REAL (itens respondíveis + cálculo de escore) no lugar da ficha.
+  const interactive = getInteractiveScale(scaleId);
+  if (interactive) {
+    return (
+      <div className="max-w-2xl mx-auto p-3 sm:p-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/filtro")}
+          className="mb-3 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar ao Filtro
+        </Button>
+        <GenericScale config={makeInteractiveConfig(scale, interactive)} />
       </div>
     );
   }

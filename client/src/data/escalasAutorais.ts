@@ -17,6 +17,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-001",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (J26-001)",
     fullName: "Protocolo de Triagem de Marcos Motores Grossos de 0 a 6 Meses",
     ageMin: 0,
@@ -29,6 +30,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-002",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (J26-002)",
     fullName: "Protocolo de Triagem de Marcos Motores Grossos de 6 a 12 Meses",
     ageMin: 6,
@@ -41,6 +43,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-003",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (J26-003)",
     fullName: "Protocolo de Triagem de Marcos de Linguagem Expressiva e Receptiva de 0 a 24 Meses",
     ageMin: 0,
@@ -89,6 +92,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-007",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Desenvolvimento Socioemocional 0-3 Anos (J26-007)",
     fullName: "Protocolo de Triagem do Desenvolvimento Socioemocional de 0 a 36 Meses",
     ageMin: 0,
@@ -101,6 +105,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-008",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motor Fino 12-36 Meses (J26-008)",
     fullName: "Protocolo de Triagem do Desenvolvimento Motor Fino de 12 a 36 Meses",
     ageMin: 12,
@@ -113,6 +118,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-009",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Atenção Conjunta Precoce (J26-009)",
     fullName: "Protocolo de Triagem de Atenção Conjunta e Apontamento em 9 a 18 Meses",
     ageMin: 9,
@@ -161,6 +167,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-013",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Auditiva Funcional (J26-013)",
     fullName: "Protocolo de Triagem Comportamental da Função Auditiva em 0 a 24 Meses",
     ageMin: 0,
@@ -173,6 +180,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-014",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Visual Funcional (J26-014)",
     fullName: "Protocolo de Triagem Comportamental da Função Visual em 0 a 12 Meses",
     ageMin: 0,
@@ -185,6 +193,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-015",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Autonomia e Autocuidado 2-5 Anos (J26-015)",
     fullName: "Protocolo de Triagem de Autonomia e Habilidades de Autocuidado de 2 a 5 Anos",
     ageMin: 24,

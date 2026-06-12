@@ -37,7 +37,7 @@ interface ResultDomain {
   color: string;
 }
 
-interface ScaleConfig {
+export interface ScaleConfig {
   title: string;
   subtitle: string;
   icon: LucideIcon;
