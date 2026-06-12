@@ -274,9 +274,9 @@ function AppRouter() {
           <Route path="/acessibilidade" component={AcessibilidadePage} />
           <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
           <Route path="/glossario" component={GlossarioPage} />
+          <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
+          <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
           <Route path="/qualidade" component={QualidadePage} />
-                        <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
-                      <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
           <Route component={NotFound} />
         </Switch>
       </Suspense>
