@@ -1344,9 +1344,22 @@ export const linguagem: ScaleEntry[] = [
 ];
 
 // Continuação em próximo bloco...
+
+// Preenche `fonte` por família apenas onde está ausente, usando a procedência
+// OFICIAL e verificável de cada conjunto (não fabrica citação específica). As
+// famílias PROMIS e NIH Toolbox têm fonte autoritativa única; demais famílias
+// permanecem pendentes até citação individual confirmada.
+const withFonte = (scales: ScaleEntry[], fonte: string): ScaleEntry[] =>
+  scales.map((s) => (s.fonte && String(s.fonte).trim() ? s : { ...s, fonte }));
+
+const FONTE_PROMIS =
+  "PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio público para uso clínico/pesquisa.";
+const FONTE_NIH_TOOLBOX =
+  "NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH.";
+
 export const complementares230 = [
-  ...promisHealthMeasures,
-  ...nihToolbox,
+  ...withFonte(promisHealthMeasures, FONTE_PROMIS),
+  ...withFonte(nihToolbox, FONTE_NIH_TOOLBOX),
   ...paralisiaCerebral,
   ...desenvolvimento,
   ...linguagem,
