@@ -576,9 +576,8 @@ export default function FiltroPage() {
                 prev.includes(signalId) ? prev.filter(x => x !== signalId) : [...prev, signalId]
               );
             }}
-            onRecommendationSelect={(rec) => {
+            onRecommendationSelect={() => {
               softTick(); haptic.select();
-              console.log("Recomendação selecionada:", rec);
             }}
           />
         </section>
@@ -613,10 +612,6 @@ export default function FiltroPage() {
                 <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 sm:p-6">
                   <OPBRecommendationCards
                     recommendations={opbRec}
-                    onSelectScale={(scaleId) => {
-                      // Usuário pode clicar no botão para selecionar a escala
-                      console.log("Selecionou escala:", scaleId);
-                    }}
                   />
                 </div>
               );
