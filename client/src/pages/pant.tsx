@@ -253,7 +253,7 @@ export default function PantPage() {
       {/* Instruction */}
       <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
         <p className="text-xs text-foreground/80 leading-relaxed">
-          <strong>Instruções:</strong> Para cada escala passiva, atribua o nível observado de 0 a 4 conforme a régua de regulação. Avalie a espontaneidade, frequência, generalização e impacto funcional no cotidiano.
+          <strong>Instruções:</strong> Para cada escala passiva, atribua o nível observado de 0 a 4 conforme a régua de regulação. Use o <strong>exemplo do dia a dia</strong> em cada item para responder com mais segurança, avaliando espontaneidade, frequência, generalização e impacto funcional no cotidiano.
         </p>
       </div>
 
@@ -330,6 +330,15 @@ export default function PantPage() {
                             <p className="text-sm text-foreground font-medium leading-relaxed">
                               {scale.name}
                             </p>
+                            {/* Exemplo concreto para pai/mãe responder com mais assertividade */}
+                            {scale.parentExample && (
+                              <div className={`mt-1.5 flex items-start gap-1.5 rounded-lg ${domainAccentBg[domain.id]} border ${domainAccentBorder[domain.id]} px-2.5 py-1.5`}>
+                                <Lightbulb className={`w-3 h-3 mt-0.5 flex-shrink-0 ${domainTextColor[domain.id]}`} />
+                                <p className="text-xs text-foreground/75 leading-relaxed">
+                                  {scale.parentExample}
+                                </p>
+                              </div>
+                            )}
                             {/* Show anchor on tap */}
                             {showAnchor === `${scale.number}-${currentAnswer}` && currentAnswer !== undefined && scale.levels[currentAnswer] && (
                               <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed italic">

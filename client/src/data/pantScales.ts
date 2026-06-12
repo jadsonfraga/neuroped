@@ -15,6 +15,12 @@ export interface PantScale {
   number: number;
   name: string;
   domain: number;
+  /**
+   * Exemplo concreto do cotidiano, escrito para quem responde (pai ou mãe).
+   * Traduz a escala passiva em uma cena observável do dia a dia, para que o
+   * respondente consiga atribuir o nível 0-4 com mais segurança e assertividade.
+   */
+  parentExample?: string;
   levels: PantLevel[];
 }
 
@@ -49,6 +55,7 @@ export const pantScales: PantScale[] = [
     number: 1,
     name: "Atenção compartilhada espontânea",
     domain: 1,
+    parentExample: "No dia a dia: a criança vê algo interessante (um cachorro, um avião) e, por conta própria, olha para você e depois para o objeto, como quem diz “viu aquilo?”. Repare quantas vezes ela divide um interesse com você sem que você peça.",
     levels: [
       { level: 0, label: "ausente", anchor: "Atenção compartilhada espontânea não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Atenção compartilhada espontânea aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -61,6 +68,7 @@ export const pantScales: PantScale[] = [
     number: 2,
     name: "Atenção compartilhada responsiva",
     domain: 1,
+    parentExample: "No dia a dia: quando VOCÊ aponta ou diz “olha lá!”, ela acompanha seu dedo/olhar e olha para a mesma coisa. Veja se ela segue a sua indicação ou se ignora.",
     levels: [
       { level: 0, label: "ausente", anchor: "Atenção compartilhada responsiva não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Atenção compartilhada responsiva aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -73,6 +81,7 @@ export const pantScales: PantScale[] = [
     number: 3,
     name: "Mostra social de objetos",
     domain: 1,
+    parentExample: "No dia a dia: ela pega um brinquedo e levanta/estende para você ver, só para compartilhar, sem querer que você faça nada com ele. Repare se ela mostra coisas “só para dividir”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Mostra social de objetos não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Mostra social de objetos aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -85,6 +94,7 @@ export const pantScales: PantScale[] = [
     number: 4,
     name: "Procura do outro para validação",
     domain: 1,
+    parentExample: "No dia a dia: diante de algo novo ou de uma dúvida, ela olha para o seu rosto para checar sua reação (“posso?”, “tá tudo bem?”). Veja se ela busca seu rosto nos momentos de incerteza.",
     levels: [
       { level: 0, label: "ausente", anchor: "Procura do outro para validação não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Procura do outro para validação aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -97,6 +107,7 @@ export const pantScales: PantScale[] = [
     number: 5,
     name: "Uso social do sorriso",
     domain: 1,
+    parentExample: "No dia a dia: ela sorri de volta quando você sorri, ou sorri para chamar e manter a sua atenção — um sorriso dirigido a você, não solto no ar.",
     levels: [
       { level: 0, label: "ausente", anchor: "Uso social do sorriso não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Uso social do sorriso aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -109,6 +120,7 @@ export const pantScales: PantScale[] = [
     number: 6,
     name: "Resposta ao nome",
     domain: 1,
+    parentExample: "No dia a dia: você chama o nome dela (sem bronca e sem mostrar nada) e ela para e te olha. Conte quantas vezes precisa chamar até ela responder.",
     levels: [
       { level: 0, label: "ausente", anchor: "Resposta ao nome não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Resposta ao nome aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -121,6 +133,7 @@ export const pantScales: PantScale[] = [
     number: 7,
     name: "Qualidade do contato ocular",
     domain: 1,
+    parentExample: "No dia a dia: durante conversa, mamada ou brincadeira, ela te olha nos olhos de forma natural e calorosa, não só de relance. Repare se o olhar “conecta”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Qualidade do contato ocular não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Qualidade do contato ocular aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -133,6 +146,7 @@ export const pantScales: PantScale[] = [
     number: 8,
     name: "Alternância de olhar pessoa-objeto",
     domain: 1,
+    parentExample: "No dia a dia: ela alterna o olhar entre você e o que quer (olha o biscoito, olha você, olha o biscoito) para te pedir algo com os olhos.",
     levels: [
       { level: 0, label: "ausente", anchor: "Alternância de olhar pessoa-objeto não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Alternância de olhar pessoa-objeto aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -145,6 +159,7 @@ export const pantScales: PantScale[] = [
     number: 9,
     name: "Iniciativa de interação",
     domain: 1,
+    parentExample: "No dia a dia: é ela quem começa a brincadeira ou chega perto para interagir, sem esperar você puxar. Veja quem dá o primeiro passo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Iniciativa de interação não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Iniciativa de interação aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -157,6 +172,7 @@ export const pantScales: PantScale[] = [
     number: 10,
     name: "Manutenção da troca social",
     domain: 1,
+    parentExample: "No dia a dia: uma vez iniciada uma brincadeira de ida-e-volta (esconde-esconde, jogar a bola), ela mantém a troca por várias rodadas, em vez de largar logo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Manutenção da troca social não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Manutenção da troca social aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -169,6 +185,7 @@ export const pantScales: PantScale[] = [
     number: 11,
     name: "Imitação espontânea",
     domain: 1,
+    parentExample: "No dia a dia: ela copia sozinha um gesto seu (bater palmas, mandar beijo, dar “tchau”) sem você pedir, só por ter visto.",
     levels: [
       { level: 0, label: "ausente", anchor: "Imitação espontânea não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Imitação espontânea aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -181,6 +198,7 @@ export const pantScales: PantScale[] = [
     number: 12,
     name: "Imitação sob modelo",
     domain: 1,
+    parentExample: "No dia a dia: quando você mostra “faz assim” e pede para imitar, ela consegue reproduzir o gesto ou a ação.",
     levels: [
       { level: 0, label: "ausente", anchor: "Imitação sob modelo não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Imitação sob modelo aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -193,6 +211,7 @@ export const pantScales: PantScale[] = [
     number: 13,
     name: "Jogo simbólico emergente",
     domain: 1,
+    parentExample: "No dia a dia: ela faz de conta — dá comidinha para a boneca, finge falar no telefone, faz o carrinho “dirigir”. Veja se aparece o faz de conta.",
     levels: [
       { level: 0, label: "ausente", anchor: "Jogo simbólico emergente não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Jogo simbólico emergente aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -205,6 +224,7 @@ export const pantScales: PantScale[] = [
     number: 14,
     name: "Flexibilidade de brincadeira",
     domain: 1,
+    parentExample: "No dia a dia: ela aceita brincar de jeitos diferentes, muda as regras e topa uma ideia nova sua na brincadeira, sem precisar ser sempre igual.",
     levels: [
       { level: 0, label: "ausente", anchor: "Flexibilidade de brincadeira não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Flexibilidade de brincadeira aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -217,6 +237,7 @@ export const pantScales: PantScale[] = [
     number: 15,
     name: "Interesse por pares",
     domain: 1,
+    parentExample: "No dia a dia: ela demonstra curiosidade por outras crianças — observa, se aproxima, se interessa — em vez de ficar indiferente à presença delas.",
     levels: [
       { level: 0, label: "ausente", anchor: "Interesse por pares não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Interesse por pares aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -229,6 +250,7 @@ export const pantScales: PantScale[] = [
     number: 16,
     name: "Reciprocidade em pares",
     domain: 1,
+    parentExample: "No dia a dia: com outras crianças há troca real (dá e recebe, espera a vez, responde), e não só ficar lado a lado cada um no seu.",
     levels: [
       { level: 0, label: "ausente", anchor: "Reciprocidade em pares não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Reciprocidade em pares aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -241,6 +263,7 @@ export const pantScales: PantScale[] = [
     number: 17,
     name: "Entendimento de turnos",
     domain: 1,
+    parentExample: "No dia a dia: em jogos ou conversa, ela entende o “agora é sua vez, agora é a minha” e respeita esse vai-e-vem.",
     levels: [
       { level: 0, label: "ausente", anchor: "Entendimento de turnos não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Entendimento de turnos aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -253,6 +276,7 @@ export const pantScales: PantScale[] = [
     number: 18,
     name: "Percepção de regras sociais implícitas",
     domain: 1,
+    parentExample: "No dia a dia: ela percebe regras não ditas (falar mais baixo num lugar calmo, esperar na fila, não interromper) sem precisar ser lembrada toda vez.",
     levels: [
       { level: 0, label: "ausente", anchor: "Percepção de regras sociais implícitas não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Percepção de regras sociais implícitas aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -265,6 +289,7 @@ export const pantScales: PantScale[] = [
     number: 19,
     name: "Comunicação de prazer compartilhado",
     domain: 1,
+    parentExample: "No dia a dia: quando algo é divertido, ela divide a alegria com você — olha, ri junto, te chama para ver. A diversão é “com você”, não sozinha.",
     levels: [
       { level: 0, label: "ausente", anchor: "Comunicação de prazer compartilhado não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Comunicação de prazer compartilhado aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -277,6 +302,7 @@ export const pantScales: PantScale[] = [
     number: 20,
     name: "Sinais sutis de isolamento social",
     domain: 1,
+    parentExample: "No dia a dia: repare se ela tende a se afastar, brincar sempre sozinha ou “desligar” do grupo. Quanto mais conectada e integrada, maior o nível.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de sinais sutis de isolamento social.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Sinais sutis de isolamento social aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -289,6 +315,7 @@ export const pantScales: PantScale[] = [
     number: 21,
     name: "Intenção comunicativa global",
     domain: 2,
+    parentExample: "No dia a dia: de algum jeito (palavra, gesto, olhar, puxar a sua mão) ela tenta te comunicar o que quer ou sente. Repare se há “vontade de se comunicar”, mesmo sem falar bem.",
     levels: [
       { level: 0, label: "ausente", anchor: "Intenção comunicativa global não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Intenção comunicativa global aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -301,6 +328,7 @@ export const pantScales: PantScale[] = [
     number: 22,
     name: "Gesto protoimperativo",
     domain: 2,
+    parentExample: "No dia a dia: ela usa gesto para PEDIR — aponta ou estende a mão para o que quer, puxa você até o objeto. É o gesto de “me dá”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Gesto protoimperativo não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Gesto protoimperativo aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -313,6 +341,7 @@ export const pantScales: PantScale[] = [
     number: 23,
     name: "Gesto protodeclarativo",
     domain: 2,
+    parentExample: "No dia a dia: ela aponta para COMPARTILHAR (“olha que legal!”), sem querer pegar — só para te mostrar e dividir o interesse.",
     levels: [
       { level: 0, label: "ausente", anchor: "Gesto protodeclarativo não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Gesto protodeclarativo aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -325,6 +354,7 @@ export const pantScales: PantScale[] = [
     number: 24,
     name: "Apontar funcional",
     domain: 2,
+    parentExample: "No dia a dia: ela aponta com o dedo indicador, de forma clara, para indicar o que quer ou o que viu.",
     levels: [
       { level: 0, label: "ausente", anchor: "Apontar funcional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Apontar funcional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -337,6 +367,7 @@ export const pantScales: PantScale[] = [
     number: 25,
     name: "Repertório gestual substitutivo",
     domain: 2,
+    parentExample: "No dia a dia: quando faltam palavras, ela compensa com gestos variados (aceno, balançar a cabeça para sim/não, mímica) para se fazer entender.",
     levels: [
       { level: 0, label: "ausente", anchor: "Repertório gestual substitutivo não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Repertório gestual substitutivo aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -349,6 +380,7 @@ export const pantScales: PantScale[] = [
     number: 26,
     name: "Compreensão de ordens simples",
     domain: 2,
+    parentExample: "No dia a dia: ela entende e cumpre pedidos curtos sem você apontar (“pega o sapato”, “vem aqui”, “senta”).",
     levels: [
       { level: 0, label: "ausente", anchor: "Compreensão de ordens simples não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Compreensão de ordens simples aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -361,6 +393,7 @@ export const pantScales: PantScale[] = [
     number: 27,
     name: "Compreensão de ordens complexas",
     domain: 2,
+    parentExample: "No dia a dia: ela segue pedidos com 2-3 passos ou com conceitos (“pega o copo na cozinha e traz para mim”, “guarda o azul, não o vermelho”).",
     levels: [
       { level: 0, label: "ausente", anchor: "Compreensão de ordens complexas não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Compreensão de ordens complexas aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -373,6 +406,7 @@ export const pantScales: PantScale[] = [
     number: 28,
     name: "Vocabulário receptivo funcional",
     domain: 2,
+    parentExample: "No dia a dia: ela reconhece o nome de muitas coisas, pessoas e partes do corpo quando você fala — aponta ou olha o certo quando você pergunta “cadê o…?”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Vocabulário receptivo funcional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Vocabulário receptivo funcional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -385,6 +419,7 @@ export const pantScales: PantScale[] = [
     number: 29,
     name: "Vocabulário expressivo funcional",
     domain: 2,
+    parentExample: "No dia a dia: quantas palavras ela usa de verdade, com sentido, para nomear e pedir coisas no cotidiano?",
     levels: [
       { level: 0, label: "ausente", anchor: "Vocabulário expressivo funcional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Vocabulário expressivo funcional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -397,6 +432,7 @@ export const pantScales: PantScale[] = [
     number: 30,
     name: "Combinação de palavras",
     domain: 2,
+    parentExample: "No dia a dia: ela junta duas ou mais palavras para formar ideias (“quer água”, “papai foi”, “mais bolacha”).",
     levels: [
       { level: 0, label: "ausente", anchor: "Combinação de palavras não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Combinação de palavras aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -409,6 +445,7 @@ export const pantScales: PantScale[] = [
     number: 31,
     name: "Organização sintática espontânea",
     domain: 2,
+    parentExample: "No dia a dia: ela monta frases na ordem certa, com as pequenas palavras de ligação (o, e, na), de forma que soam organizadas.",
     levels: [
       { level: 0, label: "ausente", anchor: "Organização sintática espontânea não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Organização sintática espontânea aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -421,6 +458,7 @@ export const pantScales: PantScale[] = [
     number: 32,
     name: "Coerência narrativa",
     domain: 2,
+    parentExample: "No dia a dia: ela conta um acontecimento (o que fez na escola) com começo, meio e fim — dá para acompanhar a história.",
     levels: [
       { level: 0, label: "ausente", anchor: "Coerência narrativa não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Coerência narrativa aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -433,6 +471,7 @@ export const pantScales: PantScale[] = [
     number: 33,
     name: "Pragmática conversacional",
     domain: 2,
+    parentExample: "No dia a dia: ela mantém uma conversinha — responde no assunto, espera a vez de falar e fica no tema, sem “sair pela tangente”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Pragmática conversacional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Pragmática conversacional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -445,6 +484,7 @@ export const pantScales: PantScale[] = [
     number: 34,
     name: "Resposta a perguntas abertas",
     domain: 2,
+    parentExample: "No dia a dia: ela responde perguntas de “o quê / quem / por quê” com uma resposta própria, não só repetindo ou dando sim/não.",
     levels: [
       { level: 0, label: "ausente", anchor: "Resposta a perguntas abertas não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Resposta a perguntas abertas aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -457,6 +497,7 @@ export const pantScales: PantScale[] = [
     number: 35,
     name: "Prosódia funcional",
     domain: 2,
+    parentExample: "No dia a dia: a fala dela tem entonação natural (sobe e desce, mostra emoção), não soa robótica, monótona ou “cantada” demais.",
     levels: [
       { level: 0, label: "ausente", anchor: "Prosódia funcional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Prosódia funcional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -469,6 +510,7 @@ export const pantScales: PantScale[] = [
     number: 36,
     name: "Ecolalia imediata",
     domain: 2,
+    parentExample: "No dia a dia: repare se ela repete na hora o que você acabou de falar, em vez de responder (você: “quer suco?”; ela: “quer suco?”).",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de ecolalia imediata.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Ecolalia imediata aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -481,6 +523,7 @@ export const pantScales: PantScale[] = [
     number: 37,
     name: "Ecolalia tardia",
     domain: 2,
+    parentExample: "No dia a dia: repare se ela repete falas guardadas (frases de desenho, propagandas) fora de contexto, soltas no meio do dia.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de ecolalia tardia.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Ecolalia tardia aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -493,6 +536,7 @@ export const pantScales: PantScale[] = [
     number: 38,
     name: "Linguagem para regular o outro",
     domain: 2,
+    parentExample: "No dia a dia: ela usa palavras para DIRIGIR você (“abre”, “me dá”, “vem”) — a fala serve para conseguir coisas.",
     levels: [
       { level: 0, label: "ausente", anchor: "Linguagem para regular o outro não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Linguagem para regular o outro aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -505,6 +549,7 @@ export const pantScales: PantScale[] = [
     number: 39,
     name: "Linguagem para compartilhar experiência",
     domain: 2,
+    parentExample: "No dia a dia: ela usa palavras para DIVIDIR o que sentiu ou viu (“olha o passarinho!”, “que gostoso!”), e não só para pedir.",
     levels: [
       { level: 0, label: "ausente", anchor: "Linguagem para compartilhar experiência não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Linguagem para compartilhar experiência aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -517,6 +562,7 @@ export const pantScales: PantScale[] = [
     number: 40,
     name: "Reparo comunicativo",
     domain: 2,
+    parentExample: "No dia a dia: quando não a entendem, ela tenta de novo de outro jeito (repete mais claro, mostra, aponta) em vez de desistir ou explodir.",
     levels: [
       { level: 0, label: "ausente", anchor: "Reparo comunicativo não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Reparo comunicativo aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -529,6 +575,7 @@ export const pantScales: PantScale[] = [
     number: 41,
     name: "Atenção sustentada",
     domain: 3,
+    parentExample: "No dia a dia: ela consegue ficar numa mesma atividade de que gosta (montar, desenhar) por um tempo razoável para a idade, sem largar a cada instante.",
     levels: [
       { level: 0, label: "ausente", anchor: "Atenção sustentada não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Atenção sustentada aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -541,6 +588,7 @@ export const pantScales: PantScale[] = [
     number: 42,
     name: "Atenção seletiva",
     domain: 3,
+    parentExample: "No dia a dia: ela consegue focar no que importa mesmo com barulho e movimento em volta (ouvir você num ambiente agitado).",
     levels: [
       { level: 0, label: "ausente", anchor: "Atenção seletiva não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Atenção seletiva aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -553,6 +601,7 @@ export const pantScales: PantScale[] = [
     number: 43,
     name: "Atenção alternada",
     domain: 3,
+    parentExample: "No dia a dia: ela troca o foco entre duas coisas e volta (olha o caderno, olha a lousa, volta ao caderno) sem se perder.",
     levels: [
       { level: 0, label: "ausente", anchor: "Atenção alternada não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Atenção alternada aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -565,6 +614,7 @@ export const pantScales: PantScale[] = [
     number: 44,
     name: "Controle inibitório",
     domain: 3,
+    parentExample: "No dia a dia: ela consegue se segurar antes de agir — não sai correndo na rua, não pega o que não pode, pensa um pouco antes.",
     levels: [
       { level: 0, label: "ausente", anchor: "Controle inibitório não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Controle inibitório aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -577,6 +627,7 @@ export const pantScales: PantScale[] = [
     number: 45,
     name: "Tolerância à espera",
     domain: 3,
+    parentExample: "No dia a dia: ela aguenta esperar a vez ou um “já já” por alguns minutos sem desmoronar.",
     levels: [
       { level: 0, label: "ausente", anchor: "Tolerância à espera não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Tolerância à espera aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -589,6 +640,7 @@ export const pantScales: PantScale[] = [
     number: 46,
     name: "Persistência em tarefa",
     domain: 3,
+    parentExample: "No dia a dia: diante de algo difícil (um quebra-cabeça, uma lição), ela insiste e tenta de novo, em vez de desistir no primeiro obstáculo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Persistência em tarefa não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Persistência em tarefa aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -601,6 +653,7 @@ export const pantScales: PantScale[] = [
     number: 47,
     name: "Monitoramento de erro",
     domain: 3,
+    parentExample: "No dia a dia: ela percebe sozinha quando errou e tenta corrigir (“ops, errei”), sem precisar que você aponte tudo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Monitoramento de erro não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Monitoramento de erro aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -613,6 +666,7 @@ export const pantScales: PantScale[] = [
     number: 48,
     name: "Flexibilidade cognitiva",
     domain: 3,
+    parentExample: "No dia a dia: ela aceita uma mudança de plano ou de regra (“hoje vamos por outro caminho”) sem travar nem ter crise.",
     levels: [
       { level: 0, label: "ausente", anchor: "Flexibilidade cognitiva não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Flexibilidade cognitiva aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -625,6 +679,7 @@ export const pantScales: PantScale[] = [
     number: 49,
     name: "Planejamento motor-cognitivo",
     domain: 3,
+    parentExample: "No dia a dia: antes de uma tarefa, ela organiza os passos (“primeiro isso, depois aquilo”) em vez de começar de qualquer jeito.",
     levels: [
       { level: 0, label: "ausente", anchor: "Planejamento motor-cognitivo não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Planejamento motor-cognitivo aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -637,6 +692,7 @@ export const pantScales: PantScale[] = [
     number: 50,
     name: "Organização sequencial",
     domain: 3,
+    parentExample: "No dia a dia: ela segue uma sequência de passos (rotina de banho, arrumar a mochila) na ordem certa.",
     levels: [
       { level: 0, label: "ausente", anchor: "Organização sequencial não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Organização sequencial aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -649,6 +705,7 @@ export const pantScales: PantScale[] = [
     number: 51,
     name: "Memória operacional verbal",
     domain: 3,
+    parentExample: "No dia a dia: ela guarda na cabeça uma instrução falada o tempo de executá-la (você fala 3 coisas e ela lembra de fazer).",
     levels: [
       { level: 0, label: "ausente", anchor: "Memória operacional verbal não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Memória operacional verbal aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -661,6 +718,7 @@ export const pantScales: PantScale[] = [
     number: 52,
     name: "Memória operacional visuoespacial",
     domain: 3,
+    parentExample: "No dia a dia: ela lembra onde estão as coisas, refaz um caminho ou copia um modelo visual de memória.",
     levels: [
       { level: 0, label: "ausente", anchor: "Memória operacional visuoespacial não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Memória operacional visuoespacial aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -673,6 +731,7 @@ export const pantScales: PantScale[] = [
     number: 53,
     name: "Velocidade de processamento funcional",
     domain: 3,
+    parentExample: "No dia a dia: ela responde e reage num ritmo adequado, sem ficar “demorando para a ficha cair” em tudo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Velocidade de processamento funcional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Velocidade de processamento funcional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -685,6 +744,7 @@ export const pantScales: PantScale[] = [
     number: 54,
     name: "Compreensão de regras",
     domain: 3,
+    parentExample: "No dia a dia: ela entende as regras de um jogo ou da casa e consegue aplicá-las.",
     levels: [
       { level: 0, label: "ausente", anchor: "Compreensão de regras não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Compreensão de regras aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -697,6 +757,7 @@ export const pantScales: PantScale[] = [
     number: 55,
     name: "Generalização de aprendizagem",
     domain: 3,
+    parentExample: "No dia a dia: o que ela aprende num lugar (na escola) ela usa em outro (em casa), sem precisar reaprender do zero.",
     levels: [
       { level: 0, label: "ausente", anchor: "Generalização de aprendizagem não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Generalização de aprendizagem aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -709,6 +770,7 @@ export const pantScales: PantScale[] = [
     number: 56,
     name: "Dependência de mediação",
     domain: 3,
+    parentExample: "No dia a dia: repare o quanto ela precisa de alguém colado, ajudando passo a passo, para conseguir fazer as coisas. Quanto mais autônoma, maior o nível.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de dependência de mediação.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Dependência de mediação aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -721,6 +783,7 @@ export const pantScales: PantScale[] = [
     number: 57,
     name: "Autonomia diante de tarefa escolar",
     domain: 3,
+    parentExample: "No dia a dia: ela consegue começar e tocar uma lição/atividade sozinha, sem você sentado do lado o tempo todo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Autonomia diante de tarefa escolar não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Autonomia diante de tarefa escolar aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -733,6 +796,7 @@ export const pantScales: PantScale[] = [
     number: 58,
     name: "Leitura do contexto de sala",
     domain: 3,
+    parentExample: "No dia a dia (relato da escola): ela percebe o que está acontecendo na aula e acompanha o ritmo do grupo, sem ficar “perdida”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Leitura do contexto de sala não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Leitura do contexto de sala aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -745,6 +809,7 @@ export const pantScales: PantScale[] = [
     number: 59,
     name: "Fragilidade em transições",
     domain: 3,
+    parentExample: "No dia a dia: repare como ela reage às mudanças de atividade (parar de brincar para jantar, sair de casa) — de forma fluida ou com muita resistência e crise? Quanto mais fluida, maior o nível.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de fragilidade em transições.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Fragilidade em transições aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -757,6 +822,7 @@ export const pantScales: PantScale[] = [
     number: 60,
     name: "Sinais passivos de fadiga cognitiva",
     domain: 3,
+    parentExample: "No dia a dia: repare se, depois de um tempo de esforço mental, ela “apaga” — fica irritada, dispersa, deita na mesa e rende muito menos.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de sinais passivos de fadiga cognitiva.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Sinais passivos de fadiga cognitiva aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -769,6 +835,7 @@ export const pantScales: PantScale[] = [
     number: 61,
     name: "Hiporreatividade dolorosa",
     domain: 4,
+    parentExample: "No dia a dia: repare se ela reage pouco à dor, ao frio ou ao calor — leva tombos e nem chora, não percebe machucados.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de hiporreatividade dolorosa.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Hiporreatividade dolorosa aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -781,6 +848,7 @@ export const pantScales: PantScale[] = [
     number: 62,
     name: "Hiperreatividade auditiva",
     domain: 4,
+    parentExample: "No dia a dia: repare se sons comuns (liquidificador, secador, festa, mão) a incomodam muito — tapa os ouvidos, se assusta, foge.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de hiperreatividade auditiva.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Hiperreatividade auditiva aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -793,6 +861,7 @@ export const pantScales: PantScale[] = [
     number: 63,
     name: "Hiperreatividade tátil",
     domain: 4,
+    parentExample: "No dia a dia: repare se ela se incomoda com etiqueta de roupa, costura da meia, mão lambuzada, abraço apertado ou cabelo molhado.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de hiperreatividade tátil.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Hiperreatividade tátil aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -805,6 +874,7 @@ export const pantScales: PantScale[] = [
     number: 64,
     name: "Busca vestibular",
     domain: 4,
+    parentExample: "No dia a dia: repare se ela busca muito movimento — girar, balançar, pular, ficar de cabeça para baixo o tempo todo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de busca vestibular.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Busca vestibular aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -817,6 +887,7 @@ export const pantScales: PantScale[] = [
     number: 65,
     name: "Busca proprioceptiva",
     domain: 4,
+    parentExample: "No dia a dia: repare se ela procura apertos e impactos — abraço forte, esbarrar, pular, morder, empurrar móveis.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de busca proprioceptiva.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Busca proprioceptiva aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -829,6 +900,7 @@ export const pantScales: PantScale[] = [
     number: 66,
     name: "Seletividade alimentar sensorial",
     domain: 4,
+    parentExample: "No dia a dia: repare se ela recusa alimentos por textura, cheiro ou cor, come pouquíssimos tipos e enjoa de comidas misturadas.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de seletividade alimentar sensorial.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Seletividade alimentar sensorial aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -841,6 +913,7 @@ export const pantScales: PantScale[] = [
     number: 67,
     name: "Mastigação e coordenação oral",
     domain: 4,
+    parentExample: "No dia a dia: ela mastiga e engole bem os alimentos da idade, sem engasgar, segurar na boca ou só aceitar papinha/líquido.",
     levels: [
       { level: 0, label: "ausente", anchor: "Mastigação e coordenação oral não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Mastigação e coordenação oral aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -853,6 +926,7 @@ export const pantScales: PantScale[] = [
     number: 68,
     name: "Controle postural",
     domain: 4,
+    parentExample: "No dia a dia: ela mantém o corpo firme sentada e em pé, não “derrete” na cadeira nem se cansa rápido de ficar ereta.",
     levels: [
       { level: 0, label: "ausente", anchor: "Controle postural não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Controle postural aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -865,6 +939,7 @@ export const pantScales: PantScale[] = [
     number: 69,
     name: "Praxia global",
     domain: 4,
+    parentExample: "No dia a dia: ela coordena o corpo todo para correr, pular, subir e chutar bola, com o jeito esperado para a idade.",
     levels: [
       { level: 0, label: "ausente", anchor: "Praxia global não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Praxia global aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -877,6 +952,7 @@ export const pantScales: PantScale[] = [
     number: 70,
     name: "Praxia fina",
     domain: 4,
+    parentExample: "No dia a dia: ela usa bem as mãozinhas — segura o lápis, encaixa peças pequenas, abotoa, usa tesoura.",
     levels: [
       { level: 0, label: "ausente", anchor: "Praxia fina não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Praxia fina aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -889,6 +965,7 @@ export const pantScales: PantScale[] = [
     number: 71,
     name: "Coordenação bimanual",
     domain: 4,
+    parentExample: "No dia a dia: ela usa as duas mãos juntas e coordenadas (uma segura o papel, a outra corta; abrir um pote).",
     levels: [
       { level: 0, label: "ausente", anchor: "Coordenação bimanual não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Coordenação bimanual aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -901,6 +978,7 @@ export const pantScales: PantScale[] = [
     number: 72,
     name: "Marcha e padrão motor",
     domain: 4,
+    parentExample: "No dia a dia: ela anda e corre com padrão típico — sem ficar muito na ponta dos pés, sem tropeçar demais nem cair toda hora.",
     levels: [
       { level: 0, label: "ausente", anchor: "Marcha e padrão motor não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Marcha e padrão motor aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -913,6 +991,7 @@ export const pantScales: PantScale[] = [
     number: 73,
     name: "Estereotipias motoras",
     domain: 4,
+    parentExample: "No dia a dia: repare se aparecem movimentos repetitivos (balançar as mãos, rodar, balançar o corpo), principalmente quando ela está excitada ou aflita.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de estereotipias motoras.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Estereotipias motoras aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -925,6 +1004,7 @@ export const pantScales: PantScale[] = [
     number: 74,
     name: "Autorregulação corporal",
     domain: 4,
+    parentExample: "No dia a dia: ela consegue se acalmar e organizar o corpo sozinha quando fica agitada, voltando a um estado tranquilo.",
     levels: [
       { level: 0, label: "ausente", anchor: "Autorregulação corporal não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Autorregulação corporal aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -937,6 +1017,7 @@ export const pantScales: PantScale[] = [
     number: 75,
     name: "Tolerância ao toque de cuidado",
     domain: 4,
+    parentExample: "No dia a dia: ela tolera cuidados como cortar unha e cabelo, escovar os dentes, lavar o rosto e passar creme, sem reação exagerada.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de tolerância ao toque de cuidado.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Tolerância ao toque de cuidado aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -949,6 +1030,7 @@ export const pantScales: PantScale[] = [
     number: 76,
     name: "Vestir-se e despir-se",
     domain: 4,
+    parentExample: "No dia a dia: ela colabora ou consegue se vestir e despir conforme a idade (tirar sapato, vestir a blusa, lidar com fechos).",
     levels: [
       { level: 0, label: "ausente", anchor: "Vestir-se e despir-se não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Vestir-se e despir-se aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -961,6 +1043,7 @@ export const pantScales: PantScale[] = [
     number: 77,
     name: "Higiene pessoal assistida",
     domain: 4,
+    parentExample: "No dia a dia: ela participa da própria higiene (lavar as mãos, escovar os dentes, banho) com a ajuda esperada para a idade.",
     levels: [
       { level: 0, label: "ausente", anchor: "Higiene pessoal assistida não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Higiene pessoal assistida aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -973,6 +1056,7 @@ export const pantScales: PantScale[] = [
     number: 78,
     name: "Controle esfincteriano funcional",
     domain: 4,
+    parentExample: "No dia a dia: como está o controle de xixi e cocô para a idade — ela avisa, segura, usa o banheiro?",
     levels: [
       { level: 0, label: "ausente", anchor: "Controle esfincteriano funcional não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Controle esfincteriano funcional aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -985,6 +1069,7 @@ export const pantScales: PantScale[] = [
     number: 79,
     name: "Sono e ritmicidade biológica",
     domain: 4,
+    parentExample: "No dia a dia: ela tem um sono regular — pega no sono, dorme a noite e acorda em horário, sem grandes batalhas todo dia.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de sono e ritmicidade biológica.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Sono e ritmicidade biológica aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -997,6 +1082,7 @@ export const pantScales: PantScale[] = [
     number: 80,
     name: "Rotina adaptativa cotidiana",
     domain: 4,
+    parentExample: "No dia a dia: ela acompanha a rotina da casa (acordar, comer, sair, dormir) de forma fluida, sem cada etapa virar um conflito.",
     levels: [
       { level: 0, label: "ausente", anchor: "Rotina adaptativa cotidiana não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Rotina adaptativa cotidiana aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -1009,6 +1095,7 @@ export const pantScales: PantScale[] = [
     number: 81,
     name: "Regulação emocional basal",
     domain: 5,
+    parentExample: "No dia a dia: no geral, o humor dela é estável e ela lida com as emoções de forma proporcional, sem viver “à flor da pele”.",
     levels: [
       { level: 0, label: "ausente", anchor: "Regulação emocional basal não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Regulação emocional basal aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -1021,6 +1108,7 @@ export const pantScales: PantScale[] = [
     number: 82,
     name: "Irritabilidade reativa",
     domain: 5,
+    parentExample: "No dia a dia: repare com que facilidade ela se irrita ou explode com contrariedades pequenas — pavio curto?",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de irritabilidade reativa.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Irritabilidade reativa aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1033,6 +1121,7 @@ export const pantScales: PantScale[] = [
     number: 83,
     name: "Frustração e recuperação",
     domain: 5,
+    parentExample: "No dia a dia: quando algo dá errado ou ela ouve um “não”, quanto tempo leva para se recompor? Volta logo ou fica muito tempo mal?",
     levels: [
       { level: 0, label: "ausente", anchor: "Frustração e recuperação não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Frustração e recuperação aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -1045,6 +1134,7 @@ export const pantScales: PantScale[] = [
     number: 84,
     name: "Ansiedade antecipatória",
     domain: 5,
+    parentExample: "No dia a dia: repare se ela fica muito aflita ANTES das coisas (médico, escola, novidade) — pergunta sem parar, não dorme, passa mal de tão preocupada.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de ansiedade antecipatória.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Ansiedade antecipatória aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1057,6 +1147,7 @@ export const pantScales: PantScale[] = [
     number: 85,
     name: "Rigidez comportamental",
     domain: 5,
+    parentExample: "No dia a dia: repare se ela exige que tudo seja sempre do mesmo jeito (mesma roupa, mesmo caminho, mesma ordem) e sofre quando muda.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de rigidez comportamental.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Rigidez comportamental aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1069,6 +1160,7 @@ export const pantScales: PantScale[] = [
     number: 86,
     name: "Oposição reativa versus sobrecarga",
     domain: 5,
+    parentExample: "No dia a dia: quando ela “desobedece”, é birra de querer ganhar ou é por estar sobrecarregada, sem conta dar? Repare o que costuma estar por trás.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de oposição reativa versus sobrecarga.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Oposição reativa versus sobrecarga aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1081,6 +1173,7 @@ export const pantScales: PantScale[] = [
     number: 87,
     name: "Autoagressão",
     domain: 5,
+    parentExample: "No dia a dia: repare se ela se machuca de propósito quando aflita (bate a cabeça, se morde, se belisca, se arranha).",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de autoagressão.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Autoagressão aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1093,6 +1186,7 @@ export const pantScales: PantScale[] = [
     number: 88,
     name: "Heteroagressão",
     domain: 5,
+    parentExample: "No dia a dia: repare se, na crise ou na frustração, ela parte para cima dos outros (bate, empurra, morde, chuta).",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de heteroagressão.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Heteroagressão aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1105,6 +1199,7 @@ export const pantScales: PantScale[] = [
     number: 89,
     name: "Segurança e percepção de risco",
     domain: 5,
+    parentExample: "No dia a dia: ela tem noção de perigo adequada — cuidado com rua, altura, estranhos, fogão — ou se expõe sem medir risco?",
     levels: [
       { level: 0, label: "ausente", anchor: "Segurança e percepção de risco não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Segurança e percepção de risco aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -1117,6 +1212,7 @@ export const pantScales: PantScale[] = [
     number: 90,
     name: "Pistas passivas de humor deprimido",
     domain: 5,
+    parentExample: "No dia a dia: repare em sinais de tristeza ou desânimo — perdeu a graça no que gostava, está mais quietinha, chorosa, isolada, sem energia.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de pistas passivas de humor deprimido.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Pistas passivas de humor deprimido aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1129,6 +1225,7 @@ export const pantScales: PantScale[] = [
     number: 91,
     name: "Pistas passivas de crises paroxísticas",
     domain: 5,
+    parentExample: "No dia a dia: repare em episódios súbitos e repetitivos — “desligadas” com o olhar parado, abalos, ausências, sempre parecidos. Anote e relate ao médico.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de pistas passivas de crises paroxísticas.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Pistas passivas de crises paroxísticas aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1141,6 +1238,7 @@ export const pantScales: PantScale[] = [
     number: 92,
     name: "Eventos noturnos e sono",
     domain: 5,
+    parentExample: "No dia a dia: repare em eventos da noite — terror noturno, despertar gritando, movimentos estranhos, ranger de dentes, parar de respirar ou roncar.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de eventos noturnos e sono.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Eventos noturnos e sono aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1153,6 +1251,7 @@ export const pantScales: PantScale[] = [
     number: 93,
     name: "Sinais de dor somática ou cefaleia",
     domain: 5,
+    parentExample: "No dia a dia: repare em queixas ou sinais de dor de cabeça ou de barriga frequentes — leva a mão à cabeça, fica prostrada, recusa luz e barulho.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de sinais de dor somática ou cefaleia.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Sinais de dor somática ou cefaleia aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1165,6 +1264,7 @@ export const pantScales: PantScale[] = [
     number: 94,
     name: "Impacto gastrointestinal funcional",
     domain: 5,
+    parentExample: "No dia a dia: repare em prisão de ventre, diarreia, cólica, refluxo ou dor de barriga que atrapalham o cotidiano dela.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de impacto gastrointestinal funcional.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Impacto gastrointestinal funcional aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1177,6 +1277,7 @@ export const pantScales: PantScale[] = [
     number: 95,
     name: "Sobrecarga familiar observável",
     domain: 5,
+    parentExample: "No dia a dia: o quanto a rotina e o comportamento dela esgotam a família — vocês vivem no limite, sem pausa, com a casa girando em torno disso?",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de sobrecarga familiar observável.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Sobrecarga familiar observável aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1189,6 +1290,7 @@ export const pantScales: PantScale[] = [
     number: 96,
     name: "Necessidade de previsibilidade ambiental",
     domain: 5,
+    parentExample: "No dia a dia: o quanto ela precisa de aviso prévio, rotina fixa e ambiente previsível para ficar bem — e desmorona quando foge do combinado?",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de necessidade de previsibilidade ambiental.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Necessidade de previsibilidade ambiental aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1201,6 +1303,7 @@ export const pantScales: PantScale[] = [
     number: 97,
     name: "Capacidade de permanência escolar",
     domain: 5,
+    parentExample: "No dia a dia: ela consegue ficar e aguentar o período escolar inteiro, ou cansa, recusa ou é chamada para buscar antes da hora?",
     levels: [
       { level: 0, label: "ausente", anchor: "Capacidade de permanência escolar não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Capacidade de permanência escolar aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -1213,6 +1316,7 @@ export const pantScales: PantScale[] = [
     number: 98,
     name: "Necessidade de apoio escolar individualizado",
     domain: 5,
+    parentExample: "No dia a dia (relato da escola): o quanto ela precisa de um adulto de apoio, de adaptações ou de atenção individual para acompanhar a turma.",
     levels: [
       { level: 0, label: "ausente", anchor: "Não se observam sinais clinicamente relevantes de necessidade de apoio escolar individualizado.", phrase: "“Isso não chama atenção no dia a dia.”" },
       { level: 1, label: "leve / ocasional", anchor: "Necessidade de apoio escolar individualizado aparece de forma rara, breve ou leve, sem repercussão funcional consistente.", phrase: "“Acontece de vez em quando, mas passa rápido.”" },
@@ -1225,6 +1329,7 @@ export const pantScales: PantScale[] = [
     number: 99,
     name: "Convergência multiprofissional dos achados",
     domain: 5,
+    parentExample: "Aqui você reúne o que vê em casa com o que escola e terapeutas relatam: o quanto todos descrevem a MESMA criança e apontam na mesma direção.",
     levels: [
       { level: 0, label: "ausente", anchor: "Convergência multiprofissional dos achados não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Convergência multiprofissional dos achados aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
@@ -1237,6 +1342,7 @@ export const pantScales: PantScale[] = [
     number: 100,
     name: "Potencial de aprendizagem e prognóstico dinâmico",
     domain: 5,
+    parentExample: "Aqui pesa o quanto ela AVANÇA com ajuda e estímulo: responde bem às intervenções e mostra evolução ao longo do tempo? Quanto melhor a resposta e o progresso, maior o nível.",
     levels: [
       { level: 0, label: "ausente", anchor: "Potencial de aprendizagem e prognóstico dinâmico não se evidencia de modo útil no cotidiano; a criança não sustenta esse recurso de forma espontânea.", phrase: "“Ele ainda não faz isso sozinho.”" },
       { level: 1, label: "muito frágil", anchor: "Potencial de aprendizagem e prognóstico dinâmico aparece apenas sob convite intenso, modelagem forte ou contexto muito facilitado.", phrase: "“Só acontece quando a gente puxa muito.”" },
