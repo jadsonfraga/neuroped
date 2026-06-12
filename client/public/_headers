@@ -1,0 +1,19 @@
+# Cloudflare Pages — política de cache HTTP.
+# Objetivo: o app sempre reflete o último deploy. O service worker e o HTML
+# nunca podem ficar presos no cache do navegador/CDN; os assets com hash
+# (imutáveis) podem ser cacheados agressivamente.
+
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache
+
+/
+  Cache-Control: no-cache
+
+/manifest.json
+  Cache-Control: no-cache
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

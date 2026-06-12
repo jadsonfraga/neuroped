@@ -1,17 +1,20 @@
 /**
- * NeuroPed Service Worker — v6
- * Estratégia de cache auditada e corrigida (sessão 2 — 2026-05-08)
+ * NeuroPed Service Worker — v7
+ * Estratégia de cache auditada e corrigida (sessão 2026-06-12)
  *
  * ESTRATÉGIAS:
  *  - APIs clínicas (/api/*)      → Network Only  (nunca cachear dados sensíveis)
  *  - JS/CSS hasheados            → Cache First   (imutáveis — nomes com hash)
  *  - Imagens / Fontes            → Cache First   (estáticas)
- *  - HTML / Manifest             → Stale-While-Revalidate (offline-first suave)
+ *  - HTML / navegação / manifest → Network First (online traz sempre o deploy
+ *    recém-publicado; offline cai no cache). Antes era Stale-While-Revalidate,
+ *    que servia o index.html ANTIGO do cache e só atualizava na visita seguinte
+ *    — causa do "fiz deploy e o app continua na versão antiga".
  *
  * LGPD: este SW NÃO cacheia nenhum dado de paciente ou resposta de API.
  */
 
-const CACHE_NAME = "neuroped-v6";
+const CACHE_NAME = "neuroped-v7";
 
 // App shell — apenas recursos estáticos sem dados clínicos
 const APP_SHELL = [
@@ -94,8 +97,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // HTML, manifest e tudo mais → Stale-While-Revalidate
-  event.respondWith(staleWhileRevalidate(request));
+  // HTML / navegação / manifest e tudo mais → Network First.
+  // ONLINE, sempre entrega o build recém-publicado; offline cai no cache.
+  event.respondWith(networkFirst(request));
 });
 
 // ---------- Mensagens do cliente ----------
@@ -134,32 +138,23 @@ async function cacheFirst(request) {
 }
 
 /**
- * Stale-While-Revalidate — ideal para HTML e recursos que mudam.
- * Retorna cache imediatamente e atualiza em background.
+ * Network First — ideal para HTML/navegação: ONLINE busca sempre a versão mais
+ * recente (o deploy novo) e só recorre ao cache quando a rede falha (offline).
  */
-async function staleWhileRevalidate(request) {
+async function networkFirst(request) {
   const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
 
-  const networkFetch = fetch(request)
-    .then((response) => {
-      if (response.ok) {
-        cache.put(request, response.clone());
-      }
-      return response;
-    })
-    .catch(() => null);
-
-  // Retorna cache imediatamente se disponível
-  if (cached) {
-    // Revalida em background (fire and forget)
-    void networkFetch;
-    return cached;
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    // Offline / falha de rede — recorre ao cache.
+    const cached = await cache.match(request);
+    if (cached) return cached;
   }
-
-  // Sem cache — aguarda rede
-  const response = await networkFetch;
-  if (response) return response;
 
   // Fallback offline: serve index.html para navegação SPA
   const offlinePage = await cache.match("./offline.html");
