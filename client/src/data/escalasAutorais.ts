@@ -237,6 +237,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-018",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Camouflage TEA Meninas (J26-018)",
     fullName: "Protocolo de Avaliação do Mascaramento Autista em Meninas e Adolescentes",
     ageMin: 72,
@@ -262,6 +263,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-020",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Linguagem Pragmática TEA (J26-020)",
     fullName: "Protocolo de Avaliação da Linguagem Pragmática e Comunicação Funcional em TEA",
     ageMin: 36,
@@ -300,6 +302,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-023",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Função Executiva TEA (J26-023)",
     fullName: "Protocolo de Triagem de Função Executiva no Cotidiano em TEA",
     ageMin: 48,
@@ -312,6 +315,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-024",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TEA Adulto Jovem (J26-024)",
     fullName: "Protocolo de Rastreio de TEA em Adolescentes e Adultos Jovens",
     ageMin: 144,
@@ -350,6 +354,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-027",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comunicação Alternativa TEA (J26-027)",
     fullName: "Protocolo de Avaliação de Necessidades de Comunicação Alternativa e Aumentativa em TEA",
     ageMin: 24,
@@ -362,6 +367,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-028",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Nível de Suporte TEA (J26-028)",
     fullName: "Protocolo de Classificação de Necessidade de Suporte em TEA — Níveis 1, 2 e 3 DSM-5",
     ageMin: 24,
@@ -387,6 +393,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-030",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Evolução Clínica TEA (J26-030)",
     fullName: "Protocolo de Monitorização da Evolução Clínica e Terapêutica em TEA",
     ageMin: 24,

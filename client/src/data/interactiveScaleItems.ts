@@ -762,6 +762,274 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       },
     ],
   },
+
+  // ---- J26-018 — Mascaramento (camouflage) TEA em meninas ----
+  "j26-018": {
+    icon: Sparkles,
+    gradient: "from-fuchsia-500 to-purple-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "O mascaramento frequentemente esconde o TEA em meninas e adolescentes (maior escore = mais camuflagem). Escore elevado, mesmo com boa adaptação aparente, justifica avaliação cuidadosa. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Mascaramento social (maior = mais camuflagem)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Camuflagem e compensação social",
+        color: "text-fuchsia-600 dark:text-fuchsia-400",
+        items: [
+          "Observa e copia o jeito das outras pessoas de falar e se comportar para se encaixar",
+          "Ensaia conversas, falas ou expressões antes de situações sociais",
+          "Força o contato visual mesmo quando é desconfortável",
+          "Esconde os próprios interesses ou estereotipias quando está com outras pessoas",
+          "Imita personagens de filmes/séries para saber como agir socialmente",
+          "Fica exausta depois de conviver socialmente (precisa se recolher)",
+          "Finge entender piadas ou conversas que na verdade não acompanhou",
+          "Segura os comportamentos na escola e “desmonta” só ao chegar em casa",
+          "Tem amigas, mas sente que precisa “atuar” um papel para mantê-las",
+          "Sente-se diferente das outras meninas, mas esconde isso",
+          "Planeja as respostas sociais conscientemente em vez de fluir naturalmente",
+          "Evita situações sociais novas por medo de não saber se comportar",
+          "Apresenta ansiedade ligada ao esforço de parecer “normal”",
+          "Reprime emoções em público e extravasa em particular",
+          "Passou despercebida em avaliações anteriores por “se comportar bem”",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-020 — Linguagem Pragmática TEA (habilidade; maior = melhor) ----
+  "j26-020": {
+    icon: MessageCircle,
+    gradient: "from-sky-500 to-blue-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "Avalia o USO social da linguagem (funções comunicativas), além da forma da fala. Maior escore = comunicação mais funcional. Triagem clínica, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Linguagem pragmática (maior = mais funcional)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Funções e uso social da linguagem",
+        color: "text-sky-600 dark:text-sky-400",
+        items: [
+          "Usa a linguagem para PEDIR o que quer",
+          "Usa a linguagem para COMENTAR e compartilhar (não só para pedir)",
+          "Faz perguntas para obter informação",
+          "Responde a perguntas de forma pertinente (no assunto)",
+          "Inicia uma conversa espontaneamente",
+          "Mantém o tema da conversa por várias trocas",
+          "Respeita a vez de falar (não monopoliza nem interrompe sempre)",
+          "Repara a comunicação quando não é entendida (tenta de novo de outro jeito)",
+          "Ajusta a fala ao interlocutor (fala diferente com um bebê e com um adulto)",
+          "Usa e entende gestos, expressão facial e tom junto com a fala",
+          "Entende linguagem não-literal simples (ironia, expressões, piadas)",
+          "Usa saudações e fórmulas sociais (oi, tchau, obrigado) no momento certo",
+          "Conta um acontecimento de forma que o ouvinte acompanhe (narrativa)",
+          "Percebe e responde às pistas do ouvinte (interesse, tédio, dúvida)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-023 — Função Executiva TEA (dificuldades; maior = mais problema) ----
+  "j26-023": {
+    icon: Sparkles,
+    gradient: "from-amber-500 to-yellow-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia dificuldades executivas no cotidiano (maior escore = mais dificuldade). Orienta os suportes em casa e na escola. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Dificuldades executivas (maior = mais problema)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Função executiva no dia a dia",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "Tem dificuldade de começar uma tarefa sozinha (precisa de empurrão)",
+          "Trava ou tem crise quando muda a rotina ou o plano (inflexibilidade)",
+          "Esquece o que tem que fazer no meio do caminho (memória de trabalho)",
+          "Tem dificuldade de organizar materiais, mochila ou tarefas",
+          "Age sem pensar nas consequências (impulsividade)",
+          "Tem dificuldade de planejar os passos de uma atividade",
+          "Não consegue parar uma atividade prazerosa para fazer outra",
+          "Tem dificuldade de executar uma sequência de várias etapas",
+          "Fica preso em um detalhe e não enxerga o todo",
+          "Tem dificuldade de controlar a emoção quando frustrada",
+          "Precisa ser lembrada o tempo todo das mesmas regras e rotinas",
+          "Tem dificuldade de terminar o que começou (persistência)",
+          "Demora muito para se adaptar a uma instrução nova",
+          "Perde ou esquece objetos com frequência",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-024 — Rastreio de TEA em adolescentes/adultos jovens (autorrelato) ----
+  "j26-024": {
+    icon: Sparkles,
+    gradient: "from-violet-500 to-indigo-600",
+    instruction:
+      "Para cada frase, marque o quanto ela combina com você no dia a dia. Não há resposta certa ou errada — responda com sinceridade. Responda todos os itens.",
+    infoBox:
+      "Rastreio de traços autistas em quem chegou à adolescência sem diagnóstico (maior escore = mais traços). Escore elevado indica encaminhamento para avaliação diagnóstica. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Traços autistas (maior = mais traços)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Autorrelato de traços do espectro",
+        color: "text-violet-600 dark:text-violet-400",
+        items: [
+          "Acho difícil entender o que as pessoas estão pensando ou sentindo",
+          "Prefiro fazer as coisas sempre da mesma maneira",
+          "Fico sobrecarregado(a) com sons, luzes, cheiros ou texturas",
+          "Acho difícil manter conversas informais (“conversa fiada”)",
+          "Tenho interesses muito intensos e específicos",
+          "Sinto-me esgotado(a) depois de situações sociais",
+          "Acho difícil fazer e manter amizades",
+          "Não percebo quando alguém está entediado ou incomodado comigo",
+          "Prefiro rotinas e fico ansioso(a) com mudanças inesperadas",
+          "Levo as coisas ao pé da letra (dificuldade com ironia e sentido figurado)",
+          "Sinto que tenho que “atuar” para parecer como os outros",
+          "Tenho movimentos ou hábitos repetitivos que me acalmam",
+          "Tenho dificuldades sociais desde a infância",
+          "Evito contato visual ou ele me deixa desconfortável",
+          "Sinto-me diferente das pessoas da minha idade",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-027 — Necessidades de Comunicação Alternativa (CAA) ----
+  "j26-027": {
+    icon: MessageCircle,
+    gradient: "from-teal-500 to-emerald-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "Avalia as habilidades comunicativas atuais (maior escore = mais recursos próprios). Quanto MENOR o escore, maior a necessidade e o benefício de CAA (figuras/PECS, prancha, tablet). Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Recursos comunicativos atuais (menor = mais necessidade de CAA)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Intenção e funções comunicativas atuais",
+        color: "text-teal-600 dark:text-teal-400",
+        items: [
+          "Demonstra intenção de se comunicar (mesmo sem fala)",
+          "Usa o olhar dirigido para se comunicar",
+          "Usa gestos para pedir ou recusar",
+          "Aponta para pedir ou para mostrar",
+          "Leva o adulto pela mão até o que quer",
+          "Entende ordens simples faladas",
+          "Entende figuras ou fotos de objetos e ações",
+          "Faz escolhas quando lhe mostram duas opções",
+          "Usa sons, palavras ou aproximações para se comunicar",
+          "Comunica diferentes funções (pedir, recusar, comentar, cumprimentar)",
+          "Responde quando alguém tenta se comunicar com ela",
+          "Usa ou aceitaria recursos visuais (figuras, prancha, tablet) para se expressar",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-028 — Necessidade de Suporte TEA (níveis DSM-5) ----
+  "j26-028": {
+    icon: ClipboardList,
+    gradient: "from-rose-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Estrutura a avaliação da necessidade de suporte (maior escore = mais suporte). Apoia a definição dos níveis 1/2/3 do DSM-5 (apoio / apoio substancial / apoio muito substancial). O juízo clínico final é do profissional.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Necessidade de suporte (maior = mais suporte)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Comunicação social",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Precisa de apoio para iniciar interações sociais",
+          "Tem respostas sociais reduzidas ou atípicas às aproximações dos outros",
+          "Comunicação verbal/não-verbal limitada para a idade",
+          "Interesse social reduzido por crianças da mesma idade",
+          "Dificuldade marcante para se adaptar a diferentes contextos sociais",
+          "Necessita de muito suporte para funcionar na escola/ambientes sociais",
+        ],
+      },
+      {
+        name: "Comportamentos restritos e repetitivos",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Inflexibilidade que interfere no funcionamento em vários contextos",
+          "Grande dificuldade para mudar de foco ou de atividade",
+          "Comportamentos repetitivos evidentes e frequentes",
+          "Rituais ou insistência na mesmice que atrapalham o cotidiano",
+          "Reações intensas a mudanças (crises)",
+          "Interesses restritos que limitam a participação em atividades",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-030 — Evolução Clínica TEA (funcionamento atual; multidomínio) ----
+  "j26-030": {
+    icon: Activity,
+    gradient: "from-emerald-500 to-teal-600",
+    instruction:
+      "Para cada item, marque como está a criança HOJE. Aplique a cada ~3 meses e compare com a avaliação anterior para acompanhar a evolução nas terapias. Responda todos os itens.",
+    infoBox:
+      "Monitorização da evolução (maior escore = melhor funcionamento atual). Compare o escore ao longo do tempo para ver a resposta às terapias. Não é diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Funcionamento atual (maior = melhor)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Comunicação",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Comunica o que quer de forma clara",
+          "Usa mais palavras ou frases do que antes",
+          "Responde quando falam com ela",
+          "Inicia comunicação espontaneamente",
+          "Entende o que lhe é pedido",
+        ],
+      },
+      {
+        name: "Social",
+        color: "text-pink-600 dark:text-pink-400",
+        items: [
+          "Busca e aceita interação com outras pessoas",
+          "Brinca ou convive melhor com outras crianças",
+          "Faz contato visual e compartilha atenção",
+          "Demonstra afeto e reciprocidade",
+          "Tolera melhor estar em grupo",
+        ],
+      },
+      {
+        name: "Comportamento",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "Tem menos crises de comportamento",
+          "Lida melhor com mudanças e frustrações",
+          "Reduziu comportamentos repetitivos prejudiciais",
+          "Regula melhor as emoções",
+          "Dorme e se alimenta melhor",
+        ],
+      },
+      {
+        name: "Autonomia",
+        color: "text-emerald-600 dark:text-emerald-400",
+        items: [
+          "Faz mais tarefas de autocuidado sozinha",
+          "Participa melhor da rotina da casa",
+          "Acompanha melhor a rotina escolar",
+          "Generaliza para casa/escola o que aprende nas terapias",
+          "Ganhou mais independência desde a última avaliação",
+        ],
+      },
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
