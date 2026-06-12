@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Award,
   Baby,
-  BookOpen,
   Brain,
   ClipboardCheck,
   Filter,
@@ -82,6 +81,16 @@ function resolveAppRoute(scale: ScaleEntry): string | null {
 // aquelas que abrem"). Qualquer escala sem rota real é removida do catálogo.
 function opensInApp(scale: ScaleEntry): boolean {
   return resolveAppRoute(scale) !== null;
+}
+
+// Aplicação COMPLETA: página dedicada, escala interativa por dados ou catálogo
+// mundial — em oposição a abrir apenas como ficha técnica.
+function isFullApp(scale: ScaleEntry): boolean {
+  return (
+    (Boolean(scale.appRoute) && !scale.appRoute!.startsWith("/generic-scale/")) ||
+    scale.id.startsWith("world-") ||
+    Boolean(interactiveScales[scale.id])
+  );
 }
 
 function unique(scales: ScaleEntry[]) {
@@ -330,6 +339,9 @@ export default function FiltroPage() {
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
   // "Só aplicação completa": esconde as fichas de referência (/generic-scale),
   // deixando só escalas com página própria/usável no app. Reversível, por ora.
+  // REGRA C (Dr. Jadson, 2026-06-12): o catálogo do filtro já exclui restritas/
+  // comerciais sem aplicação; todas as de licença livre aparecem por padrão.
+  // O botão "Só aplicação completa" continua disponível para ocultar fichas.
   const [onlyApp, setOnlyApp] = useState(false);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
@@ -358,18 +370,13 @@ export default function FiltroPage() {
   // Catálogo do filtro = só escalas que ABREM (têm rota real). Escalas sem
   // destino renderizável são removidas — nunca recomendamos um beco sem saída.
   const catalog = useMemo(() => {
-    const base = unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp);
-    // Por ora: opção de mostrar só escalas que abrem como aplicação PRÓPRIA
-    // (página dedicada registrada ou catálogo mundial), escondendo as fichas de
-    // referência — inclusive as que apontam appRoute para /generic-scale/:id.
-    return onlyApp
-      ? base.filter(
-          (s) =>
-            (s.appRoute && !s.appRoute.startsWith("/generic-scale/")) ||
-            s.id.startsWith("world-") ||
-            Boolean(interactiveScales[s.id]) // escalas interativas dirigidas por dados também são apps completos
-        )
-      : base;
+    const base = unique([...CORE_FILTERABLE_CATALOG, ...world])
+      .filter(opensInApp)
+      // REGRA C (Dr. Jadson, 2026-06-12): escalas RESTRITAS ou COMERCIAIS que
+      // ainda NÃO abrem como aplicação completa saem do filtro (ficam só no
+      // catálogo/ficha). Todas as de licença LIVRE permanecem no filtro.
+      .filter((s) => isFullApp(s) || (s.licencaUso !== "restrita" && s.licencaUso !== "comercial"));
+    return onlyApp ? base.filter(isFullApp) : base;
   }, [world, onlyApp]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
@@ -501,7 +508,7 @@ export default function FiltroPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
 
         {/* LEFT COLUMN — Controls (Sticky on Desktop) */}
-        <div className="lg:col-span-1 space-y-3 sm:space-y-4 lg:sticky lg:top-5 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
+        <div className={hasSearch ? "lg:col-span-1 space-y-3 sm:space-y-4 lg:sticky lg:top-5 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto" : "lg:col-span-3 space-y-3 sm:space-y-4"}>
 
           {/* Search & Filters */}
           <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
@@ -724,32 +731,6 @@ export default function FiltroPage() {
         </div>
         )}
         <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
-        </section>
-        )}
-
-        {!hasSearch && (
-        <section className="lg:col-span-2 space-y-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card>
-        </div>
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-6">
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-4">
-              <div className="text-5xl">🧠</div>
-              <div className="flex-1">
-                <h3 className="font-black text-foreground mb-2">Como usar o Filtro</h3>
-                <ol className="space-y-1 text-xs text-muted-foreground list-decimal list-inside">
-                  <li>Selecione a <strong>idade</strong> da criança</li>
-                  <li>Escolha os <strong>sinais e sintomas</strong> observados</li>
-                  <li>Veja as <strong>recomendações</strong> organizadas por prioridade</li>
-                  <li>Clique para <strong>abrir</strong> o instrumento escolhido</li>
-                </ol>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
         </section>
         )}
 

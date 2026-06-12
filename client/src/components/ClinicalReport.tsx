@@ -141,7 +141,9 @@ async function sendEmail(
         ? `${reportText.slice(0, 1800)}\n\n[...relatório completo truncado por limite de mailto — use Copiar Texto para obter o relatório inteiro]`
         : reportText;
     const mailtoUrl = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(truncated)}`;
-    window.open(mailtoUrl, "_blank");
+    // location.href abre o app de email sem criar aba em branco (window.open
+    // em "_blank" deixava uma aba vazia quando não há cliente de email).
+    window.location.href = mailtoUrl;
     setSent(true);
     toast({
       title: "✉️ Email aberto",

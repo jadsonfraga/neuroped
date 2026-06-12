@@ -62,6 +62,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const allItems = useMemo(
@@ -91,9 +92,20 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       const parsed = JSON.parse(raw) as {
         answers?: Record<string, number>;
         showResult?: boolean;
+        updatedAt?: string;
       };
+      // Rascunho com mais de 12h é descartado: evita restaurar respostas de um
+      // atendimento anterior (vazamento de rascunho entre pacientes).
+      if (parsed.updatedAt) {
+        const ageMs = Date.now() - new Date(parsed.updatedAt).getTime();
+        if (Number.isFinite(ageMs) && ageMs > 12 * 60 * 60 * 1000) {
+          window.localStorage.removeItem(draftKey);
+          return;
+        }
+      }
       if (parsed.answers && typeof parsed.answers === "object") {
         setAnswers(parsed.answers);
+        if (Object.keys(parsed.answers).length > 0) setDraftRestored(true);
       }
       if (
         parsed.showResult &&
@@ -362,6 +374,28 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           </p>
         </div>
       </motion.div>
+
+      {draftRestored && !showResult && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 px-3 py-2">
+          <p className="text-xs text-amber-800 dark:text-amber-200">
+            Respostas de uma aplicação anterior foram restauradas. Novo paciente? Comece do zero.
+          </p>
+          <button
+            type="button"
+            data-testid="button-clear-draft"
+            onClick={() => {
+              try { window.localStorage.removeItem(draftKey); } catch { /* sem storage */ }
+              setAnswers({});
+              setShowResult(false);
+              setSubmitAttempted(false);
+              setDraftRestored(false);
+            }}
+            className="shrink-0 rounded-lg border border-amber-400/70 px-2.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
+          >
+            Começar do zero
+          </button>
+        </div>
+      )}
 
       <div className="sticky top-0 z-20 -mx-1 rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur space-y-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
