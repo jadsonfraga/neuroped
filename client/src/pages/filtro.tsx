@@ -246,6 +246,17 @@ function icon(slot: Slot) {
   return <School className="h-5 w-5" />;
 }
 
+// Emoji didático da medalha — reforça visualmente a prioridade do ranking.
+function slotEmoji(slot: Slot): string {
+  if (slot === "Ouro") return "🥇";
+  if (slot === "Prata") return "🥈";
+  if (slot === "Bronze") return "🥉";
+  if (slot === "Teste Direto") return "🧒";
+  if (slot === "Questionário Escolar") return "🏫";
+  if (slot === "Satisfação Medicação") return "💊";
+  return "🏅";
+}
+
 interface ScaleVisual {
   label: string;
   Icon: LucideIcon;
@@ -495,7 +506,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">🎂</span> Idade da criança</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             {faixasEtarias.map((age) => <button key={age.id} type="button" aria-pressed={selectedAge === age.id} aria-label={`Faixa etária ${age.label}`} onMouseEnter={() => softHover()} onClick={() => setSelectedAge((v) => v === age.id ? null : age.id)} className={`shrink-0 rounded-2xl border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>{age.label}</button>)}
           </div>
@@ -504,20 +515,21 @@ export default function FiltroPage() {
         <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">Queixa</p>
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate"><span aria-hidden="true">🩺</span> Queixa / sintomas</p>
               {detectedPattern && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 {detectedPattern.name.split('(')[0]}</span>}
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {queixas.slice(0, 24).map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} aria-label={q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
+              {q.emoji && <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">{q.emoji}</span>}
               <span className="truncate text-[11px] sm:text-xs leading-tight">{q.label}</span>
             </button>)}
           </div>
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Respondente</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">🙋</span> Quem responde</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="crianca" type="button" aria-pressed={selectedRespondente === "autoaplicavel"} aria-label="Respondente: criança (teste direto)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🧒</span> <span className="hidden sm:inline">Direto</span></button>
             <button key="pais" type="button" aria-pressed={selectedRespondente === "pais"} aria-label="Respondente: pais ou cuidador" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
@@ -527,7 +539,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Comunicação</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">💬</span> Comunicação</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="verbal" type="button" aria-pressed={selectedCommunication === "verbal"} aria-label="Comunicação: criança verbal (fala)" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "verbal" ? null : "verbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "verbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🗣️</span> <span className="hidden sm:inline">Fala</span></button>
             <button key="nonverbal" type="button" aria-pressed={selectedCommunication === "nonverbal"} aria-label="Comunicação: criança não-verbal" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "nonverbal" ? null : "nonverbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "nonverbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🤐</span> <span className="hidden sm:inline">Não-Verbal</span></button>
@@ -535,7 +547,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Alfabetização</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">📖</span> Alfabetização</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="literate" type="button" aria-pressed={selectedLiteracy === "literate"} aria-label="Alfabetização: criança alfabetizada" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "literate" ? null : "literate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "literate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">📖</span> <span className="hidden sm:inline">Alfabetizada</span></button>
             <button key="preliterate" type="button" aria-pressed={selectedLiteracy === "preliterate"} aria-label="Alfabetização: criança pré-alfabetizada" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "preliterate" ? null : "preliterate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "preliterate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👶</span> <span className="hidden sm:inline">Pré-Alfab.</span></button>
@@ -543,7 +555,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de Avaliação</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">🎯</span> Tipo de avaliação</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="diagnostic" type="button" aria-pressed={selectedAssessmentType === "diagnostic"} aria-label="Tipo de avaliação: diagnóstico" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "diagnostic" ? null : "diagnostic")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🔍</span> <span className="hidden sm:inline">Diagnóstico</span></button>
             <button key="monitoring" type="button" aria-pressed={selectedAssessmentType === "monitoring"} aria-label="Tipo de avaliação: monitorização" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "monitoring" ? null : "monitoring")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">📊</span> <span className="hidden sm:inline">Monitorização</span></button>
@@ -656,7 +668,7 @@ export default function FiltroPage() {
                 <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
                   <CardContent className="filter-260-card-content">
                     <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
+                      <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}><span aria-hidden="true">{slotEmoji(item.slot)}</span> {item.slot}</Badge>
                       {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}{item.confidence !== null ? ` · ${item.confidence}%` : ""}</Badge>}
                     </div>
                     {item.warnings.length > 0 && (
@@ -702,20 +714,51 @@ export default function FiltroPage() {
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card>
         </div>
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-6">
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-4">
-              <div className="text-5xl">🧠</div>
+        <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-5 sm:p-6">
+          <CardContent className="space-y-5 p-0">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="text-4xl sm:text-5xl">🧠</div>
               <div className="flex-1">
-                <h3 className="font-black text-foreground mb-2">Como usar o Filtro</h3>
-                <ol className="space-y-1 text-xs text-muted-foreground list-decimal list-inside">
-                  <li>Selecione a <strong>idade</strong> da criança</li>
-                  <li>Escolha os <strong>sinais e sintomas</strong> observados</li>
-                  <li>Veja as <strong>recomendações</strong> organizadas por prioridade</li>
-                  <li>Clique para <strong>abrir</strong> o instrumento escolhido</li>
-                </ol>
+                <h3 className="font-black text-foreground">Como usar o Filtro em 4 passos</h3>
+                <p className="text-xs text-muted-foreground">Combine os critérios à esquerda e o filtro monta o ranking de escalas para você. 😉</p>
               </div>
             </div>
+
+            {/* Passo a passo ilustrado */}
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
+                <span className="text-2xl leading-none" aria-hidden="true">1️⃣</span>
+                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">🎂</span> Escolha a <strong className="text-foreground">idade</strong> da criança.</p>
+              </div>
+              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
+                <span className="text-2xl leading-none" aria-hidden="true">2️⃣</span>
+                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">🩺</span> Marque a <strong className="text-foreground">queixa</strong> e os sintomas observados.</p>
+              </div>
+              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
+                <span className="text-2xl leading-none" aria-hidden="true">3️⃣</span>
+                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">🙋</span> Diga <strong className="text-foreground">quem vai responder</strong> (criança, pais, escola ou clínico).</p>
+              </div>
+              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
+                <span className="text-2xl leading-none" aria-hidden="true">4️⃣</span>
+                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">👆</span> <strong className="text-foreground">Toque na escala</strong> recomendada para abri-la.</p>
+              </div>
+            </div>
+
+            {/* Legenda didática das medalhas */}
+            <div className="rounded-2xl border border-border/60 bg-background/70 p-3 sm:p-4">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">Como ler o ranking 🏅</p>
+              <ul className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
+                <li><span aria-hidden="true">🥇</span> <strong className="text-foreground">Ouro</strong> — a escala principal, que melhor responde à sua dúvida.</li>
+                <li><span aria-hidden="true">🥈</span> <strong className="text-foreground">Prata</strong> — complementa e detalha o que o Ouro não cobre.</li>
+                <li><span aria-hidden="true">🥉</span> <strong className="text-foreground">Bronze</strong> — uma perspectiva adicional, quando ainda restam dúvidas.</li>
+              </ul>
+            </div>
+
+            {/* Aviso prudente, em tom acolhedor */}
+            <p className="flex items-start gap-2 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 px-3 py-2 text-[11px] leading-relaxed text-amber-900 dark:text-amber-100">
+              <span aria-hidden="true">💡</span>
+              <span>O filtro <strong>organiza e sugere</strong> instrumentos — ele nunca substitui a avaliação clínica nem fecha diagnóstico sozinho.</span>
+            </p>
           </CardContent>
         </Card>
         </section>
