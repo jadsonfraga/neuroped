@@ -296,6 +296,47 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
   );
 }
 
+// ---------- K) Invariantes do motor (anti-regressão) ----------
+head("K) Invariantes do motor — limites, ordenação e determinismo");
+{
+  const ctx = { queixas: ["tdah"], selectedSignals: [], ageMonths: 84, respondente: "professor", assessmentUse: "diagnostico" };
+  const r1 = run(ctx);
+  ok(r1.length > 0, "cenário de referência deve retornar candidatos");
+
+  // Limites: relevanceScore e confidenceLevel sempre em [0, 100].
+  ok(
+    r1.every((m) => m.relevanceScore >= 0 && m.relevanceScore <= 100),
+    "relevanceScore de toda recomendação está em [0,100]"
+  );
+  ok(
+    r1.every((m) => m.confidenceLevel >= 0 && m.confidenceLevel <= 100),
+    "confidenceLevel de toda recomendação está em [0,100]"
+  );
+
+  // Ordenação monótona não-crescente por relevanceScore (ranking confiável).
+  let monotonic = true;
+  for (let i = 1; i < r1.length; i++) if (r1[i].relevanceScore > r1[i - 1].relevanceScore) monotonic = false;
+  ok(monotonic, "resultados ordenados por relevanceScore não-crescente");
+
+  // Determinismo: mesma entrada => mesma ordem (sort estável com desempate por nome).
+  const r2 = run(ctx);
+  ok(
+    r1.length === r2.length && r1.every((m, i) => m.scale.id === r2[i].scale.id),
+    "filtragem é determinística (mesma entrada, mesma ordem)"
+  );
+
+  // Coerência de tier x score (limiares declarados no motor).
+  ok(
+    r1.every((m) =>
+      (m.tier === "gold" && m.relevanceScore >= 80) ||
+      (m.tier === "silver" && m.relevanceScore >= 62 && m.relevanceScore < 80) ||
+      (m.tier === "bronze" && m.relevanceScore >= 45 && m.relevanceScore < 62) ||
+      (m.tier === "conditional" && m.relevanceScore < 45)
+    ),
+    "tier coerente com a faixa de relevanceScore"
+  );
+}
+
 // ---------- Resumo ----------
 console.log(`\n${"=".repeat(48)}`);
 if (failures === 0) {
