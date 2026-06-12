@@ -306,8 +306,12 @@ function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas
     reasons.push("✓ Respondente: Clínico (observação direta)");
   }
 
-  if (scale.appRoute) {
-    reasons.push(getImplementationStatus(scale) === "complete" ? "✓ Aplicação completa no app" : "✓ Ficha técnica no app");
+  // Toda escala recomendada abre: aplicação completa quando há rota dedicada
+  // "complete", senão ficha técnica (inclusive via /generic-scale/:id).
+  if (scale.appRoute && getImplementationStatus(scale) === "complete") {
+    reasons.push("✓ Aplicação completa no app");
+  } else if (resolveAppRoute(scale)) {
+    reasons.push("✓ Ficha técnica no app");
   }
   if (scale.prioridade === "triagem") reasons.push("✓ Instrumento de triagem");
 
@@ -652,9 +656,7 @@ export default function FiltroPage() {
               ? "—"
               : item.implementationStatus === "complete"
                 ? "Abrir aplicação"
-                : item.route === "/filtro"
-                  ? "Ver no catálogo"
-                  : "Ver ficha técnica";
+                : "Ver ficha técnica";
             const cardInner = (
                 <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
                   <CardContent className="filter-260-card-content">
