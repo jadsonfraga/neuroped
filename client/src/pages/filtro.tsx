@@ -327,6 +327,9 @@ export default function FiltroPage() {
   const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
+  // "Só aplicação completa": esconde as fichas de referência (/generic-scale),
+  // deixando só escalas com página própria/usável no app. Reversível, por ora.
+  const [onlyApp, setOnlyApp] = useState(false);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -353,7 +356,15 @@ export default function FiltroPage() {
 
   // Catálogo do filtro = só escalas que ABREM (têm rota real). Escalas sem
   // destino renderizável são removidas — nunca recomendamos um beco sem saída.
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp), [world]);
+  const catalog = useMemo(() => {
+    const base = unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp);
+    // Por ora: opção de mostrar só escalas que abrem como aplicação PRÓPRIA
+    // (página dedicada registrada ou catálogo mundial), escondendo as fichas de
+    // referência — inclusive as que apontam appRoute para /generic-scale/:id.
+    return onlyApp
+      ? base.filter((s) => (s.appRoute && !s.appRoute.startsWith("/generic-scale/")) || s.id.startsWith("world-"))
+      : base;
+  }, [world, onlyApp]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
@@ -548,6 +559,21 @@ export default function FiltroPage() {
             <button key="diagnostic" type="button" aria-pressed={selectedAssessmentType === "diagnostic"} aria-label="Tipo de avaliação: diagnóstico" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "diagnostic" ? null : "diagnostic")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🔍</span> <span className="hidden sm:inline">Diagnóstico</span></button>
             <button key="monitoring" type="button" aria-pressed={selectedAssessmentType === "monitoring"} aria-label="Tipo de avaliação: monitorização" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "monitoring" ? null : "monitoring")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">📊</span> <span className="hidden sm:inline">Monitorização</span></button>
           </div>
+        </div>
+
+        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
+          <button
+            type="button"
+            aria-pressed={onlyApp}
+            aria-label="Mostrar somente escalas com aplicação completa no app"
+            onMouseEnter={() => softHover()}
+            onClick={() => { softTick(); haptic.select(); setOnlyApp((v) => !v); }}
+            className={`w-full rounded-xl sm:rounded-2xl border px-3 py-2 text-xs font-bold transition min-h-9 flex items-center justify-between gap-2 ${onlyApp ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+          >
+            <span className="flex items-center gap-1.5"><span aria-hidden="true">{onlyApp ? "✅" : "📄"}</span> Só aplicação completa</span>
+            <span className={`text-[10px] font-semibold ${onlyApp ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{onlyApp ? "fichas ocultas" : "inclui fichas"}</span>
+          </button>
         </div>
       </section>
 
