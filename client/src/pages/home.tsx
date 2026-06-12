@@ -181,7 +181,7 @@ export default function HomePage() {
         </div>
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
           <div className="space-y-5">
-            <BrandMark size="md" showWordmark subtitle="Cockpit clínico NeuroPed" />
+            <BrandMark size="md" showWordmark subtitle="Painel clínico NeuroPed" />
             <div className="max-w-2xl space-y-3">
               <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10 font-semibold">
                 🏥 Plataforma Clínica Premium · Integrada
@@ -194,7 +194,7 @@ export default function HomePage() {
                 }}
                 data-testid="text-page-title"
               >
-                Cockpit de Decisão Clínica
+                Painel de Decisão Clínica
               </h1>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Navegue pelos 5 fluxos principais: aplicar escala de rastreio, encontrar instrumento ideal por queixa, gerenciar pacientes, gerar documentos clínicos ou acompanhar evolução terapêutica.
@@ -289,7 +289,7 @@ export default function HomePage() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">5 fluxos principais</p>
                 <h2 id="fluxos-principais" className="text-xl font-black text-foreground">Escolha o próximo passo clínico</h2>
               </div>
-              <Badge variant="outline" className="hidden sm:inline-flex">Cockpit 9.0</Badge>
+              <Badge variant="outline" className="hidden sm:inline-flex">Painel 9.0</Badge>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
