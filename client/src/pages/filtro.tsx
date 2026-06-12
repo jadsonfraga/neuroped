@@ -77,10 +77,16 @@ function resolveAppRoute(scale: ScaleEntry): string | null {
   return null;
 }
 
-// Só permanecem no filtro escalas que ABREM (req. do usuário: "só deverão ficar
-// aquelas que abrem"). Qualquer escala sem rota real é removida do catálogo.
+// Só permanecem no filtro escalas que ABREM uma página própria (req. do usuário:
+// "só deverão ficar aquelas que abrem"). Escala sem rota real — ou cuja única
+// rota é o catálogo mundial genérico (/escalas-neuropsiquiatria), que NÃO abre a
+// escala específica — é removida do filtro. O catálogo mundial segue acessível
+// pelo link "Ver catálogo mundial".
 function opensInApp(scale: ScaleEntry): boolean {
-  return resolveAppRoute(scale) !== null;
+  const route = resolveAppRoute(scale);
+  if (!route) return false;
+  if (route === "/escalas-neuropsiquiatria") return false;
+  return true;
 }
 
 // Aplicação COMPLETA: página dedicada, escala interativa por dados ou catálogo
