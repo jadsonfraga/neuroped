@@ -276,6 +276,28 @@
 }
 
 @layer components {
+  /* Skip-link de acessibilidade (SkipNav.tsx). Sua regra canônica vive em
+     styles/tokens.css, mas esse @import está após os @tailwind e é descartado
+     pelo bundler — sem a regra, o link vira um bloco estático visível (~222px)
+     no início da flex-row e ESMAGA a coluna do conteúdo (sobretudo no mobile).
+     Reposicionamos aqui, fora do fluxo, visível só ao foco de teclado. */
+  .skip-nav {
+    position: absolute;
+    left: -9999px;
+    top: 0.5rem;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background: hsl(var(--primary));
+    color: #fff;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .skip-nav:focus {
+    left: 0.5rem;
+  }
+
   /* Camada de efeitos ambiente (AmbientEffects.tsx) — decorativa, FIXA, atrás
      do conteúdo e fora do fluxo. CRÍTICO: sem position fixa as partículas
      (com width/height explícitos) entram no fluxo e empurram toda a aplicação
