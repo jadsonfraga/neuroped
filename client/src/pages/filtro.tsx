@@ -483,7 +483,7 @@ export default function FiltroPage() {
           <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Medicação, autismo, TDAH, ansiedade..." className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm" data-testid="input-search" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Buscar por medicação, queixa ou nome da escala" placeholder="Medicação, autismo, TDAH, ansiedade..." className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm" data-testid="input-search" />
           {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 
@@ -582,6 +582,9 @@ export default function FiltroPage() {
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+        <p className="sr-only" role="status" aria-live="polite">
+          {hasSafeResults ? `${refinedMatches.length} escala${refinedMatches.length === 1 ? "" : "s"} segura${refinedMatches.length === 1 ? "" : "s"} encontrada${refinedMatches.length === 1 ? "" : "s"} para este perfil.` : "Nenhuma escala segura para este perfil. Refine idade, queixa ou respondente."}
+        </p>
 
         {/* Síntese clínica do motor de filtragem avançada */}
         {refinedMatches.length > 0 && (
