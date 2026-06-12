@@ -211,6 +211,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-016",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Perfil Sensorial TEA (J26-016)",
     fullName: "Protocolo de Avaliação do Perfil Sensorial em Crianças com TEA",
     ageMin: 24,
@@ -223,6 +224,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-017",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Interesses Restritos TEA (J26-017)",
     fullName: "Protocolo de Mapeamento de Interesses Restritos e Comportamentos Repetitivos em TEA",
     ageMin: 24,
@@ -247,6 +249,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-019",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motivação Social TEA (J26-019)",
     fullName: "Protocolo de Avaliação da Motivação e Interesse Social em TEA",
     ageMin: 36,
@@ -271,6 +274,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-021",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Atenção Conjunta TEA (J26-021)",
     fullName: "Protocolo Expandido de Avaliação da Atenção Conjunta em TEA",
     ageMin: 12,
@@ -283,6 +287,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-022",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Teoria da Mente TEA (J26-022)",
     fullName: "Protocolo de Avaliação da Teoria da Mente em Crianças com TEA",
     ageMin: 48,
@@ -319,6 +324,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-025",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Agressividade TEA (J26-025)",
     fullName: "Protocolo de Avaliação de Comportamentos Agressivos e Autolesivos em TEA",
     ageMin: 24,
@@ -331,6 +337,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-026",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Habilidades de Brincar TEA (J26-026)",
     fullName: "Protocolo de Avaliação das Habilidades de Brincar em Crianças com TEA",
     ageMin: 18,
@@ -367,6 +374,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-029",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TEA e Sono (J26-029)",
     fullName: "Protocolo de Avaliação de Problemas de Sono em Crianças com TEA",
     ageMin: 24,

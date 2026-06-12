@@ -151,6 +151,47 @@ const DEV_INSTRUCTION =
 const DEV_INFO =
   "Triagem do neurodesenvolvimento (não é diagnóstico). Escore maior = mais marcos alcançados. Resultados abaixo do esperado indicam reavaliar e, se necessário, encaminhar.";
 
+// ------------------------------------------------------------
+// Escalas de SINAIS/SINTOMAS (maior = mais intenso = mais concern)
+// ------------------------------------------------------------
+const SEVERITY_LABELS = ["Não / nunca", "Leve / às vezes", "Moderado / frequente", "Intenso / quase sempre"];
+const FREQ_LABELS = ["Nunca", "Raro (≤1×/semana)", "Semanal", "Quase diário", "Várias vezes ao dia"];
+
+// Faixas por intensidade (maior % = mais sinais/intensidade).
+const SEVERITY_BANDS: InteractiveBand[] = [
+  {
+    minPct: 70,
+    classification: "Intensidade alta — suporte significativo",
+    color: "red",
+    description:
+      "Vários sinais presentes e intensos, com impacto no cotidiano. Recomenda-se avaliação dirigida e plano de suporte/intervenção. Triagem, não diagnóstico.",
+  },
+  {
+    minPct: 45,
+    classification: "Intensidade moderada — suporte indicado",
+    color: "orange",
+    description:
+      "Sinais presentes com repercussão no dia a dia. Vale estruturar suporte/estratégias e reavaliar a resposta ao longo do tempo. Triagem, não diagnóstico.",
+  },
+  {
+    minPct: 20,
+    classification: "Intensidade leve — acompanhar",
+    color: "amber",
+    description:
+      "Alguns sinais presentes, de menor intensidade. Acompanhe a evolução e reforce estratégias no cotidiano.",
+  },
+  {
+    minPct: 0,
+    classification: "Pouco ou ausente",
+    color: "emerald",
+    description:
+      "Poucos sinais relatados nesta área. Mantenha o acompanhamento de rotina.",
+  },
+];
+
+const SEVERITY_INSTRUCTION =
+  "Para cada item, marque o quanto descreve a criança no dia a dia. Responda com base no que você realmente observa. Responda todos os itens.";
+
 // ============================================================
 // LOTE 1 — Categoria 1: Triagem do Neurodesenvolvimento (autoral)
 // ============================================================
@@ -451,6 +492,272 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
           "Assoa o nariz com ajuda",
           "Come uma refeição completa sozinho",
           "Veste-se quase sozinho",
+        ],
+      },
+    ],
+  },
+
+  // ============================================================
+  // LOTE 2 — Categoria 2: Espectro Autista Expandido (autoral)
+  // ============================================================
+
+  // ---- J26-016 — Perfil Sensorial TEA (sinais/intensidade) ----
+  "j26-016": {
+    icon: Hand,
+    gradient: "from-violet-500 to-purple-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Mapeamento do perfil sensorial (maior escore = mais alterações sensoriais). Orienta o plano de intervenção sensorial. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Carga sensorial (maior = mais alterações)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Perfil sensorial no cotidiano",
+        color: "text-violet-600 dark:text-violet-400",
+        items: [
+          "Tapa os ouvidos ou se incomoda muito com sons comuns (liquidificador, secador, festa)",
+          "Não reage a sons altos ou parece não ouvir quando é chamada",
+          "Procura sons repetitivos ou faz barulhos com a boca/objetos",
+          "Recusa certas texturas de roupa, etiquetas ou costuras",
+          "Incomoda-se com mão suja, cola, areia ou tinta",
+          "Não percebe quando está suja, molhada ou se machuca (alta tolerância à dor)",
+          "Fixa-se em luzes, objetos que giram ou detalhes pequenos",
+          "Incomoda-se com luz forte ou ambientes visualmente cheios",
+          "Procura muito movimento — girar, balançar, pular sem cansar",
+          "Esbarra, aperta ou busca apertos e impactos no corpo",
+          "Parece “molenga”, cansa rápido ou tem postura frouxa",
+          "Tem seletividade alimentar forte por textura, cheiro ou cor",
+          "Cheira ou lambe objetos que não são alimentos",
+          "Leva objetos à boca além da idade esperada",
+          "Fica sobrecarregada (crise) em ambientes com muito estímulo (mercado, festa)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-017 — Interesses Restritos e Comportamentos Repetitivos ----
+  "j26-017": {
+    icon: Sparkles,
+    gradient: "from-amber-500 to-orange-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Mapeia comportamentos repetitivos e inflexibilidade (maior escore = mais presente/intenso). Complementa a avaliação diagnóstica. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Comportamentos repetitivos e inflexibilidade",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Repetição, rituais e interesses restritos",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "Balança as mãos, mexe os dedos ou bate palmas no ar repetidamente",
+          "Balança o corpo, gira ou anda na ponta dos pés",
+          "Repete os mesmos movimentos com objetos (alinhar, girar rodas, abrir/fechar)",
+          "Exige que tudo seja sempre do mesmo jeito (mesma rota, prato, ordem)",
+          "Fica muito aflita com mudanças de rotina ou imprevistos",
+          "Tem rituais que precisam ser cumpridos em sequência fixa",
+          "Tem um interesse muito intenso e específico que domina a atenção",
+          "Fala repetidamente do mesmo assunto, mesmo sem o outro se interessar",
+          "Apega-se a objetos incomuns e os carrega consigo",
+          "Repete falas, frases de desenhos ou propagandas fora de contexto (ecolalia)",
+          "Faz as mesmas perguntas repetidamente, mesmo sabendo a resposta",
+          "Observa objetos de ângulos incomuns ou de muito perto",
+          "Fascina-se por partes de objetos (rodinhas, botões) em vez do todo",
+          "Tem crise quando o ritual ou a rotina é interrompido",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-019 — Motivação e Dificuldade Social TEA ----
+  "j26-019": {
+    icon: MessageCircle,
+    gradient: "from-blue-500 to-indigo-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a dificuldade de interação social (maior escore = mais dificuldade). Ajuda a distinguir o retraimento e a planejar a intervenção. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Dificuldade de interação social",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Motivação e interação social",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Prefere brincar sozinha mesmo quando há outras crianças disponíveis",
+          "Não procura espontaneamente outras crianças para brincar",
+          "Ignora ou não responde quando outra criança a chama ou convida",
+          "Não compartilha conquistas ou descobertas buscando o adulto",
+          "Parece indiferente ao elogio ou à atenção social",
+          "Tem dificuldade de fazer e manter amizades",
+          "Aproxima-se das crianças de forma atípica (não sabe como entrar na brincadeira)",
+          "Prefere o convívio com adultos ao de crianças da mesma idade",
+          "Não imita brincadeiras sociais espontaneamente",
+          "Mostra pouco interesse pelo que os colegas estão fazendo",
+          "Afasta-se quando o ambiente social fica intenso",
+          "Demonstra querer se relacionar, mas não sabe como (frustra-se socialmente)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-021 — Atenção Conjunta TEA (habilidade; maior = melhor) ----
+  "j26-021": {
+    icon: Sparkles,
+    gradient: "from-pink-500 to-rose-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "Atenção conjunta é central no diagnóstico precoce de TEA. Ausência consistente após 12–18 meses é sinal de alerta. Maior escore = mais habilidade. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Atenção conjunta (maior = mais habilidade)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Atenção compartilhada",
+        color: "text-pink-600 dark:text-pink-400",
+        items: [
+          "Segue o olhar ou o apontar do adulto para um objeto distante",
+          "Aponta com o dedo para PEDIR algo que quer",
+          "Aponta com o dedo para MOSTRAR/compartilhar (apontar declarativo)",
+          "Mostra ou traz objetos ao adulto só para compartilhar interesse",
+          "Alterna o olhar entre o objeto e o rosto do adulto",
+          "Olha para o rosto do adulto para checar a reação (referência social)",
+          "Responde ao próprio nome olhando",
+          "Compartilha sorriso e alegria olhando para o adulto",
+          "Imita gestos sociais (tchau, palmas, mandar beijo)",
+          "Inicia momentos de atenção compartilhada (mostrar um livro, brincar junto)",
+          "Segue uma ordem simples acompanhada de gesto",
+          "Busca o olhar do adulto para iniciar uma interação",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-022 — Teoria da Mente TEA (habilidade; maior = melhor) ----
+  "j26-022": {
+    icon: Sparkles,
+    gradient: "from-cyan-500 to-blue-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "Avalia a compreensão de estados mentais do outro (maior escore = mais habilidade). Explica parte da dificuldade social no TEA. Triagem clínica, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Teoria da mente (maior = mais habilidade)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Compreensão de estados mentais",
+        color: "text-cyan-600 dark:text-cyan-400",
+        items: [
+          "Reconhece emoções básicas em rostos (alegre, triste, bravo, com medo)",
+          "Nomeia como ela mesma está se sentindo",
+          "Entende que outra pessoa pode querer algo diferente do que ela quer",
+          "Entende que alguém pode não saber de algo que ela sabe",
+          "Passa em tarefa de falsa crença de 1ª ordem (“onde ele vai procurar?”)",
+          "Entende que as pessoas agem conforme acreditam, mesmo quando estão erradas",
+          "Percebe quando alguém está brincando, mentindo ou sendo irônico",
+          "Entende uma piada ou expressão figurada simples",
+          "Ajusta o que fala conforme o que o ouvinte já sabe",
+          "Demonstra empatia — preocupa-se quando alguém se machuca ou chora",
+          "Prevê como o outro vai reagir a uma situação",
+          "Entende falsa crença de 2ª ordem (“o que ele acha que ela pensa?”)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-025 — Agressividade e Autolesão TEA (frequência) ----
+  "j26-025": {
+    icon: Activity,
+    gradient: "from-red-500 to-rose-600",
+    instruction:
+      "Marque a frequência de cada comportamento nas últimas 2 semanas. Use para monitorar a resposta ao tratamento ao longo do tempo.",
+    infoBox:
+      "Monitorização de comportamentos agressivos e autolesivos (maior escore = mais frequente/grave). Relate ao médico — apoia decisões terapêuticas e ajuste de medicação. Não é diagnóstico.",
+    labels: FREQ_LABELS,
+    totalLabel: "Frequência de agressão/autolesão",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Comportamentos agressivos e autolesivos",
+        color: "text-red-600 dark:text-red-400",
+        items: [
+          "Bate, empurra, chuta ou belisca outras pessoas",
+          "Morde outras pessoas",
+          "Bate a própria cabeça (em superfícies ou com a mão)",
+          "Morde ou belisca a si mesma",
+          "Arranha ou machuca a própria pele",
+          "Puxa o próprio cabelo",
+          "Joga-se no chão ou se atira contra objetos",
+          "Quebra ou arremessa objetos durante a crise",
+          "Tem crises de grito ou choro intensas e de difícil consolo",
+          "Agride ao ser contrariada ou frustrada",
+          "Agride quando está sobrecarregada sensorialmente",
+          "As crises chegam a causar risco de lesão (a ela ou a outros)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-026 — Habilidades de Brincar TEA (habilidade; maior = melhor) ----
+  "j26-026": {
+    icon: Sparkles,
+    gradient: "from-teal-500 to-cyan-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "O brincar é uma janela do desenvolvimento social e simbólico. Maior escore = brincar mais elaborado e social. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Habilidades de brincar (maior = mais elaborado)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Desenvolvimento do brincar",
+        color: "text-teal-600 dark:text-teal-400",
+        items: [
+          "Explora os brinquedos de forma variada (não só leva à boca ou joga)",
+          "Usa os objetos pela função (empurra o carrinho, alimenta a boneca)",
+          "Brinca de faz de conta simples (fingir comer, falar ao telefone)",
+          "Cria histórias ou cenários no faz de conta",
+          "Usa um objeto representando outro (banana vira telefone)",
+          "Brinca de forma sequenciada (encadeia ações com sentido)",
+          "Aceita que o adulto entre na brincadeira e a modifique",
+          "Brinca ao lado de outras crianças (jogo paralelo)",
+          "Brinca junto com outras crianças (jogo cooperativo)",
+          "Respeita a vez nos jogos de turnos",
+          "Imita brincadeiras que viu outras crianças fazendo",
+          "Demonstra prazer e flexibilidade ao brincar (não fica preso a um único padrão)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-029 — TEA e Sono (sinais/intensidade) ----
+  "j26-029": {
+    icon: Sparkles,
+    gradient: "from-indigo-500 to-blue-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia problemas de sono comuns no TEA (maior escore = mais alterações). Base para discutir rotina noturna e melatonina com o médico. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Alterações do sono (maior = mais problemas)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Padrão de sono",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Demora muito para pegar no sono (mais de 30 minutos)",
+          "Resiste à hora de dormir ou não quer ir para a cama",
+          "Só dorme com condições específicas (luz, objeto, companhia, movimento)",
+          "Acorda várias vezes durante a noite",
+          "Fica acordada por longos períodos no meio da noite",
+          "Acorda muito cedo e não volta a dormir",
+          "Inverte o ciclo (dorme de dia e fica ativa de noite)",
+          "Tem sono agitado, mexe-se muito ou range os dentes",
+          "Tem terror noturno, pesadelos ou desperta gritando",
+          "Apresenta sonolência ou cansaço diurno por sono insuficiente",
+          "O sono dela atrapalha o sono da família",
+          "Precisa de melatonina ou medicação para conseguir dormir",
         ],
       },
     ],
