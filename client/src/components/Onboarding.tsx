@@ -7,8 +7,8 @@ import {
   Printer, Mail, Smartphone, HeartHandshake,
 } from "lucide-react";
 import neuropedLogo from "@assets/neuroped-logo.png";
-import childAssessmentImg from "@assets/images/child-assessment.png";
-import teamImg from "@assets/images/team-multiprofessional.png";
+import childAssessmentImg from "@assets/images/child-assessment.webp";
+import teamImg from "@assets/images/team-multiprofessional.webp";
 import { appMetrics } from "@/data/appMetrics";
 import { SafeImage } from "@/components/SafeImage";
 import { softTap, softTick, softSuccess, softWhoosh } from "@/lib/softSounds";

@@ -11,7 +11,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import childAssessmentImg from "@assets/images/child-assessment.png";
+import childAssessmentImg from "@assets/images/child-assessment.webp";
 import { apiRequest } from "@/lib/queryClient";
 
 const EMAIL_TO = "jadsonfraga@hotmail.com";

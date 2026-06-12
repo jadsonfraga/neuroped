@@ -13,7 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import heroBrainImg from "@assets/images/hero-brain.png";
+import heroBrainImg from "@assets/images/hero-brain.webp";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 

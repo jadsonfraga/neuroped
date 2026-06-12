@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
-import neuralAbstractImg from "@assets/images/neural-abstract.png";
+import neuralAbstractImg from "@assets/images/neural-abstract.webp";
 import drSelfie from "@assets/images/dr-jadson-selfie.jpeg";
 import drBatman from "@assets/images/dr-jadson-consultorio-batman.jpeg";
 import drSuperman from "@assets/images/dr-jadson-consultorio-superman.jpeg";
