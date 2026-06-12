@@ -1,9 +1,9 @@
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useState } from "react";
 import { ArrowLeft, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { allScales } from "@/data/scaleFilter";
+import { allScales, queixas } from "@/data/scaleFilter";
 import {
   getImplementationStatus,
   getImplementationLabel,
@@ -41,6 +41,91 @@ const VERBAL_LABEL: Record<string, string> = {
   nao_verbal_compativel: "Compatível com não-verbal",
 };
 
+// Rótulos legíveis de queixa (id -> label). Cobre as categorias do filtro e os
+// usos pós-consulta mais comuns; o resto cai num prettify simples.
+const QUEIXA_LABEL: Record<string, string> = {
+  ...Object.fromEntries(queixas.map((q) => [q.id, q.label])),
+  evolucao: "Evolução / Seguimento",
+  efeitos: "Efeitos de medicação",
+  adesao: "Adesão ao tratamento",
+  qualidade_vida: "Qualidade de vida",
+  triagem: "Triagem ampla",
+};
+function queixaLabel(id: string): string {
+  return QUEIXA_LABEL[id] ?? id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ");
+}
+
+// Idade legível: meses até 24m, anos acima. Evita o "0-0a" das escalas neonatais.
+function ageLabel(min: number, max: number): string {
+  const fmt = (m: number) => (m < 24 ? `${m} m` : `${Math.round(m / 12)} a`);
+  return min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`;
+}
+
+// "Como usar" adaptado ao modo de aplicação (honesto: orienta o uso real do
+// instrumento, sem inventar itens/escore que a ficha não tem).
+const USAGE_BY_MODE: Record<string, string[]> = {
+  questionario_pais: [
+    "Confirme se a idade da criança está na faixa do instrumento.",
+    "Entregue ao responsável que melhor conhece a rotina da criança.",
+    "Oriente a responder sobre o comportamento habitual, sem pressa.",
+    "Use a referência original para os pontos de corte e a interpretação.",
+    "Registre data, respondente e escore no prontuário.",
+  ],
+  questionario_professor: [
+    "Confirme a faixa etária e o tempo de convívio do professor com a criança.",
+    "Envie o questionário ao professor/escola com instruções claras.",
+    "Considere o comportamento no contexto escolar (sala, recreio).",
+    "Cruze com a versão de pais quando houver, para múltiplos contextos.",
+    "Registre data, respondente e escore no prontuário.",
+  ],
+  autoquestionario_crianca_adolescente: [
+    "Confirme idade e capacidade de leitura/compreensão (autorrelato).",
+    "Garanta privacidade e ambiente seguro para o adolescente responder.",
+    "Em temas sensíveis (humor, risco), acompanhe de perto e tenha plano de manejo.",
+    "Use a referência original para corte e conduta.",
+    "Registre data e escore; reavalie conforme indicado.",
+  ],
+  teste_direto_crianca: [
+    "Confirme a faixa etária e prepare o material do teste.",
+    "Aplique diretamente com a criança em ambiente calmo e sem distrações.",
+    "Siga o protocolo padronizado de administração e pontuação.",
+    "Anote desempenho e observações qualitativas.",
+    "Interprete com normas/idade de referência e registre no prontuário.",
+  ],
+  observacional_clinico: [
+    "Observe a criança nas situações relevantes ao domínio avaliado.",
+    "Registre os comportamentos conforme os critérios do instrumento.",
+    "Complemente com história clínica e relato dos cuidadores.",
+    "Use a referência original para classificação.",
+    "Documente data e achados no prontuário.",
+  ],
+  registro_clinico: [
+    "Defina o período e a frequência do registro (diário/semanal).",
+    "Oriente a família/equipe a anotar de forma consistente.",
+    "Reúna os registros para análise de evolução ao longo do tempo.",
+    "Compare entre consultas para apoiar decisões de manejo.",
+    "Arquive no prontuário com as datas.",
+  ],
+};
+const USAGE_DEFAULT = [
+  "Confirme se a escala é adequada para a idade da criança.",
+  "Prepare um ambiente calmo e seguro para a aplicação.",
+  "Revise as instruções de aplicação na referência original.",
+  "Registre as respostas conforme fornecidas.",
+  "Interprete com a tabela de escore/corte oficial do instrumento.",
+  "Documente data, escore e observações no prontuário.",
+];
+
+// Resolve a rota real de uma escala (mesma regra do filtro) para os links de
+// instrumentos relacionados.
+const ALL_IDS = new Set(allScales.map((s) => s.id));
+function routeFor(s: { id: string; appRoute?: string }): string {
+  if (s.appRoute) return s.appRoute;
+  if (ALL_IDS.has(s.id)) return `/generic-scale/${s.id}`;
+  if (s.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
+  return "/filtro";
+}
+
 export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
   const [_location, navigate] = useLocation();
@@ -72,6 +157,18 @@ export default function GenericScalePage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Instrumentos relacionados: mesma queixa e faixa etária sobreposta. Torna a
+  // ficha um hub de navegação entre escalas afins (sem inventar conteúdo).
+  const related = allScales
+    .filter(
+      (o) =>
+        o.id !== scale.id &&
+        o.queixas.some((q) => scale.queixas.includes(q)) &&
+        o.ageMax >= scale.ageMin &&
+        o.ageMin <= scale.ageMax
+    )
+    .slice(0, 6);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
@@ -123,7 +220,7 @@ export default function GenericScalePage() {
                 <div>
                   <p className="text-xs text-slate-400 uppercase">Faixa Etária</p>
                   <p className="text-sm font-semibold text-slate-200">
-                    {Math.floor(scale.ageMin / 12)}-{Math.floor(scale.ageMax / 12)}a
+                    {ageLabel(scale.ageMin, scale.ageMax)}
                   </p>
                 </div>
                 <div>
@@ -164,7 +261,7 @@ export default function GenericScalePage() {
                       key={q}
                       className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-200 text-sm border border-blue-700"
                     >
-                      {q}
+                      {queixaLabel(q)}
                     </span>
                   ))}
                 </div>
@@ -211,6 +308,22 @@ export default function GenericScalePage() {
                 <p className="text-slate-400 italic">{scale.fonte}</p>
               </div>
             )}
+
+            {/* Transparência honesta: o que esta base NÃO documenta para este
+                instrumento. Em vez de omitir silenciosamente, deixa explícito. */}
+            {(!scale.scoringCutoff || !scale.validacaoBrasil || !scale.fonte) && (
+              <div className="border-t border-slate-700 pt-6">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  <span className="font-semibold text-slate-300">Não documentado nesta base:</span>{" "}
+                  {[
+                    !scale.scoringCutoff && "pontos de corte/interpretação",
+                    !scale.validacaoBrasil && "validação brasileira",
+                    !scale.fonte && "fonte/referência",
+                  ].filter(Boolean).join(" · ")}
+                  . Consulte a referência original do instrumento antes do uso clínico.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -248,27 +361,38 @@ export default function GenericScalePage() {
           </CardHeader>
           <CardContent className="pt-6 space-y-4 text-slate-300">
             <ol className="space-y-3 list-decimal list-inside">
-              <li>
-                <span className="font-semibold">Verificar faixa etária:</span> Confirme se a escala é adequada para a idade da criança
-              </li>
-              <li>
-                <span className="font-semibold">Preparar o ambiente:</span> Use um ambiente calmo e seguro para aplicação
-              </li>
-              <li>
-                <span className="font-semibold">Ler instruções:</span> Revise as instruções de aplicação antes de iniciar
-              </li>
-              <li>
-                <span className="font-semibold">Registrar respostas:</span> Anote as respostas conforme fornecidas
-              </li>
-              <li>
-                <span className="font-semibold">Calcular escore:</span> Use a tabela de escore para interpretar resultados
-              </li>
-              <li>
-                <span className="font-semibold">Documentar:</span> Registre data, escore e observações no prontuário
-              </li>
+              {(USAGE_BY_MODE[getApplicationMode(scale)] ?? USAGE_DEFAULT).map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
             </ol>
           </CardContent>
         </Card>
+
+        {/* Instrumentos relacionados — hub de navegação por queixa/idade afim */}
+        {related.length > 0 && (
+          <Card className="bg-slate-800/80 border-slate-700 mb-6">
+            <CardHeader className="border-b border-slate-700">
+              <CardTitle className="text-white">Instrumentos relacionados</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {related.map((o) => (
+                  <Link
+                    key={o.id}
+                    href={routeFor(o)}
+                    className="block rounded-lg border border-slate-700 bg-slate-700/30 p-3 transition hover:border-blue-500 hover:bg-slate-700/60"
+                  >
+                    <p className="text-sm font-semibold text-slate-100">{o.name}</p>
+                    <p className="text-xs text-slate-400 line-clamp-1">{o.fullName}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {o.respondente.join(" · ")} · {ageLabel(o.ageMin, o.ageMax)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Aviso Legal */}
         <Card className="bg-amber-900/20 border-amber-700 mb-6">
