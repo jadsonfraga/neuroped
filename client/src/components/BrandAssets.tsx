@@ -287,7 +287,7 @@ export function BrandMark({
         <SafeAssetImage
           src={brandAssets.masterShield}
           alt="Escudo Dr. Jadson Fraga — logo mestre NeuroPed"
-          className={`${sizeClasses[size]} relative rounded-[1.2rem] object-contain bg-white p-0.5 shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
+          className={`${sizeClasses[size]} relative rounded-[1.2rem] object-cover shadow-lg ring-2 ring-amber-300/60 dark:ring-amber-400/40 ${imageClassName}`}
           fallbackClassName={sizeClasses[size]}
         />
         <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-md ring-1 ring-white/70 dark:ring-black/40" aria-hidden="true">

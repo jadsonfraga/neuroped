@@ -106,20 +106,18 @@ export function SplashScreen({
 
               {/* Shield container com border premium */}
               <div
-                className="relative w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-2"
+                className="relative w-32 h-32 rounded-[1.9rem] overflow-hidden flex items-center justify-center shadow-2xl border-2"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 245, 0.9) 100%)",
-                  borderColor: "rgba(15, 76, 58, 0.3)",
+                  borderColor: "rgba(212, 175, 55, 0.55)",
                   boxShadow:
-                    "0 25px 80px rgba(15, 76, 58, 0.4), 0 12px 40px rgba(61, 20, 40, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.8)",
+                    "0 25px 80px rgba(15, 76, 58, 0.4), 0 12px 40px rgba(61, 20, 40, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.15)",
                 }}
               >
                 {/* Master Shield Logo */}
                 <img
                   src={drJadsonMasterShieldLogo}
                   alt="Dr. Jadson Fraga Shield"
-                  className="w-24 h-24 object-contain drop-shadow-lg"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </motion.div>
