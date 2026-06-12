@@ -205,6 +205,17 @@ export const supplementalFilterableInstruments: ScaleEntry[] = [
     prioridade: "triagem", applicationMode: "teste_direto_crianca", assessmentUse: "triagem", implementationStatus: "complete",
     tempo: "10 min", appRoute: "/processamento-visuoauditivo", description: "Teste direto interativo de processamento visual-auditivo e integração.", licencaUso: "autoral",
   },
+  {
+    // AQ-10 — aplicação interativa real (autorrelato), distinta do card mundial
+    // "AQ-10 Child" que só abre o catálogo. Aponta para a página /aq10.
+    id: "aq10", name: "AQ-10", fullName: "Autism Quotient — Triagem de TEA (autorrelato)",
+    ageMin: 192, ageMax: 216, queixas: ["tea", "social"], respondente: ["autoaplicavel"],
+    prioridade: "triagem", applicationMode: "autoquestionario_crianca_adolescente", assessmentUse: "triagem",
+    implementationStatus: "complete", literacyRequirement: "alfabetizado",
+    tempo: "~2 min", appRoute: "/aq10",
+    description: "10 itens de triagem de TEA; ponto de corte ≥6 indica avaliação diagnóstica. Domínio público (Baron-Cohen et al.).",
+    fonte: "Allison C, Auyeung B, Baron-Cohen S, 2012", licencaUso: "livre", scoringCutoff: "≥6 = encaminhar para avaliação diagnóstica",
+  },
 ];
 
 function uniqueById(items: ScaleEntry[]): ScaleEntry[] {
