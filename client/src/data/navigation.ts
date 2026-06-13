@@ -200,6 +200,7 @@ export const navSections: NavSection[] = [
   {
     title: "Referência clínica",
     items: [
+      { href: "/instrumentos-padronizados", label: "Instrumentos padronizados (Pearson/Hogrefe)", icon: BookOpen },
       { href: "/fluxogramas", label: "Fluxogramas", icon: Brain },
       { href: "/marcos-desenvolvimento", label: "Marcos do desenvolvimento", icon: Calendar },
       { href: "/valores-referencia", label: "Valores de referência", icon: Thermometer },

@@ -135,6 +135,7 @@ const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
 const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
 const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
 const GlossarioPage = lazy(() => import("@/pages/glossario"));
+const InstrumentosPadronizadosPage = lazy(() => import("@/pages/instrumentos-padronizados"));
 const QualidadePage = lazy(() => import("@/pages/qualidade"));
 const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
@@ -274,6 +275,7 @@ function AppRouter() {
           <Route path="/acessibilidade" component={AcessibilidadePage} />
           <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
           <Route path="/glossario" component={GlossarioPage} />
+          <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
           <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
           <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
           <Route path="/qualidade" component={QualidadePage} />
