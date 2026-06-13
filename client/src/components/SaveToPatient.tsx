@@ -51,12 +51,14 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
-    data: patients = [],
+    data: patientsRaw,
     isLoading: loadingPatients,
     isError: patientsError,
-  } = useQuery<any[]>({
+  } = useQuery<any>({
     queryKey: ["/api/patients"],
   });
+  // A API retorna { data: [...] }; aceita também array puro por robustez.
+  const patients: any[] = Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? []);
 
   const createPatientMutation = useMutation({
     mutationFn: async (name: string) => {

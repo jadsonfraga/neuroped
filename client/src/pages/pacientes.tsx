@@ -46,10 +46,12 @@ export default function PacientesPage() {
   const [formNotes, setFormNotes] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: patients = [], isLoading } = useQuery<any[]>({
+  const { data: patientsRaw, isLoading } = useQuery<any>({
     queryKey: ["/api/patients"],
     enabled: internalAuth,
   });
+  // A API retorna { data: [...] }; aceita também array puro por robustez.
+  const patients: any[] = Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? []);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
