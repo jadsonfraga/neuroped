@@ -772,6 +772,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-058",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade de Separação (J26-058)",
     fullName: "Protocolo de Triagem Expandida de Ansiedade de Separação",
     ageMin: 18,
@@ -784,6 +785,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-059",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Fobia Social Infantil (J26-059)",
     fullName: "Protocolo de Avaliação da Fobia Social em Crianças e Adolescentes",
     ageMin: 60,
@@ -796,6 +798,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-060",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Mutismo Seletivo Expandido (J26-060)",
     fullName: "Protocolo Expandido de Avaliação do Mutismo Seletivo em Crianças",
     ageMin: 36,
@@ -808,6 +811,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-061",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Escolar e Recusa (J26-061)",
     fullName: "Protocolo de Avaliação da Ansiedade Escolar e Comportamento de Recusa Escolar",
     ageMin: 60,
@@ -820,6 +824,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-062",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade de Desempenho (J26-062)",
     fullName: "Protocolo de Triagem da Ansiedade de Desempenho Escolar e Esportivo",
     ageMin: 72,
@@ -832,6 +837,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-063",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Fobias Específicas Checklist (J26-063)",
     fullName: "Protocolo de Mapeamento de Fobias Específicas em Crianças e Adolescentes",
     ageMin: 36,
@@ -844,6 +850,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-064",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade à Saúde Criança (J26-064)",
     fullName: "Protocolo de Avaliação da Ansiedade Hipocondríaca em Crianças e Adolescentes",
     ageMin: 72,
@@ -856,6 +863,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-065",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Medos Noturnos e Pesadelos (J26-065)",
     fullName: "Protocolo de Avaliação dos Medos Noturnos, Pesadelos e Terror Noturno em Crianças",
     ageMin: 24,
@@ -868,6 +876,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-066",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Generalizada Criança (J26-066)",
     fullName: "Protocolo de Triagem do Transtorno de Ansiedade Generalizada em Crianças",
     ageMin: 60,
@@ -880,6 +889,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-067",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Somática Funcional (J26-067)",
     fullName: "Protocolo de Avaliação de Queixas Somáticas Funcionais Relacionadas à Ansiedade",
     ageMin: 60,
@@ -892,6 +902,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-068",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TAG Adolescente (J26-068)",
     fullName: "Protocolo de Avaliação do Transtorno de Ansiedade Generalizada em Adolescentes",
     ageMin: 132,
@@ -904,6 +915,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-069",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Pânico Adolescente (J26-069)",
     fullName: "Protocolo de Triagem do Transtorno de Pânico em Adolescentes",
     ageMin: 120,

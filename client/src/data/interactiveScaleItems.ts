@@ -1969,6 +1969,399 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       },
     ],
   },
+
+  // ============================================================
+  // LOTE 5 — Categoria 5: Ansiedade Infantil (autoral)
+  // ============================================================
+
+  // ---- J26-058 — Ansiedade de Separação ----
+  "j26-058": {
+    icon: Heart,
+    gradient: "from-indigo-500 to-blue-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem da ansiedade de separação além do esperado para a idade (maior escore = mais intensa). Diferencia do apego seguro. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Ansiedade de separação (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Medo de separação",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Fica muito aflita ao se separar dos pais",
+          "Chora ou tem crise quando os pais saem",
+          "Recusa-se a dormir sozinha ou longe dos pais",
+          "Tem pesadelos com separação ou perda dos pais",
+          "Preocupa-se que algo ruim aconteça aos pais",
+          "Não quer ir à escola por medo de se separar",
+          "Precisa saber o tempo todo onde os pais estão",
+          "Tem queixas físicas (dor de barriga, cabeça) ao se separar",
+          "Gruda nos pais em casa, segue de cômodo em cômodo",
+          "Recusa ficar com babá, avós ou outros cuidadores",
+          "Tem medo de ficar sozinha em um cômodo",
+          "A ansiedade de separação atrapalha a rotina da família",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-059 — Fobia Social Infantil ----
+  "j26-059": {
+    icon: ShieldAlert,
+    gradient: "from-blue-500 to-indigo-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o medo de ser julgado e de situações sociais (maior escore = mais intenso). Diferencia timidez de fobia social com prejuízo. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Fobia social (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Ansiedade social",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Tem medo de falar ou se apresentar na frente dos outros",
+          "Evita situações sociais novas",
+          "Fica muito ansiosa de ser observada ou julgada",
+          "Tem medo de fazer algo vergonhoso em público",
+          "Fica calada ou retraída em grupos",
+          "Evita levantar a mão ou participar na aula",
+          "Tem dificuldade de iniciar conversas",
+          "Recusa convites, festas ou atividades em grupo",
+          "Tem sintomas físicos (rubor, suor, tremor) em situações sociais",
+          "Preocupa-se muito antes de eventos sociais",
+          "Tem poucos amigos por causa do medo social",
+          "O medo social atrapalha a escola ou o dia a dia",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-060 — Mutismo Seletivo ----
+  "j26-060": {
+    icon: MessageCircle,
+    gradient: "from-violet-500 to-purple-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o mutismo seletivo além da timidez (maior escore = mais grave/abrangente). Diferencia de problemas de fala ou de língua. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Mutismo seletivo (maior = mais abrangente)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Fala por contexto",
+        color: "text-violet-600 dark:text-violet-400",
+        items: [
+          "Fala em casa, mas não fala na escola",
+          "Não fala com adultos fora da família",
+          "Não fala com outras crianças em certos contextos",
+          "Comunica-se por gestos em vez de falar fora de casa",
+          "Fica paralisada ou travada quando esperam que fale",
+          "O silêncio acontece consistentemente nos mesmos lugares",
+          "O quadro já dura mais de um mês",
+          "Atrapalha o desempenho ou a participação escolar",
+          "Atrapalha as amizades",
+          "Fica visivelmente ansiosa quando é pressionada a falar",
+          "Usa sussurro ou monossílabos em vez de falar normalmente",
+          "Não é por não saber a língua nem por problema de fala",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-061 — Ansiedade Escolar e Recusa ----
+  "j26-061": {
+    icon: ShieldAlert,
+    gradient: "from-amber-500 to-orange-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Mapeia a ansiedade escolar e a recusa de ir à escola (maior escore = mais intensa). Muito comum após a pandemia. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Ansiedade e recusa escolar",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Ansiedade ligada à escola",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "Tem dor de barriga ou de cabeça nas manhãs de escola",
+          "Chora ou implora para não ir à escola",
+          "Tem crise na hora de sair de casa",
+          "Falta à escola por ansiedade",
+          "Pede para ir embora mais cedo",
+          "Tem medo específico ligado à escola (prova, professor, colega)",
+          "Os sintomas somem nos fins de semana e nas férias",
+          "Fica grudada nos pais antes da escola",
+          "Tem dificuldade de entrar na sala",
+          "Liga ou pede pelos pais o tempo todo durante a aula",
+          "A recusa vem piorando",
+          "A ansiedade escolar atrapalha o aprendizado",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-062 — Ansiedade de Desempenho ----
+  "j26-062": {
+    icon: ShieldAlert,
+    gradient: "from-orange-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a ansiedade de desempenho escolar e esportivo (maior escore = mais intensa). O perfeccionismo costuma estar por trás. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Ansiedade de desempenho",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Medo de errar e de avaliação",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Tem medo intenso de errar",
+          "Fica muito ansiosa antes de provas",
+          "Tem medo de tirar nota baixa",
+          "Tem medo de decepcionar os pais ou professores",
+          "Tem “branco” ou bloqueio na hora da prova ou apresentação",
+          "Tem sintomas físicos antes de avaliações (náusea, tremor)",
+          "Estuda em excesso por medo de falhar",
+          "Evita competições ou apresentações",
+          "É perfeccionista — nada está bom o bastante",
+          "Chora ou se desespera com pequenos erros",
+          "Subestima o próprio desempenho",
+          "A ansiedade prejudica o resultado real",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-063 — Fobias Específicas (mapa por intensidade) ----
+  "j26-063": {
+    icon: ShieldAlert,
+    gradient: "from-rose-500 to-red-600",
+    instruction:
+      "Para cada item, marque a intensidade do medo da criança. Use para priorizar o tratamento e planejar a exposição gradual. Responda todos os itens.",
+    infoBox:
+      "Mapeamento de fobias específicas por intensidade (maior escore = medos mais intensos). Apoia o planejamento da exposição gradual. Triagem, não diagnóstico.",
+    labels: ["Sem medo", "Medo leve", "Medo moderado", "Medo intenso"],
+    totalLabel: "Carga de fobias (maior = medos mais intensos)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Medos específicos",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Agulha, injeção ou sangue",
+          "Cachorro ou outros animais",
+          "Trovão, raio ou tempestade",
+          "Escuro",
+          "Altura",
+          "Vômito (próprio ou dos outros)",
+          "Palhaço ou pessoas fantasiadas",
+          "Insetos (barata, aranha)",
+          "Médico ou dentista",
+          "Água / afogamento (piscina, mar)",
+          "Lugares fechados",
+          "Ficar sozinha",
+          "Sons altos (fogos, balão estourando)",
+          "Banheiros ou ralos",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-064 — Ansiedade à Saúde (hipocondríaca) ----
+  "j26-064": {
+    icon: Heart,
+    gradient: "from-teal-500 to-cyan-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a ansiedade excessiva com a saúde (maior escore = mais intensa). A busca por reasseguramento alimenta o ciclo. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Ansiedade à saúde",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Preocupação com a saúde",
+        color: "text-teal-600 dark:text-teal-400",
+        items: [
+          "Preocupa-se demais com a possibilidade de ficar doente",
+          "Interpreta qualquer sintoma como algo grave",
+          "Busca reasseguramento o tempo todo (“estou bem?”)",
+          "Pesquisa ou pergunta muito sobre doenças",
+          "Pede com frequência para medir febre ou ser examinada",
+          "Tem medo de morrer ou de que os pais adoeçam",
+          "Fica atenta demais a sensações do corpo",
+          "Evita lugares ou coisas por medo de contaminação/doença",
+          "Pede para ir ao médico com frequência sem necessidade",
+          "Sente sintomas físicos quando ansiosa com a saúde",
+          "A preocupação atrapalha a rotina",
+          "Não se tranquiliza mesmo após exames normais",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-065 — Medos Noturnos e Pesadelos ----
+  "j26-065": {
+    icon: Sparkles,
+    gradient: "from-indigo-500 to-blue-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia medos noturnos, pesadelos e terror noturno (maior escore = mais intenso) e o impacto no sono. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Medos noturnos (maior = mais intensos)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Medos e eventos da noite",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Tem medo de dormir sozinha",
+          "Precisa de luz ou companhia para dormir",
+          "Tem pesadelos frequentes",
+          "Acorda assustada à noite",
+          "Tem episódios de terror noturno (grita, agitada, sem acordar direito)",
+          "Tem medo do escuro",
+          "Tem medo de monstros ou de coisas imaginárias",
+          "Vai para a cama dos pais à noite",
+          "Resiste a ir dormir por medo",
+          "O medo noturno atrapalha o sono dela",
+          "O medo noturno atrapalha o sono da família",
+          "Fica ansiosa ao anoitecer",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-066 — Ansiedade Generalizada (criança) ----
+  "j26-066": {
+    icon: ShieldAlert,
+    gradient: "from-sky-500 to-blue-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem do transtorno de ansiedade generalizada na criança (maior escore = mais intenso), com os efeitos físicos da preocupação. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Ansiedade generalizada (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Preocupação excessiva",
+        color: "text-sky-600 dark:text-sky-400",
+        items: [
+          "Preocupa-se com muitas coisas ao mesmo tempo",
+          "Preocupa-se com o futuro ou com catástrofes",
+          "Tem dificuldade de controlar as preocupações",
+          "Pergunta “e se...” o tempo todo",
+          "Busca reasseguramento constante",
+          "Tem tensão muscular ou inquietação",
+          "Tem dor de cabeça ou de barriga ligadas à preocupação",
+          "Cansa-se com facilidade",
+          "Tem dificuldade de concentração por estar preocupada",
+          "Tem dificuldade para dormir por causa das preocupações",
+          "É perfeccionista e autocrítica",
+          "A preocupação atrapalha o dia a dia",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-067 — Ansiedade Somática Funcional ----
+  "j26-067": {
+    icon: Heart,
+    gradient: "from-rose-500 to-pink-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Mapeia queixas físicas sem causa orgânica como expressão de ansiedade (maior escore = mais associação). Sempre afastar causas clínicas primeiro. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Somatização ansiosa (maior = mais associada à ansiedade)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Queixas somáticas funcionais",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Tem dor de cabeça sem causa médica encontrada",
+          "Tem dor de barriga recorrente sem causa orgânica",
+          "As queixas aparecem em situações de estresse (escola, prova)",
+          "Tem náusea ou enjoo ligados à ansiedade",
+          "Tem tontura em momentos de tensão",
+          "As queixas somem em casa, nos fins de semana ou nas férias",
+          "Falta à escola por causa das queixas físicas",
+          "Tem palpitação ou falta de ar sem causa cardíaca",
+          "Tem tensão muscular ou dores no corpo",
+          "As queixas aumentam quando há cobrança ou conflito",
+          "Já fez exames que vieram normais",
+          "As queixas físicas atrapalham a rotina",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-068 — TAG Adolescente (autorrelato) ----
+  "j26-068": {
+    icon: ShieldAlert,
+    gradient: "from-blue-500 to-indigo-600",
+    instruction:
+      "Para cada frase, marque o quanto descreve você nas últimas 2 semanas. Responda com sinceridade. Responda todos os itens.",
+    infoBox:
+      "Autorrelato de ansiedade generalizada na adolescência (maior escore = mais intensa). Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Ansiedade generalizada (autorrelato)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Sintomas de ansiedade",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Preocupo-me demais com várias coisas",
+          "Tenho dificuldade de controlar as preocupações",
+          "Não consigo relaxar",
+          "Fico tenso(a) ou no limite com facilidade",
+          "Canso-me rápido",
+          "Tenho dificuldade de concentração",
+          "Fico irritado(a) facilmente",
+          "Tenho tensão muscular ou dores",
+          "Tenho dificuldade para dormir",
+          "Antecipo o pior nos cenários",
+          "Preocupo-me com o que os outros pensam de mim",
+          "A ansiedade atrapalha meus estudos ou minha vida",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-069 — Pânico Adolescente ----
+  "j26-069": {
+    icon: ShieldAlert,
+    gradient: "from-rose-600 to-red-700",
+    instruction:
+      "Marque o quanto cada item descreve as crises e os sintomas. Responda com sinceridade. Responda todos os itens.",
+    infoBox:
+      "Triagem do transtorno de pânico no adolescente (maior escore = mais intenso). Crises recorrentes merecem avaliação clínica. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sintomas de pânico (maior = mais intensos)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Crises de pânico",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Tem crises súbitas de medo intenso",
+          "O coração dispara durante as crises",
+          "Falta de ar ou sensação de sufocamento",
+          "Tremores ou suor frio",
+          "Tontura ou sensação de desmaio",
+          "Sensação de que algo terrível vai acontecer",
+          "Medo de morrer durante a crise",
+          "Sensação de irrealidade ou de estar “fora de si”",
+          "Formigamento ou dormência",
+          "Medo de ter outra crise (ansiedade antecipatória)",
+          "Evita lugares onde já teve crises",
+          "As crises atrapalham a rotina",
+        ],
+      },
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
