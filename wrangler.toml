@@ -13,16 +13,12 @@ pages_build_output_dir = "dist/public"
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"
 
-#── Ambiente de produção ───────────────────────────────────
-[env.production]
-name = "neuroped-production"
-
-[env.production.vars]
-ENVIRONMENT = "production"
-
-# ── Ambiente de preview (PRs e branches) ──────────────────
-[env.preview]
-name = "neuroped-preview"
-
-[env.preview.vars]
-ENVIRONMENT = "preview"
+# ── Backend: binding Cloudflare D1 ───────────────────────────────────────
+# IMPORTANTE: o `wrangler pages deploy` sincroniza os bindings do projeto com
+# este arquivo. Se este bloco for removido, o deploy regular APAGA o binding D1
+# do projeto (database volta a "not_configured"). Mantenha-o.
+# O id é o do D1 "neuroped-db" criado pelo workflow "Provision D1 backend".
+[[d1_databases]]
+binding = "DB"
+database_name = "neuroped-db"
+database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"

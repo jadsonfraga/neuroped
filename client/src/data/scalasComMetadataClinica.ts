@@ -251,7 +251,7 @@ export const scaredParentalReclassified: ScaleEntryWithClinicalMetadata = {
   respondente: ["pais"],
   prioridade: "triagem",
   tempo: "10 min",
-  appRoute: "/scared-pais",
+  appRoute: "/scared",
   description: "41 itens respondidos por pais sobre sintomas de ansiedade da criança.",
   fonte: "Birmaher B et al., 1997",
   validacaoBrasil: "Sim",
@@ -288,7 +288,7 @@ export const scaredParentalReclassified: ScaleEntryWithClinicalMetadata = {
         ageMaxMonths: 216,
         tempo: "10 min",
         language: "pt-BR",
-        appRoute: "/scared-pais",
+        appRoute: "/scared",
       },
       {
         variantId: "scared-crianca",
@@ -298,7 +298,7 @@ export const scaredParentalReclassified: ScaleEntryWithClinicalMetadata = {
         ageMaxMonths: 216,
         tempo: "10 min",
         language: "pt-BR",
-        appRoute: "/scared-crianca",
+        appRoute: "/scared",
       },
     ],
 
@@ -345,7 +345,7 @@ export const scaredChildReclassified: ScaleEntryWithClinicalMetadata = {
   respondente: ["autoaplicavel"],
   prioridade: "triagem",
   tempo: "10 min",
-  appRoute: "/scared-crianca",
+  appRoute: "/scared",
   description:
     "41 itens respondidos pela própria criança/adolescente sobre sintomas de ansiedade pessoal.",
   fonte: "Birmaher B et al., 1997",
@@ -384,7 +384,7 @@ export const scaredChildReclassified: ScaleEntryWithClinicalMetadata = {
         ageMaxMonths: 216,
         tempo: "10 min",
         language: "pt-BR",
-        appRoute: "/scared-pais",
+        appRoute: "/scared",
       },
       {
         variantId: "scared-crianca",
@@ -394,7 +394,7 @@ export const scaredChildReclassified: ScaleEntryWithClinicalMetadata = {
         ageMaxMonths: 216,
         tempo: "10 min",
         language: "pt-BR",
-        appRoute: "/scared-crianca",
+        appRoute: "/scared",
       },
     ],
 

@@ -4,8 +4,8 @@
 > Não edite à mão — rode `npm run verify` para regenerar.
 
 - **Total de instrumentos:** 623
-- **Com fonte declarada:** 423
-- **Pendentes de validação/fonte:** 200
+- **Com fonte declarada:** 462
+- **Pendentes de validação/fonte:** 161
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
@@ -343,19 +343,19 @@
 | `nepsy2-tom` | NEPSY-2 ToM | — | sim |
 | `nhs3` | NHS3 | — | sim |
 | `nias` | NIAS | — | sim |
-| `nih-anger` | NIH Toolbox Pediatric Anger | — | sim |
-| `nih-emotional-support` | NIH Toolbox Pediatric Emotional Support | — | sim |
-| `nih-fear-anxiety` | NIH Toolbox Pediatric Fear / Anxiety | — | sim |
-| `nih-friendship` | NIH Toolbox Pediatric Friendship | — | sim |
-| `nih-hostility` | NIH Toolbox Pediatric Perceived Hostility | — | sim |
-| `nih-life-satisfaction` | NIH Toolbox Pediatric General Life Satisfaction | — | sim |
-| `nih-loneliness` | NIH Toolbox Pediatric Loneliness | — | sim |
-| `nih-meaning-purpose` | NIH Toolbox Pediatric Meaning and Purpose | — | sim |
-| `nih-positive-affect` | NIH Toolbox Pediatric Positive Affect | — | sim |
-| `nih-rejection` | NIH Toolbox Pediatric Perceived Rejection | — | sim |
-| `nih-sadness` | NIH Toolbox Pediatric Sadness / Depression | — | sim |
-| `nih-self-efficacy` | NIH Toolbox Pediatric Self-Efficacy | — | sim |
-| `nih-stress` | NIH Toolbox Pediatric Perceived Stress | — | sim |
+| `nih-anger` | NIH Toolbox Pediatric Anger | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-emotional-support` | NIH Toolbox Pediatric Emotional Support | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-fear-anxiety` | NIH Toolbox Pediatric Fear / Anxiety | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-friendship` | NIH Toolbox Pediatric Friendship | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-hostility` | NIH Toolbox Pediatric Perceived Hostility | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-life-satisfaction` | NIH Toolbox Pediatric General Life Satisfaction | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-loneliness` | NIH Toolbox Pediatric Loneliness | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-meaning-purpose` | NIH Toolbox Pediatric Meaning and Purpose | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-positive-affect` | NIH Toolbox Pediatric Positive Affect | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-rejection` | NIH Toolbox Pediatric Perceived Rejection | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-sadness` | NIH Toolbox Pediatric Sadness / Depression | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-self-efficacy` | NIH Toolbox Pediatric Self-Efficacy | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
+| `nih-stress` | NIH Toolbox Pediatric Perceived Stress | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |
 | `nips` | NIPS | Lawrence J et al., 1993 (Neonatal Infant Pain Scale) | não |
 | `nnns` | NNNS | Lester BM et al., 2004 | não |
 | `nrs-pain` | NRS Pain | — | sim |
@@ -496,32 +496,32 @@
 | `pq-b` | PQ-B | Nature (Loewy et al.), PubMed Central | não |
 | `prime-screen` | PRIME Screen | Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk) | não |
 | `prolec` | PROLEC-SE | Cuetos F et al. (PROLEC); adaptação BR Capellini SA et al. | não |
-| `promis-ec-family` | PROMIS Early Childhood Family Relationships | — | sim |
-| `promis-ec-fatigue` | PROMIS Early Childhood Fatigue | — | sim |
-| `promis-ec-global-health` | PROMIS Early Childhood Global Health | — | sim |
-| `promis-ec-pain-interf` | PROMIS Early Childhood Pain Interference | — | sim |
-| `promis-ec-sleep` | PROMIS Early Childhood Sleep Problems | — | sim |
-| `promis-ec-social` | PROMIS Early Childhood Social Relationships | — | sim |
-| `promis-parent-anger` | PROMIS Parent Proxy Anger | — | sim |
-| `promis-parent-cognitive` | PROMIS Parent Proxy Cognitive Function | — | sim |
-| `promis-parent-family-relations` | PROMIS Parent Proxy Family Relationships | — | sim |
-| `promis-parent-fatigue` | PROMIS Parent Proxy Fatigue | — | sim |
-| `promis-parent-global-health` | PROMIS Parent Proxy Global Health | — | sim |
-| `promis-parent-pain-interf` | PROMIS Parent Proxy Pain Interference | — | sim |
-| `promis-parent-phys-function` | PROMIS Parent Proxy Physical Function | — | sim |
-| `promis-parent-strength` | PROMIS Parent Proxy Strength Impact | — | sim |
-| `promis-ped-anger` | PROMIS Pediatric Anger | — | sim |
-| `promis-ped-cognitive` | PROMIS Pediatric Cognitive Function | — | sim |
-| `promis-ped-fatigue` | PROMIS Pediatric Fatigue | — | sim |
-| `promis-ped-global-health` | PROMIS Pediatric Global Health | — | sim |
-| `promis-ped-life-satisfaction` | PROMIS Pediatric Life Satisfaction | — | sim |
-| `promis-ped-meaning-purpose` | PROMIS Pediatric Meaning and Purpose | — | sim |
-| `promis-ped-pain-intensity` | PROMIS Pediatric Pain Intensity | — | sim |
-| `promis-ped-pain-interf` | PROMIS Pediatric Pain Interference | — | sim |
-| `promis-ped-pain-quality` | PROMIS Pediatric Pain Quality | — | sim |
-| `promis-ped-phys-function` | PROMIS Pediatric Physical Function — Mobility | — | sim |
-| `promis-ped-stigma` | PROMIS Pediatric Stigma | — | sim |
-| `promis-ped-stress` | PROMIS Pediatric Psychological Stress | — | sim |
+| `promis-ec-family` | PROMIS Early Childhood Family Relationships | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ec-fatigue` | PROMIS Early Childhood Fatigue | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ec-global-health` | PROMIS Early Childhood Global Health | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ec-pain-interf` | PROMIS Early Childhood Pain Interference | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ec-sleep` | PROMIS Early Childhood Sleep Problems | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ec-social` | PROMIS Early Childhood Social Relationships | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-anger` | PROMIS Parent Proxy Anger | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-cognitive` | PROMIS Parent Proxy Cognitive Function | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-family-relations` | PROMIS Parent Proxy Family Relationships | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-fatigue` | PROMIS Parent Proxy Fatigue | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-global-health` | PROMIS Parent Proxy Global Health | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-pain-interf` | PROMIS Parent Proxy Pain Interference | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-phys-function` | PROMIS Parent Proxy Physical Function | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-parent-strength` | PROMIS Parent Proxy Strength Impact | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-anger` | PROMIS Pediatric Anger | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-cognitive` | PROMIS Pediatric Cognitive Function | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-fatigue` | PROMIS Pediatric Fatigue | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-global-health` | PROMIS Pediatric Global Health | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-life-satisfaction` | PROMIS Pediatric Life Satisfaction | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-meaning-purpose` | PROMIS Pediatric Meaning and Purpose | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-pain-intensity` | PROMIS Pediatric Pain Intensity | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-pain-interf` | PROMIS Pediatric Pain Interference | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-pain-quality` | PROMIS Pediatric Pain Quality | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-phys-function` | PROMIS Pediatric Physical Function — Mobility | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-stigma` | PROMIS Pediatric Stigma | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
+| `promis-ped-stress` | PROMIS Pediatric Psychological Stress | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não |
 | `psi` | PSI | Abidin RR, 1995 (Parenting Stress Index) | não |
 | `psq` | PSQ | Chervin RD et al., 2000 - University of Michigan | não |

@@ -12,12 +12,12 @@ const expectedAssets = [
   "attached_assets/images/dr-jadson-selfie.jpeg",
   "attached_assets/images/dr-jadson-consultorio-batman.jpeg",
   "attached_assets/images/dr-jadson-consultorio-full.jpeg",
-  "attached_assets/images/hero-brain.png",
-  "attached_assets/images/child-assessment.png",
-  "attached_assets/images/child-development.png",
-  "attached_assets/images/mental-health-child.png",
-  "attached_assets/images/neural-abstract.png",
-  "attached_assets/images/team-multiprofessional.png",
+  "attached_assets/images/hero-brain.webp",
+  "attached_assets/images/child-assessment.webp",
+  "attached_assets/images/child-development.webp",
+  "attached_assets/images/mental-health-child.webp",
+  "attached_assets/images/neural-abstract.webp",
+  "attached_assets/images/team-multiprofessional.webp",
 ];
 
 const brandAssetsPath = join(root, "client/src/components/BrandAssets.tsx");

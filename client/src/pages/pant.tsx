@@ -3,6 +3,7 @@ import {
   pantScales, pantDomains, pantLevelLabels, pantLevelColors,
   classifyPantDomain, type PantScale
 } from "@/data/pantScales";
+import { pantExamples, pantLevelExamples } from "@/data/pantExamples";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   FileText, RotateCcw, ChevronDown, ChevronUp,
   AlertTriangle, CheckCircle2, Info, MessageCircle,
-  Languages, Lightbulb, Hand, Heart
+  Languages, Lightbulb, Hand, Heart, Printer
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -229,7 +230,8 @@ export default function PantPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-6 print:hidden">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-sm">
@@ -239,6 +241,15 @@ export default function PantPage() {
           <h1 className="text-lg font-bold">PANT — 100 Escalas Passivas</h1>
           <p className="text-xs text-muted-foreground">Avaliação Funcional do Neurodesenvolvimento</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.print()}
+          className="ml-auto gap-1.5"
+          data-testid="button-print-pant"
+        >
+          <Printer className="w-4 h-4" /> <span className="hidden sm:inline">Imprimir p/ família</span>
+        </Button>
       </div>
 
       {/* Global Progress */}
@@ -257,12 +268,13 @@ export default function PantPage() {
         </p>
       </div>
 
-      {/* Régua reference (sticky) */}
-      <div className="flex flex-wrap gap-1.5 text-xs">
+      {/* Régua reference — nível + exemplo para os pais */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-xs">
         {pantLevelLabels.map((label, i) => (
-          <span key={i} className={`px-2 py-1 rounded-md ${pantLevelColors[i]}`}>
-            {i}: {label}
-          </span>
+          <div key={i} className={`px-2 py-1.5 rounded-md ${pantLevelColors[i]}`}>
+            <span className="font-bold">{i}: {label}</span>
+            <span className="block opacity-80 mt-0.5 leading-snug">{pantLevelExamples[i]}</span>
+          </div>
         ))}
       </div>
 
@@ -330,14 +342,11 @@ export default function PantPage() {
                             <p className="text-sm text-foreground font-medium leading-relaxed">
                               {scale.name}
                             </p>
-                            {/* Exemplo concreto para pai/mãe responder com mais assertividade */}
-                            {scale.parentExample && (
-                              <div className={`mt-1.5 flex items-start gap-1.5 rounded-lg ${domainAccentBg[domain.id]} border ${domainAccentBorder[domain.id]} px-2.5 py-1.5`}>
-                                <Lightbulb className={`w-3 h-3 mt-0.5 flex-shrink-0 ${domainTextColor[domain.id]}`} />
-                                <p className="text-xs text-foreground/75 leading-relaxed">
-                                  {scale.parentExample}
-                                </p>
-                              </div>
+                            {pantExamples[scale.number] && (
+                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                <span className="font-semibold text-foreground/70">Ex.:</span>{" "}
+                                {pantExamples[scale.number]}
+                              </p>
                             )}
                             {/* Show anchor on tap */}
                             {showAnchor === `${scale.number}-${currentAnswer}` && currentAnswer !== undefined && scale.levels[currentAnswer] && (
@@ -397,5 +406,52 @@ export default function PantPage() {
         {allAnswered ? "Ver Resultado" : `Responda todas as ${total} escalas (${answered}/${total})`}
       </Button>
     </div>
+
+    {/* ===== Versão imprimível para a família (somente impressão) ===== */}
+    <div className="hidden print:block text-black text-[11px] leading-snug">
+      <h1 className="text-lg font-bold">PANT — 100 Escalas Passivas</h1>
+      <p className="text-xs">Avaliação Funcional do Neurodesenvolvimento — para a família observar e responder em casa.</p>
+      <p className="text-[10px] mt-1">
+        Em cada item, marque o número de 0 a 4 que melhor descreve o dia a dia da criança, usando os exemplos como referência.
+      </p>
+
+      <div className="mt-2 mb-3 border border-black/40 rounded p-2 break-inside-avoid">
+        <p className="font-bold mb-1">Régua 0 a 4</p>
+        <ul className="space-y-0.5">
+          {pantLevelLabels.map((label, i) => (
+            <li key={i}><b>{i} — {label}:</b> {pantLevelExamples[i]}</li>
+          ))}
+        </ul>
+      </div>
+
+      {pantDomains.map((domain) => {
+        const scales = pantScales.filter((s) => s.domain === domain.id);
+        return (
+          <div key={domain.id} className="mb-3 break-inside-avoid">
+            <h2 className="text-sm font-bold border-b border-black/40 mb-1">
+              {domain.id}. {domain.name}
+            </h2>
+            <ul className="space-y-1.5">
+              {scales.map((s) => (
+                <li key={s.number} className="break-inside-avoid">
+                  <div className="flex justify-between gap-3">
+                    <span><b>{String(s.number).padStart(2, "0")}.</b> {s.name}</span>
+                    <span className="whitespace-nowrap font-mono tracking-widest">0 1 2 3 4</span>
+                  </div>
+                  {pantExamples[s.number] && (
+                    <div className="text-[10px] text-black/70">Ex.: {pantExamples[s.number]}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+
+      <p className="mt-3 text-[9px] text-black/60">
+        Documento de apoio à observação familiar — não substitui avaliação clínica. NeuroPed · Dr. Jadson Fraga.
+      </p>
+    </div>
+    </>
   );
 }

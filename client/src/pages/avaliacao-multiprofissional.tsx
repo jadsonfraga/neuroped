@@ -10,7 +10,7 @@ import {
   Tabs, TabsList, TabsTrigger, TabsContent
 } from "@/components/ui/tabs";
 
-import teamImg from "@assets/images/team-multiprofessional.png";
+import teamImg from "@assets/images/team-multiprofessional.webp";
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 

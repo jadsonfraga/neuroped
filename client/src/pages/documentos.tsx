@@ -1,119 +1,122 @@
-import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, FileText, Save } from "lucide-react";
+import { useLocation } from "wouter";
+import { FileText, ClipboardList, Stethoscope, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const documentTypes = [
-  "PANT completo",
-  "Laudo EXPRESS",
-  "Relatório médico",
-  "Declaração",
-  "Encaminhamento",
-  "Solicitação de terapias",
-  "Plano terapêutico",
-  "PEI escolar",
+/* ────────────────────────────────────────────────────────────
+   Central de Documentos — NeuroPed
+   Acesso rápido para Laudo Neuropediátrico e Receita C1
+──────────────────────────────────────────────────────────── */
+
+const docCards = [
+  {
+    path: "/laudo-neuroped",
+    icon: Stethoscope,
+    title: "Laudo Neuropediátrico",
+    desc: "Template completo — SuperNeuroPed. Preencha os campos, visualize e imprima em PDF.",
+    badge: "Laudo",
+    badgeVariant: "default" as const,
+    status: "Disponível",
+    ok: true,
+  },
+  {
+    path: "/receita-c1",
+    icon: ClipboardList,
+    title: "Receita Especial C1",
+    desc: "Notificação de receita para medicamentos Lista C1. 2 vias, válida por 30 dias.",
+    badge: "Receita",
+    badgeVariant: "secondary" as const,
+    status: "Disponível",
+    ok: true,
+  },
+  {
+    path: "/assinatura-digital",
+    icon: FileText,
+    title: "Assinatura Digital",
+    desc: "Assine documentos com certificado P12 (ICP-Brasil / eCFM).",
+    badge: "Assinatura",
+    badgeVariant: "outline" as const,
+    status: "Disponível",
+    ok: true,
+  },
 ];
 
 export default function DocumentosPage() {
-  const [documentType, setDocumentType] = useState(documentTypes[0]);
-  const [patientName, setPatientName] = useState("");
-  const [doctorName, setDoctorName] = useState("Dr. Jadson Fraga Araújo Júnior");
-  const [crm, setCrm] = useState("CRM-PE 25.227");
-  const [validationAttempted, setValidationAttempted] = useState(false);
-
-  const missingFields = useMemo(() => {
-    const missing: string[] = [];
-    if (!patientName.trim()) missing.push("paciente.nome");
-    if (!documentType.trim()) missing.push("documento.tipo");
-    if (!doctorName.trim()) missing.push("medico.nome");
-    if (!crm.trim()) missing.push("medico.crm");
-    return missing;
-  }, [crm, doctorName, documentType, patientName]);
-
-  const canPreview = missingFields.length === 0;
+  const [, setLocation] = useLocation();
 
   return (
     <div className="space-y-5">
+      {/* Header */}
       <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
         <Badge variant="outline" className="w-fit">Documentos</Badge>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">Central de Documentos NeuroPed</h1>
+        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
+          Central de Documentos NeuroPed
+        </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Camada operacional para preparar documentos clínicos com validação mínima antes da prévia. Estado atual: parcial, aguardando integração plena dos templates oficiais no fluxo de renderização.
+          Gere laudos neuropediátricos e receitas especiais C1 com templates clínicos oficiais.
+          Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756
         </p>
       </section>
 
-      <Card className="border-border/70 bg-card/80">
-        <CardContent className="space-y-4 p-4 sm:p-5">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            <h2 className="font-bold text-foreground">Dados mínimos</h2>
-          </div>
-
-          <label className="block space-y-1.5 text-sm">
-            <span className="font-semibold text-foreground">Tipo de documento</span>
-            <select
-              value={documentType}
-              onChange={(event) => setDocumentType(event.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+      {/* Cards de acesso */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {docCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card
+              key={card.path}
+              className="border-border/70 bg-card/80 cursor-pointer hover:border-primary/50 hover:bg-card transition-colors"
+              onClick={() => setLocation(card.path)}
             >
-              {documentTypes.map((type) => <option key={type}>{type}</option>)}
-            </select>
-          </label>
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-xl bg-primary/10 p-2.5">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <Badge variant={card.badgeVariant} className="text-xs">{card.badge}</Badge>
+                  </div>
+                  {card.ok ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-1" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-1" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="font-bold text-foreground">{card.title}</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{card.desc}</p>
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={(e) => { e.stopPropagation(); setLocation(card.path); }}
+                >
+                  Abrir
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          <label className="block space-y-1.5 text-sm">
-            <span className="font-semibold text-foreground">Paciente</span>
-            <input
-              value={patientName}
-              onChange={(event) => setPatientName(event.target.value)}
-              placeholder="Nome completo do paciente"
-              className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </label>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1.5 text-sm">
-              <span className="font-semibold text-foreground">Médico</span>
-              <input
-                value={doctorName}
-                onChange={(event) => setDoctorName(event.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </label>
-            <label className="block space-y-1.5 text-sm">
-              <span className="font-semibold text-foreground">CRM</span>
-              <input
-                value={crm}
-                onChange={(event) => setCrm(event.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </label>
-          </div>
-
-          {validationAttempted && missingFields.length > 0 && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-xs text-red-900 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-100">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                <p>Campos obrigatórios ausentes: {missingFields.join(", ")}.</p>
-              </div>
-            </div>
-          )}
-
-          {validationAttempted && canPreview && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-100">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                <p>Campos mínimos validados. Documento pode seguir como rascunho ou prévia.</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setValidationAttempted(true)} className="gap-2"><CheckCircle2 className="h-4 w-4" />Validar campos</Button>
-            <Button variant="outline" disabled={!canPreview} className="gap-2"><Save className="h-4 w-4" />Salvar rascunho</Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Info box */}
+      <div className="rounded-2xl border border-border/50 bg-muted/30 p-4 text-xs text-muted-foreground space-y-1">
+        <p>
+          <strong className="text-foreground">Laudo Neuropediátrico:</strong>{" "}
+          Template SuperNeuroPed — anamnese, exame clínico, escalas, hipótese diagnóstica e conduta.
+          Impressão/PDF direta pelo navegador.
+        </p>
+        <p>
+          <strong className="text-foreground">Receita C1:</strong>{" "}
+          Notificação de receita especial (Lista C1 — Portaria SVS/MS 344/98).
+          Emitir em 2 vias obrigatoriamente.
+        </p>
+        <p>
+          <strong className="text-foreground">Assinatura Digital:</strong>{" "}
+          Assine com certificado P12 (ICP-Brasil). Compatível com eCFM.
+        </p>
+      </div>
     </div>
   );
 }
