@@ -2411,6 +2411,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-180",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — AVDs Infantis (J26-180)",
     fullName: "Protocolo de Avaliação das Atividades de Vida Diária em Crianças com Necessidades Especiais",
     ageMin: 24,
@@ -2423,6 +2424,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-181",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Participação Social Criança (J26-181)",
     fullName: "Protocolo de Avaliação da Participação Social em Crianças com Necessidades Especiais",
     ageMin: 48,
@@ -2435,6 +2437,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-182",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sobrecarga Cuidador (J26-182)",
     fullName: "Protocolo de Avaliação da Sobrecarga e Qualidade de Vida do Cuidador Principal",
     ageMin: 0,
@@ -2447,6 +2450,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-183",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — QV Família TEA/TDAH (J26-183)",
     fullName: "Protocolo de Avaliação da Qualidade de Vida Familiar em TEA e TDAH",
     ageMin: 0,
@@ -2459,6 +2463,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-184",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Satisfação Tratamento (J26-184)",
     fullName: "Protocolo de Avaliação da Satisfação da Família com o Tratamento e Equipe",
     ageMin: 0,
@@ -2471,6 +2476,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-185",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Engajamento Terapias (J26-185)",
     fullName: "Protocolo de Avaliação do Engajamento nas Terapias e Barreiras de Acesso",
     ageMin: 0,
@@ -2483,6 +2489,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-186",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Inclusão Escolar Efetiva (J26-186)",
     fullName: "Protocolo de Avaliação do Sucesso da Inclusão Escolar e Participação Ativa",
     ageMin: 48,
@@ -2495,6 +2502,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-187",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Autonomia Adolescente Especial (J26-187)",
     fullName: "Protocolo de Avaliação da Autonomia e Projeto de Vida do Adolescente com NEE",
     ageMin: 144,
@@ -2519,6 +2527,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-189",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Funcionalidade PC GMFCS (J26-189)",
     fullName: "Protocolo Expandido de Avaliação Funcional para Criança com Paralisia Cerebral",
     ageMin: 0,

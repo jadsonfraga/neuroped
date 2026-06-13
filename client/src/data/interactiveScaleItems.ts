@@ -3892,6 +3892,86 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       ]},
     ],
   },
+
+  // ============================================================
+  // LOTE 16 — Categoria 16: Qualidade de Vida e Funcionalidade (autoral)
+  // (J26-188 — Metas/GAS — segue como ferramenta de planejamento individual)
+  // ============================================================
+
+  "j26-180": {
+    icon: Hand, gradient: "from-cyan-500 to-sky-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia as atividades de vida diária (maior = mais funcional/autônoma). Para crianças com PC, TEA, DI e outras condições. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "AVDs (maior = mais funcional)", bands: DEV_BANDS,
+    domains: [{ name: "Atividades de vida diária", color: "text-cyan-600 dark:text-cyan-400", items: [
+      "Alimenta-se sozinha (com a assistência esperada)","Veste-se e despe-se (com a assistência esperada)","Faz a própria higiene (mãos, dentes, banho)","Usa o banheiro de forma independente","Desloca-se pelo ambiente","Comunica as suas necessidades","Participa das tarefas simples de casa","Move-se com segurança (transferências)","Manuseia objetos do dia a dia","Organiza os seus pertences","Realiza a rotina diária com a autonomia possível","Pede ajuda quando necessário",
+    ]}],
+  },
+  "j26-181": {
+    icon: Sparkles, gradient: "from-blue-500 to-indigo-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a participação social (maior = mais participação). Meta importante das intervenções. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Participação social (maior = mais)", bands: DEV_BANDS,
+    domains: [{ name: "Participação na comunidade", color: "text-blue-600 dark:text-blue-400", items: [
+      "Participa de festas de aniversário","Brinca com outras crianças","Participa de atividades na escola","Participa de esportes ou atividades de grupo","Vai a passeios com a família","Frequenta lugares públicos (praça, igreja, mercado)","Tem amigos","Participa de atividades religiosas ou culturais","Aceita convites sociais","Comunica-se nas situações sociais","Participa das rotinas familiares","Tem oportunidades de participação na comunidade",
+    ]}],
+  },
+  "j26-182": {
+    icon: Heart, gradient: "from-rose-500 to-red-600", instruction:
+      "Para cada frase, marque o quanto combina com você (cuidador principal). Responda com sinceridade. Responda todos os itens.",
+    infoBox: "Avalia a sobrecarga do cuidador principal (maior = mais sobrecarregado). O cuidador também precisa de cuidado. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sobrecarga do cuidador (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Esgotamento e suporte", color: "text-rose-600 dark:text-rose-400", items: [
+      "Sinto-me física e emocionalmente esgotado(a)","Tenho pouco tempo para mim","Abdiquei do trabalho ou de planos pessoais","Sinto-me isolado(a) socialmente","Minha saúde tem sido prejudicada","Durmo mal por causa dos cuidados","Sinto-me sobrecarregado(a) com as responsabilidades","Tenho ansiedade ou tristeza frequentes","Sinto que não dou conta de tudo","Falta apoio de outras pessoas ou serviços","As finanças da família estão comprometidas","Sinto que preciso de ajuda e suporte",
+    ]}],
+  },
+  "j26-183": {
+    icon: Heart, gradient: "from-orange-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto do diagnóstico na qualidade de vida familiar (maior = mais impacto). Mostra onde a família mais precisa de suporte. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Impacto na QV familiar (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Qualidade de vida familiar", color: "text-orange-600 dark:text-orange-400", items: [
+      "A rotina da família gira em torno do diagnóstico","A relação do casal está sob tensão","O trabalho dos pais é prejudicado","A família tem pouco lazer","Os irmãos recebem menos atenção","As finanças estão comprometidas (terapias, etc.)","A família se sente isolada socialmente","Há estresse constante em casa","O sono da família é prejudicado","A família se sente sem suporte","Há conflitos frequentes","A qualidade de vida familiar está comprometida",
+    ]}],
+  },
+  "j26-184": {
+    icon: Sparkles, gradient: "from-emerald-500 to-teal-600", instruction:
+      "Para cada frase, marque o quanto concorda. Responda com sinceridade — sua opinião ajuda a melhorar o atendimento. Responda todos os itens.",
+    infoBox: "Avalia a satisfação da família com o tratamento (maior = mais satisfeita). Usado para melhorar o atendimento. Não é diagnóstico.",
+    labels: ["Discordo", "Mais ou menos", "Concordo"], totalLabel: "Satisfação com o tratamento (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Satisfação com a equipe e o cuidado", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Sinto-me bem acolhido(a) no atendimento","O médico explica de forma clara","Tenho as minhas dúvidas respondidas","Sinto que a minha opinião é considerada","As terapias estão sendo úteis","A equipe se comunica bem entre si","Consigo contato quando preciso","Os horários e o acesso são adequados","Vejo evolução no meu filho","Confio na equipe","Recomendaria o atendimento","No geral, estou satisfeito(a) com o tratamento",
+    ]}],
+  },
+  "j26-185": {
+    icon: ClipboardList, gradient: "from-teal-500 to-cyan-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia o engajamento e as barreiras de acesso às terapias (maior = mais engajamento e menos barreiras). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Engajamento nas terapias (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Engajamento e acesso", color: "text-teal-600 dark:text-teal-400", items: [
+      "Conseguimos manter a frequência das terapias","Temos transporte para as terapias","Conseguimos arcar com os custos","A criança aceita e colabora nas terapias","Fazemos as atividades de casa orientadas","Vemos evolução com as terapias","Conseguimos conciliar com a rotina","Temos acesso aos serviços necessários","A escola colabora com o tratamento","A família está engajada no plano","Não há barreiras importantes ao tratamento","No geral, o engajamento está bom",
+    ]}],
+  },
+  "j26-186": {
+    icon: Sparkles, gradient: "from-emerald-500 to-green-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia o sucesso real da inclusão escolar (maior = mais efetiva). Para as reuniões com a escola. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Inclusão efetiva (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Inclusão e participação ativa", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "A criança tem amigos na escola","Participa ativamente das aulas","O professor faz as adaptações necessárias","O AEE ou apoio funciona","A criança é aceita pelos colegas","A criança está avançando na aprendizagem","Há comunicação entre escola e família","A criança se sente bem na escola","As avaliações são adaptadas quando preciso","A escola tem postura inclusiva","A criança participa dos eventos escolares","No geral, a inclusão é efetiva",
+    ]}],
+  },
+  "j26-187": {
+    icon: Sparkles, gradient: "from-violet-500 to-purple-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a autonomia e o projeto de vida do adolescente com necessidades especiais (maior = mais autônomo). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Autonomia e projeto de vida (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Autonomia do adolescente", color: "text-violet-600 dark:text-violet-400", items: [
+      "Realiza as AVDs com a autonomia possível","Cuida da própria higiene e aparência","Administra a própria rotina com o apoio adequado","Tem habilidades para tarefas domésticas","Comunica as suas necessidades e decisões","Tem vida social e amizades","Tem um projeto profissional ou ocupacional","Participa de atividades na comunidade","Tem noções de segurança e autocuidado","Lida com dinheiro e transações simples","Recebeu orientação sobre sexualidade e relações","Caminha para a maior independência possível",
+    ]}],
+  },
+  "j26-189": {
+    icon: Activity, gradient: "from-teal-500 to-emerald-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a funcionalidade motora grossa na PC (maior = mais funcional). Complementa a classificação GMFCS. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Funcionalidade motora na PC (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Função motora grossa", color: "text-teal-600 dark:text-teal-400", items: [
+      "Controla a cabeça e o tronco","Senta-se com a estabilidade possível","Faz transferências com a assistência esperada","Desloca-se pelo ambiente (anda, cadeira, engatinha)","Caminha em casa conforme o nível","Caminha fora de casa ou na comunidade conforme o nível","Sobe e desce superfícies ou degraus conforme o nível","Usa as mãos para tarefas funcionais","Usa dispositivos ou órteses de forma efetiva","Participa de atividades físicas adaptadas","Mantém posturas funcionais ao longo do dia","Tem a mobilidade necessária para a rotina",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
