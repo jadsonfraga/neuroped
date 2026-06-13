@@ -16,6 +16,23 @@ server/public
 .env.*.local
 .env.production
 .env.development
+.env.*
+!.env.example
+
+# Credenciais/segredos locais (NUNCA commitar)
+CREDENCIAIS-LOCAIS.txt
+CREDENCIAIS*.txt
+*credenciais*.txt
+*credentials*.txt
+*secret*.txt
+*token*.txt
+*token*.log
+*deploy*.log
+railway_*log.txt
+*_deploy_log.txt
+*.pem
+*.key
+*.p12
 
 # Banco de dados local (contem dados sensiveis)
 *.db
@@ -27,6 +44,7 @@ neuroped.db*
 
 # Logs
 *.log
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

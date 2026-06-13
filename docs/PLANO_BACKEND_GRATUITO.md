@@ -178,7 +178,6 @@ wrangler kv:namespace create CACHE
 # 6. Configurar secrets
 wrangler secret put NEUROPED_MASTER_KEY
 wrangler secret put NEUROPED_JWT_SECRET
-wrangler secret put VITE_PIN_HASH
 
 # 7. Copiar e configurar wrangler.toml
 cp wrangler.toml.example wrangler.toml

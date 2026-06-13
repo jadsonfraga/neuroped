@@ -1,15 +1,15 @@
-/**
- * GET /api/audit-log  — lista entradas do log de auditoria (admin only)
+﻿/**
+ * GET /api/audit-log  â€” lista entradas do log de auditoria (admin only)
  *
- * Parâmetros:
+ * ParÃ¢metros:
  *  ?page=1&limit=50
  *  ?resource=patients
  *  ?action=login
  *  ?from=2025-01-01
  *  ?to=2025-12-31
  *
- * LGPD: Este endpoint expõe metadados de acesso (quem acessou o quê e quando).
- * Deve ser restrito a administradores. Não expõe conteúdo clínico.
+ * LGPD: Este endpoint expÃµe metadados de acesso (quem acessou o quÃª e quando).
+ * Deve ser restrito a administradores. NÃ£o expÃµe conteÃºdo clÃ­nico.
  */
 
 interface Env {
@@ -28,9 +28,9 @@ function errorResponse(message: string, code: string, status: number): Response 
 }
 
 const DEMO_LOGS = [
-  { id: "log-001", action: "auth.login.success", resource: "auth", resource_id: null, user_id: "pin-session", ip: "127.0.0.1", details: null, created_at: new Date("2025-05-08T09:00:00").toISOString() },
-  { id: "log-002", action: "patients.list", resource: "patients", resource_id: null, user_id: "pin-session", ip: "127.0.0.1", details: null, created_at: new Date("2025-05-08T09:01:00").toISOString() },
-  { id: "log-003", action: "scale.result.create", resource: "scale_results", resource_id: "scale-demo-001", user_id: "pin-session", ip: "127.0.0.1", details: '{"scale_id":"mchat"}', created_at: new Date("2025-05-08T09:05:00").toISOString() },
+  { id: "log-001", action: "auth.login.success", resource: "auth", resource_id: null, user_id: "demo-user", ip: "127.0.0.1", details: null, created_at: new Date("2025-05-08T09:00:00").toISOString() },
+  { id: "log-002", action: "patients.list", resource: "patients", resource_id: null, user_id: "demo-user", ip: "127.0.0.1", details: null, created_at: new Date("2025-05-08T09:01:00").toISOString() },
+  { id: "log-003", action: "scale.result.create", resource: "scale_results", resource_id: "scale-demo-001", user_id: "demo-user", ip: "127.0.0.1", details: '{"scale_id":"mchat"}', created_at: new Date("2025-05-08T09:05:00").toISOString() },
 ];
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {

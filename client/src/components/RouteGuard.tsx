@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Brain, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LocalUnlockGate } from "@/components/LocalUnlockGate";
-import { hasClinicalUnlock, localUnlockEventName } from "@/lib/localUnlock";
 
 export const SENSITIVE_ROUTES = [
   "/pant",
@@ -36,17 +33,6 @@ export function RouteGuard({
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const [locallyUnlocked, setLocallyUnlocked] = useState(() => hasClinicalUnlock());
-
-  useEffect(() => {
-    function handleLockEvent(event: Event) {
-      const detail = (event as CustomEvent<{ unlocked?: boolean }>).detail;
-      setLocallyUnlocked(Boolean(detail?.unlocked));
-    }
-
-    window.addEventListener(localUnlockEventName, handleLockEvent);
-    return () => window.removeEventListener(localUnlockEventName, handleLockEvent);
-  }, []);
 
   if (isLoading) {
     return (
@@ -61,8 +47,19 @@ export function RouteGuard({
     );
   }
 
-  if (!isAuthenticated && !locallyUnlocked) {
-    return <LocalUnlockGate onUnlocked={() => setLocallyUnlocked(true)} />;
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto py-12 px-4 text-center space-y-5">
+        <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+          <Lock className="w-6 h-6 text-amber-500" />
+        </div>
+        <h1 className="text-xl font-bold">Login necessario</h1>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Areas clinicas com dados identificaveis exigem autenticacao nominal no backend seguro.
+        </p>
+        <Button onClick={() => setLocation("/login")}>Entrar</Button>
+      </div>
+    );
   }
 
   if (roles && roles.length > 0 && user && !roles.includes(user.role)) {

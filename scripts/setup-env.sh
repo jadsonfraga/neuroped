@@ -1,108 +1,64 @@
 #!/bin/bash
-# ============================================================
-# NeuroPed — Script de Configuração do Ambiente
-# Uso: bash scripts/setup-env.sh
-# ============================================================
+set -euo pipefail
 
 echo ""
-echo "🔐 NeuroPed — Configuração de Ambiente"
-echo "============================================"
+echo "NeuroPed - Configuracao de Ambiente"
+echo "==================================="
 echo ""
-echo "Este script gera o hash SHA-256 do seu PIN profissional"
-echo "e cria o arquivo .env com as variáveis necessárias."
+echo "Este script cria um .env local sem PIN global de frontend."
+echo "Areas clinicas com dados reais exigem login nominal no backend."
 echo ""
 
-# Verificar se .env já existe
 if [ -f ".env" ]; then
-    echo "⚠️  Arquivo .env já existe."
-    read -p "   Deseja sobrescrever? (s/N): " OVERWRITE
+    echo "Arquivo .env ja existe."
+    read -p "Deseja sobrescrever? (s/N): " OVERWRITE
     if [[ "$OVERWRITE" != "s" && "$OVERWRITE" != "S" ]]; then
-        echo "   Operação cancelada."
+        echo "Operacao cancelada."
         exit 0
     fi
 fi
 
-# Solicitar PIN
-echo ""
-read -s -p "Digite seu PIN profissional (mínimo 6 dígitos): " PIN
-echo ""
-
-if [ ${#PIN} -lt 6 ]; then
-    echo "❌ PIN deve ter no mínimo 6 caracteres."
-    exit 1
-fi
-
-# Gerar hash SHA-256
-if command -v sha256sum &> /dev/null; then
-    HASH=$(echo -n "$PIN" | sha256sum | cut -d' ' -f1)
-elif command -v shasum &> /dev/null; then
-    HASH=$(echo -n "$PIN" | shasum -a 256 | cut -d' ' -f1)
-elif command -v node &> /dev/null; then
-    HASH=$(node -e "process.stdout.write(require('crypto').createHash('sha256').update('$PIN').digest('hex'))")
+if command -v node >/dev/null 2>&1; then
+    MASTER_KEY=$(node -e "process.stdout.write(require('crypto').randomBytes(48).toString('base64'))")
+    JWT_SECRET=$(node -e "process.stdout.write(require('crypto').randomBytes(64).toString('base64'))")
+    ADMIN_PASSWORD=$(node -e "process.stdout.write(require('crypto').randomBytes(24).toString('base64url'))")
 else
-    echo "❌ Não foi possível calcular o hash. Instale sha256sum, shasum ou Node.js."
-    exit 1
+    MASTER_KEY=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
+    JWT_SECRET=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 96)
+    ADMIN_PASSWORD=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)
 fi
 
-# Gerar JWT_SECRET aleatório
-if command -v node &> /dev/null; then
-    JWT_SECRET=$(node -e "process.stdout.write(require('crypto').randomBytes(64).toString('hex'))")
-else
-    JWT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 128 | head -n 1)
-fi
-
-# Criar .env
 cat > .env << EOF
-# NeuroPed — Variáveis de Ambiente
+# NeuroPed - Variaveis de Ambiente
 # Gerado em: $(date)
-# IMPORTANTE: Nunca commite este arquivo no git!
+# IMPORTANTE: Nunca commite este arquivo no git.
 
-# ── Autenticação ──────────────────────────────────
-# Hash SHA-256 do PIN profissional
-VITE_PIN_HASH=$HASH
-PIN_HASH=$HASH
-
-# Chave secreta para JWT (gerada aleatoriamente)
-JWT_SECRET=$JWT_SECRET
-
-# ── Banco de Dados ────────────────────────────────
-# Descomente e configure conforme seu banco:
-# DATABASE_URL=postgresql://user:password@host:5432/neuroped?sslmode=require
-
-# ── Servidor ──────────────────────────────────────
 NODE_ENV=development
 PORT=5000
+HOST=0.0.0.0
+DATABASE_PATH=./neuroped.db
 
-# ── Email (opcional) ──────────────────────────────
-# SMTP_HOST=smtp.gmail.com
-# SMTP_PORT=587
-# SMTP_USER=seu@email.com
-# SMTP_PASS=sua_senha_app
+NEUROPED_MASTER_KEY=$MASTER_KEY
+NEUROPED_JWT_SECRET=$JWT_SECRET
+
+ADMIN_EMAIL=admin@example.local
+ADMIN_NAME=Administrador
+ADMIN_INITIAL_PASSWORD=$ADMIN_PASSWORD
+
+# Configure quando usar object storage real:
+# STORAGE_PROVIDER=supabase
+# STORAGE_ENDPOINT=
+# STORAGE_REGION=auto
+# STORAGE_BUCKET=neuroped-files
+# STORAGE_ACCESS_KEY=
+# STORAGE_SECRET_KEY=
 EOF
 
 echo ""
-echo "✅ Arquivo .env criado com sucesso!"
+echo "Arquivo .env criado com sucesso."
 echo ""
-echo "============================================"
-echo "📋 PRÓXIMOS PASSOS:"
-echo "============================================"
-echo ""
-echo "1. Configure o GitHub Actions Secret:"
-echo "   → https://github.com/jadsonfraga/neuroped/settings/secrets/actions"
-echo "   → New repository secret"
-echo "   → Name: VITE_PIN_HASH"
-echo "   → Value: $HASH"
-echo ""
-echo "2. Configure o banco de dados no .env:"
-echo "   → Edite .env e adicione DATABASE_URL"
-echo ""
-echo "3. Verifique que .env está no .gitignore:"
-echo "   → grep .env .gitignore"
-echo ""
-
-# Verificar .gitignore
-if ! grep -q "^\.env$" .gitignore 2>/dev/null; then
-    echo "⚠️  AVISO: .env não está no .gitignore!"
-    echo "   Execute: echo '.env' >> .gitignore"
-    echo ""
-fi
+echo "Proximos passos:"
+echo "1. Troque ADMIN_EMAIL/ADMIN_NAME antes do primeiro uso local."
+echo "2. Faca login e altere a senha temporaria imediatamente."
+echo "3. Remova ADMIN_INITIAL_PASSWORD depois do primeiro login."
+echo "4. Configure segredos reais apenas nos provedores de deploy."

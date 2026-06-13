@@ -13,6 +13,7 @@ import {
   type AssessmentUse,
   type ImplementationStatus,
 } from "./scaleFilter";
+import { interactiveScaleItems } from "./interactiveScaleItems";
 
 export const SAFE_EMPTY_MESSAGE =
   "Nenhuma escala segura encontrada para este perfil. Revise idade, queixa ou respondente.";
@@ -64,6 +65,7 @@ export function isLicenseRestricted(scale: ScaleEntry): boolean {
  */
 export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus {
   if (scale.implementationStatus) return scale.implementationStatus;
+  if (interactiveScaleItems[scale.id] && !isLicenseRestricted(scale)) return "complete";
   const route = scale.appRoute;
   if (!route) return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
   if (isLicenseRestricted(scale)) return "external_only";

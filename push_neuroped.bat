@@ -1,14 +1,14 @@
-@echo off
+﻿@echo off
 chcp 65001 > nul
-title NeuroPed — Git Push CI/CD Pipeline
+title NeuroPed â€” Git Push CI/CD Pipeline
 
 echo.
 echo ================================================
-echo  NeuroPed — Commit e Push do Pipeline CI/CD
+echo  NeuroPed â€” Commit e Push do Pipeline CI/CD
 echo ================================================
 echo.
 
-:: Navegar para o diretório do projeto
+:: Navegar para o diretÃ³rio do projeto
 cd /d "C:\Users\User\OneDrive\Desktop\neuroped-comparacao\NeuroPed Escalas de Neuropedia"
 
 echo [1/5] Verificando repositorio git...
@@ -64,7 +64,7 @@ if %ERRORLEVEL% == 0 (
     echo  Proximos passos (apenas 1x):
     echo  1. github.com/jadsonfraga/neuroped/settings/pages
     echo     Source: GitHub Actions
-    echo  2. Adicionar secret VITE_PIN_HASH
+    echo  2. Configurar secrets de backend no provedor
     echo     github.com/jadsonfraga/neuroped/settings/secrets/actions
     echo ================================================
 ) else (

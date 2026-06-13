@@ -23,6 +23,7 @@ import { logAudit, getAuditContextFromRequest } from "./lib/audit.js";
 import { sendEmail } from "./lib/email.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerFileRoutes } from "./routes/files.js";
+import { canAccessPatient, canAccessScaleResult, isAdmin } from "./lib/ownership.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 
@@ -70,7 +71,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/patients", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
-    const rows = db.select().from(patients).all();
+    const rows = isAdmin(req.user!)
+      ? db.select().from(patients).all()
+      : db.select().from(patients).where(eq(patients.ownerUserId, req.user!.id)).all();
     await logAudit({ eventType: "patient.read", context: ctx, metadata: { count: rows.length } });
     return res.json(rows.map(patientToPlaintext));
   });
@@ -79,6 +82,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const ctx = getAuditContextFromRequest(req);
     const row = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
     if (!row) return res.status(404).json({ error: "Paciente nao encontrado" });
+    if (!canAccessPatient(req.user!, row)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
     await logAudit({
       eventType: "patient.read",
       context: ctx,
@@ -94,6 +98,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const parsed = patientApiSchema.partial().parse(req.body);
       const existing = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
       if (!existing) return res.status(404).json({ error: "Paciente nao encontrado" });
+      if (!canAccessPatient(req.user!, existing)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
 
       const merged = patientToStorage({
         name: parsed.name ?? patientToPlaintext(existing).name,
@@ -128,6 +133,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.delete("/api/patients/:id", requireAuth, requireProfessional, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
+    const existing = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
+    if (!existing) return res.status(404).json({ error: "Paciente nao encontrado" });
+    if (!canAccessPatient(req.user!, existing)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
     const ok = storage.deletePatient(oneParam(req.params.id));
     if (!ok) return res.status(404).json({ error: "Paciente nao encontrado" });
     await logAudit({
@@ -165,17 +173,32 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.get("/api/results", requireAuth, (_req, res) => {
-    res.json(storage.getResults());
+    const rows = storage.getResults();
+    if (isAdmin(_req.user!)) return res.json(rows);
+    return res.json(
+      rows.filter((result) => {
+        if (result.appliedByUserId === _req.user!.id) return true;
+        if (!result.patientId) return false;
+        const patient = db.select().from(patients).where(eq(patients.id, result.patientId)).get();
+        return canAccessScaleResult(_req.user!, result, patient);
+      }),
+    );
   });
 
   app.get("/api/results/:id", requireAuth, (req, res) => {
     const r = storage.getResult(oneParam(req.params.id));
     if (!r) return res.status(404).json({ error: "Nao encontrado" });
+    const patient = r.patientId ? db.select().from(patients).where(eq(patients.id, r.patientId)).get() : null;
+    if (!canAccessScaleResult(req.user!, r, patient)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
     return res.json(r);
   });
 
   app.delete("/api/results/:id", requireAuth, requireProfessional, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
+    const result = storage.getResult(oneParam(req.params.id));
+    if (!result) return res.status(404).json({ error: "Nao encontrado" });
+    const patient = result.patientId ? db.select().from(patients).where(eq(patients.id, result.patientId)).get() : null;
+    if (!canAccessScaleResult(req.user!, result, patient)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
     const ok = storage.deleteResult(oneParam(req.params.id));
     if (!ok) return res.status(404).json({ error: "Nao encontrado" });
     await logAudit({
@@ -188,6 +211,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.get("/api/patients/:id/results", requireAuth, (req, res) => {
+    const patient = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
+    if (!patient) return res.status(404).json({ error: "Paciente nao encontrado" });
+    if (!canAccessPatient(req.user!, patient)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
     res.json(storage.getResultsByPatient(oneParam(req.params.id)));
   });
 

@@ -22,13 +22,9 @@ Refatorar o nucleo inicial do NeuroPed para um padrao de app medico premium, com
 
 ### 1. Bloqueio inicial antes de qualquer rota
 
-O `PasswordGate` passou a envolver o `App` diretamente em `main.tsx`. Assim, nenhuma rota, `Layout`, home ou pagina interna e renderizada antes do desbloqueio.
+Historico legado: esta revisao introduziu um bloqueio local por hash no navegador.
 
-A validacao usa SHA-256 no navegador e compara contra o hash mestre:
-
-`d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207`
-
-Nao ha senha em texto claro no codigo. A persistencia usa `sessionStorage` por meio da chave `neuroped:pin-ok`. O token de servidor, quando existir, tambem usa `sessionStorage`.
+Status atual: o fluxo foi desativado em 2026-06-13. Areas clinicas com dados reais devem depender de login nominal e autorizacao server-side no backend oficial. Hashes antigos de PIN foram removidos do checkout atual e devem ser tratados como comprometidos no historico Git.
 
 ### 2. Home como painel clinico de decisao
 

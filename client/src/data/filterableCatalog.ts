@@ -7,6 +7,23 @@ import type { ScaleEntry } from "@/data/scaleFilter";
  */
 export const supplementalFilterableInstruments: ScaleEntry[] = [
   {
+    id: "testes-diretos",
+    name: "Testes Diretos",
+    fullName: "Mini-testes diretos com a crianca",
+    ageMin: 36,
+    ageMax: 168,
+    queixas: ["atraso", "linguagem", "cognicao", "aprendizagem", "tdah"],
+    respondente: ["teste_direto_crianca"],
+    prioridade: "triagem",
+    tempo: "10-20 min",
+    appRoute: "/testes-diretos",
+    description: "Conjunto de mini-testes observacionais e interativos para aplicar diretamente com a crianca durante a consulta.",
+    licencaUso: "autoral",
+    applicationMode: "teste_direto_crianca",
+    assessmentUse: "triagem",
+    implementationStatus: "complete",
+  },
+  {
     id: "testes-reconhecimento",
     name: "Testes de Reconhecimento",
     fullName: "Cores, letras, animais e partes do corpo por faixa etária",

@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Rotas de autenticacao:
- *  POST /api/auth/register  — cria conta (apenas admin pode em producao)
- *  POST /api/auth/login     — emite access + refresh token
- *  POST /api/auth/refresh   — rotaciona refresh token e emite novo access
- *  POST /api/auth/logout    — revoga refresh token
- *  GET  /api/auth/me        — retorna usuario atual
- *  POST /api/auth/change-password — troca senha do usuario logado
+ *  POST /api/auth/register  â€” cria conta (apenas admin pode em producao)
+ *  POST /api/auth/login     â€” emite access + refresh token
+ *  POST /api/auth/refresh   â€” rotaciona refresh token e emite novo access
+ *  POST /api/auth/logout    â€” revoga refresh token
+ *  GET  /api/auth/me        â€” retorna usuario atual
+ *  POST /api/auth/change-password â€” troca senha do usuario logado
  */
 
 import type { Express, Request, Response } from "express";
@@ -204,6 +204,22 @@ export function registerAuthRoutes(app: Express): void {
         .get();
 
       if (!stored) {
+        const reused = db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash)).get();
+        if (reused?.revokedAt) {
+          db.update(refreshTokens)
+            .set({ revokedAt: new Date().toISOString() })
+            .where(and(eq(refreshTokens.userId, reused.userId), isNull(refreshTokens.revokedAt)))
+            .run();
+
+          await logAudit({
+            eventType: "auth.token.refresh",
+            context: { ...ctx, userId: reused.userId },
+            targetType: "user",
+            targetId: reused.userId,
+            metadata: { reason: "refresh_reuse_detected" },
+            success: false,
+          });
+        }
         return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
       }
 
@@ -298,49 +314,19 @@ export function registerAuthRoutes(app: Express): void {
     });
   });
 
-  // ----- Verify PIN (bridge PIN → JWT para legado mobile/offline) -----
+  // ----- Verify PIN (bridge PIN â†’ JWT para legado mobile/offline) -----
   app.post("/api/auth/verify-pin", loginRateLimit, async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
-    const schema = z.object({ pinHash: z.string().length(64, "pinHash deve ser SHA-256 hex (64 chars)") });
-    try {
-      const { pinHash } = schema.parse(req.body);
-      const serverPinHash = process.env.PIN_HASH ?? process.env.VITE_PIN_HASH ?? "";
-
-      if (!serverPinHash) {
-        await logAudit({ eventType: "auth.pin.failure", context: ctx, metadata: { reason: "pin_not_configured" }, success: false });
-        return res.status(503).json({ error: "Autenticação por PIN não configurada neste servidor.", code: "PIN_NOT_CONFIGURED" });
-      }
-
-      // Comparação em tempo constante (evita timing attacks)
-      const expected = Buffer.from(serverPinHash.toLowerCase());
-      const received = Buffer.from(pinHash.toLowerCase());
-      if (expected.length !== received.length || !expected.equals(received)) {
-        await logAudit({ eventType: "auth.pin.failure", context: ctx, metadata: { reason: "wrong_pin" }, success: false });
-        return res.status(401).json({ error: "PIN incorreto.", code: "AUTH_INVALID" });
-      }
-
-      // PIN correto: cria sessão JWT temporária (30 min, role reader)
-      const accessToken = signAccessToken({
-        userId: "pin-session",
-        email: "pin@local",
-        role: "professional",
-        name: "Acesso Local",
-      });
-
-      await logAudit({ eventType: "auth.pin.success", context: ctx });
-
-      return res.json({
-        accessToken,
-        expiresIn: 30 * 60,
-        sessionType: "pin",
-        note: "Sessão gerada por PIN. Para acesso completo, utilize login com email e senha.",
-      });
-    } catch (e: any) {
-      if (e instanceof z.ZodError) {
-        return res.status(400).json({ error: "Dados inválidos", details: e.errors });
-      }
-      return res.status(500).json({ error: "Erro interno", code: "INTERNAL_ERROR" });
-    }
+    await logAudit({
+      eventType: "auth.pin.failure",
+      context: ctx,
+      metadata: { reason: "pin_bridge_disabled" },
+      success: false,
+    });
+    return res.status(410).json({
+      error: "Acesso por PIN desativado. Use login nominal com email e senha.",
+      code: "PIN_DISABLED",
+    });
   });
 
   // ----- Change password -----

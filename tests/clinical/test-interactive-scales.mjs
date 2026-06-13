@@ -104,6 +104,13 @@ const interactiveInCatalog = new Set(
 );
 console.log(`  runner=${runnerEntries.length} | acervo=${itemEntries.length} | interativas no catálogo=${interactiveInCatalog.size}`);
 ok(interactiveInCatalog.size >= 100, `≥100 escalas interativas selecionáveis no filtro (=${interactiveInCatalog.size})`);
+const priorityClinicalPack = [
+  "engel", "bears", "flacc", "rflacc", "comfort-b", "bars", "uku",
+  "psc17", "erc", "hine", "catclams", "fas-fluencia", "bisq", "nddie", "scas", "rcads", "fas-pr",
+];
+for (const id of priorityClinicalPack) {
+  ok(interactiveInCatalog.has(id), `${id}: pacote prioritario abre como escala preenchivel`);
+}
 
 console.log(`\n${"=".repeat(48)}`);
 if (failures === 0) {

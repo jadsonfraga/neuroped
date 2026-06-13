@@ -25,7 +25,7 @@ import {
  */
 
 const PRINCIPIOS = [
-  { icon: Lock, titulo: "Dados sensíveis protegidos", texto: "Prontuário, documentos e dados identificáveis nunca são expostos em páginas públicas. Áreas clínicas exigem autenticação profissional ou PIN master local." },
+  { icon: Lock, titulo: "Dados sensíveis protegidos", texto: "Prontuário, documentos e dados identificáveis nunca são expostos em páginas públicas. Áreas clínicas exigem login profissional no backend seguro." },
   { icon: Database, titulo: "Armazenamento local por padrão", texto: "Diários, CAA e registros ficam apenas no dispositivo (localStorage). Nada é enviado a servidores sem ação explícita do profissional." },
   { icon: KeyRound, titulo: "Acesso por papel", texto: "Rotas sensíveis (farmacologia, pacientes, prontuário, planos) são protegidas por guarda de rota." },
   { icon: Smartphone, titulo: "PWA e responsividade", texto: "Funciona offline para conteúdos locais, instala como app e adapta-se a celular, tablet e desktop, com áreas de toque ampliadas." },

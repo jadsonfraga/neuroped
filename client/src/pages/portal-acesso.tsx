@@ -13,7 +13,7 @@ const SECOES = [
     n: "1",
     titulo: "Médico",
     texto:
-      "O PIN master é a chave operacional do médico para abrir as áreas profissionais do app neste navegador.",
+      "As áreas profissionais exigem login nominal no backend seguro antes de acessar dados clinicos reais.",
     tone: "ok" as const,
   },
   {

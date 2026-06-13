@@ -18,6 +18,7 @@
  */
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
@@ -241,6 +242,8 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
   // Espelha resolveAppRoute/opensInApp de filtro.tsx: appRoute dedicado, ou
   // ficha /generic-scale/:id (id ∈ allScales), ou /escalas-neuropsiquiatria (world-*).
   const allIds = new Set(allScales.map((s) => s.id));
+  const appSource = readFileSync(resolve(repoRoot, "client/src/App.tsx"), "utf8");
+  const appRoutes = new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((m) => m[1]));
   const resolveRoute = (s) =>
     s.appRoute
       ? s.appRoute
@@ -259,6 +262,11 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
 
   const naoAbrem = filtered.filter((s) => resolveRoute(s) === null);
   ok(naoAbrem.length === 0, `nenhuma escala do filtro sem rota real (${naoAbrem.length} violações)`);
+  const appRoutesInvalidas = filtered.filter((s) => {
+    const route = resolveRoute(s);
+    return route && !route.startsWith("/generic-scale/") && !appRoutes.has(route);
+  });
+  ok(appRoutesInvalidas.length === 0, `nenhuma appRoute do filtro aponta para rota ausente (${appRoutesInvalidas.length} violações)`);
   ok(filtered.length > 0, "catálogo filtrado não pode ficar vazio");
 
   // Simulação de 300 perfis: TODA recomendação do motor abre (nunca o loop /filtro).

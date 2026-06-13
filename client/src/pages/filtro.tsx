@@ -120,6 +120,7 @@ function opensInApp(scale: ScaleEntry): boolean {
 function isFullApp(scale: ScaleEntry): boolean {
   return (
     (Boolean(scale.appRoute) && !scale.appRoute!.startsWith("/generic-scale/")) ||
+    INTERACTIVE_SCALE_IDS.has(scale.id) ||
     scale.id.startsWith("world-") ||
     Boolean(interactiveScales[scale.id])
   );
@@ -160,11 +161,59 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
   return !age || (scale.ageMax >= age.min && scale.ageMin <= age.max);
 }
 
+const SEARCH_SYNONYMS: Record<string, string[]> = {
+  atraso: ["desenvolvimento", "marcos", "bebe", "bebê", "lactente", "prematuro"],
+  tea: ["autismo", "autista", "espectro", "social", "mchat", "m-chat"],
+  tdah: ["adhd", "atencao", "atenção", "hiperatividade", "impulsividade", "desatencao", "desatenção"],
+  linguagem: ["fala", "comunicacao", "comunicação", "fonologia", "vocabulario", "vocabulário"],
+  aprendizagem: ["escola", "escolar", "leitura", "escrita", "dislexia", "matematica", "matemática"],
+  ansiedade: ["medo", "panico", "pânico", "fobia", "preocupacao", "preocupação"],
+  depressao: ["humor", "tristeza", "depressivo"],
+  comportamento: ["conduta", "oposicao", "oposição", "agressividade", "irritabilidade"],
+  sono: ["dormir", "insonia", "insônia", "ronco"],
+  epilepsia: ["crise", "convulsao", "convulsão"],
+  pc: ["paralisia", "cerebral", "espasticidade"],
+  motor: ["coordenacao", "coordenação", "motricidade", "fino", "grossa"],
+  sensorial: ["sensorial", "integracao", "integração", "hipersensibilidade"],
+  suicidio: ["suicidio", "suicídio", "autolesao", "autolesão", "risco"],
+  efeitos: ["medicacao", "medicação", "remedio", "remédio", "efeito colateral", "adesao", "adesão"],
+};
+
+function expandSearchText(query: string): string {
+  const normalized = norm(query);
+  const extra: string[] = [];
+  for (const [queixa, words] of Object.entries(SEARCH_SYNONYMS)) {
+    if (normalized.includes(queixa) || words.some((w) => normalized.includes(norm(w)))) {
+      extra.push(queixa, ...words);
+    }
+  }
+  return `${query} ${extra.join(" ")}`;
+}
+
+function inferQueixasFromSearch(query: string): string[] {
+  const normalized = norm(query);
+  if (normalized.length < 2) return [];
+  return queixas
+    .filter((q) => {
+      const words = SEARCH_SYNONYMS[q.id] ?? [];
+      return normalized.includes(norm(q.id)) || normalized.includes(norm(q.label)) || words.some((w) => normalized.includes(norm(w)));
+    })
+    .map((q) => q.id);
+}
+
+function inferAgeMonthsFromSearch(query: string): number | null {
+  const normalized = norm(query).replace(",", ".");
+  const month = normalized.match(/\b(\d{1,2})\s*(m|mes|meses)\b/);
+  if (month) return Number(month[1]);
+  const year = normalized.match(/\b(\d{1,2})(?:\s*(a|ano|anos)|a\b)/);
+  if (year) return Number(year[1]) * 12;
+  return null;
+}
 // Realce textual leve para a busca livre. NÃO decide pertinência clínica —
 // apenas reordena, dentro dos candidatos já validados pelo motor, os que casam
 // com o termo digitado. (A segurança/score clínico vem do advancedFilterLogic.)
 function searchBoost(scale: ScaleEntry, query: string) {
-  const tokens = norm(query).split(/\s+/).filter(Boolean);
+  const tokens = norm(expandSearchText(query)).split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return 0;
   const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
   let value = 0;
@@ -438,9 +487,11 @@ export default function FiltroPage() {
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
     const ageRange = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
-    const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
+    const inferredAgeMonths = !ageRange ? inferAgeMonthsFromSearch(search) : null;
+    const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : inferredAgeMonths;
+    const inferredQueixas = selectedQueixas.length === 0 ? inferQueixasFromSearch(search) : [];
     return {
-      queixas: selectedQueixas,
+      queixas: selectedQueixas.length > 0 ? selectedQueixas : inferredQueixas,
       ageMonths,
       ageBand: ageRange ? { min: ageRange.min, max: ageRange.max } : null,
       respondente: selectedRespondente ?? null,
@@ -450,7 +501,7 @@ export default function FiltroPage() {
         selectedAssessmentType === "diagnostic" ? "diagnostico" : selectedAssessmentType === "monitoring" ? "monitorizacao" : null,
       selectedSignals: selectedSignalIds,
     };
-  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
+  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, search]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
   const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);

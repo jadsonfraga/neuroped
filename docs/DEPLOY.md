@@ -1,100 +1,86 @@
-# Deploy Automático — NeuroPed
+﻿# Deploy AutomÃ¡tico â€” NeuroPed
 
-Guia completo para colocar o NeuroPed em produção usando **apenas serviços gratuitos**, com deploy totalmente automático após um único `git push`.
-
----
-
-## Visão Geral da Arquitetura
-
-```
-┌─────────────────────────────────────────┐
-│  GitHub (jadsonfraga/neuroped)          │
-│                                         │
-│  push → GitHub Actions → build          │
-│                     ↓                   │
-│            dist/public/                 │
-│                     ↓                   │
-│         GitHub Pages (frontend)         │
-│  https://jadsonfraga.github.io/neuroped │
-└─────────────────────────────────────────┘
-         ↕ API calls (HTTPS)
-┌─────────────────────────────────────────┐
-│  Render.com (backend Node.js)           │
-│  https://neuroped-api.onrender.com      │
-│                     ↓                   │
-│  better-sqlite3 ou PostgreSQL (banco)   │
-└─────────────────────────────────────────┘
-```
+Guia completo para colocar o NeuroPed em produÃ§Ã£o usando **apenas serviÃ§os gratuitos**, com deploy totalmente automÃ¡tico apÃ³s um Ãºnico `git push`.
 
 ---
 
-## 1. Frontend — GitHub Pages (GRATUITO)
+## VisÃ£o Geral da Arquitetura
 
-O deploy do frontend é **totalmente automático** a cada push para `main`.
+```
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  GitHub (jadsonfraga/neuroped)          â”‚
+â”‚                                         â”‚
+â”‚  push â†’ GitHub Actions â†’ build          â”‚
+â”‚                     â†“                   â”‚
+â”‚            dist/public/                 â”‚
+â”‚                     â†“                   â”‚
+â”‚         GitHub Pages (frontend)         â”‚
+â”‚  https://jadsonfraga.github.io/neuroped â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â†• API calls (HTTPS)
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Render.com (backend Node.js)           â”‚
+â”‚  https://neuroped-api.onrender.com      â”‚
+â”‚                     â†“                   â”‚
+â”‚  better-sqlite3 ou PostgreSQL (banco)   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+```
 
-### Ativação única (apenas na primeira vez)
+---
+
+## 1. Frontend â€” GitHub Pages (GRATUITO)
+
+O deploy do frontend Ã© **totalmente automÃ¡tico** a cada push para `main`.
+
+### AtivaÃ§Ã£o Ãºnica (apenas na primeira vez)
 
 1. Acesse: https://github.com/jadsonfraga/neuroped/settings/pages
 2. Em **Source**, selecione **GitHub Actions**
 3. Clique em **Save**
 
-Pronto. A partir do próximo push, o deploy acontece automaticamente.
+Pronto. A partir do prÃ³ximo push, o deploy acontece automaticamente.
 
-### URL de produção
+### URL de produÃ§Ã£o
 
 ```
 https://jadsonfraga.github.io/neuroped/
 ```
 
-### Configurar o Secret do PIN (uma única vez)
+### Seguranca do frontend publico
 
-O PIN profissional é armazenado como hash SHA-256, nunca em texto puro.
+O frontend publicado em GitHub Pages, Cloudflare Pages ou Vercel e estatico. Ele nao deve receber PIN, senha, JWT secret ou chave mestra no build.
 
-**Gerar o hash:**
-```bash
-node -e "console.log(require('crypto').createHash('sha256').update('SEU_PIN').digest('hex'))"
-```
-
-Ou use o script auxiliar:
-```bash
-bash scripts/setup-env.sh
-```
-
-**Adicionar ao GitHub:**
-1. Acesse: https://github.com/jadsonfraga/neuroped/settings/secrets/actions
-2. Clique em **New repository secret**
-3. **Name**: `VITE_PIN_HASH`
-4. **Value**: (o hash gerado acima)
-5. Clique em **Add secret**
+Areas clinicas com dados reais devem chamar a API oficial autenticada, com sessao nominal por usuario e autorizacao server-side.
 
 ---
 
-## 2. Backend — Render.com (GRATUITO)
+## 2. Backend â€” Render.com (GRATUITO)
 
-O `render.yaml` na raiz do repositório configura o serviço automaticamente.
+O `render.yaml` na raiz do repositÃ³rio configura o serviÃ§o automaticamente.
 
-### Configuração inicial (apenas na primeira vez)
+### ConfiguraÃ§Ã£o inicial (apenas na primeira vez)
 
 1. Crie uma conta em https://render.com
-2. Clique em **New** → **Blueprint**
+2. Clique em **New** â†’ **Blueprint**
 3. Conecte sua conta GitHub
-4. Selecione o repositório `jadsonfraga/neuroped`
-5. O Render detectará o `render.yaml` e configurará tudo automaticamente
+4. Selecione o repositÃ³rio `jadsonfraga/neuroped`
+5. O Render detectarÃ¡ o `render.yaml` e configurarÃ¡ tudo automaticamente
 6. Clique em **Apply**
 
-### Configurar variáveis de ambiente no Render
+### Configurar variÃ¡veis de ambiente no Render
 
-No dashboard do Render, acesse **neuroped-api** → **Environment** e adicione:
+No dashboard do Render, acesse **neuroped-api** â†’ **Environment** e adicione:
 
-| Variável | Valor | Descrição |
+| VariÃ¡vel | Valor | DescriÃ§Ã£o |
 |----------|-------|-----------|
-| `PIN_HASH` | (hash SHA-256 do PIN) | Mesmo hash gerado acima |
-| `JWT_SECRET` | (string aleatória, 64+ chars) | `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
-| `DATABASE_URL` | `postgresql://...` | String de conexão PostgreSQL |
+| `NEUROPED_MASTER_KEY` | string aleatoria forte | `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"` |
+| `NEUROPED_JWT_SECRET` | string aleatoria forte | `node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"` |
+| `ADMIN_INITIAL_PASSWORD` | senha temporaria forte | remover apos o primeiro login |
+| `DATABASE_URL` | `postgresql://...` | String de conexÃ£o PostgreSQL |
 
-### Observação sobre o plano gratuito
+### ObservaÃ§Ã£o sobre o plano gratuito
 
-O serviço gratuito do Render **hiberna após 15 minutos sem uso**. O primeiro acesso após inatividade pode demorar ~30 segundos enquanto o servidor "acorda". Para uso clínico diário, isso é aceitável.
+O serviÃ§o gratuito do Render **hiberna apÃ³s 15 minutos sem uso**. O primeiro acesso apÃ³s inatividade pode demorar ~30 segundos enquanto o servidor "acorda". Para uso clÃ­nico diÃ¡rio, isso Ã© aceitÃ¡vel.
 
 ### URL do backend
 
@@ -104,23 +90,23 @@ https://neuroped-api.onrender.com
 
 ---
 
-## 3. Banco de Dados — Opções Gratuitas
+## 3. Banco de Dados â€” OpÃ§Ãµes Gratuitas
 
-### Opção A: Neon (PostgreSQL — recomendado)
+### OpÃ§Ã£o A: Neon (PostgreSQL â€” recomendado)
 
 1. Crie conta em https://neon.tech
 2. Crie um projeto e um banco chamado `neuroped`
 3. Copie a **Connection String** (formato: `postgresql://user:pass@host/neuroped?sslmode=require`)
 4. Configure como `DATABASE_URL` no Render
 
-### Opção B: Supabase (PostgreSQL)
+### OpÃ§Ã£o B: Supabase (PostgreSQL)
 
 1. Crie conta em https://supabase.com
 2. Crie um projeto
-3. Acesse **Settings** → **Database** → copie a **Connection string (URI)**
+3. Acesse **Settings** â†’ **Database** â†’ copie a **Connection string (URI)**
 4. Configure como `DATABASE_URL` no Render
 
-### Opção C: Cloudflare D1 (SQLite edge — para Workers)
+### OpÃ§Ã£o C: Cloudflare D1 (SQLite edge â€” para Workers)
 
 1. Instale Wrangler: `npm install -g wrangler`
 2. Autentique: `npx wrangler login`
@@ -156,7 +142,7 @@ git push origin main
 | Actions (CI/CD) | https://github.com/jadsonfraga/neuroped/actions |
 | GitHub Pages | https://github.com/jadsonfraga/neuroped/deployments |
 | Render Dashboard | https://dashboard.render.com |
-| Logs do backend | Render Dashboard → neuroped-api → Logs |
+| Logs do backend | Render Dashboard â†’ neuroped-api â†’ Logs |
 
 ---
 
@@ -166,29 +152,29 @@ git push origin main
 # Configurar .env local e gerar hash do PIN
 bash scripts/setup-env.sh
 
-# Build e instruções de deploy
+# Build e instruÃ§Ãµes de deploy
 bash scripts/deploy.sh
 
-# Auditoria de segurança manual
+# Auditoria de seguranÃ§a manual
 npm audit
 ```
 
 ---
 
-## 7. Resolução de Problemas
+## 7. ResoluÃ§Ã£o de Problemas
 
 **Build falha no GitHub Actions:**
 - Verifique os logs em https://github.com/jadsonfraga/neuroped/actions
-- Confirme que `VITE_PIN_HASH` está configurado nos Secrets
+- Confirme que `NEUROPED_JWT_SECRET` estÃ¡ configurado nos Secrets
 
-**App não carrega após deploy:**
-- Verifique se o Source do GitHub Pages está em **GitHub Actions** (não em branch)
-- Aguarde 2-3 minutos após o workflow terminar
+**App nÃ£o carrega apÃ³s deploy:**
+- Verifique se o Source do GitHub Pages estÃ¡ em **GitHub Actions** (nÃ£o em branch)
+- Aguarde 2-3 minutos apÃ³s o workflow terminar
 
 **Backend retorna 502:**
-- O servidor pode estar hibernando — aguarde 30s e tente novamente
+- O servidor pode estar hibernando â€” aguarde 30s e tente novamente
 - Verifique os logs no Render Dashboard
 
 **Erro de banco de dados:**
-- Confirme que `DATABASE_URL` está corretamente configurado no Render
-- Verifique se o banco PostgreSQL está acessível externamente
+- Confirme que `DATABASE_URL` estÃ¡ corretamente configurado no Render
+- Verifique se o banco PostgreSQL estÃ¡ acessÃ­vel externamente

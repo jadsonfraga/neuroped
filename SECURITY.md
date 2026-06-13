@@ -4,7 +4,7 @@
 
 Use o canal privado:
 - WhatsApp: (87) 9 9109-7371
-- Endereco: Rua Raimundo Lacerda, 001 — Sao Jose, Petrolina/PE — 56302-470
+- Endereco: Rua Raimundo Lacerda, 001 â€” Sao Jose, Petrolina/PE â€” 56302-470
 
 **NAO** abra issue publica para vulnerabilidades.
 
@@ -16,12 +16,13 @@ SLA:
 - Patch medio/baixo: 90 dias
 - Confidencialidade pre-disclosure: 90 dias apos patch
 
-## Histórico de Correções Críticas
+## HistÃ³rico de CorreÃ§Ãµes CrÃ­ticas
 
-| Data | Severidade | Arquivo(s) | Problema | Correção |
+| Data | Severidade | Arquivo(s) | Problema | CorreÃ§Ã£o |
 |------|-----------|------------|----------|----------|
-| 2026-05-08 | 🔴 CRÍTICO | `PasswordGate.tsx`, `pacientes.tsx`, `paciente-detalhe.tsx` | PIN `260756` hardcoded em plain text no código frontend | Removido. Substituído por `VITE_PIN_HASH` (SHA-256) + utilitário `client/src/lib/pinAuth.ts` |
-| 2026-05-08 | 🟠 ALTO | `PasswordGate.tsx` | `simpleHash()` trivialmente reversível usado para autenticação | Substituído por `crypto.subtle.digest("SHA-256")` nativo do browser |
+| 2026-06-13 | CRITICO | `localUnlock.ts`, `PasswordGate.tsx`, `PinGate.tsx`, `auth/routes.ts` | PIN/hash local e ponte PIN -> JWT permitiam ataque offline e sessao compartilhada | Desativado. Areas clinicas exigem login nominal no backend seguro. |
+| 2026-05-08 | ðŸ”´ CRÃTICO | `PasswordGate.tsx`, `pacientes.tsx`, `paciente-detalhe.tsx` | PIN historico hardcoded em plain text no codigo frontend | Removido do texto claro; modelo de PIN global desativado em 2026-06-13 |
+| 2026-05-08 | ðŸŸ  ALTO | `PasswordGate.tsx` | `simpleHash()` trivialmente reversÃ­vel usado para autenticaÃ§Ã£o | SubstituÃ­do por `crypto.subtle.digest("SHA-256")` nativo do browser |
 
 ---
 
@@ -32,14 +33,14 @@ SLA:
 - [x] Senhas com bcrypt cost 12, nunca em texto puro
 - [x] JWT HS256 com `NEUROPED_JWT_SECRET` minimo 32 chars
 - [x] Refresh token com hash SHA-256 em DB
-- [x] Rotacao de refresh com deteccao de reuso
+- [x] Rotacao de refresh com deteccao de reuso e revogacao de sessoes ativas do usuario afetado
 - [x] Lockout: 5 falhas = 15 min de bloqueio
 - [x] Validacao Zod em toda entrada
 - [x] Audit log em todo evento sensivel
 - [x] Erros de auth genericos (nao vazam se email existe)
 - [x] PBKDF2 100k iteracoes para derivacao de chave AES
 - [x] AES-256-GCM com IV aleatorio por mensagem
-- [x] HMAC-SHA256 para hash determinístico (CPF pesquisavel)
+- [x] HMAC-SHA256 para hash determinÃ­stico (CPF pesquisavel)
 - [x] CSP restritiva (default-src 'self', frame-ancestors 'none')
 - [x] HSTS preload
 - [x] X-Frame-Options DENY
@@ -136,9 +137,9 @@ SLA:
 
 ## Lista de portas/servicos
 
-- 5000 (HTTP local) — proxy reverso (nginx/caddy) deve servir 443 em producao
-- 587/465 (SMTP outbound) — para envio de email
-- 5432 (Postgres) — apenas se usar Postgres direto em producao (preferir socket interno)
+- 5000 (HTTP local) â€” proxy reverso (nginx/caddy) deve servir 443 em producao
+- 587/465 (SMTP outbound) â€” para envio de email
+- 5432 (Postgres) â€” apenas se usar Postgres direto em producao (preferir socket interno)
 
 Bloquear todas as outras portas no firewall.
 
