@@ -23,9 +23,10 @@ const unlock = read(localUnlockPath);
 const unlockGate = read(localUnlockGatePath);
 const notFound = read(notFoundPath);
 
-const CURRENT_PIN_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
+const CURRENT_PIN_HASH = "7469fe7380c5adaf6764369b74bd5c4e70dc358761136458c436da2787a1e6b7";
 const OLD_PIN_HASHES = [
   "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207",
+  "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd",
 ];
 
 const sensitiveRoutes = [
