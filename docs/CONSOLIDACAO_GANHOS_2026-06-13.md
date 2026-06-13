@@ -77,14 +77,25 @@ mais específicas têm precedência, o tráfego se divide:
 - **Railway**: todo o resto — `/api/auth/*`, `/api/results`, `/api/consents`,
   `/api/files/*`, `/api/send-report`, `/api/send-whatsapp`.
 
-**Inconsistência de dados:** a UI cria paciente em `POST /api/patients` (D1) e
-salva o resultado de escala em `POST /api/results` (Railway); também lê
-`/api/patients/:id/results` (Railway). Paciente num banco, resultado no outro →
-vínculo quebrado. Há ainda divergência de path: a UI usa `/api/results`, mas o D1
-expõe `/api/scales/results`.
+**O backend de dados é o D1.** Verificado que o alvo do proxy
+(`neuroped-api-production.up.railway.app`) é, na prática, um serviço **não
+relacionado** (`secretaria-ia`): responde 200 só em `/api/health` e **404** em
+`/api/patients`, `/api/results`, `/api/auth/*`, `/api/consents`, `/api/files`,
+etc. Ou seja, tudo que era proxyado para lá estava **quebrado (404)**.
 
-**Decisão necessária:** consolidar em UM backend (Railway completo, ou Cloudflare
-D1) — ver questão aberta abaixo.
+**Bug central (corrigido):** a UI chama `POST /api/results`, `GET
+/api/patients/:id/results` e `DELETE /api/results/:id` — paths que caíam no proxy
+(404). O D1 só expunha `/api/scales/results` com corpo em snake_case. **Fix:**
+adicionadas 3 Functions-adaptadoras no D1 nos paths exatos da UI
+(`functions/api/results.ts`, `functions/api/results/[id].ts`,
+`functions/api/patients/[id]/results.ts`), traduzindo o corpo camelCase da UI →
+`scale_results_demo`. UI intacta; fluxo paciente → salvar resultado → ver/excluir
+agora funciona ponta a ponta no D1.
+
+**Recomendação (cleanup):** remover ou repontar o proxy `[[path]].js` — hoje
+encaminha requisições (e headers) a um serviço de terceiro não relacionado, e
+todas as rotas restantes (auth, files, send-*) retornam 404. As features de auth/
+upload/envio precisam de implementação própria (Functions) quando forem ativadas.
 
 ### 2. [OK] `memory/search` referencia FTS inexistente, mas degrada com segurança
 
@@ -103,15 +114,16 @@ comentário ficou desatualizado.
 Imagens/WebP, logo/ícones, filtro, fontes PROMIS/NIH e seed: sem inconsistências;
 `tsc`, guards, `test:filter` e `test:clinical` verdes.
 
-## Questão aberta — consolidação dos backends
+## Consolidação dos backends — resolvido
 
-Há dois backends em nuvem ativos. Para eliminar a divisão de dados, é preciso
-escolher um:
+A auditoria mostrou que o alvo do proxy não é o backend do NeuroPed (é
+`secretaria-ia`, que 404 em tudo menos `/api/health`). Logo, **o backend de dados
+é o Cloudflare D1** — não havia escolha real de "ir para o Railway". A
+consolidação foi feita alinhando os paths da UI ao D1 (3 adaptadoras acima),
+mantendo o caminho mais simples e funcional.
 
-- **A) Tudo no Railway**: remover as Functions D1 parciais (caem no proxy);
-  backend único e completo (auth, files, results já existem). Descarta o D1.
-- **B) Tudo no Cloudflare D1**: portar `auth`/`results`/`files`/`send-*` para
-  Functions e remover o proxy Railway. Mais trabalho; tira dependência do Railway.
+Restante (não bloqueante): o proxy `[[path]].js` pode ser removido/repontado; e
+`auth`/`files`/`send-*`/`consents` exigem implementação própria quando ativados.
 
 ## Pendências rastreadas
 
