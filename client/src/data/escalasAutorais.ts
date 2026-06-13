@@ -1093,6 +1093,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-082",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Linguagem Pragmática Escolar (J26-082)",
     fullName: "Protocolo de Avaliação da Linguagem Pragmática em Contexto Escolar",
     ageMin: 48,
@@ -1105,6 +1106,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-083",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Narrativa Oral Infantil (J26-083)",
     fullName: "Protocolo de Avaliação das Habilidades Narrativas Orais em Crianças",
     ageMin: 48,
@@ -1117,6 +1119,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-084",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Consciência Fonológica Expandida (J26-084)",
     fullName: "Protocolo Expandido de Avaliação da Consciência Fonológica e Metafológica",
     ageMin: 48,
@@ -1129,6 +1132,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-085",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Vocabulário em Profundidade (J26-085)",
     fullName: "Protocolo de Avaliação da Profundidade do Vocabulário em Crianças Escolares",
     ageMin: 60,
@@ -1141,6 +1145,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-086",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Fluência Verbal Criança (J26-086)",
     fullName: "Protocolo de Avaliação da Fluência Verbal Semântica e Fonológica em Crianças",
     ageMin: 60,
@@ -1153,6 +1158,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-087",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Gagueira Expandida (J26-087)",
     fullName: "Protocolo de Avaliação Expandida da Gagueira e Fluência na Comunicação",
     ageMin: 36,
@@ -1165,6 +1171,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-088",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Linguagem Bilíngue NE (J26-088)",
     fullName: "Protocolo de Avaliação da Linguagem em Crianças Bilíngues ou com Diversidade Dialetal",
     ageMin: 36,
@@ -1177,6 +1184,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-089",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — CAA Necessidades (J26-089)",
     fullName: "Protocolo de Avaliação de Necessidades de Comunicação Alternativa e Aumentativa",
     ageMin: 24,
@@ -1189,6 +1197,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-090",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Compreensão Oral Complexa (J26-090)",
     fullName: "Protocolo de Avaliação da Compreensão de Linguagem Oral Complexa em Crianças",
     ageMin: 60,
@@ -1201,6 +1210,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-091",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Linguagem 18-36 Meses (J26-091)",
     fullName: "Protocolo de Triagem de Atraso de Linguagem entre 18 e 36 Meses",
     ageMin: 18,
@@ -1213,6 +1223,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-092",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Discurso e Linguagem Escolar (J26-092)",
     fullName: "Protocolo de Avaliação do Discurso e Habilidades de Linguagem Acadêmica",
     ageMin: 72,
@@ -1225,6 +1236,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-093",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Prosódia e Entonação (J26-093)",
     fullName: "Protocolo de Avaliação da Prosódia, Entonação e Suprassegmentos da Fala",
     ageMin: 36,

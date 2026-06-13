@@ -2728,6 +2728,272 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       },
     ],
   },
+
+  // ============================================================
+  // LOTE 7 — Categoria 7: Linguagem e Comunicação (autoral)
+  // ============================================================
+
+  // ---- J26-082 — Linguagem Pragmática Escolar (habilidade) ----
+  "j26-082": {
+    icon: MessageCircle, gradient: "from-sky-500 to-blue-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia o uso social da linguagem na escola (maior escore = mais funcional). Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Pragmática escolar (maior = mais funcional)", bands: DEV_BANDS,
+    domains: [{ name: "Uso social da linguagem na escola", color: "text-sky-600 dark:text-sky-400", items: [
+      "Pede ajuda ao professor quando precisa",
+      "Faz e responde perguntas de forma pertinente",
+      "Mantém o tema numa conversa",
+      "Espera a vez de falar e não interrompe sempre",
+      "Entende piadas e brincadeiras dos colegas",
+      "Interpreta expressões e sentido figurado simples",
+      "Ajusta a fala ao contexto (professor × colega)",
+      "Usa cumprimentos e fórmulas sociais adequadas",
+      "Repara a comunicação quando não é entendido",
+      "Entende instruções dadas ao grupo",
+      "Participa de trocas conversacionais com os colegas",
+      "Percebe as pistas sociais do interlocutor (interesse, tédio)",
+    ]}],
+  },
+
+  // ---- J26-083 — Narrativa Oral (habilidade) ----
+  "j26-083": {
+    icon: MessageCircle, gradient: "from-blue-500 to-indigo-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia as habilidades narrativas orais (maior escore = narrativa mais elaborada). Sensível para linguagem e cognição. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Narrativa oral (maior = mais elaborada)", bands: DEV_BANDS,
+    domains: [{ name: "Habilidades narrativas", color: "text-blue-600 dark:text-blue-400", items: [
+      "Conta um acontecimento com início, meio e fim",
+      "Inclui personagens na história",
+      "Mantém a sequência temporal (o que veio antes e depois)",
+      "Estabelece relações de causa e efeito",
+      "Usa conectivos (aí, então, porque, mas)",
+      "Mantém o tema sem se perder",
+      "Dá detalhes suficientes para o ouvinte entender",
+      "Usa vocabulário adequado para narrar",
+      "Marca quem fala (discurso direto ou indireto)",
+      "Conclui a história de forma coerente",
+      "Reconta uma história ouvida mantendo o sentido",
+      "A narrativa é compreensível para quem ouve",
+    ]}],
+  },
+
+  // ---- J26-084 — Consciência Fonológica (habilidade) ----
+  "j26-084": {
+    icon: Ear, gradient: "from-violet-500 to-purple-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a consciência fonológica em níveis progressivos (maior escore = mais habilidade). Base para o risco de dislexia. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Consciência fonológica (maior = mais habilidade)", bands: DEV_BANDS,
+    domains: [{ name: "Habilidades fonológicas", color: "text-violet-600 dark:text-violet-400", items: [
+      "Reconhece e produz rimas",
+      "Identifica palavras que começam com o mesmo som (aliteração)",
+      "Separa a palavra em sílabas (batendo palmas)",
+      "Conta o número de sílabas de uma palavra",
+      "Junta sílabas para formar a palavra (síntese silábica)",
+      "Identifica o primeiro som (fonema) da palavra",
+      "Identifica o último som da palavra",
+      "Separa a palavra em sons (segmentação fonêmica)",
+      "Junta sons para formar a palavra (síntese fonêmica)",
+      "Tira um som e diz o que sobra (manipulação)",
+      "Troca um som por outro",
+      "Identifica sons iguais ou diferentes entre palavras",
+    ]}],
+  },
+
+  // ---- J26-085 — Vocabulário em Profundidade (habilidade) ----
+  "j26-085": {
+    icon: MessageCircle, gradient: "from-teal-500 to-cyan-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a profundidade do vocabulário, além do nomear (maior escore = mais rico). Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Vocabulário em profundidade (maior = mais rico)", bands: DEV_BANDS,
+    domains: [{ name: "Profundidade lexical", color: "text-teal-600 dark:text-teal-400", items: [
+      "Explica o significado de palavras comuns",
+      "Dá sinônimos de palavras",
+      "Dá antônimos de palavras",
+      "Agrupa palavras por categoria (frutas, animais)",
+      "Entende que uma palavra pode ter vários sentidos",
+      "Usa as palavras de forma precisa ao se expressar",
+      "Entende palavras menos frequentes para a idade",
+      "Relaciona palavras de um mesmo campo semântico",
+      "Usa palavras novas que aprende",
+      "Entende definições e adivinhas",
+      "Percebe diferenças sutis entre palavras parecidas",
+      "Tem vocabulário compatível com a idade",
+    ]}],
+  },
+
+  // ---- J26-086 — Fluência Verbal (habilidade) ----
+  "j26-086": {
+    icon: Sparkles, gradient: "from-amber-500 to-orange-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a fluência verbal semântica e fonológica (maior escore = mais fluente). Sensível para acesso lexical e funções executivas. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Fluência verbal (maior = mais fluente)", bands: DEV_BANDS,
+    domains: [{ name: "Acesso lexical e fluência", color: "text-amber-600 dark:text-amber-400", items: [
+      "Diz muitos animais em pouco tempo (fluência semântica)",
+      "Diz muitas palavras de uma categoria sem repetir",
+      "Diz palavras que começam com um som dado (fluência fonológica)",
+      "Acessa as palavras com rapidez (sem ficar “travando”)",
+      "Organiza a busca por subgrupos (animais da fazenda, do mar)",
+      "Evita repetir palavras já ditas",
+      "Mantém o critério pedido (categoria ou letra)",
+      "Não foge da tarefa proposta",
+      "Recupera palavras menos comuns",
+      "Tem ritmo de produção compatível com a idade",
+      "Corrige-se quando foge do critério",
+      "A quantidade de palavras é adequada para a idade",
+    ]}],
+  },
+
+  // ---- J26-087 — Gagueira (intensidade/impacto) ----
+  "j26-087": {
+    icon: MessageCircle, gradient: "from-orange-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a gagueira pela frequência e pelo impacto (maior escore = mais impacto). Encaminhar à fonoaudiologia. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Gagueira (maior = mais impacto)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Disfluência e impacto", color: "text-orange-600 dark:text-orange-400", items: [
+      "Repete sons ou sílabas no início das palavras",
+      "Prolonga sons (“mmmmamãe”)",
+      "Trava ou bloqueia, com esforço para iniciar a fala",
+      "Tem tensão facial ou corporal ao falar",
+      "Usa palavras de apoio ou rodeios para evitar travar",
+      "Evita falar em certas situações por medo de gaguejar",
+      "Fica ansiosa antes de falar (ansiedade antecipatória)",
+      "Demonstra frustração ou vergonha ao gaguejar",
+      "Evita certas palavras difíceis",
+      "A gagueira piora sob pressão ou nervosismo",
+      "A gagueira atrapalha a comunicação no dia a dia",
+      "A gagueira afeta a participação social ou escolar",
+    ]}],
+  },
+
+  // ---- J26-088 — Linguagem Bilíngue/Dialetal (sinais de transtorno) ----
+  "j26-088": {
+    icon: MessageCircle, gradient: "from-lime-500 to-green-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Diferencia a DIFERENÇA linguística (dialetal/bilíngue, esperada) do TRANSTORNO de linguagem (maior escore = mais sinais de transtorno verdadeiro, presentes nas duas línguas). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sinais de transtorno (além da diferença)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sinais que vão além do dialeto/bilinguismo", color: "text-lime-700 dark:text-lime-400", items: [
+      "Tem dificuldade de linguagem TAMBÉM na língua/dialeto de casa",
+      "Falava pouco para a idade desde cedo (em qualquer língua)",
+      "Tem vocabulário reduzido nas duas línguas",
+      "Tem dificuldade de montar frases em ambas as línguas",
+      "Tem dificuldade de compreender em ambas as línguas",
+      "Os familiares notam atraso de fala (não só “sotaque”)",
+      "Tem dificuldade de aprender palavras novas",
+      "Tem dificuldade de contar histórias em qualquer língua",
+      "Tem dificuldade de encontrar as palavras (acesso lexical)",
+      "A dificuldade persiste apesar de boa exposição à língua",
+      "Outras crianças bilíngues da mesma comunidade falam melhor",
+      "A dificuldade aparece em casa e na escola",
+    ]}],
+  },
+
+  // ---- J26-089 — Necessidades de CAA (habilidade comunicativa) ----
+  "j26-089": {
+    icon: MessageCircle, gradient: "from-teal-500 to-emerald-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia as habilidades para uso de CAA (maior escore = mais recursos próprios; MENOR escore = maior necessidade e benefício de prancha/PECS/tablet). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Recursos para CAA (menor = mais necessidade)", bands: DEV_BANDS,
+    domains: [{ name: "Comunicação e pré-requisitos para CAA", color: "text-teal-600 dark:text-teal-400", items: [
+      "Demonstra intenção de se comunicar",
+      "Usa o olhar dirigido para se comunicar",
+      "Usa gestos para pedir ou recusar",
+      "Aponta para pedir ou mostrar",
+      "Entende ordens simples faladas",
+      "Entende figuras ou fotos",
+      "Faz escolhas entre opções apresentadas",
+      "Usa sons, palavras ou aproximações",
+      "Tem controle motor para apontar ou tocar (prancha/tablet)",
+      "Responde quando alguém se comunica com ela",
+      "Comunica diferentes funções (pedir, recusar, comentar)",
+      "Aceita e se interessa por recursos visuais de comunicação",
+    ]}],
+  },
+
+  // ---- J26-090 — Compreensão Oral Complexa (habilidade) ----
+  "j26-090": {
+    icon: Ear, gradient: "from-blue-500 to-indigo-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a compreensão de linguagem oral complexa (maior escore = mais habilidade). Essencial antes de concluir sobre dificuldade de leitura. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Compreensão oral complexa (maior = mais habilidade)", bands: DEV_BANDS,
+    domains: [{ name: "Compreensão oral", color: "text-blue-600 dark:text-blue-400", items: [
+      "Entende frases longas e compostas",
+      "Segue instruções com 2-3 passos",
+      "Entende instruções com conceitos (antes/depois, se/então)",
+      "Faz inferências (deduz o que não foi dito)",
+      "Entende perguntas de “por que” e “como”",
+      "Entende metáforas e sentido figurado simples",
+      "Entende ironia e duplo sentido (conforme a idade)",
+      "Acompanha uma história ouvida e responde sobre ela",
+      "Entende relações de causa e efeito no que ouve",
+      "Reconta o que entendeu mantendo o sentido",
+      "Identifica a ideia principal de um texto ouvido",
+      "Compreende vocabulário compatível com a idade",
+    ]}],
+  },
+
+  // ---- J26-091 — Triagem de Linguagem 18-36 meses (marcos) ----
+  "j26-091": {
+    icon: Baby, gradient: "from-blue-500 to-indigo-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Triagem rápida de atraso de linguagem entre 18 e 36 meses (maior escore = mais marcos). Escore baixo indica encaminhamento à fonoaudiologia. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Marcos de linguagem 18–36 meses", bands: DEV_BANDS,
+    domains: [{ name: "Linguagem 18–36 meses", color: "text-blue-600 dark:text-blue-400", items: [
+      "Fala pelo menos 10 a 20 palavras com sentido",
+      "Aponta para pedir ou mostrar",
+      "Entende ordens simples sem gesto",
+      "Aponta partes do corpo ou figuras quando são nomeadas",
+      "Junta duas palavras (“quer água”)",
+      "Responde ao nome",
+      "Imita palavras que ouve",
+      "Nomeia objetos e pessoas familiares",
+      "Usa palavras para pedir o que quer",
+      "Entende perguntas simples (“cadê?”)",
+    ]}],
+  },
+
+  // ---- J26-092 — Discurso e Linguagem Acadêmica (habilidade) ----
+  "j26-092": {
+    icon: MessageCircle, gradient: "from-emerald-500 to-teal-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a linguagem acadêmica em sala (maior escore = mais habilidade). Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Linguagem acadêmica (maior = mais habilidade)", bands: DEV_BANDS,
+    domains: [{ name: "Discurso e linguagem escolar", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Explica um procedimento ou como algo funciona",
+      "Argumenta e defende uma opinião",
+      "Descreve objetos, lugares ou pessoas com detalhes",
+      "Relata acontecimentos de forma organizada",
+      "Usa vocabulário acadêmico adequado",
+      "Responde a perguntas abertas com elaboração",
+      "Organiza as ideias de forma lógica",
+      "Usa conectivos para ligar as ideias",
+      "Adapta a linguagem à tarefa escolar",
+      "Compreende e usa os termos de cada matéria",
+      "Participa de discussões em sala",
+      "Comunica o que aprendeu de forma clara",
+    ]}],
+  },
+
+  // ---- J26-093 — Prosódia e Entonação (habilidade) ----
+  "j26-093": {
+    icon: MessageCircle, gradient: "from-pink-500 to-rose-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a prosódia funcional (maior escore = mais típica/funcional). Alterações de prosódia são comuns no TEA. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Prosódia funcional (maior = mais típica)", bands: DEV_BANDS,
+    domains: [{ name: "Prosódia, entonação e ritmo", color: "text-pink-600 dark:text-pink-400", items: [
+      "A fala tem entonação natural (sobe e desce)",
+      "Demonstra emoção pela voz (alegria, dúvida, surpresa)",
+      "Não soa monótona ou robótica",
+      "Não soa “cantada” ou artificial demais",
+      "Usa um ritmo de fala adequado (nem rápido, nem lento demais)",
+      "Faz as pausas certas entre as ideias",
+      "Dá ênfase às palavras importantes",
+      "Ajusta o volume ao contexto",
+      "A entonação combina com a intenção (pergunta, afirmação)",
+      "Entende a emoção do outro pelo tom de voz",
+      "Diferencia pergunta de afirmação pela entonação",
+      "A prosódia ajuda (e não atrapalha) a comunicação",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
