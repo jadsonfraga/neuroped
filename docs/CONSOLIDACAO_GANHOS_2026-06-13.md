@@ -63,6 +63,68 @@ Obstáculos vencidos no caminho: permissões do token (OK), bug do splitter do
 corrompida por run parcial → `DROP+CREATE`, e bindings de Pages via API (não
 via `wrangler.toml`).
 
+## Auditoria — bugs e inconsistências (13/06)
+
+### 1. [ALTO] Backend dividido entre Cloudflare D1 e Railway
+
+O catch-all `functions/api/[[path]].js` faz **proxy de `/api/*` para um backend
+Railway** (Express, atualmente vivo — `GET /api/health` → 200). Como as Functions
+mais específicas têm precedência, o tráfego se divide:
+
+- **Cloudflare D1**: `/api/patients`, `/api/patients/:id`, `/api/consultations`,
+  `/api/documents`, `/api/scales/results`, `/api/health`, `/api/audit-log`,
+  `/api/memory/search`, `/api/version`.
+- **Railway**: todo o resto — `/api/auth/*`, `/api/results`, `/api/consents`,
+  `/api/files/*`, `/api/send-report`, `/api/send-whatsapp`.
+
+**O backend de dados é o D1.** Verificado que o alvo do proxy
+(`neuroped-api-production.up.railway.app`) é, na prática, um serviço **não
+relacionado** (`secretaria-ia`): responde 200 só em `/api/health` e **404** em
+`/api/patients`, `/api/results`, `/api/auth/*`, `/api/consents`, `/api/files`,
+etc. Ou seja, tudo que era proxyado para lá estava **quebrado (404)**.
+
+**Bug central (corrigido):** a UI chama `POST /api/results`, `GET
+/api/patients/:id/results` e `DELETE /api/results/:id` — paths que caíam no proxy
+(404). O D1 só expunha `/api/scales/results` com corpo em snake_case. **Fix:**
+adicionadas 3 Functions-adaptadoras no D1 nos paths exatos da UI
+(`functions/api/results.ts`, `functions/api/results/[id].ts`,
+`functions/api/patients/[id]/results.ts`), traduzindo o corpo camelCase da UI →
+`scale_results_demo`. UI intacta; fluxo paciente → salvar resultado → ver/excluir
+agora funciona ponta a ponta no D1.
+
+**Recomendação (cleanup):** remover ou repontar o proxy `[[path]].js` — hoje
+encaminha requisições (e headers) a um serviço de terceiro não relacionado, e
+todas as rotas restantes (auth, files, send-*) retornam 404. As features de auth/
+upload/envio precisam de implementação própria (Functions) quando forem ativadas.
+
+### 2. [OK] `memory/search` referencia FTS inexistente, mas degrada com segurança
+
+`functions/api/memory/search.ts` consulta `memory_notes_fts`, que o `schema.d1.sql`
+não cria. Há `try/catch` com fallback para busca LIKE/TF-IDF — funciona, apenas
+loga um warning. (FTS pode ser adicionada depois.)
+
+### 3. [LIMPEZA] `wrangler.toml` com bloco D1 inerte
+
+Restou um `[[d1_databases]]` + marcador no `wrangler.toml` (de um run anterior). O
+binding de Pages é feito via API do projeto, então esse bloco é inócuo, mas o
+comentário ficou desatualizado.
+
+### 4. [OK] Demais mudanças da sessão
+
+Imagens/WebP, logo/ícones, filtro, fontes PROMIS/NIH e seed: sem inconsistências;
+`tsc`, guards, `test:filter` e `test:clinical` verdes.
+
+## Consolidação dos backends — resolvido
+
+A auditoria mostrou que o alvo do proxy não é o backend do NeuroPed (é
+`secretaria-ia`, que 404 em tudo menos `/api/health`). Logo, **o backend de dados
+é o Cloudflare D1** — não havia escolha real de "ir para o Railway". A
+consolidação foi feita alinhando os paths da UI ao D1 (3 adaptadoras acima),
+mantendo o caminho mais simples e funcional.
+
+Restante (não bloqueante): o proxy `[[path]].js` pode ser removido/repontado; e
+`auth`/`files`/`send-*`/`consents` exigem implementação própria quando ativados.
+
 ## Pendências rastreadas
 
 - **Proveniência**: 161 instrumentos ainda sem `fonte` (paralisia cerebral,
