@@ -75,8 +75,10 @@ export async function buildDocumentPdf(spec: DocSpec): Promise<Uint8Array> {
   for (const sec of spec.sections) {
     if (!sec.body || !sec.body.trim()) continue;
     ensure(LINE * 3);
-    text(sec.heading.toUpperCase(), bold, 10, rgb(0.15, 0.15, 0.2));
-    y -= LINE;
+    if (sec.heading && sec.heading.trim()) {
+      text(sec.heading.toUpperCase(), bold, 10, rgb(0.15, 0.15, 0.2));
+      y -= LINE;
+    }
     for (const ln of wrap(sec.body, font, 10, maxW)) {
       ensure(LINE);
       text(ln, font, 10);

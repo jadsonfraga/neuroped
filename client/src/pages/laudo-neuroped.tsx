@@ -1,11 +1,16 @@
 import { useState } from "react";
+<<<<<<< Updated upstream
 import { FileText, Printer, RefreshCw } from "lucide-react";
+=======
+import { FileText, RotateCcw } from "lucide-react";
+>>>>>>> Stashed changes
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 
 /* ────────────────────────────────────────────────────────────
+<<<<<<< Updated upstream
    Laudo Neuropediátrico — texto integral + assinatura PAdES
    Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17756
 ──────────────────────────────────────────────────────────── */
@@ -104,11 +109,50 @@ export default function LaudoNeuropedPage() {
   };
 
   const filename = `laudo-neuroped-${dateStamp()}`;
+=======
+   Laudo Neuropediátrico — caixa única + assinatura ICP-Brasil (A1)
+   Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17756
+──────────────────────────────────────────────────────────── */
+
+const MODELO = `LAUDO NEUROPEDIÁTRICO
+
+Paciente:
+Data de nascimento:            Idade:            Sexo:
+Responsável:
+Data da consulta:
+
+QUEIXA PRINCIPAL
+
+
+HISTÓRIA CLÍNICA
+
+
+EXAME / AVALIAÇÃO
+
+
+ESCALAS E EXAMES COMPLEMENTARES
+
+
+HIPÓTESE DIAGNÓSTICA (CID-10):
+
+
+CONDUTA E ENCAMINHAMENTOS
+
+
+`;
+
+export default function LaudoNeuropedPage() {
+  const [texto, setTexto] = useState("");
+  const [nome, setNome] = useState("");
+
+  const fileBase = `laudo-${(nome || "neuroped").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40) || "neuroped"}`;
+>>>>>>> Stashed changes
 
   return (
     <div className="space-y-5 pb-8">
       <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
         <Badge variant="outline" className="w-fit">Documentos</Badge>
+<<<<<<< Updated upstream
         <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
           Laudo Neuropediátrico
         </h1>
@@ -126,10 +170,25 @@ export default function LaudoNeuropedPage() {
           </Button>
           <Button variant="secondary" size="sm" className="gap-2" onClick={() => setTexto("")}>
             <RefreshCw className="h-4 w-4" /> Limpar
+=======
+        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">Laudo Neuropediátrico</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Cole ou escreva o laudo completo (já com os dados do paciente) no quadro abaixo, depois assine
+          com seu certificado ICP-Brasil (A1) e baixe o PDF assinado.
+          <br />Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button onClick={() => setTexto(MODELO)} variant="outline" size="sm" className="gap-2">
+            <FileText className="h-4 w-4" /> Inserir modelo
+          </Button>
+          <Button onClick={() => setTexto("")} variant="secondary" size="sm" className="gap-2">
+            <RotateCcw className="h-4 w-4" /> Limpar
+>>>>>>> Stashed changes
           </Button>
         </div>
       </section>
 
+<<<<<<< Updated upstream
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
         <div>
           <h2 className="text-sm font-bold text-foreground">Texto integral do laudo</h2>
@@ -148,18 +207,59 @@ export default function LaudoNeuropedPage() {
 
       <AssinaturaIcpPanel
         filename={filename}
+=======
+      {/* Nome do paciente (apenas para o nome do arquivo) */}
+      <section className="rounded-2xl border border-border bg-card/80 p-4">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Nome do paciente <span className="font-normal normal-case">(opcional — usado só no nome do arquivo PDF)</span>
+        </label>
+        <input
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Ex.: Maria Silva"
+          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          data-testid="input-nome-paciente"
+        />
+      </section>
+
+      {/* Caixa única do laudo */}
+      <section className="rounded-2xl border border-border bg-card/80 p-4">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Conteúdo do laudo
+        </label>
+        <Textarea
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder="Cole aqui o laudo completo, já com todos os dados do paciente…"
+          className="mt-1 min-h-[420px] font-mono text-[13px] leading-relaxed"
+          data-testid="textarea-laudo"
+        />
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {texto.trim() ? `${texto.length} caracteres` : "O quadro está vazio — cole o conteúdo do laudo."}
+        </p>
+      </section>
+
+      {/* Assinatura digital ICP-Brasil (A1) */}
+      <AssinaturaIcpPanel
+        filename={fileBase}
+>>>>>>> Stashed changes
         signerName="Dr. Jadson Fraga Araujo Junior"
         location="Petrolina-PE"
         reason="Laudo Neuropediatrico"
         buildPdf={async () => {
           const { buildDocumentPdf } = await import("@/lib/documentPdf");
           return buildDocumentPdf({
+<<<<<<< Updated upstream
             title: "Laudo Medico Neuropediatrico",
             subtitle: "Texto integral colado pelo medico assistente",
+=======
+            title: "Laudo Neuropediatrico",
+>>>>>>> Stashed changes
             credentials: [
               "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
               "Neurologista Infantil / Neuropediatra",
             ],
+<<<<<<< Updated upstream
             sections: [
               { heading: "Conteudo integral do laudo", body: texto.trim() || "Sem conteudo informado." },
             ],
@@ -182,6 +282,13 @@ export default function LaudoNeuropedPage() {
           />
         </div>
       )}
+=======
+            sections: [{ heading: "", body: texto }],
+            footer: "Documento emitido eletronicamente pela plataforma NeuroPed. Quando assinado, contem assinatura digital ICP-Brasil (certificado A1) anexada ao proprio PDF, conferivel em validar.iti.gov.br.",
+          });
+        }}
+      />
+>>>>>>> Stashed changes
     </div>
   );
 }
