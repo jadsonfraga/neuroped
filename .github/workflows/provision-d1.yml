@@ -2,13 +2,14 @@ name: Provision D1 backend
 
 # Provisiona o backend em nuvem do NeuroPed na Cloudflare:
 #  1. Cria (idempotente) o banco D1 "neuroped-db" e o KV "RATE_LIMIT_KV"
-#  2. Aplica o schema db/schema.sql no D1 remoto
-#  3. Grava os bindings (IDs) no wrangler.toml e faz commit na main
-#  4. Faz o deploy para o Cloudflare Pages já com o backend ativo
+#  2. Aplica o schema db/schema.d1.sql no D1 remoto
+#  3. Configura os bindings D1/KV no PROJETO Cloudflare Pages via API
+#     (para Pages, bindings nao vem do wrangler.toml -- tem que ser no projeto)
+#  4. Faz o deploy para o Cloudflare Pages, agora com o backend ativo
 #
-# Rode UMA vez em Actions → "Provision D1 backend" → Run workflow.
-# Requer os secrets: CLOUDFLARE_API_TOKEN (com permissões D1 + Workers KV +
-# Pages) e CLOUDFLARE_ACCOUNT_ID.
+# Rode em Actions -> "Provision D1 backend" -> Run workflow.
+# Requer os secrets: CLOUDFLARE_API_TOKEN (D1 + Workers KV + Pages) e
+# CLOUDFLARE_ACCOUNT_ID.
 
 on:
   workflow_dispatch:
@@ -18,12 +19,13 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   WRANGLER: "npx --yes wrangler@3"
   D1_NAME: "neuroped-db"
   KV_NAME: "RATE_LIMIT_KV"
+  PAGES_PROJECT: "neuroped"
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
@@ -60,9 +62,9 @@ jobs:
             exit 1
           fi
           echo "id=$ID" >> "$GITHUB_OUTPUT"
-          echo "D1 $D1_NAME → $ID"
+          echo "D1 $D1_NAME -> $ID"
 
-      - name: Aplicar schema no D1 (idempotente)
+      - name: Aplicar schema no D1 (reconstrói tabelas)
         run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/schema.d1.sql --yes
 
       # ── 2. KV: cria se não existir e resolve o id (best-effort) ───────────
@@ -77,47 +79,40 @@ jobs:
           set -euo pipefail
           ID="$($WRANGLER kv namespace list | jq -r --arg n "$KV_NAME" '.[] | select(.title==$n or (.title|endswith($n))) | .id' | head -n1)"
           echo "id=${ID:-}" >> "$GITHUB_OUTPUT"
-          echo "KV $KV_NAME → ${ID:-<não resolvido>}"
+          echo "KV $KV_NAME -> ${ID:-<nao resolvido>}"
 
-      # ── 3. Grava os bindings no wrangler.toml e commita na main ───────────
-      - name: Escrever bindings no wrangler.toml
+      # ── 3. Configura os bindings no PROJETO Pages (Cloudflare API) ────────
+      # Para Pages, os bindings D1/KV NAO vem do wrangler.toml; precisam estar
+      # no projeto (deployment_configs.production/preview). Faz GET + merge para
+      # nao apagar outras configs, depois PATCH.
+      - name: Configurar bindings D1/KV no projeto Pages
         env:
           D1_ID: ${{ steps.d1.outputs.id }}
           KV_ID: ${{ steps.kv.outputs.id }}
         run: |
           set -euo pipefail
-          # Remove qualquer bloco de bindings antigo (idempotência) a partir do marcador
-          if grep -q ">>> D1_BINDING_PLACEHOLDER <<<" wrangler.toml; then
-            sed -i '/>>> D1_BINDING_PLACEHOLDER <<</q' wrangler.toml
-          fi
-          {
-            echo ""
-            echo "[[d1_databases]]"
-            echo "binding = \"DB\""
-            echo "database_name = \"$D1_NAME\""
-            echo "database_id = \"$D1_ID\""
-            if [ -n "${KV_ID:-}" ]; then
-              echo ""
-              echo "[[kv_namespaces]]"
-              echo "binding = \"$KV_NAME\""
-              echo "id = \"$KV_ID\""
-            fi
-          } >> wrangler.toml
-          echo "----- wrangler.toml -----"
-          cat wrangler.toml
-
-      - name: Commit dos bindings na main
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- wrangler.toml; then
-            echo "wrangler.toml sem mudanças — bindings já estavam aplicados."
-          else
-            git add wrangler.toml
-            git commit -m "chore(backend): grava bindings D1/KV no wrangler.toml (provisionamento)"
-            git push origin HEAD:main || echo "::warning::push para main bloqueado (branch protection). Os bindings estão no deploy desta execução; aplique-os manualmente se necessário."
-          fi
+          API="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT}"
+          CUR="$(curl -sS "$API" -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+          echo "$CUR" | jq -e '.success == true' >/dev/null || { echo "::error::GET do projeto Pages falhou:"; echo "$CUR" | jq '.errors'; exit 1; }
+          BODY="$(echo "$CUR" | jq \
+            --arg d1 "$D1_ID" --arg kv "${KV_ID:-}" --arg kvname "$KV_NAME" '
+              (.result.deployment_configs // {}) as $dc
+              | { deployment_configs: (
+                    $dc
+                    | .production.d1_databases.DB = {"id":$d1}
+                    | .preview.d1_databases.DB = {"id":$d1}
+                    | if $kv != "" then
+                        .production.kv_namespaces[$kvname] = {"namespace_id":$kv}
+                        | .preview.kv_namespaces[$kvname] = {"namespace_id":$kv}
+                      else . end
+                  ) }')"
+          RESP="$(curl -sS -X PATCH "$API" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "$BODY")"
+          echo "$RESP" | jq '{success, errors}'
+          echo "$RESP" | jq -e '.success == true' >/dev/null || { echo "::error::PATCH dos bindings no projeto Pages falhou."; exit 1; }
+          echo "Bindings D1/KV configurados no projeto Pages '$PAGES_PROJECT'."
 
       # ── 4. Build + deploy já com o backend ativo ──────────────────────────
       - name: Build do frontend
@@ -126,11 +121,15 @@ jobs:
           VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
-      - name: Deploy para Cloudflare Pages (com bindings)
-        run: $WRANGLER pages deploy dist/public --project-name neuroped --branch main
+      - name: Deploy para Cloudflare Pages
+        run: $WRANGLER pages deploy dist/public --project-name "$PAGES_PROJECT" --branch main
 
       - name: Smoke test do backend (/api/health)
         run: |
           echo "Aguardando propagação..."
-          sleep 20
-          curl -fsSL https://neuroped.pages.dev/api/health || echo "::warning::/api/health não respondeu 2xx ainda — pode levar alguns minutos para propagar."
+          sleep 25
+          OUT="$(curl -fsSL "https://${PAGES_PROJECT}.pages.dev/api/health?t=$GITHUB_RUN_ID" || true)"
+          echo "$OUT"
+          echo "$OUT" | grep -q '"database":"ok"' \
+            && echo "✅ Backend conectado ao D1 (database: ok)." \
+            || echo "::warning::database ainda não está 'ok' — pode levar alguns minutos para propagar; re-cheque /api/health."
