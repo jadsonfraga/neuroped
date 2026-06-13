@@ -3460,6 +3460,93 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       ]},
     ],
   },
+
+  // ============================================================
+  // LOTE 11 — Categoria 11: Sono Expandido (autoral)
+  // ============================================================
+
+  "j26-130": {
+    icon: Sparkles, gradient: "from-indigo-500 to-blue-700", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia as práticas de higiene do sono (maior = mais saudáveis). Base antes de indicar melatonina. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Higiene do sono (maior = mais saudável)", bands: DEV_BANDS,
+    domains: [{ name: "Práticas de sono", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "Tem horário fixo para dormir","Tem horário fixo para acordar","Faz um ritual calmo antes de dormir (banho, leitura)","O quarto é escuro na hora de dormir","O quarto é silencioso e tranquilo","Evita telas na hora antes de dormir","Evita cafeína ou refrigerante à noite","Não faz atividade agitada perto da hora de dormir","Dorme na própria cama","Tem ambiente com temperatura agradável","Evita refeições pesadas antes de dormir","Mantém a rotina de sono nos fins de semana",
+    ]}],
+  },
+  "j26-131": {
+    icon: ShieldAlert, gradient: "from-violet-500 to-purple-700", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Ajuda a diferenciar pesadelo, terror noturno e sonambulismo (manejos diferentes). Maior = mais frequente/intenso. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Eventos noturnos (maior = mais intensos)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Pesadelos, terrores e sonambulismo", color: "text-violet-600 dark:text-violet-400", items: [
+      "Tem pesadelos (acorda assustada e lembra do sonho)","Tem terror noturno (grita/agitada, sem acordar nem lembrar)","Anda dormindo (sonambulismo)","Fala dormindo","Tem despertar confuso no meio da noite","Os episódios acontecem no início da noite","Os episódios acontecem na madrugada ou fim da noite","Tem vários episódios por semana","Os episódios assustam a família","Há risco de a criança se machucar nos episódios","Fica sonolenta no dia seguinte por causa disso","Os episódios vêm piorando",
+    ]}],
+  },
+  "j26-132": {
+    icon: Sparkles, gradient: "from-blue-500 to-indigo-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o atraso de início do sono (maior = mais demora). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Latência do sono (maior = mais demora)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Início do sono", color: "text-blue-600 dark:text-blue-400", items: [
+      "Demora mais de 30-45 minutos para pegar no sono","Fica se mexendo e rolando na cama","A mente “não para” na hora de dormir","Levanta-se várias vezes antes de dormir","Chama os pais repetidamente","Pede água, banheiro ou colo seguidamente","Reclama que não consegue dormir","Fica ansiosa por não conseguir dormir","Só dorme muito tarde","Precisa de companhia ou condições para iniciar o sono","A demora atrapalha o sono total da noite","Acorda cansada por dormir tarde",
+    ]}],
+  },
+  "j26-133": {
+    icon: Sparkles, gradient: "from-slate-500 to-indigo-700", instruction:
+      "Marque a frequência de cada evento durante o sono. Anote também o horário em que costumam ocorrer. Responda todos os itens.",
+    infoBox: "Inventário de parassônias por frequência (maior = mais frequentes). Tipo e horário ajudam o diagnóstico. Não é diagnóstico.",
+    labels: FREQ_LABELS, totalLabel: "Parassônias (maior = mais frequentes)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Eventos durante o sono", color: "text-slate-600 dark:text-slate-300", items: [
+      "Anda dormindo (sonambulismo)","Fala dormindo","Range os dentes (bruxismo)","Faz movimentos rítmicos (bate a cabeça, balança) ao dormir","Tem terror noturno","Tem despertar confusional","Tem pesadelos","Mexe muito as pernas ou tem desconforto nas pernas","Tem sobressaltos ao adormecer","Urina na cama (enurese noturna)","Os episódios ocorrem sempre no mesmo horário","As parassônias atrapalham o sono ou o dia seguinte",
+    ]}],
+  },
+  "j26-134": {
+    icon: Activity, gradient: "from-slate-500 to-blue-700", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto das telas no sono (maior = mais impacto). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Telas e sono (maior = mais impacto)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Telas no sono", color: "text-blue-600 dark:text-blue-400", items: [
+      "Usa telas na hora antes de dormir","Tem celular, tablet ou TV no quarto","Assiste ou joga até altas horas","Leva o celular para a cama","Acorda à noite para ver o celular","Fica agitada ou estimulada depois da tela","Atrasa a hora de dormir por causa da tela","Reduz o tempo total de sono pela tela","Tem dificuldade de “desligar” da tela à noite","Acorda cansada por dormir tarde com tela","Resiste a entregar a tela na hora de dormir","O uso de tela à noite atrapalha claramente o sono",
+    ]}],
+  },
+  "j26-135": {
+    icon: ShieldAlert, gradient: "from-indigo-500 to-violet-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a ansiedade noturna como causa de insônia (maior = mais intensa). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Ansiedade noturna (maior = mais intensa)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Ansiedade na hora de dormir", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "Tem medo do escuro","Tem medo de dormir sozinha","Tem medo de pesadelos","Tem pensamentos que não param na hora de dormir","Preocupa-se com coisas ao deitar","Pede para um adulto ficar até ela dormir","Vai para a cama dos pais por medo","Resiste a ir para a cama por ansiedade","Tem sintomas físicos (coração acelerado, barriga) ao deitar","Fica aflita conforme a hora de dormir se aproxima","Acorda à noite ansiosa e com medo","A ansiedade é a causa principal da insônia",
+    ]}],
+  },
+  "j26-136": {
+    icon: Sparkles, gradient: "from-emerald-500 to-teal-600", instruction:
+      "Marque como está o sono desde o início da melatonina. Aplique semanalmente. Responda todos os itens.",
+    infoBox: "Monitorização da resposta à melatonina (maior = melhor resposta). Ajustes de dose/horário com o médico. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Resposta à melatonina (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Resposta ao tratamento", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Demora menos para pegar no sono desde a melatonina","Pega no sono em menos de 30 minutos","Acorda menos vezes durante a noite","Dorme mais horas no total","Acorda mais descansada de manhã","Está menos irritada durante o dia","Aceita bem a medicação","Não tem efeitos adversos (sonolência diurna, dor de cabeça)","A rotina de sono melhorou","O comportamento diurno melhorou","A família está dormindo melhor também","No geral, a melatonina está ajudando",
+    ]}],
+  },
+  "j26-137": {
+    icon: Sparkles, gradient: "from-teal-500 to-cyan-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Estrutura e monitora a rotina noturna (maior = melhor estruturada). Intervenção de primeira linha, antes de medicação. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Rotina noturna (maior = melhor estruturada)", bands: DEV_BANDS,
+    domains: [{ name: "Estrutura da rotina", color: "text-teal-600 dark:text-teal-400", items: [
+      "Tem horário definido para começar a rotina da noite","Faz o banho como parte da rotina","Janta em horário adequado","Tem um período de brincadeira calma antes de dormir","Faz leitura ou história antes de dormir","Diminui as luzes e os estímulos ao se aproximar a hora","Apaga a luz em horário consistente","A criança sabe o que vem a seguir na rotina","A rotina é tranquila (sem brigas)","A rotina é mantida todos os dias","A rotina é mantida nos fins de semana","A rotina ajuda a criança a dormir melhor",
+    ]}],
+  },
+  "j26-138": {
+    icon: Baby, gradient: "from-blue-500 to-indigo-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a qualidade do sono e o impacto no neurodesenvolvimento (maior = mais problemas). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sono e desenvolvimento (maior = mais problemas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Qualidade do sono e impacto", color: "text-blue-600 dark:text-blue-400", items: [
+      "Dorme menos horas do que o esperado para a idade","Acorda muitas vezes à noite","Tem dificuldade de pegar no sono","Tem sono agitado ou inquieto","Fica irritada e chorosa de dia por causa do sono","Tem dificuldade de atenção/aprendizagem ligada ao sono","Tem mais problemas de comportamento quando dorme mal","Tem sonolência diurna","O ritmo de sono é irregular","A privação de sono afeta o desenvolvimento e o humor","A família dorme mal por causa do sono da criança","Os problemas de sono persistem há tempo",
+    ]}],
+  },
+  "j26-139": {
+    icon: ShieldAlert, gradient: "from-rose-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Triagem de apneia obstrutiva do sono (maior = mais sinais). Sinais positivos exigem avaliação (otorrino/polissonografia). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sinais de apneia do sono (maior = mais sinais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Respiração no sono", color: "text-rose-600 dark:text-rose-400", items: [
+      "Ronca alto e com frequência","Faz pausas na respiração durante o sono","Engasga ou tem sufocos durante o sono","Respira pela boca dormindo","Tem sono agitado e suado","Dorme em posições estranhas (pescoço estendido)","Acorda cansada mesmo dormindo o suficiente","Tem sonolência diurna","Tem dificuldade de atenção ou hiperatividade de dia","Tem amígdalas ou adenoides aumentadas (ou já foi dito por médico)","Faz xixi na cama (associado)","O ronco ou a apneia atrapalham a qualidade do sono",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

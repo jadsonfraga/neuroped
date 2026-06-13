@@ -1737,6 +1737,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-130",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Higiene do Sono Infantil (J26-130)",
     fullName: "Protocolo de Avaliação e Orientação de Higiene do Sono em Crianças",
     ageMin: 12,
@@ -1749,6 +1750,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-131",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Pesadelos e Terrores Noturnos (J26-131)",
     fullName: "Protocolo de Diferenciação entre Pesadelos, Terrores Noturnos e Sonambulismo",
     ageMin: 24,
@@ -1761,6 +1763,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-132",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Latência de Início do Sono (J26-132)",
     fullName: "Protocolo de Avaliação do Atraso de Início do Sono em Crianças e Adolescentes",
     ageMin: 36,
@@ -1773,6 +1776,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-133",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Parassônias Checklist (J26-133)",
     fullName: "Protocolo de Avaliação Completa das Parassônias em Crianças",
     ageMin: 24,
@@ -1785,6 +1789,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-134",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Tela e Sono (J26-134)",
     fullName: "Protocolo de Avaliação do Impacto do Uso de Telas no Sono Infantil e Adolescente",
     ageMin: 48,
@@ -1797,6 +1802,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-135",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Noturna (J26-135)",
     fullName: "Protocolo de Avaliação da Ansiedade Noturna como Causa de Insônia Infantil",
     ageMin: 36,
@@ -1809,6 +1815,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-136",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Resposta Melatonina (J26-136)",
     fullName: "Protocolo de Monitorização da Resposta ao Tratamento com Melatonina",
     ageMin: 24,
@@ -1821,6 +1828,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-137",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Rotina Noturna (J26-137)",
     fullName: "Protocolo de Estruturação e Monitorização da Rotina Noturna Infantil",
     ageMin: 12,
@@ -1833,6 +1841,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-138",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sono e Neurodesenvolvimento (J26-138)",
     fullName: "Protocolo de Avaliação da Qualidade do Sono e Impacto no Neurodesenvolvimento",
     ageMin: 0,
@@ -1845,6 +1854,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-139",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — SAOS Triagem Infantil (J26-139)",
     fullName: "Protocolo de Triagem da Síndrome de Apneia Obstrutiva do Sono em Crianças",
     ageMin: 12,
