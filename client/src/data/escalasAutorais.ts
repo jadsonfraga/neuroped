@@ -56,6 +56,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-004",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Cognição Precoce 0-18 Meses (J26-004)",
     fullName: "Protocolo de Triagem de Cognição e Resolução de Problemas de 0 a 18 Meses",
     ageMin: 0,
@@ -68,6 +69,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-005",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Regulação Sensorial Neonatal (J26-005)",
     fullName: "Protocolo de Triagem de Regulação Sensorial e Comportamental Neonatal",
     ageMin: 0,
@@ -80,6 +82,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-006",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Reflexos Primitivos (J26-006)",
     fullName: "Protocolo de Avaliação de Reflexos Primitivos e Posturas Patológicas",
     ageMin: 0,
@@ -131,6 +134,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-010",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Global 24-36 Meses (J26-010)",
     fullName: "Protocolo de Triagem do Desenvolvimento Global de 24 a 36 Meses",
     ageMin: 24,
@@ -143,6 +147,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-011",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Global 36-60 Meses (J26-011)",
     fullName: "Protocolo de Triagem do Desenvolvimento Global de 36 a 60 Meses",
     ageMin: 36,
@@ -155,6 +160,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-012",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Portage Adaptado NE (J26-012)",
     fullName: "Protocolo de Estimulação e Triagem Tipo Portage Adaptado ao Nordeste Brasileiro",
     ageMin: 0,

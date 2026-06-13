@@ -4155,6 +4155,71 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Houve evolução na área principal tratada","Houve evolução na comunicação","Houve evolução no comportamento","Houve evolução na autonomia","Houve evolução social","As metas do trimestre foram alcançadas","A família percebe melhora no dia a dia","A escola percebe melhora","A criança está mais regulada","As terapias estão sendo efetivas","O plano atual continua adequado","No geral, a evolução é positiva",
     ]}],
   },
+
+  // ============================================================
+  // COMPLEMENTO — Categoria 1 restante (004, 005, 006, 010, 011, 012)
+  // ============================================================
+
+  "j26-004": {
+    icon: Sparkles, gradient: "from-amber-500 to-yellow-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Triagem de cognição e resolução de problemas de 0 a 18 meses (maior = mais marcos). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Cognição precoce 0–18 meses", bands: DEV_BANDS,
+    domains: [{ name: "Cognição e resolução de problemas", color: "text-amber-600 dark:text-amber-400", items: [
+      "Procura um objeto que sumiu (permanência do objeto)","Explora os brinquedos de formas variadas","Imita ações simples (bater palmas)","Usa um objeto para alcançar outro (resolve problema)","Encontra um objeto escondido sob um pano","Manipula o brinquedo para entender como funciona","Busca ou aponta o que quer (intencionalidade)","Empilha ou encaixa objetos simples","Reconhece objetos e pessoas familiares","Antecipa rotinas (sabe o que vem depois)","Imita gestos novos","Brinca de causa e efeito (aperta botão e faz tocar)",
+    ]}],
+  },
+  "j26-005": {
+    icon: Baby, gradient: "from-pink-500 to-rose-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Triagem da regulação sensorial e comportamental do neonato (maior = melhor regulação). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Regulação sensorial neonatal (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Regulação do recém-nascido", color: "text-pink-600 dark:text-pink-400", items: [
+      "Acalma-se quando embalado ou aconchegado","Tolera o toque do cuidado (banho, troca)","Mantém-se calmo com estímulos comuns","Tem períodos de alerta tranquilo","Transita suavemente entre sono e vigília","Reage de forma proporcional a sons","Reage de forma proporcional à luz","Mantém o tônus organizado (nem muito mole, nem rígido)","Suga e se alimenta de forma organizada","Recupera-se após um estímulo intenso","Não se sobressalta excessivamente","No geral, regula bem os estímulos",
+    ]}],
+  },
+  "j26-006": {
+    icon: Baby, gradient: "from-rose-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avaliação de reflexos primitivos e posturas (maior = mais achados alterados). Encaminhar conforme os achados. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Reflexos alterados (maior = mais achados)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Reflexos primitivos e posturas", color: "text-rose-600 dark:text-rose-400", items: [
+      "Reflexo de Moro ausente","Reflexo de Moro assimétrico","Reflexo de Moro persistente além do esperado","Preensão palmar ausente ou assimétrica","Preensão plantar alterada","Reflexo de sucção fraco ou ausente","Reflexo de busca (procura) ausente","RTAC (reflexo tônico cervical) persistente ou obrigatório","Marcha automática (stepping) ausente","Assimetria entre os lados do corpo","Posturas anormais (hiperextensão, opistótono)","Reflexos exaltados ou diminuídos para a idade",
+    ]}],
+  },
+  "j26-010": {
+    icon: Baby, gradient: "from-blue-500 to-indigo-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Triagem global de 24 a 36 meses nas 5 áreas (maior = mais marcos). O detalhamento por domínio mostra a área mais frágil. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Triagem global 24–36 meses", bands: DEV_BANDS,
+    domains: [
+      { name: "Motor grosso", color: "text-amber-600 dark:text-amber-400", items: ["Corre sem cair","Sobe escada com apoio","Chuta uma bola"] },
+      { name: "Motor fino", color: "text-teal-600 dark:text-teal-400", items: ["Empilha 4 ou mais cubos","Rabisca espontaneamente","Vira páginas de um livro"] },
+      { name: "Linguagem expressiva", color: "text-blue-600 dark:text-blue-400", items: ["Fala frases de 2-3 palavras","Nomeia objetos comuns","Usa o próprio nome ou “eu”"] },
+      { name: "Linguagem receptiva", color: "text-sky-600 dark:text-sky-400", items: ["Segue ordens de 2 passos","Aponta figuras quando nomeadas","Entende conceitos (grande/pequeno)"] },
+      { name: "Social", color: "text-pink-600 dark:text-pink-400", items: ["Brinca perto de outras crianças","Imita tarefas do dia a dia","Faz de conta (boneca, telefone)"] },
+    ],
+  },
+  "j26-011": {
+    icon: Baby, gradient: "from-indigo-500 to-blue-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Triagem global de 36 a 60 meses, pré-escolar (maior = mais marcos). Útil antes da entrada na escola. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Triagem global 36–60 meses", bands: DEV_BANDS,
+    domains: [
+      { name: "Motor grosso", color: "text-amber-600 dark:text-amber-400", items: ["Pula em um pé só","Sobe escada alternando os pés","Equilibra-se brevemente em um pé"] },
+      { name: "Motor fino", color: "text-teal-600 dark:text-teal-400", items: ["Copia um círculo ou uma cruz","Usa a tesoura","Veste-se com pouca ajuda"] },
+      { name: "Linguagem", color: "text-blue-600 dark:text-blue-400", items: ["Conta uma história curta","Fala frases completas","Faz perguntas"] },
+      { name: "Cognição", color: "text-violet-600 dark:text-violet-400", items: ["Entende conceitos (cores, números)","Segue ordens de 3 passos","Entende “por quê”"] },
+      { name: "Autonomia e social", color: "text-pink-600 dark:text-pink-400", items: ["Usa o banheiro sozinha","Brinca cooperativamente","Espera a vez"] },
+    ],
+  },
+  "j26-012": {
+    icon: Sparkles, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Guia de estimulação e triagem tipo Portage adaptado (maior = mais marcos por área). Referência para estimulação domiciliar. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Triagem tipo Portage (maior = mais marcos)", bands: DEV_BANDS,
+    domains: [
+      { name: "Socialização", color: "text-pink-600 dark:text-pink-400", items: ["Interage e busca o outro","Brinca com outras crianças","Demonstra afeto"] },
+      { name: "Linguagem", color: "text-blue-600 dark:text-blue-400", items: ["Comunica o que quer","Fala conforme a idade","Entende ordens"] },
+      { name: "Autocuidado", color: "text-cyan-600 dark:text-cyan-400", items: ["Come e bebe com a autonomia da idade","Veste-se conforme a idade","Faz a higiene conforme a idade"] },
+      { name: "Cognição", color: "text-violet-600 dark:text-violet-400", items: ["Resolve problemas simples","Reconhece formas/cores/números conforme a idade","Brinca de faz de conta"] },
+      { name: "Motor", color: "text-amber-600 dark:text-amber-400", items: ["Tem motor grosso adequado","Tem motor fino adequado","Coordena os movimentos"] },
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
