@@ -1,5 +1,6 @@
 // Filtro Inteligente — Banco de escalas por queixa, idade, respondente e prioridade
 import { escalasAutoraisDrJadson } from "./escalasAutorais";
+import { escalasAutoraisAprovadas } from "./escalasAutoraisCuradoria";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
@@ -742,7 +743,10 @@ const scalesComProveniencia: ScaleEntry[] = scales.map((s) =>
 // Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25) + open-access mundiais + 230 complementares
 const allScalesBase: ScaleEntry[] = [
   ...scalesComProveniencia,
-  ...escalasAutoraisDrJadson,
+  // Curadoria clínica: das 257 autorais J26, só as aprovadas (marcos do
+  // neurodesenvolvimento, baixo/médio risco) entram no filtro. Ver
+  // escalasAutoraisCuradoria.ts para o critério e a lista.
+  ...escalasAutoraisDrJadson.filter((s) => escalasAutoraisAprovadas.has(s.id)),
   ...escalasImportadasV25Ebook,
   ...scalasOpenAccessMundiais,
   ...todasAsEscalasComplementares,
