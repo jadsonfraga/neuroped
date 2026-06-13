@@ -1415,6 +1415,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-106",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motor Fino Escolar (J26-106)",
     fullName: "Protocolo de Avaliação das Habilidades de Motor Fino em Contexto Escolar",
     ageMin: 48,
@@ -1427,6 +1428,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-107",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Marco Motor Grosso 1-5 Anos (J26-107)",
     fullName: "Protocolo de Acompanhamento dos Marcos de Motor Grosso de 1 a 5 Anos",
     ageMin: 12,
@@ -1439,6 +1441,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-108",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Integração Visomotora (J26-108)",
     fullName: "Protocolo de Avaliação da Integração Visomotora e Coordenação Olho-Mão",
     ageMin: 36,
@@ -1451,6 +1454,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-109",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Apraxia e Praxia Motora (J26-109)",
     fullName: "Protocolo de Triagem de Apraxia e Dispraxia do Desenvolvimento",
     ageMin: 36,
@@ -1463,6 +1467,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-110",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Coordenação Problemas Cotidiano (J26-110)",
     fullName: "Protocolo de Avaliação dos Problemas de Coordenação Motora no Cotidiano",
     ageMin: 48,
@@ -1475,6 +1480,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-111",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motor PC Funcional (J26-111)",
     fullName: "Protocolo de Avaliação Funcional do Motor em Paralisia Cerebral",
     ageMin: 0,
@@ -1487,6 +1493,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-112",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Equilíbrio e Marcha Infantil (J26-112)",
     fullName: "Protocolo de Avaliação do Equilíbrio Estático, Dinâmico e Qualidade da Marcha",
     ageMin: 24,
@@ -1499,6 +1506,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-113",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Escrita Manual Avançado (J26-113)",
     fullName: "Protocolo Avançado de Avaliação da Escrita Manual e Disgrafia",
     ageMin: 72,
@@ -1511,6 +1519,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-114",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Tônus Muscular Funcional (J26-114)",
     fullName: "Protocolo de Avaliação Clínica do Tônus Muscular e Seu Impacto Funcional",
     ageMin: 0,
@@ -1523,6 +1532,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-115",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Habilidades Esportivas Motor (J26-115)",
     fullName: "Protocolo de Avaliação de Habilidades Motoras para Práticas Esportivas",
     ageMin: 60,
@@ -1535,6 +1545,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-116",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Tiques e Motor Compulsivo (J26-116)",
     fullName: "Protocolo de Avaliação de Tiques Motores e Vocais e Transtorno de Tourette",
     ageMin: 36,
@@ -1547,6 +1558,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-117",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motor Prematuro Follow-Up (J26-117)",
     fullName: "Protocolo de Acompanhamento Motor de Prematuros nos Primeiros 2 Anos",
     ageMin: 0,

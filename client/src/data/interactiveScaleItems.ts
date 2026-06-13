@@ -3238,6 +3238,113 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Beneficia-se de atendimento especializado no exame",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 9 — Categoria 9: Motor e Coordenação (autoral)
+  // ============================================================
+
+  "j26-106": {
+    icon: Hand, gradient: "from-teal-500 to-cyan-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia o motor fino no contexto escolar (maior = melhor). Útil antes de encaminhar à terapia ocupacional. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Motor fino escolar (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Motor fino na escola", color: "text-teal-600 dark:text-teal-400", items: [
+      "Pega o lápis com preensão adequada","Tem força e controle ao escrever ou desenhar","Usa a tesoura para recortar com precisão","Cola e monta com cuidado","Pinta dentro dos limites","Encaixa e manuseia peças pequenas","Abotoa, amarra e usa fechos","Aponta o lápis e usa a borracha bem","Manuseia régua e materiais escolares","Coordena as duas mãos nas tarefas","Tem velocidade adequada nas tarefas manuais","Não se cansa demais ao usar as mãos",
+    ]}],
+  },
+  "j26-107": {
+    icon: Baby, gradient: "from-amber-500 to-orange-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Acompanha os marcos de motor grosso de 1 a 5 anos (maior = mais marcos). Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Motor grosso 1–5 anos", bands: DEV_BANDS,
+    domains: [{ name: "Marcos motores grossos", color: "text-amber-600 dark:text-amber-400", items: [
+      "Anda sozinha com firmeza","Corre sem cair com frequência","Sobe e desce escada (com apoio conforme a idade)","Chuta uma bola","Pula com os dois pés juntos","Pula em um pé só (conforme a idade)","Joga e pega uma bola","Anda na ponta dos pés quando pede","Pedala um triciclo (conforme a idade)","Equilibra-se em um pé por alguns segundos","Agacha e levanta sem apoio","Tem coordenação corporal compatível com a idade",
+    ]}],
+  },
+  "j26-108": {
+    icon: Hand, gradient: "from-blue-500 to-indigo-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a integração visomotora e a coordenação olho-mão (maior = melhor). Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Integração visomotora (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Coordenação olho-mão", color: "text-blue-600 dark:text-blue-400", items: [
+      "Copia formas simples (círculo, cruz, quadrado)","Copia formas complexas (triângulo, losango)","Liga pontos seguindo um modelo","Encaixa peças observando o formato","Monta quebra-cabeças da idade","Desenha figuras reconhecíveis","Coordena olho e mão para alcançar e pegar","Empilha ou alinha objetos com precisão","Traça dentro de um caminho ou labirinto","Reproduz um padrão visual","Copia letras e números com a forma correta","Coordena visão e mão sem grande esforço",
+    ]}],
+  },
+  "j26-109": {
+    icon: Hand, gradient: "from-violet-500 to-purple-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Triagem de praxia/dispraxia do desenvolvimento (maior = melhor planejamento motor). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Praxia (maior = melhor planejamento motor)", bands: DEV_BANDS,
+    domains: [{ name: "Planejamento motor (praxia)", color: "text-violet-600 dark:text-violet-400", items: [
+      "Imita gestos simples sob modelo","Imita sequências de gestos","Faz gestos com significado (tchau, beijo) sob comando","Usa ferramentas e objetos corretamente (pente, colher)","Aprende uma sequência motora nova","Planeja os movimentos de uma tarefa nova","Executa os movimentos na ordem certa","Coordena os movimentos da boca para a fala (praxia oral)","Realiza tarefas motoras de várias etapas","Adapta o movimento a um novo objeto ou situação","Faz movimentos finos sob comando verbal","Realiza gestos sem precisar de muitas tentativas",
+    ]}],
+  },
+  "j26-110": {
+    icon: Activity, gradient: "from-orange-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto do Transtorno do Desenvolvimento da Coordenação no cotidiano (maior = mais impacto). Encaminhar à TO/fisioterapia. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Descoordenação no cotidiano (maior = mais impacto)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Coordenação no dia a dia", color: "text-orange-600 dark:text-orange-400", items: [
+      "Cai ou tropeça com facilidade","Esbarra nas coisas e nas pessoas","Tem dificuldade de amarrar o tênis","Tem dificuldade de pegar ou chutar bola","Tem letra muito ruim ou desorganizada","É desajeitada nas tarefas manuais","Derruba objetos com frequência","Tem dificuldade de andar de bicicleta","Tem dificuldade de se vestir sozinha","Cansa-se ou evita atividades físicas","É mais lenta que os colegas em tarefas motoras","A descoordenação atrapalha o dia a dia e a escola",
+    ]}],
+  },
+  "j26-111": {
+    icon: Activity, gradient: "from-teal-500 to-emerald-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avaliação funcional do motor na paralisia cerebral (maior = mais funcional dentro do quadro). Base para o plano de terapias. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Função motora na PC (maior = mais funcional)", bands: DEV_BANDS,
+    domains: [{ name: "Funcionalidade motora", color: "text-teal-600 dark:text-teal-400", items: [
+      "Mantém a cabeça e o tronco controlados","Senta-se com o controle possível para o seu quadro","Faz transferências com a ajuda esperada","Desloca-se pelo ambiente (engatinha, anda, cadeira)","Caminha conforme seu nível (com ou sem apoio/órtese)","Usa as mãos para manipular objetos","Alcança e segura objetos","Participa das AVDs com a assistência necessária","Mantém posturas funcionais ao longo do dia","Usa adaptações ou órteses de forma efetiva","Comunica necessidades motoras (ajuda, posição)","Participa de atividades dentro das suas possibilidades",
+    ]}],
+  },
+  "j26-112": {
+    icon: Activity, gradient: "from-cyan-500 to-blue-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia equilíbrio estático/dinâmico e marcha (maior = melhor). Detecta sinais cerebelares, vestibulares e motores. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Equilíbrio e marcha (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Equilíbrio e marcha", color: "text-cyan-600 dark:text-cyan-400", items: [
+      "Fica em pé parada sem se desequilibrar","Equilibra-se em um pé por alguns segundos","Anda em linha reta (um pé à frente do outro)","Anda na ponta dos pés quando pede","Anda sobre os calcanhares","Sobe degraus alternando os pés","Desce degraus com controle","Agacha e levanta sem apoio","Muda de direção ao correr sem cair","Mantém o equilíbrio ao ser levemente empurrada","Tem marcha simétrica e harmoniosa","Mantém o equilíbrio com os olhos fechados (conforme a idade)",
+    ]}],
+  },
+  "j26-113": {
+    icon: Hand, gradient: "from-indigo-500 to-blue-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avaliação detalhada da caligrafia (maior = melhor). Subsidia decisões como o uso de computador na escola. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Escrita manual (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Qualidade da escrita manual", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "Tem letra legível","Faz pressão adequada no papel (nem fraca, nem forte demais)","Mantém o tamanho das letras uniforme","Mantém a inclinação constante das letras","Tem espaçamento regular entre letras e palavras","Mantém as letras sobre a linha","Forma as letras com o traçado correto","Escreve com velocidade compatível com a série","Mantém a legibilidade ao escrever rápido","Não apaga nem rabisca excessivamente","Escreve sem dor ou cansaço excessivo na mão","Organiza bem o texto na folha",
+    ]}],
+  },
+  "j26-114": {
+    icon: Activity, gradient: "from-rose-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto funcional do tônus (hipotonia/hipertonia) — maior escore = mais impacto. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Impacto do tônus (maior = mais impacto)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Tônus e função", color: "text-rose-600 dark:text-rose-400", items: [
+      "Parece “molenga”/frouxa (hipotonia) ou muito “dura” (hipertonia)","Cansa-se rápido para manter a postura","Tem dificuldade de sustentar a cabeça ou o tronco","Tem posturas atípicas ao sentar ou ficar em pé","Tem movimentos rígidos ou pouco fluidos","Tem amplitude de movimento alterada (frouxa ou limitada)","Tem dificuldade de manipular objetos pelo tônus","Tem dificuldade para a marcha ou as transferências","Tem reflexos ou posturas alterados","O tônus atrapalha a alimentação ou a fala","O tônus atrapalha as atividades do dia a dia","Apresenta assimetria entre os lados do corpo",
+    ]}],
+  },
+  "j26-115": {
+    icon: Activity, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia habilidades motoras para esportes e brincadeiras coletivas (maior = melhor). Importante para o desenvolvimento social. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Habilidades esportivas (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Motor para esportes", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Corre com coordenação","Pula corda","Pega e arremessa bola","Chuta bola com direção","Participa de jogos coletivos","Acompanha o ritmo dos colegas no esporte","Tem equilíbrio para atividades físicas","Coordena braços e pernas em movimentos esportivos","Aprende novas habilidades esportivas","Tem resistência física para brincar e jogar","Nada ou anda de bicicleta (conforme a idade)","Sente-se confiante em atividades físicas",
+    ]}],
+  },
+  "j26-116": {
+    icon: Activity, gradient: "from-yellow-500 to-orange-600", instruction:
+      "Marque a frequência de cada tique nas últimas 2 semanas. Responda todos os itens.",
+    infoBox: "Inventário de tiques motores e vocais (maior = mais frequentes/intensos). Base para Tourette e para a conversa com a escola. Não é diagnóstico.",
+    labels: FREQ_LABELS, totalLabel: "Tiques (maior = mais frequentes)", bands: SEVERITY_BANDS,
+    domains: [
+      { name: "Tiques motores", color: "text-yellow-600 dark:text-yellow-400", items: [
+        "Pisca os olhos repetidamente","Faz caretas ou movimentos faciais","Encolhe ou levanta os ombros","Mexe a cabeça ou o pescoço","Faz movimentos com braços ou mãos","Faz movimentos complexos (pular, tocar, gestos)",
+      ]},
+      { name: "Tiques vocais", color: "text-orange-600 dark:text-orange-400", items: [
+        "Funga, pigarreia ou tosse sem estar doente","Faz sons com a garganta ou a boca","Repete sons, sílabas ou palavras","Solta palavras ou frases involuntárias","Os tiques pioram com estresse ou cansaço","Os tiques atrapalham a escola ou o convívio",
+      ]},
+    ],
+  },
+  "j26-117": {
+    icon: Baby, gradient: "from-pink-500 to-rose-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Acompanhamento motor de prematuros nos primeiros 2 anos — usar IDADE CORRIGIDA (maior = mais marcos). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Motor do prematuro (idade corrigida)", bands: DEV_BANDS,
+    domains: [{ name: "Marcos motores (idade corrigida)", color: "text-pink-600 dark:text-pink-400", items: [
+      "Sustenta a cabeça (idade corrigida)","Apoia-se nos antebraços de bruços","Rola","Senta com e depois sem apoio","Alcança e pega objetos","Passa objetos de uma mão para a outra","Engatinha ou se desloca","Fica de pé com apoio","Anda com e depois sem apoio","Tem tônus e postura simétricos","Faz movimentos variados e fluidos (não estereotipados)","Acompanha os marcos esperados para a idade corrigida",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
