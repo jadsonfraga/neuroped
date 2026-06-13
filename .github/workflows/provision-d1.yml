@@ -63,7 +63,7 @@ jobs:
           echo "D1 $D1_NAME → $ID"
 
       - name: Aplicar schema no D1 (idempotente)
-        run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/schema.sql --yes
+        run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/schema.d1.sql --yes
 
       # ── 2. KV: cria se não existir e resolve o id (best-effort) ───────────
       - name: Criar namespace KV (idempotente, opcional)
