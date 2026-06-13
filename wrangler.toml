@@ -13,9 +13,12 @@ pages_build_output_dir = "dist/public"
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"
 
-# ── Backend (Cloudflare Pages) ───────────────────────────────────────────
-# Os bindings de runtime do Pages (D1 `DB`, KV `RATE_LIMIT_KV`) e variáveis
-# (CORS_ORIGINS) NÃO vêm deste wrang.toml — o `wrangler pages deploy` não os
-# aplica. Eles são configurados no PROJETO Pages (deployment_configs) pelo
-# workflow ".github/workflows/provision-d1.yml" via API da Cloudflare.
-# Banco provisionado: D1 "neuroped-db".
+# ── Backend: binding Cloudflare D1 ───────────────────────────────────────
+# IMPORTANTE: o `wrangler pages deploy` sincroniza os bindings do projeto com
+# este arquivo. Se este bloco for removido, o deploy regular APAGA o binding D1
+# do projeto (database volta a "not_configured"). Mantenha-o.
+# O id é o do D1 "neuroped-db" criado pelo workflow "Provision D1 backend".
+[[d1_databases]]
+binding = "DB"
+database_name = "neuroped-db"
+database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"
