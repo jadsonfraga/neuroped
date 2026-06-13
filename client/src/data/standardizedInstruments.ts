@@ -50,6 +50,16 @@ export const NEUROPED_USE_LABEL: Record<NeuropediatricUse, string> = {
   requer_psicologo: "Requer psicóloga(o) habilitada(o)",
 };
 
+// Grau de PADRONIZAÇÃO/VALIDAÇÃO do instrumento — NÃO é um nível formal de
+// evidência clínica (GRADE). Reflete o quão estabelecido/normatizado ele é.
+export type EvidenceLevel = "amplo" | "validado" | "triagem";
+
+export const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
+  amplo: "Amplamente validado",
+  validado: "Validado",
+  triagem: "Triagem / apoio",
+};
+
 export interface StandardizedInstrument {
   id: string;
   name: string;
@@ -66,6 +76,8 @@ export interface StandardizedInstrument {
   /** true = teste psicológico restrito (privativo de psicóloga(o)). */
   restricted: boolean;
   neuropediatricUse: NeuropediatricUse;
+  /** Grau de padronização/validação (não é GRADE clínico). */
+  evidenceLevel: EvidenceLevel;
   /** Referência editorial pública. */
   reference: string;
   /** Texto genérico para citar no laudo — SEM conteúdo proprietário. */
@@ -87,6 +99,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Não restrito a psicólogos; requer profissional habilitado.",
     restricted: false,
     neuropediatricUse: "triagem_nao_restrita",
+    evidenceLevel: "validado",
     reference: "Constantino & Gruber — Pearson Clinical / Hogrefe CETEPP (Brasil).",
     citation:
       "Responsividade social avaliada pela SRS-2 (Escala de Responsividade Social, 2ª ed.), aplicada por profissional habilitado em [data]. Resultado integrado à avaliação clínica; interpretação conforme manual original (Pearson/Hogrefe).",
@@ -105,6 +118,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Aplicação por profissional habilitado, conforme o manual.",
     restricted: false,
     neuropediatricUse: "integra_relatorio",
+    evidenceLevel: "amplo",
     reference: "Sparrow, Cicchetti & Saulnier — Pearson Clinical / Hogrefe (Brasil).",
     citation:
       "Comportamento adaptativo avaliado pela Vineland-3, integrado ao raciocínio clínico em [data]. Domínios de comunicação, vida diária, socialização e motor; interpretação conforme manual original (Pearson/Hogrefe).",
@@ -123,6 +137,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Não restrito a psicólogos; requer profissional habilitado.",
     restricted: false,
     neuropediatricUse: "triagem_nao_restrita",
+    evidenceLevel: "amplo",
     reference: "Bayley — Pearson Clinical / Hogrefe (Brasil).",
     citation:
       "Desenvolvimento avaliado pela Bayley-III em [data] (domínios cognitivo, linguagem e motor). Resultado integrado à avaliação do neurodesenvolvimento; interpretação conforme manual original (Pearson/Hogrefe).",
@@ -141,6 +156,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Uso por profissional habilitado (ex.: terapeuta ocupacional).",
     restricted: false,
     neuropediatricUse: "integra_relatorio",
+    evidenceLevel: "validado",
     reference: "Dunn — Pearson Clinical / Hogrefe (Brasil).",
     citation:
       "Processamento sensorial avaliado pelo Perfil Sensorial 2 (W. Dunn), integrado à avaliação em [data]. Interpretação por quadrantes conforme manual original (Pearson/Hogrefe).",
@@ -159,6 +175,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Restrito a psicóloga(o); consulta ao SATEPSI.",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "amplo",
     reference: "Wechsler — Pearson Clinical / Hogrefe (Brasil).",
     citation:
       "Perfil cognitivo avaliado pela WISC-IV por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Resultado integrado às hipóteses clínicas; aplicação e interpretação conforme manual original (Pearson/Hogrefe).",
@@ -176,6 +193,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Restrito a psicóloga(o); consulta ao SATEPSI.",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "validado",
     reference: "Brickenkamp — Hogrefe (Brasil).",
     citation:
       "Atenção concentrada avaliada pelo d2-R por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Hogrefe).",
@@ -193,6 +211,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Restrito a psicóloga(o); consulta ao SATEPSI.",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "validado",
     reference: "Hogrefe (Brasil).",
     citation:
       "Sintomas de TDAH em contexto escolar avaliados pela ETDAH-II (relato do professor), conforme relatório de psicóloga(o) habilitada(o) em [data]. Interpretação conforme manual original (Hogrefe).",
@@ -211,6 +230,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Não restrito a psicólogos; profissional da área de desenvolvimento.",
     restricted: false,
     neuropediatricUse: "triagem_nao_restrita",
+    evidenceLevel: "triagem",
     reference: "Frankenburg & Dodds — Pearson / Hogrefe (Brasil).",
     citation:
       "Triagem do desenvolvimento pelo Denver II em [data]. Resultado de triagem (não diagnóstico), integrado à avaliação clínica; interpretação conforme manual original.",
@@ -229,6 +249,7 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Bateria padronizada (catálogo Hogrefe); uso por profissional habilitado.",
     restricted: true,
     neuropediatricUse: "integra_relatorio",
+    evidenceLevel: "validado",
     reference: "Henderson, Sugden & Barnett — Hogrefe (Brasil).",
     citation:
       "Coordenação motora avaliada pela Movement ABC-2, conforme relatório de profissional habilitado em [data]. Interpretação conforme manual original (Hogrefe).",
@@ -247,9 +268,105 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "validado",
     reference: "Smith — Hogrefe (Brasil).",
     citation:
       "Velocidade de processamento avaliada pelo SDMT por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Hogrefe).",
+  },
+  {
+    id: "wppsi-iv",
+    name: "WPPSI-IV",
+    fullName: "Escala Wechsler de Inteligência Pré-Escolar e Primária — 4ª edição",
+    publisher: "Pearson",
+    domains: ["cognicao", "desenvolvimento"],
+    ageRange: "Pré-escolar / primeira infância (catálogo Pearson)",
+    clinicalIndication:
+      "Perfil cognitivo na primeira infância: raciocínio, linguagem, memória de trabalho e velocidade de processamento.",
+    generalUse:
+      "Avaliação psicométrica individual aplicada, corrigida e interpretada por psicóloga(o), conforme manual e SATEPSI.",
+    professionalRestriction: "Restrito a psicóloga(o); consulta ao SATEPSI.",
+    restricted: true,
+    neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "amplo",
+    reference: "Wechsler — Pearson Clinical (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    citation:
+      "Perfil cognitivo pré-escolar avaliado pela WPPSI-IV por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Pearson).",
+  },
+  {
+    id: "nepsy-ii",
+    name: "NEPSY-II",
+    fullName: "Avaliação Neuropsicológica do Desenvolvimento — 2ª edição",
+    publisher: "Pearson",
+    domains: ["cognicao", "atencao", "aprendizagem"],
+    ageRange: "Infância e adolescência (catálogo neuropsicológico)",
+    clinicalIndication:
+      "Avaliação neuropsicológica por domínios: atenção/função executiva, linguagem, memória, percepção e sensório-motor.",
+    generalUse:
+      "Bateria neuropsicológica aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual e SATEPSI.",
+    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
+    restricted: true,
+    neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "validado",
+    reference: "Korkman, Kirk & Kemp — Pearson Clinical (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    citation:
+      "Perfil neuropsicológico avaliado pela NEPSY-II por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Pearson).",
+  },
+  {
+    id: "beery-vmi",
+    name: "Beery VMI",
+    fullName: "Beery-Buktenica — Teste de Integração Visuomotora",
+    publisher: "Pearson",
+    domains: ["motricidade", "aprendizagem", "cognicao"],
+    ageRange: "Faixa ampla (pré-escolar à adolescência; catálogo Pearson)",
+    clinicalIndication:
+      "Integração visuomotora e coordenação olho-mão; apoio na investigação de dificuldades de escrita/grafismo.",
+    generalUse:
+      "Tarefa padronizada de cópia de formas geométricas; aplicação e escore por profissional habilitado, conforme manual.",
+    professionalRestriction: "Uso por profissional habilitado, conforme o manual.",
+    restricted: false,
+    neuropediatricUse: "integra_relatorio",
+    evidenceLevel: "validado",
+    reference: "Beery & Beery — Pearson Clinical (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    citation:
+      "Integração visuomotora avaliada pelo Beery VMI em [data], conforme relatório de profissional habilitado. Interpretação conforme manual original (Pearson).",
+  },
+  {
+    id: "figura-rey",
+    name: "Figura de Rey",
+    fullName: "Teste de Cópia e Reprodução de Memória de Figuras Complexas (Rey-Osterrieth)",
+    publisher: "Hogrefe",
+    domains: ["cognicao", "atencao"],
+    ageRange: "A partir da idade escolar (catálogo neuropsicológico)",
+    clinicalIndication:
+      "Organização visuoespacial, planejamento perceptual e memória visual de curto/longo prazo.",
+    generalUse:
+      "Tarefa de cópia e reprodução de memória, aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual e SATEPSI.",
+    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
+    restricted: true,
+    neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "validado",
+    reference: "Rey & Osterrieth — Hogrefe (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    citation:
+      "Organização visuoespacial e memória visual avaliadas pela Figura Complexa de Rey por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Hogrefe).",
+  },
+  {
+    id: "stroop",
+    name: "Teste de Stroop",
+    fullName: "Teste de Stroop (atenção seletiva e controle inibitório)",
+    publisher: "Hogrefe",
+    domains: ["atencao", "cognicao"],
+    ageRange: "Idade escolar e adolescência (catálogo neuropsicológico)",
+    clinicalIndication:
+      "Atenção seletiva, controle inibitório e flexibilidade — funções executivas relevantes em TDAH.",
+    generalUse:
+      "Tarefa de interferência cor-palavra, aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual e SATEPSI.",
+    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
+    restricted: true,
+    neuropediatricUse: "requer_psicologo",
+    evidenceLevel: "validado",
+    reference: "Stroop (variantes padronizadas) — Hogrefe (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    citation:
+      "Controle inibitório/atenção seletiva avaliados pelo Teste de Stroop por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Hogrefe).",
   },
 ];
 

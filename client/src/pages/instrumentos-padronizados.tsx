@@ -9,9 +9,16 @@ import {
   availableDomains,
   DOMAIN_LABEL,
   NEUROPED_USE_LABEL,
+  EVIDENCE_LABEL,
   type InstrumentDomain,
   type StandardizedInstrument,
 } from "@/data/standardizedInstruments";
+
+const EVIDENCE_STYLE: Record<StandardizedInstrument["evidenceLevel"], string> = {
+  amplo: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
+  validado: "bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
+  triagem: "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300",
+};
 
 const USE_STYLE: Record<StandardizedInstrument["neuropediatricUse"], string> = {
   integra_relatorio:
@@ -51,9 +58,17 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
             <h3 className="text-base font-black leading-tight text-foreground">{inst.name}</h3>
             <p className="text-xs leading-snug text-muted-foreground">{inst.fullName}</p>
           </div>
-          <Badge variant="outline" className="shrink-0 text-[10px] font-bold">
-            {inst.publisher}
-          </Badge>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <Badge variant="outline" className="text-[10px] font-bold">
+              {inst.publisher}
+            </Badge>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${EVIDENCE_STYLE[inst.evidenceLevel]}`}
+              title="Grau de padronização/validação (não é nível formal de evidência clínica/GRADE)."
+            >
+              {EVIDENCE_LABEL[inst.evidenceLevel]}
+            </span>
+          </div>
         </div>
 
         {/* Alerta de restrição profissional */}
@@ -272,6 +287,12 @@ export default function InstrumentosPadronizadosPage() {
           referências para <em>apoiar o raciocínio clínico</em> e <em>auxiliar na triagem</em> — os resultados devem ser
           integrados à anamnese, à observação clínica e a relatórios escolares/familiares. Aplicação e correção seguem
           sempre o manual original licenciado.
+        </p>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          <strong className="text-foreground/80">Sobre o selo de validação:</strong> &ldquo;Amplamente validado / Validado /
+          Triagem&rdquo; indica o grau de <em>padronização e validação psicométrica</em> do instrumento — não é um nível
+          formal de evidência clínica (GRADE). Disponibilidade e edição devem ser confirmadas no catálogo oficial
+          Pearson/Hogrefe.
         </p>
       </div>
     </div>
