@@ -12,17 +12,10 @@ pages_build_output_dir = "dist/public"
 [vars]
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"
-# Origens permitidas para a API (CORS). As chamadas same-origin (pages.dev) já
-# passam; adicione aqui domínios customizados/extra que consumirem /api.
-CORS_ORIGINS = "https://neuroped.pages.dev"
 
-# ── Backend: bindings Cloudflare D1 (banco) + KV (rate limit) ─────────────
-# Estes blocos são preenchidos automaticamente pelo workflow
-# ".github/workflows/provision-d1.yml" (cria o D1/KV na sua conta e grava os IDs).
-# NÃO edite os IDs à mão — rode o workflow "Provision D1 backend" em Actions.
-# >>> D1_BINDING_PLACEHOLDER <<<
-
-[[d1_databases]]
-binding = "DB"
-database_name = "neuroped-db"
-database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"
+# ── Backend (Cloudflare Pages) ───────────────────────────────────────────
+# Os bindings de runtime do Pages (D1 `DB`, KV `RATE_LIMIT_KV`) e variáveis
+# (CORS_ORIGINS) NÃO vêm deste wrang.toml — o `wrangler pages deploy` não os
+# aplica. Eles são configurados no PROJETO Pages (deployment_configs) pelo
+# workflow ".github/workflows/provision-d1.yml" via API da Cloudflare.
+# Banco provisionado: D1 "neuroped-db".
