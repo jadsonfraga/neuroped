@@ -109,10 +109,20 @@ export const pantExamples: Record<number, string> = {
   92: "Eventos durante o sono: terror noturno, muitos despertares, movimentos, ronco ou pausas na respiração.",
   93: "Queixas frequentes de dor (cabeça, barriga) ou sinais de dor mesmo sem dizer.",
   94: "Problemas de intestino frequentes (prisão de ventre, diarreia, dor) que atrapalham o dia.",
-  95: "O quanto a rotina e o comportamento sobrecarregam a família no dia a dia.",
-  96: "O quanto ela precisa de rotina fixa e de avisos antecipados para ficar bem.",
-  97: "Consegue permanecer e participar na escola (sem sair, sem crises frequentes).",
-  98: "O quanto precisa de apoio extra na escola (mediador, adaptações).",
+  95: "O quanto a rotina e o comportamento sobrecarregam a família no dia a dia (ex.: precisam se revezar, evitam sair, dormem mal por causa do manejo).",
+  96: "O quanto ela precisa de rotina fixa e de avisos antecipados para ficar bem (ex.: organiza-se quando sabe o que vai acontecer; desorganiza com mudanças de última hora).",
+  97: "Consegue permanecer e participar na escola (sem precisar sair antes, sem crises frequentes).",
+  98: "O quanto precisa de apoio extra na escola (ex.: mediador, adaptações de atividade, tempo a mais).",
   99: "O quanto diferentes profissionais (escola, terapias, médico) apontam as mesmas dificuldades.",
-  100: "O quanto ela evolui e aprende quando recebe apoio, ao longo do tempo.",
+  100: "O quanto ela evolui e aprende quando recebe apoio, ao longo do tempo (ex.: ganha habilidades novas a cada alguns meses).",
 };
+
+// Exemplos curtos da RÉGUA 0-4 (genéricos, valem para qualquer pergunta) —
+// ajudam o responsável a escolher o nível certo em linguagem simples.
+export const pantLevelExamples: string[] = [
+  "Ainda não faz / não aparece.",
+  "Só com muita ajuda ou insistência.",
+  "Às vezes sim, às vezes não.",
+  "Já faz na maioria das vezes, mas ainda varia.",
+  "Faz sozinha, em vários lugares, com naturalidade.",
+];

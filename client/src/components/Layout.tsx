@@ -79,7 +79,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <OfflineBanner />
 
       {/* Mobile top header bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md md:hidden">
+      <header className="print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md md:hidden">
         <div className="flex items-center gap-3">
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
@@ -169,6 +169,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={[
+          "print:hidden",
           "fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
           "transition-transform duration-300 md:transition-all md:duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
@@ -385,7 +386,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main
         id="main-content"
-        className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
+        className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 print:!ml-0 print:!pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
       >
         {showClinicalFlow && (
           <div className="sticky top-14 md:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
