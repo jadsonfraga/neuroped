@@ -1872,6 +1872,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-140",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Seletividade Alimentar (J26-140)",
     fullName: "Protocolo de Avaliação da Seletividade Alimentar em Crianças",
     ageMin: 18,
@@ -1884,6 +1885,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-141",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamento na Refeição (J26-141)",
     fullName: "Protocolo de Avaliação do Comportamento da Criança durante as Refeições",
     ageMin: 12,
@@ -1896,6 +1898,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-142",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motor Oral e Deglutição (J26-142)",
     fullName: "Protocolo de Avaliação da Função Motora Oral e Deglutição em Crianças",
     ageMin: 0,
@@ -1908,6 +1911,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-143",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — ARFID Expandido (J26-143)",
     fullName: "Protocolo Expandido de Avaliação do Transtorno Alimentar Restritivo/Evitativo (ARFID)",
     ageMin: 24,
@@ -1920,6 +1924,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-144",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Aversão a Textura (J26-144)",
     fullName: "Protocolo de Avaliação da Aversão a Texturas Alimentares em Crianças",
     ageMin: 12,
@@ -1932,6 +1937,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-145",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Neofobia Alimentar (J26-145)",
     fullName: "Protocolo de Avaliação da Neofobia Alimentar e Recusa de Novos Alimentos",
     ageMin: 18,
@@ -1944,6 +1950,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-146",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Autonomia Alimentar (J26-146)",
     fullName: "Protocolo de Avaliação dos Marcos de Autonomia Alimentar de 6 a 36 Meses",
     ageMin: 6,
@@ -1956,6 +1963,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-147",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Preocupações Nutricionais (J26-147)",
     fullName: "Protocolo de Rastreio de Preocupações Nutricionais em Crianças com Seletividade",
     ageMin: 18,
@@ -1968,6 +1976,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-148",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Alimentação Amamentação (J26-148)",
     fullName: "Protocolo de Avaliação das Dificuldades de Aleitamento e Sucção no Lactente",
     ageMin: 0,
@@ -1980,6 +1989,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-149",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Recusa Alimentar Bebê (J26-149)",
     fullName: "Protocolo de Avaliação da Recusa Alimentar em Bebês de 6 a 18 Meses",
     ageMin: 6,

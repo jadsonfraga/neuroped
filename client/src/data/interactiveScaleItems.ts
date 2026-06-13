@@ -3547,6 +3547,91 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Ronca alto e com frequência","Faz pausas na respiração durante o sono","Engasga ou tem sufocos durante o sono","Respira pela boca dormindo","Tem sono agitado e suado","Dorme em posições estranhas (pescoço estendido)","Acorda cansada mesmo dormindo o suficiente","Tem sonolência diurna","Tem dificuldade de atenção ou hiperatividade de dia","Tem amígdalas ou adenoides aumentadas (ou já foi dito por médico)","Faz xixi na cama (associado)","O ronco ou a apneia atrapalham a qualidade do sono",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 12 — Categoria 12: Alimentação e Nutrição (autoral)
+  // ============================================================
+
+  "j26-140": {
+    icon: Sparkles, gradient: "from-lime-500 to-green-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a seletividade alimentar e suas causas sensoriais (maior = mais seletiva). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Seletividade alimentar (maior = mais seletiva)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Repertório e recusa alimentar", color: "text-lime-700 dark:text-lime-400", items: [
+      "Aceita poucos tipos de alimentos","Recusa alimentos por textura","Recusa alimentos por cor","Recusa alimentos por cheiro","Recusa alimentos por sabor","Come sempre as mesmas comidas","Recusa alimentos novos sem provar","Recusa comidas misturadas","Só aceita certas marcas ou preparos","Tem ânsia ou náusea com alimentos rejeitados","A seletividade limita refeições em família ou fora","A seletividade preocupa quanto à nutrição",
+    ]}],
+  },
+  "j26-141": {
+    icon: Activity, gradient: "from-orange-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o comportamento nas refeições (maior = mais difícil). Diferencia seletividade de comportamento opositor. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Comportamento na refeição (maior = mais difícil)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Comportamento à mesa", color: "text-orange-600 dark:text-orange-400", items: [
+      "Chora ou faz drama na hora de comer","Recusa-se a sentar à mesa","Cospe a comida","Joga a comida ou o prato","Demora muito para comer","Precisa de distração (tela, brinquedo) para comer","Só come no colo ou andando","Tem crise quando é oferecido algo que não quer","Negocia ou chantageia na refeição","A refeição vira uma batalha diária","Os pais preparam algo separado só para ela","O comportamento atrapalha a refeição da família",
+    ]}],
+  },
+  "j26-142": {
+    icon: Activity, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia função motora oral e deglutição (maior = mais dificuldades). Engasgos e tosse frequentes exigem avaliação fonoaudiológica. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Motor oral e deglutição (maior = mais dificuldades)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Função oral e deglutição", color: "text-amber-600 dark:text-amber-400", items: [
+      "Engasga durante as refeições","Tosse ao comer ou beber","Tem dificuldade de mastigar","Guarda comida na boca (não engole)","Tem dificuldade com certas texturas por motivo motor","Derrama muito líquido ao beber","Tem ânsia frequente ao comer","Demora muito para mastigar e engolir","Tem escape de alimento pela boca","Cansa-se durante a refeição","Tem voz “molhada” após engolir","As dificuldades atrapalham a alimentação ou o ganho de peso",
+    ]}],
+  },
+  "j26-143": {
+    icon: ShieldAlert, gradient: "from-fuchsia-500 to-rose-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o ARFID — transtorno alimentar restritivo/evitativo (maior = mais grave). Diferencia da anorexia (aqui não há medo de engordar). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "ARFID (maior = mais grave)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Restrição/evitação alimentar", color: "text-fuchsia-600 dark:text-fuchsia-400", items: [
+      "Come uma variedade muito restrita de alimentos","Evita alimentos por características sensoriais","Tem medo de engasgar ou vomitar ao comer","Tem pouco interesse por comida ou apetite","Não come o suficiente para crescer ou ganhar peso","Precisou de suplemento ou sonda em algum momento","Evita comer fora de casa ou em festas","A restrição prejudica o convívio social","A restrição preocupa quanto à nutrição","Teve perda de peso ou estagnação","A restrição NÃO é por medo de engordar","A restrição atrapalha a vida diária",
+    ]}],
+  },
+  "j26-144": {
+    icon: Hand, gradient: "from-teal-500 to-cyan-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Mapeia aversões por textura alimentar (maior = mais aversões). Orienta a progressão de consistências. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Aversão a texturas (maior = mais aversões)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Texturas rejeitadas", color: "text-teal-600 dark:text-teal-400", items: [
+      "Rejeita alimentos moles ou pastosos","Rejeita alimentos granulados","Rejeita alimentos fibrosos (carne, folhas)","Rejeita alimentos crocantes","Rejeita alimentos com casca ou sementes","Rejeita comidas com texturas misturadas","Tem ânsia ao sentir certas texturas","Só aceita uma faixa estreita de consistência","Cospe quando sente uma textura indesejada","Evita pegar certos alimentos com a mão","A aversão limita muito o cardápio","A aversão atrapalha a progressão de consistências",
+    ]}],
+  },
+  "j26-145": {
+    icon: Sparkles, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a neofobia alimentar — recusa do novo (maior = mais intensa). Diferencia de ARFID e seletividade sensorial. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Neofobia alimentar (maior = mais intensa)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Recusa de novos alimentos", color: "text-amber-600 dark:text-amber-400", items: [
+      "Recusa experimentar qualquer alimento novo","Diz “não gosto” antes mesmo de provar","Desconfia de pratos diferentes do habitual","Reage com medo ou aversão ao novo no prato","Precisa de muitas exposições para aceitar algo novo","Recusa se a aparência do alimento mudou","Não aceita o alimento conhecido preparado de forma diferente","Fica ansiosa diante de comida desconhecida","Prefere sempre o mesmo cardápio","A recusa do novo vem piorando ou persiste","A neofobia limita a variedade da dieta","A neofobia atrapalha refeições fora de casa",
+    ]}],
+  },
+  "j26-146": {
+    icon: Baby, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Marcos de autonomia alimentar de 6 a 36 meses (maior = mais marcos). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Autonomia alimentar 6–36 meses", bands: DEV_BANDS,
+    domains: [{ name: "Marcos de autonomia alimentar", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Leva a mão ou objetos à boca (início da introdução)","Come pedaços com a mão","Segura e bebe no copo","Segura a colher (mesmo sem precisão)","Leva a colher à boca sozinha","Come sozinha derramando pouco","Mastiga alimentos em pedaços","Senta na cadeirinha para comer","Aceita texturas progressivamente mais complexas","Sinaliza fome e saciedade","Participa da refeição da família","Usa garfo (conforme a idade)",
+    ]}],
+  },
+  "j26-147": {
+    icon: Heart, gradient: "from-rose-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Triagem de risco nutricional na criança seletiva (maior = mais risco). Orienta exames e encaminhamento à nutrição. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Risco nutricional (maior = mais risco)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sinais de risco nutricional", color: "text-rose-600 dark:text-rose-400", items: [
+      "A dieta é pouco variada","Come poucas frutas e verduras","Come pouca proteína (carne, ovo, feijão)","Consome muito ultraprocessado ou açúcar","Recusa grupos alimentares inteiros (laticínios, etc.)","Tem sinais de anemia (palidez, cansaço)","Está abaixo do peso ou altura esperados","Teve estagnação de peso ou altura","Toma pouca água e muito leite ou suco","Tem unhas/cabelos frágeis ou outros sinais carenciais","Já precisou de suplementação","A alimentação restrita preocupa nutricionalmente",
+    ]}],
+  },
+  "j26-148": {
+    icon: Baby, gradient: "from-pink-500 to-rose-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia dificuldades de sucção e aleitamento (maior = mais dificuldades). Podem ser o primeiro sinal neurológico. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Dificuldades de amamentação (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sucção e aleitamento", color: "text-pink-600 dark:text-pink-400", items: [
+      "Tem dificuldade de pega no peito","Suga de forma fraca ou descoordenada","Cansa-se rápido durante a mamada","As mamadas são muito longas","Engasga ou tosse ao mamar","Escapa leite pelos cantos da boca","Não esvazia bem o peito","Tem ganho de peso insuficiente","Chora ou irrita-se durante a mamada","Precisou de complemento ou fórmula por dificuldade","Tem língua presa ou alteração oral (ou já foi dito por profissional)","As dificuldades preocupam quanto à nutrição ou ao neurológico",
+    ]}],
+  },
+  "j26-149": {
+    icon: Baby, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a recusa alimentar no bebê de 6 a 18 meses (maior = mais grave). Afastar causas clínicas (refluxo, alergia, dor). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Recusa alimentar do bebê (maior = mais grave)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Recusa alimentar", color: "text-amber-600 dark:text-amber-400", items: [
+      "Recusa a mamadeira ou o peito","Recusa a introdução alimentar (papinha)","Vira o rosto ou fecha a boca ao ser alimentado","Cospe a comida oferecida","Chora durante as refeições","Aceita muito pouca quantidade","Tem ânsia ou vômito com a comida","Só aceita líquidos","Demonstra desconforto ao comer (dor, refluxo)","Tem ganho de peso insuficiente","A recusa preocupa ou persiste","A recusa gera muita ansiedade na família",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
