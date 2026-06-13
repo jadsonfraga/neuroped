@@ -477,7 +477,7 @@
 
   .filter-260-medal.medal-ouro {
     background: linear-gradient(135deg,#e7c98b,#caa56a);
-    color: #241a05;
+    color: var(--ink);
     border-color: rgba(231,201,139,.4);
     box-shadow: 0 4px 12px rgba(231,201,139,.2);
     font-weight: 900;
