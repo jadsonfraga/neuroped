@@ -2,6 +2,7 @@ import { useState, useRef, type ReactNode } from "react";
 import { FileText, Printer, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — template SuperNeuroPed
@@ -283,6 +284,52 @@ export default function LaudoNeuropedPage() {
           </Button>
         </div>
       </section>
+
+      {/* Assinatura digital ICP-Brasil (A1) */}
+      <AssinaturaIcpPanel
+        filename={`laudo-${(data.nomePaciente || "neuroped").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40) || "neuroped"}`}
+        signerName="Dr. Jadson Fraga Araujo Junior"
+        location="Petrolina-PE"
+        reason="Laudo Neuropediatrico"
+        buildPdf={async () => {
+          const { buildDocumentPdf } = await import("@/lib/documentPdf");
+          const idade = [data.idadeAnos && `${data.idadeAnos} anos`, data.idadeMeses && `${data.idadeMeses} meses`].filter(Boolean).join(" e ");
+          return buildDocumentPdf({
+            title: "Laudo Neuropediatrico",
+            subtitle: "Avaliacao clinica do neurodesenvolvimento",
+            credentials: [
+              "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
+              "Especialista em Neuropediatria",
+            ],
+            sections: [
+              { heading: "Identificacao", body: [
+                data.nomePaciente && `Paciente: ${data.nomePaciente}`,
+                [data.dataNascimento && `Nascimento: ${data.dataNascimento}`, idade && `Idade: ${idade}`, data.sexo && `Sexo: ${data.sexo}`].filter(Boolean).join("   "),
+                [data.nomeMae && `Mae: ${data.nomeMae}`, data.nomePai && `Pai: ${data.nomePai}`].filter(Boolean).join("   "),
+                data.dataConsulta && `Data da consulta: ${data.dataConsulta}`,
+              ].filter(Boolean).join("\n") },
+              { heading: "Queixa principal", body: data.queixaPrincipal },
+              { heading: "Historia clinica", body: data.historiaClinica },
+              { heading: "Historia gestacional", body: data.historiaGestacional },
+              { heading: "Historia neonatal / perinatal", body: data.historiaNeonatal },
+              { heading: "Marcos do desenvolvimento", body: data.marcosDev },
+              { heading: "Historico familiar", body: data.historicoFamiliar },
+              { heading: "Medicamentos em uso", body: data.medicamentosUso },
+              { heading: "Exame fisico geral", body: data.exameFisico },
+              { heading: "Exame neurologico", body: data.exameNeurologico },
+              { heading: "Exame psiquico / comportamental", body: data.examePsiquico },
+              { heading: "Escalas e instrumentos aplicados", body: data.escalasAplicadas },
+              { heading: "Exames complementares", body: data.examesComplementares },
+              { heading: "Hipotese diagnostica", body: [data.hipoteseDiagnostica, data.cid10 && `CID-10: ${data.cid10}`].filter(Boolean).join("\n") },
+              { heading: "Conduta", body: data.conduta },
+              { heading: "Encaminhamentos", body: data.encaminhamentos },
+              { heading: "Retorno", body: data.retorno },
+              { heading: "Observacoes", body: data.observacoes },
+            ],
+            footer: "Documento emitido eletronicamente pela plataforma NeuroPed. Quando assinado, contem assinatura digital ICP-Brasil (certificado A1) anexada ao proprio PDF, conferivel por qualquer validador (ex.: validar.iti.gov.br).",
+          });
+        }}
+      />
 
       {/* Preview iframe */}
       {showPreview && (
