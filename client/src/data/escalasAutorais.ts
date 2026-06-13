@@ -611,6 +611,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-046",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Oposição e Desafio (J26-046)",
     fullName: "Protocolo de Triagem do Transtorno Opositor Desafiador em Crianças e Adolescentes",
     ageMin: 48,
@@ -623,6 +624,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-047",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Problemas de Conduta (J26-047)",
     fullName: "Protocolo de Avaliação de Problemas de Conduta e Comportamento Antissocial",
     ageMin: 72,
@@ -635,6 +637,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-048",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Raiva e Manejo da Frustração (J26-048)",
     fullName: "Protocolo de Avaliação do Controle da Raiva e Tolerância à Frustração",
     ageMin: 48,
@@ -647,6 +650,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-049",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Agressão com Pares (J26-049)",
     fullName: "Protocolo de Avaliação da Agressividade com Pares e Bullying",
     ageMin: 60,
@@ -659,6 +663,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-050",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Traços Calosos-Emocionais (J26-050)",
     fullName: "Protocolo de Avaliação de Traços Calosos-Emocionais em Crianças com Problemas de Conduta",
     ageMin: 72,
@@ -671,6 +676,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-051",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Flexibilidade Comportamental (J26-051)",
     fullName: "Protocolo de Avaliação da Flexibilidade Cognitivo-Comportamental em Crianças",
     ageMin: 48,
@@ -683,6 +689,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-052",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Birra Patológica vs. Normativa (J26-052)",
     fullName: "Protocolo de Diferenciação entre Birra Normativa e Comportamento Opositor Patológico",
     ageMin: 18,
@@ -695,6 +702,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-053",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamento na Pandemia Pós-Covid (J26-053)",
     fullName: "Protocolo de Avaliação de Mudanças Comportamentais Pós-Pandemia em Crianças",
     ageMin: 36,
@@ -707,6 +715,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-054",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamento Digital (J26-054)",
     fullName: "Protocolo de Avaliação do Comportamento Relacionado ao Uso Digital e Internet",
     ageMin: 72,
@@ -719,6 +728,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-055",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Automutilação Não Suicida (J26-055)",
     fullName: "Protocolo de Triagem de Automutilação Não Suicida em Adolescentes",
     ageMin: 120,
@@ -731,6 +741,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-056",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamento Alimentar Restritivo (J26-056)",
     fullName: "Protocolo de Triagem de Comportamento Alimentar Restritivo e Purgativo em Adolescentes",
     ageMin: 108,
@@ -743,6 +754,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-057",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Regulação Emocional Criança (J26-057)",
     fullName: "Protocolo de Avaliação das Estratégias de Regulação Emocional em Crianças",
     ageMin: 48,

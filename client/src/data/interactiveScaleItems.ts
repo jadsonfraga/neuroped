@@ -13,7 +13,7 @@
 // ============================================================
 import {
   Baby, Activity, MessageCircle, Heart, Hand, Eye, Ear, Sparkles,
-  ClipboardList, type LucideIcon,
+  ClipboardList, ShieldAlert, type LucideIcon,
 } from "lucide-react";
 import type { ScaleEntry } from "./scaleFilter";
 import type { ScaleConfig } from "@/components/GenericScale";
@@ -1556,6 +1556,415 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
           "Tem dificuldade de parar sozinha",
           "Prefere conteúdos muito acelerados e estimulantes",
           "O uso de tela vira motivo de briga em casa",
+        ],
+      },
+    ],
+  },
+
+  // ============================================================
+  // LOTE 4 — Categoria 4: Comportamento e Conduta (autoral)
+  // ============================================================
+
+  // ---- J26-046 — Transtorno Opositor Desafiador (TOD) ----
+  "j26-046": {
+    icon: Activity,
+    gradient: "from-orange-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem de comportamento opositor-desafiador (maior escore = mais sintomas). Avalie persistência e prejuízo em mais de um ambiente. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Comportamento opositor (maior = mais sintomas)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Oposição e desafio",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Perde a paciência com facilidade",
+          "Discute com adultos e questiona as regras",
+          "Desafia ou recusa ativamente cumprir pedidos e regras",
+          "Provoca ou irrita os outros de propósito",
+          "Culpa os outros pelos próprios erros ou comportamento",
+          "É facilmente incomodada ou aborrecida pelos outros",
+          "Fica com raiva e ressentida",
+          "É rancorosa ou vingativa",
+          "Faz de propósito o contrário do que é pedido",
+          "Tem explosões frequentes diante de limites",
+          "O comportamento desafiador atrapalha em casa",
+          "O comportamento desafiador atrapalha na escola",
+          "Mantém o desafio mesmo com consequências",
+          "Tem grande dificuldade de aceitar um “não”",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-047 — Problemas de Conduta ----
+  "j26-047": {
+    icon: ClipboardList,
+    gradient: "from-red-600 to-rose-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreio de problemas de conduta e comportamento antissocial (maior escore = mais grave). Escore elevado exige avaliação especializada e abordagem multidisciplinar. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Problemas de conduta (maior = mais grave)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Conduta e comportamento antissocial",
+        color: "text-red-600 dark:text-red-400",
+        items: [
+          "Entra em brigas físicas",
+          "Intimida, ameaça ou amedronta os outros",
+          "Foi cruel fisicamente com pessoas",
+          "Foi cruel com animais",
+          "Destrói propriedade alheia de propósito",
+          "Pega coisas que não são suas / furta",
+          "Mente para obter vantagens ou evitar obrigações",
+          "Falta à escola sem permissão (mata aula)",
+          "Foge ou ameaça fugir de casa",
+          "Usa arma ou objeto para machucar",
+          "Desrespeita regras importantes de forma grave",
+          "Não demonstra culpa após machucar ou prejudicar",
+          "Envolve-se em comportamentos perigosos ou ilegais",
+          "O comportamento já gerou problemas sérios (escola, lei)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-048 — Controle da Raiva e Tolerância à Frustração ----
+  "j26-048": {
+    icon: Activity,
+    gradient: "from-orange-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o controle da raiva e a tolerância à frustração (maior escore = mais intenso). Base para planejar a intervenção comportamental. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Raiva e frustração (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Raiva e manejo da frustração",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Explode quando as coisas não saem como quer",
+          "Joga ou quebra objetos na raiva",
+          "Bate, chuta ou empurra durante a crise",
+          "As crises duram muito tempo",
+          "Tem dificuldade de se acalmar sozinha",
+          "A intensidade da raiva é desproporcional à situação",
+          "Frustra-se muito ao perder em jogos",
+          "Não tolera esperar",
+          "Reage com raiva a correções ou limites",
+          "Grita ou xinga quando frustrada",
+          "As crises acontecem várias vezes ao dia",
+          "A raiva atrapalha as relações com a família",
+          "A raiva atrapalha na escola",
+          "Tem dificuldade de retomar a calma e seguir em frente",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-049 — Agressividade com Pares e Bullying ----
+  "j26-049": {
+    icon: Activity,
+    gradient: "from-red-500 to-orange-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Identifica o papel de agressor, vítima ou ambos no contexto escolar (maior escore = mais envolvimento). Permite ação conjunta com a escola. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Envolvimento em agressão/bullying",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Como agressor",
+        color: "text-red-600 dark:text-red-400",
+        items: [
+          "Bate, empurra ou machuca os colegas",
+          "Xinga, humilha ou apelida os colegas",
+          "Exclui ou espalha fofocas para isolar alguém (agressão relacional)",
+          "Ameaça ou intimida outras crianças",
+          "Tira coisas dos colegas à força",
+          "Lidera ou incentiva outros a implicar com alguém",
+        ],
+      },
+      {
+        name: "Como vítima",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "É alvo de apelidos, humilhações ou zoação",
+          "Apanha, é empurrada ou machucada pelos colegas",
+          "É excluída ou isolada pelo grupo",
+          "Tem medo de ir à escola por causa dos colegas",
+          "Volta da escola triste, calada ou com pertences danificados",
+          "Evita falar sobre o que acontece com os colegas",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-050 — Traços Calosos-Emocionais (CU) ----
+  "j26-050": {
+    icon: ClipboardList,
+    gradient: "from-slate-500 to-gray-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreio de traços calosos-emocionais, relevantes no prognóstico da conduta (maior escore = mais traços). NÃO é um rótulo — exige avaliação clínica especializada e abordagem cuidadosa. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Traços calosos-emocionais",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Empatia, culpa e afeto",
+        color: "text-slate-600 dark:text-slate-300",
+        items: [
+          "Não demonstra culpa ou remorso ao fazer algo errado",
+          "Parece indiferente ao sofrimento dos outros",
+          "Não se importa em ir mal na escola ou decepcionar",
+          "Mostra pouca emoção ou afeto superficial",
+          "Não se abala com punições ou consequências",
+          "Usa charme ou simpatia de forma superficial para conseguir o que quer",
+          "Não mantém amizades verdadeiras",
+          "É frio(a) ou calculista no trato",
+          "Mente com facilidade e sem desconforto",
+          "Não se responsabiliza pelos próprios atos",
+          "Magoa os outros sem se importar",
+          "Tem dificuldade de demonstrar afeto genuíno",
+          "Mostra empatia apenas quando lhe convém",
+          "Não muda o comportamento mesmo após prejudicar alguém",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-051 — Flexibilidade Comportamental (habilidade; maior = melhor) ----
+  "j26-051": {
+    icon: Sparkles,
+    gradient: "from-teal-500 to-cyan-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "Avalia a flexibilidade adaptativa no cotidiano (maior escore = mais flexível). A rigidez aparece no TDAH, no TEA e nos quadros de oposição. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Flexibilidade comportamental (maior = mais flexível)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Flexibilidade adaptativa",
+        color: "text-teal-600 dark:text-teal-400",
+        items: [
+          "Aceita mudanças de rotina sem grande sofrimento",
+          "Muda de plano quando é necessário",
+          "Aceita quando as regras mudam",
+          "Lida bem quando o resultado não é o esperado",
+          "Aceita ajuda ou sugestões para fazer diferente",
+          "Transita entre atividades sem travar",
+          "Tolera os imprevistos do dia a dia",
+          "Aceita perder ou empatar em jogos",
+          "Considera mais de uma forma de resolver um problema",
+          "Aceita um “agora não” e tenta de novo depois",
+          "Adapta-se a ambientes e pessoas novas",
+          "Recupera-se rápido quando algo dá errado",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-052 — Birra Patológica vs Normativa ----
+  "j26-052": {
+    icon: Baby,
+    gradient: "from-amber-500 to-orange-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Ajuda a diferenciar a birra normal (2–3 anos) da oposição patológica (maior escore = mais sinais de alerta). Vários itens marcados merecem avaliação. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sinais de alerta nas crises (maior = mais atípico)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Características das crises",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "As crises duram mais de 15 minutos",
+          "Tem várias crises por dia",
+          "Machuca a si mesma durante a crise",
+          "Machuca outras pessoas durante a crise",
+          "Destrói objetos durante a crise",
+          "As crises acontecem mesmo sem motivo aparente",
+          "Não consegue se acalmar de jeito nenhum",
+          "As crises acontecem também com pessoas fora da família",
+          "Fica esgotada ou exausta após a crise",
+          "As crises são desproporcionais para a idade",
+          "O comportamento piora em vez de melhorar com o tempo",
+          "As crises atrapalham seriamente a rotina da família",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-053 — Mudanças Comportamentais Pós-Pandemia ----
+  "j26-053": {
+    icon: Heart,
+    gradient: "from-blue-500 to-indigo-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia mudanças comportamentais após o período de isolamento (maior escore = mais mudanças). Orienta o suporte emocional e o retorno à rotina. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Mudanças pós-pandemia (maior = mais alterações)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Mudanças observadas",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Ficou mais ansiosa ou medrosa após a pandemia",
+          "Ficou mais agressiva ou irritada",
+          "Tem dificuldade de brincar e conviver com outras crianças",
+          "Ficou mais apegada e insegura",
+          "Regrediu em habilidades (fala, sono, uso do banheiro)",
+          "Aumentou muito o uso de telas",
+          "Tem mais medo de sair de casa ou de lugares cheios",
+          "Tem dificuldade de se separar dos pais",
+          "Piorou o sono",
+          "Está mais retraída ou isolada",
+          "Tem mais crises de choro ou raiva",
+          "Tem dificuldade de voltar à rotina escolar",
+          "Mostra tristeza ou desânimo",
+          "Mudou o apetite",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-054 — Comportamento Digital e Uso da Internet ----
+  "j26-054": {
+    icon: Activity,
+    gradient: "from-slate-500 to-indigo-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreio de saúde digital (maior escore = mais problemático). Itens de risco (contato com desconhecidos, conteúdo inadequado) exigem conversa direta. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Comportamento digital (maior = mais problemático)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Uso digital e internet",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Tem explosão de raiva quando a tela é retirada",
+          "Mente sobre o tempo que passa em telas",
+          "Esconde-se para usar o celular ou o jogo",
+          "Perdeu interesse por outras atividades",
+          "Isola-se socialmente por causa das telas",
+          "Usa telas até de madrugada",
+          "Fica irritada ou ansiosa sem acesso à tela",
+          "Negligencia tarefas e estudos pelo uso digital",
+          "Tem conflitos frequentes em casa por causa das telas",
+          "Acessa conteúdos inadequados para a idade",
+          "Interage com desconhecidos online",
+          "O uso digital prejudica o sono",
+          "Não consegue cumprir os limites de tempo combinados",
+          "Mostra sinais de dependência (não consegue parar)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-055 — Automutilação Não Suicida (NSSI) ----
+  "j26-055": {
+    icon: ShieldAlert,
+    gradient: "from-rose-600 to-red-700",
+    instruction:
+      "Marque a frequência de cada comportamento nos últimos meses. Responda com sinceridade e sem julgamento — esta é uma ferramenta de cuidado. Responda todos os itens.",
+    infoBox:
+      "Rastreio de automutilação não suicida, SEM julgamento. Qualquer resposta positiva exige avaliação clínica de segurança e suporte em saúde mental. Não é diagnóstico. Em risco de vida, procure urgência — CVV 188, SAMU 192.",
+    labels: FREQ_LABELS,
+    totalLabel: "Comportamento autolesivo (frequência)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Autolesão não suicida",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Arranha-se de propósito até machucar",
+          "Corta a própria pele de propósito",
+          "Queima a própria pele de propósito",
+          "Bate em si mesma ou bate a cabeça de propósito",
+          "Belisca ou fere a pele de propósito",
+          "Morde a si mesma a ponto de machucar",
+          "Impede que feridas cicatrizem",
+          "Faz isso para aliviar uma dor emocional ou tensão",
+          "Esconde as marcas (roupas, faixas)",
+          "Sente alívio momentâneo após se machucar",
+          "Pensa em se machucar quando está mal",
+          "Já precisou de cuidado médico por causa disso",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-056 — Comportamento Alimentar Restritivo e Purgativo ----
+  "j26-056": {
+    icon: ShieldAlert,
+    gradient: "from-fuchsia-500 to-rose-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreio de comportamento alimentar de risco (maior escore = mais sinais). Sinais positivos exigem avaliação médica (inclui risco clínico) e suporte especializado. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Comportamento alimentar de risco",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Restrição, compulsão e purgação",
+        color: "text-fuchsia-600 dark:text-fuchsia-400",
+        items: [
+          "Restringe a quantidade de comida ou pula refeições",
+          "Tem medo intenso de engordar",
+          "Preocupa-se excessivamente com o peso e a forma do corpo",
+          "Conta calorias de forma obsessiva",
+          "Evita comer na frente dos outros",
+          "Faz exercício de forma excessiva para “queimar” comida",
+          "Provoca vômito depois de comer",
+          "Usa laxantes ou diuréticos para controlar o peso",
+          "Tem episódios de comer muito com sensação de descontrole",
+          "Sente culpa ou vergonha intensa após comer",
+          "Verifica o corpo no espelho ou se pesa repetidamente",
+          "Perdeu peso de forma preocupante",
+          "Esconde alimentos ou comportamentos alimentares",
+          "O peso e a comida dominam os pensamentos",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-057 — Estratégias de Regulação Emocional (habilidade) ----
+  "j26-057": {
+    icon: Heart,
+    gradient: "from-pink-500 to-rose-600",
+    instruction: DEV_INSTRUCTION,
+    infoBox:
+      "Avalia as estratégias de regulação emocional (maior escore = mais recursos). Orienta o trabalho de habilidades socioemocionais. Triagem, não diagnóstico.",
+    labels: MILESTONE_LABELS,
+    totalLabel: "Regulação emocional (maior = mais recursos)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Estratégias de regulação",
+        color: "text-pink-600 dark:text-pink-400",
+        items: [
+          "Consegue se acalmar sozinha quando fica chateada",
+          "Nomeia o que está sentindo (“estou bravo”, “estou triste”)",
+          "Pede ajuda quando está mal",
+          "Espera a emoção forte passar antes de agir",
+          "Aceita o consolo de um adulto",
+          "Usa estratégias para se acalmar (respirar, se afastar, beber água)",
+          "Recupera-se em tempo razoável após uma frustração",
+          "Fala sobre o que sentiu depois que se acalma",
+          "Tolera pequenas frustrações sem explodir",
+          "Adapta a reação ao tamanho do problema",
+          "Expressa a raiva sem agredir",
+          "Volta a se concentrar depois de um abalo emocional",
         ],
       },
     ],
