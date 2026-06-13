@@ -116,7 +116,9 @@ export default function PortalFamiliaPage() {
       );
       if (!res.ok) throw new Error("Erro ao buscar documentos.");
       const data = await res.json();
-      return (data.documents ?? []).filter(
+      // A API retorna { data: [...] }; aceita 'documents' e array puro por robustez.
+      const list = Array.isArray(data) ? data : (data.data ?? data.documents ?? []);
+      return list.filter(
         (d: any) => d.is_family_visible === 1 || d.is_family_visible === true,
       );
     },
