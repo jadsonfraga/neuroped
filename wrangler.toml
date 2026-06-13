@@ -22,16 +22,7 @@ CORS_ORIGINS = "https://neuroped.pages.dev"
 # NÃO edite os IDs à mão — rode o workflow "Provision D1 backend" em Actions.
 # >>> D1_BINDING_PLACEHOLDER <<<
 
-#── Ambiente de produção ───────────────────────────────────
-[env.production]
-name = "neuroped-production"
-
-[env.production.vars]
-ENVIRONMENT = "production"
-
-# ── Ambiente de preview (PRs e branches) ──────────────────
-[env.preview]
-name = "neuroped-preview"
-
-[env.preview.vars]
-ENVIRONMENT = "preview"
+[[d1_databases]]
+binding = "DB"
+database_name = "neuroped-db"
+database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"
