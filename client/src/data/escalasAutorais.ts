@@ -1576,6 +1576,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-118",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Processamento Tátil (J26-118)",
     fullName: "Protocolo de Avaliação do Processamento Tátil em Crianças",
     ageMin: 18,
@@ -1588,6 +1589,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-119",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Processamento Vestibular (J26-119)",
     fullName: "Protocolo de Avaliação do Processamento Vestibular em Crianças",
     ageMin: 18,
@@ -1600,6 +1602,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-120",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Processamento Proprioceptivo (J26-120)",
     fullName: "Protocolo de Avaliação do Processamento Proprioceptivo em Crianças",
     ageMin: 18,
@@ -1612,6 +1615,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-121",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Processamento Auditivo Cotidiano (J26-121)",
     fullName: "Protocolo de Avaliação do Processamento Auditivo no Cotidiano",
     ageMin: 36,
@@ -1624,6 +1628,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-122",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Processamento Visual Funcional (J26-122)",
     fullName: "Protocolo de Avaliação do Processamento Visual no Cotidiano e na Aprendizagem",
     ageMin: 48,
@@ -1636,6 +1641,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-123",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sensibilidade Oral-Sensorial (J26-123)",
     fullName: "Protocolo de Avaliação da Sensibilidade Oral-Sensorial e Alimentar",
     ageMin: 12,
@@ -1648,6 +1654,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-124",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamento Buscador Sensorial (J26-124)",
     fullName: "Protocolo de Avaliação do Comportamento Buscador de Sensações em Crianças",
     ageMin: 18,
@@ -1660,6 +1667,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-125",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sobrecarga Sensorial (J26-125)",
     fullName: "Protocolo de Avaliação da Sobrecarga Sensorial e Meltdown em Crianças",
     ageMin: 24,
@@ -1672,6 +1680,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-126",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dieta Sensorial Eficácia (J26-126)",
     fullName: "Protocolo de Monitorização da Eficácia da Dieta Sensorial em Crianças",
     ageMin: 24,
@@ -1684,6 +1693,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-127",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Hipersensibilidade Olfativa (J26-127)",
     fullName: "Protocolo de Avaliação da Hipersensibilidade Olfativa em Crianças",
     ageMin: 18,
@@ -1696,6 +1706,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-128",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Regulação Sensorial Escolar (J26-128)",
     fullName: "Protocolo de Avaliação da Regulação Sensorial em Contexto Escolar",
     ageMin: 48,
@@ -1708,6 +1719,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-129",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Perfil Sensorial Integrado (J26-129)",
     fullName: "Protocolo Integrado de Perfil Sensorial em Crianças com TEA e TDAH",
     ageMin: 24,

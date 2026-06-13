@@ -3345,6 +3345,121 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Sustenta a cabeça (idade corrigida)","Apoia-se nos antebraços de bruços","Rola","Senta com e depois sem apoio","Alcança e pega objetos","Passa objetos de uma mão para a outra","Engatinha ou se desloca","Fica de pé com apoio","Anda com e depois sem apoio","Tem tônus e postura simétricos","Faz movimentos variados e fluidos (não estereotipados)","Acompanha os marcos esperados para a idade corrigida",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 10 — Categoria 10: Sensorial e Integração (autoral)
+  // ============================================================
+
+  "j26-118": {
+    icon: Hand, gradient: "from-violet-500 to-purple-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o processamento tátil — defensivo e buscador (maior = mais alterações). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Processamento tátil (maior = mais alterações)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Tato", color: "text-violet-600 dark:text-violet-400", items: [
+      "Incomoda-se com etiquetas, costuras ou texturas de roupa","Não gosta de mão suja, areia, tinta ou cola","Reage mal a toques leves inesperados","Não gosta de cortar unha/cabelo ou escovar os dentes","Evita abraços ou certos contatos","Reage demais (ou quase nada) a pequenos machucados","Incomoda-se com roupas de certo tecido","Não tolera estar com rosto ou mãos sujos","Busca tocar texturas o tempo todo","Esfrega-se em superfícies ou pessoas","Tem reação intensa à temperatura (água, comida)","As reações táteis atrapalham o dia a dia",
+    ]}],
+  },
+  "j26-119": {
+    icon: Activity, gradient: "from-blue-500 to-indigo-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o processamento vestibular — evitação e busca de movimento (maior = mais alterações). Base para a integração sensorial. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Processamento vestibular (maior = mais alterações)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Movimento e equilíbrio", color: "text-blue-600 dark:text-blue-400", items: [
+      "Enjoa fácil no carro","Tem medo de balanço, escorregador ou altura","Fica tonta com facilidade","Evita brinquedos de movimento","Tem medo de tirar os pés do chão","Procura girar, balançar e rodar sem parar","Não enjoa nem fica tonta por mais que gire","Busca movimento intenso o tempo todo","Tem dificuldade de equilíbrio","Fica insegura em superfícies instáveis","Reage com medo a mudanças de posição","As reações ao movimento atrapalham o dia a dia",
+    ]}],
+  },
+  "j26-120": {
+    icon: Hand, gradient: "from-teal-500 to-cyan-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o processamento proprioceptivo — força e busca de pressão profunda (maior = mais alterações). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Processamento proprioceptivo (maior = mais alterações)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Força e pressão profunda", color: "text-teal-600 dark:text-teal-400", items: [
+      "Bate as portas mais forte do que precisa","Aperta demais o lápis ou os objetos","Joga-se no sofá, no chão ou nas pessoas","Adora abraço bem apertado","Esbarra e empurra para sentir o corpo","Pisa forte ao andar","Morde, rói ou aperta objetos","Não dosa a força (machuca sem querer)","Busca carregar coisas pesadas","Procura apertos e compressão","Parece “não saber onde o corpo está” (desajeitada)","A busca por estímulo profundo atrapalha o dia a dia",
+    ]}],
+  },
+  "j26-121": {
+    icon: Ear, gradient: "from-cyan-500 to-blue-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o processamento auditivo funcional (maior = mais dificuldades). Flag para encaminhamento fonoaudiológico. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Processamento auditivo (maior = mais dificuldades)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Audição funcional", color: "text-cyan-600 dark:text-cyan-400", items: [
+      "Distrai-se com sons de fundo","Confunde palavras parecidas","Tem dificuldade de entender em ambiente barulhento","Pede para repetir com frequência","Tapa os ouvidos com sons comuns","Assusta-se demais com sons inesperados","Demora a responder ao que é falado","Tem dificuldade de seguir instruções faladas","Incomoda-se com lugares barulhentos (recreio, festa)","Parece “não ouvir” quando está concentrada","Tem dificuldade de localizar de onde vem o som","As dificuldades auditivas atrapalham a aprendizagem",
+    ]}],
+  },
+  "j26-122": {
+    icon: Eye, gradient: "from-indigo-500 to-blue-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o processamento visual funcional (maior = mais dificuldades). Impacta leitura e coordenação. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Processamento visual (maior = mais dificuldades)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Visão funcional", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "Perde a linha ao ler (tracking)","Inverte ou troca letras e números","Confunde figuras ou letras parecidas","Incomoda-se com luz forte","Cansa os olhos rapidamente em tarefas visuais","Tem dificuldade de copiar do quadro","Tem dificuldade de achar um objeto em meio a outros","Esbarra em coisas ou julga mal as distâncias","Tem dificuldade com quebra-cabeças e formas","Fecha um olho ou aproxima muito o rosto do papel","Pula linhas ou palavras ao ler","As dificuldades visuais atrapalham a leitura e a coordenação",
+    ]}],
+  },
+  "j26-123": {
+    icon: Sparkles, gradient: "from-lime-500 to-green-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a sensibilidade oral-sensorial e alimentar (maior = mais alterações). Útil na seletividade alimentar e no TEA. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sensibilidade oral (maior = mais alterações)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sensibilidade oral", color: "text-lime-700 dark:text-lime-400", items: [
+      "Recusa alimentos por textura","Recusa alimentos por cheiro","Recusa alimentos por temperatura","Só aceita pouquíssimos tipos de comida","Enjoa de comidas misturadas","Tem ânsia de vômito com certas texturas","Prefere só comidas pastosas ou só crocantes","Não tolera novos alimentos","Cheira a comida antes de comer","Coloca objetos não-alimentares na boca","Reage mal a escovar os dentes","A sensibilidade oral atrapalha a alimentação",
+    ]}],
+  },
+  "j26-124": {
+    icon: Activity, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a busca de sensações (maior = mais busca). Pode ser confundida com TDAH ou comportamento opositor. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Busca sensorial (maior = mais busca)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Comportamento buscador", color: "text-amber-600 dark:text-amber-400", items: [
+      "Toca em tudo o tempo todo","Lambe ou cheira objetos","Fica se jogando, batendo, esbarrando de propósito","Parece não sentir dor","Busca estímulos intensos (barulho, luz, movimento)","Não para quieta, está sempre em movimento","Aperta, morde ou rói objetos","Faz barulho com a boca ou objetos","Mexe em texturas o tempo todo","Procura sensações fortes (girar, pular de alturas)","O comportamento é confundido com TDAH ou oposição","A busca sensorial atrapalha o dia a dia",
+    ]}],
+  },
+  "j26-125": {
+    icon: ShieldAlert, gradient: "from-rose-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a sobrecarga sensorial e os meltdowns (maior = mais intenso). O meltdown é por sobrecarga, diferente de birra. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sobrecarga sensorial (maior = mais intensa)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sobrecarga e meltdown", color: "text-rose-600 dark:text-rose-400", items: [
+      "Fica sobrecarregada em ambientes com muito estímulo","Tapa os ouvidos ou os olhos quando é demais","Entra em crise (meltdown) com estímulo excessivo","Foge ou tenta sair de lugares cheios","Chora, grita ou se agride quando sobrecarregada","Tem náusea ou vômito com a sobrecarga","“Desliga” ou se isola quando é demais","Demora muito para se recuperar da crise","Antecipa e evita lugares estimulantes","Precisa de um canto calmo para se regular","A crise é por sobrecarga (diferente de birra)","A sobrecarga atrapalha a vida em sociedade",
+    ]}],
+  },
+  "j26-126": {
+    icon: Sparkles, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Monitora a eficácia da dieta sensorial prescrita pelo TO (maior = funcionando melhor). Aplicar mensalmente. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Eficácia da dieta sensorial (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Resposta às estratégias sensoriais", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "As estratégias sensoriais ajudam a criança a se regular","A criança fica mais calma após as atividades sensoriais","Melhorou o foco com a dieta sensorial","Melhorou o comportamento em casa","Melhorou o comportamento na escola","Reduziram as crises de sobrecarga","A criança aceita bem as estratégias","As estratégias são usadas na rotina diária","Melhorou o sono","Melhorou a alimentação","A família consegue aplicar as estratégias","No geral, a dieta sensorial está funcionando",
+    ]}],
+  },
+  "j26-127": {
+    icon: Sparkles, gradient: "from-fuchsia-500 to-purple-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a hipersensibilidade olfativa (maior = mais alterações). Pode afetar a alimentação. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Hipersensibilidade olfativa (maior = mais intensa)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Olfato", color: "text-fuchsia-600 dark:text-fuchsia-400", items: [
+      "Cheira tudo antes de comer","Vomita ou tem ânsia com certos cheiros","Não suporta cheiro de perfume ou produto de limpeza","Recusa alimentos pelo cheiro","Incomoda-se com cheiros que outros nem notam","Reclama de cheiros em ambientes (banheiro, cozinha)","Tapa o nariz com frequência","Evita lugares por causa do cheiro","O cheiro afeta o apetite","Reage com mau humor a certos cheiros","Identifica cheiros muito sutis","A sensibilidade a cheiros atrapalha o dia a dia",
+    ]}],
+  },
+  "j26-128": {
+    icon: Activity, gradient: "from-orange-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a regulação sensorial na sala de aula (maior = mais desregulação). Respondido pelo professor. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Desregulação sensorial escolar (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sensorial na escola", color: "text-orange-600 dark:text-orange-400", items: [
+      "Agita-se ao ficar sentada por muito tempo","Não suporta o barulho do recreio ou da sala","Distrai-se com estímulos do ambiente","Levanta-se e se mexe o tempo todo","Reage mal a aglomeração (fila, pátio)","Busca tocar materiais e colegas","Tem crise de sobrecarga na escola","Tem dificuldade de foco em ambiente estimulante","Precisa de pausas sensoriais para se regular","Reage à luz ou à temperatura da sala","Mostra desconforto em atividades sensoriais (cola, tinta)","A desregulação sensorial atrapalha a aprendizagem",
+    ]}],
+  },
+  "j26-129": {
+    icon: Hand, gradient: "from-violet-500 to-fuchsia-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Perfil sensorial integrado por modalidade (maior = mais alterações). O detalhamento por domínio mostra os canais mais afetados. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Perfil sensorial integrado (maior = mais alterações)", bands: SEVERITY_BANDS,
+    domains: [
+      { name: "Tátil", color: "text-violet-600 dark:text-violet-400", items: [
+        "Etiquetas e texturas de roupa incomodam","Não gosta de sujar as mãos","Reage mal a toques leves",
+      ]},
+      { name: "Auditivo", color: "text-cyan-600 dark:text-cyan-400", items: [
+        "Tapa os ouvidos com sons comuns","Distrai-se com ruído de fundo","Assusta-se com sons inesperados",
+      ]},
+      { name: "Vestibular / proprioceptivo", color: "text-blue-600 dark:text-blue-400", items: [
+        "Busca girar, pular e se movimentar intensamente","Não dosa a força do corpo","Tem medo ou busca excessiva de movimento",
+      ]},
+      { name: "Oral / olfativo", color: "text-lime-700 dark:text-lime-400", items: [
+        "Seletividade por textura ou cheiro dos alimentos","Leva objetos à boca além do esperado","Reage a cheiros que outros não notam",
+      ]},
+      { name: "Visual", color: "text-indigo-600 dark:text-indigo-400", items: [
+        "Incomoda-se com luz forte","Perde-se em ambientes visualmente cheios","Fixa-se em luzes ou objetos que giram",
+      ]},
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
