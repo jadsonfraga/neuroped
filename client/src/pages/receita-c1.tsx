@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { Badge } from "@/components/ui/badge";
 
 /* ────────────────────────────────────────────────────────────
@@ -217,6 +218,42 @@ export default function ReceitaC1Page() {
           </Button>
         </div>
       </section>
+
+      {/* Assinatura digital ICP-Brasil (A1) */}
+      <AssinaturaIcpPanel
+        filename={`receita-c1-${(data.nomePaciente || "neuroped").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40) || "neuroped"}`}
+        signerName={data.nomeMedico}
+        location={data.local || "Petrolina-PE"}
+        reason="Receita Especial C1"
+        buildPdf={async () => {
+          const { buildDocumentPdf } = await import("@/lib/documentPdf");
+          return buildDocumentPdf({
+            title: "Receita Especial C1 - Notificacao de Receita",
+            subtitle: "Portaria SVS/MS no 344/1998 - Lista C1",
+            credentials: [
+              `${data.nomeMedico} - ${data.crm} - ${data.rqe}`,
+              [data.especialidade, data.endereco, data.cidadeUF, data.telefone].filter(Boolean).join(" - "),
+            ],
+            sections: [
+              { heading: "Paciente", body: [
+                data.nomePaciente && `Nome: ${data.nomePaciente}`,
+                data.enderecoP && `Endereco: ${data.enderecoP}`,
+                data.cidadeUFP && `Cidade/UF: ${data.cidadeUFP}`,
+              ].filter(Boolean).join("\n") },
+              { heading: "Prescricao", body: [
+                [data.medicamento, data.concentracao, data.formaFarm].filter(Boolean).join(" "),
+                data.quantidade && `Quantidade: ${data.quantidade}`,
+                data.via && `Via: ${data.via}`,
+                data.posologia && `Posologia: ${data.posologia}`,
+                data.duracao && `Duracao: ${data.duracao}`,
+              ].filter(Boolean).join("\n") },
+              { heading: "Observacoes", body: data.observacoes },
+              { heading: "Data e local", body: [data.local, data.data].filter(Boolean).join(", ") },
+            ],
+            footer: "Notificacao de Receita - Lista C1 (Portaria SVS/MS 344/1998). Quando assinado, contem assinatura digital ICP-Brasil (certificado A1) anexada ao PDF, conferivel em validar.iti.gov.br. A validade legal da prescricao de controlados deve observar a regulamentacao vigente.",
+          });
+        }}
+      />
 
       {/* Paciente */}
       <div className="rounded-xl border border-border/60 bg-card/70 p-4">
