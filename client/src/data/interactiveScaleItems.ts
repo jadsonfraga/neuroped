@@ -3972,6 +3972,77 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Controla a cabeça e o tronco","Senta-se com a estabilidade possível","Faz transferências com a assistência esperada","Desloca-se pelo ambiente (anda, cadeira, engatinha)","Caminha em casa conforme o nível","Caminha fora de casa ou na comunidade conforme o nível","Sobe e desce superfícies ou degraus conforme o nível","Usa as mãos para tarefas funcionais","Usa dispositivos ou órteses de forma efetiva","Participa de atividades físicas adaptadas","Mantém posturas funcionais ao longo do dia","Tem a mobilidade necessária para a rotina",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 17 — Categoria 17: Neonatal e Prematuridade (autoral)
+  // ============================================================
+
+  "j26-190": {
+    icon: ShieldAlert, gradient: "from-pink-500 to-rose-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Estratifica o risco neonatal para problemas de neurodesenvolvimento (maior = mais risco, mais seguimento). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Risco neonatal (maior = mais risco)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Fatores de risco neonatal", color: "text-pink-600 dark:text-pink-400", items: [
+      "Prematuridade (menos de 37 semanas)","Muito baixo peso ao nascer (menos de 1500 g)","Asfixia ou sofrimento fetal (Apgar baixo)","Necessidade de reanimação ou ventilação","Hemorragia intracraniana","Infecção congênita (TORCH) ou sepse","Hipoglicemia ou distúrbio metabólico grave","Icterícia grave ou exsanguineotransfusão","Convulsão neonatal","Malformação do sistema nervoso central","Internação prolongada na UTIN","Exame neurológico neonatal alterado",
+    ]}],
+  },
+  "j26-191": {
+    icon: Baby, gradient: "from-amber-500 to-orange-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a prontidão para alimentação oral do prematuro (maior = mais pronto). Uso na UTIN. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Prontidão alimentar (maior = mais pronto)", bands: DEV_BANDS,
+    domains: [{ name: "Prontidão para via oral", color: "text-amber-600 dark:text-amber-400", items: [
+      "Mantém estado de alerta adequado","Tem estabilidade respiratória","Tem reflexo de sucção presente","Coordena sucção e deglutição","Coordena sucção, deglutição e respiração","Mantém a saturação durante a tentativa","Não engasga nem aspira nas tentativas","Demonstra sinais de fome ou procura","Tem tônus oral adequado","Ganha peso de forma adequada","Tolera o volume oferecido","Mostra prontidão para retirar a sonda",
+    ]}],
+  },
+  "j26-192": {
+    icon: Baby, gradient: "from-rose-500 to-pink-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Monitorização do Método Canguru até 6 meses de idade corrigida (maior = melhor evolução). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Follow-up do canguru (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Vínculo, amamentação e evolução", color: "text-rose-600 dark:text-rose-400", items: [
+      "Os pais fazem a posição canguru regularmente","O vínculo pais-bebê está fortalecido","A amamentação está estabelecida ou evoluindo","O bebê ganha peso adequadamente","O bebê regula bem a temperatura","Os pais se sentem confiantes nos cuidados","Os pais percebem os sinais do bebê","O bebê tem bons períodos de sono","O bebê está mais calmo e regulado","A família tem rede de apoio","O bebê comparece ao follow-up","No geral, o seguimento do canguru vai bem",
+    ]}],
+  },
+  "j26-193": {
+    icon: Activity, gradient: "from-red-500 to-rose-600", instruction:
+      "Avaliação clínica durante e após procedimentos. Marque a intensidade de cada sinal. Responda todos os itens.",
+    infoBox: "Avaliação da dor neonatal (maior = mais dor/estresse). Orienta o manejo analgésico não farmacológico e farmacológico. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Dor neonatal (maior = mais dor)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sinais de dor e estresse", color: "text-red-600 dark:text-red-400", items: [
+      "Faz careta ou franze a testa (expressão facial de dor)","Chora de forma aguda ou intensa","Fica com o corpo rígido ou tenso","Mexe-se de forma agitada","Tem aumento da frequência cardíaca","Tem queda da saturação","Fecha os olhos com força","Tem tremores ou sobressaltos","Não se consola facilmente","Reage intensamente a procedimentos","Tem alteração do padrão respiratório","Mostra sinais de estresse persistente",
+    ]}],
+  },
+  "j26-194": {
+    icon: Baby, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a prontidão para alta da UTIN e a transição para casa (maior = mais pronto). Reduz reinternações. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Prontidão para alta (maior = mais pronto)", bands: DEV_BANDS,
+    domains: [{ name: "Prontidão de bebê e família", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "O bebê se alimenta o suficiente por via oral","Mantém a temperatura estável fora da incubadora","Tem ganho de peso consistente","Tem estabilidade respiratória e cardíaca","Não tem mais episódios de apneia significativos","A mãe ou o pai foi treinado(a) nos cuidados","A família sabe reconhecer sinais de alerta","A amamentação ou a alimentação está estabelecida","Há rede de apoio em casa","Os retornos e o seguimento estão agendados","As medicações de casa estão organizadas","No geral, bebê e família estão prontos para a alta",
+    ]}],
+  },
+  "j26-195": {
+    icon: Baby, gradient: "from-blue-500 to-indigo-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Seguimento do neurodesenvolvimento do prematuro aos 2 anos de idade CORRIGIDA (maior = mais adequado). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Follow-up 2 anos corrigidos (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Desenvolvimento (idade corrigida)", color: "text-blue-600 dark:text-blue-400", items: [
+      "Tem motor grosso adequado (idade corrigida)","Tem motor fino adequado","Tem linguagem compatível (idade corrigida)","Tem desenvolvimento cognitivo adequado","Tem desenvolvimento social adequado","Anda com firmeza","Fala palavras ou frases esperadas","Brinca de forma simbólica","Tem boa interação social","Tem tônus e postura adequados","Tem crescimento adequado (peso/altura/PC)","Acompanha os marcos para a idade corrigida",
+    ]}],
+  },
+  "j26-196": {
+    icon: Heart, gradient: "from-indigo-500 to-violet-600", instruction:
+      "Para cada frase, marque o quanto combina com você durante a internação do bebê. Responda com sinceridade. Responda todos os itens.",
+    infoBox: "Rastreio de ansiedade e depressão em pais de bebês na UTIN (maior = mais sofrimento). Encaminhar ao psicólogo da equipe. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sofrimento parental na UTIN (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Saúde mental do cuidador", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "Sinto-me muito ansioso(a) com a internação","Tenho medo constante de perder o bebê","Sinto-me culpado(a)","Tenho dificuldade de dormir","Choro com frequência","Sinto-me impotente ou sem controle","Tenho dificuldade de me concentrar","Sinto-me distante ou “anestesiado(a)”","Tenho pensamentos repetitivos sobre o bebê","Sinto-me isolado(a) ou sem apoio","Tenho sintomas físicos de estresse","Sinto que preciso de ajuda psicológica",
+    ]}],
+  },
+  "j26-197": {
+    icon: ShieldAlert, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Seguimento neurossensorial pós-icterícia grave / kernícterus (maior = mais sinais de sequela). Encaminhar conforme os achados. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sequelas pós-icterícia (maior = mais sinais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Seguimento neurossensorial", color: "text-amber-600 dark:text-amber-400", items: [
+      "Teve icterícia grave ou precisou de exsanguineotransfusão","Tem alteração auditiva (não reage a sons)","Falhou na triagem auditiva","Tem atraso motor","Tem alterações de tônus (hipertonia ou hipotonia)","Tem movimentos anormais","Tem atraso de linguagem","Tem dificuldade de olhar para cima (paralisia do olhar)","Tem alterações dentárias (esmalte)","Tem atraso no desenvolvimento global","Tem sinais sugestivos de kernícterus","Os achados preocupam quanto a sequela neurossensorial",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

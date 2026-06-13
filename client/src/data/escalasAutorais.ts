@@ -2545,6 +2545,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-190",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Estratificação Risco Neonatal (J26-190)",
     fullName: "Protocolo de Estratificação de Risco Neonatal para Seguimento do Neurodesenvolvimento",
     ageMin: 0,
@@ -2557,6 +2558,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-191",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Prontidão Alimentar Prematuro (J26-191)",
     fullName: "Protocolo de Avaliação da Prontidão para Alimentação Oral do Prematuro",
     ageMin: 0,
@@ -2569,6 +2571,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-192",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Método Canguru Follow-Up (J26-192)",
     fullName: "Protocolo de Monitorização e Follow-Up do Método Canguru em Prematuros",
     ageMin: 0,
@@ -2581,6 +2584,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-193",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dor Neonatal Expandida (J26-193)",
     fullName: "Protocolo Expandido de Avaliação e Manejo da Dor Neonatal na UTIN",
     ageMin: 0,
@@ -2593,6 +2597,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-194",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Alta UTIN Prontidão (J26-194)",
     fullName: "Protocolo de Avaliação de Prontidão para Alta da UTIN e Transição para Casa",
     ageMin: 0,
@@ -2605,6 +2610,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-195",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Prematuro Follow-Up 2 Anos (J26-195)",
     fullName: "Protocolo de Seguimento do Neurodesenvolvimento do Prematuro aos 2 Anos Corrigidos",
     ageMin: 0,
@@ -2617,6 +2623,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-196",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Pais UTIN (J26-196)",
     fullName: "Protocolo de Triagem de Ansiedade e Depressão em Pais de Bebês Internados na UTIN",
     ageMin: 0,
@@ -2629,6 +2636,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-197",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Icterícia Neonatal Seguimento (J26-197)",
     fullName: "Protocolo de Seguimento Neurossensorial de Neonatos com Icterícia Grave",
     ageMin: 0,
