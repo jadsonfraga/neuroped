@@ -2250,6 +2250,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-168",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TOC Infantil Triagem (J26-168)",
     fullName: "Protocolo de Triagem do Transtorno Obsessivo-Compulsivo em Crianças",
     ageMin: 60,
@@ -2262,6 +2263,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-169",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — PTSD Criança (J26-169)",
     fullName: "Protocolo de Triagem do Transtorno de Estresse Pós-Traumático em Crianças",
     ageMin: 36,
@@ -2274,6 +2276,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-170",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Mania Infantil (J26-170)",
     fullName: "Protocolo de Triagem de Episódio Maníaco e Hipomaníaco em Crianças e Adolescentes",
     ageMin: 72,
@@ -2286,6 +2289,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-171",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Psicose Risco Adolescente (J26-171)",
     fullName: "Protocolo de Triagem de Risco Ultrafragilidade Psicótica em Adolescentes",
     ageMin: 132,
@@ -2298,6 +2302,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-172",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Substâncias Adolescente (J26-172)",
     fullName: "Protocolo de Rastreio de Uso de Álcool e Drogas em Adolescentes",
     ageMin: 132,
@@ -2310,6 +2315,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-173",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dissociação Infantil (J26-173)",
     fullName: "Protocolo de Triagem de Sintomas Dissociativos em Crianças e Adolescentes",
     ageMin: 60,
@@ -2322,6 +2328,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-174",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Traços de Personalidade Adolescente (J26-174)",
     fullName: "Protocolo de Avaliação de Traços de Personalidade Adaptativos e Desadaptativos na Adolescência",
     ageMin: 144,
@@ -2334,6 +2341,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-175",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Inteligência Emocional Criança (J26-175)",
     fullName: "Protocolo de Avaliação da Inteligência Emocional em Crianças Escolares",
     ageMin: 60,
@@ -2346,6 +2354,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-176",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Resiliência Infantil (J26-176)",
     fullName: "Protocolo de Avaliação de Resiliência e Fatores Protetores em Crianças",
     ageMin: 60,
@@ -2358,6 +2367,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-177",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — PTSD Adolescente (J26-177)",
     fullName: "Protocolo de Triagem do PTSD em Adolescentes — Adaptado ao Nordeste",
     ageMin: 120,
@@ -2370,6 +2380,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-178",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Suicídio Adolescente Avaliação (J26-178)",
     fullName: "Protocolo Estruturado de Avaliação do Risco de Suicídio em Adolescentes",
     ageMin: 120,
@@ -2382,6 +2393,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-179",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Enurese e Encoprese (J26-179)",
     fullName: "Protocolo Expandido de Avaliação da Enurese e Encoprese em Crianças",
     ageMin: 48,

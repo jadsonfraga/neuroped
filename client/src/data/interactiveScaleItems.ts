@@ -3782,6 +3782,116 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "O professor sabe que a criança tem epilepsia","O professor sabe o que fazer na crise","A escola tem plano de emergência","Há medicação de resgate disponível na escola","A escola permite que a criança se recupere após a crise","Há adaptações pedagógicas quando necessário","A criança não sofre estigma na escola","A criança participa das atividades com segurança","A escola comunica as crises à família","A escola colabora com o tratamento","A criança se sente segura na escola","No geral, a inclusão escolar está adequada",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 15 — Categoria 15: Saúde Mental e Psiquiatria (autoral)
+  // ============================================================
+
+  "j26-168": {
+    icon: ShieldAlert, gradient: "from-purple-500 to-fuchsia-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Rastreio de TOC (maior = mais sintomas). Diferenciar de rituais normais do desenvolvimento. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "TOC (maior = mais sintomas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Obsessões e compulsões", color: "text-purple-600 dark:text-purple-400", items: [
+      "Tem pensamentos repetitivos que a incomodam (obsessões)","Faz rituais ou repetições para aliviar a aflição (compulsões)","Lava as mãos ou se limpa excessivamente","Verifica coisas repetidamente (porta, mochila)","Precisa de simetria ou ordem (tudo no lugar certo)","Conta, repete ou toca de forma ritualística","Tem medo de contaminação ou germes","Tem pensamentos ruins intrusivos que a assustam","Fica muito aflita se impedida de fazer o ritual","Os rituais tomam muito tempo do dia","Pede reasseguramento repetidamente","As obsessões e compulsões atrapalham a rotina",
+    ]}],
+  },
+  "j26-169": {
+    icon: ShieldAlert, gradient: "from-slate-500 to-blue-700", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Rastreio de TEPT na criança após evento traumático (maior = mais sintomas). Encaminhar para avaliação especializada. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "TEPT infantil (maior = mais sintomas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sintomas pós-trauma", color: "text-slate-600 dark:text-slate-300", items: [
+      "Revive o evento em brincadeiras repetitivas","Tem pesadelos (sobre o evento ou não)","Fica muito aflita com lembranças do ocorrido","Evita lugares, pessoas ou assuntos que lembram o evento","Regrediu em comportamentos (sono, banheiro, fala)","Está mais irritada ou tem crises","Está mais assustada e sobressaltada (hipervigilância)","Tem dificuldade de dormir","Está mais retraída ou “desligada”","Perdeu interesse em brincar ou nas atividades","Tem queixas físicas sem causa","As mudanças surgiram após um evento marcante",
+    ]}],
+  },
+  "j26-170": {
+    icon: Activity, gradient: "from-fuchsia-500 to-purple-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Triagem de episódio maníaco/hipomaníaco (maior = mais sintomas). Diferencia de TDAH e TOD. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Mania (maior = mais sintomas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sintomas maníacos", color: "text-fuchsia-600 dark:text-fuchsia-400", items: [
+      "Tem períodos de humor muito elevado ou eufórico","Sente-se grandiosa (acha que pode tudo)","Dorme muito menos sem sentir cansaço","Fala muito rápido e sem parar","Tem pensamentos acelerados (pula de ideia)","Fica muito agitada e acelerada","Fica desinibida (faz coisas impróprias)","Tem aumento anormal de energia","Faz vários projetos grandiosos ao mesmo tempo","Toma riscos sem medir as consequências","Fica muito irritada ou explosiva nesses períodos","Esses períodos são diferentes do jeito habitual dela",
+    ]}],
+  },
+  "j26-171": {
+    icon: ShieldAlert, gradient: "from-purple-600 to-slate-800", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Rastreio de sintomas atenuados de psicose (risco ultra-alto) — maior = mais sintomas. Exige avaliação psiquiátrica especializada. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Risco psicótico (maior = mais sintomas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sintomas atenuados", color: "text-purple-600 dark:text-purple-400", items: [
+      "Tem percepções incomuns (ouve ou vê coisas que outros não)","Tem ideias estranhas ou mágicas","Desconfia demais dos outros (acha que querem prejudicá-lo)","Tem pensamentos confusos ou desorganizados","Isolou-se intensamente","Caiu muito o funcionamento (escola, higiene)","Tem fala estranha ou difícil de seguir","Acha que tem poderes ou missões especiais","Sente que algo mudou em si ou no mundo","Tem afeto embotado ou estranho","Tem medo intenso sem motivo claro","As mudanças preocupam a família ou a escola",
+    ]}],
+  },
+  "j26-172": {
+    icon: ShieldAlert, gradient: "from-rose-500 to-red-600", instruction:
+      "Aplicação com privacidade e sem julgamento. Marque a frequência de cada item. Responda com sinceridade.",
+    infoBox: "Rastreio de uso de álcool e drogas, SEM julgamento e com privacidade (maior = mais risco). Resultados positivos exigem abordagem clínica e suporte. Não é diagnóstico.",
+    labels: FREQ_LABELS, totalLabel: "Uso de substâncias (maior = mais risco)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Uso de álcool e drogas", color: "text-rose-600 dark:text-rose-400", items: [
+      "Usou álcool","Usou maconha","Usou cigarro ou vape","Usou cocaína ou crack","Usou outras drogas","Usou medicamentos sem prescrição para “viajar”","Usou sozinho(a)","Usou para lidar com problemas ou emoções","Familiares ou amigos se preocuparam com o uso","Teve problemas (escola, briga, lei) por causa do uso","Tentou parar e não conseguiu","O uso vem aumentando",
+    ]}],
+  },
+  "j26-173": {
+    icon: Sparkles, gradient: "from-indigo-500 to-purple-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Rastreio de sintomas dissociativos (maior = mais sintomas). Diferenciar de epilepsia, fantasia normal e psicose. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Dissociação (maior = mais sintomas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sintomas dissociativos", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "“Vai embora” na própria cabeça (desliga do ambiente)","Tem lapsos de memória de coisas que fez","Age como se fosse outra pessoa às vezes","Tem amnésia de episódios ou eventos","Sente-se “fora do próprio corpo”","Sente o mundo como irreal ou estranho","Tem mudanças bruscas de comportamento","Por momentos, não reconhece pessoas ou lugares conhecidos","Tem fantasias muito intensas (refúgio)","Olha “para o nada” por períodos (diferente de crise epiléptica)","Nega coisas que claramente fez","Os episódios preocupam a família",
+    ]}],
+  },
+  "j26-174": {
+    icon: ClipboardList, gradient: "from-slate-500 to-gray-700", instruction:
+      "Para cada frase, marque o quanto descreve você. Responda com sinceridade. Responda todos os itens.",
+    infoBox: "Avalia traços de personalidade emergentes (maior = mais desadaptativos). Na adolescência são traços, não diagnóstico fechado. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Traços desadaptativos (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Traços de personalidade", color: "text-slate-600 dark:text-slate-300", items: [
+      "Sou excessivamente perfeccionista","Sou muito impulsivo(a)","Evito relações por medo de rejeição","Dependo demais dos outros para decidir","Tenho necessidade excessiva de admiração","Tenho dificuldade de controlar a raiva","Tenho relações instáveis (de 8 ou 80)","Tenho medo intenso de abandono","Tenho uma autoimagem instável","Sou excessivamente desconfiado(a)","Tenho dificuldade de me colocar no lugar do outro","Esses traços me causam sofrimento ou prejuízo nas relações",
+    ]}],
+  },
+  "j26-175": {
+    icon: Heart, gradient: "from-pink-500 to-rose-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a inteligência emocional (maior = mais desenvolvida). Orienta a educação socioemocional. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Inteligência emocional (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Competências socioemocionais", color: "text-pink-600 dark:text-pink-400", items: [
+      "Reconhece as próprias emoções","Nomeia o que está sentindo","Reconhece as emoções dos outros","Demonstra empatia","Consegue se acalmar quando alterada","Expressa as emoções de forma adequada","Lida bem com frustrações","Resolve conflitos sem agredir","Pede ajuda quando precisa","Adapta a reação ao contexto","Anima-se e motiva a si mesma","Mantém boas relações com os colegas",
+    ]}],
+  },
+  "j26-176": {
+    icon: Sparkles, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia resiliência e fatores protetores (maior = mais protegida). Orienta o plano terapêutico. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Resiliência (maior = mais protegida)", bands: DEV_BANDS,
+    domains: [{ name: "Fatores protetores", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Tem um vínculo seguro com um cuidador","Tem ao menos um adulto de confiança","Sente-se apoiada pela escola","Tem amigos ou rede de apoio","Acredita que pode superar dificuldades","Tem um senso de propósito ou sonhos","Recupera-se após situações difíceis","Pede e aceita ajuda","Tem autoestima razoável","Consegue ver o lado bom das coisas","Tem rotinas e estrutura que a apoiam","Tem estratégias para lidar com o estresse",
+    ]}],
+  },
+  "j26-177": {
+    icon: ShieldAlert, gradient: "from-slate-600 to-blue-800", instruction:
+      "Para cada frase, marque o quanto combina com você. Responda com sinceridade. Responda todos os itens.",
+    infoBox: "Rastreio de TEPT no adolescente (maior = mais sintomas). Encaminhar para avaliação especializada. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "TEPT adolescente (maior = mais sintomas)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sintomas pós-trauma", color: "text-slate-600 dark:text-slate-300", items: [
+      "Revivo o evento (memórias, flashbacks)","Tenho pesadelos sobre o ocorrido","Fico muito aflito(a) com lembranças","Evito lugares, pessoas ou assuntos ligados ao evento","Sinto-me emocionalmente entorpecido(a)","Estou sempre “em alerta” (hipervigilância)","Assusto-me com facilidade","Tenho dificuldade de dormir","Tenho dificuldade de concentração","Sinto culpa ou vergonha ligadas ao evento","Estou mais irritado(a) ou agressivo(a)","Os sintomas surgiram após um evento traumático",
+    ]}],
+  },
+  "j26-178": {
+    icon: ShieldAlert, gradient: "from-red-600 to-rose-800", instruction:
+      "Avaliação clínica estruturada, conduzida com acolhimento. Marque cada item conforme avaliado. Responda todos os itens.",
+    infoBox: "Avaliação estruturada de risco de suicídio. Itens positivos — sobretudo plano, intenção, acesso a meios ou tentativa prévia — exigem ação imediata de segurança e podem indicar internação. Urgência: SAMU 192, CVV 188. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Risco de suicídio (avaliar segurança já)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Avaliação de risco", color: "text-red-600 dark:text-red-400", items: [
+      "Tem pensamentos de morte ou de não querer viver","Pensa ativamente em se matar (ideação)","Tem um plano de como faria","Tem acesso aos meios (arma, medicação, etc.)","Tem intenção de agir","Já tentou se matar antes","Tem automutilação associada","Expressa desesperança intensa","Fez preparativos ou despedidas","Tem fatores de estresse atuais graves","Tem poucos fatores protetores ou apoio","Está sob efeito de álcool/drogas ou com impulsividade alta",
+    ]}],
+  },
+  "j26-179": {
+    icon: Activity, gradient: "from-cyan-500 to-blue-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia enurese e encoprese (maior = mais frequente/impactante). Afastar causas clínicas. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Enurese e encoprese (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [
+      { name: "Enurese (urina)", color: "text-cyan-600 dark:text-cyan-400", items: [
+        "Faz xixi na cama à noite","Faz xixi na roupa durante o dia","Acontece várias vezes por semana","Tem urgência ou perdas de urina","Já tem idade para ter controle (≥5 anos)","Causa constrangimento ou sofrimento",
+      ]},
+      { name: "Encoprese (fezes)", color: "text-blue-600 dark:text-blue-400", items: [
+        "Suja a roupa de fezes","Retém as fezes (segura)","Tem constipação associada","Esconde a roupa suja","Já tem idade para ter controle (≥4 anos)","Causa constrangimento ou conflito",
+      ]},
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
