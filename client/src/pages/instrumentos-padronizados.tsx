@@ -115,6 +115,20 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
           <span className="opacity-70">Uso pelo neuropediatra:</span> {NEUROPED_USE_LABEL[inst.neuropediatricUse]}
         </div>
 
+        {/* Nota SATEPSI (vermelho quando desfavorável) */}
+        {inst.satepsiNote && (
+          <div
+            className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold leading-snug ${
+              inst.satepsiUnfavorable
+                ? "border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+                : "border-border bg-muted/40 text-muted-foreground"
+            }`}
+          >
+            {inst.satepsiUnfavorable ? "⚠️ " : ""}
+            <span className="font-bold">SATEPSI:</span> {inst.satepsiNote}
+          </div>
+        )}
+
         {/* Referência */}
         <p className="text-[11px] italic text-muted-foreground">{inst.reference}</p>
 

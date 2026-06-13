@@ -82,6 +82,10 @@ export interface StandardizedInstrument {
   reference: string;
   /** Texto genérico para citar no laudo — SEM conteúdo proprietário. */
   citation: string;
+  /** Observação sobre status no SATEPSI (favorável/desfavorável/não submetido). */
+  satepsiNote?: string;
+  /** true = SATEPSI desfavorável → uso NÃO recomendado (alerta vermelho). */
+  satepsiUnfavorable?: boolean;
 }
 
 export const standardizedInstruments: StandardizedInstrument[] = [
@@ -288,9 +292,10 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     restricted: true,
     neuropediatricUse: "requer_psicologo",
     evidenceLevel: "amplo",
-    reference: "Wechsler — Pearson Clinical (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    reference: "Wechsler — Pearson Clinical (Brasil). WPPSI-IV é produto Pearson; no Brasil há edições WPPSI-III/IV — confirmar a vigente.",
     citation:
       "Perfil cognitivo pré-escolar avaliado pela WPPSI-IV por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Pearson).",
+    satepsiNote: "Confirmar a edição vigente (WPPSI-III/IV) e o status no SATEPSI antes do uso.",
   },
   {
     id: "nepsy-ii",
@@ -298,18 +303,19 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     fullName: "Avaliação Neuropsicológica do Desenvolvimento — 2ª edição",
     publisher: "Pearson",
     domains: ["cognicao", "atencao", "aprendizagem"],
-    ageRange: "Infância e adolescência (catálogo neuropsicológico)",
+    ageRange: "3 a 16 anos",
     clinicalIndication:
-      "Avaliação neuropsicológica por domínios: atenção/função executiva, linguagem, memória, percepção e sensório-motor.",
+      "Avaliação neuropsicológica por domínios: atenção/função executiva, linguagem, memória e aprendizagem, processamento visuoespacial, sensório-motor e percepção social.",
     generalUse:
-      "Bateria neuropsicológica aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual e SATEPSI.",
-    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
+      "Bateria neuropsicológica aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual.",
+    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico.",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
     evidenceLevel: "validado",
-    reference: "Korkman, Kirk & Kemp — Pearson Clinical (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    reference: "Korkman, Kirk & Kemp — Pearson / Casa do Psicólogo (Brasil).",
     citation:
       "Perfil neuropsicológico avaliado pela NEPSY-II por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Pearson).",
+    satepsiNote: "Disponível no Brasil (Pearson/Casa do Psicólogo); ainda NÃO submetido ao SATEPSI — uso como instrumento complementar.",
   },
   {
     id: "beery-vmi",
@@ -326,9 +332,10 @@ export const standardizedInstruments: StandardizedInstrument[] = [
     restricted: false,
     neuropediatricUse: "integra_relatorio",
     evidenceLevel: "validado",
-    reference: "Beery & Beery — Pearson Clinical (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    reference: "Beery & Beery — Pearson Clinical. Há adaptação brasileira (Instituto de Psicologia, UnB).",
     citation:
       "Integração visuomotora avaliada pelo Beery VMI em [data], conforme relatório de profissional habilitado. Interpretação conforme manual original (Pearson).",
+    satepsiNote: "Possui estudo de adaptação/validação brasileira (UnB). Confirmar a versão e o status no SATEPSI antes do uso.",
   },
   {
     id: "figura-rey",
@@ -341,32 +348,35 @@ export const standardizedInstruments: StandardizedInstrument[] = [
       "Organização visuoespacial, planejamento perceptual e memória visual de curto/longo prazo.",
     generalUse:
       "Tarefa de cópia e reprodução de memória, aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual e SATEPSI.",
-    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
+    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico.",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
     evidenceLevel: "validado",
-    reference: "Rey & Osterrieth — Hogrefe (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    reference: "Rey & Osterrieth — edições no Brasil por Hogrefe e Casa do Psicólogo.",
     citation:
-      "Organização visuoespacial e memória visual avaliadas pela Figura Complexa de Rey por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Hogrefe).",
+      "Organização visuoespacial e memória visual avaliadas pela Figura Complexa de Rey por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original.",
+    satepsiNote: "Classificado como DESFAVORÁVEL no SATEPSI — uso NÃO recomendado na prática profissional. Mantido aqui apenas como referência histórica/literatura.",
+    satepsiUnfavorable: true,
   },
   {
     id: "stroop",
-    name: "Teste de Stroop",
-    fullName: "Teste de Stroop (atenção seletiva e controle inibitório)",
+    name: "Stroop (Cores e Palavras)",
+    fullName: "Teste de Stroop — Teste de Cores e Palavras",
     publisher: "Hogrefe",
     domains: ["atencao", "cognicao"],
-    ageRange: "Idade escolar e adolescência (catálogo neuropsicológico)",
+    ageRange: "Indivíduos alfabetizados (ampla faixa etária)",
     clinicalIndication:
       "Atenção seletiva, controle inibitório e flexibilidade — funções executivas relevantes em TDAH.",
     generalUse:
-      "Tarefa de interferência cor-palavra, aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual e SATEPSI.",
-    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico (SATEPSI).",
+      "Tarefa de interferência cor-palavra (3 cartões), aplicada e interpretada por psicóloga(o)/neuropsicóloga(o), conforme manual.",
+    professionalRestriction: "Restrito a psicóloga(o); uso neuropsicológico.",
     restricted: true,
     neuropediatricUse: "requer_psicologo",
     evidenceLevel: "validado",
-    reference: "Stroop (variantes padronizadas) — Hogrefe (Brasil). Confirmar edição/disponibilidade no catálogo oficial.",
+    reference: "Stroop (1935); edição brasileira por Hogrefe (Teste de Cores e Palavras).",
     citation:
       "Controle inibitório/atenção seletiva avaliados pelo Teste de Stroop por psicóloga(o) habilitada(o) em [data], conforme relatório anexo. Interpretação conforme manual original (Hogrefe).",
+    satepsiNote: "Versões padronizadas em uso clínico cadastradas no SATEPSI; privativo de psicóloga(o).",
   },
 ];
 
