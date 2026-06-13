@@ -2840,6 +2840,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── TEA — Evolução (j26-211 a j26-218) ──
   {
     id: "j26-211",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Evolução de Comunicação Social TEA (J26-211)",
     fullName: "Registro Evolutivo Trimestral de Comunicação Social em Transtorno do Espectro Autista",
     ageMin: 18,
@@ -2852,6 +2853,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-212",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamentos Restritivos TEA Baseline vs Atual (J26-212)",
     fullName: "Checklist de Comportamentos Restritivos e Repetitivos em TEA — Comparação Temporal",
     ageMin: 18,
@@ -2864,6 +2866,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-213",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Habilidades Adaptativas TEA Trimestral (J26-213)",
     fullName: "Monitorização de Habilidades Adaptativas em TEA — Atividades de Vida Diária Trimestrais",
     ageMin: 24,
@@ -2876,6 +2879,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-214",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Integração Sensorial TEA Pós-TO (J26-214)",
     fullName: "Escala de Integração Sensorial em TEA — Evolução Pós-Intervenção de Terapia Ocupacional",
     ageMin: 18,
@@ -2888,6 +2892,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-215",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Crises de Desregulação TEA Antes vs Depois (J26-215)",
     fullName: "Registro de Frequência de Crises de Desregulação Emocional em TEA — Comparação Temporal",
     ageMin: 18,
@@ -2900,6 +2905,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-216",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Contato Visual e Atenção Conjunta TEA (J26-216)",
     fullName: "Acompanhamento de Contato Visual e Atenção Conjunta em TEA — Monitorização Sequencial",
     ageMin: 18,
@@ -2912,6 +2918,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-217",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Brincadeira Funcional e Simbólica TEA (J26-217)",
     fullName: "Evolução de Brincadeira Funcional e Simbólica em TEA — Acompanhamento Trimestral",
     ageMin: 18,
@@ -2924,6 +2931,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-218",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Impressão Global dos Pais TEA (J26-218)",
     fullName: "Resposta ao Tratamento em TEA — Impressão Global de Melhora Relatada pelos Pais",
     ageMin: 18,
@@ -2938,6 +2946,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── TDAH — Evolução (j26-219 a j26-226) ──
   {
     id: "j26-219",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — SNAP-IV Monitorização TDAH (J26-219)",
     fullName: "SNAP-IV de Monitorização — Comparação Pré e Pós-Medicação em TDAH",
     ageMin: 60,
@@ -2950,6 +2959,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-220",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Funções Executivas TDAH Cotidiano (J26-220)",
     fullName: "Evolução de Funções Executivas no Cotidiano em TDAH — Acompanhamento Trimestral",
     ageMin: 72,
@@ -2962,6 +2972,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-221",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Desempenho Escolar TDAH Trimestral (J26-221)",
     fullName: "Registro de Desempenho Escolar Trimestral em Crianças com TDAH",
     ageMin: 72,
@@ -2974,6 +2985,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-222",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Efeitos do Metilfenidato/Lisdexanfetamina (J26-222)",
     fullName: "Monitorização de Efeitos do Metilfenidato e Lisdexanfetamina em TDAH",
     ageMin: 60,
@@ -2986,6 +2998,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-223",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Regulação Emocional TDAH Evolução (J26-223)",
     fullName: "Evolução de Regulação Emocional em TDAH — Acompanhamento Sequencial",
     ageMin: 72,
@@ -2998,6 +3011,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-224",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sono e Apetite TDAH Tratamento (J26-224)",
     fullName: "Acompanhamento de Sono e Apetite Durante Tratamento de TDAH com Estimulantes",
     ageMin: 60,
@@ -3010,6 +3024,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-225",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Feedback do Professor TDAH Sala (J26-225)",
     fullName: "Feedback do Professor sobre Evolução Comportamental em Sala — TDAH",
     ageMin: 60,
@@ -3022,6 +3037,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-226",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Impressão Global Melhora TDAH CGI (J26-226)",
     fullName: "Impressão Global de Melhora Adaptada para TDAH — Versão Clínica e de Pais",
     ageMin: 60,
@@ -3036,6 +3052,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── Epilepsia — Evolução (j26-227 a j26-232) ──
   {
     id: "j26-227",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Diário de Frequência de Crises Epilepsia (J26-227)",
     fullName: "Diário de Frequência de Crises Epilépticas — Comparação Mensal",
     ageMin: 0,
@@ -3048,6 +3065,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-228",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Efeitos de Antiepilépticos Monitorização (J26-228)",
     fullName: "Monitorização de Efeitos de Antiepilépticos — Eficácia e Efeitos Colaterais",
     ageMin: 0,
@@ -3060,6 +3078,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-229",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Evolução Cognitiva Epilepsia (J26-229)",
     fullName: "Evolução Cognitiva em Epilepsia — Acompanhamento de Memória, Atenção e Aprendizagem",
     ageMin: 48,
@@ -3072,6 +3091,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-230",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Qualidade de Vida Epilepsia Semestral (J26-230)",
     fullName: "Qualidade de Vida em Epilepsia — Comparação Semestral",
     ageMin: 48,
@@ -3084,6 +3104,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-231",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Adesão Medicamentosa Epilepsia (J26-231)",
     fullName: "Adesão Medicamentosa em Epilepsia — Barreiras e Estratégias de Melhora",
     ageMin: 0,
@@ -3096,6 +3117,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-232",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — EEG Evolutivo Achados Sequenciais (J26-232)",
     fullName: "Registro de EEG Evolutivo — Achados Sequenciais em Epilepsia",
     ageMin: 0,
@@ -3110,6 +3132,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── Linguagem — Evolução (j26-233 a j26-237) ──
   {
     id: "j26-233",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Evolução Vocabulário Expressivo Trimestral (J26-233)",
     fullName: "Evolução de Vocabulário Expressivo — Acompanhamento Trimestral Pós-Fonoterapia",
     ageMin: 12,
@@ -3122,6 +3145,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-234",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Inteligibilidade de Fala Monitorização (J26-234)",
     fullName: "Monitorização de Inteligibilidade de Fala — Evolução Pós-Fonoterapia",
     ageMin: 24,
@@ -3134,6 +3158,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-235",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Linguagem Pragmática Acompanhamento (J26-235)",
     fullName: "Acompanhamento de Linguagem Pragmática — Evolução de Uso Social da Linguagem",
     ageMin: 24,
