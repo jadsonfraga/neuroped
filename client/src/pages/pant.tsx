@@ -3,6 +3,7 @@ import {
   pantScales, pantDomains, pantLevelLabels, pantLevelColors,
   classifyPantDomain, type PantScale
 } from "@/data/pantScales";
+import { pantExamples } from "@/data/pantExamples";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -330,6 +331,12 @@ export default function PantPage() {
                             <p className="text-sm text-foreground font-medium leading-relaxed">
                               {scale.name}
                             </p>
+                            {pantExamples[scale.number] && (
+                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                <span className="font-semibold text-foreground/70">Ex.:</span>{" "}
+                                {pantExamples[scale.number]}
+                              </p>
+                            )}
                             {/* Show anchor on tap */}
                             {showAnchor === `${scale.number}-${currentAnswer}` && currentAnswer !== undefined && scale.levels[currentAnswer] && (
                               <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed italic">
