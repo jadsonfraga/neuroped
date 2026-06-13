@@ -933,6 +933,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-070",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Anedonia Infantil (J26-070)",
     fullName: "Protocolo de Triagem da Anedonia e Perda de Prazer em Crianças e Adolescentes",
     ageMin: 72,
@@ -945,6 +946,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-071",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ideação Suicida Criança (J26-071)",
     fullName: "Protocolo de Triagem de Ideação Suicida em Crianças de 6 a 12 Anos",
     ageMin: 72,
@@ -969,6 +971,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-073",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Bipolar Triagem Criança (J26-073)",
     fullName: "Protocolo de Triagem de Transtorno Bipolar em Crianças e Adolescentes",
     ageMin: 72,
@@ -981,6 +984,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-074",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Depressão Sazonal Infantil (J26-074)",
     fullName: "Protocolo de Triagem de Variação Sazonal de Humor em Crianças e Adolescentes",
     ageMin: 60,
@@ -993,6 +997,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-075",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Luto e Perda Infantil (J26-075)",
     fullName: "Protocolo de Avaliação do Processo de Luto em Crianças e Adolescentes",
     ageMin: 36,
@@ -1005,6 +1010,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-076",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Autoestima Infantil (J26-076)",
     fullName: "Protocolo de Avaliação da Autoestima e Autoeficácia em Crianças Escolares",
     ageMin: 60,
@@ -1017,6 +1023,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-077",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Desesperança Infantil (J26-077)",
     fullName: "Protocolo de Avaliação da Desesperança e Pensamento Pessimista em Crianças",
     ageMin: 72,
@@ -1029,6 +1036,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-078",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Depressão Pós-COVID Infantil (J26-078)",
     fullName: "Protocolo de Rastreio de Sintomas Depressivos Pós-COVID-19 em Crianças e Adolescentes",
     ageMin: 48,
@@ -1041,6 +1049,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-079",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sintomas Depressivos Físicos (J26-079)",
     fullName: "Protocolo de Avaliação de Sintomas Somáticos da Depressão em Crianças",
     ageMin: 60,
@@ -1053,6 +1062,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-080",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Depressão Mascarada Adolescente (J26-080)",
     fullName: "Protocolo de Triagem de Depressão Mascarada por Irritabilidade em Adolescentes",
     ageMin: 120,
@@ -1065,6 +1075,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-081",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Impacto Funcional Depressão (J26-081)",
     fullName: "Protocolo de Avaliação do Impacto Funcional da Depressão em Crianças e Adolescentes",
     ageMin: 60,

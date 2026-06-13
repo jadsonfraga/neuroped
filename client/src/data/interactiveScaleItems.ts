@@ -2362,6 +2362,372 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       },
     ],
   },
+
+  // ============================================================
+  // LOTE 6 — Categoria 6: Depressão e Humor (autoral)
+  // (J26-072 — Diário de Humor — segue como ferramenta diária, não escala)
+  // ============================================================
+
+  // ---- J26-070 — Anedonia Infantil ----
+  "j26-070": {
+    icon: Heart,
+    gradient: "from-sky-500 to-blue-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem da anedonia — perda de prazer e interesse (maior escore = mais intensa). Sintoma central da depressão. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Anedonia (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Perda de prazer e interesse",
+        color: "text-sky-600 dark:text-sky-400",
+        items: [
+          "Perdeu o interesse pelas coisas de que gostava",
+          "Não se anima nem com brincadeiras ou atividades favoritas",
+          "Parece sem graça, apática",
+          "Não demonstra prazer ao receber algo bom",
+          "Recusa convites e passeios que antes adorava",
+          "Brinca menos do que antes",
+          "Não ri nem se diverte como antes",
+          "Isola-se, fica no quarto, sem querer companhia",
+          "Diz que “nada é legal” ou “não tem graça”",
+          "Perdeu o entusiasmo pela escola e pelos amigos",
+          "Tem pouca energia para fazer as coisas",
+          "Mostra-se indiferente na maior parte do dia",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-071 — Ideação Suicida na Criança (sensível) ----
+  "j26-071": {
+    icon: ShieldAlert,
+    gradient: "from-red-600 to-rose-700",
+    instruction:
+      "Aplicação clínica, com linguagem acolhedora e sem julgamento. Marque o que a criança expressa ou apresenta. Responda todos os itens.",
+    infoBox:
+      "Rastreio de ideação suicida na criança. QUALQUER resposta positiva exige avaliação imediata de segurança e plano de proteção. Em risco de vida, procure urgência — SAMU 192, CVV 188. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Indicadores de risco (avaliar segurança)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Pensamentos e sinais de risco",
+        color: "text-red-600 dark:text-red-400",
+        items: [
+          "Fala ou pergunta sobre morte com frequência",
+          "Diz que queria não existir ou sumir",
+          "Diz que queria estar morta",
+          "Já disse querer se machucar para morrer",
+          "Desenha ou brinca com temas de morte",
+          "Diz que a família ficaria melhor sem ela",
+          "Já fez algum gesto de se machucar",
+          "Relata pensamentos de se machucar",
+          "Tem acesso a meios perigosos em casa",
+          "Fala de um plano para se machucar",
+          "Despede-se ou dá coisas como se fosse partir",
+          "Mostra desesperança intensa sobre o futuro",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-073 — Triagem de Bipolaridade ----
+  "j26-073": {
+    icon: Activity,
+    gradient: "from-fuchsia-500 to-purple-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem de bipolaridade (maior escore = mais sintomas), avaliando os dois polos do humor. Ajuda a diferenciar de TDAH e TOD; o diagnóstico exige avaliação especializada. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sintomas de oscilação do humor",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Elevação / mania",
+        color: "text-fuchsia-600 dark:text-fuchsia-400",
+        items: [
+          "Tem períodos de humor muito elevado ou eufórico",
+          "Fica extremamente agitada e acelerada",
+          "Dorme muito menos sem sentir cansaço",
+          "Fala muito rápido e pula de assunto",
+          "Tem ideias de grandeza (acha que pode tudo)",
+          "Toma riscos sem medir as consequências",
+        ],
+      },
+      {
+        name: "Depressão / instabilidade",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Tem períodos de tristeza profunda",
+          "Perde o interesse pelas coisas",
+          "Fica irritada e explosiva sem motivo claro",
+          "Tem mudanças bruscas de humor no mesmo dia",
+          "Alterna energia muito alta e depois muito baixa",
+          "O humor oscila de forma extrema e cíclica",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-074 — Variação Sazonal de Humor ----
+  "j26-074": {
+    icon: Sparkles,
+    gradient: "from-amber-500 to-orange-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem de variação sazonal do humor (maior escore = padrão mais marcado). Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Padrão sazonal do humor",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Variação sazonal",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "O humor piora em épocas específicas do ano",
+          "Fica mais triste ou desanimada em certos meses",
+          "A energia cai em determinadas épocas",
+          "Dorme mais ou pior nessas épocas",
+          "O apetite muda conforme a época do ano",
+          "Isola-se mais em certos períodos",
+          "Cai o rendimento escolar nessas épocas",
+          "Melhora espontaneamente quando a época passa",
+          "O padrão se repete ano após ano",
+          "Tem mais irritabilidade nessas épocas",
+          "Perde o interesse pelas atividades nesses períodos",
+          "A variação acompanha mudanças de clima ou de luz",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-075 — Luto e Perda ----
+  "j26-075": {
+    icon: Heart,
+    gradient: "from-slate-500 to-blue-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Distingue o luto normal do luto complicado (maior escore = mais sinais de complicação). Escore alto e persistente indica suporte especializado. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sinais de luto complicado",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Processo de luto",
+        color: "text-slate-600 dark:text-slate-300",
+        items: [
+          "A tristeza pela perda não diminui com o tempo",
+          "Recusa-se a aceitar a perda",
+          "Evita tudo o que lembra a pessoa perdida",
+          "Tem raiva intensa relacionada à perda",
+          "Regrediu em comportamentos (sono, banheiro, fala)",
+          "Tem culpa intensa (“a culpa é minha”)",
+          "Tem medo de perder outras pessoas",
+          "Teve queda no rendimento escolar",
+          "Tem pesadelos ou pensamentos repetitivos sobre a perda",
+          "Isola-se de amigos e da família",
+          "Apresenta queixas físicas ligadas ao luto",
+          "O luto atrapalha gravemente a rotina há muito tempo",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-076 — Autoestima Infantil (positiva; maior = melhor) ----
+  "j26-076": {
+    icon: Heart,
+    gradient: "from-emerald-500 to-teal-600",
+    instruction:
+      "Para cada frase, marque o quanto combina com a criança. Pode ser respondido pela própria criança/adolescente. Responda todos os itens.",
+    infoBox:
+      "Avalia a autoestima (maior escore = mais positiva). Escore baixo pede atenção e suporte emocional. Triagem, não diagnóstico.",
+    labels: ["Discordo", "Às vezes / mais ou menos", "Concordo"],
+    totalLabel: "Autoestima (maior = mais positiva)",
+    bands: DEV_BANDS,
+    domains: [
+      {
+        name: "Autoestima e autoeficácia",
+        color: "text-emerald-600 dark:text-emerald-400",
+        items: [
+          "Eu gosto de mim do jeito que sou",
+          "Eu me acho capaz de aprender as coisas",
+          "Eu tenho amigos e me sinto querida",
+          "Eu consigo fazer as coisas que tento",
+          "Eu me sinto bem com a minha aparência",
+          "Eu me sinto importante para a minha família",
+          "Eu me orgulho das minhas conquistas",
+          "Eu acredito que posso melhorar quando erro",
+          "Eu me sinto bem na escola",
+          "Eu me sinto seguro(a) para tentar coisas novas",
+          "Eu me sinto tão capaz quanto os outros",
+          "Eu acho que sou uma boa pessoa",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-077 — Desesperança (sensível) ----
+  "j26-077": {
+    icon: ShieldAlert,
+    gradient: "from-slate-600 to-gray-800",
+    instruction:
+      "Para cada frase, marque o quanto combina com você. Responda com sinceridade. Responda todos os itens.",
+    infoBox:
+      "A desesperança é marcador importante de risco de suicídio, além da tristeza (maior escore = mais desesperança). Escore alto exige avaliação de segurança. Urgência: SAMU 192, CVV 188. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Desesperança (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Pensamento pessimista",
+        color: "text-slate-600 dark:text-slate-300",
+        items: [
+          "Acha que o futuro não vai melhorar",
+          "Acredita que nada do que faz adianta",
+          "Sente que as coisas ruins nunca vão acabar",
+          "Não tem esperança nas próprias capacidades",
+          "Acha que nunca vai conseguir o que quer",
+          "Sente que desistiu de tentar",
+          "Acredita que não vale a pena se esforçar",
+          "Vê o futuro como vazio ou sem sentido",
+          "Acha que os problemas não têm solução",
+          "Sente que ninguém pode ajudar",
+          "Pensa que as coisas só pioram",
+          "Perdeu a vontade de planejar o futuro",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-078 — Sintomas Depressivos Pós-COVID ----
+  "j26-078": {
+    icon: Heart,
+    gradient: "from-blue-500 to-indigo-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreio de sintomas depressivos no contexto pós-pandemia (maior escore = mais intensos). Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sintomas depressivos pós-pandemia",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Humor e funcionamento",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Ficou triste ou desanimada após a pandemia",
+          "Perdeu o interesse pelas atividades",
+          "Tem menos energia do que antes",
+          "Perdeu contato ou amizades",
+          "Não retomou o ritmo escolar",
+          "Dorme mal ou demais",
+          "Mudou o apetite",
+          "Fica mais irritada ou chorosa",
+          "Isola-se no quarto ou nas telas",
+          "Tem queixas físicas (dor, cansaço)",
+          "Fala de forma pessimista sobre si ou o futuro",
+          "O funcionamento geral piorou desde a pandemia",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-079 — Sintomas Somáticos da Depressão ----
+  "j26-079": {
+    icon: Heart,
+    gradient: "from-rose-500 to-pink-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "A depressão na criança costuma se expressar no corpo (maior escore = mais sintomas somáticos). Afaste causas orgânicas e considere o componente emocional. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sintomas somáticos depressivos",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Queixas físicas da depressão",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Tem dor de cabeça frequente",
+          "Sente cansaço o tempo todo",
+          "Tem dor de barriga recorrente",
+          "Perdeu o apetite ou come demais",
+          "Dorme mal (insônia ou sono excessivo)",
+          "Queixa-se de dores pelo corpo",
+          "Tem lentidão de movimentos e de fala",
+          "Fica prostrada, sem energia",
+          "Tem alterações de peso",
+          "Sente um “peso” ou aperto no peito",
+          "As queixas não têm causa médica encontrada",
+          "As queixas físicas vêm junto com tristeza ou desânimo",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-080 — Depressão Mascarada por Irritabilidade ----
+  "j26-080": {
+    icon: Activity,
+    gradient: "from-orange-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "No adolescente, a depressão frequentemente aparece como irritabilidade, não como tristeza (maior escore = mais provável). Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Depressão mascarada (maior = mais provável)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Irritabilidade e retraimento",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Está mais irritado e explosivo que o habitual",
+          "Briga com todo mundo (família, colegas)",
+          "Responde mal e fica “grosso”",
+          "Isola-se no quarto ou nas telas",
+          "Perdeu o interesse pelas coisas",
+          "Está mais cansado e sem energia",
+          "Dorme mal ou demais",
+          "Mudou o apetite",
+          "Caiu o rendimento escolar",
+          "Fala de forma pessimista ou negativa",
+          "Tem baixa autoestima",
+          "A irritabilidade parece esconder uma tristeza de fundo",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-081 — Impacto Funcional da Depressão ----
+  "j26-081": {
+    icon: Activity,
+    gradient: "from-sky-500 to-indigo-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o quanto a depressão prejudica o funcionamento (maior escore = mais impacto). Útil para dimensionar gravidade e acompanhar resposta. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Impacto funcional (maior = mais prejuízo)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Prejuízo no dia a dia",
+        color: "text-sky-600 dark:text-sky-400",
+        items: [
+          "A tristeza atrapalha o desempenho escolar",
+          "Atrapalha as amizades e o convívio",
+          "Atrapalha a relação com a família",
+          "Reduz a participação em atividades ou esportes",
+          "Atrapalha o autocuidado (higiene, alimentação)",
+          "Atrapalha o sono",
+          "Faz faltar à escola",
+          "Reduz a capacidade de se divertir",
+          "Atrapalha a concentração nos estudos",
+          "Reduz a energia para a rotina",
+          "Afeta a vontade de sair de casa",
+          "Compromete o funcionamento geral do dia a dia",
+        ],
+      },
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
