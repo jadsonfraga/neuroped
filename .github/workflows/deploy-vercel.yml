@@ -1,0 +1,126 @@
+name: Deploy Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-vercel:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Validate Vercel secrets
+        run: |
+          missing=0
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not configured in GitHub repository secrets. Configure it to deploy to Vercel."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: TypeScript check
+        run: npm run check
+
+      - name: Validate clinical catalog
+        run: npm run validate:catalog
+
+      - name: Audit access policy
+        run: npm run audit:access
+
+      - name: Audit institutional identity
+        run: npm run audit:identity
+
+      - name: Audit navigation
+        run: npm run audit:navigation
+
+      - name: Audit visual assets
+        run: npm run audit:assets
+
+      - name: Run clinical tests
+        run: npm run test:clinical
+
+      - name: Create deploy sentinel
+        run: |
+          mkdir -p client/public
+          cat > client/public/deploy-check.json <<EOF
+          {
+            "app": "NeuroPed",
+            "provider": "vercel",
+            "branch": "${GITHUB_REF_NAME}",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat client/public/deploy-check.json
+
+      - name: Build client
+        env:
+          NODE_ENV: production
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+        run: npm run build:client
+
+      - name: Verify build output
+        run: |
+          test -d dist/public
+          test -f dist/public/index.html
+          test -f dist/public/deploy-check.json
+          cat dist/public/deploy-check.json
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build with Vercel
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel production
+        id: vercel-deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
+          echo "Vercel deployment: $url"
+
+      - name: Verify public Vercel deploy sentinel
+        run: |
+          url="${{ steps.vercel-deploy.outputs.deployment_url }}"
+          echo "Checking $url/deploy-check.json"
+          curl -fsSL "$url/deploy-check.json" -o /tmp/vercel-deploy-check.json
+          cat /tmp/vercel-deploy-check.json
+          grep "${GITHUB_SHA}" /tmp/vercel-deploy-check.json
