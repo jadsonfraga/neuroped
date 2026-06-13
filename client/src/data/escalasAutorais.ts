@@ -1254,6 +1254,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-094",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Fluência de Leitura (J26-094)",
     fullName: "Protocolo de Avaliação da Fluência de Leitura Oral em Crianças Escolares",
     ageMin: 72,
@@ -1266,6 +1267,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-095",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Padrão de Erros Ortográficos (J26-095)",
     fullName: "Protocolo de Análise Qualitativa dos Erros de Escrita em Crianças",
     ageMin: 72,
@@ -1278,6 +1280,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-096",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Matemática (J26-096)",
     fullName: "Protocolo de Avaliação da Ansiedade Matemática em Crianças e Adolescentes",
     ageMin: 72,
@@ -1290,6 +1293,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-097",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Expressão Escrita (J26-097)",
     fullName: "Protocolo de Avaliação da Expressão Escrita e Disgrafia",
     ageMin: 72,
@@ -1302,6 +1306,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-098",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Habilidades de Estudo (J26-098)",
     fullName: "Protocolo de Avaliação das Habilidades de Estudo e Organização Acadêmica",
     ageMin: 96,
@@ -1314,6 +1319,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-099",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Motivação Escolar (J26-099)",
     fullName: "Protocolo de Avaliação da Motivação Acadêmica Intrínseca e Extrínseca",
     ageMin: 72,
@@ -1326,6 +1332,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-100",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dislexia Risco (J26-100)",
     fullName: "Protocolo de Rastreio de Risco para Dislexia em Crianças de 5 a 8 Anos",
     ageMin: 60,
@@ -1338,6 +1345,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-101",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Discalculia Triagem (J26-101)",
     fullName: "Protocolo de Triagem de Discalculia e Dificuldades Específicas em Matemática",
     ageMin: 72,
@@ -1350,6 +1358,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-102",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dificuldade de Cópia e Ditado (J26-102)",
     fullName: "Protocolo de Avaliação de Habilidades de Cópia e Ditado em Crianças",
     ageMin: 72,
@@ -1362,6 +1371,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-103",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comportamento Dever de Casa (J26-103)",
     fullName: "Protocolo de Avaliação do Comportamento frente ao Dever de Casa",
     ageMin: 72,
@@ -1374,6 +1384,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-104",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Inclusão Escolar TEA/TDAH (J26-104)",
     fullName: "Protocolo de Avaliação do Sucesso da Inclusão Escolar em Crianças com NEE",
     ageMin: 48,
@@ -1386,6 +1397,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-105",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Avaliação Pré-ENEM (J26-105)",
     fullName: "Protocolo de Avaliação Neuropsicológica de Necessidades Especiais para ENEM",
     ageMin: 168,
