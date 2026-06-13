@@ -3171,6 +3171,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-236",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Fluência Verbal Pós-Fonoterapia (J26-236)",
     fullName: "Evolução de Fluência Verbal Pós-Fonoterapia — Acompanhamento de Gagueira",
     ageMin: 36,
@@ -3183,6 +3184,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-237",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Marcos de Comunicação Atingidos (J26-237)",
     fullName: "Registro de Marcos de Comunicação Atingidos — Evolução Longitudinal",
     ageMin: 0,
@@ -3197,6 +3199,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── Motor/PC — Evolução (j26-238 a j26-243) ──
   {
     id: "j26-238",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — GMFCS Reclassificação Anual (J26-238)",
     fullName: "Evolução de GMFCS — Reclassificação Anual em Paralisia Cerebral",
     ageMin: 0,
@@ -3209,6 +3212,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-239",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Amplitude de Movimento Pós-Fisioterapia (J26-239)",
     fullName: "Monitorização de Amplitude de Movimento Pós-Fisioterapia em Paralisia Cerebral",
     ageMin: 0,
@@ -3221,6 +3225,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-240",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Função Manual MACS Evolutivo (J26-240)",
     fullName: "Evolução de Função Manual em PC — MACS Evolutivo Anual",
     ageMin: 48,
@@ -3233,6 +3238,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-241",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Espasticidade Ashworth Sequencial (J26-241)",
     fullName: "Registro de Espasticidade Evolutiva — Escala de Ashworth Modificada Sequencial",
     ageMin: 0,
@@ -3245,6 +3251,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-242",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Postura e Marcha Acompanhamento (J26-242)",
     fullName: "Acompanhamento de Postura e Marcha em Paralisia Cerebral — Evolução Funcional",
     ageMin: 12,
@@ -3257,6 +3264,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-243",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Toxina Botulínica Antes e Depois (J26-243)",
     fullName: "Resposta à Toxina Botulínica em PC — Registro Antes e Depois da Aplicação",
     ageMin: 12,
@@ -3271,6 +3279,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── Aprendizagem — Evolução (j26-244 a j26-248) ──
   {
     id: "j26-244",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Leitura Fluência e Compreensão Trimestral (J26-244)",
     fullName: "Evolução de Leitura — Fluência e Compreensão Trimestral Pós-Intervenção",
     ageMin: 72,
@@ -3283,6 +3292,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-245",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Escrita Amostras Comparativas (J26-245)",
     fullName: "Monitorização de Escrita — Comparação de Amostras de Produção Escrita",
     ageMin: 72,
@@ -3295,6 +3305,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-246",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Matemática Pós-Psicopedagogia (J26-246)",
     fullName: "Evolução Matemática Pós-Intervenção Psicopedagógica — Acompanhamento Trimestral",
     ageMin: 72,
@@ -3307,6 +3318,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-247",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Adaptação Curricular Feedback Escolar (J26-247)",
     fullName: "Feedback Escolar de Adaptação Curricular — Evolução e Adesão da Escola",
     ageMin: 60,
@@ -3319,6 +3331,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-248",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Metas PEI Plano Educacional (J26-248)",
     fullName: "Registro de Metas do PEI — Plano Educacional Individualizado — Evolução Trimestral",
     ageMin: 48,
@@ -3333,6 +3346,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── Saúde Mental — Evolução (j26-249 a j26-254) ──
   {
     id: "j26-249",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ansiedade Pós-Terapia Comparativo (J26-249)",
     fullName: "Monitorização de Ansiedade Pós-Terapia — Comparação SCARED/GAD-7 Sequencial",
     ageMin: 72,
@@ -3345,6 +3359,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-250",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Depressão CDI-2/PHQ-A Sequencial (J26-250)",
     fullName: "Evolução de Sintomas Depressivos — CDI-2 ou PHQ-A Sequencial Comparativo",
     ageMin: 84,
@@ -3357,6 +3372,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-251",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Autolesão e Ideação Suicida Evolutivo (J26-251)",
     fullName: "Registro Evolutivo de Autolesão e Ideação Suicida — Monitorização Longitudinal",
     ageMin: 108,
@@ -3369,6 +3385,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-252",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TOC Resposta ao Tratamento (J26-252)",
     fullName: "Monitorização de TOC — Resposta ao Tratamento com Y-BOCS Sequencial",
     ageMin: 72,
@@ -3381,6 +3398,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-253",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TEPT Evolução Pós-Terapia (J26-253)",
     fullName: "Evolução de TEPT Pós-Terapia — Comparação UCLA PTSD-RI Sequencial",
     ageMin: 72,
@@ -3393,6 +3411,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-254",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Regulação Emocional Global Acompanhamento (J26-254)",
     fullName: "Acompanhamento de Regulação Emocional Global — Evolução Transdiagnóstica",
     ageMin: 60,
@@ -3407,6 +3426,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   // ── Farmacológica — Evolução (j26-255 a j26-260) ──
   {
     id: "j26-255",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Metabólico Antipsicóticos Monitorização (J26-255)",
     fullName: "Monitorização Metabólica de Antipsicóticos — Peso, Glicemia e Perfil Lipídico",
     ageMin: 48,
@@ -3419,6 +3439,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-256",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Crescimento Estimulantes Acompanhamento (J26-256)",
     fullName: "Acompanhamento de Crescimento em Uso de Estimulantes — Altura, Peso e Percentis",
     ageMin: 48,
@@ -3431,6 +3452,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-257",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Ajuste de Dose Eficácia vs Efeitos (J26-257)",
     fullName: "Registro de Ajuste de Dose — Eficácia versus Efeitos Colaterais de Qualquer Psicofármaco",
     ageMin: 0,
@@ -3443,6 +3465,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-258",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Hepático Hematológico Antiepilépticos (J26-258)",
     fullName: "Monitorização Hepática e Hematológica de Antiepilépticos — Exames Sequenciais",
     ageMin: 0,
@@ -3455,6 +3478,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-259",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — CGI-S e CGI-I Gravidade e Melhora (J26-259)",
     fullName: "Registro de CGI-S e CGI-I — Impressão Clínica Global de Gravidade e Melhora",
     ageMin: 0,
@@ -3467,6 +3491,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-260",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Laboratorial Rotina por Medicação (J26-260)",
     fullName: "Checklist de Exames Laboratoriais de Rotina por Medicação — Monitorização Periódica",
     ageMin: 0,
