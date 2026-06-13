@@ -411,6 +411,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-031",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Disregulação Emocional TDAH (J26-031)",
     fullName: "Protocolo de Avaliação da Disregulação Emocional associada ao TDAH",
     ageMin: 72,
@@ -423,6 +424,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-032",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Tempo Cognitivo Lento (J26-032)",
     fullName: "Protocolo de Triagem do Tempo Cognitivo Lento (Sluggish Cognitive Tempo)",
     ageMin: 72,
@@ -435,6 +437,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-033",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Perfil Desatenção vs Hiperatividade (J26-033)",
     fullName: "Protocolo de Diferenciação entre Perfil Predominantemente Desatento e Hiperativo no TDAH",
     ageMin: 60,
@@ -447,6 +450,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-034",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Função Executiva Cotidiano (J26-034)",
     fullName: "Protocolo de Avaliação de Função Executiva no Cotidiano Escolar e Doméstico",
     ageMin: 60,
@@ -459,6 +463,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-035",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Percepção do Tempo TDAH (J26-035)",
     fullName: "Protocolo de Avaliação de Percepção e Gestão do Tempo em TDAH",
     ageMin: 72,
@@ -471,6 +476,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-036",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Sensibilidade a Recompensa TDAH (J26-036)",
     fullName: "Protocolo de Avaliação da Sensibilidade a Recompensa e Motivação em TDAH",
     ageMin: 72,
@@ -483,6 +489,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-037",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Memória de Trabalho TDAH (J26-037)",
     fullName: "Protocolo de Triagem da Memória de Trabalho no TDAH — Contexto Escolar",
     ageMin: 60,
@@ -495,6 +502,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-038",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Impulsividade Comportamental (J26-038)",
     fullName: "Protocolo de Avaliação do Perfil de Impulsividade Motora, Verbal e Cognitiva em TDAH",
     ageMin: 60,
@@ -507,6 +515,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-039",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TDAH e Autoestima (J26-039)",
     fullName: "Protocolo de Avaliação do Impacto do TDAH na Autoestima e Autoimagem",
     ageMin: 72,
@@ -519,6 +528,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-040",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TDAH e Sono (J26-040)",
     fullName: "Protocolo de Avaliação dos Problemas de Sono associados ao TDAH",
     ageMin: 60,
@@ -531,6 +541,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-041",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TDAH Impacto Familiar (J26-041)",
     fullName: "Protocolo de Avaliação do Impacto do TDAH na Dinâmica Familiar",
     ageMin: 60,
@@ -543,6 +554,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-042",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem TDAH Pré-Escolar (J26-042)",
     fullName: "Protocolo de Triagem de TDAH em Crianças Pré-Escolares de 3 a 6 Anos",
     ageMin: 36,
@@ -555,6 +567,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-043",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TDAH Adolescente (J26-043)",
     fullName: "Protocolo de Avaliação do TDAH na Adolescência — Perfil, Impacto e Riscos",
     ageMin: 144,
@@ -567,6 +580,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-044",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Monitorização Estimulante (J26-044)",
     fullName: "Protocolo de Monitorização de Efeitos do Metilfenidato e Anfetaminas em Crianças",
     ageMin: 60,
@@ -579,6 +593,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-045",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — TDAH e Tela (J26-045)",
     fullName: "Protocolo de Avaliação do Uso de Telas e Impacto no TDAH",
     ageMin: 60,

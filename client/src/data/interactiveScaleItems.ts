@@ -1030,6 +1030,536 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       },
     ],
   },
+
+  // ============================================================
+  // LOTE 3 — Categoria 3: TDAH e Funções Executivas (autoral)
+  // ============================================================
+
+  // ---- J26-031 — Disregulação Emocional no TDAH ----
+  "j26-031": {
+    icon: Activity,
+    gradient: "from-orange-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a disregulação emocional ligada ao TDAH (maior escore = mais intensa). Orienta a decisão sobre adjuvantes e manejo. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Disregulação emocional (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Regulação emocional no cotidiano",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Explode de raiva por coisas pequenas",
+          "Passa de calma a muito irritada rapidamente (pavio curto)",
+          "Tem dificuldade de se acalmar depois de irritada",
+          "Chora ou fica muito frustrada ao errar ou perder",
+          "Reage de forma exagerada a um “não”",
+          "Tem crises ao mudar de atividade ou ao ser interrompida",
+          "Fica irritada quando algo não sai como esperava",
+          "A intensidade da emoção é desproporcional à situação",
+          "Tem dias de humor muito instável (oscila bastante)",
+          "Descarrega a frustração em pessoas ou objetos",
+          "Demora muito para “virar a chave” depois de chateada",
+          "Fica facilmente sobrecarregada emocionalmente",
+          "A irritabilidade atrapalha a convivência em casa",
+          "A irritabilidade atrapalha a convivência na escola",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-032 — Tempo Cognitivo Lento (SCT) ----
+  "j26-032": {
+    icon: Sparkles,
+    gradient: "from-slate-500 to-blue-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreia o Tempo Cognitivo Lento — perfil “sonhador/lento”, diferente do TDAH hiperativo (maior escore = mais sinais). Útil para diferenciar perfis. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sinais de tempo cognitivo lento",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Perfil de lentidão/desligamento",
+        color: "text-slate-600 dark:text-slate-300",
+        items: [
+          "Parece sonhando acordada, “na lua”",
+          "É lenta para começar e terminar tarefas",
+          "Processa as informações devagar (demora para a “ficha cair”)",
+          "Confunde-se facilmente com instruções",
+          "Fica olhando para o nada com frequência",
+          "Tem pouca energia ou parece apática/desanimada",
+          "Perde-se nos próprios pensamentos com facilidade",
+          "Precisa que repitam várias vezes para entender",
+          "Reage devagar quando é chamada",
+          "Tem aparência sonolenta mesmo descansada",
+          "Trabalha de forma lenta e desorganizada",
+          "Parece desligada do que acontece ao redor",
+          "Mistura ideias ou se atrapalha ao explicar algo",
+          "É quieta e passiva (não é agitada como o TDAH clássico)",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-033 — Perfil Desatenção vs Hiperatividade ----
+  "j26-033": {
+    icon: Activity,
+    gradient: "from-teal-500 to-cyan-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Mapeia os dois eixos do TDAH (maior escore = mais sintomas). O detalhamento por domínio mostra qual perfil predomina — apoia tratamento e conversa com a escola. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sintomas de TDAH (maior = mais sintomas)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Desatenção",
+        color: "text-cyan-600 dark:text-cyan-400",
+        items: [
+          "Não presta atenção a detalhes / comete erros por descuido",
+          "Tem dificuldade de manter a atenção em tarefas",
+          "Parece não escutar quando falam diretamente com ela",
+          "Não segue instruções até o fim / não termina tarefas",
+          "Tem dificuldade de organizar tarefas e materiais",
+          "Evita tarefas que exigem esforço mental contínuo",
+          "Perde objetos necessários (material, brinquedos)",
+          "Distrai-se com facilidade com estímulos externos",
+          "Esquece atividades do dia a dia",
+        ],
+      },
+      {
+        name: "Hiperatividade / Impulsividade",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Mexe mãos e pés ou se remexe na cadeira",
+          "Levanta-se quando deveria ficar sentada",
+          "Corre ou sobe nas coisas em momentos inadequados",
+          "Tem dificuldade de brincar em silêncio",
+          "Está “a mil”, como se tivesse um motorzinho",
+          "Fala em excesso",
+          "Responde antes de a pergunta terminar",
+          "Tem dificuldade de esperar a vez",
+          "Interrompe ou se intromete nas conversas e brincadeiras",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-034 — Função Executiva no Cotidiano (casa e escola) ----
+  "j26-034": {
+    icon: Sparkles,
+    gradient: "from-amber-500 to-yellow-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a função executiva no dia a dia (maior escore = mais dificuldade), separando casa e escola. Mais prático que teste de laboratório. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Dificuldades executivas (maior = mais dificuldade)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Em casa",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "Precisa de ajuda para começar as tarefas",
+          "Esquece o que foi pedido no meio do caminho",
+          "Tem dificuldade de organizar o quarto e os materiais",
+          "Não consegue seguir uma rotina sem lembretes",
+          "Tem dificuldade de administrar o tempo (atrasa, enrola)",
+          "Abandona as tarefas antes de terminar",
+        ],
+      },
+      {
+        name: "Na escola",
+        color: "text-yellow-600 dark:text-yellow-400",
+        items: [
+          "Tem dificuldade de planejar e iniciar as atividades",
+          "Não anota ou esquece as tarefas de casa",
+          "Perde materiais e prazos",
+          "Tem dificuldade de manter o foco até terminar",
+          "Atrapalha-se com tarefas de várias etapas",
+          "Precisa de mediação constante do professor",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-035 — Percepção e Gestão do Tempo ----
+  "j26-035": {
+    icon: Sparkles,
+    gradient: "from-indigo-500 to-violet-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a percepção e a gestão do tempo (maior escore = mais dificuldade). Comum no TDAH e muito ligado ao prejuízo funcional. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Dificuldade com o tempo (maior = mais dificuldade)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Percepção e gestão do tempo",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Vive atrasada para tudo",
+          "Não consegue estimar quanto tempo uma tarefa vai levar",
+          "Perde a noção de quanto tempo passou",
+          "Perde a hora em atividades prazerosas (tela, jogo)",
+          "Deixa tudo para a última hora",
+          "Esquece horários e compromissos",
+          "Tem dificuldade de cumprir prazos",
+          "Não percebe quando está demorando demais",
+          "Precisa de alarmes e lembretes para se organizar no tempo",
+          "Subestima o tempo necessário para se arrumar e sair",
+          "Distrai-se e “o tempo voa” sem perceber",
+          "Tem dificuldade de manter uma agenda ou rotina horária",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-036 — Sensibilidade a Recompensa e Motivação ----
+  "j26-036": {
+    icon: Sparkles,
+    gradient: "from-pink-500 to-fuchsia-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o perfil motivacional (maior escore = mais dependência de recompensa imediata). Orienta estratégias de reforço (metas curtas, retorno imediato) em vez de punição. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Desafio motivacional (maior = mais dependência de recompensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Sensibilidade a recompensa",
+        color: "text-pink-600 dark:text-pink-400",
+        items: [
+          "Só se esforça quando a recompensa é imediata",
+          "Desiste se o prêmio demora a vir",
+          "Não responde a consequências de longo prazo (notas, futuro)",
+          "Precisa de estímulo constante para manter o esforço",
+          "Cansa rápido de recompensas repetidas (precisa de novidade)",
+          "Reage muito mal a punições, sem mudar o comportamento",
+          "Busca gratificação imediata mesmo com prejuízo depois",
+          "Tem dificuldade de adiar um prazer para conseguir algo melhor",
+          "Perde o interesse rápido por atividades sem retorno imediato",
+          "Funciona bem com recompensa, mas “trava” sem ela",
+          "Não conecta o esforço de hoje com o resultado de amanhã",
+          "Rende melhor com metas pequenas e frequentes",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-037 — Memória de Trabalho (contexto escolar) ----
+  "j26-037": {
+    icon: Sparkles,
+    gradient: "from-blue-500 to-indigo-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem da memória de trabalho no cotidiano escolar (maior escore = mais dificuldade). Professores identificam com facilidade. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Dificuldade de memória de trabalho",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Memória de trabalho no dia a dia",
+        color: "text-blue-600 dark:text-blue-400",
+        items: [
+          "Esquece a instrução antes de chegar a executá-la",
+          "Perde a sequência do que estava fazendo",
+          "Copia errado ou incompleto do quadro",
+          "Esquece parte de pedidos com vários passos",
+          "Perde o fio do raciocínio no meio de uma conta/tarefa",
+          "Precisa que repitam as instruções",
+          "Esquece o que ia falar no meio da frase",
+          "Tem dificuldade de fazer cálculo mental",
+          "Confunde a ordem dos passos de uma atividade",
+          "Esquece regras combinadas há pouco",
+          "Tem dificuldade de seguir histórias ou explicações longas",
+          "Precisa de apoio visual (lista, lembrete) para não esquecer",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-038 — Impulsividade (motora, verbal, cognitiva) ----
+  "j26-038": {
+    icon: Activity,
+    gradient: "from-red-500 to-orange-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Mapeia os três tipos de impulsividade (maior escore = mais intensa). O detalhamento por domínio ajuda a personalizar o tratamento. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Impulsividade (maior = mais intensa)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Impulsividade motora",
+        color: "text-red-600 dark:text-red-400",
+        items: [
+          "Age sem pensar nas consequências",
+          "Mexe em tudo, não consegue ficar parada",
+          "Sai correndo ou se arrisca sem avaliar o perigo",
+          "Pega objetos ou coisas sem pedir",
+        ],
+      },
+      {
+        name: "Impulsividade verbal",
+        color: "text-orange-600 dark:text-orange-400",
+        items: [
+          "Fala sem esperar a vez",
+          "Responde antes de a pergunta terminar",
+          "Interrompe conversas e brincadeiras",
+          "Fala o que vem à cabeça, sem filtro",
+        ],
+      },
+      {
+        name: "Impulsividade cognitiva",
+        color: "text-amber-600 dark:text-amber-400",
+        items: [
+          "Decide sem analisar as opções",
+          "Faz provas e tarefas rápido demais e erra por isso",
+          "Muda de ideia ou de atividade impulsivamente",
+          "Tem dificuldade de parar para planejar antes de agir",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-039 — Impacto do TDAH na Autoestima ----
+  "j26-039": {
+    icon: Heart,
+    gradient: "from-rose-500 to-red-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Rastreia o sofrimento secundário do TDAH (maior escore = mais sofrimento/autoimagem negativa). Escore alto pede suporte emocional e cuidado com a autoestima. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sofrimento e autoimagem negativa",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Autoestima e autoimagem",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "Acha que é “burra”, “preguiçosa” ou “problemática”",
+          "Sente que decepciona os pais ou professores",
+          "Acha que se esforça mais que os outros e mesmo assim vai mal",
+          "Sente-se diferente ou pior que os colegas",
+          "Desiste fácil por achar que “não vai dar certo”",
+          "Evita tentar coisas novas por medo de errar",
+          "Fica muito abalada com críticas",
+          "Fala mal de si mesma (“sou um fracasso”)",
+          "Acha que os outros não gostam dela",
+          "Sente vergonha do próprio comportamento",
+          "Mostra tristeza ou desânimo ligados às dificuldades",
+          "Perdeu a confiança em conseguir melhorar",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-040 — Problemas de Sono no TDAH ----
+  "j26-040": {
+    icon: Sparkles,
+    gradient: "from-indigo-500 to-blue-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o sono na criança com TDAH (maior escore = mais problemas), antes e durante o tratamento. Base para discutir rotina e medicação com o médico. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Alterações do sono (maior = mais problemas)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Padrão de sono",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Demora muito para pegar no sono (mente “a mil”)",
+          "Resiste à hora de dormir",
+          "Acorda várias vezes durante a noite",
+          "Tem sono agitado, mexe-se muito",
+          "Acorda cansada mesmo tendo dormido",
+          "Tem sonolência durante o dia",
+          "Tem dificuldade de acordar de manhã",
+          "O sono piorou após iniciar o estimulante",
+          "Range os dentes ou fala dormindo",
+          "Tem horário de sono irregular",
+          "Precisa de companhia ou condições específicas para dormir",
+          "A falta de sono piora o comportamento no dia seguinte",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-041 — Impacto do TDAH na Dinâmica Familiar ----
+  "j26-041": {
+    icon: Heart,
+    gradient: "from-rose-500 to-pink-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia a sobrecarga familiar (maior escore = mais impacto). Escore alto indica necessidade de suporte e orientação parental. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sobrecarga familiar (maior = mais impacto)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Impacto na família",
+        color: "text-rose-600 dark:text-rose-400",
+        items: [
+          "A rotina da casa gira em torno do comportamento da criança",
+          "Os pais se sentem esgotados ou estressados",
+          "Há brigas frequentes por causa do comportamento",
+          "O casal discorda sobre como lidar",
+          "Os irmãos são afetados (menos atenção, mais conflitos)",
+          "A família evita sair ou receber visitas por causa das crises",
+          "Os pais se sentem julgados por outras pessoas",
+          "A hora da tarefa de casa é um campo de batalha",
+          "Os pais perdem a paciência mais do que gostariam",
+          "Falta tempo e energia para o autocuidado dos pais",
+          "A família se sente sozinha ou sem suporte",
+          "O estresse afeta o trabalho ou a saúde dos pais",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-042 — Triagem de TDAH Pré-Escolar (3-6 anos) ----
+  "j26-042": {
+    icon: Baby,
+    gradient: "from-teal-500 to-emerald-600",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Triagem adaptada ao pré-escolar (maior escore = mais sintomas). O TDAH pode iniciar antes dos 7 anos — observe persistência e prejuízo, sem confundir com a agitação normal da idade. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Sintomas pré-escolares (maior = mais sintomas)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Desatenção (pré-escolar)",
+        color: "text-teal-600 dark:text-teal-400",
+        items: [
+          "Troca de brincadeira o tempo todo, não termina nenhuma",
+          "Não para de ouvir uma história curta",
+          "Distrai-se com qualquer coisa",
+          "Parece não ouvir quando é chamada",
+          "Esquece o que ia fazer",
+        ],
+      },
+      {
+        name: "Hiperatividade / Impulsividade (pré-escolar)",
+        color: "text-emerald-600 dark:text-emerald-400",
+        items: [
+          "Não para quieta, está sempre em movimento",
+          "Corre e sobe nas coisas o tempo todo",
+          "Tem dificuldade de esperar a vez",
+          "Não consegue brincar com calma",
+          "Age sem perceber o perigo",
+          "Pega as coisas dos colegas sem pedir",
+          "Tem mais crises e agitação que outras crianças da idade",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-043 — TDAH na Adolescência (perfil, impacto e riscos) ----
+  "j26-043": {
+    icon: Activity,
+    gradient: "from-violet-500 to-purple-600",
+    instruction:
+      "Para cada frase, marque o quanto descreve o adolescente no dia a dia. Pode ser respondido pelo próprio jovem ou pelos pais. Responda todos os itens.",
+    infoBox:
+      "Avalia o TDAH na adolescência (maior escore = mais impacto). Os itens de risco (substâncias, comportamento, autoestima) merecem conversa clínica direcionada. Triagem, não diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Impacto do TDAH na adolescência",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Perfil, impacto e riscos",
+        color: "text-violet-600 dark:text-violet-400",
+        items: [
+          "Não termina o que começa (tarefas, projetos)",
+          "Procrastina e deixa tudo para a última hora",
+          "Tem desempenho escolar abaixo do seu potencial",
+          "Passa tempo excessivo no celular ou em jogos",
+          "Tem dificuldade de organização e gestão do tempo",
+          "Esquece compromissos e prazos",
+          "Age por impulso e se arrepende depois",
+          "Tem comportamentos de risco (trânsito, brigas)",
+          "Irrita-se ou se frustra com facilidade",
+          "Tem conflitos frequentes com a família",
+          "Tem baixa autoestima ligada às dificuldades",
+          "Tem curiosidade ou já experimentou álcool/substâncias",
+          "Tem dificuldade de manter a motivação nos estudos",
+          "Sente que “não consegue acompanhar” os colegas",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-044 — Monitorização de Efeitos do Estimulante (frequência) ----
+  "j26-044": {
+    icon: Activity,
+    gradient: "from-cyan-500 to-teal-600",
+    instruction:
+      "Marque a frequência de cada efeito desde o início (ou ajuste) do remédio. Use nas primeiras semanas e a cada mudança de dose. Responda todos os itens.",
+    infoBox:
+      "Monitorização de efeitos do metilfenidato/anfetaminas (maior escore = mais efeitos). Relate ao médico para ajuste de dose ou horário. Não suspenda a medicação por conta própria.",
+    labels: FREQ_LABELS,
+    totalLabel: "Carga de efeitos adversos",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Efeitos observados",
+        color: "text-cyan-600 dark:text-cyan-400",
+        items: [
+          "Perda de apetite / come menos",
+          "Dificuldade para dormir / insônia",
+          "Dor de cabeça",
+          "Dor de barriga ou náusea",
+          "Fica muito quieta ou “apagada” (efeito robô)",
+          "Fica irritada ou chorosa, principalmente no fim da tarde",
+          "Tiques ou movimentos novos",
+          "Coração acelerado ou queixa de palpitação",
+          "Tontura",
+          "Perda de peso",
+          "Humor mais triste ou ansioso",
+          "Boca seca",
+          "Volta forte dos sintomas quando o efeito passa (rebote)",
+          "Choro fácil ou sensibilidade aumentada",
+        ],
+      },
+    ],
+  },
+
+  // ---- J26-045 — Uso de Telas e Impacto no TDAH ----
+  "j26-045": {
+    icon: Activity,
+    gradient: "from-slate-500 to-indigo-700",
+    instruction: SEVERITY_INSTRUCTION,
+    infoBox:
+      "Avalia o uso de telas e seu impacto (maior escore = mais problemático). O excesso pode agravar sintomas e sono no TDAH. Escore alto orienta um plano de manejo de telas. Não é diagnóstico.",
+    labels: SEVERITY_LABELS,
+    totalLabel: "Impacto do uso de telas (maior = mais problemático)",
+    bands: SEVERITY_BANDS,
+    domains: [
+      {
+        name: "Uso de telas no cotidiano",
+        color: "text-indigo-600 dark:text-indigo-400",
+        items: [
+          "Passa muitas horas por dia em telas",
+          "Tem crise ou raiva quando a tela é retirada",
+          "A tela é a única coisa que a acalma",
+          "O uso de tela atrapalha o sono",
+          "Troca brincadeiras, estudo ou convívio por tela",
+          "Fica mais agitada ou irritada depois de muito tempo de tela",
+          "Usa tela durante as refeições",
+          "Usa tela na cama, antes de dormir",
+          "Mente ou esconde o tempo de uso",
+          "Tem dificuldade de parar sozinha",
+          "Prefere conteúdos muito acelerados e estimulantes",
+          "O uso de tela vira motivo de briga em casa",
+        ],
+      },
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
