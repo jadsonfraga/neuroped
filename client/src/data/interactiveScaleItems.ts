@@ -3632,6 +3632,70 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Recusa a mamadeira ou o peito","Recusa a introdução alimentar (papinha)","Vira o rosto ou fecha a boca ao ser alimentado","Cospe a comida oferecida","Chora durante as refeições","Aceita muito pouca quantidade","Tem ânsia ou vômito com a comida","Só aceita líquidos","Demonstra desconforto ao comer (dor, refluxo)","Tem ganho de peso insuficiente","A recusa preocupa ou persiste","A recusa gera muita ansiedade na família",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 13 — Categoria 13: Dor e Cefaleia (autoral)
+  // (J26-150 — Diário de Cefaleia — segue como ferramenta diária)
+  // ============================================================
+
+  "j26-151": {
+    icon: Heart, gradient: "from-rose-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto da dor crônica na vida da criança (maior = mais impacto). Base para o plano multidisciplinar. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Impacto da dor crônica (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Impacto funcional da dor", color: "text-rose-600 dark:text-rose-400", items: [
+      "A dor atrapalha a frequência ou o desempenho escolar","A dor atrapalha o sono","A dor atrapalha brincadeiras e atividades físicas","A dor atrapalha o convívio com amigos","A dor deixa a criança irritada ou triste","A criança falta à escola por causa da dor","A dor limita passeios e atividades em família","A criança evita atividades com medo da dor","A dor exige uso frequente de medicação","A dor leva a idas frequentes ao médico/pronto-socorro","A dor preocupa e sobrecarrega a família","A dor compromete a qualidade de vida no geral",
+    ]}],
+  },
+  "j26-152": {
+    icon: ShieldAlert, gradient: "from-orange-500 to-red-600", instruction:
+      "Para cada frase, marque o quanto combina com você quando está com dor. Responda todos os itens.",
+    infoBox: "A catastrofização amplifica a dor e prediz cronificação (maior = mais catastrofização). Alvo de abordagem psicológica. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Catastrofização da dor (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Pensamentos sobre a dor", color: "text-orange-600 dark:text-orange-400", items: [
+      "Quando dói, penso que nunca vai passar","Acho que a dor é a pior coisa do mundo","Fico com medo de que a dor piore","Não consigo parar de pensar na dor","Acho que algo muito grave está acontecendo","Sinto que não consigo suportar a dor","Acho que a dor vai estragar tudo","Sinto-me impotente diante da dor","Espero o pior quando começa a doer","A dor toma conta dos meus pensamentos","Acho que ninguém entende a minha dor","Sinto que nada vai aliviar",
+    ]}],
+  },
+  "j26-153": {
+    icon: Activity, gradient: "from-violet-500 to-purple-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Caracteriza a aura da enxaqueca (maior = mais sintomas de aura). Importante diferenciar de epilepsia. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sintomas de aura (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Sintomas que precedem a dor", color: "text-violet-600 dark:text-violet-400", items: [
+      "Vê luzes, pontos ou linhas antes da dor (aura visual)","Tem áreas de visão “apagada” ou embaçada antes da dor","Sente formigamento ou dormência (aura sensitiva)","Tem dificuldade de falar ou achar palavras antes da dor","Sente fraqueza em um lado antes da dor (aura motora)","Os sintomas surgem minutos antes da dor de cabeça","Os sintomas duram de 5 a 60 minutos","Os sintomas se espalham gradualmente","Os sintomas desaparecem e então vem a dor","Os sintomas são sempre parecidos","Tem náusea ou sensibilidade à luz junto","A aura assusta a criança",
+    ]}],
+  },
+  "j26-154": {
+    icon: Heart, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a dor abdominal recorrente funcional (maior = mais sugestivo de funcional). Sempre afastar causas orgânicas. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Dor abdominal funcional (maior = mais sugestivo)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Características da dor", color: "text-amber-600 dark:text-amber-400", items: [
+      "Tem dor de barriga recorrente (semanal)","A dor é em volta do umbigo","A dor não tem causa orgânica encontrada","A dor aparece em situações de estresse (escola, prova)","A dor some nos fins de semana ou férias","A dor não acorda a criança à noite","A dor vem com náusea ou falta de apetite","Não há perda de peso nem sangramento","A criança falta à escola pela dor","A dor está ligada à ansiedade","Os exames vieram normais","A dor atrapalha a rotina",
+    ]}],
+  },
+  "j26-155": {
+    icon: MessageCircle, gradient: "from-teal-500 to-cyan-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a capacidade de comunicar e localizar a dor (maior = melhor comunicação). Adaptar a avaliação ao desenvolvimento. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Comunicação da dor (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Comunicar e localizar a dor", color: "text-teal-600 dark:text-teal-400", items: [
+      "Aponta onde dói","Diz que está com dor","Descreve como é a dor (queima, aperta, lateja)","Usa a escala de faces para mostrar a intensidade","Diz quando a dor começou","Diz o que melhora ou piora a dor","Localiza a dor em mais de um lugar quando é o caso","Diferencia dor de outros desconfortos","Avisa espontaneamente quando está com dor","Mantém a informação consistente sobre a dor","Usa palavras adequadas à idade sobre a dor","Coopera com a avaliação da dor",
+    ]}],
+  },
+  "j26-156": {
+    icon: Activity, gradient: "from-fuchsia-500 to-purple-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Triagem de características neuropáticas da dor (maior = mais sugestivo). Útil em neuropatias, lesões medulares e doenças metabólicas. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Dor neuropática (maior = mais sugestivo)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Características neuropáticas", color: "text-fuchsia-600 dark:text-fuchsia-400", items: [
+      "A dor queima","A dor formiga ou dá agulhadas","A dor dá “choques”","A pele fica sensível ao toque leve (dói o que não deveria)","A dor é em uma área de nervo ou dermátomo","A dor vem com dormência na mesma área","A dor piora à noite","A dor é desproporcional ao estímulo","A dor persiste após a lesão cicatrizar","A dor não melhora com analgésico comum","Há fraqueza ou alteração de sensibilidade associada","A dor tem características diferentes de uma dor comum",
+    ]}],
+  },
+  "j26-157": {
+    icon: ShieldAlert, gradient: "from-red-600 to-rose-700", instruction:
+      "Avaliação clínica. Marque a presença de cada sinal de alerta. QUALQUER item positivo muda a conduta. Responda todos os itens.",
+    infoBox: "SINAIS DE ALERTA (red flags) para cefaleia secundária. Qualquer item positivo exige avaliação médica imediata e considerar neuroimagem urgente. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Sinais de alerta (qualquer positivo = avaliar já)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Red flags de cefaleia", color: "text-red-600 dark:text-red-400", items: [
+      "“Pior dor de cabeça da vida” / início súbito e explosivo","Dor que vem piorando progressivamente","Dor que acorda à noite ou é pior ao acordar","Vômitos, especialmente “em jato” e sem náusea","Febre com rigidez de nuca","Alteração da consciência ou do comportamento","Convulsão associada","Déficit neurológico (fraqueza, alteração visual, fala)","Piora com esforço, tosse ou ao deitar","Dor sempre no mesmo lado ou local fixo","Crescimento anormal do perímetro cefálico (lactente)","Alteração de marcha/equilíbrio ou estrabismo novo",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

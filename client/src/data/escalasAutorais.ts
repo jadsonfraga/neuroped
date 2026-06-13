@@ -2019,6 +2019,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-151",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Impacto Dor Crônica Criança (J26-151)",
     fullName: "Protocolo de Avaliação do Impacto da Dor Crônica na Vida da Criança",
     ageMin: 60,
@@ -2031,6 +2032,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-152",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Catastrofização da Dor Infantil (J26-152)",
     fullName: "Protocolo de Avaliação da Catastrofização da Dor em Crianças e Adolescentes",
     ageMin: 72,
@@ -2043,6 +2045,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-153",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Aura de Enxaqueca (J26-153)",
     fullName: "Protocolo de Avaliação dos Sintomas de Aura em Enxaqueca Infantil",
     ageMin: 60,
@@ -2055,6 +2058,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-154",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dor Abdominal Funcional (J26-154)",
     fullName: "Protocolo de Avaliação da Dor Abdominal Recorrente Funcional em Crianças",
     ageMin: 36,
@@ -2067,6 +2071,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-155",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comunicação da Dor (J26-155)",
     fullName: "Protocolo de Avaliação da Capacidade de Comunicar e Localizar a Dor em Crianças",
     ageMin: 24,
@@ -2079,6 +2084,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-156",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Dor Neuropática Criança (J26-156)",
     fullName: "Protocolo de Triagem de Dor Neuropática em Crianças e Adolescentes",
     ageMin: 60,
@@ -2091,6 +2097,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-157",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Triagem Cefaleias Secundárias (J26-157)",
     fullName: "Protocolo de Triagem de Sinais de Alerta para Cefaleia Secundária em Crianças",
     ageMin: 12,
