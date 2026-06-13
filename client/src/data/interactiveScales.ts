@@ -196,7 +196,6 @@ const QCHAT10: InteractiveScaleDef = {
   source: "Allison C, Auyeung B, Baron-Cohen S (2012), J Am Acad Child Adolesc Psychiatry 51(2):202-212. Ponto de corte ≥ 3.",
 };
 
-
 // ============================================================
 // FPS-R — Faces Pain Scale–Revised (Hicks et al., 2001; IASP)
 // Uso clínico/não comercial livre. Autorrelato de dor, 3–18 anos.
@@ -448,6 +447,89 @@ const BFMF: InteractiveScaleDef = {
   source: "Beckung E, Hagberg G (2002). Dev Med Child Neurol 44(5):309-316.",
 };
 
+// ============================================================
+// GAD-7 — Generalized Anxiety Disorder 7-item (autorrelato, adolescente)
+// Spitzer RL, Kroenke K, Williams JBW, Löwe B. Arch Intern Med. 2006.
+// Domínio público. Cada item 0–3; total 0–21. Cortes: 5/10/15 (leve/moderada/
+// grave); ≥10 sugere transtorno de ansiedade provável.
+// ============================================================
+const GAD7_OPTIONS: InteractiveOption[] = [
+  { label: "Nenhuma vez", value: 0 },
+  { label: "Vários dias", value: 1 },
+  { label: "Mais da metade dos dias", value: 2 },
+  { label: "Quase todos os dias", value: 3 },
+];
+const GAD7: InteractiveScaleDef = {
+  id: "gad7ped",
+  name: "GAD-7",
+  fullName: "Generalized Anxiety Disorder 7-item — autorrelato",
+  respondent: "Criança/adolescente",
+  ageLabel: "12–18 anos",
+  instructions:
+    "Nas últimas 2 semanas, com que frequência você foi incomodado(a) pelos seguintes problemas?",
+  validationNote:
+    "Itens conforme a versão validada em português (Moreno et al.). Confirme a redação antes do uso formal. Corte ≥ 10 sugere ansiedade provável.",
+  items: [
+    "Sentir-se nervoso(a), ansioso(a) ou muito tenso(a)",
+    "Não conseguir parar ou controlar as preocupações",
+    "Preocupar-se muito com diversas coisas",
+    "Dificuldade para relaxar",
+    "Ficar tão agitado(a) que se torna difícil permanecer parado(a)",
+    "Ficar facilmente aborrecido(a) ou irritável",
+    "Sentir medo como se algo terrível fosse acontecer",
+  ].map((text) => ({ text, options: GAD7_OPTIONS })),
+  bands: [
+    { min: 0, max: 4, risk: "Ansiedade mínima", description: "Sintomas mínimos. Acompanhamento de rotina; reavalie se houver piora.", tone: "ok" },
+    { min: 5, max: 9, risk: "Ansiedade leve", description: "Sintomas leves. Monitorize; oriente estratégias e reavalie em algumas semanas.", tone: "warn" },
+    { min: 10, max: 14, risk: "Ansiedade moderada", description: "≥10: ansiedade provável. Avaliação clínica e considerar intervenção.", tone: "alert" },
+    { min: 15, max: 21, risk: "Ansiedade grave", description: "Sintomas graves. Avaliação clínica prioritária e plano terapêutico.", tone: "alert" },
+  ],
+  source: "Spitzer RL, Kroenke K, Williams JBW, Löwe B (2006), Arch Intern Med 166:1092-1097. Cortes 5/10/15.",
+};
+
+// ============================================================
+// SMFQ — Short Mood and Feelings Questionnaire (autorrelato, criança)
+// Angold A, Costello EJ, et al. 1995. Livre para uso clínico/pesquisa.
+// 13 itens; 0 (Não é verdade) / 1 (Às vezes) / 2 (Verdade); total 0–26.
+// Corte ≥ 8 sugere possíveis sintomas depressivos.
+// ============================================================
+const SMFQ_OPTIONS: InteractiveOption[] = [
+  { label: "Não é verdade", value: 0 },
+  { label: "Às vezes", value: 1 },
+  { label: "Verdade", value: 2 },
+];
+const SMFQ: InteractiveScaleDef = {
+  id: "smfq",
+  name: "SMFQ",
+  fullName: "Short Mood and Feelings Questionnaire — autorrelato",
+  respondent: "Criança/adolescente",
+  ageLabel: "5–12 anos",
+  instructions:
+    "Pensando nas últimas 2 semanas, marque o quanto cada frase descreveu como você se sentiu ou agiu.",
+  validationNote:
+    "Tradução para uso clínico (verifique a redação validada em português antes do uso formal). Corte ≥ 8 sugere sintomas depressivos — se positivo, avalie risco e ideação.",
+  items: [
+    "Eu me senti muito triste ou infeliz.",
+    "Eu não consegui aproveitar ou gostar de nada.",
+    "Eu me senti tão cansado(a) que só queria sentar e não fazer nada.",
+    "Eu fiquei muito agitado(a) ou inquieto(a).",
+    "Eu senti que não valia mais nada.",
+    "Eu chorei bastante.",
+    "Tive dificuldade para pensar ou me concentrar.",
+    "Eu me odiei.",
+    "Eu achei que era uma pessoa ruim.",
+    "Eu me senti sozinho(a).",
+    "Eu achei que ninguém gostava de verdade de mim.",
+    "Eu achei que nunca seria tão bom(boa) quanto as outras crianças.",
+    "Eu senti que fazia tudo errado.",
+  ].map((text) => ({ text, options: SMFQ_OPTIONS })),
+  bands: [
+    { min: 0, max: 7, risk: "Abaixo do corte", description: "Pontuação abaixo de 8. Sem rastreio positivo para sintomas depressivos no momento; reavalie se houver mudança.", tone: "ok" },
+    { min: 8, max: 26, risk: "Rastreio positivo", description: "≥ 8: sugere sintomas depressivos. Aprofunde a avaliação e investigue ativamente risco/ideação suicida. Triagem não confirma diagnóstico.", tone: "alert" },
+  ],
+  source: "Angold A, Costello EJ, et al. (1995). Short Mood and Feelings Questionnaire. Corte ≥ 8.",
+};
+
 export const interactiveScales: Record<string, InteractiveScaleDef> = {
   "q-chat-10": QCHAT10,
   "fps-r": FPSR,
@@ -459,6 +541,8 @@ export const interactiveScales: Record<string, InteractiveScaleDef> = {
   "viking-speech": VIKING,
   "mini-macs": MINIMACS,
   bfmf: BFMF,
+  "gad7ped": GAD7,
+  "smfq": SMFQ,
 };
 
 export function getInteractiveScale(id: string | undefined): InteractiveScaleDef | null {

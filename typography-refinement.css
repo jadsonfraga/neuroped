@@ -1,0 +1,10 @@
+:root {
+    --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    --font-heading: "Fraunces", Georgia, serif;
+    --space-md: 16px;
+    --weight-semibold: 600;
+}
+body { font-family: var(--font-main); line-height: 1.5; -webkit-font-smoothing: antialiased; letter-spacing: -0.011em; }
+h1, h2, h3, .fraunces { font-family: var(--font-heading); letter-spacing: -0.02em; }
+.np-card { padding: var(--space-md); margin-bottom: var(--space-md); border-radius: var(--radius-lg); }
+button { font-family: var(--font-main); font-weight: var(--weight-semibold); letter-spacing: -0.01em; }
