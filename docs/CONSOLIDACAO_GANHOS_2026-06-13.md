@@ -63,6 +63,56 @@ Obstáculos vencidos no caminho: permissões do token (OK), bug do splitter do
 corrompida por run parcial → `DROP+CREATE`, e bindings de Pages via API (não
 via `wrangler.toml`).
 
+## Auditoria — bugs e inconsistências (13/06)
+
+### 1. [ALTO] Backend dividido entre Cloudflare D1 e Railway
+
+O catch-all `functions/api/[[path]].js` faz **proxy de `/api/*` para um backend
+Railway** (Express, atualmente vivo — `GET /api/health` → 200). Como as Functions
+mais específicas têm precedência, o tráfego se divide:
+
+- **Cloudflare D1**: `/api/patients`, `/api/patients/:id`, `/api/consultations`,
+  `/api/documents`, `/api/scales/results`, `/api/health`, `/api/audit-log`,
+  `/api/memory/search`, `/api/version`.
+- **Railway**: todo o resto — `/api/auth/*`, `/api/results`, `/api/consents`,
+  `/api/files/*`, `/api/send-report`, `/api/send-whatsapp`.
+
+**Inconsistência de dados:** a UI cria paciente em `POST /api/patients` (D1) e
+salva o resultado de escala em `POST /api/results` (Railway); também lê
+`/api/patients/:id/results` (Railway). Paciente num banco, resultado no outro →
+vínculo quebrado. Há ainda divergência de path: a UI usa `/api/results`, mas o D1
+expõe `/api/scales/results`.
+
+**Decisão necessária:** consolidar em UM backend (Railway completo, ou Cloudflare
+D1) — ver questão aberta abaixo.
+
+### 2. [OK] `memory/search` referencia FTS inexistente, mas degrada com segurança
+
+`functions/api/memory/search.ts` consulta `memory_notes_fts`, que o `schema.d1.sql`
+não cria. Há `try/catch` com fallback para busca LIKE/TF-IDF — funciona, apenas
+loga um warning. (FTS pode ser adicionada depois.)
+
+### 3. [LIMPEZA] `wrangler.toml` com bloco D1 inerte
+
+Restou um `[[d1_databases]]` + marcador no `wrangler.toml` (de um run anterior). O
+binding de Pages é feito via API do projeto, então esse bloco é inócuo, mas o
+comentário ficou desatualizado.
+
+### 4. [OK] Demais mudanças da sessão
+
+Imagens/WebP, logo/ícones, filtro, fontes PROMIS/NIH e seed: sem inconsistências;
+`tsc`, guards, `test:filter` e `test:clinical` verdes.
+
+## Questão aberta — consolidação dos backends
+
+Há dois backends em nuvem ativos. Para eliminar a divisão de dados, é preciso
+escolher um:
+
+- **A) Tudo no Railway**: remover as Functions D1 parciais (caem no proxy);
+  backend único e completo (auth, files, results já existem). Descarta o D1.
+- **B) Tudo no Cloudflare D1**: portar `auth`/`results`/`files`/`send-*` para
+  Functions e remover o proxy Railway. Mais trabalho; tira dependência do Railway.
+
 ## Pendências rastreadas
 
 - **Proveniência**: 161 instrumentos ainda sem `fonte` (paralisia cerebral,
