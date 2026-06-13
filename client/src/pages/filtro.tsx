@@ -37,7 +37,8 @@ import { interactiveScaleItems } from "@/data/interactiveScaleItems";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
-import { getOPBRecommendations } from "@/data/filterRecommendationsOPB";
+import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterRecommendationsOPB";
+import { getClinicalTiers } from "@/data/clinicalRanking";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesIntelligently,
@@ -149,56 +150,51 @@ function searchBoost(scale: ScaleEntry, query: string) {
   return value;
 }
 
-// Padrões clínicos ouro: assinatura de sintomas → escala padrão-ouro
-interface ClinicalPattern {
-  name: string;
-  signature: string[]; // queixas que formam o padrão
-  goldStandard: string; // ID da escala ouro
-  reason: string;
+// Idade representativa (meses) da faixa selecionada — usada para consultar o
+// ranking clínico curado (clinicalRanking). null quando a idade não foi escolhida.
+function ageMonthsFromBand(selectedAge: string | null): number | null {
+  const band = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
+  return band ? Math.round((band.min + band.max) / 2) : null;
 }
 
-const clinicalPatterns: ClinicalPattern[] = [
-  // TEA: traço social + comportamento + linguagem/atraso
-  { name: "Suspeita TEA (padrão social-comportamental)", signature: ["tea", "comportamento", "linguagem"], goldStandard: "ados2", reason: "ADOS-2 é padrão-ouro diagnóstico de TEA quando há combinação de déficit social, comportamento restritivo e comunicação" },
-  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", reason: "M-CHAT-R/F é rastreio padrão-ouro para TEA entre 16-30 meses; sensibilidade 95%" },
-
-  // TDAH: desatenção + hiperatividade + impulsividade/comportamento
-  { name: "Suspeita TDAH (completo)", signature: ["tdah", "comportamento"], goldStandard: "snap", reason: "SNAP-IV é validado DSM-5 para triagem de TDAH com 18 itens diretos; responde pais/professor" },
-  { name: "TDAH complexo (com função executiva)", signature: ["tdah", "cognicao"], goldStandard: "brief2", reason: "BRIEF-2 complementa TDAH avaliando inibição, flexibilidade, controle emocional—funções prejudicadas no TDAH" },
-
-  // Desenvolvimento global
-  { name: "Atraso do desenvolvimento global", signature: ["atraso", "linguagem", "motor"], goldStandard: "bayley", reason: "Bayley-III é padrão-ouro diagnóstico para atraso global em lactentes (<3 anos); avalia cognição, linguagem, motor" },
-  { name: "Atraso dev. pré-escolar (triagem)", signature: ["atraso"], goldStandard: "denver", reason: "Denver II é rastreio padrão-ouro para marcos de desenvolvimento; 4 domínios, 30-45 itens" },
-
-  // Ansiedade infantil
-  { name: "Transtorno de ansiedade (criança)", signature: ["ansiedade"], goldStandard: "scared", reason: "SCARED é padrão-ouro para triagem de ansiedade em crianças; 41 itens, 5 subescalas (pânico, generalizada, separação, social, evitação escolar)" },
-  { name: "Ansiedade + depressão comórbida", signature: ["ansiedade", "depressao"], goldStandard: "rcads", reason: "RCADS avalia 6 transtornos (ansiedade + depressão); distingue sintomas sobrepostos" },
-
-  // Comportamento disruptivo
-  { name: "Problemas comportamentais gerais", signature: ["comportamento"], goldStandard: "cbcl", reason: "CBCL é padrão-ouro para triagem de psicopatologia infantil; 100 itens, problemas internalizantes/externalizantes/sociais" },
-  { name: "Comportamento + escola (triagem)", signature: ["comportamento", "aprendizagem"], goldStandard: "sdq", reason: "SDQ é breve (25 itens) com versão criança/pais/professor; detecta problemas comportamentais e acadêmicos" },
-
-  // Linguagem/Comunicação
-  { name: "Atraso de linguagem/comunicação", signature: ["linguagem", "atraso"], goldStandard: "catclams", reason: "CAT/CLAMS avalia marcos cognitivos e linguísticos em lactentes; 15-20 min, simples, validado" },
-];
-
-function detectGoldStandard(selectedQueixas: string[], _selectedAge: string | null): ClinicalPattern | null {
-  if (selectedQueixas.length < 2) return null; // Precisa de 2+ sintomas para padrão
-
-  // Busca padrão com melhor match (quantas queixas coincidem)
-  let bestMatch: { pattern: ClinicalPattern; score: number } | null = null;
-
-  for (const pattern of clinicalPatterns) {
-    const matchCount = pattern.signature.filter((s) => selectedQueixas.includes(s)).length;
-    const score = matchCount / pattern.signature.length; // % de match
-
-    if (matchCount >= 2 && (!bestMatch || score > bestMatch.score)) {
-      bestMatch = { pattern, score };
-    }
-  }
-
-  return bestMatch?.pattern ?? null;
+// Primeira frase de uma descrição (corta em quebra de linha ou ponto).
+function firstSentence(text?: string): string {
+  return (text ?? "").split(/[\n.]/)[0].trim();
 }
+
+const RESP_LABEL: Record<string, string> = {
+  pais: "os pais/cuidadores",
+  clinico: "o clínico",
+  professor: "o professor",
+  autoaplicavel: "o próprio adolescente",
+  crianca: "a criança",
+  teste_direto_crianca: "a criança (teste direto)",
+};
+
+// Monta um card OPB (parent-friendly) a partir da escala real + racional curado.
+// Texto derivado dos dados próprios da escala — nunca de instrumentos que não abrem.
+function buildOPB(
+  seal: "ouro" | "prata" | "bronze",
+  scale: ScaleEntry,
+  whyUseful: string,
+  queixaLabel: string
+): RecommendationOPB {
+  const resp = RESP_LABEL[scale.respondente?.[0] ?? "clinico"] ?? "o avaliador";
+  return {
+    seal,
+    scaleId: scale.id,
+    scaleName: scale.name,
+    time: scale.tempo || "—",
+    mainQuestion: firstSentence(scale.description) || scale.fullName || scale.name,
+    parentExample: `Aplicada com ${resp}; os itens avaliam ${queixaLabel.toLowerCase()} de forma ajustada à faixa etária da criança.`,
+    whyUseful,
+  };
+}
+
+const OPB_WHY: Record<"prata" | "bronze", string> = {
+  prata: "Complementa o OURO com outra modalidade, respondente ou domínio de avaliação.",
+  bronze: "Perspectiva adicional, aprofundamento ou monitorização quando OURO + PRATA deixam dúvidas.",
+};
 
 // Fonte ÚNICA de verdade: roda o motor clínico (advancedFilterLogic) sobre o
 // catálogo e, dentro dos candidatos seguros, aplica o realce de busca.
@@ -407,18 +403,20 @@ export default function FiltroPage() {
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
   const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
   const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
+  const catalogById = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
   const hasSafeResults = refinedMatches.length > 0;
   const clinicalRecommendation = useMemo(() => generateContextualRecommendation(refinedMatches), [refinedMatches]);
 
-  // Padrão-ouro curado só vale se a escala for um candidato SEGURO neste contexto.
-  const detectedPattern = useMemo(() => detectGoldStandard(selectedQueixas, selectedAge), [selectedQueixas, selectedAge]);
-  const goldStandardMatch = useMemo(
-    () => (detectedPattern ? refinedById.get(detectedPattern.goldStandard) ?? null : null),
-    [detectedPattern, refinedById]
+  // Ranking clínico curado (clinicalRanking) para a queixa primária + idade.
+  // É a FONTE de verdade do pódio: define explicitamente quem é ouro/prata/bronze
+  // por idade×queixa. Cai para null quando não há queixa selecionada.
+  const curatedTiers = useMemo(
+    () => (selectedQueixas.length > 0 ? getClinicalTiers(selectedQueixas[0], ageMonthsFromBand(selectedAge)) ?? null : null),
+    [selectedQueixas, selectedAge]
   );
 
-  // === PÓDIO COMPLEMENTAR (req. 9): Ouro/Prata/Bronze nunca repetem o mesmo id ===
+  // === PÓDIO (req. 9): Ouro/Prata/Bronze nunca repetem id; semeado pela tabela curada ===
   const podium = useMemo(() => {
     const empty = { ouro: undefined, prata: undefined, bronze: undefined, direct: undefined, school: undefined } as Record<
       "ouro" | "prata" | "bronze" | "direct" | "school",
@@ -432,35 +430,40 @@ export default function FiltroPage() {
       if (found) used.add(found.scale.id);
       return found;
     };
+    // Semeia um slot com a escala curada — SÓ se ela passou pelos filtros de
+    // segurança deste contexto (presente em refinedById). Senão devolve undefined
+    // e o slot cai para o melhor candidato do motor (fallback seguro).
+    const seed = (scaleId?: string) => {
+      if (!scaleId) return undefined;
+      const m = refinedById.get(scaleId);
+      if (m && !used.has(m.scale.id)) { used.add(m.scale.id); return m; }
+      return undefined;
+    };
 
-    let ouro: RefinedScaleMatch | undefined;
-    if (goldStandardMatch && !used.has(goldStandardMatch.scale.id)) {
-      ouro = goldStandardMatch;
-      used.add(goldStandardMatch.scale.id);
-    } else {
-      ouro = take(() => true);
-    }
-
+    const ouro = seed(curatedTiers?.ouro) ?? take(() => true);
     const ouroMode = ouro?.applicationMode ?? null;
     const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
-    // Prata: complementar — modo de aplicação OU domínio diferente do Ouro; senão, próximo distinto.
+    // Prata: curada; senão complementar (modo/domínio diferente do Ouro); senão próximo.
     const prata =
-      take((m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q))) ?? take(() => true);
-    const bronze = take(() => true);
+      seed(curatedTiers?.prata) ??
+      take((m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q))) ??
+      take(() => true);
+    const bronze = seed(curatedTiers?.bronze) ?? take(() => true);
 
     // Slots categóricos (podem coincidir com o pódio — propósito distinto).
     const direct = refinedMatches.find((m) => getApplicationMode(m.scale) === "teste_direto_crianca");
     const school = refinedMatches.find((m) => getApplicationMode(m.scale) === "questionario_professor");
     return { ouro, prata, bronze, direct, school };
-  }, [refinedMatches, hasSafeResults, goldStandardMatch]);
+  }, [refinedMatches, hasSafeResults, curatedTiers, refinedById]);
 
-  const isGoldPattern = Boolean(goldStandardMatch && podium.ouro?.scale.id === goldStandardMatch.scale.id);
+  // Ouro veio da tabela curada? Então mostramos o racional clínico específico.
+  const isCuratedOuro = Boolean(curatedTiers?.ouro && podium.ouro?.scale.id === curatedTiers.ouro);
   const ranking = [
     rec(
       "Ouro",
       podium.ouro,
-      isGoldPattern
-        ? `PADRÃO-OURO: ${detectedPattern!.reason}`
+      isCuratedOuro
+        ? curatedTiers!.reason
         : "Melhor instrumento para idade, queixa, finalidade e respondente.",
       "from-amber-500 via-yellow-600 to-red-800"
     ),
@@ -536,7 +539,7 @@ export default function FiltroPage() {
           <div className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate"><span aria-hidden="true">🩺</span> Queixa / sintomas</p>
-              {detectedPattern && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 {detectedPattern.name.split('(')[0]}</span>}
+              {isCuratedOuro && podium.ouro && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 1ª linha: {podium.ouro.scale.name}</span>}
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
@@ -587,7 +590,7 @@ export default function FiltroPage() {
       {!hasSearch && (
         <div className="flex justify-center mt-4">
           <img
-            src={detectedPattern ? brandAssets.mascots.consultorioSuperman : brandAssets.mascots.superDoctor}
+            src={brandAssets.mascots.superDoctor}
             alt="Dr. Jadson — seu assistente de diagnóstico"
             className="w-32 h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform"
             loading="lazy"
@@ -632,24 +635,38 @@ export default function FiltroPage() {
           </div>
         )}
 
-        {/* Recomendações OPB Estruturadas (se queixa única + idade válida) */}
+        {/* Recomendações OPB Estruturadas (queixa única) — derivadas do ranking
+            clínico curado; só aparecem quando há trio ouro+prata+bronze que ABRE. */}
         {(() => {
-          if (selectedQueixas.length === 1 && selectedAge) {
-            const ageRange = faixasEtarias.find(a => a.id === selectedAge);
-            const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
-            const opbRec = ageMonths ? getOPBRecommendations(selectedQueixas[0], ageMonths) : null;
+          if (selectedQueixas.length !== 1) return null;
+          const queixaId = selectedQueixas[0];
+          const rule = getClinicalTiers(queixaId, ageMonthsFromBand(selectedAge));
+          if (!rule || !rule.prata || !rule.bronze) return null;
 
-            if (opbRec) {
-              return (
-                <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 sm:p-6">
-                  <OPBRecommendationCards
-                    recommendations={opbRec}
-                  />
-                </div>
-              );
-            }
-          }
-          return null;
+          const sOuro = catalogById.get(rule.ouro);
+          const sPrata = catalogById.get(rule.prata);
+          const sBronze = catalogById.get(rule.bronze);
+          if (!sOuro || !sPrata || !sBronze) return null;
+
+          const queixaLabel = queixas.find((q) => q.id === queixaId)?.label ?? queixaId;
+          const ageBand = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
+          const ageRangeLabel = ageBand ? ageBand.label : `${rule.ageMin}–${rule.ageMax} meses`;
+
+          const recommendations: QueixaAgeRecommendations = {
+            queixa: queixaId,
+            ageRange: ageRangeLabel,
+            ageMin: rule.ageMin,
+            ageMax: rule.ageMax,
+            ouro: buildOPB("ouro", sOuro, rule.reason, queixaLabel),
+            prata: buildOPB("prata", sPrata, OPB_WHY.prata, queixaLabel),
+            bronze: buildOPB("bronze", sBronze, OPB_WHY.bronze, queixaLabel),
+          };
+
+          return (
+            <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 sm:p-6">
+              <OPBRecommendationCards recommendations={recommendations} />
+            </div>
+          );
         })()}
 
         {/* Testes Diretos Recomendados */}
