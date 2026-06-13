@@ -33,6 +33,7 @@ import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import { interactiveScaleItems } from "@/data/interactiveScaleItems";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
@@ -77,10 +78,28 @@ function resolveAppRoute(scale: ScaleEntry): string | null {
   return null;
 }
 
-// Só permanecem no filtro escalas que ABREM (req. do usuário: "só deverão ficar
-// aquelas que abrem"). Qualquer escala sem rota real é removida do catálogo.
-function opensInApp(scale: ScaleEntry): boolean {
-  return resolveAppRoute(scale) !== null;
+// ids que renderizam APLICAÇÃO INTERATIVA real em /generic-scale/:id
+// (itens respondíveis + cálculo de escore) — ver generic-scale.tsx.
+const INTERACTIVE_SCALE_IDS = new Set(Object.keys(interactiveScaleItems));
+
+// Rota dedicada = página implementada de verdade (ex.: /mchat, /asq3), NÃO o
+// catch-all /generic-scale/:id (que pode ser só ficha técnica) nem o catálogo
+// mundial.
+function hasDedicatedRoute(scale: ScaleEntry): boolean {
+  const r = scale.appRoute;
+  return (
+    !!r &&
+    !r.startsWith("/generic-scale/") &&
+    r !== "/escalas-neuropsiquiatria" &&
+    r !== "/filtro"
+  );
+}
+
+// Abre uma FERRAMENTA USÁVEL (aplicação real), não apenas uma ficha técnica.
+// Req. do usuário: "nenhuma escala que não abre como ADOS-2 deve ser
+// selecionável no filtro". ADOS-2 só tem ficha (/generic-scale/ados2) → sai.
+function opensAsUsableTool(scale: ScaleEntry): boolean {
+  return hasDedicatedRoute(scale) || INTERACTIVE_SCALE_IDS.has(scale.id);
 }
 
 function unique(scales: ScaleEntry[]) {
@@ -317,9 +336,9 @@ function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas
     reasons.push("✓ Respondente: Clínico (observação direta)");
   }
 
-  // Toda escala recomendada abre: aplicação completa quando há rota dedicada
-  // "complete", senão ficha técnica (inclusive via /generic-scale/:id).
-  if (scale.appRoute && getImplementationStatus(scale) === "complete") {
+  // Toda escala do filtro abre uma ferramenta usável: rota dedicada,
+  // itens interativos ou marcada "complete".
+  if (opensAsUsableTool(scale) || getImplementationStatus(scale) === "complete") {
     reasons.push("✓ Aplicação completa no app");
   } else if (resolveAppRoute(scale)) {
     reasons.push("✓ Ficha técnica no app");
@@ -362,9 +381,10 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  // Catálogo do filtro = só escalas que ABREM (têm rota real). Escalas sem
-  // destino renderizável são removidas — nunca recomendamos um beco sem saída.
-  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp), [world]);
+  // Catálogo do filtro = só escalas que abrem uma FERRAMENTA USÁVEL (aplicação
+  // real: rota dedicada ou itens interativos). Fichas técnicas puras (ADOS-2,
+  // Bayley, Griffiths…) saem — nunca recomendamos um beco sem saída.
+  const catalog = useMemo(() => unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensAsUsableTool), [world]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
@@ -661,7 +681,7 @@ export default function FiltroPage() {
               : [];
             const ctaLabel = !item.hasScale
               ? "—"
-              : item.implementationStatus === "complete"
+              : item.implementationStatus === "complete" || (item.scale && opensAsUsableTool(item.scale))
                 ? "Abrir aplicação"
                 : "Ver ficha técnica";
             const cardInner = (
