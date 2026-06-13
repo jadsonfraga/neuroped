@@ -14,7 +14,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Pré-checagem: o deploy do Vercel só roda se os secrets existirem. Sem eles,
+  # este job termina VERDE e o deploy é pulado (o site é publicado por Cloudflare
+  # Pages + GitHub Pages). Evita o "vermelho" em todo push quando o Vercel não
+  # está configurado.
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Secrets do Vercel presentes — deploy do Vercel habilitado."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Secrets do Vercel ausentes — deploy do Vercel IGNORADO. O site é publicado por Cloudflare Pages + GitHub Pages. Configure VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_PROJECT_ID para habilitar."
+          fi
+
   deploy-vercel:
+    needs: preflight
+    if: needs.preflight.outputs.ready == 'true'
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -31,19 +56,6 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-
-      - name: Validate Vercel secrets
-        run: |
-          missing=0
-          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
-            if [ -z "${!name}" ]; then
-              echo "::error::$name is not configured in GitHub repository secrets. Configure it to deploy to Vercel."
-              missing=1
-            fi
-          done
-          if [ "$missing" -ne 0 ]; then
-            exit 1
-          fi
 
       - name: Install dependencies
         run: npm ci
