@@ -140,6 +140,7 @@ const QualidadePage = lazy(() => import("@/pages/qualidade"));
 const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
 const DocumentosPage = lazy(() => import("@/pages/documentos"));
+const VerificarPage = lazy(() => import("@/pages/verificar"));
 
 function LoadingSpinner() {
   return (
@@ -277,6 +278,7 @@ function AppRouter() {
           <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
+          <Route path="/verificar" component={VerificarPage} />
           <Route path="/documentos"><Protected roles={["admin", "professional"]}><DocumentosPage /></Protected></Route>
           <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
           <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
