@@ -11,6 +11,7 @@ const unownedPatient = { ownerUserId: null };
 
 assert.equal(canAccessPatient(admin, patientA), true, "admin acessa qualquer paciente");
 assert.equal(canAccessPatient(userA, patientA), true, "dono acessa seu paciente");
+assert.equal(canAccessPatient(userB, patientB), true, "usuario B acessa seu proprio paciente");
 assert.equal(canAccessPatient(userA, patientB), false, "usuario A nao acessa paciente do usuario B");
 assert.equal(canAccessPatient(userA, unownedPatient), false, "paciente sem dono nao e publico");
 
