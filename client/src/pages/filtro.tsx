@@ -227,10 +227,16 @@ const OPB_WHY: Record<"prata" | "bronze", string> = {
 // Pode retornar [] — NUNCA cai para o catálogo inteiro (sem fallback perigoso).
 function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): RefinedScaleMatch[] {
   const matches = filterScalesIntelligently(unique(catalog), ctx);
-  const boost = (m: RefinedScaleMatch) =>
-    m.relevanceScore + searchBoost(m.scale, query);
   if (!query.trim()) return matches;
-  return [...matches].sort((a, b) => boost(b) - boost(a));
+  // Busca FILTRA de verdade: entre os candidatos seguros, mantém só os que casam
+  // com o termo digitado. Se nada casar (ex.: erro de digitação), não esvazia —
+  // cai para o conjunto seguro completo, reordenado por relevância.
+  const scored = matches.map((m) => ({ m, b: searchBoost(m.scale, query) }));
+  const anyMatch = scored.some((x) => x.b > 0);
+  const kept = anyMatch ? scored.filter((x) => x.b > 0) : scored;
+  return kept
+    .sort((a, b) => b.m.relevanceScore + b.b - (a.m.relevanceScore + a.b))
+    .map((x) => x.m);
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -385,7 +391,7 @@ export default function FiltroPage() {
   // O botão "Só aplicação completa" continua disponível para ocultar fichas.
   const [onlyApp, setOnlyApp] = useState(false);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
-  const [status, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
+  const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
   // Auto-close welcome tour on /filtro — ensures filter content is visible immediately
   useEffect(() => {
@@ -550,7 +556,7 @@ export default function FiltroPage() {
       <section className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-3 mb-4 sm:mb-6">
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">filtrável</p><p className="text-xl sm:text-2xl font-black text-foreground">{catalog.length}</p></CardContent></Card>
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-xl sm:text-2xl font-black text-foreground">{world.length}</p></CardContent></Card>
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="text-xl sm:text-2xl font-black text-foreground">{status}</p></CardContent></Card>
+        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">no app</p><p className="text-xl sm:text-2xl font-black text-foreground">{catalog.filter(isFullApp).length}</p></CardContent></Card>
       </section>
 
       {/* Two-column grid: Controls (left) + Results (right) */}
@@ -723,19 +729,22 @@ export default function FiltroPage() {
           );
         })()}
 
-        {/* Testes Diretos Recomendados */}
-        <DirectTestsRecommender
-          selectedQueixas={selectedQueixas}
-          selectedAge={selectedAge}
-          faixasEtarias={faixasEtarias}
-        />
-
-        {/* Testes para Pais Recomendados */}
-        <ParentTestsRecommender
-          selectedQueixas={selectedQueixas}
-          selectedAge={selectedAge}
-          faixasEtarias={faixasEtarias}
-        />
+        {/* Testes Diretos / para Pais — só quando o motor achou escala segura.
+            Coerência: não sugerir testes quando a saída é "nenhuma escala segura". */}
+        {hasSafeResults && (
+          <>
+            <DirectTestsRecommender
+              selectedQueixas={selectedQueixas}
+              selectedAge={selectedAge}
+              faixasEtarias={faixasEtarias}
+            />
+            <ParentTestsRecommender
+              selectedQueixas={selectedQueixas}
+              selectedAge={selectedAge}
+              faixasEtarias={faixasEtarias}
+            />
+          </>
+        )}
 
         {!hasSafeResults ? (
           <Card className="border-2 border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
