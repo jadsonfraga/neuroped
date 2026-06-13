@@ -1,58 +1,33 @@
 /**
- * Cloudflare Pages Function — proxy /api/* → Railway backend
- * Rota: /api/**  →  https://neuroped-api-production.up.railway.app/api/**
+ * Catch-all /api/* — retorna 404 JSON para qualquer rota de API que NÃO tenha
+ * uma Function dedicada (functions/api/...). As Functions específicas têm
+ * precedência sobre este catch-all.
  *
- * Isso elimina a necessidade de CORS e de alterar API_BASE no frontend.
+ * Antes, este arquivo fazia proxy de /api/* para um backend externo
+ * (neuroped-api-production.up.railway.app) que, na auditoria de 13/06, mostrou-se
+ * um serviço NÃO relacionado ("secretaria-ia") respondendo 404 em quase tudo.
+ * O proxy foi removido para não encaminhar requisições/headers a terceiros.
+ *
+ * CORS, headers de segurança e rate limiting são tratados por
+ * functions/api/_middleware.ts. Implemente auth/files/send-* como Functions
+ * próprias quando essas features forem ativadas.
  */
-
-const RAILWAY_BACKEND = "https://neuroped-api-production.up.railway.app";
-
 export async function onRequest(context) {
-  const { request } = context;
-  const url = new URL(request.url);
-
-  // Monta a URL de destino no Railway
-  const targetUrl = `${RAILWAY_BACKEND}${url.pathname}${url.search}`;
-
-  // Clona os headers, removendo o Host para evitar rejeição pelo Railway
-  const headers = new Headers(request.headers);
-  headers.delete("host");
-  headers.set("x-forwarded-host", url.hostname);
-
-  try {
-    const response = await fetch(targetUrl, {
-      method: request.method,
-      headers,
-      body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
-      redirect: "follow",
-    });
-
-    // Cria response com headers CORS para garantir compatibilidade
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.set("Access-Control-Allow-Origin", "*");
-    responseHeaders.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-    responseHeaders.set("Access-Control-Allow-Headers", "Content-Type,Authorization");
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders,
-    });
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Proxy error", detail: err.message }),
-      {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
-  }
+  const url = new URL(context.request.url);
+  return new Response(
+    JSON.stringify({
+      error: "Rota de API não encontrada.",
+      code: "NOT_FOUND",
+      path: url.pathname,
+    }),
+    {
+      status: 404,
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    }
+  );
 }
 
-// Handle OPTIONS preflight
+// Preflight CORS (o _middleware tambem trata; mantido por seguranca)
 export async function onRequestOptions() {
   return new Response(null, {
     status: 204,
