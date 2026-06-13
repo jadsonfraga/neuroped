@@ -63,6 +63,12 @@ export async function signPdfWithP12(
   return new Uint8Array(signed);
 }
 
+/** SHA-256 (hex) de bytes — fingerprint do documento para verificação. */
+export async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes as unknown as BufferSource);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 /** Dispara o download de bytes como arquivo. */
 export function downloadBytes(bytes: Uint8Array, filename: string, mime = "application/pdf") {
   const blob = new Blob([bytes], { type: mime });

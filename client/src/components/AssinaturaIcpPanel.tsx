@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck, FileSignature, Loader2, Download, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ShieldCheck, FileSignature, Loader2, Download, CheckCircle2, AlertTriangle, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -25,6 +25,21 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   const [busy, setBusy] = useState<"" | "verify" | "sign" | "plain">("");
   const [erro, setErro] = useState("");
   const [okMsg, setOkMsg] = useState("");
+  const [verif, setVerif] = useState<{ hash: string; qr: string; url: string } | null>(null);
+
+  // Gera o comprovante verificável (SHA-256 + QR) do PDF produzido.
+  async function gerarComprovante(bytes: Uint8Array) {
+    try {
+      const { sha256Hex } = await import("@/lib/icpSign");
+      const hash = await sha256Hex(bytes);
+      const url = `${window.location.origin}/#/verificar?h=${hash}`;
+      const QRCode = (await import("qrcode")).default;
+      const qr = await QRCode.toDataURL(url, { width: 240, margin: 1, errorCorrectionLevel: "M" });
+      setVerif({ hash, qr, url });
+    } catch {
+      /* comprovante é best-effort; não bloqueia o documento */
+    }
+  }
 
   async function onPickP12(e: React.ChangeEvent<HTMLInputElement>) {
     setErro(""); setOkMsg(""); setCert(null);
@@ -53,6 +68,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       const bytes = await buildPdf();
       downloadBytes(bytes, `${filename}.pdf`);
       setOkMsg("PDF gerado (sem assinatura).");
+      await gerarComprovante(bytes);
     } catch {
       setErro("Falha ao gerar o PDF do documento.");
     } finally { setBusy(""); }
@@ -71,6 +87,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       });
       downloadBytes(signed, `${filename}-assinado.pdf`);
       setOkMsg("Documento assinado e baixado com sucesso.");
+      await gerarComprovante(signed);
     } catch {
       setErro("Falha ao assinar. Confira a senha do certificado e tente novamente.");
     } finally { setBusy(""); }
@@ -126,6 +143,42 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       )}
       {okMsg && (
         <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {okMsg}</p>
+      )}
+
+      {verif && (
+        <div className="mt-3 rounded-xl border border-border bg-background/70 p-3">
+          <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+            <QrCode className="w-4 h-4 text-primary" /> Comprovante verificável (QR)
+          </p>
+          <div className="mt-2 flex flex-col sm:flex-row gap-3 items-start">
+            <img src={verif.qr} alt="QR de verificação do documento" className="w-32 h-32 rounded-lg border border-border bg-white p-1" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Escaneie para abrir a verificação e confira a integridade do PDF baixado. O QR carrega
+                a impressão digital (SHA-256) do documento.
+              </p>
+              <p className="text-[10px] font-mono break-all text-muted-foreground" data-testid="doc-hash">
+                SHA-256: {verif.hash}
+              </p>
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                <a href={verif.url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary hover:underline">
+                  Abrir página de verificação
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = verif.qr; a.download = `${filename}-qr-verificacao.png`;
+                    document.body.appendChild(a); a.click(); a.remove();
+                  }}
+                  className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <Download className="w-3 h-3" /> Baixar QR (PNG)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-snug">
