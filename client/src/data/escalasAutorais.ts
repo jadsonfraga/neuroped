@@ -2115,6 +2115,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-158",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Gravidade das Crises (Pais) (J26-158)",
     fullName: "Protocolo de Avaliação da Gravidade das Crises Epilépticas pelo Relato dos Pais",
     ageMin: 0,
@@ -2127,6 +2128,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-159",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Adesão Medicação Epilepsia (J26-159)",
     fullName: "Protocolo de Avaliação da Adesão ao Tratamento Antiepiléptico",
     ageMin: 0,
@@ -2139,6 +2141,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-160",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Qualidade de Vida Epilepsia Criança (J26-160)",
     fullName: "Protocolo de Avaliação da Qualidade de Vida de Crianças com Epilepsia",
     ageMin: 36,
@@ -2151,6 +2154,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-161",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Cognição e Epilepsia (J26-161)",
     fullName: "Protocolo de Triagem do Impacto Cognitivo das Crises e Medicação Antiepiléptica",
     ageMin: 36,
@@ -2163,6 +2167,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-162",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Gatilhos das Crises (J26-162)",
     fullName: "Protocolo de Identificação de Gatilhos de Crises Epilépticas em Crianças e Adolescentes",
     ageMin: 0,
@@ -2175,6 +2180,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-163",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Protocolo Crise de Emergência (J26-163)",
     fullName: "Protocolo de Preparação para Emergência e Crise Epiléptica em Casa e na Escola",
     ageMin: 0,
@@ -2187,6 +2193,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-164",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Monitorização Dieta Cetogênica (J26-164)",
     fullName: "Protocolo de Monitorização da Eficácia e Tolerância da Dieta Cetogênica",
     ageMin: 0,
@@ -2199,6 +2206,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-165",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Efeitos Antiepilépticos (J26-165)",
     fullName: "Protocolo de Monitorização de Efeitos Colaterais dos Antiepilépticos",
     ageMin: 0,
@@ -2211,6 +2219,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-166",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Depressão e Epilepsia (J26-166)",
     fullName: "Protocolo de Rastreio de Depressão e Ansiedade em Crianças com Epilepsia",
     ageMin: 72,
@@ -2223,6 +2232,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-167",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Epilepsia e Escola (J26-167)",
     fullName: "Protocolo de Avaliação das Necessidades Educacionais de Crianças com Epilepsia",
     ageMin: 48,

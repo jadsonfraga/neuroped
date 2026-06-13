@@ -3696,6 +3696,92 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "“Pior dor de cabeça da vida” / início súbito e explosivo","Dor que vem piorando progressivamente","Dor que acorda à noite ou é pior ao acordar","Vômitos, especialmente “em jato” e sem náusea","Febre com rigidez de nuca","Alteração da consciência ou do comportamento","Convulsão associada","Déficit neurológico (fraqueza, alteração visual, fala)","Piora com esforço, tosse ou ao deitar","Dor sempre no mesmo lado ou local fixo","Crescimento anormal do perímetro cefálico (lactente)","Alteração de marcha/equilíbrio ou estrabismo novo",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 14 — Categoria 14: Epilepsia Expandida (autoral)
+  // ============================================================
+
+  "j26-158": {
+    icon: Activity, gradient: "from-violet-500 to-purple-700", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia a gravidade das crises pelo relato dos pais (maior = mais grave). Complementa o diário e guia o ajuste da medicação. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Gravidade das crises (maior = mais grave)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Características das crises", color: "text-violet-600 dark:text-violet-400", items: [
+      "As crises são frequentes","As crises são longas (mais de 5 minutos)","As crises envolvem o corpo todo (tônico-clônicas)","A criança cai ou se machuca nas crises","Há perda de consciência nas crises","Há alteração respiratória ou de coloração na crise","O pós-crise é longo (sonolência, confusão)","As crises acontecem em série (uma após a outra)","Já precisou de pronto-socorro por crise","As crises acontecem durante o sono","As crises atrapalham as atividades diárias","As crises não estão controladas com a medicação atual",
+    ]}],
+  },
+  "j26-159": {
+    icon: ClipboardList, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a adesão ao tratamento antiepiléptico (maior = melhor adesão). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Adesão ao tratamento (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Adesão à medicação", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Dá o remédio todos os dias","Dá nos horários certos","Dá a dose correta","Não esquece doses","Mantém o remédio em estoque (não falta)","A criança consegue engolir ou aceitar o remédio","Não interrompe por conta própria","Continua mesmo quando a criança está bem","Sabe o que fazer se esquecer uma dose","Comparece às consultas e exames de acompanhamento","Faz os exames de nível sérico quando pedido","No geral, segue o tratamento corretamente",
+    ]}],
+  },
+  "j26-160": {
+    icon: Heart, gradient: "from-blue-500 to-indigo-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto da epilepsia na qualidade de vida (maior = mais impacto). Para olhar além das crises. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Impacto na qualidade de vida (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Qualidade de vida na epilepsia", color: "text-blue-600 dark:text-blue-400", items: [
+      "A epilepsia atrapalha a escola","Atrapalha as amizades","Atrapalha os esportes e atividades físicas","Afeta a autoestima da criança","A criança sente vergonha ou estigma","A criança tem medo de ter crise em público","Há restrições no dia a dia (natação, bicicleta)","A criança se sente diferente dos colegas","A família tem medo constante de crise","A epilepsia limita passeios e atividades","A criança fica ansiosa ou triste com a condição","A epilepsia compromete a qualidade de vida no geral",
+    ]}],
+  },
+  "j26-161": {
+    icon: Sparkles, gradient: "from-amber-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Triagem do impacto cognitivo das crises e da medicação (maior = mais impacto). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Impacto cognitivo (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Cognição e medicação", color: "text-amber-600 dark:text-amber-400", items: [
+      "Piorou a memória após as crises ou a medicação","Piorou a atenção ou a concentração","Ficou mais lenta para pensar ou responder","Caiu o rendimento escolar","Tem dificuldade de aprender coisas novas","Fica sonolenta e desligada (efeito do remédio)","Tem mais dificuldade de organização","Esquece o que estudou","Tem “brancos” ou lapsos durante o dia","As mudanças surgiram após iniciar a medicação","Tem dificuldade de acompanhar a turma","As alterações cognitivas preocupam a família",
+    ]}],
+  },
+  "j26-162": {
+    icon: Activity, gradient: "from-orange-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Identifica gatilhos das crises (maior = mais gatilhos associados). Importante para a prevenção. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Gatilhos de crise (maior = mais associados)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Fatores desencadeantes", color: "text-orange-600 dark:text-orange-400", items: [
+      "Febre desencadeia crises","Privação ou falta de sono desencadeia","Estresse ou ansiedade desencadeia","Luz piscante ou telas desencadeiam","Esquecer o remédio desencadeia","Infecções ou doenças desencadeiam","Cansaço físico excessivo desencadeia","Jejum ou hipoglicemia desencadeia","Menstruação desencadeia (catamenial)","Excesso de estimulação ou agitação desencadeia","Mudança de rotina desencadeia","Há um padrão de horário para as crises",
+    ]}],
+  },
+  "j26-163": {
+    icon: ShieldAlert, gradient: "from-teal-500 to-emerald-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a preparação para emergência em casa e na escola (maior = mais preparada). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Preparação para emergência (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Preparo para a crise", color: "text-teal-600 dark:text-teal-400", items: [
+      "A família sabe colocar a criança em posição de segurança","A família sabe NÃO colocar nada na boca","A família sabe cronometrar a crise","A família sabe quando chamar o SAMU (192)","A família sabe quando e como usar a medicação de resgate","A escola tem o plano de emergência por escrito","Os professores sabem o que fazer na crise","Há medicação de resgate disponível na escola","A família sabe o que observar e anotar na crise","Os contatos de emergência estão acessíveis","A família sabe o que fazer após a crise (pós-ictal)","Todos os cuidadores estão orientados",
+    ]}],
+  },
+  "j26-164": {
+    icon: Sparkles, gradient: "from-lime-500 to-green-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Monitorização mensal da dieta cetogênica (maior = funcionando melhor). Acompanhamento clínico/nutricional obrigatório. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Dieta cetogênica (maior = funcionando melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Eficácia e tolerância", color: "text-lime-700 dark:text-lime-400", items: [
+      "Houve redução das crises com a dieta","A criança mantém a cetose desejada","A criança aceita bem a dieta","A família consegue manter a dieta corretamente","O crescimento está adequado","Não há efeitos adversos importantes (constipação, etc.)","O humor ou o comportamento melhorou","A energia e a disposição estão boas","Os exames de acompanhamento estão adequados","A dieta é viável na rotina da família","A escola colabora com a dieta","No geral, a dieta cetogênica está funcionando",
+    ]}],
+  },
+  "j26-165": {
+    icon: Activity, gradient: "from-cyan-500 to-blue-600", instruction:
+      "Marque a frequência de cada efeito desde o início (ou ajuste) da medicação. Responda todos os itens.",
+    infoBox: "Monitorização de efeitos colaterais dos antiepilépticos (maior = mais efeitos). Relate ao médico — não suspenda por conta própria. Não é diagnóstico.",
+    labels: FREQ_LABELS, totalLabel: "Efeitos adversos (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Efeitos observados", color: "text-cyan-600 dark:text-cyan-400", items: [
+      "Sonolência","Perda de apetite","Ganho de peso","Irritabilidade ou agressividade","Tremor","Tontura ou desequilíbrio","Náusea ou vômito","Alterações de humor ou tristeza","Lentidão cognitiva","Alterações de pele (manchas, alergia)","Queda de cabelo","Mudanças de comportamento",
+    ]}],
+  },
+  "j26-166": {
+    icon: Heart, gradient: "from-sky-500 to-indigo-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Rastreio de depressão e ansiedade na epilepsia (maior = mais sintomas; risco aumentado). Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Depressão/ansiedade na epilepsia (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Humor e ansiedade", color: "text-sky-600 dark:text-sky-400", items: [
+      "Está mais triste ou desanimada","Perdeu o interesse pelas coisas","Sente-se diferente ou limitada pela epilepsia","Tem medo constante de ter crise","Evita atividades por medo ou estigma","Tem baixa autoestima","Está mais irritada","Dorme mal","Mudou o apetite","Fica ansiosa com a condição","Isola-se dos amigos","Fala de forma negativa sobre o futuro",
+    ]}],
+  },
+  "j26-167": {
+    icon: Sparkles, gradient: "from-emerald-500 to-green-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia as necessidades educacionais e a preparação da escola na epilepsia (maior = melhor). Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Epilepsia e escola (maior = melhor preparada)", bands: DEV_BANDS,
+    domains: [{ name: "Inclusão e preparo escolar", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "O professor sabe que a criança tem epilepsia","O professor sabe o que fazer na crise","A escola tem plano de emergência","Há medicação de resgate disponível na escola","A escola permite que a criança se recupere após a crise","Há adaptações pedagógicas quando necessário","A criança não sofre estigma na escola","A criança participa das atividades com segurança","A escola comunica as crises à família","A escola colabora com o tratamento","A criança se sente segura na escola","No geral, a inclusão escolar está adequada",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
