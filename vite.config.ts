@@ -1,9 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 import path from "path";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Polyfills mínimos para a assinatura PDF (PAdES) no navegador: @signpdf
+    // usa Buffer/process. A chave privada do certificado NUNCA sai do dispositivo.
+    nodePolyfills({ include: ["buffer", "process", "util", "stream"], globals: { Buffer: true, process: true } }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
