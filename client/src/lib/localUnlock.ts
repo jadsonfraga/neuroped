@@ -1,4 +1,5 @@
-const UNLOCK_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
+// PIN master das rotas clínicas sensíveis — SHA-256 de "260756".
+const UNLOCK_HASH = "7469fe7380c5adaf6764369b74bd5c4e70dc358761136458c436da2787a1e6b7";
 const SESSION_KEY = "neuroped:local-unlocked";
 const REMEMBER_KEY = "neuroped:local-unlocked-persistent";
 const LOCK_EVENT = "neuroped:local-lock-changed";

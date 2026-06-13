@@ -6,7 +6,7 @@ import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { sha256hex } from "@/lib/pinAuth";
 import { playBump, playFlagPole } from "@/lib/sounds";
 
-const MASTER_PIN_HASH = "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207";
+const MASTER_PIN_HASH = "7469fe7380c5adaf6764369b74bd5c4e70dc358761136458c436da2787a1e6b7"; // SHA-256 de "260756"
 const ENV_PIN_HASH: string = import.meta.env.VITE_PIN_HASH ?? "";
 const EFFECTIVE_PIN_HASHES = [MASTER_PIN_HASH, ENV_PIN_HASH.trim().toLowerCase()].filter(
   (hash, index, list) => /^[a-f0-9]{64}$/.test(hash) && list.indexOf(hash) === index,
