@@ -2654,6 +2654,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-198",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Estimulante Efeitos Acompanhamento (J26-198)",
     fullName: "Protocolo de Monitorização Detalhada de Efeitos do Metilfenidato e Anfetaminas",
     ageMin: 48,
@@ -2666,6 +2667,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-199",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Antiepiléptico Monitorização Ampla (J26-199)",
     fullName: "Protocolo Amplo de Monitorização de Efeitos dos Antiepilépticos de Nova Geração",
     ageMin: 0,
@@ -2678,6 +2680,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-200",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Antipsicótico Metabólico (J26-200)",
     fullName: "Protocolo de Monitorização Metabólica em Uso de Antipsicóticos em Crianças",
     ageMin: 60,
@@ -2690,6 +2693,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-201",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Adesão Medicação Criança (J26-201)",
     fullName: "Protocolo de Avaliação da Adesão ao Tratamento Farmacológico em Crianças",
     ageMin: 36,
@@ -2702,6 +2706,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-202",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Polifarmácia Risco Pediátrico (J26-202)",
     fullName: "Protocolo de Avaliação de Risco de Polifarmácia em Crianças com Multimorbidade",
     ageMin: 0,
@@ -2719,6 +2724,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
 
   {
     id: "j26-203",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Comunicação Social 3-7 Anos (J26-203)",
     fullName: "Protocolo de Avaliação da Comunicação Social em Crianças de 3 a 7 Anos",
     ageMin: 36,
@@ -2731,6 +2737,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-204",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Tiques Monitorização (J26-204)",
     fullName: "Protocolo de Monitorização da Frequência e Impacto dos Tiques",
     ageMin: 36,
@@ -2743,6 +2750,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-205",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Cognição Social TEA (J26-205)",
     fullName: "Protocolo de Avaliação da Cognição Social em Crianças com TEA",
     ageMin: 48,
@@ -2755,6 +2763,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-206",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Irmão Criança com NEE (J26-206)",
     fullName: "Protocolo de Avaliação do Impacto nos Irmãos de Crianças com Necessidades Especiais",
     ageMin: 48,
@@ -2767,6 +2776,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-207",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Privação Social e Negligência (J26-207)",
     fullName: "Protocolo de Triagem de Privação Ambiental e Negligência como Causa de Atraso do Desenvolvimento",
     ageMin: 0,
@@ -2779,6 +2789,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-208",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Habilidades de Vida Independente (J26-208)",
     fullName: "Protocolo de Avaliação das Habilidades de Vida Independente em Adolescentes com DI ou TEA",
     ageMin: 144,
@@ -2791,6 +2802,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-209",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Saúde Sexual Adolescente NEE (J26-209)",
     fullName: "Protocolo de Avaliação de Educação e Saúde Sexual em Adolescentes com Necessidades Especiais",
     ageMin: 144,
@@ -2803,6 +2815,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-210",
+    implementationStatus: "complete",
     name: "Protocolo Dr. Jadson — Avaliação Pós-Terapia Trimestral (J26-210)",
     fullName: "Protocolo Trimestral de Avaliação de Evolução Clínica Pós-Intervenção Multidisciplinar",
     ageMin: 0,

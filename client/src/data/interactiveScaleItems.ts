@@ -4043,6 +4043,118 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Teve icterícia grave ou precisou de exsanguineotransfusão","Tem alteração auditiva (não reage a sons)","Falhou na triagem auditiva","Tem atraso motor","Tem alterações de tônus (hipertonia ou hipotonia)","Tem movimentos anormais","Tem atraso de linguagem","Tem dificuldade de olhar para cima (paralisia do olhar)","Tem alterações dentárias (esmalte)","Tem atraso no desenvolvimento global","Tem sinais sugestivos de kernícterus","Os achados preocupam quanto a sequela neurossensorial",
     ]}],
   },
+
+  // ============================================================
+  // LOTE 18 — Categoria 18: Monitorização de Medicação + finais (autoral)
+  // ============================================================
+
+  "j26-198": {
+    icon: Activity, gradient: "from-amber-500 to-orange-600", instruction:
+      "Marque a frequência de cada efeito nas primeiras semanas de tratamento. Responda todos os itens.",
+    infoBox: "Monitorização detalhada do estimulante (maior = mais efeitos). Guia o ajuste de dose. Relate ao médico; não suspenda por conta própria. Não é diagnóstico.",
+    labels: FREQ_LABELS, totalLabel: "Efeitos do estimulante (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Efeitos observados", color: "text-amber-600 dark:text-amber-400", items: [
+      "Perda de apetite","Dificuldade para dormir","Perda de peso","Dor de cabeça","Dor de barriga","Irritabilidade ou rebote no fim da tarde","Fica “apagada” ou quietinha demais","Tiques novos","Coração acelerado ou palpitação","Humor mais triste ou ansioso","Tontura","Desaceleração do crescimento (relato)",
+    ]}],
+  },
+  "j26-199": {
+    icon: Activity, gradient: "from-violet-500 to-purple-600", instruction:
+      "Marque a frequência de cada efeito desde o início ou ajuste do medicamento. Responda todos os itens.",
+    infoBox: "Monitorização ampla de efeitos dos antiepilépticos de nova geração (maior = mais efeitos). Relate ao médico. Não é diagnóstico.",
+    labels: FREQ_LABELS, totalLabel: "Efeitos do antiepiléptico (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Efeitos por sistema", color: "text-violet-600 dark:text-violet-400", items: [
+      "Sonolência ou sedação","Tontura ou desequilíbrio","Alterações de comportamento ou irritabilidade","Náusea, vômito ou dor abdominal","Alterações de humor","Lentidão cognitiva ou dificuldade de atenção","Reações de pele (rash)","Alterações visuais (visão dupla)","Tremor","Alterações de apetite ou peso","Dor de cabeça","Alterações de coordenação",
+    ]}],
+  },
+  "j26-200": {
+    icon: Activity, gradient: "from-orange-500 to-red-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Monitorização metabólica trimestral de antipsicóticos (maior = mais alterações). Exige exames e acompanhamento. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Alterações metabólicas (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Monitorização metabólica", color: "text-orange-600 dark:text-orange-400", items: [
+      "Ganho de peso significativo","Aumento do apetite ou fome excessiva","Aumento do IMC","Glicemia elevada (relato de exame)","Colesterol ou triglicérides elevados (relato)","Pressão arterial elevada","Sonolência excessiva","Aumento da circunferência abdominal","Sede excessiva ou urinar muito","Movimentos involuntários (extrapiramidais)","Alterações hormonais (galactorreia, etc.)","Sinais de síndrome metabólica",
+    ]}],
+  },
+  "j26-201": {
+    icon: ClipboardList, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a adesão ao tratamento farmacológico (maior = melhor adesão). Orienta estratégias de melhora. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Adesão (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Adesão à medicação", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Dá o remédio todos os dias","Dá nos horários certos","Dá a dose correta","Não esquece doses","A criança aceita ou engole o remédio","Mantém estoque (não falta)","Não interrompe por conta própria","Consegue arcar com o custo","Continua mesmo quando a criança está bem","Sabe o que fazer se esquecer uma dose","Comparece às consultas e exames","No geral, segue o tratamento corretamente",
+    ]}],
+  },
+  "j26-202": {
+    icon: ShieldAlert, gradient: "from-slate-500 to-gray-700", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Revisão de risco de polifarmácia em criança com multimorbidade (maior = mais risco). Indica desprescrição/revisão. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Risco de polifarmácia (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Revisão de polifarmácia", color: "text-slate-600 dark:text-slate-300", items: [
+      "Usa 3 ou mais medicações ao mesmo tempo","Usa medicações de várias classes","Há risco de interação medicamentosa","Há possível duplicação terapêutica","Algum remédio pode ser desnecessário","Há efeitos adversos atribuíveis a interações","Há vários prescritores diferentes","A família tem dificuldade em administrar tantos remédios","Algum remédio sem indicação clara atual","Falta revisão periódica das medicações","Há “cascata de prescrição” (remédio para efeito de remédio)","O risco geral de polifarmácia é relevante",
+    ]}],
+  },
+  "j26-203": {
+    icon: MessageCircle, gradient: "from-sky-500 to-blue-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a comunicação social no pré-escolar e início do fundamental (maior = melhor). Identifica risco de TEA/TDL. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Comunicação social 3–7 anos (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Comunicação social", color: "text-sky-600 dark:text-sky-400", items: [
+      "Responde ao nome","Mantém contato visual na interação","Espera e respeita os turnos na conversa","Mantém um assunto compartilhado","Pede ajuda quando precisa","Inicia interação com outras crianças","Responde a perguntas de forma pertinente","Usa e entende gestos sociais","Compartilha interesse (mostra coisas)","Brinca de forma cooperativa","Entende regras sociais simples","Comunica-se de forma funcional no grupo",
+    ]}],
+  },
+  "j26-204": {
+    icon: Activity, gradient: "from-yellow-500 to-orange-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Monitorização da frequência e do impacto dos tiques ao longo do tempo (maior = pior). Ajuda na decisão sobre tratamento. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Tiques — evolução (maior = pior)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Frequência e impacto", color: "text-yellow-600 dark:text-yellow-400", items: [
+      "Tem vários tipos de tiques motores","Tem vários tipos de tiques vocais","Os tiques são frequentes","Os tiques são intensos","Os tiques pioram com estresse","Os tiques atrapalham a escola","Os tiques atrapalham o convívio social","Os tiques causam desconforto físico","A criança suprime os tiques apenas por pouco tempo","Os tiques causam constrangimento","Surgiram tiques novos desde a última avaliação","No geral, os tiques pioraram",
+    ]}],
+  },
+  "j26-205": {
+    icon: Sparkles, gradient: "from-cyan-500 to-blue-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia a cognição social na criança com TEA (maior = melhor). Base para a intervenção social. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Cognição social (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Cognição social", color: "text-cyan-600 dark:text-cyan-400", items: [
+      "Reconhece emoções básicas em faces","Reconhece emoções complexas","Entende a intenção dos outros","Lê a linguagem corporal","Tem empatia cognitiva (entende o que o outro sente)","Entende perspectivas diferentes da sua","Percebe quando alguém está brincando ou sendo irônico","Ajusta o comportamento ao contexto social","Reconhece expressões pela voz e pelo tom","Antecipa as reações dos outros","Entende regras sociais implícitas","Aplica a cognição social no dia a dia",
+    ]}],
+  },
+  "j26-206": {
+    icon: Heart, gradient: "from-rose-500 to-pink-600", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Avalia o impacto nos irmãos de crianças com necessidades especiais (maior = mais impacto). Para cuidar de toda a família. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Impacto no irmão (maior = mais)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Impacto no irmão", color: "text-rose-600 dark:text-rose-400", items: [
+      "O irmão recebe menos atenção dos pais","O irmão demonstra ciúmes ou ressentimento","O irmão assume responsabilidades demais para a idade","O irmão tem vergonha ou se isola por causa da condição","O irmão demonstra tristeza ou ansiedade","O irmão teve queda no rendimento escolar","O irmão evita levar amigos em casa","O irmão tem queixas físicas ligadas ao estresse","O irmão se preocupa demais com a família","O irmão tem poucas atividades próprias","O irmão sente que não pode incomodar","A condição do irmão impacta o desenvolvimento emocional dele",
+    ]}],
+  },
+  "j26-207": {
+    icon: ShieldAlert, gradient: "from-slate-500 to-gray-700", instruction: SEVERITY_INSTRUCTION,
+    infoBox: "Triagem de privação ambiental e negligência como causa de atraso (maior = mais provável). Pode exigir notificação/proteção conforme o caso. Não é diagnóstico.",
+    labels: SEVERITY_LABELS, totalLabel: "Privação/negligência (maior = mais provável)", bands: SEVERITY_BANDS,
+    domains: [{ name: "Contexto ambiental adverso", color: "text-slate-600 dark:text-slate-300", items: [
+      "Há pouca estimulação ou interação em casa","A criança passa muito tempo sozinha ou sem atenção","Há poucos brinquedos, livros ou estímulos","Há depressão materna grave ou doença do cuidador","Há isolamento social da família","As necessidades básicas nem sempre são atendidas","Há negligência de cuidados (higiene, alimentação, saúde)","A criança não frequenta creche, escola ou convívio","Há ambiente caótico ou violento","A criança “melhora” quando estimulada e acolhida","O atraso é desproporcional a causas biológicas","O contexto adverso é a provável causa do atraso",
+    ]}],
+  },
+  "j26-208": {
+    icon: Sparkles, gradient: "from-emerald-500 to-teal-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia habilidades de vida independente em adolescentes com DI ou TEA (maior = mais independente). Para a transição à vida adulta. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Vida independente (maior = mais autônomo)", bands: DEV_BANDS,
+    domains: [{ name: "Habilidades de vida independente", color: "text-emerald-600 dark:text-emerald-400", items: [
+      "Usa transporte público","Faz uma compra simples e confere o troco","Prepara um lanche ou refeição simples","Usa o celular com segurança","Administra dinheiro básico","Cuida da própria higiene e aparência","Faz tarefas domésticas","Toma os próprios medicamentos com supervisão","Conhece regras de segurança (rua, estranhos)","Pede ajuda quando necessário","Organiza a própria rotina","Tem habilidades para uma ocupação ou trabalho apoiado",
+    ]}],
+  },
+  "j26-209": {
+    icon: ShieldAlert, gradient: "from-pink-500 to-rose-600", instruction: DEV_INSTRUCTION,
+    infoBox: "Avalia conhecimento e proteção em saúde sexual de adolescentes com NEE (maior = mais protegido e orientado). Orienta a educação sexual adaptada. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Saúde sexual e proteção (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Educação e proteção sexual", color: "text-pink-600 dark:text-pink-400", items: [
+      "Conhece as partes do corpo e a privacidade corporal","Diferencia toque adequado de inadequado","Sabe dizer “não” a toques indesejados","Sabe a quem recorrer se algo errado acontecer","Entende noções de puberdade e mudanças do corpo","Tem noções de relacionamentos saudáveis","Entende limites e consentimento (no nível possível)","Tem a sua privacidade respeitada e compreende a dos outros","Conhece riscos básicos (abuso, exposição online)","Recebe educação sexual adaptada","Comunica desconfortos relacionados ao corpo","Tem proteção e orientação adequadas",
+    ]}],
+  },
+  "j26-210": {
+    icon: Sparkles, gradient: "from-blue-500 to-indigo-600", instruction:
+      "Marque como está a criança HOJE em relação ao trimestre anterior. Responda todos os itens.",
+    infoBox: "Avaliação trimestral de evolução pós-intervenção multidisciplinar (maior = mais evolução). Base para o relatório de acompanhamento. Não é diagnóstico.",
+    labels: MILESTONE_LABELS, totalLabel: "Evolução trimestral (maior = melhor)", bands: DEV_BANDS,
+    domains: [{ name: "Evolução pós-terapia", color: "text-blue-600 dark:text-blue-400", items: [
+      "Houve evolução na área principal tratada","Houve evolução na comunicação","Houve evolução no comportamento","Houve evolução na autonomia","Houve evolução social","As metas do trimestre foram alcançadas","A família percebe melhora no dia a dia","A escola percebe melhora","A criança está mais regulada","As terapias estão sendo efetivas","O plano atual continua adequado","No geral, a evolução é positiva",
+    ]}],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
