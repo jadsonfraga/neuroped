@@ -39,6 +39,7 @@ import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterRecommendationsOPB";
 import { getClinicalTiers } from "@/data/clinicalRanking";
+import { opbParentCopy } from "@/data/opbParentCopy";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesIntelligently,
@@ -171,23 +172,28 @@ const RESP_LABEL: Record<string, string> = {
   teste_direto_crianca: "a criança (teste direto)",
 };
 
-// Monta um card OPB (parent-friendly) a partir da escala real + racional curado.
-// Texto derivado dos dados próprios da escala — nunca de instrumentos que não abrem.
+// Monta um card OPB (parent-friendly). Usa o texto curado à mão (opbParentCopy)
+// quando existe; senão, deriva um fallback honesto dos dados da própria escala.
+// whyUseful do OURO vem da regra (racional contextual); PRATA/BRONZE preferem o
+// texto curado da escala e caem para o genérico passado.
 function buildOPB(
   seal: "ouro" | "prata" | "bronze",
   scale: ScaleEntry,
-  whyUseful: string,
+  whyUsefulFallback: string,
   queixaLabel: string
 ): RecommendationOPB {
+  const copy = opbParentCopy[scale.id];
   const resp = RESP_LABEL[scale.respondente?.[0] ?? "clinico"] ?? "o avaliador";
   return {
     seal,
     scaleId: scale.id,
     scaleName: scale.name,
     time: scale.tempo || "—",
-    mainQuestion: firstSentence(scale.description) || scale.fullName || scale.name,
-    parentExample: `Aplicada com ${resp}; os itens avaliam ${queixaLabel.toLowerCase()} de forma ajustada à faixa etária da criança.`,
-    whyUseful,
+    mainQuestion: copy?.mainQuestion || firstSentence(scale.description) || scale.fullName || scale.name,
+    parentExample:
+      copy?.parentExample ||
+      `Aplicada com ${resp}; os itens avaliam ${queixaLabel.toLowerCase()} de forma ajustada à faixa etária da criança.`,
+    whyUseful: seal === "ouro" ? whyUsefulFallback : copy?.whyUseful || whyUsefulFallback,
   };
 }
 

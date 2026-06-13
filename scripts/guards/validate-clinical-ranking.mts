@@ -10,6 +10,7 @@ import { allScales } from "../../client/src/data/scaleFilter.ts";
 import { interactiveScaleItems } from "../../client/src/data/interactiveScaleItems.ts";
 import { mergeFilterableCatalog } from "../../client/src/data/filterableCatalog.ts";
 import { clinicalRanking } from "../../client/src/data/clinicalRanking.ts";
+import { opbParentCopy } from "../../client/src/data/opbParentCopy.ts";
 
 const ITEMS = new Set(Object.keys(interactiveScaleItems));
 const dedicated = (r?: string) =>
@@ -35,6 +36,11 @@ for (const rule of clinicalRanking) {
     const overlaps = scale.ageMax >= rule.ageMin && scale.ageMin <= rule.ageMax;
     if (!overlaps) errors.push(`${tag} faixa do instrumento (${scale.ageMin}-${scale.ageMax}m) não sobrepõe a regra`);
   }
+}
+
+// Todo id com texto curado (opbParentCopy) precisa existir no catálogo usável.
+for (const id of Object.keys(opbParentCopy)) {
+  if (!byId.has(id)) errors.push(`[opbParentCopy ${id}] id não abre / inexistente no catálogo usável`);
 }
 
 if (errors.length) {
