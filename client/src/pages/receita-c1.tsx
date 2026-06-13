@@ -1,197 +1,86 @@
 import { useState } from "react";
-import { Printer, RefreshCw } from "lucide-react";
+import { FileText, Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 
 /* ────────────────────────────────────────────────────────────
-   Receita Especial C1 — Notificação de Receita Amarela
+   Receita / Documento médico — texto integral + assinatura PAdES
    Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17756
 ──────────────────────────────────────────────────────────── */
 
-interface ReceitaData {
-  // Paciente
-  nomePaciente: string;
-  enderecoP: string;
-  cidadeUFP: string;
-  // Médico
-  nomeMedico: string;
-  crm: string;
-  rqe: string;
-  especialidade: string;
-  endereco: string;
-  cidadeUF: string;
-  telefone: string;
-  // Prescrição
-  medicamento: string;
-  concentracao: string;
-  formaFarm: string;
-  quantidade: string;
-  posologia: string;
-  via: string;
-  duracao: string;
-  observacoes: string;
-  // Data
-  data: string;
-  local: string;
+const DEFAULT_TEXT = `RECEITA / DOCUMENTO MÉDICO
+
+Cole aqui o texto completo já revisado pelo médico, com todos os dados necessários do paciente e do documento.
+
+Petrolina/PE, ____/____/______.
+
+Dr. Jadson Fraga Araújo Júnior
+Neurologista Infantil / Neuropediatra
+CRM-PE 25.227 | RQE 17.756`;
+
+function escapeHtml(value: string): string {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-const defaultData = (): ReceitaData => ({
-  nomePaciente: "",
-  enderecoP: "",
-  cidadeUFP: "",
-  nomeMedico: "Dr. Jadson Fraga Araújo Júnior",
-  crm: "CRM-PE 25.227",
-  rqe: "RQE 17.756",
-  especialidade: "Neuropediatria",
-  endereco: "",
-  cidadeUF: "Recife – PE",
-  telefone: "",
-  medicamento: "",
-  concentracao: "",
-  formaFarm: "Solução oral",
-  quantidade: "",
-  posologia: "",
-  via: "",
-  duracao: "",
-  observacoes: "",
-  data: new Date().toLocaleDateString("pt-BR"),
-  local: "Recife",
-});
+function dateStamp(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
 
-function buildReceita(d: ReceitaData): string {
+function buildReceitaHtml(texto: string): string {
+  const today = new Date().toLocaleDateString("pt-BR");
+  const safeText = escapeHtml(texto.trim() || "Sem conteúdo informado.");
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<title>Receita / Documento Médico</title>
 <style>
-  @page { size: 148mm 210mm; margin: 10mm 12mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff; }
-  .border-box { border: 2px solid #b00; border-radius: 4px; padding: 8px 10px; margin-bottom: 10px; }
-  .titulo { text-align:center; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:#b00; margin-bottom:6px; }
-  .subtitulo { text-align:center; font-size:9px; color:#555; margin-bottom:8px; }
-  .header { display:flex; justify-content:space-between; margin-bottom:8px; }
-  .header-medico { font-size:10px; line-height:1.5; }
-  .header-medico .nome { font-size:11px; font-weight:700; color:#b00; }
-  .section-label { font-size:8px; text-transform:uppercase; letter-spacing:.08em; color:#888; margin-bottom:2px; font-weight:600; }
-  .section-value { font-size:11px; margin-bottom:6px; border-bottom:0.5px solid #ddd; padding-bottom:3px; min-height:16px; }
-  .rx { font-size:22px; font-weight:800; color:#b00; margin-right:4px; vertical-align:middle; }
-  .med-box { background:#fff8f8; border:1px solid #f5a0a0; border-radius:4px; padding:8px 10px; margin:8px 0; }
-  .med-name { font-size:13px; font-weight:700; color:#b00; }
-  .med-conc { font-size:10px; color:#333; margin-bottom:3px; }
-  .med-posol { font-size:11px; margin-top:4px; white-space:pre-wrap; }
-  .footer { margin-top:16px; display:flex; justify-content:space-between; align-items:flex-end; }
-  .sign { width:160px; border-top:1.5px solid #333; text-align:center; padding-top:4px; font-size:9px; }
-  .warn { font-size:7.5px; color:#666; text-align:center; margin-top:6px; border-top:0.5px solid #ccc; padding-top:4px; }
-  .cns-box { display:flex; gap:6px; margin-top:4px; }
-  .cns-item { font-size:9px; border:1px solid #ccc; border-radius:3px; padding:2px 6px; flex:1; }
+  @page { size: A4; margin: 18mm 18mm 22mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; margin: 0; }
+  .border-box { border: 2px solid #b00; border-radius: 6px; padding: 12px 14px; margin-bottom: 18px; }
+  .titulo { text-align:center; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:#b00; margin-bottom:4px; }
+  .subtitulo { text-align:center; font-size:10px; color:#555; }
+  .doctor { margin-top:10px; text-align:center; font-size:10px; line-height:1.5; color:#333; }
+  .doc-text { font-size:12px; line-height:1.65; white-space:pre-wrap; }
+  .footer { margin-top:30px; border-top:1px solid #ccc; padding-top:10px; font-size:10px; color:#666; }
   @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
 </style>
 </head>
 <body>
-
-<div class="border-box">
-  <div class="titulo">Notificação de Receita — Lista C1</div>
-  <div class="subtitulo">Receita Especial — Válida em todo o território nacional por 30 dias</div>
-
-  <!-- Médico -->
-  <div class="header-medico">
-    <div class="nome">${d.nomeMedico}</div>
-    <div>${d.crm} | ${d.rqe} — ${d.especialidade}</div>
-    <div>${d.endereco || "—"} &nbsp;·&nbsp; ${d.cidadeUF} &nbsp;·&nbsp; ${d.telefone || "—"}</div>
+  <div class="border-box">
+    <div class="titulo">Receita / Documento Médico</div>
+    <div class="subtitulo">Documento para geração em PDF e assinatura digital</div>
+    <div class="doctor">
+      <strong>Dr. Jadson Fraga Araújo Júnior</strong><br>
+      CRM-PE 25.227 | RQE 17.756 — Neurologista Infantil / Neuropediatra
+    </div>
   </div>
-</div>
-
-<!-- Paciente -->
-<div style="margin-bottom:10px">
-  <div class="section-label">Paciente</div>
-  <div class="section-value">${d.nomePaciente || "—"}</div>
-  <div class="section-label">Endereço</div>
-  <div class="section-value">${d.enderecoP || "—"}</div>
-  <div class="section-label">Cidade / UF</div>
-  <div class="section-value">${d.cidadeUFP || "—"}</div>
-</div>
-
-<!-- Prescrição -->
-<div style="margin-bottom:10px">
-  <span class="rx">Rp</span>
-  <div class="med-box">
-    <div class="med-name">${d.medicamento || "— medicamento —"}</div>
-    <div class="med-conc">${[d.concentracao, d.formaFarm].filter(Boolean).join(" · ")}</div>
-    <div class="med-conc">Qtd: ${d.quantidade || "—"}</div>
-    <div class="med-posol">${d.posologia || "—"}
-${d.via ? "Via: " + d.via : ""}${d.duracao ? "\nDuração: " + d.duracao : ""}</div>
-  </div>
-  ${d.observacoes ? '<div style="font-size:10px;margin-top:4px"><strong>Obs:</strong> ' + d.observacoes + '</div>' : ""}
-</div>
-
-<!-- Uso médico -->
-<div class="cns-box">
-  <div class="cns-item"><strong>1ª via — Farmácia</strong></div>
-  <div class="cns-item"><strong>2ª via — Paciente</strong></div>
-</div>
-
-<div class="footer">
-  <div style="font-size:9px;color:#555">
-    Local: ${d.local || "—"} &nbsp; Data: ${d.data}
-  </div>
-  <div class="sign">
-    ${d.nomeMedico}<br>
-    ${d.crm}
-  </div>
-</div>
-
-<div class="warn">
-  ⚠ Uso sujeito a controle especial (Portaria SVS/MS nº 344/1998 e atualizações).
-  Receita válida por 30 dias a partir da data de emissão.
-</div>
-
+  <main class="doc-text">${safeText}</main>
+  <div class="footer">Emitido em: ${today} — NeuroPed EDJ</div>
 </body>
 </html>`;
 }
 
-function Field({
-  label,
-  name,
-  value,
-  onChange,
-  multiline = false,
-  rows = 2,
-  colSpan = false,
-}: {
-  label: string;
-  name: keyof ReceitaData;
-  value: string;
-  onChange: (n: keyof ReceitaData, v: string) => void;
-  multiline?: boolean;
-  rows?: number;
-  colSpan?: boolean;
-}) {
-  const cls =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 resize-none";
-  return (
-    <label className={"flex flex-col gap-1 text-sm" + (colSpan ? " sm:col-span-2" : "")}>
-      <span className="font-semibold text-foreground">{label}</span>
-      {multiline ? (
-        <textarea rows={rows} className={cls} value={value} onChange={(e) => onChange(name, e.target.value)} />
-      ) : (
-        <input type="text" className={cls.replace("resize-none", "")} value={value} onChange={(e) => onChange(name, e.target.value)} />
-      )}
-    </label>
-  );
-}
-
 export default function ReceitaC1Page() {
-  const [data, setData] = useState<ReceitaData>(defaultData());
-  const set = (name: keyof ReceitaData, value: string) =>
-    setData((prev) => ({ ...prev, [name]: value }));
+  const [texto, setTexto] = useState(DEFAULT_TEXT);
+  const [showPreview, setShowPreview] = useState(false);
+  const filename = `receita-documento-${dateStamp()}`;
 
   const handlePrint = () => {
-    const html = buildReceita(data);
     const win = window.open("", "_blank");
     if (!win) return;
-    win.document.write(html);
+    win.document.write(buildReceitaHtml(texto));
     win.document.close();
     win.focus();
     setTimeout(() => { win.print(); }, 400);
@@ -199,121 +88,80 @@ export default function ReceitaC1Page() {
 
   return (
     <div className="space-y-5 pb-8">
-      {/* Header */}
       <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
         <Badge variant="outline" className="w-fit">Documentos</Badge>
         <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
-          Receita Especial C1
+          Receita / Documento Médico
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Notificação de receita para medicamentos da Lista C1 — Portaria SVS/MS nº 344/1998.
-          Dr. Jadson Fraga · CRM-PE 25.227 · RQE 17.756
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Cole o documento completo em uma única área, já com todos os dados necessários. Abaixo,
+          selecione seu certificado <strong>.p12/.pfx</strong>, informe a senha e gere o PDF assinado em padrão PAdES.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
+          <Button onClick={() => setShowPreview(true)} variant="outline" size="sm" className="gap-2">
+            <FileText className="h-4 w-4" /> Visualizar
+          </Button>
           <Button onClick={handlePrint} size="sm" className="gap-2">
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
-          <Button variant="secondary" size="sm" className="gap-2" onClick={() => setData(defaultData())}>
+          <Button variant="secondary" size="sm" className="gap-2" onClick={() => setTexto("")}>
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
         </div>
       </section>
 
-      {/* Assinatura digital ICP-Brasil (A1) */}
+      <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
+        <div>
+          <h2 className="text-sm font-bold text-foreground">Texto integral do documento</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Use esta área como folha única: cole o conteúdo já pronto, sem preencher campo por campo.
+          </p>
+        </div>
+        <Textarea
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder="Cole aqui o documento completo, já com todos os dados necessários…"
+          className="min-h-[500px] resize-y font-mono text-sm leading-relaxed"
+          data-testid="textarea-receita-integral"
+        />
+      </section>
+
       <AssinaturaIcpPanel
-        filename={`receita-c1-${(data.nomePaciente || "neuroped").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40) || "neuroped"}`}
-        signerName={data.nomeMedico}
-        location={data.local || "Petrolina-PE"}
-        reason="Receita Especial C1"
+        filename={filename}
+        signerName="Dr. Jadson Fraga Araujo Junior"
+        location="Petrolina-PE"
+        reason="Receita / Documento Medico"
         buildPdf={async () => {
           const { buildDocumentPdf } = await import("@/lib/documentPdf");
           return buildDocumentPdf({
-            title: "Receita Especial C1 - Notificacao de Receita",
-            subtitle: "Portaria SVS/MS no 344/1998 - Lista C1",
+            title: "Receita / Documento Medico",
+            subtitle: "Texto integral colado pelo medico assistente",
             credentials: [
-              `${data.nomeMedico} - ${data.crm} - ${data.rqe}`,
-              [data.especialidade, data.endereco, data.cidadeUF, data.telefone].filter(Boolean).join(" - "),
+              "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
+              "Neurologista Infantil / Neuropediatra",
             ],
             sections: [
-              { heading: "Paciente", body: [
-                data.nomePaciente && `Nome: ${data.nomePaciente}`,
-                data.enderecoP && `Endereco: ${data.enderecoP}`,
-                data.cidadeUFP && `Cidade/UF: ${data.cidadeUFP}`,
-              ].filter(Boolean).join("\n") },
-              { heading: "Prescricao", body: [
-                [data.medicamento, data.concentracao, data.formaFarm].filter(Boolean).join(" "),
-                data.quantidade && `Quantidade: ${data.quantidade}`,
-                data.via && `Via: ${data.via}`,
-                data.posologia && `Posologia: ${data.posologia}`,
-                data.duracao && `Duracao: ${data.duracao}`,
-              ].filter(Boolean).join("\n") },
-              { heading: "Observacoes", body: data.observacoes },
-              { heading: "Data e local", body: [data.local, data.data].filter(Boolean).join(", ") },
+              { heading: "Conteudo integral", body: texto.trim() || "Sem conteudo informado." },
             ],
-            footer: "Notificacao de Receita - Lista C1 (Portaria SVS/MS 344/1998). Quando assinado, contem assinatura digital ICP-Brasil (certificado A1) anexada ao PDF, conferivel em validar.iti.gov.br. A validade legal da prescricao de controlados deve observar a regulamentacao vigente.",
+            footer: "Documento emitido eletronicamente pela plataforma NeuroPed. Quando assinado, contem assinatura digital ICP-Brasil em padrao PAdES-BES com certificado A1 (.p12/.pfx), anexada ao proprio PDF e conferivel em validador oficial.",
           });
         }}
       />
 
-      {/* Paciente */}
-      <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-        <h2 className="font-bold text-sm text-foreground mb-3">Dados do Paciente</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome do Paciente" name="nomePaciente" value={data.nomePaciente} onChange={set} colSpan />
-          <Field label="Endereço" name="enderecoP" value={data.enderecoP} onChange={set} colSpan />
-          <Field label="Cidade / UF" name="cidadeUFP" value={data.cidadeUFP} onChange={set} />
+      {showPreview && (
+        <div className="rounded-2xl border border-border bg-card/80 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border/60">
+            <span className="text-sm font-semibold">Pré-visualização</span>
+            <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>✕</Button>
+          </div>
+          <iframe
+            srcDoc={buildReceitaHtml(texto)}
+            className="w-full"
+            style={{ height: "680px", border: "none" }}
+            title="Receita Preview"
+          />
         </div>
-      </div>
-
-      {/* Médico */}
-      <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-        <h2 className="font-bold text-sm text-foreground mb-3">Dados do Médico</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome do Médico" name="nomeMedico" value={data.nomeMedico} onChange={set} colSpan />
-          <Field label="CRM" name="crm" value={data.crm} onChange={set} />
-          <Field label="RQE" name="rqe" value={data.rqe} onChange={set} />
-          <Field label="Especialidade" name="especialidade" value={data.especialidade} onChange={set} />
-          <Field label="Endereço do consultório" name="endereco" value={data.endereco} onChange={set} colSpan />
-          <Field label="Cidade / UF" name="cidadeUF" value={data.cidadeUF} onChange={set} />
-          <Field label="Telefone" name="telefone" value={data.telefone} onChange={set} />
-        </div>
-      </div>
-
-      {/* Prescrição */}
-      <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-        <h2 className="font-bold text-sm text-foreground mb-3">Prescrição</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Medicamento (nome genérico)" name="medicamento" value={data.medicamento} onChange={set} colSpan />
-          <Field label="Concentração" name="concentracao" value={data.concentracao} onChange={set} />
-          <Field label="Forma farmacêutica" name="formaFarm" value={data.formaFarm} onChange={set} />
-          <Field label="Quantidade / Volume total" name="quantidade" value={data.quantidade} onChange={set} />
-          <Field label="Via de administração" name="via" value={data.via} onChange={set} />
-          <Field label="Posologia (dose e horários)" name="posologia" value={data.posologia} onChange={set} multiline rows={3} colSpan />
-          <Field label="Duração do tratamento" name="duracao" value={data.duracao} onChange={set} />
-          <Field label="Observações" name="observacoes" value={data.observacoes} onChange={set} multiline rows={2} colSpan />
-        </div>
-      </div>
-
-      {/* Data e local */}
-      <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-        <h2 className="font-bold text-sm text-foreground mb-3">Emissão</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Local" name="local" value={data.local} onChange={set} />
-          <Field label="Data" name="data" value={data.data} onChange={set} />
-        </div>
-      </div>
-
-      {/* Ações */}
-      <div className="flex flex-wrap gap-2 justify-end">
-        <Button onClick={handlePrint} size="sm" className="gap-2">
-          <Printer className="h-4 w-4" /> Imprimir / PDF
-        </Button>
-      </div>
-
-      <p className="text-xs text-muted-foreground text-center">
-        ⚠️ Receita de controle especial — emitir em 2 vias. 1ª via retida na farmácia, 2ª via entregue ao paciente.
-        Válida por 30 dias. Portaria SVS/MS nº 344/1998.
-      </p>
+      )}
     </div>
   );
 }
