@@ -6,6 +6,9 @@
   "description": "NeuroPed EDJ - Plataforma fullstack de neuropediatria com auth, LGPD e criptografia",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
+    "gen:build-info": "node scripts/gen-build-info.mjs",
+    "prebuild": "node scripts/gen-build-info.mjs",
+    "prebuild:client": "node scripts/gen-build-info.mjs",
     "build": "tsx script/build.ts",
     "build:client": "vite build",
     "build:server": "esbuild server/index.ts --platform=node --bundle --format=cjs --outfile=dist/index.cjs --define:process.env.NODE_ENV='\"production\"' --packages=external",

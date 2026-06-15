@@ -2,6 +2,7 @@
  * GET /api/version
  * Cloudflare Pages Function — Versão do app e informações do schema
  */
+import { BUILD_INFO } from "./_buildInfo";
 
 interface Env {
   DB?: D1Database;
@@ -11,9 +12,10 @@ export const onRequestGet: PagesFunction<Env> = async (_context) => {
   const response = {
     app: {
       name: "NeuroPed EDJ",
-      version: "2.0.0-fullstack",
-      buildDate: "2026-05-08",
-      branch: "feat/auditoria-total-ui-backend-memoria",
+      version: BUILD_INFO.version,
+      buildDate: BUILD_INFO.buildDate,
+      commit: BUILD_INFO.commit,
+      branch: BUILD_INFO.branch,
     },
     api: {
       version: "1",
