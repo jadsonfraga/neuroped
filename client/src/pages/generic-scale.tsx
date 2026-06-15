@@ -139,10 +139,16 @@ export default function GenericScalePage() {
   const [copied, setCopied] = useState(false);
   const implStatus = scale ? getImplementationStatus(scale) : null;
 
+  // GATE DE COPYRIGHT: escala proprietária/restrita (comercial/restrita/contato_autor)
+  // NÃO reproduz itens nem escore — cai na ficha técnica (metadado + onde obter).
+  // Só domínio público e autorais do Dr. abrem o runner com itens.
+  const isProprietaria =
+    !!scale && ["comercial", "restrita", "contato_autor"].includes(scale.licencaUso ?? "");
+
   // Escalas interativas "runner" (acervo novo: dor/FPS-R, Q-CHAT, Viking, MACS…)
   // — renderizadas pelo InteractiveScaleRunner. Conjunto à parte do acervo de
   // itens (interactiveScaleItems), por isso é checado primeiro e independe de allScales.
-  const runnerDef = getInteractiveRunnerScale(scaleId);
+  const runnerDef = isProprietaria ? null : getInteractiveRunnerScale(scaleId);
   if (runnerDef) {
     return (
       <div className="p-1">
@@ -170,7 +176,7 @@ export default function GenericScalePage() {
 
   // Quando a escala já tem itens interativos cadastrados (acervo de 257), renderiza
   // a APLICAÇÃO REAL (itens respondíveis + cálculo de escore) no lugar da ficha.
-  const itemDef = getInteractiveItemScale(scaleId);
+  const itemDef = isProprietaria ? null : getInteractiveItemScale(scaleId);
   if (itemDef) {
     return (
       <div className="max-w-2xl mx-auto p-3 sm:p-4">

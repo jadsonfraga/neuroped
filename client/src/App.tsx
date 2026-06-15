@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { Switch, Route, Router } from "wouter";
+import { Switch, Route, Router, Redirect } from "wouter";
+import { PROPRIETARY_GATED_ROUTES } from "@/data/proprietaryGatedRoutes";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -166,6 +167,15 @@ function AppRouter() {
           <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
           <Route path="/" component={HomePage} />
+
+          {/* GATE DE COPYRIGHT: escalas proprietárias com página dedicada redirecionam
+              para a ficha (/generic-scale/:id renderiza só metadado, sem itens/escore).
+              Precede as rotas dedicadas abaixo, então a ficha sombreia o runner. */}
+          {PROPRIETARY_GATED_ROUTES.map((r) => (
+            <Route key={`gate-${r.id}`} path={r.path}>
+              <Redirect to={`/generic-scale/${r.id}`} />
+            </Route>
+          ))}
           <Route path="/mchat" component={MchatPage} />
           <Route path="/cars" component={CarsPage} />
           <Route path="/snap" component={SnapPage} />
