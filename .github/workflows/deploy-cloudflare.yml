@@ -1,7 +1,8 @@
 name: Deploy Cloudflare Pages
 
 # Deploy do frontend (Vite) para o Cloudflare Pages, em paralelo ao GitHub Pages.
-# Usa as secrets do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, VITE_PIN_HASH.
+# Usa as secrets do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+# Este workflow publica somente o frontend estatico; dados reais exigem a API oficial autenticada.
 
 on:
   push:
@@ -75,7 +76,6 @@ jobs:
       - name: Compilar frontend para Cloudflare Pages
         env:
           NODE_ENV: production
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
       - name: Verificar output do build

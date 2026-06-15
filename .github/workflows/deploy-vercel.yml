@@ -45,7 +45,6 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
 
     steps:
       - name: Checkout repository
@@ -103,7 +102,6 @@ jobs:
       - name: Build client
         env:
           NODE_ENV: production
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
       - name: Verify build output

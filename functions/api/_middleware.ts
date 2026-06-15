@@ -1,13 +1,13 @@
-/**
- * _middleware.ts — Middleware global para todas as functions/api/*
+﻿/**
+ * _middleware.ts â€” Middleware global para todas as functions/api/*
  * Aplicado automaticamente pelo Cloudflare Pages a todas as rotas filhas.
  *
  * Responsabilidades:
  *  - CORS configurado (origin allowlist via env CORS_ORIGINS)
- *  - Rate limiting básico por IP (via KV ou memória temporária)
- *  - Headers de segurança (X-Content-Type-Options, X-Frame-Options, etc.)
- *  - Validação de Content-Type em POSTs
- *  - Log de auditoria mínimo
+ *  - Rate limiting bÃ¡sico por IP (via KV ou memÃ³ria temporÃ¡ria)
+ *  - Headers de seguranÃ§a (X-Content-Type-Options, X-Frame-Options, etc.)
+ *  - ValidaÃ§Ã£o de Content-Type em POSTs
+ *  - Log de auditoria mÃ­nimo
  */
 
 interface Env {
@@ -15,10 +15,11 @@ interface Env {
   RATE_LIMIT_KV?: KVNamespace;
   CORS_ORIGINS?: string;         // Comma-separated allowed origins
   ENVIRONMENT?: string;
+  DEMO_API_WRITES_ENABLED?: string;
 }
 
-// Rate limit em memória (fallback quando KV não disponível)
-// Cloudflare Workers reusam instâncias no mesmo pop — suficiente para burst básico
+// Rate limit em memÃ³ria (fallback quando KV nÃ£o disponÃ­vel)
+// Cloudflare Workers reusam instÃ¢ncias no mesmo pop â€” suficiente para burst bÃ¡sico
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
 
 const RATE_LIMIT_WINDOW_MS = 60_000;   // 1 minuto
@@ -41,7 +42,7 @@ function getAllowedOrigins(env: Env): string[] {
 
 function getCorsHeaders(origin: string | null, allowedOrigins: string[]): Record<string, string> {
   const allowed =
-    allowedOrigins.length === 0 || // sem restrição configurada
+    allowedOrigins.length === 0 || // sem restriÃ§Ã£o configurada
     (origin && allowedOrigins.includes(origin)) ||
     allowedOrigins.includes("*");
 
@@ -111,7 +112,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (!rl.allowed) {
     return new Response(
       JSON.stringify({
-        error: "Muitas requisições. Aguarde antes de tentar novamente.",
+        error: "Muitas requisiÃ§Ãµes. Aguarde antes de tentar novamente.",
         code: "RATE_LIMIT_EXCEEDED",
         retryAfter: Math.ceil((rl.resetAt - Date.now()) / 1000),
       }),
@@ -149,10 +150,29 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // Executa a função real
+  // Executa a funÃ§Ã£o real
+  const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
+  const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
+  if (isProduction && !demoWritesEnabled && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+    return new Response(
+      JSON.stringify({
+        error: "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",
+        code: "DEMO_API_READ_ONLY",
+      }),
+      {
+        status: 403,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+          ...SECURITY_HEADERS,
+        },
+      }
+    );
+  }
+
   const response = await next();
 
-  // Clona e adiciona headers de segurança e CORS
+  // Clona e adiciona headers de seguranÃ§a e CORS
   const newHeaders = new Headers(response.headers);
   for (const [k, v] of Object.entries({ ...corsHeaders, ...SECURITY_HEADERS })) {
     newHeaders.set(k, v);

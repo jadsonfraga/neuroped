@@ -79,6 +79,7 @@ const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/testes-reconhecimento"));
 const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
+const TestesDiretosPage = lazy(() => import("@/pages/testes-diretos"));
 const AcademicoInterativoPage = lazy(() => import("@/pages/academico-interativo"));
 const EscritaDesenhoPage = lazy(() => import("@/pages/escrita-desenho"));
 const ConhecimentoVisualPage = lazy(() => import("@/pages/conhecimento-visual"));
@@ -101,6 +102,7 @@ const ClassificacoesPage = lazy(() => import("@/pages/classificacoes"));
 const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
 const MarcosDesenvolvimentoPage = lazy(() => import("@/pages/marcos-desenvolvimento"));
 const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
+const PdaePage = lazy(() => import("@/pages/pdae"));
 
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
@@ -220,6 +222,7 @@ function AppRouter() {
           <Route path="/tde2" component={Tde2Page} />
           <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
           <Route path="/testes-academicos" component={TestesAcademicosPage} />
+          <Route path="/testes-diretos" component={TestesDiretosPage} />
           <Route path="/academico-interativo" component={AcademicoInterativoPage} />
           <Route path="/escrita-desenho" component={EscritaDesenhoPage} />
           <Route path="/conhecimento-visual" component={ConhecimentoVisualPage} />
@@ -242,6 +245,7 @@ function AppRouter() {
           <Route path="/fluxogramas" component={FluxogramasPage} />
           <Route path="/marcos-desenvolvimento" component={MarcosDesenvolvimentoPage} />
           <Route path="/valores-referencia" component={ValoresReferenciaPage} />
+          <Route path="/pdae" component={PdaePage} />
 
           <Route path="/farmacologia"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
           <Route path="/pacientes"><Protected roles={["admin", "professional"]}><PacientesPage /></Protected></Route>

@@ -44,6 +44,7 @@ import { opbParentCopy } from "@/data/opbParentCopy";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesIntelligently,
+  getBroadbandFallback,
   generateContextualRecommendation,
   getApplicationMode,
   getImplementationStatus,
@@ -119,6 +120,7 @@ function opensInApp(scale: ScaleEntry): boolean {
 function isFullApp(scale: ScaleEntry): boolean {
   return (
     (Boolean(scale.appRoute) && !scale.appRoute!.startsWith("/generic-scale/")) ||
+    INTERACTIVE_SCALE_IDS.has(scale.id) ||
     scale.id.startsWith("world-") ||
     Boolean(interactiveScales[scale.id])
   );
@@ -159,11 +161,59 @@ function matchAge(scale: ScaleEntry, selectedAge: string | null) {
   return !age || (scale.ageMax >= age.min && scale.ageMin <= age.max);
 }
 
+const SEARCH_SYNONYMS: Record<string, string[]> = {
+  atraso: ["desenvolvimento", "marcos", "bebe", "bebê", "lactente", "prematuro"],
+  tea: ["autismo", "autista", "espectro", "social", "mchat", "m-chat"],
+  tdah: ["adhd", "atencao", "atenção", "hiperatividade", "impulsividade", "desatencao", "desatenção"],
+  linguagem: ["fala", "comunicacao", "comunicação", "fonologia", "vocabulario", "vocabulário"],
+  aprendizagem: ["escola", "escolar", "leitura", "escrita", "dislexia", "matematica", "matemática"],
+  ansiedade: ["medo", "panico", "pânico", "fobia", "preocupacao", "preocupação"],
+  depressao: ["humor", "tristeza", "depressivo"],
+  comportamento: ["conduta", "oposicao", "oposição", "agressividade", "irritabilidade"],
+  sono: ["dormir", "insonia", "insônia", "ronco"],
+  epilepsia: ["crise", "convulsao", "convulsão"],
+  pc: ["paralisia", "cerebral", "espasticidade"],
+  motor: ["coordenacao", "coordenação", "motricidade", "fino", "grossa"],
+  sensorial: ["sensorial", "integracao", "integração", "hipersensibilidade"],
+  suicidio: ["suicidio", "suicídio", "autolesao", "autolesão", "risco"],
+  efeitos: ["medicacao", "medicação", "remedio", "remédio", "efeito colateral", "adesao", "adesão"],
+};
+
+function expandSearchText(query: string): string {
+  const normalized = norm(query);
+  const extra: string[] = [];
+  for (const [queixa, words] of Object.entries(SEARCH_SYNONYMS)) {
+    if (normalized.includes(queixa) || words.some((w) => normalized.includes(norm(w)))) {
+      extra.push(queixa, ...words);
+    }
+  }
+  return `${query} ${extra.join(" ")}`;
+}
+
+function inferQueixasFromSearch(query: string): string[] {
+  const normalized = norm(query);
+  if (normalized.length < 2) return [];
+  return queixas
+    .filter((q) => {
+      const words = SEARCH_SYNONYMS[q.id] ?? [];
+      return normalized.includes(norm(q.id)) || normalized.includes(norm(q.label)) || words.some((w) => normalized.includes(norm(w)));
+    })
+    .map((q) => q.id);
+}
+
+function inferAgeMonthsFromSearch(query: string): number | null {
+  const normalized = norm(query).replace(",", ".");
+  const month = normalized.match(/\b(\d{1,2})\s*(m|mes|meses)\b/);
+  if (month) return Number(month[1]);
+  const year = normalized.match(/\b(\d{1,2})(?:\s*(a|ano|anos)|a\b)/);
+  if (year) return Number(year[1]) * 12;
+  return null;
+}
 // Realce textual leve para a busca livre. NÃO decide pertinência clínica —
 // apenas reordena, dentro dos candidatos já validados pelo motor, os que casam
 // com o termo digitado. (A segurança/score clínico vem do advancedFilterLogic.)
 function searchBoost(scale: ScaleEntry, query: string) {
-  const tokens = norm(query).split(/\s+/).filter(Boolean);
+  const tokens = norm(expandSearchText(query)).split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return 0;
   const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
   let value = 0;
@@ -226,17 +276,23 @@ const OPB_WHY: Record<"prata" | "bronze", string> = {
 // catálogo e, dentro dos candidatos seguros, aplica o realce de busca.
 // Pode retornar [] — NUNCA cai para o catálogo inteiro (sem fallback perigoso).
 function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): RefinedScaleMatch[] {
-  const matches = filterScalesIntelligently(unique(catalog), ctx);
-  if (!query.trim()) return matches;
-  // Busca FILTRA de verdade: entre os candidatos seguros, mantém só os que casam
-  // com o termo digitado. Se nada casar (ex.: erro de digitação), não esvazia —
-  // cai para o conjunto seguro completo, reordenado por relevância.
-  const scored = matches.map((m) => ({ m, b: searchBoost(m.scale, query) }));
-  const anyMatch = scored.some((x) => x.b > 0);
-  const kept = anyMatch ? scored.filter((x) => x.b > 0) : scored;
-  return kept
-    .sort((a, b) => b.m.relevanceScore + b.b - (a.m.relevanceScore + a.b))
-    .map((x) => x.m);
+  const uniq = unique(catalog);
+  let matches = filterScalesIntelligently(uniq, ctx);
+  if (query.trim()) {
+    // Busca FILTRA de verdade: entre os candidatos seguros, mantém só os que casam
+    // com o termo digitado. Se nada casar (ex.: erro de digitação), não esvazia —
+    // cai para o conjunto seguro completo, reordenado por relevância.
+    const scored = matches.map((m) => ({ m, b: searchBoost(m.scale, query) }));
+    const anyMatch = scored.some((x) => x.b > 0);
+    const kept = anyMatch ? scored.filter((x) => x.b > 0) : scored;
+    matches = kept.sort((a, b) => b.m.relevanceScore + b.b - (a.m.relevanceScore + a.b)).map((x) => x.m);
+  }
+  // Nunca dar vazio para uma queixa+idade real: se não há instrumento específico
+  // seguro, oferece rastreio AMPLO apropriado à idade (escalas reais), rotulado.
+  if (matches.length === 0 && (ctx.queixas.length > 0 || ctx.ageBand != null || ctx.ageMonths != null)) {
+    matches = getBroadbandFallback(uniq, ctx);
+  }
+  return matches;
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -431,9 +487,11 @@ export default function FiltroPage() {
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
     const ageRange = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
-    const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : null;
+    const inferredAgeMonths = !ageRange ? inferAgeMonthsFromSearch(search) : null;
+    const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : inferredAgeMonths;
+    const inferredQueixas = selectedQueixas.length === 0 ? inferQueixasFromSearch(search) : [];
     return {
-      queixas: selectedQueixas,
+      queixas: selectedQueixas.length > 0 ? selectedQueixas : inferredQueixas,
       ageMonths,
       ageBand: ageRange ? { min: ageRange.min, max: ageRange.max } : null,
       respondente: selectedRespondente ?? null,
@@ -443,7 +501,7 @@ export default function FiltroPage() {
         selectedAssessmentType === "diagnostic" ? "diagnostico" : selectedAssessmentType === "monitoring" ? "monitorizacao" : null,
       selectedSignals: selectedSignalIds,
     };
-  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
+  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, search]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
   const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
@@ -451,6 +509,8 @@ export default function FiltroPage() {
   const catalogById = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
   const hasSafeResults = refinedMatches.length > 0;
+  // Resultado veio do fallback de triagem ampla (sem instrumento específico).
+  const usingBroadbandFallback = refinedMatches.length > 0 && refinedMatches.every((m) => m.isBroadbandFallback);
   const clinicalRecommendation = useMemo(() => generateContextualRecommendation(refinedMatches), [refinedMatches]);
 
   // Ranking clínico curado (clinicalRanking) para a queixa primária + idade.
@@ -683,6 +743,11 @@ export default function FiltroPage() {
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+        {usingBroadbandFallback && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100" role="note">
+            Sem instrumento <strong>específico</strong> validado para esta combinação nesta idade. Mostrando <strong>triagem ampla</strong> apropriada à idade (instrumentos reais) — use como rastreio inicial, não como avaliação específica.
+          </div>
+        )}
         <p className="sr-only" role="status" aria-live="polite">
           {hasSafeResults ? `${refinedMatches.length} escala${refinedMatches.length === 1 ? "" : "s"} segura${refinedMatches.length === 1 ? "" : "s"} encontrada${refinedMatches.length === 1 ? "" : "s"} para este perfil.` : "Nenhuma escala segura para este perfil. Refine idade, queixa ou respondente."}
         </p>

@@ -1,7 +1,0 @@
- 
-============================================= 
-NeuroPed Railway Deploy - 12/05/2026 12:59:57,20 
-============================================= 
-[DIR] C:\Users\User\OneDrive\Desktop\neuroped-comparacao\NeuroPed Escalas de Neuropedia 
-railway 4.57.5
-

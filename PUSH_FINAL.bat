@@ -1,6 +1,6 @@
-@echo off
+﻿@echo off
 chcp 65001 > nul
-title NeuroPed — Push Final CI/CD
+title NeuroPed â€” Push Final CI/CD
 
 cd /d "C:\Users\User\OneDrive\Desktop\neuroped-comparacao\NeuroPed Escalas de Neuropedia"
 
@@ -53,7 +53,7 @@ if %ERRORLEVEL% == 0 (
     echo  1. Ativar GitHub Pages:
     echo     github.com/jadsonfraga/neuroped/settings/pages
     echo     Source: GitHub Actions
-    echo  2. Adicionar secret VITE_PIN_HASH:
+    echo  2. Configurar secrets de backend no provedor:
     echo     github.com/jadsonfraga/neuroped/settings/secrets/actions
     echo  3. Conectar Render.com:
     echo     render.com -> New -> Blueprint -> jadsonfraga/neuroped

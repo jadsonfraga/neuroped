@@ -1,24 +1,9 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { verifyPin } from "@/lib/pinAuth";
-import { softTap, softSuccess, softError } from "@/lib/softSounds";
-import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 
-/**
- * Portão de PIN reutilizável da Área Restrita (prontuários do Dr. Jadson).
- * Extraído de pacientes.tsx / paciente-detalhe.tsx para que aqueles
- * componentes possam chamar todos os seus hooks de dados de forma
- * incondicional (regra react-hooks/rules-of-hooks) — o early-return passa a
- * renderizar este componente, cujos próprios hooks ficam isolados aqui.
- */
 export function PinGate({
-  onUnlock,
-  inputTestId,
-  buttonTestId,
   buttonClassName = "w-full",
 }: {
   onUnlock: () => void;
@@ -26,29 +11,6 @@ export function PinGate({
   buttonTestId: string;
   buttonClassName?: string;
 }) {
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState(false);
-  const [pinChecking, setPinChecking] = useState(false);
-
-  async function handlePinSubmit() {
-    if (!pin) return;
-    setPinChecking(true);
-    softTap();
-    haptic.tap();
-    const ok = await verifyPin(pin);
-    setPinChecking(false);
-    if (ok) {
-      softSuccess();
-      haptic.success();
-      onUnlock();
-    } else {
-      softError();
-      haptic.error();
-      setPinError(true);
-      setTimeout(() => setPinError(false), 3000);
-    }
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -69,34 +31,22 @@ export function PinGate({
           className="text-2xl text-foreground"
           style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
         >
-          Área Restrita
+          Area restrita
         </h2>
-        <p className="text-xs text-muted-foreground italic">Acesso exclusivo do Dr. Jadson</p>
+        <p className="text-xs text-muted-foreground italic">Login nominal obrigatorio</p>
       </div>
       <div className="w-full max-w-xs space-y-3">
-        <Input
-          type="password"
-          placeholder="PIN de acesso..."
-          value={pin}
-          onChange={(e) => { setPin(e.target.value); setPinError(false); }}
-          onKeyDown={(e) => { if (e.key === "Enter") handlePinSubmit(); }}
-          className={`text-center h-12 text-lg ${pinError ? "border-red-400" : ""}`}
-          data-testid={inputTestId}
-        />
-        {pinError && (
-          <p className="text-xs text-red-500 text-center">PIN incorreto. Tente novamente.</p>
-        )}
         <Button
           className={buttonClassName}
-          onClick={handlePinSubmit}
-          disabled={!pin || pinChecking}
-          data-testid={buttonTestId}
+          onClick={() => {
+            window.location.hash = "/login";
+          }}
         >
-          {pinChecking ? "Verificando..." : "Acessar Prontuários"}
+          Ir para login
         </Button>
       </div>
       <p className="text-xs text-muted-foreground text-center max-w-xs">
-        Dados protegidos localmente. Modo demonstração — não inserir dados reais de pacientes.
+        O acesso por PIN local foi desativado. Dados reais de pacientes exigem backend autenticado.
       </p>
     </motion.div>
   );

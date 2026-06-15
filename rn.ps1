@@ -1,7 +1,11 @@
 # NeuroPed Railway — verificar status do deploy
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$TOKEN     = "f8f412d3-f3b6-4ea8-b6f3-21bfdb262d3b"
+$TOKEN     = $env:RAILWAY_TOKEN
+if (-not $TOKEN) {
+    Write-Host "Defina RAILWAY_TOKEN no ambiente antes de executar este script." -ForegroundColor Red
+    exit 1
+}
 $API       = "https://backboard.railway.app/graphql/v2"
 $FOLDER    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $LOG       = "$FOLDER\railway_status_log.txt"

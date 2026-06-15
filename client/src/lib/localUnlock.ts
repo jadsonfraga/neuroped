@@ -1,71 +1,38 @@
-const UNLOCK_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
-const SESSION_KEY = "neuroped:local-unlocked";
-const REMEMBER_KEY = "neuroped:local-unlocked-persistent";
 const LOCK_EVENT = "neuroped:local-lock-changed";
 
-function sanitizeUnlockInput(value: string): string {
-  return String(value || "")
-    .normalize("NFKC")
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .trim();
-}
-
-async function sha256Hex(value: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function emitUnlockState(): void {
+function emitLockedState(): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: hasClinicalUnlock() } }));
+  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: false } }));
 }
 
-export async function verifyUnlockPassword(input: string): Promise<boolean> {
-  if (!input || typeof crypto === "undefined" || !crypto.subtle) return false;
-  const normalized = sanitizeUnlockInput(input);
-  const candidateHash = await sha256Hex(normalized);
-  return candidateHash === UNLOCK_HASH;
+export async function verifyUnlockPassword(_input: string): Promise<boolean> {
+  return false;
 }
 
-export function unlockApp(rememberDevice = false): void {
-  try {
-    sessionStorage.setItem(SESSION_KEY, "1");
-    if (rememberDevice) localStorage.setItem(REMEMBER_KEY, "1");
-  } catch {
-    // Storage pode estar indisponível em modo privado; o estado em memória cobre a sessão atual.
-  }
-  emitUnlockState();
+export function unlockApp(_rememberDevice = false): void {
+  lockApp();
 }
 
 export function lockApp(): void {
   try {
-    sessionStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(REMEMBER_KEY);
+    sessionStorage.removeItem("neuroped:local-unlocked");
+    localStorage.removeItem("neuroped:local-unlocked-persistent");
+    sessionStorage.removeItem("neuroped:pin-ok");
   } catch {
-    // Falha de storage não deve quebrar o bloqueio visual local.
+    // Storage indisponivel nao deve quebrar o bloqueio visual local.
   }
-  emitUnlockState();
+  emitLockedState();
 }
 
 export function hasClinicalUnlock(): boolean {
-  try {
-    return sessionStorage.getItem(SESSION_KEY) === "1" || localStorage.getItem(REMEMBER_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return false;
 }
 
 export function isAppUnlocked(): boolean {
-  // O app público deve abrir para todos. O PIN master fica reservado
-  // exclusivamente às rotas sensíveis via RouteGuard + hasClinicalUnlock().
   return true;
 }
 
 export const localUnlockEventName = LOCK_EVENT;
 
 export const localUnlockSecurityNote =
-  "Bloqueio local leve para rotas clínicas sensíveis em app estático/frontend/local-first. Não substitui autenticação robusta com backend para dados médicos sensíveis.";
+  "Areas clinicas com dados identificaveis exigem autenticacao nominal no backend. O modo local/offline nao deve ser usado para dados reais de pacientes.";

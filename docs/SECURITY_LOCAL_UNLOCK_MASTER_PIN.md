@@ -1,28 +1,16 @@
-# NeuroPed — Bloqueio local / PIN master
+# NeuroPed - bloqueio local / PIN master
 
-Status: confirmado em 2026-06-07.
+Status: desativado em 2026-06-13.
+
+O NeuroPed nao deve usar PIN master, hash de PIN no frontend ou bloqueio local como controle de acesso clinico.
 
 ## Regra operacional
 
-O PIN master não deve ser armazenado em texto claro no código-fonte, documentação ou bundle.
+- Rotas publicas continuam abertas.
+- Areas clinicas com dados reais exigem autenticacao nominal no backend oficial.
+- Modo local/offline, quando existir, e apenas demonstrativo e nao deve receber dados reais identificaveis.
+- Nenhum segredo, PIN, hash de PIN, JWT secret ou chave mestra deve ser enviado ao bundle frontend.
 
-A validação local deve usar exclusivamente o hash SHA-256 configurado em:
+## Historico
 
-- `client/src/lib/localUnlock.ts`
-
-Hash ativo:
-
-```txt
-d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207
-```
-
-## Fluxo esperado
-
-1. O app inicia.
-2. O `SplashScreen` conclui.
-3. Se o app não estiver desbloqueado na sessão/dispositivo, renderiza `LocalUnlockGate`.
-4. Apenas após validação positiva, o `Router` e as rotas internas são renderizados.
-
-## Observação de segurança
-
-Este é um bloqueio local leve para app estático/frontend/local-first. Ele reduz acesso casual, mas não substitui autenticação robusta com backend para dados médicos sensíveis.
+Qualquer hash de PIN anteriormente versionado deve ser tratado como comprometido. A correcao atual removeu o fluxo de PIN do codigo ativo, mas o historico Git ainda precisa ser reescrito antes de distribuir ou tornar o repositorio confiavel.

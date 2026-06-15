@@ -13,6 +13,7 @@ import {
   type AssessmentUse,
   type ImplementationStatus,
 } from "./scaleFilter";
+import { interactiveScaleItems } from "./interactiveScaleItems";
 
 export const SAFE_EMPTY_MESSAGE =
   "Nenhuma escala segura encontrada para este perfil. Revise idade, queixa ou respondente.";
@@ -39,6 +40,8 @@ export interface RefinedScaleMatch {
   implementationLabel: string;
   applicationMode: ApplicationMode;
   licenseRestricted: boolean;
+  /** true quando veio do fallback de triagem ampla (sem instrumento específico). */
+  isBroadbandFallback?: boolean;
 }
 
 const POST_CONSULT_QUEIXAS = new Set(["efeitos", "evolucao"]);
@@ -62,6 +65,7 @@ export function isLicenseRestricted(scale: ScaleEntry): boolean {
  */
 export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus {
   if (scale.implementationStatus) return scale.implementationStatus;
+  if (interactiveScaleItems[scale.id] && !isLicenseRestricted(scale)) return "complete";
   const route = scale.appRoute;
   if (!route) return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
   if (isLicenseRestricted(scale)) return "external_only";
@@ -437,6 +441,50 @@ export function filterScalesIntelligently(
     });
   // IMPORTANTE: sem fallback para o catálogo inteiro — pode retornar [].
 }
+
+// ============ FALLBACK DE TRIAGEM AMPLA ============
+//
+// Quando NÃO há instrumento específico seguro para a queixa+idade, oferecemos um
+// rastreador AMPLO real e apropriado à idade (em vez de vazio). Nunca força um
+// instrumento clinicamente inadequado: cada candidato precisa cobrir a idade e
+// passar o mesmo clinicalHardBlock. Ex.: "suicídio + bebê" não traz escala de
+// suicídio (bloqueada) — traz triagem de desenvolvimento apropriada à idade.
+//
+// Lista curada e ORDENADA por idade (do menor ao maior). Todos são instrumentos
+// reais, de banda larga, presentes no catálogo e que abrem.
+export const BROADBAND_SCREENER_IDS = [
+  "denver",   // 0–72m — desenvolvimento
+  "asq3",     // 1–66m — desenvolvimento
+  "asq-se-2", // 3–60m — socioemocional
+  "cbcl",     // 18–216m — banda larga emocional/comportamental
+  "sdq",      // 24–204m — banda larga
+  "psc17",    // 48–192m — banda larga
+];
+
+function ageCovers(scale: ScaleEntry, ctx: FilterContext): boolean {
+  if (ctx.ageBand) return scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
+  if (ctx.ageMonths != null) return scale.ageMin <= ctx.ageMonths && ctx.ageMonths <= scale.ageMax;
+  return true;
+}
+
+/**
+ * Rastreadores amplos seguros para o contexto (idade), marcados como fallback.
+ * Retorna [] apenas se nem um rastreador amplo for apropriado/seguro à idade.
+ */
+export function getBroadbandFallback(scales: ScaleEntry[], ctx: FilterContext): RefinedScaleMatch[] {
+  const byId = new Map(scales.map((s) => [s.id, s]));
+  const baseCtx: FilterContext = { ...ctx, queixas: [], assessmentUse: null };
+  const out: RefinedScaleMatch[] = [];
+  for (const id of BROADBAND_SCREENER_IDS) {
+    const scale = byId.get(id);
+    if (!scale) continue;
+    if (!ageCovers(scale, ctx)) continue;
+    if (clinicalHardBlock(scale, baseCtx) !== null) continue; // nunca oferece algo inadequado à idade
+    out.push({ ...calculateRefinedScore(scale, baseCtx), isBroadbandFallback: true });
+  }
+  return out;
+}
+
 
 // ============ DETECÇÃO DE PADRÃO CLÍNICO ============
 

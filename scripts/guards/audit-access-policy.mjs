@@ -1,11 +1,11 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 
 const root = process.cwd();
 const appPath = join(root, "client/src/App.tsx");
 const routeGuardPath = join(root, "client/src/components/RouteGuard.tsx");
 const localUnlockPath = join(root, "client/src/lib/localUnlock.ts");
-const localUnlockGatePath = join(root, "client/src/components/LocalUnlockGate.tsx");
+const passwordGatePath = join(root, "client/src/components/PasswordGate.tsx");
 const notFoundPath = join(root, "client/src/pages/not-found.tsx");
 
 function read(path) {
@@ -13,20 +13,26 @@ function read(path) {
 }
 
 function fail(message) {
-  console.error(`❌ ${message}`);
+  console.error(`ERRO: ${message}`);
   process.exitCode = 1;
+}
+
+function walk(dir, files = []) {
+  for (const entry of readdirSync(dir)) {
+    if (["node_modules", ".git", "dist", "build"].includes(entry)) continue;
+    const full = join(dir, entry);
+    const stat = statSync(full);
+    if (stat.isDirectory()) walk(full, files);
+    else files.push(full);
+  }
+  return files;
 }
 
 const app = read(appPath);
 const guard = read(routeGuardPath);
 const unlock = read(localUnlockPath);
-const unlockGate = read(localUnlockGatePath);
+const passwordGate = read(passwordGatePath);
 const notFound = read(notFoundPath);
-
-const CURRENT_PIN_HASH = "c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd";
-const OLD_PIN_HASHES = [
-  "d48b2da02ca999eddf04ea7acc0f5673423f2cf618c014bf3863f4452a6ec207",
-];
 
 const sensitiveRoutes = [
   "/pant",
@@ -54,112 +60,105 @@ const publicRoutes = [
   "/consentimento-lgpd",
 ];
 
-console.log("🔐 Auditando política de acesso NeuroPed...");
+console.log("Auditando politica de acesso NeuroPed...");
 
 if (app.includes("LocalUnlockGate")) {
-  fail("App.tsx não deve importar/renderizar LocalUnlockGate global. O PIN deve ficar apenas em RouteGuard.");
+  fail("App.tsx nao deve importar/renderizar LocalUnlockGate global.");
 }
 
-if (app.includes("isAppUnlocked") || app.includes("localUnlockEventName")) {
-  fail("App.tsx não deve depender de isAppUnlocked/localUnlockEventName para abrir a casca pública.");
+if (guard.includes("LocalUnlockGate") || guard.includes("hasClinicalUnlock")) {
+  fail("RouteGuard.tsx nao deve liberar area clinica por desbloqueio local.");
 }
 
-if (!unlock.includes(CURRENT_PIN_HASH)) {
-  fail("localUnlock.ts não contém o hash autorizado atual do PIN master.");
+if (!guard.includes("isAuthenticated")) {
+  fail("RouteGuard.tsx deve exigir autenticacao nominal.");
 }
 
-for (const oldHash of OLD_PIN_HASHES) {
-  if (unlock.includes(oldHash)) {
-    fail("localUnlock.ts ainda contém hash antigo de PIN master.");
-  }
+if (!unlock.includes("return false") || !unlock.includes("dados reais de pacientes")) {
+  fail("localUnlock.ts deve manter desbloqueio local desativado e avisar que offline nao serve para dados reais.");
 }
 
-if (/Clarice11@08|vasco1108/i.test(unlock) || /Clarice11@08|vasco1108/i.test(unlockGate)) {
-  fail("PIN master não deve aparecer em texto claro no código-fonte.");
-}
-
-if (/maiúsculas|maiusculas|símbolo|simbolo|números|numeros/i.test(unlockGate)) {
-  fail("Mensagem de senha incorreta não deve dar pistas sobre composição da senha.");
-}
-
-if (!guard.includes("export const SENSITIVE_ROUTES")) {
-  fail("RouteGuard.tsx deve exportar SENSITIVE_ROUTES como registro central.");
-}
-
-if (!guard.includes("hasClinicalUnlock")) {
-  fail("RouteGuard.tsx deve usar hasClinicalUnlock para PIN master local nas rotas sensíveis.");
-}
-
-if (!guard.includes("LocalUnlockGate")) {
-  fail("RouteGuard.tsx deve renderizar LocalUnlockGate para rotas sensíveis quando necessário.");
-}
-
-if (!guard.includes("localUnlockEventName") || !guard.includes("addEventListener(localUnlockEventName")) {
-  fail("RouteGuard.tsx deve escutar localUnlockEventName para reagir a lockApp()/unlockApp().");
+if (/VITE_PIN_HASH|PIN_HASH|MASTER_PIN_HASH|UNLOCK_HASH|sha256hex|pin-ok/i.test(passwordGate)) {
+  fail("PasswordGate.tsx nao deve conter PIN/hash/fallback local.");
 }
 
 for (const route of sensitiveRoutes) {
   if (!guard.includes(`"${route}"`)) {
-    fail(`Rota sensível ausente do registro central: ${route}`);
+    fail(`Rota sensivel ausente do registro central: ${route}`);
   }
 
   const appProtectedRoute = route === "/paciente/" ? "/paciente/:id" : route;
   const routeIndex = app.indexOf(`path="${appProtectedRoute}"`);
   if (routeIndex === -1) {
-    fail(`Rota sensível não encontrada em App.tsx: ${appProtectedRoute}`);
+    fail(`Rota sensivel nao encontrada em App.tsx: ${appProtectedRoute}`);
     continue;
   }
 
   const routeSnippet = app.slice(routeIndex, routeIndex + 220);
   if (!routeSnippet.includes("<Protected")) {
-    fail(`Rota sensível sem wrapper Protected em App.tsx: ${appProtectedRoute}`);
+    fail(`Rota sensivel sem wrapper Protected em App.tsx: ${appProtectedRoute}`);
   }
 }
 
 for (const route of protectedBridgeRoutes) {
   if (!guard.includes(`"${route}"`)) {
-    fail(`Ponte sensível ausente do registro central RouteGuard.SENSITIVE_ROUTES: ${route}`);
+    fail(`Ponte sensivel ausente do registro central RouteGuard.SENSITIVE_ROUTES: ${route}`);
   }
 
   const routeIndex = notFound.indexOf(`location === "${route}"`);
   if (routeIndex === -1) {
-    fail(`Ponte sensível ausente de not-found.tsx: ${route}`);
+    fail(`Ponte sensivel ausente de not-found.tsx: ${route}`);
     continue;
   }
   const routeSnippet = notFound.slice(routeIndex, routeIndex + 320);
   if (!routeSnippet.includes("RouteGuard") && !routeSnippet.includes("<Protected")) {
-    fail(`Ponte sensível sem proteção em not-found.tsx: ${route}`);
+    fail(`Ponte sensivel sem protecao em not-found.tsx: ${route}`);
   }
 }
 
 for (const route of publicRoutes) {
   const routeIndex = app.indexOf(`path="${route}"`);
   if (routeIndex === -1) {
-    fail(`Rota pública esperada não encontrada em App.tsx: ${route}`);
+    fail(`Rota publica esperada nao encontrada em App.tsx: ${route}`);
     continue;
   }
 
   const routeSnippet = app.slice(routeIndex, routeIndex + 180);
   if (routeSnippet.includes("<Protected")) {
-    fail(`Rota pública não deve exigir PIN/Protected: ${route}`);
+    fail(`Rota publica nao deve exigir Protected: ${route}`);
   }
 }
 
-if (!/export function isAppUnlocked\(\): boolean\s*{[\s\S]*return true;/.test(unlock)) {
-  fail("isAppUnlocked() deve permanecer true para manter a casca pública aberta.");
-}
+const sourceFiles = walk(root).filter((file) =>
+  /\.(ts|tsx|js|jsx|mjs|cjs|ps1|bat|sh|md|json|toml|yml|yaml|txt)$/i.test(file),
+);
 
-if (!unlock.includes("export function hasClinicalUnlock")) {
-  fail("hasClinicalUnlock() deve existir para proteger áreas sensíveis.");
-}
+const allowDocs = new Set([
+  "SECURITY.md",
+  "docs/CHANGELOG_CIRURGICO.md",
+  "docs/AUDITORIA_CONTINUA_NEUROPED.md",
+]);
 
-if (!unlock.includes("detail: { unlocked: hasClinicalUnlock() }")) {
-  fail("Evento de lock/unlock deve emitir hasClinicalUnlock(), não isAppUnlocked().");
+const suspiciousPatterns = [
+  { name: "hash SHA-256 fixo de possivel PIN", re: /["'][a-f0-9]{64}["']/i },
+  { name: "token Railway hardcoded", re: /railway[_-]?token\s*[:=]\s*["']?[a-z0-9-]{20,}/i },
+  { name: "segredo de aplicacao hardcoded", re: /(NEUROPED_MASTER_KEY|NEUROPED_JWT_SECRET|ADMIN_INITIAL_PASSWORD)\s*[:=]\s*["'](?!__|\$env:|process\.env|%|\$\()/i },
+];
+
+for (const file of sourceFiles) {
+  const rel = relative(root, file).replaceAll("\\", "/");
+  if (allowDocs.has(rel)) continue;
+  const content = read(file);
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.re.test(content)) {
+      fail(`${pattern.name} em ${rel}`);
+    }
+  }
 }
 
 if (process.exitCode) {
-  console.error("\nResultado: política de acesso reprovada.");
+  console.error("\nResultado: politica de acesso reprovada.");
   process.exit(process.exitCode);
 }
 
-console.log("✅ Política de acesso aprovada: app público aberto, PIN reservado às rotas sensíveis.");
+console.log("Politica de acesso aprovada: publico aberto, clinico autenticado, sem PIN/hash local.");

@@ -122,7 +122,6 @@ jobs:
       - name: Build do frontend
         env:
           NODE_ENV: production
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
       - name: Deploy para Cloudflare Pages

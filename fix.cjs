@@ -4,10 +4,15 @@
  */
 const https = require("https");
 
-const TOKEN  = "f8f412d3-f3b6-4ea8-b6f3-21bfdb262d3b";
+const TOKEN  = process.env.RAILWAY_TOKEN;
 const API    = "backboard.railway.app";
 const SVC_ID = "9724306d-35ba-4364-b520-83b3f84bcf82";
 const ENV_ID = "0e82b70b-9668-4395-9e36-3487fda39fa0";
+
+if (!TOKEN) {
+  console.error("Defina RAILWAY_TOKEN no ambiente antes de executar este script.");
+  process.exit(1);
+}
 
 function gql(query) {
   return new Promise((resolve) => {

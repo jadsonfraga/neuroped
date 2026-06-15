@@ -18,16 +18,19 @@
  */
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
 const imp = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 
-const { allScales } = await imp("client/src/data/scaleFilter.ts");
+const { allScales, faixasEtarias } = await imp("client/src/data/scaleFilter.ts");
 const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
 const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
 const {
   filterScalesIntelligently,
+  getBroadbandFallback,
+  clinicalHardBlock,
   generateContextualRecommendation,
   getApplicationMode,
   getAssessmentUse,
@@ -239,6 +242,8 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
   // Espelha resolveAppRoute/opensInApp de filtro.tsx: appRoute dedicado, ou
   // ficha /generic-scale/:id (id ∈ allScales), ou /escalas-neuropsiquiatria (world-*).
   const allIds = new Set(allScales.map((s) => s.id));
+  const appSource = readFileSync(resolve(repoRoot, "client/src/App.tsx"), "utf8");
+  const appRoutes = new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((m) => m[1]));
   const resolveRoute = (s) =>
     s.appRoute
       ? s.appRoute
@@ -257,6 +262,11 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
 
   const naoAbrem = filtered.filter((s) => resolveRoute(s) === null);
   ok(naoAbrem.length === 0, `nenhuma escala do filtro sem rota real (${naoAbrem.length} violações)`);
+  const appRoutesInvalidas = filtered.filter((s) => {
+    const route = resolveRoute(s);
+    return route && !route.startsWith("/generic-scale/") && !appRoutes.has(route);
+  });
+  ok(appRoutesInvalidas.length === 0, `nenhuma appRoute do filtro aponta para rota ausente (${appRoutesInvalidas.length} violações)`);
   ok(filtered.length > 0, "catálogo filtrado não pode ficar vazio");
 
   // Simulação de 300 perfis: TODA recomendação do motor abre (nunca o loop /filtro).
@@ -335,6 +345,43 @@ head("K) Invariantes do motor — limites, ordenação e determinismo");
     ),
     "tier coerente com a faixa de relevanceScore"
   );
+}
+
+// ---------- L) Fallback de triagem ampla — nunca vazio + seguro ----------
+head("L) Fallback de triagem ampla — nunca vazio em queixa+idade real");
+{
+  const bandFor = (m) => {
+    const f = faixasEtarias.find((b) => m >= b.min && m <= b.max) ?? faixasEtarias[faixasEtarias.length - 1];
+    return { min: f.min, max: f.max };
+  };
+  const fbCtx = (q, m) => ({ queixas: q ? [q] : [], selectedSignals: [], ageMonths: m, ageBand: bandFor(m) });
+
+  // 1) Toda faixa etária tem ≥1 rastreador amplo real, marcado, cobrindo a idade.
+  for (const f of faixasEtarias) {
+    const mid = Math.round((f.min + f.max) / 2);
+    const fb = getBroadbandFallback(catalog, { queixas: [], selectedSignals: [], ageMonths: mid, ageBand: { min: f.min, max: f.max } });
+    ok(fb.length >= 1, `faixa ${f.min}-${f.max}m: ≥1 rastreador amplo`);
+    ok(fb.every((x) => x.isBroadbandFallback), `${f.min}-${f.max}m: fallback marcado isBroadbandFallback`);
+    ok(fb.every((x) => x.scale.ageMax >= f.min && x.scale.ageMin <= f.max), `${f.min}-${f.max}m: rastreador cobre a idade`);
+  }
+
+  // 2) Combos que davam vazio agora têm fallback (instrumento real aplicável).
+  for (const [q, m] of [["suicidio", 3], ["psicose", 9], ["substancias", 24], ["ansiedade", 3], ["toc", 18], ["tiques", 6], ["trauma", 6], ["enurese", 9]]) {
+    const fb = getBroadbandFallback(catalog, fbCtx(q, m));
+    ok(fb.length >= 1, `${q} @ ${m}m: fallback oferece ≥1 rastreador amplo`);
+  }
+
+  // 3) SEGURANÇA: o fallback nunca traz instrumento inadequado à idade — todo
+  //    candidato passa o clinicalHardBlock da idade (sem a queixa).
+  for (const [q, m] of [["suicidio", 3], ["psicose", 9], ["substancias", 24]]) {
+    const fb = getBroadbandFallback(catalog, fbCtx(q, m));
+    const baseCtx = { queixas: [], selectedSignals: [], ageMonths: m, ageBand: bandFor(m), assessmentUse: null };
+    ok(fb.every((x) => clinicalHardBlock(x.scale, baseCtx) === null), `${q} @ ${m}m: todo rastreador do fallback é seguro p/ a idade`);
+    ok(fb.every((x) => !x.scale.queixas.includes("suicidio") && !x.scale.queixas.includes("psicose")), `${q} @ ${m}m: fallback não traz instrumento de suicídio/psicose`);
+  }
+
+  // 4) Quando HÁ instrumento específico, o motor não cai no fallback (engine puro).
+  ok(run({ queixas: ["tea"], ageMonths: 23 }).length > 0 && run({ queixas: ["tea"], ageMonths: 23 }).every((x) => !x.isBroadbandFallback), "com instrumento específico, sem fallback");
 }
 
 // ---------- Resumo ----------
