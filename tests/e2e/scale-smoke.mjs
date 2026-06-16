@@ -46,12 +46,29 @@ function startStaticServer() {
 }
 
 // Escalas que renderizam pelo contrato GenericScale (radiogroups + button-submit
-// + ClinicalReport + SaveToPatient). Smoke representativo, rápido.
+// + ClinicalReport + SaveToPatient). Cobre todas as páginas com rota dedicada.
 const ROUTES = [
   { path: "/#/gad7", name: "GAD-7" },
   { path: "/#/vanderbilt", name: "Vanderbilt" },
   { path: "/#/psc17", name: "PSC-17" },
   { path: "/#/aq10", name: "AQ-10" },
+  { path: "/#/abc", name: "ABC" },
+  // ASQ-3 fica de fora: fluxo divergente (pré-seleção de idade/versão antes dos
+  // itens), não segue o contrato radiogroup→submit direto. Smoke próprio se preciso.
+  { path: "/#/brief2", name: "BRIEF-2" },
+  { path: "/#/cbcl", name: "CBCL" },
+  { path: "/#/cshq", name: "CSHQ" },
+  { path: "/#/eaf", name: "EAF" },
+  { path: "/#/eai", name: "EAI" },
+  { path: "/#/easi", name: "EASI" },
+  { path: "/#/ecsm", name: "ECSM" },
+  { path: "/#/edi", name: "EDI" },
+  { path: "/#/emdi", name: "EMDI" },
+  { path: "/#/ems", name: "EMS" },
+  { path: "/#/etare", name: "ETARE" },
+  { path: "/#/ips", name: "IPS" },
+  { path: "/#/pdae", name: "PDAE" },
+  { path: "/#/pedsql", name: "PedsQL" },
 ];
 const OPTION_INDEX = 1; // segunda opção de cada item (clinicamente neutra p/ smoke)
 
@@ -92,34 +109,41 @@ async function main() {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-result" }) }),
   );
 
+  const failures = [];
   let ok = 0;
   try {
     for (const scale of ROUTES) {
-      await page.goto(`${base}${scale.path}`, { waitUntil: "domcontentloaded" });
-      // Espera a escala montar (primeiro grupo de opções), sem depender do título.
-      await page.locator('[role="radiogroup"]').first().waitFor({ timeout: 15000 });
+      try {
+        await page.goto(`${base}${scale.path}`, { waitUntil: "domcontentloaded" });
+        // Espera a escala montar (primeiro grupo de opções), sem depender do título.
+        await page.locator('[role="radiogroup"]').first().waitFor({ timeout: 15000 });
 
-      await answerAll(page, OPTION_INDEX);
+        await answerAll(page, OPTION_INDEX);
 
-      const submit = page.getByTestId("button-submit");
-      await submit.waitFor({ timeout: 10000 });
-      await page.waitForFunction(
-        () => {
-          const b = document.querySelector('[data-testid="button-submit"]');
-          return !!b && b.getAttribute("aria-disabled") !== "true";
-        },
-        { timeout: 10000 },
-      );
-      await submit.click();
+        const submit = page.getByTestId("button-submit");
+        await submit.waitFor({ timeout: 10000 });
+        await page.waitForFunction(
+          () => {
+            const b = document.querySelector('[data-testid="button-submit"]');
+            return !!b && b.getAttribute("aria-disabled") !== "true";
+          },
+          { timeout: 10000 },
+        );
+        await submit.click();
 
-      await page.getByText(/Resultado/i).first().waitFor({ timeout: 10000 });
-      await page.getByTestId("button-print-report").waitFor({ timeout: 10000 });
-      await page.getByText(/Vincular a Paciente/i).first().waitFor({ timeout: 10000 });
+        await page.getByText(/Resultado/i).first().waitFor({ timeout: 10000 });
+        await page.getByTestId("button-print-report").waitFor({ timeout: 10000 });
+        await page.getByText(/Vincular a Paciente/i).first().waitFor({ timeout: 10000 });
 
-      ok += 1;
-      console.log(`  ✓ ${scale.name}: abriu, respondeu, calculou e expôs imprimir/salvar`);
+        ok += 1;
+        console.log(`  ✓ ${scale.name}`);
+      } catch (e) {
+        failures.push(scale.name);
+        console.log(`  ✗ ${scale.name}: ${String(e.message).split("\n")[0]}`);
+      }
     }
-    console.log(`\n[scale-smoke] OK — ${ok}/${ROUTES.length} escalas validadas de ponta a ponta.`);
+    console.log(`\n[scale-smoke] ${ok}/${ROUTES.length} verdes${failures.length ? ` — falhas: ${failures.join(", ")}` : ""}.`);
+    if (failures.length) process.exitCode = 1;
   } finally {
     await browser.close();
     if (server) server.close();
