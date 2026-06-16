@@ -105,7 +105,10 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # NOTA: jobs deploy-vercel e deploy-railway removidos — referenciavam actions
-  # inexistentes (vercel/action@master, railwayapp/deploy-action@v1) e falhavam
-  # sempre. O backend é publicado pelo Render (render.yaml autoDeploy) e o
-  # frontend pelo GitHub Pages (acima) + Cloudflare Pages (deploy-cloudflare.yml).
+  # NOTA: jobs deploy-vercel e deploy-railway antigos removidos — referenciavam
+  # actions inexistentes e falhavam sempre.
+  # Arquitetura atual: o full-stack canônico é o Cloudflare Pages
+  # (frontend + Functions + D1, deploy-cloudflare.yml). GitHub Pages (acima) e
+  # Vercel (deploy-vercel.yml) são mirrors ESTÁTICOS do frontend. O backend
+  # Express (server/) serve apenas o `npm run dev` local — Render foi aposentado
+  # (render.yaml removido).
