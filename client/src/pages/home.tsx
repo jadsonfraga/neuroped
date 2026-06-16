@@ -140,7 +140,7 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{flow.subtitle}</p>
             </div>
           </div>
-          <div className="mt-auto flex items-center justify-between rounded-2xl px-4 py-3 text-xs font-bold transition-all" style={{ background: "rgba(15, 148, 136, 0.08)", color: "var(--np-color-primary)" }}>
+          <div className="mt-auto flex items-center justify-between rounded-2xl bg-primary/10 px-4 py-3 text-xs font-bold text-primary transition-all group-hover:bg-primary/15">
             <span>{flow.action}</span>
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </div>
@@ -171,10 +171,7 @@ export default function HomePage() {
   return (
     <div className="page-enter proportion-safe-page space-y-6 pb-8">
       {/* Hero section — Premium visual com gradiente clínico */}
-      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 p-5 shadow-md backdrop-blur sm:p-7" style={{
-        background: "linear-gradient(135deg, rgba(15, 148, 136, 0.08) 0%, rgba(61, 20, 40, 0.06) 100%)",
-        borderColor: "rgba(15, 148, 136, 0.2)",
-      }}>
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-br from-primary/10 via-chart-2/8 to-transparent p-5 shadow-md backdrop-blur sm:p-7">
         <BrandWatermark className="right-4 top-4 h-40 w-40" />
         <div className="asset-proportion-box pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" aria-hidden="true">
           <img src={brandAssets.legacyNeuroPedSymbol} alt="" className="no-zoom-media h-full w-full rounded-2xl object-contain" />
@@ -206,14 +203,10 @@ export default function HomePage() {
                 return (
                   <div
                     key={metric.label}
-                    className="rounded-2xl border shadow-sm transition-all hover:shadow-md p-4"
-                    style={{
-                      borderColor: "rgba(15, 148, 136, 0.3)",
-                      background: "linear-gradient(135deg, rgba(15, 148, 136, 0.05) 0%, rgba(61, 20, 40, 0.02) 100%)",
-                    }}
+                    className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm transition-all hover:shadow-md"
                   >
                     <div className="flex items-center gap-2.5 text-primary">
-                      <Icon className="h-5 w-5 text-teal-600" />
+                      <Icon className="h-5 w-5 text-primary" />
                       <span className="text-2xl font-black text-foreground">{metric.value}</span>
                     </div>
                     <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -287,7 +280,7 @@ export default function HomePage() {
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">5 fluxos principais</p>
-                <h2 id="fluxos-principais" className="text-xl font-black text-foreground">Escolha o próximo passo clínico</h2>
+                <h2 id="fluxos-principais" className="font-display text-xl font-bold tracking-tight text-foreground">Escolha o próximo passo clínico</h2>
               </div>
               <Badge variant="outline" className="hidden sm:inline-flex">Painel 9.0</Badge>
             </div>
