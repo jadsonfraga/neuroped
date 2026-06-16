@@ -42,7 +42,7 @@ import {
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
-type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "QuestionÃ¡rio Escolar" | "Questionário Escolar" | "Questionario Escolar";
+type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar" | "Questionário Escolar" | "Questionario Escolar";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -52,7 +52,7 @@ const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
 const EUSM10_FILTER_SCALE: ScaleEntry = {
   id: "eusm10",
   name: "EUSM-10",
-  fullName: "Escala Universal de SatisfaÃ§Ã£o com MedicaÃ§Ã£o",
+  fullName: "Escala Universal de Satisfação com Medicação",
   ageMin: 0,
   ageMax: 216,
   queixas: ["efeitos", "evolucao"],
@@ -60,10 +60,10 @@ const EUSM10_FILTER_SCALE: ScaleEntry = {
   prioridade: "monitorizacao",
   tempo: "3â€“5 min",
   appRoute: "/eusm10",
-  description: "Instrumento breve de 10 itens para acompanhar benefÃ­cio percebido, tolerabilidade, adesÃ£o, seguranÃ§a familiar e viabilidade prÃ¡tica de qualquer medicaÃ§Ã£o nos Ãºltimos 7 a 14 dias. Ãštil quando hÃ¡ dÃºvida sobre efeitos colaterais, perda de eficÃ¡cia, troca de dose, aceitaÃ§Ã£o do paciente ou decisÃ£o compartilhada de manter a medicaÃ§Ã£o.",
+  description: "Instrumento breve de 10 itens para acompanhar benefício percebido, tolerabilidade, adesão, seguranÃ§a familiar e viabilidade prática de qualquer medicaÃ§Ã£o nos últimos 7 a 14 dias. Ãštil quando hÃ¡ dúvida sobre efeitos colaterais, perda de eficácia, troca de dose, aceitaÃ§Ã£o do paciente ou decisÃ£o compartilhada de manter a medicaÃ§Ã£o.",
   fonte: "Dr. Jadson Fraga, NeuroPed â€” EUSM-10 (2026)",
-  licencaUso: "autoral",
-  validacaoBrasil: "Autoral â€” uso clÃ­nico local",
+  licençaUso: "autoral",
+  validacaoBrasil: "Autoral â€” uso clínico local",
   scoringCutoff: "0â€“10 muito baixa; 11â€“20 baixa; 21â€“28 intermediÃ¡ria; 29â€“35 boa; 36â€“40 excelente",
   pendente_validacao_clinica: false,
 };
@@ -129,9 +129,9 @@ function rowToScale(row: Row): ScaleEntry {
     respondente: guessRespondente(respondente),
     prioridade: prioridadeMap[selo] || "triagem",
     tempo: "3â€“10 min", // TODO: Bug #20 â€” parse actual time values from source data instead of hardcoding
-    description: `Escala mundial sem custo. PolÃ­tica: ${politica}. Usar como triagem/monitoramento, nunca diagnÃ³stico isolado.`,
-    fonte: "CatÃ¡logo NeuroPed 100 escalas Â· verificar fonte oficial antes de embutir itens",
-    licencaUso: politica === "embed" ? "livre" : "restrita",
+    description: `Escala mundial sem custo. Política: ${politica}. Usar como triagem/monitoramento, nunca diagnóstico isolado.`,
+    fonte: "Catálogo NeuroPed 100 escalas · verificar fonte oficial antes de embutir itens",
+    licençaUso: politica === "embed" ? "livre" : "restrita",
   };
 }
 
@@ -143,16 +143,18 @@ function tierFromSlot(slot: Slot): Tier | null {
 }
 
 function rec(slot: Slot, scale: ScaleEntry | undefined, reason: string, tone: string) {
-  const restricted = Boolean(scale?.licencaUso && protectedLicenseKinds.has(scale.licencaUso));
+  const restricted = Boolean(scale?.licençaUso && protectedLicenseKinds.has(scale.licençaUso));
+  const fallbackRoute = slot === "Questionário Escolar" || slot === "Questionario Escolar" || slot === "Questionário Escolar"
+    ? "/escalas-neuropsiquiatria"
+    : "/filtro";
   return {
     slot,
     tier: tierFromSlot(slot),
-    // FIX BUG-003: Ensure route defaults even if scale is undefined
-    route: scale?.appRoute || (scale?.id && scale.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : "/filtro"),
+    route: scale?.appRoute || (scale?.id && scale.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : fallbackRoute),
     title: scale?.name || "Sem escala ideal",
     subtitle: scale?.fullName || "Refine idade, queixa ou termo pesquisado",
     reason,
-    state: restricted ? "Instrumento protegido - usar conforme licenca/autorizacao." : scale?.appRoute ? "Rota direta disponÃ­vel." : "CatÃ¡logo filtrÃ¡vel; aplicaÃ§Ã£o direta ainda nÃ£o implementada.",
+    state: restricted ? "Instrumento protegido - usar conforme licença/autorizacao." : scale?.appRoute ? "Rota direta disponível." : "Catálogo filtrÃ¡vel; aplicaÃ§Ã£o direta ainda nÃ£o implementada.",
     source: scale?.fonte,
     tone,
     pending: scale?.pendente_validacao_clinica === true,
@@ -179,27 +181,27 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
   const t = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")}`);
 
   if (/tea|autis|social|assq|m-chat|q-chat|cast|aq/.test(t)) return { label: "TEA / social", Icon: Brain, tone: "from-violet-600 via-purple-700 to-slate-950" };
-  if (/tdah|adhd|snap|vanderbilt|aten|weiss|wfirs/.test(t)) return { label: "atenÃ§Ã£o", Icon: Activity, tone: "from-amber-500 via-orange-600 to-red-800" };
+  if (/tdah|adhd|snap|vanderbilt|aten|weiss|wfirs/.test(t)) return { label: "atenção", Icon: Activity, tone: "from-amber-500 via-orange-600 to-red-800" };
   if (/linguagem|fala|comunic|language|speech/.test(t)) return { label: "linguagem", Icon: MessageCircle, tone: "from-cyan-600 via-blue-700 to-slate-950" };
   if (/school|professor|teacher|aprendiz|leitura|escrita|aritmet|academ/.test(t)) return { label: "escola", Icon: GraduationCap, tone: "from-emerald-600 via-teal-700 to-slate-950" };
   if (/sono|sleep|bears|psq|cshq/.test(t)) return { label: "sono", Icon: Moon, tone: "from-indigo-700 via-blue-900 to-slate-950" };
   if (/ansiedade|depress|humor|mood|phq|gad|scared|rcads|scas/.test(t)) return { label: "humor", Icon: HeartPulse, tone: "from-rose-600 via-red-700 to-slate-950" };
   if (/desenvolvimento|milestone|cdc|swyc|atraso|motor|gmfcs/.test(t)) return { label: "desenvolvimento", Icon: Baby, tone: "from-blue-600 via-indigo-700 to-slate-950" };
   if (/eusm|medic|dose|farmaco|risperidona|metilfenidato|tolerab|adesao|efeito/.test(t)) return { label: "medicaÃ§Ã£o", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
-  if (/pais|parent|cuidador|family/.test(t)) return { label: "famÃ­lia", Icon: Users, tone: "from-slate-600 via-slate-800 to-slate-950" };
+  if (/pais|parent|cuidador|family/.test(t)) return { label: "família", Icon: Users, tone: "from-slate-600 via-slate-800 to-slate-950" };
 
-  return { label: "clÃ­nico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
+  return { label: "clínico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
 }
 
 function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas: string[], selectedAge: string | null): string[] {
   if (!scale) return [];
   const reasons: string[] = [];
-  if (selectedQueixas.length > 0 && scale.queixas.some((q) => selectedQueixas.includes(q))) reasons.push("âœ“ Queixa");
-  if (selectedAge && matchAge(scale, selectedAge)) reasons.push("âœ“ Idade");
-  if (scale.appRoute) reasons.push("âœ“ Rota direta");
-  if (scale.prioridade === "triagem") reasons.push("âœ“ Triagem");
-  if (scale.respondente.includes("professor")) reasons.push("âœ“ Escola");
-  return reasons.length ? reasons : ["âœ“ Compatibilidade geral"];
+  if (selectedQueixas.length > 0 && scale.queixas.some((q) => selectedQueixas.includes(q))) reasons.push("✓ Queixa");
+  if (selectedAge && matchAge(scale, selectedAge)) reasons.push("✓ Idade");
+  if (scale.appRoute) reasons.push("✓ Rota direta");
+  if (scale.prioridade === "triagem") reasons.push("✓ Triagem");
+  if (scale.respondente.includes("professor")) reasons.push("✓ Escola");
+  return reasons.length ? reasons : ["✓ Compatibilidade geral"];
 }
 
 export default function FiltroPage() {
@@ -281,24 +283,24 @@ export default function FiltroPage() {
         <div className="flex items-start gap-2 sm:gap-3">
           <div className="filter-260-iconbox flex h-10 sm:h-12 w-10 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-4 sm:h-5 w-4 sm:w-5" /></div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-1 sm:mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10 text-[10px] sm:text-xs">ranking Â· escalas + questionÃ¡rios</Badge>
-            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground">Filtro ClÃ­nico Inteligente</h1>
+            <Badge className="mb-1 sm:mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10 text-[10px] sm:text-xs">ranking · escalas + questionários</Badge>
+            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
             <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm leading-relaxed text-muted-foreground">Cruza idade, queixa, respondente, rota direta e 100 escalas mundiais sem custo.</p>
           </div>
         </div>
       </header>
 
       <section className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-3">
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">catÃ¡logo filtrÃ¡vel</p><p className="text-2xl font-black tabular-nums text-foreground">{catalog.length}</p></CardContent></Card>
+        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">catálogo filtrável</p><p className="text-2xl font-black tabular-nums text-foreground">{catalog.length}</p></CardContent></Card>
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-2xl font-black tabular-nums text-foreground">{world.length}</p></CardContent></Card>
         <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">status</p><p className="mt-1 flex items-center gap-2 text-lg font-black text-foreground"><span className={`h-2.5 w-2.5 shrink-0 rounded-full ${statusInfo.dot}`} aria-hidden="true" />{statusInfo.label}</p></CardContent></Card>
       </section>
-      {status === "fallback" && <p className="-mt-2 px-1 text-[11px] leading-relaxed text-muted-foreground">CatÃ¡logo mundial online indisponÃ­vel agora â€” usando a base local embutida, sem perda de funÃ§Ã£o.</p>}
+      {status === "fallback" && <p className="-mt-2 px-1 text-[11px] leading-relaxed text-muted-foreground">Catálogo mundial online indisponÃ­vel agora â€” usando a base local embutida, sem perda de funÃ§Ã£o.</p>}
 
       <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: medicaÃ§Ã£o, efeitos, satisfaÃ§Ã£o, autismo, TDAH, escola, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex.: medicação, efeitos, satisfação, autismo, TDAH, escola, sono..." className="h-11 rounded-2xl pl-10 pr-10" data-testid="input-search" />
           {search && <button type="button" onClick={() => setSearch("")} className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 
@@ -313,7 +315,7 @@ export default function FiltroPage() {
           <div className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">Queixa</p>
-              {detectedPattern && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">ðŸ§  {detectedPattern.name.split('(')[0]}</span>}
+              {detectedPattern && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 {detectedPattern.name.split('(')[0]}</span>}
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
@@ -325,16 +327,16 @@ export default function FiltroPage() {
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Respondente</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>ðŸ§’</span> <span className="hidden sm:inline">Direto</span></button>
-            <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>ðŸ‘¨â€ðŸ‘©â€ðŸ‘§</span> <span className="hidden sm:inline">Pais</span></button>
-            <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>ðŸ‘¨â€ðŸ«</span> <span className="hidden sm:inline">Escola</span></button>
-            <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>ðŸ‘¨â€âš•ï¸</span> <span className="hidden sm:inline">ClÃ­nico</span></button>
+            <button key="crianca" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>🧒</span> <span className="hidden sm:inline">Direto</span></button>
+            <button key="pais" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
+            <button key="professor" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍🏫</span> <span className="hidden sm:inline">Escola</span></button>
+            <button key="clinico" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span>👨‍⚕️</span> <span className="hidden sm:inline">Clínico</span></button>
           </div>
         </div>
       </section>
 
       {hasSearch ? <section ref={resultsSectionRef} className="space-y-3">
-        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saÃ­da obrigatÃ³ria</p><h2 className="text-lg font-black text-foreground">RecomendaÃ§Ãµes por prioridade clÃ­nica</h2></div>
+        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         <div className="filter-260-grid">
           {ranking.map((item) => {
             const reasons = getRecommendationReasons(
@@ -348,8 +350,8 @@ export default function FiltroPage() {
                   <CardContent className="filter-260-card-content">
                     <div className="filter-260-medalrow flex-wrap gap-2">
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}>{item.slot}</Badge>
-                      {item.pending && <Badge variant="outline" className="filter-260-badge border-amber-400/60 text-amber-700 dark:text-amber-300">validacao pendente</Badge>}
-                      {item.restricted && <Badge variant="outline" className="filter-260-badge border-primary/40 text-primary" title="Instrumento protegido - usar conforme licenca/autorizacao">protegida</Badge>}
+                      {item.pending && <Badge variant="outline" className="filter-260-badge border-amber-400/60 text-amber-700 dark:text-amber-300">validação pendente</Badge>}
+                      {item.restricted && <Badge variant="outline" className="filter-260-badge border-primary/40 text-primary" title="Instrumento protegido - usar conforme licença/autorizacao">protegida</Badge>}
                     </div>
                     <div className="filter-260-head">
                       <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
@@ -373,23 +375,23 @@ export default function FiltroPage() {
             );
           })}
         </div>
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponÃ­veis; nÃ£o inventa pontuaÃ§Ã£o, nÃ£o substitui diagnÃ³stico e marca escalas que exigem permissÃ£o.</CardContent></Card>
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponÃ­veis; nÃ£o inventa pontuaÃ§Ã£o, nÃ£o substitui diagnóstico e marca escalas que exigem permissÃ£o.</CardContent></Card>
       </section> : <section className="space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionÃ¡rios aplicÃ¡veis, inventÃ¡rios e 100 escalas mundiais sem custo.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicÃ¡veis, inventÃ¡rios e 100 escalas mundiais sem custo.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">LicenÃ§a visÃ­vel</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clÃ­nica atÃ© permissÃ£o formal.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card>
         </div>
         <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-6">
           <CardContent className="space-y-3">
             <div className="flex items-start gap-4">
-              <div className="text-5xl">ðŸ§ </div>
+              <div className="text-5xl">🧠</div>
               <div className="flex-1">
                 <h3 className="font-black text-foreground mb-2">Como usar o Filtro</h3>
                 <ol className="space-y-1 text-xs text-muted-foreground list-decimal list-inside">
-                  <li>Selecione a <strong>idade</strong> da crianÃ§a</li>
+                  <li>Selecione a <strong>idade</strong> da criança</li>
                   <li>Escolha os <strong>sinais e sintomas</strong> observados</li>
-                  <li>Veja as <strong>recomendaÃ§Ãµes</strong> organizadas por prioridade</li>
+                  <li>Veja as <strong>recomendações</strong> organizadas por prioridade</li>
                   <li>Clique para <strong>abrir</strong> o instrumento escolhido</li>
                 </ol>
               </div>
@@ -399,7 +401,7 @@ export default function FiltroPage() {
       </section>}
 
       <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
-        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prÃ©via do catÃ¡logo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catÃ¡logo mundial</Link></div>
+        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
             <div key={s.id} className="filter-260-card compact rounded-2xl border border-border/70 bg-background/70 transition hover:border-primary/30 hover:bg-background">
@@ -412,11 +414,11 @@ export default function FiltroPage() {
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>
                         {s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}
-                        {s.pendente_validacao_clinica && <Badge variant="outline" className="filter-260-badge border-amber-400/60 text-amber-700 dark:text-amber-300">validacao pendente</Badge>}
-                        {s.licencaUso && protectedLicenseKinds.has(s.licencaUso) && <Badge variant="outline" className="filter-260-badge border-primary/40 text-primary" title="Instrumento protegido - usar conforme licenca/autorizacao">protegida</Badge>}
+                        {s.pendente_validacao_clinica && <Badge variant="outline" className="filter-260-badge border-amber-400/60 text-amber-700 dark:text-amber-300">validação pendente</Badge>}
+                        {s.licençaUso && protectedLicenseKinds.has(s.licençaUso) && <Badge variant="outline" className="filter-260-badge border-primary/40 text-primary" title="Instrumento protegido - usar conforme licença/autorizacao">protegida</Badge>}
                       </div>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-[11px] text-muted-foreground">{s.respondente.join(" Â· ")} Â· {Math.round(s.ageMin / 12)}â€“{Math.round(s.ageMax / 12)} anos</p>
+                    <p className="mt-2 line-clamp-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}â€“{Math.round(s.ageMax / 12)} anos</p>
                   </div>
                 </div>
               </div>

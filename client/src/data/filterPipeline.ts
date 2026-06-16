@@ -12,9 +12,11 @@ import {
 export interface ClinicalPattern {
   name: string;
   signature: string[];
-  goldStandard: string;
+  screening: string[];
+  diagnostic?: string[];
   minAge?: number;
   maxAge?: number;
+  allowedRespondentes?: ScaleEntry["respondente"][number][];
   reason: string;
 }
 
@@ -25,17 +27,17 @@ export interface RankedRecommendation {
 }
 
 export const clinicalPatterns: ClinicalPattern[] = [
-  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], goldStandard: "mchat", minAge: 16, maxAge: 30, reason: "M-CHAT-R/F e o rastreio de primeira linha para TEA entre 16 e 30 meses." },
-  { name: "TEA + comunicacao social", signature: ["tea", "linguagem"], goldStandard: "mchat", minAge: 16, maxAge: 30, reason: "TEA com queixa de linguagem em idade de toddler prioriza rastreio M-CHAT-R/F antes de instrumentos formais." },
-  { name: "Suspeita TDAH escolar", signature: ["tdah", "comportamento"], goldStandard: "snap", minAge: 72, reason: "SNAP-IV e Vanderbilt cobrem sintomas nucleares em pais e escola a partir de 6 anos." },
-  { name: "TDAH + ansiedade", signature: ["tdah", "ansiedade"], goldStandard: "snap", minAge: 72, reason: "Bateria combinada inicia por TDAH nuclear e adiciona alvo ansioso/broadband." },
-  { name: "TEA + TDAH", signature: ["tea", "tdah"], goldStandard: "mchat", minAge: 16, maxAge: 30, reason: "Em toddlers, TEA + TDAH prioriza rastreio de TEA e complementa comportamento/atencao." },
-  { name: "Ansiedade + depressao", signature: ["ansiedade", "depressao"], goldStandard: "scared", minAge: 96, reason: "SCARED rastreia ansiedade e deve ser combinado com instrumentos de humor." },
-  { name: "Depressao + suicidio", signature: ["depressao", "suicidio"], goldStandard: "cssrs", minAge: 84, reason: "Risco suicida e prioridade de seguranca; C-SSRS deve subir para o topo." },
-  { name: "Aprendizagem + TDAH", signature: ["aprendizagem", "tdah"], goldStandard: "snap", minAge: 72, reason: "TDAH escolar com aprendizagem pede SNAP-IV e testes academicos/diretos." },
-  { name: "Linguagem + atraso", signature: ["linguagem", "atraso"], goldStandard: "asq3", maxAge: 66, reason: "Queixa de linguagem/desenvolvimento pequena deve iniciar por triagem parental ampla." },
-  { name: "Aprendizagem escolar", signature: ["aprendizagem"], goldStandard: "pdae", minAge: 72, reason: "Rastreio pedagogico autoral e tarefas diretas sao primeira linha no app." },
-  { name: "Cognicao", signature: ["cognicao"], goldStandard: "testes-diretos", minAge: 48, reason: "Sondagens diretas sao primeira linha antes de instrumentos formais protegidos." },
+  { name: "Suspeita TEA em lactentes", signature: ["tea", "atraso"], screening: ["mchat"], diagnostic: ["cars"], minAge: 16, maxAge: 30, allowedRespondentes: ["pais"], reason: "M-CHAT-R/F e o rastreio de primeira linha para TEA entre 16 e 30 meses; CARS-2 entra como complemento clinico quando aplicavel." },
+  { name: "TEA + comunicacao social", signature: ["tea", "linguagem"], screening: ["mchat"], diagnostic: ["cars"], minAge: 16, maxAge: 30, allowedRespondentes: ["pais"], reason: "TEA com queixa de linguagem em idade de toddler prioriza rastreio M-CHAT-R/F antes de instrumentos formais." },
+  { name: "Suspeita TDAH escolar", signature: ["tdah", "comportamento"], screening: ["snap", "vanderbilt"], diagnostic: ["conners"], minAge: 72, allowedRespondentes: ["pais", "professor"], reason: "SNAP-IV e Vanderbilt cobrem sintomas nucleares em pais e escola a partir de 6 anos." },
+  { name: "TDAH + ansiedade", signature: ["tdah", "ansiedade"], screening: ["snap", "scared"], diagnostic: ["conners"], minAge: 72, reason: "Bateria combinada inicia por TDAH nuclear e adiciona alvo ansioso/broadband." },
+  { name: "TEA + TDAH", signature: ["tea", "tdah"], screening: ["mchat"], diagnostic: ["cars"], minAge: 16, maxAge: 30, allowedRespondentes: ["pais"], reason: "Em toddlers, TEA + TDAH prioriza rastreio de TEA e complementa comportamento/atencao." },
+  { name: "Ansiedade + depressao", signature: ["ansiedade", "depressao"], screening: ["scared", "cdi2"], diagnostic: ["cbcl"], minAge: 96, allowedRespondentes: ["pais", "autoaplicavel"], reason: "SCARED rastreia ansiedade e deve ser combinado com instrumentos de humor apropriados para a idade." },
+  { name: "Depressao + suicidio", signature: ["depressao", "suicidio"], screening: ["cssrs", "cdi2", "phqa"], diagnostic: ["cbcl"], minAge: 84, reason: "Risco suicida e prioridade de seguranca; C-SSRS deve subir para o topo e a triagem de humor precisa respeitar idade/respondente." },
+  { name: "Aprendizagem + TDAH", signature: ["aprendizagem", "tdah"], screening: ["snap", "pdae"], diagnostic: ["conners"], minAge: 72, reason: "TDAH escolar com aprendizagem pede SNAP-IV e testes academicos/diretos." },
+  { name: "Linguagem + atraso", signature: ["linguagem", "atraso"], screening: ["asq3", "denver"], maxAge: 66, allowedRespondentes: ["pais", "clinico"], reason: "Queixa de linguagem/desenvolvimento pequena deve iniciar por triagem parental ampla." },
+  { name: "Aprendizagem escolar", signature: ["aprendizagem"], screening: ["pdae"], minAge: 72, allowedRespondentes: ["pais", "professor"], reason: "Rastreio pedagogico autoral e tarefas diretas sao primeira linha no app." },
+  { name: "Cognicao", signature: ["cognicao"], screening: [], diagnostic: [], minAge: 48, reason: "Sondagens diretas sao primeira linha antes de instrumentos formais protegidos." },
 ];
 
 export function defaultPreConsultaCatalog(extraWorld: ScaleEntry[] = noCostWorldScales): ScaleEntry[] {
@@ -100,6 +102,7 @@ export function poolScales(
 export function detectGoldStandard(
   selectedQueixas: string[],
   selectedAge: string | null,
+  selectedRespondente: ScaleEntry["respondente"][number] | null,
   catalog: ScaleEntry[],
 ): ClinicalPattern | null {
   const patterns = clinicalPatterns
@@ -111,16 +114,41 @@ export function detectGoldStandard(
 
   let best: { pattern: ClinicalPattern; score: number } | null = null;
   for (const { pattern, matchCount } of patterns) {
-    const scale = catalog.find((item) => item.id === pattern.goldStandard);
-    if (!scale || !matchAge(scale, selectedAge)) continue;
     const age = selectedAge ? faixasEtarias.find((item) => item.id === selectedAge) : null;
     const center = age ? (age.min + age.max) / 2 : null;
     if (center != null && pattern.minAge != null && center < pattern.minAge) continue;
     if (center != null && pattern.maxAge != null && center > pattern.maxAge) continue;
+    if (selectedRespondente && pattern.allowedRespondentes && !pattern.allowedRespondentes.includes(selectedRespondente)) continue;
+    const candidateIds = [...pattern.screening, ...(pattern.diagnostic || [])];
+    const hasApplicableScale = candidateIds.some((id) => {
+      const scale = catalog.find((item) => item.id === id);
+      if (!scale || !matchAge(scale, selectedAge)) return false;
+      if (!selectedRespondente) return true;
+      return scale.respondente.includes(selectedRespondente) || (selectedRespondente === "autoaplicavel" && scale.respondente.includes("crianca"));
+    });
+    if (!hasApplicableScale && candidateIds.length > 0) continue;
     const score = matchCount / pattern.signature.length;
     if (!best || score > best.score) best = { pattern, score };
   }
   return best?.pattern ?? null;
+}
+
+function findPatternScale(
+  pattern: ClinicalPattern | null,
+  pool: ScaleEntry[],
+  catalog: ScaleEntry[],
+  selectedAge: string | null,
+  selectedRespondente: ScaleEntry["respondente"][number] | null,
+): ScaleEntry | null {
+  if (!pattern) return null;
+  const ids = [...pattern.screening, ...(pattern.diagnostic || [])];
+  for (const id of ids) {
+    const scale = pool.find((item) => item.id === id) || catalog.find((item) => item.id === id);
+    if (!scale || !matchAge(scale, selectedAge)) continue;
+    if (selectedRespondente && !scale.respondente.includes(selectedRespondente) && !(selectedRespondente === "autoaplicavel" && scale.respondente.includes("crianca"))) continue;
+    return scale;
+  }
+  return null;
 }
 
 function pickNext(pool: ScaleEntry[], used: Set<string>, preferred?: ScaleEntry | null): ScaleEntry | undefined {
@@ -137,8 +165,8 @@ export function buildFilterRanking(
   selectedRespondente: ScaleEntry["respondente"][number] | null = null,
 ): { pool: ScaleEntry[]; pattern: ClinicalPattern | null; recommendations: RankedRecommendation[] } {
   const pool = poolScales(catalog, query, selectedQueixas, selectedAge, selectedRespondente);
-  const pattern = detectGoldStandard(selectedQueixas, selectedAge, catalog);
-  const gold = pattern ? pool.find((scale) => scale.id === pattern.goldStandard) || catalog.find((scale) => scale.id === pattern.goldStandard) : null;
+  const pattern = detectGoldStandard(selectedQueixas, selectedAge, selectedRespondente, catalog);
+  const gold = findPatternScale(pattern, pool, catalog, selectedAge, selectedRespondente);
   const used = new Set<string>();
   const ouro = pickNext(pool, used, gold || pool[0]);
   const prata = pickNext(pool, used);
