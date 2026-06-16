@@ -96,6 +96,15 @@ const emphasisClasses: Record<ClinicalFlow["emphasis"], string> = {
   slate: "from-slate-700 via-slate-800 to-slate-950 text-slate-50 ring-slate-300/30",
 };
 
+// Barra de acento (topo do card) — tratamento premium da lib /instrumentos-padronizados.
+const accentBarClasses: Record<ClinicalFlow["emphasis"], string> = {
+  primary: "from-red-700 via-rose-600 to-amber-500",
+  gold: "from-amber-400 via-yellow-500 to-red-600",
+  teal: "from-teal-500 via-cyan-600 to-blue-600",
+  blue: "from-blue-600 via-indigo-600 to-violet-600",
+  slate: "from-slate-400 via-slate-500 to-slate-700",
+};
+
 const metricCards = [
   { label: "Escalas no catálogo", value: appMetrics.scaleCount, icon: ClipboardCheck },
   { label: "Itens filtráveis", value: appMetrics.filterableInstrumentCount, icon: Filter },
@@ -122,10 +131,11 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           softTap();
           haptic.tap();
         }}
-        className="group h-full cursor-pointer rounded-3xl border border-border/70 bg-card/90 p-4 shadow-sm backdrop-blur transition-all hover:border-primary/40 hover:shadow-lg"
+        className="group h-full cursor-pointer overflow-hidden rounded-3xl border border-border/70 bg-card/90 shadow-sm backdrop-blur transition-all hover:border-primary/40 hover:shadow-lg"
         data-testid={`home-flow-${index + 1}`}
       >
-        <div className="flex h-full flex-col gap-4">
+        <div className={`h-1.5 w-full bg-gradient-to-r ${accentBarClasses[flow.emphasis]}`} aria-hidden="true" />
+        <div className="flex h-full flex-col gap-4 p-4">
           <div className="flex items-start gap-3">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg ring-1 ${emphasisClasses[flow.emphasis]}`} style={{ boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)" }}>
               <Icon className="h-6 w-6" strokeWidth={1.8} aria-hidden="true" />
