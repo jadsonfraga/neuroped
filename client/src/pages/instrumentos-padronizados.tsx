@@ -76,7 +76,7 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
         {/* Cabeçalho */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="fraunces text-[1.05rem] font-bold leading-tight tracking-tight text-foreground">
+            <h3 className="font-display text-[1.05rem] font-bold leading-tight tracking-tight text-foreground">
               {inst.name}
             </h3>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{inst.fullName}</p>
@@ -222,7 +222,7 @@ export default function InstrumentosPadronizadosPage() {
             <Badge className="mb-1.5 rounded-full bg-primary/10 text-[10px] font-bold text-primary hover:bg-primary/10">
               Pearson · Hogrefe
             </Badge>
-            <h1 className="fraunces text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">
+            <h1 className="font-display text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">
               Literatura e Instrumentos Padronizados
             </h1>
             <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-sm">
@@ -240,7 +240,7 @@ export default function InstrumentosPadronizadosPage() {
             { n: restritos, l: "restritos a psi." },
           ].map((s) => (
             <div key={s.l} className="rounded-2xl border border-border/60 bg-card/70 px-3 py-2 text-center backdrop-blur">
-              <p className="fraunces text-lg font-bold leading-none text-foreground">{s.n}</p>
+              <p className="font-display text-lg font-bold leading-none text-foreground">{s.n}</p>
               <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">{s.l}</p>
             </div>
           ))}
