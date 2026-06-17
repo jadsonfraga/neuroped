@@ -10,6 +10,7 @@ import {
   RotateCcw,
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   Info,
   Save,
   type LucideIcon,
@@ -168,6 +169,18 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     } catch {
       /* storage indisponível — ignora limpeza local */
     }
+  }
+
+  // Leva à primeira pendência sem enviar — usado pela barra sticky para virar um
+  // controle de navegação em escalas longas (evita rolar caçando o que falta).
+  function goToFirstMissing() {
+    if (!firstMissing) return;
+    softTap();
+    haptic.tap();
+    itemRefs.current[firstMissing.key]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }
 
   if (showResult) {
@@ -405,11 +418,35 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           <span>{Math.round(progress)}%</span>
         </div>
         <Progress value={progress} className="h-2" />
-        {answered > 0 && !showResult && (
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
-            <Save className="h-3.5 w-3.5" /> Progresso salvo neste dispositivo
-          </div>
-        )}
+        <div className="flex items-center justify-between gap-2">
+          {answered > 0 ? (
+            <span className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
+              <Save className="h-3.5 w-3.5" /> Progresso salvo
+            </span>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">Toque numa opção para começar</span>
+          )}
+          {total > 0 &&
+            (allAnswered ? (
+              <Button
+                size="sm"
+                onClick={handleSubmit}
+                className="h-7 gap-1 px-3 text-xs"
+                data-testid="button-submit-sticky"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> Ver resultado
+              </Button>
+            ) : answered > 0 ? (
+              <button
+                type="button"
+                onClick={goToFirstMissing}
+                data-testid="button-next-missing"
+                className="flex shrink-0 items-center gap-1 rounded-full border border-amber-400/70 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
+              >
+                Próxima pendente <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            ) : null)}
+        </div>
       </div>
 
       <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-4">
@@ -418,7 +455,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         </p>
       </div>
 
-      {config.domains.map((domain, di) => (
+      {config.domains.map((domain, di) => {
+        const domTotal = domain.items.length;
+        const domAnswered = domain.items.reduce(
+          (s, _, ii) => s + (answers[`${di}-${ii}`] !== undefined ? 1 : 0),
+          0,
+        );
+        const domComplete = domTotal > 0 && domAnswered === domTotal;
+        return (
         <div key={di} className="space-y-3">
           <div className="flex items-center gap-2 py-2">
             <div
@@ -447,6 +491,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             <h2 className={`text-sm font-semibold ${domain.color}`}>
               {domain.name}
             </h2>
+            <span
+              className={`ml-auto flex items-center gap-1 text-[11px] tabular-nums ${
+                domComplete ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+              }`}
+            >
+              {domComplete && <CheckCircle2 className="h-3.5 w-3.5" />}
+              {domAnswered}/{domTotal}
+            </span>
           </div>
 
           {domain.items.map((item, ii) => {
@@ -529,7 +581,8 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             );
           })}
         </div>
-      ))}
+        );
+      })}
 
       {submitAttempted && !allAnswered && (
         <div
