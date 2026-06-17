@@ -25,6 +25,12 @@ CREATE TABLE users (
   crm TEXT,
   specialty TEXT,
   pin_hash TEXT,
+  -- Autenticação nominal (functions/api/auth, hash PBKDF2 via Web Crypto):
+  password_hash TEXT,
+  must_change_password INTEGER NOT NULL DEFAULT 0 CHECK (must_change_password IN (0, 1)),
+  failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until DATETIME,
+  last_login_at DATETIME,
   role TEXT NOT NULL DEFAULT 'professional' CHECK (role IN ('admin', 'professional', 'reader', 'operator')),
   is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

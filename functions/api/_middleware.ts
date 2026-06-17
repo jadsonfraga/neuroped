@@ -153,7 +153,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Executa a funÃ§Ã£o real
   const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
   const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
-  if (isProduction && !demoWritesEnabled && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+  // Auth (login/refresh/logout) é backend real, não escrita clínica demo — sempre
+  // liberado, senão o login (POST) cairia no bloqueio read-only.
+  const isAuthRoute = new URL(request.url).pathname.startsWith("/api/auth/");
+  if (isProduction && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
     return new Response(
       JSON.stringify({
         error: "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",

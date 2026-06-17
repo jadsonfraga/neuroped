@@ -43,12 +43,33 @@ variáveis onde esse backend roda:
    `NEUROPED_JWT_SECRET`.
 3. **Redeploy** para o bootstrap rodar.
 
-### Cloudflare Pages (se o backend for Pages Functions)
-```bash
-npx wrangler pages secret put ADMIN_INITIAL_PASSWORD
-npx wrangler pages secret put NEUROPED_JWT_SECRET
-# ADMIN_EMAIL/ADMIN_NAME podem ir em [vars] do wrangler.toml (não são segredos)
-```
+### Cloudflare Pages — auth nativo no D1 (implementado)
+
+O login em produção (`neuroped.pages.dev`) é servido por **Pages Functions sobre
+D1** (`functions/api/auth/*`), com hash PBKDF2 (Web Crypto) e JWT HS256. Para
+ativar, faça **uma vez**:
+
+1. **Migrar o D1** (adiciona colunas de auth em `users`, sem perder dados):
+   ```bash
+   npx wrangler d1 execute neuroped-db --remote --file=./db/migrations/0001_users_auth.sql --yes
+   ```
+2. **Definir os secrets** do projeto Pages:
+   ```bash
+   npx wrangler pages secret put NEUROPED_JWT_SECRET     # gere 64 bytes aleatórios
+   npx wrangler pages secret put ADMIN_INITIAL_PASSWORD  # senha inicial do admin
+   ```
+3. **Definir as vars não-secretas** (em `[vars]` do `wrangler.toml` ou no painel):
+   `ADMIN_EMAIL`, `ADMIN_NAME` (opcional).
+4. **Redeploy.** No primeiro `POST /api/auth/login`, o admin é criado de forma
+   idempotente a partir de `ADMIN_EMAIL`/`ADMIN_INITIAL_PASSWORD`.
+
+Notas:
+- O middleware libera `/api/auth/*` do bloqueio _demo read-only_; as demais
+  escritas clínicas continuam bloqueadas em produção (por design).
+- Tokens são _stateless_ nesta versão (logout descarta no client; sem revogação
+  server-side). Há _lockout_ de 15 min após 5 tentativas falhas por conta.
+- Se o e-mail já existir **com** senha, o bootstrap não sobrescreve. Sem senha
+  (ex.: seed só com PIN), ele faz _backfill_ do hash.
 
 ### Vercel (se hospedar o backend/API)
 Settings → **Environment Variables** → adicione as mesmas chaves para o ambiente
