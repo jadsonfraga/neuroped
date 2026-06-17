@@ -530,8 +530,60 @@ const SMFQ: InteractiveScaleDef = {
   source: "Angold A, Costello EJ, et al. (1995). Short Mood and Feelings Questionnaire. Corte ≥ 8.",
 };
 
+// ============================================================
+// PSC-17 — Pediatric Symptom Checklist-17 (pais/cuidador)
+// Gardner W et al. (1999/2007). Domínio público (Massachusetts General Hospital).
+// 17 itens; 0 (Nunca) / 1 (Às vezes) / 2 (Frequentemente); total 0–34.
+// Corte total ≥ 17 sugere comprometimento psicossocial (rastreio positivo).
+// Subescalas: internalizante (≥5), atenção (≥7), externalizante (≥7).
+// ============================================================
+const PSC17_OPTIONS: InteractiveOption[] = [
+  { label: "Nunca", value: 0 },
+  { label: "Às vezes", value: 1 },
+  { label: "Frequentemente", value: 2 },
+];
+const PSC17: InteractiveScaleDef = {
+  id: "psc17",
+  name: "PSC-17",
+  fullName: "Pediatric Symptom Checklist-17 — pais/cuidador",
+  respondent: "Pais/cuidador",
+  ageLabel: "4–16 anos",
+  instructions:
+    "Marque a frequência com que cada situação descreve a criança/adolescente nos últimos tempos.",
+  validationNote:
+    "Tradução para uso clínico (confirme a redação validada em português). Rastreio de banda larga — corte total ≥ 17 sugere comprometimento psicossocial; subescalas: internalizante ≥5, atenção ≥7, externalizante ≥7.",
+  items: [
+    // Internalizante
+    "Sente-se triste ou infeliz",
+    "Sente-se sem esperança",
+    "Deprecia a si mesmo(a) (acha que não presta)",
+    "Preocupa-se muito",
+    "Parece estar se divertindo menos",
+    // Atenção
+    "Fica inquieto(a), não consegue ficar parado(a)",
+    "Sonha acordado(a) em excesso",
+    "Distrai-se com facilidade",
+    "Tem dificuldade de concentração",
+    "Age como se estivesse 'a mil' (movido(a) a motor)",
+    // Externalizante
+    "Briga com outras crianças",
+    "Não segue regras",
+    "Não entende os sentimentos das outras pessoas",
+    "Implica ou provoca os outros",
+    "Culpa os outros pelos próprios problemas",
+    "Recusa-se a dividir/compartilhar",
+    "Pega coisas que não lhe pertencem",
+  ].map((text) => ({ text, options: PSC17_OPTIONS })),
+  bands: [
+    { min: 0, max: 16, risk: "Rastreio negativo", description: "Abaixo do corte total (≥17). Sem rastreio positivo de comprometimento psicossocial; mantenha vigilância de rotina.", tone: "ok" },
+    { min: 17, max: 34, risk: "Rastreio positivo", description: "≥17: sugere comprometimento psicossocial. Aprofunde a avaliação (verifique também as subescalas internalizante/atenção/externalizante). Triagem não confirma diagnóstico.", tone: "alert" },
+  ],
+  source: "Gardner W, Murphy M, Childs G, et al. (1999); Pediatric Symptom Checklist-17. Domínio público (MGH). Corte total ≥ 17.",
+};
+
 export const interactiveScales: Record<string, InteractiveScaleDef> = {
   "q-chat-10": QCHAT10,
+  "psc17": PSC17,
   "fps-r": FPSR,
   // O catálogo tem também a entrada "faces" (FPS-R) — mesma aplicação.
   faces: { ...FPSR, id: "faces" },
