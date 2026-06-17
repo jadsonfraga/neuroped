@@ -6,6 +6,7 @@ import {
 import { useRecents } from "@/hooks/useFavorites";
 import { navigablePages } from "@/data/navigation";
 import { Clock, Search } from "lucide-react";
+import { COMMAND_PALETTE_OPEN_EVENT } from "@/lib/commandPaletteBus";
 
 /**
  * CommandPalette — Bloco D2.
@@ -14,13 +15,6 @@ import { Clock, Search } from "lucide-react";
  * Layout). Busca escalas (nome/sigla), páginas e recentes. Navegação por
  * teclado é nativa do cmdk (setas, Enter, Esc). Realça o termo buscado.
  */
-
-const OPEN_EVENT = "neuroped:open-command";
-
-/** Dispara a abertura da paleta de qualquer lugar (ex.: botão do header). */
-export function openCommandPalette() {
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(OPEN_EVENT));
-}
 
 /** Forma mínima usada pela paleta (evita import estático do catálogo pesado). */
 interface NavScale {
@@ -88,10 +82,10 @@ export function CommandPalette() {
     };
     const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    window.addEventListener(OPEN_EVENT, onOpen);
+    window.addEventListener(COMMAND_PALETTE_OPEN_EVENT, onOpen);
     return () => {
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener(OPEN_EVENT, onOpen);
+      window.removeEventListener(COMMAND_PALETTE_OPEN_EVENT, onOpen);
     };
   }, []);
 

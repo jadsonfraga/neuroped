@@ -25,6 +25,17 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     cssMinify: "esbuild",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("react") || id.includes("wouter")) return "vendor-react";
+          if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("lucide-react")) return "vendor-ui";
+          if (id.includes("recharts") || id.includes("date-fns")) return "vendor-charts";
+          return "vendor";
+        },
+      },
+    },
   },
   server: {
     fs: {

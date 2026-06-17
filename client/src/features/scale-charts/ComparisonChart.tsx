@@ -9,13 +9,17 @@ interface ComparisonChartProps {
   colors?: string[];
 }
 
+const CHART_GRID = "hsl(var(--border))";
+const CHART_MUTED = "hsl(var(--muted-foreground))";
+const CHART_SURFACE = "hsl(var(--card) / 0.95)";
+
 const defaultColors = [
-  "#3b82f6", // Blue
-  "#10b981", // Green
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#8b5cf6", // Purple
-  "#ec4899", // Pink
+  "hsl(var(--primary))",
+  "hsl(var(--success))",
+  "hsl(var(--warning))",
+  "hsl(var(--destructive))",
+  "hsl(var(--accent-foreground))",
+  "hsl(var(--secondary-foreground))",
 ];
 
 export function ComparisonChart({
@@ -95,22 +99,22 @@ export function ComparisonChart({
             data={chartData}
             margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
           >
-            {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />}
+            {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />}
             <XAxis
               dataKey="name"
-              stroke="#9ca3af"
+              stroke={CHART_MUTED}
               style={{ fontSize: "12px" }}
             />
             <YAxis
               domain={[0, maxScore]}
-              stroke="#9ca3af"
+              stroke={CHART_MUTED}
               style={{ fontSize: "12px" }}
               label={{ value: "Score", angle: -90, position: "insideLeft" }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                border: "1px solid #e5e7eb",
+                backgroundColor: CHART_SURFACE,
+                border: `1px solid ${CHART_GRID}`,
                 borderRadius: "8px",
               }}
               formatter={(value) => [`Score: ${value}`, "Valor"]}
