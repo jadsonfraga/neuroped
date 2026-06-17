@@ -52,11 +52,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
     if (location !== "/") softWhoosh();
   }, [location]);
 
-  // Auto-expande a seção que contém a rota atual — o usuário sempre vê onde está
-  // e os instrumentos vizinhos, sem precisar abrir a seção manualmente.
+  // Auto-expande a seção que contém a rota atual e rola o item ativo para a vista
+  // — o usuário sempre vê onde está e os instrumentos vizinhos, sem abrir nada.
   useEffect(() => {
-    const title = getNavigationMatch(location)?.section.title;
+    const match = getNavigationMatch(location);
+    const title = match?.section.title;
     if (title) setOpenSections((prev) => (prev[title] ? prev : { ...prev, [title]: true }));
+    const label = match?.item.label;
+    if (!label) return;
+    const t = setTimeout(() => {
+      document.querySelector(`[data-testid="nav-${label}"]`)?.scrollIntoView({ block: "nearest" });
+    }, 80);
+    return () => clearTimeout(t);
   }, [location]);
 
   const activeNavigation = getNavigationMatch(location);
