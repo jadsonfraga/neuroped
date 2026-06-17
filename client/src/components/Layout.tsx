@@ -25,16 +25,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return localStorage.getItem("neuroped:sidebar-collapsed") === "1";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Chaves = títulos REAIS das seções (navigation.ts). Abre por padrão as duas
+  // mais usadas; as demais começam recolhidas (a seção da rota atual auto-expande).
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
     principal: true,
-    "Fluxo clínico": true,
-    Escalas: false,
-    Pacientes: false,
-    "Pais / Psicoeducação": true,
-    Documentos: false,
-    Medicamentos: false,
-    "Ferramentas clínicas": false,
-    "Configurações / Ajuda": false,
+    "Recepção e pré-consulta": true,
+    "Escalas principais": true,
   }));
 
   useEffect(() => {
@@ -54,6 +50,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
     setMobileOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (location !== "/") softWhoosh();
+  }, [location]);
+
+  // Auto-expande a seção que contém a rota atual — o usuário sempre vê onde está
+  // e os instrumentos vizinhos, sem precisar abrir a seção manualmente.
+  useEffect(() => {
+    const title = getNavigationMatch(location)?.section.title;
+    if (title) setOpenSections((prev) => (prev[title] ? prev : { ...prev, [title]: true }));
   }, [location]);
 
   const activeNavigation = getNavigationMatch(location);
