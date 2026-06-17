@@ -63,11 +63,22 @@ export function CommandPalette() {
     let cancelled = false;
     import("@/data/scaleFilter").then((mod) => {
       if (cancelled) return;
-      setNavigableScales(
-        mod.allScales
-          .filter((s) => typeof s.appRoute === "string" && s.appRoute.length > 0)
-          .map((s) => ({ id: s.id, name: s.name, fullName: s.fullName, appRoute: s.appRoute })),
-      );
+      // Inclui o catálogo INTEIRO na busca global: escalas com rota dedicada usam
+      // appRoute; as demais abrem pela rota canônica /generic-scale/:id. Antes só
+      // ~as dedicadas apareciam, deixando o acervo de fora do ⌘K. Dedup por id.
+      const seen = new Set<string>();
+      const list: NavScale[] = [];
+      for (const s of mod.allScales) {
+        if (seen.has(s.id)) continue;
+        seen.add(s.id);
+        list.push({
+          id: s.id,
+          name: s.name,
+          fullName: s.fullName,
+          appRoute: s.appRoute && s.appRoute.length > 0 ? s.appRoute : `/generic-scale/${s.id}`,
+        });
+      }
+      setNavigableScales(list);
     });
     return () => {
       cancelled = true;
