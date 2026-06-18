@@ -102,6 +102,7 @@ jobs:
       - name: Build client
         env:
           NODE_ENV: production
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
       - name: Verify build output
