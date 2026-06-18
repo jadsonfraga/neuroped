@@ -87,14 +87,14 @@ const clinicalFlows: ClinicalFlow[] = [
   },
 ];
 
-// Acento sutil por fluxo: fundo tonal + ícone colorido + anel fino. Sem
-// gradientes escuros pesados — leveza e coerência (nível premium).
+// Hierarquia premium: o fluxo principal ganha o acento da marca; os demais usam
+// um tratamento NEUTRO sofisticado (vidro fosco + hairline). Coesão > arco-íris.
 const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
-  primary: "bg-rose-500/10 text-rose-600 ring-rose-500/15 dark:text-rose-400",
-  gold: "bg-amber-500/10 text-amber-600 ring-amber-500/15 dark:text-amber-400",
-  teal: "bg-teal-500/10 text-teal-600 ring-teal-500/15 dark:text-teal-400",
-  blue: "bg-blue-500/10 text-blue-600 ring-blue-500/15 dark:text-blue-400",
-  slate: "bg-slate-500/10 text-slate-600 ring-slate-500/15 dark:text-slate-300",
+  primary: "bg-gradient-to-br from-primary to-rose-600 text-white ring-1 ring-white/20 shadow-[0_8px_18px_-8px_hsl(var(--primary)/0.55)]",
+  gold: "bg-foreground/[0.05] text-foreground/75 ring-1 ring-border/60",
+  teal: "bg-foreground/[0.05] text-foreground/75 ring-1 ring-border/60",
+  blue: "bg-foreground/[0.05] text-foreground/75 ring-1 ring-border/60",
+  slate: "bg-foreground/[0.05] text-foreground/75 ring-1 ring-border/60",
 };
 
 const metricCards = [
@@ -110,6 +110,7 @@ function normalize(text: string) {
 
 function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
   const Icon = flow.icon;
+  const featured = flow.emphasis === "primary";
   return (
     <Link href={flow.href}>
       <motion.div
@@ -123,11 +124,11 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           softTap();
           haptic.tap();
         }}
-        className="group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/10 before:to-transparent hover:border-border hover:shadow-[0_18px_40px_-16px_rgba(0,0,0,0.22)]"
+        className={`group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-3xl border p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/10 before:to-transparent hover:shadow-[0_18px_40px_-16px_rgba(0,0,0,0.22)] ${featured ? "border-primary/25 bg-primary/[0.04] hover:border-primary/40" : "border-border/60 bg-card/80 hover:border-border"}`}
         data-testid={`home-flow-${index + 1}`}
       >
         <div className="flex items-start justify-between">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${accentClasses[flow.emphasis]}`}>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${accentClasses[flow.emphasis]}`}>
             <Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden="true" />
           </div>
           <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
