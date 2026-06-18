@@ -92,6 +92,54 @@ jobs:
           npx wrangler@3 pages project create neuroped --production-branch main \
             || echo "Projeto 'neuroped' já existe ou criação ignorada — seguindo para o deploy."
 
+      - name: Migrar D1 — colunas de auth (idempotente)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Cada coluna é adicionada de forma independente; "duplicate column" é
+          # esperado em re-execuções e tolerado. Robusto a aplicação parcial.
+          add_col() {
+            echo "ALTER users ADD $1"
+            npx wrangler@3 d1 execute neuroped-db --remote --yes \
+              --command "ALTER TABLE users ADD COLUMN $1;" 2>&1 | tail -2 || true
+          }
+          add_col "password_hash TEXT"
+          add_col "must_change_password INTEGER NOT NULL DEFAULT 0"
+          add_col "failed_login_attempts INTEGER NOT NULL DEFAULT 0"
+          add_col "locked_until DATETIME"
+          add_col "last_login_at DATETIME"
+          echo "Verificando colunas de auth em users..."
+          npx wrangler@3 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM pragma_table_info('users');" > /tmp/cols.txt 2>&1 || true
+          cat /tmp/cols.txt
+          for c in password_hash must_change_password failed_login_attempts locked_until last_login_at; do
+            grep -q "\b$c\b" /tmp/cols.txt || { echo "::error::coluna de auth ausente: $c"; exit 1; }
+          done
+          echo "Colunas de auth OK."
+
+      - name: Configurar secrets/vars de auth no Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          JWT_SECRET: ${{ secrets.NEUROPED_JWT_SECRET }}
+          ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_NM: ${{ secrets.ADMIN_NAME }}
+        run: |
+          put() {
+            if [ -n "$2" ]; then
+              printf '%s' "$2" | npx wrangler@3 pages secret put "$1" --project-name neuroped >/dev/null 2>&1 \
+                && echo "secret $1: definido" || echo "::warning::falha ao definir $1"
+            else
+              echo "::notice::$1 ausente (crie o GitHub Secret) — pulando"
+            fi
+          }
+          put NEUROPED_JWT_SECRET "$JWT_SECRET"
+          put ADMIN_INITIAL_PASSWORD "$ADMIN_PW"
+          put ADMIN_EMAIL "$ADMIN_MAIL"
+          put ADMIN_NAME "$ADMIN_NM"
+
       - name: Deploy para Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -105,3 +153,32 @@ jobs:
           curl -fsSL https://neuroped.pages.dev/deploy-check.json -o /tmp/cloudflare-deploy-check.json
           cat /tmp/cloudflare-deploy-check.json
           grep "${GITHUB_SHA}" /tmp/cloudflare-deploy-check.json
+
+      - name: Verificar login (auth e2e)
+        env:
+          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+        run: |
+          if [ -z "$ADMIN_MAIL" ] || [ -z "$ADMIN_PW" ]; then
+            echo "::notice::ADMIN_EMAIL/ADMIN_INITIAL_PASSWORD ausentes — pulando verificação de login."
+            exit 0
+          fi
+          BASE=https://neuroped.pages.dev
+          sleep 10
+          # 1) senha errada → 401
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"$ADMIN_MAIL\",\"password\":\"senha_errada___\"}")
+          echo "login (senha errada): HTTP $code"
+          [ "$code" = "401" ] || { echo "::error::esperado 401 para senha errada"; exit 1; }
+          # 2) correto → 200 + accessToken (token nunca é impresso)
+          resp=$(curl -s -X POST "$BASE/api/auth/login" -H "Content-Type: application/json" \
+            -d "{\"email\":\"$ADMIN_MAIL\",\"password\":\"$ADMIN_PW\"}")
+          tok=$(printf '%s' "$resp" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).accessToken||'')}catch{process.stdout.write('')}})")
+          [ -n "$tok" ] || { echo "::error::login correto não retornou accessToken"; exit 1; }
+          echo "login (correto): OK — token recebido (mascarado)"
+          # 3) /me com o token → 200
+          mecode=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/auth/me" -H "Authorization: Bearer $tok")
+          echo "me: HTTP $mecode"
+          [ "$mecode" = "200" ] || { echo "::error::/api/auth/me esperado 200"; exit 1; }
+          echo "✅ AUTH E2E OK — login nominal no ar."

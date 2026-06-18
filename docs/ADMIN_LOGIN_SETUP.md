@@ -9,8 +9,30 @@ servidor a partir de variáveis de ambiente.
 > docs). Ela iria para o histórico do git em texto puro. Use sempre o painel de
 > _secrets_ da plataforma de hospedagem.
 
-## Variáveis envolvidas
+## Caminho automático (CI — Cloudflare)
 
+O workflow **Deploy Cloudflare Pages** (`.github/workflows/deploy-cloudflare.yml`)
+faz tudo a cada push em `main`: migra o D1, publica os secrets no Pages e faz o
+deploy, terminando com uma **verificação e2e do login**. Para ativar, crie estes
+**GitHub Secrets** no repositório (Settings → Secrets and variables → Actions):
+
+| GitHub Secret | Conteúdo |
+|---|---|
+| `NEUROPED_JWT_SECRET` | 64 bytes base64 estáveis (gere uma vez; **não troque** entre deploys, senão invalida sessões). |
+| `ADMIN_INITIAL_PASSWORD` | Senha inicial do admin. |
+| `ADMIN_EMAIL` | E-mail do admin (ex.: `jadsonfraga@hotmail.com`). |
+| `ADMIN_NAME` | (opcional) Nome exibido. |
+
+> Os secrets do Cloudflare (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) já
+> existem no repositório. Sem os secrets de auth acima, o deploy continua
+> funcionando e os passos de auth são **pulados** com aviso (não quebram o build).
+
+Gerar o `NEUROPED_JWT_SECRET`:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
+```
+
+## Variáveis envolvidas
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `ADMIN_EMAIL` | sim | E-mail de login do admin inicial. |
