@@ -1884,6 +1884,33 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
     infoBox: "Checklist de monitorização laboratorial periódica por medicação (maior = monitorização mais completa e em dia). Não é diagnóstico.",
     labels: MILESTONE_LABELS, totalLabel: "Monitorização laboratorial (maior = mais em dia)", bands: DEV_BANDS,
     domains: [{ name: "Exames de rotina em dia", color: "text-emerald-600 dark:text-emerald-400", items: ["Hemograma em dia","Função hepática em dia","Função renal em dia","Nível sérico da medicação em dia","Perfil metabólico (glicemia/lipídios) em dia","Eletrólitos em dia","Exames específicos da medicação em dia","Monitorização em dia no geral"] }] },
+
+  // ===== Livres clássicas (domínio público) — itens reais, escore uniforme =====
+  "ess-adol": {
+    icon: Moon, gradient: "from-indigo-500 to-violet-600",
+    instruction: "Qual a chance de você cochilar ou adormecer (não apenas se sentir cansado) nas situações abaixo, considerando seu dia a dia recente? Se não viveu alguma delas, imagine como reagiria.",
+    infoBox: "Escala de Sonolência de Epworth (domínio público). Corte: 0–7 normal; 8–9 limítrofe; 10–15 sonolência diurna excessiva moderada; ≥16 intensa. Não substitui polissonografia.",
+    labels: ["Nunca cochilaria", "Pequena chance", "Chance moderada", "Grande chance"],
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "Escore Epworth (0–24)",
+    bands: [
+      { minPct: 0, classification: "Sonolência diurna normal", color: "emerald", description: "Escore 0–7: propensão ao sono diurno dentro do esperado." },
+      { minPct: 33, classification: "Sonolência diurna limítrofe", color: "amber", description: "Escore 8–9: leve excesso de sonolência — vigiar higiene do sono." },
+      { minPct: 41, classification: "Sonolência diurna excessiva (moderada)", color: "orange", description: "Escore 10–15: sonolência diurna excessiva — investigar causas (sono insuficiente, apneia, etc.)." },
+      { minPct: 66, classification: "Sonolência diurna excessiva (intensa)", color: "red", description: "Escore ≥16: sonolência intensa — avaliação especializada do sono recomendada." },
+    ],
+    domains: [{ name: "Propensão ao sono diurno", color: "text-indigo-600 dark:text-indigo-400", items: [
+      "Sentado(a) e lendo",
+      "Assistindo à televisão",
+      "Sentado(a), quieto(a), em um lugar público (sala de aula, cinema, reunião)",
+      "Como passageiro(a) em um carro por uma hora, sem parar",
+      "Deitado(a) para descansar à tarde, quando possível",
+      "Sentado(a) conversando com alguém",
+      "Sentado(a) quieto(a) após o almoço, sem ter bebido álcool",
+      "No carro, parado(a) por alguns minutos no trânsito",
+    ] }],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
