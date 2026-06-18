@@ -47,7 +47,6 @@
 | `battelle-screening` | Battelle Screening | — | sim |
 | `battelle3` | Battelle-3 | Newborg J, 2020 (Battelle Developmental Inventory 3), Riverside | não |
 | `bayley` | Bayley-III | Bayley N, 2006 - Pearson Clinical | não |
-| `bbd-checklist` | BBD Checklist | NIH-funded research | não |
 | `bdefs-ca` | BDEFS-CA | — | sim |
 | `bdi-3` | BDI-3 | — | sim |
 | `bears` | BEARS | Owens JA & Dalzell V, 2005 - Brown University | não |
@@ -59,6 +58,7 @@
 | `boha` | BoHA | — | sim |
 | `bosa` | BOSA | — | sim |
 | `bot2` | BOT-2 | Bruininks RH, Bruininks BD, 2005 (BOT-2), Pearson | não |
+| `bowel-bladder-checklist` | BBD Checklist | NIH-funded research | não |
 | `bpfas` | BPFAS | NIH-funded research | não |
 | `bprsc` | BPRS-C | Overall JE, Pfefferbaum B, 1982 (BPRS for Children) | não |
 | `brief-p` | BRIEF-P | — | sim |
