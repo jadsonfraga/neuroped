@@ -2100,6 +2100,50 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       { name: "Compulsões (rituais)", color: "text-violet-600 dark:text-violet-400", items: ["Tempo gasto com compulsões", "Interferência das compulsões na rotina", "Aflição se impedido(a) de realizar o ritual", "Esforço para resistir às compulsões", "Controle sobre as compulsões"] },
     ],
   },
+  "gad7": {
+    icon: Activity, gradient: "from-amber-500 to-orange-600",
+    instruction: "Nas ÚLTIMAS 2 SEMANAS, com que frequência você foi incomodado(a) por cada um dos problemas abaixo?",
+    infoBox: "GAD-7 (Generalized Anxiety Disorder 7-item, Spitzer et al.; domínio público). Escore 0–21. Faixas: 0–4 mínima · 5–9 leve · 10–14 moderada · 15–21 grave. Corte ≥10 = ansiedade clinicamente significativa. Não é diagnóstico.",
+    labels: ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "Escore GAD-7 (0–21)",
+    bands: [
+      { minPct: 0, classification: "Ansiedade mínima", color: "emerald", description: "Escore 0–4: sintomas mínimos de ansiedade." },
+      { minPct: 23, classification: "Ansiedade leve", color: "amber", description: "Escore 5–9: ansiedade leve — monitorar." },
+      { minPct: 47, classification: "Ansiedade moderada", color: "orange", description: "Escore 10–14: avaliação clínica recomendada." },
+      { minPct: 71, classification: "Ansiedade grave", color: "red", description: "Escore 15–21: ansiedade grave — avaliação e manejo especializados." },
+    ],
+    domains: [{ name: "Sintomas de ansiedade (2 semanas)", color: "text-amber-600 dark:text-amber-400", items: [
+      "Sentir-se nervoso(a), ansioso(a) ou muito tenso(a)",
+      "Não conseguir parar ou controlar as preocupações",
+      "Preocupar-se demais com diferentes coisas",
+      "Dificuldade para relaxar",
+      "Ficar tão agitado(a) que se torna difícil permanecer parado(a)",
+      "Ficar facilmente aborrecido(a) ou irritado(a)",
+      "Sentir medo, como se algo terrível fosse acontecer",
+    ] }],
+  },
+  "scoff": {
+    icon: Heart, gradient: "from-pink-500 to-rose-600",
+    instruction: "Responda com sinceridade às 5 perguntas abaixo (Sim/Não).",
+    infoBox: "SCOFF (Morgan et al., 1999; domínio público). Triagem de transtornos alimentares. ≥ 2 respostas 'Sim' = rastreio positivo → avaliação clínica adicional. Não é diagnóstico.",
+    labels: ["Não", "Sim"],
+    optionPoints: [0, 1],
+    scoreDirection: "higher_worse",
+    totalLabel: "Respostas afirmativas (0–5)",
+    bands: [
+      { minPct: 0, classification: "Rastreio negativo", color: "emerald", description: "0–1 'Sim': baixa probabilidade de transtorno alimentar nesta triagem." },
+      { minPct: 40, classification: "Rastreio POSITIVO (≥ 2)", color: "red", description: "≥ 2 'Sim': avaliação clínica para transtorno alimentar recomendada." },
+    ],
+    domains: [{ name: "Triagem SCOFF", color: "text-rose-600 dark:text-rose-400", items: [
+      "Você se faz vomitar porque se sente desconfortavelmente cheio(a)?",
+      "Você se preocupa por ter perdido o controle sobre o quanto come?",
+      "Você perdeu mais de 6 kg em um período de cerca de 3 meses?",
+      "Você acredita estar gordo(a) mesmo quando os outros dizem que está magro(a)?",
+      "Você diria que a comida domina sua vida?",
+    ] }],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

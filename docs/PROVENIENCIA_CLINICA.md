@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 623
-- **Com fonte declarada:** 462
+- **Total de instrumentos:** 625
+- **Com fonte declarada:** 464
 - **Pendentes de validação/fonte:** 161
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -178,6 +178,7 @@
 | `fns-child` | FNS-Child | — | sim |
 | `foci-c` | FOCI-C | Published research | não |
 | `fps-r` | FPS-R | — | sim |
+| `gad7` | GAD-7 | Spitzer RL et al., 2006 - Arch Intern Med | não |
 | `gad7ped` | GAD-7 Pediátrico | Spitzer RL et al., 2006 | não |
 | `gars3` | GARS-3 | Gilliam JE, 2014 (GARS-3), PRO-ED | não |
 | `gas` | GAS | Kiresuk TJ, Sherman RE, 1968 (Goal Attainment Scaling) | não |
@@ -555,6 +556,7 @@
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não |
 | `scas-c` | SCAS-C | — | sim |
 | `scas-p` | SCAS-P | — | sim |
+| `scoff` | SCOFF | Morgan JF et al., 1999 - BMJ | não |
 | `scq` | SCQ | Rutter M et al., 2003 | não |
 | `scq-current` | SCQ Current | — | sim |
 | `scq-lifetime` | SCQ Lifetime | — | sim |
