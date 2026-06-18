@@ -64,5 +64,8 @@ jobs:
       - name: Test scale-filter podium
         run: npm run test:podium
 
+      - name: Audit 100 practical scale-filter cases
+        run: npm run test:practical-filter
+
       - name: Build application
         run: npm run build

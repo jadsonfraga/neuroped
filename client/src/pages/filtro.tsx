@@ -44,7 +44,7 @@ import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
-  filterScalesIntelligently,
+  filterScalesWithClinicalRescue,
   getBroadbandFallback,
   generateContextualRecommendation,
   getImplementationStatus,
@@ -277,7 +277,7 @@ const OPB_WHY: Record<"prata" | "bronze", string> = {
 // Pode retornar [] — NUNCA cai para o catálogo inteiro (sem fallback perigoso).
 function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): RefinedScaleMatch[] {
   const uniq = unique(catalog);
-  let matches = filterScalesIntelligently(uniq, ctx);
+  let matches = filterScalesWithClinicalRescue(uniq, ctx);
   if (query.trim()) {
     // Busca FILTRA de verdade: entre os candidatos seguros, mantém só os que casam
     // com o termo digitado. Se nada casar (ex.: erro de digitação), não esvazia —

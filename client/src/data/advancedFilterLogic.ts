@@ -442,6 +442,33 @@ export function filterScalesIntelligently(
   // IMPORTANTE: sem fallback para o catálogo inteiro — pode retornar [].
 }
 
+export function filterScalesWithClinicalRescue(
+  scales: ScaleEntry[],
+  ctx: FilterContext
+): RefinedScaleMatch[] {
+  const primary = filterScalesIntelligently(scales, ctx);
+  if (!ctx.respondente) return primary;
+
+  const primaryIsStrong =
+    primary.length >= 3 &&
+    primary[0]?.relevanceScore >= 60 &&
+    primary.slice(0, 3).every((m) => m.relevanceScore >= 45);
+  if (primaryIsStrong) return primary;
+
+  const relaxed = filterScalesIntelligently(scales, { ...ctx, respondente: null });
+  if (relaxed.length === 0) return fillPodiumWithBroadband(primary, scales, ctx);
+
+  const seen = new Set(primary.map((m) => m.scale.id));
+  const rescued = [...primary];
+  for (const match of relaxed) {
+    if (!seen.has(match.scale.id)) {
+      rescued.push(match);
+      seen.add(match.scale.id);
+    }
+  }
+  return fillPodiumWithBroadband(rescued, scales, ctx);
+}
+
 // ============ FALLBACK DE TRIAGEM AMPLA ============
 //
 // Quando NÃO há instrumento específico seguro para a queixa+idade, oferecemos um
@@ -453,12 +480,14 @@ export function filterScalesIntelligently(
 // Lista curada e ORDENADA por idade (do menor ao maior). Todos são instrumentos
 // reais, de banda larga, presentes no catálogo e que abrem.
 export const BROADBAND_SCREENER_IDS = [
-  "denver",   // 0–72m — desenvolvimento
-  "asq3",     // 1–66m — desenvolvimento
-  "asq-se-2", // 3–60m — socioemocional
-  "cbcl",     // 18–216m — banda larga emocional/comportamental
-  "sdq",      // 24–204m — banda larga
-  "psc17",    // 48–192m — banda larga
+  "denver",   // 0-72m - desenvolvimento
+  "asq3",     // 1-66m - desenvolvimento
+  "asq-se-2", // 3-60m - socioemocional
+  "cbcl",     // 18-216m - banda larga emocional/comportamental
+  "basc3",    // 24-216m - comportamento/emocional multidimensional
+  "sdq",      // 24-204m - banda larga
+  "psc17",    // 48-192m - banda larga
+  "who5",     // 108-216m - bem-estar/humor em adolescentes
 ];
 
 function ageCovers(scale: ScaleEntry, ctx: FilterContext): boolean {
@@ -481,6 +510,24 @@ export function getBroadbandFallback(scales: ScaleEntry[], ctx: FilterContext): 
     if (!ageCovers(scale, ctx)) continue;
     if (clinicalHardBlock(scale, baseCtx) !== null) continue; // nunca oferece algo inadequado à idade
     out.push({ ...calculateRefinedScore(scale, baseCtx), isBroadbandFallback: true });
+  }
+  return out;
+}
+
+function fillPodiumWithBroadband(
+  matches: RefinedScaleMatch[],
+  scales: ScaleEntry[],
+  ctx: FilterContext
+): RefinedScaleMatch[] {
+  if (matches.length >= 3) return matches;
+  const seen = new Set(matches.map((m) => m.scale.id));
+  const out = [...matches];
+  for (const fallback of getBroadbandFallback(scales, ctx)) {
+    if (!seen.has(fallback.scale.id)) {
+      out.push(fallback);
+      seen.add(fallback.scale.id);
+    }
+    if (out.length >= 3) break;
   }
   return out;
 }

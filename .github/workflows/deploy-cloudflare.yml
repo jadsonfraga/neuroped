@@ -63,6 +63,9 @@ jobs:
       - name: Testar podio do filtro de escalas
         run: npm run test:podium
 
+      - name: Auditar 100 casos praticos do filtro
+        run: npm run test:practical-filter
+
       - name: Criar sentinela de deploy
         run: |
           mkdir -p client/public
