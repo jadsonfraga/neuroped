@@ -1029,7 +1029,7 @@ export const j26Bloco2Items: Record<string, InteractiveScaleDef> = {
         ],
       },
     ],
-  },,
+  },
 
 "j26-086": {
 

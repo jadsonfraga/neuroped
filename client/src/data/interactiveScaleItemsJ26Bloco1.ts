@@ -1602,7 +1602,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 25, classification: "Sinais leves", color: "amber", description: "Sinais leves" },
       { minPct: 0, classification: "Sem alteracao relevante", color: "emerald", description: "Sem alteracao relevante" },
     ],
-  },,
+  },
 
 "j26-034": {
     instruction: "Marque com que frequencia voce observa cada comportamento nas ultimas 4 semanas. Responda com base no que realmente acontece, nao no que acha que deveria acontecer.",
