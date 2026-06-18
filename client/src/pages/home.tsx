@@ -17,8 +17,9 @@ import {
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
+import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
+import npLogo from "@assets/neuroped-logo.png";
 import { appMetrics } from "@/data/appMetrics";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { navigablePages } from "@/data/navigation";
@@ -259,25 +260,43 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          {/* Painel visual real — imagem + overlay + badge de vidro flutuante (alto padrão) */}
+          {/* Hero autoral animado — "neuro-cosmos": logo-cérebro flutuando com
+              órbitas e starfield. Tema espacial, da marca, com movimento premium. */}
           <div className="relative hidden lg:block">
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: duration.slow, ease: easing.smooth, delay: 0.1 }}
-              className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] border border-white/10 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.5)] ring-1 ring-black/5"
+              className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[radial-gradient(circle_at_50%_38%,#3b2a72,#1a1140_55%,#0b0820)] shadow-[0_30px_60px_-25px_rgba(0,0,0,0.6)] ring-1 ring-black/10"
             >
-              <img src={brandAssets.illustrations.neuralAbstract} alt="Ilustração de neurodesenvolvimento" className="h-full w-full object-cover" loading="eager" />
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-tr from-primary/40 via-primary/5 to-transparent mix-blend-multiply" />
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+              {/* starfield */}
+              <div aria-hidden="true" className="absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1px),radial-gradient(rgba(255,255,255,0.5)_1px,transparent_1px)] [background-position:0_0,13px_19px] [background-size:34px_34px,26px_26px]" />
+              <motion.div aria-hidden="true" className="absolute inset-0 opacity-40 [background-image:radial-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:48px_48px]" animate={{ opacity: [0.2, 0.5, 0.2] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+              {/* glow central */}
+              <div aria-hidden="true" className="absolute left-1/2 top-[40%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/40 blur-3xl" />
+              {/* órbitas (ecoam as órbitas neurais da logo) */}
+              <motion.div aria-hidden="true" className="absolute left-1/2 top-[40%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/15" animate={{ rotate: 360 }} transition={{ duration: 22, repeat: Infinity, ease: "linear" }}>
+                <span className="absolute -top-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-amber-300 shadow-[0_0_12px_3px_rgba(252,211,77,0.7)]" />
+              </motion.div>
+              <motion.div aria-hidden="true" className="absolute left-1/2 top-[40%] h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" animate={{ rotate: -360 }} transition={{ duration: 34, repeat: Infinity, ease: "linear" }}>
+                <span className="absolute top-1/2 -right-[4px] h-2 w-2 -translate-y-1/2 rounded-full bg-violet-300 shadow-[0_0_10px_2px_rgba(196,181,253,0.7)]" />
+              </motion.div>
+              {/* logo-cérebro flutuando */}
+              <motion.img
+                src={npLogo}
+                alt="NeuroPed"
+                className="absolute left-1/2 top-[40%] h-28 w-28 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_24px_rgba(168,85,247,0.65)]"
+                animate={{ y: [0, -9, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              />
               {/* badge de vidro flutuante */}
-              <div className="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-2xl border border-white/20 bg-background/60 p-3 shadow-lg backdrop-blur-xl">
+              <div className="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-3 shadow-lg backdrop-blur-xl">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-rose-600 text-white shadow-sm">
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-bold leading-tight text-foreground">{appMetrics.scaleCount} escalas validadas</p>
-                  <p className="truncate text-[11px] text-muted-foreground">Rastreio · diagnóstico · evolução</p>
+                  <p className="text-[13px] font-bold leading-tight text-white">{appMetrics.scaleCount} escalas validadas</p>
+                  <p className="truncate text-[11px] text-white/70">Rastreio · diagnóstico · evolução</p>
                 </div>
               </div>
             </motion.div>
