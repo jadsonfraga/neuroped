@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 623
-- **Com fonte declarada:** 462
+- **Total de instrumentos:** 627
+- **Com fonte declarada:** 466
 - **Pendentes de validação/fonte:** 161
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -60,6 +60,7 @@
 | `bosa` | BOSA | — | sim |
 | `bot2` | BOT-2 | Bruininks RH, Bruininks BD, 2005 (BOT-2), Pearson | não |
 | `bpfas` | BPFAS | NIH-funded research | não |
+| `bprs` | BPRS | Overall JE, Gorham DR. Psychol Rep. 1962. Versão ancorada BPRS-A: Woerner, 1998; tradução Romano F, Elkis H, 1996. | não |
 | `bprsc` | BPRS-C | Overall JE, Pfefferbaum B, 1982 (BPRS for Children) | não |
 | `brief-p` | BRIEF-P | — | sim |
 | `brief2` | BRIEF-2 | Gioia GA et al., 2015 | não |
@@ -189,8 +190,10 @@
 | `gmfm-88` | GMFM-88 | — | sim |
 | `gort5` | GORT-5 | Wiederholt JL, Bryant BR, 2012 (GORT-5), PRO-ED | não |
 | `griffiths` | Griffiths III | Griffiths R, 2006 (Griffiths-3) | não |
+| `hads` | HADS | Zigmond AS, Snaith RP. Acta Psychiatr Scand. 1983. Validação brasileira: Botega NJ et al., Rev. Saúde Pública 1995. | não |
 | `hague-seizure` | Hague Seizure | — | sim |
 | `hague-szs` | Hague Seizure Severity | Carpay HA et al., 1997 (Hague Seizure Severity Scale) | não |
+| `hamd` | HAM-D | Hamilton M. J Neurol Neurosurg Psychiatry. 1960 (HDRS/HAM-D). | não |
 | `hammersmith-infant` | Hammersmith Infant | Romeo DM et al., 2016 (Hammersmith Infant Neurological Examination) | não |
 | `help-strands` | HELP Strands | — | sim |
 | `hine` | HINE | Dubowitz L et al., 2008 | não |
@@ -485,6 +488,7 @@
 | `pedsql-epilepsy` | PedsQL Epilepsy | — | sim |
 | `pesq` | PESQ | — | sim |
 | `pgd-checklist` | PGD-Checklist | — | sim |
+| `phq9` | PHQ-9 | Kroenke K, Spitzer RL, Williams JBW. J Gen Intern Med. 2001. Validação brasileira: Santos IS et al., Cad. Saúde Pública 2013; Osório FL et al. | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não |
 | `pi-cv` | PI-CV | Published literature (open-access research) | não |
 | `pliksi` | PLIKSi | King's College London, British Journal of Psychiatry | não |

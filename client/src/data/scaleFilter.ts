@@ -4,6 +4,7 @@ import { escalasAutoraisAprovadas } from "./escalasAutoraisCuradoria";
 import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
+import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImportadas2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
@@ -750,6 +751,7 @@ const allScalesBase: ScaleEntry[] = [
   ...escalasImportadasV25Ebook,
   ...scalasOpenAccessMundiais,
   ...todasAsEscalasComplementares,
+  ...escalasPsiquiatricasImportadas2026,
 ];
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
