@@ -182,6 +182,8 @@ export default function HomePage() {
         {/* Glows decorativos — profundidade de luz sutil (premium) */}
         <div aria-hidden="true" className="pointer-events-none absolute -left-28 -top-28 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 right-12 h-60 w-60 rounded-full bg-chart-2/10 blur-3xl" />
+        {/* Textura de pontos sutil, esmaecida — profundidade premium */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(hsl(var(--foreground)/0.05)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(ellipse_at_top_left,black,transparent_72%)]" />
         <div className="relative grid gap-7 lg:grid-cols-[1.45fr_0.55fr] lg:items-center">
           <div className="space-y-6">
             <BrandMark size="md" showWordmark subtitle="Painel clínico NeuroPed" />
@@ -237,8 +239,10 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div className="hidden justify-center lg:flex">
-            <Mascote contexto="home" size="md" />
+          <div className="hidden lg:flex">
+            <div className="flex w-full flex-col items-center gap-3 rounded-3xl border border-border/50 bg-gradient-to-b from-card/70 to-card/25 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm">
+              <Mascote contexto="home" size="md" />
+            </div>
           </div>
         </div>
       </motion.section>
