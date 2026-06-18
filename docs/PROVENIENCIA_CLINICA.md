@@ -3,9 +3,9 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 628
-- **Com fonte declarada:** 467
-- **Pendentes de validação/fonte:** 161
+- **Total de instrumentos:** 636
+- **Com fonte declarada:** 474
+- **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
@@ -38,6 +38,7 @@
 | `assq` | ASSQ | Ehlers S et al., 1999 | não |
 | `atec` | ATEC | Rimland B, Edelson SM, 1999 (ATEC), Autism Research Institute | não |
 | `auquei` | AUQUEI | Manificat S, Dazord A, 1997 (AUQUEI) | não |
+| `bai` | BAI | Beck AT, Epstein N, Brown G, Steer RA. J Consult Clin Psychol. 1988. Adaptação brasileira: Cunha JA, 2001. | não |
 | `ballard` | Ballard | Ballard JL et al., 1991 (New Ballard Score) | não |
 | `bapq` | BAPQ | — | sim |
 | `barkley` | Barkley | Barkley RA, 2012 (Barkley Functional Impairment Scale - Children) | não |
@@ -52,6 +53,7 @@
 | `bears` | BEARS | Owens JA & Dalzell V, 2005 - Brown University | não |
 | `beery-vmi` | Beery VMI | Beery KE, Buktenica NA, Beery NA, 2010 (Beery VMI-6), Pearson | não |
 | `bfmf` | BFMF | — | sim |
+| `bhs` | BHS | Beck AT, Weissman A, Lester D, Trexler L. J Consult Clin Psychol. 1974. Adaptação brasileira: Cunha JA, 2001. | não |
 | `bisq` | BISQ | Sadeh A, 2004 (Brief Infant Sleep Questionnaire) | não |
 | `bisq-r` | BISQ-R | — | sim |
 | `bladder-diary` | Diário Vesical Pediátrico | International Children's Continence Society (ICCS) — diário miccional padronizado | não |
@@ -60,6 +62,7 @@
 | `bot2` | BOT-2 | Bruininks RH, Bruininks BD, 2005 (BOT-2), Pearson | não |
 | `bowel-bladder-checklist` | BBD Checklist | NIH-funded research | não |
 | `bpfas` | BPFAS | NIH-funded research | não |
+| `bprs` | BPRS | Overall JE, Gorham DR. Psychol Rep. 1962. Versão ancorada BPRS-A: Woerner, 1998; tradução Romano F, Elkis H, 1996. | não |
 | `bprsc` | BPRS-C | Overall JE, Pfefferbaum B, 1982 (BPRS for Children) | não |
 | `brief-p` | BRIEF-P | — | sim |
 | `brief2` | BRIEF-2 | Gioia GA et al., 2015 | não |
@@ -144,6 +147,7 @@
 | `dubowitz` | Dubowitz Neurológico | Dubowitz L, Dubowitz V, Mercuri E, 1999 (Dubowitz Neurological Examination) | não |
 | `dvss` | DVSS | Farhat W et al., 2000 (Dysfunctional Voiding Symptom Score) | não |
 | `eaah` | EAAH-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `ead-das` | EAD (DAS) | Weissman AN, Beck AT. (Dysfunctional Attitudes Scale — DAS), 1978. | não |
 | `eaf` | EAF | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `eai` | EAI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `easi` | EASI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
@@ -190,8 +194,10 @@
 | `gmfm-88` | GMFM-88 | — | sim |
 | `gort5` | GORT-5 | Wiederholt JL, Bryant BR, 2012 (GORT-5), PRO-ED | não |
 | `griffiths` | Griffiths III | Griffiths R, 2006 (Griffiths-3) | não |
+| `hads` | HADS | Zigmond AS, Snaith RP. Acta Psychiatr Scand. 1983. Validação brasileira: Botega NJ et al., Rev. Saúde Pública 1995. | não |
 | `hague-seizure` | Hague Seizure | — | sim |
 | `hague-szs` | Hague Seizure Severity | Carpay HA et al., 1997 (Hague Seizure Severity Scale) | não |
+| `hamd` | HAM-D | Hamilton M. J Neurol Neurosurg Psychiatry. 1960 (HDRS/HAM-D). | não |
 | `hammersmith-infant` | Hammersmith Infant | Romeo DM et al., 2016 (Hammersmith Infant Neurological Examination) | não |
 | `help-strands` | HELP Strands | — | sim |
 | `hine` | HINE | Dubowitz L et al., 2008 | não |
@@ -487,6 +493,7 @@
 | `pedsql-epilepsy` | PedsQL Epilepsy | — | sim |
 | `pesq` | PESQ | — | sim |
 | `pgd-checklist` | PGD-Checklist | — | sim |
+| `phq9` | PHQ-9 | Kroenke K, Spitzer RL, Williams JBW. J Gen Intern Med. 2001. Validação brasileira: Santos IS et al., Cad. Saúde Pública 2013; Osório FL et al. | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não |
 | `pi-cv` | PI-CV | Published literature (open-access research) | não |
 | `pliksi` | PLIKSi | King's College London, British Journal of Psychiatry | não |
@@ -549,6 +556,7 @@
 | `rey-figure` | Figura de Rey | Rey A, 1941; Osterrieth PA, 1944 (Rey-Osterrieth Complex Figure) | não |
 | `rfl-a` | RFL-A | Linehan research (open-access) | não |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não |
+| `risco-suicidio-familias` | Risco de Suicídio (Famílias) | Roteiro de avaliação de risco de suicídio para uso com famílias e profissionais de saúde mental (material de apoio). | sim |
 | `rossetti` | Rossetti | — | sim |
 | `rowpvt` | ROWPVT | — | sim |
 | `sb5` | Stanford-Binet 5 | Roid GH, 2003 (Stanford-Binet Intelligence Scales 5) | não |
