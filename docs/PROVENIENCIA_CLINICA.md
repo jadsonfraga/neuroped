@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 625
-- **Com fonte declarada:** 464
+- **Total de instrumentos:** 628
+- **Com fonte declarada:** 467
 - **Pendentes de validação/fonte:** 161
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -206,6 +206,7 @@
 | `irs` | IRS | — | sim |
 | `isas` | ISAS | Klonsky & Glenn research | não |
 | `isi-adolescent` | ISI-Adolescent | — | sim |
+| `ita-adultos` | ITA-Adultos | Instrumento inspirado no AQ (Autism Spectrum Quotient) | não |
 | `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (J26-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `j26-002` | Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (J26-002) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
 | `j26-003` | Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (J26-003) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
@@ -535,6 +536,7 @@
 | `quest` | QUEST | — | sim |
 | `qvce50` | QVCE-50 | Maia Filho HS et al., 2007 (QVCE-50), J Pediatr (Rio J) | não |
 | `rads2` | RADS-2 | Reynolds WM, 2002 (RADS-2) | não |
+| `raisd` | RAISD | Fisher, Piazza, Bowman & Amari, 1996 | não |
 | `ran-ras` | RAN/RAS | Wolf M, Denckla MB, 2005 (RAN/RAS), PRO-ED | não |
 | `raven` | Raven Colorido | Raven JC, 1947 (Raven Colorido); normas BR Angelini et al., 1999 | não |
 | `raven-std` | Raven Matrizes | Raven J, Court JH, Raven JC, 1998 (Standard Progressive Matrices) | não |
@@ -622,6 +624,7 @@
 | `vineland` | Vineland-3 | Sparrow SS et al., 2016 | não |
 | `wcst` | WCST | Heaton RK et al., 1993 (Wisconsin Card Sorting Test) | não |
 | `weefim` | WeeFIM | Msall ME et al., 1994 | não |
+| `who5` | WHO-5 | WHO Collaborating Centre, 1998 | não |
 | `whoqol-ped` | WHOQOL-BREF Pediátrico | WHOQOL Group, 1998 (WHOQOL-BREF) — adaptação adolescente | não |
 | `wiat-4` | WIAT-4 | — | sim |
 | `wisc5` | WISC-V | Wechsler D, 2014 | não |
