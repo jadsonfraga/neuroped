@@ -1959,6 +1959,69 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       "Você já tentou se matar alguma vez?",
     ] }],
   },
+  "cries13": {
+    icon: ShieldAlert, gradient: "from-slate-500 to-rose-600",
+    instruction: "Pensando no evento difícil/traumático, marque com que frequência cada coisa aconteceu com você na ÚLTIMA SEMANA.",
+    infoBox: "CRIES-13 (Children's Revised Impact of Event Scale; domínio público). Pontuação 0/1/3/5. Regra de triagem validada: subescala de Intrusão + Evitação (8 itens) ≥ 17 indica risco de TEPT. A excitação complementa o quadro. Não é diagnóstico.",
+    labels: ["Nunca", "Raramente", "Às vezes", "Frequentemente"],
+    optionPoints: [0, 1, 3, 5],
+    scoreDirection: "higher_worse",
+    totalLabel: "Escore CRIES-13 (0–65)",
+    bands: [
+      { minPct: 0, classification: "Sintomas pós-traumáticos baixos", color: "emerald", description: "Poucos sintomas relatados na última semana. Reavaliar conforme contexto." },
+      { minPct: 26, classification: "Sintomas pós-traumáticos moderados", color: "amber", description: "Atenção: ver subescala Intrusão+Evitação (≥17 = risco de TEPT)." },
+      { minPct: 46, classification: "Sintomas pós-traumáticos elevados", color: "red", description: "Quadro sugestivo — avaliação especializada para TEPT recomendada." },
+    ],
+    domains: [
+      { name: "Intrusão", color: "text-rose-600 dark:text-rose-400", items: [
+        "Penso no evento mesmo sem querer", "Tenho imagens ou sonhos sobre o que aconteceu", "Sinto como se estivesse acontecendo de novo", "Fico aflito(a) quando algo me lembra do evento" ] },
+      { name: "Evitação", color: "text-amber-600 dark:text-amber-400", items: [
+        "Tento não pensar no que aconteceu", "Evito lugares ou coisas que me lembram do evento", "Tento apagar o evento da memória", "Evito falar sobre o assunto" ] },
+      { name: "Excitação (arousal)", color: "text-orange-600 dark:text-orange-400", items: [
+        "Fico mais irritado(a) ou com raiva", "Tenho dificuldade de me concentrar", "Durmo pior por causa disso", "Fico em alerta, como se algo ruim fosse acontecer", "Assusto-me com facilidade" ] },
+    ],
+  },
+  "oci-cv": {
+    icon: ClipboardList, gradient: "from-cyan-500 to-blue-600",
+    instruction: "Marque com que frequência cada situação tem incomodado ou atrapalhado você no último mês.",
+    infoBox: "OCI-CV (Obsessive-Compulsive Inventory — Child Version, Foa et al.; uso em pesquisa). 21 itens, 0–2, escore 0–42 em 6 dimensões. Maior = mais sintomas obsessivo-compulsivos. Triagem — não substitui avaliação clínica.",
+    labels: ["Nunca", "Às vezes", "Sempre"],
+    optionPoints: [0, 1, 2],
+    scoreDirection: "higher_worse",
+    totalLabel: "Escore OCI-CV (0–42)",
+    bands: [
+      { minPct: 0, classification: "Sintomas mínimos", color: "emerald", description: "Poucos sintomas obsessivo-compulsivos relatados." },
+      { minPct: 30, classification: "Sintomas moderados", color: "amber", description: "Sintomas presentes — avaliar impacto funcional e contexto." },
+      { minPct: 48, classification: "Sintomas elevados", color: "red", description: "Quadro sugestivo de TOC — avaliação clínica especializada recomendada." },
+    ],
+    domains: [
+      { name: "Lavar/limpar", color: "text-cyan-600 dark:text-cyan-400", items: ["Lavo as mãos mais vezes ou mais tempo que o necessário", "Preocupo-me muito com sujeira ou germes", "Tomo banho ou me limpo de forma exagerada"] },
+      { name: "Verificar", color: "text-blue-600 dark:text-blue-400", items: ["Verifico portas, fogão ou luzes várias vezes", "Preciso conferir as coisas repetidamente", "Tenho medo de que algo ruim aconteça por minha culpa", "Peço para outras pessoas confirmarem que está tudo bem"] },
+      { name: "Ordenar", color: "text-indigo-600 dark:text-indigo-400", items: ["Preciso que as coisas fiquem em ordem exata", "Fico aflito(a) se algo está fora do lugar", "Arrumo objetos até ficarem 'certos'"] },
+      { name: "Obsessões", color: "text-violet-600 dark:text-violet-400", items: ["Tenho pensamentos ruins que voltam sem querer", "Tenho pensamentos que me assustam e não consigo parar", "Imagens ou ideias indesejadas surgem na minha cabeça", "Preciso pensar em algo 'bom' para neutralizar um pensamento ruim"] },
+      { name: "Acumular", color: "text-fuchsia-600 dark:text-fuchsia-400", items: ["Tenho dificuldade de jogar coisas fora", "Guardo coisas que não preciso", "Fico aflito(a) só de pensar em descartar objetos"] },
+      { name: "Neutralizar/repetir", color: "text-purple-600 dark:text-purple-400", items: ["Repito ações um número certo de vezes", "Conto coisas ou repito palavras mentalmente", "Faço rituais para me sentir 'em paz'", "Preciso refazer tarefas até parecerem certas"] },
+    ],
+  },
+  "cats": {
+    icon: ShieldAlert, gradient: "from-teal-500 to-emerald-600",
+    instruction: "Após o evento difícil, marque com que frequência cada problema incomodou você no último mês.",
+    infoBox: "CATS (Child and Adolescent Trauma Screen; domínio público). 20 sintomas pós-traumáticos, 0–3. Corte de triagem: escore total ≥ 21 (com prejuízo funcional) sugere estresse pós-traumático clinicamente relevante. Não é diagnóstico.",
+    labels: ["Nunca", "Um pouco", "Bastante", "Quase sempre"],
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "Escore CATS (0–60)",
+    bands: [
+      { minPct: 0, classification: "Abaixo do corte de triagem", color: "emerald", description: "Escore < 21: triagem negativa para estresse pós-traumático. Reavaliar conforme contexto." },
+      { minPct: 35, classification: "Triagem positiva (≥ 21)", color: "red", description: "Escore ≥ 21: triagem positiva — avaliar TEPT e prejuízo funcional, com encaminhamento se indicado." },
+    ],
+    domains: [
+      { name: "Reexperiência", color: "text-teal-600 dark:text-teal-400", items: ["Lembranças do evento que vêm sem eu querer", "Pesadelos sobre o evento", "Sentir como se o evento acontecesse de novo", "Ficar muito aflito(a) ao lembrar", "Reações no corpo ao lembrar (coração acelerado, suor)"] },
+      { name: "Evitação", color: "text-cyan-600 dark:text-cyan-400", items: ["Evitar pensar ou falar sobre o evento", "Evitar pessoas, lugares ou coisas que lembrem o evento"] },
+      { name: "Cognição e humor", color: "text-amber-600 dark:text-amber-400", items: ["Dificuldade de lembrar partes do evento", "Pensar que o mundo é muito perigoso", "Culpar a si mesmo(a) pelo que aconteceu", "Sentir-se triste, com medo ou com raiva quase sempre", "Perder o interesse por coisas de que gostava", "Sentir-se distante das pessoas", "Dificuldade de sentir emoções boas"] },
+      { name: "Alerta", color: "text-orange-600 dark:text-orange-400", items: ["Ficar irritado(a) ou ter explosões de raiva", "Fazer coisas arriscadas ou se machucar", "Ficar muito vigilante, esperando algo ruim", "Assustar-se com facilidade", "Dificuldade de concentração", "Dificuldade para dormir"] },
+    ],
+  },
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
