@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
+  ArrowUpRight,
   ClipboardCheck,
   FileText,
   Filter,
@@ -14,10 +15,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AssetShowcase, BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
+import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
@@ -43,44 +42,44 @@ const homeSearchCatalog = mergeFilterableCatalog(allScales);
 const clinicalFlows: ClinicalFlow[] = [
   {
     href: "/mchat",
-    title: "Avaliar criança / Aplicar escala",
-    subtitle: "Abrir instrumento implementado e registrar resultado clínico.",
-    action: "Aplicar escala",
+    title: "Aplicar escala",
+    subtitle: "Abra um instrumento implementado e registre o resultado no atendimento.",
+    action: "Avaliar agora",
     useCase: "Consulta em andamento",
     icon: ClipboardCheck,
     emphasis: "primary",
   },
   {
     href: "/filtro",
-    title: "Encontrar escala ideal",
-    subtitle: "Filtrar por idade, queixa, objetivo e contexto de aplicação.",
-    action: "Usar filtro clínico",
-    useCase: "Dúvida sobre melhor instrumento",
+    title: "Encontrar a escala ideal",
+    subtitle: "Filtre por idade, queixa, objetivo e contexto de aplicação.",
+    action: "Abrir filtro clínico",
+    useCase: "Escolher instrumento",
     icon: Filter,
     emphasis: "gold",
   },
   {
     href: "/pacientes",
     title: "Pacientes e prontuário",
-    subtitle: "Organizar histórico, consulta, documentos e acompanhamento por paciente.",
+    subtitle: "Histórico, consultas, documentos e acompanhamento por paciente.",
     action: "Abrir pacientes",
-    useCase: "Gestão clínica longitudinal",
+    useCase: "Gestão longitudinal",
     icon: Users,
     emphasis: "blue",
   },
   {
     href: "/pant",
-    title: "Documentos médicos / PANT / Receita C1",
-    subtitle: "Acessar matrizes documentais e área preparada para assinatura externa.",
+    title: "Documentos e receitas",
+    subtitle: "Matrizes documentais e área preparada para assinatura externa.",
     action: "Abrir documentos",
-    useCase: "Laudo, relatório e prescrição",
+    useCase: "Laudo · relatório · receita",
     icon: FileText,
     emphasis: "teal",
   },
   {
     href: "/satisfacao-medicacao",
-    title: "Evolução clínica / acompanhamento",
-    subtitle: "Monitorar resposta terapêutica, satisfação medicamentosa e mudanças funcionais.",
+    title: "Evolução e acompanhamento",
+    subtitle: "Resposta terapêutica, satisfação medicamentosa e mudanças funcionais.",
     action: "Acompanhar evolução",
     useCase: "Retorno e seguimento",
     icon: LineChart,
@@ -88,19 +87,21 @@ const clinicalFlows: ClinicalFlow[] = [
   },
 ];
 
-const emphasisClasses: Record<ClinicalFlow["emphasis"], string> = {
-  primary: "from-red-800 via-red-700 to-slate-950 text-amber-100 ring-amber-300/40",
-  gold: "from-amber-500 via-yellow-600 to-red-800 text-white ring-amber-200/50",
-  teal: "from-teal-700 via-cyan-800 to-slate-950 text-cyan-50 ring-cyan-200/40",
-  blue: "from-blue-700 via-indigo-800 to-slate-950 text-blue-50 ring-blue-200/40",
-  slate: "from-slate-700 via-slate-800 to-slate-950 text-slate-50 ring-slate-300/30",
+// Acento sutil por fluxo: fundo tonal + ícone colorido + anel fino. Sem
+// gradientes escuros pesados — leveza e coerência (nível premium).
+const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
+  primary: "bg-rose-500/10 text-rose-600 ring-rose-500/15 dark:text-rose-400",
+  gold: "bg-amber-500/10 text-amber-600 ring-amber-500/15 dark:text-amber-400",
+  teal: "bg-teal-500/10 text-teal-600 ring-teal-500/15 dark:text-teal-400",
+  blue: "bg-blue-500/10 text-blue-600 ring-blue-500/15 dark:text-blue-400",
+  slate: "bg-slate-500/10 text-slate-600 ring-slate-500/15 dark:text-slate-300",
 };
 
 const metricCards = [
-  { label: "Escalas no catálogo", value: appMetrics.scaleCount, icon: ClipboardCheck },
-  { label: "Itens filtráveis", value: appMetrics.filterableInstrumentCount, icon: Filter },
+  { label: "Escalas", value: appMetrics.scaleCount, icon: ClipboardCheck },
+  { label: "Filtráveis", value: appMetrics.filterableInstrumentCount, icon: Filter },
   { label: "Medicações", value: appMetrics.medicationCount, icon: Pill },
-  { label: "Rotas/páginas", value: appMetrics.pageCount, icon: FileText },
+  { label: "Páginas", value: appMetrics.pageCount, icon: FileText },
 ];
 
 function normalize(text: string) {
@@ -112,38 +113,37 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
   return (
     <Link href={flow.href}>
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.04, duration: duration.normal, ease: easing.smooth }}
-        whileHover={{ y: -3 }}
-        whileTap={{ scale: 0.985 }}
+        transition={{ delay: index * 0.05, duration: duration.normal, ease: easing.smooth }}
+        whileHover={{ y: -4 }}
+        whileTap={{ scale: 0.99 }}
         onMouseEnter={() => softHover()}
         onClick={() => {
           softTap();
           haptic.tap();
         }}
-        className="group h-full cursor-pointer rounded-3xl border border-border/70 bg-card/90 p-4 shadow-sm backdrop-blur transition-all hover:border-primary/40 hover:shadow-lg"
+        className="group relative flex h-full cursor-pointer flex-col gap-5 rounded-3xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 hover:border-border hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]"
         data-testid={`home-flow-${index + 1}`}
       >
-        <div className="flex h-full flex-col gap-4">
-          <div className="flex items-start gap-3">
-            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg ring-1 ${emphasisClasses[flow.emphasis]}`} style={{ boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)" }}>
-              <Icon className="h-6 w-6" strokeWidth={1.8} aria-hidden="true" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-[0.12em] font-bold">
-                {flow.useCase}
-              </Badge>
-              <h2 className="text-lg font-black leading-snug text-foreground group-hover:text-primary transition-colors">
-                {flow.title}
-              </h2>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{flow.subtitle}</p>
-            </div>
+        <div className="flex items-start justify-between">
+          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${accentClasses[flow.emphasis]}`}>
+            <Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden="true" />
           </div>
-          <div className="mt-auto flex items-center justify-between rounded-2xl bg-primary/10 px-4 py-3 text-xs font-bold text-primary transition-all group-hover:bg-primary/15">
-            <span>{flow.action}</span>
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-          </div>
+          <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
+            {flow.useCase}
+          </p>
+          <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">
+            {flow.title}
+          </h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{flow.subtitle}</p>
+          <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/70 transition-colors group-hover:text-primary">
+            {flow.action}
+            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+          </span>
         </div>
       </motion.div>
     </Link>
@@ -169,141 +169,118 @@ export default function HomePage() {
   const isSearching = q.length >= 2;
 
   return (
-    <div className="page-enter proportion-safe-page space-y-6 pb-8">
-      {/* Hero section — Premium visual com gradiente clínico */}
-      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-br from-primary/10 via-chart-2/8 to-transparent p-5 shadow-md backdrop-blur sm:p-7">
-        <BrandWatermark className="right-4 top-4 h-40 w-40" />
-        <div className="asset-proportion-box pointer-events-none absolute bottom-4 left-4 h-16 w-16 rounded-2xl opacity-[0.06] grayscale contrast-125 dark:opacity-[0.08]" aria-hidden="true">
-          <img src={brandAssets.legacyNeuroPedSymbol} alt="" className="no-zoom-media h-full w-full rounded-2xl object-contain" />
-        </div>
-        <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
-          <div className="space-y-5">
+    <div className="page-enter proportion-safe-page space-y-7 pb-10">
+      {/* Hero — calmo, confiante, com a busca como ação principal */}
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.07] via-card/40 to-card/20 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur sm:p-9"
+      >
+        <BrandWatermark className="-right-6 -top-6 h-44 w-44 opacity-60" />
+        <div className="relative grid gap-7 lg:grid-cols-[1.45fr_0.55fr] lg:items-center">
+          <div className="space-y-6">
             <BrandMark size="md" showWordmark subtitle="Painel clínico NeuroPed" />
-            <div className="max-w-2xl space-y-3">
-              <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10 font-semibold">
-                🏥 Plataforma Clínica Premium · Integrada
-              </Badge>
+            <div className="max-w-2xl space-y-3.5">
               <h1
-                className="text-4xl font-black tracking-tight sm:text-5xl leading-tight"
-                style={{
-                  fontFamily: "Cormorant Garamond, Georgia, serif",
-                  color: "hsl(var(--foreground))",
-                }}
+                className="text-[2.5rem] leading-[1.04] tracking-[-0.02em] text-foreground sm:text-[3.25rem]"
+                style={{ fontFamily: "Cormorant Garamond, Georgia, serif", fontWeight: 600 }}
                 data-testid="text-page-title"
               >
-                Painel de Decisão Clínica
+                Decisão clínica, <span className="text-primary">com clareza</span>.
               </h1>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Navegue pelos 5 fluxos principais: aplicar escala de rastreio, encontrar instrumento ideal por queixa, gerenciar pacientes, gerar documentos clínicos ou acompanhar evolução terapêutica.
+              <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+                Aplique escalas validadas, encontre o instrumento ideal por queixa e idade, acompanhe a evolução e gere documentos — tudo em um fluxo só.
               </p>
             </div>
-            <div className="grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Métricas reais do app">
-              {metricCards.map((metric) => {
-                const Icon = metric.icon;
-                return (
-                  <div
-                    key={metric.label}
-                    className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm transition-all hover:shadow-md"
-                  >
-                    <div className="flex items-center gap-2.5 text-primary">
-                      <Icon className="h-5 w-5 text-primary" />
-                      <span className="text-2xl font-black text-foreground">{metric.value}</span>
-                    </div>
-                    <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                      {metric.label}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+
             <div className="relative max-w-xl" data-testid="search-container">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala, questionário, inventário, página..."
-                className="h-11 rounded-2xl border-border/80 bg-background/70 pl-10 pr-10 text-sm"
+                placeholder="Buscar escala, questionário, paciente ou página…"
+                className="h-12 rounded-2xl border-border/70 bg-background/80 pl-11 pr-10 text-[15px] shadow-sm transition-shadow focus-visible:shadow-md"
                 data-testid="input-search"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   aria-label="Limpar busca"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
+
+            {/* Métricas — faixa fina com divisores, em vez de caixas pesadas */}
+            <div
+              className="flex max-w-xl divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-card/50"
+              aria-label="Métricas do app"
+            >
+              {metricCards.map((metric) => (
+                <div key={metric.label} className="flex-1 px-3.5 py-3 sm:px-4">
+                  <div className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{metric.value}</div>
+                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">{metric.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="hidden justify-center lg:flex">
             <Mascote contexto="home" size="md" />
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {isSearching ? (
-        <section className="space-y-3" aria-label="Resultados da busca da home">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-foreground">Resultados rápidos</h2>
-            <Badge variant="secondary">{searchResults.length}</Badge>
+        <section className="space-y-4" aria-label="Resultados da busca da home">
+          <div className="flex items-center gap-2">
+            <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Resultados rápidos</h2>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{searchResults.length}</span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {searchResults.length > 0 ? searchResults.map((item) => (
               <Link key={`${item.href}-${item.title}`} href={item.href}>
-                <Card className="cursor-pointer border-border/70 bg-card/90 transition hover:border-primary/40 hover:shadow-md">
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                      <Stethoscope className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-sm font-bold text-foreground">{item.title}</h3>
-                      <p className="truncate text-xs text-muted-foreground">{item.detail}</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-primary" />
-                  </CardContent>
-                </Card>
+                <div className="group flex cursor-pointer items-center gap-3.5 rounded-2xl border border-border/60 bg-card/80 p-3.5 transition-all duration-200 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Stethoscope className="h-[18px] w-[18px]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-[14px] font-medium text-foreground">{item.title}</h3>
+                    <p className="truncate text-[12px] text-muted-foreground">{item.detail}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                </div>
               </Link>
             )) : (
-              <Card className="border-dashed">
-                <CardContent className="p-4 text-sm text-muted-foreground">
-                  Nenhum atalho direto encontrado. Use o Filtro Clínico Inteligente para aproximação por idade e queixa.
-                </CardContent>
-              </Card>
+              <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
+                Nenhum atalho direto. Use o <Link href="/filtro" className="font-medium text-primary underline-offset-2 hover:underline">Filtro Clínico</Link> para aproximar por idade e queixa.
+              </div>
             )}
           </div>
         </section>
       ) : (
         <>
-          <section className="space-y-3" aria-labelledby="fluxos-principais">
+          <section className="space-y-4" aria-labelledby="fluxos-principais">
             <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">5 fluxos principais</p>
-                <h2 id="fluxos-principais" className="font-display text-xl font-bold tracking-tight text-foreground">Escolha o próximo passo clínico</h2>
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Fluxos principais</p>
+                <h2 id="fluxos-principais" className="text-xl font-semibold tracking-tight text-foreground">Por onde começar</h2>
               </div>
-              <Badge variant="outline" className="hidden sm:inline-flex">Painel 9.0</Badge>
             </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
               {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
             </div>
           </section>
 
-          <AssetShowcase
-            variant="clinical"
-            title="Mascotes e figuras clínicas em uso"
-            subtitle="As imagens oficiais do repositório aparecem com proporção preservada, sem zoom forçado nem cortes agressivos."
-            max={6}
-          />
-
-          <section className="grid gap-3 lg:grid-cols-[1fr_0.8fr]">
-            <Card className="border-amber-200/60 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20">
-              <CardContent className="p-4">
-                <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
-                  <strong>Uso responsável:</strong> escalas orientam rastreio, documentação e monitorização. Elas não substituem julgamento clínico, anamnese, exame neurológico e integração com família/escola.
-                </p>
-              </CardContent>
-            </Card>
+          <section className="grid gap-3.5 lg:grid-cols-[1fr_0.8fr]">
+            <div className="rounded-2xl border border-amber-200/50 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/15">
+              <p className="text-[12.5px] leading-relaxed text-amber-900/90 dark:text-amber-100/90">
+                <strong className="font-semibold">Uso responsável.</strong> As escalas orientam rastreio, documentação e monitorização — não substituem julgamento clínico, anamnese, exame neurológico e integração com família e escola.
+              </p>
+            </div>
             <FavoritesRecents />
           </section>
         </>
