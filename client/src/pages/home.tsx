@@ -19,7 +19,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
-import npLogo from "@assets/neuroped-logo.png";
 import { appMetrics } from "@/data/appMetrics";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { navigablePages } from "@/data/navigation";
@@ -281,14 +280,16 @@ export default function HomePage() {
               <motion.div aria-hidden="true" className="absolute left-1/2 top-[40%] h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" animate={{ rotate: -360 }} transition={{ duration: 34, repeat: Infinity, ease: "linear" }}>
                 <span className="absolute top-1/2 -right-[4px] h-2 w-2 -translate-y-1/2 rounded-full bg-violet-300 shadow-[0_0_10px_2px_rgba(196,181,253,0.7)]" />
               </motion.div>
-              {/* logo-cérebro flutuando */}
-              <motion.img
-                src={npLogo}
-                alt="NeuroPed"
-                className="absolute left-1/2 top-[40%] h-28 w-28 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_24px_rgba(168,85,247,0.65)]"
+              {/* núcleo luminoso abstrato (sem logo) — "neuro core" flutuando */}
+              <motion.div
+                className="absolute left-1/2 top-[40%] h-24 w-24 -translate-x-1/2 -translate-y-1/2"
                 animate={{ y: [0, -9, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              />
+              >
+                <div className="h-full w-full rounded-full bg-[radial-gradient(circle_at_35%_30%,#fbcfe8,#f43f5e_42%,#7c3aed)] shadow-[0_0_55px_14px_rgba(168,85,247,0.55)]" />
+                <div className="absolute inset-0 rounded-full ring-1 ring-white/30" />
+                <div aria-hidden="true" className="absolute left-[28%] top-[24%] h-5 w-5 rounded-full bg-white/40 blur-[3px]" />
+              </motion.div>
               {/* badge de vidro flutuante */}
               <div className="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-3 shadow-lg backdrop-blur-xl">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-rose-600 text-white shadow-sm">
