@@ -116,14 +116,14 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05, duration: duration.normal, ease: easing.smooth }}
-        whileHover={{ y: -4 }}
-        whileTap={{ scale: 0.99 }}
+        whileHover={{ y: -6 }}
+        whileTap={{ scale: 0.985 }}
         onMouseEnter={() => softHover()}
         onClick={() => {
           softTap();
           haptic.tap();
         }}
-        className="group relative flex h-full cursor-pointer flex-col gap-5 rounded-3xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 hover:border-border hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]"
+        className="group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/10 before:to-transparent hover:border-border hover:shadow-[0_18px_40px_-16px_rgba(0,0,0,0.22)]"
         data-testid={`home-flow-${index + 1}`}
       >
         <div className="flex items-start justify-between">
@@ -178,6 +178,9 @@ export default function HomePage() {
         className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.07] via-card/40 to-card/20 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur sm:p-9"
       >
         <BrandWatermark className="-right-6 -top-6 h-44 w-44 opacity-60" />
+        {/* Glows decorativos — profundidade de luz sutil (premium) */}
+        <div aria-hidden="true" className="pointer-events-none absolute -left-28 -top-28 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 right-12 h-60 w-60 rounded-full bg-chart-2/10 blur-3xl" />
         <div className="relative grid gap-7 lg:grid-cols-[1.45fr_0.55fr] lg:items-center">
           <div className="space-y-6">
             <BrandMark size="md" showWordmark subtitle="Painel clínico NeuroPed" />
@@ -200,9 +203,14 @@ export default function HomePage() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Buscar escala, questionário, paciente ou página…"
-                className="h-12 rounded-2xl border-border/70 bg-background/80 pl-11 pr-10 text-[15px] shadow-sm transition-shadow focus-visible:shadow-md"
+                className="h-12 rounded-2xl border-border/70 bg-background/80 pl-11 pr-14 text-[15px] shadow-sm transition-shadow focus-visible:shadow-md"
                 data-testid="input-search"
               />
+              {!searchQuery && (
+                <kbd className="pointer-events-none absolute right-3.5 top-1/2 hidden -translate-y-1/2 items-center rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-flex">
+                  ⌘K
+                </kbd>
+              )}
               {searchQuery && (
                 <button
                   type="button"
@@ -221,8 +229,8 @@ export default function HomePage() {
               aria-label="Métricas do app"
             >
               {metricCards.map((metric) => (
-                <div key={metric.label} className="flex-1 px-3.5 py-3 sm:px-4">
-                  <div className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{metric.value}</div>
+                <div key={metric.label} className="flex-1 px-3.5 py-3 transition-colors hover:bg-foreground/[0.025] sm:px-4">
+                  <div className="text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">{metric.value}</div>
                   <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">{metric.label}</p>
                 </div>
               ))}
