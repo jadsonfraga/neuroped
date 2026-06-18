@@ -764,13 +764,15 @@ const allScalesBase: ScaleEntry[] = [
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
 const allScalesComDescricoes: ScaleEntry[] = allScalesBase.map(escala => {
+  const appRoute = escala.appRoute ?? `/generic-scale/${escala.id}`;
   if (descricoesMelhoradas[escala.id]) {
     return {
       ...escala,
+      appRoute,
       description: descricoesMelhoradas[escala.id],
     };
   }
-  return escala;
+  return { ...escala, appRoute };
 });
 
 // Deduplicação por id E por nome. O merge de lotes de importação (legado + v25 +

@@ -273,6 +273,31 @@ export const clinicalRanking: ClinicalTierRule[] = [
     reason: "Reavaliação evolutiva apoia-se em medidas seriadas; EUSM-10 ancora a monitorização e os protocolos de evolução por domínio (TEA, TDAH, motor, leitura) complementam conforme a queixa associada." },
 
   // ============================ SUBSTÂNCIAS =============================
+  { queixa: "psicose", ageMin: 144, ageMax: 216,
+    ouro: "sips", prata: "prime-screen", bronze: "ymrs",
+    reason: "Em adolescentes, SIPS/SOPS estrutura risco psicotico/prodromico; PRIME rastreia sintomas autorreferidos e YMRS quantifica mania quando a queixa e expansividade/agitação." },
+
+  { queixa: "toc", ageMin: 72, ageMax: 96,
+    ouro: "cybocs", prata: "foci-c", bronze: "oci-cv",
+    reason: "CY-BOCS e a entrevista de referencia para gravidade de obsessões/compulsões; FOCI-C/OCI-CV ajudam no rastreio quando a criança ja compreende os itens." },
+  { queixa: "toc", ageMin: 96, ageMax: 204,
+    ouro: "cybocs", prata: "oci-cv", bronze: "cybocs-sr",
+    reason: "CY-BOCS ancora a gravidade clinica; OCI-CV e CY-BOCS-SR complementam o autorrelato em crianças maiores/adolescentes." },
+
+  { queixa: "trauma", ageMin: 24, ageMax: 72,
+    ouro: "tscyc", prata: "cats-caregiver", bronze: "csbi",
+    reason: "Em pre-escolares, trauma deve ser heterorrelatado: TSCYC e CATS-Caregiver captam sintomas observados; CSBI ajuda quando ha comportamento sexualizado." },
+  { queixa: "trauma", ageMin: 72, ageMax: 216,
+    ouro: "ucla-ptsd", prata: "cpss-5", bronze: "cats",
+    reason: "UCLA PTSD-RI e a linha central para sintomas de TEPT; CPSS-5 e CATS complementam gravidade, exposição e acompanhamento." },
+
+  { queixa: "enurese", ageMin: 18, ageMax: 48,
+    ouro: "pant-v7-078", prata: "bristol-stool-pediatric", bronze: "bowel-bladder-checklist",
+    reason: "Antes dos 4 anos, o foco e prontidão/controle esfincteriano e constipação associada, sem medicalizar a maturação normal." },
+  { queixa: "enurese", ageMin: 48, ageMax: 216,
+    ouro: "dvss", prata: "bowel-bladder-checklist", bronze: "bladder-diary",
+    reason: "DVSS rastreia sintomas urinarios funcionais; BBD integra intestino-bexiga e o diario vesical documenta padrão, frequencia e resposta ao manejo." },
+
   { queixa: "substancias", ageMin: 144, ageMax: 216,
     ouro: "crafft",
     reason: "CRAFFT é o rastreio validado de uso de álcool/substâncias no adolescente." },

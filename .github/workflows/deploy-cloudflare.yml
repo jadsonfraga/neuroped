@@ -42,6 +42,9 @@ jobs:
       - name: Validar catálogo clínico
         run: npm run validate:catalog
 
+      - name: Validar ranking clinico
+        run: npm run validate:ranking
+
       - name: Auditar política de acesso
         run: npm run audit:access
 
@@ -56,6 +59,9 @@ jobs:
 
       - name: Testes clínicos
         run: npm run test:clinical
+
+      - name: Testar podio do filtro de escalas
+        run: npm run test:podium
 
       - name: Criar sentinela de deploy
         run: |
@@ -92,7 +98,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx wrangler@3 pages project create neuroped --production-branch main \
+          npx wrangler@4 pages project create neuroped --production-branch main \
             || echo "Projeto 'neuroped' já existe ou criação ignorada — seguindo para o deploy."
 
       - name: Migrar D1 — colunas de auth (idempotente)
@@ -104,7 +110,7 @@ jobs:
           # esperado em re-execuções e tolerado. Robusto a aplicação parcial.
           add_col() {
             echo "ALTER users ADD $1"
-            npx wrangler@3 d1 execute neuroped-db --remote --yes \
+            npx wrangler@4 d1 execute neuroped-db --remote --yes \
               --command "ALTER TABLE users ADD COLUMN $1;" 2>&1 | tail -2 || true
           }
           add_col "password_hash TEXT"
@@ -113,7 +119,7 @@ jobs:
           add_col "locked_until DATETIME"
           add_col "last_login_at DATETIME"
           echo "Verificando colunas de auth em users..."
-          npx wrangler@3 d1 execute neuroped-db --remote \
+          npx wrangler@4 d1 execute neuroped-db --remote \
             --command "SELECT name FROM pragma_table_info('users');" > /tmp/cols.txt 2>&1 || true
           cat /tmp/cols.txt
           for c in password_hash must_change_password failed_login_attempts locked_until last_login_at; do
@@ -132,7 +138,7 @@ jobs:
         run: |
           put() {
             if [ -n "$2" ]; then
-              printf '%s' "$2" | npx wrangler@3 pages secret put "$1" --project-name neuroped >/dev/null 2>&1 \
+              printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null 2>&1 \
                 && echo "secret $1: definido" || echo "::warning::falha ao definir $1"
             else
               echo "::notice::$1 ausente (crie o GitHub Secret) — pulando"
@@ -147,7 +153,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler@3 pages deploy dist/public --project-name neuroped --branch main
+        run: npx wrangler@4 pages deploy dist/public --project-name neuroped --branch main
 
       - name: Verificar publicação pública no Cloudflare
         run: |

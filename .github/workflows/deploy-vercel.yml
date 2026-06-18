@@ -68,6 +68,9 @@ jobs:
       - name: Validate clinical catalog
         run: npm run validate:catalog
 
+      - name: Validate clinical ranking
+        run: npm run validate:ranking
+
       - name: Audit access policy
         run: npm run audit:access
 
@@ -82,6 +85,9 @@ jobs:
 
       - name: Run clinical tests
         run: npm run test:clinical
+
+      - name: Test scale-filter podium
+        run: npm run test:podium
 
       - name: Create deploy sentinel
         run: |

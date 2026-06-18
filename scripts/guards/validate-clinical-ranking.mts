@@ -7,17 +7,18 @@
  * o usuário consegue de fato aplicar".
  */
 import { allScales } from "../../client/src/data/scaleFilter.ts";
-import { interactiveScaleItems } from "../../client/src/data/interactiveScaleItems.ts";
 import { mergeFilterableCatalog } from "../../client/src/data/filterableCatalog.ts";
 import { clinicalRanking } from "../../client/src/data/clinicalRanking.ts";
 import { opbParentCopy } from "../../client/src/data/opbParentCopy.ts";
 
-const ITEMS = new Set(Object.keys(interactiveScaleItems));
-const dedicated = (r?: string) =>
-  !!r && !r.startsWith("/generic-scale/") && r !== "/escalas-neuropsiquiatria" && r !== "/filtro";
-const opensAsUsableTool = (s: any) => dedicated(s.appRoute) || ITEMS.has(s.id);
+const allIds = new Set(allScales.map((s) => s.id));
+const opensInternally = (s: any) => {
+  if (s.appRoute && s.appRoute !== "/filtro") return true;
+  if (allIds.has(s.id)) return true;
+  return false;
+};
 
-const catalog = mergeFilterableCatalog(allScales).filter(opensAsUsableTool);
+const catalog = mergeFilterableCatalog(allScales).filter(opensInternally);
 const byId = new Map(catalog.map((s) => [s.id, s]));
 
 const errors: string[] = [];

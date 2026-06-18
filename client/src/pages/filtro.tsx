@@ -40,13 +40,13 @@ import { interactiveScales } from "@/data/interactiveScales";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterRecommendationsOPB";
 import { getClinicalTiers } from "@/data/clinicalRanking";
+import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesIntelligently,
   getBroadbandFallback,
   generateContextualRecommendation,
-  getApplicationMode,
   getImplementationStatus,
   SAFE_EMPTY_MESSAGE,
   type FilterContext,
@@ -518,51 +518,18 @@ export default function FiltroPage() {
   // É a FONTE de verdade do pódio: define explicitamente quem é ouro/prata/bronze
   // por idade×queixa. Cai para null quando não há queixa selecionada.
   const curatedTiers = useMemo(
-    () => (selectedQueixas.length > 0 ? getClinicalTiers(selectedQueixas[0], ageMonthsFromBand(selectedAge)) ?? null : null),
-    [selectedQueixas, selectedAge]
+    () => selectCuratedTiers(selectedQueixas, ageMonthsFromBand(selectedAge), refinedById, selectedRespondente),
+    [selectedQueixas, selectedAge, selectedRespondente, refinedById]
   );
 
   // === PÓDIO (req. 9): Ouro/Prata/Bronze nunca repetem id; semeado pela tabela curada ===
-  const podium = useMemo(() => {
-    const empty = { ouro: undefined, prata: undefined, bronze: undefined, direct: undefined, school: undefined } as Record<
-      "ouro" | "prata" | "bronze" | "direct" | "school",
-      RefinedScaleMatch | undefined
-    >;
-    if (!hasSafeResults) return empty;
-
-    const used = new Set<string>();
-    const take = (pred: (m: RefinedScaleMatch) => boolean) => {
-      const found = refinedMatches.find((m) => !used.has(m.scale.id) && pred(m));
-      if (found) used.add(found.scale.id);
-      return found;
-    };
-    // Semeia um slot com a escala curada — SÓ se ela passou pelos filtros de
-    // segurança deste contexto (presente em refinedById). Senão devolve undefined
-    // e o slot cai para o melhor candidato do motor (fallback seguro).
-    const seed = (scaleId?: string) => {
-      if (!scaleId) return undefined;
-      const m = refinedById.get(scaleId);
-      if (m && !used.has(m.scale.id)) { used.add(m.scale.id); return m; }
-      return undefined;
-    };
-
-    const ouro = seed(curatedTiers?.ouro) ?? take(() => true);
-    const ouroMode = ouro?.applicationMode ?? null;
-    const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
-    // Prata: curada; senão complementar (modo/domínio diferente do Ouro); senão próximo.
-    const prata =
-      seed(curatedTiers?.prata) ??
-      take((m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q))) ??
-      take(() => true);
-    const bronze = seed(curatedTiers?.bronze) ?? take(() => true);
-
-    // Slots categóricos (podem coincidir com o pódio — propósito distinto).
-    const direct = refinedMatches.find((m) => getApplicationMode(m.scale) === "teste_direto_crianca");
-    const school = refinedMatches.find((m) => getApplicationMode(m.scale) === "questionario_professor");
-    return { ouro, prata, bronze, direct, school };
-  }, [refinedMatches, hasSafeResults, curatedTiers, refinedById]);
+  const auditedPodium = useMemo(
+    () => selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers),
+    [refinedMatches, hasSafeResults, curatedTiers]
+  );
 
   // Ouro veio da tabela curada? Então mostramos o racional clínico específico.
+  const podium = auditedPodium;
   const isCuratedOuro = Boolean(curatedTiers?.ouro && podium.ouro?.scale.id === curatedTiers.ouro);
   const ranking = [
     rec(
