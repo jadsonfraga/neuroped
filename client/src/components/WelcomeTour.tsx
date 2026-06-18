@@ -191,8 +191,8 @@ export function WelcomeTour() {
         aria-label="Rever o tour guiado do app"
         title="Rever tour"
         className={[
-          "fixed right-4 bottom-20 z-[99990] flex items-center justify-center gap-2 rounded-full",
-          "bg-gradient-to-b from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/40",
+          "fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 rounded-full",
+          "bg-gradient-to-b from-indigo-500 to-violet-600 text-white shadow-[0_8px_28px_rgba(99,102,241,0.45),0_2px_8px_rgba(0,0,0,0.25)]",
           "transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300",
           introHighlight ? "h-12 px-5 text-sm font-bold animate-pulse" : "h-11 w-11",
         ].join(" ")}
@@ -272,7 +272,7 @@ export function WelcomeTour() {
                 </button>
                 <button
                   onClick={next}
-                  className="flex items-center gap-1 rounded-lg bg-gradient-to-b from-indigo-500 to-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/40"
+                  className="flex items-center gap-1 rounded-lg bg-gradient-to-b from-indigo-500 to-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-[0_8px_28px_rgba(99,102,241,0.45),0_2px_8px_rgba(0,0,0,0.25)]"
                 >
                   {idx === STEPS.length - 1 ? "Concluir" : "Próximo"}
                   {idx < STEPS.length - 1 && <ChevronRight className="w-3.5 h-3.5" />}
