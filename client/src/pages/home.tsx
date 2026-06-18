@@ -11,13 +11,13 @@ import {
   LineChart,
   Pill,
   Search,
+  Sparkles,
   Stethoscope,
   Users,
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
-import { Mascote } from "@/components/Mascote";
+import { BrandMark, BrandWatermark, brandAssets } from "@/components/BrandAssets";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
@@ -112,7 +112,7 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
   const Icon = flow.icon;
   const featured = flow.emphasis === "primary";
   return (
-    <Link href={flow.href}>
+    <Link href={flow.href} className={featured ? "sm:col-span-2 xl:col-span-2" : ""}>
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,28 +124,48 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           softTap();
           haptic.tap();
         }}
-        className={`group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-3xl border p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/10 before:to-transparent hover:shadow-[0_18px_40px_-16px_rgba(0,0,0,0.22)] ${featured ? "border-primary/25 bg-primary/[0.04] hover:border-primary/40" : "border-border/60 bg-card/80 hover:border-border"}`}
+        className={`group relative flex h-full cursor-pointer overflow-hidden rounded-3xl border p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-10 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/10 before:to-transparent hover:shadow-[0_18px_40px_-16px_rgba(0,0,0,0.22)] ${featured ? "flex-col justify-between gap-6 border-primary/25 bg-gradient-to-br from-primary/[0.1] via-primary/[0.04] to-transparent hover:border-primary/40 sm:flex-row sm:items-center sm:gap-8 sm:p-7" : "flex-col gap-5 border-border/60 bg-card/80 hover:border-border"}`}
         data-testid={`home-flow-${index + 1}`}
       >
-        <div className="flex items-start justify-between">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${accentClasses[flow.emphasis]}`}>
-            <Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden="true" />
-          </div>
-          <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
-        </div>
-        <div className="flex flex-1 flex-col">
-          <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
-            {flow.useCase}
-          </p>
-          <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">
-            {flow.title}
-          </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{flow.subtitle}</p>
-          <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/70 transition-colors group-hover:text-primary">
-            {flow.action}
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
-          </span>
-        </div>
+        {featured && (
+          <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/15 blur-3xl transition-opacity duration-500 group-hover:opacity-80" />
+        )}
+        {featured ? (
+          <>
+            <div className="relative flex items-start gap-4 sm:flex-1">
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${accentClasses.primary}`}>
+                <Icon className="h-7 w-7" strokeWidth={1.9} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-primary/80">{flow.useCase}</p>
+                <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.015em] text-foreground sm:text-[25px]">{flow.title}</h2>
+                <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-muted-foreground">{flow.subtitle}</p>
+              </div>
+            </div>
+            <span className="relative inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-primary px-5 py-2.5 text-[13px] font-semibold text-primary-foreground shadow-[0_10px_24px_-8px_hsl(var(--primary)/0.6)] transition-transform duration-300 group-hover:scale-[1.03] sm:self-auto">
+              {flow.action}
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
+            </span>
+          </>
+        ) : (
+          <>
+            <div className="flex items-start justify-between">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${accentClasses[flow.emphasis]}`}>
+                <Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden="true" />
+              </div>
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+            </div>
+            <div className="flex flex-1 flex-col">
+              <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">{flow.useCase}</p>
+              <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">{flow.title}</h2>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{flow.subtitle}</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/70 transition-colors group-hover:text-primary">
+                {flow.action}
+                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+              </span>
+            </div>
+          </>
+        )}
       </motion.div>
     </Link>
   );
@@ -239,10 +259,28 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div className="hidden lg:flex">
-            <div className="flex w-full flex-col items-center gap-3 rounded-3xl border border-border/50 bg-gradient-to-b from-card/70 to-card/25 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm">
-              <Mascote contexto="home" size="md" />
-            </div>
+          {/* Painel visual real — imagem + overlay + badge de vidro flutuante (alto padrão) */}
+          <div className="relative hidden lg:block">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: duration.slow, ease: easing.smooth, delay: 0.1 }}
+              className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] border border-white/10 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.5)] ring-1 ring-black/5"
+            >
+              <img src={brandAssets.illustrations.neuralAbstract} alt="Ilustração de neurodesenvolvimento" className="h-full w-full object-cover" loading="eager" />
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-tr from-primary/40 via-primary/5 to-transparent mix-blend-multiply" />
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+              {/* badge de vidro flutuante */}
+              <div className="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-2xl border border-white/20 bg-background/60 p-3 shadow-lg backdrop-blur-xl">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-rose-600 text-white shadow-sm">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold leading-tight text-foreground">{appMetrics.scaleCount} escalas validadas</p>
+                  <p className="truncate text-[11px] text-muted-foreground">Rastreio · diagnóstico · evolução</p>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </motion.section>
@@ -283,7 +321,7 @@ export default function HomePage() {
                 <h2 id="fluxos-principais" className="text-xl font-semibold tracking-tight text-foreground">Por onde começar</h2>
               </div>
             </div>
-            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
             </div>
           </section>
