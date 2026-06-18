@@ -601,23 +601,23 @@ export default function FiltroPage() {
 
   return (
     <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
-      {/* Full-width header */}
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-3 sm:p-5 shadow-sm backdrop-blur mb-3 sm:mb-5">
-        <div className="flex items-start gap-2 sm:gap-3">
-          <div className="filter-260-iconbox flex h-10 sm:h-12 w-10 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md"><Filter className="h-4 sm:h-5 w-4 sm:w-5" /></div>
+      {/* Full-width header — premium calmo (consistente com a Home) */}
+      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur mb-4 sm:mb-5">
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          <div className="filter-260-iconbox flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15"><Filter className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.9} /></div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-1 sm:mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10 text-[10px] sm:text-xs">ranking · escalas + questionários</Badge>
-            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground">Filtro Clínico Inteligente</h1>
-            <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm leading-relaxed text-muted-foreground">Cruza idade, queixa, respondente, rota direta e 100 escalas mundiais sem custo.</p>
+            <p className="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Ranking clínico</p>
+            <h1 className="mt-0.5 text-xl sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-foreground">Filtro Clínico Inteligente</h1>
+            <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">Cruze idade, queixa, respondente e contexto — incluindo 100 escalas mundiais sem custo.</p>
           </div>
         </div>
       </header>
 
-      {/* Stats — full width */}
-      <section className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-3 mb-4 sm:mb-6">
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">filtrável</p><p className="text-xl sm:text-2xl font-black text-foreground">{catalog.length}</p></CardContent></Card>
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">mundiais</p><p className="text-xl sm:text-2xl font-black text-foreground">{world.length}</p></CardContent></Card>
-        <Card><CardContent className="p-2 sm:p-4"><p className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">no app</p><p className="text-xl sm:text-2xl font-black text-foreground">{catalog.filter(isFullApp).length}</p></CardContent></Card>
+      {/* Métricas — faixa fina com divisores (consistente com a Home) */}
+      <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-card/50" aria-label="Métricas do filtro">
+        <div className="flex-1 px-3.5 py-3 sm:px-4"><div className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{catalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Filtráveis</p></div>
+        <div className="flex-1 px-3.5 py-3 sm:px-4"><div className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{world.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
+        <div className="flex-1 px-3.5 py-3 sm:px-4"><div className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{catalog.filter(isFullApp).length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">No app</p></div>
       </section>
 
       {/* Two-column grid: Controls (left) + Results (right) */}
@@ -635,7 +635,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">🎂</span> Idade da criança</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade da criança</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             {faixasEtarias.map((age) => <button key={age.id} type="button" aria-pressed={selectedAge === age.id} aria-label={`Faixa etária ${age.label}`} onMouseEnter={() => softHover()} onClick={() => setSelectedAge((v) => v === age.id ? null : age.id)} className={`shrink-0 rounded-2xl border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>{age.label}</button>)}
           </div>
@@ -644,7 +644,7 @@ export default function FiltroPage() {
         <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate"><span aria-hidden="true">🩺</span> Queixa / sintomas</p>
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">Queixa / sintomas</p>
               {isCuratedOuro && podium.ouro && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 1ª linha: {podium.ouro.scale.name}</span>}
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
@@ -658,7 +658,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">🙋</span> Quem responde</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quem responde</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="crianca" type="button" aria-pressed={selectedRespondente === "autoaplicavel"} aria-label="Respondente: criança (teste direto)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🧒</span> <span className="hidden sm:inline">Direto</span></button>
             <button key="pais" type="button" aria-pressed={selectedRespondente === "pais"} aria-label="Respondente: pais ou cuidador" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
@@ -668,7 +668,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">💬</span> Comunicação</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Comunicação</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="verbal" type="button" aria-pressed={selectedCommunication === "verbal"} aria-label="Comunicação: criança verbal (fala)" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "verbal" ? null : "verbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "verbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🗣️</span> <span className="hidden sm:inline">Fala</span></button>
             <button key="nonverbal" type="button" aria-pressed={selectedCommunication === "nonverbal"} aria-label="Comunicação: criança não-verbal" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "nonverbal" ? null : "nonverbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "nonverbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🤐</span> <span className="hidden sm:inline">Não-Verbal</span></button>
@@ -676,7 +676,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">📖</span> Alfabetização</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Alfabetização</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="literate" type="button" aria-pressed={selectedLiteracy === "literate"} aria-label="Alfabetização: criança alfabetizada" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "literate" ? null : "literate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "literate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">📖</span> <span className="hidden sm:inline">Alfabetizada</span></button>
             <button key="preliterate" type="button" aria-pressed={selectedLiteracy === "preliterate"} aria-label="Alfabetização: criança pré-alfabetizada" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "preliterate" ? null : "preliterate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "preliterate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👶</span> <span className="hidden sm:inline">Pré-Alfab.</span></button>
@@ -684,7 +684,7 @@ export default function FiltroPage() {
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"><span aria-hidden="true">🎯</span> Tipo de avaliação</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de avaliação</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button key="diagnostic" type="button" aria-pressed={selectedAssessmentType === "diagnostic"} aria-label="Tipo de avaliação: diagnóstico" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "diagnostic" ? null : "diagnostic")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🔍</span> <span className="hidden sm:inline">Diagnóstico</span></button>
             <button key="monitoring" type="button" aria-pressed={selectedAssessmentType === "monitoring"} aria-label="Tipo de avaliação: monitorização" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "monitoring" ? null : "monitoring")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">📊</span> <span className="hidden sm:inline">Monitorização</span></button>
