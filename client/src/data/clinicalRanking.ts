@@ -26,6 +26,8 @@
  * (fallback quando a idade não é informada).
  */
 
+import { getSignalFlowchart, resolveFlowchartTierIds } from "./signalFlowcharts";
+
 export interface ClinicalTierRule {
   queixa: string;
   ageMin: number;
@@ -284,6 +286,24 @@ export function getClinicalTiers(
   queixa: string,
   ageMonths: number | null
 ): ClinicalTierRule | undefined {
+  // Fluxograma por sinal (signalFlowcharts, rico e editável) tem PRECEDÊNCIA
+  // quando existe — é a fonte de verdade curada do pódio para aquele sinal.
+  const flow = getSignalFlowchart(queixa);
+  if (flow) {
+    const ids = resolveFlowchartTierIds(flow, ageMonths);
+    if (ids.ouro.length > 0 || ids.prata.length > 0 || ids.bronze.length > 0) {
+      return {
+        queixa,
+        ageMin: 0,
+        ageMax: 216,
+        ouro: ids.ouro[0] ?? ids.prata[0] ?? ids.bronze[0],
+        prata: ids.prata[0] ?? ids.ouro[1],
+        bronze: ids.bronze[0] ?? ids.prata[1] ?? ids.ouro[2],
+        reason: `Fluxograma ${flow.label} — curadoria por faixa etária.`,
+      };
+    }
+  }
+
   const rules = clinicalRanking.filter((r) => r.queixa === queixa);
   if (rules.length === 0) return undefined;
   if (ageMonths == null) return rules[0];

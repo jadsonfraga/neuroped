@@ -474,12 +474,13 @@ export default function FiltroPage() {
   // ou catálogo mundial). Fichas técnicas puras (ADOS-2, Bayley…) saem — nunca
   // recomendamos um beco sem saída.
   const catalog = useMemo(() => {
-    const base = unique([...CORE_FILTERABLE_CATALOG, ...world])
-      .filter(opensInApp)
-      // REGRA C (Dr. Jadson, 2026-06-12): escalas RESTRITAS ou COMERCIAIS que
-      // ainda NÃO abrem como aplicação completa saem do filtro (ficam só no
-      // catálogo/ficha). Todas as de licença LIVRE permanecem no filtro.
-      .filter((s) => isFullApp(s) || (s.licencaUso !== "restrita" && s.licencaUso !== "comercial"));
+    // REGRA C (atualizada — Dr. Jadson, 2026-06-18): TODA escala que abre
+    // internamente entra no filtro, INCLUSIVE licenciadas (comercial/restrita) —
+    // elas abrem como FICHA interna (descrição, faixa, pontos de corte, como
+    // aplicar), nunca link externo nem beco sem saída. Assim os padrões-ouro
+    // (ADOS-2, CARS-2, SRS-2, Dunn…) deixam de sumir do filtro. O toggle "Só
+    // aplicação completa" (onlyApp) segue disponível para ocultar fichas.
+    const base = unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp);
     return onlyApp ? base.filter(isFullApp) : base;
   }, [world, onlyApp]);
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
