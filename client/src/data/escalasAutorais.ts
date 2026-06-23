@@ -1,5 +1,5 @@
 // ============================================================
-// ESCALAS AUTORAIS DR. JADSON FRAGA — LOTE 1 (J26-001 a J26-210)
+// ESCALAS AUTORAIS DR. JADSON FRAGA — LOTE 1 (NEXUS-001 a NEXUS-210)
 // Neuropediatria — Petrolina-PE | 2026
 // Inspiradas em instrumentos internacionais, escritas em
 // português brasileiro coloquial do Nordeste 2026.
@@ -7,18 +7,18 @@
 
 import { ScaleEntry } from "./scaleFilter";
 
-// Lote autoral bruto (J26-001 a J26-260). A proveniência autoral é injetada
+// Lote autoral bruto (NEXUS-001 a NEXUS-260). A proveniência autoral é injetada
 // abaixo via map não destrutivo (Bloco 1.4 — Consolidação 9.0).
 const escalasAutoraisRaw: ScaleEntry[] = [
 
   // =====================================================================
-  // CATEGORIA 1 — TRIAGEM DO NEURODESENVOLVIMENTO (J26-001 a J26-015)
+  // CATEGORIA 1 — TRIAGEM DO NEURODESENVOLVIMENTO (NEXUS-001 a NEXUS-015)
   // =====================================================================
 
   {
     id: "j26-001",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (J26-001)",
+    name: "Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (NEXUS-001)",
     fullName: "Protocolo de Triagem de Marcos Motores Grossos de 0 a 6 Meses",
     ageMin: 0,
     ageMax: 6,
@@ -31,7 +31,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-002",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (J26-002)",
+    name: "Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (NEXUS-002)",
     fullName: "Protocolo de Triagem de Marcos Motores Grossos de 6 a 12 Meses",
     ageMin: 6,
     ageMax: 12,
@@ -44,7 +44,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-003",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (J26-003)",
+    name: "Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (NEXUS-003)",
     fullName: "Protocolo de Triagem de Marcos de Linguagem Expressiva e Receptiva de 0 a 24 Meses",
     ageMin: 0,
     ageMax: 24,
@@ -57,7 +57,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-004",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Cognição Precoce 0-18 Meses (J26-004)",
+    name: "Protocolo Dr. Jadson — Cognição Precoce 0-18 Meses (NEXUS-004)",
     fullName: "Protocolo de Triagem de Cognição e Resolução de Problemas de 0 a 18 Meses",
     ageMin: 0,
     ageMax: 18,
@@ -70,7 +70,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-005",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Regulação Sensorial Neonatal (J26-005)",
+    name: "Protocolo Dr. Jadson — Regulação Sensorial Neonatal (NEXUS-005)",
     fullName: "Protocolo de Triagem de Regulação Sensorial e Comportamental Neonatal",
     ageMin: 0,
     ageMax: 3,
@@ -83,7 +83,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-006",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Reflexos Primitivos (J26-006)",
+    name: "Protocolo Dr. Jadson — Reflexos Primitivos (NEXUS-006)",
     fullName: "Protocolo de Avaliação de Reflexos Primitivos e Posturas Patológicas",
     ageMin: 0,
     ageMax: 6,
@@ -96,7 +96,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-007",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Desenvolvimento Socioemocional 0-3 Anos (J26-007)",
+    name: "Protocolo Dr. Jadson — Desenvolvimento Socioemocional 0-3 Anos (NEXUS-007)",
     fullName: "Protocolo de Triagem do Desenvolvimento Socioemocional de 0 a 36 Meses",
     ageMin: 0,
     ageMax: 36,
@@ -109,7 +109,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-008",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motor Fino 12-36 Meses (J26-008)",
+    name: "Protocolo Dr. Jadson — Motor Fino 12-36 Meses (NEXUS-008)",
     fullName: "Protocolo de Triagem do Desenvolvimento Motor Fino de 12 a 36 Meses",
     ageMin: 12,
     ageMax: 36,
@@ -122,7 +122,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-009",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Atenção Conjunta Precoce (J26-009)",
+    name: "Protocolo Dr. Jadson — Atenção Conjunta Precoce (NEXUS-009)",
     fullName: "Protocolo de Triagem de Atenção Conjunta e Apontamento em 9 a 18 Meses",
     ageMin: 9,
     ageMax: 18,
@@ -135,7 +135,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-010",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Global 24-36 Meses (J26-010)",
+    name: "Protocolo Dr. Jadson — Triagem Global 24-36 Meses (NEXUS-010)",
     fullName: "Protocolo de Triagem do Desenvolvimento Global de 24 a 36 Meses",
     ageMin: 24,
     ageMax: 36,
@@ -148,7 +148,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-011",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Global 36-60 Meses (J26-011)",
+    name: "Protocolo Dr. Jadson — Triagem Global 36-60 Meses (NEXUS-011)",
     fullName: "Protocolo de Triagem do Desenvolvimento Global de 36 a 60 Meses",
     ageMin: 36,
     ageMax: 60,
@@ -161,7 +161,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-012",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Portage Adaptado NE (J26-012)",
+    name: "Protocolo Dr. Jadson — Portage Adaptado NE (NEXUS-012)",
     fullName: "Protocolo de Estimulação e Triagem Tipo Portage Adaptado ao Nordeste Brasileiro",
     ageMin: 0,
     ageMax: 72,
@@ -174,7 +174,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-013",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Auditiva Funcional (J26-013)",
+    name: "Protocolo Dr. Jadson — Triagem Auditiva Funcional (NEXUS-013)",
     fullName: "Protocolo de Triagem Comportamental da Função Auditiva em 0 a 24 Meses",
     ageMin: 0,
     ageMax: 24,
@@ -187,7 +187,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-014",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Visual Funcional (J26-014)",
+    name: "Protocolo Dr. Jadson — Triagem Visual Funcional (NEXUS-014)",
     fullName: "Protocolo de Triagem Comportamental da Função Visual em 0 a 12 Meses",
     ageMin: 0,
     ageMax: 12,
@@ -200,7 +200,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-015",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Autonomia e Autocuidado 2-5 Anos (J26-015)",
+    name: "Protocolo Dr. Jadson — Autonomia e Autocuidado 2-5 Anos (NEXUS-015)",
     fullName: "Protocolo de Triagem de Autonomia e Habilidades de Autocuidado de 2 a 5 Anos",
     ageMin: 24,
     ageMax: 60,
@@ -212,13 +212,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 2 — ESPECTRO AUTISTA EXPANDIDO (J26-016 a J26-030)
+  // CATEGORIA 2 — ESPECTRO AUTISTA EXPANDIDO (NEXUS-016 a NEXUS-030)
   // =====================================================================
 
   {
     id: "j26-016",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Perfil Sensorial TEA (J26-016)",
+    name: "Protocolo Dr. Jadson — Perfil Sensorial TEA (NEXUS-016)",
     fullName: "Protocolo de Avaliação do Perfil Sensorial em Crianças com TEA",
     ageMin: 24,
     ageMax: 144,
@@ -231,7 +231,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-017",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Interesses Restritos TEA (J26-017)",
+    name: "Protocolo Dr. Jadson — Interesses Restritos TEA (NEXUS-017)",
     fullName: "Protocolo de Mapeamento de Interesses Restritos e Comportamentos Repetitivos em TEA",
     ageMin: 24,
     ageMax: 216,
@@ -244,7 +244,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-018",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Camouflage TEA Meninas (J26-018)",
+    name: "Protocolo Dr. Jadson — Camouflage TEA Meninas (NEXUS-018)",
     fullName: "Protocolo de Avaliação do Mascaramento Autista em Meninas e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -257,7 +257,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-019",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motivação Social TEA (J26-019)",
+    name: "Protocolo Dr. Jadson — Motivação Social TEA (NEXUS-019)",
     fullName: "Protocolo de Avaliação da Motivação e Interesse Social em TEA",
     ageMin: 36,
     ageMax: 216,
@@ -270,7 +270,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-020",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Linguagem Pragmática TEA (J26-020)",
+    name: "Protocolo Dr. Jadson — Linguagem Pragmática TEA (NEXUS-020)",
     fullName: "Protocolo de Avaliação da Linguagem Pragmática e Comunicação Funcional em TEA",
     ageMin: 36,
     ageMax: 144,
@@ -283,7 +283,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-021",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Atenção Conjunta TEA (J26-021)",
+    name: "Protocolo Dr. Jadson — Atenção Conjunta TEA (NEXUS-021)",
     fullName: "Protocolo Expandido de Avaliação da Atenção Conjunta em TEA",
     ageMin: 12,
     ageMax: 72,
@@ -296,7 +296,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-022",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Teoria da Mente TEA (J26-022)",
+    name: "Protocolo Dr. Jadson — Teoria da Mente TEA (NEXUS-022)",
     fullName: "Protocolo de Avaliação da Teoria da Mente em Crianças com TEA",
     ageMin: 48,
     ageMax: 144,
@@ -309,7 +309,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-023",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Função Executiva TEA (J26-023)",
+    name: "Protocolo Dr. Jadson — Função Executiva TEA (NEXUS-023)",
     fullName: "Protocolo de Triagem de Função Executiva no Cotidiano em TEA",
     ageMin: 48,
     ageMax: 216,
@@ -322,7 +322,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-024",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TEA Adulto Jovem (J26-024)",
+    name: "Protocolo Dr. Jadson — TEA Adulto Jovem (NEXUS-024)",
     fullName: "Protocolo de Rastreio de TEA em Adolescentes e Adultos Jovens",
     ageMin: 144,
     ageMax: 216,
@@ -335,7 +335,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-025",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Agressividade TEA (J26-025)",
+    name: "Protocolo Dr. Jadson — Agressividade TEA (NEXUS-025)",
     fullName: "Protocolo de Avaliação de Comportamentos Agressivos e Autolesivos em TEA",
     ageMin: 24,
     ageMax: 216,
@@ -348,7 +348,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-026",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Habilidades de Brincar TEA (J26-026)",
+    name: "Protocolo Dr. Jadson — Habilidades de Brincar TEA (NEXUS-026)",
     fullName: "Protocolo de Avaliação das Habilidades de Brincar em Crianças com TEA",
     ageMin: 18,
     ageMax: 72,
@@ -361,7 +361,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-027",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comunicação Alternativa TEA (J26-027)",
+    name: "Protocolo Dr. Jadson — Comunicação Alternativa TEA (NEXUS-027)",
     fullName: "Protocolo de Avaliação de Necessidades de Comunicação Alternativa e Aumentativa em TEA",
     ageMin: 24,
     ageMax: 216,
@@ -374,7 +374,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-028",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Nível de Suporte TEA (J26-028)",
+    name: "Protocolo Dr. Jadson — Nível de Suporte TEA (NEXUS-028)",
     fullName: "Protocolo de Classificação de Necessidade de Suporte em TEA — Níveis 1, 2 e 3 DSM-5",
     ageMin: 24,
     ageMax: 216,
@@ -387,7 +387,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-029",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TEA e Sono (J26-029)",
+    name: "Protocolo Dr. Jadson — TEA e Sono (NEXUS-029)",
     fullName: "Protocolo de Avaliação de Problemas de Sono em Crianças com TEA",
     ageMin: 24,
     ageMax: 144,
@@ -400,7 +400,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-030",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Evolução Clínica TEA (J26-030)",
+    name: "Protocolo Dr. Jadson — Evolução Clínica TEA (NEXUS-030)",
     fullName: "Protocolo de Monitorização da Evolução Clínica e Terapêutica em TEA",
     ageMin: 24,
     ageMax: 216,
@@ -412,13 +412,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 3 — TDAH E FUNÇÕES EXECUTIVAS (J26-031 a J26-045)
+  // CATEGORIA 3 — TDAH E FUNÇÕES EXECUTIVAS (NEXUS-031 a NEXUS-045)
   // =====================================================================
 
   {
     id: "j26-031",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Disregulação Emocional TDAH (J26-031)",
+    name: "Protocolo Dr. Jadson — Disregulação Emocional TDAH (NEXUS-031)",
     fullName: "Protocolo de Avaliação da Disregulação Emocional associada ao TDAH",
     ageMin: 72,
     ageMax: 216,
@@ -431,7 +431,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-032",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Tempo Cognitivo Lento (J26-032)",
+    name: "Protocolo Dr. Jadson — Tempo Cognitivo Lento (NEXUS-032)",
     fullName: "Protocolo de Triagem do Tempo Cognitivo Lento (Sluggish Cognitive Tempo)",
     ageMin: 72,
     ageMax: 216,
@@ -444,7 +444,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-033",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Perfil Desatenção vs Hiperatividade (J26-033)",
+    name: "Protocolo Dr. Jadson — Perfil Desatenção vs Hiperatividade (NEXUS-033)",
     fullName: "Protocolo de Diferenciação entre Perfil Predominantemente Desatento e Hiperativo no TDAH",
     ageMin: 60,
     ageMax: 216,
@@ -457,7 +457,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-034",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Função Executiva Cotidiano (J26-034)",
+    name: "Protocolo Dr. Jadson — Função Executiva Cotidiano (NEXUS-034)",
     fullName: "Protocolo de Avaliação de Função Executiva no Cotidiano Escolar e Doméstico",
     ageMin: 60,
     ageMax: 216,
@@ -470,7 +470,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-035",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Percepção do Tempo TDAH (J26-035)",
+    name: "Protocolo Dr. Jadson — Percepção do Tempo TDAH (NEXUS-035)",
     fullName: "Protocolo de Avaliação de Percepção e Gestão do Tempo em TDAH",
     ageMin: 72,
     ageMax: 216,
@@ -483,7 +483,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-036",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sensibilidade a Recompensa TDAH (J26-036)",
+    name: "Protocolo Dr. Jadson — Sensibilidade a Recompensa TDAH (NEXUS-036)",
     fullName: "Protocolo de Avaliação da Sensibilidade a Recompensa e Motivação em TDAH",
     ageMin: 72,
     ageMax: 216,
@@ -496,7 +496,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-037",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Memória de Trabalho TDAH (J26-037)",
+    name: "Protocolo Dr. Jadson — Memória de Trabalho TDAH (NEXUS-037)",
     fullName: "Protocolo de Triagem da Memória de Trabalho no TDAH — Contexto Escolar",
     ageMin: 60,
     ageMax: 216,
@@ -509,7 +509,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-038",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Impulsividade Comportamental (J26-038)",
+    name: "Protocolo Dr. Jadson — Impulsividade Comportamental (NEXUS-038)",
     fullName: "Protocolo de Avaliação do Perfil de Impulsividade Motora, Verbal e Cognitiva em TDAH",
     ageMin: 60,
     ageMax: 144,
@@ -522,7 +522,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-039",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TDAH e Autoestima (J26-039)",
+    name: "Protocolo Dr. Jadson — TDAH e Autoestima (NEXUS-039)",
     fullName: "Protocolo de Avaliação do Impacto do TDAH na Autoestima e Autoimagem",
     ageMin: 72,
     ageMax: 216,
@@ -535,7 +535,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-040",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TDAH e Sono (J26-040)",
+    name: "Protocolo Dr. Jadson — TDAH e Sono (NEXUS-040)",
     fullName: "Protocolo de Avaliação dos Problemas de Sono associados ao TDAH",
     ageMin: 60,
     ageMax: 216,
@@ -548,7 +548,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-041",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TDAH Impacto Familiar (J26-041)",
+    name: "Protocolo Dr. Jadson — TDAH Impacto Familiar (NEXUS-041)",
     fullName: "Protocolo de Avaliação do Impacto do TDAH na Dinâmica Familiar",
     ageMin: 60,
     ageMax: 216,
@@ -561,7 +561,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-042",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem TDAH Pré-Escolar (J26-042)",
+    name: "Protocolo Dr. Jadson — Triagem TDAH Pré-Escolar (NEXUS-042)",
     fullName: "Protocolo de Triagem de TDAH em Crianças Pré-Escolares de 3 a 6 Anos",
     ageMin: 36,
     ageMax: 72,
@@ -574,7 +574,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-043",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TDAH Adolescente (J26-043)",
+    name: "Protocolo Dr. Jadson — TDAH Adolescente (NEXUS-043)",
     fullName: "Protocolo de Avaliação do TDAH na Adolescência — Perfil, Impacto e Riscos",
     ageMin: 144,
     ageMax: 216,
@@ -587,7 +587,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-044",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Monitorização Estimulante (J26-044)",
+    name: "Protocolo Dr. Jadson — Monitorização Estimulante (NEXUS-044)",
     fullName: "Protocolo de Monitorização de Efeitos do Metilfenidato e Anfetaminas em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -600,7 +600,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-045",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TDAH e Tela (J26-045)",
+    name: "Protocolo Dr. Jadson — TDAH e Tela (NEXUS-045)",
     fullName: "Protocolo de Avaliação do Uso de Telas e Impacto no TDAH",
     ageMin: 60,
     ageMax: 216,
@@ -612,13 +612,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 4 — COMPORTAMENTO E CONDUTA (J26-046 a J26-057)
+  // CATEGORIA 4 — COMPORTAMENTO E CONDUTA (NEXUS-046 a NEXUS-057)
   // =====================================================================
 
   {
     id: "j26-046",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Oposição e Desafio (J26-046)",
+    name: "Protocolo Dr. Jadson — Oposição e Desafio (NEXUS-046)",
     fullName: "Protocolo de Triagem do Transtorno Opositor Desafiador em Crianças e Adolescentes",
     ageMin: 48,
     ageMax: 192,
@@ -631,7 +631,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-047",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Problemas de Conduta (J26-047)",
+    name: "Protocolo Dr. Jadson — Problemas de Conduta (NEXUS-047)",
     fullName: "Protocolo de Avaliação de Problemas de Conduta e Comportamento Antissocial",
     ageMin: 72,
     ageMax: 216,
@@ -644,7 +644,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-048",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Raiva e Manejo da Frustração (J26-048)",
+    name: "Protocolo Dr. Jadson — Raiva e Manejo da Frustração (NEXUS-048)",
     fullName: "Protocolo de Avaliação do Controle da Raiva e Tolerância à Frustração",
     ageMin: 48,
     ageMax: 192,
@@ -657,7 +657,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-049",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Agressão com Pares (J26-049)",
+    name: "Protocolo Dr. Jadson — Agressão com Pares (NEXUS-049)",
     fullName: "Protocolo de Avaliação da Agressividade com Pares e Bullying",
     ageMin: 60,
     ageMax: 192,
@@ -670,7 +670,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-050",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Traços Calosos-Emocionais (J26-050)",
+    name: "Protocolo Dr. Jadson — Traços Calosos-Emocionais (NEXUS-050)",
     fullName: "Protocolo de Avaliação de Traços Calosos-Emocionais em Crianças com Problemas de Conduta",
     ageMin: 72,
     ageMax: 216,
@@ -683,7 +683,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-051",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Flexibilidade Comportamental (J26-051)",
+    name: "Protocolo Dr. Jadson — Flexibilidade Comportamental (NEXUS-051)",
     fullName: "Protocolo de Avaliação da Flexibilidade Cognitivo-Comportamental em Crianças",
     ageMin: 48,
     ageMax: 144,
@@ -696,7 +696,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-052",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Birra Patológica vs. Normativa (J26-052)",
+    name: "Protocolo Dr. Jadson — Birra Patológica vs. Normativa (NEXUS-052)",
     fullName: "Protocolo de Diferenciação entre Birra Normativa e Comportamento Opositor Patológico",
     ageMin: 18,
     ageMax: 72,
@@ -709,7 +709,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-053",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamento na Pandemia Pós-Covid (J26-053)",
+    name: "Protocolo Dr. Jadson — Comportamento na Pandemia Pós-Covid (NEXUS-053)",
     fullName: "Protocolo de Avaliação de Mudanças Comportamentais Pós-Pandemia em Crianças",
     ageMin: 36,
     ageMax: 144,
@@ -722,7 +722,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-054",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamento Digital (J26-054)",
+    name: "Protocolo Dr. Jadson — Comportamento Digital (NEXUS-054)",
     fullName: "Protocolo de Avaliação do Comportamento Relacionado ao Uso Digital e Internet",
     ageMin: 72,
     ageMax: 216,
@@ -735,7 +735,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-055",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Automutilação Não Suicida (J26-055)",
+    name: "Protocolo Dr. Jadson — Automutilação Não Suicida (NEXUS-055)",
     fullName: "Protocolo de Triagem de Automutilação Não Suicida em Adolescentes",
     ageMin: 120,
     ageMax: 216,
@@ -748,7 +748,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-056",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamento Alimentar Restritivo (J26-056)",
+    name: "Protocolo Dr. Jadson — Comportamento Alimentar Restritivo (NEXUS-056)",
     fullName: "Protocolo de Triagem de Comportamento Alimentar Restritivo e Purgativo em Adolescentes",
     ageMin: 108,
     ageMax: 216,
@@ -761,7 +761,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-057",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Regulação Emocional Criança (J26-057)",
+    name: "Protocolo Dr. Jadson — Regulação Emocional Criança (NEXUS-057)",
     fullName: "Protocolo de Avaliação das Estratégias de Regulação Emocional em Crianças",
     ageMin: 48,
     ageMax: 144,
@@ -773,13 +773,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 5 — ANSIEDADE INFANTIL (J26-058 a J26-069)
+  // CATEGORIA 5 — ANSIEDADE INFANTIL (NEXUS-058 a NEXUS-069)
   // =====================================================================
 
   {
     id: "j26-058",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade de Separação (J26-058)",
+    name: "Protocolo Dr. Jadson — Ansiedade de Separação (NEXUS-058)",
     fullName: "Protocolo de Triagem Expandida de Ansiedade de Separação",
     ageMin: 18,
     ageMax: 144,
@@ -792,7 +792,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-059",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Fobia Social Infantil (J26-059)",
+    name: "Protocolo Dr. Jadson — Fobia Social Infantil (NEXUS-059)",
     fullName: "Protocolo de Avaliação da Fobia Social em Crianças e Adolescentes",
     ageMin: 60,
     ageMax: 216,
@@ -805,7 +805,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-060",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Mutismo Seletivo Expandido (J26-060)",
+    name: "Protocolo Dr. Jadson — Mutismo Seletivo Expandido (NEXUS-060)",
     fullName: "Protocolo Expandido de Avaliação do Mutismo Seletivo em Crianças",
     ageMin: 36,
     ageMax: 120,
@@ -818,7 +818,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-061",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Escolar e Recusa (J26-061)",
+    name: "Protocolo Dr. Jadson — Ansiedade Escolar e Recusa (NEXUS-061)",
     fullName: "Protocolo de Avaliação da Ansiedade Escolar e Comportamento de Recusa Escolar",
     ageMin: 60,
     ageMax: 192,
@@ -831,7 +831,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-062",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade de Desempenho (J26-062)",
+    name: "Protocolo Dr. Jadson — Ansiedade de Desempenho (NEXUS-062)",
     fullName: "Protocolo de Triagem da Ansiedade de Desempenho Escolar e Esportivo",
     ageMin: 72,
     ageMax: 216,
@@ -844,7 +844,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-063",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Fobias Específicas Checklist (J26-063)",
+    name: "Protocolo Dr. Jadson — Fobias Específicas Checklist (NEXUS-063)",
     fullName: "Protocolo de Mapeamento de Fobias Específicas em Crianças e Adolescentes",
     ageMin: 36,
     ageMax: 216,
@@ -857,7 +857,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-064",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade à Saúde Criança (J26-064)",
+    name: "Protocolo Dr. Jadson — Ansiedade à Saúde Criança (NEXUS-064)",
     fullName: "Protocolo de Avaliação da Ansiedade Hipocondríaca em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -870,7 +870,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-065",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Medos Noturnos e Pesadelos (J26-065)",
+    name: "Protocolo Dr. Jadson — Medos Noturnos e Pesadelos (NEXUS-065)",
     fullName: "Protocolo de Avaliação dos Medos Noturnos, Pesadelos e Terror Noturno em Crianças",
     ageMin: 24,
     ageMax: 120,
@@ -883,7 +883,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-066",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Generalizada Criança (J26-066)",
+    name: "Protocolo Dr. Jadson — Ansiedade Generalizada Criança (NEXUS-066)",
     fullName: "Protocolo de Triagem do Transtorno de Ansiedade Generalizada em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -896,7 +896,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-067",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Somática Funcional (J26-067)",
+    name: "Protocolo Dr. Jadson — Ansiedade Somática Funcional (NEXUS-067)",
     fullName: "Protocolo de Avaliação de Queixas Somáticas Funcionais Relacionadas à Ansiedade",
     ageMin: 60,
     ageMax: 216,
@@ -909,7 +909,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-068",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TAG Adolescente (J26-068)",
+    name: "Protocolo Dr. Jadson — TAG Adolescente (NEXUS-068)",
     fullName: "Protocolo de Avaliação do Transtorno de Ansiedade Generalizada em Adolescentes",
     ageMin: 132,
     ageMax: 216,
@@ -922,7 +922,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-069",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Pânico Adolescente (J26-069)",
+    name: "Protocolo Dr. Jadson — Pânico Adolescente (NEXUS-069)",
     fullName: "Protocolo de Triagem do Transtorno de Pânico em Adolescentes",
     ageMin: 120,
     ageMax: 216,
@@ -934,13 +934,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 6 — DEPRESSÃO E HUMOR (J26-070 a J26-081)
+  // CATEGORIA 6 — DEPRESSÃO E HUMOR (NEXUS-070 a NEXUS-081)
   // =====================================================================
 
   {
     id: "j26-070",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Anedonia Infantil (J26-070)",
+    name: "Protocolo Dr. Jadson — Anedonia Infantil (NEXUS-070)",
     fullName: "Protocolo de Triagem da Anedonia e Perda de Prazer em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -953,7 +953,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-071",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ideação Suicida Criança (J26-071)",
+    name: "Protocolo Dr. Jadson — Ideação Suicida Criança (NEXUS-071)",
     fullName: "Protocolo de Triagem de Ideação Suicida em Crianças de 6 a 12 Anos",
     ageMin: 72,
     ageMax: 144,
@@ -965,7 +965,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-072",
-    name: "Protocolo Dr. Jadson — Diário de Humor (J26-072)",
+    name: "Protocolo Dr. Jadson — Diário de Humor (NEXUS-072)",
     fullName: "Protocolo de Automonitorização do Humor em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -978,7 +978,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-073",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Bipolar Triagem Criança (J26-073)",
+    name: "Protocolo Dr. Jadson — Bipolar Triagem Criança (NEXUS-073)",
     fullName: "Protocolo de Triagem de Transtorno Bipolar em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -991,7 +991,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-074",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Depressão Sazonal Infantil (J26-074)",
+    name: "Protocolo Dr. Jadson — Depressão Sazonal Infantil (NEXUS-074)",
     fullName: "Protocolo de Triagem de Variação Sazonal de Humor em Crianças e Adolescentes",
     ageMin: 60,
     ageMax: 216,
@@ -1004,7 +1004,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-075",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Luto e Perda Infantil (J26-075)",
+    name: "Protocolo Dr. Jadson — Luto e Perda Infantil (NEXUS-075)",
     fullName: "Protocolo de Avaliação do Processo de Luto em Crianças e Adolescentes",
     ageMin: 36,
     ageMax: 216,
@@ -1017,7 +1017,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-076",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Autoestima Infantil (J26-076)",
+    name: "Protocolo Dr. Jadson — Autoestima Infantil (NEXUS-076)",
     fullName: "Protocolo de Avaliação da Autoestima e Autoeficácia em Crianças Escolares",
     ageMin: 60,
     ageMax: 192,
@@ -1030,7 +1030,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-077",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Desesperança Infantil (J26-077)",
+    name: "Protocolo Dr. Jadson — Desesperança Infantil (NEXUS-077)",
     fullName: "Protocolo de Avaliação da Desesperança e Pensamento Pessimista em Crianças",
     ageMin: 72,
     ageMax: 216,
@@ -1043,7 +1043,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-078",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Depressão Pós-COVID Infantil (J26-078)",
+    name: "Protocolo Dr. Jadson — Depressão Pós-COVID Infantil (NEXUS-078)",
     fullName: "Protocolo de Rastreio de Sintomas Depressivos Pós-COVID-19 em Crianças e Adolescentes",
     ageMin: 48,
     ageMax: 216,
@@ -1056,7 +1056,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-079",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sintomas Depressivos Físicos (J26-079)",
+    name: "Protocolo Dr. Jadson — Sintomas Depressivos Físicos (NEXUS-079)",
     fullName: "Protocolo de Avaliação de Sintomas Somáticos da Depressão em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -1069,7 +1069,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-080",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Depressão Mascarada Adolescente (J26-080)",
+    name: "Protocolo Dr. Jadson — Depressão Mascarada Adolescente (NEXUS-080)",
     fullName: "Protocolo de Triagem de Depressão Mascarada por Irritabilidade em Adolescentes",
     ageMin: 120,
     ageMax: 216,
@@ -1082,7 +1082,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-081",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Impacto Funcional Depressão (J26-081)",
+    name: "Protocolo Dr. Jadson — Impacto Funcional Depressão (NEXUS-081)",
     fullName: "Protocolo de Avaliação do Impacto Funcional da Depressão em Crianças e Adolescentes",
     ageMin: 60,
     ageMax: 216,
@@ -1094,13 +1094,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 7 — LINGUAGEM E COMUNICAÇÃO (J26-082 a J26-093)
+  // CATEGORIA 7 — LINGUAGEM E COMUNICAÇÃO (NEXUS-082 a NEXUS-093)
   // =====================================================================
 
   {
     id: "j26-082",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Linguagem Pragmática Escolar (J26-082)",
+    name: "Protocolo Dr. Jadson — Linguagem Pragmática Escolar (NEXUS-082)",
     fullName: "Protocolo de Avaliação da Linguagem Pragmática em Contexto Escolar",
     ageMin: 48,
     ageMax: 144,
@@ -1113,7 +1113,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-083",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Narrativa Oral Infantil (J26-083)",
+    name: "Protocolo Dr. Jadson — Narrativa Oral Infantil (NEXUS-083)",
     fullName: "Protocolo de Avaliação das Habilidades Narrativas Orais em Crianças",
     ageMin: 48,
     ageMax: 144,
@@ -1126,7 +1126,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-084",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Consciência Fonológica Expandida (J26-084)",
+    name: "Protocolo Dr. Jadson — Consciência Fonológica Expandida (NEXUS-084)",
     fullName: "Protocolo Expandido de Avaliação da Consciência Fonológica e Metafológica",
     ageMin: 48,
     ageMax: 96,
@@ -1139,7 +1139,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-085",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Vocabulário em Profundidade (J26-085)",
+    name: "Protocolo Dr. Jadson — Vocabulário em Profundidade (NEXUS-085)",
     fullName: "Protocolo de Avaliação da Profundidade do Vocabulário em Crianças Escolares",
     ageMin: 60,
     ageMax: 144,
@@ -1152,7 +1152,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-086",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Fluência Verbal Criança (J26-086)",
+    name: "Protocolo Dr. Jadson — Fluência Verbal Criança (NEXUS-086)",
     fullName: "Protocolo de Avaliação da Fluência Verbal Semântica e Fonológica em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -1165,7 +1165,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-087",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Gagueira Expandida (J26-087)",
+    name: "Protocolo Dr. Jadson — Gagueira Expandida (NEXUS-087)",
     fullName: "Protocolo de Avaliação Expandida da Gagueira e Fluência na Comunicação",
     ageMin: 36,
     ageMax: 216,
@@ -1178,7 +1178,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-088",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Linguagem Bilíngue NE (J26-088)",
+    name: "Protocolo Dr. Jadson — Linguagem Bilíngue NE (NEXUS-088)",
     fullName: "Protocolo de Avaliação da Linguagem em Crianças Bilíngues ou com Diversidade Dialetal",
     ageMin: 36,
     ageMax: 144,
@@ -1191,7 +1191,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-089",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — CAA Necessidades (J26-089)",
+    name: "Protocolo Dr. Jadson — CAA Necessidades (NEXUS-089)",
     fullName: "Protocolo de Avaliação de Necessidades de Comunicação Alternativa e Aumentativa",
     ageMin: 24,
     ageMax: 216,
@@ -1204,7 +1204,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-090",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Compreensão Oral Complexa (J26-090)",
+    name: "Protocolo Dr. Jadson — Compreensão Oral Complexa (NEXUS-090)",
     fullName: "Protocolo de Avaliação da Compreensão de Linguagem Oral Complexa em Crianças",
     ageMin: 60,
     ageMax: 144,
@@ -1217,7 +1217,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-091",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Linguagem 18-36 Meses (J26-091)",
+    name: "Protocolo Dr. Jadson — Triagem Linguagem 18-36 Meses (NEXUS-091)",
     fullName: "Protocolo de Triagem de Atraso de Linguagem entre 18 e 36 Meses",
     ageMin: 18,
     ageMax: 36,
@@ -1230,7 +1230,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-092",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Discurso e Linguagem Escolar (J26-092)",
+    name: "Protocolo Dr. Jadson — Discurso e Linguagem Escolar (NEXUS-092)",
     fullName: "Protocolo de Avaliação do Discurso e Habilidades de Linguagem Acadêmica",
     ageMin: 72,
     ageMax: 168,
@@ -1243,7 +1243,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-093",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Prosódia e Entonação (J26-093)",
+    name: "Protocolo Dr. Jadson — Prosódia e Entonação (NEXUS-093)",
     fullName: "Protocolo de Avaliação da Prosódia, Entonação e Suprassegmentos da Fala",
     ageMin: 36,
     ageMax: 144,
@@ -1255,13 +1255,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 8 — APRENDIZAGEM E ESCOLA (J26-094 a J26-105)
+  // CATEGORIA 8 — APRENDIZAGEM E ESCOLA (NEXUS-094 a NEXUS-105)
   // =====================================================================
 
   {
     id: "j26-094",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Fluência de Leitura (J26-094)",
+    name: "Protocolo Dr. Jadson — Fluência de Leitura (NEXUS-094)",
     fullName: "Protocolo de Avaliação da Fluência de Leitura Oral em Crianças Escolares",
     ageMin: 72,
     ageMax: 168,
@@ -1274,7 +1274,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-095",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Padrão de Erros Ortográficos (J26-095)",
+    name: "Protocolo Dr. Jadson — Padrão de Erros Ortográficos (NEXUS-095)",
     fullName: "Protocolo de Análise Qualitativa dos Erros de Escrita em Crianças",
     ageMin: 72,
     ageMax: 168,
@@ -1287,7 +1287,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-096",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Matemática (J26-096)",
+    name: "Protocolo Dr. Jadson — Ansiedade Matemática (NEXUS-096)",
     fullName: "Protocolo de Avaliação da Ansiedade Matemática em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -1300,7 +1300,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-097",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Expressão Escrita (J26-097)",
+    name: "Protocolo Dr. Jadson — Expressão Escrita (NEXUS-097)",
     fullName: "Protocolo de Avaliação da Expressão Escrita e Disgrafia",
     ageMin: 72,
     ageMax: 168,
@@ -1313,7 +1313,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-098",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Habilidades de Estudo (J26-098)",
+    name: "Protocolo Dr. Jadson — Habilidades de Estudo (NEXUS-098)",
     fullName: "Protocolo de Avaliação das Habilidades de Estudo e Organização Acadêmica",
     ageMin: 96,
     ageMax: 216,
@@ -1326,7 +1326,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-099",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motivação Escolar (J26-099)",
+    name: "Protocolo Dr. Jadson — Motivação Escolar (NEXUS-099)",
     fullName: "Protocolo de Avaliação da Motivação Acadêmica Intrínseca e Extrínseca",
     ageMin: 72,
     ageMax: 216,
@@ -1339,7 +1339,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-100",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dislexia Risco (J26-100)",
+    name: "Protocolo Dr. Jadson — Dislexia Risco (NEXUS-100)",
     fullName: "Protocolo de Rastreio de Risco para Dislexia em Crianças de 5 a 8 Anos",
     ageMin: 60,
     ageMax: 96,
@@ -1352,7 +1352,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-101",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Discalculia Triagem (J26-101)",
+    name: "Protocolo Dr. Jadson — Discalculia Triagem (NEXUS-101)",
     fullName: "Protocolo de Triagem de Discalculia e Dificuldades Específicas em Matemática",
     ageMin: 72,
     ageMax: 168,
@@ -1365,7 +1365,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-102",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dificuldade de Cópia e Ditado (J26-102)",
+    name: "Protocolo Dr. Jadson — Dificuldade de Cópia e Ditado (NEXUS-102)",
     fullName: "Protocolo de Avaliação de Habilidades de Cópia e Ditado em Crianças",
     ageMin: 72,
     ageMax: 144,
@@ -1378,7 +1378,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-103",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamento Dever de Casa (J26-103)",
+    name: "Protocolo Dr. Jadson — Comportamento Dever de Casa (NEXUS-103)",
     fullName: "Protocolo de Avaliação do Comportamento frente ao Dever de Casa",
     ageMin: 72,
     ageMax: 168,
@@ -1391,7 +1391,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-104",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Inclusão Escolar TEA/TDAH (J26-104)",
+    name: "Protocolo Dr. Jadson — Inclusão Escolar TEA/TDAH (NEXUS-104)",
     fullName: "Protocolo de Avaliação do Sucesso da Inclusão Escolar em Crianças com NEE",
     ageMin: 48,
     ageMax: 192,
@@ -1404,7 +1404,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-105",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Avaliação Pré-ENEM (J26-105)",
+    name: "Protocolo Dr. Jadson — Avaliação Pré-ENEM (NEXUS-105)",
     fullName: "Protocolo de Avaliação Neuropsicológica de Necessidades Especiais para ENEM",
     ageMin: 168,
     ageMax: 216,
@@ -1416,13 +1416,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 9 — MOTOR E COORDENAÇÃO (J26-106 a J26-117)
+  // CATEGORIA 9 — MOTOR E COORDENAÇÃO (NEXUS-106 a NEXUS-117)
   // =====================================================================
 
   {
     id: "j26-106",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motor Fino Escolar (J26-106)",
+    name: "Protocolo Dr. Jadson — Motor Fino Escolar (NEXUS-106)",
     fullName: "Protocolo de Avaliação das Habilidades de Motor Fino em Contexto Escolar",
     ageMin: 48,
     ageMax: 144,
@@ -1435,7 +1435,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-107",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Marco Motor Grosso 1-5 Anos (J26-107)",
+    name: "Protocolo Dr. Jadson — Marco Motor Grosso 1-5 Anos (NEXUS-107)",
     fullName: "Protocolo de Acompanhamento dos Marcos de Motor Grosso de 1 a 5 Anos",
     ageMin: 12,
     ageMax: 60,
@@ -1448,7 +1448,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-108",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Integração Visomotora (J26-108)",
+    name: "Protocolo Dr. Jadson — Integração Visomotora (NEXUS-108)",
     fullName: "Protocolo de Avaliação da Integração Visomotora e Coordenação Olho-Mão",
     ageMin: 36,
     ageMax: 144,
@@ -1461,7 +1461,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-109",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Apraxia e Praxia Motora (J26-109)",
+    name: "Protocolo Dr. Jadson — Apraxia e Praxia Motora (NEXUS-109)",
     fullName: "Protocolo de Triagem de Apraxia e Dispraxia do Desenvolvimento",
     ageMin: 36,
     ageMax: 144,
@@ -1474,7 +1474,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-110",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Coordenação Problemas Cotidiano (J26-110)",
+    name: "Protocolo Dr. Jadson — Coordenação Problemas Cotidiano (NEXUS-110)",
     fullName: "Protocolo de Avaliação dos Problemas de Coordenação Motora no Cotidiano",
     ageMin: 48,
     ageMax: 168,
@@ -1487,7 +1487,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-111",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motor PC Funcional (J26-111)",
+    name: "Protocolo Dr. Jadson — Motor PC Funcional (NEXUS-111)",
     fullName: "Protocolo de Avaliação Funcional do Motor em Paralisia Cerebral",
     ageMin: 0,
     ageMax: 216,
@@ -1500,7 +1500,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-112",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Equilíbrio e Marcha Infantil (J26-112)",
+    name: "Protocolo Dr. Jadson — Equilíbrio e Marcha Infantil (NEXUS-112)",
     fullName: "Protocolo de Avaliação do Equilíbrio Estático, Dinâmico e Qualidade da Marcha",
     ageMin: 24,
     ageMax: 144,
@@ -1513,7 +1513,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-113",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Escrita Manual Avançado (J26-113)",
+    name: "Protocolo Dr. Jadson — Escrita Manual Avançado (NEXUS-113)",
     fullName: "Protocolo Avançado de Avaliação da Escrita Manual e Disgrafia",
     ageMin: 72,
     ageMax: 168,
@@ -1526,7 +1526,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-114",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Tônus Muscular Funcional (J26-114)",
+    name: "Protocolo Dr. Jadson — Tônus Muscular Funcional (NEXUS-114)",
     fullName: "Protocolo de Avaliação Clínica do Tônus Muscular e Seu Impacto Funcional",
     ageMin: 0,
     ageMax: 144,
@@ -1539,7 +1539,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-115",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Habilidades Esportivas Motor (J26-115)",
+    name: "Protocolo Dr. Jadson — Habilidades Esportivas Motor (NEXUS-115)",
     fullName: "Protocolo de Avaliação de Habilidades Motoras para Práticas Esportivas",
     ageMin: 60,
     ageMax: 168,
@@ -1552,7 +1552,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-116",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Tiques e Motor Compulsivo (J26-116)",
+    name: "Protocolo Dr. Jadson — Tiques e Motor Compulsivo (NEXUS-116)",
     fullName: "Protocolo de Avaliação de Tiques Motores e Vocais e Transtorno de Tourette",
     ageMin: 36,
     ageMax: 216,
@@ -1565,7 +1565,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-117",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motor Prematuro Follow-Up (J26-117)",
+    name: "Protocolo Dr. Jadson — Motor Prematuro Follow-Up (NEXUS-117)",
     fullName: "Protocolo de Acompanhamento Motor de Prematuros nos Primeiros 2 Anos",
     ageMin: 0,
     ageMax: 24,
@@ -1577,13 +1577,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 10 — SENSORIAL E INTEGRAÇÃO (J26-118 a J26-129)
+  // CATEGORIA 10 — SENSORIAL E INTEGRAÇÃO (NEXUS-118 a NEXUS-129)
   // =====================================================================
 
   {
     id: "j26-118",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Processamento Tátil (J26-118)",
+    name: "Protocolo Dr. Jadson — Processamento Tátil (NEXUS-118)",
     fullName: "Protocolo de Avaliação do Processamento Tátil em Crianças",
     ageMin: 18,
     ageMax: 144,
@@ -1596,7 +1596,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-119",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Processamento Vestibular (J26-119)",
+    name: "Protocolo Dr. Jadson — Processamento Vestibular (NEXUS-119)",
     fullName: "Protocolo de Avaliação do Processamento Vestibular em Crianças",
     ageMin: 18,
     ageMax: 144,
@@ -1609,7 +1609,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-120",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Processamento Proprioceptivo (J26-120)",
+    name: "Protocolo Dr. Jadson — Processamento Proprioceptivo (NEXUS-120)",
     fullName: "Protocolo de Avaliação do Processamento Proprioceptivo em Crianças",
     ageMin: 18,
     ageMax: 144,
@@ -1622,7 +1622,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-121",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Processamento Auditivo Cotidiano (J26-121)",
+    name: "Protocolo Dr. Jadson — Processamento Auditivo Cotidiano (NEXUS-121)",
     fullName: "Protocolo de Avaliação do Processamento Auditivo no Cotidiano",
     ageMin: 36,
     ageMax: 144,
@@ -1635,7 +1635,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-122",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Processamento Visual Funcional (J26-122)",
+    name: "Protocolo Dr. Jadson — Processamento Visual Funcional (NEXUS-122)",
     fullName: "Protocolo de Avaliação do Processamento Visual no Cotidiano e na Aprendizagem",
     ageMin: 48,
     ageMax: 144,
@@ -1648,7 +1648,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-123",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sensibilidade Oral-Sensorial (J26-123)",
+    name: "Protocolo Dr. Jadson — Sensibilidade Oral-Sensorial (NEXUS-123)",
     fullName: "Protocolo de Avaliação da Sensibilidade Oral-Sensorial e Alimentar",
     ageMin: 12,
     ageMax: 144,
@@ -1661,7 +1661,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-124",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamento Buscador Sensorial (J26-124)",
+    name: "Protocolo Dr. Jadson — Comportamento Buscador Sensorial (NEXUS-124)",
     fullName: "Protocolo de Avaliação do Comportamento Buscador de Sensações em Crianças",
     ageMin: 18,
     ageMax: 144,
@@ -1674,7 +1674,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-125",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sobrecarga Sensorial (J26-125)",
+    name: "Protocolo Dr. Jadson — Sobrecarga Sensorial (NEXUS-125)",
     fullName: "Protocolo de Avaliação da Sobrecarga Sensorial e Meltdown em Crianças",
     ageMin: 24,
     ageMax: 144,
@@ -1687,7 +1687,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-126",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dieta Sensorial Eficácia (J26-126)",
+    name: "Protocolo Dr. Jadson — Dieta Sensorial Eficácia (NEXUS-126)",
     fullName: "Protocolo de Monitorização da Eficácia da Dieta Sensorial em Crianças",
     ageMin: 24,
     ageMax: 144,
@@ -1700,7 +1700,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-127",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Hipersensibilidade Olfativa (J26-127)",
+    name: "Protocolo Dr. Jadson — Hipersensibilidade Olfativa (NEXUS-127)",
     fullName: "Protocolo de Avaliação da Hipersensibilidade Olfativa em Crianças",
     ageMin: 18,
     ageMax: 144,
@@ -1713,7 +1713,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-128",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Regulação Sensorial Escolar (J26-128)",
+    name: "Protocolo Dr. Jadson — Regulação Sensorial Escolar (NEXUS-128)",
     fullName: "Protocolo de Avaliação da Regulação Sensorial em Contexto Escolar",
     ageMin: 48,
     ageMax: 144,
@@ -1726,7 +1726,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-129",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Perfil Sensorial Integrado (J26-129)",
+    name: "Protocolo Dr. Jadson — Perfil Sensorial Integrado (NEXUS-129)",
     fullName: "Protocolo Integrado de Perfil Sensorial em Crianças com TEA e TDAH",
     ageMin: 24,
     ageMax: 168,
@@ -1738,13 +1738,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 11 — SONO EXPANDIDO (J26-130 a J26-139)
+  // CATEGORIA 11 — SONO EXPANDIDO (NEXUS-130 a NEXUS-139)
   // =====================================================================
 
   {
     id: "j26-130",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Higiene do Sono Infantil (J26-130)",
+    name: "Protocolo Dr. Jadson — Higiene do Sono Infantil (NEXUS-130)",
     fullName: "Protocolo de Avaliação e Orientação de Higiene do Sono em Crianças",
     ageMin: 12,
     ageMax: 144,
@@ -1757,7 +1757,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-131",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Pesadelos e Terrores Noturnos (J26-131)",
+    name: "Protocolo Dr. Jadson — Pesadelos e Terrores Noturnos (NEXUS-131)",
     fullName: "Protocolo de Diferenciação entre Pesadelos, Terrores Noturnos e Sonambulismo",
     ageMin: 24,
     ageMax: 144,
@@ -1770,7 +1770,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-132",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Latência de Início do Sono (J26-132)",
+    name: "Protocolo Dr. Jadson — Latência de Início do Sono (NEXUS-132)",
     fullName: "Protocolo de Avaliação do Atraso de Início do Sono em Crianças e Adolescentes",
     ageMin: 36,
     ageMax: 216,
@@ -1783,7 +1783,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-133",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Parassônias Checklist (J26-133)",
+    name: "Protocolo Dr. Jadson — Parassônias Checklist (NEXUS-133)",
     fullName: "Protocolo de Avaliação Completa das Parassônias em Crianças",
     ageMin: 24,
     ageMax: 144,
@@ -1796,7 +1796,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-134",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Tela e Sono (J26-134)",
+    name: "Protocolo Dr. Jadson — Tela e Sono (NEXUS-134)",
     fullName: "Protocolo de Avaliação do Impacto do Uso de Telas no Sono Infantil e Adolescente",
     ageMin: 48,
     ageMax: 216,
@@ -1809,7 +1809,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-135",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Noturna (J26-135)",
+    name: "Protocolo Dr. Jadson — Ansiedade Noturna (NEXUS-135)",
     fullName: "Protocolo de Avaliação da Ansiedade Noturna como Causa de Insônia Infantil",
     ageMin: 36,
     ageMax: 168,
@@ -1822,7 +1822,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-136",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Resposta Melatonina (J26-136)",
+    name: "Protocolo Dr. Jadson — Resposta Melatonina (NEXUS-136)",
     fullName: "Protocolo de Monitorização da Resposta ao Tratamento com Melatonina",
     ageMin: 24,
     ageMax: 216,
@@ -1835,7 +1835,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-137",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Rotina Noturna (J26-137)",
+    name: "Protocolo Dr. Jadson — Rotina Noturna (NEXUS-137)",
     fullName: "Protocolo de Estruturação e Monitorização da Rotina Noturna Infantil",
     ageMin: 12,
     ageMax: 120,
@@ -1848,7 +1848,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-138",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sono e Neurodesenvolvimento (J26-138)",
+    name: "Protocolo Dr. Jadson — Sono e Neurodesenvolvimento (NEXUS-138)",
     fullName: "Protocolo de Avaliação da Qualidade do Sono e Impacto no Neurodesenvolvimento",
     ageMin: 0,
     ageMax: 72,
@@ -1861,7 +1861,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-139",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — SAOS Triagem Infantil (J26-139)",
+    name: "Protocolo Dr. Jadson — SAOS Triagem Infantil (NEXUS-139)",
     fullName: "Protocolo de Triagem da Síndrome de Apneia Obstrutiva do Sono em Crianças",
     ageMin: 12,
     ageMax: 144,
@@ -1873,13 +1873,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 12 — ALIMENTAÇÃO E NUTRIÇÃO (J26-140 a J26-149)
+  // CATEGORIA 12 — ALIMENTAÇÃO E NUTRIÇÃO (NEXUS-140 a NEXUS-149)
   // =====================================================================
 
   {
     id: "j26-140",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Seletividade Alimentar (J26-140)",
+    name: "Protocolo Dr. Jadson — Seletividade Alimentar (NEXUS-140)",
     fullName: "Protocolo de Avaliação da Seletividade Alimentar em Crianças",
     ageMin: 18,
     ageMax: 144,
@@ -1892,7 +1892,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-141",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamento na Refeição (J26-141)",
+    name: "Protocolo Dr. Jadson — Comportamento na Refeição (NEXUS-141)",
     fullName: "Protocolo de Avaliação do Comportamento da Criança durante as Refeições",
     ageMin: 12,
     ageMax: 120,
@@ -1905,7 +1905,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-142",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Motor Oral e Deglutição (J26-142)",
+    name: "Protocolo Dr. Jadson — Motor Oral e Deglutição (NEXUS-142)",
     fullName: "Protocolo de Avaliação da Função Motora Oral e Deglutição em Crianças",
     ageMin: 0,
     ageMax: 144,
@@ -1918,7 +1918,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-143",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — ARFID Expandido (J26-143)",
+    name: "Protocolo Dr. Jadson — ARFID Expandido (NEXUS-143)",
     fullName: "Protocolo Expandido de Avaliação do Transtorno Alimentar Restritivo/Evitativo (ARFID)",
     ageMin: 24,
     ageMax: 216,
@@ -1931,7 +1931,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-144",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Aversão a Textura (J26-144)",
+    name: "Protocolo Dr. Jadson — Aversão a Textura (NEXUS-144)",
     fullName: "Protocolo de Avaliação da Aversão a Texturas Alimentares em Crianças",
     ageMin: 12,
     ageMax: 120,
@@ -1944,7 +1944,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-145",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Neofobia Alimentar (J26-145)",
+    name: "Protocolo Dr. Jadson — Neofobia Alimentar (NEXUS-145)",
     fullName: "Protocolo de Avaliação da Neofobia Alimentar e Recusa de Novos Alimentos",
     ageMin: 18,
     ageMax: 120,
@@ -1957,7 +1957,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-146",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Autonomia Alimentar (J26-146)",
+    name: "Protocolo Dr. Jadson — Autonomia Alimentar (NEXUS-146)",
     fullName: "Protocolo de Avaliação dos Marcos de Autonomia Alimentar de 6 a 36 Meses",
     ageMin: 6,
     ageMax: 36,
@@ -1970,7 +1970,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-147",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Preocupações Nutricionais (J26-147)",
+    name: "Protocolo Dr. Jadson — Preocupações Nutricionais (NEXUS-147)",
     fullName: "Protocolo de Rastreio de Preocupações Nutricionais em Crianças com Seletividade",
     ageMin: 18,
     ageMax: 144,
@@ -1983,7 +1983,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-148",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Alimentação Amamentação (J26-148)",
+    name: "Protocolo Dr. Jadson — Alimentação Amamentação (NEXUS-148)",
     fullName: "Protocolo de Avaliação das Dificuldades de Aleitamento e Sucção no Lactente",
     ageMin: 0,
     ageMax: 6,
@@ -1996,7 +1996,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-149",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Recusa Alimentar Bebê (J26-149)",
+    name: "Protocolo Dr. Jadson — Recusa Alimentar Bebê (NEXUS-149)",
     fullName: "Protocolo de Avaliação da Recusa Alimentar em Bebês de 6 a 18 Meses",
     ageMin: 6,
     ageMax: 18,
@@ -2008,12 +2008,12 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 13 — DOR E CEFALEIA (J26-150 a J26-157)
+  // CATEGORIA 13 — DOR E CEFALEIA (NEXUS-150 a NEXUS-157)
   // =====================================================================
 
   {
     id: "j26-150",
-    name: "Protocolo Dr. Jadson — Diário de Cefaleia Expandido (J26-150)",
+    name: "Protocolo Dr. Jadson — Diário de Cefaleia Expandido (NEXUS-150)",
     fullName: "Protocolo de Diário de Cefaleia Expandido para Crianças e Adolescentes",
     ageMin: 60,
     ageMax: 216,
@@ -2026,7 +2026,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-151",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Impacto Dor Crônica Criança (J26-151)",
+    name: "Protocolo Dr. Jadson — Impacto Dor Crônica Criança (NEXUS-151)",
     fullName: "Protocolo de Avaliação do Impacto da Dor Crônica na Vida da Criança",
     ageMin: 60,
     ageMax: 216,
@@ -2039,7 +2039,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-152",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Catastrofização da Dor Infantil (J26-152)",
+    name: "Protocolo Dr. Jadson — Catastrofização da Dor Infantil (NEXUS-152)",
     fullName: "Protocolo de Avaliação da Catastrofização da Dor em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -2052,7 +2052,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-153",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Aura de Enxaqueca (J26-153)",
+    name: "Protocolo Dr. Jadson — Aura de Enxaqueca (NEXUS-153)",
     fullName: "Protocolo de Avaliação dos Sintomas de Aura em Enxaqueca Infantil",
     ageMin: 60,
     ageMax: 216,
@@ -2065,7 +2065,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-154",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dor Abdominal Funcional (J26-154)",
+    name: "Protocolo Dr. Jadson — Dor Abdominal Funcional (NEXUS-154)",
     fullName: "Protocolo de Avaliação da Dor Abdominal Recorrente Funcional em Crianças",
     ageMin: 36,
     ageMax: 168,
@@ -2078,7 +2078,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-155",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comunicação da Dor (J26-155)",
+    name: "Protocolo Dr. Jadson — Comunicação da Dor (NEXUS-155)",
     fullName: "Protocolo de Avaliação da Capacidade de Comunicar e Localizar a Dor em Crianças",
     ageMin: 24,
     ageMax: 120,
@@ -2091,7 +2091,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-156",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dor Neuropática Criança (J26-156)",
+    name: "Protocolo Dr. Jadson — Dor Neuropática Criança (NEXUS-156)",
     fullName: "Protocolo de Triagem de Dor Neuropática em Crianças e Adolescentes",
     ageMin: 60,
     ageMax: 216,
@@ -2104,7 +2104,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-157",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Triagem Cefaleias Secundárias (J26-157)",
+    name: "Protocolo Dr. Jadson — Triagem Cefaleias Secundárias (NEXUS-157)",
     fullName: "Protocolo de Triagem de Sinais de Alerta para Cefaleia Secundária em Crianças",
     ageMin: 12,
     ageMax: 216,
@@ -2116,13 +2116,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 14 — EPILEPSIA EXPANDIDA (J26-158 a J26-167)
+  // CATEGORIA 14 — EPILEPSIA EXPANDIDA (NEXUS-158 a NEXUS-167)
   // =====================================================================
 
   {
     id: "j26-158",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Gravidade das Crises (Pais) (J26-158)",
+    name: "Protocolo Dr. Jadson — Gravidade das Crises (Pais) (NEXUS-158)",
     fullName: "Protocolo de Avaliação da Gravidade das Crises Epilépticas pelo Relato dos Pais",
     ageMin: 0,
     ageMax: 216,
@@ -2135,7 +2135,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-159",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Adesão Medicação Epilepsia (J26-159)",
+    name: "Protocolo Dr. Jadson — Adesão Medicação Epilepsia (NEXUS-159)",
     fullName: "Protocolo de Avaliação da Adesão ao Tratamento Antiepiléptico",
     ageMin: 0,
     ageMax: 216,
@@ -2148,7 +2148,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-160",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Qualidade de Vida Epilepsia Criança (J26-160)",
+    name: "Protocolo Dr. Jadson — Qualidade de Vida Epilepsia Criança (NEXUS-160)",
     fullName: "Protocolo de Avaliação da Qualidade de Vida de Crianças com Epilepsia",
     ageMin: 36,
     ageMax: 168,
@@ -2161,7 +2161,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-161",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Cognição e Epilepsia (J26-161)",
+    name: "Protocolo Dr. Jadson — Cognição e Epilepsia (NEXUS-161)",
     fullName: "Protocolo de Triagem do Impacto Cognitivo das Crises e Medicação Antiepiléptica",
     ageMin: 36,
     ageMax: 216,
@@ -2174,7 +2174,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-162",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Gatilhos das Crises (J26-162)",
+    name: "Protocolo Dr. Jadson — Gatilhos das Crises (NEXUS-162)",
     fullName: "Protocolo de Identificação de Gatilhos de Crises Epilépticas em Crianças e Adolescentes",
     ageMin: 0,
     ageMax: 216,
@@ -2187,7 +2187,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-163",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Protocolo Crise de Emergência (J26-163)",
+    name: "Protocolo Dr. Jadson — Protocolo Crise de Emergência (NEXUS-163)",
     fullName: "Protocolo de Preparação para Emergência e Crise Epiléptica em Casa e na Escola",
     ageMin: 0,
     ageMax: 216,
@@ -2200,7 +2200,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-164",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Monitorização Dieta Cetogênica (J26-164)",
+    name: "Protocolo Dr. Jadson — Monitorização Dieta Cetogênica (NEXUS-164)",
     fullName: "Protocolo de Monitorização da Eficácia e Tolerância da Dieta Cetogênica",
     ageMin: 0,
     ageMax: 144,
@@ -2213,7 +2213,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-165",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Efeitos Antiepilépticos (J26-165)",
+    name: "Protocolo Dr. Jadson — Efeitos Antiepilépticos (NEXUS-165)",
     fullName: "Protocolo de Monitorização de Efeitos Colaterais dos Antiepilépticos",
     ageMin: 0,
     ageMax: 216,
@@ -2226,7 +2226,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-166",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Depressão e Epilepsia (J26-166)",
+    name: "Protocolo Dr. Jadson — Depressão e Epilepsia (NEXUS-166)",
     fullName: "Protocolo de Rastreio de Depressão e Ansiedade em Crianças com Epilepsia",
     ageMin: 72,
     ageMax: 216,
@@ -2239,7 +2239,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-167",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Epilepsia e Escola (J26-167)",
+    name: "Protocolo Dr. Jadson — Epilepsia e Escola (NEXUS-167)",
     fullName: "Protocolo de Avaliação das Necessidades Educacionais de Crianças com Epilepsia",
     ageMin: 48,
     ageMax: 192,
@@ -2251,13 +2251,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 15 — SAÚDE MENTAL E PSIQUIATRIA (J26-168 a J26-179)
+  // CATEGORIA 15 — SAÚDE MENTAL E PSIQUIATRIA (NEXUS-168 a NEXUS-179)
   // =====================================================================
 
   {
     id: "j26-168",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TOC Infantil Triagem (J26-168)",
+    name: "Protocolo Dr. Jadson — TOC Infantil Triagem (NEXUS-168)",
     fullName: "Protocolo de Triagem do Transtorno Obsessivo-Compulsivo em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -2270,7 +2270,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-169",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — PTSD Criança (J26-169)",
+    name: "Protocolo Dr. Jadson — PTSD Criança (NEXUS-169)",
     fullName: "Protocolo de Triagem do Transtorno de Estresse Pós-Traumático em Crianças",
     ageMin: 36,
     ageMax: 144,
@@ -2283,7 +2283,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-170",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Mania Infantil (J26-170)",
+    name: "Protocolo Dr. Jadson — Mania Infantil (NEXUS-170)",
     fullName: "Protocolo de Triagem de Episódio Maníaco e Hipomaníaco em Crianças e Adolescentes",
     ageMin: 72,
     ageMax: 216,
@@ -2296,7 +2296,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-171",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Psicose Risco Adolescente (J26-171)",
+    name: "Protocolo Dr. Jadson — Psicose Risco Adolescente (NEXUS-171)",
     fullName: "Protocolo de Triagem de Risco Ultrafragilidade Psicótica em Adolescentes",
     ageMin: 132,
     ageMax: 216,
@@ -2309,7 +2309,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-172",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Substâncias Adolescente (J26-172)",
+    name: "Protocolo Dr. Jadson — Substâncias Adolescente (NEXUS-172)",
     fullName: "Protocolo de Rastreio de Uso de Álcool e Drogas em Adolescentes",
     ageMin: 132,
     ageMax: 216,
@@ -2322,7 +2322,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-173",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dissociação Infantil (J26-173)",
+    name: "Protocolo Dr. Jadson — Dissociação Infantil (NEXUS-173)",
     fullName: "Protocolo de Triagem de Sintomas Dissociativos em Crianças e Adolescentes",
     ageMin: 60,
     ageMax: 216,
@@ -2335,7 +2335,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-174",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Traços de Personalidade Adolescente (J26-174)",
+    name: "Protocolo Dr. Jadson — Traços de Personalidade Adolescente (NEXUS-174)",
     fullName: "Protocolo de Avaliação de Traços de Personalidade Adaptativos e Desadaptativos na Adolescência",
     ageMin: 144,
     ageMax: 216,
@@ -2348,7 +2348,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-175",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Inteligência Emocional Criança (J26-175)",
+    name: "Protocolo Dr. Jadson — Inteligência Emocional Criança (NEXUS-175)",
     fullName: "Protocolo de Avaliação da Inteligência Emocional em Crianças Escolares",
     ageMin: 60,
     ageMax: 168,
@@ -2361,7 +2361,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-176",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Resiliência Infantil (J26-176)",
+    name: "Protocolo Dr. Jadson — Resiliência Infantil (NEXUS-176)",
     fullName: "Protocolo de Avaliação de Resiliência e Fatores Protetores em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -2374,7 +2374,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-177",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — PTSD Adolescente (J26-177)",
+    name: "Protocolo Dr. Jadson — PTSD Adolescente (NEXUS-177)",
     fullName: "Protocolo de Triagem do PTSD em Adolescentes — Adaptado ao Nordeste",
     ageMin: 120,
     ageMax: 216,
@@ -2387,7 +2387,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-178",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Suicídio Adolescente Avaliação (J26-178)",
+    name: "Protocolo Dr. Jadson — Suicídio Adolescente Avaliação (NEXUS-178)",
     fullName: "Protocolo Estruturado de Avaliação do Risco de Suicídio em Adolescentes",
     ageMin: 120,
     ageMax: 216,
@@ -2400,7 +2400,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-179",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Enurese e Encoprese (J26-179)",
+    name: "Protocolo Dr. Jadson — Enurese e Encoprese (NEXUS-179)",
     fullName: "Protocolo Expandido de Avaliação da Enurese e Encoprese em Crianças",
     ageMin: 48,
     ageMax: 168,
@@ -2412,13 +2412,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 16 — QUALIDADE DE VIDA E FUNCIONALIDADE (J26-180 a J26-189)
+  // CATEGORIA 16 — QUALIDADE DE VIDA E FUNCIONALIDADE (NEXUS-180 a NEXUS-189)
   // =====================================================================
 
   {
     id: "j26-180",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — AVDs Infantis (J26-180)",
+    name: "Protocolo Dr. Jadson — AVDs Infantis (NEXUS-180)",
     fullName: "Protocolo de Avaliação das Atividades de Vida Diária em Crianças com Necessidades Especiais",
     ageMin: 24,
     ageMax: 216,
@@ -2431,7 +2431,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-181",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Participação Social Criança (J26-181)",
+    name: "Protocolo Dr. Jadson — Participação Social Criança (NEXUS-181)",
     fullName: "Protocolo de Avaliação da Participação Social em Crianças com Necessidades Especiais",
     ageMin: 48,
     ageMax: 216,
@@ -2444,7 +2444,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-182",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sobrecarga Cuidador (J26-182)",
+    name: "Protocolo Dr. Jadson — Sobrecarga Cuidador (NEXUS-182)",
     fullName: "Protocolo de Avaliação da Sobrecarga e Qualidade de Vida do Cuidador Principal",
     ageMin: 0,
     ageMax: 216,
@@ -2457,7 +2457,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-183",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — QV Família TEA/TDAH (J26-183)",
+    name: "Protocolo Dr. Jadson — QV Família TEA/TDAH (NEXUS-183)",
     fullName: "Protocolo de Avaliação da Qualidade de Vida Familiar em TEA e TDAH",
     ageMin: 0,
     ageMax: 216,
@@ -2470,7 +2470,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-184",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Satisfação Tratamento (J26-184)",
+    name: "Protocolo Dr. Jadson — Satisfação Tratamento (NEXUS-184)",
     fullName: "Protocolo de Avaliação da Satisfação da Família com o Tratamento e Equipe",
     ageMin: 0,
     ageMax: 216,
@@ -2483,7 +2483,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-185",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Engajamento Terapias (J26-185)",
+    name: "Protocolo Dr. Jadson — Engajamento Terapias (NEXUS-185)",
     fullName: "Protocolo de Avaliação do Engajamento nas Terapias e Barreiras de Acesso",
     ageMin: 0,
     ageMax: 216,
@@ -2496,7 +2496,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-186",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Inclusão Escolar Efetiva (J26-186)",
+    name: "Protocolo Dr. Jadson — Inclusão Escolar Efetiva (NEXUS-186)",
     fullName: "Protocolo de Avaliação do Sucesso da Inclusão Escolar e Participação Ativa",
     ageMin: 48,
     ageMax: 192,
@@ -2509,7 +2509,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-187",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Autonomia Adolescente Especial (J26-187)",
+    name: "Protocolo Dr. Jadson — Autonomia Adolescente Especial (NEXUS-187)",
     fullName: "Protocolo de Avaliação da Autonomia e Projeto de Vida do Adolescente com NEE",
     ageMin: 144,
     ageMax: 216,
@@ -2521,7 +2521,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
   {
     id: "j26-188",
-    name: "Protocolo Dr. Jadson — Metas Terapêuticas (J26-188)",
+    name: "Protocolo Dr. Jadson — Metas Terapêuticas (NEXUS-188)",
     fullName: "Protocolo de Estabelecimento e Monitorização de Metas Terapêuticas Centradas na Família",
     ageMin: 0,
     ageMax: 216,
@@ -2534,7 +2534,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-189",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Funcionalidade PC GMFCS (J26-189)",
+    name: "Protocolo Dr. Jadson — Funcionalidade PC GMFCS (NEXUS-189)",
     fullName: "Protocolo Expandido de Avaliação Funcional para Criança com Paralisia Cerebral",
     ageMin: 0,
     ageMax: 216,
@@ -2546,13 +2546,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 17 — NEONATAL E PREMATURIDADE (J26-190 a J26-197)
+  // CATEGORIA 17 — NEONATAL E PREMATURIDADE (NEXUS-190 a NEXUS-197)
   // =====================================================================
 
   {
     id: "j26-190",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Estratificação Risco Neonatal (J26-190)",
+    name: "Protocolo Dr. Jadson — Estratificação Risco Neonatal (NEXUS-190)",
     fullName: "Protocolo de Estratificação de Risco Neonatal para Seguimento do Neurodesenvolvimento",
     ageMin: 0,
     ageMax: 3,
@@ -2565,7 +2565,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-191",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Prontidão Alimentar Prematuro (J26-191)",
+    name: "Protocolo Dr. Jadson — Prontidão Alimentar Prematuro (NEXUS-191)",
     fullName: "Protocolo de Avaliação da Prontidão para Alimentação Oral do Prematuro",
     ageMin: 0,
     ageMax: 4,
@@ -2578,7 +2578,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-192",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Método Canguru Follow-Up (J26-192)",
+    name: "Protocolo Dr. Jadson — Método Canguru Follow-Up (NEXUS-192)",
     fullName: "Protocolo de Monitorização e Follow-Up do Método Canguru em Prematuros",
     ageMin: 0,
     ageMax: 6,
@@ -2591,7 +2591,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-193",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Dor Neonatal Expandida (J26-193)",
+    name: "Protocolo Dr. Jadson — Dor Neonatal Expandida (NEXUS-193)",
     fullName: "Protocolo Expandido de Avaliação e Manejo da Dor Neonatal na UTIN",
     ageMin: 0,
     ageMax: 3,
@@ -2604,7 +2604,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-194",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Alta UTIN Prontidão (J26-194)",
+    name: "Protocolo Dr. Jadson — Alta UTIN Prontidão (NEXUS-194)",
     fullName: "Protocolo de Avaliação de Prontidão para Alta da UTIN e Transição para Casa",
     ageMin: 0,
     ageMax: 4,
@@ -2617,7 +2617,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-195",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Prematuro Follow-Up 2 Anos (J26-195)",
+    name: "Protocolo Dr. Jadson — Prematuro Follow-Up 2 Anos (NEXUS-195)",
     fullName: "Protocolo de Seguimento do Neurodesenvolvimento do Prematuro aos 2 Anos Corrigidos",
     ageMin: 0,
     ageMax: 30,
@@ -2630,7 +2630,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-196",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Pais UTIN (J26-196)",
+    name: "Protocolo Dr. Jadson — Ansiedade Pais UTIN (NEXUS-196)",
     fullName: "Protocolo de Triagem de Ansiedade e Depressão em Pais de Bebês Internados na UTIN",
     ageMin: 0,
     ageMax: 3,
@@ -2643,7 +2643,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-197",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Icterícia Neonatal Seguimento (J26-197)",
+    name: "Protocolo Dr. Jadson — Icterícia Neonatal Seguimento (NEXUS-197)",
     fullName: "Protocolo de Seguimento Neurossensorial de Neonatos com Icterícia Grave",
     ageMin: 0,
     ageMax: 24,
@@ -2655,13 +2655,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // CATEGORIA 18 — MONITORIZAÇÃO DE MEDICAÇÃO (J26-198 a J26-202)
+  // CATEGORIA 18 — MONITORIZAÇÃO DE MEDICAÇÃO (NEXUS-198 a NEXUS-202)
   // =====================================================================
 
   {
     id: "j26-198",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Estimulante Efeitos Acompanhamento (J26-198)",
+    name: "Protocolo Dr. Jadson — Estimulante Efeitos Acompanhamento (NEXUS-198)",
     fullName: "Protocolo de Monitorização Detalhada de Efeitos do Metilfenidato e Anfetaminas",
     ageMin: 48,
     ageMax: 216,
@@ -2674,7 +2674,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-199",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Antiepiléptico Monitorização Ampla (J26-199)",
+    name: "Protocolo Dr. Jadson — Antiepiléptico Monitorização Ampla (NEXUS-199)",
     fullName: "Protocolo Amplo de Monitorização de Efeitos dos Antiepilépticos de Nova Geração",
     ageMin: 0,
     ageMax: 216,
@@ -2687,7 +2687,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-200",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Antipsicótico Metabólico (J26-200)",
+    name: "Protocolo Dr. Jadson — Antipsicótico Metabólico (NEXUS-200)",
     fullName: "Protocolo de Monitorização Metabólica em Uso de Antipsicóticos em Crianças",
     ageMin: 60,
     ageMax: 216,
@@ -2700,7 +2700,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-201",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Adesão Medicação Criança (J26-201)",
+    name: "Protocolo Dr. Jadson — Adesão Medicação Criança (NEXUS-201)",
     fullName: "Protocolo de Avaliação da Adesão ao Tratamento Farmacológico em Crianças",
     ageMin: 36,
     ageMax: 216,
@@ -2713,7 +2713,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-202",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Polifarmácia Risco Pediátrico (J26-202)",
+    name: "Protocolo Dr. Jadson — Polifarmácia Risco Pediátrico (NEXUS-202)",
     fullName: "Protocolo de Avaliação de Risco de Polifarmácia em Crianças com Multimorbidade",
     ageMin: 0,
     ageMax: 216,
@@ -2725,13 +2725,13 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // =====================================================================
-  // ESCALAS ADICIONAIS — PARA COMPLETAR 210 ENTRADAS (J26-203 a J26-210)
+  // ESCALAS ADICIONAIS — PARA COMPLETAR 210 ENTRADAS (NEXUS-203 a NEXUS-210)
   // =====================================================================
 
   {
     id: "j26-203",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comunicação Social 3-7 Anos (J26-203)",
+    name: "Protocolo Dr. Jadson — Comunicação Social 3-7 Anos (NEXUS-203)",
     fullName: "Protocolo de Avaliação da Comunicação Social em Crianças de 3 a 7 Anos",
     ageMin: 36,
     ageMax: 84,
@@ -2744,7 +2744,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-204",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Tiques Monitorização (J26-204)",
+    name: "Protocolo Dr. Jadson — Tiques Monitorização (NEXUS-204)",
     fullName: "Protocolo de Monitorização da Frequência e Impacto dos Tiques",
     ageMin: 36,
     ageMax: 216,
@@ -2757,7 +2757,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-205",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Cognição Social TEA (J26-205)",
+    name: "Protocolo Dr. Jadson — Cognição Social TEA (NEXUS-205)",
     fullName: "Protocolo de Avaliação da Cognição Social em Crianças com TEA",
     ageMin: 48,
     ageMax: 168,
@@ -2770,7 +2770,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-206",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Irmão Criança com NEE (J26-206)",
+    name: "Protocolo Dr. Jadson — Irmão Criança com NEE (NEXUS-206)",
     fullName: "Protocolo de Avaliação do Impacto nos Irmãos de Crianças com Necessidades Especiais",
     ageMin: 48,
     ageMax: 216,
@@ -2783,7 +2783,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-207",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Privação Social e Negligência (J26-207)",
+    name: "Protocolo Dr. Jadson — Privação Social e Negligência (NEXUS-207)",
     fullName: "Protocolo de Triagem de Privação Ambiental e Negligência como Causa de Atraso do Desenvolvimento",
     ageMin: 0,
     ageMax: 72,
@@ -2796,7 +2796,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-208",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Habilidades de Vida Independente (J26-208)",
+    name: "Protocolo Dr. Jadson — Habilidades de Vida Independente (NEXUS-208)",
     fullName: "Protocolo de Avaliação das Habilidades de Vida Independente em Adolescentes com DI ou TEA",
     ageMin: 144,
     ageMax: 216,
@@ -2809,7 +2809,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-209",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Saúde Sexual Adolescente NEE (J26-209)",
+    name: "Protocolo Dr. Jadson — Saúde Sexual Adolescente NEE (NEXUS-209)",
     fullName: "Protocolo de Avaliação de Educação e Saúde Sexual em Adolescentes com Necessidades Especiais",
     ageMin: 144,
     ageMax: 216,
@@ -2822,7 +2822,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-210",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Avaliação Pós-Terapia Trimestral (J26-210)",
+    name: "Protocolo Dr. Jadson — Avaliação Pós-Terapia Trimestral (NEXUS-210)",
     fullName: "Protocolo Trimestral de Avaliação de Evolução Clínica Pós-Intervenção Multidisciplinar",
     ageMin: 0,
     ageMax: 216,
@@ -2834,14 +2834,14 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // ESCALAS DE MONITORIZAÇÃO / EVOLUÇÃO — J26-211 a J26-260
+  // ESCALAS DE MONITORIZAÇÃO / EVOLUÇÃO — NEXUS-211 a NEXUS-260
   // ═══════════════════════════════════════════════════════════
 
   // ── TEA — Evolução (j26-211 a j26-218) ──
   {
     id: "j26-211",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Evolução de Comunicação Social TEA (J26-211)",
+    name: "Protocolo Dr. Jadson — Evolução de Comunicação Social TEA (NEXUS-211)",
     fullName: "Registro Evolutivo Trimestral de Comunicação Social em Transtorno do Espectro Autista",
     ageMin: 18,
     ageMax: 216,
@@ -2854,7 +2854,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-212",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Comportamentos Restritivos TEA Baseline vs Atual (J26-212)",
+    name: "Protocolo Dr. Jadson — Comportamentos Restritivos TEA Baseline vs Atual (NEXUS-212)",
     fullName: "Checklist de Comportamentos Restritivos e Repetitivos em TEA — Comparação Temporal",
     ageMin: 18,
     ageMax: 216,
@@ -2867,7 +2867,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-213",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Habilidades Adaptativas TEA Trimestral (J26-213)",
+    name: "Protocolo Dr. Jadson — Habilidades Adaptativas TEA Trimestral (NEXUS-213)",
     fullName: "Monitorização de Habilidades Adaptativas em TEA — Atividades de Vida Diária Trimestrais",
     ageMin: 24,
     ageMax: 216,
@@ -2880,7 +2880,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-214",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Integração Sensorial TEA Pós-TO (J26-214)",
+    name: "Protocolo Dr. Jadson — Integração Sensorial TEA Pós-TO (NEXUS-214)",
     fullName: "Escala de Integração Sensorial em TEA — Evolução Pós-Intervenção de Terapia Ocupacional",
     ageMin: 18,
     ageMax: 144,
@@ -2893,7 +2893,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-215",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Crises de Desregulação TEA Antes vs Depois (J26-215)",
+    name: "Protocolo Dr. Jadson — Crises de Desregulação TEA Antes vs Depois (NEXUS-215)",
     fullName: "Registro de Frequência de Crises de Desregulação Emocional em TEA — Comparação Temporal",
     ageMin: 18,
     ageMax: 216,
@@ -2906,7 +2906,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-216",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Contato Visual e Atenção Conjunta TEA (J26-216)",
+    name: "Protocolo Dr. Jadson — Contato Visual e Atenção Conjunta TEA (NEXUS-216)",
     fullName: "Acompanhamento de Contato Visual e Atenção Conjunta em TEA — Monitorização Sequencial",
     ageMin: 18,
     ageMax: 96,
@@ -2919,7 +2919,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-217",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Brincadeira Funcional e Simbólica TEA (J26-217)",
+    name: "Protocolo Dr. Jadson — Brincadeira Funcional e Simbólica TEA (NEXUS-217)",
     fullName: "Evolução de Brincadeira Funcional e Simbólica em TEA — Acompanhamento Trimestral",
     ageMin: 18,
     ageMax: 96,
@@ -2932,7 +2932,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-218",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Impressão Global dos Pais TEA (J26-218)",
+    name: "Protocolo Dr. Jadson — Impressão Global dos Pais TEA (NEXUS-218)",
     fullName: "Resposta ao Tratamento em TEA — Impressão Global de Melhora Relatada pelos Pais",
     ageMin: 18,
     ageMax: 216,
@@ -2947,7 +2947,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-219",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — SNAP-IV Monitorização TDAH (J26-219)",
+    name: "Protocolo Dr. Jadson — SNAP-IV Monitorização TDAH (NEXUS-219)",
     fullName: "SNAP-IV de Monitorização — Comparação Pré e Pós-Medicação em TDAH",
     ageMin: 60,
     ageMax: 216,
@@ -2960,7 +2960,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-220",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Funções Executivas TDAH Cotidiano (J26-220)",
+    name: "Protocolo Dr. Jadson — Funções Executivas TDAH Cotidiano (NEXUS-220)",
     fullName: "Evolução de Funções Executivas no Cotidiano em TDAH — Acompanhamento Trimestral",
     ageMin: 72,
     ageMax: 216,
@@ -2973,7 +2973,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-221",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Desempenho Escolar TDAH Trimestral (J26-221)",
+    name: "Protocolo Dr. Jadson — Desempenho Escolar TDAH Trimestral (NEXUS-221)",
     fullName: "Registro de Desempenho Escolar Trimestral em Crianças com TDAH",
     ageMin: 72,
     ageMax: 216,
@@ -2986,7 +2986,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-222",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Efeitos do Metilfenidato/Lisdexanfetamina (J26-222)",
+    name: "Protocolo Dr. Jadson — Efeitos do Metilfenidato/Lisdexanfetamina (NEXUS-222)",
     fullName: "Monitorização de Efeitos do Metilfenidato e Lisdexanfetamina em TDAH",
     ageMin: 60,
     ageMax: 216,
@@ -2999,7 +2999,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-223",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Regulação Emocional TDAH Evolução (J26-223)",
+    name: "Protocolo Dr. Jadson — Regulação Emocional TDAH Evolução (NEXUS-223)",
     fullName: "Evolução de Regulação Emocional em TDAH — Acompanhamento Sequencial",
     ageMin: 72,
     ageMax: 216,
@@ -3012,7 +3012,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-224",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Sono e Apetite TDAH Tratamento (J26-224)",
+    name: "Protocolo Dr. Jadson — Sono e Apetite TDAH Tratamento (NEXUS-224)",
     fullName: "Acompanhamento de Sono e Apetite Durante Tratamento de TDAH com Estimulantes",
     ageMin: 60,
     ageMax: 216,
@@ -3025,7 +3025,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-225",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Feedback do Professor TDAH Sala (J26-225)",
+    name: "Protocolo Dr. Jadson — Feedback do Professor TDAH Sala (NEXUS-225)",
     fullName: "Feedback do Professor sobre Evolução Comportamental em Sala — TDAH",
     ageMin: 60,
     ageMax: 180,
@@ -3038,7 +3038,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-226",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Impressão Global Melhora TDAH CGI (J26-226)",
+    name: "Protocolo Dr. Jadson — Impressão Global Melhora TDAH CGI (NEXUS-226)",
     fullName: "Impressão Global de Melhora Adaptada para TDAH — Versão Clínica e de Pais",
     ageMin: 60,
     ageMax: 216,
@@ -3053,7 +3053,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-227",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Diário de Frequência de Crises Epilepsia (J26-227)",
+    name: "Protocolo Dr. Jadson — Diário de Frequência de Crises Epilepsia (NEXUS-227)",
     fullName: "Diário de Frequência de Crises Epilépticas — Comparação Mensal",
     ageMin: 0,
     ageMax: 216,
@@ -3066,7 +3066,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-228",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Efeitos de Antiepilépticos Monitorização (J26-228)",
+    name: "Protocolo Dr. Jadson — Efeitos de Antiepilépticos Monitorização (NEXUS-228)",
     fullName: "Monitorização de Efeitos de Antiepilépticos — Eficácia e Efeitos Colaterais",
     ageMin: 0,
     ageMax: 216,
@@ -3079,7 +3079,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-229",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Evolução Cognitiva Epilepsia (J26-229)",
+    name: "Protocolo Dr. Jadson — Evolução Cognitiva Epilepsia (NEXUS-229)",
     fullName: "Evolução Cognitiva em Epilepsia — Acompanhamento de Memória, Atenção e Aprendizagem",
     ageMin: 48,
     ageMax: 216,
@@ -3092,7 +3092,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-230",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Qualidade de Vida Epilepsia Semestral (J26-230)",
+    name: "Protocolo Dr. Jadson — Qualidade de Vida Epilepsia Semestral (NEXUS-230)",
     fullName: "Qualidade de Vida em Epilepsia — Comparação Semestral",
     ageMin: 48,
     ageMax: 216,
@@ -3105,7 +3105,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-231",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Adesão Medicamentosa Epilepsia (J26-231)",
+    name: "Protocolo Dr. Jadson — Adesão Medicamentosa Epilepsia (NEXUS-231)",
     fullName: "Adesão Medicamentosa em Epilepsia — Barreiras e Estratégias de Melhora",
     ageMin: 0,
     ageMax: 216,
@@ -3118,7 +3118,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-232",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — EEG Evolutivo Achados Sequenciais (J26-232)",
+    name: "Protocolo Dr. Jadson — EEG Evolutivo Achados Sequenciais (NEXUS-232)",
     fullName: "Registro de EEG Evolutivo — Achados Sequenciais em Epilepsia",
     ageMin: 0,
     ageMax: 216,
@@ -3133,7 +3133,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-233",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Evolução Vocabulário Expressivo Trimestral (J26-233)",
+    name: "Protocolo Dr. Jadson — Evolução Vocabulário Expressivo Trimestral (NEXUS-233)",
     fullName: "Evolução de Vocabulário Expressivo — Acompanhamento Trimestral Pós-Fonoterapia",
     ageMin: 12,
     ageMax: 84,
@@ -3146,7 +3146,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-234",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Inteligibilidade de Fala Monitorização (J26-234)",
+    name: "Protocolo Dr. Jadson — Inteligibilidade de Fala Monitorização (NEXUS-234)",
     fullName: "Monitorização de Inteligibilidade de Fala — Evolução Pós-Fonoterapia",
     ageMin: 24,
     ageMax: 120,
@@ -3159,7 +3159,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-235",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Linguagem Pragmática Acompanhamento (J26-235)",
+    name: "Protocolo Dr. Jadson — Linguagem Pragmática Acompanhamento (NEXUS-235)",
     fullName: "Acompanhamento de Linguagem Pragmática — Evolução de Uso Social da Linguagem",
     ageMin: 24,
     ageMax: 144,
@@ -3172,7 +3172,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-236",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Fluência Verbal Pós-Fonoterapia (J26-236)",
+    name: "Protocolo Dr. Jadson — Fluência Verbal Pós-Fonoterapia (NEXUS-236)",
     fullName: "Evolução de Fluência Verbal Pós-Fonoterapia — Acompanhamento de Gagueira",
     ageMin: 36,
     ageMax: 180,
@@ -3185,7 +3185,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-237",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Marcos de Comunicação Atingidos (J26-237)",
+    name: "Protocolo Dr. Jadson — Marcos de Comunicação Atingidos (NEXUS-237)",
     fullName: "Registro de Marcos de Comunicação Atingidos — Evolução Longitudinal",
     ageMin: 0,
     ageMax: 72,
@@ -3200,7 +3200,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-238",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — GMFCS Reclassificação Anual (J26-238)",
+    name: "Protocolo Dr. Jadson — GMFCS Reclassificação Anual (NEXUS-238)",
     fullName: "Evolução de GMFCS — Reclassificação Anual em Paralisia Cerebral",
     ageMin: 0,
     ageMax: 216,
@@ -3213,7 +3213,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-239",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Amplitude de Movimento Pós-Fisioterapia (J26-239)",
+    name: "Protocolo Dr. Jadson — Amplitude de Movimento Pós-Fisioterapia (NEXUS-239)",
     fullName: "Monitorização de Amplitude de Movimento Pós-Fisioterapia em Paralisia Cerebral",
     ageMin: 0,
     ageMax: 216,
@@ -3226,7 +3226,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-240",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Função Manual MACS Evolutivo (J26-240)",
+    name: "Protocolo Dr. Jadson — Função Manual MACS Evolutivo (NEXUS-240)",
     fullName: "Evolução de Função Manual em PC — MACS Evolutivo Anual",
     ageMin: 48,
     ageMax: 216,
@@ -3239,7 +3239,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-241",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Espasticidade Ashworth Sequencial (J26-241)",
+    name: "Protocolo Dr. Jadson — Espasticidade Ashworth Sequencial (NEXUS-241)",
     fullName: "Registro de Espasticidade Evolutiva — Escala de Ashworth Modificada Sequencial",
     ageMin: 0,
     ageMax: 216,
@@ -3252,7 +3252,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-242",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Postura e Marcha Acompanhamento (J26-242)",
+    name: "Protocolo Dr. Jadson — Postura e Marcha Acompanhamento (NEXUS-242)",
     fullName: "Acompanhamento de Postura e Marcha em Paralisia Cerebral — Evolução Funcional",
     ageMin: 12,
     ageMax: 216,
@@ -3265,7 +3265,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-243",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Toxina Botulínica Antes e Depois (J26-243)",
+    name: "Protocolo Dr. Jadson — Toxina Botulínica Antes e Depois (NEXUS-243)",
     fullName: "Resposta à Toxina Botulínica em PC — Registro Antes e Depois da Aplicação",
     ageMin: 12,
     ageMax: 216,
@@ -3280,7 +3280,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-244",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Leitura Fluência e Compreensão Trimestral (J26-244)",
+    name: "Protocolo Dr. Jadson — Leitura Fluência e Compreensão Trimestral (NEXUS-244)",
     fullName: "Evolução de Leitura — Fluência e Compreensão Trimestral Pós-Intervenção",
     ageMin: 72,
     ageMax: 168,
@@ -3293,7 +3293,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-245",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Escrita Amostras Comparativas (J26-245)",
+    name: "Protocolo Dr. Jadson — Escrita Amostras Comparativas (NEXUS-245)",
     fullName: "Monitorização de Escrita — Comparação de Amostras de Produção Escrita",
     ageMin: 72,
     ageMax: 168,
@@ -3306,7 +3306,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-246",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Matemática Pós-Psicopedagogia (J26-246)",
+    name: "Protocolo Dr. Jadson — Matemática Pós-Psicopedagogia (NEXUS-246)",
     fullName: "Evolução Matemática Pós-Intervenção Psicopedagógica — Acompanhamento Trimestral",
     ageMin: 72,
     ageMax: 168,
@@ -3319,7 +3319,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-247",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Adaptação Curricular Feedback Escolar (J26-247)",
+    name: "Protocolo Dr. Jadson — Adaptação Curricular Feedback Escolar (NEXUS-247)",
     fullName: "Feedback Escolar de Adaptação Curricular — Evolução e Adesão da Escola",
     ageMin: 60,
     ageMax: 180,
@@ -3332,7 +3332,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-248",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Metas PEI Plano Educacional (J26-248)",
+    name: "Protocolo Dr. Jadson — Metas PEI Plano Educacional (NEXUS-248)",
     fullName: "Registro de Metas do PEI — Plano Educacional Individualizado — Evolução Trimestral",
     ageMin: 48,
     ageMax: 180,
@@ -3347,7 +3347,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-249",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ansiedade Pós-Terapia Comparativo (J26-249)",
+    name: "Protocolo Dr. Jadson — Ansiedade Pós-Terapia Comparativo (NEXUS-249)",
     fullName: "Monitorização de Ansiedade Pós-Terapia — Comparação SCARED/GAD-7 Sequencial",
     ageMin: 72,
     ageMax: 216,
@@ -3360,7 +3360,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-250",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Depressão CDI-2/PHQ-A Sequencial (J26-250)",
+    name: "Protocolo Dr. Jadson — Depressão CDI-2/PHQ-A Sequencial (NEXUS-250)",
     fullName: "Evolução de Sintomas Depressivos — CDI-2 ou PHQ-A Sequencial Comparativo",
     ageMin: 84,
     ageMax: 216,
@@ -3373,7 +3373,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-251",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Autolesão e Ideação Suicida Evolutivo (J26-251)",
+    name: "Protocolo Dr. Jadson — Autolesão e Ideação Suicida Evolutivo (NEXUS-251)",
     fullName: "Registro Evolutivo de Autolesão e Ideação Suicida — Monitorização Longitudinal",
     ageMin: 108,
     ageMax: 216,
@@ -3386,7 +3386,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-252",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TOC Resposta ao Tratamento (J26-252)",
+    name: "Protocolo Dr. Jadson — TOC Resposta ao Tratamento (NEXUS-252)",
     fullName: "Monitorização de TOC — Resposta ao Tratamento com Y-BOCS Sequencial",
     ageMin: 72,
     ageMax: 216,
@@ -3399,7 +3399,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-253",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — TEPT Evolução Pós-Terapia (J26-253)",
+    name: "Protocolo Dr. Jadson — TEPT Evolução Pós-Terapia (NEXUS-253)",
     fullName: "Evolução de TEPT Pós-Terapia — Comparação UCLA PTSD-RI Sequencial",
     ageMin: 72,
     ageMax: 216,
@@ -3412,7 +3412,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-254",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Regulação Emocional Global Acompanhamento (J26-254)",
+    name: "Protocolo Dr. Jadson — Regulação Emocional Global Acompanhamento (NEXUS-254)",
     fullName: "Acompanhamento de Regulação Emocional Global — Evolução Transdiagnóstica",
     ageMin: 60,
     ageMax: 216,
@@ -3427,7 +3427,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-255",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Metabólico Antipsicóticos Monitorização (J26-255)",
+    name: "Protocolo Dr. Jadson — Metabólico Antipsicóticos Monitorização (NEXUS-255)",
     fullName: "Monitorização Metabólica de Antipsicóticos — Peso, Glicemia e Perfil Lipídico",
     ageMin: 48,
     ageMax: 216,
@@ -3440,7 +3440,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-256",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Crescimento Estimulantes Acompanhamento (J26-256)",
+    name: "Protocolo Dr. Jadson — Crescimento Estimulantes Acompanhamento (NEXUS-256)",
     fullName: "Acompanhamento de Crescimento em Uso de Estimulantes — Altura, Peso e Percentis",
     ageMin: 48,
     ageMax: 180,
@@ -3453,7 +3453,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-257",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Ajuste de Dose Eficácia vs Efeitos (J26-257)",
+    name: "Protocolo Dr. Jadson — Ajuste de Dose Eficácia vs Efeitos (NEXUS-257)",
     fullName: "Registro de Ajuste de Dose — Eficácia versus Efeitos Colaterais de Qualquer Psicofármaco",
     ageMin: 0,
     ageMax: 216,
@@ -3466,7 +3466,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-258",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Hepático Hematológico Antiepilépticos (J26-258)",
+    name: "Protocolo Dr. Jadson — Hepático Hematológico Antiepilépticos (NEXUS-258)",
     fullName: "Monitorização Hepática e Hematológica de Antiepilépticos — Exames Sequenciais",
     ageMin: 0,
     ageMax: 216,
@@ -3479,7 +3479,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-259",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — CGI-S e CGI-I Gravidade e Melhora (J26-259)",
+    name: "Protocolo Dr. Jadson — CGI-S e CGI-I Gravidade e Melhora (NEXUS-259)",
     fullName: "Registro de CGI-S e CGI-I — Impressão Clínica Global de Gravidade e Melhora",
     ageMin: 0,
     ageMax: 216,
@@ -3492,7 +3492,7 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   {
     id: "j26-260",
     implementationStatus: "complete",
-    name: "Protocolo Dr. Jadson — Laboratorial Rotina por Medicação (J26-260)",
+    name: "Protocolo Dr. Jadson — Laboratorial Rotina por Medicação (NEXUS-260)",
     fullName: "Checklist de Exames Laboratoriais de Rotina por Medicação — Monitorização Periódica",
     ageMin: 0,
     ageMax: 216,
@@ -3504,12 +3504,12 @@ const escalasAutoraisRaw: ScaleEntry[] = [
   },
 ];
 
-// Bloco 1.4 — Proveniência clínica dos instrumentos autorais (J26).
+// Bloco 1.4 — Proveniência clínica dos instrumentos autorais ( NEXUS).
 // Todos os protocolos do lote são autoria do Dr. Jadson Fraga (NeuroPed).
 // O map é NÃO destrutivo: se um item já trouxer `fonte`/`licencaUso` inline,
 // esses valores prevalecem ({ ...defaults, ...s }).
 export const escalasAutoraisDrJadson: ScaleEntry[] = escalasAutoraisRaw.map((s) => ({
-  fonte: "Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26)",
+  fonte: "Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS)",
   licencaUso: "autoral" as const,
   pubmedId: null,
   ...s,

@@ -106,8 +106,8 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
   const maxPerItem = Math.max(...pts);
   const nItems = def.domains.reduce((s, d) => s + d.items.length, 0);
   const maxTotal = maxPerItem * nItems;
-  // Título limpo: remove o código "(J26-xxx)" do fim, se houver.
-  const cleanTitle = scale.name.replace(/\s*\(J26-\d+\)\s*$/i, "").trim() || scale.name;
+  // Título limpo: remove o código "(NEXUS-xxx)" do fim, se houver.
+  const cleanTitle = scale.name.replace(/\s*\(NEXUS-\d+\)\s*$/i, "").trim() || scale.name;
 
   return {
     title: cleanTitle,

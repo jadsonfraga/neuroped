@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 const scales = [
   {
     href: "/emdi",
-    title: "EMDI-J26",
+    title: "EMDI-NEXUS",
     subtitle: "Escala Médica do Desenvolvimento Infantil",
     ageRange: "12m–8 anos",
     items: 36,
@@ -22,7 +22,7 @@ const scales = [
   },
   {
     href: "/eaf",
-    title: "EAF-J26",
+    title: "EAF-NEXUS",
     subtitle: "Escala de Adaptação Funcional",
     ageRange: "2–18 anos",
     items: 24,
@@ -34,7 +34,7 @@ const scales = [
   },
   {
     href: "/ecsm",
-    title: "ECSM-J26",
+    title: "ECSM-NEXUS",
     subtitle: "Escala de Cognição Social e Mentalização",
     ageRange: "4–14 anos",
     items: 15,
@@ -46,7 +46,7 @@ const scales = [
   },
   {
     href: "/ips",
-    title: "IPS-J26",
+    title: "IPS-NEXUS",
     subtitle: "Inventário de Processamento Sensorial",
     ageRange: "18m–14 anos",
     items: 24,
@@ -61,7 +61,7 @@ const scales = [
 const regulacaoScales = [
   {
     href: "/ecar-si",
-    title: "ECAR-SI J26",
+    title: "ECAR-SI NEXUS",
     subtitle: "Escala Clínica de Risco de Autoagressão e Suicidalidade",
     ageRange: "Pediatria",
     items: 36,
@@ -73,7 +73,7 @@ const regulacaoScales = [
   },
   {
     href: "/edi",
-    title: "EDI-J26",
+    title: "EDI-NEXUS",
     subtitle: "Escala de Depressão Infantil",
     ageRange: "Pediatria",
     items: 24,
@@ -85,7 +85,7 @@ const regulacaoScales = [
   },
   {
     href: "/eai",
-    title: "EAI-J26",
+    title: "EAI-NEXUS",
     subtitle: "Escala de Ansiedade Infantil",
     ageRange: "Pediatria",
     items: 20,
@@ -97,7 +97,7 @@ const regulacaoScales = [
   },
   {
     href: "/easi",
-    title: "EASI-J26",
+    title: "EASI-NEXUS",
     subtitle: "Escala de Ansiedade Social Infantil",
     ageRange: "Pediatria",
     items: 15,
@@ -109,7 +109,7 @@ const regulacaoScales = [
   },
   {
     href: "/ems",
-    title: "EMS-J26",
+    title: "EMS-NEXUS",
     subtitle: "Escala de Mutismo Seletivo",
     ageRange: "Pediatria",
     items: 15,
@@ -121,7 +121,7 @@ const regulacaoScales = [
   },
   {
     href: "/etare",
-    title: "ETARE-J26",
+    title: "ETARE-NEXUS",
     subtitle: "Escala de Transtorno Alimentar Restritivo Evitativo",
     ageRange: "Pediatria",
     items: 18,
@@ -133,7 +133,7 @@ const regulacaoScales = [
   },
   {
     href: "/eaah",
-    title: "EAAH-J26",
+    title: "EAAH-NEXUS",
     subtitle: "Escala de Autoagressividade e Heteroagressividade",
     ageRange: "Pediatria",
     items: 20,

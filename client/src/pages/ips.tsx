@@ -5,14 +5,14 @@ import { ipsDomains, ipsLabels, classifyIps } from "@/data/bateriaJadson";
 export default function IpsPage() {
   return (
     <GenericScale config={{
-      title: "IPS-J26",
+      title: "IPS-NEXUS",
       subtitle: "Inventário de Processamento Sensorial (18m–14 anos)",
       icon: Waves,
       gradient: "from-rose-500 to-pink-600",
       instruction: "Para cada item, indique a frequência com que a criança apresenta o comportamento descrito. Atenção: pontuações mais altas indicam MAIOR alteração sensorial.",
       labels: ipsLabels,
       domains: ipsDomains,
-      infoBox: "IPS-J26: 24 itens, 6 domínios, máximo 72 pontos. ATENÇÃO: escala invertida — pontuações mais altas indicam maior alteração sensorial e impacto funcional. Instrumento autoral — Dr. Jadson Fraga, 2026.",
+      infoBox: "IPSNEXUS: 24 itens, 6 domínios, máximo 72 pontos. ATENÇÃO: escala invertida — pontuações mais altas indicam maior alteração sensorial e impacto funcional. Instrumento autoral — Dr. Jadson Fraga, 2026.",
       onCalculate: (answers) => {
         const domainResults = ipsDomains.map((domain, di) => {
           const score = domain.items.reduce((sum, _, ii) => sum + (answers[`${di}-${ii}`] || 0), 0);
