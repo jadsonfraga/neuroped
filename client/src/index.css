@@ -1,9 +1,9 @@
+/* Design System NeuroPed — tokens de cor, espaçamento e tipografia */
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Design System NeuroPed — tokens de cor, espaçamento e tipografia */
-@import './styles/tokens.css';
 
 /* LIGHT MODE — Lúdico / Colorido / Neuropediatria */
 :root {

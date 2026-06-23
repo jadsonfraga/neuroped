@@ -21,6 +21,7 @@ const baseline = JSON.parse(readFileSync(resolve(__dirname, "guards/baseline.jso
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const RGB = /\brgba?\(/g;
 const EXT = new Set([".tsx", ".ts", ".css", ".jsx", ".js"]);
+const DESIGN_SYSTEM_SOURCES = new Set(["client/src/index.css", "client/src/styles/tokens.css"]);
 
 function walk(d) {
   let out = [];
@@ -36,10 +37,13 @@ function walk(d) {
 const perFile = {};
 let total = 0;
 for (const f of walk(resolve(repoRoot, "client/src"))) {
+  const relativeFile = f.replace(repoRoot + "\\", "").replace(repoRoot + "/", "");
+  if (DESIGN_SYSTEM_SOURCES.has(relativeFile)) continue;
+
   const c = readFileSync(f, "utf8");
   const n = (c.match(HEX)?.length ?? 0) + (c.match(RGB)?.length ?? 0);
   if (n > 0) {
-    perFile[f.replace(repoRoot + "\\", "").replace(repoRoot + "/", "")] = n;
+    perFile[relativeFile] = n;
     total += n;
   }
 }

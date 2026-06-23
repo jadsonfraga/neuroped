@@ -16,14 +16,13 @@ import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
-import { CommandPalette } from "@/components/CommandPalette";
 
-import HomePage from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import SessionExpiredPage from "@/pages/session-expired";
 import LgpdConsentPage from "@/pages/lgpd-consent";
 
+const HomePage = lazy(() => import("@/pages/home"));
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -143,6 +142,7 @@ const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
 const DocumentosPage = lazy(() => import("@/pages/documentos"));
 const VerificarPage = lazy(() => import("@/pages/verificar"));
+const CommandPalette = lazy(() => import("@/components/CommandPalette").then((mod) => ({ default: mod.CommandPalette })));
 
 function LoadingSpinner() {
   return (
@@ -338,7 +338,9 @@ function App() {
             <Router hook={useHashLocation}><AppRouter /></Router>
             <InstallPrompt />
             <PreferencesPanel />
-            <CommandPalette />
+            <Suspense fallback={null}>
+              <CommandPalette />
+            </Suspense>
             {splashComplete && <WelcomeTour />}
           </ToastProvider>
         </TooltipProvider>

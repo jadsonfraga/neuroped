@@ -11,6 +11,12 @@ interface LongitudinalChartProps {
   onDataPointClick?: (dataPoint: LongitudinalChartData) => void;
 }
 
+const CHART_GRID = "hsl(var(--border))";
+const CHART_MUTED = "hsl(var(--muted-foreground))";
+const CHART_PRIMARY = "hsl(var(--primary))";
+const CHART_PRIMARY_SOFT = "hsl(var(--primary) / 0.35)";
+const CHART_SURFACE = "hsl(var(--card) / 0.95)";
+
 export function LongitudinalChart({
   scaleName,
   data,
@@ -132,22 +138,22 @@ export function LongitudinalChart({
             data={chartData}
             margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
           >
-            {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />}
+            {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />}
             <XAxis
               dataKey="date"
-              stroke="#9ca3af"
+              stroke={CHART_MUTED}
               style={{ fontSize: "12px" }}
             />
             <YAxis
               domain={[0, maxScore]}
-              stroke="#9ca3af"
+              stroke={CHART_MUTED}
               style={{ fontSize: "12px" }}
               label={{ value: "Score", angle: -90, position: "insideLeft" }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                border: "1px solid #e5e7eb",
+                backgroundColor: CHART_SURFACE,
+                border: `1px solid ${CHART_GRID}`,
                 borderRadius: "8px",
               }}
               formatter={(value) => [`Score: ${value}`, "Valor"]}
@@ -158,25 +164,25 @@ export function LongitudinalChart({
             {/* Reference lines */}
             <ReferenceLine
               y={maxScore}
-              stroke="#d1d5db"
+              stroke={CHART_GRID}
               strokeDasharray="5 5"
-              label={{ value: "Máximo", position: "right", fill: "#9ca3af", fontSize: 12 }}
+              label={{ value: "Máximo", position: "right", fill: CHART_MUTED, fontSize: 12 }}
             />
             <ReferenceLine
               y={avgScore}
-              stroke="#93c5fd"
+              stroke={CHART_PRIMARY_SOFT}
               strokeDasharray="5 5"
-              label={{ value: "Média", position: "right", fill: "#3b82f6", fontSize: 12 }}
+              label={{ value: "Média", position: "right", fill: CHART_PRIMARY, fontSize: 12 }}
             />
 
             {/* Main line */}
             <Line
               type="monotone"
               dataKey="score"
-              stroke="#3b82f6"
+              stroke={CHART_PRIMARY}
               strokeWidth={2}
-              dot={{ fill: "#3b82f6", r: 5 }}
-              activeDot={{ r: 7, fill: "#1d4ed8" }}
+              dot={{ fill: CHART_PRIMARY, r: 5 }}
+              activeDot={{ r: 7, fill: CHART_PRIMARY }}
               onClick={(data: any) => handleClick(data.index)}
               name="Score"
             />

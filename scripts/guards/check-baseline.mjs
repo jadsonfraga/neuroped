@@ -28,7 +28,10 @@ const { allScales } = await import(
 
 const current = {
   catalogInstruments: allScales.length,
-  catalogWithFonte: allScales.filter((s) => typeof s.fonte === "string" && s.fonte.trim().length > 0).length,
+  catalogWithFonte: allScales.filter((s) => {
+    const hasFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
+    return hasFonte && s.pendente_validacao_clinica !== true;
+  }).length,
 };
 
 /** @type {string[]} */

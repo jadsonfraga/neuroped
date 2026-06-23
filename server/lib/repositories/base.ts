@@ -29,9 +29,12 @@ export interface BaseRepository<T, CreateInput = Partial<T>> {
  * Helper para cálculo de paginação
  */
 export function calculatePagination(page = 1, limit = 20) {
+  const normalizedPage = Math.max(1, page);
+  const normalizedLimit = Math.min(Math.max(1, limit), 100);
+
   return {
-    page: Math.max(1, page),
-    limit: Math.min(limit, 100), // Cap at 100 per page
-    offset: Math.max(0, (page - 1) * limit),
+    page: normalizedPage,
+    limit: normalizedLimit, // Cap at 100 per page
+    offset: (normalizedPage - 1) * normalizedLimit,
   };
 }
