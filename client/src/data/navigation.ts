@@ -72,7 +72,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
       { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
-      { href: "/pre-retorno", label: "Efeitos percebidos", icon: Pill },
+      { href: "/efeitos-colaterais", label: "Efeitos percebidos", icon: Pill },
       { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
     ],
@@ -103,7 +103,7 @@ export const navSections: NavSection[] = [
   {
     title: "Escalas principais",
     items: [
-      { href: "/escalas-neuropsiquiatria", label: "100 escalas mundiais", icon: BookOpen },
+      { href: "/escalas-neuropsiquiatria", label: "Escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "M-CHAT-R/F", icon: Baby },
       { href: "/cars", label: "CARS-2", icon: ClipboardCheck },
       { href: "/denver", label: "Denver II", icon: BookOpen },
@@ -197,6 +197,7 @@ export const navSections: NavSection[] = [
   {
     title: "Medicamentos e doses",
     items: [
+      { href: "/medicamentos", label: "Medicamentos", icon: Pill },
       { href: "/farmacologia", label: "Farmacologia", icon: Pill },
       { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
     ],
@@ -229,12 +230,28 @@ export const navSections: NavSection[] = [
 
 export const navigablePages = navSections.flatMap((section) => section.items);
 
+export function normalizeNavigationPath(pathname: string): string {
+  const withoutHash = (pathname || "/").replace(/^#/, "");
+  const withoutQuery = withoutHash.split("?")[0]?.split("#")[0] || "/";
+  const path = withoutQuery.startsWith("/") ? withoutQuery : `/${withoutQuery}`;
+  return path !== "/" ? path.replace(/\/$/, "") : "/";
+}
+
+function matchesNavigationItem(pathname: string, href: string): boolean {
+  const path = normalizeNavigationPath(pathname);
+  const normalizedHref = normalizeNavigationPath(href);
+  if (normalizedHref === "/") return path === "/";
+  return path === normalizedHref || path.startsWith(`${normalizedHref}/`);
+}
+
 export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
-  for (const section of navSections) {
-    const item = section.items.find((candidate) => candidate.href === pathname);
-    if (item) return { section, item };
-  }
-  return undefined;
+  const matches = navSections.flatMap((section) =>
+    section.items
+      .filter((item) => matchesNavigationItem(pathname, item.href))
+      .map((item) => ({ section, item })),
+  );
+
+  return matches.sort((a, b) => b.item.href.length - a.item.href.length)[0];
 }
 
 export const getNavigationMatch = findNavigationMatch;

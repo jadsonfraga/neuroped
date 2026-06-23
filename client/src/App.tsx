@@ -16,6 +16,7 @@ import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
+import { FloatingHelp } from "@/components/FloatingHelp";
 
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
@@ -104,6 +105,7 @@ const ValoresReferenciaPage = lazy(() => import("@/pages/valores-referencia"));
 const PdaePage = lazy(() => import("@/pages/pdae"));
 
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
+const MedicamentosPage = lazy(() => import("@/pages/medicamentos"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const SatisfacaoMedicacaoPage = lazy(() => import("@/pages/satisfacao-medicacao"));
@@ -130,6 +132,7 @@ const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
 const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
+const EfeitosColateraisPage = lazy(() => import("@/pages/efeitos-colaterais"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
 const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
 const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
@@ -208,7 +211,7 @@ function AppRouter() {
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
           <Route path="/pre-retorno" component={PreRetornoPage} />
-          <Route path="/efeitos-colaterais" component={PreRetornoPage} />
+          <Route path="/efeitos-colaterais" component={EfeitosColateraisPage} />
           <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
@@ -247,6 +250,7 @@ function AppRouter() {
           <Route path="/valores-referencia" component={ValoresReferenciaPage} />
           <Route path="/pdae" component={PdaePage} />
 
+          <Route path="/medicamentos"><Protected roles={["admin", "professional"]}><MedicamentosPage /></Protected></Route>
           <Route path="/farmacologia"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
           <Route path="/pacientes"><Protected roles={["admin", "professional"]}><PacientesPage /></Protected></Route>
           <Route path="/paciente/:id"><Protected roles={["admin", "professional"]}><PacienteDetalhePage /></Protected></Route>
@@ -338,6 +342,7 @@ function App() {
             <Router hook={useHashLocation}><AppRouter /></Router>
             <InstallPrompt />
             <PreferencesPanel />
+            <FloatingHelp />
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>

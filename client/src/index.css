@@ -153,6 +153,22 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: hsl(var(--background));
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  main {
+    min-height: 100vh;
+    background: hsl(var(--background));
+  }
+
   img {
     max-width: 100%;
     height: auto;
