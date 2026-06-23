@@ -36,7 +36,6 @@ import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scale
 import { interactiveScaleItems } from "@/data/interactiveScaleItems";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
-import { interactiveScales } from "@/data/interactiveScales";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterRecommendationsOPB";
 import { getClinicalTiers } from "@/data/clinicalRanking";
@@ -48,8 +47,6 @@ import {
   getBroadbandFallback,
   generateContextualRecommendation,
   getImplementationStatus,
-  getImplementationLabel,
-  getApplicationMode,
   SAFE_EMPTY_MESSAGE,
   type FilterContext,
   type RefinedScaleMatch,
@@ -117,15 +114,11 @@ function opensInApp(scale: ScaleEntry): boolean {
   return true;
 }
 
-// Aplicação COMPLETA: página dedicada, escala interativa por dados ou catálogo
-// mundial — em oposição a abrir apenas como ficha técnica.
+// Aplicação COMPLETA e preenchível dentro do app: deve ter itens/fluxo interno
+// respondível e cálculo/registro. Fichas técnicas, catálogo mundial e escalas
+// externas/licenciadas não entram no filtro principal.
 function isFullApp(scale: ScaleEntry): boolean {
-  return (
-    (Boolean(scale.appRoute) && !scale.appRoute!.startsWith("/generic-scale/")) ||
-    INTERACTIVE_SCALE_IDS.has(scale.id) ||
-    scale.id.startsWith("world-") ||
-    Boolean(interactiveScales[scale.id])
-  );
+  return getImplementationStatus(scale) === "complete" && opensAsUsableTool(scale);
 }
 
 function unique(scales: ScaleEntry[]) {
@@ -297,31 +290,6 @@ function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): R
   return matches;
 }
 
-
-function catalogToMatches(catalog: ScaleEntry[]): RefinedScaleMatch[] {
-  return unique(catalog)
-    .map((scale) => {
-      const implementationStatus = getImplementationStatus(scale);
-      return {
-        scale,
-        relevanceScore: opensAsUsableTool(scale) ? 88 : 72,
-        clinicalReason: "Exibição completa do banco de escalas filtráveis.",
-        warningFlags: [],
-        tier: opensAsUsableTool(scale) ? "gold" : "silver",
-        confidenceLevel: 100,
-        implementationStatus,
-        implementationLabel: getImplementationLabel(implementationStatus),
-        applicationMode: getApplicationMode(scale),
-        licenseRestricted: scale.licencaUso === "restrita" || scale.licencaUso === "comercial" || scale.licencaUso === "contato_autor",
-      } satisfies RefinedScaleMatch;
-    })
-    .sort((a, b) => {
-      const fullAppDelta = Number(isFullApp(b.scale)) - Number(isFullApp(a.scale));
-      if (fullAppDelta) return fullAppDelta;
-      return a.scale.name.localeCompare(b.scale.name, "pt-BR");
-    });
-}
-
 function tierFromSlot(slot: Slot): Tier | null {
   if (slot === "Ouro") return "ouro";
   if (slot === "Prata") return "prata";
@@ -467,13 +435,6 @@ export default function FiltroPage() {
   const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
-  const [showAllScales, setShowAllScales] = useState(false);
-  // "Só aplicação completa": esconde as fichas de referência (/generic-scale),
-  // deixando só escalas com página própria/usável no app. Reversível, por ora.
-  // REGRA C (Dr. Jadson, 2026-06-12): o catálogo do filtro já exclui restritas/
-  // comerciais sem aplicação; todas as de licença livre aparecem por padrão.
-  // O botão "Só aplicação completa" continua disponível para ocultar fichas.
-  const [onlyApp, setOnlyApp] = useState(false);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -498,20 +459,13 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  // Catálogo do filtro = só escalas que ABREM (rota dedicada, escala interativa
-  // ou catálogo mundial). Fichas técnicas puras (ADOS-2, Bayley…) saem — nunca
-  // recomendamos um beco sem saída.
+  // Catálogo do filtro = apenas escalas que abrem uma APLICAÇÃO completa e
+  // preenchível dentro do app. Fichas técnicas (/generic-scale), catálogo mundial
+  // genérico e instrumentos externos/licenciados não aparecem no ranking.
   const catalog = useMemo(() => {
-    // REGRA C (atualizada — Dr. Jadson, 2026-06-18): TODA escala que abre
-    // internamente entra no filtro, INCLUSIVE licenciadas (comercial/restrita) —
-    // elas abrem como FICHA interna (descrição, faixa, pontos de corte, como
-    // aplicar), nunca link externo nem beco sem saída. Assim os padrões-ouro
-    // (ADOS-2, CARS-2, SRS-2, Dunn…) deixam de sumir do filtro. O toggle "Só
-    // aplicação completa" (onlyApp) segue disponível para ocultar fichas.
-    const base = unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp);
-    return onlyApp ? base.filter(isFullApp) : base;
-  }, [world, onlyApp]);
-  const hasSearch = showAllScales || search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
+    return unique([...CORE_FILTERABLE_CATALOG, ...world]).filter((scale) => opensInApp(scale) && isFullApp(scale));
+  }, [world]);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
@@ -533,10 +487,7 @@ export default function FiltroPage() {
   }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, search]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
-  const refinedMatches = useMemo(
-    () => showAllScales ? catalogToMatches(catalog) : rankSafely(catalog, filterContext, search),
-    [catalog, filterContext, search, showAllScales]
-  );
+  const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
   const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
   const catalogById = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
@@ -579,12 +530,11 @@ export default function FiltroPage() {
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
-    setShowAllScales(false);
     setSelectedQueixas((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]); setShowAllScales(false);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]);
   };
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
@@ -649,29 +599,6 @@ export default function FiltroPage() {
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            <button
-              type="button"
-              aria-pressed={showAllScales}
-              aria-label="Mostrar todas as escalas do banco filtrável"
-              onMouseEnter={() => softHover()}
-              onClick={() => {
-                softTick();
-                haptic.select();
-                setShowAllScales((v) => !v);
-                setSelectedQueixas([]);
-                setSelectedAge(null);
-                setSelectedRespondente(null);
-                setSelectedCommunication(null);
-                setSelectedLiteracy(null);
-                setSelectedAssessmentType(null);
-                setSelectedSignalIds([]);
-                setSearch("");
-              }}
-              className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${showAllScales ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
-            >
-              <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">🌐</span>
-              <span className="truncate text-[11px] sm:text-xs leading-tight">Todas as escalas</span>
-            </button>
             {queixas.map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} aria-label={q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
               {q.emoji && <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">{q.emoji}</span>}
               <span className="truncate text-[11px] sm:text-xs leading-tight">{q.label}</span>
@@ -682,7 +609,7 @@ export default function FiltroPage() {
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quem responde</p>
           <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="crianca" type="button" aria-pressed={selectedRespondente === "autoaplicavel"} aria-label="Respondente: criança (teste direto)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "autoaplicavel" ? null : "autoaplicavel")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "autoaplicavel" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🧒</span> <span className="hidden sm:inline">Direto</span></button>
+            <button key="crianca" type="button" aria-pressed={selectedRespondente === "teste_direto_crianca"} aria-label="Respondente: criança (teste direto preenchível)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "teste_direto_crianca" ? null : "teste_direto_crianca")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "teste_direto_crianca" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">🧒</span> <span className="hidden sm:inline">Direto</span></button>
             <button key="pais" type="button" aria-pressed={selectedRespondente === "pais"} aria-label="Respondente: pais ou cuidador" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👨‍👩‍👧</span> <span className="hidden sm:inline">Pais</span></button>
             <button key="professor" type="button" aria-pressed={selectedRespondente === "professor"} aria-label="Respondente: professor ou escola" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👨‍🏫</span> <span className="hidden sm:inline">Escola</span></button>
             <button key="clinico" type="button" aria-pressed={selectedRespondente === "clinico"} aria-label="Respondente: clínico (observação direta)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">👨‍⚕️</span> <span className="hidden sm:inline">Clínico</span></button>
@@ -715,17 +642,14 @@ export default function FiltroPage() {
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
-          <button
-            type="button"
-            aria-pressed={onlyApp}
-            aria-label="Mostrar somente escalas com aplicação completa no app"
-            onMouseEnter={() => softHover()}
-            onClick={() => { softTick(); haptic.select(); setOnlyApp((v) => !v); }}
-            className={`w-full rounded-xl sm:rounded-2xl border px-3 py-2 text-xs font-bold transition min-h-9 flex items-center justify-between gap-2 ${onlyApp ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+          <div
+            role="status"
+            aria-label="O filtro mostra somente escalas completas e preenchíveis no app"
+            className="w-full rounded-xl sm:rounded-2xl border border-primary bg-primary px-3 py-2 text-xs font-bold text-primary-foreground min-h-9 flex items-center justify-between gap-2"
           >
-            <span className="flex items-center gap-1.5"><span aria-hidden="true">{onlyApp ? "✅" : "📄"}</span> Só aplicação completa</span>
-            <span className={`text-[10px] font-semibold ${onlyApp ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{onlyApp ? "fichas ocultas" : "inclui fichas"}</span>
-          </button>
+            <span className="flex items-center gap-1.5"><span aria-hidden="true">✅</span> Só completas e preenchíveis</span>
+            <span className="text-[10px] font-semibold text-primary-foreground/80">fichas ocultas</span>
+          </div>
         </div>
       </section>
 
@@ -765,7 +689,7 @@ export default function FiltroPage() {
         {/* RIGHT COLUMN — Results (lg:col-span-2) */}
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
-        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">{showAllScales ? "Todas as escalas do banco filtrável" : "Recomendações por prioridade clínica"}</h2></div>
+        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
         {usingBroadbandFallback && (
           <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100" role="note">
             Sem instrumento <strong>específico</strong> validado para esta combinação nesta idade. Mostrando <strong>triagem ampla</strong> apropriada à idade (instrumentos reais) — use como rastreio inicial, não como avaliação específica.
@@ -891,16 +815,16 @@ export default function FiltroPage() {
           })}
         </div>
         )}
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza instrumentos disponíveis; não inventa pontuação, não substitui diagnóstico e marca escalas que exigem permissão.</CardContent></Card>
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza somente aplicações completas e preenchíveis dentro do app; não inventa pontuação e não substitui diagnóstico.</CardContent></Card>
         </section>
         )}
 
         {!hasSearch && (
         <section className="lg:col-span-2 space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários aplicáveis, inventários e 100 escalas mundiais sem custo.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui apenas escalas existentes, questionários e inventários com aplicação interna preenchível.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas ficam como ficha clínica até permissão formal.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Fichas e escalas restritas ficam fora do filtro até terem aplicação preenchível autorizada.</p></CardContent></Card>
         </div>
         <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-5 sm:p-6">
           <CardContent className="space-y-5 p-0">
@@ -956,9 +880,9 @@ export default function FiltroPage() {
 
       {/* Catálogo resumido — Full Width */}
       <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
-        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{showAllScales ? rankedPool.length : rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
+        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
-          {(showAllScales ? rankedPool : rankedPool.slice(0, 24)).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
+          {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
             <Link key={s.id} href={resolveAppRoute(s) ?? "/filtro"} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition cursor-pointer hover:border-primary/30 hover:bg-background">
               <div className="filter-260-card-content compact">
                 <div className="filter-260-head">
