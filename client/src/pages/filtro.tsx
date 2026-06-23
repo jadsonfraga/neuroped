@@ -55,6 +55,7 @@ import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
 
 type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar" | "Satisfação Medicação";
+type AvailabilityMode = "complete" | "all";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -434,6 +435,7 @@ export default function FiltroPage() {
   const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(null);
   const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
+  const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>("complete");
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
@@ -459,13 +461,14 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
-  // Catálogo do filtro = apenas escalas que abrem uma APLICAÇÃO completa e
-  // preenchível dentro do app. Fichas técnicas (/generic-scale), catálogo mundial
-  // genérico e instrumentos externos/licenciados não aparecem no ranking.
+  // Catálogo do filtro. Por padrão exibe só aplicações completas e preenchíveis,
+  // mas o botão "Todas as escalas" reabre fichas técnicas com rota real sem cair
+  // no catálogo mundial genérico. Isso preserva a opção introduzida no #446.
   const catalog = useMemo(() => {
-    return unique([...CORE_FILTERABLE_CATALOG, ...world]).filter((scale) => opensInApp(scale) && isFullApp(scale));
-  }, [world]);
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
+    const routedScales = unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(opensInApp);
+    return availabilityMode === "all" ? routedScales : routedScales.filter(isFullApp);
+  }, [world, availabilityMode]);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType) || availabilityMode === "all";
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
@@ -534,7 +537,7 @@ export default function FiltroPage() {
   };
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]); setAvailabilityMode("complete");
   };
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
@@ -642,13 +645,28 @@ export default function FiltroPage() {
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
-          <div
-            role="status"
-            aria-label="O filtro mostra somente escalas completas e preenchíveis no app"
-            className="w-full rounded-xl sm:rounded-2xl border border-primary bg-primary px-3 py-2 text-xs font-bold text-primary-foreground min-h-9 flex items-center justify-between gap-2"
-          >
-            <span className="flex items-center gap-1.5"><span aria-hidden="true">✅</span> Só completas e preenchíveis</span>
-            <span className="text-[10px] font-semibold text-primary-foreground/80">fichas ocultas</span>
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2" role="group" aria-label="Filtrar por disponibilidade da escala">
+            <button
+              type="button"
+              aria-pressed={availabilityMode === "complete"}
+              onMouseEnter={() => softHover()}
+              onClick={() => setAvailabilityMode("complete")}
+              className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 text-left text-xs font-bold transition min-h-10 ${availabilityMode === "complete" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span aria-hidden="true">✅</span> Completas
+              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">preenchíveis</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={availabilityMode === "all"}
+              aria-label="Todas as escalas com rota real no app"
+              onMouseEnter={() => softHover()}
+              onClick={() => setAvailabilityMode("all")}
+              className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 text-left text-xs font-bold transition min-h-10 ${availabilityMode === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span aria-hidden="true">📚</span> Todas as escalas
+              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">inclui fichas</span>
+            </button>
           </div>
         </div>
       </section>
@@ -815,7 +833,7 @@ export default function FiltroPage() {
           })}
         </div>
         )}
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza somente aplicações completas e preenchíveis dentro do app; não inventa pontuação e não substitui diagnóstico.</CardContent></Card>
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza {availabilityMode === "all" ? "aplicações e fichas técnicas com rota real" : "somente aplicações completas e preenchíveis"} dentro do app; não inventa pontuação e não substitui diagnóstico.</CardContent></Card>
         </section>
         )}
 
