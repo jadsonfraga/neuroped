@@ -13,7 +13,9 @@ import {
   loadPreConsultas,
   preConsultaQueixas,
   recommendPreConsultaScales,
+  sanitizeAgeInput,
   savePreConsultas,
+  validateAge,
   type PreConsultaContexto,
   type PreConsultaRecord,
   type PreConsultaRespondente,
@@ -34,10 +36,6 @@ const respondentes: Array<{ id: PreConsultaRespondente; label: string }> = [
   { id: "secretaria", label: "Secretária auxiliando" },
 ];
 
-function idadeMeses(anos: string, meses: string) {
-  return Math.max(0, Number(anos || 0) * 12 + Number(meses || 0));
-}
-
 export default function PreConsultaPage() {
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
@@ -48,19 +46,30 @@ export default function PreConsultaPage() {
   const [observacoes, setObservacoes] = useState("");
   const [saved, setSaved] = useState<PreConsultaRecord | null>(null);
 
+  const ageValidation = useMemo(() => validateAge({ years: anos, months: meses }), [anos, meses]);
+
   const draft = useMemo(() => createPreConsultaRecord({
     paciente,
-    idadeMeses: idadeMeses(anos, meses),
+    idadeMeses: ageValidation.totalMonths,
     queixa,
     respondente,
     contexto,
     observacoes,
-  }), [paciente, anos, meses, queixa, respondente, contexto, observacoes]);
+  }), [paciente, ageValidation.totalMonths, queixa, respondente, contexto, observacoes]);
 
-  const recommendations = useMemo(() => recommendPreConsultaScales(draft), [draft]);
-  const summary = useMemo(() => buildPreConsultaSummary(saved || draft, recommendations), [saved, draft, recommendations]);
+  const recommendations = useMemo(() => ageValidation.isValid ? recommendPreConsultaScales(draft) : [], [ageValidation.isValid, draft]);
+  const summary = useMemo(
+    () => ageValidation.isValid
+      ? buildPreConsultaSummary(saved || draft, recommendations)
+      : "Corrija a idade antes de gerar o resumo clínico.",
+    [ageValidation.isValid, saved, draft, recommendations],
+  );
 
   function salvar() {
+    if (!ageValidation.isValid) {
+      setSaved(null);
+      return;
+    }
     const record = { ...draft, status: "pronto-medico" as const };
     const current = loadPreConsultas();
     savePreConsultas([record, ...current].slice(0, 50));
@@ -68,7 +77,13 @@ export default function PreConsultaPage() {
   }
 
   async function copiar() {
+    if (!ageValidation.isValid) return;
     await navigator.clipboard?.writeText(summary);
+  }
+
+  function imprimir() {
+    if (!ageValidation.isValid) return;
+    window.print();
   }
 
   return (
@@ -98,13 +113,40 @@ export default function PreConsultaPage() {
               </label>
               <label className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anos</span>
-                <Input type="number" min={0} max={20} value={anos} onChange={(event) => setAnos(event.target.value)} />
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min={0}
+                  max={18}
+                  value={anos}
+                  aria-invalid={!ageValidation.isValid}
+                  aria-describedby="pre-consulta-age-error"
+                  onChange={(event) => setAnos(sanitizeAgeInput(event.target.value))}
+                  className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
+                />
               </label>
               <label className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Meses</span>
-                <Input type="number" min={0} max={11} value={meses} onChange={(event) => setMeses(event.target.value)} />
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min={0}
+                  max={11}
+                  value={meses}
+                  aria-invalid={!ageValidation.isValid}
+                  aria-describedby="pre-consulta-age-error"
+                  onChange={(event) => setMeses(sanitizeAgeInput(event.target.value))}
+                  className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
+                />
               </label>
             </div>
+            {!ageValidation.isValid && (
+              <div id="pre-consulta-age-error" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+                {ageValidation.errors.join(" ")}
+              </div>
+            )}
 
             <PremiumVisualPanel
               src={brandAssets.illustrations.childAssessment}
@@ -146,9 +188,9 @@ export default function PreConsultaPage() {
             </label>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={salvar} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-consulta</Button>
-              <Button variant="outline" onClick={copiar} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
-              <Button variant="outline" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
+              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-consulta</Button>
+              <Button variant="outline" onClick={copiar} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
+              <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
             </div>
           </CardContent>
         </Card>

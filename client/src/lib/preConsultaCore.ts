@@ -24,6 +24,20 @@ export interface PreConsultaRecommendation {
   reason: string;
 }
 
+export interface AgeValidationInput {
+  years: string | number;
+  months: string | number;
+}
+
+export interface AgeValidationResult {
+  isValid: boolean;
+  years: number;
+  months: number;
+  totalMonths: number;
+  errors: string[];
+  label: string;
+}
+
 export const PRE_CONSULTA_STORAGE_KEY = "neuroped:pre-consultas";
 
 export const preConsultaQueixas = [
@@ -44,6 +58,51 @@ export const preConsultaQueixas = [
 ];
 
 const catalog = mergeFilterableCatalog([...allScales, ...noCostWorldScales]);
+
+export function sanitizeAgeInput(value: string): string {
+  return value.replace(/[^\d]/g, "");
+}
+
+function parseAgePart(value: string | number) {
+  const text = String(value).trim();
+  if (!/^\d+$/.test(text)) return Number.NaN;
+  return Number(text);
+}
+
+export function formatAgeLabel(totalMonths: number): string {
+  if (totalMonths < 24) return `${totalMonths} meses`;
+  return `${Math.floor(totalMonths / 12)} anos e ${totalMonths % 12} meses`;
+}
+
+export function validateAge({ years, months }: AgeValidationInput): AgeValidationResult {
+  const parsedYears = parseAgePart(years);
+  const parsedMonths = parseAgePart(months);
+  const errors: string[] = [];
+
+  if (!Number.isInteger(parsedYears) || parsedYears < 0 || parsedYears > 18) {
+    errors.push("Anos deve ser um número inteiro entre 0 e 18.");
+  }
+  if (!Number.isInteger(parsedMonths) || parsedMonths < 0 || parsedMonths > 11) {
+    errors.push("Meses deve ser um número inteiro entre 0 e 11.");
+  }
+
+  const safeYears = Number.isInteger(parsedYears) ? parsedYears : 0;
+  const safeMonths = Number.isInteger(parsedMonths) ? parsedMonths : 0;
+  const totalMonths = safeYears * 12 + safeMonths;
+
+  if (errors.length === 0 && totalMonths === 0) {
+    errors.push("Informe uma idade maior que 0 mês para gerar resumo clínico.");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    years: safeYears,
+    months: safeMonths,
+    totalMonths,
+    errors,
+    label: errors.length === 0 ? formatAgeLabel(totalMonths) : "",
+  };
+}
 
 function uniqueById(items: ScaleEntry[]): ScaleEntry[] {
   const seen = new Set<string>();
@@ -108,7 +167,7 @@ export function savePreConsultas(items: PreConsultaRecord[]) {
 }
 
 export function buildPreConsultaSummary(record: PreConsultaRecord, recommendations = recommendPreConsultaScales(record)) {
-  const idade = record.idadeMeses < 24 ? `${record.idadeMeses} meses` : `${Math.floor(record.idadeMeses / 12)} anos e ${record.idadeMeses % 12} meses`;
+  const idade = formatAgeLabel(record.idadeMeses);
   const escalas = recommendations
     .filter((item) => item.scale)
     .map((item) => `- ${item.label}: ${item.scale?.name} — ${item.scale?.fullName}`)
