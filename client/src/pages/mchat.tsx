@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { mchatQuestions, mchatReversedItems, classifyMchat } from "@/data/scales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,11 +14,18 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 export default function MchatPage() {
   const [answers, setAnswers] = useState<Record<number, boolean | null>>({});
   const [showResult, setShowResult] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  const answered = Object.values(answers).filter((v) => v !== null).length;
   const total = mchatQuestions.length;
+  const answered = mchatQuestions.reduce(
+    (count, _, i) => count + (answers[i] === true || answers[i] === false ? 1 : 0),
+    0,
+  );
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
+  const firstMissingIndex = mchatQuestions.findIndex((_, i) => answers[i] !== true && answers[i] !== false);
+  const missingCount = Math.max(total - answered, 0);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -44,6 +51,14 @@ export default function MchatPage() {
   }
 
   function handleSubmit() {
+    setSubmitAttempted(true);
+    if (!allAnswered) {
+      if (firstMissingIndex >= 0) {
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+      }
+      return;
+    }
     const score = calculateScore();
     const result = classifyMchat(score);
     saveMutation.mutate({
@@ -59,6 +74,7 @@ export default function MchatPage() {
   function handleReset() {
     setAnswers({});
     setShowResult(false);
+    setSubmitAttempted(false);
   }
 
   if (showResult) {
@@ -125,7 +141,7 @@ export default function MchatPage() {
           maxScore={20}
           classification={result.risk}
           description={result.description}
-          items={mchatQuestions.map((q, i) => ({ question: q, answer: answers[i] ? "Sim" : "Não", value: answers[i] ? 1 : 0 }))}
+          items={mchatQuestions.map((q, i) => ({ question: q, answer: answers[i] === true ? "Sim" : answers[i] === false ? "Não" : "—", value: answers[i] ? 1 : 0 }))}
           patientAge="16-30 meses"
         />
         <SaveToPatient
@@ -161,7 +177,14 @@ export default function MchatPage() {
           <span>{answered} de {total} respondidas</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" aria-label={`Progresso: ${answered} de ${total} perguntas respondidas`} />
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} perguntas respondidas`}
+        />
       </div>
 
       {/* Instruction */}
@@ -173,54 +196,78 @@ export default function MchatPage() {
 
       {/* Questions */}
       <div className="space-y-3">
-        {mchatQuestions.map((q, i) => (
-          <Card
-            key={i}
-            data-testid={`card-question-${i}`}
-            className={`border-card-border transition-all ${
-              answers[i] !== undefined && answers[i] !== null
-                ? "bg-card"
-                : "bg-card/60"
-            }`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs font-mono">
-                  {i + 1}
-                </Badge>
-                <div className="flex-1 space-y-3">
-                  <p className="text-sm text-foreground leading-relaxed">{q}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={answers[i] === true ? "default" : "outline"}
-                      onClick={() => setAnswers({ ...answers, [i]: true })}
-                      className="min-w-[64px]"
-                      data-testid={`button-yes-${i}`}
-                    >
-                      Sim
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={answers[i] === false ? "default" : "outline"}
-                      onClick={() => setAnswers({ ...answers, [i]: false })}
-                      className="min-w-[64px]"
-                      data-testid={`button-no-${i}`}
-                    >
-                      Não
-                    </Button>
+        {mchatQuestions.map((q, i) => {
+          const pending = submitAttempted && answers[i] !== true && answers[i] !== false;
+          return (
+            <Card
+              key={i}
+              ref={(node) => { itemRefs.current[i] = node; }}
+              tabIndex={-1}
+              aria-invalid={pending}
+              data-testid={`card-question-${i}`}
+              className={`border-card-border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                pending
+                  ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
+                  : answers[i] !== undefined && answers[i] !== null
+                    ? "bg-card"
+                    : "bg-card/60"
+              }`}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs font-mono">
+                    {i + 1}
+                  </Badge>
+                  <div className="flex-1 space-y-3">
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    {pending && (
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                        Resposta obrigatória para concluir a escala.
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={answers[i] === true ? "default" : "outline"}
+                        aria-pressed={answers[i] === true}
+                        onClick={() => setAnswers({ ...answers, [i]: true })}
+                        className="min-w-[64px]"
+                        data-testid={`button-yes-${i}`}
+                      >
+                        Sim
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={answers[i] === false ? "default" : "outline"}
+                        aria-pressed={answers[i] === false}
+                        onClick={() => setAnswers({ ...answers, [i]: false })}
+                        className="min-w-[64px]"
+                        data-testid={`button-no-${i}`}
+                      >
+                        Não
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {submitAttempted && !allAnswered && (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+          role="alert"
+        >
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+        </div>
+      )}
 
       {/* Submit */}
       <Button
         onClick={handleSubmit}
-        disabled={!allAnswered}
+        aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
         data-testid="button-submit"

@@ -149,6 +149,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           behavior: "smooth",
           block: "center",
         });
+        window.setTimeout(() => itemRefs.current[firstMissing.key]?.focus({ preventScroll: true }), 250);
       }
       return;
     }
@@ -417,7 +418,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           </span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} perguntas respondidas`}
+        />
         <div className="flex items-center justify-between gap-2">
           {answered > 0 ? (
             <span className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
@@ -509,7 +517,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 ref={(node) => {
                   itemRefs.current[key] = node;
                 }}
-                className={`border-card-border ${submitAttempted && answers[key] === undefined ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+                tabIndex={-1}
+                aria-invalid={submitAttempted && answers[key] === undefined}
+                className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${submitAttempted && answers[key] === undefined ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
               >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start gap-2">
@@ -560,11 +570,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                           <RadioGroupItem
                             value={j.toString()}
                             id={`q-${key}-o${j}`}
-                            className="sr-only"
+                            className="peer sr-only"
                           />
                           <Label
                             htmlFor={`q-${key}-o${j}`}
-                            className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-200 ${
+                            aria-pressed={answers[key] === j}
+                            className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                               answers[key] === j
                                 ? selectedColor
                                 : "bg-card text-foreground border-border hover:bg-muted"

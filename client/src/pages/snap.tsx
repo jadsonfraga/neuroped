@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { snapQuestions, snapLabels, classifySnap } from "@/data/scales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,11 +16,15 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 export default function SnapPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  const answered = Object.keys(answers).length;
   const total = snapQuestions.length;
+  const answered = snapQuestions.reduce((count, _, i) => count + (answers[i] !== undefined ? 1 : 0), 0);
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
+  const firstMissingIndex = snapQuestions.findIndex((_, i) => answers[i] === undefined);
+  const missingCount = Math.max(total - answered, 0);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -42,6 +46,14 @@ export default function SnapPage() {
   }
 
   function handleSubmit() {
+    setSubmitAttempted(true);
+    if (!allAnswered) {
+      if (firstMissingIndex >= 0) {
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+      }
+      return;
+    }
     const { inattention, hyperactivity } = calculateScores();
     const result = classifySnap(inattention, hyperactivity);
     saveMutation.mutate({
@@ -57,6 +69,7 @@ export default function SnapPage() {
   function handleReset() {
     setAnswers({});
     setShowResult(false);
+    setSubmitAttempted(false);
   }
 
   if (showResult) {
@@ -195,7 +208,14 @@ export default function SnapPage() {
           <span>{answered} de {total} respondidas</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} perguntas respondidas`}
+        />
       </div>
 
       {/* Instruction */}
@@ -214,13 +234,27 @@ export default function SnapPage() {
       </div>
 
       <div className="space-y-3">
-        {snapQuestions.slice(0, 9).map((q, i) => (
-          <Card key={i} data-testid={`card-question-${i}`} className="border-card-border">
+        {snapQuestions.slice(0, 9).map((q, i) => {
+          const pending = submitAttempted && answers[i] === undefined;
+          return (
+          <Card
+            key={i}
+            ref={(node) => { itemRefs.current[i] = node; }}
+            tabIndex={-1}
+            aria-invalid={pending}
+            data-testid={`card-question-${i}`}
+            className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+          >
             <CardContent className="p-4 space-y-3">
               <div className="flex items-start gap-2">
                 <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
                 <p className="text-sm text-foreground leading-relaxed">{q}</p>
               </div>
+              {pending && (
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                  Resposta obrigatória para concluir a escala.
+                </p>
+              )}
               <RadioGroup
                 value={answers[i]?.toString()}
                 onValueChange={(val) => setAnswers({ ...answers, [i]: parseInt(val) })}
@@ -228,10 +262,11 @@ export default function SnapPage() {
               >
                 {snapLabels.map((label, j) => (
                   <div key={j} className="flex items-center">
-                    <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="sr-only" />
+                    <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="peer sr-only" />
                     <Label
                       htmlFor={`q${i}-o${j}`}
-                      className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                      aria-pressed={answers[i] === j}
+                      className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                         answers[i] === j
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-card text-foreground border-border hover:bg-muted"
@@ -244,7 +279,8 @@ export default function SnapPage() {
               </RadioGroup>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Section: Hiperatividade/Impulsividade */}
@@ -258,13 +294,26 @@ export default function SnapPage() {
       <div className="space-y-3">
         {snapQuestions.slice(9).map((q, idx) => {
           const i = idx + 9;
+          const pending = submitAttempted && answers[i] === undefined;
           return (
-            <Card key={i} data-testid={`card-question-${i}`} className="border-card-border">
+            <Card
+              key={i}
+              ref={(node) => { itemRefs.current[i] = node; }}
+              tabIndex={-1}
+              aria-invalid={pending}
+              data-testid={`card-question-${i}`}
+              className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+            >
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
                   <p className="text-sm text-foreground leading-relaxed">{q}</p>
                 </div>
+                {pending && (
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                    Resposta obrigatória para concluir a escala.
+                  </p>
+                )}
                 <RadioGroup
                   value={answers[i]?.toString()}
                   onValueChange={(val) => setAnswers({ ...answers, [i]: parseInt(val) })}
@@ -272,10 +321,11 @@ export default function SnapPage() {
                 >
                   {snapLabels.map((label, j) => (
                     <div key={j} className="flex items-center">
-                      <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="sr-only" />
+                      <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="peer sr-only" />
                       <Label
                         htmlFor={`q${i}-o${j}`}
-                        className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                        aria-pressed={answers[i] === j}
+                        className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                           answers[i] === j
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-card text-foreground border-border hover:bg-muted"
@@ -292,10 +342,19 @@ export default function SnapPage() {
         })}
       </div>
 
+      {submitAttempted && !allAnswered && (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+          role="alert"
+        >
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+        </div>
+      )}
+
       {/* Submit */}
       <Button
         onClick={handleSubmit}
-        disabled={!allAnswered}
+        aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
         data-testid="button-submit"

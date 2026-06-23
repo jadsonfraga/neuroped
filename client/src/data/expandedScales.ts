@@ -73,6 +73,54 @@ export const cssrsQuestions = [
   { id: 5, text: "Começou a elaborar os detalhes de como se matar ou fez preparativos?", level: "Ideação com plano" },
   { id: 6, text: "Já fez algo, começou a fazer algo ou se preparou para fazer algo para acabar com sua vida?", level: "Comportamento suicida" },
 ];
+
+export function getVisibleCssrsQuestionIds(answers: Record<number, boolean>): number[] {
+  const visible = [1];
+
+  if (answers[1] === true) {
+    visible.push(2);
+    if (answers[2] === true) {
+      visible.push(3);
+      if (answers[3] === true) {
+        visible.push(4);
+        if (answers[4] === true) {
+          visible.push(5);
+        }
+      }
+    }
+  }
+
+  if (answers[1] !== undefined) {
+    visible.push(6);
+  }
+
+  return visible;
+}
+
+export function pruneCssrsAnswers(answers: Record<number, boolean>): Record<number, boolean> {
+  const visible = new Set(getVisibleCssrsQuestionIds(answers));
+  return Object.fromEntries(
+    Object.entries(answers)
+      .map(([key, value]) => [Number(key), value] as const)
+      .filter(([key]) => visible.has(key)),
+  );
+}
+
+export function getCssrsSkipLogicSummary(answers: Record<number, boolean>): string {
+  if (answers[1] === false) {
+    return "Lógica de interrupção aplicada: Q1 = Não; Q2-Q5 foram omitidas para não expor perguntas sobre ideação ativa, método, intenção ou plano sem indicação clínica.";
+  }
+  if (answers[2] === false) {
+    return "Lógica de interrupção aplicada: Q2 = Não; Q3-Q5 foram omitidas.";
+  }
+  if (answers[3] === false) {
+    return "Lógica de interrupção aplicada: Q3 = Não; Q4-Q5 foram omitidas.";
+  }
+  if (answers[4] === false) {
+    return "Lógica de interrupção aplicada: Q4 = Não; Q5 foi omitida.";
+  }
+  return "Lógica progressiva aplicada conforme respostas clínicas.";
+}
 export function classifyCssrs(answers: Record<number, boolean>) {
   if (answers[6]) return { level: 6, classification: "Comportamento Suicida", color: "red", description: "Presença de comportamento suicida. Encaminhamento IMEDIATO para emergência psiquiátrica." };
   if (answers[5]) return { level: 5, classification: "Ideação com Plano", color: "red", description: "Ideação suicida ativa com plano específico. Alto risco — encaminhamento urgente." };
