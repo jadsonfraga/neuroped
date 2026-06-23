@@ -98,7 +98,8 @@ function FieldSelect({ label, value, onChange, options }: { label: string; value
 
 export default function PreRetornoPage() {
   const [paciente, setPaciente] = useState("");
-  const [idade, setIdade] = useState("");
+  const [idadeAnos, setIdadeAnos] = useState("4");
+  const [idadeMeses, setIdadeMeses] = useState("0");
   const [ultimaConsulta, setUltimaConsulta] = useState("");
   const [motivo, setMotivo] = useState("");
   const [evolucao, setEvolucao] = useState("igual");
@@ -115,11 +116,13 @@ export default function PreRetornoPage() {
   const [observacoes, setObservacoes] = useState("");
   const [saved, setSaved] = useState<PreRetornoRecord | null>(null);
 
-  const draft = useMemo(() => buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes }), [paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes]);
+  const idadeLabel = idadeMeses === "0" ? `${idadeAnos} anos` : `${idadeAnos} anos e ${idadeMeses} meses`;
+
+  const draft = useMemo(() => buildRecord({ paciente, idade: idadeLabel, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes }), [paciente, idadeLabel, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes]);
   const resumo = useMemo(() => buildResumo(saved || draft), [saved, draft]);
 
   function salvar() {
-    const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
+    const record = buildRecord({ paciente, idade: idadeLabel, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
     saveRecords([record, ...loadRecords()].slice(0, 50));
     setSaved(record);
   }
@@ -143,7 +146,23 @@ export default function PreRetornoPage() {
         <Card><CardContent className="space-y-4 p-4">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paciente</span><Input value={paciente} onChange={(e) => setPaciente(e.target.value)} placeholder="Nome ou identificação" /></label>
-            <label className="space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</span><Input value={idade} onChange={(e) => setIdade(e.target.value)} placeholder="Ex.: 4 anos" /></label>
+            <div className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</span>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input type="number" min={0} max={18} value={idadeAnos}
+                    onChange={(e) => { const n = Math.min(18, Math.max(0, Math.round(Number(e.target.value) || 0))); setIdadeAnos(String(n)); }}
+                    aria-label="Anos" placeholder="Anos" />
+                  <span className="text-[11px] text-muted-foreground">Anos</span>
+                </div>
+                <div className="flex-1">
+                  <Input type="number" min={0} max={11} value={idadeMeses}
+                    onChange={(e) => { const n = Math.min(11, Math.max(0, Math.round(Number(e.target.value) || 0))); setIdadeMeses(String(n)); }}
+                    aria-label="Meses" placeholder="Meses" />
+                  <span className="text-[11px] text-muted-foreground">Meses (0–11)</span>
+                </div>
+              </div>
+            </div>
             <label className="space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Última consulta</span><Input value={ultimaConsulta} onChange={(e) => setUltimaConsulta(e.target.value)} placeholder="Data aproximada" /></label>
             <label className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Motivo do retorno</span><Input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Principal motivo" /></label>
           </div>

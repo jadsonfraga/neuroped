@@ -16,19 +16,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
 
-// Build a lookup: question index → subscale key + bg color for the dot
-const qToSubscale: Record<number, { key: string; dotColor: string }> = {};
-for (const [key, sub] of Object.entries(sdqSubscales)) {
-  const dotColor =
-    key === "prosocial" ? "bg-emerald-500" :
-    key === "hyperactivity" ? "bg-orange-500" :
-    key === "emotional" ? "bg-blue-500" :
-    key === "conduct" ? "bg-red-500" : "bg-purple-500";
-  for (const idx of sub.items) {
-    qToSubscale[idx] = { key, dotColor };
-  }
-}
-
 export default function SdqPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
@@ -194,7 +181,7 @@ export default function SdqPage() {
 
       {/* Progress */}
       <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
           <span>{answered} de {total} respondidas</span>
           <span>{Math.round(progress)}%</span>
         </div>
@@ -208,44 +195,52 @@ export default function SdqPage() {
         </p>
       </div>
 
-      {/* Questions in sequential order (1-25) */}
-      {sdqQuestions.map((question, qIdx) => {
-        const subscaleInfo = qToSubscale[qIdx];
-        return (
-          <Card key={qIdx} data-testid={`card-question-${qIdx}`} className="border-card-border">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{qIdx + 1}</Badge>
-                <p className="text-sm text-foreground leading-relaxed">{question}</p>
-                {subscaleInfo && (
-                  <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-1 ml-auto ${subscaleInfo.dotColor}`} title={sdqSubscales[subscaleInfo.key as keyof typeof sdqSubscales].name} />
-                )}
-              </div>
-              <RadioGroup
-                value={answers[qIdx]?.toString()}
-                onValueChange={(val) => setAnswers({ ...answers, [qIdx]: parseInt(val) })}
-                className="flex flex-wrap gap-2"
-              >
-                {sdqLabels.map((label, j) => (
-                  <div key={j} className="flex items-center">
-                    <RadioGroupItem value={j.toString()} id={`sdq-q${qIdx}-o${j}`} className="sr-only" />
-                    <Label
-                      htmlFor={`sdq-q${qIdx}-o${j}`}
-                      className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
-                        answers[qIdx] === j
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card text-foreground border-border hover:bg-muted"
-                      }`}
-                    >
-                      {label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
-        );
-      })}
+      {/* Questions by subscale */}
+      {Object.entries(sdqSubscales).map(([key, sub]) => (
+        <div key={key} className="space-y-3">
+          <div className="flex items-center gap-2 py-2">
+            <div className={`w-3 h-3 rounded-full ${
+              key === "prosocial" ? "bg-emerald-500" :
+              key === "hyperactivity" ? "bg-orange-500" :
+              key === "emotional" ? "bg-blue-500" :
+              key === "conduct" ? "bg-red-500" : "bg-purple-500"
+            }`} />
+            <h2 className={`text-sm font-semibold ${sub.color}`}>{sub.name}</h2>
+          </div>
+
+          {sub.items.map((qIdx) => (
+            <Card key={qIdx} data-testid={`card-question-${qIdx}`} className="border-card-border">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{qIdx + 1}</Badge>
+                  <p className="text-sm text-foreground leading-relaxed">{sdqQuestions[qIdx]}</p>
+                </div>
+                <RadioGroup
+                  value={answers[qIdx]?.toString()}
+                  onValueChange={(val) => setAnswers({ ...answers, [qIdx]: parseInt(val) })}
+                  className="flex flex-wrap gap-2"
+                >
+                  {sdqLabels.map((label, j) => (
+                    <div key={j} className="flex items-center">
+                      <RadioGroupItem value={j.toString()} id={`sdq-q${qIdx}-o${j}`} className="sr-only" />
+                      <Label
+                        htmlFor={`sdq-q${qIdx}-o${j}`}
+                        className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                          answers[qIdx] === j
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ))}
 
       {/* Submit */}
       <Button

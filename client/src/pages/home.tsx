@@ -98,8 +98,8 @@ const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
 };
 
 const metricCards = [
-  { label: "Escalas", value: appMetrics.scaleCount, icon: ClipboardCheck },
-  { label: "Filtráveis", value: appMetrics.filterableInstrumentCount, icon: Filter },
+  { label: "Escalas no catálogo", value: appMetrics.scaleCount, icon: ClipboardCheck },
+  { label: "Itens no filtro inteligente", value: appMetrics.filterableInstrumentCount, icon: Filter },
   { label: "Medicações", value: appMetrics.medicationCount, icon: Pill },
   { label: "Páginas", value: appMetrics.pageCount, icon: FileText },
 ];

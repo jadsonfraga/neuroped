@@ -12,10 +12,10 @@ import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
 
 export default function MchatPage() {
-  const [answers, setAnswers] = useState<Record<number, boolean | null>>({});
+  const [answers, setAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
 
-  const answered = Object.values(answers).filter((v) => v !== null).length;
+  const answered = Object.keys(answers).length;
   const total = mchatQuestions.length;
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
@@ -31,7 +31,7 @@ export default function MchatPage() {
     let score = 0;
     mchatQuestions.forEach((_, i) => {
       const answer = answers[i];
-      if (answer === null || answer === undefined) return;
+      if (answer === undefined) return;
       // Itens invertidos: "sim" = risco
       if (mchatReversedItems.includes(i)) {
         if (answer === true) score++;
@@ -156,9 +156,9 @@ export default function MchatPage() {
       </div>
 
       {/* Progress */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
-          <span>{answered} de {total} respondidas</span>
+      <div className="space-y-2" role="status">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span aria-live="polite">{answered} de {total} respondidas</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <Progress value={progress} className="h-2" aria-label={`Progresso: ${answered} de ${total} perguntas respondidas`} />
@@ -177,10 +177,12 @@ export default function MchatPage() {
           <Card
             key={i}
             data-testid={`card-question-${i}`}
-            className={`border-card-border transition-all ${
-              answers[i] !== undefined && answers[i] !== null
-                ? "bg-card"
-                : "bg-card/60"
+            className={`transition-all ${
+              answers[i] === undefined
+                ? "border-border bg-card/50"
+                : answers[i] === true
+                ? "border-emerald-300/60 dark:border-emerald-700/60 bg-card"
+                : "border-slate-300/60 dark:border-slate-600/60 bg-card"
             }`}
           >
             <CardContent className="p-4">
@@ -195,7 +197,8 @@ export default function MchatPage() {
                       size="sm"
                       variant={answers[i] === true ? "default" : "outline"}
                       onClick={() => setAnswers({ ...answers, [i]: true })}
-                      className="min-w-[64px]"
+                      className={`min-w-[64px] ${answers[i] === true ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600" : ""}`}
+                      aria-pressed={answers[i] === true}
                       data-testid={`button-yes-${i}`}
                     >
                       Sim
@@ -204,7 +207,8 @@ export default function MchatPage() {
                       size="sm"
                       variant={answers[i] === false ? "default" : "outline"}
                       onClick={() => setAnswers({ ...answers, [i]: false })}
-                      className="min-w-[64px]"
+                      className={`min-w-[64px] ${answers[i] === false ? "bg-slate-600 text-white border-slate-600 hover:bg-slate-700" : ""}`}
+                      aria-pressed={answers[i] === false}
                       data-testid={`button-no-${i}`}
                     >
                       Não
