@@ -72,7 +72,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
       { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
-      { href: "/pre-retorno", label: "Efeitos percebidos", icon: Pill },
+      { href: "/efeitos-colaterais", label: "Efeitos percebidos", icon: Pill },
       { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
     ],
@@ -105,7 +105,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/escalas-neuropsiquiatria", label: "100 escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "M-CHAT-R/F", icon: Baby },
-      { href: "/cars", label: "CARS-2", icon: ClipboardCheck },
+      { href: "/cars", label: "CARS", icon: ClipboardCheck },
       { href: "/denver", label: "Denver II", icon: BookOpen },
       { href: "/asq3", label: "ASQ-3", icon: Baby },
       { href: "/snap", label: "SNAP-IV", icon: Activity },

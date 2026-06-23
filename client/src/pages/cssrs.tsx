@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +11,34 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 export default function CssrsPage() {
   const [answers, setAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const total = cssrsQuestions.length;
-  const answered = Object.keys(answers).length;
+  // Skip logic: Q3-Q5 only shown if Q2 = true (active ideation confirmed)
+  const activeIdeation = answers[2] === true;
+  const visibleQuestions = cssrsQuestions.filter(
+    (q) => q.id <= 2 || q.id === 6 || activeIdeation
+  );
+
+  const total = visibleQuestions.length;
+  const answered = visibleQuestions.filter((q) => q.id in answers).length;
+
+  // Refs for scrolling to first unanswered question on submit attempt
+  const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const handleSubmit = () => {
+    if (answered < total) {
+      setSubmitAttempted(true);
+      const firstUnanswered = visibleQuestions.find((q) => !(q.id in answers));
+      if (firstUnanswered && itemRefs.current[firstUnanswered.id]) {
+        itemRefs.current[firstUnanswered.id]!.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+      return;
+    }
+    setShowResult(true);
+  };
 
   if (showResult) {
     const result = classifyCssrs(answers);
@@ -68,7 +93,7 @@ export default function CssrsPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <ClinicalReport
           scaleName="C-SSRS"
           scaleFullName="Columbia Suicide Severity Rating Scale"
@@ -85,7 +110,7 @@ export default function CssrsPage() {
           classification={result.classification}
           answers={answers}
         />
-        <Button onClick={() => { setAnswers({}); setShowResult(false); }} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
+        <Button onClick={() => { setAnswers({}); setShowResult(false); setSubmitAttempted(false); }} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
       </div>
     );
   }
@@ -103,39 +128,60 @@ export default function CssrsPage() {
       </div>
       <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
         <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
-          <strong>Instruções:</strong> Pergunte ao paciente cada questão. Se a resposta for “Sim”, prossiga com as perguntas seguintes. Cada nível escala a gravidade da ideação/comportamento suicida.
+          <strong>Instruções:</strong> Pergunte ao paciente cada questão. Se a resposta for "Sim", prossiga com as perguntas seguintes. Cada nível escala a gravidade da ideação/comportamento suicida.
+        </p>
+        <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed mt-2">
+          A escala usa lógica de pulo: se ideação ativa (Q2) for negada, as perguntas sobre método, intenção e plano são automaticamente omitidas.
         </p>
       </div>
-      {cssrsQuestions.map((q) => (
-        <Card key={q.id} className="border-card-border">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-start gap-2">
-              <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
-              <div>
-                <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">{q.level}</p>
-                <p className="text-sm text-foreground leading-relaxed">{q.text}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {[true, false].map((val) => (
-                <button
-                  key={val.toString()}
-                  onClick={() => setAnswers({ ...answers, [q.id]: val })}
-                  className={`text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors ${
-                    answers[q.id] === val
-                      ? val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500"
-                      : "bg-card text-foreground border-border hover:bg-muted"
-                  }`}
-                >
-                  {val ? "Sim" : "Não"}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-      <Button onClick={() => setShowResult(true)} disabled={answered < total} className="w-full" size="lg">
-        {answered >= total ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
+      {visibleQuestions.map((q) => {
+        const isUnanswered = submitAttempted && !(q.id in answers);
+        return (
+          <div
+            key={q.id}
+            ref={(el) => { itemRefs.current[q.id] = el; }}
+          >
+            <Card className={`border-card-border transition-colors ${isUnanswered ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
+                  <div>
+                    <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">{q.level}</p>
+                    <p className="text-sm text-foreground leading-relaxed">{q.text}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[true, false].map((val) => (
+                    <button
+                      key={val.toString()}
+                      onClick={() => setAnswers({ ...answers, [q.id]: val })}
+                      className={`text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                        answers[q.id] === val
+                          ? val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500"
+                          : "bg-card text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {val ? "Sim" : "Não"}
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })}
+      {!activeIdeation && answers[2] === false && (
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 p-4">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+              Questões 3-5 (método/intenção/plano) não se aplicam — ideação ativa ausente.
+            </p>
+          </div>
+        </div>
+      )}
+      <Button onClick={handleSubmit} className="w-full" size="lg">
+        {answered >= total ? "Ver Resultado" : `Responda todas as ${total} perguntas (${answered}/${total})`}
       </Button>
       <ScaleReference scaleId="cssrs" />
     </div>

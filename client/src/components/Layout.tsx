@@ -293,7 +293,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {sectionOpen && (
                   <div id={`nav-section-${si}`} className="space-y-1">
                     {section.items.map((item) => {
-                      const active = location === item.href;
+                      // Exact match OR location starts with item href followed by /
+                      // (e.g. /filtro active when on /generic-scale/:id if no closer match exists)
+                      const active =
+                        location === item.href ||
+                        (item.href !== "/" && location.startsWith(item.href + "/"));
                       return (
                         <Link key={`${sectionKey}-${item.href}-${item.label}`} href={item.href}>
                           <div

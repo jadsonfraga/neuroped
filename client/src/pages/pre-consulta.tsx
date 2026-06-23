@@ -98,11 +98,41 @@ export default function PreConsultaPage() {
               </label>
               <label className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anos</span>
-                <Input type="number" min={0} max={20} value={anos} onChange={(event) => setAnos(event.target.value)} />
+                <Input
+                  type="number"
+                  min={0}
+                  max={18}
+                  value={anos}
+                  onChange={(event) => {
+                    const v = event.target.value;
+                    if (v === "" || v === "-") { setAnos("0"); return; }
+                    const n = Math.min(18, Math.max(0, Math.round(Number(v))));
+                    setAnos(String(isNaN(n) ? 0 : n));
+                  }}
+                  className={Number(anos) < 0 || Number(anos) > 18 ? "border-red-400 focus-visible:ring-red-400" : ""}
+                />
+                {(Number(anos) > 18) && (
+                  <p className="text-[11px] text-red-600 dark:text-red-400">Máximo 18 anos</p>
+                )}
               </label>
               <label className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Meses</span>
-                <Input type="number" min={0} max={11} value={meses} onChange={(event) => setMeses(event.target.value)} />
+                <Input
+                  type="number"
+                  min={0}
+                  max={11}
+                  value={meses}
+                  onChange={(event) => {
+                    const v = event.target.value;
+                    if (v === "" || v === "-") { setMeses("0"); return; }
+                    const n = Math.min(11, Math.max(0, Math.round(Number(v))));
+                    setMeses(String(isNaN(n) ? 0 : n));
+                  }}
+                  className={Number(meses) < 0 || Number(meses) > 11 ? "border-red-400 focus-visible:ring-red-400" : ""}
+                />
+                {(Number(meses) > 11) && (
+                  <p className="text-[11px] text-red-600 dark:text-red-400">0 a 11 meses</p>
+                )}
               </label>
             </div>
 
