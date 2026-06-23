@@ -195,52 +195,53 @@ export default function SdqPage() {
         </p>
       </div>
 
-      {/* Questions by subscale */}
-      {Object.entries(sdqSubscales).map(([key, sub]) => (
-        <div key={key} className="space-y-3">
-          <div className="flex items-center gap-2 py-2">
-            <div className={`w-3 h-3 rounded-full ${
-              key === "prosocial" ? "bg-emerald-500" :
-              key === "hyperactivity" ? "bg-orange-500" :
-              key === "emotional" ? "bg-blue-500" :
-              key === "conduct" ? "bg-red-500" : "bg-purple-500"
-            }`} />
-            <h2 className={`text-sm font-semibold ${sub.color}`}>{sub.name}</h2>
-          </div>
-
-          {sub.items.map((qIdx) => (
-            <Card key={qIdx} data-testid={`card-question-${qIdx}`} className="border-card-border">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{qIdx + 1}</Badge>
-                  <p className="text-sm text-foreground leading-relaxed">{sdqQuestions[qIdx]}</p>
+      {/* Questions in sequential order (psychometric validity: no subscale grouping) */}
+      {sdqQuestions.map((question, qIdx) => {
+        const subscaleEntry = Object.entries(sdqSubscales).find(([, sub]) => sub.items.includes(qIdx));
+        const [subKey, subDef] = subscaleEntry ?? ["", { name: "", items: [], color: "" }];
+        const dotBg =
+          subKey === "prosocial" ? "bg-emerald-500" :
+          subKey === "hyperactivity" ? "bg-orange-500" :
+          subKey === "emotional" ? "bg-blue-500" :
+          subKey === "conduct" ? "bg-red-500" : "bg-purple-500";
+        return (
+          <Card key={qIdx} data-testid={`card-question-${qIdx}`} className="border-card-border">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{qIdx + 1}</Badge>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotBg}`} aria-hidden="true" />
+                    <span className={`text-[10px] font-medium ${subDef.color}`}>{subDef.name}</span>
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">{question}</p>
                 </div>
-                <RadioGroup
-                  value={answers[qIdx]?.toString()}
-                  onValueChange={(val) => setAnswers({ ...answers, [qIdx]: parseInt(val) })}
-                  className="flex flex-wrap gap-2"
-                >
-                  {sdqLabels.map((label, j) => (
-                    <div key={j} className="flex items-center">
-                      <RadioGroupItem value={j.toString()} id={`sdq-q${qIdx}-o${j}`} className="sr-only" />
-                      <Label
-                        htmlFor={`sdq-q${qIdx}-o${j}`}
-                        className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
-                          answers[qIdx] === j
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card text-foreground border-border hover:bg-muted"
-                        }`}
-                      >
-                        {label}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ))}
+              </div>
+              <RadioGroup
+                value={answers[qIdx]?.toString()}
+                onValueChange={(val) => setAnswers({ ...answers, [qIdx]: parseInt(val) })}
+                className="flex flex-wrap gap-2"
+              >
+                {sdqLabels.map((label, j) => (
+                  <div key={j} className="flex items-center">
+                    <RadioGroupItem value={j.toString()} id={`sdq-q${qIdx}-o${j}`} className="sr-only" />
+                    <Label
+                      htmlFor={`sdq-q${qIdx}-o${j}`}
+                      className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                        answers[qIdx] === j
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-card text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {/* Submit */}
       <Button
