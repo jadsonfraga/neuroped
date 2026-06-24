@@ -85,9 +85,10 @@ jobs:
       - name: Compilar frontend para Cloudflare Pages
         env:
           NODE_ENV: production
-          # PIN unico da trava privada (PrivateGate): defina o secret
-          # VITE_PIN_HASH = SHA-256 do PIN para bloquear todo o publico.
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+          # PIN unico da trava privada (PrivateGate).
+          # Fallback = SHA-256("vasco1108"). Para trocar o PIN, atualize o secret
+          # VITE_PIN_HASH no repositório GitHub com o novo SHA-256.
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH || 'c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd' }}
         run: npm run build:client
 
       - name: Verificar output do build
