@@ -3,6 +3,7 @@ import { X, Send, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ProfessionalType, Observation } from "./types";
 
 interface ObservationFormProps {
@@ -35,6 +36,7 @@ export function ObservationForm({
   const [tagInput, setTagInput] = useState("");
   const [confidenceLevel, setConfidenceLevel] = useState<"low" | "medium" | "high">("medium");
   const [errors, setErrors] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const handleAddTag = () => {
     if (tagInput.trim()) {
@@ -68,7 +70,7 @@ export function ObservationForm({
       professionalType,
       professionalName: professionalName.trim(),
       observationText: observationText.trim(),
-      createdByUserId: "current-user", // TODO: Get from context
+      createdByUserId: user?.id ?? "unknown",
       tags: tags.length > 0 ? tags : undefined,
       confidenceLevel,
     };

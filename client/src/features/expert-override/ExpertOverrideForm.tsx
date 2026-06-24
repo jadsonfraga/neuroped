@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AlertTriangle, Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ScaleOverride, OverrideReason } from "./types";
 
 interface ExpertOverrideFormProps {
@@ -62,6 +63,7 @@ export function ExpertOverrideForm({
   const [confidenceLevel, setConfidenceLevel] = useState<"low" | "medium" | "high">("medium");
   const [acknowledged, setAcknowledged] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const handleSubmit = () => {
     const newErrors: string[] = [];
@@ -97,7 +99,7 @@ export function ExpertOverrideForm({
       patientId,
       blockedReason,
       blockingRule,
-      overrideAuthorizedBy: "current-user", // TODO: Get from context
+      overrideAuthorizedBy: user?.id ?? "unknown",
       overrideReason,
       additionalNotes: additionalNotes.trim(),
       confidenceLevel,

@@ -351,7 +351,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     pendente_validacao_clinica: false,
   },
 
-  // ===== DOR/PAIN (1 escala) - FIX BUG-A001 =====
+  // ===== DOR/PAIN =====
   {
     id: "faces",
     name: "FACES",
@@ -369,7 +369,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     pendente_validacao_clinica: false,
   },
 
-  // ===== TRAUMA/PTSD (1 escala) - FIX BUG-A001 =====
+  // ===== TRAUMA/PTSD =====
   {
     id: "caps-ca",
     name: "CAPS-CA",

@@ -157,9 +157,9 @@ export function useToast(): ToastApi {
   if (!ctx) {
     // Fallback seguro sem provider — apenas console
     return {
-      success: (m) => console.log("[toast.success]", m),
+      success: () => {},
       error: (m) => console.warn("[toast.error]", m),
-      info: (m) => console.log("[toast.info]", m),
+      info: () => {},
       dismiss: () => {},
     };
   }
