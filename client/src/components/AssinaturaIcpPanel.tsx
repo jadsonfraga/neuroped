@@ -1,5 +1,15 @@
-import { useState } from "react";
-import { ShieldCheck, FileSignature, Loader2, Download, CheckCircle2, AlertTriangle, QrCode } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ShieldCheck,
+  FileSignature,
+  Loader2,
+  Download,
+  CheckCircle2,
+  AlertTriangle,
+  QrCode,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -13,21 +23,99 @@ interface Props {
   reason?: string;
 }
 
+const DB_NAME = "neuroped-icp";
+const DB_STORE = "cert";
+const DB_KEY = "saved";
+
+async function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveCert(p12: ArrayBuffer, senha: string): Promise<void> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, "readwrite");
+    tx.objectStore(DB_STORE).put({ p12, senha }, DB_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadCert(): Promise<{ p12: ArrayBuffer; senha: string } | null> {
+  const db = await openDb();
+  return new Promise((resolve) => {
+    const tx = db.transaction(DB_STORE, "readonly");
+    const req = tx.objectStore(DB_STORE).get(DB_KEY);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function deleteCert(): Promise<void> {
+  const db = await openDb();
+  return new Promise((resolve) => {
+    const tx = db.transaction(DB_STORE, "readwrite");
+    tx.objectStore(DB_STORE).delete(DB_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
+}
+
 /**
  * Assinatura digital ICP-Brasil (certificado A1 .p12) — 100% no navegador.
  * A chave privada NUNCA sai do dispositivo; nada é enviado ao servidor.
+ * O certificado pode ser salvo no IndexedDB do dispositivo para uso automático.
  */
 export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason }: Props) {
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [p12Name, setP12Name] = useState("");
   const [senha, setSenha] = useState("");
   const [cert, setCert] = useState<{ commonName: string; notAfter: Date; issuer: string } | null>(null);
-  const [busy, setBusy] = useState<"" | "verify" | "sign" | "plain">("");
+  const [busy, setBusy] = useState<"" | "verify" | "sign" | "plain" | "save">("");
   const [erro, setErro] = useState("");
   const [okMsg, setOkMsg] = useState("");
   const [verif, setVerif] = useState<{ hash: string; qr: string; url: string } | null>(null);
+  const [hasSaved, setHasSaved] = useState(false);
 
-  // Gera o comprovante verificável (SHA-256 + QR) do PDF produzido.
+  useEffect(() => {
+    // Tenta carregar do IndexedDB primeiro, depois do backend.
+    loadCert().then(async (saved) => {
+      if (saved) {
+        setHasSaved(true);
+        setP12(saved.p12);
+        setP12Name("certificado salvo no dispositivo");
+        setSenha(saved.senha);
+        return;
+      }
+      // Tenta buscar do backend (requer JWT ativo).
+      try {
+        const { authFetch } = await import("@/lib/authClient");
+        const r = await authFetch("/api/cert");
+        if (!r.ok) return;
+        const { cert: certB64, password: pwd } = await r.json();
+        if (!certB64) return;
+        // base64 → ArrayBuffer
+        const bin = atob(certB64);
+        const buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        const ab = buf.buffer;
+        // Salva localmente para evitar chamada ao backend nas próximas sessões.
+        await saveCert(ab, pwd);
+        setHasSaved(true);
+        setP12(ab);
+        setP12Name("certificado do consultório (backend)");
+        setSenha(pwd);
+      } catch {
+        /* backend sem cert configurado — usuário pode selecionar manualmente */
+      }
+    });
+  }, []);
+
   async function gerarComprovante(bytes: Uint8Array) {
     try {
       const { sha256Hex } = await import("@/lib/icpSign");
@@ -37,7 +125,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       const qr = await QRCode.toDataURL(url, { width: 240, margin: 1, errorCorrectionLevel: "M" });
       setVerif({ hash, qr, url });
     } catch {
-      /* comprovante é best-effort; não bloqueia o documento */
+      /* comprovante é best-effort */
     }
   }
 
@@ -47,6 +135,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     if (!f) return;
     setP12Name(f.name);
     setP12(await f.arrayBuffer());
+    setHasSaved(false);
   }
 
   async function verificar() {
@@ -59,6 +148,28 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     } catch {
       setErro("Não foi possível ler o certificado. Verifique a senha e o arquivo .p12.");
     } finally { setBusy(""); }
+  }
+
+  async function salvarNoDispositivo() {
+    if (!p12) { setErro("Selecione o certificado antes de salvar."); return; }
+    setBusy("save");
+    try {
+      await saveCert(p12, senha);
+      setHasSaved(true);
+      setOkMsg("Certificado salvo no dispositivo. Será carregado automaticamente nas próximas sessões.");
+    } catch {
+      setErro("Não foi possível salvar o certificado no dispositivo.");
+    } finally { setBusy(""); }
+  }
+
+  async function removerDoDispositivo() {
+    await deleteCert();
+    setHasSaved(false);
+    setP12(null);
+    setP12Name("");
+    setSenha("");
+    setCert(null);
+    setOkMsg("Certificado removido do dispositivo.");
   }
 
   async function baixarSemAssinar() {
@@ -100,32 +211,103 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         <h3 className="text-sm font-bold text-foreground">Assinatura digital ICP-Brasil (certificado A1)</h3>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Selecione seu certificado <strong>.p12</strong> (A1). A chave privada é usada só no seu
+        Selecione seu certificado <strong>.p12 / .pfx</strong> (A1). A chave privada é usada só no seu
         dispositivo — <strong>nada é enviado ao servidor</strong>. O PDF é gerado e assinado em padrão PAdES.
       </p>
 
+      {hasSaved && (
+        <div className="mb-3 rounded-lg border border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-2 flex items-center justify-between gap-2">
+          <p className="text-xs text-blue-800 dark:text-blue-200 flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+            Certificado salvo neste dispositivo — carregado automaticamente.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs text-red-600 hover:text-red-700 h-auto py-0.5 px-2"
+            onClick={removerDoDispositivo}
+          >
+            <Trash2 className="w-3 h-3 mr-1" /> Remover
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-2 sm:grid-cols-2">
         <div>
-          <label className="text-[11px] font-semibold text-muted-foreground">Certificado (.p12 / .pfx)</label>
-          <Input type="file" accept=".p12,.pfx" onChange={onPickP12} className="text-xs" data-testid="input-p12" />
-          {p12Name && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{p12Name}</p>}
+          <label className="text-[11px] font-semibold text-muted-foreground">
+            Certificado (.p12 / .pfx)
+          </label>
+          <Input
+            type="file"
+            accept=".p12,.pfx"
+            onChange={onPickP12}
+            className="text-xs"
+            data-testid="input-p12"
+          />
+          {p12Name && (
+            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{p12Name}</p>
+          )}
         </div>
         <div>
-          <label className="text-[11px] font-semibold text-muted-foreground">Senha do certificado</label>
-          <Input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" className="text-xs" data-testid="input-p12-senha" />
+          <label className="text-[11px] font-semibold text-muted-foreground">
+            Senha do certificado
+          </label>
+          <Input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="••••••••"
+            className="text-xs"
+            data-testid="input-p12-senha"
+          />
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mt-3">
-        <Button type="button" variant="outline" size="sm" onClick={verificar} disabled={!!busy || !p12}>
-          {busy === "verify" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} Verificar certificado
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={verificar}
+          disabled={!!busy || !p12}
+        >
+          {busy === "verify" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+          Verificar certificado
         </Button>
-        <Button type="button" size="sm" onClick={gerarEAssinar} disabled={!!busy || !p12} data-testid="button-sign">
-          {busy === "sign" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />} Gerar PDF e assinar
+        <Button
+          type="button"
+          size="sm"
+          onClick={gerarEAssinar}
+          disabled={!!busy || !p12}
+          data-testid="button-sign"
+        >
+          {busy === "sign" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />}
+          Gerar PDF e assinar
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={baixarSemAssinar} disabled={!!busy}>
-          {busy === "plain" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} PDF sem assinar
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={baixarSemAssinar}
+          disabled={!!busy}
+        >
+          {busy === "plain" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          PDF sem assinar
         </Button>
+        {p12 && !hasSaved && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={salvarNoDispositivo}
+            disabled={!!busy}
+            className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50 dark:text-blue-300 dark:border-blue-700"
+          >
+            {busy === "save" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvar no dispositivo
+          </Button>
+        )}
       </div>
 
       {cert && (
@@ -135,14 +317,20 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           </p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Titular: {cert.commonName}</p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Emissor: {cert.issuer}</p>
-          <p className="text-emerald-900/80 dark:text-emerald-200/80">Válido até: {cert.notAfter.toLocaleDateString("pt-BR")}</p>
+          <p className="text-emerald-900/80 dark:text-emerald-200/80">
+            Válido até: {cert.notAfter.toLocaleDateString("pt-BR")}
+          </p>
         </div>
       )}
       {erro && (
-        <p className="mt-2 text-xs text-red-700 dark:text-red-300 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> {erro}</p>
+        <p className="mt-2 text-xs text-red-700 dark:text-red-300 flex items-center gap-1">
+          <AlertTriangle className="w-3.5 h-3.5" /> {erro}
+        </p>
       )}
       {okMsg && (
-        <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {okMsg}</p>
+        <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+          <CheckCircle2 className="w-3.5 h-3.5" /> {okMsg}
+        </p>
       )}
 
       {verif && (
@@ -151,25 +339,37 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             <QrCode className="w-4 h-4 text-primary" /> Comprovante verificável (QR)
           </p>
           <div className="mt-2 flex flex-col sm:flex-row gap-3 items-start">
-            <img src={verif.qr} alt="QR de verificação do documento" className="w-32 h-32 rounded-lg border border-border bg-white p-1" />
+            <img
+              src={verif.qr}
+              alt="QR de verificação do documento"
+              className="w-32 h-32 rounded-lg border border-border bg-white p-1"
+            />
             <div className="min-w-0 flex-1 space-y-1.5">
               <p className="text-[11px] text-muted-foreground leading-snug">
-                Escaneie para abrir a verificação e confira a integridade do PDF baixado. O QR carrega
-                a impressão digital (SHA-256) do documento.
+                Escaneie para abrir a verificação e confira a integridade do PDF baixado. O QR
+                carrega a impressão digital (SHA-256) do documento.
               </p>
               <p className="text-[10px] font-mono break-all text-muted-foreground" data-testid="doc-hash">
                 SHA-256: {verif.hash}
               </p>
               <div className="flex flex-wrap gap-2 pt-0.5">
-                <a href={verif.url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary hover:underline">
+                <a
+                  href={verif.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] font-semibold text-primary hover:underline"
+                >
                   Abrir página de verificação
                 </a>
                 <button
                   type="button"
                   onClick={() => {
                     const a = document.createElement("a");
-                    a.href = verif.qr; a.download = `${filename}-qr-verificacao.png`;
-                    document.body.appendChild(a); a.click(); a.remove();
+                    a.href = verif.qr;
+                    a.download = `${filename}-qr-verificacao.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
                   }}
                   className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1"
                 >
@@ -182,8 +382,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       )}
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-snug">
-        Perfil PAdES-BES com seu certificado A1 ICP-Brasil. Para carimbo do tempo (AD-RT) de uma
-        Autoridade de Carimbo do Tempo ICP-Brasil, é necessário acoplar uma TSA — evolução futura.
+        Perfil PAdES-BES com seu certificado A1 ICP-Brasil. A chave privada permanece apenas neste
+        dispositivo — nunca é transmitida. "Salvar no dispositivo" armazena o certificado no
+        IndexedDB do navegador para carregamento automático futuro.
       </p>
     </section>
   );

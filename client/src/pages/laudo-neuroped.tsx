@@ -19,15 +19,21 @@ Data da avaliação:
 
 1. MOTIVO DA AVALIAÇÃO
 
+
 2. HISTÓRIA CLÍNICA E DO NEURODESENVOLVIMENTO
+
 
 3. EXAME CLÍNICO / NEUROLÓGICO / COMPORTAMENTAL
 
+
 4. ESCALAS, INSTRUMENTOS E DOCUMENTOS ANALISADOS
+
 
 5. IMPRESSÃO DIAGNÓSTICA
 
+
 6. CONDUTA E RECOMENDAÇÕES
+
 
 Petrolina/PE, ____/____/______.
 
@@ -58,34 +64,44 @@ function buildPrintHtml(texto: string): string {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Laudo Médico Neuropediátrico</title>
+<title>Laudo Médico Neuropediátrico — Dr. Jadson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4; margin: 18mm 18mm 22mm 18mm; }
-  * { box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; margin: 0; }
-  .header { display:flex; align-items:flex-start; justify-content:space-between; border-bottom:2.5px solid #1a56db; padding-bottom:10px; margin-bottom:18px; }
-  .header-title { font-size:17px; font-weight:800; color:#1a56db; }
-  .header-sub { font-size:10px; color:#555; margin-top:2px; }
-  .header-crm { font-size:10px; color:#555; text-align:right; line-height:1.5; }
-  .doc-text { font-size:12px; line-height:1.65; white-space:pre-wrap; }
-  .footer { margin-top:30px; border-top:1px solid #ccc; padding-top:10px; font-size:10px; color:#666; }
-  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+@page{size:A4;margin:18mm 18mm 22mm 18mm}
+:root{--navy:#1E2A4A;--bordo:#7A1F2B;--gold:#C9A961;--teal:#2E7163;--ivory:#FAFAF6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff;font-family:'Carlito',Arial,sans-serif;font-size:11pt;color:#1a1a24}
+.header{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:8pt;margin-bottom:14pt;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3pt;background:linear-gradient(to right,var(--gold) 34%,var(--teal) 56%,var(--bordo) 78%,var(--navy) 100%)}
+.brand{font-family:'Cormorant Garamond',Georgia,serif;font-size:20pt;font-weight:700;color:var(--navy);letter-spacing:.02em;display:block}
+.brand-sub{font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:block;margin-top:1pt}
+.crm{text-align:right;font-size:8.5pt;line-height:1.6;color:#444}
+.crm strong{color:var(--navy);display:block;font-size:9.5pt}
+.doc-text{font-size:11pt;line-height:1.7;white-space:pre-wrap;margin-top:14pt}
+.footer{margin-top:28pt;border-top:1pt solid #ddd;padding-top:8pt;font-size:8pt;color:#888;display:flex;justify-content:space-between}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 </head>
 <body>
   <div class="header">
     <div>
-      <div class="header-title">NeuroPed EDJ</div>
-      <div class="header-sub">Documento médico neuropediátrico</div>
+      <span class="brand">NeuroPed EDJ</span>
+      <span class="brand-sub">Neuropediatria · Neurodesenvolvimento</span>
     </div>
-    <div class="header-crm">
-      <strong>Dr. Jadson Fraga Araújo Júnior</strong><br>
+    <div class="crm">
+      <strong>Dr. Jadson Fraga Araújo Júnior</strong>
       CRM-PE 25.227 | RQE 17.756<br>
-      Neurologista Infantil / Neuropediatra
+      Neurologista Infantil / Neuropediatra<br>
+      Rua Raimundo Lacerda, 001 · São José<br>
+      Petrolina/PE · CEP 56302-470
     </div>
   </div>
   <main class="doc-text">${safeText}</main>
-  <div class="footer">Emitido em: ${today} — NeuroPed EDJ</div>
+  <div class="footer">
+    <span>Emitido em: ${today} — NeuroPed EDJ</span>
+    <span>Documento para fins médicos · sujeito a assinatura digital ICP-Brasil</span>
+  </div>
 </body>
 </html>`;
 }
@@ -108,18 +124,19 @@ export default function LaudoNeuropedPage() {
   return (
     <div className="space-y-5 pb-8">
       <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
-        <Badge variant="outline" className="w-fit">Documentos</Badge>
+        <Badge variant="outline" className="w-fit">Laudo</Badge>
         <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
           Laudo Neuropediátrico
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
           Cole o laudo completo em uma única área, já com identificação do paciente, história,
-          exame, hipótese diagnóstica, conduta e assinatura textual. Abaixo, selecione seu
-          certificado <strong>.p12/.pfx</strong>, informe a senha e gere o PDF assinado em padrão PAdES.
+          exame, hipótese diagnóstica, conduta e assinatura textual. Use os botões para
+          visualizar, imprimir ou assinar com seu certificado ICP-Brasil.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={() => setShowPreview(true)} variant="outline" size="sm" className="gap-2">
-            <FileText className="h-4 w-4" /> Visualizar
+          <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2">
+            <FileText className="h-4 w-4" />
+            {showPreview ? "Fechar prévia" : "Visualizar"}
           </Button>
           <Button onClick={handlePrint} size="sm" className="gap-2">
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
@@ -146,6 +163,21 @@ export default function LaudoNeuropedPage() {
         />
       </section>
 
+      {showPreview && (
+        <div className="rounded-2xl border border-border bg-card/80 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border/60">
+            <span className="text-sm font-semibold">Pré-visualização</span>
+            <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>✕</Button>
+          </div>
+          <iframe
+            srcDoc={buildPrintHtml(texto)}
+            className="w-full"
+            style={{ height: "680px", border: "none" }}
+            title="Laudo Preview"
+          />
+        </div>
+      )}
+
       <AssinaturaIcpPanel
         filename={filename}
         signerName="Dr. Jadson Fraga Araujo Junior"
@@ -163,25 +195,13 @@ export default function LaudoNeuropedPage() {
             sections: [
               { heading: "Conteudo integral do laudo", body: texto.trim() || "Sem conteudo informado." },
             ],
-            footer: "Documento emitido eletronicamente pela plataforma NeuroPed. Quando assinado, contem assinatura digital ICP-Brasil em padrao PAdES-BES com certificado A1 (.p12/.pfx), anexada ao proprio PDF e conferivel em validador oficial.",
+            footer:
+              "Documento emitido eletronicamente pela plataforma NeuroPed EDJ. Quando assinado, " +
+              "contem assinatura digital ICP-Brasil em padrao PAdES-BES com certificado A1 (.p12/.pfx), " +
+              "anexada ao proprio PDF e conferivel em validador oficial.",
           });
         }}
       />
-
-      {showPreview && (
-        <div className="rounded-2xl border border-border bg-card/80 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border/60">
-            <span className="text-sm font-semibold">Pré-visualização</span>
-            <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>✕</Button>
-          </div>
-          <iframe
-            srcDoc={buildPrintHtml(texto)}
-            className="w-full"
-            style={{ height: "680px", border: "none" }}
-            title="Laudo Preview"
-          />
-        </div>
-      )}
     </div>
   );
 }
