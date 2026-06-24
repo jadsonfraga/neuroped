@@ -347,7 +347,9 @@
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-direction: alternate;
-    will-change: transform;
+    /* will-change removed: causes black-flash repaint during scroll on mobile/
+       low-VRAM devices when combined with backdrop-blur sticky elements. The
+       translate3d in the keyframe already triggers hardware compositing. */
   }
   @keyframes np-aurora-breathe {
     from { transform: scale(1); opacity: 0.85; }

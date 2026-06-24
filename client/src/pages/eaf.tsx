@@ -5,14 +5,14 @@ import { eafDomains, eafLabels, classifyEaf } from "@/data/bateriaJadson";
 export default function EafPage() {
   return (
     <GenericScale config={{
-      title: "EAF-J26",
+      title: "EAF-NEXUS",
       subtitle: "Escala de Adaptação Funcional (2–18 anos)",
       icon: Users,
       gradient: "from-blue-500 to-cyan-600",
       instruction: "Para cada item, indique o nível de independência funcional que a criança/adolescente demonstra atualmente.",
       labels: eafLabels,
       domains: eafDomains,
-      infoBox: "EAF-J26: 24 itens, 6 domínios, máximo 72 pontos. Pontuações mais altas indicam maior autonomia funcional. Instrumento autoral — Dr. Jadson Fraga, 2026.",
+      infoBox: "EAFNEXUS: 24 itens, 6 domínios, máximo 72 pontos. Pontuações mais altas indicam maior autonomia funcional. Instrumento autoral — Dr. Jadson Fraga, 2026.",
       onCalculate: (answers) => {
         const domainResults = eafDomains.map((domain, di) => {
           const score = domain.items.reduce((sum, _, ii) => sum + (answers[`${di}-${ii}`] || 0), 0);

@@ -105,7 +105,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/escalas-neuropsiquiatria", label: "Escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "M-CHAT-R/F", icon: Baby },
-      { href: "/cars", label: "CARS-2", icon: ClipboardCheck },
+      { href: "/cars", label: "CARS", icon: ClipboardCheck },
       { href: "/denver", label: "Denver II", icon: BookOpen },
       { href: "/asq3", label: "ASQ-3", icon: Baby },
       { href: "/snap", label: "SNAP-IV", icon: Activity },

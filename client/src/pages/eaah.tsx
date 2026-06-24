@@ -63,7 +63,7 @@ export default function EaahPage() {
             <Flame className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — EAAH-J26</h1>
+            <h1 className="text-lg font-bold">Resultado — EAAH-NEXUS</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function EaahPage() {
               <div className="flex items-start gap-2">
                 <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                  EAAH-J26: 20 itens (17 risco + 3 proteção). Escore = Risco − Proteção. Domínio C (fatores protetores) usa escala invertida. Instrumento autoral — Dr. Jadson Fraga, 2026.
+                  EAAHNEXUS: 20 itens (17 risco + 3 proteção). Escore = Risco − Proteção. Domínio C (fatores protetores) usa escala invertida. Instrumento autoral — Dr. Jadson Fraga, 2026.
                 </p>
               </div>
             </div>
@@ -126,7 +126,7 @@ export default function EaahPage() {
 
         
         <ClinicalReport
-          scaleName="EAAH-J26"
+          scaleName="EAAH-NEXUS"
           scaleFullName="Escala de Autoagressividade e Heteroagressividade"
           totalScore={finalScore}
           classification={result.classification}
@@ -136,7 +136,7 @@ export default function EaahPage() {
           patientAge="4-17 anos"
         />
         <SaveToPatient
-          scaleName="EAAH-J26"
+          scaleName="EAAH-NEXUS"
           totalScore={finalScore}
           classification={result.classification}
           answers={answers}
@@ -156,7 +156,7 @@ export default function EaahPage() {
           <Flame className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">EAAH-J26</h1>
+          <h1 className="text-lg font-bold">EAAH-NEXUS</h1>
           <p className="text-xs text-muted-foreground">Escala de Autoagressividade e Heteroagressividade</p>
         </div>
       </div>

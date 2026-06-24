@@ -5,14 +5,14 @@ import { pdaeDomains, pdaeLabels, classifyPdae } from "@/data/bateriaJadson";
 export default function PdaePage() {
   return (
     <GenericScale config={{
-      title: "PDAE-J26",
+      title: "PDAE-NEXUS",
       subtitle: "Protocolo de Desempenho Acadêmico e Escolar (Ed. Infantil final ao 9º ano)",
       icon: GraduationCap,
       gradient: "from-amber-500 to-orange-600",
       instruction: "Para cada item, indique o nível de desempenho acadêmico da criança/adolescente considerando a etapa escolar atual.",
       labels: pdaeLabels,
       domains: pdaeDomains,
-      infoBox: "PDAE-J26: 24 itens, 5 domínios, máximo 72 pontos. Pontuações mais altas indicam desempenho mais adequado. Instrumento autoral — Dr. Jadson Fraga, 2026.",
+      infoBox: "PDAENEXUS: 24 itens, 5 domínios, máximo 72 pontos. Pontuações mais altas indicam desempenho mais adequado. Instrumento autoral — Dr. Jadson Fraga, 2026.",
       onCalculate: (answers) => {
         const domainResults = pdaeDomains.map((domain, di) => {
           const score = domain.items.reduce((sum, _, ii) => sum + (answers[`${di}-${ii}`] || 0), 0);

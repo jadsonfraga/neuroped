@@ -264,7 +264,7 @@ export const scales: ScaleEntry[] = [
   { id: "cssrs", name: "C-SSRS", fullName: "Columbia Suicide Severity Rating Scale", ageMin: 72, ageMax: 216, queixas: ["suicidio", "depressao"], respondente: ["clinico"], prioridade: "triagem", tempo: "5–10 min", appRoute: "/cssrs", description: "Escala Columbia — 6 níveis de gravidade de ideação suicida.", fonte: "Posner K et al., 2011", validacaoBrasil: "Sim", scoringCutoff: "Ideação: nível 1 desejo passivo; 2-3 ideação ativa; 4-5 plano/intenção suicida; Comportamento: qualquer resposta SIM requer intervenção", licencaUso: "livre" },
   { id: "asq-suicide", name: "ASQ", fullName: "Ask Suicide-Screening Questions", ageMin: 120, ageMax: 216, queixas: ["suicidio"], respondente: ["clinico"], prioridade: "triagem", tempo: "2 min", description: "4 perguntas de triagem rápida de risco suicida em emergência.", appRoute: "/generic-scale/asq-suicide"},
   { id: "siqjr", name: "SIQ-Jr", fullName: "Suicidal Ideation Questionnaire - Junior", ageMin: 84, ageMax: 168, queixas: ["suicidio"], respondente: ["autoaplicavel"], prioridade: "diagnostica", tempo: "10 min", description: "15 itens de autoavaliação de ideação suicida em crianças e adolescentes.", appRoute: "/generic-scale/siqjr"},
-  { id: "ecar-si", name: "ECAR-SI J26", fullName: "Escala Clínica de Avaliação de Risco — Suicidalidade Infantojuvenil", ageMin: 96, ageMax: 216, queixas: ["suicidio"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–20 min", appRoute: "/ecar-si", description: "36 itens, 9 blocos (8 risco + 1 proteção), alarmes clínicos e conduta." },
+  { id: "ecar-si", name: "ECAR-SI NEXUS", fullName: "Escala Clínica de Avaliação de Risco — Suicidalidade Infantojuvenil", ageMin: 96, ageMax: 216, queixas: ["suicidio"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–20 min", appRoute: "/ecar-si", description: "36 itens, 9 blocos (8 risco + 1 proteção), alarmes clínicos e conduta." },
 
   // ===== PSICOSE / MANIA =====
   { id: "ymrs", name: "YMRS", fullName: "Young Mania Rating Scale", ageMin: 144, ageMax: 216, queixas: ["psicose"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–20 min", description: "11 itens avaliando gravidade de mania — humor, atividade, sono, fala, pensamento.", appRoute: "/generic-scale/ymrs"},
@@ -289,12 +289,12 @@ export const scales: ScaleEntry[] = [
   { id: "pdae", name: "PDAE", fullName: "Protocolo de Desempenho Acadêmico e Escolar", ageMin: 72, ageMax: 216, queixas: ["aprendizagem"], respondente: ["professor", "pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/pdae", description: "Desempenho acadêmico e escolar — Bateria Dr. Jadson.", implementationStatus: "complete" },
   { id: "ecsm", name: "ECSM", fullName: "Escala de Cognição Social e Mentalização", ageMin: 48, ageMax: 216, queixas: ["tea", "cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/ecsm", description: "Cognição social e metacognição — Bateria Dr. Jadson." },
   { id: "ips", name: "IPS", fullName: "Inventário de Processamento Sensorial", ageMin: 24, ageMax: 144, queixas: ["tea", "atraso"], respondente: ["pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/ips", description: "Processamento sensorial — Bateria Dr. Jadson." },
-  { id: "edi", name: "EDI-J26", fullName: "Escala de Depressão Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["depressao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/edi", description: "24 itens de depressão infantil — Bateria de Regulação Emocional." },
-  { id: "eai", name: "EAI-J26", fullName: "Escala de Ansiedade Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["ansiedade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/eai", description: "20 itens de ansiedade infantil — Bateria de Regulação Emocional." },
-  { id: "easi", name: "EASI-J26", fullName: "Escala de Ansiedade Social Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["ansiedade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/easi", description: "15 itens de ansiedade social infantil — Bateria de Regulação Emocional." },
-  { id: "ems", name: "EMS-J26", fullName: "Escala de Mutismo Seletivo — Bateria Dr. Jadson", ageMin: 24, ageMax: 144, queixas: ["ansiedade", "linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/ems", description: "15 itens de mutismo seletivo — Bateria de Regulação Emocional." },
-  { id: "etare", name: "ETARE-J26", fullName: "Escala de Transtorno Alimentar Restritivo Evitativo — Bateria Dr. Jadson", ageMin: 24, ageMax: 216, queixas: ["alimentacao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/etare", description: "18 itens de TARE — Bateria de Regulação Emocional." },
-  { id: "eaah", name: "EAAH-J26", fullName: "Escala de Autoagressividade e Heteroagressividade — Bateria Dr. Jadson", ageMin: 36, ageMax: 216, queixas: ["comportamento", "suicidio"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/eaah", description: "20 itens de agressividade — Bateria de Regulação Emocional." },
+  { id: "edi", name: "EDI-NEXUS", fullName: "Escala de Depressão Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["depressao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/edi", description: "24 itens de depressão infantil — Bateria de Regulação Emocional." },
+  { id: "eai", name: "EAI-NEXUS", fullName: "Escala de Ansiedade Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["ansiedade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/eai", description: "20 itens de ansiedade infantil — Bateria de Regulação Emocional." },
+  { id: "easi", name: "EASI-NEXUS", fullName: "Escala de Ansiedade Social Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["ansiedade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/easi", description: "15 itens de ansiedade social infantil — Bateria de Regulação Emocional." },
+  { id: "ems", name: "EMS-NEXUS", fullName: "Escala de Mutismo Seletivo — Bateria Dr. Jadson", ageMin: 24, ageMax: 144, queixas: ["ansiedade", "linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/ems", description: "15 itens de mutismo seletivo — Bateria de Regulação Emocional." },
+  { id: "etare", name: "ETARE-NEXUS", fullName: "Escala de Transtorno Alimentar Restritivo Evitativo — Bateria Dr. Jadson", ageMin: 24, ageMax: 216, queixas: ["alimentacao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/etare", description: "18 itens de TARE — Bateria de Regulação Emocional." },
+  { id: "eaah", name: "EAAH-NEXUS", fullName: "Escala de Autoagressividade e Heteroagressividade — Bateria Dr. Jadson", ageMin: 36, ageMax: 216, queixas: ["comportamento", "suicidio"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/eaah", description: "20 itens de agressividade — Bateria de Regulação Emocional." },
 
   // ===== COGNIÇÃO / NEUROPSICOLOGIA (novas) =====
   { id: "wisc5-ext", name: "WISC-V", fullName: "Wechsler Intelligence Scale for Children V", ageMin: 72, ageMax: 204, queixas: ["cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "60–90 min", description: "Avalia inteligência em 5 índices fatoriais: compreensão verbal, visual-espacial, raciocínio fluido, memória de trabalho e velocidade de processamento.", fonte: "Wechsler D, 2014", validacaoBrasil: "Sim", scoringCutoff: "QI <70 deficiência intelectual provável", licencaUso: "comercial", pendente_validacao_clinica: false, appRoute: "/generic-scale/wisc5-ext"},
@@ -533,7 +533,7 @@ export function searchScales(query: string, scaleList: ScaleEntry[]): { scale: S
 //     oficial do Dr. Jadson (Bloco 0/1.3). Não fabricamos PMIDs de memória —
 //     a citação autor/ano basta como proveniência; o PMID exato pode ser
 //     confirmado em revisão clínica.
-//   • Instrumentos autorais (baterias J26, PANT, ferramentas de registro) →
+//   • Instrumentos autorais (baterias NEXUS, PANT, ferramentas de registro) →
 //     `licencaUso: "autoral"`, fonte do Dr. Jadson Fraga.
 //   • Itens genuinamente sem fonte identificável → "Pendente revisão clínica"
 //     + `pendente_validacao_clinica: true` (rastreado, não contabilizado como
@@ -541,7 +541,7 @@ export function searchScales(query: string, scaleList: ScaleEntry[]): { scale: S
 // O merge é NÃO destrutivo: valores inline existentes sempre prevalecem
 // ({ ...prov, ...s }).
 // ============================================================================
-const J26 = "Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26)";
+const NEXUS = "Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS)";
 const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
   // ----- Desenvolvimento / triagem -----
   denver: { fonte: "Frankenburg WK et al., 1992 (Denver II), Pediatrics", validacaoBrasil: "Sim (Denver II adaptado)", scoringCutoff: ">=2 atrasos = suspeito", licencaUso: "comercial" },
@@ -555,7 +555,7 @@ const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
   gars3: { fonte: "Gilliam JE, 2014 (GARS-3), PRO-ED", validacaoBrasil: "Não", scoringCutoff: "Autism Index >=70 muito provável", licencaUso: "comercial" },
   atec: { fonte: "Rimland B, Edelson SM, 1999 (ATEC), Autism Research Institute", validacaoBrasil: "Não", scoringCutoff: "escores menores = menor gravidade (monitorização)", licencaUso: "livre" },
   "tea-checklists": { fonte: "Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2", licencaUso: "autoral" },
-  "tea-comportamentos": { fonte: J26, licencaUso: "autoral" },
+  "tea-comportamentos": { fonte: NEXUS, licencaUso: "autoral" },
   vanderbilt: { fonte: "Wolraich ML et al., 2003 (NICHQ Vanderbilt)", pubmedId: "PMID 12777548", validacaoBrasil: "Parcial", scoringCutoff: ">=6 itens 2/3 por domínio + prejuízo", licencaUso: "livre" },
   barkley: { fonte: "Barkley RA, 2012 (Barkley Functional Impairment Scale - Children)", validacaoBrasil: "Não", scoringCutoff: "prejuízo em >=2 domínios", licencaUso: "comercial" },
   "brown-add": { fonte: "Brown TE, 2001 (Brown ADD Scales)", validacaoBrasil: "Não", scoringCutoff: "T-score elevado sugere disfunção executiva", licencaUso: "comercial" },
@@ -604,7 +604,7 @@ const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
   wppsi: { fonte: "Wechsler D, 2012 (WPPSI-IV), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "QI <70 deficiência intelectual provável", licencaUso: "comercial" },
   leiter3: { fonte: "Roid GH, Miller LJ, Pomplun M, 2013 (Leiter-3)", validacaoBrasil: "Não", scoringCutoff: "QI não-verbal <70 déficit", licencaUso: "comercial" },
   raven: { fonte: "Raven JC, 1947 (Raven Colorido); normas BR Angelini et al., 1999", validacaoBrasil: "Sim", scoringCutoff: "percentis por idade", licencaUso: "comercial" },
-  pant: { fonte: J26 + " — Protocolo PANT (100 escalas passivas)", licencaUso: "autoral" },
+  pant: { fonte: NEXUS + " — Protocolo PANT (100 escalas passivas)", licencaUso: "autoral" },
   // ----- Aprendizagem (BR) -----
   tde: { fonte: "Stein LM, 1994 (Teste de Desempenho Escolar — TDE)", validacaoBrasil: "Sim (instrumento brasileiro)", scoringCutoff: "classificação inferior/médio/superior por série", licencaUso: "comercial" },
   prolec: { fonte: "Cuetos F et al. (PROLEC); adaptação BR Capellini SA et al.", validacaoBrasil: "Sim", scoringCutoff: "perfil por processo de leitura", licencaUso: "comercial" },
@@ -617,7 +617,7 @@ const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
   cssrs: { fonte: "Posner K et al., 2011 (Columbia Suicide Severity Rating Scale)", validacaoBrasil: "Sim", scoringCutoff: "ideação 1–5 / comportamento presente = risco", licencaUso: "livre" },
   "asq-suicide": { fonte: "Horowitz LM et al., 2012 (Ask Suicide-Screening Questions)", validacaoBrasil: "Parcial", scoringCutoff: "qualquer 'sim' = triagem positiva", licencaUso: "livre" },
   siqjr: { fonte: "Reynolds WM, 1988 (Suicidal Ideation Questionnaire - JR)", validacaoBrasil: "Parcial", scoringCutoff: ">=31 risco elevado", licencaUso: "comercial" },
-  "ecar-si": { fonte: J26, licencaUso: "autoral" },
+  "ecar-si": { fonte: NEXUS, licencaUso: "autoral" },
   // ----- Psicose / mania -----
   ymrs: { fonte: "Young RC et al., 1978 (Young Mania Rating Scale)", validacaoBrasil: "Sim (Vilela et al.)", scoringCutoff: ">=20 mania significativa", licencaUso: "livre" },
   bprsc: { fonte: "Overall JE, Pfefferbaum B, 1982 (BPRS for Children)", validacaoBrasil: "Não", scoringCutoff: "escore total dimensional", licencaUso: "livre" },
@@ -630,18 +630,18 @@ const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
   uku: { fonte: "Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale)", validacaoBrasil: "Parcial", scoringCutoff: "gravidade 0–3 por item", licencaUso: "livre" },
   // ----- Substâncias -----
   crafft: { fonte: "Knight JR et al., 2002 (CRAFFT)", validacaoBrasil: "Sim", scoringCutoff: ">=2 risco de uso problemático", licencaUso: "livre" },
-  // ----- Baterias autorais J26 -----
-  emdi: { fonte: J26, licencaUso: "autoral" },
-  eaf: { fonte: J26, licencaUso: "autoral" },
-  pdae: { fonte: J26, licencaUso: "autoral" },
-  ecsm: { fonte: J26, licencaUso: "autoral" },
-  ips: { fonte: J26, licencaUso: "autoral" },
-  edi: { fonte: J26, licencaUso: "autoral" },
-  eai: { fonte: J26, licencaUso: "autoral" },
-  easi: { fonte: J26, licencaUso: "autoral" },
-  ems: { fonte: J26, licencaUso: "autoral" },
-  etare: { fonte: J26, licencaUso: "autoral" },
-  eaah: { fonte: J26, licencaUso: "autoral" },
+  // ----- Baterias autorais NEXUS -----
+  emdi: { fonte: NEXUS, licencaUso: "autoral" },
+  eaf: { fonte: NEXUS, licencaUso: "autoral" },
+  pdae: { fonte: NEXUS, licencaUso: "autoral" },
+  ecsm: { fonte: NEXUS, licencaUso: "autoral" },
+  ips: { fonte: NEXUS, licencaUso: "autoral" },
+  edi: { fonte: NEXUS, licencaUso: "autoral" },
+  eai: { fonte: NEXUS, licencaUso: "autoral" },
+  easi: { fonte: NEXUS, licencaUso: "autoral" },
+  ems: { fonte: NEXUS, licencaUso: "autoral" },
+  etare: { fonte: NEXUS, licencaUso: "autoral" },
+  eaah: { fonte: NEXUS, licencaUso: "autoral" },
   // ----- Cognição / neuropsicologia (lote "novas") -----
   "wppsi4-ext": { fonte: "Wechsler D, 2012 (WPPSI-IV), Pearson", validacaoBrasil: "Parcial", scoringCutoff: "QI <70 deficiência intelectual provável", licencaUso: "comercial" },
   "leiter3-ext": { fonte: "Roid GH, Miller LJ, Pomplun M, 2013 (Leiter-3)", validacaoBrasil: "Não", scoringCutoff: "QI não-verbal <70 déficit", licencaUso: "comercial" },
@@ -749,10 +749,10 @@ const scalesComProveniencia: ScaleEntry[] = scales.map((s) =>
   provenanciaLegado[s.id] ? { ...provenanciaLegado[s.id], ...s } : s
 );
 
-// Merge: legado (com proveniência) + autorais J26 + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25) + open-access mundiais + 230 complementares
+// Merge: legado (com proveniência) + autorais NEXUS + escalas importadas (Ebook PANT v7 / SuperNeuroKids v25) + open-access mundiais + 230 complementares
 const allScalesBase: ScaleEntry[] = [
   ...scalesComProveniencia,
-  // Curadoria clínica: das 257 autorais J26, só as aprovadas (marcos do
+  // Curadoria clínica: das 257 autorais NEXUS, só as aprovadas (marcos do
   // neurodesenvolvimento, baixo/médio risco) entram no filtro. Ver
   // escalasAutoraisCuradoria.ts para o critério e a lista.
   ...escalasAutoraisDrJadson.filter((s) => escalasAutoraisAprovadas.has(s.id)),

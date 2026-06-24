@@ -17,6 +17,10 @@ import {
 } from "lucide-react";
 import type { ScaleEntry } from "./scaleFilter";
 import type { ScaleConfig } from "@/components/GenericScale";
+import { j26Bloco1Items } from "./interactiveScaleItemsJ26Bloco1";
+import { j26Bloco2Items } from "./interactiveScaleItemsJ26Bloco2";
+import { j26Bloco3Items } from "./interactiveScaleItemsJ26Bloco3";
+import { j26Bloco4Items } from "./interactiveScaleItemsJ26Bloco4";
 
 export interface InteractiveBand {
   /** Percentual mínimo do escore máximo (0-100) para cair nesta faixa. */
@@ -102,8 +106,8 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
   const maxPerItem = Math.max(...pts);
   const nItems = def.domains.reduce((s, d) => s + d.items.length, 0);
   const maxTotal = maxPerItem * nItems;
-  // Título limpo: remove o código "(J26-xxx)" do fim, se houver.
-  const cleanTitle = scale.name.replace(/\s*\(J26-\d+\)\s*$/i, "").trim() || scale.name;
+  // Título limpo: remove o código "(NEXUS-xxx)" do fim, se houver.
+  const cleanTitle = scale.name.replace(/\s*\(NEXUS-\d+\)\s*$/i, "").trim() || scale.name;
 
   return {
     title: cleanTitle,
@@ -220,7 +224,7 @@ const HINE_BANDS: InteractiveBand[] = [
   { minPct: 0, classification: "Sinais neurologicos importantes", color: "red", description: "Carga alta de achados neurologicos. Priorize avaliacao especializada e plano de cuidado." },
 ];
 
-export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
+const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
   psc17: {
     icon: ClipboardList,
     gradient: "from-sky-600 to-blue-700",
@@ -2242,6 +2246,14 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
       ] },
     ],
   },
+};
+
+export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
+  ...j26Bloco1Items,
+  ...j26Bloco2Items,
+  ...j26Bloco3Items,
+  ...j26Bloco4Items,
+  ...interactiveScaleItemsCore,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

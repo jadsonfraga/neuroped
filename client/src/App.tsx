@@ -252,6 +252,7 @@ function AppRouter() {
 
           <Route path="/medicamentos"><Protected roles={["admin", "professional"]}><MedicamentosPage /></Protected></Route>
           <Route path="/farmacologia"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
+          <Route path="/medicamentos"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
           <Route path="/pacientes"><Protected roles={["admin", "professional"]}><PacientesPage /></Protected></Route>
           <Route path="/paciente/:id"><Protected roles={["admin", "professional"]}><PacienteDetalhePage /></Protected></Route>
           <Route path="/prontuario"><Protected roles={["admin", "professional"]}><ProntuarioPage /></Protected></Route>
@@ -287,9 +288,9 @@ function AppRouter() {
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
           <Route path="/verificar" component={VerificarPage} />
-          <Route path="/documentos"><Protected roles={["admin", "professional"]}><DocumentosPage /></Protected></Route>
+          <Route path="/documentos" component={DocumentosPage} />
           <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
-          <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
+          <Route path="/receita-c1" component={ReceitaC1Page} />
           <Route path="/qualidade" component={QualidadePage} />
           <Route component={NotFound} />
         </Switch>

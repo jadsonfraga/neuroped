@@ -72,7 +72,7 @@ export default function EcarSiPage() {
             <ShieldAlert className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — ECAR-SI J26</h1>
+            <h1 className="text-lg font-bold">Resultado — ECAR-SI NEXUS</h1>
             <p className="text-xs text-muted-foreground">Avaliação de risco concluída</p>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function EcarSiPage() {
 
         
         <ClinicalReport
-          scaleName="ECAR-SI J26"
+          scaleName="ECAR-SI NEXUS"
           scaleFullName="Escala de Avaliação de Risco de Autoagressão e Suicidalidade Infantil"
           totalScore={finalScore}
           classification={result.classification}
@@ -213,7 +213,7 @@ export default function EcarSiPage() {
           patientAge="6-17 anos"
         />
         <SaveToPatient
-          scaleName="ECAR-SI J26"
+          scaleName="ECAR-SI NEXUS"
           totalScore={finalScore}
           classification={result.classification}
           answers={answers}
@@ -234,7 +234,7 @@ export default function EcarSiPage() {
           <ShieldAlert className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">ECAR-SI J26</h1>
+          <h1 className="text-lg font-bold">ECAR-SI NEXUS</h1>
           <p className="text-xs text-muted-foreground">Escala Clínica de Risco de Autoagressão e Suicidalidade</p>
         </div>
       </div>
