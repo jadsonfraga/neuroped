@@ -13,7 +13,7 @@ const SECOES = [
     n: "1",
     titulo: "Médico",
     texto:
-      "As áreas profissionais exigem login nominal no backend seguro antes de acessar dados clinicos reais.",
+      "O acesso ao app é protegido pelo PIN master. Nenhum email, CPF ou senha adicional é exigido em nenhuma tela.",
     tone: "ok" as const,
   },
   {

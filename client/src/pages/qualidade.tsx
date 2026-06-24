@@ -25,9 +25,9 @@ import {
  */
 
 const PRINCIPIOS = [
-  { icon: Lock, titulo: "Dados sensíveis protegidos", texto: "Prontuário, documentos e dados identificáveis nunca são expostos em páginas públicas. Áreas clínicas exigem login profissional no backend seguro." },
+  { icon: Lock, titulo: "Dados sensíveis protegidos", texto: "Prontuário, documentos e dados identificáveis nunca são expostos publicamente. O acesso ao app é controlado pelo PIN master." },
   { icon: Database, titulo: "Armazenamento local por padrão", texto: "Diários, CAA e registros ficam apenas no dispositivo (localStorage). Nada é enviado a servidores sem ação explícita do profissional." },
-  { icon: KeyRound, titulo: "Acesso por papel", texto: "Rotas sensíveis (farmacologia, pacientes, prontuário, planos) são protegidas por guarda de rota." },
+  { icon: KeyRound, titulo: "Acesso por PIN master", texto: "Todo o conteúdo é protegido pelo PIN master (PrivateGate). Nenhuma tela exige email, CPF ou senha adicional." },
   { icon: Smartphone, titulo: "PWA e responsividade", texto: "Funciona offline para conteúdos locais, instala como app e adapta-se a celular, tablet e desktop, com áreas de toque ampliadas." },
   { icon: Eye, titulo: "Acessibilidade", texto: "Compromisso WCAG 2.2 AA: contraste, foco visível, navegação por teclado e semântica HTML5. Ver a Declaração de Acessibilidade." },
   { icon: Server, titulo: "Transparência clínica", texto: "Instrumentos de terceiros remetem à fonte oficial e não reproduzem itens protegidos. Triagens autorais são identificadas como não normatizadas." },

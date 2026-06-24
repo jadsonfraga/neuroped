@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Clock, LogIn, Home as HomeIcon } from "lucide-react";
+import { Clock, Home as HomeIcon } from "lucide-react";
 import { fadeIn, slideUpFadeIn, easing, duration } from "@/lib/motion";
 import { softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
@@ -55,7 +55,7 @@ export default function SessionExpiredPage() {
             Sessão expirada
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            Por segurança, sua sessão foi encerrada após inatividade. Faça login novamente para continuar.
+            Por segurança, sua sessão foi encerrada após inatividade. Retorne ao início para continuar.
           </p>
         </div>
 
@@ -69,22 +69,11 @@ export default function SessionExpiredPage() {
             onClick={() => {
               softTap();
               haptic.tap();
-              setLocation("/login");
+              setLocation("/");
             }}
             className="gap-2 h-11"
           >
-            <LogIn className="w-4 h-4" /> Fazer login
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              softTap();
-              haptic.tap();
-              setLocation("/");
-            }}
-            className="gap-2 text-sm"
-          >
-            <HomeIcon className="w-3.5 h-3.5" /> Voltar à área educativa
+            <HomeIcon className="w-4 h-4" /> Voltar ao início
           </Button>
         </motion.div>
       </motion.div>

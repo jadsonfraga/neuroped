@@ -7,6 +7,9 @@ import {
   authFetch,
 } from "@/lib/authClient";
 
+const FIXED_EMAIL = "medicina119@gmail.com";
+const APP_SECRET = (import.meta.env.VITE_APP_SECRET as string | undefined)?.trim();
+
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -32,21 +35,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (r.ok) {
           const fresh = await r.json();
           if (!cancelled) setUser(fresh);
+        } else if (APP_SECRET) {
+          const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
+          if (!cancelled) setUser(data.user);
         }
-      } catch { /* sessão não validada (offline/sem backend) — mantém usuário local */ }
-      finally {
+      } catch {
+        if (APP_SECRET) {
+          try {
+            const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
+            if (!cancelled) setUser(data.user);
+          } catch { /* backend indisponível — PIN master é suficiente */ }
+        }
+      } finally {
         if (!cancelled) setIsLoading(false);
       }
     }
     bootstrap();
 
-    function handleExpired() {
+    async function handleExpired() {
+      if (APP_SECRET) {
+        try {
+          const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
+          setUser(data.user);
+          return;
+        } catch { /* tentativa de renovação falhou */ }
+      }
       setUser(null);
     }
-    window.addEventListener("auth:expired", handleExpired);
+    window.addEventListener("auth:expired", handleExpired as EventListener);
     return () => {
       cancelled = true;
-      window.removeEventListener("auth:expired", handleExpired);
+      window.removeEventListener("auth:expired", handleExpired as EventListener);
     };
   }, []);
 
