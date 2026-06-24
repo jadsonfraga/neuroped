@@ -383,7 +383,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-snug">
         Perfil PAdES-BES com seu certificado A1 ICP-Brasil. A chave privada permanece apenas neste
-        dispositivo — nunca é transmitida. "Salvar no dispositivo" armazena o certificado no
+        dispositivo — nunca é transmitida. &quot;Salvar no dispositivo&quot; armazena o certificado no
         IndexedDB do navegador para carregamento automático futuro.
       </p>
     </section>
