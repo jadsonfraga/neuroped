@@ -17,6 +17,7 @@ import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { FloatingHelp } from "@/components/FloatingHelp";
+import { MasterPinGate } from "@/components/MasterPinGate";
 
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
@@ -287,9 +288,9 @@ function AppRouter() {
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
           <Route path="/verificar" component={VerificarPage} />
-          <Route path="/documentos"><Protected roles={["admin", "professional"]}><DocumentosPage /></Protected></Route>
-          <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
-          <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
+          <Route path="/documentos"><MasterPinGate><DocumentosPage /></MasterPinGate></Route>
+          <Route path="/laudo-neuroped"><MasterPinGate><LaudoNeuropedPage /></MasterPinGate></Route>
+          <Route path="/receita-c1"><MasterPinGate><ReceitaC1Page /></MasterPinGate></Route>
           <Route path="/qualidade" component={QualidadePage} />
           <Route component={NotFound} />
         </Switch>
