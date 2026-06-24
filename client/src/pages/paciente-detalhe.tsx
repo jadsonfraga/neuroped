@@ -17,7 +17,7 @@ import {
   ArrowLeft, Pencil, Trash2, Calendar, TrendingUp, TrendingDown,
   Minus, Copy, Download, ClipboardList, Users,
 } from "lucide-react";
-import { PinGate } from "@/components/PinGate";
+
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -55,10 +55,6 @@ function fmtDateShort(d: string | Date | null | undefined): string {
 }
 
 export default function PacienteDetalhePage() {
-  // Todos os hooks são chamados de forma incondicional (regra rules-of-hooks).
-  // O portão de PIN é um componente isolado (PinGate); enquanto não autenticado,
-  // as queries ficam desabilitadas (enabled: internalAuth) para não buscar dados.
-  const [internalAuth, setInternalAuth] = useState(false);
   const { toast } = useToast();
   const [, params] = useRoute("/paciente/:id");
   const patientId = params?.id || "";
@@ -73,12 +69,12 @@ export default function PacienteDetalhePage() {
 
   const { data: patient } = useQuery<any>({
     queryKey: [`/api/patients/${patientId}`],
-    enabled: internalAuth && !!patientId,
+    enabled: !!patientId,
   });
 
   const { data: results = [] } = useQuery<any[]>({
     queryKey: [`/api/patients/${patientId}/results`],
-    enabled: internalAuth && !!patientId,
+    enabled: !!patientId,
   });
 
   const updateMutation = useMutation({
@@ -189,16 +185,6 @@ export default function PacienteDetalhePage() {
 
     navigator.clipboard.writeText(text);
     toast({ title: "Copiado!", description: "Relatório copiado para a área de transferência." });
-  }
-
-  if (!internalAuth) {
-    return (
-      <PinGate
-        onUnlock={() => setInternalAuth(true)}
-        inputTestId="input-pin-paciente-detalhe"
-        buttonTestId="button-acessar-prontuarios-detalhe"
-      />
-    );
   }
 
   if (!patient) {

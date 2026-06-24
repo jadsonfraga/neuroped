@@ -20,7 +20,6 @@ import { haptic } from "@/lib/haptic";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState, LoadingState } from "@/components/ui/VisualStates";
 import { easing, duration } from "@/lib/motion";
-import { PinGate } from "@/components/PinGate";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -33,10 +32,6 @@ function calcAge(birthDate: string | null | undefined): string | null {
 }
 
 export default function PacientesPage() {
-  // Todos os hooks são chamados de forma incondicional (regra rules-of-hooks).
-  // O portão de PIN é um componente isolado (PinGate); enquanto não autenticado,
-  // as queries ficam desabilitadas (enabled: internalAuth) para não buscar dados.
-  const [internalAuth, setInternalAuth] = useState(false);
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -51,7 +46,7 @@ export default function PacientesPage() {
 
   const { data: patientsRaw, isLoading } = useQuery<any>({
     queryKey: ["/api/patients"],
-    enabled: internalAuth,
+    enabled: true,
   });
   // A API retorna { data: [...] }; aceita também array puro por robustez.
   const patients: any[] = Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? []);
@@ -228,17 +223,6 @@ export default function PacientesPage() {
         (p.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)
       )
     : patients;
-
-  if (!internalAuth) {
-    return (
-      <PinGate
-        onUnlock={() => setInternalAuth(true)}
-        inputTestId="input-pin-pacientes"
-        buttonTestId="button-acessar-prontuarios"
-        buttonClassName="w-full btn-glow"
-      />
-    );
-  }
 
   return (
     <div className="space-y-6">
