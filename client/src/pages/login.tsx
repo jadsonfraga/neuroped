@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Brain, Mail, KeyRound, Loader2, Eye, EyeOff,
+  Brain, KeyRound, Loader2, Eye, EyeOff,
   ShieldCheck, Stethoscope, ArrowRight,
 } from "lucide-react";
 import { softTap, softSuccess, softError, softHover } from "@/lib/softSounds";
@@ -18,6 +18,9 @@ import {
   duration, easing,
 } from "@/lib/motion";
 
+// Single-user app — email is fixed; only password is required at login.
+const FIXED_EMAIL = "medicina119@gmail.com";
+
 /**
  * Login page editorial premium.
  * Layout em 2 colunas no desktop (hero + form), centralizado em mobile.
@@ -25,7 +28,6 @@ import {
 export default function LoginPage() {
   const { login } = useAuth();
   const [, setLocation] = useLocation();
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function LoginPage() {
     softTap();
     haptic.tap();
     try {
-      await login(email, password);
+      await login(FIXED_EMAIL, password);
       softSuccess();
       haptic.success();
       setTimeout(() => setLocation("/"), 200);
@@ -208,29 +210,6 @@ export default function LoginPage() {
                   </AnimatePresence>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-xs">
-                      Email
-                    </Label>
-                    <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="username"
-                        autoFocus
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onMouseEnter={() => softHover()}
-                        placeholder="seu.email@dominio.com"
-                        className="pl-9 h-11 transition-all focus:ring-2 focus:ring-primary/30"
-                        required
-                        disabled={submitting}
-                        data-testid="input-login-email"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-xs">
                       Senha
                     </Label>
@@ -240,6 +219,7 @@ export default function LoginPage() {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
+                        autoFocus
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onMouseEnter={() => softHover()}

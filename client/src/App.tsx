@@ -284,9 +284,9 @@ function AppRouter() {
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
           <Route path="/verificar" component={VerificarPage} />
-          <Route path="/documentos"><Protected roles={["admin", "professional"]}><DocumentosPage /></Protected></Route>
+          <Route path="/documentos" component={DocumentosPage} />
           <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
-          <Route path="/receita-c1"><Protected roles={["admin", "professional"]}><ReceitaC1Page /></Protected></Route>
+          <Route path="/receita-c1" component={ReceitaC1Page} />
           <Route path="/qualidade" component={QualidadePage} />
           <Route component={NotFound} />
         </Switch>
