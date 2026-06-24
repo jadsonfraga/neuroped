@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { Brain, Lock } from "lucide-react";
+import { Brain, Lock, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const SENSITIVE_ROUTES = [
@@ -13,6 +13,7 @@ export const SENSITIVE_ROUTES = [
   "/prontuario",
   "/calculadora-dose",
   "/farmacologia",
+  "/medicamentos",
   "/satisfacao-medicacao",
   "/plano-terapeutico",
   "/plano-intervencao",
@@ -41,7 +42,7 @@ export function RouteGuard({
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center animate-pulse">
             <Brain className="w-5 h-5 text-white" />
           </div>
-          <p className="text-xs text-muted-foreground">Verificando sessão...</p>
+          <p className="text-xs text-muted-foreground">Verificando sessão…</p>
         </div>
       </div>
     );
@@ -49,30 +50,58 @@ export function RouteGuard({
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto py-12 px-4 text-center space-y-5">
-        <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-          <Lock className="w-6 h-6 text-amber-500" />
+      <div className="max-w-sm mx-auto py-16 px-6 text-center space-y-5">
+        <div
+          className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--chart-2) / 0.08))",
+            border: "1px solid hsl(var(--primary) / 0.25)",
+            boxShadow: "0 8px 24px hsl(var(--primary) / 0.12)",
+          }}
+        >
+          <Lock className="w-7 h-7 text-primary" strokeWidth={1.75} />
         </div>
-        <h1 className="text-xl font-bold">Login necessario</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Areas clinicas com dados identificaveis exigem autenticacao nominal no backend seguro.
-        </p>
-        <Button onClick={() => setLocation("/login")}>Entrar</Button>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Login necessário</h1>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            Áreas clínicas com dados identificáveis exigem autenticação nominal no backend seguro.
+          </p>
+        </div>
+        <Button
+          onClick={() => setLocation("/login")}
+          className="w-full h-11 font-semibold"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
+            boxShadow: "0 4px 16px hsl(var(--primary) / 0.3)",
+          }}
+        >
+          Entrar na conta
+        </Button>
       </div>
     );
   }
 
   if (roles && roles.length > 0 && user && !roles.includes(user.role)) {
     return (
-      <div className="max-w-md mx-auto py-12 px-4 text-center space-y-5">
-        <div className="w-14 h-14 mx-auto rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-          <Lock className="w-6 h-6 text-red-500" />
+      <div className="max-w-sm mx-auto py-16 px-6 text-center space-y-5">
+        <div
+          className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--destructive) / 0.12), hsl(var(--destructive) / 0.06))",
+            border: "1px solid hsl(var(--destructive) / 0.25)",
+          }}
+        >
+          <ShieldAlert className="w-7 h-7 text-destructive" strokeWidth={1.75} />
         </div>
-        <h1 className="text-xl font-bold">Permissão insuficiente</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Seu papel ({user.role}) não tem acesso a este módulo. Contate um administrador.
-        </p>
-        <Button onClick={() => setLocation("/")}>Voltar</Button>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Permissão insuficiente</h1>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            Seu perfil ({user.role}) não tem acesso a este módulo. Contate um administrador.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => setLocation("/")} className="w-full h-11 font-semibold">
+          Voltar ao início
+        </Button>
       </div>
     );
   }

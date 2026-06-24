@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { carsCategories, classifyCars } from "@/data/scales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,11 +16,15 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 export default function CarsPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  const answered = Object.keys(answers).length;
   const total = carsCategories.length;
+  const answered = carsCategories.reduce((count, _, i) => count + (answers[i] !== undefined ? 1 : 0), 0);
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
+  const firstMissingIndex = carsCategories.findIndex((_, i) => answers[i] === undefined);
+  const missingCount = Math.max(total - answered, 0);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -34,10 +38,18 @@ export default function CarsPage() {
   }
 
   function handleSubmit() {
+    setSubmitAttempted(true);
+    if (!allAnswered) {
+      if (firstMissingIndex >= 0) {
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+      }
+      return;
+    }
     const score = calculateScore();
     const result = classifyCars(score);
     saveMutation.mutate({
-      scaleName: "CARS",
+      scaleName: "CARS-2",
       answers,
       totalScore: score,
       classification: result.classification,
@@ -49,6 +61,7 @@ export default function CarsPage() {
   function handleReset() {
     setAnswers({});
     setShowResult(false);
+    setSubmitAttempted(false);
   }
 
   if (showResult) {
@@ -61,7 +74,7 @@ export default function CarsPage() {
             <ClipboardCheck className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — CARS</h1>
+            <h1 className="text-lg font-bold">Resultado — CARS-2</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -97,7 +110,7 @@ export default function CarsPage() {
               <div className="flex items-start gap-2">
                 <Info className="w-4 h-4 text-violet-600 dark:text-violet-400 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-violet-800 dark:text-violet-300 space-y-1">
-                  <p><strong>Pontos de corte (CARS):</strong></p>
+                  <p><strong>Pontos de corte (CARS-2):</strong></p>
                   <p>15-29: Sem autismo</p>
                   <p>30-36: Autismo leve a moderado</p>
                   <p>37-60: Autismo moderado a grave</p>
@@ -109,8 +122,8 @@ export default function CarsPage() {
 
         
         <ClinicalReport
-          scaleName="CARS"
-          scaleFullName="Childhood Autism Rating Scale"
+          scaleName="CARS-2"
+          scaleFullName="Childhood Autism Rating Scale, Second Edition"
           totalScore={score}
           maxScore={60}
           classification={result.classification}
@@ -119,7 +132,7 @@ export default function CarsPage() {
           patientAge="≥ 2 anos"
         />
         <SaveToPatient
-          scaleName="CARS"
+          scaleName="CARS-2"
           totalScore={score}
           classification={result.classification}
           answers={answers}
@@ -140,8 +153,8 @@ export default function CarsPage() {
           <ClipboardCheck className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">CARS</h1>
-          <p className="text-xs text-muted-foreground">Childhood Autism Rating Scale — a partir de 2 anos</p>
+          <h1 className="text-lg font-bold">CARS-2</h1>
+          <p className="text-xs text-muted-foreground">Childhood Autism Rating Scale, Second Edition — a partir de 2 anos</p>
         </div>
       </div>
 
@@ -151,33 +164,59 @@ export default function CarsPage() {
           <span>{answered} de {total} categorias</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} categorias avaliadas`}
+        />
       </div>
 
       {/* Instruction */}
       <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40 p-4">
         <p className="text-xs text-violet-800 dark:text-violet-300 leading-relaxed">
           <strong>Instruções:</strong> Para cada categoria, selecione a opção que melhor descreve o comportamento da criança. Cada item pontua de 1 (normal) a 4 (gravemente anormal).
+          <span className="mt-2 block">Nota técnica: este módulo usa a nomenclatura CARS-2 de forma consistente no app e mantém os pontos de corte clínicos apresentados abaixo.</span>
         </p>
       </div>
 
       {/* Categories */}
       <div className="space-y-4">
-        {carsCategories.map((cat, i) => (
-          <Card key={i} data-testid={`card-category-${i}`} className="border-card-border">
+        {carsCategories.map((cat, i) => {
+          const pending = submitAttempted && answers[i] === undefined;
+          return (
+          <Card
+            key={i}
+            ref={(node) => { itemRefs.current[i] = node; }}
+            tabIndex={-1}
+            aria-invalid={pending}
+            data-testid={`card-category-${i}`}
+            className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+          >
             <CardContent className="p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs font-mono">{i + 1}</Badge>
                 <h3 className="text-sm font-semibold text-foreground">{cat.name}</h3>
               </div>
+              {pending && (
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                  Resposta obrigatória para concluir a escala.
+                </p>
+              )}
               <RadioGroup
                 value={answers[i]?.toString()}
                 onValueChange={(val) => setAnswers({ ...answers, [i]: parseInt(val) })}
               >
                 {cat.options.map((opt, j) => (
                   <div key={j} className="flex items-start space-x-3 py-1.5">
-                    <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="mt-0.5" />
-                    <Label htmlFor={`q${i}-o${j}`} className="text-sm text-foreground leading-relaxed cursor-pointer font-normal">
+                    <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="peer mt-0.5" />
+                    <Label
+                      htmlFor={`q${i}-o${j}`}
+                      aria-pressed={answers[i] === j}
+                      className="text-sm text-foreground leading-relaxed cursor-pointer font-normal peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background"
+                    >
                       <span className="font-medium text-muted-foreground mr-1">({j + 1})</span>
                       {opt}
                     </Label>
@@ -186,13 +225,23 @@ export default function CarsPage() {
               </RadioGroup>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
+
+      {submitAttempted && !allAnswered && (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+          role="alert"
+        >
+          Faltam {missingCount} categoria{missingCount !== 1 ? "s" : ""}. A primeira categoria pendente foi destacada.
+        </div>
+      )}
 
       {/* Submit */}
       <Button
         onClick={handleSubmit}
-        disabled={!allAnswered}
+        aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
         data-testid="button-submit"

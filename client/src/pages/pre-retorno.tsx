@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { sanitizeAgeInput, validateAge } from "@/lib/preConsultaCore";
 import { copyText, formatForWhatsApp, openWhatsAppShare } from "@/lib/shareText";
 
 const STORAGE_KEY = "neuroped:pre-retornos";
@@ -98,8 +99,8 @@ function FieldSelect({ label, value, onChange, options }: { label: string; value
 
 export default function PreRetornoPage() {
   const [paciente, setPaciente] = useState("");
-  const [idadeAnos, setIdadeAnos] = useState("4");
-  const [idadeMeses, setIdadeMeses] = useState("0");
+  const [anos, setAnos] = useState("4");
+  const [meses, setMeses] = useState("0");
   const [ultimaConsulta, setUltimaConsulta] = useState("");
   const [motivo, setMotivo] = useState("");
   const [evolucao, setEvolucao] = useState("igual");
@@ -116,15 +117,38 @@ export default function PreRetornoPage() {
   const [observacoes, setObservacoes] = useState("");
   const [saved, setSaved] = useState<PreRetornoRecord | null>(null);
 
-  const idadeLabel = idadeMeses === "0" ? `${idadeAnos} anos` : `${idadeAnos} anos e ${idadeMeses} meses`;
+  const ageValidation = useMemo(() => validateAge({ years: anos, months: meses }), [anos, meses]);
+  const idade = ageValidation.label;
 
-  const draft = useMemo(() => buildRecord({ paciente, idade: idadeLabel, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes }), [paciente, idadeLabel, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes]);
-  const resumo = useMemo(() => buildResumo(saved || draft), [saved, draft]);
+  const draft = useMemo(() => buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes }), [paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes]);
+  const resumo = useMemo(
+    () => ageValidation.isValid ? buildResumo(saved || draft) : "Corrija a idade antes de gerar o resumo clínico.",
+    [ageValidation.isValid, saved, draft],
+  );
 
   function salvar() {
-    const record = buildRecord({ paciente, idade: idadeLabel, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
+    if (!ageValidation.isValid) {
+      setSaved(null);
+      return;
+    }
+    const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
     saveRecords([record, ...loadRecords()].slice(0, 50));
     setSaved(record);
+  }
+
+  function copiarResumo() {
+    if (!ageValidation.isValid) return;
+    copyText(resumo);
+  }
+
+  function compartilharWhatsApp() {
+    if (!ageValidation.isValid) return;
+    openWhatsAppShare(formatForWhatsApp("Resumo pré-retorno", resumo));
+  }
+
+  function imprimir() {
+    if (!ageValidation.isValid) return;
+    window.print();
   }
 
   return (
@@ -146,23 +170,41 @@ export default function PreRetornoPage() {
         <Card><CardContent className="space-y-4 p-4">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paciente</span><Input value={paciente} onChange={(e) => setPaciente(e.target.value)} placeholder="Nome ou identificação" /></label>
-            <div className="space-y-1">
-              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade</span>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input type="number" min={0} max={18} value={idadeAnos}
-                    onChange={(e) => { const n = Math.min(18, Math.max(0, Math.round(Number(e.target.value) || 0))); setIdadeAnos(String(n)); }}
-                    aria-label="Anos" placeholder="Anos" />
-                  <span className="text-[11px] text-muted-foreground">Anos</span>
-                </div>
-                <div className="flex-1">
-                  <Input type="number" min={0} max={11} value={idadeMeses}
-                    onChange={(e) => { const n = Math.min(11, Math.max(0, Math.round(Number(e.target.value) || 0))); setIdadeMeses(String(n)); }}
-                    aria-label="Meses" placeholder="Meses" />
-                  <span className="text-[11px] text-muted-foreground">Meses (0–11)</span>
-                </div>
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anos</span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                min={0}
+                max={18}
+                value={anos}
+                aria-invalid={!ageValidation.isValid}
+                aria-describedby="pre-retorno-age-error"
+                onChange={(e) => setAnos(sanitizeAgeInput(e.target.value))}
+                className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Meses</span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                min={0}
+                max={11}
+                value={meses}
+                aria-invalid={!ageValidation.isValid}
+                aria-describedby="pre-retorno-age-error"
+                onChange={(e) => setMeses(sanitizeAgeInput(e.target.value))}
+                className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
+              />
+            </label>
+            {!ageValidation.isValid && (
+              <div id="pre-retorno-age-error" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive md:col-span-2" role="alert">
+                {ageValidation.errors.join(" ")}
               </div>
-            </div>
+            )}
             <label className="space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Última consulta</span><Input value={ultimaConsulta} onChange={(e) => setUltimaConsulta(e.target.value)} placeholder="Data aproximada" /></label>
             <label className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Motivo do retorno</span><Input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Principal motivo" /></label>
           </div>
@@ -184,10 +226,10 @@ export default function PreRetornoPage() {
           <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={salvar} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
-            <Button variant="outline" onClick={() => copyText(resumo)} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
-            <Button variant="outline" onClick={() => openWhatsAppShare(formatForWhatsApp("Resumo pré-retorno", resumo))} className="gap-2"><MessageCircle className="h-4 w-4" /> Copiar para WhatsApp</Button>
-            <Button variant="outline" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
+            <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
+            <Button variant="outline" onClick={copiarResumo} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
+            <Button variant="outline" onClick={compartilharWhatsApp} aria-disabled={!ageValidation.isValid} className="gap-2"><MessageCircle className="h-4 w-4" /> Copiar para WhatsApp</Button>
+            <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
           </div>
         </CardContent></Card>
 

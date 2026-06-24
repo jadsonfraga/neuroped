@@ -42,6 +42,7 @@ const sensitiveRoutes = [
   "/prontuario",
   "/calculadora-dose",
   "/farmacologia",
+  "/medicamentos",
   "/satisfacao-medicacao",
   "/plano-terapeutico",
   "/plano-intervencao",

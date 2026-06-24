@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import {
   sdqQuestions, sdqLabels, sdqSubscales,
@@ -19,11 +19,15 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 export default function SdqPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  const answered = Object.keys(answers).length;
   const total = sdqQuestions.length;
+  const answered = sdqQuestions.reduce((count, _, i) => count + (answers[i] !== undefined ? 1 : 0), 0);
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
+  const firstMissingIndex = sdqQuestions.findIndex((_, i) => answers[i] === undefined);
+  const missingCount = Math.max(total - answered, 0);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -44,6 +48,14 @@ export default function SdqPage() {
   }
 
   function handleSubmit() {
+    setSubmitAttempted(true);
+    if (!allAnswered) {
+      if (firstMissingIndex >= 0) {
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+      }
+      return;
+    }
     const scores = calculateScores();
     const result = classifySdq(scores);
     saveMutation.mutate({
@@ -59,6 +71,7 @@ export default function SdqPage() {
   function handleReset() {
     setAnswers({});
     setShowResult(false);
+    setSubmitAttempted(false);
   }
 
   if (showResult) {
@@ -181,72 +194,91 @@ export default function SdqPage() {
 
       {/* Progress */}
       <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
+        <div className="flex justify-between text-xs text-muted-foreground">
           <span>{answered} de {total} respondidas</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} perguntas respondidas`}
+        />
       </div>
 
       {/* Instruction */}
       <div className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 p-4">
         <p className="text-xs text-green-800 dark:text-green-300 leading-relaxed">
-          <strong>Instruções:</strong> Para cada afirmação, indique o quanto ela se aplica ao comportamento da criança/adolescente. Considere os últimos 6 meses.
+          <strong>Instruções:</strong> Para cada afirmação, indique o quanto ela se aplica ao comportamento da criança/adolescente nos últimos 6 meses. Os itens aparecem em ordem sequencial; as subescalas são calculadas apenas no resultado.
         </p>
       </div>
 
-      {/* Questions in sequential order (psychometric validity: no subscale grouping) */}
-      {sdqQuestions.map((question, qIdx) => {
-        const subscaleEntry = Object.entries(sdqSubscales).find(([, sub]) => sub.items.includes(qIdx));
-        const [subKey, subDef] = subscaleEntry ?? ["", { name: "", items: [], color: "" }];
-        const dotBg =
-          subKey === "prosocial" ? "bg-emerald-500" :
-          subKey === "hyperactivity" ? "bg-orange-500" :
-          subKey === "emotional" ? "bg-blue-500" :
-          subKey === "conduct" ? "bg-red-500" : "bg-purple-500";
-        return (
-          <Card key={qIdx} data-testid={`card-question-${qIdx}`} className="border-card-border">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{qIdx + 1}</Badge>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotBg}`} aria-hidden="true" />
-                    <span className={`text-[10px] font-medium ${subDef.color}`}>{subDef.name}</span>
-                  </div>
+      {/* Questions in original sequential order */}
+      <div className="space-y-3">
+        {sdqQuestions.map((question, qIdx) => {
+          const pending = submitAttempted && answers[qIdx] === undefined;
+          return (
+            <Card
+              key={qIdx}
+              ref={(node) => { itemRefs.current[qIdx] = node; }}
+              tabIndex={-1}
+              aria-invalid={pending}
+              data-testid={`card-question-${qIdx}`}
+              className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+            >
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{qIdx + 1}</Badge>
                   <p className="text-sm text-foreground leading-relaxed">{question}</p>
                 </div>
-              </div>
-              <RadioGroup
-                value={answers[qIdx]?.toString()}
-                onValueChange={(val) => setAnswers({ ...answers, [qIdx]: parseInt(val) })}
-                className="flex flex-wrap gap-2"
-              >
-                {sdqLabels.map((label, j) => (
-                  <div key={j} className="flex items-center">
-                    <RadioGroupItem value={j.toString()} id={`sdq-q${qIdx}-o${j}`} className="sr-only" />
-                    <Label
-                      htmlFor={`sdq-q${qIdx}-o${j}`}
-                      className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
-                        answers[qIdx] === j
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card text-foreground border-border hover:bg-muted"
-                      }`}
-                    >
-                      {label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
-        );
-      })}
+                {pending && (
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                    Resposta obrigatória para concluir a escala.
+                  </p>
+                )}
+                <RadioGroup
+                  value={answers[qIdx]?.toString()}
+                  onValueChange={(val) => setAnswers({ ...answers, [qIdx]: parseInt(val) })}
+                  className="flex flex-wrap gap-2"
+                >
+                  {sdqLabels.map((label, j) => (
+                    <div key={j} className="flex items-center">
+                      <RadioGroupItem value={j.toString()} id={`sdq-q${qIdx}-o${j}`} className="peer sr-only" />
+                      <Label
+                        htmlFor={`sdq-q${qIdx}-o${j}`}
+                        aria-pressed={answers[qIdx] === j}
+                        className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                          answers[qIdx] === j
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {submitAttempted && !allAnswered && (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+          role="alert"
+        >
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+        </div>
+      )}
 
       {/* Submit */}
       <Button
         onClick={handleSubmit}
-        disabled={!allAnswered}
+        aria-disabled={!allAnswered}
         className="w-full"
         size="lg"
         data-testid="button-submit"

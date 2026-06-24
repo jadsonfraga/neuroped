@@ -37,6 +37,7 @@ const CLINICAL_PREFIXES = [
   "/pantc1",
   "/receitas",
   "/farmacologia",
+  "/medicamentos",
   "/medicacoes",
   "/calculadora-dose",
   "/assinatura-digital",

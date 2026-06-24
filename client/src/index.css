@@ -1,9 +1,9 @@
+/* Design System NeuroPed — tokens de cor, espaçamento e tipografia */
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Design System NeuroPed — tokens de cor, espaçamento e tipografia */
-@import './styles/tokens.css';
 
 /* LIGHT MODE — Lúdico / Colorido / Neuropediatria */
 :root {
@@ -12,13 +12,13 @@
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 30 50% 98%;
+  --background: 30 30% 97%;
   --foreground: 260 30% 15%;
   --border: 30 20% 88%;
-  --card: 30 40% 99%;
+  --card: 30 25% 98.5%;
   --card-foreground: 260 30% 15%;
   --card-border: 30 20% 91%;
-  --sidebar: 260 30% 97%;
+  --sidebar: 260 20% 96.5%;
   --sidebar-foreground: 260 30% 15%;
   --sidebar-border: 260 20% 90%;
   --sidebar-primary: 260 60% 55%;
@@ -151,6 +151,22 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: hsl(var(--background));
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  main {
+    min-height: 100vh;
+    background: hsl(var(--background));
   }
 
   img {
@@ -672,3 +688,83 @@
 .novidade-prose ul { margin: .5rem 0; padding-left: 1.25rem; list-style: disc; }
 .novidade-prose li { margin: .25rem 0; }
 .novidade-prose .tip-box { background: hsl(var(--primary) / 0.08); border-left: 4px solid hsl(var(--primary)); border-radius: 12px; padding: 12px 14px; margin: 14px 0; }
+
+
+@layer components {
+
+  /* Custom native select styling — replaces browser defaults across all themes */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='hsl(260 10%25 45%25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem !important;
+    border-radius: 0.625rem;
+    border-color: hsl(var(--border));
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
+    font-size: 0.875rem;
+    font-family: var(--font-sans);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+  }
+  select:hover {
+    border-color: hsl(var(--primary) / 0.4);
+  }
+  select:focus {
+    outline: none;
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
+  }
+  .dark select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='hsl(30 10%25 60%25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-color: hsl(var(--card));
+  }
+
+
+  /* Filter chips — selected state with strong fill */
+  .chip-selected,
+  button[data-selected="true"],
+  [data-state="active"].chip {
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    border-color: hsl(var(--primary)) !important;
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.25) !important;
+  }
+
+
+  /* Scale answer buttons — clearer active state */
+  .answer-btn-active,
+  button[data-answer="selected"] {
+    background-color: hsl(var(--primary) / 0.15) !important;
+    border-color: hsl(var(--primary) / 0.6) !important;
+    color: hsl(var(--primary)) !important;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2), inset 0 1px 0 hsl(var(--primary) / 0.1) !important;
+    font-weight: 600 !important;
+  }
+
+
+  /* Floating action button — better presence */
+  .fab-help,
+  button[data-fab="help"] {
+    box-shadow: 0 8px 24px hsl(var(--primary) / 0.35), 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+    transition: box-shadow 0.2s ease, transform 0.15s ease !important;
+  }
+  .fab-help:hover,
+  button[data-fab="help"]:hover {
+    box-shadow: 0 12px 32px hsl(var(--primary) / 0.45), 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+    transform: translateY(-1px) !important;
+  }
+
+
+  /* Clinical summary boxes — use sans-serif instead of mono */
+  .resumo-medico,
+  .clinical-summary,
+  pre.clinical-text {
+    font-family: var(--font-sans) !important;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+}

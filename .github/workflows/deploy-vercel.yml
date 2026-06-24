@@ -68,6 +68,9 @@ jobs:
       - name: Validate clinical catalog
         run: npm run validate:catalog
 
+      - name: Validate clinical ranking
+        run: npm run validate:ranking
+
       - name: Audit access policy
         run: npm run audit:access
 
@@ -82,6 +85,12 @@ jobs:
 
       - name: Run clinical tests
         run: npm run test:clinical
+
+      - name: Test scale-filter podium
+        run: npm run test:podium
+
+      - name: Audit 100 practical scale-filter cases
+        run: npm run test:practical-filter
 
       - name: Create deploy sentinel
         run: |
@@ -102,6 +111,7 @@ jobs:
       - name: Build client
         env:
           NODE_ENV: production
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
       - name: Verify build output

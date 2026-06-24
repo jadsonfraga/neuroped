@@ -1,9 +1,16 @@
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { RotateCcw, AlertTriangle, CheckCircle2, Info, ShieldAlert } from "lucide-react";
-import { cssrsQuestions, classifyCssrs } from "@/data/expandedScales";
+import {
+  cssrsQuestions,
+  classifyCssrs,
+  getCssrsSkipLogicSummary,
+  getVisibleCssrsQuestionIds,
+  pruneCssrsAnswers,
+} from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -12,36 +19,51 @@ export default function CssrsPage() {
   const [answers, setAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
-
-  // Skip logic: Q3-Q5 only shown if Q2 = true (active ideation confirmed)
-  const activeIdeation = answers[2] === true;
-  const visibleQuestions = cssrsQuestions.filter(
-    (q) => q.id <= 2 || q.id === 6 || activeIdeation
-  );
-
-  const total = visibleQuestions.length;
-  const answered = visibleQuestions.filter((q) => q.id in answers).length;
-
-  // Refs for scrolling to first unanswered question on submit attempt
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  const handleSubmit = () => {
-    if (answered < total) {
-      setSubmitAttempted(true);
-      const firstUnanswered = visibleQuestions.find((q) => !(q.id in answers));
-      if (firstUnanswered && itemRefs.current[firstUnanswered.id]) {
-        itemRefs.current[firstUnanswered.id]!.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
+  const visibleIds = useMemo(() => getVisibleCssrsQuestionIds(answers), [answers]);
+  const visibleQuestions = useMemo(
+    () => cssrsQuestions.filter((q) => visibleIds.includes(q.id)),
+    [visibleIds],
+  );
+  const total = visibleQuestions.length;
+  const answered = visibleIds.filter((id) => answers[id] !== undefined).length;
+  const progress = total > 0 ? (answered / total) * 100 : 0;
+  const allAnswered = total > 0 && answered === total;
+  const firstMissingId = visibleIds.find((id) => answers[id] === undefined);
+  const missingCount = Math.max(total - answered, 0);
+
+  function answerQuestion(id: number, value: boolean) {
+    setAnswers((current) => pruneCssrsAnswers({ ...current, [id]: value }));
+  }
+
+  function focusFirstMissing() {
+    if (!firstMissingId) return;
+    itemRefs.current[firstMissingId]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => itemRefs.current[firstMissingId]?.focus({ preventScroll: true }), 250);
+  }
+
+  function handleSubmit() {
+    setSubmitAttempted(true);
+    if (!allAnswered) {
+      focusFirstMissing();
       return;
     }
     setShowResult(true);
-  };
+  }
+
+  function handleReset() {
+    setAnswers({});
+    setShowResult(false);
+    setSubmitAttempted(false);
+  }
 
   if (showResult) {
     const result = classifyCssrs(answers);
+    const skipSummary = getCssrsSkipLogicSummary(answers);
+    const reportDescription = `${result.description} ${skipSummary}`;
+    const resultVisibleIds = getVisibleCssrsQuestionIds(answers);
+
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -62,25 +84,32 @@ export default function CssrsPage() {
                 {result.classification}
               </Badge>
             </div>
-            <div className="rounded-xl bg-muted/50 p-4">
+            <div className="rounded-xl bg-muted/50 p-4 space-y-2">
               <div className="flex items-start gap-2">
                 {result.color === "emerald" ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />}
                 <p className="text-sm text-foreground leading-relaxed">{result.description}</p>
               </div>
+              <p className="text-xs text-muted-foreground">{skipSummary}</p>
             </div>
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">Respostas por nível</h3>
-              {cssrsQuestions.map((q) => (
-                <div key={q.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-foreground">{q.level}</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-xs">{q.text}</p>
+              {cssrsQuestions.map((q) => {
+                const wasAsked = resultVisibleIds.includes(q.id);
+                const answeredYes = answers[q.id] === true;
+                return (
+                  <div key={q.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/30">
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-foreground">{q.level}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {wasAsked ? q.text : `Pergunta Q${q.id} omitida pela lógica de interrupção.`}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${!wasAsked ? "text-muted-foreground border-border" : answeredYes ? "text-red-600 border-red-300" : "text-emerald-600 border-emerald-300"}`}>
+                      {!wasAsked ? "Omitida" : answeredYes ? "Sim" : "Não"}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className={`text-xs ${answers[q.id] ? "text-red-600 border-red-300" : "text-emerald-600 border-emerald-300"}`}>
-                    {answers[q.id] ? "Sim" : "Não"}
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
               <div className="flex items-start gap-2">
@@ -100,17 +129,24 @@ export default function CssrsPage() {
           totalScore={result.level}
           maxScore={6}
           classification={result.classification}
-          description={result.description}
-          items={cssrsQuestions.map((q, i) => ({ question: q.text, answer: answers[i] ? "Sim" : "Não", value: answers[i] ? 1 : 0 }))}
+          description={reportDescription}
+          items={[
+            ...visibleQuestions.map((q) => ({
+              question: q.text,
+              answer: answers[q.id] ? "Sim" : "Não",
+              value: answers[q.id] ? 1 : 0,
+            })),
+            { question: "Lógica C-SSRS aplicada", answer: skipSummary, value: 0 },
+          ]}
           patientAge="≥ 6 anos"
         />
         <SaveToPatient
           scaleName="C-SSRS"
           totalScore={result.level}
           classification={result.classification}
-          answers={answers}
+          answers={{ ...answers, skipLogic: skipSummary }}
         />
-        <Button onClick={() => { setAnswers({}); setShowResult(false); setSubmitAttempted(false); }} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
+        <Button onClick={handleReset} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
       </div>
     );
   }
@@ -128,60 +164,81 @@ export default function CssrsPage() {
       </div>
       <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
         <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
-          <strong>Instruções:</strong> Pergunte ao paciente cada questão. Se a resposta for "Sim", prossiga com as perguntas seguintes. Cada nível escala a gravidade da ideação/comportamento suicida.
-        </p>
-        <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed mt-2">
-          A escala usa lógica de pulo: se ideação ativa (Q2) for negada, as perguntas sobre método, intenção e plano são automaticamente omitidas.
+          <strong>Instruções:</strong> Aplique em sequência clínica. Perguntas sobre ideação ativa, método, intenção e plano só aparecem quando a resposta anterior indica necessidade.
         </p>
       </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
+          <span>{answered} de {total} respondidas</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} perguntas respondidas`}
+        />
+      </div>
+
       {visibleQuestions.map((q) => {
-        const isUnanswered = submitAttempted && !(q.id in answers);
+        const pending = submitAttempted && answers[q.id] === undefined;
         return (
-          <div
+          <Card
             key={q.id}
-            ref={(el) => { itemRefs.current[q.id] = el; }}
+            ref={(node) => { itemRefs.current[q.id] = node; }}
+            tabIndex={-1}
+            aria-invalid={pending}
+            className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
           >
-            <Card className={`border-card-border transition-colors ${isUnanswered ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
-                  <div>
-                    <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">{q.level}</p>
-                    <p className="text-sm text-foreground leading-relaxed">{q.text}</p>
-                  </div>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
+                <div>
+                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">{q.level}</p>
+                  <p className="text-sm text-foreground leading-relaxed">{q.text}</p>
                 </div>
-                <div className="flex gap-2">
-                  {[true, false].map((val) => (
-                    <button
-                      key={val.toString()}
-                      onClick={() => setAnswers({ ...answers, [q.id]: val })}
-                      className={`text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors ${
-                        answers[q.id] === val
-                          ? val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500"
-                          : "bg-card text-foreground border-border hover:bg-muted"
-                      }`}
-                    >
-                      {val ? "Sim" : "Não"}
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              {pending && (
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                  Resposta obrigatória para concluir esta etapa.
+                </p>
+              )}
+              <div className="flex gap-2">
+                {[true, false].map((val) => (
+                  <button
+                    key={val.toString()}
+                    type="button"
+                    aria-pressed={answers[q.id] === val}
+                    onClick={() => answerQuestion(q.id, val)}
+                    className={`min-h-[40px] text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                      answers[q.id] === val
+                        ? val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500"
+                        : "bg-card text-foreground border-border hover:bg-muted"
+                    }`}
+                  >
+                    {val ? "Sim" : "Não"}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         );
       })}
-      {!activeIdeation && answers[2] === false && (
-        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 p-4">
-          <div className="flex items-start gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-              Questões 3-5 (método/intenção/plano) não se aplicam — ideação ativa ausente.
-            </p>
-          </div>
+
+      {submitAttempted && !allAnswered && (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+          role="alert"
+        >
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
         </div>
       )}
-      <Button onClick={handleSubmit} className="w-full" size="lg">
-        {answered >= total ? "Ver Resultado" : `Responda todas as ${total} perguntas (${answered}/${total})`}
+
+      <Button onClick={handleSubmit} aria-disabled={!allAnswered} className="w-full" size="lg">
+        {allAnswered ? "Ver Resultado" : `Responder pendências (${answered}/${total})`}
       </Button>
       <ScaleReference scaleId="cssrs" />
     </div>

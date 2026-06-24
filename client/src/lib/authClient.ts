@@ -7,6 +7,8 @@
  * - Eventos: emite "auth:expired" quando refresh falhar.
  */
 
+const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 const ACCESS_KEY = "neuroped:access";
 const REFRESH_KEY = "neuroped:refresh";
 const USER_KEY = "neuroped:user";
@@ -66,7 +68,7 @@ export function clearAuth(): void {
 }
 
 export async function loginRequest(email: string, password: string): Promise<LoginResponse> {
-  const r = await fetch("/api/auth/login", {
+  const r = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -86,7 +88,7 @@ export async function refreshTokenRequest(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
   try {
-    const r = await fetch("/api/auth/refresh", {
+    const r = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -104,7 +106,7 @@ export async function refreshTokenRequest(): Promise<string | null> {
 export async function logoutRequest(): Promise<void> {
   const refreshToken = getRefreshToken();
   try {
-    await fetch("/api/auth/logout", {
+    await fetch(`${API_BASE}/api/auth/logout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -125,13 +127,15 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
     headers.set("Content-Type", "application/json");
   }
 
-  let response = await fetch(input, { ...init, headers });
+  const requestUrl = typeof input === "string" && input.startsWith("/") ? `${API_BASE}${input}` : input;
+
+  let response = await fetch(requestUrl, { ...init, headers });
 
   if (response.status === 401) {
     const newToken = await refreshTokenRequest();
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);
-      response = await fetch(input, { ...init, headers });
+      response = await fetch(requestUrl, { ...init, headers });
     } else {
       clearAuth();
       window.dispatchEvent(new CustomEvent("auth:expired"));

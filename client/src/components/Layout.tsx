@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { openCommandPalette } from "@/components/CommandPalette";
+import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";
@@ -210,8 +210,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 NeuroPed
               </h1>
-              <p className="text-[11px] text-muted-foreground leading-tight italic">
-                App clínico guiado
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/40 leading-tight mt-0.5">
+                Neuropediatria
               </p>
             </div>
           )}
@@ -293,11 +293,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {sectionOpen && (
                   <div id={`nav-section-${si}`} className="space-y-1">
                     {section.items.map((item) => {
-                      // Exact match OR location starts with item href followed by /
-                      // (e.g. /filtro active when on /generic-scale/:id if no closer match exists)
-                      const active =
-                        location === item.href ||
-                        (item.href !== "/" && location.startsWith(item.href + "/"));
+                      const active = activeNavigation?.item.href === item.href;
                       return (
                         <Link key={`${sectionKey}-${item.href}-${item.label}`} href={item.href}>
                           <div
@@ -391,7 +387,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            {!collapsed && <span className="ml-2 text-sm">Recolher</span>}
+            {!collapsed && <span className="ml-2 text-xs text-muted-foreground/60">Recolher</span>}
             {collapsed && <span className="ml-2 text-sm md:hidden">Expandir</span>}
           </Button>
         </div>
@@ -410,7 +406,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {flowSteps.map((step, index) => {
                 const active = activeNavigation?.item.label.toLowerCase().includes(step.toLowerCase()) || (index === 1 && location === "/filtro");
                 return (
-                  <span key={step} className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/40 bg-primary/10 text-primary" : "border-border bg-card/60"}`}>
+                  <span key={step} className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/50 bg-primary/15 text-primary font-medium" : "border-border/60 bg-muted/30 text-muted-foreground/80"}`}>
                     {step}
                   </span>
                 );

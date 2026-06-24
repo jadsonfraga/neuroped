@@ -21,12 +21,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install
-      - run: npm run build
+          cache: "npm"
 
       - name: Instalar dependências
         run: npm ci
@@ -39,6 +38,9 @@ jobs:
 
       - name: Validar catálogo clínico
         run: npm run validate:catalog
+
+      - name: Validar ranking clinico
+        run: npm run validate:ranking
 
       - name: Auditar política de acesso
         run: npm run audit:access
@@ -54,6 +56,12 @@ jobs:
 
       - name: Testes clínicos
         run: npm run test:clinical
+
+      - name: Testar podio do filtro de escalas
+        run: npm run test:podium
+
+      - name: Auditar 100 casos praticos do filtro
+        run: npm run test:practical-filter
 
       - name: Criar sentinela de deploy
         run: |
@@ -74,6 +82,7 @@ jobs:
       - name: Compilar frontend para Pages
         env:
           NODE_ENV: production
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
 
       - name: Verificar output do build

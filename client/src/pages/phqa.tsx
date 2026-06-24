@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,10 +14,33 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 export default function PhqaPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const total = phqaQuestions.length;
-  const answered = Object.keys(answers).length;
+  const answered = phqaQuestions.reduce((count, _, i) => count + (answers[i] !== undefined ? 1 : 0), 0);
   const progress = (answered / total) * 100;
+  const allAnswered = answered === total;
+  const firstMissingIndex = phqaQuestions.findIndex((_, i) => answers[i] === undefined);
+  const missingCount = Math.max(total - answered, 0);
+
+  function handleSubmit() {
+    setSubmitAttempted(true);
+    if (!allAnswered) {
+      if (firstMissingIndex >= 0) {
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+      }
+      return;
+    }
+    setShowResult(true);
+  }
+
+  function handleReset() {
+    setAnswers({});
+    setShowResult(false);
+    setSubmitAttempted(false);
+  }
 
   if (showResult) {
     const sum = Object.values(answers).reduce((a, b) => a + b, 0);
@@ -77,7 +100,7 @@ export default function PhqaPage() {
           classification={result.classification}
           answers={answers}
         />
-        <Button onClick={() => { setAnswers({}); setShowResult(false); }} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
+        <Button onClick={handleReset} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
       </div>
     );
   }
@@ -97,32 +120,61 @@ export default function PhqaPage() {
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{answered} de {total}</span><span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress
+          value={progress}
+          className="h-2"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answered}
+          aria-label={`Progresso da escala: ${answered} de ${total} perguntas respondidas`}
+        />
       </div>
       <div className="rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/20 border border-fuchsia-200 dark:border-fuchsia-800/40 p-4">
         <p className="text-xs text-fuchsia-800 dark:text-fuchsia-300 leading-relaxed">
           <strong>Instruções:</strong> Nas últimas 2 semanas, com que frequência você foi incomodado(a) por cada um dos problemas a seguir?
         </p>
       </div>
-      {phqaQuestions.map((q, i) => (
-        <Card key={i} className="border-card-border">
+      {phqaQuestions.map((q, i) => {
+        const pending = submitAttempted && answers[i] === undefined;
+        return (
+        <Card
+          key={i}
+          ref={(node) => { itemRefs.current[i] = node; }}
+          tabIndex={-1}
+          aria-invalid={pending}
+          className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+        >
           <CardContent className="p-4 space-y-3">
             <div className="flex items-start gap-2">
               <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
               <p className="text-sm text-foreground leading-relaxed">{q}</p>
             </div>
+            {pending && (
+              <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                Resposta obrigatória para concluir a escala.
+              </p>
+            )}
             <RadioGroup value={answers[i]?.toString()} onValueChange={(val) => setAnswers({ ...answers, [i]: parseInt(val) })} className="flex flex-wrap gap-2">
               {phqaLabels.map((label, j) => (
                 <div key={j} className="flex items-center">
-                  <RadioGroupItem value={j.toString()} id={`phqa-q${i}-o${j}`} className="sr-only" />
-                  <Label htmlFor={`phqa-q${i}-o${j}`} className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${answers[i] === j ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:bg-muted"}`}>{label}</Label>
+                  <RadioGroupItem value={j.toString()} id={`phqa-q${i}-o${j}`} className="peer sr-only" />
+                  <Label htmlFor={`phqa-q${i}-o${j}`} aria-pressed={answers[i] === j} className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${answers[i] === j ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:bg-muted"}`}>{label}</Label>
                 </div>
               ))}
             </RadioGroup>
           </CardContent>
         </Card>
-      ))}
-      <Button onClick={() => setShowResult(true)} disabled={answered < total} className="w-full" size="lg">{answered >= total ? "Ver Resultado" : `Responda todas as ${total} perguntas`}</Button>
+        );
+      })}
+      {submitAttempted && !allAnswered && (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
+          role="alert"
+        >
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+        </div>
+      )}
+      <Button onClick={handleSubmit} aria-disabled={!allAnswered} className="w-full" size="lg">{allAnswered ? "Ver Resultado" : `Responder pendências (${answered}/${total})`}</Button>
       <ScaleReference scaleId="phqa" />
     </div>
   );
