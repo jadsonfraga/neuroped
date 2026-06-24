@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, ShieldCheck, Download, Upload,
+  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, ShieldCheck, Download, Upload, Loader2,
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
@@ -45,6 +45,9 @@ export default function PacientesPage() {
   const [formBirth, setFormBirth] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState<{ id: string; name: string } | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: patientsRaw, isLoading } = useQuery<any>({
     queryKey: ["/api/patients"],
@@ -123,6 +126,88 @@ export default function PacientesPage() {
     setFormBirth(p.birthDate || "");
     setFormNotes(p.notes || "");
     setDialogOpen(true);
+  }
+
+  async function handleBackup() {
+    if (patients.length === 0) {
+      toast({ title: "Nenhum paciente para exportar.", variant: "destructive" });
+      return;
+    }
+    setBackupLoading(true);
+    try {
+      const results: Record<string, any[]> = {};
+      for (const p of patients) {
+        try {
+          const res = await apiRequest("GET", `/api/patients/${p.id}/results`);
+          const data = await res.json();
+          results[p.id] = Array.isArray(data) ? data : (data?.data ?? []);
+        } catch {
+          results[p.id] = [];
+        }
+      }
+      const backup = { version: "1.0", app: "NeuroPed", exportedAt: new Date().toISOString(), patients, results };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `neuroped-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      softSuccess(); haptic.success();
+      toast({ title: `Backup de ${patients.length} paciente(s) exportado.` });
+    } catch {
+      softError(); haptic.error();
+      toast({ title: "Erro ao gerar backup.", variant: "destructive" });
+    } finally {
+      setBackupLoading(false);
+    }
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setImportLoading(true);
+    try {
+      const backup = JSON.parse(await file.text());
+      if (!backup.version || !Array.isArray(backup.patients)) {
+        toast({ title: "Arquivo inválido. Selecione um backup NeuroPed (.json).", variant: "destructive" });
+        return;
+      }
+      let imported = 0; let skipped = 0;
+      for (const p of backup.patients) {
+        try {
+          const pd: any = { name: p.name };
+          if (p.birthDate) pd.birthDate = p.birthDate;
+          if (p.notes) pd.notes = p.notes;
+          const res = await apiRequest("POST", "/api/patients", pd);
+          if (!res.ok) { skipped++; continue; }
+          const newPatient = await res.json();
+          for (const r of (backup.results?.[p.id] ?? [])) {
+            try {
+              await apiRequest("POST", "/api/results", {
+                patientId: newPatient.id,
+                scaleName: r.scaleName,
+                answers: r.answers,
+                totalScore: r.totalScore,
+                classification: r.classification,
+                patientAge: r.patientAge,
+                domainScores: r.domainScores ?? null,
+              });
+            } catch { /* pula resultados com erro */ }
+          }
+          imported++;
+        } catch { skipped++; }
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      softSuccess(); haptic.success();
+      toast({ title: `${imported} paciente(s) importado(s)${skipped > 0 ? `, ${skipped} ignorado(s)` : ""}.` });
+    } catch {
+      softError(); haptic.error();
+      toast({ title: "Backup corrompido ou formato inválido.", variant: "destructive" });
+    } finally {
+      setImportLoading(false);
+    }
   }
 
   function handleSubmit() {
@@ -255,12 +340,27 @@ export default function PacientesPage() {
           </CardContent>
         </Card>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="h-full min-h-[52px] flex-col gap-1" disabled title="Exportação em lote pendente de integração com backend">
-            <Download className="w-4 h-4" /> Backup
+          <Button
+            variant="outline" size="sm"
+            className="h-full min-h-[52px] flex-col gap-1"
+            onClick={() => { softTap(); haptic.tap(); handleBackup(); }}
+            disabled={backupLoading || patients.length === 0}
+            title="Exportar todos os pacientes e resultados como JSON"
+          >
+            {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Backup
           </Button>
-          <Button variant="outline" size="sm" className="h-full min-h-[52px] flex-col gap-1" disabled title="Importação pendente de integração com backend">
-            <Upload className="w-4 h-4" /> Importar
+          <Button
+            variant="outline" size="sm"
+            className="h-full min-h-[52px] flex-col gap-1"
+            onClick={() => { softTap(); haptic.tap(); fileInputRef.current?.click(); }}
+            disabled={importLoading}
+            title="Importar pacientes de um backup NeuroPed (.json)"
+          >
+            {importLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Importar
           </Button>
+          <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
         </div>
       </div>
 
