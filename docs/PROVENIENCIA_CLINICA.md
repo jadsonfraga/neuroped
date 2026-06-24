@@ -146,20 +146,20 @@
 | `dst-jr` | DST-Jr | — | sim |
 | `dubowitz` | Dubowitz Neurológico | Dubowitz L, Dubowitz V, Mercuri E, 1999 (Dubowitz Neurological Examination) | não |
 | `dvss` | DVSS | Farhat W et al., 2000 (Dysfunctional Voiding Symptom Score) | não |
-| `eaah` | EAAH-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `eaah` | EAAH-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ead-das` | EAD (DAS) | Weissman AN, Beck AT. (Dysfunctional Attitudes Scale — DAS), 1978. | não |
-| `eaf` | EAF | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `eai` | EAI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `easi` | EASI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `ecar-si` | ECAR-SI J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `eaf` | EAF | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `eai` | EAI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `easi` | EASI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `ecar-si` | ECAR-SI NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ecbi` | ECBI | Eyberg SM & Ross AW, 1978 | não |
-| `ecsm` | ECSM | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `ecsm` | ECSM | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `eda` | EDA | Pendente revisão clínica | sim |
 | `edacs` | EDACS | Sellers D et al., 2014 (EDACS) | não |
-| `edi` | EDI-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `edi` | EDI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `edy-q` | EDY-Q | — | sim |
-| `emdi` | EMDI | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `ems` | EMS-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `emdi` | EMDI | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `ems` | EMS-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não |
 | `eowpvt` | EOWPVT | — | sim |
 | `eowpvt4` | EOWPVT-4 | Martin NA, Brownell R, 2011 (EOWPVT-4), Academic Therapy | não |
@@ -168,7 +168,7 @@
 | `esi-r` | ESI-R | — | sim |
 | `ess-adol` | ESS Adolescente | Johns MW, 1991 (Epworth Sleepiness Scale); versão pediátrica Melendres MC et al., 2004 (ESS-DASC) | não |
 | `ess-chad` | ESS-CHAD | — | sim |
-| `etare` | ETARE-J26 | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `etare` | ETARE-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `etch` | ETCH | — | sim |
 | `eva-ped` | EVA Pediátrica | Escala Visual Analógica (VAS) — uso pediátrico (a partir de ~7 anos) | não |
 | `evt-3` | EVT-3 | — | sim |
@@ -208,105 +208,105 @@
 | `ims` | IMS | Piper MC, Darrah J, 1994 (Alberta Infant Motor Scale); validação BR Saccani & Valentini, 2012 | não |
 | `infanib` | INFANIB | Ellison PH, 1994 (INFANIB) | não |
 | `ipes` | IPES | Camfield C et al., 2001 (Impact of Pediatric Epilepsy Scale) | não |
-| `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `irs` | IRS | — | sim |
 | `isas` | ISAS | Klonsky & Glenn research | não |
 | `isi-adolescent` | ISI-Adolescent | — | sim |
 | `ita-adultos` | ITA-Adultos | Instrumento inspirado no AQ (Autism Spectrum Quotient) | não |
-| `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (J26-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-002` | Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (J26-002) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-003` | Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (J26-003) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-004` | Protocolo Dr. Jadson — Cognição Precoce 0-18 Meses (J26-004) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-005` | Protocolo Dr. Jadson — Regulação Sensorial Neonatal (J26-005) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-007` | Protocolo Dr. Jadson — Desenvolvimento Socioemocional 0-3 Anos (J26-007) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-008` | Protocolo Dr. Jadson — Motor Fino 12-36 Meses (J26-008) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-009` | Protocolo Dr. Jadson — Atenção Conjunta Precoce (J26-009) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-010` | Protocolo Dr. Jadson — Triagem Global 24-36 Meses (J26-010) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-011` | Protocolo Dr. Jadson — Triagem Global 36-60 Meses (J26-011) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-012` | Protocolo Dr. Jadson — Portage Adaptado NE (J26-012) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-013` | Protocolo Dr. Jadson — Triagem Auditiva Funcional (J26-013) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-014` | Protocolo Dr. Jadson — Triagem Visual Funcional (J26-014) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-015` | Protocolo Dr. Jadson — Autonomia e Autocuidado 2-5 Anos (J26-015) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-020` | Protocolo Dr. Jadson — Linguagem Pragmática TEA (J26-020) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-021` | Protocolo Dr. Jadson — Atenção Conjunta TEA (J26-021) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-022` | Protocolo Dr. Jadson — Teoria da Mente TEA (J26-022) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-026` | Protocolo Dr. Jadson — Habilidades de Brincar TEA (J26-026) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-027` | Protocolo Dr. Jadson — Comunicação Alternativa TEA (J26-027) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-030` | Protocolo Dr. Jadson — Evolução Clínica TEA (J26-030) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-051` | Protocolo Dr. Jadson — Flexibilidade Comportamental (J26-051) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-082` | Protocolo Dr. Jadson — Linguagem Pragmática Escolar (J26-082) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-083` | Protocolo Dr. Jadson — Narrativa Oral Infantil (J26-083) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-084` | Protocolo Dr. Jadson — Consciência Fonológica Expandida (J26-084) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-085` | Protocolo Dr. Jadson — Vocabulário em Profundidade (J26-085) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-086` | Protocolo Dr. Jadson — Fluência Verbal Criança (J26-086) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-089` | Protocolo Dr. Jadson — CAA Necessidades (J26-089) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-090` | Protocolo Dr. Jadson — Compreensão Oral Complexa (J26-090) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-091` | Protocolo Dr. Jadson — Triagem Linguagem 18-36 Meses (J26-091) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-092` | Protocolo Dr. Jadson — Discurso e Linguagem Escolar (J26-092) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-093` | Protocolo Dr. Jadson — Prosódia e Entonação (J26-093) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-094` | Protocolo Dr. Jadson — Fluência de Leitura (J26-094) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-097` | Protocolo Dr. Jadson — Expressão Escrita (J26-097) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-098` | Protocolo Dr. Jadson — Habilidades de Estudo (J26-098) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-101` | Protocolo Dr. Jadson — Discalculia Triagem (J26-101) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-102` | Protocolo Dr. Jadson — Dificuldade de Cópia e Ditado (J26-102) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-104` | Protocolo Dr. Jadson — Inclusão Escolar TEA/TDAH (J26-104) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-106` | Protocolo Dr. Jadson — Motor Fino Escolar (J26-106) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-107` | Protocolo Dr. Jadson — Marco Motor Grosso 1-5 Anos (J26-107) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-108` | Protocolo Dr. Jadson — Integração Visomotora (J26-108) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-109` | Protocolo Dr. Jadson — Apraxia e Praxia Motora (J26-109) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-111` | Protocolo Dr. Jadson — Motor PC Funcional (J26-111) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-112` | Protocolo Dr. Jadson — Equilíbrio e Marcha Infantil (J26-112) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-113` | Protocolo Dr. Jadson — Escrita Manual Avançado (J26-113) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-115` | Protocolo Dr. Jadson — Habilidades Esportivas Motor (J26-115) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-117` | Protocolo Dr. Jadson — Motor Prematuro Follow-Up (J26-117) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-126` | Protocolo Dr. Jadson — Dieta Sensorial Eficácia (J26-126) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-130` | Protocolo Dr. Jadson — Higiene do Sono Infantil (J26-130) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-136` | Protocolo Dr. Jadson — Resposta Melatonina (J26-136) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-137` | Protocolo Dr. Jadson — Rotina Noturna (J26-137) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-146` | Protocolo Dr. Jadson — Autonomia Alimentar (J26-146) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-176` | Protocolo Dr. Jadson — Resiliência Infantil (J26-176) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-180` | Protocolo Dr. Jadson — AVDs Infantis (J26-180) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-181` | Protocolo Dr. Jadson — Participação Social Criança (J26-181) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-184` | Protocolo Dr. Jadson — Satisfação Tratamento (J26-184) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-185` | Protocolo Dr. Jadson — Engajamento Terapias (J26-185) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-186` | Protocolo Dr. Jadson — Inclusão Escolar Efetiva (J26-186) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-187` | Protocolo Dr. Jadson — Autonomia Adolescente Especial (J26-187) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-189` | Protocolo Dr. Jadson — Funcionalidade PC GMFCS (J26-189) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-191` | Protocolo Dr. Jadson — Prontidão Alimentar Prematuro (J26-191) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-192` | Protocolo Dr. Jadson — Método Canguru Follow-Up (J26-192) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-194` | Protocolo Dr. Jadson — Alta UTIN Prontidão (J26-194) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-195` | Protocolo Dr. Jadson — Prematuro Follow-Up 2 Anos (J26-195) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-201` | Protocolo Dr. Jadson — Adesão Medicação Criança (J26-201) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-203` | Protocolo Dr. Jadson — Comunicação Social 3-7 Anos (J26-203) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-205` | Protocolo Dr. Jadson — Cognição Social TEA (J26-205) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-208` | Protocolo Dr. Jadson — Habilidades de Vida Independente (J26-208) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-209` | Protocolo Dr. Jadson — Saúde Sexual Adolescente NEE (J26-209) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-210` | Protocolo Dr. Jadson — Avaliação Pós-Terapia Trimestral (J26-210) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-211` | Protocolo Dr. Jadson — Evolução de Comunicação Social TEA (J26-211) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-213` | Protocolo Dr. Jadson — Habilidades Adaptativas TEA Trimestral (J26-213) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-216` | Protocolo Dr. Jadson — Contato Visual e Atenção Conjunta TEA (J26-216) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-217` | Protocolo Dr. Jadson — Brincadeira Funcional e Simbólica TEA (J26-217) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-218` | Protocolo Dr. Jadson — Impressão Global dos Pais TEA (J26-218) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-220` | Protocolo Dr. Jadson — Funções Executivas TDAH Cotidiano (J26-220) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-221` | Protocolo Dr. Jadson — Desempenho Escolar TDAH Trimestral (J26-221) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-223` | Protocolo Dr. Jadson — Regulação Emocional TDAH Evolução (J26-223) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-225` | Protocolo Dr. Jadson — Feedback do Professor TDAH Sala (J26-225) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-226` | Protocolo Dr. Jadson — Impressão Global Melhora TDAH CGI (J26-226) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-233` | Protocolo Dr. Jadson — Evolução Vocabulário Expressivo Trimestral (J26-233) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-234` | Protocolo Dr. Jadson — Inteligibilidade de Fala Monitorização (J26-234) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-235` | Protocolo Dr. Jadson — Linguagem Pragmática Acompanhamento (J26-235) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-237` | Protocolo Dr. Jadson — Marcos de Comunicação Atingidos (J26-237) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-238` | Protocolo Dr. Jadson — GMFCS Reclassificação Anual (J26-238) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-239` | Protocolo Dr. Jadson — Amplitude de Movimento Pós-Fisioterapia (J26-239) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-240` | Protocolo Dr. Jadson — Função Manual MACS Evolutivo (J26-240) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-242` | Protocolo Dr. Jadson — Postura e Marcha Acompanhamento (J26-242) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-243` | Protocolo Dr. Jadson — Toxina Botulínica Antes e Depois (J26-243) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-244` | Protocolo Dr. Jadson — Leitura Fluência e Compreensão Trimestral (J26-244) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-245` | Protocolo Dr. Jadson — Escrita Amostras Comparativas (J26-245) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-246` | Protocolo Dr. Jadson — Matemática Pós-Psicopedagogia (J26-246) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-247` | Protocolo Dr. Jadson — Adaptação Curricular Feedback Escolar (J26-247) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-248` | Protocolo Dr. Jadson — Metas PEI Plano Educacional (J26-248) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
-| `j26-260` | Protocolo Dr. Jadson — Laboratorial Rotina por Medicação (J26-260) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (NEXUS-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-002` | Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (NEXUS-002) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-003` | Protocolo Dr. Jadson — Marcos de Linguagem 0-24 Meses (NEXUS-003) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-004` | Protocolo Dr. Jadson — Cognição Precoce 0-18 Meses (NEXUS-004) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-005` | Protocolo Dr. Jadson — Regulação Sensorial Neonatal (NEXUS-005) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-007` | Protocolo Dr. Jadson — Desenvolvimento Socioemocional 0-3 Anos (NEXUS-007) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-008` | Protocolo Dr. Jadson — Motor Fino 12-36 Meses (NEXUS-008) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-009` | Protocolo Dr. Jadson — Atenção Conjunta Precoce (NEXUS-009) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-010` | Protocolo Dr. Jadson — Triagem Global 24-36 Meses (NEXUS-010) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-011` | Protocolo Dr. Jadson — Triagem Global 36-60 Meses (NEXUS-011) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-012` | Protocolo Dr. Jadson — Portage Adaptado NE (NEXUS-012) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-013` | Protocolo Dr. Jadson — Triagem Auditiva Funcional (NEXUS-013) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-014` | Protocolo Dr. Jadson — Triagem Visual Funcional (NEXUS-014) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-015` | Protocolo Dr. Jadson — Autonomia e Autocuidado 2-5 Anos (NEXUS-015) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-020` | Protocolo Dr. Jadson — Linguagem Pragmática TEA (NEXUS-020) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-021` | Protocolo Dr. Jadson — Atenção Conjunta TEA (NEXUS-021) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-022` | Protocolo Dr. Jadson — Teoria da Mente TEA (NEXUS-022) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-026` | Protocolo Dr. Jadson — Habilidades de Brincar TEA (NEXUS-026) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-027` | Protocolo Dr. Jadson — Comunicação Alternativa TEA (NEXUS-027) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-030` | Protocolo Dr. Jadson — Evolução Clínica TEA (NEXUS-030) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-051` | Protocolo Dr. Jadson — Flexibilidade Comportamental (NEXUS-051) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-082` | Protocolo Dr. Jadson — Linguagem Pragmática Escolar (NEXUS-082) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-083` | Protocolo Dr. Jadson — Narrativa Oral Infantil (NEXUS-083) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-084` | Protocolo Dr. Jadson — Consciência Fonológica Expandida (NEXUS-084) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-085` | Protocolo Dr. Jadson — Vocabulário em Profundidade (NEXUS-085) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-086` | Protocolo Dr. Jadson — Fluência Verbal Criança (NEXUS-086) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-089` | Protocolo Dr. Jadson — CAA Necessidades (NEXUS-089) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-090` | Protocolo Dr. Jadson — Compreensão Oral Complexa (NEXUS-090) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-091` | Protocolo Dr. Jadson — Triagem Linguagem 18-36 Meses (NEXUS-091) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-092` | Protocolo Dr. Jadson — Discurso e Linguagem Escolar (NEXUS-092) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-093` | Protocolo Dr. Jadson — Prosódia e Entonação (NEXUS-093) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-094` | Protocolo Dr. Jadson — Fluência de Leitura (NEXUS-094) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-097` | Protocolo Dr. Jadson — Expressão Escrita (NEXUS-097) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-098` | Protocolo Dr. Jadson — Habilidades de Estudo (NEXUS-098) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-101` | Protocolo Dr. Jadson — Discalculia Triagem (NEXUS-101) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-102` | Protocolo Dr. Jadson — Dificuldade de Cópia e Ditado (NEXUS-102) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-104` | Protocolo Dr. Jadson — Inclusão Escolar TEA/TDAH (NEXUS-104) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-106` | Protocolo Dr. Jadson — Motor Fino Escolar (NEXUS-106) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-107` | Protocolo Dr. Jadson — Marco Motor Grosso 1-5 Anos (NEXUS-107) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-108` | Protocolo Dr. Jadson — Integração Visomotora (NEXUS-108) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-109` | Protocolo Dr. Jadson — Apraxia e Praxia Motora (NEXUS-109) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-111` | Protocolo Dr. Jadson — Motor PC Funcional (NEXUS-111) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-112` | Protocolo Dr. Jadson — Equilíbrio e Marcha Infantil (NEXUS-112) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-113` | Protocolo Dr. Jadson — Escrita Manual Avançado (NEXUS-113) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-115` | Protocolo Dr. Jadson — Habilidades Esportivas Motor (NEXUS-115) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-117` | Protocolo Dr. Jadson — Motor Prematuro Follow-Up (NEXUS-117) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-126` | Protocolo Dr. Jadson — Dieta Sensorial Eficácia (NEXUS-126) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-130` | Protocolo Dr. Jadson — Higiene do Sono Infantil (NEXUS-130) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-136` | Protocolo Dr. Jadson — Resposta Melatonina (NEXUS-136) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-137` | Protocolo Dr. Jadson — Rotina Noturna (NEXUS-137) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-146` | Protocolo Dr. Jadson — Autonomia Alimentar (NEXUS-146) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-176` | Protocolo Dr. Jadson — Resiliência Infantil (NEXUS-176) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-180` | Protocolo Dr. Jadson — AVDs Infantis (NEXUS-180) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-181` | Protocolo Dr. Jadson — Participação Social Criança (NEXUS-181) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-184` | Protocolo Dr. Jadson — Satisfação Tratamento (NEXUS-184) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-185` | Protocolo Dr. Jadson — Engajamento Terapias (NEXUS-185) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-186` | Protocolo Dr. Jadson — Inclusão Escolar Efetiva (NEXUS-186) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-187` | Protocolo Dr. Jadson — Autonomia Adolescente Especial (NEXUS-187) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-189` | Protocolo Dr. Jadson — Funcionalidade PC GMFCS (NEXUS-189) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-191` | Protocolo Dr. Jadson — Prontidão Alimentar Prematuro (NEXUS-191) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-192` | Protocolo Dr. Jadson — Método Canguru Follow-Up (NEXUS-192) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-194` | Protocolo Dr. Jadson — Alta UTIN Prontidão (NEXUS-194) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-195` | Protocolo Dr. Jadson — Prematuro Follow-Up 2 Anos (NEXUS-195) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-201` | Protocolo Dr. Jadson — Adesão Medicação Criança (NEXUS-201) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-203` | Protocolo Dr. Jadson — Comunicação Social 3-7 Anos (NEXUS-203) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-205` | Protocolo Dr. Jadson — Cognição Social TEA (NEXUS-205) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-208` | Protocolo Dr. Jadson — Habilidades de Vida Independente (NEXUS-208) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-209` | Protocolo Dr. Jadson — Saúde Sexual Adolescente NEE (NEXUS-209) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-210` | Protocolo Dr. Jadson — Avaliação Pós-Terapia Trimestral (NEXUS-210) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-211` | Protocolo Dr. Jadson — Evolução de Comunicação Social TEA (NEXUS-211) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-213` | Protocolo Dr. Jadson — Habilidades Adaptativas TEA Trimestral (NEXUS-213) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-216` | Protocolo Dr. Jadson — Contato Visual e Atenção Conjunta TEA (NEXUS-216) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-217` | Protocolo Dr. Jadson — Brincadeira Funcional e Simbólica TEA (NEXUS-217) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-218` | Protocolo Dr. Jadson — Impressão Global dos Pais TEA (NEXUS-218) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-220` | Protocolo Dr. Jadson — Funções Executivas TDAH Cotidiano (NEXUS-220) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-221` | Protocolo Dr. Jadson — Desempenho Escolar TDAH Trimestral (NEXUS-221) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-223` | Protocolo Dr. Jadson — Regulação Emocional TDAH Evolução (NEXUS-223) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-225` | Protocolo Dr. Jadson — Feedback do Professor TDAH Sala (NEXUS-225) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-226` | Protocolo Dr. Jadson — Impressão Global Melhora TDAH CGI (NEXUS-226) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-233` | Protocolo Dr. Jadson — Evolução Vocabulário Expressivo Trimestral (NEXUS-233) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-234` | Protocolo Dr. Jadson — Inteligibilidade de Fala Monitorização (NEXUS-234) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-235` | Protocolo Dr. Jadson — Linguagem Pragmática Acompanhamento (NEXUS-235) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-237` | Protocolo Dr. Jadson — Marcos de Comunicação Atingidos (NEXUS-237) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-238` | Protocolo Dr. Jadson — GMFCS Reclassificação Anual (NEXUS-238) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-239` | Protocolo Dr. Jadson — Amplitude de Movimento Pós-Fisioterapia (NEXUS-239) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-240` | Protocolo Dr. Jadson — Função Manual MACS Evolutivo (NEXUS-240) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-242` | Protocolo Dr. Jadson — Postura e Marcha Acompanhamento (NEXUS-242) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-243` | Protocolo Dr. Jadson — Toxina Botulínica Antes e Depois (NEXUS-243) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-244` | Protocolo Dr. Jadson — Leitura Fluência e Compreensão Trimestral (NEXUS-244) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-245` | Protocolo Dr. Jadson — Escrita Amostras Comparativas (NEXUS-245) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-246` | Protocolo Dr. Jadson — Matemática Pós-Psicopedagogia (NEXUS-246) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-247` | Protocolo Dr. Jadson — Adaptação Curricular Feedback Escolar (NEXUS-247) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-248` | Protocolo Dr. Jadson — Metas PEI Plano Educacional (NEXUS-248) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `j26-260` | Protocolo Dr. Jadson — Laboratorial Rotina por Medicação (NEXUS-260) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `jvq` | JVQ | — | sim |
 | `k-cpt2` | K-CPT 2 | — | sim |
 | `kabc2` | K-ABC-II | Kaufman AS, Kaufman NL, 2004 (KABC-II) | não |
@@ -373,7 +373,7 @@
 | `odds-rs` | ODDS-RS | — | sim |
 | `owls-ii` | OWLS-II | — | sim |
 | `panss-ped` | PANSS Pediátrico | Kay SR, Fiszbein A, Opler LA, 1987 (PANSS) | não |
-| `pant` | PANT | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) — Protocolo PANT (100 escalas passivas) | não |
+| `pant` | PANT | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) — Protocolo PANT (100 escalas passivas) | não |
 | `pant-v7-001` | Atenção compartilhada espontânea | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não |
 | `pant-v7-002` | Atenção compartilhada responsiva | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não |
 | `pant-v7-003` | Mostra social de objetos | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não |
@@ -477,7 +477,7 @@
 | `pardi` | PARDI | — | sim |
 | `pas` | PAS | — | sim |
 | `pcs-c` | PCS-C | — | sim |
-| `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `pdms2` | PDMS-2 | Folio MR, Fewell RR, 2000 (PDMS-2), PRO-ED | não |
 | `pdss` | PDSS | — | sim |
 | `peat` | PEAT | Speech-language pathology journals (open-access) | não |
@@ -601,7 +601,7 @@
 | `tde` | TDE | Stein LM, 1994 | não |
 | `tea-ch2` | TEA-Ch2 | — | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não |
-| `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (J26) | não |
+| `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `tema-3` | TEMA-3 | — | sim |
 | `tgmd3` | TGMD-3 | Ulrich DA, 2019 (Test of Gross Motor Development 3) | não |
 | `timp` | TIMP | Campbell SK et al., 1995 (Test of Infant Motor Performance) | não |
