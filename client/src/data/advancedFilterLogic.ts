@@ -302,16 +302,21 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
     }
   }
 
-  // 2. Correspondência da queixa (0–28).
+  // 2. Correspondência da queixa (0–38).
+  // Cobertura total recebe bônus de sinergia proporcional ao número de queixas
+  // selecionadas (instrumento que cobre 3 queixas simultâneas > que cobre 1).
+  // Cobertura parcial é penalizada proporcionalmente: diferença máx ≈ 30 pts.
   if (ctx.queixas.length === 0) {
     score += 14;
   } else {
     const matchCount = scale.queixas.filter((q) => ctx.queixas.includes(q)).length;
     if (matchCount === ctx.queixas.length) {
-      score += 28;
+      const synergy = Math.min(10, (ctx.queixas.length - 1) * 5);
+      score += 28 + synergy;
       reasons.push(`Cobre todas as ${ctx.queixas.length} queixa(s)`);
     } else if (matchCount > 0) {
-      score += 16 + matchCount * 4;
+      const ratio = matchCount / ctx.queixas.length;
+      score += Math.round(28 * ratio * 0.55);
       reasons.push(`Cobre ${matchCount} de ${ctx.queixas.length} queixas`);
     }
   }
@@ -538,9 +543,42 @@ function fillPodiumWithBroadband(
 export function detectClinicalPattern(context: FilterContext): string {
   const { queixas, selectedSignals = [] } = context;
 
+  // ── Padrões multi-queixa (mais específicos — verificar antes dos mono) ──────
+  if (queixas.includes("depressao") && queixas.includes("suicidio")) {
+    return "Depressão com risco de suicídio — avaliação urgente";
+  }
+  if (queixas.includes("tea") && queixas.includes("tdah")) {
+    return "TEA com perfil TDAH associado";
+  }
+  if (queixas.includes("tea") && queixas.includes("ansiedade")) {
+    return "TEA com comorbidade ansiosa";
+  }
+  if (queixas.includes("tdah") && queixas.includes("ansiedade")) {
+    return "TDAH com comorbidade ansiosa";
+  }
+  if (queixas.includes("tdah") && queixas.includes("comportamento")) {
+    return "TDAH com comportamento disruptivo";
+  }
+  if (queixas.includes("linguagem") && queixas.includes("aprendizagem")) {
+    return "Dificuldade de linguagem e aprendizagem";
+  }
+  if (queixas.includes("motor") && queixas.includes("atraso")) {
+    return "Atraso do desenvolvimento global com componente motor";
+  }
+  if (queixas.includes("toc") && queixas.includes("ansiedade")) {
+    return "TOC com quadro ansioso";
+  }
+  if (queixas.includes("trauma") && queixas.includes("depressao")) {
+    return "Trauma com sintomas depressivos";
+  }
+  if (queixas.includes("cognicao") && queixas.includes("aprendizagem")) {
+    return "Dificuldade cognitiva e de aprendizagem";
+  }
+
+  // ── Padrões mono-queixa com refinamento por sinal ───────────────────────────
   if (queixas.includes("tdah")) {
     if (selectedSignals.some((s) => s.includes("hiperatividade"))) return "TDAH com hiperatividade predominante";
-    if (selectedSignals.some((s) => s.includes("desatenção"))) return "TDAH com desatenção predominante";
+    if (selectedSignals.some((s) => s.includes("desatenção") || s.includes("desatencao"))) return "TDAH com desatenção predominante";
     return "TDAH misto";
   }
 
@@ -560,6 +598,41 @@ export function detectClinicalPattern(context: FilterContext): string {
     if (hasLanguage) return "Atraso de linguagem";
     return "Suspeita atraso desenvolvimento";
   }
+
+  if (queixas.includes("depressao")) {
+    if (context.ageMonths !== null && context.ageMonths >= 144) return "Depressão no adolescente";
+    return "Humor deprimido";
+  }
+  if (queixas.includes("suicidio")) return "Risco de suicídio — avaliação urgente";
+  if (queixas.includes("ansiedade")) {
+    if (selectedSignals.some((s) => s.includes("fobia") || s.includes("social"))) return "Ansiedade social/fóbica";
+    if (selectedSignals.some((s) => s.includes("pânico") || s.includes("panico"))) return "Pânico/ansiedade aguda";
+    return "Quadro ansioso";
+  }
+  if (queixas.includes("comportamento")) {
+    if (selectedSignals.some((s) => s.includes("agressi"))) return "Comportamento agressivo";
+    if (selectedSignals.some((s) => s.includes("oposi"))) return "Comportamento opositivo";
+    return "Transtorno comportamental";
+  }
+  if (queixas.includes("linguagem")) return "Atraso/transtorno de linguagem";
+  if (queixas.includes("aprendizagem")) return "Dificuldade de aprendizagem";
+  if (queixas.includes("cognicao")) return "Avaliação cognitiva/neuropsicológica";
+  if (queixas.includes("motor")) return "Atraso/disfunção motora";
+  if (queixas.includes("sono")) return "Transtorno de sono";
+  if (queixas.includes("funcionalidade")) return "Avaliação de funcionalidade adaptativa";
+  if (queixas.includes("social")) return "Dificuldade de habilidades sociais";
+  if (queixas.includes("tiques")) return "Tiques / Síndrome de Tourette";
+  if (queixas.includes("toc")) return "Transtorno Obsessivo-Compulsivo";
+  if (queixas.includes("trauma")) return "Trauma / TEPT";
+  if (queixas.includes("psicose")) return "Suspeita de psicose/mania";
+  if (queixas.includes("alimentacao")) return "Transtorno alimentar/seletividade";
+  if (queixas.includes("epilepsia")) return "Epilepsia — monitorização de crises";
+  if (queixas.includes("dor")) return "Dor crônica / cefaleia";
+  if (queixas.includes("sensorial")) return "Disfunção de integração sensorial";
+  if (queixas.includes("neonatal")) return "Avaliação neonatal/prematuridade";
+  if (queixas.includes("autonomia")) return "Avaliação de autonomia/AVDs";
+  if (queixas.includes("enurese")) return "Enurese/encoprese";
+  if (queixas.includes("substancias")) return "Uso de substâncias";
 
   return "Avaliação geral";
 }
