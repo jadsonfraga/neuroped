@@ -139,6 +139,8 @@ jobs:
           ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
           ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_NM: ${{ secrets.ADMIN_NAME }}
+          CERT_B64: ${{ secrets.CERT_P12_B64 }}
+          CERT_PW: ${{ secrets.CERT_P12_PASSWORD }}
         run: |
           put() {
             if [ -n "$2" ]; then
@@ -152,6 +154,8 @@ jobs:
           put ADMIN_INITIAL_PASSWORD "$ADMIN_PW"
           put ADMIN_EMAIL "$ADMIN_MAIL"
           put ADMIN_NAME "$ADMIN_NM"
+          put CERT_P12_B64 "$CERT_B64"
+          put CERT_P12_PASSWORD "$CERT_PW"
 
       - name: Deploy para Cloudflare Pages
         env:
