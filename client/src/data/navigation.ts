@@ -187,7 +187,8 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/documentos", label: "Central de Documentos", icon: FileText },
       { href: "/laudo-neuroped", label: "Laudo Digital", icon: ClipboardPlus },
-      { href: "/receita-c1", label: "Receita C1 Digital", icon: Pill },
+      { href: "/receita-c1-express", label: "Receita C1 Express ⚡", icon: Pill },
+      { href: "/receita-c1", label: "Receita C1 (avançada)", icon: Pill },
       { href: "/verificar", label: "Verificar documento", icon: ShieldCheck },
       { href: "/pant", label: "PANT", icon: FileText },
       { href: "/assinatura-digital", label: "Assinatura externa", icon: FileSignature },

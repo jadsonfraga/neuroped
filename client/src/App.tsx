@@ -143,6 +143,7 @@ const InstrumentosPadronizadosPage = lazy(() => import("@/pages/instrumentos-pad
 const QualidadePage = lazy(() => import("@/pages/qualidade"));
 const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
+const ReceitaC1ExpressPage = lazy(() => import("@/pages/receita-c1-express"));
 const DocumentosPage = lazy(() => import("@/pages/documentos"));
 const VerificarPage = lazy(() => import("@/pages/verificar"));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((mod) => ({ default: mod.CommandPalette })));
@@ -291,6 +292,7 @@ function AppRouter() {
           <Route path="/documentos" component={DocumentosPage} />
           <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
           <Route path="/receita-c1" component={ReceitaC1Page} />
+          <Route path="/receita-c1-express" component={ReceitaC1ExpressPage} />
           <Route path="/qualidade" component={QualidadePage} />
           <Route component={NotFound} />
         </Switch>
