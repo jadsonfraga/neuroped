@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
+import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -37,6 +38,154 @@ function esc(s: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+async function sha256HexText(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string) {
+  return [
+    "NeuroPed EDJ - Receita C1",
+    "Dr. Jadson Fraga Araujo Junior",
+    "CRM-PE 25.227",
+    "RQE 17.756",
+    `Emitida em: ${issuedAt}`,
+    `Paciente: ${f.pac || "-"}`,
+    `Endereco: ${f.end || "-"}`,
+    `Medicamento: ${f.med || "-"}`,
+    `Quantidade: ${f.qtd || "-"} ${f.qtde || ""}`.trim(),
+    `Posologia: ${f.poso || "-"}`,
+    `Data declarada: ${f.data || "-"}`,
+  ].join("\n");
+}
+
+async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Array> {
+  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+  const QRCode = (await import("qrcode")).default;
+  const pdf = await PDFDocument.create();
+  const helv = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
+  const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
+  const signatureImage = await pdf.embedJpg(signatureImageBytes);
+
+  const issuedAt = new Date().toLocaleString("pt-BR");
+  const validade = new Date();
+  validade.setDate(validade.getDate() + 30);
+  const valBr = validade.toLocaleDateString("pt-BR");
+  const canonical = canonicalReceitaC1Payload(f, issuedAt);
+  const hash = await sha256HexText(canonical);
+  const validationUrl = `${window.location.origin}/#/verificar?h=${hash}`;
+  const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 240, margin: 1, errorCorrectionLevel: "M" });
+  const qrImage = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
+
+  const A5 = { w: 419.53, h: 595.28 };
+  const navy = rgb(0.06, 0.1, 0.18);
+  const bordo = rgb(0.46, 0.12, 0.18);
+  const gold = rgb(0.79, 0.66, 0.38);
+  const ink = rgb(0.08, 0.09, 0.16);
+  const muted = rgb(0.34, 0.34, 0.42);
+  const line = rgb(0.78, 0.75, 0.68);
+
+  const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
+    let text = value || "";
+    while (text.length > 0 && font.widthOfTextAtSize(text, size) > maxWidth) text = text.slice(0, -1);
+    page.drawText(text || " ", { x, y, size, font, color: ink });
+  };
+
+  const wrap = (value: string, maxWidth: number, size: number, font = helv) => {
+    const lines: string[] = [];
+    for (const raw of String(value || "").split("\n")) {
+      if (!raw.trim()) { lines.push(""); continue; }
+      let current = "";
+      for (const word of raw.split(/\s+/)) {
+        const test = current ? `${current} ${word}` : word;
+        if (font.widthOfTextAtSize(test, size) > maxWidth && current) {
+          lines.push(current);
+          current = word;
+        } else {
+          current = test;
+        }
+      }
+      if (current) lines.push(current);
+    }
+    return lines;
+  };
+
+  const drawVia = (via: "1a" | "2a", destino: string, pageIndex: number) => {
+    const page = pdf.addPage([A5.w, A5.h]);
+    const m = 14;
+    const contentW = A5.w - m * 2;
+    const top = A5.h;
+
+    page.drawRectangle({ x: m, y: top - 55, width: contentW, height: 31, color: navy });
+    page.drawRectangle({ x: A5.w - 155, y: top - 55, width: 141, height: 31, color: bordo });
+    page.drawText("NeuroPed EDJ", { x: m + 8, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 8, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
+    page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
+    page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
+    page.drawLine({ start: { x: m, y: top - 57 }, end: { x: A5.w - m, y: top - 57 }, thickness: 1.5, color: gold });
+
+    page.drawRectangle({ x: m, y: top - 94, width: contentW, height: 32, color: rgb(0.97, 0.96, 0.92) });
+    page.drawRectangle({ x: m, y: top - 94, width: 4, height: 32, color: gold });
+    page.drawText("Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 | RQE 17.756", { x: m + 10, y: top - 73, size: 5.8, font: bold, color: ink });
+    page.drawText("Neurologista Infantil / Neuropediatra", { x: m + 10, y: top - 82, size: 5.6, font: helv, color: ink });
+    page.drawText("Rua Raimundo Lacerda, 001 - Sao Jose, Petrolina/PE - CEP 56302-470 - (87) 9 9109-7371", { x: m + 10, y: top - 91, size: 5.4, font: helv, color: ink });
+
+    const tableY = top - 122;
+    const rowH = 13;
+    page.drawRectangle({ x: m, y: tableY, width: contentW, height: rowH * 3, borderWidth: 0.4, borderColor: line });
+    [1, 2].forEach((i) => page.drawLine({ start: { x: m, y: tableY + rowH * i }, end: { x: A5.w - m, y: tableY + rowH * i }, thickness: 0.35, color: line }));
+    [70, 236, 342].forEach((x) => page.drawLine({ start: { x: m + x, y: tableY }, end: { x: m + x, y: tableY + rowH * 3 }, thickness: 0.35, color: line }));
+    page.drawText("PACIENTE", { x: m + 6, y: tableY + 29, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.pac, m + 74, tableY + 28, 160, 6.2, bold);
+    page.drawText("DATA", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.data, m + 346, tableY + 28, 60, 6.2, bold);
+    page.drawText("ENDERECO", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.end, m + 74, tableY + 15, 318, 6.2, bold);
+    page.drawText("MUNICIPIO/UF", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    page.drawText("Petrolina/PE", { x: m + 74, y: tableY + 2, size: 6.2, font: bold, color: ink });
+    page.drawText("VALIDADE", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    page.drawText(valBr, { x: m + 346, y: tableY + 2, size: 6.2, font: bold, color: ink });
+
+    const rxY = 132;
+    const rxH = tableY - rxY - 8;
+    page.drawRectangle({ x: m, y: rxY, width: contentW, height: rxH, borderWidth: 0.45, borderColor: line, color: rgb(0.99, 1, 1) });
+    page.drawText("Rx", { x: m + 8, y: tableY - 29, size: 23, font: serif, color: navy });
+    drawFitted(page, f.med || "-", m + 40, tableY - 17, contentW - 52, 8.8, serif);
+    page.drawLine({ start: { x: m + 40, y: tableY - 39 }, end: { x: A5.w - m - 6, y: tableY - 39 }, thickness: 0.3, color: line, dashArray: [2, 2] });
+    drawFitted(page, `Quantidade: ${f.qtd || "-"}${f.qtde ? ` (${f.qtde})` : ""}`, m + 40, tableY - 52, contentW - 52, 6.8, helv);
+    let iy = tableY - 67;
+    for (const ln of wrap(`Instrucoes: ${f.poso || "-"}`, contentW - 52, 6.4, helv).slice(0, 10)) {
+      page.drawText(ln || " ", { x: m + 40, y: iy, size: 6.4, font: helv, color: ink });
+      iy -= 9;
+    }
+
+    page.drawLine({ start: { x: m, y: 120 }, end: { x: A5.w - m, y: 120 }, thickness: 0.4, color: line });
+    page.drawText(`Petrolina/PE, ${f.data || issuedAt}  -  Validade: ${valBr}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
+
+    page.drawRectangle({ x: 218, y: 44, width: 176, height: 66, borderWidth: 0.6, borderColor: rgb(0.2, 0.45, 0.34), color: rgb(0.93, 0.99, 0.96) });
+    page.drawImage(signatureImage, { x: 226, y: 78, width: 152, height: 26 });
+    page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });
+    page.drawText("Dr. Jadson Fraga Araujo Junior", { x: 238, y: 66, size: 6.2, font: bold, color: rgb(0.04, 0.22, 0.16) });
+    page.drawText("CRM-PE 25.227 | RQE 17.756", { x: 250, y: 58, size: 5.2, font: helv, color: muted });
+    page.drawText("Assinatura digital ICP-Brasil PAdES-BES", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
+    if (pageIndex === 0) page.drawText("Campo tecnico da assinatura digital embutida no PDF.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
+
+    page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
+    page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
+    page.drawText("Abra no Adobe Acrobat ou validador ICP-Brasil/ITI.", { x: m + 8, y: 52, size: 4.8, font: helv, color: ink });
+    page.drawText("QR contem hash SHA-256 dos dados da receita.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
+    page.drawText(`SHA-256: ${hash.slice(0, 22)}...`, { x: m + 8, y: 34, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
+    page.drawImage(qrImage, { x: m + 152, y: 30, width: 34, height: 34 });
+  };
+
+  drawVia("1a", "FARMACIA", 0);
+  drawVia("2a", "PACIENTE", 1);
+  return await pdf.save({ useObjectStreams: false });
 }
 
 function viaHtml(tag: string, f: ReceitaFields) {
@@ -287,31 +436,9 @@ export default function ReceitaC1Page() {
           signerName="Dr. Jadson Fraga Araujo Junior"
           location="Petrolina-PE"
           reason="Receita de Controle Especial - Lista C1"
-          buildPdf={async () => {
-            const { buildDocumentPdf } = await import("@/lib/documentPdf");
-            return buildDocumentPdf({
-              title: "Receita de Controle Especial - Lista C1",
-              subtitle: "Portaria SVS/MS n. 344/1998 · RDC ANVISA n. 970/2025",
-              credentials: [
-                "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
-                "Neurologista Infantil / Neuropediatra",
-              ],
-              sections: [
-                { heading: "Paciente", body: f.pac || "-" },
-                { heading: "Endereco", body: f.end || "-" },
-                { heading: "Medicamento", body: f.med || "-" },
-                {
-                  heading: "Quantidade",
-                  body: [f.qtd, f.qtde].filter(Boolean).join(" — ") || "-",
-                },
-                { heading: "Posologia", body: f.poso || "-" },
-                { heading: "Data", body: f.data ? `Petrolina/PE, ${f.data}` : "-" },
-              ],
-              footer:
-                "Receita de Controle Especial (Lista C1). Validade 30 dias. Emitida em 2 vias. " +
-                "Portaria SVS/MS n. 344/1998 e RDC ANVISA n. 970/2025.",
-            });
-          }}
+          widgetRect={[218, 44, 394, 110]}
+          widgetPageIndex={0}
+          buildPdf={async () => buildReceitaC1SignedPdfBytes(f)}
         />
       </section>
 

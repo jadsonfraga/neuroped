@@ -21,6 +21,8 @@ interface Props {
   signerName?: string;
   location?: string;
   reason?: string;
+  widgetRect?: number[];
+  widgetPageIndex?: number;
 }
 
 const DB_NAME = "neuroped-icp";
@@ -76,7 +78,7 @@ function signingErrorMessage(error: unknown): string {
  * A chave privada NUNCA sai do dispositivo; nada é enviado ao servidor.
  * O certificado pode ser salvo no IndexedDB do dispositivo para uso automático.
  */
-export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason }: Props) {
+export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex }: Props) {
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [p12Name, setP12Name] = useState("");
   const [senha, setSenha] = useState("");
@@ -201,6 +203,8 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         reason: reason ?? "Assinatura digital ICP-Brasil",
         name: signerName,
         location,
+        widgetRect,
+        widgetPageIndex,
       });
       downloadBytes(signed, `${filename}-assinado.pdf`);
       setOkMsg("Documento assinado e baixado com sucesso.");

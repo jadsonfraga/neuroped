@@ -85,6 +85,33 @@ function escHtml(v: string) {
     .replace(/"/g, "&quot;");
 }
 
+async function sha256HexText(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function canonicalExpressPayload(f: FormFields, issuedAt: string) {
+  return [
+    "NeuroPed EDJ - Receita C1 Express",
+    "Dr. Jadson Fraga Araujo Junior",
+    "CRM-PE 25.227",
+    "RQE 17.756",
+    `Emitida em: ${issuedAt}`,
+    `Paciente: ${f.paciente || "-"}`,
+    `Data de nascimento: ${f.dataNasc || "-"}`,
+    `Endereco: ${f.endereco || "-"}`,
+    `Municipio/UF: ${f.municipio || "-"}`,
+    `CEP: ${f.cep || "-"}`,
+    `Medicamento: ${f.medicamento || "-"}`,
+    `Concentracao: ${f.concentracao || "-"}`,
+    `Forma: ${f.forma || "-"}`,
+    `Quantidade: ${f.quantidade || "-"} ${f.quantidadeExtenso || ""}`.trim(),
+    `Instrucoes: ${f.instrucoes || "-"}`,
+    `CID-10: ${f.cid || "-"}`,
+  ].join("\n");
+}
+
 // ── PDF assinável (texto estruturado) ────────────────────────────
 async function buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
   const { buildDocumentPdf } = await import("@/lib/documentPdf");
@@ -161,7 +188,9 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const ink = rgb(0.08, 0.09, 0.16);
   const muted = rgb(0.34, 0.34, 0.42);
   const line = rgb(0.78, 0.75, 0.68);
-  const validationUrl = `${window.location.origin}/#/verificar`;
+  const issuedAt = new Date().toLocaleString("pt-BR");
+  const hash = await sha256HexText(canonicalExpressPayload(f, issuedAt));
+  const validationUrl = `${window.location.origin}/#/verificar?h=${hash}`;
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 220, margin: 1, errorCorrectionLevel: "M" });
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
   const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
@@ -256,8 +285,8 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
     page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
     page.drawText("Abra no Adobe Acrobat ou no validador ICP-Brasil/ITI.", { x: m + 8, y: 52, size: 4.8, font: helv, color: ink });
-    page.drawText("Qualquer alteracao invalida a assinatura.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
-    page.drawText(validationUrl, { x: m + 8, y: 32, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
+    page.drawText("QR contem hash SHA-256 dos dados da receita.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
+    page.drawText(`SHA-256: ${hash.slice(0, 22)}...`, { x: m + 8, y: 32, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
     page.drawImage(qrPng, { x: m + 152, y: 30, width: 34, height: 34 });
   };
 
