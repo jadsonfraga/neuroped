@@ -527,7 +527,7 @@ export default function ReceitaC1ExpressPage() {
                 type={showSenha ? "text" : "password"}
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                placeholder="Digite a senha do .p12"
+                placeholder="Digite a senha do .pfx"
                 className="pr-9"
                 onKeyDown={(e) => e.key === "Enter" && verificarCert()}
               />
