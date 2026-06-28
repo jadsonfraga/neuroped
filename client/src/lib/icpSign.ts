@@ -16,6 +16,8 @@ export interface SignMeta {
   name?: string;
   location?: string;
   contactInfo?: string;
+  widgetRect?: number[];
+  widgetPageIndex?: number;
 }
 
 export interface CertInfo {
@@ -138,15 +140,18 @@ async function signPreparedPdf(
   meta: SignMeta,
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.load(pdfBytes);
+  const pages = doc.getPages();
+  const signaturePage = pages[Math.min(Math.max(meta.widgetPageIndex ?? 0, 0), pages.length - 1)];
 
   pdflibAddPlaceholder({
-    pdfDoc: doc,
+    pdfPage: signaturePage,
     reason: meta.reason ?? "Assinatura digital ICP-Brasil",
     name: meta.name ?? "",
     location: meta.location ?? "",
     contactInfo: meta.contactInfo ?? "NeuroPed",
     subFilter: SUBFILTER_ETSI_CADES_DETACHED,
     signatureLength,
+    widgetRect: meta.widgetRect ?? [0, 0, 0, 0],
   });
 
   const withPlaceholder = Buffer.from(await doc.save({ useObjectStreams: false }));
