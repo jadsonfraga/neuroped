@@ -466,29 +466,30 @@ export default function ReceitaC1ExpressPage() {
   // ── Carrega certificado automaticamente ───────────────────────
   useEffect(() => {
     (async () => {
-      // 1. IndexedDB
+      // 1. IndexedDB — exibição rápida enquanto backend responde
       const cached = await loadCachedP12();
       if (cached) {
         setP12(cached);
         setCertStatus("ready");
-        return;
+        // Não retorna: backend sempre tem precedência para garantir cert PF correto
       }
-      // 2. Backend /api/cert
+      // 2. Backend /api/cert — autoridade final (cert configurado no Cloudflare Pages)
       try {
         const { authFetch } = await import("@/lib/authClient");
         const r = await authFetch("/api/cert");
-        if (!r.ok) { setCertStatus("missing"); return; }
-        const { cert: b64 } = await r.json();
-        if (!b64) { setCertStatus("missing"); return; }
+        if (!r.ok) { if (!cached) setCertStatus("missing"); return; }
+        const { cert: b64, password: pwd } = await r.json();
+        if (!b64) { if (!cached) setCertStatus("missing"); return; }
         const bin = atob(b64);
         const buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
         const ab = buf.buffer;
         await saveP12ToCache(ab);
         setP12(ab);
+        if (pwd) setSenha(pwd);
         setCertStatus("ready");
       } catch {
-        setCertStatus("missing");
+        if (!cached) setCertStatus("missing");
       }
     })();
   }, []);

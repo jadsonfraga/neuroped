@@ -90,37 +90,36 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
-    // Tenta carregar do IndexedDB primeiro, depois do backend.
-    loadCert().then(async (saved) => {
+    (async () => {
+      // 1. IndexedDB — exibição rápida enquanto backend responde
+      const saved = await loadCert();
       if (saved) {
         setHasSaved(true);
         setP12(saved.p12);
         setP12Name("certificado salvo no dispositivo");
         setSenha(saved.senha);
-        return;
+        // Não retorna: backend tem precedência para garantir cert PF correto
       }
-      // Tenta buscar do backend (requer JWT ativo).
+      // 2. Backend — autoridade final; substitui IndexedDB se tiver cert configurado
       try {
         const { authFetch } = await import("@/lib/authClient");
         const r = await authFetch("/api/cert");
         if (!r.ok) return;
         const { cert: certB64, password: pwd } = await r.json();
         if (!certB64) return;
-        // base64 → ArrayBuffer
         const bin = atob(certB64);
         const buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
         const ab = buf.buffer;
-        // Salva localmente para evitar chamada ao backend nas próximas sessões.
-        await saveCert(ab, pwd);
+        await saveCert(ab, pwd ?? "");
         setHasSaved(true);
         setP12(ab);
-        setP12Name("certificado do consultório (backend)");
-        setSenha(pwd);
+        setP12Name("certificado do consultório");
+        setSenha(pwd ?? "");
       } catch {
-        /* backend sem cert configurado — usuário pode selecionar manualmente */
+        /* backend sem cert — segue com IndexedDB se disponível */
       }
-    });
+    })();
   }, []);
 
   async function gerarComprovante(bytes: Uint8Array) {
