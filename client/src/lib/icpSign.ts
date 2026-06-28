@@ -1,17 +1,14 @@
 // ============================================================
-// Assinatura digital ICP-Brasil (certificado A1 .p12) — no NAVEGADOR.
-// A chave privada do certificado NUNCA sai do dispositivo: o .p12 é lido em
-// memória, usado para assinar (PAdES) e descartado. Nada é enviado ao servidor.
-//
-// Perfil atual: PAdES-BES (assinatura CAdES embutida no PDF com o certificado
-// A1 ICP-Brasil). Para AD-RT (carimbo do tempo de uma ACT ICP-Brasil) é preciso
-// acoplar uma TSA — passo futuro.
+// Assinatura digital ICP-Brasil (certificado A1 .p12/.pfx) no navegador.
+// A chave privada nunca sai do dispositivo: o arquivo e lido em memoria,
+// usado para assinar o PDF em PAdES-BES e descartado.
 // ============================================================
 import { Buffer } from "buffer";
 import { PDFDocument } from "pdf-lib";
 import { SignPdf } from "@signpdf/signpdf";
 import { P12Signer } from "@signpdf/signer-p12";
 import { pdflibAddPlaceholder } from "@signpdf/placeholder-pdf-lib";
+import { SUBFILTER_ETSI_CADES_DETACHED } from "@signpdf/utils";
 import forge from "node-forge";
 
 export interface SignMeta {
@@ -26,85 +23,165 @@ export interface CertInfo {
   notBefore: Date;
   notAfter: Date;
   issuer: string;
+  hasPrivateKey: boolean;
 }
 
-/**
- * Normaliza um PFX para 3DES (formato amplamente suportado por @signpdf/signer-p12).
- * Certs ICP-Brasil antigos usam RC2-40-CBC (cipher legado) que o signer-p12 não
- * consegue abrir para extrair a chave privada, mesmo com a senha correta.
- * Esta função extrai key+cert via node-forge (que suporta RC2-40) e reempacota
- * em 3DES-CBC, mantendo a mesma senha.
- */
-function normalizePfxBuffer(p12: ArrayBuffer, passphrase: string): Buffer {
+const SIGNATURE_PLACEHOLDER_LENGTHS = [131072, 262144];
+
+interface ParsedP12 {
+  privateKey: forge.pki.rsa.PrivateKey;
+  certs: forge.pki.Certificate[];
+}
+
+function parseP12(p12: ArrayBuffer, passphrase: string): ParsedP12 {
   const der = Buffer.from(p12).toString("binary");
   const asn1 = forge.asn1.fromDer(der);
   const p12obj = forge.pkcs12.pkcs12FromAsn1(asn1, passphrase);
 
-  // Extrai chave privada (pkcs8ShroudedKeyBag ou keyBag)
   let privateKey: forge.pki.rsa.PrivateKey | null = null;
   const shroudedBags = p12obj.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
   const shroudedList = shroudedBags[forge.pki.oids.pkcs8ShroudedKeyBag];
   if (shroudedList?.length) privateKey = shroudedList[0].key ?? null;
+
   if (!privateKey) {
     const keyBags = p12obj.getBags({ bagType: forge.pki.oids.keyBag });
     const keyList = keyBags[forge.pki.oids.keyBag];
     if (keyList?.length) privateKey = keyList[0].key ?? null;
   }
-  if (!privateKey) throw new Error("Chave privada não encontrada no certificado.");
 
-  // Extrai cadeia de certificados
+  if (!privateKey) throw new Error("Chave privada nao encontrada no certificado.");
+
   const certBags = p12obj.getBags({ bagType: forge.pki.oids.certBag });
   const certList = certBags[forge.pki.oids.certBag] ?? [];
-  const certs = certList.map((b) => b.cert).filter((c): c is forge.pki.Certificate => !!c);
-  if (!certs.length) throw new Error("Certificado não encontrado no .p12.");
+  const certs = certList.map((bag) => bag.cert).filter((cert): cert is forge.pki.Certificate => !!cert);
+  if (!certs.length) throw new Error("Certificado nao encontrado no arquivo .p12/.pfx.");
 
-  // Reempacota com 3DES-CBC (suportado por @signpdf e pela maioria dos validadores)
-  const newAsn1 = forge.pkcs12.toPkcs12Asn1(privateKey, certs, passphrase, {
+  return { privateKey, certs };
+}
+
+function assertCertificateDates(cert: forge.pki.Certificate, now = new Date()) {
+  if (now < cert.validity.notBefore) {
+    throw new Error("Certificado ainda nao esta valido.");
+  }
+  if (now > cert.validity.notAfter) {
+    throw new Error("Certificado expirado.");
+  }
+}
+
+function getCertDisplayInfo(cert: forge.pki.Certificate): Omit<CertInfo, "hasPrivateKey"> {
+  const commonName = cert.subject.getField("CN")?.value ?? "(sem nome)";
+  const issuer = cert.issuer.getField("CN")?.value ?? cert.issuer.getField("O")?.value ?? "(emissor)";
+  return { commonName, issuer, notBefore: cert.validity.notBefore, notAfter: cert.validity.notAfter };
+}
+
+function certMatchesPrivateKey(cert: forge.pki.Certificate, privateKey: forge.pki.rsa.PrivateKey): boolean {
+  const publicKey = cert.publicKey as forge.pki.rsa.PublicKey;
+  return Boolean(publicKey?.n?.equals(privateKey.n) && publicKey?.e?.equals(privateKey.e));
+}
+
+function orderCertChain(privateKey: forge.pki.rsa.PrivateKey, certs: forge.pki.Certificate[]): forge.pki.Certificate[] {
+  const signingCertIndex = certs.findIndex((cert) => certMatchesPrivateKey(cert, privateKey));
+  if (signingCertIndex <= 0) return certs;
+  const signingCert = certs[signingCertIndex];
+  return [signingCert, ...certs.slice(0, signingCertIndex), ...certs.slice(signingCertIndex + 1)];
+}
+
+/**
+ * Normaliza um PFX/P12 para 3DES, formato amplamente suportado por @signpdf/signer-p12.
+ * Certificados ICP-Brasil antigos podem vir em RC2-40-CBC; o node-forge consegue
+ * abrir esse legado e reempacotar mantendo a mesma senha e a cadeia de certificados.
+ */
+function normalizePfxBuffer(p12: ArrayBuffer, passphrase: string): Buffer {
+  const { privateKey, certs } = parseP12(p12, passphrase);
+  const orderedCerts = orderCertChain(privateKey, certs);
+  assertCertificateDates(orderedCerts[0]);
+
+  const newAsn1 = forge.pkcs12.toPkcs12Asn1(privateKey, orderedCerts, passphrase, {
     algorithm: "3des",
-    friendlyName: certs[0]?.subject?.getField("CN")?.value ?? undefined,
+    friendlyName: orderedCerts[0]?.subject?.getField("CN")?.value ?? undefined,
   });
+
   return Buffer.from(forge.asn1.toDer(newAsn1).getBytes(), "binary");
 }
 
-/** Lê o titular e a validade do certificado .p12 (para exibir antes de assinar). */
-export function readP12Info(p12: ArrayBuffer, passphrase: string): CertInfo {
-  const der = Buffer.from(p12).toString("binary");
-  const asn1 = forge.asn1.fromDer(der);
-  const p12obj = forge.pkcs12.pkcs12FromAsn1(asn1, passphrase);
-  const bags = p12obj.getBags({ bagType: forge.pki.oids.certBag });
-  const certBag = bags[forge.pki.oids.certBag]?.[0];
-  const cert = certBag?.cert;
-  if (!cert) throw new Error("Certificado não encontrado no arquivo .p12.");
-  const cn = cert.subject.getField("CN")?.value ?? "(sem nome)";
-  const issuer = cert.issuer.getField("CN")?.value ?? cert.issuer.getField("O")?.value ?? "(emissor)";
-  return { commonName: cn, notBefore: cert.validity.notBefore, notAfter: cert.validity.notAfter, issuer };
+function originalPfxBuffer(p12: ArrayBuffer): Buffer {
+  return Buffer.from(p12);
 }
 
-/** Assina um PDF (bytes) com o certificado .p12, em PAdES. Retorna o PDF assinado. */
-export async function signPdfWithP12(
+export function icpErrorMessage(error: unknown): string {
+  const msg = error instanceof Error ? error.message : String(error || "");
+  if (/invalid password|mac verify failure|password|senha|pkcs12/i.test(msg)) {
+    return "Senha incorreta ou certificado .p12/.pfx invalido.";
+  }
+  if (/private key|chave privada/i.test(msg)) {
+    return "O certificado selecionado nao contem chave privada. Use o certificado A1 completo (.p12/.pfx).";
+  }
+  if (/not enough space|placeholder|signature/i.test(msg)) {
+    return "Falha ao embutir a assinatura no PDF. Gere novamente; o app agora reserva espaco ampliado para certificados ICP-Brasil.";
+  }
+  return msg || "Falha ao assinar o PDF. Verifique o certificado e tente novamente.";
+}
+
+/** Le titular, emissor e validade do certificado .p12/.pfx antes de assinar. */
+export function readP12Info(p12: ArrayBuffer, passphrase: string): CertInfo {
+  const { privateKey, certs } = parseP12(p12, passphrase);
+  const cert = orderCertChain(privateKey, certs)[0];
+  assertCertificateDates(cert);
+  return { ...getCertDisplayInfo(cert), hasPrivateKey: true };
+}
+
+async function signPreparedPdf(
   pdfBytes: Uint8Array,
-  p12: ArrayBuffer,
+  p12Buffer: Buffer,
   passphrase: string,
-  meta: SignMeta = {},
+  signatureLength: number,
+  meta: SignMeta,
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.load(pdfBytes);
+
   pdflibAddPlaceholder({
     pdfDoc: doc,
     reason: meta.reason ?? "Assinatura digital ICP-Brasil",
     name: meta.name ?? "",
     location: meta.location ?? "",
     contactInfo: meta.contactInfo ?? "NeuroPed",
+    subFilter: SUBFILTER_ETSI_CADES_DETACHED,
+    signatureLength,
   });
+
   const withPlaceholder = Buffer.from(await doc.save({ useObjectStreams: false }));
-  // Normaliza para 3DES antes de assinar — necessário para certs ICP-Brasil
-  // com criptografia legada RC2-40-CBC (emitidos antes de ~2023).
-  const normalizedP12 = normalizePfxBuffer(p12, passphrase);
-  const signer = new P12Signer(normalizedP12, { passphrase });
+  const signer = new P12Signer(p12Buffer, { passphrase });
   const signed = await new SignPdf().sign(withPlaceholder, signer);
   return new Uint8Array(signed);
 }
 
-/** SHA-256 (hex) de bytes — fingerprint do documento para verificação. */
+/** Assina um PDF com certificado A1 .p12/.pfx em PAdES-BES. */
+export async function signPdfWithP12(
+  pdfBytes: Uint8Array,
+  p12: ArrayBuffer,
+  passphrase: string,
+  meta: SignMeta = {},
+): Promise<Uint8Array> {
+  // Valida senha, validade e chave privada antes de gerar a assinatura.
+  readP12Info(p12, passphrase);
+
+  const candidateP12s = [normalizePfxBuffer(p12, passphrase), originalPfxBuffer(p12)];
+  let lastError: unknown = null;
+
+  for (const signatureLength of SIGNATURE_PLACEHOLDER_LENGTHS) {
+    for (const candidateP12 of candidateP12s) {
+      try {
+        return await signPreparedPdf(pdfBytes, candidateP12, passphrase, signatureLength, meta);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+  }
+
+  throw new Error(icpErrorMessage(lastError));
+}
+
+/** SHA-256 (hex) de bytes para comprovante de integridade do documento. */
 export async function sha256Hex(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", bytes as unknown as BufferSource);
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");

@@ -377,6 +377,15 @@ export default function ReceitaC1ExpressPage() {
     }
     setError(""); setOk(""); setBusy("sign");
     try {
+      const { readP12Info } = await import("@/lib/icpSign");
+      readP12Info(p12, senha);
+    } catch (error) {
+      const { icpErrorMessage } = await import("@/lib/icpSign");
+      setError(icpErrorMessage(error));
+      setBusy("");
+      return;
+    }
+    try {
       const pdfBytes = await buildC1PdfBytes(form);
       const { signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
       const signed = await signPdfWithP12(pdfBytes, p12, senha, {
@@ -386,8 +395,9 @@ export default function ReceitaC1ExpressPage() {
       });
       downloadBytes(signed, `receita-c1-${dateStamp()}-assinada.pdf`);
       setOk("Receita assinada e baixada com sucesso.");
-    } catch {
-      setError("Senha incorreta ou falha na assinatura. Verifique a senha e tente novamente.");
+    } catch (error) {
+      const { icpErrorMessage } = await import("@/lib/icpSign");
+      setError(icpErrorMessage(error));
     } finally { setBusy(""); }
   }
 

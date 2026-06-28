@@ -66,6 +66,11 @@ async function deleteCert(): Promise<void> {
   });
 }
 
+function signingErrorMessage(error: unknown): string {
+  const msg = error instanceof Error ? error.message : "";
+  return msg || "Falha ao assinar. Confira a senha do certificado e tente novamente.";
+}
+
 /**
  * Assinatura digital ICP-Brasil (certificado A1 .p12) — 100% no navegador.
  * A chave privada NUNCA sai do dispositivo; nada é enviado ao servidor.
@@ -145,8 +150,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       const { readP12Info } = await import("@/lib/icpSign");
       const info = readP12Info(p12, senha);
       setCert({ commonName: info.commonName, notAfter: info.notAfter, issuer: info.issuer });
-    } catch {
-      setErro("Não foi possível ler o certificado. Verifique a senha e o arquivo .p12.");
+    } catch (error) {
+      setErro(signingErrorMessage(error));
+      return;
     } finally { setBusy(""); }
   }
 
@@ -199,8 +205,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       downloadBytes(signed, `${filename}-assinado.pdf`);
       setOkMsg("Documento assinado e baixado com sucesso.");
       await gerarComprovante(signed);
-    } catch {
-      setErro("Falha ao assinar. Confira a senha do certificado e tente novamente.");
+    } catch (error) {
+      setErro(signingErrorMessage(error));
+      return;
     } finally { setBusy(""); }
   }
 
