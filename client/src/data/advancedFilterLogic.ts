@@ -14,6 +14,7 @@ import {
   type ImplementationStatus,
 } from "./scaleFilter";
 import { interactiveScaleItems } from "./interactiveScaleItems";
+import { getAllSignalsForQueixa } from "./signalsAndSymptoms";
 
 export const SAFE_EMPTY_MESSAGE =
   "Nenhuma escala segura encontrada para este perfil. Revise idade, queixa ou respondente.";
@@ -40,11 +41,41 @@ export interface RefinedScaleMatch {
   implementationLabel: string;
   applicationMode: ApplicationMode;
   licenseRestricted: boolean;
+  signalSpecificityScore?: number;
   /** true quando veio do fallback de triagem ampla (sem instrumento específico). */
   isBroadbandFallback?: boolean;
 }
 
 const POST_CONSULT_QUEIXAS = new Set(["efeitos", "evolucao"]);
+
+const SIGNAL_TAGS_BY_SCALE_ID: Record<string, string[]> = {
+  mchat: ["tea", "social", "comunicacao", "linguagem", "gestos", "atencao compartilhada", "resposta nome", "triagem precoce"],
+  cars: ["tea", "social", "comunicacao", "sensorial", "rrb", "rigidez", "funcionalidade", "diagnostico"],
+  srs2: ["tea", "social", "reciprocidade", "pragmatica", "camuflagem", "amizade", "professor", "pais"],
+  scq: ["tea", "social", "comunicacao", "rrb", "pais"],
+  assq: ["tea", "social", "pragmatica", "escolar", "amizade", "adolescente"],
+  cast: ["tea", "social", "comunicacao", "escolar", "amizade"],
+  gars3: ["tea", "social", "comunicacao", "sensorial", "rrb", "funcionalidade"],
+  atec: ["tea", "linguagem", "social", "sensorial", "funcionalidade", "monitorizacao"],
+  "podj-tea-prime-familiar": ["tea", "social", "linguagem", "comunicacao", "sensorial", "funcionalidade", "rigidez", "camuflagem", "familia", "regressao"],
+  "podj-tea-prime-escola-terapia": ["tea", "social", "pragmatica", "sensorial", "funcionalidade", "aprendizagem", "escola", "terapia", "pervasividade"],
+  "podj-tea-prime-1-6a": ["tea", "atraso", "linguagem", "gestos", "atencao compartilhada", "brincadeira", "sensorial", "seletividade", "funcionalidade", "nao verbal"],
+  "podj-tea-prime-6-12a": ["tea", "social", "pragmatica", "amizade", "bullying", "rigidez", "hiperfoco", "sensorial", "funcionalidade", "aprendizagem"],
+  "podj-tea-prime-12-19a": ["tea", "social", "camuflagem", "exaustao social", "vulnerabilidade", "autonomia", "funcionalidade", "ansiedade", "rigidez", "sensorial"],
+  snap: ["tdah", "desatencao", "hiperatividade", "impulsividade", "pais", "professor", "dsm"],
+  vanderbilt: ["tdah", "desatencao", "hiperatividade", "impulsividade", "comportamento", "oposicao", "escola", "pais", "professor"],
+  conners: ["tdah", "desatencao", "hiperatividade", "impulsividade", "comportamento", "aprendizagem", "executivo"],
+  brief2: ["tdah", "funcao executiva", "inibicao", "memoria trabalho", "planejamento", "flexibilidade", "organizacao"],
+  cbcl: ["comportamento", "ansiedade", "depressao", "social", "agressao", "externalizante", "internalizante"],
+  sdq: ["comportamento", "emocional", "hiperatividade", "pares", "prosocial", "triagem"],
+  basc3: ["comportamento", "ansiedade", "depressao", "social", "adaptativo", "aprendizagem", "banda larga"],
+  "psc17": ["comportamento", "tdah", "ansiedade", "depressao", "internalizante", "externalizante", "atencao"],
+  "asq3": ["atraso", "desenvolvimento", "motor", "linguagem", "comunicacao", "cognicao", "precoce"],
+  "asq-se-2": ["social", "emocional", "comportamento", "autonomia", "funcionalidade", "precoce"],
+  denver: ["atraso", "desenvolvimento", "motor", "linguagem", "social", "adaptativo"],
+  vineland: ["funcionalidade", "autonomia", "comunicacao", "social", "vida diaria", "adaptativo"],
+  ablls: ["linguagem", "aprendizagem", "funcionalidade", "tea", "habilidades"],
+};
 
 // ============ DERIVAÇÕES (campos opcionais => valor seguro padrão) ============
 
@@ -78,7 +109,7 @@ export function getImplementationLabel(status: ImplementationStatus): string {
     case "complete":
       return "Aplicação completa disponível no app.";
     case "metadata_only":
-      return "Ficha técnica disponível; aplicação ainda não implementada.";
+      return "Ficha técnica e registro interno com PIN master disponíveis; itens oficiais podem depender de autorização.";
     case "external_only":
       return "Instrumento externo/licenciado; não embutir itens ou escore sem permissão.";
     case "not_implemented":
@@ -174,7 +205,7 @@ function isPsychosisInstrument(scale: ScaleEntry): boolean {
   const text = `${scale.name} ${scale.fullName}`.toLowerCase();
   return (
     scale.queixas.includes("psicose") ||
-    /psicos|psychosis|mania|bipolar|sips|panss|prodrom|prime/.test(`${id} ${text}`)
+    /psicos|psychosis|mania|bipolar|sips|panss|prodrom|prime-?screen/.test(`${id} ${text}`)
   );
 }
 
@@ -275,6 +306,74 @@ function passesMandatoryFilters(scale: ScaleEntry, ctx: FilterContext): boolean 
   return true;
 }
 
+function normalizeClinicalText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function tokensFromText(value: string): Set<string> {
+  return new Set(
+    normalizeClinicalText(value)
+      .split(/\s+/)
+      .filter((token) => token.length >= 4)
+  );
+}
+
+function selectedSignalText(ctx: FilterContext): string {
+  const ids = new Set(ctx.selectedSignals || []);
+  const labels: string[] = [];
+  for (const queixa of ctx.queixas) {
+    for (const signal of getAllSignalsForQueixa(queixa)) {
+      if (ids.has(signal.id)) labels.push(signal.label, signal.description);
+    }
+  }
+  return [...ids, ...labels].join(" ");
+}
+
+function scaleClinicalText(scale: ScaleEntry): string {
+  return [
+    scale.id,
+    scale.name,
+    scale.fullName,
+    scale.description,
+    scale.queixas.join(" "),
+    ...(scale.signalTags || []),
+    ...(SIGNAL_TAGS_BY_SCALE_ID[scale.id] || []),
+  ].join(" ");
+}
+
+function calculateSignalSpecificity(scale: ScaleEntry, ctx: FilterContext): { score: number; rawScore: number; reason?: string } {
+  if (!ctx.selectedSignals?.length) return { score: 0, rawScore: 0 };
+
+  const signalText = selectedSignalText(ctx);
+  const selectedTokens = tokensFromText(signalText);
+  const scaleTokens = tokensFromText(scaleClinicalText(scale));
+  let matched = 0;
+  for (const token of selectedTokens) {
+    if (scaleTokens.has(token)) matched += 1;
+  }
+
+  const normalizedSignalText = normalizeClinicalText(signalText);
+  const idPrefixHits = ctx.selectedSignals.filter((id) =>
+    scale.queixas.some((queixa) => id.startsWith(`${queixa}-`))
+  ).length;
+  const exactTagHits = (SIGNAL_TAGS_BY_SCALE_ID[scale.id] || []).filter((tag) =>
+    normalizedSignalText.includes(normalizeClinicalText(tag))
+  ).length;
+
+  const rawScore = Math.round(matched * 1.6 + idPrefixHits * 2 + exactTagHits * 3 + Math.min(4, ctx.selectedSignals.length));
+  const score = Math.min(18, rawScore);
+
+  if (score >= 12) return { score, rawScore, reason: "Alta correspondência com os sinais marcados" };
+  if (score >= 6) return { score, rawScore, reason: "Boa correspondência com os sinais marcados" };
+  if (score > 0) return { score, rawScore, reason: "Alguma correspondência com os sinais marcados" };
+  return { score: 0, rawScore };
+}
+
 // ============ SCORING REFINADO (nova hierarquia clínica) ============
 
 export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): RefinedScaleMatch {
@@ -319,6 +418,12 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
       score += Math.round(28 * ratio * 0.55);
       reasons.push(`Cobre ${matchCount} de ${ctx.queixas.length} queixas`);
     }
+  }
+
+  const signalSpecificity = calculateSignalSpecificity(scale, ctx);
+  if (signalSpecificity.score > 0) {
+    score += signalSpecificity.score;
+    if (signalSpecificity.reason) reasons.push(signalSpecificity.reason);
   }
 
   // 3. Finalidade clínica (0–15).
@@ -410,6 +515,7 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
     implementationLabel: getImplementationLabel(implementationStatus),
     applicationMode: mode,
     licenseRestricted,
+    signalSpecificityScore: signalSpecificity.rawScore,
   };
 }
 
@@ -418,8 +524,9 @@ function calculateConfidenceLevel(ctx: FilterContext, score: number): number {
     (ctx.queixas.length > 0 ? 1 : 0) +
     (ctx.ageMonths !== null ? 1 : 0) +
     (ctx.respondente ? 1 : 0) +
-    (ctx.assessmentUse ? 1 : 0);
-  return Math.min(100, Math.round(score * 0.8 + completeness * 5));
+    (ctx.assessmentUse ? 1 : 0) +
+    (ctx.selectedSignals?.length ? 1 : 0);
+  return Math.min(100, Math.round(score * 0.78 + completeness * 5));
 }
 
 // ============ FILTRAGEM INTELIGENTE (sem fallback) ============
@@ -438,6 +545,9 @@ export function filterScalesIntelligently(
     .sort((a, b) => {
       if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
       if (tierOrder[a.tier] !== tierOrder[b.tier]) return tierOrder[a.tier] - tierOrder[b.tier];
+      if ((b.signalSpecificityScore ?? 0) !== (a.signalSpecificityScore ?? 0)) {
+        return (b.signalSpecificityScore ?? 0) - (a.signalSpecificityScore ?? 0);
+      }
       // desempate final por usabilidade (rota disponível), depois nome.
       const ar = a.scale.appRoute ? 1 : 0;
       const br = b.scale.appRoute ? 1 : 0;
@@ -541,7 +651,8 @@ function fillPodiumWithBroadband(
 // ============ DETECÇÃO DE PADRÃO CLÍNICO ============
 
 export function detectClinicalPattern(context: FilterContext): string {
-  const { queixas, selectedSignals = [] } = context;
+  const { queixas } = context;
+  const selectedText = normalizeClinicalText(selectedSignalText(context));
 
   // ── Padrões multi-queixa (mais específicos — verificar antes dos mono) ──────
   if (queixas.includes("depressao") && queixas.includes("suicidio")) {
@@ -577,22 +688,24 @@ export function detectClinicalPattern(context: FilterContext): string {
 
   // ── Padrões mono-queixa com refinamento por sinal ───────────────────────────
   if (queixas.includes("tdah")) {
-    if (selectedSignals.some((s) => s.includes("hiperatividade"))) return "TDAH com hiperatividade predominante";
-    if (selectedSignals.some((s) => s.includes("desatenção") || s.includes("desatencao"))) return "TDAH com desatenção predominante";
+    if (/hiperatividade|movimento|sentado|impulsiv|fala excessiva|aguardar|intromet/.test(selectedText)) return "TDAH com hiperatividade/impulsividade predominante";
+    if (/desatenc|focar|instruc|organiza|distrai|tarefa|memoria trabalho|procrast/.test(selectedText)) return "TDAH com desatenção predominante";
     return "TDAH misto";
   }
 
   if (queixas.includes("tea")) {
-    const hasLanguage = selectedSignals.some((s) => s.includes("linguagem"));
-    const hasSocial = selectedSignals.some((s) => s.includes("social"));
+    const hasLanguage = /linguagem|comunicacao|fala|gestos|pragmatica|ecolalia|balbucio/.test(selectedText);
+    const hasSocial = /social|amizade|reciproc|pares|camuflagem|exaustao|bullying|vulnerabilidade/.test(selectedText);
+    const hasSensory = /sensorial|auditiv|tatil|textura|seletividade|sobrecarga/.test(selectedText);
+    if (hasSocial && hasSensory) return "TEA com déficit social e perfil sensorial";
     if (hasLanguage && hasSocial) return "TEA com déficit social-comunicativo";
     if (hasLanguage) return "TEA com atraso de linguagem";
     return "Suspeita TEA";
   }
 
   if (queixas.includes("atraso")) {
-    const hasMotor = selectedSignals.some((s) => s.includes("motor"));
-    const hasLanguage = selectedSignals.some((s) => s.includes("linguagem"));
+    const hasMotor = /motor|sentar|engatinh|biped|rolar|cabeca|pinca/.test(selectedText);
+    const hasLanguage = /linguagem|comunicacao|balbucio|palavras|gestos/.test(selectedText);
     if (hasMotor && hasLanguage) return "Atraso desenvolvimento global";
     if (hasMotor) return "Atraso motor";
     if (hasLanguage) return "Atraso de linguagem";
@@ -605,13 +718,14 @@ export function detectClinicalPattern(context: FilterContext): string {
   }
   if (queixas.includes("suicidio")) return "Risco de suicídio — avaliação urgente";
   if (queixas.includes("ansiedade")) {
-    if (selectedSignals.some((s) => s.includes("fobia") || s.includes("social"))) return "Ansiedade social/fóbica";
-    if (selectedSignals.some((s) => s.includes("pânico") || s.includes("panico"))) return "Pânico/ansiedade aguda";
+    if (/fobia|social|vergonha|apresentacao|estranhos/.test(selectedText)) return "Ansiedade social/fóbica";
+    if (/panico|crise|tremor|aguda/.test(selectedText)) return "Pânico/ansiedade aguda";
+    if (/separacao|cuidador|dormir sozinho/.test(selectedText)) return "Ansiedade de separação";
     return "Quadro ansioso";
   }
   if (queixas.includes("comportamento")) {
-    if (selectedSignals.some((s) => s.includes("agressi"))) return "Comportamento agressivo";
-    if (selectedSignals.some((s) => s.includes("oposi"))) return "Comportamento opositivo";
+    if (/agress|bate|morde|bullying|ameaca|vandalismo/.test(selectedText)) return "Comportamento agressivo";
+    if (/oposi|desafio|recusa|birra|regras|autoridade/.test(selectedText)) return "Comportamento opositivo";
     return "Transtorno comportamental";
   }
   if (queixas.includes("linguagem")) return "Atraso/transtorno de linguagem";

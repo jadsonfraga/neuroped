@@ -491,13 +491,270 @@ export const comportamentoSignals: QueixaSignalMap[] = [
   }
 ];
 
+// TEA - extensão escolar/adolescente para o filtro não ficar preso só até 6 anos
+export const teaExtendedSignals: QueixaSignalMap[] = [
+  {
+    queixaId: "tea",
+    queixaLabel: "Transtorno do Espectro Autista",
+    ageRange: "6-12a",
+    ageMin: 72,
+    ageMax: 143,
+    clusters: [
+      {
+        id: "tea-pragmatica-escolar",
+        label: "Comunicação Social / Pragmática (6-12 anos)",
+        signals: [
+          { id: "tea-pragmatica-conversa", label: "Conversa unilateral ou pouco recíproca", description: "Monologa, muda pouco de tema e não percebe sinais de desinteresse." },
+          { id: "tea-pragmatica-piadas", label: "Dificuldade com piadas, ironia ou duplo sentido", description: "Interpreta de forma literal e se confunde em situações sociais." },
+          { id: "tea-pragmatica-turnos", label: "Dificuldade em alternar turnos de fala", description: "Interrompe, fala sobre o próprio interesse ou responde fora do contexto." },
+          { id: "tea-pragmatica-contexto", label: "Comunicação muda muito conforme o contexto", description: "Vai melhor com adulto estruturando, mas piora com pares ou grupos." },
+        ],
+      },
+      {
+        id: "tea-social-escolar-avancado",
+        label: "Socialização Escolar (6-12 anos)",
+        signals: [
+          { id: "tea-amizade-ingenua", label: "Amizades frágeis ou ingênuas", description: "Quer amigos, mas não entende reciprocidade, limites ou brincadeiras coletivas." },
+          { id: "tea-bullying-isolamento", label: "Bullying, exclusão ou isolamento", description: "Fica só, é alvo de colegas ou não percebe provocações." },
+          { id: "tea-regras-sociais-implicitas", label: "Dificuldade com regras sociais implícitas", description: "Não capta combinados não ditos, tom de voz ou expressão facial." },
+          { id: "tea-sofrimento-social", label: "Sofrimento após interação social", description: "Chega exausto, irritado ou choroso depois de escola/festas." },
+        ],
+      },
+      {
+        id: "tea-flexibilidade-sensorial-escolar",
+        label: "Rigidez, Hiperfoco e Sensorialidade (6-12 anos)",
+        signals: [
+          { id: "tea-hiperfoco-escolar", label: "Hiperfoco que atrapalha rotina escolar", description: "Insiste no mesmo tema e resiste a tarefas fora do interesse." },
+          { id: "tea-mudanca-rotina-escolar", label: "Crise com mudança de rotina", description: "Substituição de professor, passeio ou alteração de sala desorganiza o dia." },
+          { id: "tea-sobrecarga-sensorial-escolar", label: "Sobrecarga sensorial na escola", description: "Barulho, fila, recreio ou uniforme geram irritação, fuga ou choro." },
+          { id: "tea-seletividade-alimentar-escolar", label: "Seletividade alimentar impactando escola", description: "Recusa merenda, marcas ou texturas e isso limita permanência/rotina." },
+        ],
+      },
+    ],
+  },
+  {
+    queixaId: "tea",
+    queixaLabel: "Transtorno do Espectro Autista",
+    ageRange: "12-18a",
+    ageMin: 144,
+    ageMax: 216,
+    clusters: [
+      {
+        id: "tea-adolescente-camuflagem",
+        label: "Camuflagem e Exaustão Social (12-18 anos)",
+        signals: [
+          { id: "tea-camuflagem-social", label: "Camufla sintomas em público", description: "Imita pares, ensaia respostas e colapsa em casa depois." },
+          { id: "tea-exaustao-social", label: "Exaustão intensa após socializar", description: "Precisa de isolamento prolongado depois da escola ou eventos." },
+          { id: "tea-amizades-instaveis", label: "Amizades instáveis ou muito assimétricas", description: "É explorado, não percebe intenção do outro ou se apega demais." },
+          { id: "tea-vulnerabilidade-social", label: "Ingenuidade/vulnerabilidade social", description: "Dificuldade de julgar risco, malícia, pressão de pares ou abuso." },
+        ],
+      },
+      {
+        id: "tea-adolescente-funcional",
+        label: "Funcionalidade e Autonomia no Adolescente",
+        signals: [
+          { id: "tea-autonomia-baixa", label: "Autonomia abaixo do esperado", description: "Precisa de ajuda excessiva para higiene, organização, dinheiro ou deslocamento." },
+          { id: "tea-planejamento-vida-diaria", label: "Dificuldade de planejar rotina", description: "Perde prazos, esquece materiais e se desorganiza sem adulto." },
+          { id: "tea-rigidez-incerteza", label: "Intolerância à incerteza", description: "Sofre quando planos mudam ou quando precisa decidir sem regra clara." },
+          { id: "tea-sofrimento-ansioso-social", label: "Ansiedade social secundária ao TEA", description: "Evita grupos por medo de errar socialmente ou ser ridicularizado." },
+        ],
+      },
+    ],
+  },
+];
+
+// Linguagem / comunicação
+export const linguagemSignals: QueixaSignalMap[] = [
+  {
+    queixaId: "linguagem",
+    queixaLabel: "Linguagem / Comunicação",
+    ageRange: "1-6a",
+    ageMin: 12,
+    ageMax: 71,
+    clusters: [
+      {
+        id: "linguagem-expressiva-precoce",
+        label: "Linguagem Expressiva",
+        signals: [
+          { id: "linguagem-poucas-palavras", label: "Poucas palavras para a idade", description: "Vocabulário reduzido, frases ausentes ou muito curtas." },
+          { id: "linguagem-frases-atrasadas", label: "Não combina palavras/frases", description: "Não junta duas palavras ou não estrutura frases simples." },
+          { id: "linguagem-inteligibilidade-baixa", label: "Fala pouco inteligível", description: "Família entende, mas pessoas de fora têm dificuldade." },
+          { id: "linguagem-ecolalia", label: "Ecolalia ou fala repetitiva", description: "Repete falas sem função comunicativa clara." },
+        ],
+      },
+      {
+        id: "linguagem-receptiva-precoce",
+        label: "Compreensão / Receptiva",
+        signals: [
+          { id: "linguagem-nao-segue-comandos", label: "Não segue comandos simples", description: "Dificuldade para entender ordens de um ou dois passos." },
+          { id: "linguagem-nao-responde-nome", label: "Não responde quando chamado", description: "Parece não ouvir apesar de audição aparentemente preservada." },
+          { id: "linguagem-compreensao-baixa", label: "Compreensão abaixo da expressão", description: "Fala algumas palavras, mas entende pouco o que é pedido." },
+        ],
+      },
+    ],
+  },
+  {
+    queixaId: "linguagem",
+    queixaLabel: "Linguagem / Comunicação",
+    ageRange: "6-18a",
+    ageMin: 72,
+    ageMax: 216,
+    clusters: [
+      {
+        id: "linguagem-pragmatica-escolar",
+        label: "Pragmática e Narrativa",
+        signals: [
+          { id: "linguagem-narrativa-desorganizada", label: "Narrativa desorganizada", description: "Conta fatos sem sequência, perde começo/meio/fim ou detalhes essenciais." },
+          { id: "linguagem-inferencia", label: "Dificuldade de inferência", description: "Lê ou ouve, mas não entende implícitos, intenção ou contexto." },
+          { id: "linguagem-pragmatica-social", label: "Uso social da linguagem prejudicado", description: "Não adapta fala ao interlocutor, idade ou situação." },
+          { id: "linguagem-vocabulario-academico", label: "Vocabulário acadêmico fraco", description: "Dificuldade com termos abstratos, textos e explicações escolares." },
+        ],
+      },
+    ],
+  },
+];
+
+// Aprendizagem
+export const aprendizagemSignals: QueixaSignalMap[] = [
+  {
+    queixaId: "aprendizagem",
+    queixaLabel: "Aprendizagem",
+    ageRange: "6-18a",
+    ageMin: 72,
+    ageMax: 216,
+    clusters: [
+      {
+        id: "aprendizagem-leitura-escrita",
+        label: "Leitura e Escrita",
+        signals: [
+          { id: "aprendizagem-leitura-lenta", label: "Leitura lenta ou silabada", description: "Demora, troca letras ou evita leitura em voz alta." },
+          { id: "aprendizagem-compreensao-texto", label: "Baixa compreensão de texto", description: "Decodifica, mas não entende a ideia principal." },
+          { id: "aprendizagem-ortografia", label: "Muitos erros ortográficos persistentes", description: "Trocas, omissões e escrita muito abaixo da escolaridade." },
+          { id: "aprendizagem-producao-textual", label: "Produção textual pobre", description: "Dificuldade para organizar frases, parágrafos e ideias." },
+        ],
+      },
+      {
+        id: "aprendizagem-matematica-executiva",
+        label: "Matemática e Funções Executivas",
+        signals: [
+          { id: "aprendizagem-calculo", label: "Dificuldade em cálculo", description: "Erra operações básicas, fatos aritméticos ou valor posicional." },
+          { id: "aprendizagem-problemas", label: "Dificuldade em problemas matemáticos", description: "Não identifica operação ou dados importantes." },
+          { id: "aprendizagem-organizacao-escolar", label: "Desorganização escolar importante", description: "Perde tarefas, esquece prazos e não acompanha rotina." },
+          { id: "aprendizagem-rendimento-discrepante", label: "Rendimento muito abaixo do potencial", description: "Esforça-se, mas desempenho não acompanha capacidade aparente." },
+        ],
+      },
+    ],
+  },
+];
+
+// Sono
+export const sonoSignals: QueixaSignalMap[] = [
+  {
+    queixaId: "sono",
+    queixaLabel: "Sono",
+    ageRange: "0-18a",
+    ageMin: 0,
+    ageMax: 216,
+    clusters: [
+      {
+        id: "sono-insonia-rotina",
+        label: "Insônia e Rotina",
+        signals: [
+          { id: "sono-inicio-demorado", label: "Demora muito para iniciar sono", description: "Leva mais de 30-60 minutos para dormir com frequência." },
+          { id: "sono-despertares", label: "Despertares noturnos frequentes", description: "Acorda várias vezes e precisa de ajuda para voltar a dormir." },
+          { id: "sono-rotina-irregular", label: "Rotina de sono irregular", description: "Horários muito variáveis, telas à noite ou resistência intensa ao sono." },
+          { id: "sono-sonolencia-diurna", label: "Sonolência diurna", description: "Cochila excessiva, irritabilidade ou queda escolar por sono ruim." },
+        ],
+      },
+      {
+        id: "sono-respiratorio-parassonia",
+        label: "Respiração e Parassonias",
+        signals: [
+          { id: "sono-ronco-apneia", label: "Ronco alto ou pausas respiratórias", description: "Ronca, engasga ou parece parar de respirar durante o sono." },
+          { id: "sono-pesadelos-terrores", label: "Pesadelos/terrores noturnos", description: "Episódios intensos de medo, gritos ou confusão à noite." },
+          { id: "sono-pernas-inquietas", label: "Movimento de pernas/desconforto", description: "Precisa mexer pernas ou relata desconforto ao deitar." },
+        ],
+      },
+    ],
+  },
+];
+
+// Sensorial e funcionalidade, usados tanto isoladamente quanto como refinadores de TEA
+export const sensorialSignals: QueixaSignalMap[] = [
+  {
+    queixaId: "sensorial",
+    queixaLabel: "Sensorial",
+    ageRange: "0-18a",
+    ageMin: 0,
+    ageMax: 216,
+    clusters: [
+      {
+        id: "sensorial-hiperresponsividade",
+        label: "Hiperresponsividade Sensorial",
+        signals: [
+          { id: "sensorial-auditivo", label: "Hipersensibilidade auditiva", description: "Cobre ouvidos, evita ambientes ruidosos ou entra em crise com sons comuns." },
+          { id: "sensorial-tatil", label: "Hipersensibilidade tátil", description: "Recusa roupas, etiquetas, corte de cabelo/unhas ou toque." },
+          { id: "sensorial-alimentar-textura", label: "Recusa por textura/cheiro de alimento", description: "Seletividade intensa por marca, cor, textura ou cheiro." },
+          { id: "sensorial-visual", label: "Sensibilidade visual", description: "Incomoda-se com luz, movimento ou ambientes visualmente cheios." },
+        ],
+      },
+      {
+        id: "sensorial-busca-propriocepcao",
+        label: "Busca Sensorial / Propriocepção",
+        signals: [
+          { id: "sensorial-busca-movimento", label: "Busca movimento intenso", description: "Pula, gira, corre ou se joga em objetos repetidamente." },
+          { id: "sensorial-pressao-profunda", label: "Busca pressão profunda", description: "Aperta, se enfia em espaços, pede cobertor pesado ou abraços fortes." },
+          { id: "sensorial-baixa-dor", label: "Resposta incomum à dor", description: "Parece não sentir dor ou reage de forma exagerada a estímulos leves." },
+        ],
+      },
+    ],
+  },
+];
+
+export const funcionalidadeSignals: QueixaSignalMap[] = [
+  {
+    queixaId: "funcionalidade",
+    queixaLabel: "Funcionalidade / Autonomia",
+    ageRange: "0-18a",
+    ageMin: 0,
+    ageMax: 216,
+    clusters: [
+      {
+        id: "funcionalidade-avd-autonomia",
+        label: "Atividades de Vida Diária",
+        signals: [
+          { id: "funcionalidade-higiene", label: "Dificuldade em higiene/autocuidado", description: "Precisa de ajuda acima do esperado para banho, escovar dentes ou vestir." },
+          { id: "funcionalidade-alimentacao", label: "Baixa autonomia alimentar", description: "Dificuldade para comer sozinho, aceitar alimentos ou manter rotina alimentar." },
+          { id: "funcionalidade-rotina", label: "Não acompanha rotina diária", description: "Precisa de prompts constantes para tarefas simples." },
+          { id: "funcionalidade-seguranca", label: "Baixa noção de segurança", description: "Não percebe risco em rua, fogo, objetos cortantes ou estranhos." },
+        ],
+      },
+      {
+        id: "funcionalidade-escola-comunidade",
+        label: "Escola e Comunidade",
+        signals: [
+          { id: "funcionalidade-participacao-escolar", label: "Participação escolar limitada", description: "Precisa de adaptação/mediador para acompanhar rotina da turma." },
+          { id: "funcionalidade-generalizacao", label: "Não generaliza habilidades", description: "Aprende em terapia, mas não leva para casa/escola." },
+          { id: "funcionalidade-impacto-familiar", label: "Impacto familiar importante", description: "Rotina da família gira em torno dos sintomas e crises." },
+        ],
+      },
+    ],
+  },
+];
+
 // Combinar todos os sinais por queixa
 export const allSignalsMap: Record<string, QueixaSignalMap[]> = {
   tdah: tdahSignals,
-  tea: teaSignals,
+  tea: [...teaSignals, ...teaExtendedSignals],
   atraso: atrasoSignals,
   ansiedade: ansiedadeSignals,
   comportamento: comportamentoSignals,
+  linguagem: linguagemSignals,
+  aprendizagem: aprendizagemSignals,
+  sono: sonoSignals,
+  sensorial: sensorialSignals,
+  funcionalidade: funcionalidadeSignals,
+  social: [...teaSignals, ...teaExtendedSignals],
 };
 
 export function getSignalsForQueixaAndAge(queixaId: string, ageMonths: number): SymptomCluster[] {

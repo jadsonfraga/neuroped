@@ -1,3 +1,5 @@
+import { clearMasterPinUnlock, isMasterPinUnlocked, verifyMasterPin } from "@/lib/masterPin";
+
 const LOCK_EVENT = "neuroped:local-lock-changed";
 
 function emitLockedState(): void {
@@ -5,8 +7,8 @@ function emitLockedState(): void {
   window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: false } }));
 }
 
-export async function verifyUnlockPassword(_input: string): Promise<boolean> {
-  return false;
+export async function verifyUnlockPassword(input: string): Promise<boolean> {
+  return verifyMasterPin(input);
 }
 
 export function unlockApp(_rememberDevice = false): void {
@@ -15,6 +17,7 @@ export function unlockApp(_rememberDevice = false): void {
 
 export function lockApp(): void {
   try {
+    clearMasterPinUnlock();
     sessionStorage.removeItem("neuroped:local-unlocked");
     localStorage.removeItem("neuroped:local-unlocked-persistent");
     sessionStorage.removeItem("neuroped:pin-ok");
@@ -25,11 +28,11 @@ export function lockApp(): void {
 }
 
 export function hasClinicalUnlock(): boolean {
-  return false;
+  return isMasterPinUnlocked();
 }
 
 export function isAppUnlocked(): boolean {
-  return true;
+  return isMasterPinUnlocked();
 }
 
 export const localUnlockEventName = LOCK_EVENT;

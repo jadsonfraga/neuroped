@@ -1,32 +1,12 @@
 import { useEffect, useState } from "react";
-
-const SESSION_KEY = "neuroped:private-gate:ok";
-const PERSIST_KEY = "neuroped:private-gate:persist";
-const DEVICE_HASH_KEY = "neuroped:private-gate:device-hash";
-
-function envHash(): string | null {
-  const env = (import.meta.env.VITE_PIN_HASH as string | undefined)?.trim().toLowerCase();
-  return env && /^[0-9a-f]{64}$/.test(env) ? env : null;
-}
-
-function deviceHash(): string | null {
-  try {
-    const h = localStorage.getItem(DEVICE_HASH_KEY)?.trim().toLowerCase();
-    return h && /^[0-9a-f]{64}$/.test(h) ? h : null;
-  } catch { return null; }
-}
-
-async function sha256Hex(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function alreadyUnlocked(): boolean {
-  try {
-    return sessionStorage.getItem(SESSION_KEY) === "1" || localStorage.getItem(PERSIST_KEY) === "1";
-  } catch { return false; }
-}
+import {
+  getMasterPinLockSeconds,
+  hasConfiguredMasterPin,
+  isMasterPinUnlocked,
+  markMasterPinUnlocked,
+  storeDeviceMasterPin,
+  verifyMasterPin,
+} from "@/lib/masterPin";
 
 function LockIcon() {
   return (
@@ -38,12 +18,12 @@ function LockIcon() {
 }
 
 export function PrivateGate({ children }: { children: React.ReactNode }) {
-  const [unlocked, setUnlocked] = useState<boolean>(() => alreadyUnlocked());
+  const [unlocked, setUnlocked] = useState<boolean>(() => isMasterPinUnlocked());
   const [pin, setPin] = useState("");
   const [remember, setRemember] = useState(true);
   const [erro, setErro] = useState("");
   const [busy, setBusy] = useState(false);
-  const [setupMode] = useState<boolean>(() => !envHash() && !deviceHash());
+  const [setupMode] = useState<boolean>(() => !hasConfiguredMasterPin());
 
   useEffect(() => { if (!unlocked) document.title = "NeuroPed — acesso privado"; }, [unlocked]);
 
@@ -52,20 +32,24 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
     if (!pin.trim()) return;
     setBusy(true); setErro("");
     try {
-      const entered = await sha256Hex(pin);
       if (setupMode) {
-        if (pin.trim().length < 4) { setErro("Use um PIN com 4+ caracteres."); return; }
-        try { localStorage.setItem(DEVICE_HASH_KEY, entered); } catch { /**/ }
+        if (pin.trim().length < 8) { setErro("Use um PIN com 8+ caracteres."); return; }
+        await storeDeviceMasterPin(pin);
         liberar(); return;
       }
-      const expected = envHash() ?? deviceHash();
-      if (!expected || entered !== expected) { setErro("PIN incorreto."); setPin(""); return; }
+      const lockSeconds = getMasterPinLockSeconds();
+      if (lockSeconds > 0) {
+        setErro(`Muitas tentativas. Aguarde ${lockSeconds}s.`);
+        return;
+      }
+      const ok = await verifyMasterPin(pin);
+      if (!ok) { setErro("PIN incorreto."); setPin(""); return; }
       liberar();
     } finally { setBusy(false); }
   }
 
   function liberar() {
-    try { sessionStorage.setItem(SESSION_KEY, "1"); if (remember) localStorage.setItem(PERSIST_KEY, "1"); } catch { /**/ }
+    try { markMasterPinUnlocked(remember); } catch { /**/ }
     setUnlocked(true);
   }
 
@@ -112,7 +96,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           autoFocus
           value={pin}
           onChange={(e) => setPin(e.target.value)}
-          placeholder={setupMode ? "Criar PIN (mín. 4 caracteres)" : "PIN de acesso"}
+          placeholder={setupMode ? "Criar PIN (mín. 8 caracteres)" : "PIN de acesso"}
           className="w-full rounded-xl border px-4 py-3 text-center text-lg tracking-widest text-white placeholder:text-white/30 outline-none transition-all"
           style={{
             background: "rgba(255,255,255,0.06)",

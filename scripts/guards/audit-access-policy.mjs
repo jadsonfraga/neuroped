@@ -78,8 +78,8 @@ if (!mainTsx.includes("PrivateGate")) {
   fail("main.tsx deve envolver <App> com <PrivateGate> (PIN master).");
 }
 
-if (!unlock.includes("return false") || !unlock.includes("dados reais de pacientes")) {
-  fail("localUnlock.ts deve manter desbloqueio local desativado e avisar que offline nao serve para dados reais.");
+if (!unlock.includes("verifyMasterPin") || !unlock.includes("clearMasterPinUnlock") || !unlock.includes("dados reais de pacientes")) {
+  fail("localUnlock.ts deve usar somente o PIN master forte e avisar que offline nao serve para dados reais.");
 }
 
 if (/VITE_PIN_HASH|PIN_HASH|MASTER_PIN_HASH|UNLOCK_HASH|sha256hex|pin-ok/i.test(passwordGate)) {
@@ -169,4 +169,4 @@ if (process.exitCode) {
   process.exit(process.exitCode);
 }
 
-console.log("Politica de acesso aprovada: publico aberto, clinico autenticado, sem PIN/hash local.");
+console.log("Politica de acesso aprovada: publico aberto, clinico autenticado e PIN master sem segredo em texto.");

@@ -1,9 +1,11 @@
 import { useParams, useLocation, Link } from "wouter";
 import { useState } from "react";
-import { ArrowLeft, Download, Copy } from "lucide-react";
+import { ArrowLeft, Download, Copy, Lock, ShieldCheck, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { allScales, queixas } from "@/data/scaleFilter";
+import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { GenericScale } from "@/components/GenericScale";
 import { getInteractiveScale as getInteractiveItemScale, makeInteractiveConfig } from "@/data/interactiveScaleItems";
 import { getInteractiveScale as getInteractiveRunnerScale } from "@/data/interactiveScales";
@@ -16,6 +18,7 @@ import {
   getLiteracyRequirement,
   getVerbalRequirement,
 } from "@/data/advancedFilterLogic";
+import { getMasterPinLockSeconds, isMasterPinUnlocked, verifyMasterPin } from "@/lib/masterPin";
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
   questionario_pais: "Questionário — pais/cuidador",
@@ -128,6 +131,266 @@ function routeFor(s: { id: string; appRoute?: string }): string {
   if (ALL_IDS.has(s.id)) return `/generic-scale/${s.id}`;
   if (s.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
   return "/filtro";
+}
+
+function buildAdaptedItems(scale: ScaleEntry): string[] {
+  const q = new Set(scale.queixas);
+  const items: string[] = [];
+
+  if (q.has("tea") || q.has("social")) {
+    items.push(
+      "Compartilha interesse mostrando, apontando ou chamando alguém para ver junto",
+      "Mantém troca social de ida e volta, sem ficar só no assunto preferido",
+      "Entende regras sociais do dia a dia: esperar a vez, perceber brincadeira e respeitar espaço",
+      "Tolera mudança de rotina sem crise importante quando o combinado muda de repente"
+    );
+  }
+  if (q.has("tdah")) {
+    items.push(
+      "Sustenta atenção em tarefa compatível com a idade, sem se perder o tempo todo",
+      "Controla impulso de levantar, interromper ou responder antes da hora",
+      "Organiza material, rotina e começo-meio-fim da atividade com pouca ajuda"
+    );
+  }
+  if (q.has("linguagem")) {
+    items.push(
+      "Compreende comandos e explicações do cotidiano sem precisar repetir muitas vezes",
+      "Expressa necessidades, ideias e acontecimentos com clareza para quem não convive todo dia",
+      "Usa linguagem de forma social, adaptando fala ao contexto, pessoa e intenção"
+    );
+  }
+  if (q.has("aprendizagem")) {
+    items.push(
+      "Lê, escreve ou calcula dentro do esperado para escolaridade e oportunidade de ensino",
+      "Aprende conteúdo novo e consegue aplicar depois sem depender sempre de alguém do lado",
+      "Mostra rendimento escolar compatível com esforço, presença e potencial observado"
+    );
+  }
+  if (q.has("ansiedade") || q.has("depressao")) {
+    items.push(
+      "Preocupação, medo ou tristeza atrapalham escola, sono, alimentação ou convivência",
+      "Consegue se acalmar com apoio comum da família ou escola, sem escalada frequente",
+      "Evita situações importantes por sofrimento emocional ou medo de passar vergonha"
+    );
+  }
+  if (q.has("comportamento")) {
+    items.push(
+      "Aceita limites e combinados sem agressão, ameaça ou birra desproporcional",
+      "Assume responsabilidade pelo que fez, sem culpar sempre os outros",
+      "Consegue reparar dano ou retomar a atividade depois de conflito"
+    );
+  }
+  if (q.has("sensorial") || q.has("alimentacao")) {
+    items.push(
+      "Reage a som, toque, cheiro, roupa ou textura de forma proporcional ao contexto",
+      "Busca movimento, pressão ou estímulo sensorial sem se colocar em risco",
+      "Aceita variedade alimentar suficiente para rotina e saúde, considerando textura, cheiro e marca"
+    );
+  }
+  if (q.has("funcionalidade") || q.has("autonomia") || q.has("atraso")) {
+    items.push(
+      "Realiza autocuidado esperado para idade, como higiene, vestir, comer e organizar pertences",
+      "Participa da rotina familiar, escolar ou terapêutica com necessidade de ajuda compatível",
+      "Generaliza habilidades aprendidas para casa, escola e outros ambientes"
+    );
+  }
+  if (q.has("sono")) {
+    items.push(
+      "Inicia e mantém sono em horário adequado para idade, sem sofrimento importante",
+      "Acorda com disposição suficiente para escola, terapias e rotina diária"
+    );
+  }
+
+  items.push(
+    "O prejuízo aparece em mais de um contexto, como casa, escola, terapia ou consulta",
+    "A família reconhece exemplos concretos do comportamento na semana ou no último mês",
+    "O achado muda conduta clínica, orientação, encaminhamento ou plano terapêutico"
+  );
+
+  return Array.from(new Set(items)).slice(0, 12);
+}
+
+function adaptedScoreValue(value: string | undefined): number {
+  const first = value?.trim().charAt(0);
+  const n = Number(first);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
+  const [unlocked, setUnlocked] = useState(() => isMasterPinUnlocked());
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [scores, setScores] = useState<Record<string, string>>({});
+  const [rawScore, setRawScore] = useState("");
+  const [classification, setClassification] = useState("");
+  const [notes, setNotes] = useState("");
+  const [copied, setCopied] = useState(false);
+  const sensitiveLicense = scale.licencaUso === "comercial" || scale.licencaUso === "restrita" || scale.licencaUso === "contato_autor";
+  const adaptedItems = buildAdaptedItems(scale);
+  const adaptedSubtotal = adaptedItems.reduce((sum, item) => sum + adaptedScoreValue(scores[item]), 0);
+  const adaptedMax = adaptedItems.length * 3;
+
+  async function unlockInternal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pin.trim()) return;
+    const lockSeconds = getMasterPinLockSeconds();
+    if (lockSeconds > 0) {
+      setPinError(`Muitas tentativas. Aguarde ${lockSeconds}s.`);
+      return;
+    }
+    setBusy(true);
+    setPinError("");
+    try {
+      const ok = await verifyMasterPin(pin);
+      if (!ok) {
+        setPinError("PIN master incorreto.");
+        setPin("");
+        return;
+      }
+      setUnlocked(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function buildSummary(): string {
+    const domainText = adaptedItems
+      .map((item) => `- ${item}: ${scores[item] || "não informado"}`)
+      .join("\n");
+    return [
+      `REGISTRO INTERNO DE ESCALA`,
+      `Escala: ${scale.name} (${scale.fullName})`,
+      `ID: ${scale.id}`,
+      `Licença: ${scale.licencaUso || "não informada"}`,
+      `Modo: ${APPLICATION_MODE_LABEL[getApplicationMode(scale)] ?? getApplicationMode(scale)}`,
+      `Finalidade: ${ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ?? getAssessmentUse(scale)}`,
+      "",
+      sensitiveLicense
+        ? "Tipo de uso: adaptação autoral regional com equivalência funcional pretendida; não é versão oficial validada do instrumento."
+        : "Tipo de uso: aplicação/registro clínico autoral ou livre conforme metadados da escala.",
+      "",
+      "Itens clínicos adaptados:",
+      domainText,
+      "",
+      `Subtotal autoral adaptado: ${adaptedSubtotal}/${adaptedMax}`,
+      "",
+      `Escore bruto/oficial registrado: ${rawScore || "não informado"}`,
+      `Classificação/interpretação registrada: ${classification || "não informada"}`,
+      "",
+      `Observações: ${notes || "sem observações adicionais"}`,
+      "",
+      sensitiveLicense
+        ? "Nota: instrumento com licença restrita/comercial; este registro não reproduz itens proprietários. Use o material oficial quando houver autorização e registre aqui a interpretação clínica."
+        : "Nota: correlacionar com história clínica, exame e contexto familiar/escolar.",
+    ].join("\n");
+  }
+
+  async function copySummary() {
+    await navigator.clipboard.writeText(buildSummary());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (!unlocked) {
+    return (
+      <Card className="bg-slate-800/80 border-violet-700 mb-6">
+        <CardHeader className="border-b border-slate-700">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Lock className="w-5 h-5 text-violet-300" />
+            Uso interno da escala
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <p className="text-sm text-slate-300 mb-4">
+            Esta escala pode ser registrada internamente após PIN master. O PIN não fica visível nem salvo em texto.
+          </p>
+          <form onSubmit={unlockInternal} className="flex flex-col sm:flex-row gap-3">
+            <Input
+              type="password"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="PIN master"
+              className="bg-slate-900/70 border-slate-600 text-white"
+              autoComplete="off"
+            />
+            <Button type="submit" disabled={busy || !pin.trim()} className="bg-violet-600 hover:bg-violet-700">
+              {busy ? "Verificando..." : "Desbloquear"}
+            </Button>
+          </form>
+          {pinError && <p className="mt-2 text-sm font-semibold text-red-300">{pinError}</p>}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="bg-slate-800/80 border-emerald-700 mb-6">
+      <CardHeader className="border-b border-slate-700">
+        <CardTitle className="text-white flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-emerald-300" />
+          Uso interno desbloqueado
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-6 space-y-5">
+        {sensitiveLicense && (
+          <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-100">
+            Instrumento com licença restrita/comercial. Quando não houver autorização para reproduzir itens, esta tela usa uma adaptação autoral em português brasileiro regional, com equivalência funcional pretendida para triagem/registro clínico, sem copiar o instrumento oficial.
+          </div>
+        )}
+        <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-4 text-sm text-blue-100">
+          Linguagem calibrada para consulta real: clara, brasileira, nordestina quando útil, e atualizada para 2026. Não substitui normas, manual oficial ou validação psicométrica.
+        </div>
+        <div className="rounded-lg border border-emerald-700 bg-emerald-900/20 p-4">
+          <p className="text-xs uppercase tracking-wide text-emerald-300">Subtotal autoral adaptado</p>
+          <p className="text-2xl font-black text-white">{adaptedSubtotal}/{adaptedMax}</p>
+          <p className="text-xs text-emerald-100">0 ausente/não aplicável · 1 leve · 2 moderado · 3 importante</p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          {adaptedItems.map((item) => (
+            <label key={item} className="space-y-1">
+              <span className="text-xs font-semibold text-slate-300">{item}</span>
+              <select
+                value={scores[item] || ""}
+                onChange={(e) => setScores((prev) => ({ ...prev, [item]: e.target.value }))}
+                className="w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-white"
+              >
+                <option value="">Selecionar</option>
+                <option value="0 - não observado / não aplicável">0 - não observado / não aplicável</option>
+                <option value="1 - leve / pouco impacto">1 - leve / pouco impacto</option>
+                <option value="2 - moderado / impacto claro">2 - moderado / impacto claro</option>
+                <option value="3 - grave / impacto importante">3 - grave / impacto importante</option>
+              </select>
+            </label>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <label className="space-y-1">
+            <span className="text-xs font-semibold text-slate-300">Escore bruto/oficial</span>
+            <Input value={rawScore} onChange={(e) => setRawScore(e.target.value)} className="bg-slate-900/70 border-slate-600 text-white" />
+          </label>
+          <label className="space-y-1">
+            <span className="text-xs font-semibold text-slate-300">Classificação/interpretação</span>
+            <Input value={classification} onChange={(e) => setClassification(e.target.value)} className="bg-slate-900/70 border-slate-600 text-white" />
+          </label>
+        </div>
+        <label className="space-y-1 block">
+          <span className="text-xs font-semibold text-slate-300">Observações clínicas</span>
+          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-slate-900/70 border-slate-600 text-white min-h-28" />
+        </label>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button onClick={copySummary} className="bg-emerald-600 hover:bg-emerald-700">
+            <ClipboardCheck className="w-4 h-4 mr-2" />
+            {copied ? "Registro copiado" : "Copiar registro clínico"}
+          </Button>
+          <Button onClick={() => window.print()} variant="outline" className="bg-slate-700 border-slate-600 hover:bg-slate-600">
+            <Download className="w-4 h-4 mr-2" />
+            Imprimir
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function GenericScalePage() {
@@ -388,6 +651,8 @@ export default function GenericScalePage() {
             </div>
           </CardContent>
         </Card>
+
+        <InternalScaleApplication scale={scale} />
 
         {/* Instruções de Uso */}
         <Card className="bg-slate-800/80 border-slate-700 mb-6">

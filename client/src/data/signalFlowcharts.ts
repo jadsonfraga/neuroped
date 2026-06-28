@@ -46,8 +46,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 18,
         tiers: {
           ouro: ["mchat", "q-chat-10"],
-          prata: ["j26-009", "csbs-dp"],
-          bronze: ["j26-007"],
+          prata: ["podj-tea-prime-1-6a", "j26-009", "csbs-dp"],
+          bronze: ["podj-tea-prime-familiar", "j26-007"],
         },
       },
       {
@@ -55,8 +55,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 18,
         maxMonths: 36,
         tiers: {
-          ouro: ["mchat", "ados2"],
-          prata: ["cars", "j26-021"],
+          ouro: ["mchat", "podj-tea-prime-1-6a", "ados2"],
+          prata: ["cars", "podj-tea-prime-familiar", "j26-021"],
           bronze: ["j26-026", "stat"],
         },
       },
@@ -65,9 +65,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 36,
         maxMonths: 72,
         tiers: {
-          ouro: ["ados2", "cars"],
-          prata: ["srs2", "scq", "gars3"],
-          bronze: ["j26-020", "j26-022"],
+          ouro: ["cars", "podj-tea-prime-1-6a", "ados2"],
+          prata: ["srs2", "scq", "podj-tea-prime-escola-terapia", "gars3"],
+          bronze: ["podj-tea-prime-familiar", "j26-020", "j26-022"],
         },
       },
       {
@@ -75,9 +75,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 72,
         maxMonths: 144,
         tiers: {
-          ouro: ["ados2", "srs2"],
-          prata: ["assq", "cast", "gars3"],
-          bronze: ["j26-205", "sensory-profile2"],
+          ouro: ["podj-tea-prime-6-12a", "srs2", "ados2"],
+          prata: ["podj-tea-prime-escola-terapia", "assq", "cast", "gars3"],
+          bronze: ["podj-tea-prime-familiar", "j26-205", "sensory-profile2"],
         },
       },
       {
@@ -85,16 +85,16 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 144,
         maxMonths: 216,
         tiers: {
-          ouro: ["ados2", "adir"],
-          prata: ["srs2", "catq", "assq"],
-          bronze: ["j26-208"],
+          ouro: ["podj-tea-prime-12-19a", "srs2", "ados2"],
+          prata: ["podj-tea-prime-familiar", "catq", "assq"],
+          bronze: ["podj-tea-prime-escola-terapia", "j26-208"],
         },
       },
     ],
     monitoring: {
       ouro: ["atec"],
-      prata: ["j26-030"],
-      bronze: ["sensory-profile2"],
+      prata: ["podj-tea-prime-familiar", "j26-030"],
+      bronze: ["podj-tea-prime-escola-terapia", "sensory-profile2"],
     },
   },
 

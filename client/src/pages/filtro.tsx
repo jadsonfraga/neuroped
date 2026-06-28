@@ -775,7 +775,7 @@ export default function FiltroPage() {
               ? "—"
               : item.implementationStatus === "complete" || (item.scale && opensAsUsableTool(item.scale))
                 ? "Abrir aplicação"
-                : "Ver ficha técnica";
+                : "Abrir uso interno";
             const cardInner = (
                 <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
                   <CardContent className="filter-260-card-content">
@@ -815,16 +815,16 @@ export default function FiltroPage() {
           })}
         </div>
         )}
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza somente aplicações completas e preenchíveis dentro do app; não inventa pontuação e não substitui diagnóstico.</CardContent></Card>
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza escalas utilizáveis no app. Escalas sem itens internos completos abrem ficha e registro clínico protegido por PIN master, sem inventar pontuação nem reproduzir material proprietário.</CardContent></Card>
         </section>
         )}
 
         {!hasSearch && (
         <section className="lg:col-span-2 space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui apenas escalas existentes, questionários e inventários com aplicação interna preenchível.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários, inventários, fichas técnicas e registro interno protegido por PIN.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Fichas e escalas restritas ficam fora do filtro até terem aplicação preenchível autorizada.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas abrem modo interno com PIN master; quando não puder copiar, o app usa adaptação autoral em português brasileiro regional sem reproduzir itens protegidos.</p></CardContent></Card>
         </div>
         <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-5 sm:p-6">
           <CardContent className="space-y-5 p-0">
