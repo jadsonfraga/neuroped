@@ -248,7 +248,7 @@ function buildOPB(
   queixaLabel: string
 ): RecommendationOPB {
   const copy = opbParentCopy[scale.id];
-  const resp = RESP_LABEL[scale.respondente?.[0] ?? "clinico"] ?? "o avaliador";
+  const resp = scale.respondente.map((r) => RESP_LABEL[r] ?? r).filter(Boolean).join(", ") || "o avaliador";
   return {
     seal,
     scaleId: scale.id,
@@ -297,11 +297,14 @@ function tierFromSlot(slot: Slot): Tier | null {
   return null;
 }
 
-const CLINICAL_TIER_LABEL: Record<RefinedScaleMatch["tier"], string> = {
-  gold: "ajuste clínico ouro",
-  silver: "ajuste clínico prata",
-  bronze: "ajuste clínico bronze",
-  conditional: "ajuste condicional",
+// Label reflects the podium slot, not the score-based tier, so the badge on
+// the Ouro card always reads "1ª linha clínica" regardless of the raw score.
+const SLOT_CLINICAL_LABEL: Partial<Record<Slot, string>> = {
+  "Ouro": "1ª linha clínica",
+  "Prata": "complementar",
+  "Bronze": "apoio adicional",
+  "Teste Direto": "teste direto",
+  "Questionário Escolar": "perspectiva escolar",
 };
 
 function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
@@ -320,14 +323,14 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
     // técnica (/generic-scale/:id) ou catálogo mundial. Nunca mais o loop /filtro.
     route: scale ? (resolveAppRoute(scale) ?? "/filtro") : "/filtro",
     title: scale?.name || "Sem escala segura",
-    subtitle: scale?.fullName || "Refine idade, queixa ou respondente",
+    subtitle: scale?.fullName || (slot === "Ouro" ? "Sem instrumento padrão-ouro para este perfil" : "Refine idade, queixa ou respondente"),
     reason,
     state,
     source: scale?.fonte,
     tone,
     hasScale: Boolean(scale),
     // Saída do motor de filtragem avançada (advancedFilterLogic)
-    clinicalTier: match ? CLINICAL_TIER_LABEL[match.tier] : null,
+    clinicalTier: match ? (SLOT_CLINICAL_LABEL[slot] ?? slot.toLowerCase()) : null,
     confidence: match?.confidenceLevel ?? null,
     warnings: match?.warningFlags ?? [],
     clinicalReason: match?.clinicalReason ?? null,
@@ -494,7 +497,6 @@ export default function FiltroPage() {
   const hasSafeResults = refinedMatches.length > 0;
   // Resultado veio do fallback de triagem ampla (sem instrumento específico).
   const usingBroadbandFallback = refinedMatches.length > 0 && refinedMatches.every((m) => m.isBroadbandFallback);
-  const clinicalRecommendation = useMemo(() => generateContextualRecommendation(refinedMatches), [refinedMatches]);
 
   // Ranking clínico curado (clinicalRanking) para a queixa primária + idade.
   // É a FONTE de verdade do pódio: define explicitamente quem é ouro/prata/bronze
@@ -504,10 +506,16 @@ export default function FiltroPage() {
     [selectedQueixas, selectedAge, selectedRespondente, refinedById]
   );
 
-  // === PÓDIO (req. 9): Ouro/Prata/Bronze nunca repetem id; semeado pela tabela curada ===
+  // === PÓDIO: score-ordered, curated tiers as soft tiebreaker, quality threshold ≥60 ===
   const auditedPodium = useMemo(
     () => selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers),
     [refinedMatches, hasSafeResults, curatedTiers]
+  );
+
+  // Síntese clínica referencia o Ouro do pódio directamente (elimina divergência).
+  const clinicalRecommendation = useMemo(
+    () => generateContextualRecommendation(refinedMatches, auditedPodium.ouro),
+    [refinedMatches, auditedPodium],
   );
 
   // Ouro veio da tabela curada? Então mostramos o racional clínico específico.

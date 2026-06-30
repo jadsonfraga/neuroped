@@ -753,11 +753,19 @@ export function detectClinicalPattern(context: FilterContext): string {
 
 // ============ SÍNTESE CLÍNICA ============
 
-export function generateContextualRecommendation(matches: RefinedScaleMatch[]): string {
+export function generateContextualRecommendation(
+  matches: RefinedScaleMatch[],
+  podiumOuro?: RefinedScaleMatch,
+): string {
   if (matches.length === 0) return SAFE_EMPTY_MESSAGE;
 
-  const gold = matches.find((m) => m.tier === "gold");
-  if (gold) return `Recomendado: ${gold.scale.name} — ${gold.clinicalReason}`;
+  // Use the podium Ouro directly so the text always references the same scale
+  // shown in the medal card (eliminates score-tier vs podium-slot divergence).
+  const primary = podiumOuro ?? matches.find((m) => m.tier === "gold");
+  if (primary) {
+    const reason = primary.clinicalReason || primary.scale.description || "instrumento de primeira linha para este perfil";
+    return `Recomendado: ${primary.scale.name} — ${reason}`;
+  }
 
   const silver = matches.find((m) => m.tier === "silver");
   if (silver) return `Segunda opção: ${silver.scale.name} — ${silver.clinicalReason}`;
