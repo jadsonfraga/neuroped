@@ -138,6 +138,7 @@ export const navSections: NavSection[] = [
   {
     title: "Testes Diretos com a Criança",
     items: [
+      { href: "/avaliacao-cognitiva-infantil", label: "Avaliação Cognitiva 2–19 anos", icon: BrainCog },
       { href: "/testes-reconhecimento", label: "Reconhecimento Visual", icon: Eye },
       { href: "/testes-academicos", label: "Leitura/Escrita/Aritmética", icon: School },
       { href: "/tde2", label: "TDE-2 Adaptado", icon: BookOpen },

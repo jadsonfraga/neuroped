@@ -80,6 +80,7 @@ const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/testes-reconhecimento"));
 const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
 const TestesDiretosPage = lazy(() => import("@/pages/testes-diretos"));
+const AvaliacaoCognitivaInfantilPage = lazy(() => import("@/pages/avaliacao-cognitiva-infantil"));
 const AcademicoInterativoPage = lazy(() => import("@/pages/academico-interativo"));
 const EscritaDesenhoPage = lazy(() => import("@/pages/escrita-desenho"));
 const ConhecimentoVisualPage = lazy(() => import("@/pages/conhecimento-visual"));
@@ -227,6 +228,7 @@ function AppRouter() {
           <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
           <Route path="/testes-academicos" component={TestesAcademicosPage} />
           <Route path="/testes-diretos" component={TestesDiretosPage} />
+          <Route path="/avaliacao-cognitiva-infantil" component={AvaliacaoCognitivaInfantilPage} />
           <Route path="/academico-interativo" component={AcademicoInterativoPage} />
           <Route path="/escrita-desenho" component={EscritaDesenhoPage} />
           <Route path="/conhecimento-visual" component={ConhecimentoVisualPage} />
