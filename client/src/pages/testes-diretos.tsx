@@ -1,11 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentType, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import AcademicoInterativoPage from "@/pages/academico-interativo";
+import AtencaoConcentracaoPage from "@/pages/atencao-concentracao";
+import AvaliacaoCognitivaInfantilPage from "@/pages/avaliacao-cognitiva-infantil";
+import ConhecimentoVisualPage from "@/pages/conhecimento-visual";
+import ConhecimentosGeraisPage from "@/pages/conhecimentos-gerais";
+import EscritaDesenhoPage from "@/pages/escrita-desenho";
+import FuncoesExecutivasPage from "@/pages/funcoes-executivas";
+import LinguagemFonologiaPage from "@/pages/linguagem-fonologia";
+import MemoriaTestePage from "@/pages/memoria-teste";
+import MotricidadeTestePage from "@/pages/motricidade-teste";
+import ProcessamentoVisuoauditivoPage from "@/pages/processamento-visuoauditivo";
+import Tde2Page from "@/pages/tde2";
+import TestesAcademicosPage from "@/pages/testes-academicos";
+import TestesReconhecimentoPage from "@/pages/testes-reconhecimento";
 import {
+  ArrowRight,
   Hash,
   Brain,
+  Calendar,
+  CheckCircle,
+  Clock,
   Search,
   SunMoon,
   Music,
@@ -398,11 +417,79 @@ const TESTS = [
   { id: "phonological", label: "Consciência Fonológica", icon: Music, hint: "Pré-alfabetização" },
 ] as const;
 
+const AGE_BANDS = [
+  { id: "2-3", label: "2-3 anos", min: 2, max: 3, months: "24-47 meses" },
+  { id: "4-5", label: "4-5 anos", min: 4, max: 5, months: "48-71 meses" },
+  { id: "6-8", label: "6-8 anos", min: 6, max: 8, months: "72-107 meses" },
+  { id: "9-12", label: "9-12 anos", min: 9, max: 12, months: "108-155 meses" },
+  { id: "13-17", label: "13-17 anos", min: 13, max: 17, months: "156-215 meses" },
+] as const;
+
+const UNIFIED_DIRECT_TESTS = [
+  { id: "avaliacao-cognitiva-infantil", label: "Avaliacao cognitiva infantil", route: "/avaliacao-cognitiva-infantil", ageMin: 2, ageMax: 19, tempo: "15-30 min", area: "Cognicao", note: "Bateria cognitiva por faixa etaria, de 2 a 19 anos." },
+  { id: "testes-reconhecimento", label: "Reconhecimento visual", route: "/testes-reconhecimento", ageMin: 3, ageMax: 12, tempo: "5-10 min", area: "Visual", note: "Formas, cores, figura-fundo e discriminacao visual." },
+  { id: "linguagem-fonologia", label: "Linguagem e fonologia", route: "/linguagem-fonologia", ageMin: 3, ageMax: 12, tempo: "10-15 min", area: "Linguagem", note: "Vocabulario, compreensao, expressao e consciencia fonologica." },
+  { id: "motricidade-teste", label: "Motricidade", route: "/motricidade-teste", ageMin: 4, ageMax: 12, tempo: "10-15 min", area: "Motor", note: "Coordenacao grossa, fina, equilibrio e destreza." },
+  { id: "escrita-desenho", label: "Escrita e desenho", route: "/escrita-desenho", ageMin: 4, ageMax: 12, tempo: "10-15 min", area: "Grafomotor", note: "Tracado, copia de formas, organizacao espacial e escrita inicial." },
+  { id: "conhecimento-visual", label: "Conhecimento visual", route: "/conhecimento-visual", ageMin: 3, ageMax: 10, tempo: "10 min", area: "Cognitivo visual", note: "Simetria, padroes, sequencias e percepcao visual." },
+  { id: "conhecimentos-gerais", label: "Conhecimentos gerais", route: "/conhecimentos-gerais", ageMin: 5, ageMax: 12, tempo: "10-15 min", area: "Cognicao", note: "Conhecimento factual, raciocinio logico e repertorio cultural." },
+  { id: "atencao-concentracao", label: "Atencao e concentracao", route: "/atencao-concentracao", ageMin: 6, ageMax: 14, tempo: "10 min", area: "Atencao", note: "Atencao sustentada, seletiva e dividida." },
+  { id: "funcoes-executivas", label: "Funcoes executivas", route: "/funcoes-executivas", ageMin: 6, ageMax: 14, tempo: "10-15 min", area: "Executivo", note: "Planejamento, inibicao, flexibilidade e memoria de trabalho." },
+  { id: "memoria-teste", label: "Memoria", route: "/memoria-teste", ageMin: 5, ageMax: 14, tempo: "10-15 min", area: "Memoria", note: "Curto prazo, memoria operacional, aprendizagem e evocacao." },
+  { id: "processamento-visuoauditivo", label: "Processamento visual-auditivo", route: "/processamento-visuoauditivo", ageMin: 5, ageMax: 12, tempo: "10 min", area: "Integracao", note: "Processamento auditivo, visual e integracao multissensorial." },
+  { id: "academico-interativo", label: "Academico interativo", route: "/academico-interativo", ageMin: 6, ageMax: 14, tempo: "10-15 min", area: "Aprendizagem", note: "Calculo, problemas, sequencias logicas e habilidades escolares." },
+  { id: "testes-academicos", label: "Leitura, escrita e aritmetica", route: "/testes-academicos", ageMin: 6, ageMax: 14, tempo: "15-25 min", area: "Escolar", note: "Sondagem escolar direta para leitura, escrita e matematica." },
+  { id: "tde2", label: "TDE-2 adaptado", route: "/tde2", ageMin: 6, ageMax: 17, tempo: "15-25 min", area: "Escolar", note: "Triagem adaptada de desempenho escolar por idade." },
+] as const;
+
+type UnifiedDirectTestId = (typeof UNIFIED_DIRECT_TESTS)[number]["id"];
+
+const UNIFIED_TEST_COMPONENTS: Record<UnifiedDirectTestId, ComponentType> = {
+  "avaliacao-cognitiva-infantil": AvaliacaoCognitivaInfantilPage,
+  "testes-reconhecimento": TestesReconhecimentoPage,
+  "linguagem-fonologia": LinguagemFonologiaPage,
+  "motricidade-teste": MotricidadeTestePage,
+  "escrita-desenho": EscritaDesenhoPage,
+  "conhecimento-visual": ConhecimentoVisualPage,
+  "conhecimentos-gerais": ConhecimentosGeraisPage,
+  "atencao-concentracao": AtencaoConcentracaoPage,
+  "funcoes-executivas": FuncoesExecutivasPage,
+  "memoria-teste": MemoriaTestePage,
+  "processamento-visuoauditivo": ProcessamentoVisuoauditivoPage,
+  "academico-interativo": AcademicoInterativoPage,
+  "testes-academicos": TestesAcademicosPage,
+  tde2: Tde2Page,
+};
+
+function getInitialUnifiedTest(): UnifiedDirectTestId | null {
+  if (typeof window === "undefined") return null;
+  const query = window.location.hash.split("?")[1] ?? "";
+  const teste = new URLSearchParams(query).get("teste");
+  return UNIFIED_DIRECT_TESTS.some((item) => item.id === teste) ? (teste as UnifiedDirectTestId) : null;
+}
+
+function getAgeBand(age: number | null) {
+  if (age == null) return AGE_BANDS[2];
+  return AGE_BANDS.find((band) => age >= band.min && age <= band.max) ?? AGE_BANDS[AGE_BANDS.length - 1];
+}
+
 export default function TestesDiretosPage() {
   const [active, setActive] = useState<string>("digit-span");
-  const [ageStr, setAgeStr] = useState("");
+  const [selectedUnifiedTest, setSelectedUnifiedTest] = useState<UnifiedDirectTestId | null>(getInitialUnifiedTest);
+  const [ageStr, setAgeStr] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const query = window.location.hash.split("?")[1] ?? "";
+    const idade = new URLSearchParams(query).get("idade") ?? "";
+    return idade.replace(/[^0-9]/g, "").slice(0, 2);
+  });
   const [results, setResults] = useState<Record<string, TestResult>>({});
   const age = ageStr.trim() ? Math.max(0, Math.min(18, Number(ageStr) || 0)) : null;
+  const selectedAgeBand = getAgeBand(age);
+  const unifiedBattery = UNIFIED_DIRECT_TESTS.filter(
+    (test) => test.ageMin <= selectedAgeBand.max && test.ageMax >= selectedAgeBand.min,
+  );
+  const selectedUnifiedMeta = UNIFIED_DIRECT_TESTS.find((test) => test.id === selectedUnifiedTest) ?? null;
+  const SelectedUnifiedComponent = selectedUnifiedTest ? UNIFIED_TEST_COMPONENTS[selectedUnifiedTest] : null;
 
   const addResult = (r: TestResult) => setResults((prev) => ({ ...prev, [r.id]: r }));
 
@@ -428,6 +515,101 @@ export default function TestesDiretosPage() {
           <span className="text-xs text-muted-foreground">ajusta a referência clínica</span>
         </div>
       </header>
+
+      <section className="space-y-3" aria-labelledby="bateria-unica-title">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="bateria-unica-title" className="text-lg font-black text-foreground">Bateria unica por faixa etaria</h2>
+            <p className="text-sm text-muted-foreground">Todos os testes diretos ficam reunidos aqui. Escolha a idade para ver o bloco mais adequado.</p>
+          </div>
+          <Badge variant="outline" className="gap-1 rounded-full px-3 py-1">
+            <Calendar className="h-3.5 w-3.5" />
+            {selectedAgeBand.label} · {selectedAgeBand.months}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Faixa etaria">
+          {AGE_BANDS.map((band) => {
+            const isActive = selectedAgeBand.id === band.id;
+            return (
+              <button
+                key={band.id}
+                type="button"
+                onClick={() => setAgeStr(String(band.min))}
+                aria-pressed={isActive}
+                className={`min-h-[56px] rounded-2xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}
+              >
+                <span className="block text-sm font-black text-foreground">{band.label}</span>
+                <span className="block text-[11px] text-muted-foreground">{band.months}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          {unifiedBattery.map((test) => (
+            <Card key={test.id} className="border-border/70 bg-card">
+              <CardContent className="flex items-start justify-between gap-3 p-4">
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className="bg-primary/10 text-primary hover:bg-primary/10">{test.area}</Badge>
+                    <Badge variant="outline" className="gap-1">
+                      <Clock className="h-3 w-3" />
+                      {test.tempo}
+                    </Badge>
+                    <Badge variant="outline">{test.ageMin}-{test.ageMax} anos</Badge>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-foreground">{test.label}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{test.note}</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={selectedUnifiedTest === test.id ? "default" : "outline"}
+                  className="shrink-0"
+                  onClick={() => setSelectedUnifiedTest(test.id)}
+                  aria-label={`Abrir ${test.label} nesta bateria`}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {SelectedUnifiedComponent && selectedUnifiedMeta && (
+          <section className="space-y-3 rounded-2xl border border-border bg-background p-3 sm:p-4" aria-labelledby="teste-direto-ativo-title">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <Badge className="mb-1 bg-primary/10 text-primary hover:bg-primary/10">aplicando agora</Badge>
+                <h3 id="teste-direto-ativo-title" className="text-base font-black text-foreground">{selectedUnifiedMeta.label}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button asChild size="sm" variant="ghost">
+                  <Link href={selectedUnifiedMeta.route}>Rota antiga</Link>
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setSelectedUnifiedTest(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-card/40 p-2 sm:p-3">
+              <SelectedUnifiedComponent />
+            </div>
+          </section>
+        )}
+
+        <Card className="border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-950/20">
+          <CardContent className="flex items-start gap-3 p-4">
+            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Use a bateria acima como porta unica dos testes diretos. Os mini-testes rapidos abaixo continuam na mesma tela para triagem breve durante a consulta.
+            </p>
+          </CardContent>
+        </Card>
+      </section>
 
       <nav className="grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Selecionar teste">
         {TESTS.map((t) => {

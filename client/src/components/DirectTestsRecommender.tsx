@@ -140,6 +140,9 @@ interface TestCardProps {
 }
 
 function TestCard({ test }: TestCardProps) {
+  const midpointAgeYears = Math.max(0, Math.round(((test.ageMin + test.ageMax) / 2) / 12));
+  const unifiedRoute = `/testes-diretos?idade=${midpointAgeYears}&teste=${test.id}`;
+
   const getPriorityColor = (prioridade: string) => {
     switch (prioridade) {
       case "primaria":
@@ -152,7 +155,7 @@ function TestCard({ test }: TestCardProps) {
   };
 
   return (
-    <Link href={test.route}>
+    <Link href={unifiedRoute}>
       <a className="block">
         <Card className={`border-l-4 transition-all hover:shadow-md ${getPriorityColor(test.prioridade)}`}>
           <CardContent className="p-4">
