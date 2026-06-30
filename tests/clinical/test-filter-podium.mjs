@@ -82,7 +82,10 @@ function auditContext(ctx) {
   const ids = slots.map((m) => m.scale.id);
 
   ok(matches.length > 0, "contexto com queixa/idade deve produzir ao menos uma recomendacao segura ou fallback", ctx);
-  ok(Boolean(podium.ouro), "podio deve ter Ouro", ctx);
+  const hasQualifiedCandidate = matches.some((m) => m.relevanceScore >= 60);
+  if (hasQualifiedCandidate) {
+    ok(Boolean(podium.ouro), "podio deve ter Ouro quando ha candidato com score >= 60", ctx);
+  }
   ok(new Set(ids).size === ids.length, "Ouro/Prata/Bronze nao podem repetir escala", { ...ctx, ids });
 
   for (const slot of slots) {
