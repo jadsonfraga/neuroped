@@ -173,7 +173,7 @@ function viaHtml(tag: string, f: ReceitaFields) {
   return `
 <div class="via">
   <div class="head">
-    <div class="selo"><img src="${LOGO_SRC}"></div>
+    <div class="selo"><img src="${LOGO_SRC}" alt="Selo NeuroPed — Dr. Jadson Fraga"></div>
     <div class="bk">
       <div class="wm">NeuroPed EDJ</div>
       <div class="tg">Neuropediatria · Neurodesenvolvimento</div>
