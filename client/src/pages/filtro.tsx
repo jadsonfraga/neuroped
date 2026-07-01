@@ -321,6 +321,16 @@ function licenseChip(scale?: ScaleEntry): { label: string; cls: string } | null 
   return { label: "Licenciada", cls: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200" };
 }
 
+// Atalhos clínicos comuns — 1 toque preenche idade + queixa e já traz o pódio.
+// Reduz a fricção do primeiro uso e faz o filtro parecer "esperto".
+const QUICK_STARTS: { emoji: string; label: string; sub: string; age: string; queixas: string[] }[] = [
+  { emoji: "⚡", label: "TDAH", sub: "6–12 anos", age: "6-12a", queixas: ["tdah"] },
+  { emoji: "🧩", label: "TEA", sub: "2–4 anos", age: "2-4a", queixas: ["tea"] },
+  { emoji: "🌱", label: "Atraso", sub: "1–2 anos", age: "1-2a", queixas: ["atraso"] },
+  { emoji: "🌙", label: "Sono", sub: "4–6 anos", age: "4-6a", queixas: ["sono"] },
+  { emoji: "💭", label: "Ansiedade", sub: "12–18 anos", age: "12-18a", queixas: ["ansiedade"] },
+];
+
 function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
   const scale = match?.scale;
   // Estado HONESTO vindo do motor (req. 3): aplicação completa vs ficha vs externo.
@@ -604,6 +614,28 @@ export default function FiltroPage() {
           <Input value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Buscar por medicação, queixa ou nome da escala" placeholder="Medicação, autismo, TDAH, ansiedade..." className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm" data-testid="input-search" />
           {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
+
+        {!hasSearch && (
+          <div className="space-y-1.5 sm:space-y-2">
+            <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">✨ Sugestões rápidas</p>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {QUICK_STARTS.map((q) => (
+                <button
+                  key={q.label}
+                  type="button"
+                  onMouseEnter={() => softHover()}
+                  onClick={() => { softTap(); haptic.tap(); setSelectedAge(q.age); setSelectedQueixas(q.queixas); }}
+                  aria-label={`Sugestão rápida: ${q.label}, ${q.sub}`}
+                  className="group flex items-center gap-1.5 rounded-2xl border border-border bg-background px-2.5 py-1.5 text-xs font-bold transition hover:border-primary/50 hover:bg-primary/5 active:scale-[0.97]"
+                >
+                  <span aria-hidden="true" className="text-sm leading-none transition-transform group-hover:scale-110">{q.emoji}</span>
+                  <span className="text-foreground">{q.label}</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">· {q.sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-1.5 sm:space-y-2">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade da criança</p>
