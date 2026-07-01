@@ -324,6 +324,31 @@ function licenseChip(scale?: ScaleEntry): { label: string; cls: string } | null 
   return { label: "Licenciada", cls: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200" };
 }
 
+// QUALIFICAÇÃO CLÍNICA — sinal de validação brasileira derivado do campo REAL
+// `validacaoBrasil` (nunca inventado). Para um neuropediatra no Brasil, saber se
+// a escala tem adaptação/validação nacional é o principal marcador de confiança.
+// Ausência do campo NÃO vira "sem validação": simplesmente não exibimos o selo
+// (metadado ausente ≠ escala não validada) — evita esconder bons instrumentos.
+function brValidationChip(scale?: ScaleEntry): { label: string; cls: string } | null {
+  const v = scale?.validacaoBrasil?.trim();
+  if (!v) return null;
+  const head = norm(v).split(/[\s\-—]+/)[0];
+  if (head === "sim")
+    return { label: "🇧🇷 Validada no Brasil", cls: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" };
+  if (head === "parcial")
+    return { label: "🇧🇷 Adaptação parcial (BR)", cls: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200" };
+  if (head === "nao")
+    return { label: "Sem validação BR", cls: "border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300" };
+  // Autoral / observacional / outros textos curados — mostra o próprio rótulo.
+  return { label: `🇧🇷 ${v.length > 26 ? v.slice(0, 26) + "…" : v}`, cls: "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200" };
+}
+
+// Tempo de aplicação como chip curto — carga do instrumento num relance.
+function timeChip(scale?: ScaleEntry): string | null {
+  const t = scale?.tempo?.trim();
+  return t && t !== "—" ? t : null;
+}
+
 // Atalhos clínicos comuns — 1 toque preenche idade + queixa e já traz o pódio.
 // Reduz a fricção do primeiro uso e faz o filtro parecer "esperto".
 const QUICK_STARTS: { emoji: string; label: string; sub: string; age: string; queixas: string[] }[] = [
@@ -918,7 +943,7 @@ export default function FiltroPage() {
             <span className="text-lg" aria-hidden="true">🎯</span>
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Pódio clínico para este perfil</p>
-              <p className="text-[12px] leading-snug text-muted-foreground">Priorizado por idade, queixa e respondente — toque em um card para abrir a escala.</p>
+              <p className="text-[12px] leading-snug text-muted-foreground">Priorizado por idade, queixa e respondente. Cada card mostra <strong className="text-foreground">🇧🇷 validação no Brasil</strong>, <strong className="text-foreground">⏱️ tempo</strong> e <strong className="text-foreground">🎯 ponto de corte</strong> quando disponíveis — toque para abrir.</p>
             </div>
           </div>
         )}
@@ -948,6 +973,8 @@ export default function FiltroPage() {
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}><span aria-hidden="true">{slotEmoji(item.slot)}</span> {item.slot}</Badge>
                       {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}{item.confidence !== null ? ` · ${item.confidence}%` : ""}</Badge>}
                       {(() => { const lc = licenseChip(item.scale); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}
+                      {(() => { const bv = brValidationChip(item.scale); return bv ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${bv.cls}`}>{bv.label}</span> : null; })()}
+                      {(() => { const t = timeChip(item.scale); return t ? <span className="inline-block rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">⏱️ {t}</span> : null; })()}
                     </div>
                     {item.warnings.length > 0 && (
                       <div className="rounded-lg border border-red-300 bg-red-50 px-2 py-1.5 text-[11px] font-bold leading-snug text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
@@ -968,6 +995,7 @@ export default function FiltroPage() {
                     )}
                     {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}
                     <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
+                    {item.scale?.scoringCutoff && <div className="filter-260-source line-clamp-2"><strong>🎯 Ponto de corte:</strong> {item.scale.scoringCutoff}</div>}
                     {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
                     <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{ctaLabel}</span>{item.hasScale && <ArrowRight className="h-4 w-4" />}</div>
                   </CardContent>
@@ -1004,6 +1032,7 @@ export default function FiltroPage() {
                           <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
                           <div className="flex shrink-0 flex-col items-end gap-1">
                             <span className="inline-block rounded-full border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">ficha técnica</span>
+                            {(() => { const bv = brValidationChip(s); return bv ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${bv.cls}`}>{bv.label}</span> : null; })()}
                             {(() => { const lc = licenseChip(s); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}
                           </div>
                         </div>
