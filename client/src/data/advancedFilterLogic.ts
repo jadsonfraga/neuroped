@@ -89,15 +89,27 @@ export function isLicenseRestricted(scale: ScaleEntry): boolean {
 
 /**
  * Status real de implementação no app. Regra honesta:
- *  - escala com licença restrita/comercial => external_only (nunca embutir itens/escore);
- *  - rota /generic-scale/* => apenas ficha técnica (metadata_only);
- *  - rota dedicada e livre/autoral => aplicação completa;
- *  - sem rota => não implementada.
+ *  - rota DEDICADA (página própria construída no app, ex.: /denver, /asq3) =>
+ *    aplicação completa — a ferramenta já existe no app (itens + escore), então
+ *    o instrumento entra no filtro e é recomendável, mesmo sendo licenciado;
+ *  - rota /generic-scale/* => ficha técnica; licenciada vira external_only;
+ *  - interativa por itens (interactiveScaleItems) e livre => aplicação completa;
+ *  - sem rota => external_only (licenciada) ou não implementada.
+ *
+ * O gate de licença NÃO deve esconder instrumentos padrão-ouro que já têm página
+ * dedicada implementada (Denver, ASQ-3, CARS, Conners, BRIEF-2, CBCL, ABC, CDI-2,
+ * CSHQ, Vineland, PedsQL): o filtro precisa nomeá-los como 1ª linha clínica.
  */
 export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus {
   if (scale.implementationStatus) return scale.implementationStatus;
-  if (interactiveScaleItems[scale.id] && !isLicenseRestricted(scale)) return "complete";
   const route = scale.appRoute;
+  const hasDedicatedPage =
+    !!route &&
+    !route.startsWith("/generic-scale/") &&
+    route !== "/escalas-neuropsiquiatria" &&
+    route !== "/filtro";
+  if (hasDedicatedPage) return "complete";
+  if (interactiveScaleItems[scale.id] && !isLicenseRestricted(scale)) return "complete";
   if (!route) return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
   if (isLicenseRestricted(scale)) return "external_only";
   if (route.startsWith("/generic-scale/")) return "metadata_only";
