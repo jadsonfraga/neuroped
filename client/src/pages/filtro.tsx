@@ -348,7 +348,7 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
     scale,
     // Toda escala recomendada abre uma página real: aplicação completa, ficha
     // técnica (/generic-scale/:id) ou catálogo mundial. Nunca mais o loop /filtro.
-    route: scale ? (resolveAppRoute(scale) ?? "/filtro") : "/filtro",
+    route: scale ? (resolveAppRoute(scale) ?? `/generic-scale/${scale.id}`) : "/filtro",
     title: scale?.name || "Sem escala segura",
     subtitle: scale?.fullName || (slot === "Ouro" ? "Sem instrumento padrão-ouro para este perfil" : "Refine idade, queixa ou respondente"),
     reason,
@@ -1026,7 +1026,7 @@ export default function FiltroPage() {
         <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-            <Link key={s.id} href={resolveAppRoute(s) ?? "/filtro"} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition cursor-pointer hover:border-primary/30 hover:bg-background">
+            <Link key={s.id} href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition cursor-pointer hover:border-primary/30 hover:bg-background">
               <div className="filter-260-card-content compact">
                 <div className="filter-260-head">
                   <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
