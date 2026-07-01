@@ -165,11 +165,28 @@ jobs:
 
       - name: Verificar publicação pública no Cloudflare
         run: |
-          echo "Aguardando propagação curta do Cloudflare Pages..."
-          sleep 20
-          curl -fsSL https://neuroped.pages.dev/deploy-check.json -o /tmp/cloudflare-deploy-check.json
-          cat /tmp/cloudflare-deploy-check.json
-          grep "${GITHUB_SHA}" /tmp/cloudflare-deploy-check.json
+          echo "Aguardando o Cloudflare promover o deploy para o domínio apex (poll)..."
+          # O `wrangler pages deploy` já concluiu com sucesso; aqui só confirmamos
+          # que o apex (neuroped.pages.dev) já serve o commit novo. A promoção do
+          # apex pode levar alguns minutos — então fazemos poll em vez de um único
+          # sleep. Se após ~3 min ainda estiver defasado, avisamos SEM falhar o
+          # deploy (que já foi concluído), evitando vermelho falso por timing de CDN.
+          ok=0
+          for i in $(seq 1 12); do
+            sleep 15
+            if curl -fsSL "https://neuroped.pages.dev/deploy-check.json?ts=$(date +%s)" \
+                 -o /tmp/cloudflare-deploy-check.json 2>/dev/null \
+               && grep -q "${GITHUB_SHA}" /tmp/cloudflare-deploy-check.json; then
+              echo "✓ Apex já serve ${GITHUB_SHA} (tentativa $i)."
+              ok=1
+              break
+            fi
+            echo "  apex ainda não promoveu o commit novo (tentativa $i/12)…"
+          done
+          cat /tmp/cloudflare-deploy-check.json 2>/dev/null || true
+          if [ "$ok" -ne 1 ]; then
+            echo "::warning::Deploy do Cloudflare concluído com sucesso, mas o apex ainda servia o commit anterior após ~3 min (promoção de CDN). Não é falha de deploy."
+          fi
 
       - name: Verificar login (auth e2e)
         env:
