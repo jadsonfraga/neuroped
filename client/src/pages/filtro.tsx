@@ -456,15 +456,39 @@ function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas
   return reasons.length ? reasons : ["✓ Compatibilidade geral"];
 }
 
+// Persistência das seleções do filtro — o clínico volta ao /filtro e mantém o
+// contexto (idade, queixa, respondente…) em vez de recomeçar do zero.
+const FILTER_STATE_KEY = "np_filtro_state_v1";
+interface PersistedFilter {
+  search?: string;
+  queixas?: string[];
+  age?: string | null;
+  respondente?: ScaleEntry["respondente"][number] | null;
+  communication?: "verbal" | "nonverbal" | null;
+  literacy?: "literate" | "preliterate" | null;
+  assessment?: "diagnostic" | "monitoring" | null;
+  signals?: string[];
+}
+function loadFilterState(): PersistedFilter {
+  try {
+    if (typeof localStorage === "undefined") return {};
+    return (JSON.parse(localStorage.getItem(FILTER_STATE_KEY) || "{}") || {}) as PersistedFilter;
+  } catch {
+    return {};
+  }
+}
+
 export default function FiltroPage() {
-  const [search, setSearch] = useState("");
-  const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
-  const [selectedAge, setSelectedAge] = useState<string | null>(null);
-  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
-  const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(null);
-  const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
-  const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
-  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
+  const [initial] = useState(loadFilterState);
+  const [search, setSearch] = useState<string>(initial.search ?? "");
+  const [selectedQueixas, setSelectedQueixas] = useState<string[]>(initial.queixas ?? []);
+  const [selectedAge, setSelectedAge] = useState<string | null>(initial.age ?? null);
+  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(initial.respondente ?? null);
+  const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(initial.communication ?? null);
+  const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(initial.literacy ?? null);
+  const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(initial.assessment ?? null);
+  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(initial.signals ?? []);
+  const [copiedRec, setCopiedRec] = useState(false);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -475,6 +499,17 @@ export default function FiltroPage() {
       localStorage.setItem("np_tour_intro_v2", "1");
     } catch { /* tour é best-effort */ }
   }, []);
+
+  // Persiste as seleções sempre que mudam (best-effort).
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
+        search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,
+        communication: selectedCommunication, literacy: selectedLiteracy,
+        assessment: selectedAssessmentType, signals: selectedSignalIds,
+      } satisfies PersistedFilter));
+    } catch { /* persistência best-effort */ }
+  }, [search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
 
   useEffect(() => {
     let alive = true;
@@ -562,6 +597,37 @@ export default function FiltroPage() {
     rec("Teste Direto", podium.direct, "Instrumento aplicado diretamente com a criança.", "from-blue-600 via-indigo-700 to-slate-950"),
     rec("Questionário Escolar", podium.school, "Questionário respondido por professor/contexto escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
   ];
+
+  // Texto pronto para o laudo — pódio recomendado + contexto do filtro.
+  // Cálculo direto (barato) para não depender do array `ranking` recriado a cada render.
+  const recommendationText = ((): string => {
+    if (!hasSafeResults) return "";
+    const ageLbl = selectedAge ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge) : "não especificada";
+    const queixasLbl = selectedQueixas.length
+      ? selectedQueixas.map((id) => queixas.find((q) => q.id === id)?.label ?? id).join(", ")
+      : "não especificada";
+    const respLbl = selectedRespondente ?? "qualquer";
+    const lines = ranking
+      .filter((r) => r.hasScale)
+      .map((r) => `• ${r.slot}${r.clinicalTier ? ` (${r.clinicalTier})` : ""}: ${r.title}${r.source ? ` — ${r.source}` : ""}`);
+    return [
+      "Recomendação de escalas — NeuroPed",
+      `Idade: ${ageLbl} · Queixa(s): ${queixasLbl} · Respondente: ${respLbl}`,
+      "",
+      ...lines,
+      "",
+      "Gerado pelo Filtro Clínico Inteligente — triagem de apoio; não substitui o julgamento clínico.",
+    ].join("\n");
+  })();
+
+  const copyRecommendation = () => {
+    if (!recommendationText) return;
+    softTick(); haptic.select();
+    navigator.clipboard?.writeText(recommendationText).then(
+      () => { setCopiedRec(true); setTimeout(() => setCopiedRec(false), 1800); },
+      () => { /* clipboard indisponível — best-effort */ }
+    );
+  };
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -747,7 +813,15 @@ export default function FiltroPage() {
         {/* RIGHT COLUMN — Results (lg:col-span-2) */}
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
-        <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+        <div className="flex items-start justify-between gap-3">
+          <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+          {hasSafeResults && (
+            <Button variant="outline" size="sm" onClick={copyRecommendation} className="shrink-0 gap-1.5" aria-label="Copiar recomendação para o laudo">
+              <ClipboardCheck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{copiedRec ? "Copiado!" : "Copiar p/ laudo"}</span>
+            </Button>
+          )}
+        </div>
         {usingBroadbandFallback && (
           <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100" role="note">
             Sem instrumento <strong>específico</strong> validado para esta combinação nesta idade. Mostrando <strong>triagem ampla</strong> apropriada à idade (instrumentos reais) — use como rastreio inicial, não como avaliação específica.
