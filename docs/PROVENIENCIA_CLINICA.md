@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 636
-- **Com fonte declarada:** 474
+- **Total de instrumentos:** 641
+- **Com fonte declarada:** 479
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -499,6 +499,11 @@
 | `pliksi` | PLIKSi | King's College London, British Journal of Psychiatry | não |
 | `pls-5-screening` | PLS-5 Screening | — | sim |
 | `pls5` | PLS-5 | Zimmerman IL, Steiner VG, Pond RE, 2011 (PLS-5), Pearson | não |
+| `podj-tea-prime-1-6a` | PODJ-TEA PRIME 1–6A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
+| `podj-tea-prime-12-19a` | PODJ-TEA PRIME 12–19A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
+| `podj-tea-prime-6-12a` | PODJ-TEA PRIME 6–12A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
+| `podj-tea-prime-escola-terapia` | PODJ-TEA Escola/Terapia | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
+| `podj-tea-prime-familiar` | PODJ-TEA Familiar | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
 | `ppp` | PPP | Hunt A et al., 2004 (Paediatric Pain Profile) | não |
 | `ppvt4` | PPVT-4 | Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson | não |
 | `ppvt4-new` | PPVT-4 Peabody | Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson | não |
