@@ -118,6 +118,9 @@ function opensInApp(scale: ScaleEntry): boolean {
 // respondível e cálculo/registro. Fichas técnicas, catálogo mundial e escalas
 // externas/licenciadas não entram no filtro principal.
 function isFullApp(scale: ScaleEntry): boolean {
+  // Psicoeducação / portais informativos NÃO são escalas preenchíveis — abrem
+  // conteúdo de leitura, não uma aplicação com itens+escore. Fora do filtro.
+  if (scale.applicationMode === "psicoeducacao") return false;
   return getImplementationStatus(scale) === "complete" && opensAsUsableTool(scale);
 }
 
