@@ -112,63 +112,7 @@ function canonicalExpressPayload(f: FormFields, issuedAt: string) {
   ].join("\n");
 }
 
-// ── PDF assinável (texto estruturado) ────────────────────────────
-async function buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
-  const { buildDocumentPdf } = await import("@/lib/documentPdf");
-  const data = todayBr();
-  const validade = new Date();
-  validade.setDate(validade.getDate() + 30);
-  const valBr = validade.toLocaleDateString("pt-BR");
-
-  return buildDocumentPdf({
-    title: "RECEITA DE CONTROLE ESPECIAL — C1",
-    subtitle: "Via para farmácia · Validade: 30 dias",
-    credentials: [
-      "Dr. Jadson Fraga Araújo Júnior  CRM-PE 25.227  RQE 17.756",
-      "Neurologista Infantil / Neuropediatra",
-      "Av. Cardoso de Sá, 445 — Petrolina/PE  CEP 56304-100  (87) 99999-0000",
-    ],
-    sections: [
-      {
-        heading: "Dados do Paciente",
-        body: [
-          `Nome: ${f.paciente || "—"}`,
-          `Data de nascimento: ${f.dataNasc || "—"}`,
-          `Endereço: ${f.endereco || "—"}`,
-          `Município/UF: ${f.municipio || "—"}  CEP: ${f.cep || "—"}`,
-        ].join("\n"),
-      },
-      {
-        heading: "Prescrição",
-        body: [
-          `Rp./ ${f.medicamento || "—"}`,
-          f.concentracao ? `Concentração: ${f.concentracao}` : "",
-          f.forma ? `Forma farmacêutica: ${f.forma}` : "",
-          `Quantidade: ${f.quantidade || "—"}${f.quantidadeExtenso ? ` (${f.quantidadeExtenso})` : ""}`,
-          `\nPosologia / Instrução de uso:\n${f.instrucoes || "—"}`,
-        ].filter(Boolean).join("\n"),
-      },
-      {
-        heading: "Validade e Assinatura",
-        body: [
-          `Petrolina/PE, ${data}`,
-          `Validade da receita: ${valBr}`,
-          f.cid ? `CID-10: ${f.cid}` : "",
-          "\n_________________________________",
-          "Dr. Jadson Fraga Araújo Júnior",
-          "CRM-PE 25.227 | RQE 17.756",
-          "Assinatura digital ICP-Brasil PAdES-BES",
-        ].filter(Boolean).join("\n"),
-      },
-    ],
-    footer:
-      "Receita de Controle Especial (C1) — 1ª Via. " +
-      "Assinatura digital ICP-Brasil em padrão PAdES-BES, verificável em iti.br/repositorio. " +
-      `Emitida em ${data}. Validade: 30 dias.`,
-  });
-}
-
-// ── HTML de impressão (2 vias em A5) ─────────────────────────────
+// ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
 async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;

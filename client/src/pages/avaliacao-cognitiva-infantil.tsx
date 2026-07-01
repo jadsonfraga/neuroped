@@ -385,19 +385,6 @@ function QuizModule({ questions, onComplete }: {
     if (opt === q.answer) setScore((s) => s + 1);
   }
 
-  function next() {
-    if (idx + 1 >= questions.length) {
-      const finalScore = score + (selected === q.answer ? 0 : 0); // already counted
-      setPhase("done");
-      onComplete(score + (isCorrect ? 0 : 0), questions.length);
-      // score is already updated in pick()
-    } else {
-      setIdx((i) => i + 1);
-      setSelected(null);
-      setPhase("question");
-    }
-  }
-
   function handleComplete() {
     onComplete(score, questions.length);
   }
@@ -482,6 +469,13 @@ function QuizModule({ questions, onComplete }: {
 }
 
 // ─────────────────────────────── DOMAIN WRAPPER ───────────────────────────────
+const DOMAIN_LABELS: Record<Domain, string> = {
+  visual: "Reconhecimento Visual",
+  leitura: "Leitura",
+  escrita: "Escrita / Ortografia",
+  aritmetica: "Aritmética",
+};
+
 function DomainModule({ domain, band, onComplete, result }: {
   domain: Domain;
   band: Band;
@@ -497,13 +491,6 @@ function DomainModule({ domain, band, onComplete, result }: {
     escrita: ESCRITA_BANK[band],
     aritmetica: ARITMETICA_BANK[band],
   }[domain];
-
-  const DOMAIN_LABELS: Record<Domain, string> = {
-    visual: "Reconhecimento Visual",
-    leitura: "Leitura",
-    escrita: "Escrita / Ortografia",
-    aritmetica: "Aritmética",
-  };
 
   const handleComplete = useCallback((score: number, max: number) => {
     onComplete({ domain, label: DOMAIN_LABELS[domain], score, max });
