@@ -215,6 +215,12 @@ function isPsychosisInstrument(scale: ScaleEntry): boolean {
 export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string | null {
   const age = ctx.ageMonths;
 
+  // Para bloqueios de segurança do tipo "requer idade >= X", uma faixa selecionada
+  // (ageBand) precisa ser avaliada pelo seu extremo MAIS NOVO — senão a criança
+  // mais nova da faixa escaparia do bloqueio (ex.: faixa 6–12 anos usando o ponto
+  // médio de 9 anos deixaria passar instrumentos de suicídio para uma criança de 6).
+  const youngestAge = ctx.ageBand ? ctx.ageBand.min : age;
+
   // Idade fora do range do instrumento. Com faixa (ageBand) usa SOBREPOSIÇÃO
   // (a escala cobre algum ponto da faixa selecionada) — restaura a semântica
   // correta e evita excluir escalas estreitas/neonatais que tangenciam a faixa.
@@ -226,26 +232,26 @@ export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string
   }
 
   // Suicídio/autolesão: requer ≥ 8 anos (96 meses).
-  if (isSuicideInstrument(scale) && age !== null && age < 96) {
+  if (isSuicideInstrument(scale) && youngestAge !== null && youngestAge < 96) {
     return "Risco de suicídio requer ≥ 8 anos";
   }
 
   // Psicose/mania: requer ≥ 12 anos (144 meses).
-  if (isPsychosisInstrument(scale) && age !== null && age < 144) {
+  if (isPsychosisInstrument(scale) && youngestAge !== null && youngestAge < 144) {
     return "Psicose/mania requer ≥ 12 anos";
   }
 
   const mode = getApplicationMode(scale);
 
   // Autoquestionário: requer ≥ 8 anos.
-  if (mode === "autoquestionario_crianca_adolescente" && age !== null && age < 96) {
+  if (mode === "autoquestionario_crianca_adolescente" && youngestAge !== null && youngestAge < 96) {
     return "Autoaplicável requer ≥ 8 anos";
   }
 
   // Alfabetização obrigatória (metadado derivado quando não declarado).
   if (getLiteracyRequirement(scale) === "alfabetizado") {
     if (ctx.isLiterate === false) return "Requer criança alfabetizada";
-    if (ctx.isLiterate == null && age !== null && age < 72) return "Requer alfabetização";
+    if (ctx.isLiterate == null && youngestAge !== null && youngestAge < 72) return "Requer alfabetização";
   }
 
   // Linguagem verbal obrigatória (metadado derivado quando não declarado).
