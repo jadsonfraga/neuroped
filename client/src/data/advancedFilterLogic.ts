@@ -407,16 +407,23 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
     const rangeSize = Math.max(1, scale.ageMax - scale.ageMin);
     const midpoint = scale.ageMin + rangeSize / 2;
     const percentFromMid = (Math.abs(age - midpoint) / (rangeSize / 2)) * 100;
+    // Instrumento REALMENTE cobre a idade da criança? Faixa validada que contém
+    // a idade nunca deve cair para "margem" só por ser ampla — ex.: CARS/ADOS/
+    // CBCL (2–18a) avaliando um pré-escolar é uso pleno, não marginal.
+    const containsAge = age >= scale.ageMin && age <= scale.ageMax;
+    let ageScore: number;
     if (percentFromMid < 25) {
-      score += 30;
+      ageScore = 30;
       reasons.push("Idade ideal para o instrumento");
     } else if (percentFromMid < 60) {
-      score += 24;
+      ageScore = 24;
       reasons.push("Idade adequada");
     } else {
-      score += 16;
-      reasons.push("Idade na margem da faixa");
+      // Piso de contenção: cobre a idade de fato ⇒ 22; senão margem real ⇒ 16.
+      ageScore = containsAge ? 22 : 16;
+      reasons.push(containsAge ? "Faixa validada cobre esta idade" : "Idade na margem da faixa");
     }
+    score += ageScore;
   }
 
   // 2. Correspondência da queixa (0–38).
@@ -435,6 +442,22 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
       const ratio = matchCount / ctx.queixas.length;
       score += Math.round(28 * ratio * 0.55);
       reasons.push(`Cobre ${matchCount} de ${ctx.queixas.length} queixas`);
+    }
+    // FOCO/PRECISÃO (0–8): instrumento dedicado à queixa (poucas queixas, quase
+    // todas relevantes) vale mais que um catch-all tagueado com tudo. Assim a
+    // escolha por sintoma privilegia a ferramenta CERTA, não a mais abrangente.
+    if (matchCount > 0) {
+      const precision = matchCount / Math.max(1, scale.queixas.length);
+      const focusBonus = Math.round(8 * precision);
+      if (focusBonus > 0) {
+        score += focusBonus;
+        if (precision >= 0.75) reasons.push("Instrumento focado nesta queixa");
+      }
+      // PRIMÁRIA (+5): a queixa selecionada é o foco principal (1ª listada) do
+      // instrumento — ex.: SNAP-IV para TDAH, M-CHAT para TEA.
+      if (scale.queixas.length > 0 && ctx.queixas.includes(scale.queixas[0])) {
+        score += 5;
+      }
     }
   }
 
