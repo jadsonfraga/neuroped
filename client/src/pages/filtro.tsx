@@ -307,6 +307,20 @@ const SLOT_CLINICAL_LABEL: Partial<Record<Slot, string>> = {
   "Questionário Escolar": "perspectiva escolar",
 };
 
+// Selo de licença do instrumento — deixa explícito ao clínico se a escala
+// recomendada é gratuita, autoral (Dr. Jadson) ou licenciada/comercial. Agora
+// que o filtro nomeia instrumentos padrão-ouro licenciados (Denver, CBCL…),
+// a origem/licença precisa ficar visível em cada card.
+function licenseChip(scale?: ScaleEntry): { label: string; cls: string } | null {
+  const lic = scale?.licencaUso;
+  if (!lic) return null;
+  if (lic === "livre")
+    return { label: "Gratuita", cls: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" };
+  if (lic === "autoral")
+    return { label: "Autoral", cls: "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200" };
+  return { label: "Licenciada", cls: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200" };
+}
+
 function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
   const scale = match?.scale;
   // Estado HONESTO vindo do motor (req. 3): aplicação completa vs ficha vs externo.
@@ -790,6 +804,7 @@ export default function FiltroPage() {
                     <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}><span aria-hidden="true">{slotEmoji(item.slot)}</span> {item.slot}</Badge>
                       {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}{item.confidence !== null ? ` · ${item.confidence}%` : ""}</Badge>}
+                      {(() => { const lc = licenseChip(item.scale); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}
                     </div>
                     {item.warnings.length > 0 && (
                       <div className="rounded-lg border border-red-300 bg-red-50 px-2 py-1.5 text-[11px] font-bold leading-snug text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
@@ -898,7 +913,7 @@ export default function FiltroPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}</div>
+                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}{(() => { const lc = licenseChip(s); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}</div>
                     </div>
                     <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
                   </div>
