@@ -412,7 +412,7 @@ function emptySlotReason(
   if (slot === "Ouro") {
     if (!sel.hasQueixa && !sel.hasAge)
       return "Selecione idade e/ou queixa para o filtro encontrar o instrumento principal.";
-    return "Nenhum instrumento padrão-ouro preenchível cruza idade + queixa + respondente selecionados. Amplie a faixa etária, remova o filtro de respondente ou veja as fichas técnicas de referência abaixo.";
+    return "Nenhum instrumento padrão-ouro preenchível cruza idade + queixa + respondente selecionados. Amplie a faixa etária ou remova o filtro de respondente para ver mais opções aplicáveis.";
   }
   return "Sem complementar seguro além dos já listados para este perfil — os instrumentos acima cobrem o essencial, ou faltam escalas preenchíveis validadas nesta faixa.";
 }
@@ -584,18 +584,6 @@ export default function FiltroPage() {
     return unique([...CORE_FILTERABLE_CATALOG, ...world]).filter((scale) => opensInApp(scale) && isFullApp(scale));
   }, [world]);
 
-  // Fichas técnicas de referência — escalas que ABREM uma página real
-  // (/generic-scale/:id: fonte, faixa etária, uso, registro clínico protegido)
-  // mas ainda NÃO têm aplicação preenchível completa. NÃO entram no pódio
-  // (reservado ao padrão-ouro preenchível), mas são oferecidas como referência
-  // clínica claramente rotulada — assim o filtro aproveita a biblioteca inteira
-  // sem enganar sobre o que é preenchível dentro do app.
-  const referenceCatalog = useMemo(() => {
-    return unique([...CORE_FILTERABLE_CATALOG, ...world]).filter(
-      (scale) => scale.applicationMode !== "psicoeducacao" && opensInApp(scale) && !isFullApp(scale)
-    );
-  }, [world]);
-
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
@@ -625,16 +613,6 @@ export default function FiltroPage() {
   const hasSafeResults = refinedMatches.length > 0;
   // Resultado veio do fallback de triagem ampla (sem instrumento específico).
   const usingBroadbandFallback = refinedMatches.length > 0 && refinedMatches.every((m) => m.isBroadbandFallback);
-
-  // Fichas técnicas de referência pertinentes ao mesmo perfil clínico. Passam
-  // pela MESMA barreira de segurança por idade (filterScalesWithClinicalRescue),
-  // excluem o fallback de triagem ampla e não repetem escalas já no pódio.
-  const referenceMatches = useMemo(() => {
-    if (!hasSearch) return [];
-    return rankSafely(referenceCatalog, filterContext, search)
-      .filter((m) => !m.isBroadbandFallback && !refinedById.has(m.scale.id))
-      .slice(0, 8);
-  }, [referenceCatalog, filterContext, search, hasSearch, refinedById]);
 
   // Ranking clínico curado (clinicalRanking) para a queixa primária + idade.
   // É a FONTE de verdade do pódio: define explicitamente quem é ouro/prata/bronze
@@ -750,13 +728,12 @@ export default function FiltroPage() {
     } catch { /* exportação best-effort — não quebra a página */ }
   };
 
-  // Pool comparável = escalas do pódio (preenchíveis) + fichas de referência
-  // pertinentes, deduplicadas. Permite comparar, p.ex., SCARED-pais × SCARED-criança.
+  // Pool comparável = escalas preenchíveis do pódio, deduplicadas. Permite
+  // comparar, p.ex., SCARED-pais × SCARED-criança — só instrumentos aplicáveis.
   const comparablePool: ScaleEntry[] = (() => {
     const seen = new Set<string>();
     const out: ScaleEntry[] = [];
     for (const r of ranking) if (r.hasScale && r.scale && !seen.has(r.scale.id)) { seen.add(r.scale.id); out.push(r.scale); }
-    for (const m of referenceMatches) if (!seen.has(m.scale.id)) { seen.add(m.scale.id); out.push(m.scale); }
     return out;
   })();
   const comparing = compareIds.map((id) => comparablePool.find((s) => s.id === id)).filter(Boolean) as ScaleEntry[];
@@ -815,7 +792,7 @@ export default function FiltroPage() {
       <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card/70 to-card/30 shadow-sm" aria-label="Métricas do filtro">
         <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Filtráveis</p></div>
         <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{world.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
-        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{referenceCatalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Referência</p></div>
+        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.filter((s) => s.licencaUso === "livre").length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Gratuitas</p></div>
       </section>
 
       {/* Two-column grid: Controls (left) + Results (right) */}
@@ -915,11 +892,11 @@ export default function FiltroPage() {
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
           <div
             role="status"
-            aria-label="O pódio mostra escalas completas e preenchíveis; fichas técnicas aparecem como referência"
+            aria-label="O filtro mostra apenas escalas que abrem como ferramenta usável e preenchível no app"
             className="w-full rounded-xl sm:rounded-2xl border border-primary bg-primary px-3 py-2 text-xs font-bold text-primary-foreground min-h-9 flex items-center justify-between gap-2"
           >
-            <span className="flex items-center gap-1.5"><span aria-hidden="true">✅</span> Pódio: só preenchíveis</span>
-            <span className="text-[10px] font-semibold text-primary-foreground/80">fichas como referência</span>
+            <span className="flex items-center gap-1.5"><span aria-hidden="true">✅</span> Só as que abrem pra usar</span>
+            <span className="text-[10px] font-semibold text-primary-foreground/80">fichas ocultas</span>
           </div>
         </div>
       </section>
@@ -1191,50 +1168,14 @@ export default function FiltroPage() {
           </section>
         )}
 
-        {/* Fichas técnicas de referência — aproveitam a biblioteca inteira sem
-            fingir que são preenchíveis. Abrem ficha real + registro protegido. */}
-        {referenceMatches.length > 0 && (
-          <section className="space-y-2.5 pt-1">
-            <div className="flex items-center gap-2.5 px-0.5">
-              <span className="text-lg" aria-hidden="true">📁</span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Também relevantes · fichas técnicas</p>
-                <p className="text-[12px] leading-snug text-muted-foreground">Abrem uma ficha de referência (fonte, faixa etária, uso) com registro clínico protegido — ainda sem preenchimento completo no app.</p>
-              </div>
-            </div>
-            <div className="filter-260-grid compact">
-              {referenceMatches.map((m) => { const s = m.scale; const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-                <Link key={s.id} href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition cursor-pointer hover:border-primary/30 hover:bg-background">
-                  <div className="filter-260-card-content compact">
-                    <div className="filter-260-head">
-                      <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                          <div className="flex shrink-0 flex-col items-end gap-1">
-                            <span className="inline-block rounded-full border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">ficha técnica</span>
-                            {(() => { const bv = brValidationChip(s); return bv ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${bv.cls}`}>{bv.label}</span> : null; })()}
-                            {(() => { const lc = licenseChip(s); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}
-                          </div>
-                        </div>
-                        <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ); })}
-            </div>
-          </section>
-        )}
-
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o ranking organiza escalas utilizáveis no app. Escalas sem itens internos completos abrem ficha e registro clínico protegido por PIN master, sem inventar pontuação nem reproduzir material proprietário.</CardContent></Card>
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o filtro mostra apenas escalas que abrem como ferramenta usável no app — itens preenchíveis e cálculo de escore. Fichas de referência que não permitem aplicação não aparecem aqui, para você abrir só o que dá para usar de verdade.</CardContent></Card>
         </section>
         )}
 
         {!hasSearch && (
         <section className="lg:col-span-2 space-y-5">
         <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Base ampliada</h2><p className="text-xs leading-relaxed text-muted-foreground">Inclui escalas existentes, questionários, inventários, fichas técnicas e registro interno protegido por PIN.</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Só o que abre pra usar</h2><p className="text-xs leading-relaxed text-muted-foreground">O filtro mostra apenas escalas que abrem como ferramenta aplicável — itens preenchíveis e cálculo de escore. Nada de ficha que só dá pra ler.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
           <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Licença visível</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas abrem modo interno com PIN master; quando não puder copiar, o app usa adaptação autoral em português brasileiro regional sem reproduzir itens protegidos.</p></CardContent></Card>
         </div>
