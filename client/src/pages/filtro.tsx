@@ -8,6 +8,7 @@ import {
   BookOpen,
   Brain,
   ClipboardCheck,
+  FileDown,
   Filter,
   GraduationCap,
   HeartPulse,
@@ -20,6 +21,7 @@ import {
   Search,
   ShieldAlert,
   Star,
+  Table,
   Users,
   X,
   type LucideIcon,
@@ -53,6 +55,7 @@ import {
 } from "@/data/advancedFilterLogic";
 import { haptic } from "@/lib/haptic";
 import { softHover, softTap, softTick } from "@/lib/softSounds";
+import { buildFilterCsv, buildFilterPdf, downloadBlob, type FilterExportRow, type FilterExportMeta } from "@/lib/filterExport";
 
 type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar" | "Satisfação Medicação";
 type Tier = "ouro" | "prata" | "bronze";
@@ -390,6 +393,30 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
   };
 }
 
+// Slot vazio HONESTO: explica ao clínico POR QUE aquele lugar do pódio ficou
+// sem escala e o que ajustar — em vez de sumir ou mostrar card genérico.
+function emptySlotReason(
+  slot: Slot,
+  sel: { hasQueixa: boolean; hasAge: boolean; respondente: string | null; communication: "verbal" | "nonverbal" | null }
+): string {
+  if (slot === "Questionário Escolar") {
+    if (sel.respondente && sel.respondente !== "professor")
+      return "Nenhum questionário com o professor como respondente bate com o filtro atual — remova o filtro “Quem responde” para incluir a perspectiva escolar.";
+    return "Sem questionário escolar (professor) preenchível para esta idade/queixa. A perspectiva escolar pode entrar por relato livre.";
+  }
+  if (slot === "Teste Direto") {
+    if (sel.communication === "nonverbal")
+      return "Nenhum teste aplicado diretamente com a criança é compatível com perfil não-verbal aqui — priorize instrumentos respondidos por pais/clínico.";
+    return "Nenhum teste aplicado diretamente com a criança para este perfil (comum quando a queixa depende do relato de pais/escola ou a criança é muito nova).";
+  }
+  if (slot === "Ouro") {
+    if (!sel.hasQueixa && !sel.hasAge)
+      return "Selecione idade e/ou queixa para o filtro encontrar o instrumento principal.";
+    return "Nenhum instrumento padrão-ouro preenchível cruza idade + queixa + respondente selecionados. Amplie a faixa etária, remova o filtro de respondente ou veja as fichas técnicas de referência abaixo.";
+  }
+  return "Sem complementar seguro além dos já listados para este perfil — os instrumentos acima cobrem o essencial, ou faltam escalas preenchíveis validadas nesta faixa.";
+}
+
 function icon(slot: Slot) {
   if (slot === "Ouro") return <Award className="h-5 w-5" />;
   if (slot === "Prata") return <Medal className="h-5 w-5" />;
@@ -677,6 +704,51 @@ export default function FiltroPage() {
     );
   };
 
+  // Linhas estruturadas para exportação (PDF/CSV) — só escalas que abrem, com
+  // os mesmos qualificadores clínicos exibidos nos cards.
+  const exportRows: FilterExportRow[] = ranking
+    .filter((r) => r.hasScale && r.scale)
+    .map((r) => {
+      const s = r.scale!;
+      return {
+        slot: r.slot,
+        clinicalTier: r.clinicalTier ?? "",
+        name: s.name,
+        fullName: s.fullName,
+        ageRange: `${Math.round(s.ageMin / 12)}–${Math.round(s.ageMax / 12)} anos`,
+        respondente: s.respondente.join(" · "),
+        validacaoBrasil: s.validacaoBrasil ?? "",
+        tempo: s.tempo ?? "",
+        scoringCutoff: s.scoringCutoff ?? "",
+        fonte: s.fonte ?? "",
+        reason: r.reason ?? "",
+      };
+    });
+
+  const buildExportMeta = (): FilterExportMeta => ({
+    age: selectedAge ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge) : "não especificada",
+    queixas: selectedQueixas.length
+      ? selectedQueixas.map((id) => queixas.find((q) => q.id === id)?.label ?? id).join(", ")
+      : "não especificada",
+    respondente: selectedRespondente ?? "qualquer",
+    generatedAtLabel: new Date().toLocaleDateString("pt-BR"),
+  });
+
+  const exportCsv = () => {
+    if (!exportRows.length) return;
+    softTick(); haptic.select();
+    downloadBlob("neuroped-recomendacao-escalas.csv", "text/csv;charset=utf-8", buildFilterCsv(buildExportMeta(), exportRows));
+  };
+
+  const exportPdf = async () => {
+    if (!exportRows.length) return;
+    softTick(); haptic.select();
+    try {
+      const bytes = await buildFilterPdf(buildExportMeta(), exportRows);
+      downloadBlob("neuroped-recomendacao-escalas.pdf", "application/pdf", bytes);
+    } catch { /* exportação best-effort — não quebra a página */ }
+  };
+
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
     setSelectedQueixas((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
@@ -864,10 +936,20 @@ export default function FiltroPage() {
         <div className="flex items-start justify-between gap-3">
           <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
           {hasSafeResults && (
-            <Button variant="outline" size="sm" onClick={copyRecommendation} className="shrink-0 gap-1.5" aria-label="Copiar recomendação para o laudo">
-              <ClipboardCheck className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{copiedRec ? "Copiado!" : "Copiar p/ laudo"}</span>
-            </Button>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button variant="outline" size="sm" onClick={copyRecommendation} className="gap-1.5" aria-label="Copiar recomendação para o laudo">
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{copiedRec ? "Copiado!" : "Copiar"}</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5" aria-label="Exportar recomendação em PDF">
+                <FileDown className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">PDF</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5" aria-label="Exportar recomendação em CSV (Excel)">
+                <Table className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">CSV</span>
+              </Button>
+            </div>
           )}
         </div>
         {usingBroadbandFallback && (
@@ -993,8 +1075,13 @@ export default function FiltroPage() {
                         {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
                       </div>
                     )}
+                    {!item.hasScale && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-snug text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                        <strong>Por que vazio:</strong> {emptySlotReason(item.slot, { hasQueixa: selectedQueixas.length > 0, hasAge: Boolean(selectedAge), respondente: selectedRespondente, communication: selectedCommunication })}
+                      </div>
+                    )}
                     {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}
-                    <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>
+                    {item.hasScale && <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>}
                     {item.scale?.scoringCutoff && <div className="filter-260-source line-clamp-2"><strong>🎯 Ponto de corte:</strong> {item.scale.scoringCutoff}</div>}
                     {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
                     <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{ctaLabel}</span>{item.hasScale && <ArrowRight className="h-4 w-4" />}</div>
