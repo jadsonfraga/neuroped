@@ -85,33 +85,6 @@ function escHtml(v: string) {
     .replace(/"/g, "&quot;");
 }
 
-async function sha256HexText(value: string): Promise<string> {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function canonicalExpressPayload(f: FormFields, issuedAt: string) {
-  return [
-    "NeuroPed EDJ - Receita C1 Express",
-    "Dr. Jadson Fraga Araujo Junior",
-    "CRM-PE 25.227",
-    "RQE 17.756",
-    `Emitida em: ${issuedAt}`,
-    `Paciente: ${f.paciente || "-"}`,
-    `Data de nascimento: ${f.dataNasc || "-"}`,
-    `Endereco: ${f.endereco || "-"}`,
-    `Municipio/UF: ${f.municipio || "-"}`,
-    `CEP: ${f.cep || "-"}`,
-    `Medicamento: ${f.medicamento || "-"}`,
-    `Concentracao: ${f.concentracao || "-"}`,
-    `Forma: ${f.forma || "-"}`,
-    `Quantidade: ${f.quantidade || "-"} ${f.quantidadeExtenso || ""}`.trim(),
-    `Instrucoes: ${f.instrucoes || "-"}`,
-    `CID-10: ${f.cid || "-"}`,
-  ].join("\n");
-}
-
 // ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
 async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
@@ -132,9 +105,11 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const ink = rgb(0.08, 0.09, 0.16);
   const muted = rgb(0.34, 0.34, 0.42);
   const line = rgb(0.78, 0.75, 0.68);
-  const issuedAt = new Date().toLocaleString("pt-BR");
-  const hash = await sha256HexText(canonicalExpressPayload(f, issuedAt));
-  const validationUrl = `${window.location.origin}/#/verificar?h=${hash}`;
+  // QR aponta para a verificação (orienta validar a assinatura ICP-Brasil no
+  // Adobe/ITI). Sem hash na URL: um hash de texto não é conferível por terceiros
+  // e o hash dos bytes do PDF final não cabe no QR embutido nele. A conferência
+  // por SHA-256 dos bytes é feita pelo comprovante pós-assinatura.
+  const validationUrl = `${window.location.origin}/#/verificar`;
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 220, margin: 1, errorCorrectionLevel: "M" });
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
   const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
@@ -183,7 +158,7 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawRectangle({ x: m, y: top - 94, width: 4, height: 32, color: gold });
     page.drawText("Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 | RQE 17.756", { x: m + 10, y: top - 73, size: 5.8, font: bold, color: ink });
     page.drawText("Neurologista Infantil / Neuropediatra", { x: m + 10, y: top - 82, size: 5.6, font: helv, color: ink });
-    page.drawText("Av. Cardoso de Sa, 445 - Centro, Petrolina/PE - CEP 56304-100 - (87) 99999-0000", { x: m + 10, y: top - 91, size: 5.4, font: helv, color: ink });
+    page.drawText("Rua Raimundo Lacerda, 001 - Sao Jose, Petrolina/PE - CEP 56302-470 - (87) 9 9109-7371", { x: m + 10, y: top - 91, size: 5.4, font: helv, color: ink });
 
     const tableY = top - 122;
     const rowH = 13;
@@ -229,8 +204,8 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
     page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
     page.drawText("Abra no Adobe Acrobat ou no validador ICP-Brasil/ITI.", { x: m + 8, y: 52, size: 4.8, font: helv, color: ink });
-    page.drawText("QR contem hash SHA-256 dos dados da receita.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
-    page.drawText(`SHA-256: ${hash.slice(0, 22)}...`, { x: m + 8, y: 32, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
+    page.drawText("Escaneie o QR para abrir a pagina de verificacao.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
+    page.drawText("Confira a assinatura ICP-Brasil embutida no PDF.", { x: m + 8, y: 32, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
     page.drawImage(qrPng, { x: m + 152, y: 30, width: 34, height: 34 });
   };
 
@@ -261,7 +236,7 @@ function buildC1PrintHtml(f: FormFields): string {
   <div class="medico-box">
     <strong>Dr. Jadson Fraga Araújo Júnior</strong> — CRM-PE 25.227 | RQE 17.756<br>
     Neurologista Infantil / Neuropediatra<br>
-    Av. Cardoso de Sá, 445 — Centro, Petrolina/PE — CEP 56304-100 — (87) 99999-0000
+    Rua Raimundo Lacerda, 001 — São José, Petrolina/PE — CEP 56302-470 — (87) 9 9109-7371
   </div>
 
   <table class="dados">

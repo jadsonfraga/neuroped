@@ -40,28 +40,6 @@ function esc(s: string) {
     .replace(/>/g, "&gt;");
 }
 
-async function sha256HexText(value: string): Promise<string> {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string) {
-  return [
-    "NeuroPed EDJ - Receita C1",
-    "Dr. Jadson Fraga Araujo Junior",
-    "CRM-PE 25.227",
-    "RQE 17.756",
-    `Emitida em: ${issuedAt}`,
-    `Paciente: ${f.pac || "-"}`,
-    `Endereco: ${f.end || "-"}`,
-    `Medicamento: ${f.med || "-"}`,
-    `Quantidade: ${f.qtd || "-"} ${f.qtde || ""}`.trim(),
-    `Posologia: ${f.poso || "-"}`,
-    `Data declarada: ${f.data || "-"}`,
-  ].join("\n");
-}
-
 async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
@@ -76,9 +54,12 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
   const validade = new Date();
   validade.setDate(validade.getDate() + 30);
   const valBr = validade.toLocaleDateString("pt-BR");
-  const canonical = canonicalReceitaC1Payload(f, issuedAt);
-  const hash = await sha256HexText(canonical);
-  const validationUrl = `${window.location.origin}/#/verificar?h=${hash}`;
+  // O QR leva à página de verificação, que orienta a validar a assinatura
+  // ICP-Brasil no Adobe/ITI. Não embutimos hash na URL: um hash do texto não é
+  // conferível por terceiros, e o hash dos bytes do PDF final não pode ser
+  // embutido no QR que já faz parte desse PDF. A conferência por SHA-256 dos
+  // bytes é feita pelo comprovante gerado após a assinatura (AssinaturaIcpPanel).
+  const validationUrl = `${window.location.origin}/#/verificar`;
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 240, margin: 1, errorCorrectionLevel: "M" });
   const qrImage = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
 
@@ -178,8 +159,8 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
     page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
     page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
     page.drawText("Abra no Adobe Acrobat ou validador ICP-Brasil/ITI.", { x: m + 8, y: 52, size: 4.8, font: helv, color: ink });
-    page.drawText("QR contem hash SHA-256 dos dados da receita.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
-    page.drawText(`SHA-256: ${hash.slice(0, 22)}...`, { x: m + 8, y: 34, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
+    page.drawText("Escaneie o QR para abrir a pagina de verificacao.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
+    page.drawText("Confira a assinatura ICP-Brasil embutida no PDF.", { x: m + 8, y: 34, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
     page.drawImage(qrImage, { x: m + 152, y: 30, width: 34, height: 34 });
   };
 
