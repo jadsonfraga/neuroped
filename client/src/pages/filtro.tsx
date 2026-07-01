@@ -780,6 +780,16 @@ export default function FiltroPage() {
           </>
         )}
 
+        {hasSafeResults && (
+          <div className="flex items-center gap-2.5 px-0.5 pt-1">
+            <span className="text-lg" aria-hidden="true">🎯</span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Pódio clínico para este perfil</p>
+              <p className="text-[12px] leading-snug text-muted-foreground">Priorizado por idade, queixa e respondente — toque em um card para abrir a escala.</p>
+            </div>
+          </div>
+        )}
+
         {!hasSafeResults ? (
           <Card className="border-2 border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
             <CardContent className="flex items-start gap-3 p-5 text-sm font-bold text-amber-900 dark:text-amber-100">
