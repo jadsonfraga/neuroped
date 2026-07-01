@@ -99,13 +99,18 @@ export default function PacienteDetalhePage() {
     },
   });
 
-  // Scale groups for evolution tab
+  // Scale groups for evolution tab (chronological order — first/last/delta depend on it)
   const scaleGroups = useMemo(() => {
     const groups: Record<string, any[]> = {};
     results.forEach((r: any) => {
       if (!groups[r.scaleName]) groups[r.scaleName] = [];
       groups[r.scaleName].push(r);
     });
+    for (const key of Object.keys(groups)) {
+      groups[key].sort(
+        (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+    }
     return groups;
   }, [results]);
 

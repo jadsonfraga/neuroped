@@ -1,18 +1,19 @@
-import { clearMasterPinUnlock, isMasterPinUnlocked, verifyMasterPin } from "@/lib/masterPin";
+import { clearMasterPinUnlock, isMasterPinUnlocked, markMasterPinUnlocked, verifyMasterPin } from "@/lib/masterPin";
 
 const LOCK_EVENT = "neuroped:local-lock-changed";
 
-function emitLockedState(): void {
+function emitLockState(unlocked: boolean): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked: false } }));
+  window.dispatchEvent(new CustomEvent(LOCK_EVENT, { detail: { unlocked } }));
 }
 
 export async function verifyUnlockPassword(input: string): Promise<boolean> {
   return verifyMasterPin(input);
 }
 
-export function unlockApp(_rememberDevice = false): void {
-  lockApp();
+export function unlockApp(rememberDevice = false): void {
+  markMasterPinUnlocked(rememberDevice);
+  emitLockState(true);
 }
 
 export function lockApp(): void {
@@ -24,7 +25,7 @@ export function lockApp(): void {
   } catch {
     // Storage indisponivel nao deve quebrar o bloqueio visual local.
   }
-  emitLockedState();
+  emitLockState(false);
 }
 
 export function hasClinicalUnlock(): boolean {

@@ -255,7 +255,6 @@ function AppRouter() {
 
           <Route path="/medicamentos"><Protected roles={["admin", "professional"]}><MedicamentosPage /></Protected></Route>
           <Route path="/farmacologia"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
-          <Route path="/medicamentos"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
           <Route path="/pacientes"><Protected roles={["admin", "professional"]}><PacientesPage /></Protected></Route>
           <Route path="/paciente/:id"><Protected roles={["admin", "professional"]}><PacienteDetalhePage /></Protected></Route>
           <Route path="/prontuario"><Protected roles={["admin", "professional"]}><ProntuarioPage /></Protected></Route>
