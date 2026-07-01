@@ -541,6 +541,7 @@ export default function FiltroPage() {
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(initial.assessment ?? null);
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(initial.signals ?? []);
   const [copiedRec, setCopiedRec] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -748,6 +749,32 @@ export default function FiltroPage() {
       downloadBlob("neuroped-recomendacao-escalas.pdf", "application/pdf", bytes);
     } catch { /* exportação best-effort — não quebra a página */ }
   };
+
+  // Pool comparável = escalas do pódio (preenchíveis) + fichas de referência
+  // pertinentes, deduplicadas. Permite comparar, p.ex., SCARED-pais × SCARED-criança.
+  const comparablePool: ScaleEntry[] = (() => {
+    const seen = new Set<string>();
+    const out: ScaleEntry[] = [];
+    for (const r of ranking) if (r.hasScale && r.scale && !seen.has(r.scale.id)) { seen.add(r.scale.id); out.push(r.scale); }
+    for (const m of referenceMatches) if (!seen.has(m.scale.id)) { seen.add(m.scale.id); out.push(m.scale); }
+    return out;
+  })();
+  const comparing = compareIds.map((id) => comparablePool.find((s) => s.id === id)).filter(Boolean) as ScaleEntry[];
+  const toggleCompare = (id: string) => {
+    softTick(); haptic.select();
+    setCompareIds((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 3 ? cur : [...cur, id]);
+  };
+  // Linhas do quadro comparativo — mesmos qualificadores clínicos dos cards.
+  const COMPARE_ATTRS: { label: string; get: (s: ScaleEntry) => string }[] = [
+    { label: "Faixa etária", get: (s) => `${Math.round(s.ageMin / 12)}–${Math.round(s.ageMax / 12)} anos` },
+    { label: "Respondente", get: (s) => s.respondente.join(" · ") },
+    { label: "⏱️ Tempo", get: (s) => (s.tempo && s.tempo !== "—" ? s.tempo : "—") },
+    { label: "🇧🇷 Validação BR", get: (s) => s.validacaoBrasil || "—" },
+    { label: "🎯 Ponto de corte", get: (s) => s.scoringCutoff || "—" },
+    { label: "Licença", get: (s) => licenseChip(s)?.label || "—" },
+    { label: "Aplicação", get: (s) => (isFullApp(s) ? "Preenchível no app" : "Ficha técnica / referência") },
+    { label: "Fonte", get: (s) => s.fonte || "—" },
+  ];
 
   const toggleQueixa = (id: string) => {
     softTick(); haptic.select();
@@ -1095,6 +1122,73 @@ export default function FiltroPage() {
             );
           })}
         </div>
+        )}
+
+        {/* Comparação lado a lado — 2 a 3 escalas recomendadas, atributo a
+            atributo (idade, respondente, tempo, validação BR, corte, licença). */}
+        {hasSafeResults && comparablePool.length >= 2 && (
+          <section className="space-y-2.5 rounded-2xl border border-border/70 bg-card/60 p-3 sm:p-4">
+            <div className="flex items-center gap-2.5 px-0.5">
+              <span className="text-lg" aria-hidden="true">⚖️</span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Comparar lado a lado</p>
+                <p className="text-[12px] leading-snug text-muted-foreground">Escolha 2 a 3 escalas para comparar atributo a atributo (ex.: versão dos pais × da criança).</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {comparablePool.map((s) => {
+                const on = compareIds.includes(s.id);
+                const disabled = !on && compareIds.length >= 3;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => toggleCompare(s.id)}
+                    disabled={disabled}
+                    aria-pressed={on}
+                    onMouseEnter={() => softHover()}
+                    className={`rounded-2xl border px-2.5 py-1.5 text-xs font-bold transition ${on ? "border-primary bg-primary text-primary-foreground shadow-sm" : disabled ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground/60" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
+                  >
+                    {on ? "✓ " : ""}{s.name}
+                  </button>
+                );
+              })}
+              {compareIds.length > 0 && (
+                <button type="button" onClick={() => { softTap(); haptic.tap(); setCompareIds([]); }} className="rounded-2xl border border-border bg-background px-2.5 py-1.5 text-xs font-bold text-muted-foreground transition hover:border-primary/40">
+                  limpar
+                </button>
+              )}
+            </div>
+            {comparing.length >= 2 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] border-collapse text-left text-xs">
+                  <thead>
+                    <tr>
+                      <th className="w-28 border-b border-border/60 px-2 py-2 align-bottom text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Atributo</th>
+                      {comparing.map((s) => (
+                        <th key={s.id} className="border-b border-border/60 px-2 py-2 align-bottom">
+                          <span className="block font-black leading-tight text-foreground">{s.name}</span>
+                          <span className="block text-[10px] font-medium leading-tight text-muted-foreground line-clamp-2">{s.fullName}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {COMPARE_ATTRS.map((attr) => (
+                      <tr key={attr.label} className="align-top">
+                        <td className="border-b border-border/40 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">{attr.label}</td>
+                        {comparing.map((s) => (
+                          <td key={s.id} className="border-b border-border/40 px-2 py-1.5 text-[11px] leading-snug text-foreground">{attr.get(s)}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="px-0.5 text-[11px] italic text-muted-foreground">Selecione pelo menos 2 escalas acima para ver o quadro comparativo.</p>
+            )}
+          </section>
         )}
 
         {/* Fichas técnicas de referência — aproveitam a biblioteca inteira sem
