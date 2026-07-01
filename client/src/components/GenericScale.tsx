@@ -298,6 +298,36 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               </div>
             )}
 
+            {/* Respostas na íntegra — cada item com a resposta escolhida por quem respondeu */}
+            <details className="rounded-xl border border-border/60 bg-muted/20 p-4" open>
+              <summary className="cursor-pointer select-none text-sm font-semibold text-foreground">
+                Respostas item a item ({answered}/{allItems.length})
+              </summary>
+              <div className="mt-3 space-y-3">
+                {config.domains.map((d, di) => (
+                  <div key={di}>
+                    {config.domains.length > 1 && (
+                      <p className="mb-1 text-xs font-bold text-foreground">{d.name}</p>
+                    )}
+                    <ol className="space-y-1">
+                      {d.items.map((item, ii) => {
+                        const idx = answers[`${di}-${ii}`];
+                        const resp = idx === undefined ? "—" : (config.labels[idx] ?? `Opção ${idx + 1}`);
+                        return (
+                          <li key={ii} className="flex items-start justify-between gap-3 text-[11.5px] leading-snug">
+                            <span className="min-w-0 text-muted-foreground">
+                              <span className="text-foreground">{ii + 1}.</span> {item}
+                            </span>
+                            <span className="shrink-0 font-semibold text-foreground">{resp}</span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            </details>
+
             {config.infoBox && (
               <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-4">
                 <div className="flex items-start gap-2">

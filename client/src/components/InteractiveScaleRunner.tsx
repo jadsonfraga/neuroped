@@ -105,6 +105,29 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
           </CardContent>
         </Card>
 
+        {/* Respostas na íntegra — cada item com a resposta escolhida */}
+        <Card className="border-card-border">
+          <CardContent className="p-6">
+            <details open>
+              <summary className="cursor-pointer select-none text-sm font-semibold text-foreground">
+                Respostas item a item ({answered}/{total})
+              </summary>
+              <ol className="mt-3 space-y-1">
+                {def.items.map((item, i) => (
+                  <li key={i} className="flex items-start justify-between gap-3 text-[11.5px] leading-snug">
+                    <span className="min-w-0 text-muted-foreground">
+                      <span className="text-foreground">{i + 1}.</span> {item.text}
+                    </span>
+                    <span className="shrink-0 font-semibold text-foreground">
+                      {answers[i] != null ? item.options[answers[i]].label : "—"}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          </CardContent>
+        </Card>
+
         <ClinicalReport
           scaleName={def.name}
           scaleFullName={def.fullName}

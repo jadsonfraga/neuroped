@@ -29,11 +29,18 @@ interface ObsBlock {
 }
 type Question = MCQ | ObsBlock;
 
+interface AnswerRecord {
+  prompt: string;          // enunciado da pergunta ou habilidade observada
+  correct?: string;        // resposta correta (apenas MCQ)
+  selected: string | null; // o que a criança escolheu / "Observado" no bloco de observação
+  isCorrect: boolean;
+}
 interface DomainResult {
   domain: Domain;
   label: string;
   score: number;
   max: number;
+  answers: AnswerRecord[]; // registro item-a-item de todas as perguntas e respostas
 }
 
 // ─────────────────────────────── helpers ───────────────────────────────
@@ -314,7 +321,7 @@ const ARITMETICA_BANK: Record<Band, MCQ[]> = {
 // ─────────────────────────────── ObsModule ───────────────────────────────
 function ObsModule({ block, onComplete }: {
   block: ObsBlock;
-  onComplete: (score: number, max: number) => void;
+  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
 }) {
   const [answers, setAnswers] = useState<boolean[]>(Array(block.items.length).fill(false));
   const [done, setDone] = useState(false);
@@ -326,8 +333,13 @@ function ObsModule({ block, onComplete }: {
 
   function finish() {
     const score = answers.filter(Boolean).length;
+    const records: AnswerRecord[] = block.items.map((it, i) => ({
+      prompt: it.label,
+      selected: answers[i] ? "Observado" : "Não observado",
+      isCorrect: Boolean(answers[i]),
+    }));
     setDone(true);
-    onComplete(score, block.items.length);
+    onComplete(score, block.items.length, records);
   }
 
   const score = answers.filter(Boolean).length;
@@ -368,11 +380,12 @@ function ObsModule({ block, onComplete }: {
 // ─────────────────────────────── QuizModule ───────────────────────────────
 function QuizModule({ questions, onComplete }: {
   questions: MCQ[];
-  onComplete: (score: number, max: number) => void;
+  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
 }) {
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [phase, setPhase] = useState<"question" | "feedback" | "done">("question");
 
   const q = questions[idx];
@@ -382,11 +395,13 @@ function QuizModule({ questions, onComplete }: {
     if (phase !== "question") return;
     setSelected(opt);
     setPhase("feedback");
-    if (opt === q.answer) setScore((s) => s + 1);
+    const ok = opt === q.answer;
+    if (ok) setScore((s) => s + 1);
+    setAnswers((a) => [...a, { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok }]);
   }
 
   function handleComplete() {
-    onComplete(score, questions.length);
+    onComplete(score, questions.length, answers);
   }
 
   if (phase === "done" || idx >= questions.length) {
@@ -492,8 +507,8 @@ function DomainModule({ domain, band, onComplete, result }: {
     aritmetica: ARITMETICA_BANK[band],
   }[domain];
 
-  const handleComplete = useCallback((score: number, max: number) => {
-    onComplete({ domain, label: DOMAIN_LABELS[domain], score, max });
+  const handleComplete = useCallback((score: number, max: number, answers: AnswerRecord[]) => {
+    onComplete({ domain, label: DOMAIN_LABELS[domain], score, max, answers });
   }, [domain, onComplete]);
 
   if (result && !started) {
@@ -509,7 +524,7 @@ function DomainModule({ domain, band, onComplete, result }: {
                 {result.score}/{result.max} corretas ({Math.round((result.score / result.max) * 100)}%) · {interpret(result.score, result.max)}
               </p>
             </div>
-            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setStarted(false); setReset((r) => r + 1); onComplete({ domain, label: DOMAIN_LABELS[domain], score: 0, max: 0 }); }}>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setStarted(false); setReset((r) => r + 1); onComplete({ domain, label: DOMAIN_LABELS[domain], score: 0, max: 0, answers: [] }); }}>
               <RotateCcw className="h-3.5 w-3.5" /> Refazer
             </Button>
           </CardContent>
@@ -573,14 +588,21 @@ export default function AvaliacaoCognitivaInfantilPage() {
   const completedDomains = Object.values(results).filter((r) => r && r.max > 0);
   const allDone = completedDomains.length === 4;
 
+  const answerLine = (a: AnswerRecord): string =>
+    a.correct !== undefined
+      ? (a.isCorrect ? `respondeu ${a.selected}` : `respondeu ${a.selected ?? "—"} | correto: ${a.correct}`)
+      : `${a.selected}`;
+
   const reportText = allDone && band
     ? [
       `Avaliação Cognitiva Infantil — Faixa etária: ${BAND_LABEL[band]}`,
       "",
-      ...completedDomains.map((r) =>
-        `• ${r!.label}: ${r!.score}/${r!.max} (${Math.round((r!.score / r!.max) * 100)}%) — ${interpret(r!.score, r!.max)}`
-      ),
-    ].join("\n")
+      ...completedDomains.flatMap((r) => [
+        `• ${r!.label}: ${r!.score}/${r!.max} (${Math.round((r!.score / r!.max) * 100)}%) — ${interpret(r!.score, r!.max)}`,
+        ...r!.answers.map((a, i) => `   ${i + 1}. [${a.isCorrect ? "✓" : "✗"}] ${a.prompt} → ${answerLine(a)}`),
+        "",
+      ]),
+    ].join("\n").trimEnd()
     : "";
 
   return (
@@ -718,6 +740,28 @@ export default function AvaliacaoCognitivaInfantilPage() {
                           <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
                         </div>
                         <p className="text-[10px] text-muted-foreground">{interpret(r.score, r.max)}</p>
+                        {r.answers.length > 0 && (
+                          <details className="mt-1 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1.5">
+                            <summary className="cursor-pointer select-none text-[11px] font-semibold text-primary">
+                              Ver todas as {r.answers.length} perguntas e respostas
+                            </summary>
+                            <ol className="mt-1.5 space-y-1">
+                              {r.answers.map((a, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-[11px] leading-snug">
+                                  <span className={`mt-px shrink-0 font-bold ${a.isCorrect ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>{a.isCorrect ? "✓" : "✗"}</span>
+                                  <span className="min-w-0">
+                                    <span className="font-medium text-foreground">{i + 1}. {a.prompt}</span>{" "}
+                                    <span className="text-muted-foreground">
+                                      → {a.correct !== undefined
+                                        ? (a.isCorrect ? <>respondeu <strong className="text-foreground">{a.selected}</strong></> : <>respondeu <strong className="text-red-600 dark:text-red-400">{a.selected ?? "—"}</strong> · correto: <strong className="text-emerald-700 dark:text-emerald-300">{a.correct}</strong></>)
+                                        : <strong className="text-foreground">{a.selected}</strong>}
+                                    </span>
+                                  </span>
+                                </li>
+                              ))}
+                            </ol>
+                          </details>
+                        )}
                       </div>
                     );
                   })}
