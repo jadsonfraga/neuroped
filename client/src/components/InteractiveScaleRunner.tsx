@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { ClipboardCheck, CheckCircle2, AlertTriangle, Info, RotateCcw, ArrowLeft } from "lucide-react";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { ClipboardCheck, CheckCircle2, Check, AlertTriangle, Info, RotateCcw, ArrowLeft, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,12 +9,16 @@ import { Progress } from "@/components/ui/progress";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { softTick, softSuccess } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
+import { celebrate } from "@/lib/confetti";
+import { easing, duration, scaleIn, staggerContainer, staggerItem } from "@/lib/motion";
 import { type InteractiveScaleDef, maxScoreOf } from "@/data/interactiveScales";
 
 /**
  * InteractiveScaleRunner — renderiza QUALQUER escala definida em
  * interactiveScales.ts como uma aplicação completa: itens, escore, faixa de
- * interpretação e relatório clínico (PDF). Uma só implementação para todas.
+ * interpretação e relatório clínico (PDF). Uma só implementação para todas —
+ * com um acabamento visual caprichado (progresso animado, opções táteis,
+ * resultado comemorativo) para tornar a aplicação agradável de responder.
  */
 export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   const [, navigate] = useLocation();
@@ -35,10 +40,20 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   const band =
     def.bands.find((b) => score >= b.min && score <= b.max) ?? def.bands[def.bands.length - 1];
 
-  const toneClasses: Record<string, string> = {
-    ok: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-    warn: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-    alert: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+  // Microcopy que acompanha o progresso — deixa a aplicação mais acolhedora.
+  const progressHint = useMemo(() => {
+    if (answered === 0) return "Toque numa opção para começar";
+    if (allAnswered) return "Tudo respondido — veja o resultado ✨";
+    if (progress >= 66) return "Quase lá! 💪";
+    if (progress >= 33) return "Indo muito bem…";
+    return "Continue no seu ritmo";
+  }, [answered, allAnswered, progress]);
+
+  // Herói do resultado — gradiente conforme a gravidade da faixa.
+  const heroGradient: Record<string, string> = {
+    ok: "from-emerald-500 via-emerald-600 to-green-700",
+    warn: "from-amber-500 via-orange-500 to-yellow-600",
+    alert: "from-red-500 via-rose-600 to-red-700",
   };
 
   function pick(itemIndex: number, optionIndex: number) {
@@ -50,6 +65,7 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   function handleSubmit() {
     softSuccess();
     haptic.success();
+    celebrate();
     setShowResult(true);
   }
 
@@ -60,44 +76,69 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
 
   if (showResult) {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="space-y-6"
+      >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-sm">
-            <ClipboardCheck className="w-5 h-5 text-white" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-md">
+            <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — {def.name}</h1>
-            <p className="text-xs text-muted-foreground">Avaliação concluída</p>
+            <h1 className="text-lg font-bold leading-tight">Resultado — {def.name}</h1>
+            <p className="text-xs italic text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
 
-        <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{score}</div>
-              <p className="text-xs text-muted-foreground">de {maxScore} pontos</p>
-              <Badge className={`text-sm px-4 py-1.5 ${toneClasses[band.tone]}`}>{band.risk}</Badge>
+        <Card className="overflow-hidden border-card-border shadow-sm">
+          {/* Herói comemorativo com o escore em destaque */}
+          <motion.div
+            variants={scaleIn}
+            initial="hidden"
+            animate="visible"
+            className={`relative overflow-hidden bg-gradient-to-br p-7 text-center ${heroGradient[band.tone] ?? heroGradient.ok}`}
+          >
+            <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+            <div aria-hidden="true" className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+            <div className="relative space-y-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5" /> Pontuação final
+              </div>
+              <div className="flex items-end justify-center gap-1.5">
+                <span className="text-6xl font-black leading-none text-white drop-shadow-sm">{score}</span>
+                <span className="pb-1.5 text-base font-semibold text-white/80">/ {maxScore}</span>
+              </div>
+              <Badge className="border-white/30 bg-white/20 px-4 py-1.5 text-sm text-white backdrop-blur-sm">{band.risk}</Badge>
             </div>
+          </motion.div>
 
-            <div className="rounded-xl bg-muted/50 p-4 space-y-2">
+          <CardContent className="space-y-5 p-6">
+            <div className="rounded-xl bg-muted/50 p-4">
               <div className="flex items-start gap-2">
                 {band.tone === "ok" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                 )}
-                <p className="text-sm text-foreground leading-relaxed">{band.description}</p>
+                <p className="text-sm leading-relaxed text-foreground">{band.description}</p>
               </div>
             </div>
 
-            <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-4">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/40 dark:bg-blue-950/20">
               <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
+                <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
                   <p><strong>Faixas de interpretação:</strong></p>
-                  {def.bands.map((b) => (
-                    <p key={b.risk}>{b.min}–{b.max}: {b.risk}</p>
-                  ))}
+                  {def.bands.map((b) => {
+                    const active = score >= b.min && score <= b.max;
+                    return (
+                      <p key={b.risk} className={active ? "font-bold" : ""}>
+                        {active ? "▸ " : ""}{b.min}–{b.max}: {b.risk}
+                      </p>
+                    );
+                  })}
                   <p className="pt-1 italic">Fonte: {def.source}</p>
                 </div>
               </div>
@@ -144,88 +185,123 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
         />
 
         <Button onClick={handleReset} variant="outline" className="w-full gap-2" data-testid="button-reset">
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="h-4 w-4" />
           Nova Avaliação
         </Button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="flex items-center gap-3"
+      >
         <Button variant="ghost" size="sm" className="px-2" onClick={() => navigate("/filtro")} aria-label="Voltar ao filtro">
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-sm">
-          <ClipboardCheck className="w-5 h-5 text-white" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-md">
+          <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
         </div>
         <div className="min-w-0">
-          <h1 className="text-lg font-bold truncate">{def.name}</h1>
+          <h1 className="truncate text-lg font-bold leading-tight">{def.name}</h1>
           <p className="text-xs text-muted-foreground">{def.fullName} · {def.respondent} · {def.ageLabel}</p>
         </div>
-      </div>
+      </motion.div>
 
       {def.validationNote && (
-        <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-3 text-xs text-amber-800 dark:text-amber-300" role="note">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300" role="note">
           ⚠️ {def.validationNote}
         </div>
       )}
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
-          <span>{answered} de {total} respondidas</span>
-          <span>{Math.round(progress)}%</span>
+      {/* Barra de progresso pegajosa e viva — gradiente + microcopy encorajador */}
+      <div className="sticky top-0 z-20 -mx-1 space-y-2 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm backdrop-blur">
+        <div className="flex items-center justify-between text-xs" aria-live="polite">
+          <span className="font-semibold text-foreground">{answered} de {total} respondidas</span>
+          <span className="tabular-nums font-bold text-primary">{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-2" aria-label={`Progresso: ${answered} de ${total}`} />
+        <Progress value={progress} className="h-2.5" aria-label={`Progresso: ${answered} de ${total}`} />
+        <p className="text-[11px] font-medium text-muted-foreground">{progressHint}</p>
       </div>
 
-      <div className="rounded-xl bg-muted/40 border border-border p-4">
-        <p className="text-xs text-foreground leading-relaxed"><strong>Instruções:</strong> {def.instructions}</p>
+      <div className="rounded-xl border border-border bg-muted/40 p-4">
+        <p className="text-xs leading-relaxed text-foreground"><strong>Instruções:</strong> {def.instructions}</p>
       </div>
 
-      <div className="space-y-3">
-        {def.items.map((item, i) => (
-          <Card key={i} data-testid={`card-question-${i}`} className={`border-card-border ${answers[i] != null ? "bg-card" : "bg-card/60"}`}>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs font-mono">{i + 1}</Badge>
-                <p className="text-sm text-foreground leading-relaxed">{item.text}</p>
-              </div>
-              <div className="grid grid-cols-1 gap-1.5" role="radiogroup" aria-label={item.text}>
-                {item.options.map((opt, oi) => {
-                  const selected = answers[i] === oi;
-                  return (
-                    <button
-                      key={oi}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => pick(i, oi)}
-                      data-testid={`item-${i}-opt-${oi}`}
-                      className={`text-left rounded-lg border px-3 py-2 text-sm transition ${
-                        selected
-                          ? "border-primary bg-primary text-primary-foreground font-semibold"
-                          : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"
+      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
+        {def.items.map((item, i) => {
+          const isAnswered = answers[i] != null;
+          return (
+            <motion.div key={i} variants={staggerItem}>
+              <Card
+                data-testid={`card-question-${i}`}
+                className={`group border-card-border transition-all duration-200 ${isAnswered ? "bg-card ring-1 ring-emerald-400/40" : "bg-card/60 hover:bg-card"}`}
+              >
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                        isAnswered
+                          ? "bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-sm"
+                          : "bg-gradient-to-br from-primary/15 to-chart-2/10 text-primary ring-1 ring-primary/15"
                       }`}
                     >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                      {isAnswered ? <Check className="h-4 w-4" strokeWidth={2.5} /> : i + 1}
+                    </div>
+                    <p className="pt-0.5 text-sm leading-relaxed text-foreground">{item.text}</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1.5 pl-10" role="radiogroup" aria-label={item.text}>
+                    {item.options.map((opt, oi) => {
+                      const selected = answers[i] === oi;
+                      return (
+                        <button
+                          key={oi}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => pick(i, oi)}
+                          data-testid={`item-${i}-opt-${oi}`}
+                          className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200 active:scale-[0.99] ${
+                            selected
+                              ? "border-transparent bg-gradient-to-r from-primary to-chart-2 font-semibold text-white shadow-sm"
+                              : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                              selected ? "border-white bg-white/25" : "border-muted-foreground/40"
+                            }`}
+                          >
+                            {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                          </span>
+                          <span className="min-w-0">{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </motion.div>
 
       <Button
         onClick={handleSubmit}
         disabled={!allAnswered}
-        className="w-full h-12 gap-2 bg-gradient-to-r from-primary to-chart-2 text-white font-semibold"
+        size="lg"
+        className="h-12 w-full gap-2 bg-gradient-to-r from-primary to-chart-2 font-semibold text-white shadow-md transition hover:shadow-lg disabled:opacity-60"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver resultado" : `Responda todas (${answered}/${total})`}
+        {allAnswered ? (
+          <><CheckCircle2 className="h-4 w-4" /> Ver resultado</>
+        ) : (
+          `Responda todas (${answered}/${total})`
+        )}
       </Button>
     </div>
   );
