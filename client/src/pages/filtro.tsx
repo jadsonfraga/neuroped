@@ -587,8 +587,9 @@ export default function FiltroPage() {
     <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
       {/* Full-width header — premium calmo (consistente com a Home) */}
       <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur mb-4 sm:mb-5">
-        <div className="flex items-center gap-3.5 sm:gap-4">
-          <div className="filter-260-iconbox flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15"><Filter className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.9} /></div>
+        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-primary/15 to-chart-2/10 blur-3xl" />
+        <div className="relative flex items-center gap-3.5 sm:gap-4">
+          <div className="filter-260-iconbox flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/15 shadow-sm"><Filter className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.9} /></div>
           <div className="min-w-0 flex-1">
             <p className="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Ranking clínico</p>
             <h1 className="mt-0.5 text-xl sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-foreground">Filtro Clínico Inteligente</h1>
@@ -598,10 +599,10 @@ export default function FiltroPage() {
       </header>
 
       {/* Métricas — faixa fina com divisores (consistente com a Home) */}
-      <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-card/50" aria-label="Métricas do filtro">
-        <div className="flex-1 px-3.5 py-3 sm:px-4"><div className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{catalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Filtráveis</p></div>
-        <div className="flex-1 px-3.5 py-3 sm:px-4"><div className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{world.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
-        <div className="flex-1 px-3.5 py-3 sm:px-4"><div className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{catalog.filter(isFullApp).length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">No app</p></div>
+      <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card/70 to-card/30 shadow-sm" aria-label="Métricas do filtro">
+        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Filtráveis</p></div>
+        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{world.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
+        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.filter(isFullApp).length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">No app</p></div>
       </section>
 
       {/* Two-column grid: Controls (left) + Results (right) */}

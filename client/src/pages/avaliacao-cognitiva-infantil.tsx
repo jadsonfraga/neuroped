@@ -420,22 +420,26 @@ function QuizModule({ questions, onComplete }: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Badge variant="outline">Questão {idx + 1} / {questions.length}</Badge>
-        <Badge variant="outline">Acertos: {score}</Badge>
+        <Badge variant="outline" className="gap-1"><span className="text-emerald-500">●</span> Acertos: {score}</Badge>
       </div>
 
-      <div className="rounded-2xl border border-border bg-muted/30 p-4">
-        <p className={`text-foreground leading-relaxed whitespace-pre-line ${q.big ? "text-lg font-semibold text-center" : "text-sm font-semibold"}`}>{q.prompt}</p>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 transition-all duration-500 ease-out" style={{ width: `${((idx) / questions.length) * 100}%` }} />
+      </div>
+
+      <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-muted/50 to-transparent p-4 sm:p-5 shadow-sm">
+        <p className={`relative text-foreground leading-relaxed whitespace-pre-line ${q.big ? "text-xl font-bold text-center" : "text-sm font-semibold"}`}>{q.prompt}</p>
       </div>
 
       <div className={`grid gap-2 ${q.big ? "grid-cols-2" : "grid-cols-1"}`}>
         {q.options.map((opt) => {
-          let cls = "rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+          let cls = "rounded-2xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97]";
           if (phase === "feedback") {
-            if (opt === q.answer) cls += " border-emerald-500 bg-emerald-50 dark:border-emerald-600 dark:bg-emerald-950/40";
+            if (opt === q.answer) cls += " border-emerald-500 bg-emerald-50 shadow-sm shadow-emerald-500/10 dark:border-emerald-600 dark:bg-emerald-950/40";
             else if (opt === selected) cls += " border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30";
-            else cls += " border-border bg-background opacity-60";
+            else cls += " border-border bg-background opacity-50";
           } else {
-            cls += " border-border bg-background hover:border-primary/60 hover:bg-muted/40 cursor-pointer";
+            cls += " border-border bg-background hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/5 hover:shadow-sm cursor-pointer";
           }
 
           return (
@@ -608,9 +612,11 @@ export default function AvaliacaoCognitivaInfantilPage() {
   return (
     <div className="space-y-5 pb-8">
       {/* Header */}
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-md">
+      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 sm:p-6 shadow-sm backdrop-blur">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-blue-400/20 to-transparent blur-3xl" />
+        <div className="relative flex items-start gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-600/25 ring-1 ring-white/20">
             <Brain className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
@@ -670,11 +676,11 @@ export default function AvaliacaoCognitivaInfantilPage() {
                   type="button"
                   onClick={() => setActiveDomain(d.id)}
                   aria-pressed={isActive}
-                  className={`flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-2xl border p-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`group flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl border p-3 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] ${isActive ? "border-primary bg-gradient-to-br from-primary/15 to-primary/[0.04] shadow-sm" : "border-border bg-background hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"}`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? "text-primary" : d.color}`} />
+                  <Icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-primary" : d.color}`} />
                   <span className="text-[12px] font-bold text-foreground">{d.label}</span>
-                  {done && <span className="text-[10px] text-emerald-600 dark:text-emerald-400">✓ feito</span>}
+                  {done && <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">✓ feito</span>}
                 </button>
               );
             })}
@@ -716,10 +722,10 @@ export default function AvaliacaoCognitivaInfantilPage() {
 
           {/* Results summary */}
           {completedDomains.length > 0 && (
-            <Card className="border-border/70 bg-muted/20">
+            <Card className="overflow-hidden border-border/70 bg-gradient-to-br from-primary/[0.05] via-card to-transparent shadow-sm">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <ClipboardCheck className="h-4 w-4 text-primary" />
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-primary"><ClipboardCheck className="h-4 w-4" /></span>
                   <h2 className="text-sm font-black text-foreground">
                     Resultado parcial {completedDomains.length < 4 ? `(${completedDomains.length}/4 módulos)` : "— Completo"}
                   </h2>
