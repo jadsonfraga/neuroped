@@ -83,3 +83,6 @@ drizzle/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Claude Code local permissions (session/connector-specific)
+.claude/settings.local.json
