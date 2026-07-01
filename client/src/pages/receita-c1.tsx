@@ -364,9 +364,9 @@ html,body{background:#fff;font-family:'Carlito',Arial,sans-serif;font-size:9pt;c
 </head>
 <body>
 <div class="sheet">
-  \${viaHtml("1ª via · Retenção da farmácia", f)}
+  ${viaHtml("1ª via · Retenção da farmácia", f)}
   <div class="cut">— — — — —  destaque a 1ª via para retenção da farmácia · 2ª via do paciente  — — — — —</div>
-  \${viaHtml("2ª via · Paciente", f)}
+  ${viaHtml("2ª via · Paciente", f)}
 </div>
 </body>
 </html>`;
