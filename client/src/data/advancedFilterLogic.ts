@@ -355,6 +355,20 @@ function selectedSignalText(ctx: FilterContext): string {
   return [...ids, ...labels].join(" ");
 }
 
+// Fonte ÚNICA de signalTags: une as tags inline da escala (scale.signalTags)
+// com o mapa central curado (SIGNAL_TAGS_BY_SCALE_ID), sem duplicatas. Assim os
+// dois acervos de tags são tratados igualmente em TODO o motor (texto clínico
+// e bônus de correspondência exata), sem tag "de segunda classe".
+function allSignalTags(scale: ScaleEntry): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of [...(scale.signalTags || []), ...(SIGNAL_TAGS_BY_SCALE_ID[scale.id] || [])]) {
+    const key = t.trim().toLowerCase();
+    if (key && !seen.has(key)) { seen.add(key); out.push(t); }
+  }
+  return out;
+}
+
 function scaleClinicalText(scale: ScaleEntry): string {
   return [
     scale.id,
@@ -362,8 +376,7 @@ function scaleClinicalText(scale: ScaleEntry): string {
     scale.fullName,
     scale.description,
     scale.queixas.join(" "),
-    ...(scale.signalTags || []),
-    ...(SIGNAL_TAGS_BY_SCALE_ID[scale.id] || []),
+    ...allSignalTags(scale),
   ].join(" ");
 }
 
@@ -382,7 +395,7 @@ function calculateSignalSpecificity(scale: ScaleEntry, ctx: FilterContext): { sc
   const idPrefixHits = ctx.selectedSignals.filter((id) =>
     scale.queixas.some((queixa) => id.startsWith(`${queixa}-`))
   ).length;
-  const exactTagHits = (SIGNAL_TAGS_BY_SCALE_ID[scale.id] || []).filter((tag) =>
+  const exactTagHits = allSignalTags(scale).filter((tag) =>
     normalizedSignalText.includes(normalizeClinicalText(tag))
   ).length;
 

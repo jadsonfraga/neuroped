@@ -12,10 +12,13 @@ permissions:
   pages: write
   id-token: write
 
-# Evita deploys concorrentes do Pages
+# Evita deploys concorrentes do Pages. cancel-in-progress: true faz o commit
+# mais novo cancelar um deploy anterior ainda em andamento — o último main é o
+# que deve ir ao ar. Evita o erro "deployment in progress" quando pushes/merges
+# chegam próximos (ex.: um PR mesclado logo antes de outro deploy).
 concurrency:
   group: github-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
