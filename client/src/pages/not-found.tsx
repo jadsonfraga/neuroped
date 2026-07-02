@@ -1,10 +1,29 @@
+import { Suspense, lazy } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
+import { useLocation } from "wouter";
+import { RouteGuard } from "@/components/RouteGuard";
 
-// /documentos e /efeitos-colaterais têm rotas dedicadas (lazy) no App.tsx, que
-// casam antes deste catch-all — importá-las estaticamente aqui só as puxava
-// para o chunk principal, anulando o code-splitting.
+// Ponte de defesa em profundidade exigida pela política de acesso
+// (scripts/guards/audit-access-policy.mjs): rota sensível mantém proteção
+// mesmo se sair do roteador principal. Import LAZY de propósito — a rota
+// dedicada em App.tsx casa antes deste catch-all, e o import estático puxava
+// a página para o chunk principal, anulando o code-splitting.
+const DocumentosPage = lazy(() => import("./documentos"));
+
 export default function NotFound() {
+  const [location] = useLocation();
+
+  if (location === "/documentos") {
+    return (
+      <RouteGuard roles={["admin", "professional"]}>
+        <Suspense fallback={null}>
+          <DocumentosPage />
+        </Suspense>
+      </RouteGuard>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <Card className="w-full max-w-md mx-4">
