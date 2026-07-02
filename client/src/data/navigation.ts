@@ -17,7 +17,6 @@ import {
   FileText,
   Filter,
   Gauge,
-  HeartHandshake,
   HeartPulse,
   HelpCircle,
   Home,
@@ -26,7 +25,6 @@ import {
   ListChecks,
   MessageCircle,
   Moon,
-  Newspaper,
   Pill,
   Puzzle,
   Ruler,
@@ -64,42 +62,25 @@ export const navSections: NavSection[] = [
     items: [{ href: "/", label: "Início", icon: Home }],
   },
   {
-    title: "Recepção e pré-consulta",
+    title: "TRABALHO CLÍNICO",
     items: [
       { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
       { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
-      { href: "/efeitos-colaterais", label: "Efeitos percebidos", icon: Pill },
-      { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
       { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
-    ],
-  },
-  {
-    title: "Pacientes e evolução",
-    items: [
+      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter },
       { href: "/pacientes", label: "Meus pacientes", icon: Users },
       { href: "/prontuario", label: "Anamnese / prontuário", icon: Stethoscope },
       { href: "/avaliacao-multiprofissional", label: "Avaliação multiprofissional", icon: ClipboardCheck },
       { href: "/plano-terapeutico", label: "Plano terapêutico", icon: Target },
       { href: "/plano-intervencao", label: "Plano de intervenção", icon: ClipboardPlus },
       { href: "/satisfacao-medicacao", label: "Evolução da medicação", icon: SmilePlus },
-    ],
-  },
-  {
-    title: "Família e escola",
-    items: [
-      { href: "/portal-familia", label: "Portal dos pais", icon: HeartHandshake },
-      { href: "/orientacao-parental", label: "Orientação parental", icon: Users },
-      { href: "/portal-familia/novidades", label: "Novidades para famílias", icon: Newspaper },
-      { href: "/portal-familia/acesso", label: "Política de acesso", icon: KeyRound },
+      { href: "/efeitos-colaterais", label: "Efeitos percebidos", icon: Pill },
+      { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/diario-sono", label: "Diário do sono", icon: Moon },
       { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
-      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
-    ],
-  },
-  {
-    title: "Escalas principais",
-    items: [
+      { href: "/epilepsia", label: "Diário de epilepsia", icon: Activity },
+      { href: "/cefaleia", label: "Calendário de cefaleia", icon: Calendar },
       { href: "/escalas-neuropsiquiatria", label: "Escalas mundiais", icon: BookOpen },
       { href: "/mchat", label: "M-CHAT-R/F", icon: Baby },
       { href: "/cars", label: "CARS", icon: ClipboardCheck },
@@ -111,11 +92,6 @@ export const navSections: NavSection[] = [
       { href: "/scared", label: "SCARED", icon: ShieldAlert },
       { href: "/phqa", label: "PHQ-A", icon: HeartPulse },
       { href: "/cssrs", label: "C-SSRS", icon: ShieldAlert },
-    ],
-  },
-  {
-    title: "Escalas complementares",
-    items: [
       { href: "/conners", label: "Conners", icon: ClipboardList },
       { href: "/cbcl", label: "CBCL", icon: ListChecks },
       { href: "/brief2", label: "BRIEF-2", icon: BrainCog },
@@ -130,17 +106,6 @@ export const navSections: NavSection[] = [
       { href: "/psc17", label: "PSC-17", icon: BarChart3 },
       { href: "/gad7", label: "GAD-7", icon: ShieldAlert },
       { href: "/aq10", label: "AQ-10", icon: Puzzle },
-    ],
-  },
-  {
-    title: "Testes Diretos com a Criança",
-    items: [
-      { href: "/testes-diretos", label: "Bateria por faixa etária", icon: ClipboardCheck },
-    ],
-  },
-  {
-    title: "Neurodesenvolvimento e escola",
-    items: [
       { href: "/tea", label: "Checklists TEA", icon: Puzzle },
       { href: "/tea-comportamentos", label: "Comport. TEA", icon: Sparkles },
       { href: "/psiquiatria", label: "Guia psiquiátrico", icon: BrainCog },
@@ -149,11 +114,6 @@ export const navSections: NavSection[] = [
       { href: "/pac", label: "PAC", icon: Brain },
       { href: "/inventarios-auto", label: "Autoavaliação", icon: ClipboardList },
       { href: "/ahsd-tea", label: "AH/SD × TEA", icon: Sparkles },
-    ],
-  },
-  {
-    title: "Protocolos autorais",
-    items: [
       { href: "/emdi", label: "EMDI", icon: ClipboardCheck },
       { href: "/eaf", label: "EAF", icon: ClipboardCheck },
       { href: "/ecsm", label: "ECSM", icon: ClipboardCheck },
@@ -165,11 +125,16 @@ export const navSections: NavSection[] = [
       { href: "/ems", label: "EMS", icon: ClipboardCheck },
       { href: "/etare", label: "ETARE", icon: ClipboardCheck },
       { href: "/eaah", label: "EAAH", icon: ClipboardCheck },
-    ],
-  },
-  {
-    title: "Documentos e laudos",
-    items: [
+      { href: "/testes-diretos", label: "Testes: bateria por faixa", icon: ClipboardCheck },
+      { href: "/testes-academicos", label: "Testes: acadêmico", icon: ClipboardCheck },
+      { href: "/escrita-desenho", label: "Testes: escrita e desenho", icon: ClipboardCheck },
+      { href: "/conhecimento-visual", label: "Testes: conhecimento visual", icon: ClipboardCheck },
+      { href: "/testes-reconhecimento", label: "Testes: reconhecimento visual", icon: ClipboardCheck },
+      { href: "/avaliacao-cognitiva-infantil", label: "Testes: leitura/escrita/aritm.", icon: ClipboardCheck },
+      { href: "/motricidade-teste", label: "Testes: motricidade", icon: ClipboardCheck },
+      { href: "/conhecimentos-gerais", label: "Testes: conhecimentos gerais", icon: ClipboardCheck },
+      { href: "/tde2", label: "TDE-2 Adaptado", icon: ClipboardCheck },
+      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
       { href: "/documentos", label: "Central de Documentos", icon: FileText },
       { href: "/laudo-neuroped", label: "Laudo Digital", icon: ClipboardPlus },
       { href: "/receita-c1-express", label: "Receita C1 Express ⚡", icon: Pill },
@@ -181,16 +146,11 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: "Medicamentos e doses",
+    title: "REFERÊNCIA",
     items: [
       { href: "/medicamentos", label: "Medicamentos", icon: Pill },
       { href: "/farmacologia", label: "Farmacologia", icon: Pill },
       { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
-    ],
-  },
-  {
-    title: "Referência clínica",
-    items: [
       { href: "/instrumentos-padronizados", label: "Instrumentos padronizados (Pearson/Hogrefe)", icon: BookOpen },
       { href: "/fluxogramas", label: "Fluxogramas", icon: Brain },
       { href: "/marcos-desenvolvimento", label: "Marcos do desenvolvimento", icon: Calendar },
@@ -198,13 +158,8 @@ export const navSections: NavSection[] = [
       { href: "/curvas-crescimento", label: "Curvas de crescimento", icon: LineChart },
       { href: "/espasticidade", label: "Espasticidade", icon: Ruler },
       { href: "/classificacoes", label: "Classificações", icon: Scale },
-      { href: "/epilepsia", label: "Diário de epilepsia", icon: Activity },
-      { href: "/cefaleia", label: "Calendário de cefaleia", icon: Calendar },
-    ],
-  },
-  {
-    title: "Configurações / Ajuda",
-    items: [
+      { href: "/orientacao-parental", label: "Orientação parental", icon: Users },
+      { href: "/portal-familia/acesso", label: "Política de acesso", icon: KeyRound },
       { href: "/ajuda", label: "Ajuda", icon: HelpCircle },
       { href: "/sobre", label: "Sobre", icon: ShieldCheck },
       { href: "/sobre-neuroped", label: "Sobre o NeuroPed", icon: ShieldCheck },

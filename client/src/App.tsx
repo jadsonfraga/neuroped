@@ -225,6 +225,7 @@ function AppRouter() {
           <Route path="/etare" component={EtarePage} />
           <Route path="/eaah" component={EaahPage} />
           <Route path="/filtro" component={FiltroPage} />
+          <Route path="/filtro-escalas" component={FiltroPage} />
           <Route path="/pre-consulta" component={PreConsultaPage} />
           <Route path="/pre-retorno" component={PreRetornoPage} />
           <Route path="/efeitos-colaterais" component={EfeitosColateraisPage} />

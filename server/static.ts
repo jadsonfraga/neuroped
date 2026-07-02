@@ -1,20 +1,22 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
-// __dirname não está disponível em ESM; fileURLToPath + import.meta.url é a forma portável.
-// esbuild em modo CJS também transforma import.meta.url corretamente.
-const _dirname =
-  typeof __dirname !== "undefined"
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+function firstExistingPath(candidates: string[]): string | null {
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(_dirname, "public");
-  if (!fs.existsSync(distPath)) {
+  const bundleDir = typeof __dirname !== "undefined" ? __dirname : null;
+  const distPath = firstExistingPath([
+    path.resolve(process.cwd(), "dist", "public"),
+    path.resolve(process.cwd(), "public"),
+    ...(bundleDir ? [path.resolve(bundleDir, "public")] : []),
+  ]);
+
+  if (!distPath) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      "Could not find the client build directory. Run `npm run build` before starting production.",
     );
   }
 

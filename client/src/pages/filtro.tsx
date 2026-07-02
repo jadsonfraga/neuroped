@@ -278,6 +278,14 @@ const OPB_WHY: Record<"prata" | "bronze", string> = {
   bronze: "Perspectiva adicional, aprofundamento ou monitorização quando OURO + PRATA deixam dúvidas.",
 };
 
+const FLASH_STORAGE_KEY = "neuroped:filter-flash";
+
+function isFlashRoute(): boolean {
+  if (typeof window === "undefined") return false;
+  const raw = `${window.location.hash || ""}${window.location.search || ""}`;
+  return /[?&]mode=flash(?:&|$)/.test(raw);
+}
+
 // Fonte ÚNICA de verdade: roda o motor clínico (advancedFilterLogic) sobre o
 // catálogo e, dentro dos candidatos seguros, aplica o realce de busca.
 // Pode retornar [] — NUNCA cai para o catálogo inteiro (sem fallback perigoso).
@@ -536,19 +544,50 @@ function loadFilterState(): PersistedFilter {
 }
 
 export default function FiltroPage() {
+  const flashMode = isFlashRoute();
   const [initial] = useState(loadFilterState);
-  const [search, setSearch] = useState<string>(initial.search ?? "");
-  const [selectedQueixas, setSelectedQueixas] = useState<string[]>(initial.queixas ?? []);
-  const [selectedAge, setSelectedAge] = useState<string | null>(initial.age ?? null);
-  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(initial.respondente ?? null);
-  const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(initial.communication ?? null);
-  const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(initial.literacy ?? null);
-  const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(initial.assessment ?? null);
-  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(initial.signals ?? []);
+  const [search, setSearch] = useState<string>(flashMode ? "" : initial.search ?? "");
+  const [selectedQueixas, setSelectedQueixas] = useState<string[]>(flashMode ? [] : initial.queixas ?? []);
+  const [selectedAge, setSelectedAge] = useState<string | null>(flashMode ? null : initial.age ?? null);
+  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(flashMode ? null : initial.respondente ?? null);
+  const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(flashMode ? null : initial.communication ?? null);
+  const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(flashMode ? null : initial.literacy ?? null);
+  const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(flashMode ? null : initial.assessment ?? null);
+  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(flashMode ? [] : initial.signals ?? []);
   const [copiedRec, setCopiedRec] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
+
+  useEffect(() => {
+    if (!flashMode) return;
+    return () => {
+      try {
+        sessionStorage.removeItem(FLASH_STORAGE_KEY);
+      } catch { /* sessionStorage indisponível — nada a limpar */ }
+    };
+  }, [flashMode]);
+
+  useEffect(() => {
+    if (!flashMode) return;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(FLASH_STORAGE_KEY) || "{}") as {
+        search?: string;
+        selectedAge?: string | null;
+        selectedQueixas?: string[];
+      };
+      if (typeof saved.search === "string") setSearch(saved.search);
+      if (typeof saved.selectedAge === "string" || saved.selectedAge === null) setSelectedAge(saved.selectedAge);
+      if (Array.isArray(saved.selectedQueixas)) setSelectedQueixas(saved.selectedQueixas);
+    } catch { /* sessionStorage indisponível — modo flash segue sem persistir */ }
+  }, [flashMode]);
+
+  useEffect(() => {
+    if (!flashMode) return;
+    try {
+      sessionStorage.setItem(FLASH_STORAGE_KEY, JSON.stringify({ search, selectedAge, selectedQueixas }));
+    } catch { /* sessionStorage indisponível — modo flash segue sem persistir */ }
+  }, [flashMode, search, selectedAge, selectedQueixas]);
 
   // Auto-close welcome tour on /filtro — ensures filter content is visible immediately
   useEffect(() => {
@@ -560,6 +599,7 @@ export default function FiltroPage() {
 
   // Persiste as seleções sempre que mudam (best-effort).
   useEffect(() => {
+    if (flashMode) return;
     try {
       localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
         search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,
@@ -567,7 +607,7 @@ export default function FiltroPage() {
         assessment: selectedAssessmentType, signals: selectedSignalIds,
       } satisfies PersistedFilter));
     } catch { /* persistência best-effort */ }
-  }, [search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
+  }, [flashMode, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
 
   useEffect(() => {
     let alive = true;
@@ -797,10 +837,20 @@ export default function FiltroPage() {
           <div className="min-w-0 flex-1">
             <p className="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Ranking clínico</p>
             <h1 className="mt-0.5 text-xl sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-foreground">Filtro Clínico Inteligente</h1>
-            <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">Cruze idade, queixa, respondente e contexto — incluindo 100 escalas mundiais sem custo.</p>
+            <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">
+              {flashMode
+                ? "Triagem rápida sem cadastro: informe idade e queixa para receber o ranking imediato."
+                : "Cruze idade, queixa, respondente e contexto — incluindo 100 escalas mundiais sem custo."}
+            </p>
           </div>
         </div>
       </header>
+
+      {flashMode && (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/25 dark:text-amber-100">
+          Modo efêmero — saia da tela e os dados somem
+        </div>
+      )}
 
       {/* Métricas — faixa fina com divisores (consistente com a Home) */}
       <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card/70 to-card/30 shadow-sm" aria-label="Métricas do filtro">
@@ -819,7 +869,14 @@ export default function FiltroPage() {
           <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Buscar por medicação, queixa ou nome da escala" placeholder="Medicação, autismo, TDAH, ansiedade..." className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm" data-testid="input-search" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label={flashMode ? "Idade e queixa para triagem sem cadastro" : "Buscar por medicação, queixa ou nome da escala"}
+            placeholder={flashMode ? "Ex.: 7 anos, não dorme, crise, desatenção..." : "Medicação, autismo, TDAH, ansiedade..."}
+            className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm"
+            data-testid="input-search"
+          />
           {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
         </div>
 

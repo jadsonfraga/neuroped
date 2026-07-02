@@ -51,12 +51,12 @@ export function selectPodium(
   };
   if (refinedMatches.length === 0) return empty;
 
-  // Minimum score to earn a medal. Below this threshold the slot stays empty.
+  // Preferred minimum score for a medal. If every safe candidate is below this
+  // threshold, the podium still shows the best safe option instead of going empty.
   const QUALITY_THRESHOLD = 60;
 
-  // Curated tiers act as a soft tiebreaker: when two matches are within 2 pts
-  // of each other, the one mentioned in the curated table wins. Scores always
-  // have priority — the curated table never overrides a clear score difference.
+  // Curated tiers are clinical priority hints once the scale has already passed
+  // mandatory filters and hard safety blocks.
   const curatedPriority = new Map<string, number>();
   if (curatedTiers) {
     if (curatedTiers.ouro) curatedPriority.set(curatedTiers.ouro, 3);
@@ -71,33 +71,56 @@ export function selectPodium(
   });
 
   const used = new Set<string>();
+  const byId = new Map(sorted.map((match) => [match.scale.id, match]));
+  const curatedIds = curatedTiers
+    ? [curatedTiers.ouro, curatedTiers.prata, curatedTiers.bronze].filter((id): id is string => Boolean(id))
+    : [];
 
-  // Returns the first unused match that passes the quality threshold AND the predicate.
-  const takeQualified = (pred: (m: RefinedScaleMatch) => boolean) => {
-    const found = sorted.find(
+  // Prefer high-quality matches, but never leave the medal empty when the
+  // engine already produced safe candidates or broadband fallbacks.
+  const takeBestAvailable = (
+    pred: (m: RefinedScaleMatch) => boolean,
+    preferredIds: string[] = [],
+  ) => {
+    const preferred = [...preferredIds, ...curatedIds].filter((id, index, arr) => arr.indexOf(id) === index);
+    const preferredMatches = preferred
+      .map((id) => byId.get(id))
+      .filter((match): match is RefinedScaleMatch => Boolean(match));
+    const curatedHighQuality = preferredMatches.find(
       (m) => !used.has(m.scale.id) && m.relevanceScore >= QUALITY_THRESHOLD && pred(m)
     );
+    const curatedSafe = preferredMatches.find((m) => !used.has(m.scale.id) && pred(m));
+    const highQuality = sorted.find(
+      (m) => !used.has(m.scale.id) && m.relevanceScore >= QUALITY_THRESHOLD && pred(m)
+    );
+    const found = curatedHighQuality ?? curatedSafe ?? highQuality ?? sorted.find((m) => !used.has(m.scale.id) && pred(m));
     if (found) used.add(found.scale.id);
     return found;
   };
 
-  const ouro = takeQualified(() => true);
+  const ouro = takeBestAvailable(() => true, curatedTiers?.ouro ? [curatedTiers.ouro] : []);
   const ouroMode = ouro?.applicationMode ?? null;
   const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
 
   // Prata must be complementary to Ouro (different mode OR different queixa domain).
-  const prata = takeQualified(
-    (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q))
-  );
+  const prata =
+    takeBestAvailable(
+      (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q)),
+      curatedTiers?.prata ? [curatedTiers.prata] : [],
+    ) ?? takeBestAvailable(() => true, curatedTiers?.prata ? [curatedTiers.prata] : []);
   const prataMode = prata?.applicationMode ?? null;
   const prataQueixas = new Set(prata?.scale.queixas ?? []);
 
   // Bronze must add value relative to at least one of Ouro or Prata.
-  const bronze = takeQualified((m) => {
-    const diffFromOuro = m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q));
-    const diffFromPrata = !prata || m.applicationMode !== prataMode || !m.scale.queixas.some((q) => prataQueixas.has(q));
-    return diffFromOuro || diffFromPrata;
-  });
+  const bronze =
+    takeBestAvailable(
+      (m) => {
+        const diffFromOuro = m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q));
+        const diffFromPrata = !prata || m.applicationMode !== prataMode || !m.scale.queixas.some((q) => prataQueixas.has(q));
+        return diffFromOuro || diffFromPrata;
+      },
+      curatedTiers?.bronze ? [curatedTiers.bronze] : [],
+    ) ?? takeBestAvailable(() => true, curatedTiers?.bronze ? [curatedTiers.bronze] : []);
 
   // Direct and school also join the used set to prevent deduplication with medals.
   const direct = (() => {

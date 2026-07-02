@@ -23,7 +23,7 @@ interface TourStep {
 
 const STEPS: TourStep[] = [
   {
-    emoji: "👋",
+    emoji: "",
     title: "Bem-vindo ao NeuroPed",
     body: `O app agora mostra numeros derivados do catalogo real: ${appMetrics.scaleCount} escalas, ${appMetrics.filterableInstrumentCount} itens filtraveis e ${appMetrics.medicationCount} medicacoes cadastradas.`,
   },
@@ -240,7 +240,7 @@ export function WelcomeTour() {
               <X className="w-4 h-4" />
             </button>
 
-            <div className="text-3xl leading-none mb-2">{step.emoji}</div>
+            {step.emoji && <div className="text-3xl leading-none mb-2">{step.emoji}</div>}
             <h3 className="text-lg font-bold text-white tracking-tight mb-1.5">{step.title}</h3>
             <p className="text-sm leading-relaxed text-indigo-100/80 mb-4">{step.body}</p>
 

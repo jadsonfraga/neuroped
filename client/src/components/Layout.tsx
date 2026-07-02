@@ -29,8 +29,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // mais usadas; as demais começam recolhidas (a seção da rota atual auto-expande).
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
     principal: true,
-    "Recepção e pré-consulta": true,
-    "Escalas principais": true,
+    "TRABALHO CLÍNICO": true,
+    "REFERÊNCIA": true,
   }));
 
   useEffect(() => {
@@ -284,14 +284,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     aria-controls={`nav-section-${si}`}
                   >
                     <span className="flex-1 truncate">{section.title}</span>
-                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${sectionOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform ${sectionOpen ? "rotate-180" : ""}`}
+                      style={{ transitionDuration: "320ms", transitionTimingFunction: "cubic-bezier(0.32,0.72,0,1)" }}
+                      aria-hidden="true"
+                    />
                   </button>
                 )}
                 {collapsed && section.title && (
                   <div className="border-t border-sidebar-border my-1 hidden md:block" />
                 )}
+                <AnimatePresence initial={false}>
                 {sectionOpen && (
-                  <div id={`nav-section-${si}`} className="space-y-1">
+                  <motion.div
+                    id={`nav-section-${si}`}
+                    className="space-y-1 overflow-hidden"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+                  >
                     {section.items.map((item) => {
                       const active = activeNavigation?.item.href === item.href;
                       return (
@@ -305,7 +317,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             }}
                             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
                               active
-                                ? "bg-primary/10 text-primary font-semibold shadow-sm"
+                                ? "bg-[linear-gradient(90deg,rgba(124,121,255,.18),transparent)] text-primary font-semibold shadow-sm"
                                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
                             } ${collapsed ? "md:justify-center" : ""}`}
                           >
@@ -333,8 +345,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         </Link>
                       );
                     })}
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
             );
           })}

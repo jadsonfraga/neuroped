@@ -214,6 +214,13 @@ export default function HomePage() {
                 </button>
               )}
             </div>
+            <Link
+              href="/filtro-escalas?mode=flash"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/15"
+            >
+              Triar paciente sem cadastrar
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
 
             {/* Métricas — faixa fina com divisores, em vez de caixas pesadas */}
             <div
