@@ -1,5 +1,5 @@
-import { Link } from "wouter";
-import { Target, ArrowRight, ShieldAlert, Footprints, Sparkles } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Target, ArrowRight, ShieldAlert, Footprints, Sparkles, Filter } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { allScales } from "@/data/scaleFilter";
 import { getImplementationStatus } from "@/data/advancedFilterLogic";
@@ -63,7 +63,18 @@ function NodeBanner({ node }: { node: FluxoNode }) {
   );
 }
 
+// Chave de persistência do Filtro (mesma de filtro.tsx) — pré-preenche idade+queixa.
+const FILTER_STATE_KEY = "np_filtro_state_v1";
+
 export default function FluxogramaPage() {
+  const [, navigate] = useLocation();
+  function openInFilter(ageBandId: string, queixaId?: string) {
+    if (!queixaId) return;
+    try {
+      localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({ queixas: [queixaId], age: ageBandId }));
+    } catch { /* storage best-effort */ }
+    navigate("/filtro");
+  }
   return (
     <div className="page-enter pb-8 space-y-5">
       {/* Hero */}
@@ -76,7 +87,7 @@ export default function FluxogramaPage() {
           <div className="min-w-0 flex-1">
             <p className="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Decisão por perfil</p>
             <h1 className="mt-0.5 text-xl sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-foreground">🧠 Fluxograma Clínico Inteligente</h1>
-            <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">Cruzamento idade × queixa × respondente × finalidade. Cada célula traz a escala de 1ª linha (Ouro); toque para abrir a que for preenchível.</p>
+            <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">Cruzamento idade × queixa × respondente × finalidade. Toque na <strong className="text-foreground">queixa</strong> para abrir o Filtro já preenchido; toque num <strong className="text-foreground">chip</strong> para abrir a escala.</p>
           </div>
         </div>
       </header>
@@ -106,10 +117,23 @@ export default function FluxogramaPage() {
               <div className="space-y-3">
                 {band.cells.map((cell) => (
                   <div key={cell.queixa} className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <span aria-hidden="true">{cell.emoji}</span>
-                      <span className="text-xs font-bold text-foreground">{cell.queixa}</span>
-                    </div>
+                    {cell.queixaId ? (
+                      <button
+                        type="button"
+                        onClick={() => openInFilter(band.ageBandId, cell.queixaId)}
+                        title={`Abrir no Filtro: ${cell.queixa} · ${band.ageLabel}`}
+                        className="group flex w-full items-center gap-1.5 rounded-lg px-1 py-0.5 text-left transition hover:bg-primary/5"
+                      >
+                        <span aria-hidden="true">{cell.emoji}</span>
+                        <span className="text-xs font-bold text-foreground">{cell.queixa}</span>
+                        <Filter className="ml-auto h-3 w-3 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1.5 px-1 py-0.5">
+                        <span aria-hidden="true">{cell.emoji}</span>
+                        <span className="text-xs font-bold text-foreground">{cell.queixa}</span>
+                      </div>
+                    )}
                     <PickChip pick={cell.ouro} variant="ouro" />
                     {cell.prata?.map((p) => <PickChip key={p.label + (p.sub ?? "")} pick={p} variant="prata" />)}
                   </div>
