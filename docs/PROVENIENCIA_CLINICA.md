@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 642
-- **Com fonte declarada:** 480
+- **Total de instrumentos:** 657
+- **Com fonte declarada:** 495
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -72,6 +72,7 @@
 | `brown-add` | Brown ADD | Brown TE, 2001 (Brown ADD Scales) | não |
 | `bus-story` | Bus Story | — | sim |
 | `cali` | CALI | — | sim |
+| `camuflagem-tea-neuroped` | Escala de Estratégias de Camuflagem no TEA | 2026-06-23 ESCALA-CAMUFLAGEM-TEA NEUROPED.docx — ESCALA DE ESTRATÉGIAS DE CAMUFLAGEM NO TEA — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2 | não |
 | `caps-ca` | CAPS-CA | National Institutes of Health (NIH), PubMed Central | não |
 | `cars` | CARS-2 | Schopler E et al., 2010 | não |
 | `casi` | CASI | Silverman WK et al., 1991 (Childhood Anxiety Sensitivity Index) | não |
@@ -144,6 +145,7 @@
 | `disc-auditiva` | Discriminação Auditiva | Pendente revisão clínica | sim |
 | `docs` | DOCS | Abramowitz JS et al., 2010 (Dimensional Obsessive-Compulsive Scale) | não |
 | `dp-4` | DP-4 | — | sim |
+| `drj-tdah-prejuizo-escolar` | Escala Escolar DRJ-TDAH | Escala_DRJ_TDAH_Prejuizo_Escolar_e_Medicacao.docx — ESCALA ESCOLAR DRJ-TDAH — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `dst-jr` | DST-Jr | — | sim |
 | `dubowitz` | Dubowitz Neurológico | Dubowitz L, Dubowitz V, Mercuri E, 1999 (Dubowitz Neurological Examination) | não |
 | `dvss` | DVSS | Farhat W et al., 2000 (Dysfunctional Voiding Symptom Score) | não |
@@ -151,22 +153,28 @@
 | `ead-das` | EAD (DAS) | Weissman AN, Beck AT. (Dysfunctional Attitudes Scale — DAS), 1978. | não |
 | `eaf` | EAF | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `eai` | EAI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `eani-fj` | Escala de Ansiedade Neuropediátrica Infantojuvenil Fraga-Jú… | EANI-FJ v1.0 Escala Ansiedade Neuropediatrica — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `easi` | EASI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ecar-si` | ECAR-SI NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ecbi` | ECBI | Eyberg SM & Ross AW, 1978 | não |
+| `eci-fraga` | Escala Cognitiva Infantil Fraga | ECI-Fraga Escala Cognitiva Infantil - uso clínico autoral (NeuroPed EDJ) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
+| `ecnfaj-1` | Escala de Cefaleia Neuropediátrica Fraga Araújo Júnior | ECNFAJ-1 — Escala de Cefaleia Neuropediátrica Fraga Araújo Júnior — Versão 1.0 — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `ecsm` | ECSM | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `eda` | EDA | Pendente revisão clínica | sim |
 | `edacs` | EDACS | Sellers D et al., 2014 (EDACS) | não |
 | `edi` | EDI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `edy-q` | EDY-Q | — | sim |
+| `efdi` | Escala Funcional Dr. Jadson (versões verbal e não verbal) | EFDI-V/NV - Escala Funcional Dr. Jadson - Triagem clínica - uso profissional — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `emdi` | EMDI | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ems` | EMS-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não |
 | `eowpvt` | EOWPVT | — | sim |
 | `eowpvt4` | EOWPVT-4 | Martin NA, Brownell R, 2011 (EOWPVT-4), Academic Therapy | não |
+| `epil-ne` | Escala de Avaliação Epileptológica Neuropediátrica Nordesti… | EPIL-NE v1.0 Escala Epilepsia DrJadson — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `epilepsia-diario` | Diário de Crises | Ferramenta de registro clínico NeuroPed (diário de crises) | não |
 | `erc` | ERC | Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist) | não |
 | `esi-r` | ESI-R | — | sim |
+| `esm-edj` | Escala de Satisfação com a Medicação | ESM-EDJ — Escala de Satisfação com a Medicação (ESM-EDJ-2025-v1.0 · PANT v7.2.1) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `ess-adol` | ESS Adolescente | Johns MW, 1991 (Epworth Sleepiness Scale); versão pediátrica Melendres MC et al., 2004 (ESS-DASC) | não |
 | `ess-chad` | ESS-CHAD | — | sim |
 | `etare` | ETARE-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
@@ -175,6 +183,7 @@
 | `evt-3` | EVT-3 | — | sim |
 | `evt2` | EVT-2 | Williams KT, 2007 (EVT-2), Pearson | não |
 | `faces` | FACES | International Association for the Study of Pain (IASP) | não |
+| `farol-escolar` | FAROL Escolar 6–17 | FAROL Escolar 6-17 - Escala Autoral Dr Jadson - Versao Refinada — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `fas-fluencia` | FAS Fluência Verbal | Benton AL, Hamsher K, 1976 (Controlled Oral Word Association — FAS) | não |
 | `fas-pr` | FAS-PR | Calvocoressi L et al., 1999 (Family Accommodation Scale) | não |
 | `fdi` | FDI | — | sim |
@@ -208,6 +217,7 @@
 | `icg-youth` | ICG-Youth | — | sim |
 | `ims` | IMS | Piper MC, Darrah J, 1994 (Alberta Infant Motor Scale); validação BR Saccani & Valentini, 2012 | não |
 | `infanib` | INFANIB | Ellison PH, 1994 (INFANIB) | não |
+| `inventario-fono-drj` | Inventário Fonoaudiológico Autoral – Dr. Jadson Fraga | ESCALA FONOAUDIOLOGICA.docx — INVENTÁRIO FONOAUDIOLÓGICO AUTORAL – DR. JADSON FRAGA (CHECKLIST DE ACOMPANHAMENTO) — instrumento autoral Dr. Jadson Fraga (import | não |
 | `ipes` | IPES | Camfield C et al., 2001 (Impact of Pediatric Epilepsy Scale) | não |
 | `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `irs` | IRS | — | sim |
@@ -336,6 +346,7 @@
 | `mfq-p` | MFQ-P | — | sim |
 | `migraine-pd` | Migraine-PD | — | sim |
 | `mini-macs` | Mini-MACS | — | sim |
+| `mnp-psi-100` | MATRIX-NEUROPED PSI 100 | 2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `moas` | MOAS | — | sim |
 | `mullen` | Mullen | Mullen EM, 1995 (Mullen Scales of Early Learning), AGS/Pearson | não |
 | `napi` | NAPI | Korner AF et al., 1987 (Neurobehavioral Assessment of the Preterm Infant) | não |
@@ -343,6 +354,8 @@
 | `ncbrf` | NCBRF | — | sim |
 | `nddi-e-y` | NDDI-E-Y | — | sim |
 | `nddie` | NDDI-E | Gilliam FG et al., 2006 (NDDI-E) | não |
+| `ndi-360` | Escala Integrada Neurodesenvolvimental e Neuropsiquiátrica… | ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
+| `nepedq` | Escala Pedagógica Neuropediátrica | NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica \| NeuroPed App — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `nepsy2` | NEPSY-II | Korkman M et al., 2007 | não |
 | `nepsy2-affect` | NEPSY-2 Affect | — | sim |
 | `nepsy2-attention` | NEPSY-2 Attention | — | sim |
@@ -605,6 +618,7 @@
 | `step` | STEP | — | sim |
 | `stroop` | Stroop | Golden CJ, 1978 (Stroop Color and Word Test); Stroop JR, 1935 | não |
 | `tde` | TDE | Stein LM, 1994 | não |
+| `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (importado do G | não |
 | `tea-ch2` | TEA-Ch2 | — | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não |
 | `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
@@ -614,6 +628,7 @@
 | `tine` | TINE | Neuro-Developmental Treatment Association, open-access research | não |
 | `tmt` | Trail Making A e B | Reitan RM, 1958 (Trail Making Test A & B) | não |
 | `tnl-2` | TNL-2 | — | sim |
+| `toc-drj-psicologia` | Escala Clínica de Gravidade do TOC – Adolescentes | ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07) | não |
 | `token-test` | Token Test | De Renzi E, Vignolo LA, 1962 (Token Test) | não |
 | `tol-du` | TOL-DU | — | sim |
 | `told-p5` | TOLD-P:5 | Newcomer PL, Hammill DD, 2008 (TOLD-P:5), PRO-ED | não |
