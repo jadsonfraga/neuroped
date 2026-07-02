@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -391,6 +391,22 @@ function QuizModule({ questions, onComplete }: {
   const q = questions[idx];
   const isCorrect = selected === q?.answer;
 
+  // Embaralha a ordem das alternativas por questão para que a resposta correta
+  // NÃO fique sempre na primeira posição. A ordem é estável durante a questão
+  // (não re-embaralha no feedback) e é sorteada de novo a cada nova questão /
+  // a cada nova tentativa (o módulo remonta ao "Refazer"). A pontuação continua
+  // comparando o texto escolhido com q.answer, então baralhar não afeta o placar.
+  const displayOptions = useMemo(() => {
+    const cur = questions[idx];
+    if (!cur) return [];
+    const a = [...cur.options];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }, [idx, questions]);
+
   function pick(opt: string) {
     if (phase !== "question") return;
     setSelected(opt);
@@ -432,7 +448,7 @@ function QuizModule({ questions, onComplete }: {
       </div>
 
       <div className={`grid gap-2 ${q.big ? "grid-cols-2" : "grid-cols-1"}`}>
-        {q.options.map((opt) => {
+        {displayOptions.map((opt) => {
           let cls = "rounded-2xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97]";
           if (phase === "feedback") {
             if (opt === q.answer) cls += " border-emerald-500 bg-emerald-50 shadow-sm shadow-emerald-500/10 dark:border-emerald-600 dark:bg-emerald-950/40";
