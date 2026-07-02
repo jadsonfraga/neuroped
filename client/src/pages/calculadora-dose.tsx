@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Calculator, AlertTriangle, CheckCircle, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
@@ -108,15 +109,13 @@ export default function CalculadoraDosePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
-          <Calculator className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold">Calculadora de Dose Pediátrica</h1>
-          <p className="text-xs text-muted-foreground">Cálculo por peso — neuropediatria</p>
-        </div>
-      </div>
+      <PageHero
+        icon={Calculator}
+        eyebrow="dose pediátrica"
+        title="Calculadora de Dose Pediátrica"
+        subtitle="Cálculo por peso — neuropediatria."
+        gradient="from-blue-500 to-cyan-500"
+      />
 
       <Card className="border-card-border">
         <CardContent className="p-5 space-y-5">

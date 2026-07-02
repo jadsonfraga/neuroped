@@ -9,7 +9,10 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "shadcn-card rounded-xl border bg-card border-card-border text-card-foreground shadow-sm",
+      // Base "Lovable": cantos mais suaves (rounded-2xl). O hover-lift já vem do
+      // CSS global de .shadcn-card; aqui só suavizamos o raio. twMerge garante
+      // que qualquer raio próprio da página vença.
+      "shadcn-card rounded-2xl border bg-card border-card-border text-card-foreground shadow-sm",
       className
     )}
     {...props}

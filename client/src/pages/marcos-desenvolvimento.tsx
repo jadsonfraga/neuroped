@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Baby, Move, Hand, MessageCircle, Users, AlertTriangle, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageHero } from "@/components/PageHero";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
@@ -695,17 +696,13 @@ export default function MarcosDesenvolvimentoPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Baby className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Marcos do Desenvolvimento</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Checklist baseado nos marcos OMS/CDC. Desmarque os marcos não atingidos para avaliação.
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={Baby}
+        eyebrow="desenvolvimento infantil"
+        title="Marcos do Desenvolvimento"
+        subtitle="Checklist baseado nos marcos OMS/CDC. Desmarque os marcos não atingidos para avaliação."
+        gradient="from-amber-500 to-orange-500"
+      />
 
       <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 flex items-start gap-2">
         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-500" />

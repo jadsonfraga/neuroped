@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Activity, AlertTriangle, Calculator } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -446,17 +447,13 @@ export default function ValoresReferenciaPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Activity className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Valores de Referência Pediátrica</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Sinais vitais, laboratório e calculadora de equipamentos por peso/idade.
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={Activity}
+        eyebrow="referência pediátrica"
+        title="Valores de Referência Pediátrica"
+        subtitle="Sinais vitais, laboratório e calculadora de equipamentos por peso/idade."
+        gradient="from-rose-500 to-red-600"
+      />
 
       <Tabs defaultValue="vitais" className="w-full">
         <TabsList className="h-auto gap-1 p-1 mb-2">

@@ -37,3 +37,25 @@ export const BUILD_INFO = ${JSON.stringify(info, null, 2)} as const;
 
 writeFileSync(new URL("../functions/api/_buildInfo.ts", import.meta.url), out);
 console.log(`[gen-build-info] ${info.version} · ${info.commit} · ${info.branch} · ${info.buildDate}`);
+
+// No VERCEL, sobrescreve o deploy-check.json com o commit REAL do build. Os
+// workflows de GitHub Pages/Cloudflare já fazem isso por conta própria (por isso
+// o gate em process.env.VERCEL) — o Vercel usa integração nativa de Git e não roda
+// aqueles steps, então o sentinel "pending-deploy-workflow" ficava congelado.
+if (process.env.VERCEL) {
+  const vercelCommit = (process.env.VERCEL_GIT_COMMIT_SHA || commit).slice(0, 12);
+  const vercelBranch = process.env.VERCEL_GIT_COMMIT_REF || branch;
+  const check = {
+    app: "NeuroPed",
+    provider: "vercel",
+    branch: vercelBranch,
+    commit: vercelCommit,
+    deployed_at_utc: info.buildDate,
+    status: "deployed",
+  };
+  writeFileSync(
+    new URL("../client/public/deploy-check.json", import.meta.url),
+    JSON.stringify(check, null, 2) + "\n",
+  );
+  console.log(`[gen-build-info] deploy-check.json (Vercel) → ${vercelCommit} @ ${vercelBranch}`);
+}
