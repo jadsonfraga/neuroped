@@ -2400,6 +2400,105 @@ const aq10Items: Record<string, InteractiveScaleDef> = {
   },
 };
 
+// ------------------------------------------------------------
+// LOTE 1 de escalas gratuitas que estavam só como ficha (agora preenchíveis).
+// Instrumentos de domínio público / uso livre; itens em redação clínica própria
+// (critérios objetivos), com a fonte creditada. Triagem — não diagnóstico.
+// ------------------------------------------------------------
+const P012_LABELS = ["0 ponto", "1 ponto", "2 pontos"];
+const freeBatch1Items: Record<string, InteractiveScaleDef> = {
+  apgar: {
+    instruction: "Avalie o recém-nascido no 1º e no 5º minuto de vida. Some os 5 componentes (0–10). Maior pontuação = melhor vitalidade.",
+    infoBox: "APGAR (Virginia Apgar, 1953) — domínio público. Avaliação de vitalidade ao nascer; repita no 1º, 5º (e 10º) minuto. Não substitui o julgamento neonatal.",
+    labels: P012_LABELS,
+    optionPoints: [0, 1, 2],
+    scoreDirection: "higher_better",
+    totalLabel: "vitalidade (0–10)",
+    bands: [
+      { minPct: 70, classification: "Boa vitalidade (7–10)", color: "emerald", description: "Recém-nascido vigoroso. Cuidados de rotina; reavaliar no 5º minuto." },
+      { minPct: 40, classification: "Depressão moderada (4–6)", color: "amber", description: "Depressão moderada. Estimulação, aquecimento e assistência conforme protocolo de reanimação neonatal." },
+      { minPct: 0, classification: "Depressão grave (0–3)", color: "red", description: "Depressão grave. Reanimação neonatal imediata." },
+    ],
+    domains: [
+      { name: "Componentes APGAR", color: "text-rose-600 dark:text-rose-400", items: [
+        "Frequência cardíaca — 0: ausente · 1: menor que 100 bpm · 2: 100 bpm ou mais",
+        "Esforço respiratório — 0: ausente · 1: irregular ou choro fraco · 2: choro forte, respiração regular",
+        "Tônus muscular — 0: flácido · 1: alguma flexão de extremidades · 2: movimento ativo, boa flexão",
+        "Irritabilidade reflexa — 0: sem resposta ao estímulo · 1: careta · 2: choro, tosse ou espirro",
+        "Cor da pele — 0: cianótico ou pálido · 1: corpo rosado com extremidades azuladas · 2: totalmente rosado",
+      ] },
+    ],
+  },
+  cries: {
+    instruction: "Avalie os 5 sinais de dor pós-operatória no recém-nascido/lactente. Some (0–10). Maior pontuação = mais dor.",
+    infoBox: "CRIES (Krechel SW & Bildner J, 1995) — instrumento de uso livre. Dor pós-operatória neonatal; reavaliar em série. Itens em redação própria; não substitui avaliação clínica.",
+    labels: P012_LABELS,
+    optionPoints: [0, 1, 2],
+    scoreDirection: "higher_worse",
+    totalLabel: "dor (0–10)",
+    bands: [
+      { minPct: 70, classification: "Dor severa (≥7)", color: "red", description: "Dor intensa. Intervenção analgésica e reavaliação precoce." },
+      { minPct: 30, classification: "Dor moderada (4–6)", color: "amber", description: "Dor moderada. Considerar analgesia e medidas de conforto." },
+      { minPct: 0, classification: "Dor mínima/ausente (0–3)", color: "emerald", description: "Sem dor significativa. Manter conforto e observação." },
+    ],
+    domains: [
+      { name: "Sinais CRIES", color: "text-amber-600 dark:text-amber-400", items: [
+        "Choro — 0: ausente ou não agudo · 1: agudo, mas consolável · 2: agudo e inconsolável",
+        "Necessidade de oxigênio para SatO₂ acima de 95% — 0: não · 1: até 30% · 2: mais de 30%",
+        "Aumento de sinais vitais (FC e PA) — 0: iguais ou abaixo do basal · 1: aumento de até 20% · 2: aumento acima de 20%",
+        "Expressão facial — 0: relaxada/neutra · 1: careta · 2: careta com grunhido",
+        "Sono nas últimas horas — 0: dorme normalmente · 1: desperta em intervalos frequentes · 2: permanece acordado",
+      ] },
+    ],
+  },
+  "eva-ped": {
+    instruction: "Peça à criança para indicar a intensidade da dor de 0 (sem dor) a 10 (pior dor imaginável). Requer compreensão abstrata — a partir de ~7 anos.",
+    infoBox: "Escala Visual Analógica adaptada. Autorrelato de dor; combine com observação quando a criança não conseguir abstrair a régua de 0–10.",
+    labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+    optionPoints: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    scoreDirection: "higher_worse",
+    totalLabel: "intensidade da dor (0–10)",
+    bands: [
+      { minPct: 70, classification: "Dor intensa (7–10)", color: "red", description: "Dor intensa. Analgesia e reavaliação." },
+      { minPct: 40, classification: "Dor moderada (4–6)", color: "orange", description: "Dor moderada. Considerar analgesia e medidas de conforto." },
+      { minPct: 10, classification: "Dor leve (1–3)", color: "amber", description: "Dor leve. Medidas de conforto e observação." },
+      { minPct: 0, classification: "Sem dor (0)", color: "emerald", description: "Sem dor relatada no momento." },
+    ],
+    domains: [
+      { name: "Intensidade da dor", color: "text-rose-600 dark:text-rose-400", items: [
+        "Intensidade da dor agora (0 = sem dor · 10 = pior dor imaginável)",
+      ] },
+    ],
+  },
+  dvss: {
+    instruction: "Pensando no último mês, marque a frequência de cada situação. Some (0–30). Maior pontuação = mais sintomas de disfunção miccional.",
+    infoBox: "DVSS — Dysfunctional Voiding Symptom Score (Farhat W et al., 2000), uso livre. Itens em redação própria. Cortes de referência aproximados: meninos ≥9 e meninas ≥6 sugerem disfunção miccional — confirmar clinicamente. Triagem, não diagnóstico.",
+    labels: ["Quase nunca (0)", "Menos da metade das vezes (1)", "Cerca de metade das vezes (2)", "Quase sempre (3)"],
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "sintomas miccionais (0–30)",
+    bands: [
+      { minPct: 30, classification: "Acima do corte de referência", color: "red", description: "Sintomas relevantes — investigar disfunção miccional (confira o corte por sexo). Orientar hábito miccional/intestinal." },
+      { minPct: 15, classification: "Sintomas leves/limítrofes", color: "amber", description: "Sintomas leves. Reforçar hidratação, rotina miccional e tratar constipação; reavaliar." },
+      { minPct: 0, classification: "Poucos sintomas", color: "emerald", description: "Poucos sintomas miccionais neste período." },
+    ],
+    domains: [
+      { name: "Sintomas do último mês", color: "text-cyan-600 dark:text-cyan-400", items: [
+        "Escapou urina na roupa durante o dia",
+        "Quando escapa, molha a roupa íntima (poucas gotas) sem perceber",
+        "Sente vontade súbita e precisa correr ao banheiro (urgência)",
+        "Faz manobras para segurar (cruza as pernas, agacha, aperta a região)",
+        "Precisa fazer força ou empurrar para começar a urinar",
+        "Urina poucas vezes ao dia (1 a 2 vezes)",
+        "Sente dor ou ardência ao urinar",
+        "Tem evacuação difícil, endurecida ou infrequente (constipação)",
+        "Adia ir ao banheiro / segura o xixi o máximo possível",
+        "Passou por situação estressante recente (mudança, escola, família)",
+      ] },
+    ],
+  },
+};
+
 export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...j26Bloco1Items,
   ...j26Bloco2Items,
@@ -2409,6 +2508,7 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...interactiveScaleItemsCore,
   ...atecItems,
   ...aq10Items,
+  ...freeBatch1Items,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
