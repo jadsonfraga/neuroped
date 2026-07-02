@@ -582,12 +582,21 @@ export default function FiltroPage() {
     return () => { alive = false; };
   }, []);
 
+  // Dedup de instrumento: uma escala mundial (world-*) que duplica um instrumento
+  // já presente no app (mesmo nome — ex.: SDQ, M-CHAT-R/F, Vanderbilt, SCARED…) é
+  // redundante. A versão do app é a canônica; a cópia mundial sai do catálogo do
+  // filtro para não contar/aparecer o mesmo instrumento duas vezes.
+  const dedupedWorld = useMemo(() => {
+    const appNames = new Set(CORE_FILTERABLE_CATALOG.map((s) => norm(s.name)));
+    return world.filter((s) => !(s.id.startsWith("world-") && appNames.has(norm(s.name))));
+  }, [world]);
+
   // Catálogo do filtro = apenas escalas que abrem uma APLICAÇÃO completa e
   // preenchível dentro do app. Fichas técnicas (/generic-scale), catálogo mundial
   // genérico e instrumentos externos/licenciados não aparecem no ranking.
   const catalog = useMemo(() => {
-    return unique([...CORE_FILTERABLE_CATALOG, ...world]).filter((scale) => opensInApp(scale) && isFullApp(scale));
-  }, [world]);
+    return unique([...CORE_FILTERABLE_CATALOG, ...dedupedWorld]).filter((scale) => opensInApp(scale) && isFullApp(scale));
+  }, [dedupedWorld]);
 
   const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
 
@@ -796,7 +805,7 @@ export default function FiltroPage() {
       {/* Métricas — faixa fina com divisores (consistente com a Home) */}
       <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card/70 to-card/30 shadow-sm" aria-label="Métricas do filtro">
         <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Filtráveis</p></div>
-        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{world.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
+        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{dedupedWorld.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
         <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.filter((s) => s.licencaUso === "livre").length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Gratuitas</p></div>
       </section>
 
