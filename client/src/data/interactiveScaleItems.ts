@@ -2499,6 +2499,95 @@ const freeBatch1Items: Record<string, InteractiveScaleDef> = {
   },
 };
 
+// ------------------------------------------------------------
+// LOTE 2 — classificações funcionais do CanChild (família GMFCS), uso livre
+// com citação. Item único: seleção do nível funcional (I–V). Níveis descritos
+// em redação clínica própria; fonte creditada. Apoio à classificação, não
+// diagnóstico. Maior nível = maior limitação.
+// ------------------------------------------------------------
+// 5 faixas monotônicas I→V (0..4 pontos): pickBand por % do máximo.
+const LEVEL5_BANDS = (labels: [string, string, string, string, string]): InteractiveBand[] => [
+  { minPct: 88, classification: `Nível V — ${labels[4]}`, color: "red", description: `Nível V. ${labels[4]}` },
+  { minPct: 63, classification: `Nível IV — ${labels[3]}`, color: "orange", description: `Nível IV. ${labels[3]}` },
+  { minPct: 38, classification: `Nível III — ${labels[2]}`, color: "amber", description: `Nível III. ${labels[2]}` },
+  { minPct: 13, classification: `Nível II — ${labels[1]}`, color: "amber", description: `Nível II. ${labels[1]}` },
+  { minPct: 0, classification: `Nível I — ${labels[0]}`, color: "emerald", description: `Nível I. ${labels[0]}` },
+];
+const freeBatch2Items: Record<string, InteractiveScaleDef> = {
+  macs: {
+    instruction: "Selecione o nível que melhor descreve como a criança MANUSEIA OBJETOS nas atividades do dia a dia (não a melhor capacidade em teste, mas o desempenho habitual).",
+    infoBox: "MACS — Manual Ability Classification System (Eliasson AC et al., CanChild), uso livre com citação. Classificação de apoio para paralisia cerebral; níveis em redação própria. Não é diagnóstico.",
+    labels: [
+      "Nível I — manuseia objetos com facilidade e sucesso",
+      "Nível II — manuseia a maioria, com qualidade/rapidez um pouco reduzidas",
+      "Nível III — manuseia com dificuldade; precisa de ajuda para preparar/adaptar",
+      "Nível IV — manuseia seleção limitada de objetos fáceis, em situação adaptada",
+      "Nível V — não manuseia objetos; capacidade muito limitada",
+    ],
+    optionPoints: [0, 1, 2, 3, 4],
+    scoreDirection: "higher_worse",
+    totalLabel: "nível manual (I–V)",
+    bands: LEVEL5_BANDS([
+      "Manuseia objetos com facilidade e sucesso.",
+      "Manuseia a maioria dos objetos, com qualidade ou rapidez um pouco reduzidas.",
+      "Manuseia objetos com dificuldade; precisa de ajuda para preparar ou adaptar a atividade.",
+      "Manuseia uma seleção limitada de objetos fáceis, em situações adaptadas.",
+      "Não manuseia objetos; capacidade muito limitada mesmo em ações simples.",
+    ]),
+    domains: [{ name: "Classificação da habilidade manual", color: "text-teal-600 dark:text-teal-400", items: [
+      "Nível de habilidade manual no dia a dia",
+    ] }],
+  },
+  cfcs: {
+    instruction: "Selecione o nível que melhor descreve a EFICÁCIA DA COMUNICAÇÃO da criança no dia a dia, considerando emissor e receptor, com pessoas conhecidas e desconhecidas.",
+    infoBox: "CFCS — Communication Function Classification System (Hidecker MJC et al., CanChild), uso livre com citação. Classificação de apoio; níveis em redação própria. Não é diagnóstico.",
+    labels: [
+      "Nível I — comunica-se com eficácia com conhecidos e desconhecidos",
+      "Nível II — eficaz, porém mais lento, com conhecidos e desconhecidos",
+      "Nível III — comunica-se com eficácia com pessoas conhecidas",
+      "Nível IV — comunicação inconsistente, mesmo com conhecidos",
+      "Nível V — raramente comunica-se com eficácia, mesmo com conhecidos",
+    ],
+    optionPoints: [0, 1, 2, 3, 4],
+    scoreDirection: "higher_worse",
+    totalLabel: "nível de comunicação (I–V)",
+    bands: LEVEL5_BANDS([
+      "Emissor e receptor eficaz com parceiros conhecidos e desconhecidos.",
+      "Emissor e receptor eficaz, porém mais lento, com conhecidos e desconhecidos.",
+      "Emissor e receptor eficaz com parceiros conhecidos.",
+      "Emissor e/ou receptor inconsistente com parceiros conhecidos.",
+      "Emissor e receptor raramente eficaz, mesmo com parceiros conhecidos.",
+    ]),
+    domains: [{ name: "Classificação da comunicação", color: "text-blue-600 dark:text-blue-400", items: [
+      "Nível de eficácia da comunicação no dia a dia",
+    ] }],
+  },
+  edacs: {
+    instruction: "Selecione o nível que melhor descreve a HABILIDADE DE COMER E BEBER da criança, priorizando SEGURANÇA (via aérea) e, depois, eficiência.",
+    infoBox: "EDACS — Eating and Drinking Ability Classification System (Sellers D et al.), uso livre com citação. Classificação de apoio; níveis em redação própria. Sinais de aspiração exigem avaliação especializada. Não é diagnóstico.",
+    labels: [
+      "Nível I — come e bebe com segurança e eficiência",
+      "Nível II — come e bebe com segurança, com eficiência reduzida",
+      "Nível III — alguma limitação de segurança; eficiência reduzida",
+      "Nível IV — limitação significativa de segurança",
+      "Nível V — incapaz de comer/beber com segurança; pode exigir via alternativa",
+    ],
+    optionPoints: [0, 1, 2, 3, 4],
+    scoreDirection: "higher_worse",
+    totalLabel: "nível alimentar (I–V)",
+    bands: LEVEL5_BANDS([
+      "Come e bebe com segurança e eficiência.",
+      "Come e bebe com segurança, mas com eficiência reduzida.",
+      "Come e bebe com alguma limitação de segurança; eficiência reduzida.",
+      "Come e bebe com limitação significativa de segurança.",
+      "Incapaz de comer/beber com segurança; pode requerer nutrição por via alternativa.",
+    ]),
+    domains: [{ name: "Classificação de comer e beber", color: "text-lime-600 dark:text-lime-400", items: [
+      "Nível de habilidade para comer e beber com segurança",
+    ] }],
+  },
+};
+
 export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...j26Bloco1Items,
   ...j26Bloco2Items,
@@ -2509,6 +2598,7 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...atecItems,
   ...aq10Items,
   ...freeBatch1Items,
+  ...freeBatch2Items,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
