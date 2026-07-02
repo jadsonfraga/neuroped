@@ -71,6 +71,7 @@ export const navSections: NavSection[] = [
       { href: "/efeitos-colaterais", label: "Efeitos percebidos", icon: Pill },
       { href: "/recepcao", label: "Painel da recepção", icon: Users },
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
+      { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
     ],
   },
   {

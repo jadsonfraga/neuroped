@@ -33,6 +33,7 @@ const ScaredPage = lazy(() => import("@/pages/scared"));
 const ConnersPage = lazy(() => import("@/pages/conners"));
 const VinelandPage = lazy(() => import("@/pages/vineland"));
 const PantPage = lazy(() => import("@/pages/pant"));
+const FluxogramaPage = lazy(() => import("@/pages/fluxograma"));
 const Cdi2Page = lazy(() => import("@/pages/cdi2"));
 const PhqaPage = lazy(() => import("@/pages/phqa"));
 const CssrsPage = lazy(() => import("@/pages/cssrs"));
@@ -192,6 +193,7 @@ function AppRouter() {
           <Route path="/conners" component={ConnersPage} />
           <Route path="/vineland" component={VinelandPage} />
           <Route path="/pant"><Protected roles={["admin", "professional"]}><PantPage /></Protected></Route>
+          <Route path="/fluxograma" component={FluxogramaPage} />
           <Route path="/cdi2" component={Cdi2Page} />
           <Route path="/phqa" component={PhqaPage} />
           <Route path="/cssrs" component={CssrsPage} />
