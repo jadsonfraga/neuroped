@@ -5,6 +5,7 @@ import { escalasImportadasV25Ebook } from "./escalasImportadasV25Ebook";
 import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
 import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImportadas2026";
+import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
@@ -769,6 +770,10 @@ const allScalesBase: ScaleEntry[] = [
   ...scalasOpenAccessMundiais,
   ...todasAsEscalasComplementares,
   ...escalasPsiquiatricasImportadas2026,
+  // Escalas/inventários autorais de neuropediatria importados do Google Drive
+  // do Dr. Jadson (2026-07): 13 com aplicação interativa completa
+  // (interactiveScaleItemsDrive2026) + fichas técnicas honestas.
+  ...escalasImportadasDrive2026,
 ];
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
