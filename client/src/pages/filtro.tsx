@@ -44,7 +44,7 @@ import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterR
 import { getClinicalTiers } from "@/data/clinicalRanking";
 import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
-import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
+import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
 import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
@@ -1046,24 +1046,23 @@ export default function FiltroPage() {
         </div>
       )}
 
-      {/* Refined Signal Selector — appears when 1 queixa + age selected */}
-      {selectedQueixas.length === 1 && selectedAge && (
-        <section className="rounded-2xl border border-teal-200/40 bg-gradient-to-br from-teal-50/50 to-cyan-50/50 dark:border-teal-800/40 dark:from-teal-950/20 dark:to-cyan-950/20 p-4 sm:p-5">
-          <RefinedSignalSelector
-            queixaId={selectedQueixas[0]}
-            queixaLabel={queixas.find(q => q.id === selectedQueixas[0])?.label || ""}
-            ageMonths={Math.round(((faixasEtarias.find(f => f.id === selectedAge)?.min ?? 0) + (faixasEtarias.find(f => f.id === selectedAge)?.max ?? 0)) / 2)}
+      {/* Sintomas populares — aparece assim que uma queixa é marcada (não exige
+          idade). Muitos sinais em linguagem de pai/mãe, tocáveis, estilo Lovable. */}
+      {selectedQueixas.length >= 1 && (
+        <div className="mt-4">
+          <PopularSymptomPicker
+            selectedQueixas={selectedQueixas}
             selectedSignalIds={selectedSignalIds}
-            onSignalToggle={(signalId) => {
+            onToggle={(signalId) => {
+              softTick(); haptic.select();
               setSelectedSignalIds(prev =>
                 prev.includes(signalId) ? prev.filter(x => x !== signalId) : [...prev, signalId]
               );
             }}
-            onRecommendationSelect={() => {
-              softTick(); haptic.select();
-            }}
+            onClear={() => { softTap(); haptic.tap(); setSelectedSignalIds([]); }}
+            onHover={() => softHover()}
           />
-        </section>
+        </div>
       )}
         </div>
 

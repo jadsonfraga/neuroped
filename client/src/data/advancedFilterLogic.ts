@@ -16,6 +16,7 @@ import {
 import { interactiveScaleItems } from "./interactiveScaleItems";
 import { interactiveScales } from "./interactiveScales";
 import { getAllSignalsForQueixa } from "./signalsAndSymptoms";
+import { popularSymptomById } from "./popularSymptoms";
 
 export const SAFE_EMPTY_MESSAGE =
   "Nenhuma escala segura encontrada para este perfil. Revise idade, queixa ou respondente.";
@@ -357,6 +358,12 @@ function selectedSignalText(ctx: FilterContext): string {
     for (const signal of getAllSignalsForQueixa(queixa)) {
       if (ids.has(signal.id)) labels.push(signal.label, signal.description);
     }
+  }
+  // Sintomas populares (linguagem de pai/mãe) — resolve o rótulo pelo id para
+  // que a marcação também case por token com a descrição/tags da escala.
+  for (const id of ids) {
+    const popular = popularSymptomById[id];
+    if (popular) labels.push(popular.label);
   }
   return [...ids, ...labels].join(" ");
 }
