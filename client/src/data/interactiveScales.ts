@@ -14,6 +14,7 @@
  * A chave do registro é o `id` da escala no catálogo (scaleFilter), de modo que
  * a rota /generic-scale/:id passa a abrir a aplicação interativa.
  */
+import { driveRunner2026 } from "./interactiveScalesDrive2026";
 
 export interface InteractiveOption {
   /** Texto da opção mostrada ao respondente. */
@@ -582,6 +583,9 @@ const PSC17: InteractiveScaleDef = {
 };
 
 export const interactiveScales: Record<string, InteractiveScaleDef> = {
+  // Escalas autorais do Drive cujo escore exige opções por item (invertidos,
+  // pesos por domínio, nota ponderada) — ver interactiveScalesDrive2026.ts.
+  ...driveRunner2026,
   "q-chat-10": QCHAT10,
   "psc17": PSC17,
   "fps-r": FPSR,

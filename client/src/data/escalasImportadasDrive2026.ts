@@ -31,7 +31,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "10–15 min",
     description:
       "Instrumento autoral experimental do Dr. Jadson Fraga Araújo Júnior (NeuroPed EDJ) que organiza, em uma única matriz de 12 domínios, sinais de desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia/eventos paroxísticos, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade adaptativa. Não visa fechar diagnóstico automaticamente, mas oferecer uma fotografia clínica ampla para consulta, laudo, plano terapêutico, comunicação com a…",
-    fonte: "ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1xKSm4urW_cgv5qZJzEk6jMMThe8Z_5oGm7PqUSvsSZ8/edit",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -53,7 +53,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "20–30 min",
     description:
       "Escala autoral experimental do Dr. Jadson Fraga Araújo Júnior que integra, em uma única estrutura clínica, sinais de neurodesenvolvimento, atenção, funções executivas, linguagem, aprendizagem, comportamento, autorregulação sensorial, sono, epilepsia, sofrimento emocional e funcionalidade em crianças e adolescentes de 3 a 17 anos e 11 meses. São 100 itens pontuados de 0 a 3, distribuídos em 10 domínios, com interpretação por média global, média por domínio, perfis clínicos (A…",
-    fonte: "2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1M5DH27_CCCZiwV2O7Xe43OIoYsznG8cV0HsgfE74rqU/edit",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -75,7 +75,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "20–30 min",
     description:
       "Instrumento autoral de triagem assistiva complementar do Dr. Jadson Fraga (neuropediatria), preenchido pelo professor que acompanha o aluno com maior frequência, após tempo mínimo ideal de 6 semanas de convivência escolar. Rastreia sinais observacionais de neurodesenvolvimento em 10 blocos (78 itens): aprendizagem, atenção/funções executivas, hiperatividade/impulsividade, linguagem, interação social, flexibilidade/sensorialidade, regulação emocional, oposição/conduta, autono…",
-    fonte: "FAROL Escolar 6-17 - Escala Autoral Dr Jadson - Versao Refinada — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "FAROL Escolar 6-17 - Escala Autoral Dr Jadson - Versao Refinada — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1O2_sooW5iREbpkDmwU9GIMzT0jnOFPBTqAIb64M04JI/edit",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -97,7 +97,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "12–18 min",
     description:
       "Escala autoral de 42 itens em 6 subdomínios para rastreamento de ansiedade clinicamente relevante em crianças e adolescentes de 4 a 17 anos e 11 meses, adaptada ao contexto clínico e cultural do Nordeste brasileiro. Baseada em SCARED, MASC-2, PARS, STAIC, RCADS, GAD-7 pediátrico e PSWQ-C, com linguagem acessível e expressões somáticas regionais. Disponível em versão Parental (P, obrigatória abaixo de 10 anos), Autoavaliação (A, 10–17 anos) e Combinada (C). Período de referên…",
-    fonte: "EANI-FJ v1.0 Escala Ansiedade Neuropediatrica — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "EANI-FJ v1.0 Escala Ansiedade Neuropediatrica — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1VQ0gDqb3hpOTTmjjbCAD2eRuotuF9YwF/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -119,7 +119,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "12–18 min",
     description:
       "Escala autoral de rastreamento multidimensional desenvolvida para a realidade clínica pediátrica do Nordeste brasileiro. Avalia cinco domínios — semiologia ictal, padrão temporal, repercussão funcional, carga farmacológica e determinantes contextuais — gerando um Índice de Complexidade Epileptológica (ICE, 0–100) que orienta a intensidade do seguimento, a urgência de investigação e a necessidade de ajuste terapêutico. Fundamentada nos sistemas ILAE 2017–2022, na CHESS, no QO…",
-    fonte: "EPIL-NE v1.0 Escala Epilepsia DrJadson — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "EPIL-NE v1.0 Escala Epilepsia DrJadson — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/15bpDryG5jUETchx7f-Nl2INHEmnX00Gn/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -141,7 +141,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "15–20 min",
     description:
       "Instrumento autoral do Dr. Jadson Fraga Araújo Júnior para avaliação multidimensional da cefaleia na infância e adolescência, com adaptação contextual ao semiárido nordestino (Petrolina/PE). Combina escala de faces de intensidade (EFD-7, 0–10), diário de crises de 30 dias, questionário funcional de 12 itens (QF-12) sobre os últimos 3 meses, módulo de gatilhos e contexto nordestino, checklist de sinais de alarme (red flags) e classificação diagnóstica IPAF-3D (Impacto · Padrã…",
-    fonte: "ECNFAJ-1 — Escala de Cefaleia Neuropediátrica Fraga Araújo Júnior — Versão 1.0 — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "ECNFAJ-1 — Escala de Cefaleia Neuropediátrica Fraga Araújo Júnior — Versão 1.0 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1tY1r9Q7p54cLxeOqDW2XpfGMaawVwoDZ/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -163,37 +163,59 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "10–15 min",
     description:
       "Instrumento clínico proprietário do Dr. Jadson Fraga Araújo Júnior para avaliação multidimensional da satisfação com a farmacoterapia em neuropediatria. Composto por 6 módulos (eficácia percebida, tolerabilidade/efeitos adversos, adesão, qualidade de vida, experiência relacional médico–família e avaliação global), em escala Likert de 5 pontos, com pontuação total de 0 a 120 e índice percentual de satisfação. Oferece quatro versões: A (cuidador/responsável), B (autoavaliação…",
-    fonte: "ESM-EDJ — Escala de Satisfação com a Medicação (ESM-EDJ-2025-v1.0 · PANT v7.2.1) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "ESM-EDJ — Escala de Satisfação com a Medicação (ESM-EDJ-2025-v1.0 · PANT v7.2.1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1xK8tRBZhLr2rpnjbc-deh9n02ZmoPf5c/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
       "Somar M1 + M2 + M3 + M4 + M5 (M6 não entra na soma): máximos M1=30, M2=30, M3=25, M4=20, M5=15; total máximo 120 pts. Itens M2.1–M2.5 têm pontuação reversa (CT=1, CP=2, NI=3, DP=4, DT=5 — efeito adverso intenso gera pontuação baixa). Itens marcados como N/A são excluídos do cálculo — recalcular o máximo possível. Índice percentual = (pontuação obtida / pontuação máxima possível) × 100; cada módulo gera escore parcial e índice percentual próprio. As bandas de interpretação são definidas sobre o índice percentual do escore total M1–M5 (minScore/maxScore em %, não em pontos brutos). M6 usa escal…",
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
-    implementationStatus: "metadata_only",
+    implementationStatus: "complete",
     appRoute: "/generic-scale/esm-edj",
   },
   {
-    id: "eci-fraga",
-    name: "Escala Cognitiva Infantil Fraga",
-    fullName: "ECI-Fraga - Escala Cognitiva Infantil Fraga: índice clínico estimativo de funcionamento cognitivo, desenvolvimento intelectual e risco de deficiência intelectual em crianças e ado…",
+    id: "eci-fraga-qdce",
+    name: "ECI-Fraga QDCe",
+    fullName: "Escala Cognitiva Infantil Fraga — Quociente de Desenvolvimento Cognitivo estimado (0–5 anos)",
     ageMin: 0,
-    ageMax: 192,
+    ageMax: 71,
     queixas: ["cognicao", "atraso", "aprendizagem", "funcionalidade", "tea", "tdah", "linguagem"],
     respondente: ["clinico"],
     prioridade: "triagem",
     tempo: "30–45 min",
     description:
-      "Instrumento clínico autoral do Dr. Jadson Fraga Araújo Júnior para triagem estimativa do funcionamento cognitivo infantil, organização de raciocínio diagnóstico, devolutiva familiar e planejamento de investigação complementar. Trabalha com duas saídas: QDCe (Quociente Desenvolvimental-Cognitivo Estimado, 0 a 5 anos) e QIe-F (Quociente Intelectual Estimado Funcional, 6 a 16 anos). O examinador pontua domínios de 0 a 4 integrando observação direta, relato familiar, informações…",
-    fonte: "ECI-Fraga Escala Cognitiva Infantil - uso clínico autoral (NeuroPed EDJ) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+      "Módulo 0–5 anos da ECI-Fraga: o clínico atribui nota 0–4 a 5 domínios ponderados (atenção/engajamento, linguagem, resolução de problemas, visuomotor, brincar/adaptação), guiado pelos itens observacionais da faixa etária. O app aplica a fórmula ponderada do documento e classifica o QDCe estimado (0–100). Estimativa clínica funcional — não substitui avaliação formal.",
+    fonte: "ECI-Fraga Escala Cognitiva Infantil - uso clínico autoral (NeuroPed EDJ) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1Kv2jBMTehLw7F4qBnQHZJYQRpypRXSXW/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
       "O escore final NÃO é soma simples de itens: cada DOMÍNIO recebe uma nota única de 0 a 4 (os itens observacionais orientam a atribuição da nota) e é ponderado. Módulo 0–5 anos (QDCe), 5 domínios ponderados: Atenção, contato e engajamento (15%), Linguagem receptiva e expressiva (25%), Resolução de problemas e raciocínio prático (25%), Coordenação visuomotora e manipulação (20%), Brincar simbólico, autonomia e adaptação (15%). Fórmula: QDCe = [(Atenção x 15) + (Linguagem x 25) + (Problemas x 25) + (Visuomotor x 20) + (Adaptação x 15)] ÷ 4. Módulo 6–16 anos (QIe-F), 7 domínios ponderados: Verbal…",
     assessmentUse: "triagem",
     applicationMode: "observacional_clinico",
-    implementationStatus: "metadata_only",
-    appRoute: "/generic-scale/eci-fraga",
+    implementationStatus: "complete",
+    appRoute: "/generic-scale/eci-fraga-qdce",
+  },
+  {
+    id: "eci-fraga-qief",
+    name: "ECI-Fraga QIe-F",
+    fullName: "Escala Cognitiva Infantil Fraga — Quociente Intelectual estimado Funcional (6–16 anos)",
+    ageMin: 72,
+    ageMax: 192,
+    queixas: ["cognicao", "atraso", "aprendizagem", "funcionalidade", "tea", "tdah", "linguagem"],
+    respondente: ["clinico"],
+    prioridade: "triagem",
+    tempo: "30–45 min",
+    description:
+      "Módulo 6–16 anos da ECI-Fraga: nota 0–4 em 7 domínios ponderados (verbal, fluido/não verbal, visuoespacial, memória operacional, velocidade, aprendizagem escolar, autonomia adaptativa), guiada por 10 itens observacionais por domínio. O app aplica a fórmula ponderada e classifica o QIe-F estimado (0–100). Estimativa clínica funcional — não substitui teste psicométrico formal.",
+    fonte: "ECI-Fraga Escala Cognitiva Infantil - uso clínico autoral (NeuroPed EDJ) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1Kv2jBMTehLw7F4qBnQHZJYQRpypRXSXW/view",
+    licencaUso: "autoral",
+    validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
+    scoringCutoff:
+      "O escore final NÃO é soma simples de itens: cada DOMÍNIO recebe uma nota única de 0 a 4 (os itens observacionais orientam a atribuição da nota) e é ponderado. Módulo 0–5 anos (QDCe), 5 domínios ponderados: Atenção, contato e engajamento (15%), Linguagem receptiva e expressiva (25%), Resolução de problemas e raciocínio prático (25%), Coordenação visuomotora e manipulação (20%), Brincar simbólico, autonomia e adaptação (15%). Fórmula: QDCe = [(Atenção x 15) + (Linguagem x 25) + (Problemas x 25) + (Visuomotor x 20) + (Adaptação x 15)] ÷ 4. Módulo 6–16 anos (QIe-F), 7 domínios ponderados: Verbal…",
+    assessmentUse: "triagem",
+    applicationMode: "observacional_clinico",
+    implementationStatus: "complete",
+    appRoute: "/generic-scale/eci-fraga-qief",
   },
   {
     id: "efdi",
@@ -207,7 +229,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "15–25 min",
     description:
       "Escala clínica autoral do Dr. Jadson Fraga Araújo Júnior para estimar o grau de comprometimento intelectual-adaptativo em crianças verbais e não verbais, com suspeita de atraso global, deficiência intelectual, TEA, transtorno de linguagem ou atraso adaptativo. São 30 itens em 5 domínios (0 a 4 pontos cada, máximo 120), pontuados a partir de entrevista com pais/cuidadores, observação direta, relatório escolar/terapêutico e tarefas clínicas breves. O princípio central é separa…",
-    fonte: "EFDI-V/NV - Escala Funcional Dr. Jadson - Triagem clínica - uso profissional — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "EFDI-V/NV - Escala Funcional Dr. Jadson - Triagem clínica - uso profissional — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/12L3wrZcOQnQgNFD7oZM6TPP8iH5wiuKg/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -229,14 +251,14 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "20–30 min",
     description:
       "Questionário proprietário do NeuroPed App para preenchimento pelo professor ou pedagogo responsável, destinado exclusivamente ao uso clínico neuropediátrico. Avalia o aluno no contexto escolar dos últimos 30 dias por meio de 90 itens em escala Likert de 1 a 5, distribuídos em 9 domínios (linguagem oral, preditores de alfabetização, leitura, escrita, matemática, aspectos motores, atenção/comportamento, interação social/regulação emocional e funções executivas). Vários itens c…",
-    fonte: "NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica | NeuroPed App — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica | NeuroPed App — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/16OO1BHZRx06J81BZRtZqnlokJ4Jt33tL/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
       "Escala Likert 1–5 por item (1 = Discordo totalmente/Nunca; 5 = Concordo totalmente/Sempre). Score global máximo de 450 pontos (90 itens × 5), com subtotais por domínio: Linguagem Oral 0/50, Habilidades Preditoras da Alfabetização 0/50, Leitura 0/65, Escrita 0/60, Matemática 0/60, Aspectos Motores 0/45, Atenção e Comportamento 0/75, Interação Social e Regulação Emocional 0/30, Funções Executivas Observáveis 0/15. Itens marcados como ↓ INVERTIDO têm lógica invertida (pontuação alta indica dificuldade) e devem ser revertidos antes da soma para que pontuações mais altas indiquem melhor desempenho…",
     assessmentUse: "triagem",
     applicationMode: "questionario_professor",
-    implementationStatus: "metadata_only",
+    implementationStatus: "complete",
     appRoute: "/generic-scale/nepedq",
   },
   {
@@ -251,14 +273,14 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "15–20 min",
     description:
       "Instrumento autoral de triagem clínico-escolar para crianças de até 8 anos, que organiza sinais de possível Transtorno do Desenvolvimento da Linguagem (TDL) e dificuldades de leitura, escrita, aritmética inicial, atenção/funções executivas e impacto funcional. São 70 itens em 7 domínios (A–G), pontuados de 0 a 3 (com opção N/A), sendo o Domínio G (impacto funcional) de peso dobrado. A escala não substitui avaliação médica, fonoaudiológica, neuropsicológica ou psicopedagógica…",
-    fonte: "NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/10GV_krIChucIRIS-er_w0c_WFEtEAZZA/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
       "Cada item pontua 0–3; há opção N/A quando a criança ainda não teve oportunidade real de aprender a habilidade. Subtotais máximos: A 36, B 30, C 30, D 30, E 30, F 24, G bruto 30. Regra do impacto: o Domínio G tem peso dobrado (subtotal bruto × 2 = até 60 pontos) por medir prejuízo real na vida escolar, emocional, familiar e social. TOTAL GERAL máximo = 240 pontos. As faixas de classificação (bands) referem-se ao ESCORE PERCENTUAL, não ao escore bruto: escore percentual = pontuação obtida / pontuação máxima aplicável × 100 (usar essa fórmula quando houver itens N/A); minScore/maxScore das bands…",
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
-    implementationStatus: "metadata_only",
+    implementationStatus: "complete",
     appRoute: "/generic-scale/tdl-aprendizagem",
   },
   {
@@ -273,14 +295,14 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "15–25 min",
     description:
       "Escala clínica estruturada para mensurar gravidade do Transtorno Obsessivo-Compulsivo em adolescentes, aplicada por psicólogo assistente em formato de entrevista clínica estruturada. Inicia com um checklist de mapeamento de sintomas (obsessões e compulsões) e, em seguida, pontua gravidade das obsessões e das compulsões em cinco dimensões cada (tempo, interferência, sofrimento, resistência e controle), além de insight, evitação e comprometimento global. O objetivo declarado é…",
-    fonte: "ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1UiBCEPBHfEVUR3k3FyiHO1EqN-jbFV0N/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
       "Cálculo final por domínio: Obsessões 0–20, Compulsões 0–20, Insight 0–4, Evitação 0–4, Comprometimento global 0–4; TOTAL MÁXIMO: 52. Critério geral de pontuação 0–4: 0=Ausente, 1=Leve, 2=Moderado, 3=Grave, 4=Extremo, porém cada item traz âncoras específicas — ex.: O1/C1 (tempo): 0=nenhum, 1=<30 min/dia, 2=1–3h/dia, 3=3–8h/dia, 4=>8h/dia; O4/C4 (resistência): 0=resiste sempre … 4=não resiste; O5/C5 (controle): 0=controle total … 4=sem controle; C3 (sofrimento se impedido): 0=nenhum … 4=crise/pânico/agitação extrema; Insight: 0=Excelente insight, 1=Bom insight, 2=Insight parcial, 3=Insight pobr…",
     assessmentUse: "triagem",
     applicationMode: "observacional_clinico",
-    implementationStatus: "metadata_only",
+    implementationStatus: "complete",
     appRoute: "/generic-scale/toc-drj-psicologia",
   },
   {
@@ -295,7 +317,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "10–15 min",
     description:
       "Instrumento exploratório autoral do Dr. Jadson Fraga, inspirado nos domínios do CAT-Q, para avaliar o uso de estratégias de camuflagem (compensação, assimilação e disfarce) em pessoas com características do Transtorno do Espectro Autista. Composto por 24 itens autoaplicáveis em escala Likert de 5 pontos, distribuídos em três domínios de 8 itens. Destina-se a adolescentes a partir de 16 anos e adultos, com ou sem diagnóstico de TEA, em contexto clínico, de triagem e pesquisa.…",
-    fonte: "2026-06-23 ESCALA-CAMUFLAGEM-TEA NEUROPED.docx — ESCALA DE ESTRATÉGIAS DE CAMUFLAGEM NO TEA — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "2026-06-23 ESCALA-CAMUFLAGEM-TEA NEUROPED.docx — ESCALA DE ESTRATÉGIAS DE CAMUFLAGEM NO TEA — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1-Z-YAmPhTgySz8EVoKo_QYfU0hhNtV17/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -317,7 +339,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "15–25 min",
     description:
       "Checklist qualitativo autoral do Dr. Jadson Fraga para ser preenchido pelo(a) fonoaudiólogo(a), como guia de avaliação inicial e de monitoramento evolutivo do paciente. Cobre 10 domínios da linguagem e da fala (expressiva, receptiva, fonologia/articulação, consciência fonológica, leitura/pré-alfabetização, pragmática, fluência, planejamento motor da fala, processamento auditivo funcional e integração linguagem–cognição), com 35 itens classificados como Adequado, Em desenvolv…",
-    fonte: "ESCALA FONOAUDIOLOGICA.docx — INVENTÁRIO FONOAUDIOLÓGICO AUTORAL – DR. JADSON FRAGA (CHECKLIST DE ACOMPANHAMENTO) — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "ESCALA FONOAUDIOLOGICA.docx — INVENTÁRIO FONOAUDIOLÓGICO AUTORAL – DR. JADSON FRAGA (CHECKLIST DE ACOMPANHAMENTO) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1isfP-2MXKZ9j5AEibucAGdehvnLhLLIR/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
@@ -339,7 +361,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     tempo: "15–25 min",
     description:
       "Instrumento autoral do Dr. Jadson Fraga que organiza a observação escolar de atenção, hiperatividade/impulsividade, função executiva e prejuízo acadêmico, ajudando a responder se o padrão observado é suficientemente persistente e prejudicial para justificar avaliação medicamentosa para TDAH. Composto por 44 itens comportamentais (0–3) em cinco blocos (A–E) preenchidos pelo professor, mais 8 perguntas Sim/Não sobre intervenções já tentadas, folha de pontuação rápida médica, c…",
-    fonte: "Escala_DRJ_TDAH_Prejuizo_Escolar_e_Medicacao.docx — ESCALA ESCOLAR DRJ-TDAH — instrumento autoral Dr. Jadson Fraga (importado do Google Drive, 2026-07)",
+    fonte: "Escala_DRJ_TDAH_Prejuizo_Escolar_e_Medicacao.docx — ESCALA ESCOLAR DRJ-TDAH — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1E0oFz4cgiSV2atnIxoVQiekM1APR17bE/view",
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
