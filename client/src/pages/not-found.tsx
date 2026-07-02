@@ -1,23 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-import { useLocation } from "wouter";
-import { RouteGuard } from "@/components/RouteGuard";
-import DocumentosPage from "./documentos";
-import EfeitosColateraisPage from "./efeitos-colaterais";
 
+// /documentos e /efeitos-colaterais têm rotas dedicadas (lazy) no App.tsx, que
+// casam antes deste catch-all — importá-las estaticamente aqui só as puxava
+// para o chunk principal, anulando o code-splitting.
 export default function NotFound() {
-  const [location] = useLocation();
-
-  // Ponte temporária: mantém itens funcionais mesmo antes da expansão completa do roteador.
-  if (location === "/documentos") {
-    return (
-      <RouteGuard roles={["admin", "professional"]}>
-        <DocumentosPage />
-      </RouteGuard>
-    );
-  }
-  if (location === "/efeitos-colaterais") return <EfeitosColateraisPage />;
-
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <Card className="w-full max-w-md mx-4">

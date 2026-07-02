@@ -14,6 +14,7 @@ import {
   type ImplementationStatus,
 } from "./scaleFilter";
 import { interactiveScaleItems } from "./interactiveScaleItems";
+import { interactiveScales } from "./interactiveScales";
 import { getAllSignalsForQueixa } from "./signalsAndSymptoms";
 
 export const SAFE_EMPTY_MESSAGE =
@@ -109,7 +110,9 @@ export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus
     route !== "/escalas-neuropsiquiatria" &&
     route !== "/filtro";
   if (hasDedicatedPage) return "complete";
-  if (interactiveScaleItems[scale.id] && !isLicenseRestricted(scale)) return "complete";
+  // Aplicação interativa em qualquer dos dois acervos: itens (GenericScale)
+  // ou runner (InteractiveScaleRunner) — ambos abrem em /generic-scale/:id.
+  if ((interactiveScaleItems[scale.id] || interactiveScales[scale.id]) && !isLicenseRestricted(scale)) return "complete";
   if (!route) return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
   if (isLicenseRestricted(scale)) return "external_only";
   if (route.startsWith("/generic-scale/")) return "metadata_only";

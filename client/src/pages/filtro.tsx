@@ -36,6 +36,7 @@ import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { interactiveScaleItems } from "@/data/interactiveScaleItems";
+import { interactiveScales } from "@/data/interactiveScales";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
@@ -85,8 +86,12 @@ function resolveAppRoute(scale: ScaleEntry): string | null {
 }
 
 // ids que renderizam APLICAÇÃO INTERATIVA real em /generic-scale/:id
-// (itens respondíveis + cálculo de escore) — ver generic-scale.tsx.
-const INTERACTIVE_SCALE_IDS = new Set(Object.keys(interactiveScaleItems));
+// (itens respondíveis + cálculo de escore) — ver generic-scale.tsx. Inclui os
+// dois acervos: itens (interactiveScaleItems) e runner (interactiveScales).
+const INTERACTIVE_SCALE_IDS = new Set([
+  ...Object.keys(interactiveScaleItems),
+  ...Object.keys(interactiveScales),
+]);
 
 // Rota dedicada = página implementada de verdade (ex.: /mchat, /asq3), NÃO o
 // catch-all /generic-scale/:id (que pode ser só ficha técnica) nem o catálogo
