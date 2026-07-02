@@ -3,6 +3,7 @@ import { FileText, ClipboardList, Stethoscope, AlertTriangle, CheckCircle2 } fro
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageHero } from "@/components/PageHero";
 
 /* ────────────────────────────────────────────────────────────
    Central de Documentos — NeuroPed
@@ -48,16 +49,12 @@ export default function DocumentosPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
-        <Badge variant="outline" className="w-fit">Documentos</Badge>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
-          Central de Documentos NeuroPed
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Gere laudos neuropediátricos e receitas especiais C1 com templates clínicos oficiais.
-          Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756
-        </p>
-      </section>
+      <PageHero
+        icon={FileText}
+        eyebrow="documentos"
+        title="Central de Documentos NeuroPed"
+        subtitle="Gere laudos neuropediátricos e receitas especiais C1 com templates clínicos oficiais. Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756"
+      />
 
       {/* Cards de acesso */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

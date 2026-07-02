@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { BookOpen, CheckCircle2, XCircle, HelpCircle, Info, Filter } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -56,15 +57,13 @@ export default function DenverPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-sm">
-          <BookOpen className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold">Denver II</h1>
-          <p className="text-xs text-muted-foreground">Triagem do Desenvolvimento — 0 a 6 anos</p>
-        </div>
-      </div>
+      <PageHero
+        icon={BookOpen}
+        eyebrow="triagem do desenvolvimento"
+        title="Denver II"
+        subtitle="Triagem do Desenvolvimento — 0 a 6 anos."
+        gradient="from-amber-500 to-orange-500"
+      />
 
       {/* Instruction */}
       <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">

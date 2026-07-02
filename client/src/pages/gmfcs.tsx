@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Accessibility, RotateCcw, CheckCircle2, Info } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { gmfcsLevels } from "@/data/expandedScales";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -83,15 +84,13 @@ export default function GmfcsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-sm">
-          <Accessibility className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold">GMFCS</h1>
-          <p className="text-xs text-muted-foreground">Sistema de Classificação da Função Motora Grossa — Paralisia Cerebral</p>
-        </div>
-      </div>
+      <PageHero
+        icon={Accessibility}
+        eyebrow="função motora grossa"
+        title="GMFCS"
+        subtitle="Sistema de Classificação da Função Motora Grossa — Paralisia Cerebral."
+        gradient="from-teal-500 to-cyan-600"
+      />
       <div className="rounded-xl bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/40 p-4">
         <p className="text-xs text-teal-800 dark:text-teal-300 leading-relaxed">
           <strong>Instruções:</strong> Leia a descrição de cada nível e selecione o que melhor descreve a função motora grossa habitual da criança. Foque no desempenho habitual, não no melhor desempenho possível.

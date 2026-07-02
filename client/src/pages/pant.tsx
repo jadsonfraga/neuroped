@@ -7,6 +7,7 @@ import { pantExamples, pantLevelExamples } from "@/data/pantExamples";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageHero } from "@/components/PageHero";
 import { Progress } from "@/components/ui/progress";
 import {
   FileText, RotateCcw, ChevronDown, ChevronUp,
@@ -233,24 +234,23 @@ export default function PantPage() {
     <>
     <div className="space-y-6 print:hidden">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-sm">
-          <FileText className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold">PANT — 100 Escalas Passivas</h1>
-          <p className="text-xs text-muted-foreground">Avaliação Funcional do Neurodesenvolvimento</p>
-        </div>
+      <PageHero
+        icon={FileText}
+        eyebrow="avaliação funcional"
+        title="PANT — 100 Escalas Passivas"
+        subtitle="Avaliação Funcional do Neurodesenvolvimento."
+        gradient="from-primary to-chart-2"
+      >
         <Button
           variant="outline"
           size="sm"
           onClick={() => window.print()}
-          className="ml-auto gap-1.5"
+          className="gap-1.5"
           data-testid="button-print-pant"
         >
           <Printer className="w-4 h-4" /> <span className="hidden sm:inline">Imprimir p/ família</span>
         </Button>
-      </div>
+      </PageHero>
 
       {/* Global Progress */}
       <div className="space-y-2">

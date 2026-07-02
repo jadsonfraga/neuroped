@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FileText, Printer, RefreshCw, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
@@ -374,17 +374,14 @@ export default function ReceitaC1Page() {
 
   return (
     <div className="space-y-5 pb-8">
-      <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
-        <Badge variant="outline" className="w-fit">Receita C1</Badge>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
-          Receita de Controle Especial
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Preencha os campos abaixo. A receita é gerada em <strong>2 vias</strong> (farmácia + paciente)
-          conforme a Portaria SVS/MS nº 344/1998 e RDC ANVISA nº 970/2025. Assine com seu certificado
-          ICP-Brasil antes de imprimir.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+      <PageHero
+        icon={FileText}
+        eyebrow="receita de controle especial"
+        title="Receita de Controle Especial"
+        subtitle="Preencha os campos abaixo. A receita é gerada em 2 vias (farmácia + paciente) conforme a Portaria SVS/MS nº 344/1998 e RDC ANVISA nº 970/2025. Assine com seu certificado ICP-Brasil antes de imprimir."
+        gradient="from-primary to-chart-2"
+      >
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2">
             <FileText className="h-4 w-4" />
             {showPreview ? "Fechar prévia" : "Visualizar"}
@@ -396,7 +393,7 @@ export default function ReceitaC1Page() {
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
         </div>
-      </section>
+      </PageHero>
 
       {/* ── Assinatura ICP-Brasil — bloco em destaque ─────────── */}
       <section

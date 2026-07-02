@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
@@ -516,18 +516,13 @@ export default function ReceitaC1ExpressPage() {
     <div className="space-y-5 pb-10 max-w-3xl mx-auto">
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
-        <Badge variant="outline" className="w-fit gap-1.5">
-          <Pill className="h-3 w-3" /> Receita C1
-        </Badge>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
-          Emissão Rápida — Receita C1
-        </h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Preencha os dados da prescrição e informe a senha do certificado digital.
-          O certificado ICP-Brasil é carregado automaticamente — nenhum arquivo precisa ser selecionado.
-        </p>
-      </section>
+      <PageHero
+        icon={Pill}
+        eyebrow="receita c1 · emissão rápida"
+        title="Emissão Rápida — Receita C1"
+        subtitle="Preencha os dados da prescrição e informe a senha do certificado digital. O certificado ICP-Brasil é carregado automaticamente — nenhum arquivo precisa ser selecionado."
+        gradient="from-primary to-chart-2"
+      />
 
       {/* ── Certificado + Senha ─────────────────────────────────── */}
       <section

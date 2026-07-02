@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FileText, Printer, RefreshCw, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { PageHero } from "@/components/PageHero";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 
@@ -149,17 +149,14 @@ export default function LaudoNeuropedPage() {
 
   return (
     <div className="space-y-5 pb-8">
-      <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
-        <Badge variant="outline" className="w-fit">Laudo</Badge>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground">
-          Laudo Neuropediátrico
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Cole o laudo completo em uma única área, já com identificação do paciente, história,
-          exame, hipótese diagnóstica, conduta e assinatura textual. Use os botões para
-          visualizar, imprimir ou assinar com seu certificado ICP-Brasil.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+      <PageHero
+        icon={FileText}
+        eyebrow="documento clínico"
+        title="Laudo Neuropediátrico"
+        subtitle="Cole o laudo completo em uma única área, já com identificação do paciente, história, exame, hipótese diagnóstica, conduta e assinatura textual. Use os botões para visualizar, imprimir ou assinar com seu certificado ICP-Brasil."
+        gradient="from-primary to-chart-2"
+      >
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2">
             <FileText className="h-4 w-4" />
             {showPreview ? "Fechar prévia" : "Visualizar"}
@@ -171,7 +168,7 @@ export default function LaudoNeuropedPage() {
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
         </div>
-      </section>
+      </PageHero>
 
       {/* ── Assinatura ICP-Brasil — bloco em destaque ─────────── */}
       <section
