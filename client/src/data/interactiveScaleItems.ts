@@ -2360,6 +2360,45 @@ const atecItems: Record<string, InteractiveScaleDef> = {
   },
 };
 
+// ------------------------------------------------------------
+// AQ-10 Adolescente — triagem rápida de traços do espectro autista (12–16a),
+// baseada no Autism Spectrum Quotient (Allison, Auyeung & Baron-Cohen, 2012).
+// Itens operacionalizados em redação própria, todos no MESMO sentido (concordar/
+// "Sim" = traço presente), de modo que a soma binária é direta e o corte ≥6/10
+// mantém sentido clínico. Triagem — não diagnóstico.
+// ------------------------------------------------------------
+const AQ10_LABELS = ["Não / discordo", "Sim / concordo"];
+const AQ10_BANDS: InteractiveBand[] = [
+  { minPct: 60, classification: "Rastreio positivo (≥6/10)", color: "red", description: "Vários traços presentes. Sugere encaminhamento para avaliação diagnóstica especializada do espectro autista." },
+  { minPct: 30, classification: "Alguns traços (3–5/10)", color: "amber", description: "Presença parcial de traços. Reavaliar com história, observação e instrumentos complementares." },
+  { minPct: 0, classification: "Baixa probabilidade (0–2/10)", color: "emerald", description: "Poucos traços neste rastreio. Manter atenção clínica se houver preocupação persistente." },
+];
+const aq10Items: Record<string, InteractiveScaleDef> = {
+  "aq10-adolescente": {
+    instruction: "Rastreio rápido de traços do espectro autista em adolescentes. Para cada afirmação, marque se descreve o adolescente. Pode ser respondido pelo próprio adolescente ou por um cuidador que o conhece bem.",
+    infoBox: "Baseado no AQ-10 Adolescente (Allison, Auyeung & Baron-Cohen, 2012). Itens em redação própria para triagem. Corte ≥6/10 sugere encaminhamento para avaliação — não é diagnóstico.",
+    labels: AQ10_LABELS,
+    optionPoints: [0, 1],
+    scoreDirection: "higher_worse",
+    totalLabel: "traços presentes (0–10)",
+    bands: AQ10_BANDS,
+    domains: [
+      { name: "AQ-10 Adolescente", color: "text-violet-600 dark:text-violet-400", items: [
+        "Percebe pequenos sons, padrões ou detalhes que a maioria das pessoas não nota",
+        "Tende a focar tanto em detalhes que perde a visão do todo",
+        "Acha difícil perceber a intenção de alguém apenas pela expressão facial ou tom de voz",
+        "Tem dificuldade em manter uma conversa de ida-e-volta, com trocas fluidas",
+        "Percebe com dificuldade quando o outro está perdendo o interesse na conversa",
+        "Interpreta frases de forma muito literal (dificuldade com ironia, piadas ou duplo sentido)",
+        "Tem dificuldade em imaginar situações ou entrar em brincadeiras de faz-de-conta / ficção",
+        "Prefere fazer as coisas sempre da mesma maneira e incomoda-se com mudanças de rotina",
+        "Tem dificuldade em fazer ou manter amizades com colegas da mesma idade",
+        "Tem interesses muito intensos e restritos que ocupam grande parte do tempo",
+      ] },
+    ],
+  },
+};
+
 export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...j26Bloco1Items,
   ...j26Bloco2Items,
@@ -2367,6 +2406,7 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...j26Bloco4Items,
   ...interactiveScaleItemsCore,
   ...atecItems,
+  ...aq10Items,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

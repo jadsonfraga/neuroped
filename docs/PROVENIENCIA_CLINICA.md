@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 641
-- **Com fonte declarada:** 479
+- **Total de instrumentos:** 642
+- **Com fonte declarada:** 480
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -29,6 +29,7 @@
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não |
 | `appt` | APPT | — | sim |
 | `aprs` | APRS | — | sim |
+| `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não |
 | `ari` | ARI | — | sim |
 | `ashs` | ASHS | — | sim |
 | `ashworth` | Ashworth Modificada | Bohannon RW, Smith MB, 1987 (Modified Ashworth Scale) | não |
