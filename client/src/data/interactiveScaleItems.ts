@@ -2248,12 +2248,125 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
   },
 };
 
+// ------------------------------------------------------------
+// ATEC — Autism Treatment Evaluation Checklist (Rimland & Edelson,
+// Autism Research Institute). Formato de MONITORAMENTO adaptado: cada item é
+// avaliado pelo GRAU DE PREOCUPAÇÃO/DIFICULDADE atual (0 = sem preocupação /
+// faz bem; 3 = intensa / sempre), de modo que MAIOR pontuação = MAIOR
+// preocupação em todos os domínios. Faixas por % do escore (triagem/
+// acompanhamento — não é diagnóstico nem o escore ponderado oficial).
+// ------------------------------------------------------------
+const ATEC_LABELS = ["Sem preocupação / faz bem", "Leve", "Moderada", "Intensa / sempre"];
+const ATEC_BANDS: InteractiveBand[] = [
+  { minPct: 40, classification: "Suspeita alta", color: "red", description: "Muitos sinais presentes com intensidade relevante. Priorize avaliação diagnóstica estruturada e suporte." },
+  { minPct: 20, classification: "Suspeita moderada", color: "amber", description: "Sinais presentes em vários domínios. Aprofundar com instrumentos específicos e observação em múltiplos contextos." },
+  { minPct: 0, classification: "Baixa suspeita", color: "emerald", description: "Poucos sinais ou de baixa intensidade neste momento. Reavaliar se surgirem novas preocupações." },
+];
+const atecItems: Record<string, InteractiveScaleDef> = {
+  atec: {
+    instruction: "Para cada item, marque o GRAU DE PREOCUPAÇÃO ou DIFICULDADE que você observa na criança hoje. Considere diferentes contextos (casa, escola, comunidade). Maior pontuação indica maior preocupação.",
+    infoBox: "Formato de monitoramento adaptado do ATEC (Autism Treatment Evaluation Checklist — Rimland & Edelson, Autism Research Institute). Instrumento de triagem e acompanhamento de resposta ao longo do tempo — não substitui avaliação diagnóstica nem reproduz o escore ponderado oficial.",
+    labels: ATEC_LABELS,
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "grau global de preocupação",
+    bands: ATEC_BANDS,
+    domains: [
+      { name: "I. Fala / Linguagem / Comunicação", color: "text-blue-600 dark:text-blue-400", items: [
+        "Sabe o próprio nome",
+        "Responde ao \"sim\" e ao \"não\"",
+        "Segue alguns comandos",
+        "Usa uma palavra por vez (ex.: \"não\", \"comer\", \"água\")",
+        "Usa duas palavras juntas (ex.: \"quero ir\")",
+        "Usa três palavras juntas (ex.: \"não quero leite\")",
+        "Sabe 10 ou mais palavras",
+        "Usa frases com 4 ou mais palavras",
+        "Explica o que quer",
+        "Faz perguntas com sentido",
+        "Fala de forma significativa e relevante",
+        "Usa frases sucessivas / encadeadas",
+        "Mantém uma boa conversa",
+        "Comunica-se normalmente para a idade",
+      ] },
+      { name: "II. Sociabilidade", color: "text-violet-600 dark:text-violet-400", items: [
+        "Parece fechado, difícil de alcançar",
+        "Ignora as outras pessoas",
+        "Presta pouca ou nenhuma atenção quando abordado",
+        "Pouco cooperativo e resistente",
+        "Pouco ou nenhum contato visual",
+        "Prefere ficar sozinho",
+        "Demonstra pouca afeição",
+        "Não cumprimenta os pais",
+        "Evita contato com os outros",
+        "Não imita",
+        "Não gosta de ser segurado / aconchegado",
+        "Não compartilha nem mostra coisas aos outros",
+        "Não acena \"tchau\"",
+        "Desobediente / opositor",
+        "Faz birras",
+        "Falta de amigos / companheiros",
+        "Raramente sorri",
+        "Insensível aos sentimentos dos outros",
+        "Indiferente a ser querido",
+        "Indiferente quando os pais saem",
+      ] },
+      { name: "III. Consciência sensorial / cognitiva", color: "text-teal-600 dark:text-teal-400", items: [
+        "Responde ao próprio nome",
+        "Reage ao elogio",
+        "Olha para pessoas e animais",
+        "Olha para fotos e TV",
+        "Desenha, pinta, usa cores",
+        "Brinca de forma apropriada com os brinquedos",
+        "Tem expressões faciais apropriadas ao contexto",
+        "Compreende histórias na TV",
+        "Compreende explicações",
+        "Tem noção do ambiente ao redor",
+        "Tem noção de perigo",
+        "Demonstra imaginação",
+        "Inicia atividades por conta própria",
+        "Veste-se sozinho",
+        "É curioso e interessado",
+        "É aventureiro, explorador",
+        "Vive num mundo à parte",
+      ] },
+      { name: "IV. Saúde / Comportamento", color: "text-amber-600 dark:text-amber-400", items: [
+        "Faz xixi na cama",
+        "Faz xixi nas calças / fraldas",
+        "Evacua nas calças / fraldas",
+        "Diarreia",
+        "Prisão de ventre",
+        "Problemas de sono",
+        "Come demais ou de menos",
+        "Dieta extremamente restrita",
+        "Hiperativo",
+        "Letárgico / apático",
+        "Machuca a si mesmo",
+        "Machuca os outros",
+        "Destrutivo",
+        "Sensível ao som",
+        "Ansioso / medroso",
+        "Triste / choroso",
+        "Convulsões",
+        "Fala / linguagem obsessiva",
+        "Rotinas rígidas",
+        "Grita",
+        "Exige que as coisas sejam sempre do mesmo jeito",
+        "Fica agitado com frequência",
+        "Insensível à dor",
+        "Obcecado por certos objetos ou temas",
+        "Faz gestos / movimentos repetitivos",
+      ] },
+    ],
+  },
+};
+
 export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...j26Bloco1Items,
   ...j26Bloco2Items,
   ...j26Bloco3Items,
   ...j26Bloco4Items,
   ...interactiveScaleItemsCore,
+  ...atecItems,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

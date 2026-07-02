@@ -36,7 +36,7 @@
 | `asq-suicide` | ASQ | Horowitz LM et al., 2012 (Ask Suicide-Screening Questions) | não |
 | `asq3` | ASQ-3 | Squires J & Bricker D, 2009 | não |
 | `assq` | ASSQ | Ehlers S et al., 1999 | não |
-| `atec` | ATEC | Rimland B, Edelson SM, 1999 (ATEC), Autism Research Institute | não |
+| `atec` | ATEC | Rimland B & Edelson SM — Autism Research Institute (ATEC) | não |
 | `auquei` | AUQUEI | Manificat S, Dazord A, 1997 (AUQUEI) | não |
 | `bai` | BAI | Beck AT, Epstein N, Brown G, Steer RA. J Consult Clin Psychol. 1988. Adaptação brasileira: Cunha JA, 2001. | não |
 | `ballard` | Ballard | Ballard JL et al., 1991 (New Ballard Score) | não |
