@@ -283,6 +283,12 @@ const FLASH_STORAGE_KEY = "neuroped:filter-flash";
 function isFlashRoute(): boolean {
   if (typeof window === "undefined") return false;
   const raw = `${window.location.hash || ""}${window.location.search || ""}`;
+  // A rota /filtro-escalas ("Triar sem cadastrar", no menu) é SEMPRE efêmera:
+  // o clínico que escolhe triar sem cadastrar não deve ter nada persistido em
+  // localStorage. Sem esta linha o link caía no filtro normal COM persistência
+  // ligada — quebrando a promessa de "sem cadastro" (privacidade/LGPD). O modo
+  // flash usa apenas sessionStorage e é apagado ao sair da tela.
+  if (/\/filtro-escalas(?:[/?#&]|$)/.test(raw)) return true;
   return /[?&]mode=flash(?:&|$)/.test(raw);
 }
 
@@ -363,6 +369,18 @@ function brValidationChip(scale?: ScaleEntry): { label: string; cls: string } | 
 function timeChip(scale?: ScaleEntry): string | null {
   const t = scale?.tempo?.trim();
   return t && t !== "—" ? t : null;
+}
+
+// Link PubMed a partir do campo REAL `pubmedId` (ex.: "PMID 24422648"). O dado
+// já existe no catálogo mas nunca era exibido no filtro — para um neuropediatra,
+// poder abrir o estudo de validação é o que separa uma "recomendação" de uma
+// decisão embasada. Só retorna link quando há um PMID numérico real.
+function pubmedRef(scale?: ScaleEntry): { pmid: string; href: string } | null {
+  const raw = scale?.pubmedId?.trim();
+  if (!raw) return null;
+  const digits = raw.match(/\d{4,}/)?.[0];
+  if (!digits) return null;
+  return { pmid: digits, href: `https://pubmed.ncbi.nlm.nih.gov/${digits}/` };
 }
 
 // Atalhos clínicos comuns — 1 toque preenche idade + queixa e já traz o pódio.
@@ -1130,7 +1148,15 @@ export default function FiltroPage() {
                   <CardContent className="filter-260-card-content">
                     <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}><span aria-hidden="true">{slotEmoji(item.slot)}</span> {item.slot}</Badge>
-                      {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}{item.confidence !== null ? ` · ${item.confidence}%` : ""}</Badge>}
+                      {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}</Badge>}
+                      {item.confidence !== null && (
+                        <span
+                          className="inline-block rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground"
+                          title="Aderência ao perfil informado — combina a força do casamento clínico (idade, queixa, respondente) com quantos filtros você preencheu. NÃO é sensibilidade/especificidade do instrumento."
+                        >
+                          {item.confidence}% aderência
+                        </span>
+                      )}
                       {(() => { const lc = licenseChip(item.scale); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}
                       {(() => { const bv = brValidationChip(item.scale); return bv ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${bv.cls}`}>{bv.label}</span> : null; })()}
                       {(() => { const t = timeChip(item.scale); return t ? <span className="inline-block rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">⏱️ {t}</span> : null; })()}
@@ -1158,9 +1184,11 @@ export default function FiltroPage() {
                       </div>
                     )}
                     {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}
+                    {item.hasScale && item.clinicalReason && <div className="filter-260-evidence"><strong>Por que ranqueou:</strong> {item.clinicalReason}</div>}
                     {item.hasScale && <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>}
                     {item.scale?.scoringCutoff && <div className="filter-260-source line-clamp-2"><strong>🎯 Ponto de corte:</strong> {item.scale.scoringCutoff}</div>}
                     {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
+                    {(() => { const pm = pubmedRef(item.scale); return pm ? <div className="filter-260-source"><a href={pm.href} target="_blank" rel="noopener noreferrer" className="font-bold text-primary underline underline-offset-2 hover:opacity-80" onClick={(e) => e.stopPropagation()}>📄 Estudo (PubMed {pm.pmid})</a></div> : null; })()}
                     <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{ctaLabel}</span>{item.hasScale && <ArrowRight className="h-4 w-4" />}</div>
                   </CardContent>
                 </Card>

@@ -206,7 +206,12 @@ export function getVerbalRequirement(scale: ScaleEntry): "indiferente" | "verbal
 
 // ============ CLASSIFICAÇÃO CLÍNICA AUXILIAR ============
 
-function isSuicideInstrument(scale: ScaleEntry): boolean {
+// Classificação de segurança. O campo explícito (revisado) SEMPRE tem prioridade
+// sobre a inferência por regex — assim uma escala nova cujo nome contenha "mania"
+// ou "matriz" não muda um gate de segurança sem revisão humana. Exportadas para o
+// guard de CI (validate-safety-metadata), que congela essa classificação.
+export function isSuicideInstrument(scale: ScaleEntry): boolean {
+  if (typeof scale.suicideRiskInstrument === "boolean") return scale.suicideRiskInstrument;
   const id = scale.id.toLowerCase();
   const text = `${scale.name} ${scale.fullName}`.toLowerCase();
   return (
@@ -215,7 +220,8 @@ function isSuicideInstrument(scale: ScaleEntry): boolean {
   );
 }
 
-function isPsychosisInstrument(scale: ScaleEntry): boolean {
+export function isPsychosisInstrument(scale: ScaleEntry): boolean {
+  if (typeof scale.psychosisRiskInstrument === "boolean") return scale.psychosisRiskInstrument;
   const id = scale.id.toLowerCase();
   const text = `${scale.name} ${scale.fullName}`.toLowerCase();
   return (

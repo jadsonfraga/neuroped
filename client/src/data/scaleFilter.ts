@@ -78,6 +78,14 @@ export interface ScaleEntry {
   // (respondente, prioridade, appRoute, licença) — nunca assume aplicação completa.
   verbalRequirement?: "indiferente" | "verbal" | "nao_verbal_compativel"; // exigência de linguagem verbal
   literacyRequirement?: "indiferente" | "alfabetizado" | "pre_alfabetizado"; // exigência de alfabetização
+  // Classificação de SEGURANÇA explícita (sobrepõe a inferência por regex sobre o
+  // nome). Estas duas propriedades disparam bloqueios clínicos duros por idade
+  // (suicídio ≥8a, psicose/mania ≥12a); por serem críticas, devem ser DADO
+  // revisado — não uma substring farejada no nome. Quando ausentes, o motor ainda
+  // infere por regex, mas o guard de CI (validate-safety-metadata) trava qualquer
+  // mudança silenciosa dessa classificação.
+  suicideRiskInstrument?: boolean;     // instrumento de rastreio de risco suicida/autolesão
+  psychosisRiskInstrument?: boolean;   // instrumento de rastreio de psicose/mania/bipolaridade
   assessmentUse?: AssessmentUse;       // finalidade clínica explícita (sobrepõe a derivação por prioridade)
   applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
   implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
