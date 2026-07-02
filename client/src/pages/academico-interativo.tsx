@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
+import { useShuffledOptionOrders } from "@/lib/shuffleQuizOptions";
 import {
   RotateCcw,
   CheckCircle2,
@@ -78,6 +79,8 @@ export default function AcademicoInterativo() {
   const [showReport, setShowReport] = useState(false);
 
   const items = ITEMS[selectedAge];
+  // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
+  const optionOrders = useShuffledOptionOrders(items);
   const answered = Object.values(answers).filter(a => a !== null).length;
   const progress = (answered / items.length) * 100;
 
@@ -189,12 +192,15 @@ export default function AcademicoInterativo() {
               {item.options ? (
                 <RadioGroup value={String(answers[item.id] ?? "")} onValueChange={(v) => handleAnswer(item.id, parseInt(v))}>
                   <div className="grid grid-cols-2 gap-2">
-                    {item.options.map((opt, i) => (
-                      <div key={i} className="flex items-center space-x-2">
-                        <RadioGroupItem value={String(i)} id={`${item.id}-${i}`} />
-                        <Label htmlFor={`${item.id}-${i}`} className="text-sm cursor-pointer">{opt}</Label>
-                      </div>
-                    ))}
+                    {(optionOrders[item.id] ?? item.options.map((_, oi) => oi)).map((i) => {
+                      const opt = item.options?.[i] ?? "";
+                      return (
+                        <div key={i} className="flex items-center space-x-2">
+                          <RadioGroupItem value={String(i)} id={`${item.id}-${i}`} />
+                          <Label htmlFor={`${item.id}-${i}`} className="text-sm cursor-pointer">{opt}</Label>
+                        </div>
+                      );
+                    })}
                   </div>
                 </RadioGroup>
               ) : null}

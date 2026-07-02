@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { RotateCcw, CheckCircle2, Eye } from "lucide-react";
+import { useShuffledOptionOrders } from "@/lib/shuffleQuizOptions";
 
 type AgeGroup = "4-5" | "6-7" | "8-9" | "10-12";
 type Score = number | null;
@@ -196,6 +197,8 @@ export default function AtencaoConcentracao() {
   const [showReport, setShowReport] = useState(false);
 
   const tasks = TASKS[selectedAge];
+  // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
+  const optionOrders = useShuffledOptionOrders(tasks);
   const answered = Object.values(answers).filter(a => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
@@ -306,12 +309,15 @@ export default function AtencaoConcentracao() {
 
               <RadioGroup value={String(answers[task.id] ?? "")} onValueChange={(v) => handleAnswer(task.id, parseInt(v))}>
                 <div className="space-y-2">
-                  {task.options.map((opt, i) => (
-                    <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                      <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
-                      <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
-                    </div>
-                  ))}
+                  {(optionOrders[task.id] ?? task.options.map((_, oi) => oi)).map((i) => {
+                    const opt = task.options[i];
+                    return (
+                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
+                        <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
+                        <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      </div>
+                    );
+                  })}
                 </div>
               </RadioGroup>
 
