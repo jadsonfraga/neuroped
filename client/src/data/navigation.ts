@@ -130,7 +130,7 @@ export const navSections: NavSection[] = [
       { href: "/escrita-desenho", label: "Testes: escrita e desenho", icon: ClipboardCheck },
       { href: "/conhecimento-visual", label: "Testes: conhecimento visual", icon: ClipboardCheck },
       { href: "/testes-reconhecimento", label: "Testes: reconhecimento visual", icon: ClipboardCheck },
-      { href: "/avaliacao-cognitiva-infantil", label: "Testes: leitura/escrita/aritm.", icon: ClipboardCheck },
+      { href: "/avaliacao-cognitiva-infantil", label: "Avaliação cognitiva infantil", icon: Brain },
       { href: "/motricidade-teste", label: "Testes: motricidade", icon: ClipboardCheck },
       { href: "/conhecimentos-gerais", label: "Testes: conhecimentos gerais", icon: ClipboardCheck },
       { href: "/tde2", label: "TDE-2 Adaptado", icon: ClipboardCheck },

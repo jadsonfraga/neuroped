@@ -11,6 +11,112 @@ import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
 import { navSections, getNavigationMatch } from "@/data/navigation";
 
+// ─────────────────────────── Atalhos em destaque ───────────────────────────
+// Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
+// para que fiquem sempre à mão: o Filtro Clínico Inteligente e a Avaliação
+// Cognitiva Infantil. Cartões desenhados à mão (não mapeados) para manter as
+// classes Tailwind estáticas e o visual polido de cada acento.
+function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; activeHref?: string }) {
+  const onPick = () => { softTap(); haptic.select(); };
+
+  const FullCards = (
+    <div className="space-y-1.5">
+      <Link href="/filtro">
+        <div
+          onClick={onPick}
+          onMouseEnter={() => softHover()}
+          data-testid="featured-filtro"
+          className={`group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-xl border px-3 py-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
+            activeHref === "/filtro"
+              ? "border-primary/50 bg-gradient-to-br from-primary/20 via-primary/12 to-chart-2/12 shadow-sm"
+              : "border-primary/25 bg-gradient-to-br from-primary/12 via-primary/[0.07] to-chart-2/10 hover:border-primary/40"
+          }`}
+        >
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-chart-2 text-white shadow-sm shadow-primary/30">
+            <Filter className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-bold leading-tight text-foreground">Filtro de Escalas</span>
+            <span className="block text-[10px] leading-tight text-muted-foreground">Por idade e queixa</span>
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-primary/50 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </div>
+      </Link>
+      <Link href="/avaliacao-cognitiva-infantil">
+        <div
+          onClick={onPick}
+          onMouseEnter={() => softHover()}
+          data-testid="featured-avaliacao-cognitiva"
+          className={`group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-xl border px-3 py-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
+            activeHref === "/avaliacao-cognitiva-infantil"
+              ? "border-violet-400/50 bg-gradient-to-br from-violet-500/20 via-violet-500/12 to-blue-500/12 shadow-sm"
+              : "border-violet-400/25 bg-gradient-to-br from-violet-500/12 via-violet-500/[0.07] to-blue-500/10 hover:border-violet-400/40"
+          }`}
+        >
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-sm shadow-violet-600/30">
+            <Brain className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-bold leading-tight text-foreground">Avaliação Cognitiva Infantil</span>
+            <span className="block text-[10px] leading-tight text-muted-foreground">Triagem lúdica · 2–19 anos</span>
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-violet-500/50 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </div>
+      </Link>
+    </div>
+  );
+
+  const IconRail = (
+    <div className="flex flex-col items-center gap-1.5">
+      <Link href="/filtro">
+        <div
+          onClick={onPick}
+          title="Filtro de Escalas"
+          aria-label="Filtro de Escalas"
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border text-primary transition-colors ${
+            activeHref === "/filtro" ? "border-primary/50 bg-primary/20" : "border-primary/25 bg-gradient-to-br from-primary/15 to-chart-2/10 hover:border-primary/40"
+          }`}
+        >
+          <Filter className="h-4 w-4" aria-hidden="true" />
+        </div>
+      </Link>
+      <Link href="/avaliacao-cognitiva-infantil">
+        <div
+          onClick={onPick}
+          title="Avaliação Cognitiva Infantil"
+          aria-label="Avaliação Cognitiva Infantil"
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border text-violet-600 dark:text-violet-400 transition-colors ${
+            activeHref === "/avaliacao-cognitiva-infantil" ? "border-violet-400/50 bg-violet-500/20" : "border-violet-400/25 bg-gradient-to-br from-violet-500/15 to-blue-500/10 hover:border-violet-400/40"
+          }`}
+        >
+          <Brain className="h-4 w-4" aria-hidden="true" />
+        </div>
+      </Link>
+    </div>
+  );
+
+  return (
+    <div className="px-2 pt-2">
+      {!collapsed ? (
+        <>
+          <p className="px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Destaques</p>
+          {FullCards}
+        </>
+      ) : (
+        <>
+          {/* Mobile (drawer largo): mostra os cartões completos */}
+          <div className="md:hidden">
+            <p className="px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Destaques</p>
+            {FullCards}
+          </div>
+          {/* Desktop recolhido: trilha de ícones */}
+          <div className="hidden md:block">{IconRail}</div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [dark, setDark] = useState(() => {
@@ -258,15 +364,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}
             {collapsed && <span className="text-xs md:hidden">Buscar escala, teste ou módulo</span>}
           </button>
-          {!collapsed && (
-            <Link href="/filtro">
-              <div className="flex min-h-[38px] cursor-pointer items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15">
-                <Filter className="h-4 w-4" aria-hidden="true" />
-                Filtrar por idade e queixa
-              </div>
-            </Link>
-          )}
         </div>
+
+        {/* Atalhos em destaque */}
+        <FeaturedShortcuts collapsed={collapsed} activeHref={activeNavigation?.item.href} />
+        <div className="mx-3 mt-2 border-t border-sidebar-border/60" />
 
         {/* Navigation */}
         <nav id="sidebar-nav" className="flex-1 py-2 px-2 space-y-1 overflow-y-auto" aria-label="Navegação principal em grupos recolhíveis">
@@ -317,7 +419,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             }}
                             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
                               active
-                                ? "bg-[linear-gradient(90deg,rgba(124,121,255,.18),transparent)] text-primary font-semibold shadow-sm"
+                                ? "bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
                                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
                             } ${collapsed ? "md:justify-center" : ""}`}
                           >
