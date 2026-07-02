@@ -771,8 +771,10 @@ const allScalesBase: ScaleEntry[] = [
   ...todasAsEscalasComplementares,
   ...escalasPsiquiatricasImportadas2026,
   // Escalas/inventários autorais de neuropediatria importados do Google Drive
-  // do Dr. Jadson (2026-07): 13 com aplicação interativa completa
-  // (interactiveScaleItemsDrive2026) + fichas técnicas honestas.
+  // do Dr. Jadson (2026-07), já curados: 7 com aplicação interativa completa
+  // (interactiveScaleItemsDrive2026) + 8 fichas técnicas honestas. Rascunhos
+  // supersedidos da mesma família broadband ficaram fora (ver cabeçalho de
+  // escalasImportadasDrive2026.ts).
   ...escalasImportadasDrive2026,
 ];
 
