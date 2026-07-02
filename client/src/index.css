@@ -277,6 +277,43 @@
   .btn-glow:hover { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12); }
   .btn-glow:active { transform: scale(0.98); }
 
+  /* ===== Passe "lovable" global (2026-07, pedido do autor) =====
+     Personalidade acolhedora em TODO o app sem tocar componente por
+     componente: todo botão responde ao toque com um "squish" elástico e todo
+     card (shadcn-card) ganha um leve lift no hover, com mola suave. As regras
+     vivem inteiras dentro de prefers-reduced-motion: no-preference — quem
+     pede menos movimento não recebe nada disso. Transições em seletor de
+     elemento perdem para utilitários Tailwind presentes no componente, então
+     nada existente é sobrescrito à força. */
+  @media (prefers-reduced-motion: no-preference) {
+    button,
+    [role="button"] {
+      transition:
+        transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.22s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        opacity 0.18s ease;
+    }
+    button:not(:disabled):active,
+    [role="button"]:not([aria-disabled="true"]):active {
+      transform: scale(0.965);
+    }
+    .shadcn-card {
+      transition:
+        transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.28s ease,
+        border-color 0.22s ease;
+    }
+    .shadcn-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+  }
+  /* Toque no mobile sem o flash cinza padrão do WebKit. */
+  html { -webkit-tap-highlight-color: transparent; }
+
   @media (prefers-reduced-motion: reduce) {
     .page-enter,
     .stagger-in > *,
