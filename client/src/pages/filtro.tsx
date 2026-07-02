@@ -920,7 +920,9 @@ export default function FiltroPage() {
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {queixas.map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} aria-label={q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
               {q.emoji && <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">{q.emoji}</span>}
-              <span className="truncate text-[11px] sm:text-xs leading-tight">{q.label}</span>
+              {/* Sem truncate: o rótulo do sintoma aparece POR EXTENSO (pedido do
+                  autor) — fonte menor no mobile e quebra de linha em vez de ocultar. */}
+              <span className="min-w-0 whitespace-normal break-words text-[10px] sm:text-xs leading-tight">{q.label}</span>
             </button>)}
           </div>
         </div>

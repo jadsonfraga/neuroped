@@ -98,7 +98,24 @@ export function selectPodium(
     return found;
   };
 
-  const ouro = takeBestAvailable(() => true, curatedTiers?.ouro ? [curatedTiers.ouro] : []);
+  // Prioridade autoral (pedido do autor, 2026-07): quando um protocolo autoral
+  // (família NEXUS / Dr. Jadson) é ADEQUADO ao perfil — já passou pelos filtros
+  // obrigatórios e bloqueios clínicos duros do motor e tem qualidade de pódio —
+  // ele assume o OURO; os instrumentos internacionais curados seguem no pódio
+  // como Prata/Bronze. Sem candidato autoral qualificado, vale o fluxo curado.
+  const autoralOuro = sorted.find(
+    (m) =>
+      m.scale.licencaUso === "autoral" &&
+      !m.isBroadbandFallback &&
+      m.relevanceScore >= QUALITY_THRESHOLD
+  );
+  let ouro: RefinedScaleMatch | undefined;
+  if (autoralOuro) {
+    used.add(autoralOuro.scale.id);
+    ouro = autoralOuro;
+  } else {
+    ouro = takeBestAvailable(() => true, curatedTiers?.ouro ? [curatedTiers.ouro] : []);
+  }
   const ouroMode = ouro?.applicationMode ?? null;
   const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
 
