@@ -6,9 +6,14 @@ export default {
   theme: {
     extend: {
       borderRadius: {
-        lg: ".5625rem", /* 9px */
-        md: ".375rem", /* 6px */
-        sm: ".1875rem", /* 3px */
+        /* Passe "lovable" (2026-07, pedido do autor): cantos mais generosos em
+           todo o sistema — a personalidade acolhedora vem daqui, sem tocar
+           componente por componente. */
+        sm: ".375rem", /* 6px (era 3px) */
+        md: ".5625rem", /* 9px (era 6px) */
+        lg: ".75rem", /* 12px (era 9px) */
+        xl: "1rem", /* 16px (era 12px) */
+        "2xl": "1.375rem", /* 22px (era 16px) */
       },
       colors: {
         // Flat / base colors (regular buttons)
