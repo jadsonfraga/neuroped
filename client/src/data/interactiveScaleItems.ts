@@ -2588,6 +2588,119 @@ const freeBatch2Items: Record<string, InteractiveScaleDef> = {
   },
 };
 
+// ------------------------------------------------------------
+// LOTES 3–5 de escalas gratuitas antes só como ficha. Itens em redação clínica
+// própria (observações objetivas / situações), como ADAPTAÇÃO para triagem —
+// fonte creditada; não reproduzem o texto oficial nem substituem o instrumento
+// validado. Maior pontuação = maior gravidade/preocupação (salvo indicado).
+// ------------------------------------------------------------
+const P0123_LABELS = ["Nada (0)", "Pouco (1)", "Bastante (2)", "Muito (3)"];
+const SEV0123_BANDS = (redPct: number, amberPct: number, note: string): InteractiveBand[] => [
+  { minPct: redPct, classification: "Gravidade alta", color: "red", description: `Sinais intensos e/ou frequentes. ${note}` },
+  { minPct: amberPct, classification: "Gravidade leve a moderada", color: "amber", description: `Sinais presentes — reavaliar e acompanhar. ${note}` },
+  { minPct: 0, classification: "Baixa gravidade", color: "emerald", description: `Poucos sinais neste momento. ${note}` },
+];
+const freeBatch3Items: Record<string, InteractiveScaleDef> = {
+  // ---- LOTE 3 · DOR ----
+  wongbaker: {
+    instruction: "Peça à criança para escolher o rosto que mostra o quanto ela sente dor agora (do rosto feliz, sem dor, ao rosto que chora, pior dor).",
+    infoBox: "Escala de faces de dor (inspirada em Wong-Baker FACES). Autorrelato a partir de ~3 anos; combine com observação quando necessário. Triagem, não diagnóstico.",
+    labels: ["0 — sem dor (rosto feliz)", "2 — dói um pouquinho", "4 — dói um pouco mais", "6 — dói ainda mais", "8 — dói muito", "10 — dói o máximo (chora)"],
+    optionPoints: [0, 2, 4, 6, 8, 10],
+    scoreDirection: "higher_worse",
+    totalLabel: "dor (0–10)",
+    bands: [
+      { minPct: 70, classification: "Dor intensa (7–10)", color: "red", description: "Dor intensa. Analgesia e reavaliação." },
+      { minPct: 40, classification: "Dor moderada (4–6)", color: "orange", description: "Dor moderada. Considerar analgesia e conforto." },
+      { minPct: 10, classification: "Dor leve (1–3)", color: "amber", description: "Dor leve. Medidas de conforto." },
+      { minPct: 0, classification: "Sem dor (0)", color: "emerald", description: "Sem dor relatada agora." },
+    ],
+    domains: [{ name: "Intensidade da dor", color: "text-rose-600 dark:text-rose-400", items: ["Qual rosto mostra a dor agora?"] }],
+  },
+  ppp: {
+    instruction: "Observando as últimas horas, marque o quanto cada sinal esteve presente. Útil quando a criança tem dificuldade de relatar dor (ex.: deficiência grave). Some (0–60).",
+    infoBox: "Adaptação observacional para triagem de dor (inspirada no Paediatric Pain Profile). Itens em redação própria. Pontuações mais altas indicam mais sinais de dor/desconforto; ≈14+ merece atenção. Não substitui avaliação clínica.",
+    labels: P0123_LABELS,
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "sinais de dor (0–60)",
+    bands: SEV0123_BANDS(40, 20, "Considerar analgesia/medidas de conforto e reavaliar."),
+    domains: [{ name: "Sinais observáveis de dor", color: "text-amber-600 dark:text-amber-400", items: [
+      "Choramingou, gemeu ou vocalizou sofrimento", "Ficou agitado ou inquieto sem se acalmar", "Expressão facial de dor (testa franzida, olhos apertados)",
+      "Chorou e foi difícil de consolar", "Ficou mais quieto ou retraído que o habitual", "Enrijeceu o corpo ou aumentou o tônus muscular",
+      "Fez caretas ou estremeceu ao ser tocado/movido", "Protegeu ou evitou mexer numa parte do corpo", "Dormiu mal / sono interrompido",
+      "Comeu ou bebeu menos que o habitual", "Sudorese, palidez ou mudança de cor", "Movimentos de defesa (afastar, empurrar) ao manuseio",
+      "Ranger de dentes, morder ou autoestimulação aumentada", "Parecia sofrido mesmo em repouso", "Não se interessou pelo ambiente/brincadeira como de costume",
+    ] }],
+  },
+  // ---- LOTE 4 · EPILEPSIA (adaptações de gravidade de crises) ----
+  lsss: {
+    instruction: "Pensando nas crises do último período, marque o quanto cada aspecto ocorre. Some para estimar a gravidade das crises (0–30).",
+    infoBox: "Adaptação para triagem da gravidade de crises (inspirada na Liverpool Seizure Severity Scale). Itens em redação própria; acompanha evolução ao longo do tempo. Não substitui o instrumento validado nem a avaliação neurológica.",
+    labels: P0123_LABELS,
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "gravidade das crises (0–30)",
+    bands: SEV0123_BANDS(50, 20, "Rever controle das crises e adesão ao tratamento."),
+    domains: [{ name: "Aspectos das crises", color: "text-violet-600 dark:text-violet-400", items: [
+      "As crises acontecem sem aviso (sem aura/pródromo)", "A criança perde a consciência durante a crise", "As crises são longas (mais de alguns minutos)",
+      "Ocorrem quedas ou risco de lesão durante a crise", "Há perda de urina ou fezes durante a crise", "Há confusão ou agitação logo após a crise",
+      "A recuperação é lenta (sonolência/cansaço prolongado)", "As crises atrapalham as atividades do dia", "A criança se machucou em alguma crise recente",
+      "Há pouco controle das crises apesar do tratamento",
+    ] }],
+  },
+  "hague-szs": {
+    instruction: "Marque o quanto cada característica descreve as crises atuais da criança. Some (0–21).",
+    infoBox: "Adaptação para triagem da gravidade de crises (inspirada na Hague Seizure Severity Scale). Itens em redação própria; útil para acompanhamento. Não substitui o instrumento validado.",
+    labels: P0123_LABELS,
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "gravidade (0–21)",
+    bands: SEV0123_BANDS(50, 20, "Correlacionar com frequência de crises e ajuste terapêutico."),
+    domains: [{ name: "Características das crises", color: "text-fuchsia-600 dark:text-fuchsia-400", items: [
+      "Alteração ou perda de consciência", "Quedas ou tombos durante a crise", "Movimentos ou automatismos intensos",
+      "Duração longa das crises", "Crises frequentes", "Generalização (envolve o corpo todo)", "Necessidade de socorro/medicação de resgate",
+    ] }],
+  },
+  // ---- LOTE 5 · COMPORTAMENTO + INTESTINO ----
+  hsq: {
+    instruction: "Para cada situação do dia a dia, marque o quanto o comportamento da criança é um problema (obediência, birra, agitação). Some (0–42).",
+    infoBox: "Adaptação para triagem de problemas de comportamento por situação (inspirada no Home Situations Questionnaire, Barkley). Itens em redação própria. Mostra ONDE o comportamento pesa mais; não substitui avaliação clínica.",
+    labels: P0123_LABELS,
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "situações com problema (0–42)",
+    bands: SEV0123_BANDS(40, 15, "Orientar manejo comportamental e rotina; reavaliar."),
+    domains: [{ name: "Situações do dia a dia", color: "text-orange-600 dark:text-orange-400", items: [
+      "Durante as refeições", "Ao brincar sozinho", "Ao brincar com outras crianças", "Na hora de se vestir", "Durante o banho/higiene",
+      "Ao assistir TV ou usar telas", "Quando há visitas em casa", "Em casa de outras pessoas", "Em lojas ou lugares públicos",
+      "Na hora do dever de casa / atividades", "Na hora de dormir", "No carro / transporte", "Quando o adulto está ao telefone / ocupado", "Ao ser contrariado ou ouvir 'não'",
+    ] }],
+  },
+  "bristol-stool": {
+    instruction: "Selecione o tipo de fezes que melhor representa o padrão habitual da criança (formato e consistência).",
+    infoBox: "Escala de forma das fezes (inspirada na Bristol Stool Form Scale). Tipos 1–2 sugerem constipação; 3–4 são normais; 5–7 sugerem fezes amolecidas/diarreia. Triagem, não diagnóstico.",
+    labels: [
+      "Tipo 1 — bolinhas duras separadas, difíceis de eliminar",
+      "Tipo 2 — em forma de salsicha, mas com grumos/endurecida",
+      "Tipo 3 — como salsicha, com rachaduras na superfície",
+      "Tipo 4 — como salsicha ou cobra, lisa e macia",
+      "Tipo 5 — pedaços macios com bordas nítidas",
+      "Tipo 6 — pedaços pastosos com bordas irregulares",
+      "Tipo 7 — totalmente líquida, sem pedaços sólidos",
+    ],
+    optionPoints: [0, 1, 2, 3, 4, 5, 6],
+    scoreDirection: "higher_worse",
+    totalLabel: "forma das fezes (tipo 1–7)",
+    bands: [
+      { minPct: 62, classification: "Fezes amolecidas / diarreia (tipos 5–7)", color: "amber", description: "Padrão amolecido/líquido. Avaliar hidratação, dieta e causas de diarreia." },
+      { minPct: 29, classification: "Padrão normal (tipos 3–4)", color: "emerald", description: "Forma normal das fezes." },
+      { minPct: 0, classification: "Constipação (tipos 1–2)", color: "amber", description: "Padrão endurecido. Avaliar constipação, fibras, hidratação e rotina intestinal." },
+    ],
+    domains: [{ name: "Forma das fezes", color: "text-cyan-600 dark:text-cyan-400", items: ["Tipo habitual das fezes"] }],
+  },
+};
+
 export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...j26Bloco1Items,
   ...j26Bloco2Items,
@@ -2599,6 +2712,7 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...aq10Items,
   ...freeBatch1Items,
   ...freeBatch2Items,
+  ...freeBatch3Items,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
