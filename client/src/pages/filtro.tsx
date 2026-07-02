@@ -34,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
-import { allScales, faixasEtarias, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import { allScales, faixasEtarias, queixas, QUEIXA_COOCORRENCIA, type ScaleEntry } from "@/data/scaleFilter";
 import { interactiveScaleItems } from "@/data/interactiveScaleItems";
 import { interactiveScales } from "@/data/interactiveScales";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
@@ -830,6 +830,26 @@ export default function FiltroPage() {
     setSelectedQueixas((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
   };
 
+  // Sugestão de co-ocorrência (comorbidade): ao marcar uma queixa, sugere marcar
+  // TAMBÉM outra que costuma vir junto (ex.: autismo → sensorial). Agrega as
+  // companheiras de todas as queixas marcadas, tira as já selecionadas, e mostra
+  // as 3 mais comuns como chips clicáveis. Ajuda o pai/mãe a não perder o quadro
+  // associado que quase sempre acompanha a queixa principal.
+  const suggestedCompanions = useMemo(() => {
+    if (selectedQueixas.length === 0) return [] as typeof queixas;
+    const selected = new Set(selectedQueixas);
+    const seen = new Set<string>();
+    const out: typeof queixas = [];
+    for (const qid of selectedQueixas) {
+      for (const compId of (QUEIXA_COOCORRENCIA[qid] || [])) {
+        if (selected.has(compId) || seen.has(compId)) continue;
+        const cat = queixas.find((q) => q.id === compId);
+        if (cat) { seen.add(compId); out.push(cat); }
+      }
+    }
+    return out.slice(0, 3);
+  }, [selectedQueixas]);
+
   const clearAll = () => {
     softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]);
   };
@@ -930,19 +950,41 @@ export default function FiltroPage() {
         <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">Queixa / sintomas</p>
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">O que você observa · sintomas</p>
               {isCuratedOuro && podium.ouro && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🧠 1ª linha: {podium.ouro.scale.name}</span>}
             </div>
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.map((q) => <button key={q.id} type="button" aria-pressed={selectedQueixas.includes(q.id)} aria-label={q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${selectedQueixas.includes(q.id) ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
+            {queixas.map((q) => { const sel = selectedQueixas.includes(q.id); return <button key={q.id} type="button" aria-pressed={sel} aria-label={q.parentHint ? `${q.label} — ${q.parentHint}` : q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${sel ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
               {q.emoji && <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">{q.emoji}</span>}
-              {/* Sem truncate: o rótulo do sintoma aparece POR EXTENSO (pedido do
-                  autor) — fonte menor no mobile e quebra de linha em vez de ocultar. */}
-              <span className="min-w-0 whitespace-normal break-words text-[10px] sm:text-xs leading-tight">{q.label}</span>
-            </button>)}
+              {/* Sem truncate: rótulo POR EXTENSO + dica em linguagem de pai/mãe
+                  (o que a criança faz), pra um leigo escolher a queixa certa. */}
+              <span className="min-w-0 flex flex-col">
+                <span className="whitespace-normal break-words text-[10px] sm:text-xs leading-tight">{q.label}</span>
+                {q.parentHint && <span className={`whitespace-normal break-words text-[8px] sm:text-[9px] font-medium leading-tight ${sel ? "text-primary-foreground/75" : "text-muted-foreground"}`}>{q.parentHint}</span>}
+              </span>
+            </button>; })}
           </div>
+          {suggestedCompanions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1" aria-label="Queixas que costumam vir junto">
+              <span className="text-[10px] font-semibold text-muted-foreground">💡 Costuma vir junto:</span>
+              {suggestedCompanions.map((q) => (
+                <button
+                  key={q.id}
+                  type="button"
+                  onClick={() => toggleQueixa(q.id)}
+                  onMouseEnter={() => softHover()}
+                  aria-label={`Adicionar também a queixa ${q.label}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary transition hover:-translate-y-0.5 hover:bg-primary/20"
+                >
+                  {q.emoji && <span aria-hidden="true">{q.emoji}</span>}
+                  {q.label}
+                  <span aria-hidden="true" className="text-primary/70">＋</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">

@@ -104,38 +104,72 @@ export interface QueixaCategory {
   iconColor: string;
   emoji?: string;       // unicode emoji for visual appeal
   appRoute?: string;    // atalho opcional para a ficha/aplicação da categoria
+  parentHint?: string;  // exemplo em linguagem de pai/mãe (o que a criança faz) — ajuda leigos a escolher a queixa certa
 }
 
+// Sugestão de comorbidade/co-ocorrência: ao marcar uma queixa, o filtro sugere
+// marcar TAMBÉM outra que costuma vir junto (ex.: autismo → sensorial). Curadoria
+// clínica leiga (o que mais aparece na prática), ordenada por frequência. IDs
+// referenciam queixas reais do array acima. NÃO sugerimos risco de suicídio a
+// leigos aqui — esse rastreio é conduzido pelo próprio pódio, com avisos e trava
+// por idade.
+export const QUEIXA_COOCORRENCIA: Record<string, string[]> = {
+  tea: ["sensorial", "tdah", "linguagem", "ansiedade"],
+  tdah: ["comportamento", "ansiedade", "aprendizagem", "sono"],
+  comportamento: ["tdah", "ansiedade", "trauma"],
+  ansiedade: ["depressao", "toc", "sono"],
+  depressao: ["ansiedade", "trauma"],
+  linguagem: ["tea", "atraso", "aprendizagem"],
+  atraso: ["linguagem", "motor", "tea"],
+  aprendizagem: ["tdah", "linguagem", "cognicao"],
+  sono: ["tdah", "ansiedade", "tea"],
+  tiques: ["toc", "tdah", "ansiedade"],
+  toc: ["ansiedade", "tiques"],
+  sensorial: ["tea", "tdah", "alimentacao"],
+  motor: ["atraso", "pc"],
+  pc: ["motor", "funcionalidade", "epilepsia"],
+  epilepsia: ["atraso", "cognicao"],
+  trauma: ["ansiedade", "depressao"],
+  alimentacao: ["sensorial", "tea"],
+  funcionalidade: ["autonomia", "atraso"],
+  autonomia: ["funcionalidade"],
+  social: ["tea", "tdah", "ansiedade"],
+  cognicao: ["aprendizagem", "atraso"],
+  enurese: ["sono"],
+  substancias: ["comportamento", "depressao"],
+  neonatal: ["atraso", "motor"],
+};
+
 export const queixas: QueixaCategory[] = [
-  { id: "atraso", label: "Atraso do Desenvolvimento", icon: "baby", color: "from-amber-500 to-orange-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "👶", appRoute: "/generic-scale/atraso"},
-  { id: "tea", label: "Autismo / TEA", icon: "puzzle", color: "from-pink-500 to-rose-500", bgLight: "bg-pink-50 dark:bg-pink-950/30", iconColor: "text-pink-600 dark:text-pink-400", emoji: "🧩", appRoute: "/generic-scale/tea"},
-  { id: "tdah", label: "TDAH", icon: "zap", color: "from-teal-500 to-cyan-500", bgLight: "bg-teal-50 dark:bg-teal-950/30", iconColor: "text-teal-600 dark:text-teal-400", emoji: "⚡", appRoute: "/generic-scale/tdah"},
-  { id: "comportamento", label: "Comportamento / Externalizantes", icon: "flame", color: "from-orange-500 to-red-500", bgLight: "bg-orange-50 dark:bg-orange-950/30", iconColor: "text-orange-600 dark:text-orange-400", emoji: "🔥", appRoute: "/generic-scale/comportamento"},
-  { id: "ansiedade", label: "Ansiedade", icon: "alert-triangle", color: "from-indigo-500 to-blue-500", bgLight: "bg-indigo-50 dark:bg-indigo-950/30", iconColor: "text-indigo-600 dark:text-indigo-400", emoji: "😰", appRoute: "/generic-scale/ansiedade"},
-  { id: "depressao", label: "Depressão / Humor", icon: "cloud-rain", color: "from-sky-500 to-blue-600", bgLight: "bg-sky-50 dark:bg-sky-950/30", iconColor: "text-sky-600 dark:text-sky-400", emoji: "☁️", appRoute: "/generic-scale/depressao"},
-  { id: "epilepsia", label: "Epilepsia", icon: "activity", color: "from-violet-500 to-purple-600", bgLight: "bg-violet-50 dark:bg-violet-950/30", iconColor: "text-violet-600 dark:text-violet-400", emoji: "⚠️", appRoute: "/generic-scale/epilepsia"},
-  { id: "pc", label: "Paralisia Cerebral / Motor", icon: "accessibility", color: "from-teal-500 to-emerald-500", bgLight: "bg-teal-50 dark:bg-teal-950/30", iconColor: "text-teal-600 dark:text-teal-400", emoji: "🚶", appRoute: "/generic-scale/pc"},
-  { id: "linguagem", label: "Linguagem / Comunicação", icon: "message-circle", color: "from-blue-500 to-indigo-500", bgLight: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400", emoji: "💬", appRoute: "/generic-scale/linguagem"},
-  { id: "sono", label: "Sono", icon: "moon", color: "from-indigo-500 to-purple-600", bgLight: "bg-indigo-50 dark:bg-indigo-950/30", iconColor: "text-indigo-600 dark:text-indigo-400", emoji: "😴", appRoute: "/generic-scale/sono"},
-  { id: "alimentacao", label: "Alimentação / Disfagia", icon: "utensils-crossed", color: "from-lime-500 to-green-600", bgLight: "bg-lime-50 dark:bg-lime-950/30", iconColor: "text-lime-600 dark:text-lime-400", emoji: "🍴", appRoute: "/generic-scale/alimentacao"},
-  { id: "dor", label: "Dor / Cefaleia", icon: "heart-pulse", color: "from-rose-500 to-red-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🤕", appRoute: "/generic-scale/dor"},
-  { id: "cognicao", label: "Cognição / Neuropsicologia", icon: "brain", color: "from-purple-500 to-violet-600", bgLight: "bg-purple-50 dark:bg-purple-950/30", iconColor: "text-purple-600 dark:text-purple-400", emoji: "🧠", appRoute: "/generic-scale/cognicao"},
-  { id: "aprendizagem", label: "Aprendizagem / Leitura", icon: "graduation-cap", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📚", appRoute: "/generic-scale/aprendizagem"},
-  { id: "funcionalidade", label: "Funcionalidade / Habilidades Adaptativas", icon: "users", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-cyan-400", emoji: "👥", appRoute: "/generic-scale/funcionalidade"},
-  { id: "neonatal", label: "Neonatal / Prematuridade", icon: "baby", color: "from-pink-400 to-rose-400", bgLight: "bg-pink-50 dark:bg-pink-950/30", iconColor: "text-pink-500 dark:text-pink-400", emoji: "🍼", appRoute: "/generic-scale/neonatal"},
-  { id: "suicidio", label: "Risco de Suicídio / Autolesão", icon: "shield-alert", color: "from-red-600 to-rose-700", bgLight: "bg-red-50 dark:bg-red-950/30", iconColor: "text-red-600 dark:text-red-400", emoji: "🆘", appRoute: "/generic-scale/suicidio"},
-  { id: "psicose", label: "Psicose / Mania", icon: "zap-off", color: "from-fuchsia-500 to-purple-600", bgLight: "bg-fuchsia-50 dark:bg-fuchsia-950/30", iconColor: "text-fuchsia-600 dark:text-fuchsia-400", emoji: "💫", appRoute: "/generic-scale/psicose"},
-  { id: "tiques", label: "Tiques / Tourette", icon: "sparkles", color: "from-yellow-500 to-orange-500", bgLight: "bg-yellow-50 dark:bg-yellow-950/30", iconColor: "text-yellow-600 dark:text-yellow-400", emoji: "✨", appRoute: "/generic-scale/tiques"},
-  { id: "efeitos", label: "Efeitos Colaterais / Monitorização", icon: "pill", color: "from-gray-500 to-slate-600", bgLight: "bg-gray-50 dark:bg-gray-950/30", iconColor: "text-gray-600 dark:text-gray-400", emoji: "💊", appRoute: "/generic-scale/efeitos"},
-  { id: "toc", label: "TOC / Obsessões", icon: "repeat", color: "from-purple-500 to-fuchsia-600", bgLight: "bg-purple-50 dark:bg-purple-950/30", iconColor: "text-purple-600 dark:text-purple-400", emoji: "🔄", appRoute: "/generic-scale/toc"},
-  { id: "trauma", label: "Trauma / TEPT", icon: "shield-alert", color: "from-slate-500 to-gray-700", bgLight: "bg-slate-50 dark:bg-slate-950/30", iconColor: "text-slate-600 dark:text-slate-400", emoji: "🛡️", appRoute: "/generic-scale/trauma"},
-  { id: "enurese", label: "Enurese / Eliminação", icon: "droplet", color: "from-cyan-500 to-blue-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-cyan-400", emoji: "💧", appRoute: "/generic-scale/enurese"},
-  { id: "motor", label: "Coordenação Motora", icon: "move", color: "from-emerald-500 to-teal-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "🏃", appRoute: "/generic-scale/motor"},
-  { id: "sensorial", label: "Sensorial / Integração", icon: "hand", color: "from-amber-500 to-yellow-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "👋", appRoute: "/generic-scale/sensorial"},
-  { id: "social", label: "Social / Relações", icon: "users", color: "from-blue-500 to-indigo-500", bgLight: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400", emoji: "🤝", appRoute: "/generic-scale/social"},
-  { id: "autonomia", label: "Autonomia / AVDs", icon: "home", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-sky-400", emoji: "🏠", appRoute: "/generic-scale/autonomia"},
-  { id: "evolucao", label: "Reavaliação / Evolução", icon: "trending-up", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📈", appRoute: "/generic-scale/evolucao"},
-  { id: "substancias", label: "Uso de Substâncias", icon: "wine", color: "from-rose-500 to-pink-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🍷", appRoute: "/generic-scale/substancias"},
+  { id: "atraso", label: "Atraso do Desenvolvimento", icon: "baby", color: "from-amber-500 to-orange-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "👶", appRoute: "/generic-scale/atraso", parentHint: "Demora pra sentar, andar ou falar"},
+  { id: "tea", label: "Autismo / TEA", icon: "puzzle", color: "from-pink-500 to-rose-500", bgLight: "bg-pink-50 dark:bg-pink-950/30", iconColor: "text-pink-600 dark:text-pink-400", emoji: "🧩", appRoute: "/generic-scale/tea", parentHint: "Pouco olho no olho, não aponta, se isola"},
+  { id: "tdah", label: "TDAH", icon: "zap", color: "from-teal-500 to-cyan-500", bgLight: "bg-teal-50 dark:bg-teal-950/30", iconColor: "text-teal-600 dark:text-teal-400", emoji: "⚡", appRoute: "/generic-scale/tdah", parentHint: "Não para quieto, desatento, esquece"},
+  { id: "comportamento", label: "Comportamento / Agressividade", icon: "flame", color: "from-orange-500 to-red-500", bgLight: "bg-orange-50 dark:bg-orange-950/30", iconColor: "text-orange-600 dark:text-orange-400", emoji: "🔥", appRoute: "/generic-scale/comportamento", parentHint: "Bate, morde, desafia, birras intensas"},
+  { id: "ansiedade", label: "Ansiedade", icon: "alert-triangle", color: "from-indigo-500 to-blue-500", bgLight: "bg-indigo-50 dark:bg-indigo-950/30", iconColor: "text-indigo-600 dark:text-indigo-400", emoji: "😰", appRoute: "/generic-scale/ansiedade", parentHint: "Medos, preocupação, apego, dor de barriga"},
+  { id: "depressao", label: "Depressão / Humor", icon: "cloud-rain", color: "from-sky-500 to-blue-600", bgLight: "bg-sky-50 dark:bg-sky-950/30", iconColor: "text-sky-600 dark:text-sky-400", emoji: "☁️", appRoute: "/generic-scale/depressao", parentHint: "Tristeza, desânimo, chora fácil, se isola"},
+  { id: "epilepsia", label: "Epilepsia", icon: "activity", color: "from-violet-500 to-purple-600", bgLight: "bg-violet-50 dark:bg-violet-950/30", iconColor: "text-violet-600 dark:text-violet-400", emoji: "⚠️", appRoute: "/generic-scale/epilepsia", parentHint: "Crises, ausências, convulsões"},
+  { id: "pc", label: "Paralisia Cerebral / Motor", icon: "accessibility", color: "from-teal-500 to-emerald-500", bgLight: "bg-teal-50 dark:bg-teal-950/30", iconColor: "text-teal-600 dark:text-teal-400", emoji: "🚶", appRoute: "/generic-scale/pc", parentHint: "Rigidez, fraqueza, atraso motor"},
+  { id: "linguagem", label: "Linguagem / Comunicação", icon: "message-circle", color: "from-blue-500 to-indigo-500", bgLight: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400", emoji: "💬", appRoute: "/generic-scale/linguagem", parentHint: "Fala pouco ou não fala, custa entender"},
+  { id: "sono", label: "Sono", icon: "moon", color: "from-indigo-500 to-purple-600", bgLight: "bg-indigo-50 dark:bg-indigo-950/30", iconColor: "text-indigo-600 dark:text-indigo-400", emoji: "😴", appRoute: "/generic-scale/sono", parentHint: "Custa dormir, acorda à noite, pesadelos"},
+  { id: "alimentacao", label: "Alimentação / Disfagia", icon: "utensils-crossed", color: "from-lime-500 to-green-600", bgLight: "bg-lime-50 dark:bg-lime-950/30", iconColor: "text-lime-600 dark:text-lime-400", emoji: "🍴", appRoute: "/generic-scale/alimentacao", parentHint: "Come pouco/seletivo, engasga, recusa"},
+  { id: "dor", label: "Dor / Cefaleia", icon: "heart-pulse", color: "from-rose-500 to-red-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🤕", appRoute: "/generic-scale/dor", parentHint: "Dor de cabeça ou dores frequentes"},
+  { id: "cognicao", label: "Cognição / Neuropsicologia", icon: "brain", color: "from-purple-500 to-violet-600", bgLight: "bg-purple-50 dark:bg-purple-950/30", iconColor: "text-purple-600 dark:text-purple-400", emoji: "🧠", appRoute: "/generic-scale/cognicao", parentHint: "Aprende devagar, memória e raciocínio"},
+  { id: "aprendizagem", label: "Aprendizagem / Leitura", icon: "graduation-cap", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📚", appRoute: "/generic-scale/aprendizagem", parentHint: "Custa ler, escrever ou fazer conta"},
+  { id: "funcionalidade", label: "Funcionalidade / Habilidades Adaptativas", icon: "users", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-cyan-400", emoji: "👥", appRoute: "/generic-scale/funcionalidade", parentHint: "Precisa de ajuda nas tarefas do dia"},
+  { id: "neonatal", label: "Neonatal / Prematuridade", icon: "baby", color: "from-pink-400 to-rose-400", bgLight: "bg-pink-50 dark:bg-pink-950/30", iconColor: "text-pink-500 dark:text-pink-400", emoji: "🍼", appRoute: "/generic-scale/neonatal", parentHint: "Bebê prematuro ou de risco"},
+  { id: "suicidio", label: "Risco de Suicídio / Autolesão", icon: "shield-alert", color: "from-red-600 to-rose-700", bgLight: "bg-red-50 dark:bg-red-950/30", iconColor: "text-red-600 dark:text-red-400", emoji: "🆘", appRoute: "/generic-scale/suicidio", parentHint: "Fala em morrer, se machuca de propósito"},
+  { id: "psicose", label: "Psicose / Mania", icon: "zap-off", color: "from-fuchsia-500 to-purple-600", bgLight: "bg-fuchsia-50 dark:bg-fuchsia-950/30", iconColor: "text-fuchsia-600 dark:text-fuchsia-400", emoji: "💫", appRoute: "/generic-scale/psicose", parentHint: "Vê/ouve coisas, fala desconexa, agitado"},
+  { id: "tiques", label: "Tiques / Tourette", icon: "sparkles", color: "from-yellow-500 to-orange-500", bgLight: "bg-yellow-50 dark:bg-yellow-950/30", iconColor: "text-yellow-600 dark:text-yellow-400", emoji: "✨", appRoute: "/generic-scale/tiques", parentHint: "Movimentos ou sons repetidos sem querer"},
+  { id: "efeitos", label: "Efeitos Colaterais / Monitorização", icon: "pill", color: "from-gray-500 to-slate-600", bgLight: "bg-gray-50 dark:bg-gray-950/30", iconColor: "text-gray-600 dark:text-gray-400", emoji: "💊", appRoute: "/generic-scale/efeitos", parentHint: "Acompanhar efeito do remédio"},
+  { id: "toc", label: "TOC / Obsessões", icon: "repeat", color: "from-purple-500 to-fuchsia-600", bgLight: "bg-purple-50 dark:bg-purple-950/30", iconColor: "text-purple-600 dark:text-purple-400", emoji: "🔄", appRoute: "/generic-scale/toc", parentHint: "Manias, rituais, repete pra aliviar"},
+  { id: "trauma", label: "Trauma / TEPT", icon: "shield-alert", color: "from-slate-500 to-gray-700", bgLight: "bg-slate-50 dark:bg-slate-950/30", iconColor: "text-slate-600 dark:text-slate-400", emoji: "🛡️", appRoute: "/generic-scale/trauma", parentHint: "Após susto/perda: medo, revive a cena"},
+  { id: "enurese", label: "Enurese / Eliminação", icon: "droplet", color: "from-cyan-500 to-blue-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-cyan-400", emoji: "💧", appRoute: "/generic-scale/enurese", parentHint: "Faz xixi/cocô na roupa ou na cama"},
+  { id: "motor", label: "Coordenação Motora", icon: "move", color: "from-emerald-500 to-teal-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "🏃", appRoute: "/generic-scale/motor", parentHint: "Desajeitado, cai muito, custa coordenar"},
+  { id: "sensorial", label: "Sensorial / Integração", icon: "hand", color: "from-amber-500 to-yellow-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "👋", appRoute: "/generic-scale/sensorial", parentHint: "Incomoda com som, textura ou luz"},
+  { id: "social", label: "Social / Relações", icon: "users", color: "from-blue-500 to-indigo-500", bgLight: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400", emoji: "🤝", appRoute: "/generic-scale/social", parentHint: "Custa fazer amigos e conviver"},
+  { id: "autonomia", label: "Autonomia / AVDs", icon: "home", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-sky-400", emoji: "🏠", appRoute: "/generic-scale/autonomia", parentHint: "Custa se vestir, comer, se cuidar sozinho"},
+  { id: "evolucao", label: "Reavaliação / Evolução", icon: "trending-up", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📈", appRoute: "/generic-scale/evolucao", parentHint: "Reavaliar após início do tratamento"},
+  { id: "substancias", label: "Uso de Substâncias", icon: "wine", color: "from-rose-500 to-pink-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🍷", appRoute: "/generic-scale/substancias", parentHint: "Uso de álcool ou drogas"},
 ];
 
 // Faixas etárias para o filtro (em meses)
