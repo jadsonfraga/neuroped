@@ -1023,13 +1023,14 @@ export default function FiltroPage() {
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
+          {/* Nota informativa (não é botão): explica honestamente o recorte do
+              filtro em vez de simular um controle que não existe. */}
           <div
-            role="status"
-            aria-label="O filtro mostra apenas escalas que abrem como ferramenta usável e preenchível no app"
-            className="w-full rounded-xl sm:rounded-2xl border border-primary bg-primary px-3 py-2 text-xs font-bold text-primary-foreground min-h-9 flex items-center justify-between gap-2"
+            role="note"
+            className="w-full rounded-xl border border-border bg-muted/40 px-3 py-2 text-[11px] leading-snug text-muted-foreground flex items-start gap-1.5"
           >
-            <span className="flex items-center gap-1.5"><span aria-hidden="true">✅</span> Só as que abrem pra usar</span>
-            <span className="text-[10px] font-semibold text-primary-foreground/80">fichas ocultas</span>
+            <span aria-hidden="true" className="mt-px">ℹ️</span>
+            <span>Mostrando apenas escalas que <strong className="font-semibold text-foreground">abrem no app</strong> para preencher. Fichas técnicas e instrumentos externos/licenciados ficam no catálogo, fora do ranking.</span>
           </div>
         </div>
       </section>
