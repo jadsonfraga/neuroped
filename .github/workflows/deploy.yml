@@ -85,7 +85,9 @@ jobs:
       - name: Compilar frontend para Pages
         env:
           NODE_ENV: production
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH || 'c578adbb17446d51d8cb58e05d5e83fcc41c3a85771b207db0f2f7e5d530f4fd' }}
+          # PIN da trava privada (PrivateGate). Fallback = verificador PBKDF2 do PIN atual.
+          # Para um PIN mais forte e fora do repositório público, defina o secret VITE_PIN_HASH.
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH || 'pbkdf2$310000$a6d0e1fe27681677ad56a811598c0d6f$13dd5fb77e08a456234eae5e2397792dd4d8cf33e2bf11911a4e9a52adcb6b24' }}
         run: npm run build:client
 
       - name: Verificar output do build
