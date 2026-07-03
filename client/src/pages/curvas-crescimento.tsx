@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { TrendingUp, AlertTriangle } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -254,15 +255,13 @@ export default function CurvasCrescimentoPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-sm">
-          <TrendingUp className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold">Curvas de Crescimento</h1>
-          <p className="text-xs text-muted-foreground">Referência OMS (WHO) — Percentis P3 a P97</p>
-        </div>
-      </div>
+      <PageHero
+        icon={TrendingUp}
+        eyebrow="antropometria"
+        title="Curvas de Crescimento"
+        subtitle="Referência OMS (WHO) — Percentis P3 a P97."
+        gradient="from-emerald-500 to-teal-500"
+      />
 
       {/* Inputs */}
       <Card className="border-card-border">

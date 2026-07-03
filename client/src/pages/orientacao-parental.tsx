@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Heart, ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, PhoneCall } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -470,16 +471,15 @@ export default function OrientacaoParentalPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-sm">
-          <Heart className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold">Orientação para Pais</h1>
-          <p className="text-xs text-muted-foreground">Guia prático por transtorno — linguagem acessível</p>
-        </div>
+      <PageHero
+        icon={Heart}
+        eyebrow="para famílias"
+        title="Orientação para Pais"
+        subtitle="Guia prático por transtorno — linguagem acessível."
+        gradient="from-rose-500 to-pink-500"
+      >
         <Badge variant="secondary" className="text-xs">{disorders.length} transtornos</Badge>
-      </div>
+      </PageHero>
 
       {/* Search */}
       <input

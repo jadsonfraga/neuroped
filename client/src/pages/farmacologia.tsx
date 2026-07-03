@@ -7,6 +7,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PageHero } from "@/components/PageHero";
 import {
   Accordion,
   AccordionContent,
@@ -109,19 +110,15 @@ export default function FarmacologiaPage() {
   return (
     <div className="space-y-6" data-testid="farmacologia-page">
       {/* Header */}
-      <div className="text-center space-y-3 py-4">
-        <div className="flex justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-cyan-600 flex items-center justify-center shadow-lg">
-            <Pill className="w-7 h-7 text-white" />
-          </div>
-        </div>
-        <h1 className="text-xl font-bold text-foreground" data-testid="text-page-title">
-          Farmacologia em Neuropediatria
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-          Doses práticas e comentários clínicos de {totalDrugs} fármacos organizados por {pharmCategories.length} indicações clínicas.
-        </p>
-        <div className="flex items-center justify-center gap-2 pt-1">
+      <div className="space-y-3">
+        <PageHero
+          icon={Pill}
+          eyebrow="farmacologia clínica"
+          title="Farmacologia em Neuropediatria"
+          subtitle={`Doses práticas e comentários clínicos de ${totalDrugs} fármacos organizados por ${pharmCategories.length} indicações clínicas.`}
+          gradient="from-emerald-600 to-cyan-600"
+        />
+        <div className="flex flex-wrap items-center gap-2 pt-1" data-testid="text-page-title">
           <Badge variant="secondary" className="gap-1.5">
             <GraduationCap className="w-3 h-3" />
             {pharmCategories.length} Categorias

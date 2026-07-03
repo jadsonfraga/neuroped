@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import {
   Accordion,
   AccordionContent,
@@ -12,17 +13,13 @@ export default function ClassificacoesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-sm">
-          <BookOpen className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold">Classificações e Frameworks</h1>
-          <p className="text-xs text-muted-foreground">
-            Referências clínicas: ILAE 2017, FMS, CIF e GMFCS
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={BookOpen}
+        eyebrow="referências clínicas"
+        title="Classificações e Frameworks"
+        subtitle="Referências clínicas: ILAE 2017, FMS, CIF e GMFCS."
+        gradient="from-indigo-500 to-blue-600"
+      />
 
       <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/40 p-4">
         <p className="text-xs text-indigo-800 dark:text-indigo-300 leading-relaxed">

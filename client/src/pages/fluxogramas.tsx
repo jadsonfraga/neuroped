@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { GitBranch, RotateCcw, ChevronRight, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -596,17 +597,13 @@ export default function FluxogramasPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <GitBranch className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Fluxogramas de Decisão Clínica</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Guia interativo passo a passo. Responda as perguntas para chegar à conduta recomendada.
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={GitBranch}
+        eyebrow="decisão clínica"
+        title="Fluxogramas de Decisão Clínica"
+        subtitle="Guia interativo passo a passo. Responda as perguntas para chegar à conduta recomendada."
+        gradient="from-violet-600 to-blue-600"
+      />
 
       <Tabs defaultValue="atraso" className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1 p-1 mb-2">

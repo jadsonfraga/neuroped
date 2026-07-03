@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ClipboardList, Printer, Mail, Loader2 } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -417,17 +418,13 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
 export default function FichasRegistroPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-          <ClipboardList className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold">Fichas de Registro — Escalas Comerciais</h1>
-          <p className="text-xs text-muted-foreground">
-            Registro de pontuações de instrumentos padronizados (Bayley-III, WISC-V, HINE, GMFM-88, ADOS-2, Griffiths-III)
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={ClipboardList}
+        eyebrow="escalas comerciais"
+        title="Fichas de Registro — Escalas Comerciais"
+        subtitle="Registro de pontuações de instrumentos padronizados (Bayley-III, WISC-V, HINE, GMFM-88, ADOS-2, Griffiths-III)."
+        gradient="from-violet-500 to-purple-600"
+      />
 
       <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">
         <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
