@@ -9,7 +9,6 @@ import { Layout } from "@/components/Layout";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { Onboarding } from "@/components/Onboarding";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { RouteGuard } from "@/components/RouteGuard";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
 import { ToastProvider } from "@/components/Toast";
@@ -65,14 +64,10 @@ const EmsPage = lazy(() => import("@/pages/ems"));
 const EtarePage = lazy(() => import("@/pages/etare"));
 const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
-const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
-const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
-const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const EscalasNeuropsiquiatriaPage = lazy(() => import("@/pages/escalas-neuropsiquiatria"));
 const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
-const AssinaturaDigitalPage = lazy(() => import("@/pages/assinatura-digital"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -108,9 +103,6 @@ const PdaePage = lazy(() => import("@/pages/pdae"));
 
 const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const MedicamentosPage = lazy(() => import("@/pages/medicamentos"));
-const PacientesPage = lazy(() => import("@/pages/pacientes"));
-const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
-const SatisfacaoMedicacaoPage = lazy(() => import("@/pages/satisfacao-medicacao"));
 const Eusm10Page = lazy(() => import("@/pages/eusm10"));
 const GenericScalePage = lazy(() => import("@/pages/generic-scale"));
 const BayleyPage = lazy(() => import("@/pages/bayley"));
@@ -128,13 +120,8 @@ const ConfiasPage = lazy(() => import("@/pages/confias"));
 const PortagePage = lazy(() => import("@/pages/portage"));
 const VinelandCompletePage = lazy(() => import("@/pages/vineland"));
 const CbclInterativoPage = lazy(() => import("@/pages/cbcl-interativo"));
-const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const AvaliacaoMultiprofissionalPage = lazy(() => import("@/pages/avaliacao-multiprofissional"));
-const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
-const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
-const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
-const EfeitosColateraisPage = lazy(() => import("@/pages/efeitos-colaterais"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
 const FamiliaPage = lazy(() => import("@/pages/familia"));
 const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
@@ -144,11 +131,6 @@ const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
 const GlossarioPage = lazy(() => import("@/pages/glossario"));
 const InstrumentosPadronizadosPage = lazy(() => import("@/pages/instrumentos-padronizados"));
 const QualidadePage = lazy(() => import("@/pages/qualidade"));
-const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
-const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
-const ReceitaC1ExpressPage = lazy(() => import("@/pages/receita-c1-express"));
-const DocumentosPage = lazy(() => import("@/pages/documentos"));
-const VerificarPage = lazy(() => import("@/pages/verificar"));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((mod) => ({ default: mod.CommandPalette })));
 
 function LoadingSpinner() {
@@ -159,9 +141,6 @@ function LoadingSpinner() {
   );
 }
 
-function Protected({ children, roles }: { children: React.ReactNode; roles?: Array<"admin" | "professional" | "reader" | "operator"> }) {
-  return <RouteGuard roles={roles}>{children}</RouteGuard>;
-}
 
 function AppRouter() {
   const [location] = useLocation();
@@ -193,7 +172,7 @@ function AppRouter() {
           <Route path="/scared" component={ScaredPage} />
           <Route path="/conners" component={ConnersPage} />
           <Route path="/vineland" component={VinelandPage} />
-          <Route path="/pant"><Protected roles={["admin", "professional"]}><PantPage /></Protected></Route>
+          <Route path="/pant" component={PantPage} />
           <Route path="/fluxograma" component={FluxogramaPage} />
           <Route path="/cdi2" component={Cdi2Page} />
           <Route path="/phqa" component={PhqaPage} />
@@ -227,15 +206,10 @@ function AppRouter() {
           <Route path="/eaah" component={EaahPage} />
           <Route path="/filtro" component={FiltroPage} />
           <Route path="/filtro-escalas" component={FiltroPage} />
-          <Route path="/pre-consulta" component={PreConsultaPage} />
-          <Route path="/pre-retorno" component={PreRetornoPage} />
-          <Route path="/efeitos-colaterais" component={EfeitosColateraisPage} />
-          <Route path="/recepcao" component={RecepcaoPage} />
           <Route path="/escalas-neuropsiquiatria" component={EscalasNeuropsiquiatriaPage} />
           <Route path="/caa" component={CaaPage} />
           <Route path="/diario-sono" component={DiarioSonoPage} />
           <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
-          <Route path="/assinatura-digital"><Protected roles={["admin", "professional"]}><AssinaturaDigitalPage /></Protected></Route>
           <Route path="/sobre" component={SobrePage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />
@@ -269,15 +243,11 @@ function AppRouter() {
           <Route path="/valores-referencia" component={ValoresReferenciaPage} />
           <Route path="/pdae" component={PdaePage} />
 
-          <Route path="/medicamentos"><Protected roles={["admin", "professional"]}><MedicamentosPage /></Protected></Route>
-          <Route path="/farmacologia"><Protected roles={["admin", "professional"]}><FarmacologiaPage /></Protected></Route>
-          <Route path="/pacientes"><Protected roles={["admin", "professional"]}><PacientesPage /></Protected></Route>
-          <Route path="/paciente/:id"><Protected roles={["admin", "professional"]}><PacienteDetalhePage /></Protected></Route>
-          <Route path="/prontuario"><Protected roles={["admin", "professional"]}><ProntuarioPage /></Protected></Route>
-          <Route path="/calculadora-dose"><Protected roles={["admin", "professional"]}><CalculadoraDosePage /></Protected></Route>
-          <Route path="/satisfacao-medicacao"><Protected roles={["admin", "professional"]}><SatisfacaoMedicacaoPage /></Protected></Route>
-          <Route path="/eusm10"><Protected roles={["admin", "professional"]}><Eusm10Page /></Protected></Route>
-          <Route path="/avaliacao-multiprofissional"><Protected roles={["admin", "professional"]}><AvaliacaoMultiprofissionalPage /></Protected></Route>
+          <Route path="/medicamentos" component={MedicamentosPage} />
+          <Route path="/farmacologia" component={FarmacologiaPage} />
+          <Route path="/calculadora-dose" component={CalculadoraDosePage} />
+          <Route path="/eusm10" component={Eusm10Page} />
+          <Route path="/avaliacao-multiprofissional" component={AvaliacaoMultiprofissionalPage} />
           <Route path="/generic-scale/:id" component={GenericScalePage} />
           <Route path="/bayley" component={BayleyPage} />
           <Route path="/griffiths" component={GriffithsPage} />
@@ -294,9 +264,6 @@ function AppRouter() {
           <Route path="/portage" component={PortagePage} />
           <Route path="/vineland-completo" component={VinelandCompletePage} />
           <Route path="/cbcl-interativo" component={CbclInterativoPage} />
-          <Route path="/plano-terapeutico"><Protected roles={["admin", "professional"]}><PlanoTerapeuticoPage /></Protected></Route>
-          <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
-          <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>
 
           <Route path="/familia" component={FamiliaPage} />
           <Route path="/portal-familia" component={PortalFamiliaPage} />
@@ -306,11 +273,6 @@ function AppRouter() {
           <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
-          <Route path="/verificar" component={VerificarPage} />
-          <Route path="/documentos" component={DocumentosPage} />
-          <Route path="/laudo-neuroped"><Protected roles={["admin", "professional"]}><LaudoNeuropedPage /></Protected></Route>
-          <Route path="/receita-c1" component={ReceitaC1Page} />
-          <Route path="/receita-c1-express" component={ReceitaC1ExpressPage} />
           <Route path="/qualidade" component={QualidadePage} />
           <Route component={NotFound} />
         </Switch>
