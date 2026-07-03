@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 658
-- **Com fonte declarada:** 496
+- **Total de instrumentos:** 659
+- **Com fonte declarada:** 497
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -519,6 +519,7 @@
 | `podj-tea-prime-6-12a` | PODJ-TEA PRIME 6–12A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
 | `podj-tea-prime-escola-terapia` | PODJ-TEA Escola/Terapia | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
 | `podj-tea-prime-familiar` | PODJ-TEA Familiar | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
+| `portage` | Portage | Bluma S et al., 1976; versão operacionalizada BR: Williams LCA & Aiello ALR | não |
 | `ppp` | PPP | Hunt A et al., 2004 (Paediatric Pain Profile) | não |
 | `ppvt4` | PPVT-4 | Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson | não |
 | `ppvt4-new` | PPVT-4 Peabody | Dunn LM, Dunn DM, 2007 (PPVT-4), Pearson | não |
