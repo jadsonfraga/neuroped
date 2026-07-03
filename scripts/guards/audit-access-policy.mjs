@@ -1,15 +1,25 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
+// POLÍTICA DE ACESSO — atualizada para o app ABERTO.
+//
+// Decisão do responsável (Dr. Jadson): as áreas de dados de paciente e de
+// documentos (pacientes, prontuário, receitas, laudos, fichas, planos…) foram
+// REMOVIDAS do app, e o restante passou a abrir SEM senha. Portanto este guard
+// deixou de exigir PrivateGate/Protected. O que ele ainda protege (e é o que
+// importa num app estático público):
+//   · nenhum segredo/PIN/token hardcoded no código-fonte;
+//   · nenhum PIN/hash embutido no PasswordGate;
+//   · nenhuma liberação de área por "desbloqueio local" frágil;
+//   · sanidade: rotas públicas existem e não exigem Protected.
+
 const root = process.cwd();
 const appPath = join(root, "client/src/App.tsx");
 const routeGuardPath = join(root, "client/src/components/RouteGuard.tsx");
-const localUnlockPath = join(root, "client/src/lib/localUnlock.ts");
 const passwordGatePath = join(root, "client/src/components/PasswordGate.tsx");
-const notFoundPath = join(root, "client/src/pages/not-found.tsx");
 
 function read(path) {
-  return readFileSync(path, "utf8");
+  try { return readFileSync(path, "utf8"); } catch { return ""; }
 }
 
 function fail(message) {
@@ -30,94 +40,23 @@ function walk(dir, files = []) {
 
 const app = read(appPath);
 const guard = read(routeGuardPath);
-const unlock = read(localUnlockPath);
 const passwordGate = read(passwordGatePath);
-const notFound = read(notFoundPath);
 
-const sensitiveRoutes = [
-  "/pant",
-  "/assinatura-digital",
-  "/pacientes",
-  "/paciente/",
-  "/prontuario",
-  "/calculadora-dose",
-  "/farmacologia",
-  "/medicamentos",
-  "/satisfacao-medicacao",
-  "/plano-terapeutico",
-  "/plano-intervencao",
-  "/avaliacao-multiprofissional",
-  "/fichas-registro",
-];
+// Rotas públicas que devem existir e NÃO podem exigir Protected (app aberto).
+const publicRoutes = ["/", "/filtro", "/familia", "/portal-familia", "/qualidade", "/consentimento-lgpd"];
 
-const protectedBridgeRoutes = ["/documentos"];
-
-const publicRoutes = [
-  "/",
-  "/filtro",
-  "/portal-familia",
-  "/qualidade",
-  "/pre-retorno",
-  "/consentimento-lgpd",
-];
-
-console.log("Auditando politica de acesso NeuroPed...");
+console.log("Auditando politica de acesso NeuroPed (app aberto)...");
 
 if (app.includes("LocalUnlockGate")) {
   fail("App.tsx nao deve importar/renderizar LocalUnlockGate global.");
 }
 
 if (guard.includes("LocalUnlockGate") || guard.includes("hasClinicalUnlock")) {
-  fail("RouteGuard.tsx nao deve liberar area clinica por desbloqueio local.");
-}
-
-// Modelo PIN master: PrivateGate no main.tsx é o único portão; RouteGuard é transparente.
-const mainPath = join(root, "client/src/main.tsx");
-const mainTsx = read(mainPath);
-if (!mainTsx.includes("PrivateGate")) {
-  fail("main.tsx deve envolver <App> com <PrivateGate> (PIN master).");
-}
-
-if (!unlock.includes("verifyMasterPin") || !unlock.includes("clearMasterPinUnlock") || !unlock.includes("dados reais de pacientes")) {
-  fail("localUnlock.ts deve usar somente o PIN master forte e avisar que offline nao serve para dados reais.");
+  fail("RouteGuard.tsx nao deve liberar area por desbloqueio local.");
 }
 
 if (/VITE_PIN_HASH|PIN_HASH|MASTER_PIN_HASH|UNLOCK_HASH|sha256hex|pin-ok/i.test(passwordGate)) {
   fail("PasswordGate.tsx nao deve conter PIN/hash/fallback local.");
-}
-
-for (const route of sensitiveRoutes) {
-  if (!guard.includes(`"${route}"`)) {
-    fail(`Rota sensivel ausente do registro central: ${route}`);
-  }
-
-  const appProtectedRoute = route === "/paciente/" ? "/paciente/:id" : route;
-  const routeIndex = app.indexOf(`path="${appProtectedRoute}"`);
-  if (routeIndex === -1) {
-    fail(`Rota sensivel nao encontrada em App.tsx: ${appProtectedRoute}`);
-    continue;
-  }
-
-  const routeSnippet = app.slice(routeIndex, routeIndex + 220);
-  if (!routeSnippet.includes("<Protected")) {
-    fail(`Rota sensivel sem wrapper Protected em App.tsx: ${appProtectedRoute}`);
-  }
-}
-
-for (const route of protectedBridgeRoutes) {
-  if (!guard.includes(`"${route}"`)) {
-    fail(`Ponte sensivel ausente do registro central RouteGuard.SENSITIVE_ROUTES: ${route}`);
-  }
-
-  const routeIndex = notFound.indexOf(`location === "${route}"`);
-  if (routeIndex === -1) {
-    fail(`Ponte sensivel ausente de not-found.tsx: ${route}`);
-    continue;
-  }
-  const routeSnippet = notFound.slice(routeIndex, routeIndex + 320);
-  if (!routeSnippet.includes("RouteGuard") && !routeSnippet.includes("<Protected")) {
-    fail(`Ponte sensivel sem protecao em not-found.tsx: ${route}`);
-  }
 }
 
 for (const route of publicRoutes) {
@@ -126,7 +65,6 @@ for (const route of publicRoutes) {
     fail(`Rota publica esperada nao encontrada em App.tsx: ${route}`);
     continue;
   }
-
   const routeSnippet = app.slice(routeIndex, routeIndex + 180);
   if (routeSnippet.includes("<Protected")) {
     fail(`Rota publica nao deve exigir Protected: ${route}`);
@@ -169,4 +107,4 @@ if (process.exitCode) {
   process.exit(process.exitCode);
 }
 
-console.log("Politica de acesso aprovada: publico aberto, clinico autenticado e PIN master sem segredo em texto.");
+console.log("Politica de acesso aprovada: app aberto, sem segredos em texto no codigo-fonte.");
