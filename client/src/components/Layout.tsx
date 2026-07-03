@@ -10,6 +10,8 @@ import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
 import { OfflineBanner } from "@/components/ui/VisualStates";
 import { navSections, getNavigationMatch } from "@/data/navigation";
+import { isPublicRoute } from "@/lib/publicRoutes";
+import { IS_PUBLIC_ZONE } from "@/lib/zone";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
@@ -174,6 +176,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const activeNavigation = getNavigationMatch(location);
   const showClinicalFlow = location !== "/" && location !== "/login" && location !== "/sessao-expirada";
+  // Na zona pública (host das famílias) o menu mostra só o conteúdo aberto.
+  const visibleSections = IS_PUBLIC_ZONE
+    ? navSections
+        .map((s) => ({ ...s, items: s.items.filter((i) => isPublicRoute(i.href)) }))
+        .filter((s) => s.items.length > 0)
+    : navSections;
+  // Selo de conteúdo educativo — aparece nas páginas públicas (para famílias).
+  const onPublicPage = isPublicRoute(location);
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
   function handleLocalLock() {
@@ -372,7 +382,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav id="sidebar-nav" className="flex-1 py-2 px-2 space-y-1 overflow-y-auto" aria-label="Navegação principal em grupos recolhíveis">
-          {navSections.map((section, si) => {
+          {visibleSections.map((section, si) => {
             const sectionKey = section.title || "principal";
             const sectionOpen = !section.title || collapsed || (openSections[sectionKey] ?? false);
             return (
@@ -530,6 +540,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
+          {onPublicPage && (
+            <div
+              role="note"
+              className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-[11px] leading-snug text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+            >
+              <span aria-hidden="true" className="mt-px">ℹ️</span>
+              <span><strong className="font-semibold">Conteúdo educativo.</strong> Estas informações apoiam e orientam as famílias — <strong className="font-semibold">não substituem</strong> a avaliação, o diagnóstico ou a conduta de um profissional de saúde.</span>
+            </div>
+          )}
           {children}
         </div>
       </main>

@@ -8,6 +8,15 @@ import {
   verifyMasterPin,
 } from "@/lib/masterPin";
 import { currentHashPath, isPublicRoute, PUBLIC_HOME } from "@/lib/publicRoutes";
+import { IS_PUBLIC_ZONE, MEDICAL_URL } from "@/lib/zone";
+
+// Estilos de cor compartilhados entre a tela do PIN e o aviso "área do
+// profissional" — definidos uma vez (sem duplicar literais de cor).
+const GATE_BG = "linear-gradient(135deg, #0f4c3a 0%, #1a2559 50%, #3d1428 100%)";
+const CARD_BG = "rgba(15,18,40,0.65)";
+const BUBBLE_BG = "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(99,102,241,0.15))";
+const BUBBLE_BORDER = "1px solid rgba(139,92,246,0.35)";
+const PRIMARY_BTN_BG = "linear-gradient(135deg, #7c3aed, #6366f1)";
 
 function LockIcon() {
   return (
@@ -36,9 +45,35 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   const onPublicRoute = isPublicRoute(path);
-  const showGate = !unlocked && !onPublicRoute;
+  // Na ZONA PÚBLICA (host das famílias) nunca há PIN: rota pública abre o app;
+  // rota médica mostra um aviso apontando para a área do profissional. Fora dela
+  // (full/medical), rota médica exige PIN.
+  const showGate = !IS_PUBLIC_ZONE && !unlocked && !onPublicRoute;
+  const showProfessionalRedirect = IS_PUBLIC_ZONE && !onPublicRoute;
 
   useEffect(() => { if (showGate) document.title = "NeuroPed — área médica (acesso restrito)"; }, [showGate]);
+
+  if (showProfessionalRedirect) {
+    return (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: GATE_BG }}>
+        <div className="w-full max-w-sm rounded-3xl border border-white/10 p-8 text-center shadow-2xl" style={{ background: CARD_BG, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: BUBBLE_BG, border: BUBBLE_BORDER }}>
+            <LockIcon />
+          </div>
+          <h1 className="text-lg font-black text-white">Área do profissional</h1>
+          <p className="mt-2 text-sm text-white/60">Esta seção é exclusiva do profissional de saúde. As famílias têm acesso ao conteúdo educativo aberto.</p>
+          <button type="button" onClick={() => { window.location.hash = `#${PUBLIC_HOME}`; }} className="mt-5 w-full rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: PRIMARY_BTN_BG }}>
+            ← Voltar ao conteúdo das famílias
+          </button>
+          {MEDICAL_URL && (
+            <a href={MEDICAL_URL} className="mt-3 block text-xs font-semibold text-white/60 underline underline-offset-4 hover:text-white/90">
+              Sou o profissional — ir para a área médica →
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   async function tentar(e: React.FormEvent) {
     e.preventDefault();
@@ -72,13 +107,13 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="fixed inset-0 z-[300] flex items-center justify-center p-4"
-      style={{ background: "linear-gradient(135deg, #0f4c3a 0%, #1a2559 50%, #3d1428 100%)" }}
+      style={{ background: GATE_BG }}
     >
       <form
         onSubmit={tentar}
         className="relative w-full max-w-sm rounded-3xl border border-white/10 p-8 shadow-2xl"
         style={{
-          background: "rgba(15,18,40,0.65)",
+          background: CARD_BG,
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           boxShadow: "0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
@@ -92,8 +127,8 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           <div
             className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
             style={{
-              background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(99,102,241,0.15))",
-              border: "1px solid rgba(139,92,246,0.35)",
+              background: BUBBLE_BG,
+              border: BUBBLE_BORDER,
               boxShadow: "0 8px 24px rgba(139,92,246,0.2)",
             }}
           >
@@ -137,7 +172,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           className="mt-5 w-full rounded-xl px-4 py-3 text-sm font-bold text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
             background: pin.trim() && !busy
-              ? "linear-gradient(135deg, #7c3aed, #6366f1)"
+              ? PRIMARY_BTN_BG
               : "rgba(255,255,255,0.08)",
             boxShadow: pin.trim() && !busy
               ? "0 4px 20px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.15)"
