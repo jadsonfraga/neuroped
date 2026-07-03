@@ -7,6 +7,7 @@ import {
   storeDeviceMasterPin,
   verifyMasterPin,
 } from "@/lib/masterPin";
+import { currentHashPath, isPublicRoute, PUBLIC_HOME } from "@/lib/publicRoutes";
 
 function LockIcon() {
   return (
@@ -24,8 +25,20 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
   const [erro, setErro] = useState("");
   const [busy, setBusy] = useState(false);
   const [setupMode] = useState<boolean>(() => !hasConfiguredMasterPin());
+  // Rota atual (roteamento por hash) — decide se a tela exige PIN. Rotas públicas
+  // (conteúdo para famílias) nunca são travadas; todo o resto é área médica.
+  const [path, setPath] = useState<string>(() => currentHashPath());
 
-  useEffect(() => { if (!unlocked) document.title = "NeuroPed — acesso privado"; }, [unlocked]);
+  useEffect(() => {
+    const onHash = () => setPath(currentHashPath());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const onPublicRoute = isPublicRoute(path);
+  const showGate = !unlocked && !onPublicRoute;
+
+  useEffect(() => { if (showGate) document.title = "NeuroPed — área médica (acesso restrito)"; }, [showGate]);
 
   async function tentar(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +66,8 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
     setUnlocked(true);
   }
 
-  if (unlocked) return <>{children}</>;
+  // Desbloqueado OU em rota pública → mostra o app normalmente.
+  if (!showGate) return <>{children}</>;
 
   return (
     <div
@@ -87,7 +101,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           </div>
           <h1 className="text-xl font-black text-white tracking-tight">NeuroPed</h1>
           <p className="mt-1 text-sm text-white/50 font-medium">
-            {setupMode ? "Defina um PIN de acesso" : "Acesso restrito"}
+            {setupMode ? "Defina um PIN de acesso" : "Área médica · acesso restrito"}
           </p>
         </div>
         <input
@@ -132,6 +146,16 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           data-testid="button-private-unlock"
         >
           {busy ? "Verificando…" : setupMode ? "Definir PIN e entrar" : "Entrar"}
+        </button>
+
+        {/* Saída para as famílias: conteúdo público, sem PIN. */}
+        <button
+          type="button"
+          onClick={() => { window.location.hash = `#${PUBLIC_HOME}`; }}
+          className="mt-4 w-full text-center text-xs font-semibold text-white/60 underline underline-offset-4 transition-colors hover:text-white/90"
+          data-testid="button-public-area"
+        >
+          Sou família / paciente — ver conteúdo aberto →
         </button>
       </form>
     </div>
