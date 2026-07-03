@@ -10,6 +10,7 @@
 // (ex.: Cloudflare Access num subdomínio médico). Ver docs/SEGURANCA-ACESSO.md.
 
 export const PUBLIC_ROUTE_PREFIXES: string[] = [
+  "/familia",               // Capa pública (home das famílias)
   "/orientacao-parental",   // Orientação aos Pais
   "/glossario",             // Glossário (linguagem acessível)
   "/portal-familia",        // Portal da Família (home pública)
@@ -24,7 +25,7 @@ export const PUBLIC_ROUTE_PREFIXES: string[] = [
 ];
 
 /** Home pública para onde mandamos as famílias a partir da tela do PIN. */
-export const PUBLIC_HOME = "/portal-familia";
+export const PUBLIC_HOME = "/familia";
 
 export function normalizePath(input: string | null | undefined): string {
   const raw = (input || "/").replace(/^#/, "");

@@ -136,6 +136,7 @@ const CalculadoraDosePage = lazy(() => import("@/pages/calculadora-dose"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const EfeitosColateraisPage = lazy(() => import("@/pages/efeitos-colaterais"));
 const PortalFamiliaPage = lazy(() => import("@/pages/portal-familia"));
+const FamiliaPage = lazy(() => import("@/pages/familia"));
 const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
 const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
 const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
@@ -297,6 +298,7 @@ function AppRouter() {
           <Route path="/plano-intervencao"><Protected roles={["admin", "professional"]}><PlanoIntervencaoPage /></Protected></Route>
           <Route path="/fichas-registro"><Protected roles={["admin", "professional"]}><FichasRegistroPage /></Protected></Route>
 
+          <Route path="/familia" component={FamiliaPage} />
           <Route path="/portal-familia" component={PortalFamiliaPage} />
           <Route path="/portal-familia/novidades" component={PortalNovidadesPage} />
           <Route path="/portal-familia/acesso" component={PortalAcessoPage} />
