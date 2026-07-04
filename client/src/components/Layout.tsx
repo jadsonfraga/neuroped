@@ -556,6 +556,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
             </span>
           </footer>
+          {/* Aviso de propriedade / anticópia. */}
+          <p className="mt-3 text-center text-[10px] leading-snug text-muted-foreground">
+            © 2026 NeuroPed · Dr. Jadson Fraga. Conteúdo proprietário e educativo — cópia, redistribuição ou
+            re-hospedagem não autorizada é proibida.
+          </p>
         </div>
       </main>
     </div>
