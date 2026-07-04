@@ -182,8 +182,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         .map((s) => ({ ...s, items: s.items.filter((i) => isPublicRoute(i.href)) }))
         .filter((s) => s.items.length > 0)
     : navSections;
-  // Selo de conteúdo educativo — aparece nas páginas públicas (para famílias).
-  const onPublicPage = isPublicRoute(location);
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
   function handleLocalLock() {
@@ -540,16 +538,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
-          {onPublicPage && (
-            <div
-              role="note"
-              className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-[11px] leading-snug text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
-            >
-              <span aria-hidden="true" className="mt-px">ℹ️</span>
-              <span><strong className="font-semibold">Conteúdo educativo.</strong> Estas informações apoiam e orientam as famílias — <strong className="font-semibold">não substituem</strong> a avaliação, o diagnóstico ou a conduta de um profissional de saúde.</span>
-            </div>
-          )}
           {children}
+          {/* Aviso EDUCATIVO global — presente em todas as páginas do app. */}
+          <footer
+            role="contentinfo"
+            aria-label="Aviso de finalidade educativa"
+            className="mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3.5 py-3 text-[11px] leading-relaxed text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+          >
+            <span aria-hidden="true" className="mt-px text-sm">⚕️</span>
+            <span>
+              <strong className="font-bold">Aviso — finalidade exclusivamente educativa.</strong> O NeuroPed é uma
+              ferramenta de <strong className="font-semibold">informação e educação</strong>. Não é dispositivo médico e
+              não realiza diagnóstico, prescrição ou tratamento. O conteúdo <strong className="font-semibold">não
+              substitui</strong> a consulta, a avaliação ou a conduta de um profissional de saúde habilitado, nem
+              estabelece relação médico-paciente. O uso das informações é de responsabilidade do usuário. Em caso de
+              dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.
+            </span>
+          </footer>
         </div>
       </main>
     </div>
