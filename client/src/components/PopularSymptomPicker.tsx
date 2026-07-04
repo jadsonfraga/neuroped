@@ -112,6 +112,12 @@ export function PopularSymptomPicker({
           );
         })}
       </div>
+
+      {/* Rótulo de transparência: conteúdo autoral educativo, sem validação clínica formal. */}
+      <p className="relative mt-3 text-[10px] leading-snug text-muted-foreground">
+        Sinais em linguagem do dia a dia — <strong className="font-semibold">material educativo, sem validação clínica
+        formal</strong>. Ajudam a organizar a conversa, não substituem avaliação profissional.
+      </p>
     </section>
   );
 }

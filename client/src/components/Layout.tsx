@@ -552,7 +552,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               não realiza diagnóstico, prescrição ou tratamento. O conteúdo <strong className="font-semibold">não
               substitui</strong> a consulta, a avaliação ou a conduta de um profissional de saúde habilitado, nem
               estabelece relação médico-paciente. O uso das informações é de responsabilidade do usuário. Em caso de
-              dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.
+              dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.{" "}
+              <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
             </span>
           </footer>
         </div>

@@ -11,6 +11,7 @@ import { Onboarding } from "@/components/Onboarding";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
+import { AvisoLegalGate } from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
@@ -69,6 +70,7 @@ const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
+const TermosPage = lazy(() => import("@/pages/termos"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
@@ -211,6 +213,7 @@ function AppRouter() {
           <Route path="/diario-sono" component={DiarioSonoPage} />
           <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
           <Route path="/sobre" component={SobrePage} />
+          <Route path="/termos" component={TermosPage} />
           <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
           <Route path="/pac" component={PacPage} />
           <Route path="/ahsd-tea" component={AhsdTeaPage} />
@@ -323,6 +326,7 @@ function App() {
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
             {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
             <Router hook={useHashLocation}><AppRouter /></Router>
+            {splashComplete && <AvisoLegalGate />}
             <InstallPrompt />
             <PreferencesPanel />
             <FloatingHelp />
