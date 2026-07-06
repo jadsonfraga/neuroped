@@ -30,6 +30,18 @@ const DB_NAME = "neuroped-icp";
 const DB_STORE = "cert";
 const DB_KEY = "saved";
 
+const CLINIC_NAME = "NeuroPed SDG";
+const DOCTOR_NAME = "Dr. Jadson Fraga Araújo Júnior";
+const DOCTOR_NAME_PDF = "Dr. Jadson Fraga Araujo Junior";
+const DOCTOR_CREDENTIALS = "CRM-PE 25.227 | RQE 17.756";
+const DOCTOR_SPECIALTY = "Neurologista Infantil / Neuropediatra";
+const DOCTOR_SPECIALTY_HTML = "Neurologista Infantil · Neuropediatra";
+const CLINIC_ADDRESS_1 = "Rua Raimundo Lacerda, 001 — Bairro São José";
+const CLINIC_ADDRESS_2 = "Petrolina/PE — CEP 56302-470";
+const CLINIC_PHONE = "Telefone: (87) 9 9109-7371";
+const CLINIC_ADDRESS_HTML = `${CLINIC_ADDRESS_1} · ${CLINIC_ADDRESS_2} · ${CLINIC_PHONE}`;
+const CLINIC_ADDRESS_PDF = "Rua Raimundo Lacerda, 001 - Bairro Sao Jose, Petrolina/PE - CEP 56302-470 - Telefone: (87) 9 9109-7371";
+
 async function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -86,6 +98,90 @@ function escHtml(v: string) {
 }
 
 // ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
+async function sha256HexText(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function canonicalExpressPayload(f: FormFields, issuedAt: string) {
+  return [
+    `${CLINIC_NAME} - Receita C1 Express`,
+    DOCTOR_NAME_PDF,
+    "CRM-PE 25.227",
+    "RQE 17.756",
+    `Emitida em: ${issuedAt}`,
+    `Paciente: ${f.paciente || "-"}`,
+    `Data de nascimento: ${f.dataNasc || "-"}`,
+    `Endereco: ${f.endereco || "-"}`,
+    `Municipio/UF: ${f.municipio || "-"}`,
+    `CEP: ${f.cep || "-"}`,
+    `Medicamento: ${f.medicamento || "-"}`,
+    `Concentracao: ${f.concentracao || "-"}`,
+    `Forma: ${f.forma || "-"}`,
+    `Quantidade: ${f.quantidade || "-"} ${f.quantidadeExtenso || ""}`.trim(),
+    `Instrucoes: ${f.instrucoes || "-"}`,
+    `CID-10: ${f.cid || "-"}`,
+  ].join("\n");
+}
+
+// ── PDF assinável (texto estruturado) ────────────────────────────
+async function buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
+  const { buildDocumentPdf } = await import("@/lib/documentPdf");
+  const data = todayBr();
+  const validade = new Date();
+  validade.setDate(validade.getDate() + 30);
+  const valBr = validade.toLocaleDateString("pt-BR");
+
+  return buildDocumentPdf({
+    title: "RECEITA DE CONTROLE ESPECIAL — C1",
+    subtitle: "Via para farmácia · Validade: 30 dias",
+    credentials: [
+      `${DOCTOR_NAME}  ${DOCTOR_CREDENTIALS}`,
+      DOCTOR_SPECIALTY,
+      CLINIC_ADDRESS_HTML,
+    ],
+    sections: [
+      {
+        heading: "Dados do Paciente",
+        body: [
+          `Nome: ${f.paciente || "—"}`,
+          `Data de nascimento: ${f.dataNasc || "—"}`,
+          `Endereço: ${f.endereco || "—"}`,
+          `Município/UF: ${f.municipio || "—"}  CEP: ${f.cep || "—"}`,
+        ].join("\n"),
+      },
+      {
+        heading: "Prescrição",
+        body: [
+          `Rp./ ${f.medicamento || "—"}`,
+          f.concentracao ? `Concentração: ${f.concentracao}` : "",
+          f.forma ? `Forma farmacêutica: ${f.forma}` : "",
+          `Quantidade: ${f.quantidade || "—"}${f.quantidadeExtenso ? ` (${f.quantidadeExtenso})` : ""}`,
+          `\nPosologia / Instrução de uso:\n${f.instrucoes || "—"}`,
+        ].filter(Boolean).join("\n"),
+      },
+      {
+        heading: "Validade e Assinatura",
+        body: [
+          `Petrolina/PE, ${data}`,
+          `Validade da receita: ${valBr}`,
+          f.cid ? `CID-10: ${f.cid}` : "",
+          "\n_________________________________",
+          DOCTOR_NAME,
+          DOCTOR_CREDENTIALS,
+          "Assinatura digital ICP-Brasil PAdES-BES",
+        ].filter(Boolean).join("\n"),
+      },
+    ],
+    footer:
+      "Receita de Controle Especial (C1) — 1ª Via. " +
+      "Assinatura digital ICP-Brasil em padrão PAdES-BES, verificável em iti.br/repositorio. " +
+      `Emitida em ${data}. Validade: 30 dias.`,
+  });
+}
+
+// ── HTML de impressão (2 vias em A5) ─────────────────────────────
 async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
@@ -148,7 +244,7 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
 
     page.drawRectangle({ x: m, y: top - 55, width: contentW, height: 31, color: navy });
     page.drawRectangle({ x: A5.w - 155, y: top - 55, width: 141, height: 31, color: bordo });
-    page.drawText("NeuroPed EDJ", { x: m + 8, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText(CLINIC_NAME, { x: m + 8, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
     page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 8, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
     page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
     page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
@@ -156,9 +252,9 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
 
     page.drawRectangle({ x: m, y: top - 94, width: contentW, height: 32, color: rgb(0.97, 0.96, 0.92) });
     page.drawRectangle({ x: m, y: top - 94, width: 4, height: 32, color: gold });
-    page.drawText("Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 | RQE 17.756", { x: m + 10, y: top - 73, size: 5.8, font: bold, color: ink });
-    page.drawText("Neurologista Infantil / Neuropediatra", { x: m + 10, y: top - 82, size: 5.6, font: helv, color: ink });
-    page.drawText("Rua Raimundo Lacerda, 001 - Sao Jose, Petrolina/PE - CEP 56302-470 - (87) 9 9109-7371", { x: m + 10, y: top - 91, size: 5.4, font: helv, color: ink });
+    drawFitted(page, `${CLINIC_NAME} - ${DOCTOR_NAME_PDF}`, m + 10, top - 73, contentW - 22, 5.8, bold);
+    page.drawText(`${DOCTOR_SPECIALTY} - ${DOCTOR_CREDENTIALS}`, { x: m + 10, y: top - 82, size: 5.6, font: helv, color: ink });
+    drawFitted(page, CLINIC_ADDRESS_PDF, m + 10, top - 91, contentW - 22, 5.4, helv);
 
     const tableY = top - 122;
     const rowH = 13;
@@ -196,8 +292,8 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawRectangle({ x: 218, y: 44, width: 176, height: 66, borderWidth: 0.6, borderColor: rgb(0.2, 0.45, 0.34), color: rgb(0.93, 0.99, 0.96) });
     page.drawImage(signatureImage, { x: 226, y: 78, width: 152, height: 26 });
     page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });
-    page.drawText("Dr. Jadson Fraga Araujo Junior", { x: 238, y: 66, size: 6.2, font: bold, color: rgb(0.04, 0.22, 0.16) });
-    page.drawText("CRM-PE 25.227 | RQE 17.756", { x: 250, y: 58, size: 5.2, font: helv, color: muted });
+    page.drawText(DOCTOR_NAME_PDF, { x: 238, y: 66, size: 6.2, font: bold, color: rgb(0.04, 0.22, 0.16) });
+    page.drawText(DOCTOR_CREDENTIALS, { x: 250, y: 58, size: 5.2, font: helv, color: muted });
     page.drawText("Assinatura digital ICP-Brasil PAdES-BES", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
     if (pageIndex === 0) page.drawText("Campo tecnico da assinatura digital embutida no PDF.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
 
@@ -224,8 +320,8 @@ function buildC1PrintHtml(f: FormFields): string {
 <div class="via">
   <div class="head">
     <div class="bk">
-      <div class="logo-nm">NeuroPed EDJ</div>
-      <div class="logo-sub">Neuropediatria · Neurodesenvolvimento</div>
+      <div class="logo-nm">${CLINIC_NAME}</div>
+      <div class="logo-sub">${DOCTOR_NAME} · Neuropediatria</div>
     </div>
     <div class="rt">
       <div class="via-tag">${numero} VIA — ${destino}</div>
@@ -234,9 +330,9 @@ function buildC1PrintHtml(f: FormFields): string {
   </div>
 
   <div class="medico-box">
-    <strong>Dr. Jadson Fraga Araújo Júnior</strong> — CRM-PE 25.227 | RQE 17.756<br>
-    Neurologista Infantil / Neuropediatra<br>
-    Rua Raimundo Lacerda, 001 — São José, Petrolina/PE — CEP 56302-470 — (87) 9 9109-7371
+    <strong>${CLINIC_NAME} — ${DOCTOR_NAME}</strong><br>
+    ${DOCTOR_SPECIALTY_HTML} · ${DOCTOR_CREDENTIALS}<br>
+    ${CLINIC_ADDRESS_HTML}
   </div>
 
   <table class="dados">
@@ -271,9 +367,10 @@ function buildC1PrintHtml(f: FormFields): string {
   <div class="footer-row">
     <div>Petrolina/PE, ${hoje} &nbsp;·&nbsp; Validade: <strong>${valBr}</strong>${f.cid ? ` &nbsp;·&nbsp; CID-10: ${escHtml(f.cid)}` : ""}</div>
     <div class="sig-area">
+      <img class="sig-img" src="${signatureImageUrl}" alt="">
       <div class="sig-line"></div>
-      <div class="sig-nm">Dr. Jadson Fraga Araújo Júnior</div>
-      <div class="sig-info">CRM-PE 25.227 · RQE 17.756</div>
+      <div class="sig-nm">${DOCTOR_NAME}</div>
+      <div class="sig-info">${DOCTOR_CREDENTIALS}</div>
       <div class="sig-digital">Assinatura digital ICP-Brasil PAdES-BES</div>
     </div>
   </div>
@@ -326,6 +423,7 @@ table.dados{width:100%;border-collapse:collapse;font-size:8pt}
 .footer-row{display:flex;align-items:flex-end;justify-content:space-between;
   border-top:.5pt solid var(--line);padding-top:2mm;font-size:7.5pt;color:var(--ink);flex-wrap:wrap;gap:2mm}
 .sig-area{text-align:center}
+.sig-img{width:42mm;height:9mm;object-fit:contain;display:block;margin:0 auto -1.2mm;opacity:.96}
 .sig-line{width:48mm;border-top:.6pt solid #333;margin:0 auto 1mm}
 .sig-nm{font-size:8pt;font-weight:700;font-family:'Cormorant Garamond',Georgia,serif}
 .sig-info{font-size:6.5pt;color:var(--ink)}
@@ -464,7 +562,7 @@ export default function ReceitaC1ExpressPage() {
       const { signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
       const signed = await signPdfWithP12(pdfBytes, p12, senha, {
         reason: "Receita de Controle Especial C1",
-        name: "Dr. Jadson Fraga Araujo Junior",
+        name: DOCTOR_NAME_PDF,
         location: "Petrolina-PE",
         widgetRect: [218, 44, 394, 110],
         widgetPageIndex: 0,

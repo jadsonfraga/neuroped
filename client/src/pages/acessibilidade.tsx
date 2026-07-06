@@ -116,7 +116,7 @@ export default function AcessibilidadePage() {
           </p>
           <div className="space-y-1.5 text-sm">
             <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> WhatsApp: (87) 9 9109-7371</p>
-            <p className="flex items-start gap-2"><MapPin className="w-4 h-4 text-primary mt-0.5" /> Rua Raimundo Lacerda, Casa 01 — Bairro São José — Petrolina/PE — CEP 56302-470</p>
+            <p className="flex items-start gap-2"><MapPin className="w-4 h-4 text-primary mt-0.5" /> Rua Raimundo Lacerda, 001 — Bairro São José — Petrolina/PE — CEP 56302-470</p>
           </div>
         </CardContent>
       </Card>
