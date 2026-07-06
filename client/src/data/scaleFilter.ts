@@ -820,11 +820,11 @@ const allScalesBase: ScaleEntry[] = [
   // supersedidos da mesma família broadband ficaram fora (ver cabeçalho de
   // escalasImportadasDrive2026.ts).
   ...escalasImportadasDrive2026,
-  // LOTE 2 (varredura completa do Drive, 2026-07): 16 escalas autorais que ainda
-  // não estavam no banco — 15 iterações da família broadband (EINPI/NEXUS/SINAPSE/
-  // PONTE/NAVI/EIDAF/IDAFENI/NEFI/INTEGRA/NEF/NEUROFUNC/MAPA/SINAF) + a Escala Maria
-  // Clara (ansiedade). Todas como ficha técnica autoral (metadata_only). Ver
-  // cabeçalho de escalasAutoraisDrive2026Lote2.ts.
+  // LOTE 2 (varredura completa do Drive, 2026-07): das 16 escalas autorais fora do
+  // banco, 15 eram iterações da mesma família broadband. Após curadoria, entram só
+  // as 2 versões broadband mais recentes (NEF-360 e NEUROFUNC-360) + a Escala Maria
+  // Clara (ansiedade). Fichas técnicas autorais (metadata_only). Ver cabeçalho de
+  // escalasAutoraisDrive2026Lote2.ts para as iterações supersedidas.
   ...escalasAutoraisDrive2026Lote2,
 ];
 
