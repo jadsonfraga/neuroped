@@ -6,6 +6,7 @@ import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
 import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImportadas2026";
 import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
+import { escalasAutoraisDrive2026Lote2 } from "./escalasAutoraisDrive2026Lote2";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
@@ -819,6 +820,12 @@ const allScalesBase: ScaleEntry[] = [
   // supersedidos da mesma família broadband ficaram fora (ver cabeçalho de
   // escalasImportadasDrive2026.ts).
   ...escalasImportadasDrive2026,
+  // LOTE 2 (varredura completa do Drive, 2026-07): 16 escalas autorais que ainda
+  // não estavam no banco — 15 iterações da família broadband (EINPI/NEXUS/SINAPSE/
+  // PONTE/NAVI/EIDAF/IDAFENI/NEFI/INTEGRA/NEF/NEUROFUNC/MAPA/SINAF) + a Escala Maria
+  // Clara (ansiedade). Todas como ficha técnica autoral (metadata_only). Ver
+  // cabeçalho de escalasAutoraisDrive2026Lote2.ts.
+  ...escalasAutoraisDrive2026Lote2,
 ];
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
