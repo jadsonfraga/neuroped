@@ -45,6 +45,8 @@ import { getClinicalTiers } from "@/data/clinicalRanking";
 import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
+import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
+import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
@@ -539,6 +541,179 @@ function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas
   return reasons.length ? reasons : ["✓ Compatibilidade geral"];
 }
 
+type RecommendationItem = ReturnType<typeof rec>;
+type AssessmentFilterType = "diagnostic" | "monitoring" | null;
+
+const QUAL_RESP_LABEL: Record<ScaleEntry["respondente"][number], string> = {
+  pais: "pais/cuidadores",
+  clinico: "clínico",
+  professor: "professor/escola",
+  autoaplicavel: "autorrelato",
+  crianca: "criança/adolescente",
+  teste_direto_crianca: "teste direto com a criança",
+};
+
+function tidySentence(value?: string | null): string {
+  return (value ?? "").replace(/\s+/g, " ").trim().replace(/[.;:]+$/g, "");
+}
+
+function joinNatural(items: string[]): string {
+  const clean = items.map((item) => item.trim()).filter(Boolean);
+  if (clean.length === 0) return "";
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return `${clean[0]} e ${clean[1]}`;
+  return `${clean.slice(0, -1).join(", ")} e ${clean[clean.length - 1]}`;
+}
+
+function getAgeLabel(selectedAge: string | null): string {
+  return selectedAge ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge) : "idade não especificada";
+}
+
+function getQueixaLabels(selectedQueixas: string[]): string[] {
+  return selectedQueixas.map((id) => queixas.find((q) => q.id === id)?.label ?? id);
+}
+
+function getSignalLabels(selectedQueixas: string[], selectedSignalIds: string[]): string[] {
+  if (selectedSignalIds.length === 0 || selectedQueixas.length === 0) return [];
+  const selected = new Set(selectedSignalIds);
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const queixaId of selectedQueixas) {
+    for (const signal of getAllSignalsForQueixa(queixaId)) {
+      if (!selected.has(signal.id) || seen.has(signal.id)) continue;
+      seen.add(signal.id);
+      labels.push(signal.label);
+    }
+  }
+  return labels;
+}
+
+function scaleDetailLine(scale: ScaleEntry | undefined): string {
+  if (!scale) return "";
+  const details = [
+    scale.validacaoBrasil ? `validação BR: ${scale.validacaoBrasil}` : "",
+    scale.tempo ? `tempo: ${scale.tempo}` : "",
+    scale.scoringCutoff ? `interpretação/corte: ${scale.scoringCutoff}` : "",
+  ].filter(Boolean);
+  return details.length ? ` Metadados úteis: ${details.join("; ")}.` : "";
+}
+
+function itemCoverageLabel(item: RecommendationItem, selectedQueixas: string[]): string {
+  if (!item.scale || selectedQueixas.length === 0) return "";
+  const covered = selectedQueixas
+    .filter((queixaId) => item.scale?.queixas.includes(queixaId))
+    .map((queixaId) => queixas.find((q) => q.id === queixaId)?.label ?? queixaId);
+  return covered.length ? `Cobre ${joinNatural(covered)}.` : "";
+}
+
+function buildQualitativeFilterReport(args: {
+  ranking: RecommendationItem[];
+  refinedMatches: RefinedScaleMatch[];
+  clinicalRecommendation: string;
+  selectedQueixas: string[];
+  selectedAge: string | null;
+  selectedRespondente: ScaleEntry["respondente"][number] | null;
+  selectedAssessmentType: AssessmentFilterType;
+  selectedSignalIds: string[];
+  usingBroadbandFallback: boolean;
+}): string {
+  const {
+    ranking,
+    refinedMatches,
+    clinicalRecommendation,
+    selectedQueixas,
+    selectedAge,
+    selectedRespondente,
+    selectedAssessmentType,
+    selectedSignalIds,
+    usingBroadbandFallback,
+  } = args;
+  if (refinedMatches.length === 0) return "";
+
+  const ageLabel = getAgeLabel(selectedAge);
+  const queixaLabel = selectedQueixas.length ? joinNatural(getQueixaLabels(selectedQueixas)) : "queixa não especificada";
+  const respondentLabel = selectedRespondente ? QUAL_RESP_LABEL[selectedRespondente] : "sem restringir respondente";
+  const assessmentLabel =
+    selectedAssessmentType === "diagnostic"
+      ? "avaliação diagnóstica/estruturação inicial"
+      : selectedAssessmentType === "monitoring"
+        ? "monitoramento evolutivo"
+        : "triagem e apoio à decisão";
+  const signalLabels = getSignalLabels(selectedQueixas, selectedSignalIds).slice(0, 6);
+
+  const ouro = ranking.find((item) => item.slot === "Ouro" && item.hasScale);
+  const prata = ranking.find((item) => item.slot === "Prata" && item.hasScale);
+  const bronze = ranking.find((item) => item.slot === "Bronze" && item.hasScale);
+  const direct = ranking.find((item) => item.slot === "Teste Direto" && item.hasScale);
+  const school = ranking.find((item) => item.slot === "Questionário Escolar" && item.hasScale);
+  const paragraphs: string[] = [];
+
+  paragraphs.push(
+    `Para este perfil (${ageLabel}; ${queixaLabel}; ${respondentLabel}; finalidade: ${assessmentLabel}), o filtro priorizou escalas que cruzam segurança por idade, aderência à queixa, modo de aplicação e disponibilidade real dentro do app. ${tidySentence(clinicalRecommendation)}.`
+  );
+
+  if (signalLabels.length > 0) {
+    paragraphs.push(
+      `Os sinais refinados selecionados (${joinNatural(signalLabels)}) aumentaram o peso das escalas mais específicas para o padrão descrito, em vez de favorecer apenas instrumentos amplos.`
+    );
+  }
+
+  if (usingBroadbandFallback) {
+    paragraphs.push(
+      "Como não havia instrumento específico seguro e preenchível para esta combinação, a recomendação foi rebaixada para triagem ampla apropriada à idade. Use esse resultado como porta de entrada e complemente com anamnese, exame neurológico e dados escolares/terapêuticos."
+    );
+  }
+
+  if (ouro?.scale) {
+    const coverage = itemCoverageLabel(ouro, selectedQueixas);
+    const reason = tidySentence(ouro.reason || ouro.clinicalReason || ouro.scale.description);
+    paragraphs.push(
+      `A melhor primeira escolha é ${ouro.title}: ${reason}. ${coverage} Por isso ela deve ser aplicada primeiro, pois tende a responder a pergunta clínica central antes de abrir instrumentos secundários.${scaleDetailLine(ouro.scale)}`
+    );
+  }
+
+  const complements = [prata, bronze].filter((item): item is RecommendationItem => Boolean(item?.scale));
+  if (complements.length > 0) {
+    const complementText = complements
+      .map((item) => {
+        const reason = tidySentence(item.reason || item.clinicalReason || item.scale?.description);
+        const coverage = itemCoverageLabel(item, selectedQueixas);
+        return `${item.slot}: ${item.title}${reason ? ` (${reason})` : ""}${coverage ? ` ${coverage}` : ""}`;
+      })
+      .join(" ");
+    paragraphs.push(
+      `Como composição qualitativa, ${complementText} Essas escolhas evitam uma leitura estreita do caso: uma escala ancora a prioridade principal e as demais acrescentam perspectiva funcional, comportamental, escolar ou de acompanhamento.`
+    );
+  }
+
+  if (selectedQueixas.length > 1) {
+    const coveredQueixas = selectedQueixas.filter((queixaId) =>
+      ranking.some((item) => item.scale?.queixas.includes(queixaId))
+    );
+    const missingQueixas = selectedQueixas.filter((queixaId) => !coveredQueixas.includes(queixaId));
+    const coveredLabel = coveredQueixas.length ? joinNatural(getQueixaLabels(coveredQueixas)) : "nenhuma queixa principal";
+    const missingLabel = missingQueixas.length ? joinNatural(getQueixaLabels(missingQueixas)) : "";
+    paragraphs.push(
+      missingQueixas.length
+        ? `Cobertura das queixas: o pódio cobre ${coveredLabel}. Ainda fica menos coberto: ${missingLabel}; nesse caso, use a prévia do catálogo ou uma escala complementar dirigida depois da primeira rodada.`
+        : `Cobertura das queixas: o pódio cobre todas as queixas marcadas (${coveredLabel}), reduzindo o risco de escolher três instrumentos bons isoladamente, mas redundantes entre si.`
+    );
+  }
+
+  const perspectiveItems = [direct, school].filter((item): item is RecommendationItem => Boolean(item?.scale));
+  if (perspectiveItems.length > 0) {
+    paragraphs.push(
+      `Perspectivas adicionais disponíveis: ${perspectiveItems.map((item) => `${item.slot}: ${item.title}`).join("; ")}. Use-as quando houver divergência entre relato familiar, observação em consulta e funcionamento escolar.`
+    );
+  }
+
+  paragraphs.push(
+    "Leitura prática final: aplique o Ouro primeiro, use Prata/Bronze para confirmar gravidade, impacto e contexto, e interprete divergências entre respondentes como dado clínico relevante. O resultado organiza a escolha das escalas, mas não substitui julgamento clínico, entrevista, exame e seguimento."
+  );
+
+  return paragraphs.join("\n\n");
+}
+
 // Persistência das seleções do filtro — o clínico volta ao /filtro e mantém o
 // contexto (idade, queixa, respondente…) em vez de recomeçar do zero.
 const FILTER_STATE_KEY = "np_filtro_state_v1";
@@ -696,8 +871,8 @@ export default function FiltroPage() {
 
   // === PÓDIO: score-ordered, curated tiers as soft tiebreaker, quality threshold ≥60 ===
   const auditedPodium = useMemo(
-    () => selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers),
-    [refinedMatches, hasSafeResults, curatedTiers]
+    () => selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers, { selectedQueixas }),
+    [refinedMatches, hasSafeResults, curatedTiers, selectedQueixas]
   );
 
   // Síntese clínica referencia o Ouro do pódio directamente (elimina divergência).
@@ -723,6 +898,20 @@ export default function FiltroPage() {
     rec("Teste Direto", podium.direct, "Instrumento aplicado diretamente com a criança.", "from-blue-600 via-indigo-700 to-slate-950"),
     rec("Questionário Escolar", podium.school, "Questionário respondido por professor/contexto escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
   ];
+  const qualitativeReportText = hasSafeResults
+    ? buildQualitativeFilterReport({
+        ranking,
+        refinedMatches,
+        clinicalRecommendation,
+        selectedQueixas,
+        selectedAge,
+        selectedRespondente,
+        selectedAssessmentType,
+        selectedSignalIds,
+        usingBroadbandFallback,
+      })
+    : "";
+  const qualitativeReportParagraphs = qualitativeReportText.split(/\n\n+/).filter(Boolean);
 
   // Texto pronto para o laudo — pódio recomendado + contexto do filtro.
   // Cálculo direto (barato) para não depender do array `ranking` recriado a cada render.
@@ -741,6 +930,9 @@ export default function FiltroPage() {
       `Idade: ${ageLbl} · Queixa(s): ${queixasLbl} · Respondente: ${respLbl}`,
       "",
       ...lines,
+      "",
+      "Relato qualitativo por extenso",
+      qualitativeReportText,
       "",
       "Gerado pelo Filtro Clínico Inteligente — triagem de apoio; não substitui o julgamento clínico.",
     ].join("\n");
@@ -783,6 +975,7 @@ export default function FiltroPage() {
       : "não especificada",
     respondente: selectedRespondente ?? "qualquer",
     generatedAtLabel: new Date().toLocaleDateString("pt-BR"),
+    qualitativeReport: qualitativeReportText,
   });
 
   const exportCsv = () => {
@@ -1308,6 +1501,23 @@ export default function FiltroPage() {
             ) : (
               <p className="px-0.5 text-[11px] italic text-muted-foreground">Selecione pelo menos 2 escalas acima para ver o quadro comparativo.</p>
             )}
+          </section>
+        )}
+
+        {hasSafeResults && qualitativeReportParagraphs.length > 0 && (
+          <section className="space-y-3 rounded-2xl border border-primary/20 bg-card/70 p-4 sm:p-5">
+            <div className="flex items-start gap-2.5">
+              <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">relato qualitativo final</p>
+                <h3 className="text-sm font-black text-foreground">Interpretação por extenso do pódio</h3>
+              </div>
+            </div>
+            <div className="space-y-2.5 text-[12px] leading-relaxed text-foreground">
+              {qualitativeReportParagraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
           </section>
         )}
 

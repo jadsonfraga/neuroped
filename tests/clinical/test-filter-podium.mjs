@@ -77,7 +77,7 @@ function auditContext(ctx) {
   const matches = rankSafely(ctx);
   const refinedById = new Map(matches.map((m) => [m.scale.id, m]));
   const curated = selectCuratedTiers(ctx.queixas, ctx.ageMonths, refinedById, ctx.respondente ?? null);
-  const podium = selectPodium(matches, curated);
+  const podium = selectPodium(matches, curated, { selectedQueixas: ctx.queixas });
   const slots = [podium.ouro, podium.prata, podium.bronze].filter(Boolean);
   const ids = slots.map((m) => m.scale.id);
 

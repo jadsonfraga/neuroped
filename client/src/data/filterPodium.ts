@@ -4,6 +4,9 @@ import type { Respondente } from "./scaleFilter";
 
 export type PodiumSlot = "ouro" | "prata" | "bronze" | "direct" | "school";
 export type PodiumSelection = Record<PodiumSlot, RefinedScaleMatch | undefined>;
+export interface PodiumSelectionContext {
+  selectedQueixas?: string[];
+}
 
 export function selectCuratedTiers(
   selectedQueixas: string[],
@@ -41,6 +44,7 @@ export function selectCuratedTiers(
 export function selectPodium(
   refinedMatches: RefinedScaleMatch[],
   curatedTiers: ClinicalTierRule | null,
+  context: PodiumSelectionContext = {},
 ): PodiumSelection {
   const empty: PodiumSelection = {
     ouro: undefined,
@@ -75,29 +79,92 @@ export function selectPodium(
   const curatedIds = curatedTiers
     ? [curatedTiers.ouro, curatedTiers.prata, curatedTiers.bronze].filter((id): id is string => Boolean(id))
     : [];
+  const selectedQueixas = [...new Set(context.selectedQueixas ?? [])];
+  const selectedQueixaSet = new Set(selectedQueixas);
+  const matchedSelectedQueixas = (match: RefinedScaleMatch) =>
+    selectedQueixas.filter((queixa) => match.scale.queixas.includes(queixa));
+  const coverageGain = (match: RefinedScaleMatch, coveredQueixas: Set<string>) =>
+    matchedSelectedQueixas(match).filter((queixa) => !coveredQueixas.has(queixa)).length;
+  const coverageTotal = (match: RefinedScaleMatch) => matchedSelectedQueixas(match).length;
+  const markCovered = (match: RefinedScaleMatch | undefined, coveredQueixas: Set<string>) => {
+    if (!match || selectedQueixaSet.size === 0) return;
+    for (const queixa of match.scale.queixas) {
+      if (selectedQueixaSet.has(queixa)) coveredQueixas.add(queixa);
+    }
+  };
+  const clinicalChoiceScore = (
+    match: RefinedScaleMatch,
+    coveredQueixas: Set<string>,
+    preferredIds: string[],
+    coverageWeight: number,
+  ) => {
+    const explicitPreference = preferredIds.includes(match.scale.id) ? 18 : 0;
+    const curatedBonus = (curatedPriority.get(match.scale.id) ?? 0) * 6;
+    const signalBonus = (match.signalSpecificityScore ?? 0) * 2.5;
+    const confidenceBonus = Math.round((match.confidenceLevel ?? 0) / 12);
+    return (
+      match.relevanceScore +
+      explicitPreference +
+      curatedBonus +
+      signalBonus +
+      confidenceBonus +
+      coverageGain(match, coveredQueixas) * coverageWeight +
+      coverageTotal(match) * 5
+    );
+  };
+  const pickByClinicalFit = (
+    candidates: RefinedScaleMatch[],
+    coveredQueixas: Set<string>,
+    preferredIds: string[],
+    coverageWeight: number,
+  ) =>
+    [...candidates].sort((a, b) => {
+      const scoreDiff =
+        clinicalChoiceScore(b, coveredQueixas, preferredIds, coverageWeight) -
+        clinicalChoiceScore(a, coveredQueixas, preferredIds, coverageWeight);
+      if (Math.abs(scoreDiff) > 2) return scoreDiff;
+      const relevanceDiff = b.relevanceScore - a.relevanceScore;
+      if (Math.abs(relevanceDiff) > 2) return relevanceDiff;
+      const signalDiff = (b.signalSpecificityScore ?? 0) - (a.signalSpecificityScore ?? 0);
+      if (signalDiff !== 0) return signalDiff;
+      return a.scale.name.localeCompare(b.scale.name);
+    })[0];
 
   // Prefer high-quality matches, but never leave the medal empty when the
   // engine already produced safe candidates or broadband fallbacks.
   const takeBestAvailable = (
     pred: (m: RefinedScaleMatch) => boolean,
     preferredIds: string[] = [],
+    options: {
+      coveredQueixas?: Set<string>;
+      coverageWeight?: number;
+      preferCuratedFirst?: boolean;
+    } = {},
   ) => {
     const preferred = [...preferredIds, ...curatedIds].filter((id, index, arr) => arr.indexOf(id) === index);
+    const coveredQueixas = options.coveredQueixas ?? new Set<string>();
+    const coverageWeight = options.coverageWeight ?? 0;
     const preferredMatches = preferred
       .map((id) => byId.get(id))
       .filter((match): match is RefinedScaleMatch => Boolean(match));
-    const curatedHighQuality = preferredMatches.find(
+    const eligible = sorted.filter((m) => !used.has(m.scale.id) && pred(m));
+    const highQuality = eligible.filter((m) => m.relevanceScore >= QUALITY_THRESHOLD);
+    const preferredHighQuality = preferredMatches.filter(
       (m) => !used.has(m.scale.id) && m.relevanceScore >= QUALITY_THRESHOLD && pred(m)
     );
-    const curatedSafe = preferredMatches.find((m) => !used.has(m.scale.id) && pred(m));
-    const highQuality = sorted.find(
-      (m) => !used.has(m.scale.id) && m.relevanceScore >= QUALITY_THRESHOLD && pred(m)
-    );
-    const found = curatedHighQuality ?? curatedSafe ?? highQuality ?? sorted.find((m) => !used.has(m.scale.id) && pred(m));
+    const preferredSafe = preferredMatches.filter((m) => !used.has(m.scale.id) && pred(m));
+    const found = options.preferCuratedFirst
+      ? pickByClinicalFit(preferredHighQuality, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(preferredSafe, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(highQuality, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(eligible, coveredQueixas, preferredIds, coverageWeight)
+      : pickByClinicalFit(highQuality, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(eligible, coveredQueixas, preferredIds, coverageWeight);
     if (found) used.add(found.scale.id);
     return found;
   };
 
+  const coveredQueixas = new Set<string>();
   // Prioridade autoral (pedido do autor, 2026-07): quando um protocolo autoral
   // (família NEXUS / Dr. Jadson) é ADEQUADO ao perfil — já passou pelos filtros
   // obrigatórios e bloqueios clínicos duros do motor e tem qualidade de pódio —
@@ -114,8 +181,13 @@ export function selectPodium(
     used.add(autoralOuro.scale.id);
     ouro = autoralOuro;
   } else {
-    ouro = takeBestAvailable(() => true, curatedTiers?.ouro ? [curatedTiers.ouro] : []);
+    ouro = takeBestAvailable(
+      () => true,
+      curatedTiers?.ouro ? [curatedTiers.ouro] : [],
+      { coveredQueixas, coverageWeight: 8, preferCuratedFirst: true },
+    );
   }
+  markCovered(ouro, coveredQueixas);
   const ouroMode = ouro?.applicationMode ?? null;
   const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
 
@@ -124,7 +196,13 @@ export function selectPodium(
     takeBestAvailable(
       (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q)),
       curatedTiers?.prata ? [curatedTiers.prata] : [],
-    ) ?? takeBestAvailable(() => true, curatedTiers?.prata ? [curatedTiers.prata] : []);
+      { coveredQueixas, coverageWeight: 30 },
+    ) ?? takeBestAvailable(
+      () => true,
+      curatedTiers?.prata ? [curatedTiers.prata] : [],
+      { coveredQueixas, coverageWeight: 24 },
+    );
+  markCovered(prata, coveredQueixas);
   const prataMode = prata?.applicationMode ?? null;
   const prataQueixas = new Set(prata?.scale.queixas ?? []);
 
@@ -137,21 +215,25 @@ export function selectPodium(
         return diffFromOuro || diffFromPrata;
       },
       curatedTiers?.bronze ? [curatedTiers.bronze] : [],
-    ) ?? takeBestAvailable(() => true, curatedTiers?.bronze ? [curatedTiers.bronze] : []);
+      { coveredQueixas, coverageWeight: 30 },
+    ) ?? takeBestAvailable(
+      () => true,
+      curatedTiers?.bronze ? [curatedTiers.bronze] : [],
+      { coveredQueixas, coverageWeight: 24 },
+    );
+  markCovered(bronze, coveredQueixas);
 
   // Direct and school also join the used set to prevent deduplication with medals.
   const direct = (() => {
-    const found = sorted.find(
-      (m) => !used.has(m.scale.id) && getApplicationMode(m.scale) === "teste_direto_crianca"
-    );
+    const candidates = sorted.filter((m) => !used.has(m.scale.id) && getApplicationMode(m.scale) === "teste_direto_crianca");
+    const found = pickByClinicalFit(candidates, coveredQueixas, [], 18);
     if (found) used.add(found.scale.id);
     return found;
   })();
 
   const school = (() => {
-    const found = sorted.find(
-      (m) => !used.has(m.scale.id) && getApplicationMode(m.scale) === "questionario_professor"
-    );
+    const candidates = sorted.filter((m) => !used.has(m.scale.id) && getApplicationMode(m.scale) === "questionario_professor");
+    const found = pickByClinicalFit(candidates, coveredQueixas, [], 18);
     if (found) used.add(found.scale.id);
     return found;
   })();

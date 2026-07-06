@@ -24,6 +24,7 @@ export interface FilterExportMeta {
   queixas: string;
   respondente: string;
   generatedAtLabel: string;
+  qualitativeReport?: string;
 }
 
 // Credenciais institucionais (mesma convenção do laudo-neuroped).
@@ -75,6 +76,7 @@ export function buildFilterCsv(meta: FilterExportMeta, rows: FilterExportRow[]):
     `Idade;${meta.age}`,
     `Queixa(s);${meta.queixas}`,
     `Respondente;${meta.respondente}`,
+    meta.qualitativeReport ? `Relato qualitativo;${csvCell(meta.qualitativeReport)}` : "",
     "",
   ];
   const body = rows.map((r) =>
@@ -133,7 +135,11 @@ export async function buildFilterPdf(
     title: "Recomendacao de Escalas - NeuroPed",
     subtitle: "Filtro Clinico Inteligente - triagem de apoio",
     credentials: CREDENTIALS,
-    sections: [{ heading: "Contexto clinico", body: asciiSafe(contextBody) }, ...scaleSections],
+    sections: [
+      { heading: "Contexto clinico", body: asciiSafe(contextBody) },
+      ...(meta.qualitativeReport ? [{ heading: "Relato qualitativo por extenso", body: asciiSafe(meta.qualitativeReport) }] : []),
+      ...scaleSections,
+    ],
     footer: asciiSafe(DISCLAIMER),
   });
 }
