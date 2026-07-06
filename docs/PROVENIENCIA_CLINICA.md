@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 662
-- **Com fonte declarada:** 500
+- **Total de instrumentos:** 659
+- **Com fonte declarada:** 497
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -174,7 +174,6 @@
 | `epil-ne` | Escala de Avaliação Epileptológica Neuropediátrica Nordesti… | EPIL-NE v1.0 Escala Epilepsia DrJadson — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/15bp | não |
 | `epilepsia-diario` | Diário de Crises | Ferramenta de registro clínico NeuroPed (diário de crises) | não |
 | `erc` | ERC | Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist) | não |
-| `escala-maria-clara-ansiedade` | Escala Maria Clara — Ansiedade | Escala Autoral Maria Clara (PDF) — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://drive.google.com/file/d/1i7LPeeg1CsJX7qnmtC | não |
 | `esi-r` | ESI-R | — | sim |
 | `esm-edj` | Escala de Satisfação com a Medicação | ESM-EDJ — Escala de Satisfação com a Medicação (ESM-EDJ-2025-v1.0 · PANT v7.2.1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento orig | não |
 | `ess-adol` | ESS Adolescente | Johns MW, 1991 (Epworth Sleepiness Scale); versão pediátrica Melendres MC et al., 2004 (ESS-DASC) | não |
@@ -357,7 +356,6 @@
 | `nddi-e-y` | NDDI-E-Y | — | sim |
 | `nddie` | NDDI-E | Gilliam FG et al., 2006 (NDDI-E) | não |
 | `ndi-360` | Escala Integrada Neurodesenvolvimental e Neuropsiquiátrica… | ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://do | não |
-| `nef-360` | NEF-360 — Neuro-Escola Funcional 360 | ESCALA AUTORAL NEF360 V1 (2026-07-06) — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/12_m2Tb8dZW | não |
 | `nepedq` | Escala Pedagógica Neuropediátrica | NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica \| NeuroPed App — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: htt | não |
 | `nepsy2` | NEPSY-II | Korkman M et al., 2007 | não |
 | `nepsy2-affect` | NEPSY-2 Affect | — | sim |
@@ -366,7 +364,6 @@
 | `nepsy2-memory` | NEPSY-2 Memory | — | sim |
 | `nepsy2-narrative` | NEPSY-2 Narrative | — | sim |
 | `nepsy2-tom` | NEPSY-2 ToM | — | sim |
-| `neurofunc-360` | NEUROFUNC-360 | 2026-07-05_ESCALA_AUTORAL_NEUROFUNC-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ss2fQ | não |
 | `nhs3` | NHS3 | — | sim |
 | `nias` | NIAS | — | sim |
 | `nih-anger` | NIH Toolbox Pediatric Anger | NIH Toolbox® Emotion Battery — National Institutes of Health, nihtoolbox.org. Medidas e normas de referência do NIH. | não |

@@ -1061,7 +1061,7 @@ export default function FiltroPage() {
   return (
     <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
       {/* Full-width header — premium calmo (consistente com a Home) */}
-      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur mb-4 sm:mb-5">
+      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-sm backdrop-blur mb-4 sm:mb-5">
         <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-primary/15 to-chart-2/10 blur-3xl" />
         <div className="relative flex items-center gap-3.5 sm:gap-4">
           <div className="filter-260-iconbox flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/15 shadow-sm"><Filter className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.9} /></div>

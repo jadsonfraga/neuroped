@@ -362,7 +362,7 @@ html,body{background:#fff;font-family:'Carlito',Arial,sans-serif;font-size:9pt;c
 .sig .ln{border-top:.75pt solid #101A2D;margin-bottom:1.2mm}
 .sig .nm{font-family:'Cormorant Garamond',Georgia,serif;font-size:10.1pt;font-weight:600;color:#101A2D}
 .sig .rg{font-size:6.6pt;color:#475467}
-.sig .sd{font-size:6.2pt;color:#2E7163;font-weight:700;margin-top:.45mm}
+.sig .sd{font-size:6.2pt;color:var(--teal);font-weight:700;margin-top:.45mm}
 .disp{display:flex;gap:4mm;margin-top:3mm}
 .disp .box{flex:1 1 0;margin-top:0;padding:1.5mm 2mm}
 .uline{border-bottom:.5pt solid var(--line);height:4.6mm;margin-bottom:1mm}

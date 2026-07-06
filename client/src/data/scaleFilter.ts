@@ -6,7 +6,6 @@ import { scalasOpenAccessMundiais } from "./scalasOpenAccessMundiais";
 import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
 import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImportadas2026";
 import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
-import { escalasAutoraisDrive2026Lote2 } from "./escalasAutoraisDrive2026Lote2";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
@@ -820,12 +819,11 @@ const allScalesBase: ScaleEntry[] = [
   // supersedidos da mesma família broadband ficaram fora (ver cabeçalho de
   // escalasImportadasDrive2026.ts).
   ...escalasImportadasDrive2026,
-  // LOTE 2 (varredura completa do Drive, 2026-07): das 16 escalas autorais fora do
-  // banco, 15 eram iterações da mesma família broadband. Após curadoria, entram só
-  // as 2 versões broadband mais recentes (NEF-360 e NEUROFUNC-360) + a Escala Maria
-  // Clara (ansiedade). Fichas técnicas autorais (metadata_only). Ver cabeçalho de
-  // escalasAutoraisDrive2026Lote2.ts para as iterações supersedidas.
-  ...escalasAutoraisDrive2026Lote2,
+  // NOTA: o "Lote 2" da varredura do Drive (NEF-360, NEUROFUNC-360, Maria Clara)
+  // foi RETIRADO por redundância/qualidade (julgado regressão): NEF-360/NEUROFUNC-360
+  // repetiam a família broadband já coberta por NDI-360 + MATRIX-100; a Escala Maria
+  // Clara era remix autoral de SCARED/GAD-7/RCADS, todas já validadas no banco.
+  // Histórico preservado no git (escalasAutoraisDrive2026Lote2.ts, removido).
 ];
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
