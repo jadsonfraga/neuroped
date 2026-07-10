@@ -423,6 +423,7 @@ function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, t
     warnings: match?.warningFlags ?? [],
     clinicalReason: match?.clinicalReason ?? null,
     implementationStatus: match?.implementationStatus ?? null,
+    isBroadbandFallback: match?.isBroadbandFallback ?? false,
   };
 }
 
@@ -662,6 +663,14 @@ function buildQualitativeFilterReport(args: {
     paragraphs.push(
       "Como não havia instrumento específico seguro e preenchível para esta combinação, a recomendação foi rebaixada para triagem ampla apropriada à idade. Use esse resultado como porta de entrada e complemente com anamnese, exame neurológico e dados escolares/terapêuticos."
     );
+  } else {
+    const broadbandComplements = [ouro, prata, bronze]
+      .filter((item): item is RecommendationItem => Boolean(item?.scale && item.isBroadbandFallback));
+    if (broadbandComplements.length > 0) {
+      paragraphs.push(
+        `Para manter três escolhas clinicamente utilizáveis sem forçar escala inadequada, o pódio foi completado com ${joinNatural(broadbandComplements.map((item) => item.title))}, usado aqui como complemento de banda larga apropriado à idade. Esse complemento ajuda a medir impacto global, funcionamento e carga emocional/comportamental enquanto a escala principal responde à queixa central.`
+      );
+    }
   }
 
   if (ouro?.scale) {

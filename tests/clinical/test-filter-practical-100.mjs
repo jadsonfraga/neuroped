@@ -201,7 +201,8 @@ const min = Math.min(...results.map((result) => result.score));
  * legitimamente menor em combinacoes clinicamente impossiveis, ex.: TDAH aos 8 meses,
  * onde nao existem 3 escalas validas para formar podio completo de alta relevancia).
  *
- * - Seguranca: zero violacoes por caso, sempre.
+ * - Seguranca: zero violacoes por caso, sempre; o pódio Ouro/Prata/Bronze
+ *   completo agora é invariante obrigatório para todo contexto clínico.
  * - Qualidade: media >= QUALITY_AVG_MIN e nenhum caso abaixo de QUALITY_CASE_FLOOR.
  *   O piso por caso (8.0) corresponde a um combo impossivel que so perde "Ouro" +
  *   "podio completo" (2.0 pts); cair abaixo disso indica o motor falhando alem da
@@ -209,6 +210,7 @@ const min = Math.min(...results.map((result) => result.score));
  */
 const SAFETY_ISSUES = new Set([
   "nao encontrou candidatos seguros",
+  "podio incompleto",
   "podio repetiu escala",
   "alguma escala do podio nao abre internamente",
   "alguma escala viola bloqueio clinico duro",

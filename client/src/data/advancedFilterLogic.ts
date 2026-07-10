@@ -632,7 +632,14 @@ export function filterScalesWithClinicalRescue(
   ctx: FilterContext
 ): RefinedScaleMatch[] {
   const primary = filterScalesIntelligently(scales, ctx);
-  if (!ctx.respondente) return primary;
+  const hasClinicalContext = ctx.queixas.length > 0 || ctx.ageBand != null || ctx.ageMonths != null;
+  if (!hasClinicalContext) return primary;
+
+  // Regra de robustez do filtro atual: sempre que o clínico informou idade ou
+  // queixa, o pódio precisa ter três opções seguras. Se a seleção específica
+  // trouxer só 1-2 escalas, completamos com rastreadores amplos adequados à
+  // idade, sem violar bloqueios duros nem cair para o catálogo inteiro.
+  if (!ctx.respondente) return fillPodiumWithBroadband(primary, scales, ctx);
 
   const primaryIsStrong =
     primary.length >= 3 &&
@@ -666,6 +673,7 @@ export function filterScalesWithClinicalRescue(
 // reais, de banda larga, presentes no catálogo e que abrem.
 export const BROADBAND_SCREENER_IDS = [
   "denver",   // 0-72m - desenvolvimento
+  "portage",  // 0-72m - desenvolvimento + funcionalidade
   "asq3",     // 1-66m - desenvolvimento
   "asq-se-2", // 3-60m - socioemocional
   "cbcl",     // 18-216m - banda larga emocional/comportamental
@@ -694,9 +702,22 @@ export function getBroadbandFallback(scales: ScaleEntry[], ctx: FilterContext): 
     if (!scale) continue;
     if (!ageCovers(scale, ctx)) continue;
     if (clinicalHardBlock(scale, baseCtx) !== null) continue; // nunca oferece algo inadequado à idade
-    out.push({ ...calculateRefinedScore(scale, baseCtx), isBroadbandFallback: true });
+    const refined = calculateRefinedScore(scale, baseCtx);
+    const reason = tidyReason(refined.clinicalReason);
+    out.push({
+      ...refined,
+      clinicalReason: [
+        reason,
+        "Complemento de triagem ampla apropriado à idade quando a queixa específica não fecha três escalas seguras",
+      ].filter(Boolean).join(" • "),
+      isBroadbandFallback: true,
+    });
   }
   return out;
+}
+
+function tidyReason(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 function fillPodiumWithBroadband(

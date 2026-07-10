@@ -19,7 +19,7 @@ const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.
 const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
 const {
   filterScalesIntelligently,
-  getBroadbandFallback,
+  filterScalesWithClinicalRescue,
   clinicalHardBlock,
   getApplicationMode,
 } = await imp("client/src/data/advancedFilterLogic.ts");
@@ -66,11 +66,7 @@ function ok(condition, message, ctx) {
 }
 
 function rankSafely(ctx) {
-  let matches = filterScalesIntelligently(catalog, ctx);
-  if (matches.length === 0 && (ctx.queixas.length > 0 || ctx.ageBand || ctx.ageMonths != null)) {
-    matches = getBroadbandFallback(catalog, ctx);
-  }
-  return matches;
+  return filterScalesWithClinicalRescue(catalog, ctx);
 }
 
 function auditContext(ctx) {
@@ -80,8 +76,14 @@ function auditContext(ctx) {
   const podium = selectPodium(matches, curated, { selectedQueixas: ctx.queixas });
   const slots = [podium.ouro, podium.prata, podium.bronze].filter(Boolean);
   const ids = slots.map((m) => m.scale.id);
+  const exactMatches = filterScalesIntelligently(catalog, ctx);
 
   ok(matches.length > 0, "contexto com queixa/idade deve produzir ao menos uma recomendacao segura ou fallback", ctx);
+  ok(slots.length === 3, "todo contexto com idade/queixa deve produzir Ouro, Prata e Bronze", {
+    ...ctx,
+    slots: ids,
+    candidatos: matches.map((m) => m.scale.id),
+  });
   const hasQualifiedCandidate = matches.some((m) => m.relevanceScore >= 60);
   if (hasQualifiedCandidate) {
     ok(Boolean(podium.ouro), "podio deve ter Ouro quando ha candidato com score >= 60", ctx);
@@ -95,7 +97,8 @@ function auditContext(ctx) {
   }
 
   const isFallback = matches.length > 0 && matches.every((m) => m.isBroadbandFallback);
-  if (!isFallback && ctx.respondente) {
+  const respondentWasClinicallyRescued = Boolean(ctx.respondente && exactMatches.length < 3);
+  if (!isFallback && ctx.respondente && !respondentWasClinicallyRescued) {
     for (const slot of slots) {
       const respondentFit =
         slot.scale.respondente.includes(ctx.respondente) ||
