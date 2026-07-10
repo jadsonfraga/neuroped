@@ -98,13 +98,13 @@ function escHtml(v: string) {
 }
 
 // ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
-async function sha256HexText(value: string): Promise<string> {
+async function _sha256HexText(value: string): Promise<string> {
   const data = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function canonicalExpressPayload(f: FormFields, issuedAt: string) {
+function _canonicalExpressPayload(f: FormFields, issuedAt: string) {
   return [
     `${CLINIC_NAME} - Receita C1 Express`,
     DOCTOR_NAME_PDF,
@@ -126,7 +126,7 @@ function canonicalExpressPayload(f: FormFields, issuedAt: string) {
 }
 
 // ── PDF assinável (texto estruturado) ────────────────────────────
-async function buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
+async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
   const { buildDocumentPdf } = await import("@/lib/documentPdf");
   const data = todayBr();
   const validade = new Date();

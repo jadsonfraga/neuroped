@@ -46,7 +46,6 @@ import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
 import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
-import { RefinedSignalSelector } from "@/components/RefinedSignalSelector";
 import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
