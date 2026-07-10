@@ -233,6 +233,15 @@ export const supplementalFilterableInstruments: ScaleEntry[] = [
     description: "10 itens de triagem de TEA; ponto de corte ≥6 indica avaliação diagnóstica. Domínio público (Baron-Cohen et al.).",
     fonte: "Allison C, Auyeung B, Baron-Cohen S, 2012", licencaUso: "livre", scoringCutoff: "≥6 = encaminhar para avaliação diagnóstica",
   },
+  {
+    id: "aq", name: "AQ-50", fullName: "Autism-Spectrum Quotient (50 itens) — traços de TEA em adultos/adolescentes",
+    ageMin: 192, ageMax: 216, queixas: ["tea", "social"], respondente: ["autoaplicavel"],
+    prioridade: "diagnostica", applicationMode: "autoquestionario_crianca_adolescente", assessmentUse: "triagem",
+    implementationStatus: "complete", literacyRequirement: "alfabetizado",
+    tempo: "~10 min", appRoute: "/aq50",
+    description: "50 itens de autorrelato de traços do espectro (QI normal), com 5 subdomínios e chave de pontuação oficial; corte sugerido ≥32. Uso livre (Baron-Cohen et al., 2001).",
+    fonte: "Baron-Cohen S et al., J Autism Dev Disord 2001;31(1):5-17", licencaUso: "livre", scoringCutoff: "≥32 = traços elevados (rastreio, não diagnóstico)",
+  },
 ];
 
 function uniqueById(items: ScaleEntry[]): ScaleEntry[] {

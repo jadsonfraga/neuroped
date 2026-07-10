@@ -96,6 +96,8 @@ const OrientacaoParentalPage = lazy(() => import("@/pages/orientacao-parental"))
 const Psc17Page = lazy(() => import("@/pages/psc17"));
 const Gad7Page = lazy(() => import("@/pages/gad7"));
 const Aq10Page = lazy(() => import("@/pages/aq10"));
+const Aq50Page = lazy(() => import("@/pages/aq50"));
+const ClassificacaoPage = lazy(() => import("@/pages/classificacao"));
 const EspasticidadePage = lazy(() => import("@/pages/espasticidade"));
 const ClassificacoesPage = lazy(() => import("@/pages/classificacoes"));
 const FluxogramasPage = lazy(() => import("@/pages/fluxogramas"));
@@ -239,6 +241,8 @@ function AppRouter() {
           <Route path="/psc17" component={Psc17Page} />
           <Route path="/gad7" component={Gad7Page} />
           <Route path="/aq10" component={Aq10Page} />
+          <Route path="/aq50" component={Aq50Page} />
+          <Route path="/classificacao/:id" component={ClassificacaoPage} />
           <Route path="/espasticidade" component={EspasticidadePage} />
           <Route path="/classificacoes" component={ClassificacoesPage} />
           <Route path="/fluxogramas" component={FluxogramasPage} />
