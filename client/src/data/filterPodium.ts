@@ -165,62 +165,99 @@ export function selectPodium(
   };
 
   const coveredQueixas = new Set<string>();
-  // Prioridade autoral (pedido do autor, 2026-07): quando um protocolo autoral
-  // (família NEXUS / Dr. Jadson) é ADEQUADO ao perfil — já passou pelos filtros
-  // obrigatórios e bloqueios clínicos duros do motor e tem qualidade de pódio —
-  // ele assume o OURO; os instrumentos internacionais curados seguem no pódio
-  // como Prata/Bronze. Sem candidato autoral qualificado, vale o fluxo curado.
-  const autoralOuro = sorted.find(
-    (m) =>
-      m.scale.licencaUso === "autoral" &&
-      !m.isBroadbandFallback &&
-      m.relevanceScore >= QUALITY_THRESHOLD
-  );
-  let ouro: RefinedScaleMatch | undefined;
-  if (autoralOuro) {
-    used.add(autoralOuro.scale.id);
-    ouro = autoralOuro;
+  // Curadoria por sinal (fluxograma → ranking) é a FONTE DE VERDADE do pódio e
+  // agora é AUTORITATIVA: o trio OURO/PRATA/BRONZE curado — que já integra os
+  // protocolos AUTORAIS (família NEXUS / Dr. Jadson) exatamente onde o autor os
+  // colocou como primeira linha — assume o pódio sempre que cada id está entre
+  // os candidatos SEGUROS e VÁLIDOS para a idade (todo `byId` já passou pelos
+  // filtros obrigatórios e bloqueios clínicos duros do motor). Antes, a
+  // relevância genérica destronava a primeira linha clínica (um checklist
+  // genérico com score marginalmente maior tomava o Ouro do protocolo curado, e
+  // o override "qualquer autoral por relevância" coroava checklists autorais
+  // genéricos em vez do protocolo curado). A heurística de relevância/cobertura
+  // só decide quando não há id curado utilizável para aquele slot.
+  const pickCurated = (id: string | undefined) =>
+    id && !used.has(id) ? byId.get(id) : undefined;
+
+  // ── OURO ──────────────────────────────────────────────────────────────────
+  let ouro = pickCurated(curatedTiers?.ouro);
+  if (ouro) {
+    used.add(ouro.scale.id);
   } else {
-    ouro = takeBestAvailable(
-      () => true,
-      curatedTiers?.ouro ? [curatedTiers.ouro] : [],
-      { coveredQueixas, coverageWeight: 8, preferCuratedFirst: true },
+    // Sem OURO curado utilizável: mantém a prioridade autoral qualificada
+    // (protocolo autoral não-broadband e com qualidade de pódio) e, na falta,
+    // a melhor escala clínica disponível.
+    const autoralOuro = sorted.find(
+      (m) =>
+        m.scale.licencaUso === "autoral" &&
+        !m.isBroadbandFallback &&
+        m.relevanceScore >= QUALITY_THRESHOLD &&
+        !used.has(m.scale.id),
     );
+    if (autoralOuro) {
+      used.add(autoralOuro.scale.id);
+      ouro = autoralOuro;
+    } else {
+      ouro = takeBestAvailable(() => true, [], {
+        coveredQueixas,
+        coverageWeight: 8,
+        preferCuratedFirst: true,
+      });
+    }
   }
   markCovered(ouro, coveredQueixas);
   const ouroMode = ouro?.applicationMode ?? null;
   const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
 
-  // Prata must be complementary to Ouro (different mode OR different queixa domain).
-  const prata =
-    takeBestAvailable(
-      (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q)),
-      curatedTiers?.prata ? [curatedTiers.prata] : [],
-      { coveredQueixas, coverageWeight: 30 },
-    ) ?? takeBestAvailable(
-      () => true,
-      curatedTiers?.prata ? [curatedTiers.prata] : [],
-      { coveredQueixas, coverageWeight: 24 },
-    );
+  // ── PRATA ─────────────────────────────────────────────────────────────────
+  // Prata curada (complemento intencional do autor) é autoritativa; na falta,
+  // busca o melhor complemento (modalidade OU domínio distinto do ouro).
+  let prata = pickCurated(curatedTiers?.prata);
+  if (prata) {
+    used.add(prata.scale.id);
+  } else {
+    prata =
+      takeBestAvailable(
+        (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q)),
+        [],
+        { coveredQueixas, coverageWeight: 30 },
+      ) ?? takeBestAvailable(() => true, [], { coveredQueixas, coverageWeight: 24 });
+  }
   markCovered(prata, coveredQueixas);
   const prataMode = prata?.applicationMode ?? null;
   const prataQueixas = new Set(prata?.scale.queixas ?? []);
 
-  // Bronze must add value relative to at least one of Ouro or Prata.
-  const bronze =
-    takeBestAvailable(
-      (m) => {
-        const diffFromOuro = m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q));
-        const diffFromPrata = !prata || m.applicationMode !== prataMode || !m.scale.queixas.some((q) => prataQueixas.has(q));
-        return diffFromOuro || diffFromPrata;
-      },
-      curatedTiers?.bronze ? [curatedTiers.bronze] : [],
-      { coveredQueixas, coverageWeight: 30 },
-    ) ?? takeBestAvailable(
-      () => true,
-      curatedTiers?.bronze ? [curatedTiers.bronze] : [],
-      { coveredQueixas, coverageWeight: 24 },
-    );
+  // ── BRONZE ────────────────────────────────────────────────────────────────
+  // Bronze curado é autoritativo, EXCETO quando ainda há queixa marcada sem
+  // cobertura e existe candidato que a cubra — aí a cobertura de múltiplas
+  // queixas vence, para o pódio falar a TODAS as queixas marcadas.
+  const uncoveredSelected = selectedQueixas.filter((q) => !coveredQueixas.has(q));
+  const curatedBronze = pickCurated(curatedTiers?.bronze);
+  const curatedBronzeCovers = curatedBronze
+    ? curatedBronze.scale.queixas.some((q) => uncoveredSelected.includes(q))
+    : false;
+  const coverageCandidateExists =
+    uncoveredSelected.length > 0 &&
+    sorted.some((m) => !used.has(m.scale.id) && coverageGain(m, coveredQueixas) > 0);
+  let bronze: RefinedScaleMatch | undefined;
+  if (curatedBronze && (curatedBronzeCovers || !coverageCandidateExists)) {
+    used.add(curatedBronze.scale.id);
+    bronze = curatedBronze;
+  } else {
+    bronze =
+      takeBestAvailable(
+        (m) => {
+          const diffFromOuro = m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q));
+          const diffFromPrata = !prata || m.applicationMode !== prataMode || !m.scale.queixas.some((q) => prataQueixas.has(q));
+          return diffFromOuro || diffFromPrata;
+        },
+        curatedTiers?.bronze ? [curatedTiers.bronze] : [],
+        { coveredQueixas, coverageWeight: 30 },
+      ) ?? takeBestAvailable(() => true, curatedTiers?.bronze ? [curatedTiers.bronze] : [], {
+        coveredQueixas,
+        coverageWeight: 24,
+      });
+  }
   markCovered(bronze, coveredQueixas);
 
   // Direct and school also join the used set to prevent deduplication with medals.
