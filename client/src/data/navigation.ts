@@ -132,6 +132,7 @@ export const navSections: NavSection[] = [
       { href: "/farmacologia", label: "Farmacologia", icon: Pill },
       { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
       { href: "/instrumentos-padronizados", label: "Instrumentos padronizados (Pearson/Hogrefe)", icon: BookOpen },
+      { href: "/biblioteca-instrumentos", label: "Biblioteca de instrumentos (137)", icon: ListChecks },
       { href: "/fluxogramas", label: "Fluxogramas", icon: Brain },
       { href: "/marcos-desenvolvimento", label: "Marcos do desenvolvimento", icon: Calendar },
       { href: "/valores-referencia", label: "Valores de referência", icon: Thermometer },
