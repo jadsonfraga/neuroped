@@ -25,7 +25,10 @@
  *  R7 seguranca       — bloqueios clinicos duros, podio completo e sem
  *                       repeticao (invariante: ZERO tolerancia).
  *
- * Gate: taxa-ideal >= IDEAL_RATE_MIN (99%) e zero violacao R7.
+ *  R8 regra de ouro  — medalha nao-aplicavel so quando nenhuma candidata com
+ *                       aplicacao completa preserva idade+cobertura (ZERO tolerancia).
+ *
+ * Gate: taxa-ideal >= IDEAL_RATE_MIN (99%) e zero violacao R7/R8.
  */
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -150,8 +153,17 @@ for (const ctx of cases) {
     }
   }
 
-  // R3 — relevancia (Ouro curado/autoral e decisao clinica deliberada, isento)
-  const feasible70 = matches.some((m) => m.relevanceScore >= 70);
+  // R3 — relevancia (Ouro curado/autoral e decisao clinica deliberada, isento).
+  // Regra de ouro: se o Ouro e APLICAVEL e as candidatas >=70 sao todas
+  // ficha/licenciada, ficar com o aplicavel e o acerto — a viabilidade de 70
+  // so conta entre aplicaveis nesse caso.
+  // Candidata "viavel para Ouro" precisa CONTER a idade exata — rel>=70 fora
+  // da faixa do paciente nao e alternativa real.
+  const inAge = (m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths;
+  const ouroApplicable = podium.ouro && getImplementationStatus(podium.ouro.scale) === "complete";
+  const feasible70 = ouroApplicable
+    ? matches.some((m) => m.relevanceScore >= 70 && inAge(m) && getImplementationStatus(m.scale) === "complete")
+    : matches.some((m) => m.relevanceScore >= 70 && inAge(m));
   const avg = slots.length ? slots.reduce((t, s) => t + s.relevanceScore, 0) / slots.length : 0;
   const curatedIds = [curated?.ouro, curated?.prata, curated?.bronze].filter(Boolean);
   const ouroIsClinicalChoice =
@@ -165,7 +177,12 @@ for (const ctx of cases) {
     const hit = (s) => (s.scale.signalTags ?? []).some((t) => ctx.selectedSignals.includes(t));
     const viable = (m) =>
       hit(m) && m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths && m.relevanceScore >= 45;
-    if (matches.some(viable) && !slots.some(hit)) issues.push("R4-sinais-ignorados");
+    // Regra de ouro: se o podio inteiro e APLICAVEL e toda candidata que bate o
+    // sinal e ficha/licenciada, manter o podio aplicavel e o acerto — nao flagra.
+    const podiumAllApplicable = slots.every((s) => getImplementationStatus(s.scale) === "complete");
+    const viableApplicable = (m) => viable(m) && getImplementationStatus(m.scale) === "complete";
+    const exigivel = podiumAllApplicable ? matches.some(viableApplicable) : matches.some(viable);
+    if (exigivel && !slots.some(hit)) issues.push("R4-sinais-ignorados");
   }
 
   // R5 — respondente
@@ -196,6 +213,38 @@ for (const ctx of cases) {
       issues.push("R6-implementacao");
       break;
     }
+  }
+
+  // R8 — REGRA DE OURO (obrigatoria, zero tolerancia): medalha que nao abre
+  // como APLICACAO no app so e aceitavel quando nenhuma candidata aplicavel
+  // contem a idade, preserva a cobertura unica e fica a ate 40 pontos de
+  // relevancia (mesma semantica do applFixSlot do motor).
+  const r8 = [];
+  for (const slot of slots) {
+    if (getImplementationStatus(slot.scale) === "complete") continue;
+    const slotIds8 = new Set(slots.map((x) => x.scale.id));
+    const uniqueQ8 = ctx.queixas.filter(
+      (q) =>
+        slot.scale.queixas.includes(q) &&
+        !slots.some((o) => o.scale.id !== slot.scale.id && o.scale.queixas.includes(q)),
+    );
+    const alt8 = matches.find(
+      (m) =>
+        !slotIds8.has(m.scale.id) &&
+        getImplementationStatus(m.scale) === "complete" &&
+        m.scale.ageMin <= ctx.ageMonths &&
+        m.scale.ageMax >= ctx.ageMonths &&
+        uniqueQ8.every((q) => m.scale.queixas.includes(q)) &&
+        m.relevanceScore >= slot.relevanceScore - 40,
+    );
+    if (alt8) {
+      r8.push("R8-regra-de-ouro");
+      break;
+    }
+  }
+  if (r8.length) {
+    safetyViolations += 1;
+    issues.push(...r8);
   }
 
   // R7 — seguranca (invariante duro, zero tolerancia)
