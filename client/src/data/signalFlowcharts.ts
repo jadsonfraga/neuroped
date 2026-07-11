@@ -81,13 +81,23 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         },
       },
       {
-        label: "12–18 anos · adolescente",
+        label: "12–16 anos · adolescente",
         minMonths: 144,
-        maxMonths: 216,
+        maxMonths: 192,
         tiers: {
           ouro: ["podj-tea-prime-12-19a", "srs2", "ados2"],
           prata: ["podj-tea-prime-familiar", "catq", "assq"],
           bronze: ["podj-tea-prime-escola-terapia", "j26-208"],
+        },
+      },
+      {
+        label: "16–18 anos · adolescente (autorrelato disponível)",
+        minMonths: 192,
+        maxMonths: 216,
+        tiers: {
+          ouro: ["podj-tea-prime-12-19a", "srs2"],
+          prata: ["aq", "catq"],
+          bronze: ["podj-tea-prime-familiar", "podj-tea-prime-escola-terapia"],
         },
       },
     ],
@@ -715,6 +725,140 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
       ouro: ["ygtss"],
       prata: [],
       bronze: [],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // PARALISIA CEREBRAL — sistemas de classificação
+  // GMFCS (motor grosso) + MACS (habilidade manual) + CFCS (comunicação)
+  // são o trio de classificação padrão da PC; EDACS (comer/beber) entra
+  // pela queixa de alimentação/disfagia. MACS abre a partir de 4 anos;
+  // CFCS a partir de 2 anos — por isso os ramos mais novos usam exame
+  // neurológico (HINE) e tônus (Ashworth) até essas ferramentas valerem.
+  // ═══════════════════════════════════════════════════════════
+  pc: {
+    signal: "pc",
+    label: "Paralisia Cerebral — classificação funcional",
+    branches: [
+      {
+        label: "0–2 anos · lactente/toddler",
+        minMonths: 0,
+        maxMonths: 24,
+        tiers: {
+          ouro: ["gmfcs"],
+          prata: ["hine"],
+          bronze: ["ashworth", "j26-111"],
+        },
+      },
+      {
+        label: "2–4 anos · pré-escolar",
+        minMonths: 24,
+        maxMonths: 48,
+        tiers: {
+          ouro: ["gmfcs"],
+          prata: ["cfcs"],
+          bronze: ["ashworth", "j26-111"],
+        },
+      },
+      {
+        label: "4–18 anos · escolar/adolescente",
+        minMonths: 48,
+        maxMonths: 216,
+        tiers: {
+          ouro: ["gmfcs"],
+          prata: ["macs"],
+          bronze: ["cfcs", "ashworth"],
+        },
+      },
+    ],
+    monitoring: {
+      ouro: ["gmfcs"],
+      prata: ["macs"],
+      bronze: ["cfcs"],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // ALIMENTAÇÃO / DISFAGIA
+  // ETARE (comportamento alimentar) na frente; EDACS classifica a
+  // segurança de comer/beber quando há disfagia/base neurológica.
+  // ═══════════════════════════════════════════════════════════
+  alimentacao: {
+    signal: "alimentacao",
+    label: "Alimentação / Disfagia",
+    branches: [
+      {
+        label: "0–2 anos · lactente",
+        minMonths: 0,
+        maxMonths: 24,
+        tiers: {
+          ouro: ["j26-146"],
+          prata: ["j26-191"],
+          bronze: ["etare"],
+        },
+      },
+      {
+        label: "2–18 anos · pré-escolar a adolescente",
+        minMonths: 24,
+        maxMonths: 216,
+        tiers: {
+          ouro: ["etare"],
+          prata: ["j26-146"],
+          bronze: ["edacs", "inventarios-auto"],
+        },
+      },
+    ],
+    monitoring: {
+      ouro: ["etare"],
+      prata: ["edacs"],
+      bronze: ["j26-146"],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // NEONATAL / PREMATURIDADE
+  // Triagem motora neonatal na frente; New Ballard classifica a
+  // maturidade/idade gestacional no recém-nascido.
+  // ═══════════════════════════════════════════════════════════
+  neonatal: {
+    signal: "neonatal",
+    label: "Neonatal / Prematuridade",
+    branches: [
+      {
+        label: "0–3 meses · recém-nascido",
+        minMonths: 0,
+        maxMonths: 3,
+        tiers: {
+          ouro: ["j26-001"],
+          prata: ["ballard"],
+          bronze: ["j26-005"],
+        },
+      },
+      {
+        label: "3–6 meses · lactente de risco",
+        minMonths: 3,
+        maxMonths: 6,
+        tiers: {
+          ouro: ["j26-001"],
+          prata: ["j26-005"],
+          bronze: ["j26-192"],
+        },
+      },
+      {
+        label: "6–30 meses · seguimento do prematuro",
+        minMonths: 6,
+        maxMonths: 30,
+        tiers: {
+          ouro: ["j26-195"],
+          prata: ["j26-117"],
+          bronze: ["j26-014"],
+        },
+      },
+    ],
+    monitoring: {
+      ouro: ["j26-195"],
+      prata: ["j26-117"],
+      bronze: ["j26-014"],
     },
   },
 };

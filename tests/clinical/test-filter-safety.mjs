@@ -244,6 +244,13 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
   const allIds = new Set(allScales.map((s) => s.id));
   const appSource = readFileSync(resolve(repoRoot, "client/src/App.tsx"), "utf8");
   const appRoutes = new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((m) => m[1]));
+  // Rotas parametrizadas (ex.: "/generic-scale/:id", "/classificacao/:id") casam
+  // qualquer appRoute concreta com o mesmo prefixo, como o wouter resolve no app.
+  const paramPrefixes = [...appRoutes]
+    .filter((r) => r.includes("/:"))
+    .map((r) => r.slice(0, r.indexOf("/:") + 1));
+  const routeIsRegistered = (route) =>
+    appRoutes.has(route) || paramPrefixes.some((p) => route.startsWith(p));
   const resolveRoute = (s) =>
     s.appRoute
       ? s.appRoute
@@ -264,7 +271,7 @@ head("J) Catálogo do filtro — toda escala abre uma página real");
   ok(naoAbrem.length === 0, `nenhuma escala do filtro sem rota real (${naoAbrem.length} violações)`);
   const appRoutesInvalidas = filtered.filter((s) => {
     const route = resolveRoute(s);
-    return route && !route.startsWith("/generic-scale/") && !appRoutes.has(route);
+    return route && !routeIsRegistered(route);
   });
   ok(appRoutesInvalidas.length === 0, `nenhuma appRoute do filtro aponta para rota ausente (${appRoutesInvalidas.length} violações)`);
   ok(filtered.length > 0, "catálogo filtrado não pode ficar vazio");
