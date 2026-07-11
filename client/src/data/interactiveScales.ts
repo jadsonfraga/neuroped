@@ -26,6 +26,10 @@ export interface InteractiveOption {
 export interface InteractiveItem {
   /** Enunciado do item. */
   text: string;
+  /** Emoji opcional exibido antes do enunciado (acolhe a leitura da família). */
+  emoji?: string;
+  /** Exemplo prático do dia a dia que explica o que a pergunta quer saber. */
+  example?: string;
   /** Opções específicas deste item (a pontuação já embute a polaridade). */
   options: InteractiveOption[];
 }

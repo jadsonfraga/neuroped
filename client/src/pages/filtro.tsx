@@ -1387,7 +1387,7 @@ export default function FiltroPage() {
                 ? "Abrir aplicação"
                 : "Abrir uso interno";
             const cardInner = (
-                <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
+                <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition-all duration-200 ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
                   <CardContent className="filter-260-card-content">
                     <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}><span aria-hidden="true">{slotEmoji(item.slot)}</span> {item.slot}</Badge>
@@ -1597,7 +1597,7 @@ export default function FiltroPage() {
         <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prévia do catálogo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catálogo mundial</Link></div>
         <div className="filter-260-grid compact">
           {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-            <Link key={s.id} href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition cursor-pointer hover:border-primary/30 hover:bg-background">
+            <Link key={s.id} href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:bg-background hover:shadow-md hover:-translate-y-0.5 active:translate-y-0">
               <div className="filter-260-card-content compact">
                 <div className="filter-260-head">
                   <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>

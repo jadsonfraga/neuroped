@@ -101,8 +101,13 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
               {def.items.map((item, i) => (
                 <li key={i} className="border-b border-border/40 pb-2 last:border-0">
                   <p className="text-sm leading-snug text-foreground">
-                    <span className="font-mono text-xs text-muted-foreground">{i + 1}.</span> {item.text}
+                    <span className="font-mono text-xs text-muted-foreground">{i + 1}.</span>{" "}
+                    {item.emoji && <span className="mr-0.5" aria-hidden="true">{item.emoji}</span>}
+                    {item.text}
                   </p>
+                  {item.example && (
+                    <p className="mt-0.5 text-xs italic text-muted-foreground leading-snug">💡 {item.example}</p>
+                  )}
                   <p className="mt-0.5 text-sm font-semibold text-primary">
                     → {answers[i] != null ? item.options[answers[i]].label : "—"}
                   </p>
@@ -194,7 +199,18 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
                     >
                       {isAnswered ? <Check className="h-4 w-4" strokeWidth={2.5} /> : i + 1}
                     </div>
-                    <p className="pt-0.5 text-sm leading-relaxed text-foreground">{item.text}</p>
+                    <div className="flex-1 space-y-1.5 pt-0.5">
+                      <p className="text-sm leading-relaxed text-foreground">
+                        {item.emoji && <span className="mr-1 text-base align-middle" aria-hidden="true">{item.emoji}</span>}
+                        {item.text}
+                      </p>
+                      {item.example && (
+                        <div className="flex items-start gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5">
+                          <span className="text-sm leading-none mt-0.5" aria-hidden="true">💡</span>
+                          <p className="text-xs italic text-muted-foreground leading-snug">{item.example}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 gap-1.5 pl-10" role="radiogroup" aria-label={item.text}>
                     {item.options.map((opt, oi) => {

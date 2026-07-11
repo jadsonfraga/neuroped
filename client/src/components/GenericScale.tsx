@@ -25,10 +25,28 @@ import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 
+/**
+ * Item de escala. Pode ser uma string simples (compatível com todo o acervo
+ * antigo) ou um objeto com emoji e um exemplo prático que explica, em
+ * linguagem do dia a dia, o que a pergunta está querendo saber — facilita a
+ * resposta da família por dar um exemplo concreto do comportamento.
+ */
+export type ScaleItem = string | { text: string; emoji?: string; example?: string };
+
+export function itemText(item: ScaleItem): string {
+  return typeof item === "string" ? item : item.text;
+}
+export function itemEmoji(item: ScaleItem): string | undefined {
+  return typeof item === "string" ? undefined : item.emoji;
+}
+export function itemExample(item: ScaleItem): string | undefined {
+  return typeof item === "string" ? undefined : item.example;
+}
+
 interface DomainConfig {
   name: string;
   color: string;
-  items: string[];
+  items: ScaleItem[];
 }
 
 interface ResultDomain {
@@ -71,7 +89,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       config.domains.flatMap((d, di) =>
         d.items.map((item, ii) => ({
           key: `${di}-${ii}`,
-          text: item,
+          text: itemText(item),
+          emoji: itemEmoji(item),
+          example: itemExample(item),
           domain: d.name,
           domainIdx: di,
           color: d.color,
@@ -252,11 +272,20 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                       const resp = idx === undefined ? "—" : (config.labels[idx] ?? `Opção ${idx + 1}`);
                       const globalN =
                         config.domains.slice(0, di).reduce((s, dd) => s + dd.items.length, 0) + ii + 1;
+                      const emoji = itemEmoji(item);
+                      const example = itemExample(item);
                       return (
                         <li key={ii} className="border-b border-border/40 pb-2 last:border-0">
                           <p className="text-sm text-foreground leading-snug">
-                            <span className="font-mono text-xs text-muted-foreground">{globalN}.</span> {item}
+                            <span className="font-mono text-xs text-muted-foreground">{globalN}.</span>{" "}
+                            {emoji && <span className="mr-0.5" aria-hidden="true">{emoji}</span>}
+                            {itemText(item)}
                           </p>
+                          {example && (
+                            <p className="mt-0.5 text-xs italic text-muted-foreground leading-snug">
+                              💡 {example}
+                            </p>
+                          )}
                           <p className="mt-0.5 text-sm font-semibold text-primary">
                             → {resp}
                           </p>
@@ -363,16 +392,16 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         </div>
       )}
 
-      <div className="sticky top-0 z-20 -mx-1 rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur space-y-2">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
+      <div className="sticky top-0 z-20 -mx-1 rounded-2xl border border-border/70 bg-background/95 p-3.5 shadow-sm backdrop-blur space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-foreground">
             {answered} de {total} respondidas
           </span>
-          <span>{Math.round(progress)}%</span>
+          <span className="tabular-nums font-bold text-primary">{Math.round(progress)}%</span>
         </div>
         <Progress
           value={progress}
-          className="h-2"
+          className="h-2.5"
           aria-valuemin={0}
           aria-valuemax={total}
           aria-valuenow={answered}
@@ -471,7 +500,13 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 }}
                 tabIndex={-1}
                 aria-invalid={submitAttempted && answers[key] === undefined}
-                className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${submitAttempted && answers[key] === undefined ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+                className={`rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  submitAttempted && answers[key] === undefined
+                    ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
+                    : answers[key] !== undefined
+                      ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
+                      : "bg-card/70 hover:bg-card hover:shadow-md"
+                }`}
               >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start gap-2">
@@ -485,9 +520,22 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         ii +
                         1}
                     </Badge>
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {item}
-                    </p>
+                    <div className="flex-1 space-y-1.5">
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {itemEmoji(item) && (
+                          <span className="mr-1 text-base align-middle" aria-hidden="true">{itemEmoji(item)}</span>
+                        )}
+                        {itemText(item)}
+                      </p>
+                      {itemExample(item) && (
+                        <div className="flex items-start gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5">
+                          <span className="text-sm leading-none mt-0.5" aria-hidden="true">💡</span>
+                          <p className="text-xs italic text-muted-foreground leading-snug">
+                            {itemExample(item)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {submitAttempted && answers[key] === undefined && (
                     <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
