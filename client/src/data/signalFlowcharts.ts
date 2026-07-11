@@ -149,7 +149,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
     monitoring: {
       ouro: ["snap"],
       prata: ["brief2"],
-      bronze: ["cbcl"],
+      bronze: ["wfirs-p", "cbcl"],
     },
   },
 
@@ -617,7 +617,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["j26-136"],
           prata: ["sdsc", "inventarios-auto"],
-          bronze: ["psq", "j26-130"],
+          bronze: ["isi", "psq", "j26-130"],
         },
       },
     ],

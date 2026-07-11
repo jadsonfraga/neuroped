@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 661
-- **Com fonte declarada:** 499
+- **Total de instrumentos:** 671
+- **Com fonte declarada:** 509
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -99,6 +99,7 @@
 | `celf-preschool-3` | CELF Preschool-3 | — | sim |
 | `celf5` | CELF-5 | Wiig EH, Semel E, Secord WA, 2013 (CELF-5), Pearson | não |
 | `cems` | CEMS | Zeman J et al., 2001 (Children's Emotion Management Scales) | não |
+| `ces-dc` | CES-DC | Weissman MM, Orvaschel H, Padian N, 1980 (domínio público) | não |
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não |
 | `cfrs` | CFRS | — | sim |
 | `chalfont` | Chalfont | Duncan JS, Sander JW, 1991 (Chalfont Seizure Severity Scale) | não |
@@ -107,6 +108,7 @@
 | `cheqol-25` | CHEQOL-25 | — | sim |
 | `chexi` | CHEXI | — | sim |
 | `chq-pf50` | CHQ-PF50 | Landgraf JM, Abetz L, Ware JE, 1996 (CHQ-PF50) | não |
+| `cis` | CIS | Bird HR et al., 1993 (uso livre) | não |
 | `cms` | CMS | — | sim |
 | `comfort-b` | COMFORT-B | van Dijk M et al., 2005 (COMFORT-Behavioral Scale) | não |
 | `confias` | CONFIAS | Moojen S et al., 2003 (CONFIAS) | não |
@@ -172,6 +174,7 @@
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não |
 | `eowpvt` | EOWPVT | — | sim |
 | `eowpvt4` | EOWPVT-4 | Martin NA, Brownell R, 2011 (EOWPVT-4), Academic Therapy | não |
+| `epds` | EPDS | Cox JL, Holden JM, Sagovsky R, 1987; validação BR: Santos IS et al., 2007 (domínio público) | não |
 | `epil-ne` | Escala de Avaliação Epileptológica Neuropediátrica Nordesti… | EPIL-NE v1.0 Escala Epilepsia DrJadson — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/15bp | não |
 | `epilepsia-diario` | Diário de Crises | Ferramenta de registro clínico NeuroPed (diário de crises) | não |
 | `erc` | ERC | Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist) | não |
@@ -224,6 +227,7 @@
 | `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `irs` | IRS | — | sim |
 | `isas` | ISAS | Klonsky & Glenn research | não |
+| `isi` | ISI | Bastien CH, Vallières A, Morin CM, 2001; validação BR: Castro LS, 2011 | não |
 | `isi-adolescent` | ISI-Adolescent | — | sim |
 | `ita-adultos` | ITA-Adultos | Instrumento inspirado no AQ (Autism Spectrum Quotient) | não |
 | `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (NEXUS-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
@@ -342,6 +346,7 @@
 | `mch-feeding` | MCH Feeding | Montreal Children's Hospital, Canada | não |
 | `mch-fs` | MCH-FS | — | sim |
 | `mchat` | M-CHAT-R/F | Robins DL et al., 2014 - Pediatrics | não |
+| `mdq` | MDQ | Hirschfeld RMA et al., 2000 (uso livre) | não |
 | `melbourne-assess-2` | Melbourne Assessment 2 | — | sim |
 | `mfq` | MFQ | Angold A, Costello EJ, 1987 (Mood and Feelings Questionnaire) | não |
 | `mfq-c` | MFQ-C | — | sim |
@@ -509,6 +514,7 @@
 | `pedsql-epilepsy` | PedsQL Epilepsy | — | sim |
 | `pesq` | PESQ | — | sim |
 | `pgd-checklist` | PGD-Checklist | — | sim |
+| `phq2` | PHQ-2 | Kroenke K, Spitzer RL, Williams JBW, 2003 (uso livre) | não |
 | `phq9` | PHQ-9 | Kroenke K, Spitzer RL, Williams JBW. J Gen Intern Med. 2001. Validação brasileira: Santos IS et al., Cad. Saúde Pública 2013; Osório FL et al. | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não |
 | `pi-cv` | PI-CV | Published literature (open-access research) | não |
@@ -555,6 +561,7 @@
 | `promis-ped-stigma` | PROMIS Pediatric Stigma | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
 | `promis-ped-stress` | PROMIS Pediatric Psychological Stress | PROMIS® (Patient-Reported Outcomes Measurement Information System) — HealthMeasures, healthmeasures.net, © Northwestern University. Banco de itens de domínio pú | não |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não |
+| `psc35` | PSC-35 | Jellinek MS et al., 1988; psc.partners.org (domínio público) | não |
 | `psi` | PSI | Abidin RR, 1995 (Parenting Stress Index) | não |
 | `psq` | PSQ | Chervin RD et al., 2000 - University of Michigan | não |
 | `psqi-ped` | PSQI Pediátrico | Buysse DJ et al., 1989 (Pittsburgh Sleep Quality Index) | não |
@@ -611,6 +618,7 @@
 | `snappe2` | SNAPPE-II | Richardson DK et al., 2001 (SNAPPE-II) | não |
 | `snk-gaze-soc-geo` | Preferência Visual Social × Geométrica | Pierce 2011 (Arch Gen Psychiatry); Pierce 2016 (Biol Psychiatry); Wen 2022 (Sci Rep) — implementação SuperNeuroKids v25 | sim |
 | `soma` | SOMA | Reilly S, Skuse D, Wolke D, 1995 (Schedule for Oral Motor Assessment) | não |
+| `spin` | SPIN | Connor KM et al., 2000 (uso livre em pesquisa/clínica) | não |
 | `spm2` | SPM-2 | Parham LD et al., 2021 (SPM-2), WPS | não |
 | `srs2` | SRS-2 | Constantino JN, Gruber CP, 2012 | não |
 | `sshs` | SSHS | — | sim |
@@ -621,6 +629,7 @@
 | `stat` | STAT | Stone WL et al., 2000 (STAT) | não |
 | `step` | STEP | — | sim |
 | `stroop` | Stroop | Golden CJ, 1978 (Stroop Color and Word Test); Stroop JR, 1935 | não |
+| `swan` | SWAN | Swanson JM et al., 2012; adhd.net (domínio público) | não |
 | `tde` | TDE | Stein LM, 1994 | não |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive,  | não |
 | `tea-ch2` | TEA-Ch2 | — | sim |
@@ -657,6 +666,7 @@
 | `vineland` | Vineland-3 | Sparrow SS et al., 2016 | não |
 | `wcst` | WCST | Heaton RK et al., 1993 (Wisconsin Card Sorting Test) | não |
 | `weefim` | WeeFIM | Msall ME et al., 1994 | não |
+| `wfirs-p` | WFIRS-P | Weiss MD et al.; distribuída livremente pela CADDRA | não |
 | `who5` | WHO-5 | WHO Collaborating Centre, 1998 | não |
 | `whoqol-ped` | WHOQOL-BREF Pediátrico | WHOQOL Group, 1998 (WHOQOL-BREF) — adaptação adolescente | não |
 | `wiat-4` | WIAT-4 | — | sim |
