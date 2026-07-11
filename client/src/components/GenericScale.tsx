@@ -278,12 +278,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         <li key={ii} className="border-b border-border/40 pb-2 last:border-0">
                           <p className="text-sm text-foreground leading-snug">
                             <span className="font-mono text-xs text-muted-foreground">{globalN}.</span>{" "}
-                            {emoji && <span className="mr-0.5" aria-hidden="true">{emoji}</span>}
+                            {emoji && <span className="mr-0.5 text-xs opacity-60" aria-hidden="true">{emoji}</span>}
                             {itemText(item)}
                           </p>
                           {example && (
-                            <p className="mt-0.5 text-xs italic text-muted-foreground leading-snug">
-                              💡 {example}
+                            <p className="mt-1 border-l-2 border-primary/20 pl-2 text-xs italic leading-snug text-muted-foreground">
+                              {example}
                             </p>
                           )}
                           <p className="mt-0.5 text-sm font-semibold text-primary">
@@ -523,17 +523,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                     <div className="flex-1 space-y-1.5">
                       <p className="text-sm text-foreground leading-relaxed">
                         {itemEmoji(item) && (
-                          <span className="mr-1 text-base align-middle" aria-hidden="true">{itemEmoji(item)}</span>
+                          <span className="mr-1.5 text-sm opacity-60 align-middle" aria-hidden="true">{itemEmoji(item)}</span>
                         )}
                         {itemText(item)}
                       </p>
                       {itemExample(item) && (
-                        <div className="flex items-start gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5">
-                          <span className="text-sm leading-none mt-0.5" aria-hidden="true">💡</span>
-                          <p className="text-xs italic text-muted-foreground leading-snug">
-                            {itemExample(item)}
-                          </p>
-                        </div>
+                        <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">
+                          {itemExample(item)}
+                        </p>
                       )}
                     </div>
                   </div>

@@ -503,9 +503,9 @@
   .filter-260-card-content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 11px;
     height: 100%;
-    padding: 18px 16px 16px;
+    padding: 20px 18px 18px;
   }
 
   .filter-260-card-content.compact {
@@ -603,13 +603,12 @@
 
   .filter-260-evidence,
   .filter-260-source {
-    border: 1px solid rgba(231,201,139,.24);
-    border-radius: 10px;
-    background: rgba(231,201,139,.10);
-    padding: 7px 10px;
+    border-left: 2px solid hsl(var(--border));
+    border-radius: 2px;
+    padding: 1px 0 1px 10px;
     color: hsl(var(--muted-foreground));
     font-size: 11.5px;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
   .filter-260-why {

@@ -102,11 +102,11 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
                 <li key={i} className="border-b border-border/40 pb-2 last:border-0">
                   <p className="text-sm leading-snug text-foreground">
                     <span className="font-mono text-xs text-muted-foreground">{i + 1}.</span>{" "}
-                    {item.emoji && <span className="mr-0.5" aria-hidden="true">{item.emoji}</span>}
+                    {item.emoji && <span className="mr-0.5 text-xs opacity-60" aria-hidden="true">{item.emoji}</span>}
                     {item.text}
                   </p>
                   {item.example && (
-                    <p className="mt-0.5 text-xs italic text-muted-foreground leading-snug">💡 {item.example}</p>
+                    <p className="mt-1 border-l-2 border-primary/20 pl-2 text-xs italic leading-snug text-muted-foreground">{item.example}</p>
                   )}
                   <p className="mt-0.5 text-sm font-semibold text-primary">
                     → {answers[i] != null ? item.options[answers[i]].label : "—"}
@@ -201,14 +201,11 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
                     </div>
                     <div className="flex-1 space-y-1.5 pt-0.5">
                       <p className="text-sm leading-relaxed text-foreground">
-                        {item.emoji && <span className="mr-1 text-base align-middle" aria-hidden="true">{item.emoji}</span>}
+                        {item.emoji && <span className="mr-1.5 text-sm opacity-60 align-middle" aria-hidden="true">{item.emoji}</span>}
                         {item.text}
                       </p>
                       {item.example && (
-                        <div className="flex items-start gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5">
-                          <span className="text-sm leading-none mt-0.5" aria-hidden="true">💡</span>
-                          <p className="text-xs italic text-muted-foreground leading-snug">{item.example}</p>
-                        </div>
+                        <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">{item.example}</p>
                       )}
                     </div>
                   </div>
