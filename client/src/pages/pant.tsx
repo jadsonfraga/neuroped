@@ -150,7 +150,7 @@ export default function PantPage() {
                         <span className="font-mono text-xs text-muted-foreground">{String(scale.number).padStart(2, "0")}.</span> {scale.name}
                       </p>
                       <p className="text-muted-foreground mt-0.5">
-                        → {answers[scale.number] === undefined ? "—" : pantLevelLabels[answers[scale.number]]}
+                        → <span className="capitalize">{answers[scale.number] === undefined ? "—" : (scale.levels[answers[scale.number]]?.label ?? pantLevelLabels[answers[scale.number]])}</span>
                       </p>
                     </div>
                   ))}
@@ -327,7 +327,7 @@ export default function PantPage() {
                         {/* Selected level label */}
                         {isAnswered && (
                           <p className="text-xs text-muted-foreground">
-                            Nível {currentAnswer}: <span className="font-medium">{pantLevelLabels[currentAnswer]}</span>
+                            Nível {currentAnswer}: <span className="font-medium capitalize">{scale.levels[currentAnswer]?.label ?? pantLevelLabels[currentAnswer]}</span>
                           </p>
                         )}
                       </CardContent>

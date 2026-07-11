@@ -864,6 +864,20 @@ export default function FiltroPage() {
   const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
   const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
   const catalogById = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
+  // Mapa de TODAS as escalas (inclui fichas/licenciadas metadata_only). Usado só
+  // para resolver recomendações curadas cujo padrão-ouro é um instrumento
+  // licenciado (ex.: Vineland-3 na funcionalidade): ele deve APARECER como
+  // recomendação de referência em vez de sumir silenciosamente do bloco OPB.
+  const allScalesById = useMemo(() => new Map(allScales.map((s) => [s.id, s])), []);
+  // Idade para a curadoria do pódio/OPB: uma faixa larga (ex.: "2–4 anos") vira
+  // um único ponto (midpoint) ao consultar o fluxograma, o que pode pular o
+  // rastreio de 1ª linha do extremo mais novo (ex.: M-CHAT numa criança de 2a).
+  // Se o profissional digitou a idade exata na busca (ex.: "24 meses"), usamos
+  // ela — mais precisa; senão, o midpoint da faixa (comportamento padrão).
+  const curatedAgeMonths = useMemo(
+    () => inferAgeMonthsFromSearch(search) ?? ageMonthsFromBand(selectedAge),
+    [search, selectedAge],
+  );
   const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
   const hasSafeResults = refinedMatches.length > 0;
   // Resultado veio do fallback de triagem ampla (sem instrumento específico).
@@ -873,8 +887,8 @@ export default function FiltroPage() {
   // É a FONTE de verdade do pódio: define explicitamente quem é ouro/prata/bronze
   // por idade×queixa. Cai para null quando não há queixa selecionada.
   const curatedTiers = useMemo(
-    () => selectCuratedTiers(selectedQueixas, ageMonthsFromBand(selectedAge), refinedById, selectedRespondente),
-    [selectedQueixas, selectedAge, selectedRespondente, refinedById]
+    () => selectCuratedTiers(selectedQueixas, curatedAgeMonths, refinedById, selectedRespondente),
+    [selectedQueixas, curatedAgeMonths, selectedRespondente, refinedById]
   );
 
   // === PÓDIO: score-ordered, curated tiers as soft tiebreaker, quality threshold ≥60 ===
@@ -1312,13 +1326,23 @@ export default function FiltroPage() {
         {(() => {
           if (selectedQueixas.length !== 1) return null;
           const queixaId = selectedQueixas[0];
-          const rule = getClinicalTiers(queixaId, ageMonthsFromBand(selectedAge));
+          const rule = getClinicalTiers(queixaId, curatedAgeMonths);
           if (!rule || !rule.prata || !rule.bronze) return null;
 
-          const sOuro = catalogById.get(rule.ouro);
-          const sPrata = catalogById.get(rule.prata);
-          const sBronze = catalogById.get(rule.bronze);
+          // Resolve do catálogo preenchível; se a escala curada for uma ficha
+          // licenciada (ex.: Vineland-3), cai para o catálogo completo — assim a
+          // recomendação padrão-ouro aparece como referência em vez de sumir.
+          const resolveScale = (id: string) => catalogById.get(id) ?? allScalesById.get(id);
+          const sOuro = resolveScale(rule.ouro);
+          const sPrata = resolveScale(rule.prata);
+          const sBronze = resolveScale(rule.bronze);
           if (!sOuro || !sPrata || !sBronze) return null;
+
+          // Nota honesta quando a escala não abre como aplicação (licenciada/ficha).
+          const refNote = (s: ScaleEntry) =>
+            catalogById.has(s.id)
+              ? ""
+              : " · Instrumento licenciado/de referência — abre como ficha técnica, não é preenchível no app.";
 
           const queixaLabel = queixas.find((q) => q.id === queixaId)?.label ?? queixaId;
           const ageBand = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
@@ -1329,9 +1353,9 @@ export default function FiltroPage() {
             ageRange: ageRangeLabel,
             ageMin: rule.ageMin,
             ageMax: rule.ageMax,
-            ouro: buildOPB("ouro", sOuro, rule.reason, queixaLabel),
-            prata: buildOPB("prata", sPrata, OPB_WHY.prata, queixaLabel),
-            bronze: buildOPB("bronze", sBronze, OPB_WHY.bronze, queixaLabel),
+            ouro: buildOPB("ouro", sOuro, rule.reason + refNote(sOuro), queixaLabel),
+            prata: buildOPB("prata", sPrata, OPB_WHY.prata + refNote(sPrata), queixaLabel),
+            bronze: buildOPB("bronze", sBronze, OPB_WHY.bronze + refNote(sBronze), queixaLabel),
           };
 
           return (
