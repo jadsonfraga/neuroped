@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, AlertTriangle, CheckCircle2, Flame, Info } from "lucide-react";
-import { eaahDomains, eaahLabels, eaahProtectiveLabels, classifyEaah } from "@/data/bateriaJadsonPsiq";
+import { RotateCcw, AlertTriangle, Flame } from "lucide-react";
+import { eaahDomains, eaahLabels, eaahProtectiveLabels } from "@/data/bateriaJadsonPsiq";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
 
@@ -36,25 +36,14 @@ export default function EaahPage() {
         else riskScore += val;
       });
     });
-    const result = classifyEaah(riskScore, protectionScore);
     const finalScore = riskScore - protectionScore;
 
-    const domainResults = eaahDomains.map((domain, di) => {
-      const score = domain.items.reduce((sum, _, ii) => sum + (answers[`${di}-${ii}`] || 0), 0);
-      const maxD = domain.items.length * 3;
-      const ratio = score / maxD;
-      const isProtective = di === PROTECTIVE_DOMAIN_IDX;
-      return {
-        domain: domain.name,
-        score,
-        classification: isProtective
-          ? (ratio >= 0.75 ? "Bom" : ratio >= 0.5 ? "Parcial" : "Frágil")
-          : (ratio <= 0.25 ? "Baixo" : ratio <= 0.5 ? "Leve" : ratio <= 0.75 ? "Moderado" : "Alto"),
-        color: isProtective
-          ? (ratio >= 0.75 ? "emerald" : ratio >= 0.5 ? "amber" : "red")
-          : (ratio <= 0.25 ? "emerald" : ratio <= 0.5 ? "amber" : ratio <= 0.75 ? "orange" : "red"),
-      };
-    });
+    const labelFor = (item: { key: string; domainIdx: number }) => {
+      const val = answers[item.key];
+      if (val === undefined) return "—";
+      const labels = item.domainIdx === PROTECTIVE_DOMAIN_IDX ? eaahProtectiveLabels : eaahLabels;
+      return labels[val] ?? "—";
+    };
 
     return (
       <div className="space-y-6">
@@ -64,81 +53,56 @@ export default function EaahPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold">Resultado — EAAH-NEXUS</h1>
-            <p className="text-xs text-muted-foreground">Avaliação concluída</p>
+            <p className="text-xs text-muted-foreground">Registro de respostas</p>
           </div>
         </div>
 
-        <Card className="border-card-border overflow-hidden">
-          <div className={`p-6 text-center space-y-3 ${
-            result.color === "emerald" ? "bg-gradient-to-br from-emerald-500 to-green-600" :
-            result.color === "amber" ? "bg-gradient-to-br from-amber-500 to-yellow-600" :
-            result.color === "orange" ? "bg-gradient-to-br from-orange-500 to-red-500" :
-            "bg-gradient-to-br from-red-500 to-rose-600"
-          }`}>
-            <div className="text-5xl font-bold text-white">{finalScore}</div>
-            <p className="text-sm text-white/80">Escore Final (Risco {riskScore} − Proteção {protectionScore})</p>
-            <Badge className="text-sm px-4 py-1.5 bg-white/20 text-white border-white/30 backdrop-blur-sm">
-              {result.classification}
-            </Badge>
-          </div>
-          <CardContent className="p-6 space-y-5">
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.color === "emerald" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">{result.description}</p>
+        <Card className="border-card-border">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            {eaahDomains.map((domain, di) => (
+              <div key={di} className="space-y-2">
+                <h3 className={`text-sm font-semibold ${domain.color}`}>{domain.name}</h3>
+                {domain.items.map((item, ii) => {
+                  const key = `${di}-${ii}`;
+                  const number = eaahDomains.slice(0, di).reduce((s, d) => s + d.items.length, 0) + ii + 1;
+                  return (
+                    <div key={key} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{number}</Badge>
+                        <p className="text-sm text-foreground leading-relaxed">{item}</p>
+                      </div>
+                      <p className="text-sm font-medium text-primary pl-8">→ {labelFor({ key, domainIdx: di })}</p>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Domínios</h3>
-              {domainResults.map((dr) => (
-                <div key={dr.domain} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{dr.domain}</p>
-                    <p className="text-xs text-muted-foreground">Pontuação: {dr.score}</p>
-                  </div>
-                  <Badge variant="outline" className={`text-xs ${
-                    dr.color === "emerald" ? "text-emerald-600 border-emerald-300" :
-                    dr.color === "amber" ? "text-amber-600 border-amber-300" :
-                    dr.color === "orange" ? "text-orange-600 border-orange-300" :
-                    "text-red-600 border-red-300"
-                  }`}>
-                    {dr.classification}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                  EAAHNEXUS: 20 itens (17 risco + 3 proteção). Escore = Risco − Proteção. Domínio C (fatores protetores) usa escala invertida. Instrumento autoral — Dr. Jadson Fraga, 2026.
-                </p>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
 
-        
+        <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
+              Instrumento de triagem. Em caso de risco de autoagressão ou heteroagressão, aciones avaliação de segurança imediata (SAMU 192 / CVV 188).
+            </p>
+          </div>
+        </div>
+
         <ClinicalReport
           scaleName="EAAH-NEXUS"
           scaleFullName="Escala de Autoagressividade e Heteroagressividade"
-          totalScore={finalScore}
-          classification={result.classification}
-          description={result.description}
-          domainResults={domainResults.map(dr => ({ domain: dr.domain, score: dr.score, classification: dr.classification }))}
-          items={allItems.map(item => ({ question: item.text, answer: String(answers[item.key] ?? 0), value: answers[item.key] ?? 0 }))}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
+          items={allItems.map(item => ({ question: item.text, answer: labelFor(item), value: answers[item.key] ?? 0 }))}
           patientAge="4-17 anos"
         />
         <SaveToPatient
           scaleName="EAAH-NEXUS"
           totalScore={finalScore}
-          classification={result.classification}
+          classification="Registro de respostas"
           answers={answers}
           domainScores={{ riskScore, protectionScore }}
         />

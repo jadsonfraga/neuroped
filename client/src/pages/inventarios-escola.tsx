@@ -232,61 +232,31 @@ function ProgressBar({ answered, total }: { answered: number; total: number }) {
   );
 }
 
-function ResultCard({
-  score,
-  maxScore,
-  band,
+function AnswersReview({
+  items,
   onReset,
-  extraInfo,
 }: {
-  score: number;
-  maxScore: number;
-  band: ClassificationBand;
+  items: { question: string; answer: string }[];
   onReset: () => void;
-  extraInfo?: React.ReactNode;
 }) {
-  const style = colorStyles[band.color];
-  const Icon = style.icon;
-
   return (
     <div className="space-y-4">
       <Card className="border-card-border">
-        <CardContent className="p-6 space-y-5">
-          {/* Score display */}
-          <div className="flex flex-col items-center gap-2 py-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Pontuação Total</p>
-            <p className="text-5xl font-bold text-foreground">{score}</p>
-            <p className="text-xs text-muted-foreground">de {maxScore} pontos</p>
+        <CardContent className="p-5 space-y-3">
+          <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Perguntas e respostas</h3>
+          <div className="space-y-2.5">
+            {items.map((it, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <div className="space-y-1">
+                    <p className="text-sm text-foreground leading-relaxed">{it.question}</p>
+                    <p className="text-sm text-primary">→ {it.answer}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-
-          {/* Progress bar */}
-          <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-            <div
-              className={`h-3 rounded-full transition-all duration-500 ${
-                band.color === "green" ? "bg-emerald-500" :
-                band.color === "yellow" ? "bg-yellow-500" :
-                band.color === "orange" ? "bg-orange-500" : "bg-red-500"
-              }`}
-              style={{ width: `${(score / maxScore) * 100}%` }}
-            />
-          </div>
-
-          {/* Classification badge */}
-          <div className="text-center">
-            <Badge className={`text-sm px-4 py-1.5 ${style.badge}`}>
-              {band.label}
-            </Badge>
-          </div>
-
-          {/* Description */}
-          <div className={`rounded-xl p-4 border ${style.bg} ${style.border}`}>
-            <div className="flex items-start gap-2">
-              <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${style.iconColor}`} />
-              <p className={`text-sm leading-relaxed ${style.text}`}>{band.description}</p>
-            </div>
-          </div>
-
-          {extraInfo}
         </CardContent>
       </Card>
 
@@ -311,38 +281,17 @@ function Inventario1() {
   const score = Object.values(answers).reduce((a, b) => a + b, 0);
   const band = getBand(score, inv1Bands);
 
-  const categoryScores = inv1Categories.map((cat) => ({
-    ...cat,
-    score: cat.items.reduce((sum, _, i) => sum + (answers[`${cat.id}-${i}`] ?? 0), 0),
-    answered: cat.items.filter((_, i) => answers[`${cat.id}-${i}`] !== undefined).length,
-  }));
-
   if (showResult) {
+    const reviewItems = inv1Categories.flatMap((cat) =>
+      cat.items.map((item, i) => {
+        const val = answers[`${cat.id}-${i}`];
+        return { question: `${cat.title} — ${item}`, answer: val === undefined ? "—" : inv1Labels[val] };
+      }),
+    );
     return (
-      <ResultCard
-        score={score}
-        maxScore={60}
-        band={band}
+      <AnswersReview
+        items={reviewItems}
         onReset={() => { setAnswers({}); setShowResult(false); }}
-        extraInfo={
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Por Categoria</p>
-            <div className="grid grid-cols-2 gap-2">
-              {categoryScores.map((cat) => {
-                const CatIcon = cat.icon;
-                return (
-                  <div key={cat.id} className={`rounded-xl p-3 border ${cat.bg} ${cat.border}`}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <CatIcon className={`w-3.5 h-3.5 ${cat.color}`} />
-                      <p className={`text-xs font-semibold ${cat.color}`}>{cat.title}</p>
-                    </div>
-                    <p className="text-xl font-bold text-foreground">{cat.score}<span className="text-xs font-normal text-muted-foreground">/15</span></p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        }
       />
     );
   }
@@ -435,26 +384,14 @@ function Inventario2() {
   const band = getBand(score, inv2Bands);
 
   if (showResult) {
-    const simCount = Object.values(answers).filter(Boolean).length;
-    const naoCount = inv2Items.length - simCount;
+    const reviewItems = inv2Items.map((item, i) => {
+      const v = answers[i];
+      return { question: item, answer: v === true ? "Sim" : v === false ? "Não" : "—" };
+    });
     return (
-      <ResultCard
-        score={score}
-        maxScore={15}
-        band={band}
+      <AnswersReview
+        items={reviewItems}
         onReset={() => { setAnswers({}); setShowResult(false); }}
-        extraInfo={
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 text-center">
-              <p className="text-2xl font-bold text-red-700 dark:text-red-300">{simCount}</p>
-              <p className="text-xs text-red-600 dark:text-red-400">Sim (sinais presentes)</p>
-            </div>
-            <div className="rounded-xl p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 text-center">
-              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{naoCount}</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">Não (sinais ausentes)</p>
-            </div>
-          </div>
-        }
       />
     );
   }
@@ -532,27 +469,14 @@ function Inventario3() {
   const band = getBand(score, inv3Bands);
 
   if (showResult) {
-    const nivelCount = [0, 1, 2].map((n) => Object.values(answers).filter((v) => v === n).length);
+    const reviewItems = inv3Items.map((item, i) => {
+      const v = answers[i];
+      return { question: item, answer: v === undefined ? "—" : inv3Labels[v] };
+    });
     return (
-      <ResultCard
-        score={score}
-        maxScore={24}
-        band={band}
+      <AnswersReview
+        items={reviewItems}
         onReset={() => { setAnswers({}); setShowResult(false); }}
-        extraInfo={
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: "Não consegue", count: nivelCount[0], color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/20", border: "border-red-200 dark:border-red-800/40" },
-              { label: "Em desen.", count: nivelCount[1], color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-950/20", border: "border-yellow-200 dark:border-yellow-800/40" },
-              { label: "Consegue", count: nivelCount[2], color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/20", border: "border-emerald-200 dark:border-emerald-800/40" },
-            ].map((n) => (
-              <div key={n.label} className={`rounded-xl p-3 border ${n.bg} ${n.border} text-center`}>
-                <p className={`text-2xl font-bold ${n.color}`}>{n.count}</p>
-                <p className={`text-xs ${n.color}`}>{n.label}</p>
-              </div>
-            ))}
-          </div>
-        }
       />
     );
   }
@@ -632,23 +556,14 @@ function Inventario4() {
   const band = getBand(score, inv4Bands);
 
   if (showResult) {
+    const reviewItems = inv4Items.map((item, i) => {
+      const v = answers[i];
+      return { question: item, answer: v === undefined ? "—" : inv4Labels[v] };
+    });
     return (
-      <ResultCard
-        score={score}
-        maxScore={30}
-        band={band}
+      <AnswersReview
+        items={reviewItems}
         onReset={() => { setAnswers({}); setShowResult(false); }}
-        extraInfo={
-          <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40 p-4">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-violet-600 dark:text-violet-400 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-violet-800 dark:text-violet-300 space-y-0.5">
-                <p><strong>Referências de corte:</strong></p>
-                <p>24-30 pts: Adequado · 16-23 pts: Leve · 8-15 pts: Moderado · 0-7 pts: Significativo</p>
-              </div>
-            </div>
-          </div>
-        }
       />
     );
   }

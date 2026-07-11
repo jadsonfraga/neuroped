@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Activity, RotateCcw, AlertTriangle, CheckCircle2, Info, Eye, Zap } from "lucide-react";
+import { Activity, RotateCcw, Eye, Zap } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
@@ -75,8 +75,6 @@ export default function SnapPage() {
   if (showResult) {
     const { inattention, hyperactivity } = calculateScores();
     const result = classifySnap(inattention, hyperactivity);
-    const inattentionAvg = (inattention / 9).toFixed(2);
-    const hyperactivityAvg = (hyperactivity / 9).toFixed(2);
 
     return (
       <div className="space-y-6">
@@ -91,87 +89,32 @@ export default function SnapPage() {
         </div>
 
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            {/* Scores */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center space-y-2 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20">
-                <Eye className="w-5 h-5 mx-auto text-blue-600 dark:text-blue-400" />
-                <p className="text-xs text-muted-foreground">Desatenção</p>
-                <p className="text-2xl font-bold text-foreground">{inattentionAvg}</p>
-                <Badge className={`text-xs ${
-                  parseFloat(inattentionAvg) >= 1.5
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                }`}>
-                  {result.inattentionResult}
-                </Badge>
-              </div>
-              <div className="text-center space-y-2 p-4 rounded-xl bg-orange-50 dark:bg-orange-950/20">
-                <Zap className="w-5 h-5 mx-auto text-orange-600 dark:text-orange-400" />
-                <p className="text-xs text-muted-foreground">Hiper/Impulsividade</p>
-                <p className="text-2xl font-bold text-foreground">{hyperactivityAvg}</p>
-                <Badge className={`text-xs ${
-                  parseFloat(hyperactivityAvg) >= 1.5
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                }`}>
-                  {result.hyperactivityResult}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Overall */}
-            <div className="text-center space-y-2">
-              <Badge className={`text-sm px-4 py-1.5 ${
-                result.combinedResult === "Sem indicativos de TDAH"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : result.combinedResult === "Apresentação Combinada"
-                  ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-              }`}>
-                {result.combinedResult}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.combinedResult === "Sem indicativos de TDAH" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">
-                  {result.description}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-teal-800 dark:text-teal-300 space-y-1">
-                  <p><strong>Ponto de corte (SNAP-IV):</strong></p>
-                  <p>Média ≥ 1.5 por domínio sugere presença de sintomas</p>
-                  <p>Desatenção: itens 1-9 / Hiper-Impulsividade: itens 10-18</p>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <div className="space-y-3">
+              {snapQuestions.map((q, i) => (
+                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm font-medium text-primary">
+                      → {answers[i] !== undefined ? snapLabels[answers[i]] : "—"}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        
+
         <ClinicalReport
           scaleName="SNAP-IV"
           scaleFullName="Swanson, Nolan and Pelham Questionnaire"
-          totalScore={inattention + hyperactivity}
-          maxScore={54}
-          classification={result.combinedResult}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
           description={result.description}
-          domainResults={[
-            { domain: "Desatenção", score: inattention, classification: result.inattentionResult },
-            { domain: "Hiperatividade/Impulsividade", score: hyperactivity, classification: result.hyperactivityResult },
-          ]}
-          items={snapQuestions.map((q, i) => ({ question: q, answer: snapLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
+          items={snapQuestions.map((q, i) => ({ question: q, answer: answers[i] !== undefined ? snapLabels[answers[i]] : "—", value: answers[i] ?? 0 }))}
           patientAge="6-18 anos"
         />
         <SaveToPatient

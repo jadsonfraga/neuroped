@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, AlertTriangle, CheckCircle2, Info, HeartPulse } from "lucide-react";
-import { phqaQuestions, phqaLabels, classifyPhqa } from "@/data/expandedScales";
+import { RotateCcw, Info, HeartPulse } from "lucide-react";
+import { phqaQuestions, phqaLabels } from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
 
@@ -43,8 +43,6 @@ export default function PhqaPage() {
   }
 
   if (showResult) {
-    const sum = Object.values(answers).reduce((a, b) => a + b, 0);
-    const result = classifyPhqa(sum);
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -57,47 +55,43 @@ export default function PhqaPage() {
           </div>
         </div>
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{sum}</div>
-              <p className="text-xs text-muted-foreground">Pontuação total (0-27)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${result.color === "emerald" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : result.color === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : result.color === "orange" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300" : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"}`}>
-                {result.classification}
-              </Badge>
-            </div>
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.color === "emerald" ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />}
-                <p className="text-sm text-foreground leading-relaxed">{result.description}</p>
-              </div>
-            </div>
-            <div className="rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/20 border border-fuchsia-200 dark:border-fuchsia-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-fuchsia-600 dark:text-fuchsia-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-fuchsia-800 dark:text-fuchsia-300 space-y-1">
-                  <p><strong>PHQ-A — Pontos de corte:</strong></p>
-                  <p>Mínima: 0-4 / Leve: 5-9 / Moderada: 10-14 / Mod-Grave: 15-19 / Grave: 20-27</p>
-                  <p>Item 9 (ideação suicida) requer atenção especial independente do total.</p>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <div className="space-y-3">
+              {phqaQuestions.map((q, i) => (
+                <div key={i} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                  </div>
+                  <p className="text-sm font-medium text-primary pl-8">→ {answers[i] !== undefined ? phqaLabels[answers[i]] : "—"}</p>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-        
+        <div className="rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/20 border border-fuchsia-200 dark:border-fuchsia-800/40 p-4">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-fuchsia-600 dark:text-fuchsia-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-fuchsia-800 dark:text-fuchsia-300 leading-relaxed">
+              Em caso de risco de autoagressão ou ideação suicida, procure atendimento imediato (SAMU 192 / CVV 188).
+            </p>
+          </div>
+        </div>
+
         <ClinicalReport
           scaleName="PHQ-A"
           scaleFullName="Patient Health Questionnaire for Adolescents"
-          totalScore={sum}
-          maxScore={phqaQuestions.length * 3}
-          classification={result.classification}
-          description={result.description}
-          items={phqaQuestions.map((q, i) => ({ question: q, answer: phqaLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
+          items={phqaQuestions.map((q, i) => ({ question: q, answer: answers[i] !== undefined ? phqaLabels[answers[i]] : "—", value: answers[i] ?? 0 }))}
           patientAge="12-17 anos"
         />
         <SaveToPatient
           scaleName="PHQ-A"
-          totalScore={sum}
-          classification={result.classification}
+          totalScore={Object.values(answers).reduce((a, b) => a + b, 0)}
+          classification="Registro de respostas"
           answers={answers}
         />
         <Button onClick={handleReset} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>

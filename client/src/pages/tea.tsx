@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
-  Puzzle, ArrowLeft, CheckCircle2, Info, RotateCcw, BookOpen, BarChart3
+  Puzzle, ArrowLeft, Info, RotateCcw, BookOpen, BarChart3
 } from "lucide-react";
 import {
   autismScales, quickRefSummary, bestOfEach,
@@ -139,20 +139,17 @@ function ScaleApplication({ scale, onBack }: { scale: AutismScale; onBack: () =>
       ? Object.values(answers).reduce((a, b) => a + b, 0)
       : presentCount;
 
-    // Domain breakdown
-    const domainBreakdown = isChecklist
-      ? scale.domains!.map((d) => {
-          const domainItems = d.items.map((i) => answers[i.id] || 0);
-          const present = domainItems.filter((v) => v === 1).length;
-          return { domain: d.title, score: present, total: d.items.length, pct: Math.round((present / d.items.length) * 100) };
-        })
-      : isDimensional
-      ? scale.dimensionalDomains!.map((d) => {
-          const sum = d.items.reduce((s, i) => s + (answers[i.id] || 0), 0);
-          const max = d.items.length * 4; // max severity = 4
-          return { domain: d.title, score: sum, total: max, pct: Math.round((sum / max) * 100) };
-        })
-      : [];
+    const answerLabel = (item: (typeof allItems)[number]) => {
+      const val = answers[item.id];
+      if (val === undefined) return "—";
+      if (isChecklist) return val === 1 ? "Presente" : "Ausente";
+      return (item as any).severityOptions?.find((o: any) => o.value === val)?.label ?? String(val);
+    };
+
+    const grouped = allItems.reduce((acc, it) => {
+      (acc[it.domain] ??= []).push(it);
+      return acc;
+    }, {} as Record<string, typeof allItems>);
 
     return (
       <div className="space-y-6">
@@ -166,36 +163,19 @@ function ScaleApplication({ scale, onBack }: { scale: AutismScale; onBack: () =>
           </div>
         </div>
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{totalScore}</div>
-              <p className="text-xs text-muted-foreground">
-                {isChecklist ? `${presentCount} de ${total} itens presentes` : `Pontuação total (dimensional)`}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold">Por Domínio</h3>
-              {domainBreakdown.map((d) => (
-                <div key={d.domain} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-foreground">{d.domain}</p>
-                    <span className="text-xs text-muted-foreground">{d.score}/{d.total} ({d.pct}%)</span>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-bold text-foreground">Perguntas e respostas</h2>
+            {Object.entries(grouped).map(([domainTitle, domainItems]) => (
+              <div key={domainTitle} className="space-y-2">
+                <h3 className="text-xs font-semibold text-primary">{domainTitle}</h3>
+                {domainItems.map((item) => (
+                  <div key={item.id} className="text-sm border-b border-border/40 pb-2 last:border-0">
+                    <p className="text-foreground leading-relaxed">{item.text}</p>
+                    <p className="text-muted-foreground mt-0.5">→ {answerLabel(item)}</p>
                   </div>
-                  <Progress value={d.pct} className="h-2" />
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-foreground leading-relaxed space-y-1">
-                  <p>{scale.bestFor}</p>
-                  <p className="text-xs text-muted-foreground">{scale.psychometrics.note}</p>
-                </div>
+                ))}
               </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
         <SaveToPatient
@@ -205,32 +185,14 @@ function ScaleApplication({ scale, onBack }: { scale: AutismScale; onBack: () =>
           answers={answers}
         />
         <ClinicalReport
+          hideScore
           scaleName={scale.shortName}
           scaleFullName={scale.fullNamePt}
-          totalScore={totalScore}
-          maxScore={isChecklist ? total : total * 4}
-          classification={
-            isChecklist
-              ? presentCount >= total * 0.75 ? "Alta densidade de sinais — avaliação especializada indicada"
-                : presentCount >= total * 0.5 ? "Média densidade de sinais — monitorar"
-                : presentCount >= total * 0.25 ? "Baixa densidade de sinais"
-                : "Sinais mínimos"
-              : totalScore >= total * 4 * 0.75 ? "Alta gravidade — avaliação especializada indicada"
-                : totalScore >= total * 4 * 0.5 ? "Gravidade moderada — monitorar"
-                : totalScore >= total * 4 * 0.25 ? "Gravidade leve"
-                : "Gravidade mínima"
-          }
-          description={scale.bestFor}
-          domainResults={domainBreakdown.map((d) => ({
-            domain: d.domain,
-            score: d.score,
-            classification: d.pct >= 75 ? "Elevado" : d.pct >= 50 ? "Moderado" : d.pct >= 25 ? "Leve" : "Mínimo",
-          }))}
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
           items={allItems.map((item) => ({
             question: item.text,
-            answer: isChecklist
-              ? (answers[item.id] === 1 ? "Presente" : "Ausente")
-              : (item as any).severityOptions?.find((o: any) => o.value === answers[item.id])?.label ?? String(answers[item.id] ?? 0),
+            answer: answerLabel(item),
             value: answers[item.id] ?? 0,
           }))}
         />

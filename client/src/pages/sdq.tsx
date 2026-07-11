@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { BarChart3, RotateCcw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { BarChart3, RotateCcw } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
@@ -91,77 +91,32 @@ export default function SdqPage() {
         </div>
 
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{result.total}</div>
-              <p className="text-xs text-muted-foreground">Total de Dificuldades (0-40)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${
-                result.classification === "Normal"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : result.classification === "Limítrofe"
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              }`}>
-                {result.classification}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.classification === "Normal" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">
-                  {result.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Subscale breakdown */}
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Subescalas</h3>
-              {Object.entries(sdqSubscales).map(([key, sub]) => {
-                const subScore = scores[key];
-                const subClass = result.subscaleClassifications[key];
-                return (
-                  <div key={key} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                    <div className="flex-1">
-                      <p className={`text-sm font-medium ${sub.color}`}>{sub.name}</p>
-                      <p className="text-xs text-muted-foreground">Pontuação: {subScore}/10</p>
-                    </div>
-                    <Badge variant="outline" className={`text-xs ${subClass.color}`}>
-                      {subClass.classification}
-                    </Badge>
+              {sdqQuestions.map((q, i) => (
+                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm font-medium text-primary">
+                      → {answers[i] !== undefined ? sdqLabels[answers[i]] : "—"}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-
-            <div className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-green-800 dark:text-green-300 space-y-1">
-                  <p><strong>Pontos de corte do SDQ:</strong></p>
-                  <p>Normal: 0-13 / Limítrofe: 14-16 / Anormal: 17-40</p>
-                  <p>Pró-social: maior = melhor; demais: menor = melhor</p>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        
+
         <ClinicalReport
           scaleName="SDQ"
           scaleFullName="Strengths and Difficulties Questionnaire"
-          totalScore={result.total}
-          maxScore={40}
-          classification={result.classification}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
           description={result.description}
-          domainResults={Object.entries(sdqSubscales).map(([key, sub]) => ({ domain: sub.name, score: scores[key] ?? 0, classification: result.subscaleClassifications[key]?.classification ?? "—" }))}
-          items={sdqQuestions.map((q, i) => ({ question: q, answer: sdqLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
+          items={sdqQuestions.map((q, i) => ({ question: q, answer: answers[i] !== undefined ? sdqLabels[answers[i]] : "—", value: answers[i] ?? 0 }))}
           patientAge="4-17 anos"
         />
         <SaveToPatient

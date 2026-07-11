@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ClipboardCheck, RotateCcw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { ClipboardCheck, RotateCcw } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
@@ -80,55 +80,32 @@ export default function CarsPage() {
         </div>
 
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{score}</div>
-              <p className="text-xs text-muted-foreground">de 60 pontos</p>
-              <Badge className={`text-sm px-4 py-1.5 ${
-                score < 30 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
-                score <= 36 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
-                "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              }`}>
-                {result.classification}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4 space-y-2">
-              <div className="flex items-start gap-2">
-                {score < 30 ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">
-                  {result.description}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-violet-600 dark:text-violet-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-violet-800 dark:text-violet-300 space-y-1">
-                  <p><strong>Pontos de corte (CARS-2):</strong></p>
-                  <p>15-29: Sem autismo</p>
-                  <p>30-36: Autismo leve a moderado</p>
-                  <p>37-60: Autismo moderado a grave</p>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <div className="space-y-3">
+              {carsCategories.map((cat, i) => (
+                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-foreground leading-relaxed">{cat.name}</p>
+                    <p className="text-sm font-medium text-primary">
+                      → {answers[i] !== undefined ? cat.options[answers[i]] : "—"}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        
+
         <ClinicalReport
           scaleName="CARS-2"
           scaleFullName="Childhood Autism Rating Scale, Second Edition"
-          totalScore={score}
-          maxScore={60}
-          classification={result.classification}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
           description={result.description}
-          items={carsCategories.map((cat, i) => ({ question: cat.name, answer: String((answers[i] ?? 0) + 1), value: (answers[i] ?? 0) + 1 }))}
+          items={carsCategories.map((cat, i) => ({ question: cat.name, answer: answers[i] !== undefined ? cat.options[answers[i]] : "—", value: (answers[i] ?? 0) + 1 }))}
           patientAge="≥ 2 anos"
         />
         <SaveToPatient

@@ -7,8 +7,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-  RotateCcw, Sparkles, Brain, AlertTriangle,
-  Info, Printer, Star, Lightbulb, Target, Users, MessageCircle,
+  RotateCcw, Sparkles, Brain,
+  Info, Printer, Lightbulb, Target, Users, MessageCircle,
   Eye, ChevronDown, ChevronUp, ClipboardCheck
 } from "lucide-react";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -317,124 +317,42 @@ export default function AhsdTeaPage() {
           <Printer className="w-4 h-4" /> Imprimir Resultado
         </Button>
 
-        {/* ── Impressão Global (Block F) ── */}
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-chart-2/5">
-          <CardContent className="p-5 space-y-3">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Eye className="w-4 h-4 text-primary" /> Impressão Global da Professora
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="rounded-xl bg-background/80 border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground">Habilidades superiores à turma?</p>
-                <Badge className={`text-xs ${result.q49Label === "SIM" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : result.q49Label === "EM PARTE" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
-                  {result.q49Label}
-                </Badge>
+        {/* ── Perguntas e respostas ── */}
+        <Card className="border-card-border">
+          <CardContent className="p-5 space-y-4">
+            <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <ClipboardCheck className="w-4 h-4 text-primary" /> Perguntas e respostas
+            </h2>
+            {blocks.map((block) => (
+              <div key={block.id} className="space-y-2">
+                <h3 className="text-xs font-semibold text-primary">{block.title}</h3>
+                {block.items.map((item) => (
+                  <div key={item.num} className="text-sm border-b border-border/40 pb-2 last:border-0">
+                    <p className="text-foreground leading-relaxed">
+                      {item.tag && <span className="font-semibold">[{item.tag}] </span>}{item.text}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5">
+                      → {answers[item.num] === undefined ? "—" : likertLabels[answers[item.num]]}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <div className="rounded-xl bg-background/80 border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground">Necessidade de avaliação para TEA?</p>
-                <Badge className={`text-xs ${result.q50Label === "SIM" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" : result.q50Label === "EM PARTE" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
-                  {result.q50Label}
-                </Badge>
-              </div>
+            ))}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-primary flex items-center gap-2">
+                <Eye className="w-4 h-4" /> Bloco F — Impressão Global da Professora
+              </h3>
+              {blockF.map((item) => (
+                <div key={item.num} className="text-sm border-b border-border/40 pb-2 last:border-0">
+                  <p className="text-foreground leading-relaxed">{item.text}</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    → {blockFAnswers[item.num] === undefined ? "—" : blockFLabels[blockFAnswers[item.num]]}
+                  </p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-
-        {/* ── Perfil Combinado ── */}
-        <Card className={`border-2 ${result.combinedClass.includes("Dupla") ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20" : result.combinedClass.includes("AH/SD pura") ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20" : result.combinedClass.includes("TEA sem") ? "border-rose-400 bg-rose-50/50 dark:bg-rose-950/20" : "border-border"}`}>
-          <CardContent className="p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-primary" />
-              <h3 className="text-sm font-bold">Perfil Combinado</h3>
-            </div>
-            <Badge className={`text-sm px-4 py-1.5 ${result.combinedClass.includes("Dupla") ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" : result.combinedClass.includes("AH/SD pura") ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : result.combinedClass.includes("TEA sem") ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}>
-              {result.combinedClass}
-            </Badge>
-            <p className="text-sm text-foreground leading-relaxed">{result.combinedDesc}</p>
-          </CardContent>
-        </Card>
-
-        {/* ── Scores por Bloco ── */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          {/* AH/SD */}
-          <Card className="border-card-border">
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500" />
-                <h3 className="text-sm font-bold">Indicadores AH/SD</h3>
-              </div>
-              <div className="text-center space-y-1">
-                <p className="text-3xl font-bold text-primary">{result.ahsdPct}%</p>
-                <p className="text-xs text-muted-foreground">{result.ahsdTotal} / {result.ahsdMax} pontos</p>
-              </div>
-              <Badge className={`w-full justify-center text-xs py-1 ${result.ahsdPct >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : result.ahsdPct >= 50 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
-                {result.ahsdClass}
-              </Badge>
-              <p className="text-xs text-muted-foreground leading-relaxed">{result.ahsdDesc}</p>
-
-              {/* Sub-scores */}
-              <div className="space-y-2 pt-2 border-t">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">A — Intelectual</span>
-                  <span className="font-bold">{result.blocoA}/48</span>
-                </div>
-                <Progress value={(result.blocoA / 48) * 100} className="h-1.5" />
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">B — Criatividade</span>
-                  <span className="font-bold">{result.blocoB}/40</span>
-                </div>
-                <Progress value={(result.blocoB / 40) * 100} className="h-1.5" />
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">C — Motivação</span>
-                  <span className="font-bold">{result.blocoC}/36</span>
-                </div>
-                <Progress value={(result.blocoC / 36) * 100} className="h-1.5" />
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">D — Social AH/SD</span>
-                  <span className="font-bold">{result.ahsdSocialScore}/20</span>
-                </div>
-                <Progress value={(result.ahsdSocialScore / 20) * 100} className="h-1.5" />
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">E — Linguagem (+)</span>
-                  <span className="font-bold">{result.posLangScore}/12</span>
-                </div>
-                <Progress value={(result.posLangScore / 12) * 100} className="h-1.5" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* TEA */}
-          <Card className="border-card-border">
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-rose-500" />
-                <h3 className="text-sm font-bold">Indicadores TEA</h3>
-              </div>
-              <div className="text-center space-y-1">
-                <p className="text-3xl font-bold text-rose-600 dark:text-rose-400">{result.teaPct}%</p>
-                <p className="text-xs text-muted-foreground">{result.teaTotal} / {result.teaMax} pontos</p>
-              </div>
-              <Badge className={`w-full justify-center text-xs py-1 ${result.teaPct >= 60 ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" : result.teaPct >= 35 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
-                {result.teaClass}
-              </Badge>
-              <p className="text-xs text-muted-foreground leading-relaxed">{result.teaDesc}</p>
-
-              {/* Sub-scores */}
-              <div className="space-y-2 pt-2 border-t">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">D — Social TEA</span>
-                  <span className="font-bold">{result.teaScore}/28</span>
-                </div>
-                <Progress value={(result.teaScore / 28) * 100} className="h-1.5" />
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">E — Linguagem TEA</span>
-                  <span className="font-bold">{result.teaLangScore}/8</span>
-                </div>
-                <Progress value={(result.teaLangScore / 8) * 100} className="h-1.5" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Important note */}
         <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">
@@ -450,25 +368,23 @@ export default function AhsdTeaPage() {
 
         {/* Clinical Report */}
         <ClinicalReport
+          hideScore
           scaleName="Triagem AH/SD × TEA"
           scaleFullName="Questionário de Triagem — AH/SD com Diagnóstico Diferencial do TEA"
-          totalScore={totalScore}
-          maxScore={result.ahsdMax + result.teaMax}
-          classification={result.combinedClass}
-          description={result.combinedDesc}
-          domainResults={[
-            { domain: "A — Intelectual", score: result.blocoA, classification: result.blocoA >= 36 ? "Alto" : result.blocoA >= 24 ? "Moderado" : "Baixo" },
-            { domain: "B — Criatividade", score: result.blocoB, classification: result.blocoB >= 30 ? "Alto" : result.blocoB >= 20 ? "Moderado" : "Baixo" },
-            { domain: "C — Motivação", score: result.blocoC, classification: result.blocoC >= 27 ? "Alto" : result.blocoC >= 18 ? "Moderado" : "Baixo" },
-            { domain: "AH/SD Social", score: result.ahsdSocialScore, classification: result.ahsdSocialScore >= 15 ? "Alto" : result.ahsdSocialScore >= 10 ? "Moderado" : "Baixo" },
-            { domain: "TEA Social", score: result.teaScore, classification: result.teaScore >= 17 ? "Significativo" : result.teaScore >= 10 ? "Moderado" : "Baixo" },
-            { domain: "TEA Linguagem", score: result.teaLangScore, classification: result.teaLangScore >= 5 ? "Significativo" : result.teaLangScore >= 3 ? "Moderado" : "Baixo" },
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
+          items={[
+            ...allItems.map(item => ({
+              question: `[${item.tag ? item.tag + " " : ""}${item.num}] ${item.text}`,
+              answer: answers[item.num] === undefined ? "—" : likertLabels[answers[item.num]],
+              value: answers[item.num] ?? 0,
+            })),
+            ...blockF.map(item => ({
+              question: `[F ${item.num}] ${item.text}`,
+              answer: blockFAnswers[item.num] === undefined ? "—" : blockFLabels[blockFAnswers[item.num]],
+              value: blockFAnswers[item.num] ?? 0,
+            })),
           ]}
-          items={allItems.map(item => ({
-            question: `[${item.tag ? item.tag + " " : ""}${item.num}] ${item.text}`,
-            answer: likertLabels[answers[item.num] ?? 0],
-            value: answers[item.num] ?? 0,
-          }))}
           patientAge={childAge || "Educação Infantil"}
         />
 

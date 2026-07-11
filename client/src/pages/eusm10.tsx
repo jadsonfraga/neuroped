@@ -118,11 +118,11 @@ export default function Eusm10Page() {
   }
 
   const reportItems = EUSM10_ITEMS.map((question, index) => {
-    const value = answers[index] ?? 0;
+    const value = answers[index];
     return {
       question,
-      answer: `${value} — ${SCORE_LABELS[value]}`,
-      value,
+      answer: value === undefined ? "—" : SCORE_LABELS[value],
+      value: value ?? 0,
     };
   });
 
@@ -148,20 +148,27 @@ export default function Eusm10Page() {
           </div>
         </div>
 
-        <Card className="border-primary/25 bg-primary/5">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Total</p>
-                <p className="text-5xl font-bold text-foreground">
-                  {totalScore}<span className="text-2xl text-muted-foreground">/40</span>
-                </p>
-              </div>
-              <Badge className={`w-fit border px-4 py-1.5 text-sm ${badgeClass(result.tone)}`}>
-                {result.label}
-              </Badge>
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h2 className="text-sm font-bold uppercase text-muted-foreground">Perguntas e respostas</h2>
+            <div className="space-y-2.5">
+              {EUSM10_ITEMS.map((item, index) => {
+                const value = answers[index];
+                return (
+                  <div key={item} className="rounded-xl border border-border/70 bg-background p-3">
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {index + 1}
+                      </span>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">{item}</p>
+                        <p className="text-sm text-primary">→ {value === undefined ? "—" : SCORE_LABELS[value]}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-sm leading-relaxed text-foreground">{result.description}</p>
           </CardContent>
         </Card>
 
@@ -179,16 +186,9 @@ export default function Eusm10Page() {
         <ClinicalReport
           scaleName="EUSM-10"
           scaleFullName="Escala Universal de Satisfação com Medicação"
-          totalScore={totalScore}
-          maxScore={40}
-          classification={result.label}
-          description={`${result.description}${observacoes ? ` Observações clínicas: ${observacoes}` : ""}`}
-          domainResults={[
-            { domain: "Benefício percebido", score: (answers[0] ?? 0) + (answers[1] ?? 0) + (answers[2] ?? 0), classification: "Itens 1–3" },
-            { domain: "Tolerabilidade", score: (answers[3] ?? 0) + (answers[4] ?? 0), classification: "Itens 4–5" },
-            { domain: "Adesão e viabilidade", score: (answers[5] ?? 0) + (answers[6] ?? 0) + (answers[7] ?? 0), classification: "Itens 6–8" },
-            { domain: "Segurança e continuidade", score: (answers[8] ?? 0) + (answers[9] ?? 0), classification: "Itens 9–10" },
-          ]}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description={observacoes ? `Observações clínicas: ${observacoes}` : ""}
           items={reportItems}
           patientAge={tempoUso ? `Tempo de uso: ${tempoUso}` : "Uso medicamentoso"}
         />

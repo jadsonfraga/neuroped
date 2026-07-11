@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ShieldAlert, RotateCcw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { ShieldAlert, RotateCcw } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
@@ -97,75 +97,32 @@ export default function ScaredPage() {
         </div>
 
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{totalScore}</div>
-              <p className="text-xs text-muted-foreground">Total (0-82)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${
-                totalScore < 25
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : totalScore < 30
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              }`}>
-                {result.classification}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {totalScore < 25 ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">
-                  {result.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Subscale breakdown */}
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Subescalas</h3>
-              {result.subscaleResults.map((sub) => (
-                <div key={sub.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${sub.color}`}>{sub.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Pontuação: {sub.score} (corte: {sub.cutoff})
+              {scaredQuestions.map((q, i) => (
+                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm font-medium text-primary">
+                      → {answers[i] !== undefined ? scaredLabels[answers[i]] : "—"}
                     </p>
                   </div>
-                  <Badge variant="outline" className={`text-xs ${sub.positive ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                    {sub.positive ? "Positivo" : "Negativo"}
-                  </Badge>
                 </div>
               ))}
-            </div>
-
-            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-indigo-800 dark:text-indigo-300 space-y-1">
-                  <p><strong>Pontos de corte do SCARED:</strong></p>
-                  <p>Total &lt; 25: sem indicativo / 25-29: possível / ≥ 30: provável transtorno de ansiedade</p>
-                  <p>Subescalas acima do ponto de corte indicam tipo específico de ansiedade</p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        
+
         <ClinicalReport
           scaleName="SCARED"
           scaleFullName="Screen for Child Anxiety Related Disorders"
-          totalScore={totalScore}
-          maxScore={82}
-          classification={result.classification}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
           description={result.description}
-          domainResults={Object.entries(subscaleScores).map(([name, score]) => ({ domain: name, score, classification: score >= (name === "Pânico" ? 7 : name === "Ansiedade Generalizada" ? 9 : name === "Ansiedade Separação" ? 5 : name === "Fobia Social" ? 8 : 3) ? "Elevado" : "Normal" }))}
-          items={scaredQuestions.map((q, i) => ({ question: q, answer: scaredLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
+          items={scaredQuestions.map((q, i) => ({ question: q, answer: answers[i] !== undefined ? scaredLabels[answers[i]] : "—", value: answers[i] ?? 0 }))}
           patientAge="8-18 anos"
         />
         <SaveToPatient

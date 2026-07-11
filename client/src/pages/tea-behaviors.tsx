@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
-  Fingerprint, ArrowLeft, RotateCcw, Info, CheckCircle2, AlertTriangle,
+  Fingerprint, ArrowLeft, RotateCcw, Info,
   BookOpen, Brain, ChevronDown, ChevronUp
 } from "lucide-react";
 import {
@@ -143,6 +143,7 @@ function AgeGroupEvaluation({ group, onBack }: { group: TeaAgeGroup; onBack: () 
 
   if (showResult) {
     const result = classifyTeaBehaviors(answers, group.items);
+    const answerLabel = (id: number) => (answers[id] === undefined ? "—" : behaviorRatingLabels[answers[id]]);
 
     return (
       <div className="space-y-6">
@@ -157,73 +158,13 @@ function AgeGroupEvaluation({ group, onBack }: { group: TeaAgeGroup; onBack: () 
         </div>
 
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{result.present}/{result.total}</div>
-              <p className="text-xs text-muted-foreground">Comportamentos presentes (pontuação &gt;0)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${
-                result.color === "emerald" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
-                result.color === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
-                result.color === "orange" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300" :
-                "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              }`}>
-                Carga: {result.pct}%
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.color === "emerald" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">{result.classification}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-muted/30 p-3 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.present}</div>
-                <p className="text-xs text-muted-foreground">Presentes</p>
-              </div>
-              <div className="rounded-xl bg-muted/30 p-3 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.highIntensity}</div>
-                <p className="text-xs text-muted-foreground">Freq/Intenso (≥2)</p>
-              </div>
-              <div className="rounded-xl bg-muted/30 p-3 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.sum}</div>
-                <p className="text-xs text-muted-foreground">Score Total</p>
-              </div>
-              <div className="rounded-xl bg-muted/30 p-3 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.pct}%</div>
-                <p className="text-xs text-muted-foreground">Carga relativa</p>
-              </div>
-            </div>
-
-            {/* Itens marcados como intensos */}
-            {result.highIntensity > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">Itens Frequentes/Intensos</h3>
-                {group.items.filter((item) => (answers[item.id] || 0) >= 2).map((item) => (
-                  <div key={item.id} className="flex items-start gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
-                    <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5 text-red-600 border-red-300">{item.id}</Badge>
-                    <p className="text-xs text-red-800 dark:text-red-300">{item.text}</p>
-                    <Badge className="ml-auto text-xs bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 flex-shrink-0">
-                      {behaviorRatingLabels[answers[item.id]]}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Notas clínicas */}
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-bold text-foreground">Perguntas e respostas</h2>
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-foreground">Leitura Clínica — {group.title}</h3>
-              {group.clinicalNotes.map((note, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-muted/30">
-                  <span className="text-xs text-primary font-bold mt-0.5">•</span>
-                  <p className="text-xs text-foreground leading-relaxed">{note}</p>
+              {group.items.map((item) => (
+                <div key={item.id} className="text-sm border-b border-border/40 pb-2 last:border-0">
+                  <p className="text-foreground leading-relaxed">{item.text}</p>
+                  <p className="text-muted-foreground mt-0.5">→ {answerLabel(item.id)}</p>
                 </div>
               ))}
             </div>
@@ -247,15 +188,14 @@ function AgeGroupEvaluation({ group, onBack }: { group: TeaAgeGroup; onBack: () 
           answers={answers}
         />
         <ClinicalReport
+          hideScore
           scaleName={`Comport. Atípicos TEA — ${group.title}`}
-          totalScore={result.present}
-          maxScore={result.total}
-          classification={result.classification}
-          description={result.classification}
-          items={group.items.map((item, index) => ({
-            question: item.text ?? item,
-            answer: (answers[item.id ?? index] ?? 0) > 0 ? "Presente" : "Ausente",
-            value: (answers[item.id ?? index] ?? 0) > 0 ? 1 : 0,
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
+          items={group.items.map((item) => ({
+            question: item.text,
+            answer: answerLabel(item.id),
+            value: answers[item.id] ?? 0,
           }))}
         />
         <div className="flex gap-2">

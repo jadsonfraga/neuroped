@@ -3,10 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { RotateCcw, AlertTriangle, CheckCircle2, Info, ShieldAlert } from "lucide-react";
+import { RotateCcw, Info, ShieldAlert } from "lucide-react";
 import {
   cssrsQuestions,
-  classifyCssrs,
   getCssrsSkipLogicSummary,
   getVisibleCssrsQuestionIds,
   pruneCssrsAnswers,
@@ -59,9 +58,7 @@ export default function CssrsPage() {
   }
 
   if (showResult) {
-    const result = classifyCssrs(answers);
     const skipSummary = getCssrsSkipLogicSummary(answers);
-    const reportDescription = `${result.description} ${skipSummary}`;
     const resultVisibleIds = getVisibleCssrsQuestionIds(answers);
 
     return (
@@ -76,64 +73,49 @@ export default function CssrsPage() {
           </div>
         </div>
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">Nível {result.level}</div>
-              <p className="text-xs text-muted-foreground">Nível mais alto identificado (0-6)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${result.color === "emerald" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : result.color === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : result.color === "orange" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300" : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"}`}>
-                {result.classification}
-              </Badge>
-            </div>
-            <div className="rounded-xl bg-muted/50 p-4 space-y-2">
-              <div className="flex items-start gap-2">
-                {result.color === "emerald" ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />}
-                <p className="text-sm text-foreground leading-relaxed">{result.description}</p>
-              </div>
-              <p className="text-xs text-muted-foreground">{skipSummary}</p>
-            </div>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Respostas por nível</h3>
               {cssrsQuestions.map((q) => {
                 const wasAsked = resultVisibleIds.includes(q.id);
-                const answeredYes = answers[q.id] === true;
                 return (
-                  <div key={q.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/30">
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-foreground">{q.level}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {wasAsked ? q.text : `Pergunta Q${q.id} omitida pela lógica de interrupção.`}
-                      </p>
+                  <div key={q.id} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
+                      <div>
+                        <p className="text-xs font-medium text-red-600 dark:text-red-400">{q.level}</p>
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {wasAsked ? q.text : `Pergunta Q${q.id} não aplicada pela lógica de interrupção.`}
+                        </p>
+                      </div>
                     </div>
-                    <Badge variant="outline" className={`text-xs ${!wasAsked ? "text-muted-foreground border-border" : answeredYes ? "text-red-600 border-red-300" : "text-emerald-600 border-emerald-300"}`}>
-                      {!wasAsked ? "Omitida" : answeredYes ? "Sim" : "Não"}
-                    </Badge>
+                    <p className="text-sm font-medium text-primary pl-8">→ {wasAsked ? (answers[q.id] !== undefined ? (answers[q.id] ? "Sim" : "Não") : "—") : "—"}</p>
                   </div>
                 );
               })}
             </div>
-            <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-red-800 dark:text-red-300 space-y-1">
-                  <p><strong>Importante:</strong> A C-SSRS é uma triagem. Qualquer resposta positiva (especialmente questões 3-6) requer avaliação profissional imediata.</p>
-                  <p>Se houver risco iminente, encaminhar para emergência psiquiátrica.</p>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
+        <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-red-800 dark:text-red-300 space-y-1">
+              <p><strong>Importante:</strong> A C-SSRS é uma triagem. Qualquer resposta positiva (especialmente questões 3-6) requer avaliação profissional imediata.</p>
+              <p>Se houver risco iminente, encaminhar para emergência psiquiátrica (SAMU 192 / CVV 188).</p>
+            </div>
+          </div>
+        </div>
 
         <ClinicalReport
           scaleName="C-SSRS"
           scaleFullName="Columbia Suicide Severity Rating Scale"
-          totalScore={result.level}
-          maxScore={6}
-          classification={result.classification}
-          description={reportDescription}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
           items={[
             ...visibleQuestions.map((q) => ({
               question: q.text,
-              answer: answers[q.id] ? "Sim" : "Não",
+              answer: answers[q.id] !== undefined ? (answers[q.id] ? "Sim" : "Não") : "—",
               value: answers[q.id] ? 1 : 0,
             })),
             { question: "Lógica C-SSRS aplicada", answer: skipSummary, value: 0 },
@@ -142,8 +124,8 @@ export default function CssrsPage() {
         />
         <SaveToPatient
           scaleName="C-SSRS"
-          totalScore={result.level}
-          classification={result.classification}
+          totalScore={0}
+          classification="Registro de respostas"
           answers={{ ...answers, skipLogic: skipSummary }}
         />
         <Button onClick={handleReset} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>

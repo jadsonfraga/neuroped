@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RotateCcw, AlertTriangle, CheckCircle2, Info, Wine } from "lucide-react";
-import { crafftPartA, crafftPartB, classifyCrafft } from "@/data/expandedScales";
+import { RotateCcw, Wine } from "lucide-react";
+import { crafftPartA, crafftPartB } from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -19,8 +19,6 @@ export default function CrafftPage() {
   const allDone = partAComplete && partBComplete;
 
   if (showResult) {
-    const score = Object.values(partBAnswers).filter(Boolean).length;
-    const result = classifyCrafft(score);
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -33,71 +31,48 @@ export default function CrafftPage() {
           </div>
         </div>
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{score}</div>
-              <p className="text-xs text-muted-foreground">Pontuação Parte B (0-6)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${result.color === "emerald" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : result.color === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"}`}>
-                {result.classification}
-              </Badge>
-            </div>
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.color === "emerald" ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />}
-                <p className="text-sm text-foreground leading-relaxed">{result.description}</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Parte A — Uso nos últimos 12 meses</h3>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground">Parte A — Uso nos últimos 12 meses</h3>
               {crafftPartA.map((q, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                  <p className="text-xs text-foreground flex-1 mr-2">{q}</p>
-                  <Badge variant="outline" className={`text-xs ${partAAnswers[i] ? "text-red-600 border-red-300" : "text-emerald-600 border-emerald-300"}`}>
-                    {partAAnswers[i] ? "Sim" : "Não"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Parte B — CRAFFT</h3>
-              {crafftPartB.map((q, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                  <div className="flex-1 mr-2">
-                    <Badge className="mr-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{q.letter}</Badge>
-                    <span className="text-xs text-foreground">{q.keyword}</span>
+                <div key={i} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">A{i + 1}</Badge>
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
                   </div>
-                  <Badge variant="outline" className={`text-xs ${partBAnswers[i] ? "text-red-600 border-red-300" : "text-emerald-600 border-emerald-300"}`}>
-                    {partBAnswers[i] ? "Sim" : "Não"}
-                  </Badge>
+                  <p className="text-sm font-medium text-primary pl-8">→ {partAAnswers[i] !== undefined ? (partAAnswers[i] ? "Sim" : "Não") : "—"}</p>
                 </div>
               ))}
             </div>
-            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-amber-800 dark:text-amber-300 space-y-1">
-                  <p><strong>CRAFFT:</strong> Ponto de corte ≥2 indica necessidade de avaliação aprofundada.</p>
-                  <p>Aplicável a adolescentes de 12-21 anos. Validado para álcool, maconha e outras substâncias.</p>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground">Parte B — CRAFFT</h3>
+              {crafftPartB.map((q, i) => (
+                <div key={i} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <Badge className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 flex-shrink-0 mt-0.5">{q.letter}</Badge>
+                    <p className="text-sm text-foreground leading-relaxed">{q.question}</p>
+                  </div>
+                  <p className="text-sm font-medium text-primary pl-8">→ {partBAnswers[i] !== undefined ? (partBAnswers[i] ? "Sim" : "Não") : "—"}</p>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-        
+
         <ClinicalReport
           scaleName="CRAFFT"
           scaleFullName="Car, Relax, Alone, Forget, Friends, Trouble"
-          totalScore={score}
-          maxScore={6}
-          classification={result.classification}
-          description={result.description}
-          items={[...crafftPartA.map((q, i) => ({ question: `[Parte A] ${q}`, answer: partAAnswers[i] ? "Sim" : "Não", value: partAAnswers[i] ? 1 : 0 })), ...crafftPartB.map((q, i) => ({ question: `[Parte B] ${q}`, answer: partBAnswers[i] ? "Sim" : "Não", value: partBAnswers[i] ? 1 : 0 }))]}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
+          items={[...crafftPartA.map((q, i) => ({ question: `[Parte A] ${q}`, answer: partAAnswers[i] !== undefined ? (partAAnswers[i] ? "Sim" : "Não") : "—", value: partAAnswers[i] ? 1 : 0 })), ...crafftPartB.map((q, i) => ({ question: `[Parte B] ${q.question}`, answer: partBAnswers[i] !== undefined ? (partBAnswers[i] ? "Sim" : "Não") : "—", value: partBAnswers[i] ? 1 : 0 }))]}
           patientAge="12-21 anos"
         />
         <SaveToPatient
           scaleName="CRAFFT"
-          totalScore={score}
-          classification={result.classification}
+          totalScore={Object.values(partBAnswers).filter(Boolean).length}
+          classification="Registro de respostas"
           answers={partBAnswers}
         />
         <Button onClick={() => { setPartAAnswers({}); setPartBAnswers({}); setShowResult(false); }} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>

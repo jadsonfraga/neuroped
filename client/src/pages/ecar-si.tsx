@@ -6,10 +6,10 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
-  RotateCcw, AlertTriangle, ShieldAlert, Info, Phone, CheckCircle2,
+  RotateCcw, AlertTriangle, ShieldAlert, Info, Phone,
 } from "lucide-react";
 import {
-  ecarsiDomains, ecarsiLabels, ecarsiProtectiveLabels, classifyEcarsi,
+  ecarsiDomains, ecarsiLabels, ecarsiProtectiveLabels,
 } from "@/data/bateriaJadsonPsiq";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -50,20 +50,13 @@ export default function EcarSiPage() {
       });
     });
     const finalScore = riskScore - protectionScore;
-    const result = classifyEcarsi(riskScore, protectionScore);
 
-    // Domain results for blocks A-H
-    const riskDomainResults = ecarsiDomains.slice(0, 8).map((domain, di) => {
-      const score = domain.items.reduce((sum, _, ii) => sum + (answers[`${di}-${ii}`] || 0), 0);
-      const maxD = domain.items.length * 3;
-      const ratio = score / maxD;
-      return {
-        domain: domain.name,
-        score,
-        classification: ratio <= 0.25 ? "Baixo" : ratio <= 0.5 ? "Leve" : ratio <= 0.75 ? "Moderado" : "Alto",
-        color: ratio <= 0.25 ? "emerald" : ratio <= 0.5 ? "amber" : ratio <= 0.75 ? "orange" : "red",
-      };
-    });
+    const labelFor = (di: number, key: string) => {
+      const val = answers[key];
+      if (val === undefined) return "—";
+      const labels = di === PROTECTIVE_DOMAIN_IDX ? ecarsiProtectiveLabels : ecarsiLabels;
+      return labels[val] ?? "—";
+    };
 
     return (
       <div className="space-y-6">
@@ -73,111 +66,45 @@ export default function EcarSiPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold">Resultado — ECAR-SI NEXUS</h1>
-            <p className="text-xs text-muted-foreground">Avaliação de risco concluída</p>
+            <p className="text-xs text-muted-foreground">Registro de respostas</p>
           </div>
         </div>
 
-        {/* Score summary */}
-        <Card className="border-card-border overflow-hidden">
-          <div className={`p-6 text-center space-y-3 ${
-            result.color === "emerald" ? "bg-gradient-to-br from-emerald-500 to-green-600" :
-            result.color === "amber" ? "bg-gradient-to-br from-amber-500 to-yellow-600" :
-            result.color === "orange" ? "bg-gradient-to-br from-orange-500 to-red-500" :
-            "bg-gradient-to-br from-red-500 to-rose-600"
-          }`}>
-            <div className="text-5xl font-bold text-white">{finalScore}</div>
-            <p className="text-sm text-white/80">Escore Final (Risco {riskScore} − Proteção {protectionScore})</p>
-            <Badge className="text-sm px-4 py-1.5 bg-white/20 text-white border-white/30 backdrop-blur-sm">
-              {result.classification}
-            </Badge>
-          </div>
-          <CardContent className="p-6 space-y-5">
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.color === "emerald" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">{result.description}</p>
+        {/* Perguntas e respostas */}
+        <Card className="border-card-border">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            {ecarsiDomains.map((domain, di) => (
+              <div key={di} className="space-y-2">
+                <h3 className={`text-sm font-semibold ${domain.color}`}>{domain.name}</h3>
+                {domain.items.map((item, ii) => {
+                  const key = `${di}-${ii}`;
+                  const number = ecarsiDomains.slice(0, di).reduce((s, d) => s + d.items.length, 0) + ii + 1;
+                  return (
+                    <div key={key} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{number}</Badge>
+                        <p className="text-sm text-foreground leading-relaxed">{item}</p>
+                      </div>
+                      <p className="text-sm font-medium text-primary pl-8">→ {labelFor(di, key)}</p>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-
-            {/* Domain breakdown */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Blocos de Risco (A–H)</h3>
-              {riskDomainResults.map((dr) => (
-                <div key={dr.domain} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{dr.domain}</p>
-                    <p className="text-xs text-muted-foreground">Pontuação: {dr.score}</p>
-                  </div>
-                  <Badge variant="outline" className={`text-xs ${
-                    dr.color === "emerald" ? "text-emerald-600 border-emerald-300" :
-                    dr.color === "amber" ? "text-amber-600 border-amber-300" :
-                    dr.color === "orange" ? "text-orange-600 border-orange-300" :
-                    "text-red-600 border-red-300"
-                  }`}>
-                    {dr.classification}
-                  </Badge>
-                </div>
-              ))}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">I. Fatores protetores</p>
-                  <p className="text-xs text-muted-foreground">Pontuação: {protectionScore} / 12</p>
-                </div>
-                <Badge variant="outline" className={`text-xs ${
-                  protectionScore >= 9 ? "text-emerald-600 border-emerald-300" :
-                  protectionScore >= 5 ? "text-amber-600 border-amber-300" :
-                  "text-red-600 border-red-300"
-                }`}>
-                  {protectionScore >= 9 ? "Bom" : protectionScore >= 5 ? "Parcial" : "Frágil"}
-                </Badge>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
 
-        {/* Alarm rules */}
+        {/* Safety warning */}
         <Card className="border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
-          <CardContent className="p-5 space-y-3">
+          <CardContent className="p-5 space-y-2">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <h2 className="text-sm font-bold text-red-700 dark:text-red-300">REGRAS DE ALARME CLÍNICO</h2>
+              <h2 className="text-sm font-bold text-red-700 dark:text-red-300">ATENÇÃO CLÍNICA</h2>
             </div>
-            <ul className="text-xs text-red-800 dark:text-red-300 leading-relaxed space-y-2 list-disc pl-4">
-              <li><strong>Qualquer item ≥ 2 nos Blocos D, E ou F</strong> — ativar protocolo de segurança imediato, independentemente do escore final.</li>
-              <li><strong>Bloco G com item ≥ 2</strong> — histórico de autoagressão grave ou tentativa prévia exige reavaliação de risco e plano de segurança atualizado.</li>
-              <li><strong>Bloco I com escore total ≤ 4</strong> — fatores protetores frágeis ou ausentes amplificam qualquer nível de risco. Considerar supervisão intensificada.</li>
-              <li><strong>Escore final ≥ 37</strong> — risco alto. Avaliação presencial imediata, considerar encaminhamento emergencial.</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Conduct guidelines */}
-        <Card className="border-card-border">
-          <CardContent className="p-5 space-y-4">
-            <h2 className="text-sm font-bold text-foreground">CONDUTA VINCULADA AO RESULTADO</h2>
-
-            <div className="space-y-3">
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 p-3">
-                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Risco Baixo (0–12)</p>
-                <p className="text-xs text-muted-foreground mt-1">Acompanhamento clínico de rotina. Orientação familiar sobre sinais de alerta. Reavaliação em consultas programadas.</p>
-              </div>
-              <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-3">
-                <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">Risco Leve a Moderado (13–24)</p>
-                <p className="text-xs text-muted-foreground mt-1">Consultas mais frequentes. Psicoeducação familiar. Plano de segurança básico. Verificar acesso a meios. Contrato terapêutico.</p>
-              </div>
-              <div className="rounded-lg bg-orange-50 dark:bg-orange-950/20 p-3">
-                <p className="text-xs font-semibold text-orange-700 dark:text-orange-300">Risco Moderado a Importante (25–36)</p>
-                <p className="text-xs text-muted-foreground mt-1">Plano de segurança ativo e documentado. Supervisão intensificada. Avaliação psiquiátrica urgente. Comunicação com família e escola. Restringir acesso a meios.</p>
-              </div>
-              <div className="rounded-lg bg-red-50 dark:bg-red-950/20 p-3">
-                <p className="text-xs font-semibold text-red-700 dark:text-red-300">Risco Alto (37–48) e Muito Alto (49+)</p>
-                <p className="text-xs text-muted-foreground mt-1">Avaliação psiquiátrica imediata. Supervisão contínua 24h. Considerar internação ou observação em ambiente protegido. Acionar rede de suporte de emergência.</p>
-              </div>
-            </div>
+            <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
+              Instrumento de triagem de risco de autoagressão e suicidalidade. Diante de qualquer indicador de risco, aciones avaliação de segurança imediata. A análise clínica das respostas é responsabilidade do profissional.
+            </p>
           </CardContent>
         </Card>
 
@@ -201,21 +128,19 @@ export default function EcarSiPage() {
           </CardContent>
         </Card>
 
-        
         <ClinicalReport
           scaleName="ECAR-SI NEXUS"
           scaleFullName="Escala de Avaliação de Risco de Autoagressão e Suicidalidade Infantil"
-          totalScore={finalScore}
-          classification={result.classification}
-          description={result.description}
-          domainResults={riskDomainResults.map(dr => ({ domain: dr.domain, score: dr.score, classification: dr.classification }))}
-          items={allItems.map(item => ({ question: item.text, answer: String(answers[item.key] ?? 0), value: answers[item.key] ?? 0 }))}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição das perguntas e respostas selecionadas."
+          items={allItems.map(item => ({ question: item.text, answer: labelFor(item.domainIdx, item.key), value: answers[item.key] ?? 0 }))}
           patientAge="6-17 anos"
         />
         <SaveToPatient
           scaleName="ECAR-SI NEXUS"
           totalScore={finalScore}
-          classification={result.classification}
+          classification="Registro de respostas"
           answers={answers}
           domainScores={{ riskScore, protectionScore }}
         />

@@ -487,12 +487,12 @@ export default function InventariosAutoPage() {
     INVENTORIES.forEach(inv => {
       const ans = allAnswers[inv.id];
       inv.items.forEach((q, i) => {
-        const val = ans[i] ?? 0;
-        const opt = SCALE_OPTIONS.find(o => o.value === val);
+        const val = ans[i];
+        const opt = val === undefined ? undefined : SCALE_OPTIONS.find(o => o.value === val);
         items.push({
           question: `[${inv.title}] ${q}`,
-          answer: opt?.label ?? "Não respondido",
-          value: val,
+          answer: opt?.label ?? "—",
+          value: val ?? 0,
         });
       });
     });
@@ -715,50 +715,28 @@ export default function InventariosAutoPage() {
           classification: inv.classify(getScore(inv.id)),
         }));
 
-        // Overall summary level
+        // Mantido apenas para SaveToPatient (não é exibido na tela).
         const highCount = results.filter(r => r.classification.level === "alto").length;
         const modCount = results.filter(r => r.classification.level === "moderado").length;
-        const overallLevel = highCount > 0 ? "alto" : modCount >= 2 ? "moderado" : modCount === 1 ? "leve" : "normal";
-        const overallColors = LEVEL_COLORS[overallLevel];
-        const OverallIcon = LEVEL_ICON[overallLevel];
 
         const reportItems = buildReportItems();
 
         return (
           <div className="space-y-6 mt-2">
-            {/* Summary banner */}
-            <Card className={`border-2 ${overallColors.border} ${overallColors.bg}`}>
+            {/* Cabeçalho */}
+            <Card className="border-border">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
-                    <BarChart3 className="w-6 h-6 text-white" />
+                    <ClipboardList className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-foreground">
-                      {childName ? `Perfil de ${childName}` : "Meu Perfil Completo"}
+                      {childName ? `Respostas de ${childName}` : "Minhas Respostas"}
                     </h2>
                     {childAge && <p className="text-xs text-muted-foreground">{childAge} anos</p>}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="text-center">
-                    <p className={`text-3xl font-bold ${overallColors.text}`}>{totalScore}</p>
-                    <p className="text-xs text-muted-foreground">de {totalMaxScore} total</p>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <Progress value={(totalScore / totalMaxScore) * 100} className="h-2.5" />
-                    <div className="flex items-center gap-1.5">
-                      <OverallIcon className={`w-4 h-4 ${overallColors.text}`} />
-                      <span className={`text-sm font-semibold ${overallColors.text}`}>
-                        {highCount > 0 ? `${highCount} área(s) com alto risco` :
-                          modCount > 0 ? `${modCount} área(s) com sinais moderados` :
-                          "Perfil sem grandes preocupações"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
                 <p className="text-xs text-muted-foreground">
                   Este inventário é uma ferramenta de rastreio e não substitui avaliação médica profissional.
                   Converse com um especialista sobre os resultados.
@@ -766,93 +744,58 @@ export default function InventariosAutoPage() {
               </CardContent>
             </Card>
 
-            {/* Grid of 8 compact cards */}
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                Perfil por Área
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {results.map(({ inv, score, classification }) => (
-                  <InventoryResult
-                    key={inv.id}
-                    inv={inv}
-                    score={score}
-                    classification={classification}
-                    compact
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Detailed result per inventory */}
+            {/* Perguntas e respostas por inventário */}
             <div>
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-primary" />
-                Resultado Detalhado por Inventário
+                Perguntas e respostas
               </h3>
               <div className="space-y-4">
-                {results.map(({ inv, score, classification }) => (
-                  <InventoryResult
-                    key={inv.id}
-                    inv={inv}
-                    score={score}
-                    classification={classification}
-                  />
-                ))}
+                {INVENTORIES.map(inv => {
+                  const ans = allAnswers[inv.id];
+                  const Icon = inv.icon;
+                  const accent = INVENTORY_ACCENT[inv.id];
+                  return (
+                    <Card key={inv.id} className="border-border">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${accent.iconBg} flex items-center justify-center flex-shrink-0`}>
+                            <Icon className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">{inv.title}</p>
+                            <p className="text-xs text-muted-foreground">{inv.subtitle}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {inv.items.map((q, i) => {
+                            const val = ans[i];
+                            const opt = val === undefined ? undefined : SCALE_OPTIONS.find(o => o.value === val);
+                            return (
+                              <div key={i} className="rounded-lg border border-border/70 bg-background p-2.5">
+                                <p className="text-sm text-foreground leading-snug">
+                                  <span className="text-muted-foreground mr-1.5 text-xs font-normal">{i + 1}.</span>
+                                  {q}
+                                </p>
+                                <p className="text-sm text-primary mt-1">→ {opt?.label ?? "—"}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
-
-            {/* Areas needing attention */}
-            {results.filter(r => r.classification.level === "alto" || r.classification.level === "moderado").length > 0 && (
-              <Card className="border-amber-300/50 bg-amber-50/60 dark:bg-amber-950/10">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    <p className="text-sm font-bold text-foreground">Áreas que precisam de atenção</p>
-                  </div>
-                  <div className="space-y-2">
-                    {results
-                      .filter(r => r.classification.level === "alto" || r.classification.level === "moderado")
-                      .map(({ inv, classification }) => {
-                        const colors = LEVEL_COLORS[classification.level];
-                        const Icon = inv.icon;
-                        return (
-                          <div key={inv.id} className={`flex items-start gap-2 p-3 rounded-lg border ${colors.border} ${colors.bg}`}>
-                            <Icon className={`w-4 h-4 mt-0.5 ${colors.text} flex-shrink-0`} />
-                            <div>
-                              <p className={`text-sm font-semibold ${colors.text}`}>{inv.title}</p>
-                              <p className="text-xs text-muted-foreground">{classification.description}</p>
-                            </div>
-                            <Badge className={`ml-auto text-xs shrink-0 ${colors.badge}`}>{classification.label}</Badge>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Clinical Report */}
             <ClinicalReport
               scaleName="Inventários Autoaplicáveis — 8 Áreas Clínicas"
               scaleFullName={childName ? `Respondido por: ${childName}${childAge ? `, ${childAge} anos` : ""}` : undefined}
-              totalScore={totalScore}
-              maxScore={totalMaxScore}
-              classification={
-                highCount > 0 ? "Risco Alto em uma ou mais áreas" :
-                modCount >= 2 ? "Sinais Moderados em múltiplas áreas" :
-                modCount === 1 ? "Sinal Moderado em uma área" :
-                "Dentro dos parâmetros esperados"
-              }
-              description={
-                highCount > 0
-                  ? `A avaliação identificou sinais de alto risco em ${highCount} área(s): ${results.filter(r => r.classification.level === "alto").map(r => r.inv.title).join(", ")}. Recomenda-se avaliação especializada o mais breve possível.`
-                  : modCount > 0
-                  ? `A avaliação identificou sinais moderados em ${modCount} área(s). Recomenda-se acompanhamento profissional para avaliação mais detalhada.`
-                  : "A avaliação não identificou sinais preocupantes significativos nas áreas avaliadas. Recomenda-se manutenção de acompanhamento de rotina."
-              }
-              domainResults={buildDomainResults()}
+              hideScore
+              classification="Registro de respostas — análise clínica pelo profissional"
+              description=""
               items={reportItems}
               patientAge={childAge ? `${childAge} anos` : "8–17 anos"}
             />

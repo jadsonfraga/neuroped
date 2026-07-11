@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ClipboardList, RotateCcw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { ClipboardList, RotateCcw } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
@@ -69,8 +69,6 @@ export default function ConnersPage() {
 
   if (showResult) {
     const { totalScore, subscaleScores } = calculateScores();
-    const maxTotal = 28 * 3;
-    const percentage = Math.round((totalScore / maxTotal) * 100);
     const result = classifyConners(totalScore, subscaleScores);
 
     return (
@@ -86,82 +84,32 @@ export default function ConnersPage() {
         </div>
 
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{totalScore}</div>
-              <p className="text-xs text-muted-foreground">de {maxTotal} pontos ({percentage}%)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${
-                result.classification === "Dentro da Normalidade"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : result.classification === "Faixa de Atenção"
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              }`}>
-                {result.classification}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {result.classification === "Dentro da Normalidade" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">
-                  {result.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Subscale breakdown */}
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Subescalas</h3>
-              {Object.entries(connersSubscales).map(([key, sub]) => {
-                const subScore = subscaleScores[key];
-                const maxSub = sub.items.length * 3;
-                const subPct = Math.round((subScore / maxSub) * 100);
-                return (
-                  <div key={key} className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <p className={`text-sm font-medium ${sub.color}`}>{sub.name}</p>
-                      <span className="text-xs text-muted-foreground">{subScore}/{maxSub}</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all ${
-                          subPct < 50 ? "bg-emerald-500" : subPct < 70 ? "bg-amber-500" : "bg-red-500"
-                        }`}
-                        style={{ width: `${subPct}%` }}
-                      />
-                    </div>
+              {connersQuestions.map((q, i) => (
+                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
+                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm font-medium text-primary">
+                      → {answers[i] !== undefined ? connersLabels[answers[i]] : "—"}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-
-            <div className="rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-rose-800 dark:text-rose-300 space-y-1">
-                  <p><strong>Interpretação da Conners Abreviada:</strong></p>
-                  <p>&lt; 50%: Normalidade / 50-70%: Faixa de atenção / &gt; 70%: Clinicamente significativo</p>
-                  <p>Avalie subescalas individualmente para perfil detalhado</p>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        
+
         <ClinicalReport
           scaleName="Conners Abreviada"
           scaleFullName="Conners Rating Scales — Abbreviated"
-          totalScore={totalScore}
-          maxScore={30}
-          classification={result.classification}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
           description={result.description}
-          items={connersQuestions.map((q, i) => ({ question: q, answer: connersLabels[answers[i] ?? 0], value: answers[i] ?? 0 }))}
+          items={connersQuestions.map((q, i) => ({ question: q, answer: answers[i] !== undefined ? connersLabels[answers[i]] : "—", value: answers[i] ?? 0 }))}
           patientAge="6-18 anos"
         />
         <SaveToPatient
