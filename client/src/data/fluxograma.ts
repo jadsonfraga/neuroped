@@ -73,7 +73,7 @@ export const fluxoBands: FluxoBand[] = [
       { emoji: "⚡", queixa: "TDAH", queixaId: "tdah", ouro: { label: "Vanderbilt (pais)", id: "vanderbilt", sub: "pais" }, prata: [{ label: "Vanderbilt (professor)", id: "vanderbilt", sub: "escola" }, { label: "SNAP-IV", id: "snap", sub: "dimensional" }] },
       { emoji: "🧩", queixa: "TEA", queixaId: "tea", ouro: { label: "ASSQ", id: "assq", sub: "pais / professor" } },
       { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "PSC-35 / SDQ", id: "sdq", sub: "pais + professor" } },
-      { emoji: "🧠", queixa: "Função global", ouro: { label: "CGAS", sub: "clínico" } },
+      { emoji: "🧠", queixa: "Função global", queixaId: "funcionalidade", ouro: { label: "CGAS", id: "cgas", sub: "clínico" } },
     ],
   },
   {
