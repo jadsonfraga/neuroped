@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 659
-- **Com fonte declarada:** 497
+- **Total de instrumentos:** 661
+- **Com fonte declarada:** 499
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -102,6 +102,7 @@
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não |
 | `cfrs` | CFRS | — | sim |
 | `chalfont` | Chalfont | Duncan JS, Sander JW, 1991 (Chalfont Seizure Severity Scale) | não |
+| `cheops` | CHEOPS | McGrath PJ et al., 1985 | não |
 | `cheq` | CHEQ | — | sim |
 | `cheqol-25` | CHEQOL-25 | — | sim |
 | `chexi` | CHEXI | — | sim |
@@ -511,6 +512,7 @@
 | `phq9` | PHQ-9 | Kroenke K, Spitzer RL, Williams JBW. J Gen Intern Med. 2001. Validação brasileira: Santos IS et al., Cad. Saúde Pública 2013; Osório FL et al. | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não |
 | `pi-cv` | PI-CV | Published literature (open-access research) | não |
+| `pipp` | PIPP | Stevens B et al., Clin J Pain 1996; PIPP-R 2014 | não |
 | `pliksi` | PLIKSi | King's College London, British Journal of Psychiatry | não |
 | `pls-5-screening` | PLS-5 Screening | — | sim |
 | `pls5` | PLS-5 | Zimmerman IL, Steiner VG, Pond RE, 2011 (PLS-5), Pearson | não |

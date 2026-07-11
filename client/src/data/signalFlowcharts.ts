@@ -909,6 +909,66 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
       bronze: ["j26-013"],
     },
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // DOR / CEFALEIA
+  // Instrumento de dor segue o nível de desenvolvimento: RN/prematuro →
+  // escalas fisiológico-comportamentais (NIPS/PIPP); pré-verbal →
+  // observacional (FLACC/CHEOPS/COMFORT-B); a partir de 4a → autoavaliação
+  // por faces (FPS-R/Wong-Baker); a partir de 8a → numérica (NRS). O
+  // calendário de cefaleia entra quando a queixa é dor de cabeça recorrente.
+  // ═══════════════════════════════════════════════════════════
+  dor: {
+    signal: "dor",
+    label: "Dor / Cefaleia",
+    branches: [
+      {
+        label: "0–3 meses · neonatal/procedural",
+        minMonths: 0,
+        maxMonths: 3,
+        tiers: {
+          ouro: ["nips"],
+          prata: ["pipp"],
+          bronze: ["comfort-b", "cries"],
+        },
+      },
+      {
+        label: "3 meses–4 anos · pré-verbal (observacional)",
+        minMonths: 3,
+        maxMonths: 48,
+        tiers: {
+          ouro: ["flacc"],
+          prata: ["comfort-b"],
+          bronze: ["cheops", "ppp"],
+        },
+      },
+      {
+        label: "4–8 anos · autoavaliação por faces",
+        minMonths: 48,
+        maxMonths: 96,
+        tiers: {
+          ouro: ["fps-r"],
+          prata: ["wongbaker"],
+          bronze: ["flacc", "cheops"],
+        },
+      },
+      {
+        label: "8–18 anos · autoavaliação numérica / cefaleia",
+        minMonths: 96,
+        maxMonths: 216,
+        tiers: {
+          ouro: ["nrs-pain"],
+          prata: ["cefaleia-calendario"],
+          bronze: ["fps-r"],
+        },
+      },
+    ],
+    monitoring: {
+      ouro: ["nrs-pain"],
+      prata: ["cefaleia-calendario"],
+      bronze: ["flacc"],
+    },
+  },
 };
 
 export function getSignalFlowchart(signalId: string): SignalFlowchart | null {
