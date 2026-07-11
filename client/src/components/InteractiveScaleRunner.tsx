@@ -69,7 +69,7 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
             <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-tight">Respostas — {def.name}</h1>
+            <h1 className="text-lg leading-tight text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>Respostas — {def.name}</h1>
             <p className="text-xs italic text-muted-foreground">Perguntas e respostas registradas — análise clínica pelo profissional</p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
           <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
         </div>
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-bold leading-tight">{def.name}</h1>
+          <h1 className="truncate text-lg leading-tight text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>{def.name}</h1>
           <p className="text-xs text-muted-foreground">{def.fullName} · {def.respondent} · {def.ageLabel}</p>
         </div>
       </motion.div>

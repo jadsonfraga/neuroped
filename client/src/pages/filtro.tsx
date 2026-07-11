@@ -1075,7 +1075,7 @@ export default function FiltroPage() {
           <div className="filter-260-iconbox flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/15 shadow-sm"><Filter className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.9} /></div>
           <div className="min-w-0 flex-1">
             <p className="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Ranking clínico</p>
-            <h1 className="mt-0.5 text-xl sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-foreground">Filtro Clínico Inteligente</h1>
+            <h1 className="mt-0.5 text-2xl sm:text-[30px] leading-tight tracking-[-0.01em] text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>Filtro Clínico Inteligente</h1>
             <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">
               {flashMode
                 ? "Triagem rápida sem cadastro: informe idade e queixa para receber o ranking imediato."
@@ -1272,7 +1272,7 @@ export default function FiltroPage() {
         {hasSearch && (
       <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
         <div className="flex items-start justify-between gap-3">
-          <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-lg font-black text-foreground">Recomendações por prioridade clínica</h2></div>
+          <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saída obrigatória</p><h2 className="text-xl text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>Recomendações por prioridade clínica</h2></div>
           {hasSafeResults && (
             <div className="flex shrink-0 items-center gap-1.5">
               <Button variant="outline" size="sm" onClick={copyRecommendation} className="gap-1.5" aria-label="Copiar recomendação para o laudo">
