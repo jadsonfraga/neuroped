@@ -113,6 +113,7 @@ export const navSections: NavSection[] = [
       { href: "/etare", label: "ETARE", icon: ClipboardCheck },
       { href: "/eaah", label: "EAAH", icon: ClipboardCheck },
       { href: "/testes-diretos", label: "Testes: bateria por faixa", icon: ClipboardCheck },
+      { href: "/cognitive-lab", label: "Cognitive Lab (tarefas cronometradas)", icon: BrainCog },
       { href: "/testes-academicos", label: "Testes: acadêmico", icon: ClipboardCheck },
       { href: "/escrita-desenho", label: "Testes: escrita e desenho", icon: ClipboardCheck },
       { href: "/conhecimento-visual", label: "Testes: conhecimento visual", icon: ClipboardCheck },
