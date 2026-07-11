@@ -24,7 +24,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         items: [
           "Chuta as pernas alternadamente quando deitado de costas",
           "Leva as mãos em direção a objetos proximos",
-          "Brinca com as próprias mãos na linha media",
+          "Brinca com as próprias mãos na linha média",
           "Vira o corpo parcialmente de costas pra barriga",
           "Vira de barriga pra costas",
           "Aguenta o peso nas pernas por segundos quando segurado de pé",
@@ -35,7 +35,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -59,7 +59,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         ],
       },
       {
-        name: "Engatinhar e bipedestacao",
+        name: "Engatinhar e bipedestação",
         items: [
           "Arrasta o corpo no chão pra frente",
           "Engatinha com barriga erguida do chão",
@@ -75,7 +75,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -92,7 +92,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Para de chorar ou se acalma ao ouvir a voz da mãe",
           "Vira a cabeça na direção de um som forte do lado",
           "Responde ao próprio nome chamado pela mãe",
-          "Para o que esta fazendo quando o adulto fala não",
+          "Para o que está fazendo quando o adulto fala não",
           "Entende e executa um comando simples com gesto (pega, da)",
           "Aponta ou olha pra objeto quando o adulto nomeia",
           "Entende dois comandos simples seguidos sem gesto",
@@ -109,7 +109,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Usa pelo menos 5 palavras diferentes com sentido",
           "Usa pelo menos 10 palavras com sentido",
           "Combina duas palavras diferentes (mais água, mama vai)",
-          "Usa combinacoes de 2 palavras regularmente no dia a dia",
+          "Usa combinações de 2 palavras regularmente no dia a dia",
         ],
       },
     ],
@@ -117,7 +117,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -129,7 +129,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
     totalLabel: "Cognição 0-18m",
     domains: [
       {
-        name: "Permanencia do objeto e causalidade",
+        name: "Permanência do objeto e causalidade",
         items: [
           "Olha na direção onde objeto desapareceu (4-6m)",
           "Procura objeto parcialmente coberto com pano",
@@ -140,7 +140,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         ],
       },
       {
-        name: "Imitação e resolucao de problemas",
+        name: "Imitação e resolução de problemas",
         items: [
           "Imita batida de palmas já demonstrada",
           "Imita nova ação não vista antes no mesmo dia",
@@ -166,7 +166,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -185,18 +185,18 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Interrompe o choro ao escutar voz calmante suave",
           "Franze a testa ou pisca ao som alto repentino",
           "Orienta os olhos para fonte de luz difusa",
-          "Mostra preferência por voz humana sobre som mecanico",
+          "Mostra preferência por voz humana sobre som mecânico",
           "Segue objeto vermelho-branco em movimento lento",
         ],
       },
       {
-        name: "Regulação tatil e vestibular",
+        name: "Regulação tátil e vestibular",
         items: [
-          "Acalma com embalo suave ritmico",
+          "Acalma com embalo suave rítmico",
           "Acalma ao ser segurado firmemente (contenedor)",
           "Responde ao toque suave na bochecha com busca (rooting)",
           "Reage de forma exagerada a toque leve não esperado",
-          "Habituase ao estímulo tatil repetido (não reage mais após 3-4 vezes)",
+          "Habituase ao estímulo tátil repetido (não reage mais após 3-4 vezes)",
           "Acalma ao ser colocado em posição de brucos sobre o adulto",
           "Mostra preferência pelo odor da mãe",
         ],
@@ -204,7 +204,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       {
         name: "Estado comportamental",
         items: [
-          "Apresenta ciclos alternados de sono-vigilia reconheciveis",
+          "Apresenta ciclos alternados de sono-vigilia reconhecíveis",
           "Consegue ser trazido ao estado de alerta pelo adulto",
           "Sustenta estado de alerta quieto por pelo menos 2 minutos",
           "Retorna ao sono após estímulo leve sem choro prolongado",
@@ -217,7 +217,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -255,7 +255,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         items: [
           "Acalma com estrategias do cuidador (voz, embalo)",
           "Usa o adulto como base segura pra explorar",
-          "Aceita separacao breve sem choro excessivo (após 18 meses)",
+          "Aceita separação breve sem choro excessivo (após 18 meses)",
           "Demonstra empatia básica (tenta confortar criança que chora)",
           "Espera breve por comida ou brinquedo sem crise (24-36m)",
           "Nomeia pelo menos 2 emoções básicas em si ou em outros (24-36m)",
@@ -266,7 +266,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -286,7 +286,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Empilha 4 cubos sem cair",
           "Empilha 6 cubos sem cair",
           "Coloca 10 pinos em tabuleiro em menos de 3 minutos",
-          "Encaixa formas geometricas simples no tabuleiro",
+          "Encaixa formas geométricas simples no tabuleiro",
           "Vira paginas de livro grosso uma de cada vez",
         ],
       },
@@ -307,7 +307,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -322,7 +322,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         name: "Atenção conjunta iniciada pela criança",
         items: [
           "Aponta com o dedo indicador pra mostrar algo interessante (apontamento declarativo)",
-          "Leva objeto ao adulto pra mostrar (não so pra pedir)",
+          "Leva objeto ao adulto pra mostrar (não só pra pedir)",
           "Vocaliza e olha pro adulto ao mesmo tempo pra chamar atenção",
           "Olha pro adulto depois de ver algo interessante (checagem social)",
           "Mostra objeto ao adulto erguendo-o na direção dele",
@@ -334,7 +334,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         items: [
           "Segue o apontamento do adulto pra objeto distante",
           "Segue o olhar do adulto quando ele olha pra algo",
-          "Para o que esta fazendo quando adulto chama nome",
+          "Para o que está fazendo quando adulto chama nome",
           "Olha pra onde o adulto olha quando ele muda a direção do olhar",
           "Responde ao gesto de 'vem ca' do adulto",
           "Participa de brincadeira de dar e receber objeto com adulto",
@@ -345,7 +345,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -392,11 +392,11 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       {
         name: "Linguagem receptiva",
         items: [
-          "Segue instrucao de 2 partes sem gesto (pega a bola e coloca na caixa)",
+          "Segue instrução de 2 partes sem gesto (pega a bola e coloca na caixa)",
           "Entende conceitos de tamanho grande e pequeno",
           "Identifica 6 partes do corpo quando nomeadas",
           "Entende perguntas simples com onde e o que",
-          "Segue instrucao negativa simples (não pega isso)",
+          "Segue instrução negativa simples (não pega isso)",
           "Aponta pra figuras de ações simples em livro (menino correndo)",
         ],
       },
@@ -407,7 +407,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Bebe em copo sem tampa",
           "Tenta tirar roupa simples (meias, sapatos)",
           "Brinca do lado de outras crianças (jogo paralelo)",
-          "Imita atividades domesticas em brincar simbolico",
+          "Imita atividades domésticas em brincar simbólico",
           "Pede pra usar o banheiro ou avisa quando já foi",
         ],
       },
@@ -416,7 +416,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -431,7 +431,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         name: "Motor e coordenação",
         items: [
           "Sobe escada alternando os pés sem apoio",
-          "Pula num so pé por pelo menos 2 saltos",
+          "Pula num só pé por pelo menos 2 saltos",
           "Anda sobre linha reta sem cair",
           "Chuta bola com precisão em direção determinada",
           "Anda de triciclo ou bicicleta com rodinhas",
@@ -442,8 +442,8 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         name: "Motor fino e grafismo",
         items: [
           "Recorta papel com tesoura de ponta arredondada",
-          "Copia um circulo reconhecivel",
-          "Copia uma cruz reconhecivel",
+          "Copia um circulo reconhecível",
+          "Copia uma cruz reconhecível",
           "Desenha figura humana com pelo menos 3 partes",
           "Escreve algumas letras do próprio nome com modelo",
           "Encaixa pecas de quebra-cabeça de 6-8 pecas",
@@ -487,7 +487,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -549,11 +549,11 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Criança entende causa e efeito simples (aperta botão, música toca)",
           "Criança agrupa objetos iguais quando pedido",
           "Criança entende conceitos grande e pequeno",
-          "Criança conta até 5 com correspondencia de objetos",
+          "Criança conta até 5 com correspondência de objetos",
           "Criança reconhece algumas letras ou números",
           "Criança lembra de eventos recentes e conta pra família",
           "Criança entende instruções de 2 partes",
-          "Criança faz jogo simbolico elaborado (brincar de casinha)",
+          "Criança faz jogo simbólico elaborado (brincar de casinha)",
           "Criança resolve problemas simples sozinha",
           "Criança demonstra curiosidade e faz perguntas sobre o mundo",
         ],
@@ -563,7 +563,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -585,7 +585,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         ],
       },
       {
-        name: "Desenvolvimento auditivo-linguistico",
+        name: "Desenvolvimento auditivo-linguístico",
         items: [
           "Localiza a voz da mãe ou cuidador principal pelo som",
           "Responde ao próprio nome chamado de longe",
@@ -599,7 +599,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -637,7 +637,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -660,21 +660,21 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         ],
       },
       {
-        name: "Vestuario e mobilidade",
+        name: "Vestuário e mobilidade",
         items: [
           "Tira meias e sapatos sem ajuda",
           "Coloca meias sem ajuda",
           "Tira calcinha ou cueca sem ajuda",
           "Coloca roupas largas sem ajuda (sem boto ou fecho)",
           "Coloca calcado sem amarrar",
-          "Sobe e desce escada com alternancia e sem apoio",
+          "Sobe e desce escada com alternância e sem apoio",
         ],
       },
       {
         name: "Controle esfincteriano e rotina",
         items: [
           "Pede pra usar o banheiro antes de fazer xixi",
-          "Usa o banheiro sem ajuda durante o dia (so supervisão)",
+          "Usa o banheiro sem ajuda durante o dia (só supervisão)",
           "Vai ao banheiro sozinho sem precisar que o adulto leve",
           "Dorme sem fralda de noite sem molhar a cama na maioria das vezes",
           "Segue rotina da manha com lembretes minimos",
@@ -686,7 +686,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       { minPct: 85, classification: "Desenvolvimento adequado", color: "emerald", description: "Desenvolvimento adequado" },
       { minPct: 65, classification: "Em desenvolvimento - vigiar", color: "amber", description: "Em desenvolvimento - vigiar" },
       { minPct: 45, classification: "Sinais de alerta", color: "orange", description: "Sinais de alerta" },
-      { minPct: 0, classification: "Atraso provavel", color: "red", description: "Atraso provavel" },
+      { minPct: 0, classification: "Atraso provável", color: "red", description: "Atraso provável" },
     ],
   },
 
@@ -695,7 +695,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
     instruction: "Com que frequência você observa esses comportamentos na criança?",
     labels: ["Nunca", "Às vezes", "Frequentemente"],
     scoreDirection: "higher_worse",
-    totalLabel: "Linguagem pragmatica TEA",
+    totalLabel: "Linguagem pragmática TEA",
     domains: [
       {
         name: "Função comunicativa",
@@ -706,8 +706,8 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Repete frases ouvidas em outros contextos fora do lugar (ecolalia)",
           "Usa frases prontas sem adaptar ao contexto da conversa",
           "Responde a perguntas com a mesma frase usada na pergunta (ecolalia imediata)",
-          "Não faz perguntas espontaneas sobre o mundo ou as pessoas",
-          "Usa linguagem muito formal ou robotica para a idade",
+          "Não faz perguntas espontâneas sobre o mundo ou as pessoas",
+          "Usa linguagem muito formal ou robótica para a idade",
           "Não usa linguagem para protestar ou recusar de forma convencional",
           "Tem dificuldade de usar pronomes eu e você corretamente",
         ],
@@ -722,7 +722,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Não mantem topico de conversa iniciado pelo outro",
           "Não usa linguagem corporal e gestos pra apoiar a fala",
           "Não responde a perguntas indiretas ou dicas sociais na conversa",
-          "Não percebe quando o interlocutor esta entediado ou quer mudar de assunto",
+          "Não percebe quando o interlocutor está entediado ou quer mudar de assunto",
           "Usa contato visual inadequado na conversa (muito intenso ou quase ausente)",
           "Não pede esclarecimento quando não entende o que foi dito",
         ],
@@ -752,7 +752,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Não vocaliza para chamar atenção do adulto para algo no ambiente",
           "Não alterna o olhar entre adulto e objeto de interesse",
           "Não gesticula para compartilhar experiencias",
-          "Não busca validacao do adulto em situações novas ou ambiguas",
+          "Não busca validação do adulto em situações novas ou ambiguas",
           "Não demonstra orgulho ao mostrar uma conquista para o adulto",
         ],
       },
@@ -760,13 +760,13 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         name: "Atenção conjunta respondida",
         items: [
           "Não segue o dedo quando o adulto aponta para objeto distante",
-          "Não olha para onde o adulto esta olhando",
+          "Não olha para onde o adulto está olhando",
           "Não responde ao próprio nome de forma consistente",
-          "Não para o que esta fazendo quando o adulto chama para ver algo",
+          "Não para o que está fazendo quando o adulto chama para ver algo",
           "Não participa de brincadeira de dar e receber com adulto",
           "Não responde ao sorriso social do adulto com sorriso",
           "Não imita ações simples demonstradas pelo adulto",
-          "Não reage ao desapontamento ou aprovacao expressados pelo adulto",
+          "Não reage ao desapontamento ou aprovação expressados pelo adulto",
         ],
       },
     ],
@@ -793,17 +793,17 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Explica por que um personagem de história ficou triste ou bravo",
           "Reconhece a diferenca entre o que e real e o que e fantasia em história",
           "Entende que pessoas diferentes podem gostar de coisas diferentes",
-          "Percebe quando alguem esta fingindo uma emoção que não sente",
-          "Entende que informações diferentes levam a conclusoes diferentes",
+          "Percebe quando alguem está fingindo uma emoção que não sente",
+          "Entende que informações diferentes levam a conclusões diferentes",
           "Adapta o que fala conforme o que o interlocutor já sabe ou não sabe",
           "Explica intenção por trás de uma ação (fez de proposito ou sem querer)",
           "Entende que machucar sem querer e diferente de machucar com raiva",
         ],
       },
       {
-        name: "Falsa crenca e atribuicao de estados mentais",
+        name: "Falsa crenca e atribuição de estados mentais",
         items: [
-          "Passa na tarefa classica de falsa crenca de 1a ordem (onde Sally vai procurar a bola)",
+          "Passa na tarefa clássica de falsa crenca de 1a ordem (onde Sally vai procurar a bola)",
           "Explica que Sally vai procurar onde ela deixou porque ela não sabe que mudou",
           "Passa na tarefa de falsa crenca com conteudo inesperado (caixa de chocolate com lapis)",
           "Entende que um personagem pode ter crenca errada sobre o que outro personagem pensa (2a ordem)",
@@ -832,7 +832,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
     totalLabel: "Habilidades de brincar TEA",
     domains: [
       {
-        name: "Brincar funcional e exploratorio",
+        name: "Brincar funcional e exploratório",
         items: [
           "Usa brinquedos da forma convencional (carro anda, colher mexe comida)",
           "Explora brinquedos novos de formas variadas",
@@ -844,14 +844,14 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         ],
       },
       {
-        name: "Brincar simbolico e social",
+        name: "Brincar simbólico e social",
         items: [
           "Faz de conta que objeto e outra coisa (caixa vira carro, pau vira espada)",
           "Usa boneca ou bicho de pelucia como personagem com vida própria",
-          "Cria enredos de história com brinquedos de forma espontanea",
+          "Cria enredos de história com brinquedos de forma espontânea",
           "Brinca de faz de conta envolvendo papeis (medico, mãe, professor)",
           "Adapta o enredo da brincadeira quando o adulto sugere algo diferente",
-          "Inicia brincadeiras tematicas de forma espontanea",
+          "Inicia brincadeiras temáticas de forma espontânea",
           "Usa linguagem durante o brincar pra construir enredo",
         ],
       },
@@ -883,7 +883,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
     totalLabel: "CAA necessidades",
     domains: [
       {
-        name: "Intenção comunicativa e recepcao",
+        name: "Intenção comunicativa e recepção",
         items: [
           "Demonstra intenção de comunicar mesmo sem linguagem oral (gestos, choro, olhar)",
           "Olha para o adulto quando quer algo",
@@ -900,14 +900,14 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
         name: "Funções comunicativas atuais",
         items: [
           "Pede objetos ou ações desejados de forma funcional",
-          "Recusa ou protesta de forma reconhecivel sem crise",
+          "Recusa ou protesta de forma reconhecível sem crise",
           "Chama atenção do adulto de forma intencional",
           "Comenta ou mostra algo de interesse ao adulto",
-          "Responde a perguntas simples com gesto, olhar ou sinalizacao",
-          "Cumprimenta ou se despede de forma reconhecivel",
-          "Expressa emoções básicas de forma reconhecivel",
+          "Responde a perguntas simples com gesto, olhar ou sinalização",
+          "Cumprimenta ou se despede de forma reconhecível",
+          "Expressa emoções básicas de forma reconhecível",
           "Pede ajuda quando não consegue algo",
-          "Faz escolhas entre duas opcoes quando oferecidas",
+          "Faz escolhas entre duas opções quando oferecidas",
         ],
       },
     ],
@@ -934,7 +934,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Vocabulário ou formas de comunicar aumentaram",
           "Faz pedidos de forma mais clara e eficiente",
           "Compreende instruções ou conversas com mais facilidade",
-          "Usa comunicação de forma mais espontanea e menos reativa",
+          "Usa comunicação de forma mais espontânea e menos reativa",
         ],
       },
       {
@@ -950,8 +950,8 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
       {
         name: "Comportamento e regulação",
         items: [
-          "Tem menos crises de agressividade ou automutilacao",
-          "As crises duram menos tempo ou sao menos intensas",
+          "Tem menos crises de agressividade ou automutilação",
+          "As crises duram menos tempo ou são menos intensas",
           "Aceita melhor mudancas de rotina",
           "Comportamentos repetitivos incomodam menos o cotidiano",
           "Se acalma mais rápido após crise",
@@ -983,19 +983,19 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
     totalLabel: "Total de sintomas — escore mais alto indica maior carga",
     bands: [
       { minPct: 70, classification: "Alteração importante", color: "red", description: "Pontuação elevada. Requer correlação clínica e conduta conforme o quadro." },
-      { minPct: 45, classification: "Sinais moderados", color: "orange", description: "Ha sinais moderados. Reavalie contexto e considere intervenção." },
-      { minPct: 25, classification: "Sinais leves", color: "amber", description: "Ha sinais leves. Acompanhe e oriente a família." },
+      { minPct: 45, classification: "Sinais moderados", color: "orange", description: "Há sinais moderados. Reavalie contexto e considere intervenção." },
+      { minPct: 25, classification: "Sinais leves", color: "amber", description: "Há sinais leves. Acompanhe e oriente a família." },
       { minPct: 0, classification: "Sem alteração relevante", color: "emerald", description: "Pontuação baixa. Mantenha vigilância clínica." },
     ],
     domains: [
       {
         name: "Rigidez diante de mudancas",
         items: [
-          "Tem crise quando a rotina muda mesmo que avisado com antecedencia",
-          "Insiste em fazer as coisas sempre do mesmo jeito e não aceita variacao",
-          "Fica muito perturbado quando regras de um jogo sao modificadas",
-          "Exige que as coisas fiquem sempre no mesmo lugar e reage quando sao movidas",
-          "Não aceita solucoes alternativas quando o plano original não funciona",
+          "Tem crise quando a rotina muda mesmo que avisado com antecedência",
+          "Insiste em fazer as coisas sempre do mesmo jeito e não aceita variação",
+          "Fica muito perturbado quando regras de um jogo são modificadas",
+          "Exige que as coisas fiquem sempre no mesmo lugar e reage quando são movidas",
+          "Não aceita soluções alternativas quando o plano original não funciona",
           "Fica em loop pensando numa situação ruim e não consegue mudar o foco",
           "Repete sempre o mesmo caminho e fica agitado se o trajeto mudar",
           "Insiste na mesma atividade ou assunto mesmo quando o ambiente muda",
@@ -1009,7 +1009,7 @@ export const j26Bloco1Items: Record<string, InteractiveScaleDef> = {
           "Não consegue adaptar o comportamento a diferentes contextos sociais",
           "Reage de forma intensa a surpresas mesmo que positivas",
           "Precisa de muito tempo para se adaptar a mudancas mesmo que positivas",
-          "Tem dificuldade de aceitar que ha mais de uma resposta certa",
+          "Tem dificuldade de aceitar que há mais de uma resposta certa",
           "Não consegue usar uma estrategia diferente quando a habitual não funciona",
           "Fica preso numa forma de resolver conflitos mesmo quando claramente não funciona",
         ],

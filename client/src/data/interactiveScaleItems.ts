@@ -87,7 +87,7 @@ const DEV_BANDS: InteractiveBand[] = [
     classification: "Atraso provável — investigar e encaminhar",
     color: "red",
     description:
-      "Muitos marcos esperados estão ausentes. Recomenda-se investigação e encaminhamento para avaliação especializada (neuropediatria e/ou terapias). Esta é uma triagem, não um diagnóstico.",
+      "Muitos marcos esperados estão ausentes. Recomenda-se investigação e encaminhamento para avaliação especializada (neuropediatria e/ou terapias). Está é uma triagem, não um diagnóstico.",
   },
 ];
 
@@ -163,33 +163,33 @@ const DEV_INFO =
 const ABSENT_MILD_CLEAR_LABELS = ["Ausente / normal", "Leve / ocasional", "Claro / frequente"];
 const PAIN_0_2_LABELS = ["0 - ausente", "1 - leve/moderado", "2 - claro/intenso"];
 const SEVERITY_0_3_LABELS = ["0 - ausente", "1 - leve", "2 - moderado", "3 - intenso"];
-const COMFORT_1_5_LABELS = ["1 - calmo/confortável", "2", "3", "4", "5 - muito desconfortavel"];
+const COMFORT_1_5_LABELS = ["1 - calmo/confortável", "2", "3", "4", "5 - muito desconfortável"];
 
 const HIGHER_WORSE_0_2_BANDS: InteractiveBand[] = [
-  { minPct: 70, classification: "Alteração importante", color: "red", description: "Pontuação elevada. Requer correlação clínica imediata, revisão do contexto e conduta conforme gravidade. A escala apoia monitorizacao, não fecha diagnóstico isoladamente." },
-  { minPct: 40, classification: "Alteração moderada", color: "orange", description: "Ha sinais moderados. Reavalie fatores desencadeantes, examine o paciente e considere intervenção/seguimento mais próximo." },
-  { minPct: 1, classification: "Sinais leves", color: "amber", description: "Ha sinais leves ou ocasionais. Acompanhe evolução, revise medidas de conforto/manejo e repita se houver piora." },
+  { minPct: 70, classification: "Alteração importante", color: "red", description: "Pontuação elevada. Requer correlação clínica imediata, revisão do contexto e conduta conforme gravidade. A escala apoia monitorização, não fecha diagnóstico isoladamente." },
+  { minPct: 40, classification: "Alteração moderada", color: "orange", description: "Há sinais moderados. Reavalie fatores desencadeantes, examine o paciente e considere intervenção/seguimento mais próximo." },
+  { minPct: 1, classification: "Sinais leves", color: "amber", description: "Há sinais leves ou ocasionais. Acompanhe evolução, revise medidas de conforto/manejo e repita se houver piora." },
   { minPct: 0, classification: "Sem alteração relevante", color: "emerald", description: "Pontuação baixa. Não há sinal relevante neste registro, mantendo vigilância clínica conforme o caso." },
 ];
 
 const MED_SIDE_EFFECT_BANDS: InteractiveBand[] = [
   { minPct: 60, classification: "Carga alta de efeitos", color: "red", description: "Muitos efeitos moderados/intensos. Requer revisão medicamentosa, exame clínico e plano de segurança conforme o contexto." },
-  { minPct: 35, classification: "Carga moderada de efeitos", color: "orange", description: "Efeitos relevantes presentes. Pondere dose, tempo de uso, comorbidades e necessidade de monitorizacao mais próxima." },
-  { minPct: 1, classification: "Efeitos leves", color: "amber", description: "Efeitos leves/ocasionais. Registre, oriente a família e acompanhe tendencia longitudinal." },
+  { minPct: 35, classification: "Carga moderada de efeitos", color: "orange", description: "Efeitos relevantes presentes. Pondere dose, tempo de uso, comorbidades e necessidade de monitorização mais próxima." },
+  { minPct: 1, classification: "Efeitos leves", color: "amber", description: "Efeitos leves/ocasionais. Registre, oriente a família e acompanhe tendência longitudinal." },
   { minPct: 0, classification: "Sem efeitos relevantes", color: "emerald", description: "Sem efeitos clinicamente relevantes neste registro. Manter vigilância de rotina." },
 ];
 
 const ENGEL_BANDS: InteractiveBand[] = [
-  { minPct: 100, classification: "Classe IV - sem melhora útil", color: "red", description: "Desfecho insatisfatorio no controle de crises. Revisar plano terapeutico/cirurgico com equipe especializada." },
-  { minPct: 67, classification: "Classe III - melhora limitada", color: "orange", description: "Melhora limitada. Registrar frequência/tipo de crise e discutir reestratificacao do manejo." },
+  { minPct: 100, classification: "Classe IV - sem melhora útil", color: "red", description: "Desfecho insatisfatório no controle de crises. Revisar plano terapêutico/cirúrgico com equipe especializada." },
+  { minPct: 67, classification: "Classe III - melhora limitada", color: "orange", description: "Melhora limitada. Registrar frequência/tipo de crise e discutir reestratificação do manejo." },
   { minPct: 34, classification: "Classe II - crises raras", color: "amber", description: "Bom desfecho parcial, com crises raras ou quase livre de crises. Manter seguimento longitudinal." },
-  { minPct: 0, classification: "Classe I - livre de crises incapacitantes", color: "emerald", description: "Melhor categoria funcional de desfecho. Interpretar junto ao diario de crises, medicações e acompanhamento neurológico." },
+  { minPct: 0, classification: "Classe I - livre de crises incapacitantes", color: "emerald", description: "Melhor categoria funcional de desfecho. Interpretar junto ao diário de crises, medicações e acompanhamento neurológico." },
 ];
 
 const COMFORT_B_BANDS: InteractiveBand[] = [
   { minPct: 77, classification: "Desconforto/dor importante", color: "red", description: "Escore alto de desconforto comportamental. Reavaliar analgesia/sedação, ambiente, procedimentos e sinais vitais." },
-  { minPct: 57, classification: "Desconforto moderado", color: "orange", description: "Ha desconforto observavel. Correlacione com dor, sedação, ventilacao e contexto clínico." },
-  { minPct: 37, classification: "Desconforto leve", color: "amber", description: "Sinais leves. Acompanhe tendencia e medidas de conforto." },
+  { minPct: 57, classification: "Desconforto moderado", color: "orange", description: "Há desconforto observável. Correlacione com dor, sedação, ventilação e contexto clínico." },
+  { minPct: 37, classification: "Desconforto leve", color: "amber", description: "Sinais leves. Acompanhe tendência e medidas de conforto." },
   { minPct: 0, classification: "Conforto adequado", color: "emerald", description: "Baixo desconforto comportamental no momento observado." },
 ];
 
@@ -199,28 +199,28 @@ const PERFORMANCE_0_3_LABELS = ["Não realiza", "Emergente", "Parcial", "Adequad
 
 const PSYCHOSOCIAL_0_2_BANDS: InteractiveBand[] = [
   { minPct: 65, classification: "Risco psicossocial alto", color: "red", description: "Carga elevada de sintomas. Requer avaliação clínica, risco funcional e plano de seguimento/encaminhamento." },
-  { minPct: 45, classification: "Risco psicossocial moderado", color: "orange", description: "Sintomas relevantes. Correlacione com escola, família, duracao e prejuizo funcional." },
-  { minPct: 25, classification: "Sinais leves", color: "amber", description: "Alguns sinais presentes. Oriente observação, medidas de apoio e reavaliacao se persistir." },
+  { minPct: 45, classification: "Risco psicossocial moderado", color: "orange", description: "Sintomas relevantes. Correlacione com escola, família, duração e prejuizo funcional." },
+  { minPct: 25, classification: "Sinais leves", color: "amber", description: "Alguns sinais presentes. Oriente observação, medidas de apoio e reavaliação se persistir." },
   { minPct: 0, classification: "Triagem baixa", color: "emerald", description: "Baixa carga de sintomas neste registro. Mantenha vigilância clínica conforme queixa e contexto." },
 ];
 
 const MENTAL_HEALTH_0_3_BANDS: InteractiveBand[] = [
   { minPct: 67, classification: "Sintomas intensos", color: "red", description: "Escore elevado. Avalie risco, prejuizo funcional, comorbidades e necessidade de intervenção/encaminhamento." },
   { minPct: 45, classification: "Sintomas moderados", color: "orange", description: "Carga moderada de sintomas. Correlacione com história, escola/família e exame do estado mental." },
-  { minPct: 20, classification: "Sintomas leves", color: "amber", description: "Sinais leves. Pode apoiar psicoeducacao e monitorizacao longitudinal." },
+  { minPct: 20, classification: "Sintomas leves", color: "amber", description: "Sinais leves. Pode apoiar psicoeducação e monitorização longitudinal." },
   { minPct: 0, classification: "Baixa carga sintomática", color: "emerald", description: "Baixa carga no registro atual. Não exclui diagnóstico se houver sinais clínicos relevantes." },
 ];
 
 const DEVELOPMENT_0_3_BANDS: InteractiveBand[] = [
   { minPct: 80, classification: "Desempenho adequado/esperado", color: "emerald", description: "Muitos marcos/desempenhos presentes. Interprete conforme idade, prematuridade e exame clínico." },
-  { minPct: 60, classification: "Desempenho parcialmente adequado", color: "amber", description: "Ha habilidades presentes, mas alguns domínios merecem vigilância e reavaliacao." },
+  { minPct: 60, classification: "Desempenho parcialmente adequado", color: "amber", description: "Há habilidades presentes, mas alguns domínios merecem vigilância e reavaliação." },
   { minPct: 40, classification: "Atraso possível", color: "orange", description: "Desempenho abaixo do esperado em áreas relevantes. Considere avaliação dirigida e intervenção precoce." },
-  { minPct: 0, classification: "Atraso provavel/importante", color: "red", description: "Poucas habilidades presentes no registro. Investigar, encaminhar e acompanhar de forma estruturada." },
+  { minPct: 0, classification: "Atraso provável/importante", color: "red", description: "Poucas habilidades presentes no registro. Investigar, encaminhar e acompanhar de forma estruturada." },
 ];
 
 const HINE_BANDS: InteractiveBand[] = [
   { minPct: 82, classification: "Exame neurológico global favorável", color: "emerald", description: "Registro com muitos sinais neurológicos adequados. Correlacione com idade corrigida, risco neonatal e exame completo." },
-  { minPct: 65, classification: "Sinais discretos - vigiar", color: "amber", description: "Alguns achados merecem seguimento, orientação e reavaliacao seriada." },
+  { minPct: 65, classification: "Sinais discretos - vigiar", color: "amber", description: "Alguns achados merecem seguimento, orientação e reavaliação seriada." },
   { minPct: 45, classification: "Sinais neurológicos moderados", color: "orange", description: "Achados relevantes. Considere encaminhamento, imagem/exames conforme contexto e intervenção precoce." },
   { minPct: 0, classification: "Sinais neurológicos importantes", color: "red", description: "Carga alta de achados neurológicos. Priorize avaliação especializada e plano de cuidado." },
 ];
@@ -230,16 +230,16 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     icon: ClipboardList,
     gradient: "from-sky-600 to-blue-700",
     instruction: "Marque a frequência dos sinais observados nas últimas semanas. Use como triagem psicossocial breve e correlacione com prejuizo funcional.",
-    infoBox: "PSC-17 estruturado para triagem no app. Escore maior = maior carga de sintomas; não substitui entrevista clínica nem formulario oficial quando exigido.",
+    infoBox: "PSC-17 estruturado para triagem no app. Escore maior = maior carga de sintomas; não substitui entrevista clínica nem formulário oficial quando exigido.",
     labels: NEVER_SOMETIMES_OFTEN_LABELS,
     optionPoints: [0, 1, 2],
     scoreDirection: "higher_worse",
     totalLabel: "Carga psicossocial PSC-17 (0-34)",
     bands: PSYCHOSOCIAL_0_2_BANDS,
     domains: [
-      { name: "Internalizante", color: "text-blue-600 dark:text-blue-400", items: ["Tristeza, desanimo ou preocupação persistente", "Medos ou ansiedade que atrapalham rotina", "Queixas somaticas associadas a estresse", "Isolamento ou perda de interesse", "Irritabilidade emocional com sofrimento"] },
+      { name: "Internalizante", color: "text-blue-600 dark:text-blue-400", items: ["Tristeza, desanimo ou preocupação persistente", "Medos ou ansiedade que atrapalham rotina", "Queixas somáticas associadas a estresse", "Isolamento ou perda de interesse", "Irritabilidade emocional com sofrimento"] },
       { name: "Atenção", color: "text-cyan-600 dark:text-cyan-400", items: ["Dificuldade de manter atenção em tarefas", "Distrai-se facilmente no cotidiano", "Esquece combinados, materiais ou instruções", "Dificuldade de concluir atividades", "Impulsividade cognitiva ou respostas precipitadas"] },
-      { name: "Externalizante", color: "text-amber-600 dark:text-amber-400", items: ["Desobedece ou desafia adultos com frequência", "Brigas, agressividade ou explosoes de raiva", "Culpa outros ou nega responsabilidade", "Regras quebradas em casa/escola", "Comportamento disruptivo com prejuizo social", "Baixa tolerância a frustração", "Conflitos recorrentes com pares"] },
+      { name: "Externalizante", color: "text-amber-600 dark:text-amber-400", items: ["Desobedece ou desafia adultos com frequência", "Brigas, agressividade ou explosões de raiva", "Culpa outros ou nega responsabilidade", "Regras quebradas em casa/escola", "Comportamento disruptivo com prejuizo social", "Baixa tolerância a frustração", "Conflitos recorrentes com pares"] },
     ],
   },
 
@@ -254,7 +254,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     totalLabel: "Dificuldade de regulação emocional (0-72)",
     bands: MENTAL_HEALTH_0_3_BANDS,
     domains: [
-      { name: "Labilidade/negatividade", color: "text-rose-600 dark:text-rose-400", items: ["Mudancas rapidas de humor", "Explosoes emocionais desproporcionais", "Irritabilidade persistente", "Choro ou raiva de difícil recuperação", "Reação intensa a pequenas frustracoes", "Dificuldade de voltar ao basal", "Hostilidade verbal ou corporal", "Emoções negativas prolongadas", "Sensibilidade excessiva a correcao", "Conflitos por baixa tolerância a espera", "Comportamento imprevisível pela emoção", "Prejuizo social por reatividade emocional"] },
+      { name: "Labilidade/negatividade", color: "text-rose-600 dark:text-rose-400", items: ["Mudancas rapidas de humor", "Explosões emocionais desproporcionais", "Irritabilidade persistente", "Choro ou raiva de difícil recuperação", "Reação intensa a pequenas frustrações", "Dificuldade de voltar ao basal", "Hostilidade verbal ou corporal", "Emoções negativas prolongadas", "Sensibilidade excessiva a correção", "Conflitos por baixa tolerância a espera", "Comportamento imprevisível pela emoção", "Prejuizo social por reatividade emocional"] },
       { name: "Regulação adaptativa", color: "text-pink-600 dark:text-pink-400", items: ["Dificuldade de nomear o que sente", "Dificuldade de pedir ajuda quando aflito", "Pouco uso de estrategias para se acalmar", "Dificuldade de seguir combinados quando frustrado", "Baixa flexibilidade diante de mudancas", "Dificuldade de reparar conflitos", "Pouca empatia quando outra pessoa sofre", "Dificuldade de esperar recompensa", "Reação emocional prejudica aprendizagem", "Precisa de adulto para regular quase sempre", "Evita atividades por medo/raiva", "Dificuldade de aceitar limites"] },
     ],
   },
@@ -273,7 +273,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
       { name: "Nervos cranianos", color: "text-emerald-600 dark:text-emerald-400", items: ["Seguimento visual", "Resposta auditiva", "Movimentos oculares conjugados", "Expressão facial simétrica", "Sucção/deglutição adequadas", "Qualidade do choro/vocalização"] },
       { name: "Postura", color: "text-teal-600 dark:text-teal-400", items: ["Postura de cabeça", "Postura de tronco", "Postura de braços", "Postura de mãos", "Postura de pernas", "Postura de pés"] },
       { name: "Movimentos", color: "text-cyan-600 dark:text-cyan-400", items: ["Quantidade de movimentos espontaneos", "Qualidade dos movimentos", "Simetria dos movimentos", "Controle antigravitacional"] },
-      { name: "Tônus", color: "text-lime-600 dark:text-lime-400", items: ["Tônus global", "Traction response", "Suspensao ventral", "Amplitude passiva de ombros", "Prono/sentado conforme idade", "Adutores/angulo popliteo conforme idade"] },
+      { name: "Tônus", color: "text-lime-600 dark:text-lime-400", items: ["Tônus global", "Traction response", "Suspensão ventral", "Amplitude passiva de ombros", "Prono/sentado conforme idade", "Adutores/angulo popliteo conforme idade"] },
       { name: "Reflexos e reações", color: "text-green-600 dark:text-green-400", items: ["Reflexos tendinosos", "Moro/paraquedas conforme idade", "Reação de proteção", "Resposta plantar"] },
     ],
   },
@@ -281,24 +281,24 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
   catclams: {
     icon: MessageCircle,
     gradient: "from-indigo-600 to-violet-700",
-    instruction: "Pontue habilidades adaptativas/cognitivas e de linguagem observadas ou confirmadas por cuidador. Compare com idade cronologica/corrigida.",
-    infoBox: "Registro estruturado CAT/CLAMS no app. Escore maior = mais habilidades presentes; não substitui conversao normativa oficial.",
+    instruction: "Pontue habilidades adaptativas/cognitivas e de linguagem observadas ou confirmadas por cuidador. Compare com idade cronológica/corrigida.",
+    infoBox: "Registro estruturado CAT/CLAMS no app. Escore maior = mais habilidades presentes; não substitui conversão normativa oficial.",
     labels: PERFORMANCE_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_better",
-    totalLabel: "Desenvolvimento adaptativo-linguistico (0-72)",
+    totalLabel: "Desenvolvimento adaptativo-linguístico (0-72)",
     bands: DEVELOPMENT_0_3_BANDS,
     domains: [
       { name: "CAT - adaptativo/cognitivo", color: "text-indigo-600 dark:text-indigo-400", items: ["Explora objeto com olhar e mãos", "Transfere objeto entre mãos", "Procura objeto parcialmente escondido", "Usa pinça ou pega fina funcional", "Coloca e retira objetos de recipiente", "Imita ação simples com objeto", "Resolve encaixe/formas simples", "Faz brincadeira funcional", "Empilha ou constrói com blocos", "Combina objetos por função", "Aponta/seleciona figura ou objeto nomeado", "Realiza tarefa de causa-efeito"] },
-      { name: "CLAMS - linguagem/audicao", color: "text-violet-600 dark:text-violet-400", items: ["Reage a sons e voz familiar", "Vocaliza para interagir", "Balbucia sílabas repetidas", "Responde ao próprio nome", "Compreende comando simples com gesto", "Usa gesto comunicativo", "Fala palavra com significado", "Aponta para pedir ou mostrar", "Compreende comando sem gesto", "Nomeia objetos/pessoas familiares", "Combina duas palavras", "Usa fala/gesto para resolver necessidade"] },
+      { name: "CLAMS - linguagem/audição", color: "text-violet-600 dark:text-violet-400", items: ["Reage a sons e voz familiar", "Vocaliza para interagir", "Balbucia sílabas repetidas", "Responde ao próprio nome", "Compreende comando simples com gesto", "Usa gesto comunicativo", "Fala palavra com significado", "Aponta para pedir ou mostrar", "Compreende comando sem gesto", "Nomeia objetos/pessoas familiares", "Combina duas palavras", "Usa fala/gesto para resolver necessidade"] },
     ],
   },
 
   "fas-fluência": {
     icon: MessageCircle,
     gradient: "from-fuchsia-600 to-purple-700",
-    instruction: "Registre desempenho por tarefa de fluência verbal. Use normas por idade/escolaridade quando disponiveis.",
-    infoBox: "Registro estruturado de fluência verbal. Escore maior = melhor produção/estrategia; a interpretacao final depende de norma local.",
+    instruction: "Registre desempenho por tarefa de fluência verbal. Use normas por idade/escolaridade quando disponíveis.",
+    infoBox: "Registro estruturado de fluência verbal. Escore maior = melhor produção/estrategia; a interpretação final depende de norma local.",
     labels: PERFORMANCE_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_better",
@@ -306,7 +306,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     bands: DEVELOPMENT_0_3_BANDS,
     domains: [
       { name: "Fluência fonológica", color: "text-fuchsia-600 dark:text-fuchsia-400", items: ["Letra F - produção adequada para idade/escolaridade", "Letra A - produção adequada para idade/escolaridade", "Letra S - produção adequada para idade/escolaridade"] },
-      { name: "Qualidade executiva", color: "text-purple-600 dark:text-purple-400", items: ["Baixa perseveracao/repetição", "Mantem regra da tarefa", "Usa estrategia de agrupamento e troca"] },
+      { name: "Qualidade executiva", color: "text-purple-600 dark:text-purple-400", items: ["Baixa perseveração/repetição", "Mantem regra da tarefa", "Usa estrategia de agrupamento e troca"] },
     ],
   },
 
@@ -314,15 +314,15 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     icon: Moon,
     gradient: "from-slate-700 to-indigo-800",
     instruction: "Pontue padrões de sono do lactente/criança pequena nos últimos 7-14 dias, com base no relato do cuidador.",
-    infoBox: "BISQ estruturado para triagem no app. Escore maior = maior carga de problema de sono; não substitui diario de sono quando necessario.",
+    infoBox: "BISQ estruturado para triagem no app. Escore maior = maior carga de problema de sono; não substitui diário de sono quando necessário.",
     labels: ABSENT_MILD_CLEAR_LABELS,
     optionPoints: [0, 1, 2],
     scoreDirection: "higher_worse",
     totalLabel: "Carga de problemas de sono infantil (0-16)",
     bands: HIGHER_WORSE_0_2_BANDS,
     domains: [
-      { name: "Sono noturno", color: "text-indigo-600 dark:text-indigo-400", items: ["Latencia para dormir prolongada", "Despertares noturnos frequentes", "Tempo acordado de madrugada prolongado", "Duracao total de sono reduzida"] },
-      { name: "Rotina e contexto", color: "text-slate-600 dark:text-slate-400", items: ["Horario de dormir irregular", "Associacao intensa para adormecer", "Sonecas desorganizadas para idade", "Sono dos cuidadores prejudicado"] },
+      { name: "Sono noturno", color: "text-indigo-600 dark:text-indigo-400", items: ["Latência para dormir prolongada", "Despertares noturnos frequentes", "Tempo acordado de madrugada prolongado", "Duração total de sono reduzida"] },
+      { name: "Rotina e contexto", color: "text-slate-600 dark:text-slate-400", items: ["Horário de dormir irregular", "Associação intensa para adormecer", "Sonecas desorganizadas para idade", "Sono dos cuidadores prejudicado"] },
     ],
   },
 
@@ -338,7 +338,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     bands: MENTAL_HEALTH_0_3_BANDS,
     domains: [
       { name: "Humor e prazer", color: "text-blue-600 dark:text-blue-400", items: ["Humor deprimido ou desesperanca", "Perda de interesse ou prazer", "Baixa autoestima ou culpa"] },
-      { name: "Energia e funcionamento", color: "text-slate-600 dark:text-slate-400", items: ["Fadiga ou lentificacao", "Dificuldade de concentração", "Prejuizo funcional por sintomas emocionais"] },
+      { name: "Energia e funcionamento", color: "text-slate-600 dark:text-slate-400", items: ["Fadiga ou lentificação", "Dificuldade de concentração", "Prejuizo funcional por sintomas emocionais"] },
     ],
   },
 
@@ -346,19 +346,19 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     icon: ShieldAlert,
     gradient: "from-yellow-600 to-orange-700",
     instruction: "Pontue sintomas de ansiedade nas últimas semanas. Pode ser respondida por cuidador ou auto-relato conforme idade.",
-    infoBox: "Registro estruturado por domínios da SCAS. Escore maior = maior carga ansiosa; use normas oficiais quando disponiveis.",
+    infoBox: "Registro estruturado por domínios da SCAS. Escore maior = maior carga ansiosa; use normas oficiais quando disponíveis.",
     labels: FREQUENCY_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",
     totalLabel: "Carga de ansiedade por domínios (0-72)",
     bands: MENTAL_HEALTH_0_3_BANDS,
     domains: [
-      { name: "Separacao", color: "text-yellow-600 dark:text-yellow-400", items: ["Medo intenso de ficar longe dos cuidadores", "Preocupação de algo ruim acontecer aos pais", "Dificuldade de dormir longe/cuidador"] },
+      { name: "Separação", color: "text-yellow-600 dark:text-yellow-400", items: ["Medo intenso de ficar longe dos cuidadores", "Preocupação de algo ruim acontecer aos pais", "Dificuldade de dormir longe/cuidador"] },
       { name: "Social", color: "text-orange-600 dark:text-orange-400", items: ["Medo de avaliação por outras pessoas", "Evita falar ou participar em grupo", "Vergonha intensa com pares/adultos"] },
-      { name: "Panico/somatico", color: "text-red-600 dark:text-red-400", items: ["Crises de medo com sintomas fisicos", "Palpitacao/falta de ar/tremor por ansiedade", "Medo de perder controle durante sintomas"] },
+      { name: "Panico/somático", color: "text-red-600 dark:text-red-400", items: ["Crises de medo com sintomas fisicos", "Palpitação/falta de ar/tremor por ansiedade", "Medo de perder controle durante sintomas"] },
       { name: "Generalizada", color: "text-amber-600 dark:text-amber-400", items: ["Preocupação excessiva com muitas coisas", "Dificuldade de controlar preocupação", "Tensão/irritabilidade por preocupação"] },
       { name: "Obsessivo-compulsivo", color: "text-purple-600 dark:text-purple-400", items: ["Pensamentos repetitivos indesejados", "Rituais ou checagens para aliviar ansiedade", "Sofrimento se impedido de fazer ritual"] },
-      { name: "Medo de dano", color: "text-lime-600 dark:text-lime-400", items: ["Medo intenso de escuro/animais/altura", "Evita situações por medo específico", "Ansiedade antecipatoria antes da exposicao"] },
+      { name: "Medo de dano", color: "text-lime-600 dark:text-lime-400", items: ["Medo intenso de escuro/animais/altura", "Evita situações por medo específico", "Ansiedade antecipatória antes da exposição"] },
     ],
   },
 
@@ -366,19 +366,19 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     icon: ShieldAlert,
     gradient: "from-cyan-700 to-blue-800",
     instruction: "Pontue sintomas de ansiedade e humor nas últimas semanas. Use como triagem dimensional e correlacione com entrevista clínica.",
-    infoBox: "Registro estruturado por domínios da RCADS. Escore maior = maior carga de sintomas; interpretacao normativa exige escore padronizado quando aplicável.",
+    infoBox: "Registro estruturado por domínios da RCADS. Escore maior = maior carga de sintomas; interpretação normativa exige escore padronizado quando aplicável.",
     labels: FREQUENCY_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",
     totalLabel: "Carga ansiedade/depressão RCADS (0-90)",
     bands: MENTAL_HEALTH_0_3_BANDS,
     domains: [
-      { name: "Ansiedade de separacao", color: "text-cyan-600 dark:text-cyan-400", items: ["Sofrimento ao separar-se de cuidadores", "Medo de perder ou algo acontecer aos cuidadores", "Evita dormir/sair sem cuidador", "Preocupação antes de separacoes", "Busca checagem/reasseguramento"] },
+      { name: "Ansiedade de separação", color: "text-cyan-600 dark:text-cyan-400", items: ["Sofrimento ao separar-se de cuidadores", "Medo de perder ou algo acontecer aos cuidadores", "Evita dormir/sair sem cuidador", "Preocupação antes de separações", "Busca checagem/reasseguramento"] },
       { name: "Ansiedade social", color: "text-blue-600 dark:text-blue-400", items: ["Medo de parecer inadequado", "Evita desempenho público", "Ansiedade com pessoas novas", "Medo de ser ridicularizado", "Dificuldade de participar em sala/grupo"] },
       { name: "Ansiedade generalizada", color: "text-amber-600 dark:text-amber-400", items: ["Preocupações excessivas", "Tensão por desempenho/escola", "Necessidade frequente de reasseguramento", "Dificuldade de relaxar", "Irritabilidade ligada a preocupação"] },
-      { name: "Panico/somatico", color: "text-red-600 dark:text-red-400", items: ["Medo abrupto intenso", "Sintomas fisicos de ansiedade", "Medo de nova crise", "Evita locais por medo de sintomas", "Procura fuga/segurança durante sintomas"] },
-      { name: "TOC", color: "text-purple-600 dark:text-purple-400", items: ["Pensamentos repetitivos intrusivos", "Rituais/checagens", "Tempo gasto com repeticoes", "Sofrimento se interrompido", "Impacto em rotina por obsessao/compulsao"] },
-      { name: "Humor depressivo", color: "text-slate-600 dark:text-slate-400", items: ["Tristeza ou vazio", "Perda de interesse", "Culpa/baixa autoestima", "Fadiga ou lentificacao", "Prejuizo escolar/social por humor"] },
+      { name: "Panico/somático", color: "text-red-600 dark:text-red-400", items: ["Medo abrupto intenso", "Sintomas fisicos de ansiedade", "Medo de nova crise", "Evita locais por medo de sintomas", "Procura fuga/segurança durante sintomas"] },
+      { name: "TOC", color: "text-purple-600 dark:text-purple-400", items: ["Pensamentos repetitivos intrusivos", "Rituais/checagens", "Tempo gasto com repetições", "Sofrimento se interrompido", "Impacto em rotina por obsessão/compulsão"] },
+      { name: "Humor depressivo", color: "text-slate-600 dark:text-slate-400", items: ["Tristeza ou vazio", "Perda de interesse", "Culpa/baixa autoestima", "Fadiga ou lentificação", "Prejuizo escolar/social por humor"] },
     ],
   },
 
@@ -386,23 +386,23 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     icon: Heart,
     gradient: "from-rose-700 to-purple-800",
     instruction: "Pontue o quanto a família modifica a rotina para acomodar sintomas obsessivo-compulsivos da criança/adolescente.",
-    infoBox: "Registro estruturado FAS-PR no app. Escore maior = maior acomodacao familiar; use para planejamento terapeutico.",
+    infoBox: "Registro estruturado FAS-PR no app. Escore maior = maior acomodação familiar; use para planejamento terapêutico.",
     labels: FREQUENCY_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",
-    totalLabel: "Acomodacao familiar ao TOC (0-36)",
+    totalLabel: "Acomodação familiar ao TOC (0-36)",
     bands: MENTAL_HEALTH_0_3_BANDS,
     domains: [
       { name: "Participação familiar", color: "text-rose-600 dark:text-rose-400", items: ["Participa de rituais/checagens", "Fornece reasseguramento repetitivo", "Ajuda a evitar gatilhos", "Repete respostas ou ações para reduzir ansiedade"] },
-      { name: "Modificacao de rotina", color: "text-purple-600 dark:text-purple-400", items: ["Altera horarios ou trajetos por sintomas", "Evita locais/atividades familiares", "Muda regras domesticas para prevenir crise", "Interrompe escola/trabalho/família por rituais"] },
-      { name: "Impacto e sofrimento", color: "text-fuchsia-600 dark:text-fuchsia-400", items: ["Conflitos familiares por acomodacao", "Sofrimento do cuidador", "Prejuizo em autonomia da criança", "Dificuldade de reduzir acomodacoes"] },
+      { name: "Modificação de rotina", color: "text-purple-600 dark:text-purple-400", items: ["Altera horários ou trajetos por sintomas", "Evita locais/atividades familiares", "Muda regras domésticas para prevenir crise", "Interrompe escola/trabalho/família por rituais"] },
+      { name: "Impacto e sofrimento", color: "text-fuchsia-600 dark:text-fuchsia-400", items: ["Conflitos familiares por acomodação", "Sofrimento do cuidador", "Prejuizo em autonomia da criança", "Dificuldade de reduzir acomodações"] },
     ],
   },
 
   engel: {
     icon: Activity,
     gradient: "from-violet-600 to-indigo-700",
-    instruction: "Selecione a classe que melhor descreve o desfecho atual das crises. Use junto ao diario de crises e ao julgamento neurológico.",
+    instruction: "Selecione a classe que melhor descreve o desfecho atual das crises. Use junto ao diário de crises e ao julgamento neurológico.",
     infoBox: "Classificação de desfecho em epilepsia. Escore maior = pior classe funcional. Não substitui revisão especializada.",
     labels: ["Classe I - livre de crises incapacitantes", "Classe II - crises raras / quase livre", "Classe III - melhora relevante, mas crises persistem", "Classe IV - sem melhora útil"],
     optionPoints: [0, 1, 2, 3],
@@ -415,14 +415,14 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
   bears: {
     icon: Moon,
     gradient: "from-indigo-600 to-slate-900",
-    instruction: "Marque a melhor descricao para cada área do sono nos últimos 14 dias. Se houver ronco importante, pausas respiratorias ou sonolencia intensa, priorize avaliação clínica.",
+    instruction: "Marque a melhor descrição para cada área do sono nos últimos 14 dias. Se houver ronco importante, pausas respiratórias ou sonolência intensa, priorize avaliação clínica.",
     infoBox: "BEARS e uma triagem rápida de sono. Escore maior = mais problemas relatados; interprete por domínio.",
     labels: ABSENT_MILD_CLEAR_LABELS,
     optionPoints: [0, 1, 2],
     scoreDirection: "higher_worse",
     totalLabel: "Sinais de problemas do sono (0-10)",
     bands: HIGHER_WORSE_0_2_BANDS,
-    domains: [{ name: "BEARS", color: "text-indigo-600 dark:text-indigo-400", items: ["B - Dificuldade para iniciar o sono ou resistência para dormir", "E - Sonolencia diurna excessiva", "A - Despertares noturnos frequentes ou prolongados", "R - Rotina/regularidade de sono inadequada", "S - Ronco, respiração ruidosa ou suspeita de apneia"] }],
+    domains: [{ name: "BEARS", color: "text-indigo-600 dark:text-indigo-400", items: ["B - Dificuldade para iniciar o sono ou resistência para dormir", "E - Sonolência diurna excessiva", "A - Despertares noturnos frequentes ou prolongados", "R - Rotina/regularidade de sono inadequada", "S - Ronco, respiração ruidosa ou suspeita de apneia"] }],
   },
 
   flacc: {
@@ -461,20 +461,20 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     scoreDirection: "higher_worse",
     totalLabel: "Escore COMFORT-B (6-30)",
     bands: COMFORT_B_BANDS,
-    domains: [{ name: "Comportamento observado", color: "text-orange-600 dark:text-orange-400", items: ["Alerta/estado de vigilia", "Calma ou agitacao", "Resposta respiratoria/choro", "Movimento corporal", "Tensão facial", "Tônus muscular"] }],
+    domains: [{ name: "Comportamento observado", color: "text-orange-600 dark:text-orange-400", items: ["Alerta/estado de vigilia", "Calma ou agitação", "Resposta respiratória/choro", "Movimento corporal", "Tensão facial", "Tônus muscular"] }],
   },
 
   bars: {
     icon: Pill,
     gradient: "from-amber-600 to-orange-700",
     instruction: "Pontue sinais objetivos e subjetivos de acatisia observados/relatados no atendimento atual.",
-    infoBox: "BARS monitora acatisia, especialmente em uso de antipsicoticos. Escore maior = maior suspeita/gravidade; avalie urgência conforme sofrimento.",
+    infoBox: "BARS monitora acatisia, especialmente em uso de antipsicóticos. Escore maior = maior suspeita/gravidade; avalie urgência conforme sofrimento.",
     labels: SEVERITY_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",
     totalLabel: "Carga de acatisia (0-12)",
     bands: MED_SIDE_EFFECT_BANDS,
-    domains: [{ name: "Acatisia", color: "text-amber-600 dark:text-amber-400", items: ["Movimentos inquietos observaveis", "Sensacao subjetiva de inquietude", "Sofrimento/desconforto associado", "Impressao clínica global de acatisia"] }],
+    domains: [{ name: "Acatisia", color: "text-amber-600 dark:text-amber-400", items: ["Movimentos inquietos observáveis", "Sensação subjetiva de inquietude", "Sofrimento/desconforto associado", "Impressão clínica global de acatisia"] }],
   },
 
   uku: {
@@ -488,10 +488,10 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     totalLabel: "Carga de efeitos colaterais (0-144)",
     bands: MED_SIDE_EFFECT_BANDS,
     domains: [
-      { name: "Psiquicos", color: "text-sky-600 dark:text-sky-400", items: ["Sonolencia/sedação", "Fadiga", "Dificuldade de concentração", "Alteração de memória", "Ansiedade/inquietacao", "Humor deprimido", "Irritabilidade", "Insonia", "Sonhos vividos", "Apatia", "Tontura subjetiva", "Outro efeito psíquico"] },
-      { name: "Neurológicos", color: "text-violet-600 dark:text-violet-400", items: ["Tremor", "Rigidez", "Acatisia", "Distonia", "Discinesia", "Marcha instável", "Parestesias", "Cefaleia", "Convulsão/piora de crise", "Lentificacao motora", "Alteração de fala/deglutição", "Outro efeito neurológico"] },
-      { name: "Autonomicos", color: "text-teal-600 dark:text-teal-400", items: ["Boca seca", "Sialorreia", "Nausea/vomitos", "Constipacao", "Diarreia", "Sudorese", "Palpitacoes", "Hipotensao/tontura postural", "Retencao urinaria", "Alteração visual", "Aumento de apetite", "Outro efeito autonomico"] },
-      { name: "Outros", color: "text-slate-600 dark:text-slate-400", items: ["Ganho de peso", "Perda de peso", "Alteração de libido/puberdade", "Alteração menstrual/prolactina", "Erupcao cutanea", "Prurido", "Edema", "Dor abdominal", "Febre/mal-estar", "Alteração laboratorial conhecida", "Queda ou acidente relacionado", "Outro efeito relevante"] },
+      { name: "Psiquicos", color: "text-sky-600 dark:text-sky-400", items: ["Sonolência/sedação", "Fadiga", "Dificuldade de concentração", "Alteração de memória", "Ansiedade/inquietação", "Humor deprimido", "Irritabilidade", "Insonia", "Sonhos vividos", "Apatia", "Tontura subjetiva", "Outro efeito psíquico"] },
+      { name: "Neurológicos", color: "text-violet-600 dark:text-violet-400", items: ["Tremor", "Rigidez", "Acatisia", "Distonia", "Discinesia", "Marcha instável", "Parestesias", "Cefaleia", "Convulsão/piora de crise", "Lentificação motora", "Alteração de fala/deglutição", "Outro efeito neurológico"] },
+      { name: "Autonomicos", color: "text-teal-600 dark:text-teal-400", items: ["Boca seca", "Sialorreia", "Nausea/vomitos", "Constipação", "Diarreia", "Sudorese", "Palpitações", "Hipotensão/tontura postural", "Retenção urinária", "Alteração visual", "Aumento de apetite", "Outro efeito autonômico"] },
+      { name: "Outros", color: "text-slate-600 dark:text-slate-400", items: ["Ganho de peso", "Perda de peso", "Alteração de libido/puberdade", "Alteração menstrual/prolactina", "Erupção cutânea", "Prurido", "Edema", "Dor abdominal", "Febre/mal-estar", "Alteração laboratorial conhecida", "Queda ou acidente relacionado", "Outro efeito relevante"] },
     ],
   },
 
@@ -1287,7 +1287,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
       "Ajusta o volume ao contexto",
       "A entonação combina com a intenção (pergunta, afirmação)",
       "Entende a emoção do outro pelo tom de voz",
-      "Diferencia pergunta de afirmação pela entonação",
+      "Diferência pergunta de afirmação pela entonação",
       "A prosódia ajuda (e não atrapalha) a comunicação",
     ]}],
   },
@@ -1707,7 +1707,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     infoBox: "Avalia conhecimento e proteção em saúde sexual de adolescentes com NEE (maior = mais protegido e orientado). Orienta a educação sexual adaptada. Não é diagnóstico.",
     labels: MILESTONE_LABELS, totalLabel: "Saúde sexual e proteção (maior = melhor)", bands: DEV_BANDS,
     domains: [{ name: "Educação e proteção sexual", color: "text-pink-600 dark:text-pink-400", items: [
-      "Conhece as partes do corpo e a privacidade corporal","Diferencia toque adequado de inadequado","Sabe dizer “não” a toques indesejados","Sabe a quem recorrer se algo errado acontecer","Entende noções de puberdade e mudanças do corpo","Tem noções de relacionamentos saudáveis","Entende limites e consentimento (no nível possível)","Tem a sua privacidade respeitada e compreende a dos outros","Conhece riscos básicos (abuso, exposição online)","Recebe educação sexual adaptada","Comunica desconfortos relacionados ao corpo","Tem proteção e orientação adequadas",
+      "Conhece as partes do corpo e a privacidade corporal","Diferência toque adequado de inadequado","Sabe dizer “não” a toques indesejados","Sabe a quem recorrer se algo errado acontecer","Entende noções de puberdade e mudanças do corpo","Tem noções de relacionamentos saudáveis","Entende limites e consentimento (no nível possível)","Tem a sua privacidade respeitada e compreende a dos outros","Conhece riscos básicos (abuso, exposição online)","Recebe educação sexual adaptada","Comunica desconfortos relacionados ao corpo","Tem proteção e orientação adequadas",
     ]}],
   },
   "j26-210": {
