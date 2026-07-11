@@ -22,6 +22,7 @@ import { j26Bloco2Items } from "./interactiveScaleItemsJ26Bloco2";
 import { j26Bloco3Items } from "./interactiveScaleItemsJ26Bloco3";
 import { j26Bloco4Items } from "./interactiveScaleItemsJ26Bloco4";
 import { driveImport2026Items } from "./interactiveScaleItemsDrive2026";
+import { podjTeaPrimeItems } from "./interactiveScaleItemsPodjTeaPrime";
 
 export interface InteractiveBand {
   /** Percentual mínimo do escore máximo (0-100) para cair nesta faixa. */
@@ -2713,6 +2714,7 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...freeBatch1Items,
   ...freeBatch2Items,
   ...freeBatch3Items,
+  ...podjTeaPrimeItems,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
