@@ -127,6 +127,17 @@ for (const level of [1, 2, 3] as const) {
     }
     ok(ms.some((t) => t.correctResponse === "javi"), `${memId}: possui repetidos`);
     ok(badRepeat === 0, `${memId}: todo "repetido" apareceu antes de fato`);
+    // Regressão: um item marcado como NOVO não pode ter aparecido antes na
+    // mesma aplicação (pool reciclado gerava falso alarme injusto).
+    const novosVistos = new Set<string>();
+    let novoReciclado = 0;
+    for (const t of ms) {
+      if (t.correctResponse === null) {
+        if (novosVistos.has(t.stimulus.display)) novoReciclado++;
+        novosVistos.add(t.stimulus.display);
+      }
+    }
+    ok(novoReciclado === 0, `${memId}: nenhum "novo" reciclado (${novoReciclado})`);
   }
 }
 

@@ -130,6 +130,7 @@ export function TowerRunner() {
     onsetMs: 0,
     /** timestamp do PRIMEIRO movimento do problema (latência de planejamento). */
     firstMoveMs: null as number | null,
+    solving: false,
     totalMoves: 0,
     totalMin: 0,
     solved: 0,
@@ -152,6 +153,7 @@ export function TowerRunner() {
     const r = ref.current;
     r.onsetMs = performance.now();
     r.firstMoveMs = null;
+    r.solving = false;
     setProblemIdx(idx);
     setBoard(cloneState(TOWER_PROBLEMS[idx].start));
     setPicked(null);
@@ -178,6 +180,10 @@ export function TowerRunner() {
 
   function handleSolved(finalMoves: number) {
     const r = ref.current;
+    // Duplo toque no pino do movimento final disparava handleSolved 2× —
+    // registro duplicado e advance pulando um problema. Trava por problema.
+    if (r.solving) return;
+    r.solving = true;
     const min = MINIMUMS[problemIdx];
     const latency =
       r.firstMoveMs !== null ? Math.round(r.firstMoveMs - r.onsetMs) : 0;
@@ -204,8 +210,8 @@ export function TowerRunner() {
   }
 
   function handlePegTap(peg: number) {
-    if (phase !== "playing") return;
     const r = ref.current;
+    if (phase !== "playing" || r.solving) return;
     if (picked === null) {
       if (board[peg].length === 0) {
         flashError(peg);
@@ -331,6 +337,7 @@ export function TowerRunner() {
       startedAtIso: "",
       onsetMs: 0,
       firstMoveMs: null,
+      solving: false,
       totalMoves: 0,
       totalMin: 0,
       solved: 0,

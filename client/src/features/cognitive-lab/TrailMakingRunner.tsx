@@ -89,6 +89,7 @@ export function TrailMakingRunner() {
     sequence: [] as string[],
     layout: [] as Array<{ x: number; y: number }>,
     records: [] as TrialRecord[],
+    progress: 0,
     errors: { A: 0, B: 0 },
     timesMs: { A: 0, B: 0 },
     partStart: 0,
@@ -115,6 +116,7 @@ export function TrailMakingRunner() {
     r.layout = makeTrailLayout(r.sequence.length, r.rng);
     r.partStart = performance.now();
     r.lastHit = r.partStart;
+    r.progress = 0;
     setPart(p);
     setProgress(0);
     setFlashIdx(-1);
@@ -123,11 +125,13 @@ export function TrailMakingRunner() {
 
   function tapTarget(i: number) {
     const r = ref.current;
-    if (phase !== "running" || i < progress) return;
+    // r.progress é a fonte de verdade: o estado React fica obsoleto num duplo
+    // toque no mesmo frame e duplicava o registro do nó com RT ~0.
+    if (phase !== "running" || i < r.progress) return;
     const now = performance.now();
     const tag = part === "A" ? "parte-a" : "parte-b";
     const block = part === "A" ? 0 : 1;
-    if (i === progress) {
+    if (i === r.progress) {
       r.records.push({
         index: r.records.length,
         block,
@@ -141,7 +145,8 @@ export function TrailMakingRunner() {
         onsetMs: r.lastHit,
       });
       r.lastHit = now;
-      const next = progress + 1;
+      const next = r.progress + 1;
+      r.progress = next;
       setProgress(next);
       if (next === r.sequence.length) {
         r.timesMs[part] = now - r.partStart;
@@ -214,6 +219,7 @@ export function TrailMakingRunner() {
       timesMs: { A: 0, B: 0 },
       sequence: [],
       layout: [],
+      progress: 0,
       rng: null,
       seed: Math.floor(Math.random() * 2 ** 31),
       startedAtIso: "",

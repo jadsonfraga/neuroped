@@ -64,6 +64,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
     records: [] as TrialRecord[],
     onset: 0,
     answered: false,
+    stimulusOn: false,
     timers: [] as number[],
     startedAtIso: "",
     phase: "intro" as "practice" | "test" | "intro",
@@ -125,6 +126,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
     after(task.fixationMs, () => {
       setTrialState("stimulus");
       r.onset = performance.now();
+      r.stimulusOn = true;
       if (task.stimulusMs > 0) after(task.stimulusMs, () => setTrialState("blank"));
       after(task.deadlineMs, () => {
         if (r.answered) return;
@@ -136,6 +138,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
 
   function settleTrial(responded: string | null, rtMs: number | null) {
     const r = ref.current;
+    r.stimulusOn = false;
     if (r.phase !== "practice" && r.phase !== "test") return;
     const p = r.phase;
     const spec = trialsOf(p, r.block)[r.trialIdx];
@@ -208,6 +211,9 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
   function respond(responseId: string) {
     const r = ref.current;
     if (r.phase !== "practice" && r.phase !== "test") return;
+    // Só aceita resposta com o estímulo em janela (onset → prazo). Sem isso,
+    // um toque durante a FIXAÇÃO consumia o ensaio com RT lixo do anterior.
+    if (!r.stimulusOn) return;
     if (r.answered) return;
     const rt = performance.now() - r.onset;
     r.answered = true;
