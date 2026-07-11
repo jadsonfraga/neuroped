@@ -57,7 +57,8 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
     setLoading(true);
     try {
       const formatted = formatPhoneNumber(phone);
-      const message = `*${scaleName}*\n\nPontuação: ${totalScore ?? "—"}\n\n${reportText.slice(0, 3000)}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
+      const scoreLine = totalScore === undefined || totalScore === null ? "" : `Pontuação: ${totalScore}\n\n`;
+      const message = `*${scaleName}*\n\n${scoreLine}${reportText.slice(0, 3000)}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
 
       // Try to send via API first (if backend supports it)
       try {

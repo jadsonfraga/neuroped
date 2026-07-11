@@ -57,6 +57,8 @@ interface ClinicalReportProps {
   domainResults?: DomainResult[];
   items?: ReportItem[];
   patientAge?: string;
+  /** Oculta escore/pontuação/classificação — relatório vira só perguntas+respostas. */
+  hideScore?: boolean;
   // Forma legada (relatório por seções):
   title?: string;
   sections?: { title: string; content: string }[];
@@ -73,6 +75,7 @@ interface NormalizedReport {
   domainResults?: DomainResult[];
   items: ReportItem[];
   patientAge?: string;
+  hideScore: boolean;
 }
 
 function normalizeReportProps(p: ClinicalReportProps): NormalizedReport {
@@ -85,9 +88,10 @@ function normalizeReportProps(p: ClinicalReportProps): NormalizedReport {
     maxScore: p.maxScore,
     classification: p.classification ?? "",
     description: p.description ?? "",
-    domainResults: p.domainResults,
+    domainResults: p.hideScore ? undefined : p.domainResults,
     items,
     patientAge: p.patientAge,
+    hideScore: p.hideScore ?? false,
   };
 }
 
@@ -179,12 +183,17 @@ function generateInterpretation(props: NormalizedReport): string {
   if (patientAge) text += `Faixa etária do paciente: ${patientAge}\n`;
   text += "\n";
 
-  text += "RESULTADO GERAL\n";
-  text += `Pontuação total: ${totalScore}${maxScore ? ` de ${maxScore} pontos possíveis` : ""}\n`;
-  text += `Classificação: ${classification}\n`;
-  text += `Interpretação: ${description}\n\n`;
+  if (props.hideScore) {
+    text += "REGISTRO DE RESPOSTAS\n";
+    text += `${description || "Transcrição por extenso das perguntas e respostas selecionadas — sem escore ou classificação."}\n\n`;
+  } else {
+    text += "RESULTADO GERAL\n";
+    text += `Pontuação total: ${totalScore}${maxScore ? ` de ${maxScore} pontos possíveis` : ""}\n`;
+    text += `Classificação: ${classification}\n`;
+    text += `Interpretação: ${description}\n\n`;
+  }
 
-  if (domainResults && domainResults.length > 0) {
+  if (!props.hideScore && domainResults && domainResults.length > 0) {
     text += "RESULTADOS POR DOMÍNIO\n";
     domainResults.forEach((dr) => {
       text += `- ${dr.domain}: ${dr.score} pontos — ${dr.classification}\n`;
@@ -192,11 +201,15 @@ function generateInterpretation(props: NormalizedReport): string {
     text += "\n";
   }
 
-  text += "DETALHAMENTO DAS RESPOSTAS\n";
-  text += "A seguir, são apresentados todos os itens respondidos, com a resposta selecionada e o valor atribuído.\n\n";
+  text += "PERGUNTAS E RESPOSTAS\n";
+  text += props.hideScore
+    ? "Cada item com a resposta selecionada, por extenso.\n\n"
+    : "A seguir, são apresentados todos os itens respondidos, com a resposta selecionada e o valor atribuído.\n\n";
   items.forEach((item, i) => {
-    text += `Item ${i + 1}: ${item.question}\n`;
-    text += `  Resposta: ${item.answer} (valor: ${item.value})\n`;
+    text += `${i + 1}. ${item.question}\n`;
+    text += props.hideScore
+      ? `   Resposta: ${item.answer}\n`
+      : `   Resposta: ${item.answer} (valor: ${item.value})\n`;
   });
   text += "\n";
 
@@ -276,12 +289,12 @@ function buildPrintHtml(props: NormalizedReport) {
   </div>
 
   <div class="section">
-    <h2>Resultado Geral</h2>
-    <div class="result-box">
+    <h2>${props.hideScore ? "Registro de respostas" : "Resultado Geral"}</h2>
+    ${props.hideScore ? "" : `<div class="result-box">
       <span class="score">${escapeHtml(props.totalScore)}</span>
       <span class="label">${props.maxScore ? ` / ${escapeHtml(props.maxScore)} pontos` : " pontos"}</span>
       <div class="classification">${escapeHtml(props.classification)}</div>
-    </div>
+    </div>`}
     <p class="narrative">${escapeHtml(props.description)}</p>
   </div>
 

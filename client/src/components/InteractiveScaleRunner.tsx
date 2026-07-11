@@ -87,95 +87,37 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
             <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-tight">Resultado — {def.name}</h1>
-            <p className="text-xs italic text-muted-foreground">Avaliação concluída</p>
+            <h1 className="text-lg font-bold leading-tight">Respostas — {def.name}</h1>
+            <p className="text-xs italic text-muted-foreground">Perguntas e respostas registradas — análise clínica pelo profissional</p>
           </div>
         </div>
 
-        <Card className="overflow-hidden border-card-border shadow-sm">
-          {/* Herói comemorativo com o escore em destaque */}
-          <motion.div
-            variants={scaleIn}
-            initial="hidden"
-            animate="visible"
-            className={`relative overflow-hidden bg-gradient-to-br p-7 text-center ${heroGradient[band.tone] ?? heroGradient.ok}`}
-          >
-            <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-            <div aria-hidden="true" className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
-            <div className="relative space-y-2">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5" /> Pontuação final
-              </div>
-              <div className="flex items-end justify-center gap-1.5">
-                <span className="text-6xl font-black leading-none text-white drop-shadow-sm">{score}</span>
-                <span className="pb-1.5 text-base font-semibold text-white/80">/ {maxScore}</span>
-              </div>
-              <Badge className="border-white/30 bg-white/20 px-4 py-1.5 text-sm text-white backdrop-blur-sm">{band.risk}</Badge>
-            </div>
-          </motion.div>
-
-          <CardContent className="space-y-5 p-6">
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {band.tone === "ok" ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-                )}
-                <p className="text-sm leading-relaxed text-foreground">{band.description}</p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/40 dark:bg-blue-950/20">
-              <div className="flex items-start gap-2">
-                <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-                <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-                  <p><strong>Faixas de interpretação:</strong></p>
-                  {def.bands.map((b) => {
-                    const active = score >= b.min && score <= b.max;
-                    return (
-                      <p key={b.risk} className={active ? "font-bold" : ""}>
-                        {active ? "▸ " : ""}{b.min}–{b.max}: {b.risk}
-                      </p>
-                    );
-                  })}
-                  <p className="pt-1 italic">Fonte: {def.source}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Respostas na íntegra — cada item com a resposta escolhida */}
+        {/* RESULTADO = perguntas e respostas por extenso. Sem escore, corte ou
+            classificação (pedido do autor, 2026). */}
         <Card className="border-card-border">
-          <CardContent className="p-6">
-            <details open>
-              <summary className="cursor-pointer select-none text-sm font-semibold text-foreground">
-                Respostas item a item ({answered}/{total})
-              </summary>
-              <ol className="mt-3 space-y-1">
-                {def.items.map((item, i) => (
-                  <li key={i} className="flex items-start justify-between gap-3 text-[11.5px] leading-snug">
-                    <span className="min-w-0 text-muted-foreground">
-                      <span className="text-foreground">{i + 1}.</span> {item.text}
-                    </span>
-                    <span className="shrink-0 font-semibold text-foreground">
-                      {answers[i] != null ? item.options[answers[i]].label : "—"}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </details>
+          <CardContent className="space-y-3 p-6">
+            <h3 className="text-sm font-semibold text-foreground">Perguntas e respostas ({answered}/{total})</h3>
+            <ol className="space-y-2">
+              {def.items.map((item, i) => (
+                <li key={i} className="border-b border-border/40 pb-2 last:border-0">
+                  <p className="text-sm leading-snug text-foreground">
+                    <span className="font-mono text-xs text-muted-foreground">{i + 1}.</span> {item.text}
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-primary">
+                    → {answers[i] != null ? item.options[answers[i]].label : "—"}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </CardContent>
         </Card>
 
         <ClinicalReport
           scaleName={def.name}
           scaleFullName={def.fullName}
-          totalScore={score}
-          maxScore={maxScore}
-          classification={band.risk}
-          description={band.description}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description="Transcrição por extenso das perguntas e das respostas selecionadas. Sem escore, ponto de corte ou classificação automática."
           items={def.items.map((item, i) => ({
             question: item.text,
             answer: answers[i] != null ? item.options[answers[i]].label : "—",
