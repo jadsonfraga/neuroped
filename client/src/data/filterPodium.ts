@@ -92,6 +92,12 @@ export function selectPodium(
       if (selectedQueixaSet.has(queixa)) coveredQueixas.add(queixa);
     }
   };
+  // Modalidades já usadas pelos selos anteriores. Serve APENAS como desempate:
+  // quando dois candidatos têm mérito clínico equivalente, prefere o que traz
+  // uma perspectiva (modalidade) ainda não representada no pódio. Peso baixo (3)
+  // para não destronar relevância nem cobertura — só desempata (Goodhart-safe:
+  // em idades onde só existe uma modalidade, nada muda).
+  const usedModes = new Set<string>();
   const clinicalChoiceScore = (
     match: RefinedScaleMatch,
     coveredQueixas: Set<string>,
@@ -102,6 +108,7 @@ export function selectPodium(
     const curatedBonus = (curatedPriority.get(match.scale.id) ?? 0) * 6;
     const signalBonus = (match.signalSpecificityScore ?? 0) * 2.5;
     const confidenceBonus = Math.round((match.confidenceLevel ?? 0) / 12);
+    const diversityPenalty = usedModes.has(match.applicationMode ?? "") ? 3 : 0;
     return (
       match.relevanceScore +
       explicitPreference +
@@ -109,7 +116,8 @@ export function selectPodium(
       signalBonus +
       confidenceBonus +
       coverageGain(match, coveredQueixas) * coverageWeight +
-      coverageTotal(match) * 5
+      coverageTotal(match) * 5 -
+      diversityPenalty
     );
   };
   const pickByClinicalFit = (
@@ -208,24 +216,41 @@ export function selectPodium(
   markCovered(ouro, coveredQueixas);
   const ouroMode = ouro?.applicationMode ?? null;
   const ouroQueixas = new Set(ouro?.scale.queixas ?? []);
+  if (ouroMode) usedModes.add(ouroMode);
 
   // ── PRATA ─────────────────────────────────────────────────────────────────
-  // Prata curada (complemento intencional do autor) é autoritativa; na falta,
-  // busca o melhor complemento (modalidade OU domínio distinto do ouro).
-  let prata = pickCurated(curatedTiers?.prata);
-  if (prata) {
-    used.add(prata.scale.id);
+  // Prata curada (complemento intencional do autor) é autoritativa, EXCETO
+  // quando o perfil é multi-queixa, a prata curada NÃO cobre nenhuma queixa
+  // ainda descoberta e existe candidato que cubra — aí a cobertura vence, para
+  // que Prata e Bronze juntos falem a TODAS as queixas marcadas (antes só o
+  // Bronze tinha essa chance, deixando pares/trios sem cobrir a 2ª/3ª queixa).
+  const uncoveredAfterOuro = selectedQueixas.filter((q) => !coveredQueixas.has(q));
+  const curatedPrata = pickCurated(curatedTiers?.prata);
+  const curatedPrataCovers = curatedPrata
+    ? curatedPrata.scale.queixas.some((q) => uncoveredAfterOuro.includes(q))
+    : false;
+  const prataCoverageCandidateExists =
+    uncoveredAfterOuro.length > 0 &&
+    sorted.some((m) => !used.has(m.scale.id) && coverageGain(m, coveredQueixas) > 0);
+  let prata: RefinedScaleMatch | undefined;
+  if (curatedPrata && (curatedPrataCovers || !prataCoverageCandidateExists)) {
+    used.add(curatedPrata.scale.id);
+    prata = curatedPrata;
   } else {
     prata =
       takeBestAvailable(
         (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q)),
-        [],
-        { coveredQueixas, coverageWeight: 30 },
-      ) ?? takeBestAvailable(() => true, [], { coveredQueixas, coverageWeight: 24 });
+        curatedTiers?.prata ? [curatedTiers.prata] : [],
+        { coveredQueixas, coverageWeight: 40 },
+      ) ?? takeBestAvailable(() => true, curatedTiers?.prata ? [curatedTiers.prata] : [], {
+        coveredQueixas,
+        coverageWeight: 30,
+      });
   }
   markCovered(prata, coveredQueixas);
   const prataMode = prata?.applicationMode ?? null;
   const prataQueixas = new Set(prata?.scale.queixas ?? []);
+  if (prataMode) usedModes.add(prataMode);
 
   // ── BRONZE ────────────────────────────────────────────────────────────────
   // Bronze curado é autoritativo, EXCETO quando ainda há queixa marcada sem
