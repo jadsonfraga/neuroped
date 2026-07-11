@@ -269,6 +269,9 @@ function buildOPB(
     mainQuestion: copy?.mainQuestion || firstSentence(scale.description) || scale.fullName || scale.name,
     parentExample:
       copy?.parentExample ||
+      // Exemplo concreto em linguagem de pais (auditoria escala-a-escala 2026-07):
+      // o que observar no dia a dia ao responder — melhor que o fallback genérico.
+      scale.exemploPais ||
       `Aplicada com ${resp}; os itens avaliam ${queixaLabel.toLowerCase()} de forma ajustada à faixa etária da criança.`,
     whyUseful: seal === "ouro" ? whyUsefulFallback : copy?.whyUseful || whyUsefulFallback,
   };
@@ -893,8 +896,13 @@ export default function FiltroPage() {
 
   // === PÓDIO: score-ordered, curated tiers as soft tiebreaker, quality threshold ≥60 ===
   const auditedPodium = useMemo(
-    () => selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers, { selectedQueixas }),
-    [refinedMatches, hasSafeResults, curatedTiers, selectedQueixas]
+    () =>
+      selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers, {
+        selectedQueixas,
+        ageMonths: curatedAgeMonths,
+        selectedSignals: selectedSignalIds,
+      }),
+    [refinedMatches, hasSafeResults, curatedTiers, selectedQueixas, curatedAgeMonths, selectedSignalIds]
   );
 
   // Síntese clínica referencia o Ouro do pódio directamente (elimina divergência).

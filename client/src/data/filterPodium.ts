@@ -1,4 +1,4 @@
-import { getApplicationMode, type RefinedScaleMatch } from "./advancedFilterLogic";
+import { getApplicationMode, getImplementationStatus, type RefinedScaleMatch } from "./advancedFilterLogic";
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import type { Respondente } from "./scaleFilter";
 
@@ -6,6 +6,14 @@ export type PodiumSlot = "ouro" | "prata" | "bronze" | "direct" | "school";
 export type PodiumSelection = Record<PodiumSlot, RefinedScaleMatch | undefined>;
 export interface PodiumSelectionContext {
   selectedQueixas?: string[];
+  // Idade EXATA do paciente (meses). O motor de relevância pontua sobreposição
+  // de faixa; aqui garantimos que o pódio prefira escalas cujo intervalo
+  // [ageMin, ageMax] CONTÉM a idade — uma escala "quase na faixa" só medalha
+  // quando não existe alternativa que cubra a idade de fato.
+  ageMonths?: number | null;
+  // Sinais/sintomas que o usuário marcou no filtro. O pódio deve conter ao
+  // menos uma escala que fale a esses sinais quando o catálogo permite.
+  selectedSignals?: string[];
 }
 
 export function selectCuratedTiers(
@@ -81,6 +89,12 @@ export function selectPodium(
     : [];
   const selectedQueixas = [...new Set(context.selectedQueixas ?? [])];
   const selectedQueixaSet = new Set(selectedQueixas);
+  const exactAge = context.ageMonths ?? null;
+  const selectedSignals = context.selectedSignals ?? [];
+  const containsAge = (match: RefinedScaleMatch) =>
+    exactAge === null || (match.scale.ageMin <= exactAge && match.scale.ageMax >= exactAge);
+  const signalHit = (match: RefinedScaleMatch) =>
+    selectedSignals.length > 0 && (match.scale.signalTags ?? []).some((tag) => selectedSignals.includes(tag));
   const matchedSelectedQueixas = (match: RefinedScaleMatch) =>
     selectedQueixas.filter((queixa) => match.scale.queixas.includes(queixa));
   const coverageGain = (match: RefinedScaleMatch, coveredQueixas: Set<string>) =>
@@ -109,15 +123,26 @@ export function selectPodium(
     const signalBonus = (match.signalSpecificityScore ?? 0) * 2.5;
     const confidenceBonus = Math.round((match.confidenceLevel ?? 0) / 12);
     const diversityPenalty = usedModes.has(match.applicationMode ?? "") ? 3 : 0;
+    // Uma escala cuja faixa NÃO contém a idade exata só deve medalhar na falta
+    // de alternativa; idem para recomendações sem nada aplicável no app.
+    const ageFitBonus = containsAge(match) ? 14 : 0;
+    const signalHitBonus = signalHit(match) ? 6 : 0;
+    // Penalidade forte: um card "recomendação" (sem NADA aplicável no app) não
+    // deve vencer o MESMO construto com aplicação completa (ex.: world-bears
+    // rel=100 vs bears rel=84 — o clínico quer a versão que abre e pontua).
+    const notImplementedPenalty = getImplementationStatus(match.scale) === "not_implemented" ? 20 : 0;
     return (
       match.relevanceScore +
       explicitPreference +
       curatedBonus +
       signalBonus +
+      signalHitBonus +
+      ageFitBonus +
       confidenceBonus +
       coverageGain(match, coveredQueixas) * coverageWeight +
       coverageTotal(match) * 5 -
-      diversityPenalty
+      diversityPenalty -
+      notImplementedPenalty
     );
   };
   const pickByClinicalFit = (
@@ -152,11 +177,20 @@ export function selectPodium(
     const preferred = [...preferredIds, ...curatedIds].filter((id, index, arr) => arr.indexOf(id) === index);
     const coveredQueixas = options.coveredQueixas ?? new Set<string>();
     const coverageWeight = options.coverageWeight ?? 0;
+    // Preferência curada NÃO atropela a idade: se existe candidato elegível que
+    // contém a idade exata, um id preferido fora da idade sai da lista (mesma
+    // regra do pickCurated — idade real vence banda de curadoria).
+    const anyEligibleContainsAge = sorted.some((m) => !used.has(m.scale.id) && pred(m) && containsAge(m));
     const preferredMatches = preferred
       .map((id) => byId.get(id))
-      .filter((match): match is RefinedScaleMatch => Boolean(match));
+      .filter((match): match is RefinedScaleMatch => Boolean(match))
+      .filter((match) => containsAge(match) || !anyEligibleContainsAge);
     const eligible = sorted.filter((m) => !used.has(m.scale.id) && pred(m));
     const highQuality = eligible.filter((m) => m.relevanceScore >= QUALITY_THRESHOLD);
+    // Camada de idade exata: dentro de cada faixa de qualidade, quem CONTÉM a
+    // idade do paciente vem antes de quem só encosta na banda.
+    const highQualityExact = highQuality.filter(containsAge);
+    const eligibleExact = eligible.filter(containsAge);
     const preferredHighQuality = preferredMatches.filter(
       (m) => !used.has(m.scale.id) && m.relevanceScore >= QUALITY_THRESHOLD && pred(m)
     );
@@ -164,9 +198,13 @@ export function selectPodium(
     const found = options.preferCuratedFirst
       ? pickByClinicalFit(preferredHighQuality, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(preferredSafe, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(highQualityExact, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(highQuality, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(eligibleExact, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(eligible, coveredQueixas, preferredIds, coverageWeight)
-      : pickByClinicalFit(highQuality, coveredQueixas, preferredIds, coverageWeight) ??
+      : pickByClinicalFit(highQualityExact, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(highQuality, coveredQueixas, preferredIds, coverageWeight) ??
+        pickByClinicalFit(eligibleExact, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(eligible, coveredQueixas, preferredIds, coverageWeight);
     if (found) used.add(found.scale.id);
     return found;
@@ -184,8 +222,16 @@ export function selectPodium(
   // o override "qualquer autoral por relevância" coroava checklists autorais
   // genéricos em vez do protocolo curado). A heurística de relevância/cobertura
   // só decide quando não há id curado utilizável para aquele slot.
-  const pickCurated = (id: string | undefined) =>
-    id && !used.has(id) ? byId.get(id) : undefined;
+  // Curadoria vale quando a escala indicada CONTÉM a idade exata do paciente:
+  // as regras de ranking são por banda etária larga, e uma escala curada para a
+  // banda pode não cobrir a idade específica (ex.: regra 12-19a apontando
+  // instrumento 15-19a para um paciente de 13a). Fora da idade, cai para a
+  // heurística — que já prioriza idade exata.
+  const pickCurated = (id: string | undefined) => {
+    if (!id || used.has(id)) return undefined;
+    const match = byId.get(id);
+    return match && containsAge(match) ? match : undefined;
+  };
 
   // ── OURO ──────────────────────────────────────────────────────────────────
   let ouro = pickCurated(curatedTiers?.ouro);
@@ -195,13 +241,18 @@ export function selectPodium(
     // Sem OURO curado utilizável: mantém a prioridade autoral qualificada
     // (protocolo autoral não-broadband e com qualidade de pódio) e, na falta,
     // a melhor escala clínica disponível.
-    const autoralOuro = sorted.find(
-      (m) =>
-        m.scale.licencaUso === "autoral" &&
-        !m.isBroadbandFallback &&
-        m.relevanceScore >= QUALITY_THRESHOLD &&
-        !used.has(m.scale.id),
-    );
+    const autoralQualifies = (m: RefinedScaleMatch) =>
+      m.scale.licencaUso === "autoral" &&
+      !m.isBroadbandFallback &&
+      m.relevanceScore >= QUALITY_THRESHOLD &&
+      !used.has(m.scale.id);
+    // Autoral só assume o Ouro se contém a idade exata; fora dela, a
+    // heurística (que prioriza idade) decide — um protocolo 12-19a não deve
+    // ser Ouro para um bebê só por ser autoral.
+    const someoneContainsAge = sorted.some((m) => !used.has(m.scale.id) && containsAge(m));
+    const autoralOuro =
+      sorted.find((m) => autoralQualifies(m) && containsAge(m)) ??
+      (someoneContainsAge ? undefined : sorted.find(autoralQualifies));
     if (autoralOuro) {
       used.add(autoralOuro.scale.id);
       ouro = autoralOuro;
@@ -284,6 +335,118 @@ export function selectPodium(
       });
   }
   markCovered(bronze, coveredQueixas);
+
+  // ── PÓS-PASSE DE QUALIDADE ────────────────────────────────────────────────
+  // Queixas marcadas que só ESTA medalha cobre (trocá-la não pode descobrir).
+  const uniqueQueixasOf = (slot: RefinedScaleMatch | undefined, others: (RefinedScaleMatch | undefined)[]) =>
+    slot
+      ? selectedQueixas.filter(
+          (q) => slot.scale.queixas.includes(q) && !others.some((o) => o?.scale.queixas.includes(q)),
+        )
+      : [];
+
+  // Guarda de desperdício: um selo HEURÍSTICO (não curado) muito abaixo do
+  // melhor candidato disponível (Δ≥25) cede o lugar, desde que o substituto
+  // contenha a idade, fale às queixas marcadas e preserve a cobertura única.
+  const upgradeSlot = (
+    current: RefinedScaleMatch | undefined,
+    isCurated: boolean,
+    others: (RefinedScaleMatch | undefined)[],
+  ): RefinedScaleMatch | undefined => {
+    if (!current || isCurated) return current;
+    const mustKeep = uniqueQueixasOf(current, others);
+    const better = sorted.find(
+      (m) =>
+        !used.has(m.scale.id) &&
+        containsAge(m) &&
+        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
+        mustKeep.every((q) => m.scale.queixas.includes(q)) &&
+        m.relevanceScore >= current.relevanceScore + 25,
+    );
+    if (!better) return current;
+    used.delete(current.scale.id);
+    used.add(better.scale.id);
+    return better;
+  };
+  // Correção de idade: selo heurístico cuja faixa NÃO contém a idade exata
+  // cede para candidato que contém (aceitando até 15 pontos a menos de
+  // relevância — cobrir a idade de fato vale mais que essa margem), sem
+  // perder cobertura única de queixa.
+  const ageFixSlot = (
+    current: RefinedScaleMatch | undefined,
+    isCurated: boolean,
+    others: (RefinedScaleMatch | undefined)[],
+  ): RefinedScaleMatch | undefined => {
+    if (!current || isCurated || containsAge(current)) return current;
+    const mustKeep = uniqueQueixasOf(current, others);
+    const better = sorted.find(
+      (m) =>
+        !used.has(m.scale.id) &&
+        containsAge(m) &&
+        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
+        mustKeep.every((q) => m.scale.queixas.includes(q)) &&
+        m.relevanceScore >= current.relevanceScore - 15,
+    );
+    if (!better) return current;
+    used.delete(current.scale.id);
+    used.add(better.scale.id);
+    return better;
+  };
+  // Correção de implementação: card "recomendação" (nada aplicável no app) só
+  // medalha se não houver candidato aplicável equivalente — troca por quem tem
+  // aplicação/ficha real, contém a idade, preserva cobertura única e fica a até
+  // 20 pontos de relevância.
+  const implFixSlot = (
+    current: RefinedScaleMatch | undefined,
+    others: (RefinedScaleMatch | undefined)[],
+  ): RefinedScaleMatch | undefined => {
+    if (!current || getImplementationStatus(current.scale) !== "not_implemented") return current;
+    const mustKeep = uniqueQueixasOf(current, others);
+    const better = sorted.find(
+      (m) =>
+        !used.has(m.scale.id) &&
+        containsAge(m) &&
+        getImplementationStatus(m.scale) !== "not_implemented" &&
+        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
+        mustKeep.every((q) => m.scale.queixas.includes(q)) &&
+        m.relevanceScore >= current.relevanceScore - 20,
+    );
+    if (!better) return current;
+    used.delete(current.scale.id);
+    used.add(better.scale.id);
+    return better;
+  };
+  prata = ageFixSlot(prata, prata !== undefined && prata === curatedPrata, [ouro, bronze]);
+  bronze = ageFixSlot(bronze, bronze !== undefined && bronze === curatedBronze, [ouro, prata]);
+  prata = implFixSlot(prata, [ouro, bronze]);
+  bronze = implFixSlot(bronze, [ouro, prata]);
+  prata = upgradeSlot(prata, prata !== undefined && prata === curatedPrata, [ouro, bronze]);
+  bronze = upgradeSlot(bronze, bronze !== undefined && bronze === curatedBronze, [ouro, prata]);
+
+  // Resgate por sinal: o usuário marcou sinais, nenhuma medalha fala neles e
+  // existe candidata segura que fala — o BRONZE cede o lugar (Ouro e Prata
+  // preservam curadoria e cobertura), sem perder cobertura única de queixa.
+  if (selectedSignals.length > 0 && ![ouro, prata, bronze].some((s) => s && signalHit(s))) {
+    const rescue = sorted.find(
+      (m) =>
+        !used.has(m.scale.id) &&
+        signalHit(m) &&
+        containsAge(m) &&
+        m.relevanceScore >= 45 &&
+        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))),
+    );
+    if (rescue) {
+      const bronzeUnique = uniqueQueixasOf(bronze, [ouro, prata]);
+      if (!bronze) {
+        used.add(rescue.scale.id);
+        bronze = rescue;
+      } else if (bronzeUnique.every((q) => rescue.scale.queixas.includes(q))) {
+        used.delete(bronze.scale.id);
+        used.add(rescue.scale.id);
+        bronze = rescue;
+      }
+    }
+  }
 
   // Direct and school also join the used set to prevent deduplication with medals.
   const direct = (() => {

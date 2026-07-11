@@ -549,6 +549,16 @@ export default function GenericScalePage() {
               </p>
             </div>
 
+            {/* Exemplo prático em linguagem de pais */}
+            {scale.exemploPais && (
+              <div className="rounded-xl border border-emerald-700/60 bg-emerald-900/20 p-4">
+                <p className="mb-1 text-sm font-semibold text-emerald-300">
+                  👨‍👩‍👧 Para quem vai responder
+                </p>
+                <p className="text-sm leading-relaxed text-emerald-100/90">{scale.exemploPais}</p>
+              </div>
+            )}
+
             {/* Queixas */}
             {scale.queixas && scale.queixas.length > 0 && (
               <div>

@@ -8,6 +8,7 @@ import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImport
 import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
 import { escalasCompendio2026 } from "./escalasCompendio2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
+import { exemplosPais2026 } from "./exemplosPais2026";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 // "crianca" e "teste_direto_crianca" são tratados como aplicação direta com a criança.
@@ -91,6 +92,10 @@ export interface ScaleEntry {
   applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
   implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
   signalTags?: string[];               // pistas clínicas/sintomas que refinam o ranking do filtro
+  // Exemplo prático em linguagem de pais: o que observar no dia a dia ao
+  // responder o questionário (sem jargão, sem sugerir diagnóstico). Populado
+  // a partir de exemplosPais2026.ts para escalas respondidas por pais/professor.
+  exemploPais?: string;
   // Proveniência do índice das 230 escalas complementares (curadoria interna).
   modoApp?: string;                    // "aplicar" | "monitorar" (hint de uso da curadoria)
   duplicataStatus?: string;            // "nova" | "possivel_duplicata" (controle de deduplicação)
@@ -836,14 +841,16 @@ const allScalesBase: ScaleEntry[] = [
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
 const allScalesComDescricoes: ScaleEntry[] = allScalesBase.map(escala => {
   const appRoute = escala.appRoute ?? `/generic-scale/${escala.id}`;
+  const exemploPais = escala.exemploPais ?? exemplosPais2026[escala.id];
   if (descricoesMelhoradas[escala.id]) {
     return {
       ...escala,
       appRoute,
+      exemploPais,
       description: descricoesMelhoradas[escala.id],
     };
   }
-  return { ...escala, appRoute };
+  return { ...escala, appRoute, exemploPais };
 });
 
 // Deduplicação por id E por nome. O merge de lotes de importação (legado + v25 +
