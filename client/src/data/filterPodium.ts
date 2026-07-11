@@ -95,7 +95,6 @@ export function selectPodium(
     exactAge === null || (match.scale.ageMin <= exactAge && match.scale.ageMax >= exactAge);
   const signalHit = (match: RefinedScaleMatch) =>
     selectedSignals.length > 0 && (match.scale.signalTags ?? []).some((tag) => selectedSignals.includes(tag));
-<<<<<<< HEAD
   // REGRA DE OURO (obrigatória): o pódio deve indicar escala que o clínico
   // consegue ABRIR E APLICAR no app (itens + escore). Ficha técnica ou
   // instrumento licenciado só medalha quando NÃO existe candidata aplicável
@@ -103,8 +102,6 @@ export function selectPodium(
   const isApplicable = (match: RefinedScaleMatch) => getImplementationStatus(match.scale) === "complete";
   const anyApplicableInAge = () =>
     sorted.some((m) => !used.has(m.scale.id) && containsAge(m) && isApplicable(m));
-=======
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
   const matchedSelectedQueixas = (match: RefinedScaleMatch) =>
     selectedQueixas.filter((queixa) => match.scale.queixas.includes(queixa));
   const coverageGain = (match: RefinedScaleMatch, coveredQueixas: Set<string>) =>
@@ -137,11 +134,8 @@ export function selectPodium(
     // de alternativa; idem para recomendações sem nada aplicável no app.
     const ageFitBonus = containsAge(match) ? 14 : 0;
     const signalHitBonus = signalHit(match) ? 6 : 0;
-<<<<<<< HEAD
     // Regra de ouro: aplicável no app vale bônus real no desempate.
     const applicableBonus = isApplicable(match) ? 12 : 0;
-=======
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
     // Penalidade forte: um card "recomendação" (sem NADA aplicável no app) não
     // deve vencer o MESMO construto com aplicação completa (ex.: world-bears
     // rel=100 vs bears rel=84 — o clínico quer a versão que abre e pontua).
@@ -153,10 +147,7 @@ export function selectPodium(
       signalBonus +
       signalHitBonus +
       ageFitBonus +
-<<<<<<< HEAD
       applicableBonus +
-=======
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
       confidenceBonus +
       coverageGain(match, coveredQueixas) * coverageWeight +
       coverageTotal(match) * 5 -
@@ -207,14 +198,10 @@ export function selectPodium(
     const eligible = sorted.filter((m) => !used.has(m.scale.id) && pred(m));
     const highQuality = eligible.filter((m) => m.relevanceScore >= QUALITY_THRESHOLD);
     // Camada de idade exata: dentro de cada faixa de qualidade, quem CONTÉM a
-<<<<<<< HEAD
     // idade do paciente vem antes de quem só encosta na banda. A regra de ouro
     // de aplicabilidade NÃO vira camada aqui — agiria por cima da cobertura de
     // queixas; ela atua pelo applicableBonus e pelo pós-passe applFixSlot, que
     // preservam cobertura por construção.
-=======
-    // idade do paciente vem antes de quem só encosta na banda.
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
     const highQualityExact = highQuality.filter(containsAge);
     const eligibleExact = eligible.filter(containsAge);
     const preferredHighQuality = preferredMatches.filter(
@@ -256,15 +243,11 @@ export function selectPodium(
   const pickCurated = (id: string | undefined) => {
     if (!id || used.has(id)) return undefined;
     const match = byId.get(id);
-<<<<<<< HEAD
     if (!match || !containsAge(match)) return undefined;
     // Regra de ouro: curadoria que aponta ficha/licenciado só vale quando não
     // há candidata APLICÁVEL na idade — o clínico precisa poder abrir e aplicar.
     if (!isApplicable(match) && anyApplicableInAge()) return undefined;
     return match;
-=======
-    return match && containsAge(match) ? match : undefined;
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
   };
 
   // ── OURO ──────────────────────────────────────────────────────────────────
@@ -393,11 +376,8 @@ export function selectPodium(
       (m) =>
         !used.has(m.scale.id) &&
         containsAge(m) &&
-<<<<<<< HEAD
         // Regra de ouro: um upgrade de relevância nunca rebaixa aplicabilidade.
         (isApplicable(m) || !isApplicable(current)) &&
-=======
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
         (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
         mustKeep.every((q) => m.scale.queixas.includes(q)) &&
         m.relevanceScore >= current.relevanceScore + 25,
@@ -455,7 +435,6 @@ export function selectPodium(
     used.add(better.scale.id);
     return better;
   };
-<<<<<<< HEAD
   // REGRA DE OURO (obrigatória): medalha que o clínico não consegue aplicar no
   // app (ficha/licenciada/recomendação) cede para candidata com aplicação
   // completa que contém a idade e preserva a cobertura única — tolerância de
@@ -485,10 +464,6 @@ export function selectPodium(
   ouro = applFixSlot(ouro, [prata, bronze]);
   prata = applFixSlot(prata, [ouro, bronze]);
   bronze = applFixSlot(bronze, [ouro, prata]);
-=======
-  prata = ageFixSlot(prata, prata !== undefined && prata === curatedPrata, [ouro, bronze]);
-  bronze = ageFixSlot(bronze, bronze !== undefined && bronze === curatedBronze, [ouro, prata]);
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
   prata = implFixSlot(prata, [ouro, bronze]);
   bronze = implFixSlot(bronze, [ouro, prata]);
   prata = upgradeSlot(prata, prata !== undefined && prata === curatedPrata, [ouro, bronze]);
@@ -498,7 +473,6 @@ export function selectPodium(
   // existe candidata segura que fala — o BRONZE cede o lugar (Ouro e Prata
   // preservam curadoria e cobertura), sem perder cobertura única de queixa.
   if (selectedSignals.length > 0 && ![ouro, prata, bronze].some((s) => s && signalHit(s))) {
-<<<<<<< HEAD
     const rescueCandidate = (requireApplicable: boolean) =>
       sorted.find(
         (m) =>
@@ -526,25 +500,6 @@ export function selectPodium(
         used.add(rescue.scale.id);
         if (targetSlot === "prata") prata = rescue;
         else bronze = rescue;
-=======
-    const rescue = sorted.find(
-      (m) =>
-        !used.has(m.scale.id) &&
-        signalHit(m) &&
-        containsAge(m) &&
-        m.relevanceScore >= 45 &&
-        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))),
-    );
-    if (rescue) {
-      const bronzeUnique = uniqueQueixasOf(bronze, [ouro, prata]);
-      if (!bronze) {
-        used.add(rescue.scale.id);
-        bronze = rescue;
-      } else if (bronzeUnique.every((q) => rescue.scale.queixas.includes(q))) {
-        used.delete(bronze.scale.id);
-        used.add(rescue.scale.id);
-        bronze = rescue;
->>>>>>> 98b57cc2137377aad8e1039f8b951c4b61d23fdd
       }
     }
   }
