@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 671
-- **Com fonte declarada:** 509
+- **Total de instrumentos:** 674
+- **Com fonte declarada:** 512
 - **Pendentes de validação/fonte:** 162
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
@@ -29,6 +29,7 @@
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não |
 | `appt` | APPT | — | sim |
 | `aprs` | APRS | — | sim |
+| `aq-adolescente` | AQ-Adolescente | Baron-Cohen S, Hoekstra RA, Knickmeyer R, Wheelwright S. J Autism Dev Disord, 2006. Distribuição: ARC Cambridge, com versão oficial em português do Brasil. | não |
 | `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não |
 | `ari` | ARI | — | sim |
 | `ashs` | ASHS | — | sim |
@@ -102,6 +103,7 @@
 | `ces-dc` | CES-DC | Weissman MM, Orvaschel H, Padian N, 1980 (domínio público) | não |
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não |
 | `cfrs` | CFRS | — | sim |
+| `cgas` | CGAS | Shaffer D et al., Arch Gen Psychiatry, 1983 (Columbia University; adaptada da GAS de Endicott) | não |
 | `chalfont` | Chalfont | Duncan JS, Sander JW, 1991 (Chalfont Seizure Severity Scale) | não |
 | `cheops` | CHEOPS | McGrath PJ et al., 1985 | não |
 | `cheq` | CHEQ | — | sim |
@@ -566,6 +568,7 @@
 | `psq` | PSQ | Chervin RD et al., 2000 - University of Michigan | não |
 | `psqi-ped` | PSQI Pediátrico | Buysse DJ et al., 1989 (Pittsburgh Sleep Quality Index) | não |
 | `q-chat-10` | Q-CHAT-10 | — | sim |
+| `q-chat-25` | Q-CHAT | Allison C, Baron-Cohen S et al. J Autism Dev Disord, 2008. Distribuição: ARC Cambridge. Cortes: Allison et al., 2021. | não |
 | `qolce-55` | QOLCE-55 | — | sim |
 | `qolce-76` | QOLCE-76 | — | sim |
 | `qolie-ad` | QOLIE-AD-48 | Cramer JA et al., 1999 (QOLIE-AD-48) | não |
