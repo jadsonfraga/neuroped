@@ -109,6 +109,89 @@ for (const level of [1, 2, 3] as const) {
   ok(seq.length > 0 && bad.length === 0, "stroop: incongruente tem tinta ≠ palavra");
 }
 
+// ---------- D) Task switching / memória (novas tarefas SR) ----------
+{
+  const sw = cognitiveTasks.find((t) => t.id === "task-switching");
+  const seq = sw ? sw.makeTrials(48, mulberry32(11)) : [];
+  ok(seq.some((t) => t.tags.includes("troca")) && seq.some((t) => t.tags.includes("repeticao")), "switching: gera trocas e repeticoes");
+  ok(seq[0]?.tags.includes("repeticao") === true, "switching: primeiro ensaio conta como repeticao");
+  for (const memId of ["memoria-visual-np", "memoria-verbal-np"]) {
+    const mem = cognitiveTasks.find((t) => t.id === memId);
+    const ms = mem ? mem.makeTrials(52, mulberry32(13)) : [];
+    const seen: string[] = [];
+    let badRepeat = 0;
+    for (const t of ms) {
+      const isRepeat = t.correctResponse === "javi";
+      if (isRepeat && !seen.includes(t.stimulus.display)) badRepeat++;
+      seen.push(t.stimulus.display);
+    }
+    ok(ms.some((t) => t.correctResponse === "javi"), `${memId}: possui repetidos`);
+    ok(badRepeat === 0, `${memId}: todo "repetido" apareceu antes de fato`);
+  }
+}
+
+// ---------- E) Lógica de span (dígitos/Corsi) ----------
+{
+  const { initialSpanState, nextSpanState, makeDigitSequence, makeCorsiSequence, isReproductionCorrect, SPAN_MAX } = await import("../../client/src/features/cognitive-lab/spanLogic");
+  let st = initialSpanState();
+  ok(st.length === 2 && st.attempt === 1, "span inicia em 2 itens");
+  st = nextSpanState(st, true);
+  ok(st.length === 3 && st.attempt === 1 && st.bestSpan === 2, "acerto de primeira sobe direto");
+  st = nextSpanState(st, false);
+  ok(st.length === 3 && st.attempt === 2, "erro na 1a tentativa da 2a chance");
+  st = nextSpanState(st, false);
+  ok(st.done && st.bestSpan === 2, "dois erros no mesmo comprimento encerram");
+  // Sobe até o teto e encerra.
+  let st2 = initialSpanState();
+  for (let i = 0; i < 20 && !st2.done; i++) st2 = nextSpanState(st2, true);
+  ok(st2.done && st2.bestSpan === SPAN_MAX, `so acertos termina no teto (${st2.bestSpan})`);
+  const dig = makeDigitSequence(8, mulberry32(5));
+  ok(dig.length === 8 && dig.every((d, i) => i === 0 || d !== dig[i - 1]), "digitos sem repeticao adjacente");
+  const cor = makeCorsiSequence(8, mulberry32(5));
+  ok(cor.length === 8 && cor.every((b) => b >= 0 && b < 9) && cor.every((b, i) => i === 0 || b !== cor[i - 1]), "corsi 0..8 sem repeticao adjacente");
+  ok(isReproductionCorrect([1, 2, 3], [1, 2, 3], false), "reproducao direta correta");
+  ok(isReproductionCorrect([1, 2, 3], [3, 2, 1], true), "reproducao inversa correta");
+  ok(!isReproductionCorrect([1, 2, 3], [1, 2], false), "tamanho errado reprova");
+}
+
+// ---------- F) Helpers dos runners custom (trail/busca/torre) ----------
+{
+  const { makeTrailSequence, makeTrailLayout } = await import("../../client/src/features/cognitive-lab/TrailMakingRunner");
+  const a = makeTrailSequence("A");
+  const b = makeTrailSequence("B");
+  ok(a.length === 15 && a[0] === "1" && a[14] === "15", "trilha A = 1..15");
+  ok(b.length === 15 && b[0] === "1" && b[1] === "A" && b[14] === "8", "trilha B alterna numero/letra ate 8");
+  const layout = makeTrailLayout(15, mulberry32(9));
+  ok(layout.length === 15, "layout com 15 posicoes");
+  let minDist = Infinity;
+  for (let i = 0; i < layout.length; i++)
+    for (let j = i + 1; j < layout.length; j++)
+      minDist = Math.min(minDist, Math.hypot(layout[i].x - layout[j].x, layout[i].y - layout[j].y));
+  ok(minDist >= 12, `trilha: alvos sem sobreposicao (dist minima ${minDist.toFixed(1)})`);
+
+  const { makeSearchGrid } = await import("../../client/src/features/cognitive-lab/VisualSearchRunner");
+  for (const size of [12, 24] as const) {
+    const g = makeSearchGrid(size, mulberry32(21));
+    ok(g.cells.length === size, `busca ${size}: grade completa`);
+    ok(g.cells.filter((c) => c === "🦋").length === 1, `busca ${size}: exatamente 1 alvo`);
+    ok(g.cells[g.targetIndex] === "🦋", `busca ${size}: targetIndex aponta o alvo`);
+  }
+
+  const { TOWER_PROBLEMS, solveMinMoves, isLegalMove, applyMove } = await import("../../client/src/features/cognitive-lab/TowerRunner");
+  ok(TOWER_PROBLEMS.length === 5, "torre: 5 problemas");
+  const mins = TOWER_PROBLEMS.map((p) => solveMinMoves(p.start, p.goal));
+  ok(mins.every((m) => m >= 2 && m <= 8), `torre: minimos plausiveis (${mins.join(",")})`);
+  ok(mins.every((m, i) => i === 0 || m >= mins[i - 1]), `torre: dificuldade nao decrescente (${mins.join(",")})`);
+  const s0 = TOWER_PROBLEMS[0].start;
+  const legalTo = [0, 1, 2].find((to) => isLegalMove(s0, s0.findIndex((p) => p.length > 0), to) && to !== s0.findIndex((p) => p.length > 0));
+  ok(legalTo !== undefined, "torre: existe movimento legal no estado inicial");
+  if (legalTo !== undefined) {
+    const from = s0.findIndex((p) => p.length > 0);
+    const s1 = applyMove(s0, from, legalTo);
+    ok(s1 !== s0 && s1[from].length === s0[from].length - 1, "torre: applyMove imutavel e move o topo");
+  }
+}
+
 console.log(`\n[cognitive-lab] ${checks} verificações, ${failures} falha(s).`);
 if (failures > 0) process.exit(1);
 console.log("✅ COGNITIVE LAB OK");

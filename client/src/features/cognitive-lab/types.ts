@@ -152,4 +152,10 @@ export interface CognitiveSession {
   stats: CognitiveStats;
   validity: ValidityResult;
   appVersion?: string;
+  /**
+   * Métricas específicas de tarefas com runner próprio (ex.: span de dígitos,
+   * span de Corsi, tempos do Trail Making, excesso de movimentos da Torre) —
+   * exibidas com destaque no ResultsPanel e incluídas nas exportações.
+   */
+  customSummary?: Array<{ label: string; value: string; hint?: string }>;
 }
