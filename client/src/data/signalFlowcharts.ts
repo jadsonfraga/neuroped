@@ -231,8 +231,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 144,
         tiers: {
           ouro: ["scared"],
-          prata: ["eai"],
-          bronze: ["sdq"],
+          prata: ["scas", "eai"],
+          bronze: ["rcads", "sdq"],
         },
       },
       {
@@ -242,7 +242,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["scared"],
           prata: ["gad7ped"],
-          bronze: ["eai"],
+          bronze: ["scas", "rcads", "eai"],
         },
       },
     ],
@@ -277,7 +277,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["cdi2"],
           prata: ["cssrs"],
-          bronze: ["cbcl"],
+          bronze: ["rcads", "cbcl"],
         },
       },
       {
@@ -606,8 +606,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 120,
         tiers: {
           ouro: ["cshq"],
-          prata: ["j26-130"],
-          bronze: ["j26-137"],
+          prata: ["sdsc", "j26-130"],
+          bronze: ["psq", "j26-137"],
         },
       },
       {
@@ -616,8 +616,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 216,
         tiers: {
           ouro: ["j26-136"],
-          prata: ["inventarios-auto"],
-          bronze: ["j26-130"],
+          prata: ["sdsc", "inventarios-auto"],
+          bronze: ["psq", "j26-130"],
         },
       },
     ],
@@ -859,6 +859,54 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
       ouro: ["j26-195"],
       prata: ["j26-117"],
       bronze: ["j26-014"],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // SENSORIAL / INTEGRAÇÃO
+  // Sensory Profile 2 é a referência de padrões de processamento
+  // sensorial (0–14 anos); triagens autorais autoral complementam
+  // por faixa. Acima de 14 anos migra p/ autoavaliação/uso terapêutico.
+  // ═══════════════════════════════════════════════════════════
+  sensorial: {
+    signal: "sensorial",
+    label: "Sensorial / Integração",
+    branches: [
+      {
+        label: "0–2 anos · lactente/toddler",
+        minMonths: 0,
+        maxMonths: 24,
+        tiers: {
+          ouro: ["sensory-profile2"],
+          prata: ["j26-013"],
+          bronze: ["j26-014", "j26-005"],
+        },
+      },
+      {
+        label: "2–14 anos · pré-escolar a escolar",
+        minMonths: 24,
+        maxMonths: 168,
+        tiers: {
+          ouro: ["sensory-profile2"],
+          prata: ["j26-126"],
+          bronze: ["j26-013"],
+        },
+      },
+      {
+        label: "14–18 anos · adolescente",
+        minMonths: 168,
+        maxMonths: 216,
+        tiers: {
+          ouro: ["j26-126"],
+          prata: ["inventarios-auto"],
+          bronze: ["sensory-profile2"],
+        },
+      },
+    ],
+    monitoring: {
+      ouro: ["j26-126"],
+      prata: ["sensory-profile2"],
+      bronze: ["j26-013"],
     },
   },
 };
