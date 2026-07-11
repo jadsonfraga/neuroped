@@ -450,8 +450,11 @@ function makeContinuousRecognition(
     isiMs: [700, 900],
     deadlineMs: 2400,
     practiceTrials: 8,
-    blocks: 2,
-    trialsPerBlock: 26,
+    // Bloco ÚNICO: com 2 blocos, o pool re-embaralhado fazia itens do bloco 1
+    // reaparecerem no bloco 2 rotulados como "novos" — quem lembrava deles era
+    // penalizado como falso alarme. Uma aplicação contínua evita a contaminação.
+    blocks: 1,
+    trialsPerBlock: 40,
     validity: { ...VALIDITY_DEFAULT, minResponseRate: 0.4 },
     makeTrials: (count, rng) => {
       const seq: Array<{ item: string; repeat: boolean }> = [];
@@ -470,8 +473,15 @@ function makeContinuousRecognition(
             continue;
           }
         }
-        seq.push({ item: usable[cursor % usable.length], repeat: false });
-        cursor++;
+        if (cursor < usable.length) {
+          seq.push({ item: usable[cursor], repeat: false });
+          cursor++;
+        } else {
+          // Pool esgotado: melhor uma repetição LEGÍTIMA (rotulada como tal)
+          // do que reciclar um item como "novo" e punir quem lembra dele.
+          const past = seq[Math.floor(rng() * seq.length)];
+          seq.push({ item: past.item, repeat: true });
+        }
       }
       return seq.map(({ item, repeat }) => ({
         stimulus: { display: item },
@@ -482,8 +492,8 @@ function makeContinuousRecognition(
   };
 }
 
-const VISUAL_POOL = ["🦁", "🍇", "🚲", "🌻", "🐙", "🎪", "🧩", "🪁", "🦒", "🍓", "🚀", "🌈", "🐧", "🎺", "🏰", "🦖", "🍉", "⛵", "🌵", "🐞"];
-const VERBAL_POOL = ["BOLA", "CASA", "PATO", "MESA", "FOGO", "LIVRO", "CHUVA", "DENTE", "PEIXE", "SAPATO", "JANELA", "MILHO", "PONTE", "VELA", "TREM", "FOLHA", "PIPOCA", "SINO", "NUVEM", "REMO"];
+const VISUAL_POOL = ["🦁", "🍇", "🚲", "🌻", "🐙", "🎪", "🧩", "🪁", "🦒", "🍓", "🚀", "🌈", "🐧", "🎺", "🏰", "🦖", "🍉", "⛵", "🌵", "🐞", "🎈", "🐋", "🍄", "🔔", "🦉", "🛴", "🧸", "🍩", "🐫", "⚓", "🪗", "🦜"];
+const VERBAL_POOL = ["BOLA", "CASA", "PATO", "MESA", "FOGO", "LIVRO", "CHUVA", "DENTE", "PEIXE", "SAPATO", "JANELA", "MILHO", "PONTE", "VELA", "TREM", "FOLHA", "PIPOCA", "SINO", "NUVEM", "REMO", "TAMPA", "GIZ", "LUVA", "BARCO", "PENTE", "SOFÁ", "LIMÃO", "RODA", "CHAVE", "PIPA", "DADO", "CANECA"];
 
 const memoriaVisual = makeContinuousRecognition("memoria-visual-np", "Memória Visual", "🖼️", VISUAL_POOL, { verbal: false });
 const memoriaVerbal = makeContinuousRecognition("memoria-verbal-np", "Memória Verbal", "📖", VERBAL_POOL, { verbal: true });

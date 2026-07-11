@@ -67,6 +67,7 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
     sequence: [] as number[],
     records: [] as TrialRecord[],
     reproStart: 0,
+    submitting: false,
     startedAtIso: "",
     timers: [] as number[],
   });
@@ -104,12 +105,17 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
     });
     after(400 + r.sequence.length * (onMs + offMs) + 150, () => {
       r.reproStart = performance.now();
+      r.submitting = false;
       setPhase("entering");
     });
   }
 
   function submit(finalEntered: number[]) {
     const r = ref.current;
+    // Duplo toque no último bloco/OK disparava submit 2× (registro duplicado
+    // e a regra adaptativa pulando um estado). Trava até a próxima sequência.
+    if (r.submitting) return;
+    r.submitting = true;
     const rt = Math.round(performance.now() - r.reproStart);
     const correct = isReproductionCorrect(r.sequence, finalEntered, direction === "backward");
     r.records.push({
@@ -254,7 +260,7 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
                         aria-label={`bloco ${i + 1}`}
                         disabled={phase !== "entering"}
                         onPointerDown={() => {
-                          if (phase !== "entering") return;
+                          if (phase !== "entering" || ref.current.submitting) return;
                           const next = [...entered, i];
                           setEntered(next);
                           if (next.length === r.sequence.length) submit(next);
