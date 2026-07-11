@@ -18,6 +18,7 @@ import { AmbientEffects } from "@/components/AmbientEffects";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { FloatingHelp } from "@/components/FloatingHelp";
 
+import { RouteGuard } from "@/components/RouteGuard";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import SessionExpiredPage from "@/pages/session-expired";
@@ -164,6 +165,7 @@ function AppRouter() {
   return (
     <Layout>
       <Suspense fallback={<LoadingSpinner />}>
+        <RouteGuard>
         <Switch>
           <Route path="/login" component={LoginPage} />
           <Route path="/sessao-expirada" component={SessionExpiredPage} />
@@ -287,6 +289,7 @@ function AppRouter() {
           <Route path="/qualidade" component={QualidadePage} />
           <Route component={NotFound} />
         </Switch>
+        </RouteGuard>
       </Suspense>
     </Layout>
   );

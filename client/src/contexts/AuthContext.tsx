@@ -7,9 +7,6 @@ import {
   authFetch,
 } from "@/lib/authClient";
 
-const FIXED_EMAIL = "medicina119@gmail.com";
-const APP_SECRET = (import.meta.env.VITE_APP_SECRET as string | undefined)?.trim();
-
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -27,6 +24,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    // Só revalida uma sessão já existente (token no sessionStorage). NÃO existe
+    // mais auto-login com segredo embutido no bundle — para acessar rotas
+    // clínicas é preciso passar pela tela de login (/login) com credenciais
+    // reais, validadas pelo backend.
     async function bootstrap() {
       const stored = getStoredUser();
       if (stored) setUser(stored);
@@ -35,31 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (r.ok) {
           const fresh = await r.json();
           if (!cancelled) setUser(fresh);
-        } else if (APP_SECRET) {
-          const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
-          if (!cancelled) setUser(data.user);
+        } else if (!cancelled) {
+          setUser(null);
         }
       } catch {
-        if (APP_SECRET) {
-          try {
-            const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
-            if (!cancelled) setUser(data.user);
-          } catch { /* backend indisponível — PIN master é suficiente */ }
-        }
+        /* backend indisponível — mantém o usuário armazenado, se houver */
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     }
     bootstrap();
 
-    async function handleExpired() {
-      if (APP_SECRET) {
-        try {
-          const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
-          setUser(data.user);
-          return;
-        } catch { /* tentativa de renovação falhou */ }
-      }
+    // Sessão expirada e refresh falhou: derruba o usuário. O RouteGuard
+    // redireciona para /login quando a rota exige sessão.
+    function handleExpired() {
       setUser(null);
     }
     window.addEventListener("auth:expired", handleExpired as EventListener);

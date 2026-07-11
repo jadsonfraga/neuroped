@@ -113,6 +113,17 @@ export const emailRateLimit = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  // /api/send-report roda DEPOIS de requireAuth, então req.user existe. Limita
+  // por USUÁRIO autenticado — não por IP, que agruparia um hospital/NAT inteiro
+  // num só balde e é falsificável via X-Forwarded-For. Fallback por IP só por
+  // segurança (não deve ser alcançado nesta rota autenticada).
+  keyGenerator: (req: Request) => {
+    const userId = (req as unknown as { user?: { id?: string } }).user?.id;
+    return userId ? `email:user:${userId}` : `email:ip:${req.ip ?? "unknown"}`;
+  },
+  // Chave por usuário autenticado (rota protegida por requireAuth); desliga o
+  // aviso de IP-fallback do express-rate-limit, que não se aplica aqui.
+  validate: false,
   message: {
     error: "Limite de envios de email atingido. Aguarde 1 hora.",
     code: "EMAIL_RATE_LIMIT",
