@@ -16,14 +16,18 @@ interface WhatsAppShareProps {
 function formatPhoneNumber(phone: string): string {
   // Remove non-digits
   const digits = phone.replace(/\D/g, "");
-  // If it's a Brazilian number (11 digits starting with 55 or not), format it
-  if (digits.length === 11 && !digits.startsWith("55")) {
+  // Número nacional (DDD + fixo de 8 ou celular de 9 dígitos): sempre prefixa o
+  // país 55 — inclusive quando o DDD é o próprio 55 (Santa Maria/RS), caso que a
+  // versão anterior tratava errado ao usar startsWith("55").
+  if (digits.length === 10 || digits.length === 11) {
     return `55${digits}`;
   }
-  if (digits.length === 13 && digits.startsWith("55")) {
+  // Já vem com o código do país 55 (12–13 dígitos).
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
     return digits;
   }
-  if (digits.length >= 10) {
+  // Outro internacional já completo.
+  if (digits.length >= 12 && digits.length <= 15) {
     return digits;
   }
   return "";
@@ -60,18 +64,25 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
       const scoreLine = totalScore === undefined || totalScore === null ? "" : `Pontuação: ${totalScore}\n\n`;
       const message = `*${scaleName}*\n\n${scoreLine}${reportText.slice(0, 3000)}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
 
-      // Try to send via API first (if backend supports it)
+      // Tenta a API do backend (best-effort). Em hosts estáticos (GitHub Pages/
+      // Cloudflare) essa rota NÃO existe e o fallback de SPA responde 200 com o
+      // index.html — por isso não basta o fetch resolver: só considero enviado
+      // pela API se a resposta for OK e realmente JSON. Caso contrário, abro o
+      // WhatsApp Web (wa.me), que é o caminho de entrega confiável.
+      let deliveredViaApi = false;
       try {
-        await fetch("/api/send-whatsapp", {
+        const res = await fetch("/api/send-whatsapp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: formatted,
-            message,
-          }),
+          body: JSON.stringify({ phone: formatted, message }),
         });
+        const contentType = res.headers.get("content-type") ?? "";
+        deliveredViaApi = res.ok && contentType.includes("application/json");
       } catch {
-        // Fallback: Open WhatsApp web
+        deliveredViaApi = false;
+      }
+
+      if (!deliveredViaApi) {
         const whatsappUrl = `https://wa.me/${formatted}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, "_blank");
       }
@@ -80,8 +91,10 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
       haptic.success();
       setSent(true);
       toast({
-        title: "Enviado!",
-        description: "Relatório compartilhado com sucesso.",
+        title: deliveredViaApi ? "Enviado!" : "Abrindo o WhatsApp…",
+        description: deliveredViaApi
+          ? "Relatório compartilhado com sucesso."
+          : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
       });
 
       // Reset after 3 seconds

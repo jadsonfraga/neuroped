@@ -300,7 +300,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     ],
   },
 
-  "fas-fluência": {
+  "fas-fluencia": {
     icon: MessageCircle,
     gradient: "from-fuchsia-600 to-purple-700",
     instruction: "Registre desempenho por tarefa de fluência verbal. Use normas por idade/escolaridade quando disponíveis.",

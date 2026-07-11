@@ -82,6 +82,11 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  // Domínios via ref: o effect de restauração lê as chaves válidas sem depender
+  // reativamente de `config.domains` (que muda de referência a cada render e
+  // reexecutaria o effect em loop).
+  const domainsRef = useRef(config.domains);
+  domainsRef.current = config.domains;
 
   const allItems = useMemo(
     () =>
@@ -124,16 +129,24 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         }
       }
       if (parsed.answers && typeof parsed.answers === "object") {
-        setAnswers(parsed.answers);
-        if (Object.keys(parsed.answers).length > 0) setDraftRestored(true);
+        // Só restaura respostas de itens que AINDA existem nesta escala. Sem
+        // isso, chaves órfãs de uma versão anterior da config fariam
+        // `answered > total` e travariam a conclusão em "Faltam 0 respostas".
+        const validKeys = new Set(
+          domainsRef.current.flatMap((d, di) => d.items.map((_, ii) => `${di}-${ii}`)),
+        );
+        const restored = Object.fromEntries(
+          Object.entries(parsed.answers).filter(([k]) => validKeys.has(k)),
+        );
+        if (Object.keys(restored).length > 0) {
+          setAnswers(restored);
+          setDraftRestored(true);
+        }
       }
-      if (
-        parsed.showResult &&
-        parsed.answers &&
-        Object.keys(parsed.answers).length === total
-      ) {
-        setShowResult(true);
-      }
+      // Intencionalmente NÃO reabrimos a tela de RESULTADO automaticamente: isso
+      // exibiria, sem aviso, o resultado de um atendimento anterior ao reabrir a
+      // mesma escala para outro paciente. O rascunho volta como formulário, com
+      // o aviso de "respostas restauradas" e o botão "Começar do zero".
     } catch {
       // Rascunho inválido não deve interromper a escala.
     }

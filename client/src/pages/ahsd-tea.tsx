@@ -283,6 +283,10 @@ export default function AhsdTeaPage() {
   function handleReset() {
     setAnswers({}); setBlockFAnswers({}); setShowResult(false);
     setExpandedBlocks({ A: true });
+    // Também zera a identificação — senão a próxima avaliação sairia sob o
+    // nome/idade da criança anterior (e iria assim para SaveToPatient).
+    setChildName(""); setChildAge(""); setTeacherName("");
+    setSchool(""); setTurma(""); setTempoConhece("");
   }
 
   function toggleBlock(id: string) {

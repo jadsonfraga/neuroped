@@ -131,6 +131,12 @@ export default function SatisfacaoMedicacaoPage() {
     setEficaciaGeral(null); setSatisfacaoGeral(null); setContinuaria(null);
     setEfeitosResp({}); setEficaciaAreas({}); setFormaResp({});
     setObsLivre(""); setShowResult(false);
+    // Também zera a identificação da criança/medicação — senão a próxima
+    // avaliação sairia com os dados do paciente anterior (e iria assim para
+    // SaveToPatient).
+    setNomeCrianca(""); setIdadeCrianca(""); setPesoCrianca("");
+    setNomeMedicacao(""); setDoseMedicacao(""); setPosologia("");
+    setTempoUso(""); setIndicacao(""); setRespondente("");
   }
 
   // ── MG/KG calc ──

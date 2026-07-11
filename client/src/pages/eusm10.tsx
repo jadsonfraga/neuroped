@@ -106,6 +106,12 @@ export default function Eusm10Page() {
     setAnswers({});
     setObservacoes("");
     setShowResult(false);
+    // Também zera a identificação — senão a próxima avaliação sairia com a
+    // medicação/respondente do paciente anterior (e iria assim para SaveToPatient).
+    setMedicacao("");
+    setDoseHorario("");
+    setTempoUso("");
+    setRespondente("");
     window.scrollTo({ top: 0 });
   }
 

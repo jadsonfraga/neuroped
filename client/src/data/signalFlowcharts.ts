@@ -96,7 +96,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 216,
         tiers: {
           ouro: ["podj-tea-prime-12-19a", "srs2"],
-          prata: ["aq", "catq"],
+          prata: ["aq10", "catq"],
           bronze: ["podj-tea-prime-familiar", "podj-tea-prime-escola-terapia"],
         },
       },

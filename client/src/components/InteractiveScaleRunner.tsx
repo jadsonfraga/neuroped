@@ -28,7 +28,7 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   const total = def.items.length;
   const answered = Object.keys(answers).length;
   const progress = total ? (answered / total) * 100 : 0;
-  const allAnswered = answered === total;
+  const allAnswered = total > 0 && answered === total;
   // Microcopy que acompanha o progresso — deixa a aplicação mais acolhedora.
   const progressHint = useMemo(() => {
     if (answered === 0) return "Toque numa opção para começar";
