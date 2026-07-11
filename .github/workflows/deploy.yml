@@ -39,6 +39,9 @@ jobs:
       - name: TypeScript check
         run: npm run check
 
+      - name: Lint (impede código morto/import órfão de chegar à produção)
+        run: npm run lint
+
       - name: Validar catálogo clínico
         run: npm run validate:catalog
 
