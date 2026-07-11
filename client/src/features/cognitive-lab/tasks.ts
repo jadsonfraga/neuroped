@@ -357,6 +357,137 @@ const crt: CognitiveTaskConfig = {
     }), rng),
 };
 
+// ------------------------------------------------------- Task Switching
+// Mapeamento bivalente clássico: botão esquerdo = vermelho OU círculo;
+// botão direito = azul OU quadrado. A pista (COR?/FORMA?) muda entre ensaios;
+// tags repeticao/troca dão o custo de troca (flexibilidade cognitiva).
+const SWITCH_STIMULI = [
+  { display: "🔴", cor: "esq", forma: "esq" },  // círculo vermelho (congruente)
+  { display: "🟦", cor: "dir", forma: "dir" },  // quadrado azul (congruente)
+  { display: "🔵", cor: "dir", forma: "esq" },  // círculo azul (incongruente)
+  { display: "🟥", cor: "esq", forma: "dir" },  // quadrado vermelho (incongruente)
+];
+const taskSwitching: CognitiveTaskConfig = {
+  id: "task-switching",
+  name: "Troca de Regras",
+  fullName: "Tarefa de Alternância de Regras NeuroPed — flexibilidade cognitiva",
+  emoji: "🔁",
+  domain: "Flexibilidade cognitiva (custo de troca)",
+  ageLabel: "7–17 anos",
+  durationLabel: "≈5 min",
+  description:
+    "A regra muda a cada momento: ora responda pela COR, ora pela FORMA da figura. O custo de troca (RT em trocas − repetições) descreve a flexibilidade.",
+  instructions:
+    "Olhe a palavra em cima da figura. Se for COR: vermelho → botão da esquerda, azul → direita. Se for FORMA: círculo → esquerda, quadrado → direita.",
+  tutorial: [
+    { text: "Regra COR com círculo vermelho → é VERMELHO → esquerda.", stimulus: { display: "COR? 🔴" }, demoResponse: "esq" },
+    { text: "Regra FORMA com quadrado vermelho → é QUADRADO → direita (a cor não importa agora!).", stimulus: { display: "FORMA? 🟥" }, demoResponse: "dir" },
+  ],
+  responses: [
+    { id: "esq", key: "ArrowLeft", label: "Vermelho / Círculo", emoji: "🔴" },
+    { id: "dir", key: "ArrowRight", label: "Azul / Quadrado", emoji: "🟦" },
+  ],
+  fixationMs: 400,
+  stimulusMs: 0,
+  isiMs: [600, 1000],
+  deadlineMs: 3500,
+  practiceTrials: 10,
+  blocks: 2,
+  trialsPerBlock: 24,
+  validity: VALIDITY_DEFAULT,
+  makeTrials: (count, rng) => {
+    const list: TrialSpec[] = [];
+    let rule: "cor" | "forma" = rng() < 0.5 ? "cor" : "forma";
+    for (let i = 0; i < count; i++) {
+      const prev = rule;
+      if (i > 0 && rng() < 0.5) rule = rule === "cor" ? "forma" : "cor";
+      const stim = SWITCH_STIMULI[Math.floor(rng() * SWITCH_STIMULI.length)];
+      list.push({
+        stimulus: {
+          display: `${rule === "cor" ? "COR?" : "FORMA?"} ${stim.display}`,
+          ariaLabel: `regra ${rule} com figura ${stim.display}`,
+        },
+        correctResponse: rule === "cor" ? stim.cor : stim.forma,
+        tags: [i === 0 || rule === prev ? "repeticao" : "troca"],
+      });
+    }
+    return list;
+  },
+};
+
+// -------------------------- Memória visual/verbal (reconhecimento contínuo)
+// Paradigma de reconhecimento contínuo: itens aparecem em sequência e alguns
+// REPETEM depois de 2–5 posições; a criança marca "Já vi". Acertos em
+// repetidos = memória; comissões em novos = falso reconhecimento.
+function makeContinuousRecognition(
+  id: string,
+  name: string,
+  emoji: string,
+  pool: string[],
+  opts: { verbal: boolean }
+): CognitiveTaskConfig {
+  return {
+    id,
+    name,
+    fullName: `${name} NeuroPed — reconhecimento contínuo`,
+    emoji,
+    domain: opts.verbal ? "Memória verbal (reconhecimento)" : "Memória visual (reconhecimento)",
+    ageLabel: opts.verbal ? "7–17 anos (alfabetizados)" : "5–17 anos",
+    durationLabel: "≈4 min",
+    description: opts.verbal
+      ? "Palavras aparecem uma a uma; aperte quando uma palavra REPETIR. Mede reconhecimento verbal e falsos alarmes."
+      : "Figuras aparecem uma a uma; aperte quando uma figura REPETIR. Mede reconhecimento visual e falsos alarmes.",
+    instructions: opts.verbal
+      ? "Leia cada palavra. Se a palavra JÁ APARECEU antes nesta rodada, aperte “Já vi!”. Se é a primeira vez, não aperte."
+      : "Olhe cada figura. Se a figura JÁ APARECEU antes nesta rodada, aperte “Já vi!”. Se é a primeira vez, não aperte.",
+    tutorial: [
+      { text: opts.verbal ? "BOLA apareceu pela 1ª vez → não aperte." : "🐢 apareceu pela 1ª vez → não aperte.", stimulus: { display: opts.verbal ? "BOLA" : "🐢" }, demoResponse: null },
+      { text: opts.verbal ? "BOLA de novo → repetiu → aperte “Já vi!”." : "🐢 de novo → repetiu → aperte “Já vi!”.", stimulus: { display: opts.verbal ? "BOLA" : "🐢" }, demoResponse: "javi" },
+    ],
+    responses: [{ id: "javi", key: " ", label: "Já vi!", emoji: "👀" }],
+    fixationMs: 300,
+    stimulusMs: opts.verbal ? 1800 : 1500,
+    isiMs: [700, 900],
+    deadlineMs: 2400,
+    practiceTrials: 8,
+    blocks: 2,
+    trialsPerBlock: 26,
+    validity: { ...VALIDITY_DEFAULT, minResponseRate: 0.4 },
+    makeTrials: (count, rng) => {
+      const seq: Array<{ item: string; repeat: boolean }> = [];
+      const usable = shuffleWith(pool, rng);
+      let cursor = 0;
+      const repeatsWanted = Math.round(count * 0.3);
+      let placed = 0;
+      for (let i = 0; i < count; i++) {
+        const canRepeat = seq.length >= 2 && placed < repeatsWanted && rng() < 0.45;
+        if (canRepeat) {
+          const lag = 2 + Math.floor(rng() * 4); // repete o item de 2–5 posições atrás
+          const src = seq[Math.max(0, i - lag)];
+          if (src && !src.repeat) {
+            seq.push({ item: src.item, repeat: true });
+            placed++;
+            continue;
+          }
+        }
+        seq.push({ item: usable[cursor % usable.length], repeat: false });
+        cursor++;
+      }
+      return seq.map(({ item, repeat }) => ({
+        stimulus: { display: item },
+        correctResponse: repeat ? "javi" : null,
+        tags: [repeat ? "repetido" : "novo"],
+      }));
+    },
+  };
+}
+
+const VISUAL_POOL = ["🦁", "🍇", "🚲", "🌻", "🐙", "🎪", "🧩", "🪁", "🦒", "🍓", "🚀", "🌈", "🐧", "🎺", "🏰", "🦖", "🍉", "⛵", "🌵", "🐞"];
+const VERBAL_POOL = ["BOLA", "CASA", "PATO", "MESA", "FOGO", "LIVRO", "CHUVA", "DENTE", "PEIXE", "SAPATO", "JANELA", "MILHO", "PONTE", "VELA", "TREM", "FOLHA", "PIPOCA", "SINO", "NUVEM", "REMO"];
+
+const memoriaVisual = makeContinuousRecognition("memoria-visual-np", "Memória Visual", "🖼️", VISUAL_POOL, { verbal: false });
+const memoriaVerbal = makeContinuousRecognition("memoria-verbal-np", "Memória Verbal", "📖", VERBAL_POOL, { verbal: true });
+
 export const cognitiveTasks: CognitiveTaskConfig[] = [
   srt,
   crt,
@@ -368,6 +499,9 @@ export const cognitiveTasks: CognitiveTaskConfig[] = [
   makeNBack(1),
   makeNBack(2),
   makeNBack(3),
+  taskSwitching,
+  memoriaVisual,
+  memoriaVerbal,
 ];
 
 export function getCognitiveTask(id: string | undefined): CognitiveTaskConfig | undefined {

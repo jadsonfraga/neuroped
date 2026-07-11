@@ -39,6 +39,11 @@ export function ResultsPanel({ session }: { session: CognitiveSession }) {
   const incongr = s.byTag["incongruente"];
   const interference =
     congr?.meanRt != null && incongr?.meanRt != null ? Math.round((incongr.meanRt - congr.meanRt) * 10) / 10 : null;
+  // Custo de troca (task switching): RT em ensaios de troca − ensaios de repetição.
+  const rep = s.byTag["repeticao"];
+  const swi = s.byTag["troca"];
+  const switchCost =
+    rep?.meanRt != null && swi?.meanRt != null ? Math.round((swi.meanRt - rep.meanRt) * 10) / 10 : null;
 
   return (
     <div className="space-y-4">
@@ -82,6 +87,21 @@ export function ResultsPanel({ session }: { session: CognitiveSession }) {
         <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs">
           <strong>Efeito de interferência:</strong> incongruente {ms(incongr?.meanRt ?? null)} −
           congruente {ms(congr?.meanRt ?? null)} = <strong>{interference > 0 ? "+" : ""}{interference} ms</strong>
+        </div>
+      )}
+
+      {switchCost !== null && (
+        <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs">
+          <strong>Custo de troca:</strong> troca {ms(swi?.meanRt ?? null)} − repetição {ms(rep?.meanRt ?? null)} ={" "}
+          <strong>{switchCost > 0 ? "+" : ""}{switchCost} ms</strong>
+        </div>
+      )}
+
+      {session.customSummary && session.customSummary.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {session.customSummary.map((c) => (
+            <Stat key={c.label} label={c.label} value={c.value} hint={c.hint} />
+          ))}
         </div>
       )}
 

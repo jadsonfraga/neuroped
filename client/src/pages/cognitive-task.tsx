@@ -1,10 +1,29 @@
-/** Rota /cognitive-lab/:taskId — abre a tarefa cognitiva pelo runner único. */
+/** Rota /cognitive-lab/:taskId — resolve a tarefa para o runner adequado. */
 import { Link, useParams } from "wouter";
 import { CognitiveTaskRunner } from "@/features/cognitive-lab/CognitiveTaskRunner";
+import { SpanTaskRunner } from "@/features/cognitive-lab/SpanTaskRunner";
+import { TrailMakingRunner } from "@/features/cognitive-lab/TrailMakingRunner";
+import { VisualSearchRunner } from "@/features/cognitive-lab/VisualSearchRunner";
+import { TowerRunner } from "@/features/cognitive-lab/TowerRunner";
 import { getCognitiveTask } from "@/features/cognitive-lab/tasks";
 
 export default function CognitiveTaskPage() {
   const params = useParams<{ taskId: string }>();
+
+  // Tarefas com runner próprio (interações além de estímulo-resposta).
+  switch (params.taskId) {
+    case "digit-span":
+      return <SpanTaskRunner variant="digit" />;
+    case "corsi-block":
+      return <SpanTaskRunner variant="corsi" />;
+    case "trail-making":
+      return <TrailMakingRunner />;
+    case "busca-visual":
+      return <VisualSearchRunner />;
+    case "torre-np":
+      return <TowerRunner />;
+  }
+
   const task = getCognitiveTask(params.taskId);
   if (!task) {
     return (

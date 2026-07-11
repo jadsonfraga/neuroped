@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cognitiveTasks } from "@/features/cognitive-lab/tasks";
+import { customCognitiveTasks } from "@/features/cognitive-lab/customTasks";
 import { deleteSession, exportSessionCsv, exportSessionJson, listSessions } from "@/features/cognitive-lab/storage";
 import { useState } from "react";
 
@@ -27,7 +28,30 @@ export default function CognitiveLabPage() {
         </p>
       </header>
 
-      <section aria-label="Tarefas disponíveis" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <section aria-label="Tarefas com runner próprio" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {customCognitiveTasks.map((t) => (
+          <Link key={t.id} href={`/cognitive-lab/${t.id}`} className="group">
+            <Card className="h-full transition hover:border-primary/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-start gap-2 text-base">
+                  <span className="text-2xl" aria-hidden="true">{t.emoji}</span>
+                  <span className="min-w-0">
+                    {t.name}
+                    <span className="block text-[11px] font-semibold text-muted-foreground">{t.domain}</span>
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-xs leading-relaxed text-muted-foreground">{t.description}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="secondary" className="text-[10px]">{t.ageLabel}</Badge>
+                  <Badge variant="secondary" className="text-[10px]">{t.durationLabel}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{t.formatLabel}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
         {cognitiveTasks.map((t) => (
           <Link key={t.id} href={`/cognitive-lab/${t.id}`} className="group">
             <Card className="h-full transition hover:border-primary/50">
