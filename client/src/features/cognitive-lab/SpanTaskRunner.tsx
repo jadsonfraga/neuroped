@@ -21,7 +21,6 @@ import {
   makeCorsiSequence,
   makeDigitSequence,
   nextSpanState,
-  type SpanState,
 } from "./spanLogic";
 import type { CognitiveSession, TrialRecord } from "./types";
 
@@ -86,10 +85,10 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
     if (!r.rng) r.rng = mulberry32(r.seed);
     r.state = initialSpanState();
     setDirection(dir);
-    presentSequence(dir);
+    presentSequence();
   }
 
-  function presentSequence(dir: Direction) {
+  function presentSequence() {
     const r = ref.current;
     r.sequence = variant === "digit"
       ? makeDigitSequence(r.state.length, r.rng as () => number)
@@ -132,7 +131,7 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
     setPhase("feedback");
     after(900, () => {
       if (!next.done) {
-        presentSequence(direction);
+        presentSequence();
         return;
       }
       if (variant === "digit" && direction === "forward") {
