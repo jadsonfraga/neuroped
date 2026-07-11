@@ -1,17 +1,16 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCheck, CheckCircle2, Check, AlertTriangle, Info, RotateCcw, ArrowLeft, Sparkles } from "lucide-react";
+import { ClipboardCheck, CheckCircle2, Check, RotateCcw, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { softTick, softSuccess } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { celebrate } from "@/lib/confetti";
-import { easing, duration, scaleIn, staggerContainer, staggerItem } from "@/lib/motion";
-import { type InteractiveScaleDef, maxScoreOf } from "@/data/interactiveScales";
+import { easing, duration, staggerContainer, staggerItem } from "@/lib/motion";
+import { type InteractiveScaleDef } from "@/data/interactiveScales";
 
 /**
  * InteractiveScaleRunner — renderiza QUALQUER escala definida em
@@ -30,16 +29,6 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   const answered = Object.keys(answers).length;
   const progress = total ? (answered / total) * 100 : 0;
   const allAnswered = answered === total;
-  const maxScore = maxScoreOf(def);
-
-  const score = def.items.reduce((acc, item, i) => {
-    const opt = answers[i];
-    return acc + (opt != null ? item.options[opt].value : 0);
-  }, 0);
-
-  const band =
-    def.bands.find((b) => score >= b.min && score <= b.max) ?? def.bands[def.bands.length - 1];
-
   // Microcopy que acompanha o progresso — deixa a aplicação mais acolhedora.
   const progressHint = useMemo(() => {
     if (answered === 0) return "Toque numa opção para começar";
@@ -48,13 +37,6 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
     if (progress >= 33) return "Indo muito bem…";
     return "Continue no seu ritmo";
   }, [answered, allAnswered, progress]);
-
-  // Herói do resultado — gradiente conforme a gravidade da faixa.
-  const heroGradient: Record<string, string> = {
-    ok: "from-emerald-500 via-emerald-600 to-green-700",
-    warn: "from-amber-500 via-orange-500 to-yellow-600",
-    alert: "from-red-500 via-rose-600 to-red-700",
-  };
 
   function pick(itemIndex: number, optionIndex: number) {
     softTick();

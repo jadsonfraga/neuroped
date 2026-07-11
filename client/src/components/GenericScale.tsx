@@ -8,7 +8,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
   RotateCcw,
-  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   Info,
@@ -205,7 +204,6 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   }
 
   if (showResult) {
-    const result = config.onCalculate(answers);
     // Transcrição por extenso: perguntas + respostas selecionadas. É o resultado
     // que o app entrega — sem escore, corte ou classificação (pedido do autor).
     const qaItems = allItems.map((item) => ({

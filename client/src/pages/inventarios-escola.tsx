@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   School, Eye, Puzzle, BookOpen, Brain,
-  CheckCircle2, AlertTriangle, AlertCircle,
   RotateCcw, Printer, ClipboardList, Users,
   MessageSquare, Info,
 } from "lucide-react";
@@ -94,7 +93,7 @@ const inv1Categories = [
   },
 ];
 
-const inv1Bands: ClassificationBand[] = [
+const _inv1Bands: ClassificationBand[] = [
   { min: 48, max: 60, label: "Adequado", color: "green", description: "O aluno apresenta desempenho dentro do esperado para a faixa etária/série. Manter acompanhamento de rotina." },
   { min: 36, max: 47, label: "Dificuldades Leves — Monitorar", color: "yellow", description: "Foram identificadas dificuldades leves em alguns domínios. Recomenda-se monitoramento regular e estratégias de suporte pedagógico." },
   { min: 24, max: 35, label: "Dificuldades Moderadas — Avaliação Recomendada", color: "orange", description: "O perfil sugere dificuldades moderadas. Encaminhar para avaliação com equipe multidisciplinar (psicopedagogo, psicólogo, neuropediatra)." },
@@ -121,7 +120,7 @@ const inv2Items = [
   "Dificuldade em esperar sua vez",
 ];
 
-const inv2Bands: ClassificationBand[] = [
+const _inv2Bands: ClassificationBand[] = [
   { min: 0, max: 3, label: "Baixo Risco", color: "green", description: "Poucos sinais de alerta identificados. Manter observação regular do desenvolvimento." },
   { min: 4, max: 7, label: "Risco Moderado — Avaliação Recomendada", color: "yellow", description: "Presença de sinais de alerta para TEA em quantidade moderada. Recomenda-se avaliação neuropediátrica e/ou com especialista em desenvolvimento." },
   { min: 8, max: 15, label: "Alto Risco — Encaminhamento Prioritário", color: "red", description: "Número significativo de sinais de alerta para TEA. Encaminhamento prioritário para avaliação diagnóstica especializada." },
@@ -146,7 +145,7 @@ const inv3Items = [
   "Identifica cores básicas",
 ];
 
-const inv3Bands: ClassificationBand[] = [
+const _inv3Bands: ClassificationBand[] = [
   { min: 20, max: 24, label: "Pronto para Alfabetização", color: "green", description: "O aluno demonstra as pré-habilidades esperadas para o processo de alfabetização." },
   { min: 14, max: 19, label: "Em Desenvolvimento — Estimulação Recomendada", color: "yellow", description: "Algumas habilidades ainda estão em desenvolvimento. Recomenda-se estimulação direcionada e acompanhamento pedagógico." },
   { min: 0, max: 13, label: "Dificuldades Significativas — Investigar Atraso", color: "red", description: "O perfil indica dificuldades significativas nas pré-habilidades de alfabetização. Investigar possível atraso no desenvolvimento e encaminhar para avaliação." },
@@ -169,7 +168,7 @@ const inv4Items = [
   "Persiste em tarefas difíceis",
 ];
 
-const inv4Bands: ClassificationBand[] = [
+const _inv4Bands: ClassificationBand[] = [
   { min: 24, max: 30, label: "Funções Executivas Adequadas", color: "green", description: "O aluno demonstra funções executivas compatíveis com a faixa etária." },
   { min: 16, max: 23, label: "Dificuldades Leves — Monitorar", color: "yellow", description: "Foram identificadas dificuldades leves nas funções executivas. Recomenda-se monitoramento e estratégias de organização em sala." },
   { min: 8, max: 15, label: "Dificuldades Moderadas — Avaliação Recomendada", color: "orange", description: "O perfil sugere comprometimento moderado das funções executivas. Avaliação neuropsicológica recomendada." },
@@ -178,44 +177,10 @@ const inv4Bands: ClassificationBand[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getBand(score: number, bands: ClassificationBand[]): ClassificationBand {
+function _getBand(score: number, bands: ClassificationBand[]): ClassificationBand {
   return bands.find((b) => score >= b.min && score <= b.max) ?? bands[bands.length - 1];
 }
 
-const colorStyles = {
-  green: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/20",
-    border: "border-emerald-200 dark:border-emerald-800/40",
-    text: "text-emerald-700 dark:text-emerald-300",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-    icon: CheckCircle2,
-    iconColor: "text-emerald-600 dark:text-emerald-400",
-  },
-  yellow: {
-    bg: "bg-yellow-50 dark:bg-yellow-950/20",
-    border: "border-yellow-200 dark:border-yellow-800/40",
-    text: "text-yellow-700 dark:text-yellow-300",
-    badge: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
-    icon: AlertCircle,
-    iconColor: "text-yellow-600 dark:text-yellow-400",
-  },
-  orange: {
-    bg: "bg-orange-50 dark:bg-orange-950/20",
-    border: "border-orange-200 dark:border-orange-800/40",
-    text: "text-orange-700 dark:text-orange-300",
-    badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
-    icon: AlertTriangle,
-    iconColor: "text-orange-600 dark:text-orange-400",
-  },
-  red: {
-    bg: "bg-red-50 dark:bg-red-950/20",
-    border: "border-red-200 dark:border-red-800/40",
-    text: "text-red-700 dark:text-red-300",
-    badge: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-    icon: AlertTriangle,
-    iconColor: "text-red-600 dark:text-red-400",
-  },
-};
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
 
@@ -278,8 +243,7 @@ function Inventario1() {
   const answered = allItems.filter((k) => answers[k] !== undefined).length;
   const allAnswered = answered === allItems.length;
 
-  const score = Object.values(answers).reduce((a, b) => a + b, 0);
-  const band = getBand(score, inv1Bands);
+  const _score = Object.values(answers).reduce((a, b) => a + b, 0);
 
   if (showResult) {
     const reviewItems = inv1Categories.flatMap((cat) =>
@@ -380,8 +344,7 @@ function Inventario2() {
 
   const answered = Object.values(answers).filter((v) => v !== null && v !== undefined).length;
   const allAnswered = answered === inv2Items.length;
-  const score = Object.values(answers).filter(Boolean).length;
-  const band = getBand(score, inv2Bands);
+  const _score = Object.values(answers).filter(Boolean).length;
 
   if (showResult) {
     const reviewItems = inv2Items.map((item, i) => {
@@ -465,8 +428,7 @@ function Inventario3() {
 
   const answered = Object.keys(answers).length;
   const allAnswered = answered === inv3Items.length;
-  const score = Object.values(answers).reduce((a, b) => a + b, 0);
-  const band = getBand(score, inv3Bands);
+  const _score = Object.values(answers).reduce((a, b) => a + b, 0);
 
   if (showResult) {
     const reviewItems = inv3Items.map((item, i) => {
@@ -552,8 +514,7 @@ function Inventario4() {
 
   const answered = Object.keys(answers).length;
   const allAnswered = answered === inv4Items.length;
-  const score = Object.values(answers).reduce((a, b) => a + b, 0);
-  const band = getBand(score, inv4Bands);
+  const _score = Object.values(answers).reduce((a, b) => a + b, 0);
 
   if (showResult) {
     const reviewItems = inv4Items.map((item, i) => {

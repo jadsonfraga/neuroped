@@ -499,14 +499,6 @@ export default function InventariosAutoPage() {
     return items;
   }
 
-  function buildDomainResults() {
-    return INVENTORIES.map(inv => {
-      const score = getScore(inv.id);
-      const cl = inv.classify(score);
-      return { domain: inv.title, score, classification: cl.label };
-    });
-  }
-
   function buildAnswersForSave() {
     const obj: Record<string, any> = {};
     INVENTORIES.forEach(inv => {
@@ -516,7 +508,6 @@ export default function InventariosAutoPage() {
   }
 
   const totalScore = INVENTORIES.reduce((sum, inv) => sum + getScore(inv.id), 0);
-  const totalMaxScore = INVENTORIES.reduce((sum, inv) => sum + inv.maxScore, 0);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
