@@ -147,46 +147,24 @@ export default function SatisfacaoMedicacaoPage() {
   // ═══════════════════════════════════════════════════════
 
   if (showResult) {
-    // Calcular scores
-    const efeitosPresentes = efeitosAdversos.filter(e => (efeitosResp[e.id] ?? 0) >= 2);
-    const efeitosGraves = efeitosAdversos.filter(e => (efeitosResp[e.id] ?? 0) >= 3);
-    const _eficaciaMedia = respondidosEficacia > 0
-      ? Object.values(eficaciaAreas).reduce((s, v) => s + v, 0) / respondidosEficacia
-      : 0;
+    // Cálculo mantido apenas para salvar no prontuário e no relatório — não é exibido na tela.
     const formaMedia = respondidosForma > 0
       ? Object.values(formaResp).reduce((s, v) => s + v, 0) / respondidosForma
       : 0;
     const totalEfeitosScore = Object.values(efeitosResp).reduce((s, v) => s + v, 0);
     const efeitosMax = totalEfeitos * 4;
-
-    // Score composto (0-100)
-    const eficaciaScore = (eficaciaGeral ?? 0) * 25; // 0-100
+    const eficaciaScore = (eficaciaGeral ?? 0) * 25;
     const satisfacaoScore = (satisfacaoGeral ?? 0) * 25;
     const efeitosInverso = Math.max(0, 100 - (totalEfeitosScore / efeitosMax) * 100);
     const compostoScore = Math.round((eficaciaScore * 0.35 + satisfacaoScore * 0.25 + efeitosInverso * 0.25 + formaMedia * 25 * 0.15));
 
     let classificacao = "";
-    let cor = "";
-    let desc = "";
-    if (compostoScore >= 75) {
-      classificacao = "Boa resposta — manter";
-      cor = "emerald";
-      desc = "A medicação apresenta boa eficácia, poucos efeitos adversos e boa aceitação familiar. Recomenda-se manter o tratamento atual e reavaliar periodicamente.";
-    } else if (compostoScore >= 50) {
-      classificacao = "Resposta parcial — ajustar";
-      cor = "amber";
-      desc = "A medicação apresenta resposta parcial. Considerar ajuste de dose, horário ou formulação. Monitorar efeitos adversos e reavaliar em 2-4 semanas.";
-    } else if (compostoScore >= 25) {
-      classificacao = "Resposta insatisfatória — reavaliar";
-      cor = "orange";
-      desc = "Resposta insuficiente ou efeitos adversos relevantes. Reavaliar indicação, considerar troca de medicação ou ajuste significativo de dose.";
-    } else {
-      classificacao = "Intolerância / sem resposta — suspender ou trocar";
-      cor = "red";
-      desc = "Efeitos adversos significativos e/ou ausência de benefício clínico. Considerar suspensão gradual e troca por alternativa terapêutica.";
-    }
+    if (compostoScore >= 75) classificacao = "Boa resposta — manter";
+    else if (compostoScore >= 50) classificacao = "Resposta parcial — ajustar";
+    else if (compostoScore >= 25) classificacao = "Resposta insatisfatória — reavaliar";
+    else classificacao = "Intolerância / sem resposta — suspender ou trocar";
 
-    const _totalScore = compostoScore;
+    const continuariaLabels = ["Não, de jeito nenhum", "Provavelmente não", "Talvez", "Provavelmente sim", "Com certeza sim"];
 
     return (
       <motion.div
@@ -209,134 +187,97 @@ export default function SatisfacaoMedicacaoPage() {
               className="text-xl text-foreground leading-tight"
               style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
             >
-              Resultado — Satisfação com Medicação
+              Respostas — Satisfação com Medicação
             </h1>
             <p className="text-xs text-muted-foreground italic">
-              {nomeCrianca && <>{nomeCrianca} · </>}{nomeMedicacao && <>{nomeMedicacao} {doseMedicacao && `${doseMedicacao}mg`} · </>}
-              {mgKg && <>{mgKg} mg/kg · </>}Score: {compostoScore}/100
+              {nomeCrianca && <>{nomeCrianca} · </>}{nomeMedicacao && <>{nomeMedicacao}{doseMedicacao && ` ${doseMedicacao}mg`} · </>}Resposta dos pais/responsáveis
             </p>
           </div>
         </div>
 
-        {/* Score principal */}
-        <Card className={`border-2 ${cor === "emerald" ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20" : cor === "amber" ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/20" : cor === "orange" ? "border-orange-300 bg-orange-50/50 dark:bg-orange-950/20" : "border-red-300 bg-red-50/50 dark:bg-red-950/20"}`}>
-          <CardContent className="p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-4xl font-bold text-foreground">{compostoScore}</p>
-                <p className="text-xs text-muted-foreground">/100 pontos</p>
+        {/* ── Eficácia ── */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h3 className="text-xs font-bold uppercase text-muted-foreground">Eficácia</h3>
+            <div className="space-y-2">
+              <div className="rounded-lg border border-border/70 bg-background p-2.5">
+                <p className="text-sm text-foreground">No geral, a medicação está fazendo efeito?</p>
+                <p className="text-sm text-primary mt-1">→ {eficaciaGeral !== null ? eficaciaLabels[eficaciaGeral] : "—"}</p>
               </div>
-              <Badge className={`text-sm px-4 py-1.5 ${cor === "emerald" ? "bg-emerald-100 text-emerald-700" : cor === "amber" ? "bg-amber-100 text-amber-700" : cor === "orange" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
-                {classificacao}
-              </Badge>
+              {areasEficacia.map(a => {
+                const val = eficaciaAreas[a.id];
+                return (
+                  <div key={a.id} className="rounded-lg border border-border/70 bg-background p-2.5">
+                    <p className="text-sm text-foreground">{a.nome}</p>
+                    <p className="text-sm text-primary mt-1">→ {val === undefined ? "—" : eficaciaLabels[val]}</p>
+                  </div>
+                );
+              })}
             </div>
-            <Progress value={compostoScore} className="h-2" />
-            <p className="text-sm text-foreground leading-relaxed">{desc}</p>
           </CardContent>
         </Card>
 
-        {/* Detalhamento */}
-        <div className="grid sm:grid-cols-2 gap-3">
-          {/* Eficácia */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="text-xs font-bold uppercase text-muted-foreground">Eficácia Global</h3>
-              <p className="text-2xl font-bold">{eficaciaLabels[eficaciaGeral ?? 0]}</p>
-              {respondidosEficacia > 0 && (
-                <div className="space-y-1.5 pt-2 border-t">
-                  {areasEficacia.map(a => {
-                    const val = eficaciaAreas[a.id];
-                    if (val === undefined) return null;
-                    const Icon = a.icon;
-                    return (
-                      <div key={a.id} className="flex items-center gap-2 text-xs">
-                        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="flex-1 truncate">{a.nome}</span>
-                        <Badge variant="outline" className={`text-[10px] ${val >= 3 ? "text-emerald-600 border-emerald-300" : val >= 2 ? "text-amber-600 border-amber-300" : "text-red-600 border-red-300"}`}>
-                          {eficaciaLabels[val]}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Efeitos adversos */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="text-xs font-bold uppercase text-muted-foreground">Efeitos Adversos</h3>
-              <div className="flex gap-3">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-amber-600">{efeitosPresentes.length}</p>
-                  <p className="text-[10px] text-muted-foreground">presentes</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-red-600">{efeitosGraves.length}</p>
-                  <p className="text-[10px] text-muted-foreground">frequentes/constantes</p>
-                </div>
-              </div>
-              {efeitosPresentes.length > 0 && (
-                <div className="space-y-1 pt-2 border-t">
-                  {efeitosPresentes.map(e => (
-                    <div key={e.id} className="flex items-center gap-2 text-xs">
-                      <span className={`w-2 h-2 rounded-full ${(efeitosResp[e.id] ?? 0) >= 3 ? "bg-red-500" : "bg-amber-500"}`} />
-                      <span className="flex-1">{e.nome}</span>
-                      <span className="text-muted-foreground">{frequenciaLabels[efeitosResp[e.id] ?? 0]}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Administração */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="text-xs font-bold uppercase text-muted-foreground">Forma de Administrar</h3>
-              <p className="text-2xl font-bold">{formaMedia.toFixed(1)}<span className="text-sm text-muted-foreground">/4</span></p>
-              <div className="space-y-1 pt-2 border-t">
-                {formaPerguntas.map(fp => {
-                  const val = formaResp[fp.id];
-                  if (val === undefined) return null;
+        {/* ── Efeitos adversos ── */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h3 className="text-xs font-bold uppercase text-muted-foreground">Efeitos adversos</h3>
+            {efeitosCategorias.map(cat => (
+              <div key={cat} className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2 border-t">{cat}</p>
+                {efeitosAdversos.filter(e => e.categoria === cat).map(e => {
+                  const val = efeitosResp[e.id];
                   return (
-                    <div key={fp.id} className="flex items-center gap-2 text-xs">
-                      <span className="flex-1 truncate">{fp.nome.replace("?", "")}</span>
-                      <Badge variant="outline" className={`text-[10px] ${val >= 3 ? "text-emerald-600 border-emerald-300" : val >= 2 ? "text-amber-600 border-amber-300" : "text-red-600 border-red-300"}`}>
-                        {facilidadeLabels[val]}
-                      </Badge>
+                    <div key={e.id} className="rounded-lg border border-border/70 bg-background p-2.5">
+                      <p className="text-sm text-foreground">{e.nome}</p>
+                      <p className="text-sm text-primary mt-1">→ {val === undefined ? "—" : frequenciaLabels[val]}</p>
                     </div>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </CardContent>
+        </Card>
 
-          {/* Satisfação geral */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="text-xs font-bold uppercase text-muted-foreground">Satisfação da Família</h3>
-              <p className="text-2xl font-bold">{satisfacaoLabels[satisfacaoGeral ?? 0]}</p>
-              {continuaria !== null && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">Continuaria usando?</p>
-                  <Badge className={`text-xs mt-1 ${continuaria >= 3 ? "bg-emerald-100 text-emerald-700" : continuaria >= 2 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
-                    {["Não, de jeito nenhum", "Provavelmente não", "Talvez", "Provavelmente sim", "Com certeza sim"][continuaria]}
-                  </Badge>
-                </div>
-              )}
-              {obsLivre && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">Observações da família:</p>
-                  <p className="text-xs text-foreground mt-1 italic">“{obsLivre}”</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* ── Forma de administrar ── */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h3 className="text-xs font-bold uppercase text-muted-foreground">Forma de administrar</h3>
+            <div className="space-y-2">
+              {formaPerguntas.map(fp => {
+                const val = formaResp[fp.id];
+                return (
+                  <div key={fp.id} className="rounded-lg border border-border/70 bg-background p-2.5">
+                    <p className="text-sm text-foreground">{fp.nome}</p>
+                    <p className="text-sm text-primary mt-1">→ {val === undefined ? "—" : facilidadeLabels[val]}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Dose e mg/kg */}
+        {/* ── Satisfação da família ── */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h3 className="text-xs font-bold uppercase text-muted-foreground">Satisfação da família</h3>
+            <div className="space-y-2">
+              <div className="rounded-lg border border-border/70 bg-background p-2.5">
+                <p className="text-sm text-foreground">Satisfação geral com a medicação</p>
+                <p className="text-sm text-primary mt-1">→ {satisfacaoGeral !== null ? satisfacaoLabels[satisfacaoGeral] : "—"}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background p-2.5">
+                <p className="text-sm text-foreground">Se pudesse, continuaria usando esta medicação?</p>
+                <p className="text-sm text-primary mt-1">→ {continuaria !== null ? continuariaLabels[continuaria] : "—"}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background p-2.5">
+                <p className="text-sm text-foreground">Observações da família (livre)</p>
+                <p className="text-sm text-primary mt-1">→ {obsLivre ? obsLivre : "—"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dose e mg/kg — referência clínica */}
         {mgKg && (
           <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
             <div className="flex items-center gap-2">
@@ -352,20 +293,16 @@ export default function SatisfacaoMedicacaoPage() {
         <ClinicalReport
           scaleName="Satisfação com Medicação"
           scaleFullName={`Escala de Satisfação e Monitoramento Medicamentoso — ${nomeMedicacao || "Medicação"}`}
-          totalScore={compostoScore}
-          maxScore={100}
-          classification={classificacao}
-          description={desc}
-          domainResults={[
-            { domain: "Eficácia", score: eficaciaScore, classification: eficaciaLabels[eficaciaGeral ?? 0] },
-            { domain: "Efeitos Adversos (invertido)", score: Math.round(efeitosInverso), classification: efeitosGraves.length === 0 ? "Ausentes" : `${efeitosGraves.length} frequentes` },
-            { domain: "Administração", score: Math.round(formaMedia * 25), classification: formaMedia >= 3 ? "Fácil" : formaMedia >= 2 ? "Razoável" : "Difícil" },
-            { domain: "Satisfação", score: satisfacaoScore, classification: satisfacaoLabels[satisfacaoGeral ?? 0] },
-          ]}
+          hideScore
+          classification="Registro de respostas — análise clínica pelo profissional"
+          description={obsLivre ? `Observações da família: ${obsLivre}` : ""}
           items={[
-            ...efeitosAdversos.filter(e => efeitosResp[e.id] !== undefined).map(e => ({ question: `[Efeito] ${e.nome}`, answer: frequenciaLabels[efeitosResp[e.id]], value: efeitosResp[e.id] })),
-            ...areasEficacia.filter(a => eficaciaAreas[a.id] !== undefined).map(a => ({ question: `[Eficácia] ${a.nome}`, answer: eficaciaLabels[eficaciaAreas[a.id]], value: eficaciaAreas[a.id] })),
-            ...formaPerguntas.filter(f => formaResp[f.id] !== undefined).map(f => ({ question: `[Admin.] ${f.nome}`, answer: facilidadeLabels[formaResp[f.id]], value: formaResp[f.id] })),
+            { question: "No geral, a medicação está fazendo efeito?", answer: eficaciaGeral !== null ? eficaciaLabels[eficaciaGeral] : "—", value: eficaciaGeral ?? 0 },
+            ...areasEficacia.map(a => ({ question: `[Eficácia] ${a.nome}`, answer: eficaciaAreas[a.id] === undefined ? "—" : eficaciaLabels[eficaciaAreas[a.id]], value: eficaciaAreas[a.id] ?? 0 })),
+            ...efeitosAdversos.map(e => ({ question: `[Efeito] ${e.nome}`, answer: efeitosResp[e.id] === undefined ? "—" : frequenciaLabels[efeitosResp[e.id]], value: efeitosResp[e.id] ?? 0 })),
+            ...formaPerguntas.map(f => ({ question: `[Admin.] ${f.nome}`, answer: formaResp[f.id] === undefined ? "—" : facilidadeLabels[formaResp[f.id]], value: formaResp[f.id] ?? 0 })),
+            { question: "Satisfação geral com a medicação", answer: satisfacaoGeral !== null ? satisfacaoLabels[satisfacaoGeral] : "—", value: satisfacaoGeral ?? 0 },
+            { question: "Se pudesse, continuaria usando esta medicação?", answer: continuaria !== null ? continuariaLabels[continuaria] : "—", value: continuaria ?? 0 },
           ]}
           patientAge={idadeCrianca || "Pediátrico"}
         />

@@ -11,7 +11,7 @@ import { PageHero } from "@/components/PageHero";
 import { Progress } from "@/components/ui/progress";
 import {
   FileText, RotateCcw, ChevronDown, ChevronUp,
-  AlertTriangle, CheckCircle2, Info, MessageCircle,
+  MessageCircle,
   Languages, Lightbulb, Hand, Heart, Printer
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -132,86 +132,31 @@ export default function PantPage() {
           </div>
         </div>
 
-        {/* Global result */}
+        {/* Perguntas e respostas */}
         <Card className="border-card-border">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-foreground">{globalResult.average.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">Média Geral (0-4)</p>
-              <Badge className={`text-sm px-4 py-1.5 ${
-                globalResult.average >= 3.5
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : globalResult.average >= 2.5
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                  : globalResult.average >= 1.5
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                  : globalResult.average >= 0.5
-                  ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              }`}>
-                {globalResult.classification}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <div className="flex items-start gap-2">
-                {globalResult.average >= 2.5 ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-sm text-foreground leading-relaxed">
-                  {globalResult.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Domain breakdown */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">Macrodomínios</h3>
-              {domainResults.map((d) => {
-                const Icon = domainIcons[d.id];
-                return (
-                  <div key={d.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Icon className={`w-4 h-4 ${domainTextColor[d.id]}`} />
-                        <p className={`text-sm font-medium ${domainTextColor[d.id]}`}>{d.short}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-muted-foreground">{d.result.average.toFixed(2)}</span>
-                        <Badge variant="outline" className={`text-xs ${d.result.color}`}>
-                          {d.result.classification}
-                        </Badge>
-                      </div>
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-sm font-bold text-foreground">Perguntas e respostas</h2>
+            {pantDomains.map((domain) => {
+              const dScales = scalesByDomain[domain.id] || [];
+              const Icon = domainIcons[domain.id];
+              return (
+                <div key={domain.id} className="space-y-2">
+                  <h3 className={`text-xs font-semibold flex items-center gap-1.5 ${domainTextColor[domain.id]}`}>
+                    <Icon className="w-4 h-4" /> Macrodomínio {domain.id}: {domain.short}
+                  </h3>
+                  {dScales.map((scale) => (
+                    <div key={scale.number} className="text-sm border-b border-border/40 pb-2 last:border-0">
+                      <p className="text-foreground leading-relaxed">
+                        <span className="font-mono text-xs text-muted-foreground">{String(scale.number).padStart(2, "0")}.</span> {scale.name}
+                      </p>
+                      <p className="text-muted-foreground mt-0.5">
+                        → {answers[scale.number] === undefined ? "—" : pantLevelLabels[answers[scale.number]]}
+                      </p>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2.5">
-                      <div
-                        className={`h-2.5 rounded-full transition-all ${
-                          d.result.average >= 3.5 ? "bg-emerald-500" :
-                          d.result.average >= 2.5 ? "bg-blue-500" :
-                          d.result.average >= 1.5 ? "bg-amber-500" :
-                          d.result.average >= 0.5 ? "bg-orange-500" : "bg-red-500"
-                        }`}
-                        style={{ width: `${(d.result.average / 4) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Rating reference */}
-            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-foreground/80 space-y-1">
-                  <p><strong>Régua de Regulação (0-4):</strong></p>
-                  <p>0 = Ausente / 1 = Muito frágil / 2 = Inconsistente</p>
-                  <p>3 = Funcional parcial / 4 = Espontâneo e generalizado</p>
+                  ))}
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </CardContent>
         </Card>
 
