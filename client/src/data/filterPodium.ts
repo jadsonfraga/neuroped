@@ -182,6 +182,11 @@ export function selectPodium(
       coveredQueixas?: Set<string>;
       coverageWeight?: number;
       preferCuratedFirst?: boolean;
+      /** Cobertura ANTES da catraca de qualidade: quando há queixa marcada ainda
+       *  descoberta, um candidato SEGURO que a cubra pode medalhar mesmo com
+       *  relevância < QUALITY_THRESHOLD — do contrário um candidato de alta
+       *  relevância que NÃO cobre monopoliza o slot e a 2ª queixa fica órfã. */
+      coverageFirst?: boolean;
     } = {},
   ) => {
     const preferred = [...preferredIds, ...curatedIds].filter((id, index, arr) => arr.indexOf(id) === index);
@@ -208,7 +213,18 @@ export function selectPodium(
       (m) => !used.has(m.scale.id) && m.relevanceScore >= QUALITY_THRESHOLD && pred(m)
     );
     const preferredSafe = preferredMatches.filter((m) => !used.has(m.scale.id) && pred(m));
-    const found = options.preferCuratedFirst
+    // Passe de COBERTURA (opt-in): antes das camadas de qualidade, se sobra
+    // queixa marcada sem cobrir, escolhe o melhor candidato que a cubra entre
+    // TODOS os elegíveis (idade exata primeiro). Corrige o vazamento em que um
+    // candidato ≥threshold que não cobre bloqueava um candidato <threshold que
+    // era a única escala aplicável para a 2ª queixa selecionada.
+    const covers = (m: RefinedScaleMatch) => coverageGain(m, coveredQueixas) > 0;
+    const coveragePick =
+      options.coverageFirst && coverageWeight > 0
+        ? pickByClinicalFit(eligibleExact.filter(covers), coveredQueixas, preferredIds, coverageWeight) ??
+          pickByClinicalFit(eligible.filter(covers), coveredQueixas, preferredIds, coverageWeight)
+        : undefined;
+    const found = coveragePick ?? (options.preferCuratedFirst
       ? pickByClinicalFit(preferredHighQuality, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(preferredSafe, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(highQualityExact, coveredQueixas, preferredIds, coverageWeight) ??
@@ -218,7 +234,7 @@ export function selectPodium(
       : pickByClinicalFit(highQualityExact, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(highQuality, coveredQueixas, preferredIds, coverageWeight) ??
         pickByClinicalFit(eligibleExact, coveredQueixas, preferredIds, coverageWeight) ??
-        pickByClinicalFit(eligible, coveredQueixas, preferredIds, coverageWeight);
+        pickByClinicalFit(eligible, coveredQueixas, preferredIds, coverageWeight));
     if (found) used.add(found.scale.id);
     return found;
   };
@@ -309,10 +325,11 @@ export function selectPodium(
       takeBestAvailable(
         (m) => m.applicationMode !== ouroMode || !m.scale.queixas.some((q) => ouroQueixas.has(q)),
         curatedTiers?.prata ? [curatedTiers.prata] : [],
-        { coveredQueixas, coverageWeight: 40 },
+        { coveredQueixas, coverageWeight: 40, coverageFirst: true },
       ) ?? takeBestAvailable(() => true, curatedTiers?.prata ? [curatedTiers.prata] : [], {
         coveredQueixas,
         coverageWeight: 30,
+        coverageFirst: true,
       });
   }
   markCovered(prata, coveredQueixas);
@@ -345,10 +362,11 @@ export function selectPodium(
           return diffFromOuro || diffFromPrata;
         },
         curatedTiers?.bronze ? [curatedTiers.bronze] : [],
-        { coveredQueixas, coverageWeight: 30 },
+        { coveredQueixas, coverageWeight: 30, coverageFirst: true },
       ) ?? takeBestAvailable(() => true, curatedTiers?.bronze ? [curatedTiers.bronze] : [], {
         coveredQueixas,
         coverageWeight: 24,
+        coverageFirst: true,
       });
   }
   markCovered(bronze, coveredQueixas);

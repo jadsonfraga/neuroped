@@ -26,6 +26,25 @@ const A4 = { w: 595.28, h: 841.89 };
 const M = 50; // margem
 const LINE = 14;
 
+// pdf-lib desenha com Helvetica/WinAnsi (Windows-1252) e LANÇA em qualquer
+// caractere fora do Latin-1 — inclusive ao só MEDIR a largura (wrap()). Texto
+// clínico colado costuma trazer "≥ ≤ → ↑" (QI ≥ 70; evolução → melhora), letras
+// gregas e emoji, que faziam a geração do laudo/receita falhar com um erro
+// genérico. Sanitizamos AQUI, no construtor, para blindar todos os chamadores.
+export function pdfSafe(input: string): string {
+  return (input ?? "")
+    .replace(/[–—]/g, "-")
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/…/g, "...")
+    .replace(/[≥]/g, ">=")
+    .replace(/[≤]/g, "<=")
+    .replace(/[→⇒]/g, "->")
+    .replace(/[←]/g, "<-")
+    .replace(/[×]/g, "x")
+    .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, ""); // mantém ASCII + Latin-1 (WinAnsi)
+}
+
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const out: string[] = [];
   for (const rawLine of (text ?? "").split("\n")) {
@@ -56,7 +75,16 @@ async function embedValidationQr(pdf: PDFDocument, url: string) {
   return pdf.embedPng(base64);
 }
 
-export async function buildDocumentPdf(spec: DocSpec): Promise<Uint8Array> {
+export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
+  // Cópia sanitizada: todo texto DESENHADO passa por pdfSafe antes de medir/pintar.
+  const spec: DocSpec = {
+    ...rawSpec,
+    title: pdfSafe(rawSpec.title),
+    subtitle: rawSpec.subtitle ? pdfSafe(rawSpec.subtitle) : undefined,
+    credentials: rawSpec.credentials.map(pdfSafe),
+    sections: rawSpec.sections.map((s) => ({ heading: pdfSafe(s.heading), body: pdfSafe(s.body) })),
+    footer: rawSpec.footer ? pdfSafe(rawSpec.footer) : undefined,
+  };
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -143,7 +171,7 @@ export async function buildDocumentPdf(spec: DocSpec): Promise<Uint8Array> {
     font,
     color: rgb(0.25, 0.25, 0.3),
   });
-  page.drawText(validationUrl, {
+  page.drawText(pdfSafe(validationUrl), {
     x: M + 12,
     y: M + 18,
     size: 6.5,

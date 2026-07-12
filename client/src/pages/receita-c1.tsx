@@ -25,6 +25,17 @@ interface ReceitaFields {
 
 const EMPTY: ReceitaFields = { pac: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
 
+// pdf-lib (Helvetica/WinAnsi, Windows-1252) LANÇA em qualquer caractere fora do
+// Latin-1 — inclusive ao só MEDIR a largura do texto. Numa RECEITA C1 assinada,
+// um "≥", "→" ou emoji colado abortava a geração. Normaliza tipografia e mapeia
+// os símbolos comuns para ASCII, preservando acentos do português (Latin-1).
+function pdfSafe(s: string): string {
+  return (s ?? "")
+    .replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...")
+    .replace(/≥/g, ">=").replace(/≤/g, "<=").replace(/[→⇒]/g, "->").replace(/←/g, "<-").replace(/×/g, "x")
+    .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, "");
+}
+
 const CLINIC_NAME = "NeuroPed SDG";
 const DOCTOR_NAME = "Dr. Jadson Fraga Araújo Júnior";
 const DOCTOR_NAME_PDF = "Dr. Jadson Fraga Araujo Junior";
@@ -75,6 +86,11 @@ function _canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string) {
 }
 
 async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Array> {
+  // Não gerar/assinar uma receita de controle especial em branco: bloqueia antes
+  // de produzir um PDF assinável sem paciente, medicamento ou posologia.
+  if (!f.pac?.trim() || !f.med?.trim() || !f.poso?.trim()) {
+    throw new Error("Preencha ao menos paciente, medicamento e posologia antes de gerar a receita.");
+  }
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
   const pdf = await PDFDocument.create();
@@ -107,14 +123,23 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
   const line = rgb(0.78, 0.75, 0.68);
 
   const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
-    let text = value || "";
-    while (text.length > 0 && font.widthOfTextAtSize(text, size) > maxWidth) text = text.slice(0, -1);
-    page.drawText(text || " ", { x, y, size, font, color: ink });
+    let text = pdfSafe(value || "");
+    // 1) Encolhe a fonte até um piso legível antes de cortar (cabe mais texto).
+    let fs = size;
+    const min = Math.max(4.4, size - 2.5);
+    while (fs > min && font.widthOfTextAtSize(text, fs) > maxWidth) fs -= 0.2;
+    // 2) Se ainda não couber, trunca com reticências VISÍVEIS — nunca corte
+    //    silencioso do medicamento/quantidade numa receita de controle especial.
+    if (text.length > 1 && font.widthOfTextAtSize(text, fs) > maxWidth) {
+      while (text.length > 1 && font.widthOfTextAtSize(text + "...", fs) > maxWidth) text = text.slice(0, -1);
+      text = text.replace(/[\s.]+$/, "") + "...";
+    }
+    page.drawText(text || " ", { x, y, size: fs, font, color: ink });
   };
 
   const wrap = (value: string, maxWidth: number, size: number, font = helv) => {
     const lines: string[] = [];
-    for (const raw of String(value || "").split("\n")) {
+    for (const raw of pdfSafe(String(value || "")).split("\n")) {
       if (!raw.trim()) { lines.push(""); continue; }
       let current = "";
       for (const word of raw.split(/\s+/)) {
@@ -405,6 +430,10 @@ export default function ReceitaC1Page() {
   }
 
   const handlePrint = () => {
+    if (!f.pac?.trim() || !f.med?.trim() || !f.poso?.trim()) {
+      window.alert("Preencha ao menos paciente, medicamento e posologia antes de imprimir a receita.");
+      return;
+    }
     const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(buildReceitaC1Html(f));

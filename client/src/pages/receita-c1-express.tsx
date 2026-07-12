@@ -112,7 +112,7 @@ function _canonicalExpressPayload(f: FormFields, issuedAt: string) {
     "RQE 17.756",
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.paciente || "-"}`,
-    `Data de nascimento: ${f.dataNasc || "-"}`,
+    `Data de nascimento: ${fmtNasc(f.dataNasc) || "-"}`,
     `Endereco: ${f.endereco || "-"}`,
     `Municipio/UF: ${f.municipio || "-"}`,
     `CEP: ${f.cep || "-"}`,
@@ -146,7 +146,7 @@ async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
         heading: "Dados do Paciente",
         body: [
           `Nome: ${f.paciente || "—"}`,
-          `Data de nascimento: ${f.dataNasc || "—"}`,
+          `Data de nascimento: ${fmtNasc(f.dataNasc) || "—"}`,
           `Endereço: ${f.endereco || "—"}`,
           `Município/UF: ${f.municipio || "—"}  CEP: ${f.cep || "—"}`,
         ].join("\n"),
@@ -181,6 +181,25 @@ async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
   });
 }
 
+// pdf-lib (Helvetica/WinAnsi, Windows-1252) LANÇA em qualquer caractere fora do
+// Latin-1 — inclusive ao só MEDIR a largura. Num C1 assinado, "≥/→/emoji" colado
+// abortava a geração. Normaliza tipografia e mapeia símbolos comuns para ASCII,
+// preservando os acentos do português (Latin-1).
+function pdfSafe(s: string): string {
+  return (s ?? "")
+    .replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...")
+    .replace(/≥/g, ">=").replace(/≤/g, "<=").replace(/[→⇒]/g, "->").replace(/←/g, "<-").replace(/×/g, "x")
+    .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, "");
+}
+
+// Data de nascimento vem do <input type="date"> como "YYYY-MM-DD". Exibe em
+// pt-BR (DD/MM/AAAA) ancorando ao meio-dia local para não recuar um dia no fuso.
+function fmtNasc(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso + "T12:00:00");
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("pt-BR");
+}
+
 // ── HTML de impressão (2 vias em A5) ─────────────────────────────
 async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
@@ -212,14 +231,23 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const signatureImage = await pdf.embedJpg(signatureImageBytes);
 
   const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
-    let text = value || "";
-    while (text.length > 0 && font.widthOfTextAtSize(text, size) > maxWidth) text = text.slice(0, -1);
-    page.drawText(text || " ", { x, y, size, font, color: ink });
+    let text = pdfSafe(value || "");
+    // 1) Encolhe a fonte até um piso legível antes de cortar (cabe mais texto).
+    let fs = size;
+    const min = Math.max(4.4, size - 2.5);
+    while (fs > min && font.widthOfTextAtSize(text, fs) > maxWidth) fs -= 0.2;
+    // 2) Se ainda não couber, trunca com reticências VISÍVEIS — nunca corte
+    //    silencioso do medicamento/quantidade numa receita de controle especial.
+    if (text.length > 1 && font.widthOfTextAtSize(text, fs) > maxWidth) {
+      while (text.length > 1 && font.widthOfTextAtSize(text + "...", fs) > maxWidth) text = text.slice(0, -1);
+      text = text.replace(/[\s.]+$/, "") + "...";
+    }
+    page.drawText(text || " ", { x, y, size: fs, font, color: ink });
   };
 
   const wrap = (value: string, maxWidth: number, size: number, font = helv) => {
     const lines: string[] = [];
-    for (const raw of String(value || "").split("\n")) {
+    for (const raw of pdfSafe(String(value || "")).split("\n")) {
       if (!raw.trim()) { lines.push(""); continue; }
       let current = "";
       for (const word of raw.split(/\s+/)) {
@@ -264,7 +292,7 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawText("PACIENTE", { x: m + 6, y: tableY + 29, size: 4.5, font: helv, color: muted });
     drawFitted(page, f.paciente, m + 74, tableY + 28, 160, 6.2, bold);
     page.drawText("DATA NASC.", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.dataNasc, m + 346, tableY + 28, 60, 6.2, bold);
+    drawFitted(page, fmtNasc(f.dataNasc), m + 346, tableY + 28, 60, 6.2, bold);
     page.drawText("ENDERECO", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
     drawFitted(page, f.endereco, m + 74, tableY + 15, 318, 6.2, bold);
     page.drawText("MUNICIPIO/UF", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
@@ -340,7 +368,7 @@ function buildC1PrintHtml(f: FormFields): string {
       <td class="lbl">Paciente</td>
       <td class="val">${escHtml(f.paciente)}</td>
       <td class="lbl" style="width:26%">Data nasc.</td>
-      <td class="val" style="width:18%">${escHtml(f.dataNasc)}</td>
+      <td class="val" style="width:18%">${escHtml(fmtNasc(f.dataNasc))}</td>
     </tr>
     <tr>
       <td class="lbl">Endereço</td>

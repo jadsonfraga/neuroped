@@ -21,7 +21,22 @@ import { haptic } from "@/lib/haptic";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-const today = new Date().toISOString().split("T")[0];
+// Data LOCAL em YYYY-MM-DD (não UTC). `toISOString()` usa UTC e, no fuso do
+// Brasil (UTC-3), após ~21h retornava a data de AMANHÃ como padrão da consulta.
+function localISODate(d = new Date()): string {
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().split("T")[0];
+}
+const today = localISODate();
+
+// Exibe uma data "YYYY-MM-DD" (input date) sem o desvio de fuso: `new Date("YYYY-
+// MM-DD")` é interpretada como meia-noite UTC e recuava um dia no horário do
+// Brasil. Ancorar ao meio-dia local resolve (mesmo padrão já usado p/ nascimento).
+function formatInputDate(iso: string): string {
+  return new Date(iso + "T12:00:00").toLocaleDateString("pt-BR", {
+    day: "2-digit", month: "long", year: "numeric",
+  });
+}
 
 function uid() {
   return Math.random().toString(36).slice(2, 9);
@@ -217,9 +232,7 @@ function buildReport(
   exames: Exame[]
 ): string {
   const linha = "─".repeat(60);
-  const dateStr = new Date(id.dataConsulta || today).toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "long", year: "numeric"
-  });
+  const dateStr = formatInputDate(id.dataConsulta || today);
 
   let r = "";
   r += `RELATÓRIO MÉDICO — DR. JADSON FRAGA ARAÚJO JÚNIOR\n`;
@@ -343,9 +356,7 @@ function printReport(
   const w = window.open("", "_blank");
   if (!w) return false;
 
-  const dateStr = new Date(id.dataConsulta || today).toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "long", year: "numeric"
-  });
+  const dateStr = formatInputDate(id.dataConsulta || today);
   const dn = id.dataNascimento ? new Date(id.dataNascimento + "T12:00:00").toLocaleDateString("pt-BR") : "—";
 
   const milestoneRows = milestoneConfigs.map(cfg => {
