@@ -141,7 +141,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "denver", prata: "asq3", bronze: "emdi",
     reason: "Denver II e ASQ-3 cobrem marcos pré-escolares; EMDI detalha o desenvolvimento infantil." },
   { queixa: "atraso", ageMin: 72, ageMax: 216,
-    ouro: "vineland", prata: "pant", bronze: "ips",
+    ouro: "efdi", prata: "ead-np", bronze: "pant",
     reason: "Após os 6 anos o foco é funcionamento adaptativo (Vineland-3) e perfil neuropsicológico (PANT)." },
 
   // ============================ APRENDIZAGEM ============================
@@ -235,7 +235,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "j26-013", prata: "j26-014", bronze: "j26-005",
     reason: "Triagem auditiva e visual funcional e regulação sensorial neonatal são a avaliação sensorial inicial." },
   { queixa: "sensorial", ageMin: 24, ageMax: 144,
-    ouro: "j26-126", prata: "j26-013",
+    ouro: "psn-np", prata: "j26-126", bronze: "j26-013",
     reason: "Eficácia da dieta sensorial monitoriza a integração sensorial na criança em terapia." },
 
   // ============================== NEONATAL ==============================
@@ -243,7 +243,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "j26-001", prata: "j26-005", bronze: "j26-192",
     reason: "Triagem motora 0–6m, regulação sensorial neonatal e follow-up do método canguru cobrem o recém-nascido de risco." },
   { queixa: "neonatal", ageMin: 6, ageMax: 30,
-    ouro: "j26-195", prata: "j26-117", bronze: "j26-014",
+    ouro: "j26-195", prata: "tdn-bebe", bronze: "j26-117",
     reason: "Follow-up do prematuro até 2 anos e acompanhamento motor detectam sequelas da prematuridade." },
 
   // ============================= AUTONOMIA ==============================
@@ -256,10 +256,10 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ========================== FUNCIONALIDADE ============================
   { queixa: "funcionalidade", ageMin: 24, ageMax: 216,
-    ouro: "vineland", prata: "pedsql", bronze: "eaf",
+    ouro: "ead-np", prata: "efdi", bronze: "pedsql",
     reason: "Vineland-3 é o padrão de comportamento adaptativo; PedsQL mede qualidade de vida e EAF a funcionalidade." },
   { queixa: "funcionalidade", ageMin: 0, ageMax: 24,
-    ouro: "vineland", prata: "denver", bronze: "pant",
+    ouro: "denver", prata: "ead-np", bronze: "efdi",
     reason: "No lactente, Vineland-3 (adaptativo) com Denver II e PANT cobrem funcionalidade e marcos." },
 
   // ============================== EFEITOS ===============================
@@ -274,28 +274,28 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ============================ SUBSTÂNCIAS =============================
   { queixa: "psicose", ageMin: 144, ageMax: 216,
-    ouro: "sips", prata: "prime-screen", bronze: "ymrs",
+    ouro: "prime-screen", prata: "erp-np", bronze: "ymrs",
     reason: "Em adolescentes, SIPS/SOPS estrutura risco psicotico/prodromico; PRIME rastreia sintomas autorreferidos e YMRS quantifica mania quando a queixa e expansividade/agitação." },
 
   { queixa: "toc", ageMin: 72, ageMax: 96,
-    ouro: "cybocs", prata: "foci-c", bronze: "oci-cv",
+    ouro: "cybocs", prata: "oci-cv", bronze: "fas-pr",
     reason: "CY-BOCS e a entrevista de referencia para gravidade de obsessões/compulsões; FOCI-C/OCI-CV ajudam no rastreio quando a criança ja compreende os itens." },
   { queixa: "toc", ageMin: 96, ageMax: 204,
     ouro: "cybocs", prata: "oci-cv", bronze: "cybocs-sr",
     reason: "CY-BOCS ancora a gravidade clinica; OCI-CV e CY-BOCS-SR complementam o autorrelato em crianças maiores/adolescentes." },
 
   { queixa: "trauma", ageMin: 24, ageMax: 72,
-    ouro: "tscyc", prata: "cats-caregiver", bronze: "csbi",
-    reason: "Em pre-escolares, trauma deve ser heterorrelatado: TSCYC e CATS-Caregiver captam sintomas observados; CSBI ajuda quando ha comportamento sexualizado." },
+    ouro: "tpp-np", prata: "cats",
+    reason: "Em pre-escolares, trauma deve ser heterorrelatado: TPP-NP (autoral) capta as mudancas observadas pelo cuidador; CATS complementa a partir dos 3 anos." },
   { queixa: "trauma", ageMin: 72, ageMax: 216,
-    ouro: "ucla-ptsd", prata: "cpss-5", bronze: "cats",
-    reason: "UCLA PTSD-RI e a linha central para sintomas de TEPT; CPSS-5 e CATS complementam gravidade, exposição e acompanhamento." },
+    ouro: "cats", prata: "cpss-v", bronze: "cries13",
+    reason: "CATS e a linha central aplicavel para sintomas de TEPT; CPSS-V e CRIES-13 complementam gravidade e acompanhamento." },
 
   { queixa: "enurese", ageMin: 18, ageMax: 48,
-    ouro: "pant-v7-078", prata: "bristol-stool-pediatric", bronze: "bowel-bladder-checklist",
+    ouro: "pant-v7-078", prata: "dvss", bronze: "bowel-bladder-checklist",
     reason: "Antes dos 4 anos, o foco e prontidão/controle esfincteriano e constipação associada, sem medicalizar a maturação normal." },
   { queixa: "enurese", ageMin: 48, ageMax: 216,
-    ouro: "dvss", prata: "bowel-bladder-checklist", bronze: "bladder-diary",
+    ouro: "dvss", prata: "bowel-bladder-checklist", bronze: "bristol-stool",
     reason: "DVSS rastreia sintomas urinarios funcionais; BBD integra intestino-bexiga e o diario vesical documenta padrão, frequencia e resposta ao manejo." },
 
   { queixa: "substancias", ageMin: 144, ageMax: 216,

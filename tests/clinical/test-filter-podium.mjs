@@ -39,7 +39,9 @@ const resolveRoute = (s) => {
   return null;
 };
 
-const catalog = uniqueById([...mergeFilterableCatalog(allScales), ...noCostWorldScales]).filter(resolveRoute);
+// Pool = a MESMA do app pós-regra-de-ouro-total: allScales já contém só
+// escalas aplicáveis; cards mundiais (não aplicáveis) ficam fora.
+const catalog = uniqueById(mergeFilterableCatalog(allScales)).filter(resolveRoute);
 const queixaIds = queixas.map((q) => q.id);
 const respondents = [null, "pais", "professor", "clinico", "autoaplicavel", "teste_direto_crianca"];
 const verbalStates = [null, true, false];
