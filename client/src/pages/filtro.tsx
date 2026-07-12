@@ -872,6 +872,16 @@ export default function FiltroPage() {
   // licenciado (ex.: Vineland-3 na funcionalidade): ele deve APARECER como
   // recomendação de referência em vez de sumir silenciosamente do bloco OPB.
   const allScalesById = useMemo(() => new Map(allScales.map((s) => [s.id, s])), []);
+  // Mapa do catálogo filtrável CANÔNICO (inclui os instrumentos suplementares:
+  // portais de psicoeducação e testes diretos). Esses ids existem só aqui — não
+  // em `allScales` — e ficam de fora de `catalogById` por não serem escalas
+  // preenchíveis (isFullApp). Sem este fallback, um selo curado que aponta para
+  // eles (ex.: bronze `orientacao-parental`) fica irresolúvel e derruba TODO o
+  // card OPB, sumindo a recomendação para queixas/idades inteiras.
+  const coreFilterableById = useMemo(
+    () => new Map(CORE_FILTERABLE_CATALOG.map((s) => [s.id, s])),
+    [],
+  );
   // Idade para a curadoria do pódio/OPB: uma faixa larga (ex.: "2–4 anos") vira
   // um único ponto (midpoint) ao consultar o fluxograma, o que pode pular o
   // rastreio de 1ª linha do extremo mais novo (ex.: M-CHAT numa criança de 2a).
@@ -1337,20 +1347,27 @@ export default function FiltroPage() {
           const rule = getClinicalTiers(queixaId, curatedAgeMonths);
           if (!rule || !rule.prata || !rule.bronze) return null;
 
-          // Resolve do catálogo preenchível; se a escala curada for uma ficha
-          // licenciada (ex.: Vineland-3), cai para o catálogo completo — assim a
-          // recomendação padrão-ouro aparece como referência em vez de sumir.
-          const resolveScale = (id: string) => catalogById.get(id) ?? allScalesById.get(id);
+          // Resolve em três camadas: (1) catálogo preenchível; (2) catálogo
+          // filtrável canônico — portais de psicoeducação e testes diretos, que
+          // não são preenchíveis mas ABREM e devem aparecer como recomendação;
+          // (3) catálogo completo — fichas licenciadas (ex.: Vineland-3) como
+          // referência. Assim nenhum selo curado some silenciosamente o card.
+          const resolveScale = (id: string) =>
+            catalogById.get(id) ?? coreFilterableById.get(id) ?? allScalesById.get(id);
           const sOuro = resolveScale(rule.ouro);
           const sPrata = resolveScale(rule.prata);
           const sBronze = resolveScale(rule.bronze);
           if (!sOuro || !sPrata || !sBronze) return null;
 
-          // Nota honesta quando a escala não abre como aplicação (licenciada/ficha).
-          const refNote = (s: ScaleEntry) =>
-            catalogById.has(s.id)
-              ? ""
-              : " · Instrumento licenciado/de referência — abre como ficha técnica, não é preenchível no app.";
+          // Nota honesta sobre COMO a escala abre, quando não é preenchível aqui.
+          const refNote = (s: ScaleEntry) => {
+            if (catalogById.has(s.id)) return "";
+            if (s.applicationMode === "psicoeducacao")
+              return " · Recurso de psicoeducação — abre como conteúdo para a família, não é uma escala preenchível.";
+            if (opensInApp(s))
+              return " · Abre como recurso complementar (teste direto/ficha), não como escala de itens preenchível aqui.";
+            return " · Instrumento licenciado/de referência — abre como ficha técnica, não é preenchível no app.";
+          };
 
           const queixaLabel = queixas.find((q) => q.id === queixaId)?.label ?? queixaId;
           const ageBand = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
