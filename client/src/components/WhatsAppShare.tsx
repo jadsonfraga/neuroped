@@ -42,6 +42,7 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sentViaApi, setSentViaApi] = useState(false);
   const { toast } = useToast();
 
   const handleSendWhatsApp = async (e: React.FormEvent) => {
@@ -84,11 +85,22 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
 
       if (!deliveredViaApi) {
         const whatsappUrl = `https://wa.me/${formatted}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, "_blank");
+        const win = window.open(whatsappUrl, "_blank");
+        // Popup bloqueado: nada foi aberto. Não anuncie sucesso — seria mentir
+        // para o clínico que o relatório chegou. Oriente e mantenha o formulário.
+        if (!win) {
+          toast({
+            title: "Não foi possível abrir o WhatsApp",
+            description: "Permita pop-ups para este site ou copie o relatório manualmente.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       softSuccess();
       haptic.success();
+      setSentViaApi(deliveredViaApi);
       setSent(true);
       toast({
         title: deliveredViaApi ? "Enviado!" : "Abrindo o WhatsApp…",
@@ -101,6 +113,7 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
       setTimeout(() => {
         setPhone("");
         setSent(false);
+        setSentViaApi(false);
       }, 3000);
     } catch (_error) {
       toast({
@@ -131,7 +144,7 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
           <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-              Relatório enviado!
+              {sentViaApi ? "Relatório enviado!" : "WhatsApp aberto — toque em enviar por lá"}
             </span>
           </div>
         ) : (

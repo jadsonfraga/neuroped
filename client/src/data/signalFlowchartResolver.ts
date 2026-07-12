@@ -9,6 +9,7 @@
  */
 
 import { allScales, type ScaleEntry } from "./scaleFilter";
+import { mergeFilterableCatalog } from "./filterableCatalog";
 import {
   getSignalFlowchart,
   resolveFlowchartTierIds,
@@ -16,7 +17,12 @@ import {
   type FlowchartTierSet,
 } from "./signalFlowcharts";
 
-const byId = new Map<string, ScaleEntry>(allScales.map((s) => [s.id, s]));
+// Resolve contra o catálogo filtrável CANÔNICO (allScales + suplementares:
+// portais de psicoeducação e testes diretos), não só allScales. Vários ids de
+// fluxograma (ex.: linguagem-fonologia, orientacao-parental) existem apenas nos
+// suplementares; com o mapa estreito, mapIds os descartaria em silêncio e um
+// tier curado voltaria vazio se este resolvedor fosse ligado à UI.
+const byId = new Map<string, ScaleEntry>(mergeFilterableCatalog(allScales).map((s) => [s.id, s]));
 
 export interface ResolvedSignalTiers {
   ouro: ScaleEntry[];

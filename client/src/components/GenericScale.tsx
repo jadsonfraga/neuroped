@@ -75,6 +75,13 @@ export interface ScaleConfig {
   };
 }
 
+/** Igualdade rasa entre dois mapas de respostas (chave → índice escolhido). */
+function sameAnswers(a: Record<string, number>, b: Record<string, number>): boolean {
+  const ak = Object.keys(a);
+  if (ak.length !== Object.keys(b).length) return false;
+  return ak.every((k) => a[k] === b[k]);
+}
+
 export function GenericScale({ config }: { config: ScaleConfig }) {
   const draftKey = `neuroped:scale-draft:${config.title.replace(/\s+/g, "-").toLowerCase()}`;
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -87,6 +94,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   // reexecutaria o effect em loop).
   const domainsRef = useRef(config.domains);
   domainsRef.current = config.domains;
+  // Instantâneo do rascunho restaurado (respostas + updatedAt original). Serve
+  // para NÃO renovar o relógio de expiração de 12h ao apenas reabrir a escala:
+  // enquanto as respostas seguem idênticas às restauradas, preservamos o
+  // updatedAt original ("12h desde a última EDIÇÃO", não "desde a última
+  // abertura"), mantendo a proteção contra vazamento de rascunho entre pacientes.
+  const restoredSnapshotRef = useRef<{ answers: Record<string, number>; updatedAt: string } | null>(null);
 
   const allItems = useMemo(
     () =>
@@ -141,6 +154,10 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         if (Object.keys(restored).length > 0) {
           setAnswers(restored);
           setDraftRestored(true);
+          // Guarda o updatedAt ORIGINAL para não reiniciar a expiração ao reabrir.
+          if (parsed.updatedAt) {
+            restoredSnapshotRef.current = { answers: restored, updatedAt: parsed.updatedAt };
+          }
         }
       }
       // Intencionalmente NÃO reabrimos a tela de RESULTADO automaticamente: isso
@@ -158,12 +175,19 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         window.localStorage.removeItem(draftKey);
         return;
       }
+      // Enquanto as respostas seguem idênticas ao rascunho restaurado (o clínico
+      // apenas reabriu, sem editar nem ver resultado), preservamos o updatedAt
+      // original — do contrário, reabrir renovaria a janela de 12h e um rascunho
+      // que deveria expirar sobreviveria para o próximo paciente.
+      const snap = restoredSnapshotRef.current;
+      const stillPristine =
+        snap != null && !showResult && sameAnswers(answers, snap.answers);
       window.localStorage.setItem(
         draftKey,
         JSON.stringify({
           answers,
           showResult,
-          updatedAt: new Date().toISOString(),
+          updatedAt: stillPristine ? snap.updatedAt : new Date().toISOString(),
         }),
       );
     } catch {
