@@ -877,7 +877,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 24,
         tiers: {
-          ouro: ["podj-tea-prime-familiar"],
+          ouro: ["psn-np"],
           prata: ["j26-013"],
           bronze: ["j26-014", "j26-005"],
         },
@@ -887,7 +887,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 24,
         maxMonths: 168,
         tiers: {
-          ouro: ["podj-tea-prime-familiar"],
+          ouro: ["psn-np"],
           prata: ["j26-126"],
           bronze: ["j26-013"],
         },

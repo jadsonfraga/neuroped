@@ -7,6 +7,7 @@ import { todasAsEscalasComplementares } from "./indiceEscalasComplementares230";
 import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImportadas2026";
 import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
 import { escalasCompendio2026 } from "./escalasCompendio2026";
+import { escalasAplicaveisNexus2026 } from "./escalasAplicaveisNexus2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 import { exemplosPais2026 } from "./exemplosPais2026";
 // Registries interativos (só importam tipos de volta — sem ciclo em runtime):
@@ -835,6 +836,10 @@ const allScalesBase: ScaleEntry[] = [
   // das 23 escalas do documento, 20 eram duplicatas de entradas existentes;
   // entram só as 3 novas (CGAS, AQ-Adolescente 50 itens, Q-CHAT 25 itens).
   ...escalasCompendio2026,
+  // Instrumentos autorais aplicáveis que cobrem os construtos dos padrões-ouro
+  // comerciais retirados na regra de ouro total (EAD-NP, TDN-Bebê, QEC-NP,
+  // PSN-NP, ERP-NP, TPP-NP — 2026-07-12).
+  ...escalasAplicaveisNexus2026,
   // NOTA: o "Lote 2" da varredura do Drive (NEF-360, NEUROFUNC-360, Maria Clara)
   // foi RETIRADO por redundância/qualidade (julgado regressão): NEF-360/NEUROFUNC-360
   // repetiam a família broadband já coberta por NDI-360 + MATRIX-100; a Escala Maria

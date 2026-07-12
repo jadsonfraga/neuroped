@@ -10,6 +10,11 @@
 // ============================================================
 
 export const exemplosPais2026: Record<string, string> = {
+  "ead-np": "Ao responder, compare com colegas da mesma idade: se veste e come sozinho(a)? Pede o que precisa de um jeito que todos entendem? Brinca e convive com outras crianças sem precisar de você o tempo todo?",
+  "tdn-bebe": "Pense no que o bebê JÁ FAZ hoje: sustenta a cabeça, rola, senta, aponta para mostrar, atende pelo nome, balbucia ou fala palavrinhas. Marque o que vê em casa, sem treinar na hora.",
+  "qec-np": "Aqui as perguntas são sobre VOCÊ: pense em como tem dormido, se tem alguém para revezar o cuidado, se sobra algum tempo seu na semana e como anda a paciência no fim do dia.",
+  "psn-np": "Pense em situações como: tapar os ouvidos no liquidificador, brigar com a etiqueta da roupa, recusar comida pela textura, girar e pular sem parar, ou não perceber frio e machucado.",
+  "tpp-np": "Compare o antes e o depois do evento: pesadelos novos, apego exagerado, brincadeira repetida da cena, sustos fáceis, volta do xixi na cama. Marque só o que mudou depois do ocorrido.",
   "raisd": "Ao responder, lembre do que mais prende e acalma seu filho(a) no dia a dia: brinquedos que ele gira ou enfileira, sons e texturas que busca ou evita, comidas preferidas e o que costuma pedir quando quer se sentir bem.",
   "asq3": "Ao responder, lembre de como seu filho(a) se comunica, se mexe e brinca no dia a dia: se aponta ou fala o que quer, se sobe degraus ou empilha blocos, e como resolve pequenos desafios sozinho.",
   "peds": "Pense em situações do dia a dia que despertam suas preocupações: como seu filho(a) fala e entende, como anda e usa as mãos, como se comporta e como convive com outras crianças.",

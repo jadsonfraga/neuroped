@@ -3,9 +3,9 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 220
+- **Total de instrumentos:** 226
 - **Com fonte declarada:** 210
-- **Pendentes de validação/fonte:** 10
+- **Pendentes de validação/fonte:** 16
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
@@ -50,6 +50,7 @@
 | `docs` | DOCS | Abramowitz JS et al., 2010 (Dimensional Obsessive-Compulsive Scale) | não |
 | `dvss` | DVSS | Farhat W et al., 2000 (Dysfunctional Voiding Symptom Score) | não |
 | `eaah` | EAAH-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
+| `ead-np` | EAD-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: comportamento adaptativo. | sim |
 | `eaf` | EAF | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `eai` | EAI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `eani-fj` | Escala de Ansiedade Neuropediátrica Infantojuvenil Fraga-Jú… | EANI-FJ v1.0 Escala Ansiedade Neuropediatrica — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file | não |
@@ -67,6 +68,7 @@
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não |
 | `epilepsia-diario` | Diário de Crises | Ferramenta de registro clínico NeuroPed (diário de crises) | não |
 | `erc` | ERC | Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist) | não |
+| `erp-np` | ERP-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estados mentais de risco. | sim |
 | `esm-edj` | Escala de Satisfação com a Medicação | ESM-EDJ — Escala de Satisfação com a Medicação (ESM-EDJ-2025-v1.0 · PANT v7.2.1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento orig | não |
 | `ess-adol` | ESS Adolescente | Johns MW, 1991 (Epworth Sleepiness Scale); versão pediátrica Melendres MC et al., 2004 (ESS-DASC) | não |
 | `etare` | ETARE-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
@@ -207,7 +209,9 @@
 | `ppp` | PPP | Hunt A et al., 2004 (Paediatric Pain Profile) | não |
 | `prime-screen` | PRIME Screen | Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk) | não |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não |
+| `psn-np` | PSN-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: processamento sensorial. | sim |
 | `q-chat-10` | Q-CHAT-10 | — | sim |
+| `qec-np` | QEC-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estresse do cuidador. | sim |
 | `rcads` | RCADS | Chorpita BF et al., 2000 - Journal of the American Academy of Child & Adolescent Psychiatry | não |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não |
 | `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não |
@@ -217,9 +221,11 @@
 | `snap` | SNAP-IV | Swanson JM et al., 2001 - University of California | não |
 | `ssq` | SSQ | — | sim |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive,  | não |
+| `tdn-bebe` | TDN-Bebê | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: desenvolvimento do lactente. | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não |
 | `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `toc-drj-psicologia` | Escala Clínica de Gravidade do TOC – Adolescentes | ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1UiBCEPBHfEVUR3k | não |
+| `tpp-np` | TPP-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: TEPT pré-escolar (heterorrelato). | sim |
 | `tsi` | TSI | NIH-supported research | não |
 | `uku` | UKU | Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale) | não |
 | `vanderbilt` | Vanderbilt | Wolraich ML et al., 2003 (NICHQ Vanderbilt) | não |

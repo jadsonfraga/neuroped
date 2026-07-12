@@ -23,6 +23,7 @@ import { j26Bloco3Items } from "./interactiveScaleItemsJ26Bloco3";
 import { j26Bloco4Items } from "./interactiveScaleItemsJ26Bloco4";
 import { driveImport2026Items } from "./interactiveScaleItemsDrive2026";
 import { gapsPodium2026Items } from "./interactiveScaleItemsGaps2026";
+import { nexusAplicaveis2026Items } from "./interactiveScaleItemsNexusAplicaveis2026";
 import { podjTeaPrimeItems } from "./interactiveScaleItemsPodjTeaPrime";
 
 export interface InteractiveBand {
@@ -2716,6 +2717,8 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...driveImport2026Items,
   // Lacunas do pódio (regra de ouro, 2026-07): 15 aplicações que antes eram ficha.
   ...gapsPodium2026Items,
+  // Versões aplicáveis autorais dos construtos comerciais removidos (2026-07-12).
+  ...nexusAplicaveis2026Items,
   ...interactiveScaleItemsCore,
   ...atecItems,
   ...aq10Items,
