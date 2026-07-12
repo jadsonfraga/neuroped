@@ -62,7 +62,9 @@ const resolveRoute = (s) => {
   if (s.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
   return null;
 };
-const catalog = uniq([...mergeFilterableCatalog(allScales), ...noCostWorldScales]).filter(resolveRoute);
+// Pool = a MESMA do app pós-regra-de-ouro-total: allScales já contém só
+// escalas aplicáveis; cards mundiais (não aplicáveis) ficam fora.
+const catalog = uniq(mergeFilterableCatalog(allScales)).filter(resolveRoute);
 
 // Vocabulario de sinais por queixa, extraido do proprio catalogo.
 const signalsByQueixa = new Map();

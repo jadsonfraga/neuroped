@@ -146,11 +146,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "Avaliação estruturada de marcos motores, de linguagem e cognitivos.",
     whyUseful: "Detalha o desenvolvimento quando a triagem aponta atraso.",
   },
-  vineland: {
-    mainQuestion: "Qual o nível de autonomia e de comportamento adaptativo?",
-    parentExample: "Perguntas sobre vestir-se, comer sozinho, comunicar necessidades, brincar e seguir regras.",
-    whyUseful: "Padrão de comportamento adaptativo — essencial para planejar intervenção e suporte.",
-  },
   pant: {
     mainQuestion: "Qual o perfil neuropsicológico/desenvolvimental?",
     parentExample: "Avaliação clínica estruturada de vários domínios do neurodesenvolvimento.",

@@ -9,6 +9,10 @@ import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
 import { escalasCompendio2026 } from "./escalasCompendio2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 import { exemplosPais2026 } from "./exemplosPais2026";
+// Registries interativos (só importam tipos de volta — sem ciclo em runtime):
+// necessários para a regra "aplicável de fato" do corte do catálogo.
+import { interactiveScaleItems } from "./interactiveScaleItems";
+import { interactiveScales } from "./interactiveScales";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 // "crianca" e "teste_direto_crianca" são tratados como aplicação direta com a criança.
@@ -902,7 +906,30 @@ function dedupeCatalog(items: ScaleEntry[]): ScaleEntry[] {
   return result;
 }
 
-export const allScales: ScaleEntry[] = dedupeCatalog(allScalesComDescricoes);
+// ── REGRA DE OURO TOTAL (decisão do Dr. Jadson, 2026-07-12) ────────────────
+// O app só OFERECE escalas que abrem e aplicam DE FATO (itens + escore).
+// Fichas técnicas e instrumentos licenciados sem aplicação saem do banco —
+// os dados permanecem nos arquivos-fonte (histórico/reversível via git).
+// A regra replica getImplementationStatus === "complete" (advancedFilterLogic)
+// sem criar ciclo de import: rota dedicada, ou aplicação interativa em um dos
+// dois acervos com licença não-restritiva, ou status explícito "complete".
+const licencaRestritiva = (s: ScaleEntry) =>
+  s.licencaUso === "restrita" || s.licencaUso === "comercial" || s.licencaUso === "contato_autor";
+const aplicavelDeFato = (s: ScaleEntry): boolean => {
+  if (s.implementationStatus) return s.implementationStatus === "complete";
+  const route = s.appRoute;
+  const rotaDedicada =
+    !!route && !route.startsWith("/generic-scale/") && route !== "/escalas-neuropsiquiatria" && route !== "/filtro";
+  if (rotaDedicada) return true;
+  if ((interactiveScaleItems[s.id] || interactiveScales[s.id]) && !licencaRestritiva(s)) return true;
+  return false;
+};
+
+// Catálogo completo interno (inclui fichas) — usado apenas para proveniência/
+// documentação; NÃO alimenta filtro, busca nem banco visível.
+export const allScalesComFichas: ScaleEntry[] = dedupeCatalog(allScalesComDescricoes);
+
+export const allScales: ScaleEntry[] = allScalesComFichas.filter(aplicavelDeFato);
 
 // Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
 export function filterScales(

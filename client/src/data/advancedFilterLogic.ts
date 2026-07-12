@@ -671,16 +671,20 @@ export function filterScalesWithClinicalRescue(
 //
 // Lista curada e ORDENADA por idade (do menor ao maior). Todos são instrumentos
 // reais, de banda larga, presentes no catálogo e que abrem.
+// Regra de ouro TOTAL (2026-07-12): a lista contém apenas rastreadores amplos
+// APLICÁVEIS no app — Portage/BASC-3/ASQ:SE-2 (licenciados, sem aplicação)
+// saíram do banco; PANT e EFDI (autorais, 0-216m, aplicação completa) garantem
+// fallback triplo também em lactentes.
 export const BROADBAND_SCREENER_IDS = [
-  "denver",   // 0-72m - desenvolvimento
-  "portage",  // 0-72m - desenvolvimento + funcionalidade
-  "asq3",     // 1-66m - desenvolvimento
-  "asq-se-2", // 3-60m - socioemocional
-  "cbcl",     // 18-216m - banda larga emocional/comportamental
-  "basc3",    // 24-216m - comportamento/emocional multidimensional
-  "sdq",      // 24-204m - banda larga
-  "psc17",    // 48-192m - banda larga
-  "who5",     // 108-216m - bem-estar/humor em adolescentes
+  "denver",  // 0-72m - desenvolvimento
+  "asq3",    // 1-66m - desenvolvimento
+  "pant",    // 0-216m - índice PANT (autoral, banda larga do desenvolvimento)
+  "efdi",    // 0-216m - funcionalidade/desenvolvimento (autoral)
+  "cbcl",    // 18-216m - banda larga emocional/comportamental
+  "sdq",     // 24-204m - banda larga
+  "psc17",   // 48-192m - banda larga
+  "ndi-360", // 36-215m - banda larga neurodesenvolvimental (autoral)
+  "who5",    // 108-216m - bem-estar/humor em adolescentes
 ];
 
 function ageCovers(scale: ScaleEntry, ctx: FilterContext): boolean {
