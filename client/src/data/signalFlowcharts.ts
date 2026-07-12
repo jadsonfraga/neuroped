@@ -46,7 +46,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 18,
         tiers: {
           ouro: ["mchat", "q-chat-10"],
-          prata: ["podj-tea-prime-1-6a", "j26-009", "csbs-dp"],
+          prata: ["podj-tea-prime-1-6a", "j26-009", "tea-comportamentos"],
           bronze: ["podj-tea-prime-familiar", "j26-007"],
         },
       },
@@ -55,9 +55,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 18,
         maxMonths: 36,
         tiers: {
-          ouro: ["mchat", "podj-tea-prime-1-6a", "ados2"],
+          ouro: ["mchat", "podj-tea-prime-1-6a"],
           prata: ["cars", "podj-tea-prime-familiar", "j26-021"],
-          bronze: ["j26-026", "stat"],
+          bronze: ["j26-026", "atec"],
         },
       },
       {
@@ -65,8 +65,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 36,
         maxMonths: 72,
         tiers: {
-          ouro: ["cars", "podj-tea-prime-1-6a", "ados2"],
-          prata: ["srs2", "scq", "podj-tea-prime-escola-terapia", "gars3"],
+          ouro: ["cars", "podj-tea-prime-1-6a"],
+          prata: ["podj-tea-prime-escola-terapia", "cars"],
           bronze: ["podj-tea-prime-familiar", "j26-020", "j26-022"],
         },
       },
@@ -75,9 +75,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 72,
         maxMonths: 144,
         tiers: {
-          ouro: ["podj-tea-prime-6-12a", "srs2", "ados2"],
-          prata: ["podj-tea-prime-escola-terapia", "assq", "cast", "gars3"],
-          bronze: ["podj-tea-prime-familiar", "j26-205", "sensory-profile2"],
+          ouro: ["podj-tea-prime-6-12a", "cars"],
+          prata: ["podj-tea-prime-escola-terapia", "atec"],
+          bronze: ["podj-tea-prime-familiar", "j26-205"],
         },
       },
       {
@@ -85,8 +85,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 144,
         maxMonths: 192,
         tiers: {
-          ouro: ["podj-tea-prime-12-19a", "srs2", "ados2"],
-          prata: ["podj-tea-prime-familiar", "catq", "assq"],
+          ouro: ["podj-tea-prime-12-19a"],
+          prata: ["podj-tea-prime-familiar", "aq10"],
           bronze: ["podj-tea-prime-escola-terapia", "j26-208"],
         },
       },
@@ -95,8 +95,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 192,
         maxMonths: 216,
         tiers: {
-          ouro: ["podj-tea-prime-12-19a", "srs2"],
-          prata: ["aq10", "catq"],
+          ouro: ["podj-tea-prime-12-19a"],
+          prata: ["aq10", "q-chat-10"],
           bronze: ["podj-tea-prime-familiar", "podj-tea-prime-escola-terapia"],
         },
       },
@@ -104,7 +104,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
     monitoring: {
       ouro: ["atec"],
       prata: ["podj-tea-prime-familiar", "j26-030"],
-      bronze: ["podj-tea-prime-escola-terapia", "sensory-profile2"],
+      bronze: ["podj-tea-prime-escola-terapia"],
     },
   },
 
@@ -149,7 +149,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
     monitoring: {
       ouro: ["snap"],
       prata: ["brief2"],
-      bronze: ["wfirs-p", "cbcl"],
+      bronze: ["cbcl"],
     },
   },
 
@@ -435,7 +435,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 72,
         maxMonths: 216,
         tiers: {
-          ouro: ["vineland"],
+          ouro: ["efdi"],
           prata: ["pant"],
           bronze: ["ips"],
         },
@@ -444,7 +444,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
     monitoring: {
       ouro: ["denver"],
       prata: ["asq3"],
-      bronze: ["vineland"],
+      bronze: ["efdi"],
     },
   },
 
@@ -606,8 +606,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 120,
         tiers: {
           ouro: ["cshq"],
-          prata: ["sdsc", "j26-130"],
-          bronze: ["psq", "j26-137"],
+          prata: ["j26-130", "cshq"],
+          bronze: ["j26-137", "bears"],
         },
       },
       {
@@ -616,8 +616,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 216,
         tiers: {
           ouro: ["j26-136"],
-          prata: ["sdsc", "inventarios-auto"],
-          bronze: ["isi", "psq", "j26-130"],
+          prata: ["ess-adol", "j26-136"],
+          bronze: ["bears", "j26-136"],
         },
       },
     ],
@@ -640,7 +640,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 24,
         tiers: {
-          ouro: ["vineland"],
+          ouro: ["efdi"],
           prata: ["denver"],
           bronze: ["pant"],
         },
@@ -650,14 +650,14 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 24,
         maxMonths: 216,
         tiers: {
-          ouro: ["vineland"],
+          ouro: ["efdi"],
           prata: ["pedsql"],
           bronze: ["eaf"],
         },
       },
     ],
     monitoring: {
-      ouro: ["vineland"],
+      ouro: ["efdi"],
       prata: ["pedsql"],
       bronze: [],
     },
@@ -877,7 +877,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 24,
         tiers: {
-          ouro: ["sensory-profile2"],
+          ouro: ["podj-tea-prime-familiar"],
           prata: ["j26-013"],
           bronze: ["j26-014", "j26-005"],
         },
@@ -887,7 +887,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 24,
         maxMonths: 168,
         tiers: {
-          ouro: ["sensory-profile2"],
+          ouro: ["podj-tea-prime-familiar"],
           prata: ["j26-126"],
           bronze: ["j26-013"],
         },
@@ -899,13 +899,13 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["j26-126"],
           prata: ["inventarios-auto"],
-          bronze: ["sensory-profile2"],
+          bronze: ["podj-tea-prime-familiar"],
         },
       },
     ],
     monitoring: {
       ouro: ["j26-126"],
-      prata: ["sensory-profile2"],
+      prata: ["podj-tea-prime-familiar"],
       bronze: ["j26-013"],
     },
   },
@@ -927,8 +927,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 3,
         tiers: {
-          ouro: ["nips"],
-          prata: ["pipp"],
+          ouro: ["flacc"],
+          prata: ["comfort-b"],
           bronze: ["comfort-b", "cries"],
         },
       },
