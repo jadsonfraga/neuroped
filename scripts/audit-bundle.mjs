@@ -15,11 +15,12 @@
  *
  * Se o build não existir, dispara `vite build` automaticamente.
  */
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve, join } from "node:path";
+import { dirname, resolve, join, sep } from "node:path";
+import { parseInitialJsAssets } from "./lib/bundle-audit-utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
@@ -37,15 +38,15 @@ if (!existsSync(join(distPublic, "index.html"))) {
 }
 
 const html = readFileSync(join(distPublic, "index.html"), "utf8");
-// Entrada = <script type="module" ... src="...index-XXXX.js">
-const entryMatch = html.match(/<script[^>]+type="module"[^>]+src="([^"]+)"/);
-let entryFiles = [];
-if (entryMatch) {
-  entryFiles.push(entryMatch[1].replace(/^\.?\//, ""));
-} else {
-  // Fallback: maior chunk index-*.js em assets/
+const parsedAssets = parseInitialJsAssets(html);
+let entryFiles = parsedAssets.entryFiles;
+const modulePreloadFiles = parsedAssets.modulePreloadFiles;
+if (!entryFiles.length) {
+  // Fallback defensivo: maior chunk index-*.js em assets/.
   const assets = resolve(distPublic, "assets");
-  const idx = readdirSync(assets).filter((f) => /^index-.*\.js$/.test(f));
+  const idx = readdirSync(assets)
+    .filter((file) => /^index-.*\.js$/.test(file))
+    .sort((left, right) => statSync(join(assets, right)).size - statSync(join(assets, left)).size);
   if (idx.length) entryFiles.push(join("assets", idx[0]));
 }
 
@@ -54,15 +55,18 @@ if (!entryFiles.length) {
   process.exit(1);
 }
 
-const modulePreloadFiles = Array.from(html.matchAll(/<link\b[^>]*\brel=["']modulepreload["'][^>]*>/gi))
-  .map(([tag]) => tag.match(/\bhref=["']([^"']+)["']/i)?.[1])
-  .filter((href) => href && !/^(?:https?:)?\/\//i.test(href))
-  .map((href) => href.replace(/^\.?\//, ""));
 const initialFiles = Array.from(new Set([...entryFiles, ...modulePreloadFiles]));
+const gzipCache = new Map();
 
 function gzipKb(rel) {
-  const buf = readFileSync(resolve(distPublic, rel));
-  return gzipSync(buf).length / 1024;
+  if (gzipCache.has(rel)) return gzipCache.get(rel);
+  const absolutePath = resolve(distPublic, rel);
+  if (!absolutePath.startsWith(`${distPublic}${sep}`) || !existsSync(absolutePath)) {
+    throw new Error(`[bundle] Asset inicial ausente ou fora de dist/public: ${rel}`);
+  }
+  const kb = gzipSync(readFileSync(absolutePath)).length / 1024;
+  gzipCache.set(rel, kb);
+  return kb;
 }
 
 const entryKb = entryFiles.reduce((total, rel) => total + gzipKb(rel), 0);

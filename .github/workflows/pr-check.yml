@@ -57,6 +57,8 @@ jobs:
             const buildStatus = '${{ steps.build.outcome }}' === 'success';
             const typecheckStatus = '${{ steps.typecheck.outcome }}' === 'success';
             const lintStatus = '${{ steps.lint.outputs.lint_status }}' !== 'failed';
+            const allPassed = buildStatus && typecheckStatus && lintStatus;
+            const marker = '<!-- neuroped-pr-check -->';
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -69,19 +71,47 @@ jobs:
             | ${icon(buildStatus)} Build | ${label(buildStatus)} |
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
 
-            ${buildStatus
-              ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Build falhou.** Corrija os erros antes de solicitar revisão.'}
+            ${allPassed
+              ? '> ✅ **Catraca essencial aprovada.** Este PR está pronto para revisão.'
+              : '> ❌ **Catraca essencial reprovada.** Corrija os itens marcados antes da revisão.'}
 
-            *Rodou em commit \`${{ github.sha }}\`*`;
+            *Rodou no head do PR \`${{ github.event.pull_request.head.sha }}\`*
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            ${marker}`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body
+              issue_number: context.issue.number,
+              per_page: 100,
             });
+            const previous = comments.find((comment) =>
+              comment.user?.login === 'github-actions[bot]' &&
+              (comment.body?.includes(marker) || comment.body?.startsWith('## NeuroPed — Verificação de PR'))
+            );
 
-      - name: Falhar se build quebrou
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
+
+      - name: Falhar se a catraca essencial quebrou
+        if: >-
+          always() &&
+          (steps.build.outcome == 'failure' ||
+           steps.typecheck.outcome == 'failure' ||
+           steps.lint.outputs.lint_status == 'failed')
+        run: |
+          echo "Build, TypeScript ou lint falhou. Consulte o resumo publicado no PR."
+          exit 1
