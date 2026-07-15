@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { RotateCcw, Info, ShieldAlert } from "lucide-react";
 import {
   cssrsQuestions,
-  getCssrsSkipLogicSummary,
   getVisibleCssrsQuestionIds,
   pruneCssrsAnswers,
 } from "@/data/expandedScales";
@@ -20,7 +19,10 @@ export default function CssrsPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  const visibleIds = useMemo(() => getVisibleCssrsQuestionIds(answers), [answers]);
+  const visibleIds = useMemo(
+    () => getVisibleCssrsQuestionIds(answers),
+    [answers],
+  );
   const visibleQuestions = useMemo(
     () => cssrsQuestions.filter((q) => visibleIds.includes(q.id)),
     [visibleIds],
@@ -38,8 +40,14 @@ export default function CssrsPage() {
 
   function focusFirstMissing() {
     if (!firstMissingId) return;
-    itemRefs.current[firstMissingId]?.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => itemRefs.current[firstMissingId]?.focus({ preventScroll: true }), 250);
+    itemRefs.current[firstMissingId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    window.setTimeout(
+      () => itemRefs.current[firstMissingId]?.focus({ preventScroll: true }),
+      250,
+    );
   }
 
   function handleSubmit() {
@@ -58,8 +66,19 @@ export default function CssrsPage() {
   }
 
   if (showResult) {
-    const skipSummary = getCssrsSkipLogicSummary(answers);
     const resultVisibleIds = getVisibleCssrsQuestionIds(answers);
+    const resultQuestions = cssrsQuestions.filter((q) =>
+      resultVisibleIds.includes(q.id),
+    );
+    const reportItems = resultQuestions.map((question) => ({
+      question: question.text,
+      answer:
+        answers[question.id] === undefined
+          ? "Não respondida"
+          : answers[question.id]
+            ? "Sim"
+            : "Não",
+    }));
 
     return (
       <div className="space-y-6">
@@ -69,30 +88,48 @@ export default function CssrsPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold">Resultado — C-SSRS</h1>
-            <p className="text-xs text-muted-foreground">Escala Columbia de Gravidade de Ideação Suicida</p>
+            <p className="text-xs text-muted-foreground">
+              Escala Columbia de Gravidade de Ideação Suicida
+            </p>
           </div>
         </div>
         <Card className="border-card-border">
           <CardContent className="p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              Perguntas e respostas
+            </h2>
             <div className="space-y-2">
-              {cssrsQuestions.map((q) => {
-                const wasAsked = resultVisibleIds.includes(q.id);
-                return (
-                  <div key={q.id} className="rounded-lg bg-muted/30 p-3 space-y-1">
-                    <div className="flex items-start gap-2">
-                      <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
-                      <div>
-                        <p className="text-xs font-medium text-red-600 dark:text-red-400">{q.level}</p>
-                        <p className="text-sm text-foreground leading-relaxed">
-                          {wasAsked ? q.text : `Pergunta Q${q.id} não aplicada pela lógica de interrupção.`}
-                        </p>
-                      </div>
+              {resultQuestions.map((q) => (
+                <div
+                  key={q.id}
+                  className="rounded-lg bg-muted/30 p-3 space-y-1"
+                >
+                  <div className="flex items-start gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-xs font-mono flex-shrink-0 mt-0.5"
+                    >
+                      {q.id}
+                    </Badge>
+                    <div>
+                      <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                        {q.level}
+                      </p>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {q.text}
+                      </p>
                     </div>
-                    <p className="text-sm font-medium text-primary pl-8">→ {wasAsked ? (answers[q.id] !== undefined ? (answers[q.id] ? "Sim" : "Não") : "—") : "—"}</p>
                   </div>
-                );
-              })}
+                  <p className="text-sm font-medium text-primary pl-8">
+                    →{" "}
+                    {answers[q.id] !== undefined
+                      ? answers[q.id]
+                        ? "Sim"
+                        : "Não"
+                      : "—"}
+                  </p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -100,8 +137,15 @@ export default function CssrsPage() {
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-red-800 dark:text-red-300 space-y-1">
-              <p><strong>Importante:</strong> A C-SSRS é uma triagem. Qualquer resposta positiva (especialmente questões 3-6) requer avaliação profissional imediata.</p>
-              <p>Se houver risco iminente, encaminhar para emergência psiquiátrica (SAMU 192 / CVV 188).</p>
+              <p>
+                <strong>Importante:</strong> A C-SSRS é uma triagem. Qualquer
+                resposta positiva (especialmente questões 3-6) requer avaliação
+                profissional imediata.
+              </p>
+              <p>
+                Se houver risco iminente, encaminhar para emergência
+                psiquiátrica (SAMU 192 / CVV 188).
+              </p>
             </div>
           </div>
         </div>
@@ -109,26 +153,21 @@ export default function CssrsPage() {
         <ClinicalReport
           scaleName="C-SSRS"
           scaleFullName="Columbia Suicide Severity Rating Scale"
-          hideScore
-          classification="Registro de respostas — análise clínica pelo profissional"
-          description="Transcrição das perguntas e respostas selecionadas."
-          items={[
-            ...visibleQuestions.map((q) => ({
-              question: q.text,
-              answer: answers[q.id] !== undefined ? (answers[q.id] ? "Sim" : "Não") : "—",
-              value: answers[q.id] ? 1 : 0,
-            })),
-            { question: "Lógica C-SSRS aplicada", answer: skipSummary, value: 0 },
-          ]}
+          items={reportItems}
           patientAge="≥ 6 anos"
         />
         <SaveToPatient
           scaleName="C-SSRS"
-          totalScore={0}
-          classification="Registro de respostas"
-          answers={{ ...answers, skipLogic: skipSummary }}
+          responses={reportItems}
+          patientAge="≥ 6 anos"
         />
-        <Button onClick={handleReset} variant="outline" className="w-full gap-2"><RotateCcw className="w-4 h-4" /> Nova Avaliação</Button>
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full gap-2"
+        >
+          <RotateCcw className="w-4 h-4" /> Nova Avaliação
+        </Button>
       </div>
     );
   }
@@ -141,18 +180,27 @@ export default function CssrsPage() {
         </div>
         <div>
           <h1 className="text-lg font-bold">C-SSRS</h1>
-          <p className="text-xs text-muted-foreground">Escala Columbia de Gravidade de Ideação Suicida</p>
+          <p className="text-xs text-muted-foreground">
+            Escala Columbia de Gravidade de Ideação Suicida
+          </p>
         </div>
       </div>
       <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
         <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
-          <strong>Instruções:</strong> Aplique em sequência clínica. Perguntas sobre ideação ativa, método, intenção e plano só aparecem quando a resposta anterior indica necessidade.
+          <strong>Instruções:</strong> Aplique em sequência clínica. Perguntas
+          sobre ideação ativa, método, intenção e plano só aparecem quando a
+          resposta anterior indica necessidade.
         </p>
       </div>
 
       <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
-          <span>{answered} de {total} respondidas</span>
+        <div
+          className="flex justify-between text-xs text-muted-foreground"
+          aria-live="polite"
+        >
+          <span>
+            {answered} de {total} respondidas
+          </span>
           <span>{Math.round(progress)}%</span>
         </div>
         <Progress
@@ -170,21 +218,35 @@ export default function CssrsPage() {
         return (
           <Card
             key={q.id}
-            ref={(node) => { itemRefs.current[q.id] = node; }}
+            ref={(node) => {
+              itemRefs.current[q.id] = node;
+            }}
             tabIndex={-1}
             aria-invalid={pending}
             className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
           >
             <CardContent className="p-4 space-y-3">
               <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{q.id}</Badge>
+                <Badge
+                  variant="outline"
+                  className="text-xs font-mono flex-shrink-0 mt-0.5"
+                >
+                  {q.id}
+                </Badge>
                 <div>
-                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">{q.level}</p>
-                  <p className="text-sm text-foreground leading-relaxed">{q.text}</p>
+                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">
+                    {q.level}
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {q.text}
+                  </p>
                 </div>
               </div>
               {pending && (
-                <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                <p
+                  className="text-xs font-medium text-amber-700 dark:text-amber-300"
+                  role="alert"
+                >
                   Resposta obrigatória para concluir esta etapa.
                 </p>
               )}
@@ -197,7 +259,9 @@ export default function CssrsPage() {
                     onClick={() => answerQuestion(q.id, val)}
                     className={`min-h-[40px] text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                       answers[q.id] === val
-                        ? val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500"
+                        ? val
+                          ? "bg-red-500 text-white border-red-500"
+                          : "bg-emerald-500 text-white border-emerald-500"
                         : "bg-card text-foreground border-border hover:bg-muted"
                     }`}
                   >
@@ -215,12 +279,20 @@ export default function CssrsPage() {
           className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
           role="alert"
         >
-          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A
+          primeira pergunta pendente foi destacada.
         </div>
       )}
 
-      <Button onClick={handleSubmit} aria-disabled={!allAnswered} className="w-full" size="lg">
-        {allAnswered ? "Ver Resultado" : `Responder pendências (${answered}/${total})`}
+      <Button
+        onClick={handleSubmit}
+        aria-disabled={!allAnswered}
+        className="w-full"
+        size="lg"
+      >
+        {allAnswered
+          ? "Ver Resultado"
+          : `Responder pendências (${answered}/${total})`}
       </Button>
       <ScaleReference scaleId="cssrs" />
     </div>

@@ -14,8 +14,19 @@ import { type Server } from "http";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, storage } from "./storage.js";
-import { patients, consents, dataRequests, patientApiSchema, insertScaleResultSchema, insertConsentSchema } from "@shared/schema";
-import { requireAuth, requireProfessional, optionalAuth } from "./middleware/auth.js";
+import {
+  patients,
+  consents,
+  dataRequests,
+  patientApiSchema,
+  insertScaleResultSchema,
+  insertConsentSchema,
+} from "@shared/schema";
+import {
+  requireAuth,
+  requireProfessional,
+  optionalAuth,
+} from "./middleware/auth.js";
 import { writeRateLimit, emailRateLimit } from "./middleware/security.js";
 import { patientToStorage, patientToPlaintext } from "./lib/patientCrypto.js";
 import { oneParam } from "./lib/http.js";
@@ -23,11 +34,53 @@ import { logAudit, getAuditContextFromRequest } from "./lib/audit.js";
 import { sendEmail } from "./lib/email.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerFileRoutes } from "./routes/files.js";
-import { canAccessPatient, canAccessScaleResult, isAdmin } from "./lib/ownership.js";
+import {
+  canAccessPatient,
+  canAccessScaleResult,
+  isAdmin,
+} from "./lib/ownership.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 
-export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+function normalizeScaleResponses(
+  value: unknown,
+): Array<{ question: string; answer: string }> {
+  let parsed = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const question = String((item as any).question ?? "").trim();
+      const answer = String((item as any).answer ?? "").trim();
+      if (!question) return null;
+      return { question, answer: answer || "Não respondida" };
+    })
+    .filter(
+      (item): item is { question: string; answer: string } => item !== null,
+    );
+}
+
+function presentScaleResponseRecord(result: any) {
+  const safe = { ...result };
+  const responses = normalizeScaleResponses(safe.answers);
+  delete safe.answers;
+  delete safe.totalScore;
+  delete safe.classification;
+  delete safe.domainScores;
+  return { ...safe, responses };
+}
+
+export async function registerRoutes(
+  httpServer: Server,
+  app: Express,
+): Promise<Server> {
   // ----- Auth: register, login, refresh, logout, me, change-password -----
   registerAuthRoutes(app);
 
@@ -48,41 +101,65 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // =========================================================================
   // PACIENTES — campos sensiveis criptografados em repouso
   // =========================================================================
-  app.post("/api/patients", requireAuth, requireProfessional, writeRateLimit, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    try {
-      const parsed = patientApiSchema.parse(req.body);
-      const data = patientToStorage({ ...parsed, ownerUserId: req.user!.id });
-      const created = db.insert(patients).values(data).returning().get();
+  app.post(
+    "/api/patients",
+    requireAuth,
+    requireProfessional,
+    writeRateLimit,
+    async (req, res) => {
+      const ctx = getAuditContextFromRequest(req);
+      try {
+        const parsed = patientApiSchema.parse(req.body);
+        const data = patientToStorage({ ...parsed, ownerUserId: req.user!.id });
+        const created = db.insert(patients).values(data).returning().get();
 
-      await logAudit({
-        eventType: "patient.create",
-        context: ctx,
-        targetType: "patient",
-        targetId: created.id,
-      });
-      return res.status(201).json(patientToPlaintext(created));
-    } catch (e: any) {
-      if (e instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: e.errors });
-      console.error("[patients.create]", e);
-      return res.status(500).json({ error: "Erro interno" });
-    }
-  });
+        await logAudit({
+          eventType: "patient.create",
+          context: ctx,
+          targetType: "patient",
+          targetId: created.id,
+        });
+        return res.status(201).json(patientToPlaintext(created));
+      } catch (e: any) {
+        if (e instanceof z.ZodError)
+          return res
+            .status(400)
+            .json({ error: "Dados invalidos", details: e.errors });
+        console.error("[patients.create]", e);
+        return res.status(500).json({ error: "Erro interno" });
+      }
+    },
+  );
 
   app.get("/api/patients", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
     const rows = isAdmin(req.user!)
       ? db.select().from(patients).all()
-      : db.select().from(patients).where(eq(patients.ownerUserId, req.user!.id)).all();
-    await logAudit({ eventType: "patient.read", context: ctx, metadata: { count: rows.length } });
+      : db
+          .select()
+          .from(patients)
+          .where(eq(patients.ownerUserId, req.user!.id))
+          .all();
+    await logAudit({
+      eventType: "patient.read",
+      context: ctx,
+      metadata: { count: rows.length },
+    });
     return res.json(rows.map(patientToPlaintext));
   });
 
   app.get("/api/patients/:id", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
-    const row = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
+    const row = db
+      .select()
+      .from(patients)
+      .where(eq(patients.id, oneParam(req.params.id)))
+      .get();
     if (!row) return res.status(404).json({ error: "Paciente nao encontrado" });
-    if (!canAccessPatient(req.user!, row)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+    if (!canAccessPatient(req.user!, row))
+      return res
+        .status(403)
+        .json({ error: "Sem permissao", code: "FORBIDDEN" });
     await logAudit({
       eventType: "patient.read",
       context: ctx,
@@ -92,60 +169,93 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json(patientToPlaintext(row));
   });
 
-  app.patch("/api/patients/:id", requireAuth, requireProfessional, writeRateLimit, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    try {
-      const parsed = patientApiSchema.partial().parse(req.body);
-      const existing = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
-      if (!existing) return res.status(404).json({ error: "Paciente nao encontrado" });
-      if (!canAccessPatient(req.user!, existing)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+  app.patch(
+    "/api/patients/:id",
+    requireAuth,
+    requireProfessional,
+    writeRateLimit,
+    async (req, res) => {
+      const ctx = getAuditContextFromRequest(req);
+      try {
+        const parsed = patientApiSchema.partial().parse(req.body);
+        const existing = db
+          .select()
+          .from(patients)
+          .where(eq(patients.id, oneParam(req.params.id)))
+          .get();
+        if (!existing)
+          return res.status(404).json({ error: "Paciente nao encontrado" });
+        if (!canAccessPatient(req.user!, existing))
+          return res
+            .status(403)
+            .json({ error: "Sem permissao", code: "FORBIDDEN" });
 
-      const merged = patientToStorage({
-        name: parsed.name ?? patientToPlaintext(existing).name,
-        birthDate: parsed.birthDate ?? existing.birthDate ?? undefined,
-        cpf: parsed.cpf ?? patientToPlaintext(existing).cpf ?? undefined,
-        cid: parsed.cid ?? existing.cid ?? undefined,
-        cidDescription: parsed.cidDescription ?? existing.cidDescription ?? undefined,
-        notes: parsed.notes ?? patientToPlaintext(existing).notes ?? undefined,
-      });
+        const merged = patientToStorage({
+          name: parsed.name ?? patientToPlaintext(existing).name,
+          birthDate: parsed.birthDate ?? existing.birthDate ?? undefined,
+          cpf: parsed.cpf ?? patientToPlaintext(existing).cpf ?? undefined,
+          cid: parsed.cid ?? existing.cid ?? undefined,
+          cidDescription:
+            parsed.cidDescription ?? existing.cidDescription ?? undefined,
+          notes:
+            parsed.notes ?? patientToPlaintext(existing).notes ?? undefined,
+        });
 
-      const updated = db
-        .update(patients)
-        .set({ ...merged, updatedAt: new Date().toISOString() })
+        const updated = db
+          .update(patients)
+          .set({ ...merged, updatedAt: new Date().toISOString() })
+          .where(eq(patients.id, oneParam(req.params.id)))
+          .returning()
+          .get();
+
+        await logAudit({
+          eventType: "patient.update",
+          context: ctx,
+          targetType: "patient",
+          targetId: updated.id,
+          metadata: { fields: Object.keys(parsed) },
+        });
+        return res.json(patientToPlaintext(updated));
+      } catch (e: any) {
+        if (e instanceof z.ZodError)
+          return res
+            .status(400)
+            .json({ error: "Dados invalidos", details: e.errors });
+        console.error("[patients.update]", e);
+        return res.status(500).json({ error: "Erro interno" });
+      }
+    },
+  );
+
+  app.delete(
+    "/api/patients/:id",
+    requireAuth,
+    requireProfessional,
+    async (req, res) => {
+      const ctx = getAuditContextFromRequest(req);
+      const existing = db
+        .select()
+        .from(patients)
         .where(eq(patients.id, oneParam(req.params.id)))
-        .returning()
         .get();
-
+      if (!existing)
+        return res.status(404).json({ error: "Paciente nao encontrado" });
+      if (!canAccessPatient(req.user!, existing))
+        return res
+          .status(403)
+          .json({ error: "Sem permissao", code: "FORBIDDEN" });
+      const ok = storage.deletePatient(oneParam(req.params.id));
+      if (!ok)
+        return res.status(404).json({ error: "Paciente nao encontrado" });
       await logAudit({
-        eventType: "patient.update",
+        eventType: "patient.delete",
         context: ctx,
         targetType: "patient",
-        targetId: updated.id,
-        metadata: { fields: Object.keys(parsed) },
+        targetId: oneParam(req.params.id),
       });
-      return res.json(patientToPlaintext(updated));
-    } catch (e: any) {
-      if (e instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: e.errors });
-      console.error("[patients.update]", e);
-      return res.status(500).json({ error: "Erro interno" });
-    }
-  });
-
-  app.delete("/api/patients/:id", requireAuth, requireProfessional, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    const existing = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
-    if (!existing) return res.status(404).json({ error: "Paciente nao encontrado" });
-    if (!canAccessPatient(req.user!, existing)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
-    const ok = storage.deletePatient(oneParam(req.params.id));
-    if (!ok) return res.status(404).json({ error: "Paciente nao encontrado" });
-    await logAudit({
-      eventType: "patient.delete",
-      context: ctx,
-      targetType: "patient",
-      targetId: oneParam(req.params.id),
-    });
-    return res.json({ ok: true });
-  });
+      return res.json({ ok: true });
+    },
+  );
 
   // =========================================================================
   // RESULTADOS DE ESCALAS
@@ -153,8 +263,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/results", requireAuth, writeRateLimit, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
     try {
+      const responses = normalizeScaleResponses(
+        req.body.responses ?? req.body.answers,
+      );
+      if (responses.length === 0) {
+        return res.status(400).json({
+          error: "Envie todas as perguntas e respostas por extenso.",
+          code: "RESPONSES_REQUIRED",
+        });
+      }
       const parsed = insertScaleResultSchema.parse({
         ...req.body,
+        answers: JSON.stringify(responses),
+        // Colunas legadas obrigatórias permanecem neutras no armazenamento e
+        // nunca são devolvidas pela API. O produto entrega somente respostas.
+        totalScore: 0,
+        classification: "Respostas registradas",
+        domainScores: null,
         appliedByUserId: req.user!.id,
       });
       const created = storage.saveResult(parsed);
@@ -163,58 +288,99 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         context: ctx,
         targetType: "scale_result",
         targetId: created.id,
-        metadata: { scaleName: created.scaleName, patientId: created.patientId },
+        metadata: {
+          scaleName: created.scaleName,
+          patientId: created.patientId,
+        },
       });
-      return res.status(201).json(created);
+      return res.status(201).json(presentScaleResponseRecord(created));
     } catch (e: any) {
-      if (e instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: e.errors });
+      if (e instanceof z.ZodError)
+        return res
+          .status(400)
+          .json({ error: "Dados invalidos", details: e.errors });
       return res.status(500).json({ error: "Erro interno" });
     }
   });
 
   app.get("/api/results", requireAuth, (_req, res) => {
     const rows = storage.getResults();
-    if (isAdmin(_req.user!)) return res.json(rows);
-    return res.json(
-      rows.filter((result) => {
-        if (result.appliedByUserId === _req.user!.id) return true;
-        if (!result.patientId) return false;
-        const patient = db.select().from(patients).where(eq(patients.id, result.patientId)).get();
-        return canAccessScaleResult(_req.user!, result, patient);
-      }),
-    );
+    const accessible = isAdmin(_req.user!)
+      ? rows
+      : rows.filter((result) => {
+          if (result.appliedByUserId === _req.user!.id) return true;
+          if (!result.patientId) return false;
+          const patient = db
+            .select()
+            .from(patients)
+            .where(eq(patients.id, result.patientId))
+            .get();
+          return canAccessScaleResult(_req.user!, result, patient);
+        });
+    return res.json(accessible.map(presentScaleResponseRecord));
   });
 
   app.get("/api/results/:id", requireAuth, (req, res) => {
     const r = storage.getResult(oneParam(req.params.id));
     if (!r) return res.status(404).json({ error: "Nao encontrado" });
-    const patient = r.patientId ? db.select().from(patients).where(eq(patients.id, r.patientId)).get() : null;
-    if (!canAccessScaleResult(req.user!, r, patient)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
-    return res.json(r);
+    const patient = r.patientId
+      ? db.select().from(patients).where(eq(patients.id, r.patientId)).get()
+      : null;
+    if (!canAccessScaleResult(req.user!, r, patient))
+      return res
+        .status(403)
+        .json({ error: "Sem permissao", code: "FORBIDDEN" });
+    return res.json(presentScaleResponseRecord(r));
   });
 
-  app.delete("/api/results/:id", requireAuth, requireProfessional, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    const result = storage.getResult(oneParam(req.params.id));
-    if (!result) return res.status(404).json({ error: "Nao encontrado" });
-    const patient = result.patientId ? db.select().from(patients).where(eq(patients.id, result.patientId)).get() : null;
-    if (!canAccessScaleResult(req.user!, result, patient)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
-    const ok = storage.deleteResult(oneParam(req.params.id));
-    if (!ok) return res.status(404).json({ error: "Nao encontrado" });
-    await logAudit({
-      eventType: "result.delete",
-      context: ctx,
-      targetType: "scale_result",
-      targetId: oneParam(req.params.id),
-    });
-    return res.json({ ok: true });
-  });
+  app.delete(
+    "/api/results/:id",
+    requireAuth,
+    requireProfessional,
+    async (req, res) => {
+      const ctx = getAuditContextFromRequest(req);
+      const result = storage.getResult(oneParam(req.params.id));
+      if (!result) return res.status(404).json({ error: "Nao encontrado" });
+      const patient = result.patientId
+        ? db
+            .select()
+            .from(patients)
+            .where(eq(patients.id, result.patientId))
+            .get()
+        : null;
+      if (!canAccessScaleResult(req.user!, result, patient))
+        return res
+          .status(403)
+          .json({ error: "Sem permissao", code: "FORBIDDEN" });
+      const ok = storage.deleteResult(oneParam(req.params.id));
+      if (!ok) return res.status(404).json({ error: "Nao encontrado" });
+      await logAudit({
+        eventType: "result.delete",
+        context: ctx,
+        targetType: "scale_result",
+        targetId: oneParam(req.params.id),
+      });
+      return res.json({ ok: true });
+    },
+  );
 
   app.get("/api/patients/:id/results", requireAuth, (req, res) => {
-    const patient = db.select().from(patients).where(eq(patients.id, oneParam(req.params.id))).get();
-    if (!patient) return res.status(404).json({ error: "Paciente nao encontrado" });
-    if (!canAccessPatient(req.user!, patient)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
-    res.json(storage.getResultsByPatient(oneParam(req.params.id)));
+    const patient = db
+      .select()
+      .from(patients)
+      .where(eq(patients.id, oneParam(req.params.id)))
+      .get();
+    if (!patient)
+      return res.status(404).json({ error: "Paciente nao encontrado" });
+    if (!canAccessPatient(req.user!, patient))
+      return res
+        .status(403)
+        .json({ error: "Sem permissao", code: "FORBIDDEN" });
+    res.json(
+      storage
+        .getResultsByPatient(oneParam(req.params.id))
+        .map(presentScaleResponseRecord),
+    );
   });
 
   // =========================================================================
@@ -244,13 +410,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         grantedAt: created.grantedAt,
       });
     } catch (e: any) {
-      if (e instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: e.errors });
+      if (e instanceof z.ZodError)
+        return res
+          .status(400)
+          .json({ error: "Dados invalidos", details: e.errors });
       return res.status(500).json({ error: "Erro interno" });
     }
   });
 
   app.get("/api/consents", requireAuth, (req, res) => {
-    const userConsents = db.select().from(consents).where(eq(consents.userId, req.user!.id)).all();
+    const userConsents = db
+      .select()
+      .from(consents)
+      .where(eq(consents.userId, req.user!.id))
+      .all();
     res.json(userConsents);
   });
 
@@ -279,7 +452,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.status(201).json({
       id: created.id,
       status: created.status,
-      message: "Solicitacao de exportacao registrada. Voce sera notificado em ate 15 dias (LGPD art. 19).",
+      message:
+        "Solicitacao de exportacao registrada. Voce sera notificado em ate 15 dias (LGPD art. 19).",
     });
   });
 
@@ -306,46 +480,59 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.status(201).json({
       id: created.id,
       status: created.status,
-      message: "Solicitacao de exclusao registrada. Sera processada em ate 15 dias.",
+      message:
+        "Solicitacao de exclusao registrada. Sera processada em ate 15 dias.",
     });
   });
 
   // =========================================================================
   // EMAIL — envio de relatorio clinico (substitui execSync Perplexity)
   // =========================================================================
-  app.post("/api/send-report", requireAuth, requireProfessional, emailRateLimit, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    const schema = z.object({
-      to: z.string().email().optional(),
-      subject: z.string().min(1).max(200),
-      body: z.string().min(1).max(50_000),
-      isHtml: z.boolean().default(false),
-    });
-    try {
-      const parsed = schema.parse(req.body);
-      const recipient = parsed.to || PROFESSIONAL_REPORT_EMAIL;
-      const result = await sendEmail({
-        to: recipient,
-        subject: parsed.subject,
-        text: parsed.isHtml ? undefined : parsed.body,
-        html: parsed.isHtml ? parsed.body : undefined,
-        replyTo: req.user!.email,
+  app.post(
+    "/api/send-report",
+    requireAuth,
+    requireProfessional,
+    emailRateLimit,
+    async (req, res) => {
+      const ctx = getAuditContextFromRequest(req);
+      const schema = z.object({
+        to: z.string().email().optional(),
+        subject: z.string().min(1).max(200),
+        body: z.string().min(1).max(50_000),
+        isHtml: z.boolean().default(false),
       });
-      await logAudit({
-        eventType: "lgpd.access",
-        context: ctx,
-        metadata: { action: "send_report", recipient },
-      });
-      return res.json({ ok: true, messageId: result.messageId });
-    } catch (e: any) {
-      if (e instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: e.errors });
-      console.error("[send-report] error:", e);
-      return res.status(500).json({
-        error: "Falha ao enviar email",
-        detail: process.env.NODE_ENV === "development" ? e.message : "Verifique configuracao SMTP em .env",
-      });
-    }
-  });
+      try {
+        const parsed = schema.parse(req.body);
+        const recipient = parsed.to || PROFESSIONAL_REPORT_EMAIL;
+        const result = await sendEmail({
+          to: recipient,
+          subject: parsed.subject,
+          text: parsed.isHtml ? undefined : parsed.body,
+          html: parsed.isHtml ? parsed.body : undefined,
+          replyTo: req.user!.email,
+        });
+        await logAudit({
+          eventType: "lgpd.access",
+          context: ctx,
+          metadata: { action: "send_report", recipient },
+        });
+        return res.json({ ok: true, messageId: result.messageId });
+      } catch (e: any) {
+        if (e instanceof z.ZodError)
+          return res
+            .status(400)
+            .json({ error: "Dados invalidos", details: e.errors });
+        console.error("[send-report] error:", e);
+        return res.status(500).json({
+          error: "Falha ao enviar email",
+          detail:
+            process.env.NODE_ENV === "development"
+              ? e.message
+              : "Verifique configuracao SMTP em .env",
+        });
+      }
+    },
+  );
 
   return httpServer;
 }

@@ -1,15 +1,20 @@
 import { useParams, useLocation, Link } from "wouter";
 import { useState } from "react";
-import { ArrowLeft, Download, Copy, Lock, ShieldCheck, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Copy, Download, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { GenericScale } from "@/components/GenericScale";
-import { getInteractiveScale as getInteractiveItemScale, makeInteractiveConfig } from "@/data/interactiveScaleItems";
+import {
+  getInteractiveScale as getInteractiveItemScale,
+  makeInteractiveConfig,
+} from "@/data/interactiveScaleItems";
 import { getInteractiveScale as getInteractiveRunnerScale } from "@/data/interactiveScales";
 import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
+import { ClinicalReport } from "@/components/ClinicalReport";
+import { SaveToPatient } from "@/components/SaveToPatient";
 import {
   getImplementationStatus,
   getImplementationLabel,
@@ -18,7 +23,11 @@ import {
   getLiteracyRequirement,
   getVerbalRequirement,
 } from "@/data/advancedFilterLogic";
-import { getMasterPinLockSeconds, isMasterPinUnlocked, verifyMasterPin } from "@/lib/masterPin";
+import {
+  getMasterPinLockSeconds,
+  isMasterPinUnlocked,
+  verifyMasterPin,
+} from "@/lib/masterPin";
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
   questionario_pais: "Questionário — pais/cuidador",
@@ -59,7 +68,10 @@ const QUEIXA_LABEL: Record<string, string> = {
   triagem: "Triagem ampla",
 };
 function queixaLabel(id: string): string {
-  return QUEIXA_LABEL[id] ?? id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ");
+  return (
+    QUEIXA_LABEL[id] ??
+    id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ")
+  );
 }
 
 // Idade legível: meses até 24m, anos acima. Evita o "0-0a" das escalas neonatais.
@@ -142,78 +154,72 @@ function buildAdaptedItems(scale: ScaleEntry): string[] {
       "Compartilha interesse mostrando, apontando ou chamando alguém para ver junto",
       "Mantém troca social de ida e volta, sem ficar só no assunto preferido",
       "Entende regras sociais do dia a dia: esperar a vez, perceber brincadeira e respeitar espaço",
-      "Tolera mudança de rotina sem crise importante quando o combinado muda de repente"
+      "Tolera mudança de rotina sem crise importante quando o combinado muda de repente",
     );
   }
   if (q.has("tdah")) {
     items.push(
       "Sustenta atenção em tarefa compatível com a idade, sem se perder o tempo todo",
       "Controla impulso de levantar, interromper ou responder antes da hora",
-      "Organiza material, rotina e começo-meio-fim da atividade com pouca ajuda"
+      "Organiza material, rotina e começo-meio-fim da atividade com pouca ajuda",
     );
   }
   if (q.has("linguagem")) {
     items.push(
       "Compreende comandos e explicações do cotidiano sem precisar repetir muitas vezes",
       "Expressa necessidades, ideias e acontecimentos com clareza para quem não convive todo dia",
-      "Usa linguagem de forma social, adaptando fala ao contexto, pessoa e intenção"
+      "Usa linguagem de forma social, adaptando fala ao contexto, pessoa e intenção",
     );
   }
   if (q.has("aprendizagem")) {
     items.push(
       "Lê, escreve ou calcula dentro do esperado para escolaridade e oportunidade de ensino",
       "Aprende conteúdo novo e consegue aplicar depois sem depender sempre de alguém do lado",
-      "Mostra rendimento escolar compatível com esforço, presença e potencial observado"
+      "Mostra rendimento escolar compatível com esforço, presença e potencial observado",
     );
   }
   if (q.has("ansiedade") || q.has("depressao")) {
     items.push(
       "Preocupação, medo ou tristeza atrapalham escola, sono, alimentação ou convivência",
       "Consegue se acalmar com apoio comum da família ou escola, sem escalada frequente",
-      "Evita situações importantes por sofrimento emocional ou medo de passar vergonha"
+      "Evita situações importantes por sofrimento emocional ou medo de passar vergonha",
     );
   }
   if (q.has("comportamento")) {
     items.push(
       "Aceita limites e combinados sem agressão, ameaça ou birra desproporcional",
       "Assume responsabilidade pelo que fez, sem culpar sempre os outros",
-      "Consegue reparar dano ou retomar a atividade depois de conflito"
+      "Consegue reparar dano ou retomar a atividade depois de conflito",
     );
   }
   if (q.has("sensorial") || q.has("alimentacao")) {
     items.push(
       "Reage a som, toque, cheiro, roupa ou textura de forma proporcional ao contexto",
       "Busca movimento, pressão ou estímulo sensorial sem se colocar em risco",
-      "Aceita variedade alimentar suficiente para rotina e saúde, considerando textura, cheiro e marca"
+      "Aceita variedade alimentar suficiente para rotina e saúde, considerando textura, cheiro e marca",
     );
   }
   if (q.has("funcionalidade") || q.has("autonomia") || q.has("atraso")) {
     items.push(
       "Realiza autocuidado esperado para idade, como higiene, vestir, comer e organizar pertences",
       "Participa da rotina familiar, escolar ou terapêutica com necessidade de ajuda compatível",
-      "Generaliza habilidades aprendidas para casa, escola e outros ambientes"
+      "Generaliza habilidades aprendidas para casa, escola e outros ambientes",
     );
   }
   if (q.has("sono")) {
     items.push(
       "Inicia e mantém sono em horário adequado para idade, sem sofrimento importante",
-      "Acorda com disposição suficiente para escola, terapias e rotina diária"
+      "Acorda com disposição suficiente para escola, terapias e rotina diária",
     );
   }
 
   items.push(
     "O prejuízo aparece em mais de um contexto, como casa, escola, terapia ou consulta",
     "A família reconhece exemplos concretos do comportamento na semana ou no último mês",
-    "O achado muda conduta clínica, orientação, encaminhamento ou plano terapêutico"
+    "O achado muda conduta clínica, orientação, encaminhamento ou plano terapêutico",
   );
 
   return Array.from(new Set(items)).slice(0, 12);
-}
-
-function adaptedScoreValue(value: string | undefined): number {
-  const first = value?.trim().charAt(0);
-  const n = Number(first);
-  return Number.isFinite(n) ? n : 0;
 }
 
 function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
@@ -221,15 +227,25 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [scores, setScores] = useState<Record<string, string>>({});
-  const [rawScore, setRawScore] = useState("");
-  const [classification, setClassification] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
-  const [copied, setCopied] = useState(false);
-  const sensitiveLicense = scale.licencaUso === "comercial" || scale.licencaUso === "restrita" || scale.licencaUso === "contato_autor";
+  const [showResponses, setShowResponses] = useState(false);
+  const sensitiveLicense =
+    scale.licencaUso === "comercial" ||
+    scale.licencaUso === "restrita" ||
+    scale.licencaUso === "contato_autor";
   const adaptedItems = buildAdaptedItems(scale);
-  const adaptedSubtotal = adaptedItems.reduce((sum, item) => sum + adaptedScoreValue(scores[item]), 0);
-  const adaptedMax = adaptedItems.length * 3;
+  const allAnswered = adaptedItems.every((item) => Boolean(answers[item]));
+  const reportItems = [
+    ...adaptedItems.map((item) => ({
+      question: item,
+      answer: answers[item] || "Não respondida",
+    })),
+    {
+      question: "Observações registradas pelo aplicador",
+      answer: notes.trim() || "Não informadas",
+    },
+  ];
 
   async function unlockInternal(e: React.FormEvent) {
     e.preventDefault();
@@ -254,44 +270,6 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
     }
   }
 
-  function buildSummary(): string {
-    const domainText = adaptedItems
-      .map((item) => `- ${item}: ${scores[item] || "não informado"}`)
-      .join("\n");
-    return [
-      `REGISTRO INTERNO DE ESCALA`,
-      `Escala: ${scale.name} (${scale.fullName})`,
-      `ID: ${scale.id}`,
-      `Licença: ${scale.licencaUso || "não informada"}`,
-      `Modo: ${APPLICATION_MODE_LABEL[getApplicationMode(scale)] ?? getApplicationMode(scale)}`,
-      `Finalidade: ${ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ?? getAssessmentUse(scale)}`,
-      "",
-      sensitiveLicense
-        ? "Tipo de uso: adaptação autoral regional com equivalência funcional pretendida; não é versão oficial validada do instrumento."
-        : "Tipo de uso: aplicação/registro clínico autoral ou livre conforme metadados da escala.",
-      "",
-      "Itens clínicos adaptados:",
-      domainText,
-      "",
-      `Subtotal autoral adaptado: ${adaptedSubtotal}/${adaptedMax}`,
-      "",
-      `Escore bruto/oficial registrado: ${rawScore || "não informado"}`,
-      `Classificação/interpretação registrada: ${classification || "não informada"}`,
-      "",
-      `Observações: ${notes || "sem observações adicionais"}`,
-      "",
-      sensitiveLicense
-        ? "Nota: instrumento com licença restrita/comercial; este registro não reproduz itens proprietários. Use o material oficial quando houver autorização e registre aqui a interpretação clínica."
-        : "Nota: correlacionar com história clínica, exame e contexto familiar/escolar.",
-    ].join("\n");
-  }
-
-  async function copySummary() {
-    await navigator.clipboard.writeText(buildSummary());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   if (!unlocked) {
     return (
       <Card className="bg-slate-800/80 border-violet-700 mb-6">
@@ -303,9 +281,13 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
         </CardHeader>
         <CardContent className="pt-6">
           <p className="text-sm text-slate-300 mb-4">
-            Esta escala pode ser registrada internamente após PIN master. O PIN não fica visível nem salvo em texto.
+            Esta escala pode ser registrada internamente após PIN master. O PIN
+            não fica visível nem salvo em texto.
           </p>
-          <form onSubmit={unlockInternal} className="flex flex-col sm:flex-row gap-3">
+          <form
+            onSubmit={unlockInternal}
+            className="flex flex-col sm:flex-row gap-3"
+          >
             <Input
               type="password"
               value={pin}
@@ -314,13 +296,46 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
               className="bg-slate-900/70 border-slate-600 text-white"
               autoComplete="off"
             />
-            <Button type="submit" disabled={busy || !pin.trim()} className="bg-violet-600 hover:bg-violet-700">
+            <Button
+              type="submit"
+              disabled={busy || !pin.trim()}
+              className="bg-violet-600 hover:bg-violet-700"
+            >
               {busy ? "Verificando..." : "Desbloquear"}
             </Button>
           </form>
-          {pinError && <p className="mt-2 text-sm font-semibold text-red-300">{pinError}</p>}
+          {pinError && (
+            <p className="mt-2 text-sm font-semibold text-red-300">
+              {pinError}
+            </p>
+          )}
         </CardContent>
       </Card>
+    );
+  }
+
+  if (showResponses) {
+    return (
+      <div className="mb-6 space-y-4">
+        <ClinicalReport
+          scaleName={scale.name}
+          scaleFullName={scale.fullName}
+          items={reportItems}
+          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+        />
+        <SaveToPatient
+          scaleName={scale.name}
+          responses={reportItems}
+          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+        />
+        <Button
+          onClick={() => setShowResponses(false)}
+          variant="outline"
+          className="w-full"
+        >
+          Editar Respostas
+        </Button>
+      </div>
     );
   }
 
@@ -335,59 +350,63 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
       <CardContent className="pt-6 space-y-5">
         {sensitiveLicense && (
           <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-100">
-            Instrumento com licença restrita/comercial. Quando não houver autorização para reproduzir itens, esta tela usa uma adaptação autoral em português brasileiro regional, com equivalência funcional pretendida para triagem/registro clínico, sem copiar o instrumento oficial.
+            Instrumento com licença restrita/comercial. Esta tela usa itens
+            autorais de registro e não reproduz o instrumento oficial.
           </div>
         )}
-        <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-4 text-sm text-blue-100">
-          Linguagem calibrada para consulta real: clara, brasileira, nordestina quando útil, e atualizada para 2026. Não substitui normas, manual oficial ou validação psicométrica.
-        </div>
-        <div className="rounded-lg border border-emerald-700 bg-emerald-900/20 p-4">
-          <p className="text-xs uppercase tracking-wide text-emerald-300">Subtotal autoral adaptado</p>
-          <p className="text-2xl font-black text-white">{adaptedSubtotal}/{adaptedMax}</p>
-          <p className="text-xs text-emerald-100">0 ausente/não aplicável · 1 leve · 2 moderado · 3 importante</p>
-        </div>
+
         <div className="grid md:grid-cols-2 gap-3">
           {adaptedItems.map((item) => (
             <label key={item} className="space-y-1">
-              <span className="text-xs font-semibold text-slate-300">{item}</span>
+              <span className="text-xs font-semibold text-slate-300">
+                {item}
+              </span>
               <select
-                value={scores[item] || ""}
-                onChange={(e) => setScores((prev) => ({ ...prev, [item]: e.target.value }))}
+                value={answers[item] || ""}
+                onChange={(e) =>
+                  setAnswers((previous) => ({
+                    ...previous,
+                    [item]: e.target.value,
+                  }))
+                }
                 className="w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-white"
               >
-                <option value="">Selecionar</option>
-                <option value="0 - não observado / não aplicável">0 - não observado / não aplicável</option>
-                <option value="1 - leve / pouco impacto">1 - leve / pouco impacto</option>
-                <option value="2 - moderado / impacto claro">2 - moderado / impacto claro</option>
-                <option value="3 - grave / impacto importante">3 - grave / impacto importante</option>
+                <option value="">Selecionar resposta</option>
+                <option value="Não observado / não aplicável">
+                  Não observado / não aplicável
+                </option>
+                <option value="Leve / pouco impacto">
+                  Leve / pouco impacto
+                </option>
+                <option value="Moderado / impacto claro">
+                  Moderado / impacto claro
+                </option>
+                <option value="Importante / impacto acentuado">
+                  Importante / impacto acentuado
+                </option>
               </select>
             </label>
           ))}
         </div>
-        <div className="grid md:grid-cols-2 gap-3">
-          <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-300">Escore bruto/oficial</span>
-            <Input value={rawScore} onChange={(e) => setRawScore(e.target.value)} className="bg-slate-900/70 border-slate-600 text-white" />
-          </label>
-          <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-300">Classificação/interpretação</span>
-            <Input value={classification} onChange={(e) => setClassification(e.target.value)} className="bg-slate-900/70 border-slate-600 text-white" />
-          </label>
-        </div>
+
         <label className="space-y-1 block">
-          <span className="text-xs font-semibold text-slate-300">Observações clínicas</span>
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-slate-900/70 border-slate-600 text-white min-h-28" />
+          <span className="text-xs font-semibold text-slate-300">
+            Observações do aplicador (opcional)
+          </span>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="bg-slate-900/70 border-slate-600 text-white min-h-28"
+          />
         </label>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={copySummary} className="bg-emerald-600 hover:bg-emerald-700">
-            <ClipboardCheck className="w-4 h-4 mr-2" />
-            {copied ? "Registro copiado" : "Copiar registro clínico"}
-          </Button>
-          <Button onClick={() => window.print()} variant="outline" className="bg-slate-700 border-slate-600 hover:bg-slate-600">
-            <Download className="w-4 h-4 mr-2" />
-            Imprimir
-          </Button>
-        </div>
+
+        <Button
+          onClick={() => setShowResponses(true)}
+          disabled={!allAnswered}
+          className="w-full bg-emerald-600 hover:bg-emerald-700"
+        >
+          Ver todas as perguntas e respostas
+        </Button>
       </CardContent>
     </Card>
   );
@@ -398,7 +417,7 @@ export default function GenericScalePage() {
   const [_location, navigate] = useLocation();
   const scaleId = params?.id;
 
-  const scale = allScales.find(s => s.id === scaleId);
+  const scale = allScales.find((s) => s.id === scaleId);
   const [copied, setCopied] = useState(false);
   const implStatus = scale ? getImplementationStatus(scale) : null;
 
@@ -419,9 +438,14 @@ export default function GenericScalePage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6 flex items-center justify-center">
         <Card className="w-full max-w-md bg-red-950/50 border-red-700">
           <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold text-red-100 mb-4">Escala não encontrada</h2>
+            <h2 className="text-2xl font-bold text-red-100 mb-4">
+              Escala não encontrada
+            </h2>
             <p className="text-red-200 mb-6">ID: {scaleId}</p>
-            <Button onClick={() => navigate("/filtro")} className="bg-red-600 hover:bg-red-700">
+            <Button
+              onClick={() => navigate("/filtro")}
+              className="bg-red-600 hover:bg-red-700"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao Filtro
             </Button>
@@ -464,7 +488,7 @@ export default function GenericScalePage() {
         o.id !== scale.id &&
         o.queixas.some((q) => scale.queixas.includes(q)) &&
         o.ageMax >= scale.ageMin &&
-        o.ageMin <= scale.ageMax
+        o.ageMin <= scale.ageMax,
     )
     .slice(0, 6);
 
@@ -487,8 +511,10 @@ export default function GenericScalePage() {
         {implStatus && implStatus !== "complete" && (
           <Card className="bg-amber-900/20 border-amber-700 mb-6">
             <CardContent className="pt-6 text-amber-100 text-sm font-semibold">
-              ⚠️ {getImplementationLabel(implStatus)} Esta página é uma <strong>ficha técnica/referência clínica</strong> —
-              não é a aplicação completa do instrumento (sem itens nem cálculo de escore embutidos).
+              ⚠️ {getImplementationLabel(implStatus)} Esta página é uma{" "}
+              <strong>ficha técnica/referência clínica</strong> — não é a
+              aplicação completa do instrumento (sem itens nem cálculo de escore
+              embutidos).
             </CardContent>
           </Card>
         )}
@@ -509,21 +535,31 @@ export default function GenericScalePage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-700">
                 <div>
                   <p className="text-xs text-slate-400 uppercase">Tempo</p>
-                  <p className="text-sm font-semibold text-slate-200">{scale.tempo}</p>
+                  <p className="text-sm font-semibold text-slate-200">
+                    {scale.tempo}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 uppercase">Prioridade</p>
-                  <p className="text-sm font-semibold text-slate-200 capitalize">{scale.prioridade}</p>
+                  <p className="text-sm font-semibold text-slate-200 capitalize">
+                    {scale.prioridade}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase">Faixa Etária</p>
+                  <p className="text-xs text-slate-400 uppercase">
+                    Faixa Etária
+                  </p>
                   <p className="text-sm font-semibold text-slate-200">
                     {ageLabel(scale.ageMin, scale.ageMax)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase">Respondente</p>
-                  <p className="text-sm font-semibold text-slate-200">{scale.respondente.join(", ")}</p>
+                  <p className="text-xs text-slate-400 uppercase">
+                    Respondente
+                  </p>
+                  <p className="text-sm font-semibold text-slate-200">
+                    {scale.respondente.join(", ")}
+                  </p>
                 </div>
               </div>
             </div>
@@ -555,16 +591,20 @@ export default function GenericScalePage() {
                 <p className="mb-1 text-sm font-semibold text-emerald-300">
                   👨‍👩‍👧 Para quem vai responder
                 </p>
-                <p className="text-sm leading-relaxed text-emerald-100/90">{scale.exemploPais}</p>
+                <p className="text-sm leading-relaxed text-emerald-100/90">
+                  {scale.exemploPais}
+                </p>
               </div>
             )}
 
             {/* Queixas */}
             {scale.queixas && scale.queixas.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Queixas Abordadas</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Queixas Abordadas
+                </h3>
                 <div className="flex flex-wrap gap-2">
-                  {scale.queixas.map(q => (
+                  {scale.queixas.map((q) => (
                     <span
                       key={q}
                       className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-200 text-sm border border-blue-700"
@@ -579,7 +619,9 @@ export default function GenericScalePage() {
             {/* Informações Clínicas */}
             {scale.scoringCutoff && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Escore / Interpretação</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Escore / Interpretação
+                </h3>
                 <div className="bg-slate-700/30 p-4 rounded text-slate-300">
                   {scale.scoringCutoff}
                 </div>
@@ -588,7 +630,9 @@ export default function GenericScalePage() {
 
             {scale.validacaoBrasil && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Validação Brasil</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Validação Brasil
+                </h3>
                 <div className="bg-green-900/20 p-4 rounded text-green-200 border border-green-700">
                   {scale.validacaoBrasil}
                 </div>
@@ -597,13 +641,20 @@ export default function GenericScalePage() {
 
             {scale.licencaUso && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Licença de Uso</h3>
-                <div className={`p-4 rounded capitalize font-semibold ${
-                  scale.licencaUso === "livre" ? "bg-emerald-900/20 text-emerald-200 border border-emerald-700" :
-                  scale.licencaUso === "comercial" ? "bg-yellow-900/20 text-yellow-200 border border-yellow-700" :
-                  scale.licencaUso === "autoral" ? "bg-blue-900/20 text-blue-200 border border-blue-700" :
-                  "bg-red-900/20 text-red-200 border border-red-700"
-                }`}>
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Licença de Uso
+                </h3>
+                <div
+                  className={`p-4 rounded capitalize font-semibold ${
+                    scale.licencaUso === "livre"
+                      ? "bg-emerald-900/20 text-emerald-200 border border-emerald-700"
+                      : scale.licencaUso === "comercial"
+                        ? "bg-yellow-900/20 text-yellow-200 border border-yellow-700"
+                        : scale.licencaUso === "autoral"
+                          ? "bg-blue-900/20 text-blue-200 border border-blue-700"
+                          : "bg-red-900/20 text-red-200 border border-red-700"
+                  }`}
+                >
                   {scale.licencaUso}
                 </div>
               </div>
@@ -619,16 +670,23 @@ export default function GenericScalePage() {
 
             {/* Transparência honesta: o que esta base NÃO documenta para este
                 instrumento. Em vez de omitir silenciosamente, deixa explícito. */}
-            {(!scale.scoringCutoff || !scale.validacaoBrasil || !scale.fonte) && (
+            {(!scale.scoringCutoff ||
+              !scale.validacaoBrasil ||
+              !scale.fonte) && (
               <div className="border-t border-slate-700 pt-6">
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  <span className="font-semibold text-slate-300">Não documentado nesta base:</span>{" "}
+                  <span className="font-semibold text-slate-300">
+                    Não documentado nesta base:
+                  </span>{" "}
                   {[
                     !scale.scoringCutoff && "pontos de corte/interpretação",
                     !scale.validacaoBrasil && "validação brasileira",
                     !scale.fonte && "fonte/referência",
-                  ].filter(Boolean).join(" · ")}
-                  . Consulte a referência original do instrumento antes do uso clínico.
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  . Consulte a referência original do instrumento antes do uso
+                  clínico.
                 </p>
               </div>
             )}
@@ -644,19 +702,31 @@ export default function GenericScalePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-slate-400 uppercase">Modo</p>
-                <p className="text-sm font-semibold text-slate-200">{APPLICATION_MODE_LABEL[getApplicationMode(scale)] ?? getApplicationMode(scale)}</p>
+                <p className="text-sm font-semibold text-slate-200">
+                  {APPLICATION_MODE_LABEL[getApplicationMode(scale)] ??
+                    getApplicationMode(scale)}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-400 uppercase">Finalidade</p>
-                <p className="text-sm font-semibold text-slate-200">{ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ?? getAssessmentUse(scale)}</p>
+                <p className="text-sm font-semibold text-slate-200">
+                  {ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ??
+                    getAssessmentUse(scale)}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-400 uppercase">Comunicação</p>
-                <p className="text-sm font-semibold text-slate-200">{VERBAL_LABEL[getVerbalRequirement(scale)]}</p>
+                <p className="text-sm font-semibold text-slate-200">
+                  {VERBAL_LABEL[getVerbalRequirement(scale)]}
+                </p>
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase">Alfabetização</p>
-                <p className="text-sm font-semibold text-slate-200">{LITERACY_LABEL[getLiteracyRequirement(scale)]}</p>
+                <p className="text-xs text-slate-400 uppercase">
+                  Alfabetização
+                </p>
+                <p className="text-sm font-semibold text-slate-200">
+                  {LITERACY_LABEL[getLiteracyRequirement(scale)]}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -671,9 +741,11 @@ export default function GenericScalePage() {
           </CardHeader>
           <CardContent className="pt-6 space-y-4 text-slate-300">
             <ol className="space-y-3 list-decimal list-inside">
-              {(USAGE_BY_MODE[getApplicationMode(scale)] ?? USAGE_DEFAULT).map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
+              {(USAGE_BY_MODE[getApplicationMode(scale)] ?? USAGE_DEFAULT).map(
+                (step, i) => (
+                  <li key={i}>{step}</li>
+                ),
+              )}
             </ol>
           </CardContent>
         </Card>
@@ -682,7 +754,9 @@ export default function GenericScalePage() {
         {related.length > 0 && (
           <Card className="bg-slate-800/80 border-slate-700 mb-6">
             <CardHeader className="border-b border-slate-700">
-              <CardTitle className="text-white">Instrumentos relacionados</CardTitle>
+              <CardTitle className="text-white">
+                Instrumentos relacionados
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -692,10 +766,15 @@ export default function GenericScalePage() {
                     href={routeFor(o)}
                     className="block rounded-lg border border-slate-700 bg-slate-700/30 p-3 transition hover:border-blue-500 hover:bg-slate-700/60"
                   >
-                    <p className="text-sm font-semibold text-slate-100">{o.name}</p>
-                    <p className="text-xs text-slate-400 line-clamp-1">{o.fullName}</p>
+                    <p className="text-sm font-semibold text-slate-100">
+                      {o.name}
+                    </p>
+                    <p className="text-xs text-slate-400 line-clamp-1">
+                      {o.fullName}
+                    </p>
                     <p className="mt-1 text-[11px] text-slate-500">
-                      {o.respondente.join(" · ")} · {ageLabel(o.ageMin, o.ageMax)}
+                      {o.respondente.join(" · ")} ·{" "}
+                      {ageLabel(o.ageMin, o.ageMax)}
                     </p>
                   </Link>
                 ))}
@@ -708,8 +787,13 @@ export default function GenericScalePage() {
         <Card className="bg-amber-900/20 border-amber-700 mb-6">
           <CardContent className="pt-6 text-amber-100">
             <p className="text-sm">
-              ⚠️ Esta escala é fornecida para fins educacionais e clínicos. Consulte a licença de uso e as normativas vigentes antes de implementar em prática clínica.
-              {scale.licencaUso === "comercial" || scale.licencaUso === "restrita" ? " Esta escala possui restrições de uso." : ""}
+              ⚠️ Esta escala é fornecida para fins educacionais e clínicos.
+              Consulte a licença de uso e as normativas vigentes antes de
+              implementar em prática clínica.
+              {scale.licencaUso === "comercial" ||
+              scale.licencaUso === "restrita"
+                ? " Esta escala possui restrições de uso."
+                : ""}
             </p>
           </CardContent>
         </Card>

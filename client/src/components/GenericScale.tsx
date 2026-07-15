@@ -10,7 +10,6 @@ import {
   RotateCcw,
   CheckCircle2,
   ChevronDown,
-  Info,
   Save,
   type LucideIcon,
 } from "lucide-react";
@@ -23,6 +22,7 @@ import { celebrate } from "@/lib/confetti";
 import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
+import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
 
 /**
  * Item de escala. Pode ser uma string simples (compatível com todo o acervo
@@ -30,7 +30,9 @@ import { easing, duration } from "@/lib/motion";
  * linguagem do dia a dia, o que a pergunta está querendo saber — facilita a
  * resposta da família por dar um exemplo concreto do comportamento.
  */
-export type ScaleItem = string | { text: string; emoji?: string; example?: string };
+export type ScaleItem =
+  | string
+  | { text: string; emoji?: string; example?: string };
 
 export function itemText(item: ScaleItem): string {
   return typeof item === "string" ? item : item.text;
@@ -76,7 +78,10 @@ export interface ScaleConfig {
 }
 
 /** Igualdade rasa entre dois mapas de respostas (chave → índice escolhido). */
-function sameAnswers(a: Record<string, number>, b: Record<string, number>): boolean {
+function sameAnswers(
+  a: Record<string, number>,
+  b: Record<string, number>,
+): boolean {
   const ak = Object.keys(a);
   if (ak.length !== Object.keys(b).length) return false;
   return ak.every((k) => a[k] === b[k]);
@@ -99,7 +104,10 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   // enquanto as respostas seguem idênticas às restauradas, preservamos o
   // updatedAt original ("12h desde a última EDIÇÃO", não "desde a última
   // abertura"), mantendo a proteção contra vazamento de rascunho entre pacientes.
-  const restoredSnapshotRef = useRef<{ answers: Record<string, number>; updatedAt: string } | null>(null);
+  const restoredSnapshotRef = useRef<{
+    answers: Record<string, number>;
+    updatedAt: string;
+  } | null>(null);
 
   const allItems = useMemo(
     () =>
@@ -146,7 +154,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         // isso, chaves órfãs de uma versão anterior da config fariam
         // `answered > total` e travariam a conclusão em "Faltam 0 respostas".
         const validKeys = new Set(
-          domainsRef.current.flatMap((d, di) => d.items.map((_, ii) => `${di}-${ii}`)),
+          domainsRef.current.flatMap((d, di) =>
+            d.items.map((_, ii) => `${di}-${ii}`),
+          ),
         );
         const restored = Object.fromEntries(
           Object.entries(parsed.answers).filter(([k]) => validKeys.has(k)),
@@ -156,7 +166,10 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           setDraftRestored(true);
           // Guarda o updatedAt ORIGINAL para não reiniciar a expiração ao reabrir.
           if (parsed.updatedAt) {
-            restoredSnapshotRef.current = { answers: restored, updatedAt: parsed.updatedAt };
+            restoredSnapshotRef.current = {
+              answers: restored,
+              updatedAt: parsed.updatedAt,
+            };
           }
         }
       }
@@ -205,7 +218,11 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           behavior: "smooth",
           block: "center",
         });
-        window.setTimeout(() => itemRefs.current[firstMissing.key]?.focus({ preventScroll: true }), 250);
+        window.setTimeout(
+          () =>
+            itemRefs.current[firstMissing.key]?.focus({ preventScroll: true }),
+          250,
+        );
       }
       return;
     }
@@ -245,8 +262,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     // que o app entrega — sem escore, corte ou classificação (pedido do autor).
     const qaItems = allItems.map((item) => ({
       question: item.text,
-      answer: config.labels[answers[item.key] ?? -1] ?? "—",
-      value: answers[item.key] ?? 0,
+      answer: formatScaleResponseAnswer(
+        config.labels[answers[item.key] ?? -1] ?? "Não respondida",
+      ),
     }));
     const qaTranscript = qaItems
       .map((it, i) => `${i + 1}. ${it.question}\n→ ${it.answer}`)
@@ -299,21 +317,44 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               {config.domains.map((d, di) => (
                 <div key={di} className="space-y-1.5">
                   {config.domains.length > 1 && (
-                    <p className="mb-1 text-xs font-bold uppercase tracking-wide text-primary">{d.name}</p>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-wide text-primary">
+                      {d.name}
+                    </p>
                   )}
                   <ol className="space-y-2">
                     {d.items.map((item, ii) => {
                       const idx = answers[`${di}-${ii}`];
-                      const resp = idx === undefined ? "—" : (config.labels[idx] ?? `Opção ${idx + 1}`);
+                      const resp =
+                        idx === undefined
+                          ? "Não respondida"
+                          : formatScaleResponseAnswer(
+                              config.labels[idx] ?? `Opção ${idx + 1}`,
+                            );
                       const globalN =
-                        config.domains.slice(0, di).reduce((s, dd) => s + dd.items.length, 0) + ii + 1;
+                        config.domains
+                          .slice(0, di)
+                          .reduce((s, dd) => s + dd.items.length, 0) +
+                        ii +
+                        1;
                       const emoji = itemEmoji(item);
                       const example = itemExample(item);
                       return (
-                        <li key={ii} className="border-b border-border/40 pb-2 last:border-0">
+                        <li
+                          key={ii}
+                          className="border-b border-border/40 pb-2 last:border-0"
+                        >
                           <p className="text-sm text-foreground leading-snug">
-                            <span className="font-mono text-xs text-muted-foreground">{globalN}.</span>{" "}
-                            {emoji && <span className="mr-0.5 text-xs opacity-60" aria-hidden="true">{emoji}</span>}
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {globalN}.
+                            </span>{" "}
+                            {emoji && (
+                              <span
+                                className="mr-0.5 text-xs opacity-60"
+                                aria-hidden="true"
+                              >
+                                {emoji}
+                              </span>
+                            )}
                             {itemText(item)}
                           </p>
                           {example && (
@@ -331,26 +372,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 </div>
               ))}
             </div>
-
-            {config.infoBox && (
-              <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-4">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                    {config.infoBox}
-                  </p>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
         <ClinicalReport
           scaleName={config.title}
           scaleFullName={config.subtitle}
-          hideScore
-          classification="Registro de respostas — análise clínica pelo profissional"
-          description="Transcrição por extenso das perguntas e das respostas selecionadas. Sem escore, ponto de corte ou classificação automática."
           items={qaItems}
         />
 
@@ -359,11 +386,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           reportText={`${config.title}\n\nPerguntas e respostas:\n\n${qaTranscript}`}
         />
 
-        <SaveToPatient
-          scaleName={config.title}
-          classification="Respostas registradas"
-          answers={answers}
-        />
+        <SaveToPatient scaleName={config.title} responses={qaItems} />
 
         <Button
           onClick={handleReset}
@@ -408,13 +431,18 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       {draftRestored && !showResult && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 px-3 py-2">
           <p className="text-xs text-amber-800 dark:text-amber-200">
-            Respostas de uma aplicação anterior foram restauradas. Novo paciente? Comece do zero.
+            Respostas de uma aplicação anterior foram restauradas. Novo
+            paciente? Comece do zero.
           </p>
           <button
             type="button"
             data-testid="button-clear-draft"
             onClick={() => {
-              try { window.localStorage.removeItem(draftKey); } catch { /* sem storage */ }
+              try {
+                window.localStorage.removeItem(draftKey);
+              } catch {
+                /* sem storage */
+              }
               setAnswers({});
               setShowResult(false);
               setSubmitAttempted(false);
@@ -432,7 +460,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           <span className="font-semibold text-foreground">
             {answered} de {total} respondidas
           </span>
-          <span className="tabular-nums font-bold text-primary">{Math.round(progress)}%</span>
+          <span className="tabular-nums font-bold text-primary">
+            {Math.round(progress)}%
+          </span>
         </div>
         <Progress
           value={progress}
@@ -448,7 +478,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               <Save className="h-3.5 w-3.5" /> Progresso salvo
             </span>
           ) : (
-            <span className="text-[11px] text-muted-foreground">Toque numa opção para começar</span>
+            <span className="text-[11px] text-muted-foreground">
+              Toque numa opção para começar
+            </span>
           )}
           {total > 0 &&
             (allAnswered ? (
@@ -458,7 +490,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 className="h-7 gap-1 px-3 text-xs"
                 data-testid="button-submit-sticky"
               >
-                <CheckCircle2 className="h-3.5 w-3.5" /> Ver resultado
+                <CheckCircle2 className="h-3.5 w-3.5" /> Ver respostas
               </Button>
             ) : answered > 0 ? (
               <button
@@ -487,143 +519,150 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         );
         const domComplete = domTotal > 0 && domAnswered === domTotal;
         return (
-        <div key={di} className="space-y-3">
-          <div className="flex items-center gap-2 py-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                domain.color.includes("red")
-                  ? "bg-red-500"
-                  : domain.color.includes("blue")
-                    ? "bg-blue-500"
-                    : domain.color.includes("green")
-                      ? "bg-green-500"
-                      : domain.color.includes("purple")
-                        ? "bg-purple-500"
-                        : domain.color.includes("orange")
-                          ? "bg-orange-500"
-                          : domain.color.includes("pink")
-                            ? "bg-pink-500"
-                            : domain.color.includes("amber")
-                              ? "bg-amber-500"
-                              : domain.color.includes("teal")
-                                ? "bg-teal-500"
-                                : domain.color.includes("indigo")
-                                  ? "bg-indigo-500"
-                                  : "bg-gray-500"
-              }`}
-            />
-            <h2 className={`text-sm font-semibold ${domain.color}`}>
-              {domain.name}
-            </h2>
-            <span
-              className={`ml-auto flex items-center gap-1 text-[11px] tabular-nums ${
-                domComplete ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-              }`}
-            >
-              {domComplete && <CheckCircle2 className="h-3.5 w-3.5" />}
-              {domAnswered}/{domTotal}
-            </span>
-          </div>
-
-          {domain.items.map((item, ii) => {
-            const key = `${di}-${ii}`;
-            return (
-              <Card
-                key={key}
-                ref={(node) => {
-                  itemRefs.current[key] = node;
-                }}
-                tabIndex={-1}
-                aria-invalid={submitAttempted && answers[key] === undefined}
-                className={`rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  submitAttempted && answers[key] === undefined
-                    ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
-                    : answers[key] !== undefined
-                      ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
-                      : "bg-card/70 hover:bg-card hover:shadow-md"
+          <div key={di} className="space-y-3">
+            <div className="flex items-center gap-2 py-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  domain.color.includes("red")
+                    ? "bg-red-500"
+                    : domain.color.includes("blue")
+                      ? "bg-blue-500"
+                      : domain.color.includes("green")
+                        ? "bg-green-500"
+                        : domain.color.includes("purple")
+                          ? "bg-purple-500"
+                          : domain.color.includes("orange")
+                            ? "bg-orange-500"
+                            : domain.color.includes("pink")
+                              ? "bg-pink-500"
+                              : domain.color.includes("amber")
+                                ? "bg-amber-500"
+                                : domain.color.includes("teal")
+                                  ? "bg-teal-500"
+                                  : domain.color.includes("indigo")
+                                    ? "bg-indigo-500"
+                                    : "bg-gray-500"
+                }`}
+              />
+              <h2 className={`text-sm font-semibold ${domain.color}`}>
+                {domain.name}
+              </h2>
+              <span
+                className={`ml-auto flex items-center gap-1 text-[11px] tabular-nums ${
+                  domComplete
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground"
                 }`}
               >
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Badge
-                      variant="outline"
-                      className="text-xs font-mono flex-shrink-0 mt-0.5"
-                    >
-                      {config.domains
-                        .slice(0, di)
-                        .reduce((s, d) => s + d.items.length, 0) +
-                        ii +
-                        1}
-                    </Badge>
-                    <div className="flex-1 space-y-1.5">
-                      <p className="text-sm text-foreground leading-relaxed">
-                        {itemEmoji(item) && (
-                          <span className="mr-1.5 text-sm opacity-60 align-middle" aria-hidden="true">{itemEmoji(item)}</span>
-                        )}
-                        {itemText(item)}
-                      </p>
-                      {itemExample(item) && (
-                        <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">
-                          {itemExample(item)}
+                {domComplete && <CheckCircle2 className="h-3.5 w-3.5" />}
+                {domAnswered}/{domTotal}
+              </span>
+            </div>
+
+            {domain.items.map((item, ii) => {
+              const key = `${di}-${ii}`;
+              return (
+                <Card
+                  key={key}
+                  ref={(node) => {
+                    itemRefs.current[key] = node;
+                  }}
+                  tabIndex={-1}
+                  aria-invalid={submitAttempted && answers[key] === undefined}
+                  className={`rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    submitAttempted && answers[key] === undefined
+                      ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
+                      : answers[key] !== undefined
+                        ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
+                        : "bg-card/70 hover:bg-card hover:shadow-md"
+                  }`}
+                >
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Badge
+                        variant="outline"
+                        className="text-xs font-mono flex-shrink-0 mt-0.5"
+                      >
+                        {config.domains
+                          .slice(0, di)
+                          .reduce((s, d) => s + d.items.length, 0) +
+                          ii +
+                          1}
+                      </Badge>
+                      <div className="flex-1 space-y-1.5">
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {itemEmoji(item) && (
+                            <span
+                              className="mr-1.5 text-sm opacity-60 align-middle"
+                              aria-hidden="true"
+                            >
+                              {itemEmoji(item)}
+                            </span>
+                          )}
+                          {itemText(item)}
                         </p>
-                      )}
+                        {itemExample(item) && (
+                          <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">
+                            {itemExample(item)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  {submitAttempted && answers[key] === undefined && (
-                    <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                      Resposta obrigatória para concluir a escala.
-                    </p>
-                  )}
-                  <RadioGroup
-                    value={answers[key]?.toString()}
-                    onValueChange={(val) => {
-                      softTick();
-                      haptic.select();
-                      setAnswers((current) => ({
-                        ...current,
-                        [key]: Number.parseInt(val, 10),
-                      }));
-                    }}
-                    className="flex flex-wrap gap-2"
-                  >
-                    {config.labels.map((label, j) => {
-                      const maxIdx = config.labels.length - 1;
-                      const ratio = maxIdx > 0 ? j / maxIdx : 0;
-                      const selectedColor =
-                        ratio === 0
-                          ? "bg-emerald-500 text-white border-emerald-500"
-                          : ratio <= 0.33
-                            ? "bg-lime-500 text-white border-lime-500"
-                            : ratio <= 0.66
-                              ? "bg-amber-500 text-white border-amber-500"
-                              : "bg-red-500 text-white border-red-500";
-                      return (
-                        <div key={j} className="flex items-center">
-                          <RadioGroupItem
-                            value={j.toString()}
-                            id={`q-${key}-o${j}`}
-                            className="peer sr-only"
-                          />
-                          <Label
-                            htmlFor={`q-${key}-o${j}`}
-                            aria-pressed={answers[key] === j}
-                            className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
-                              answers[key] === j
-                                ? selectedColor
-                                : "bg-card text-foreground border-border hover:bg-muted"
-                            }`}
-                          >
-                            {label}
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    {submitAttempted && answers[key] === undefined && (
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        Resposta obrigatória para concluir a escala.
+                      </p>
+                    )}
+                    <RadioGroup
+                      value={answers[key]?.toString()}
+                      onValueChange={(val) => {
+                        softTick();
+                        haptic.select();
+                        setAnswers((current) => ({
+                          ...current,
+                          [key]: Number.parseInt(val, 10),
+                        }));
+                      }}
+                      className="flex flex-wrap gap-2"
+                    >
+                      {config.labels.map((label, j) => {
+                        const maxIdx = config.labels.length - 1;
+                        const ratio = maxIdx > 0 ? j / maxIdx : 0;
+                        const selectedColor =
+                          ratio === 0
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : ratio <= 0.33
+                              ? "bg-lime-500 text-white border-lime-500"
+                              : ratio <= 0.66
+                                ? "bg-amber-500 text-white border-amber-500"
+                                : "bg-red-500 text-white border-red-500";
+                        return (
+                          <div key={j} className="flex items-center">
+                            <RadioGroupItem
+                              value={j.toString()}
+                              id={`q-${key}-o${j}`}
+                              className="peer sr-only"
+                            />
+                            <Label
+                              htmlFor={`q-${key}-o${j}`}
+                              aria-pressed={answers[key] === j}
+                              className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                                answers[key] === j
+                                  ? selectedColor
+                                  : "bg-card text-foreground border-border hover:bg-muted"
+                              }`}
+                            >
+                              {label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         );
       })}
 
@@ -647,7 +686,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         {total === 0
           ? "Escala sem itens configurados"
           : allAnswered
-            ? "Ver Resultado"
+            ? "Ver Respostas"
             : `Faltam ${missingCount} resposta${missingCount !== 1 ? "s" : ""}`}
       </Button>
 

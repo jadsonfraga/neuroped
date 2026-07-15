@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,7 +141,11 @@ const ITEMS: Record<AgeGroup, GeneralKnowledgeItem[]> = {
       id: "c1",
       question: "Se você ganhar um dinheiro, o que você FAZ com ele?",
       type: "reasoning",
-      options: ["Perde no caminho", "Gasta em algo importante ou guarda", "Queima"],
+      options: [
+        "Perde no caminho",
+        "Gasta em algo importante ou guarda",
+        "Queima",
+      ],
       correct: 1,
       explanation: "É sábio gastar ou economizar, não perder",
     },
@@ -169,7 +173,8 @@ const ITEMS: Record<AgeGroup, GeneralKnowledgeItem[]> = {
       type: "factual",
       options: ["2", "4", "8"],
       correct: 1,
-      explanation: "A Lua tem 4 fases principais: nova, crescente, cheia, minguante",
+      explanation:
+        "A Lua tem 4 fases principais: nova, crescente, cheia, minguante",
     },
     {
       id: "f2",
@@ -183,7 +188,11 @@ const ITEMS: Record<AgeGroup, GeneralKnowledgeItem[]> = {
       id: "c1",
       question: "Por que as plantas precisam de luz solar?",
       type: "reasoning",
-      options: ["Para brincar", "Para fazer fotossíntese e crescer", "Porque sim"],
+      options: [
+        "Para brincar",
+        "Para fazer fotossíntese e crescer",
+        "Porque sim",
+      ],
       correct: 1,
       explanation: "Plantas usam luz para fotossíntese",
     },
@@ -222,23 +231,11 @@ export default function ConhecimentosGerais() {
   const items = ITEMS[selectedAge];
   // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
   const optionOrders = useShuffledOptionOrders(items);
-  const answered = Object.values(answers).filter(a => a !== null).length;
+  const answered = Object.values(answers).filter((a) => a !== null).length;
   const progress = (answered / items.length) * 100;
 
-  const score = useMemo(() => {
-    let correct = 0;
-    items.forEach(item => {
-      const userAnswer = answers[item.id];
-      if (userAnswer === undefined || userAnswer === null) return;
-      if (userAnswer === item.correct) {
-        correct++;
-      }
-    });
-    return correct;
-  }, [answers, items]);
-
   const handleAnswer = (itemId: string, value: number) => {
-    setAnswers(prev => ({ ...prev, [itemId]: value }));
+    setAnswers((prev) => ({ ...prev, [itemId]: value }));
   };
 
   const handleReset = () => {
@@ -248,23 +245,33 @@ export default function ConhecimentosGerais() {
   };
 
   if (showReport) {
+    const reportItems = items.map((item) => {
+      const answer = answers[item.id];
+      return {
+        question: item.question,
+        answer:
+          answer === undefined || answer === null
+            ? "Não respondida"
+            : (item.options[answer] ?? String(answer)),
+      };
+    });
+
     return (
       <div className="space-y-4">
         <ClinicalReport
-          title="Conhecimentos Gerais — Resultado"
-          sections={[
-            { title: "Faixa Etária", content: AGE_GROUPS[selectedAge].label },
-            { title: "Desempenho", content: `${score}/${items.length} acertos (${Math.round((score/items.length)*100)}%)` },
-            { title: "Categorias Avaliadas", content: [
-              `Conhecimento Factual: Perguntas sobre fatos do mundo`,
-              `Raciocínio: Aplicação de lógica e senso comum`,
-              `Cultura/Awareness: Conhecimento cultural e geográfico`,
-            ].join('\n') },
-            { title: "Interpretação", content: `Escore ${Math.round((score/items.length)*100)}% indica ${Math.round((score/items.length)*100) >= 70 ? "bom" : "adequado"} conhecimento geral para a faixa etária` },
-          ]}
+          scaleName="Conhecimentos Gerais"
+          scaleFullName="Conhecimento factual, raciocínio e repertório cultural"
+          items={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
         />
-        <SaveToPatient testName="Conhecimentos Gerais" data={{ score, total: items.length, ageGroup: selectedAge }} />
-        <Button onClick={handleReset} className="w-full">← Voltar</Button>
+        <SaveToPatient
+          testName="Conhecimentos Gerais"
+          responses={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
+        />
+        <Button onClick={handleReset} className="w-full">
+          ← Voltar
+        </Button>
       </div>
     );
   }
@@ -279,7 +286,10 @@ export default function ConhecimentosGerais() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Avaliação de conhecimento factual, raciocínio lógico e awareness cultural.</p>
+          <p className="text-sm text-gray-600">
+            Avaliação de conhecimento factual, raciocínio lógico e awareness
+            cultural.
+          </p>
         </CardContent>
       </Card>
 
@@ -289,11 +299,14 @@ export default function ConhecimentosGerais() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map(age => (
+            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map((age) => (
               <Button
                 key={age}
                 variant={selectedAge === age ? "default" : "outline"}
-                onClick={() => { setSelectedAge(age); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedAge(age);
+                  setAnswers({});
+                }}
                 className="text-sm"
               >
                 {AGE_GROUPS[age].label}
@@ -307,53 +320,71 @@ export default function ConhecimentosGerais() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Teste — {AGE_GROUPS[selectedAge].label}</CardTitle>
-            <Badge>{answered}/{items.length}</Badge>
+            <Badge>
+              {answered}/{items.length}
+            </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           {items.map((item, idx) => (
-            <div key={item.id} className="border-l-4 border-yellow-300 pl-4 py-2">
+            <div
+              key={item.id}
+              className="border-l-4 border-yellow-300 pl-4 py-2"
+            >
               {/* Enunciado: o que esta pergunta avalia (para julgar a capacidade) */}
               <p className="text-[11px] font-semibold uppercase tracking-wide text-yellow-700 dark:text-yellow-500 mb-1">
-                🎯 Avalia: {item.type === "factual"
+                🎯 Avalia:{" "}
+                {item.type === "factual"
                   ? "conhecimento factual — a criança sabe o fato perguntado?"
                   : item.type === "reasoning"
-                  ? "raciocínio/senso comum — aplica lógica para chegar à resposta?"
-                  : "conhecimento cultural/geográfico — domina a informação cultural?"}
+                    ? "raciocínio/senso comum — aplica lógica para chegar à resposta?"
+                    : "conhecimento cultural/geográfico — domina a informação cultural?"}
               </p>
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="font-semibold text-sm">{idx + 1}. {item.question}</p>
+                  <p className="font-semibold text-sm">
+                    {idx + 1}. {item.question}
+                  </p>
                   <Badge variant="secondary" className="text-xs">
-                    {item.type === "factual" ? "📚 Fato" : item.type === "reasoning" ? "🧠 Raciocínio" : "🌍 Cultura"}
+                    {item.type === "factual"
+                      ? "📚 Fato"
+                      : item.type === "reasoning"
+                        ? "🧠 Raciocínio"
+                        : "🌍 Cultura"}
                   </Badge>
                 </div>
               </div>
 
-              <RadioGroup value={String(answers[item.id] ?? "")} onValueChange={(v) => handleAnswer(item.id, parseInt(v))}>
+              <RadioGroup
+                value={String(answers[item.id] ?? "")}
+                onValueChange={(v) => handleAnswer(item.id, parseInt(v))}
+              >
                 <div className="space-y-2">
-                  {(optionOrders[item.id] ?? item.options.map((_, oi) => oi)).map((i) => {
+                  {(
+                    optionOrders[item.id] ?? item.options.map((_, oi) => oi)
+                  ).map((i) => {
                     const opt = item.options[i];
                     return (
-                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                        <RadioGroupItem value={String(i)} id={`${item.id}-${i}`} />
-                        <Label htmlFor={`${item.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      <div
+                        key={i}
+                        className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={String(i)}
+                          id={`${item.id}-${i}`}
+                        />
+                        <Label
+                          htmlFor={`${item.id}-${i}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {opt}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               </RadioGroup>
-
-              {answers[item.id] !== undefined && answers[item.id] !== null && (
-                <div className="mt-3 text-xs text-gray-600">
-                  {answers[item.id] === item.correct ? (
-                    <span className="text-green-600 block">✅ Correto! {item.explanation}</span>
-                  ) : (
-                    <span className="text-red-600 block">❌ Incorreto. Resposta correta: {item.options[item.correct]}. {item.explanation}</span>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </CardContent>
@@ -370,7 +401,7 @@ export default function ConhecimentosGerais() {
           className="flex-1"
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          Finalizar e Salvar
+          Revisar Respostas
         </Button>
       </div>
     </div>

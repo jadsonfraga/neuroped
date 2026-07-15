@@ -1,21 +1,29 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCheck, CheckCircle2, Check, RotateCcw, ArrowLeft } from "lucide-react";
+import {
+  ClipboardCheck,
+  CheckCircle2,
+  Check,
+  RotateCcw,
+  ArrowLeft,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import { SaveToPatient } from "@/components/SaveToPatient";
 import { softTick, softSuccess } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { celebrate } from "@/lib/confetti";
 import { easing, duration, staggerContainer, staggerItem } from "@/lib/motion";
 import { type InteractiveScaleDef } from "@/data/interactiveScales";
+import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
 
 /**
  * InteractiveScaleRunner — renderiza QUALQUER escala definida em
- * interactiveScales.ts como uma aplicação completa: itens, escore, faixa de
- * interpretação e relatório clínico (PDF). Uma só implementação para todas —
+ * interactiveScales.ts como uma aplicação completa: itens e registro integral
+ * das respostas em PDF. Uma só implementação para todas —
  * com um acabamento visual caprichado (progresso animado, opções táteis,
  * resultado comemorativo) para tornar a aplicação agradável de responder.
  */
@@ -57,6 +65,14 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   }
 
   if (showResult) {
+    const reportItems = def.items.map((item, index) => ({
+      question: item.text,
+      answer:
+        answers[index] != null
+          ? formatScaleResponseAnswer(item.options[answers[index]].label)
+          : "Não respondida",
+    }));
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -69,8 +85,16 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
             <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
           </div>
           <div>
-            <h1 className="text-lg leading-tight text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>Respostas — {def.name}</h1>
-            <p className="text-xs italic text-muted-foreground">Perguntas e respostas registradas — análise clínica pelo profissional</p>
+            <h1
+              className="text-lg leading-tight text-foreground"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+            >
+              Respostas — {def.name}
+            </h1>
+            <p className="text-xs italic text-muted-foreground">
+              Perguntas e respostas registradas — análise clínica pelo
+              profissional
+            </p>
           </div>
         </div>
 
@@ -78,20 +102,41 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
             classificação (pedido do autor, 2026). */}
         <Card className="border-card-border">
           <CardContent className="space-y-3 p-6">
-            <h3 className="text-sm font-semibold text-foreground">Perguntas e respostas ({answered}/{total})</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              Perguntas e respostas ({answered}/{total})
+            </h3>
             <ol className="space-y-2">
               {def.items.map((item, i) => (
-                <li key={i} className="border-b border-border/40 pb-2 last:border-0">
+                <li
+                  key={i}
+                  className="border-b border-border/40 pb-2 last:border-0"
+                >
                   <p className="text-sm leading-snug text-foreground">
-                    <span className="font-mono text-xs text-muted-foreground">{i + 1}.</span>{" "}
-                    {item.emoji && <span className="mr-0.5 text-xs opacity-60" aria-hidden="true">{item.emoji}</span>}
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {i + 1}.
+                    </span>{" "}
+                    {item.emoji && (
+                      <span
+                        className="mr-0.5 text-xs opacity-60"
+                        aria-hidden="true"
+                      >
+                        {item.emoji}
+                      </span>
+                    )}
                     {item.text}
                   </p>
                   {item.example && (
-                    <p className="mt-1 border-l-2 border-primary/20 pl-2 text-xs italic leading-snug text-muted-foreground">{item.example}</p>
+                    <p className="mt-1 border-l-2 border-primary/20 pl-2 text-xs italic leading-snug text-muted-foreground">
+                      {item.example}
+                    </p>
                   )}
                   <p className="mt-0.5 text-sm font-semibold text-primary">
-                    → {answers[i] != null ? item.options[answers[i]].label : "—"}
+                    →{" "}
+                    {answers[i] != null
+                      ? formatScaleResponseAnswer(
+                          item.options[answers[i]].label,
+                        )
+                      : "Não respondida"}
                   </p>
                 </li>
               ))}
@@ -102,18 +147,22 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
         <ClinicalReport
           scaleName={def.name}
           scaleFullName={def.fullName}
-          hideScore
-          classification="Registro de respostas — análise clínica pelo profissional"
-          description="Transcrição por extenso das perguntas e das respostas selecionadas. Sem escore, ponto de corte ou classificação automática."
-          items={def.items.map((item, i) => ({
-            question: item.text,
-            answer: answers[i] != null ? item.options[answers[i]].label : "—",
-            value: answers[i] != null ? item.options[answers[i]].value : 0,
-          }))}
+          items={reportItems}
           patientAge={def.ageLabel}
         />
 
-        <Button onClick={handleReset} variant="outline" className="w-full gap-2" data-testid="button-reset">
+        <SaveToPatient
+          scaleName={def.name}
+          responses={reportItems}
+          patientAge={def.ageLabel}
+        />
+
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full gap-2"
+          data-testid="button-reset"
+        >
           <RotateCcw className="h-4 w-4" />
           Nova Avaliação
         </Button>
@@ -129,39 +178,75 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
         transition={{ duration: duration.normal, ease: easing.smooth }}
         className="flex items-center gap-3"
       >
-        <Button variant="ghost" size="sm" className="px-2" onClick={() => navigate("/filtro")} aria-label="Voltar ao filtro">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-2"
+          onClick={() => navigate("/filtro")}
+          aria-label="Voltar ao filtro"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-md">
           <ClipboardCheck className="h-5 w-5 text-white" strokeWidth={1.75} />
         </div>
         <div className="min-w-0">
-          <h1 className="truncate text-lg leading-tight text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>{def.name}</h1>
-          <p className="text-xs text-muted-foreground">{def.fullName} · {def.respondent} · {def.ageLabel}</p>
+          <h1
+            className="truncate text-lg leading-tight text-foreground"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            {def.name}
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            {def.fullName} · {def.respondent} · {def.ageLabel}
+          </p>
         </div>
       </motion.div>
 
       {def.validationNote && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300" role="note">
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300"
+          role="note"
+        >
           ⚠️ {def.validationNote}
         </div>
       )}
 
       {/* Barra de progresso pegajosa e viva — gradiente + microcopy encorajador */}
       <div className="sticky top-0 z-20 -mx-1 space-y-2 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm backdrop-blur">
-        <div className="flex items-center justify-between text-xs" aria-live="polite">
-          <span className="font-semibold text-foreground">{answered} de {total} respondidas</span>
-          <span className="tabular-nums font-bold text-primary">{Math.round(progress)}%</span>
+        <div
+          className="flex items-center justify-between text-xs"
+          aria-live="polite"
+        >
+          <span className="font-semibold text-foreground">
+            {answered} de {total} respondidas
+          </span>
+          <span className="tabular-nums font-bold text-primary">
+            {Math.round(progress)}%
+          </span>
         </div>
-        <Progress value={progress} className="h-2.5" aria-label={`Progresso: ${answered} de ${total}`} />
-        <p className="text-[11px] font-medium text-muted-foreground">{progressHint}</p>
+        <Progress
+          value={progress}
+          className="h-2.5"
+          aria-label={`Progresso: ${answered} de ${total}`}
+        />
+        <p className="text-[11px] font-medium text-muted-foreground">
+          {progressHint}
+        </p>
       </div>
 
       <div className="rounded-xl border border-border bg-muted/40 p-4">
-        <p className="text-xs leading-relaxed text-foreground"><strong>Instruções:</strong> {def.instructions}</p>
+        <p className="text-xs leading-relaxed text-foreground">
+          <strong>Instruções:</strong> {def.instructions}
+        </p>
       </div>
 
-      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="space-y-3"
+      >
         {def.items.map((item, i) => {
           const isAnswered = answers[i] != null;
           return (
@@ -179,19 +264,36 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
                           : "bg-gradient-to-br from-primary/15 to-chart-2/10 text-primary ring-1 ring-primary/15"
                       }`}
                     >
-                      {isAnswered ? <Check className="h-4 w-4" strokeWidth={2.5} /> : i + 1}
+                      {isAnswered ? (
+                        <Check className="h-4 w-4" strokeWidth={2.5} />
+                      ) : (
+                        i + 1
+                      )}
                     </div>
                     <div className="flex-1 space-y-1.5 pt-0.5">
                       <p className="text-sm leading-relaxed text-foreground">
-                        {item.emoji && <span className="mr-1.5 text-sm opacity-60 align-middle" aria-hidden="true">{item.emoji}</span>}
+                        {item.emoji && (
+                          <span
+                            className="mr-1.5 text-sm opacity-60 align-middle"
+                            aria-hidden="true"
+                          >
+                            {item.emoji}
+                          </span>
+                        )}
                         {item.text}
                       </p>
                       {item.example && (
-                        <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">{item.example}</p>
+                        <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">
+                          {item.example}
+                        </p>
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-1.5 pl-10" role="radiogroup" aria-label={item.text}>
+                  <div
+                    className="grid grid-cols-1 gap-1.5 pl-10"
+                    role="radiogroup"
+                    aria-label={item.text}
+                  >
                     {item.options.map((opt, oi) => {
                       const selected = answers[i] === oi;
                       return (
@@ -210,10 +312,17 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
                         >
                           <span
                             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                              selected ? "border-white bg-white/25" : "border-muted-foreground/40"
+                              selected
+                                ? "border-white bg-white/25"
+                                : "border-muted-foreground/40"
                             }`}
                           >
-                            {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                            {selected && (
+                              <Check
+                                className="h-3 w-3 text-white"
+                                strokeWidth={3}
+                              />
+                            )}
                           </span>
                           <span className="min-w-0">{opt.label}</span>
                         </button>
@@ -235,7 +344,9 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
         data-testid="button-submit"
       >
         {allAnswered ? (
-          <><CheckCircle2 className="h-4 w-4" /> Ver resultado</>
+          <>
+            <CheckCircle2 className="h-4 w-4" /> Ver respostas
+          </>
         ) : (
           `Responda todas (${answered}/${total})`
         )}

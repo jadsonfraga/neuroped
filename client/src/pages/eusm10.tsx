@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,14 @@ import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
-import { ArrowLeft, ClipboardCheck, Pill, RotateCcw, ShieldCheck, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardCheck,
+  Pill,
+  RotateCcw,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { duration, easing } from "@/lib/motion";
 
@@ -30,47 +37,6 @@ const EUSM10_ITEMS = [
   "A família deseja manter a medicação, se o médico concordar?",
 ];
 
-function classifyEusm10(score: number) {
-  if (score <= 10) {
-    return {
-      label: "Satisfação muito baixa",
-      tone: "red",
-      description:
-        "Resultado compatível com satisfação muito baixa. Sugere benefício limitado, baixa tolerabilidade, dificuldade prática ou insegurança familiar. Reavaliar indicação, dose, efeitos adversos e adesão.",
-    };
-  }
-  if (score <= 20) {
-    return {
-      label: "Satisfação baixa",
-      tone: "orange",
-      description:
-        "Resultado compatível com satisfação baixa. Há benefício ou aceitação insuficientes para a rotina atual. Considerar ajuste de dose, horário, formulação, manejo de efeitos colaterais ou mudança terapêutica.",
-    };
-  }
-  if (score <= 28) {
-    return {
-      label: "Satisfação intermediária",
-      tone: "amber",
-      description:
-        "Resultado intermediário. A medicação pode estar trazendo algum benefício, mas ainda há pontos relevantes de tolerabilidade, adesão, segurança familiar ou viabilidade prática que merecem revisão clínica.",
-    };
-  }
-  if (score <= 35) {
-    return {
-      label: "Boa satisfação",
-      tone: "emerald",
-      description:
-        "Resultado compatível com boa satisfação. Sugere equilíbrio favorável entre benefício percebido, tolerabilidade, adesão e viabilidade familiar. Manter seguimento e monitorização periódica.",
-    };
-  }
-  return {
-    label: "Excelente satisfação",
-    tone: "blue",
-    description:
-      "Resultado compatível com excelente satisfação. Sugere benefício percebido consistente, boa tolerabilidade, boa adesão e segurança familiar para continuidade, desde que o quadro clínico confirme essa impressão.",
-  };
-}
-
 export default function Eusm10Page() {
   const [medicacao, setMedicacao] = useState("");
   const [doseHorario, setDoseHorario] = useState("");
@@ -81,11 +47,6 @@ export default function Eusm10Page() {
   const [showResult, setShowResult] = useState(false);
 
   const answeredCount = Object.keys(answers).length;
-  const totalScore = useMemo(
-    () => Object.values(answers).reduce((sum, value) => sum + value, 0),
-    [answers],
-  );
-  const result = classifyEusm10(totalScore);
   const canSubmit = answeredCount === EUSM10_ITEMS.length;
 
   function setItemAnswer(index: number, value: string) {
@@ -115,14 +76,23 @@ export default function Eusm10Page() {
     window.scrollTo({ top: 0 });
   }
 
-  const reportItems = EUSM10_ITEMS.map((question, index) => {
-    const value = answers[index];
-    return {
-      question,
-      answer: value === undefined ? "—" : SCORE_LABELS[value],
-      value: value ?? 0,
-    };
-  });
+  const reportItems = [
+    { question: "Medicação avaliada", answer: medicacao || "Não informada" },
+    { question: "Dose e horário", answer: doseHorario || "Não informados" },
+    { question: "Tempo de uso", answer: tempoUso || "Não informado" },
+    { question: "Respondente", answer: respondente || "Não informado" },
+    ...EUSM10_ITEMS.map((question, index) => {
+      const value = answers[index];
+      return {
+        question,
+        answer: value === undefined ? "Não respondida" : SCORE_LABELS[value],
+      };
+    }),
+    {
+      question: "Observações adicionais",
+      answer: observacoes || "Não informadas",
+    },
+  ];
 
   if (showResult) {
     return (
@@ -137,30 +107,43 @@ export default function Eusm10Page() {
             <ClipboardCheck className="w-5 h-5 text-white" strokeWidth={1.75} />
           </div>
           <div>
-            <h1 className="text-xl text-foreground leading-tight" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>
+            <h1
+              className="text-xl text-foreground leading-tight"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+            >
               Resultado — EUSM-10
             </h1>
             <p className="text-xs text-muted-foreground italic">
-              Escala Universal de Satisfação com Medicação · {medicacao || "medicação não informada"}
+              Escala Universal de Satisfação com Medicação ·{" "}
+              {medicacao || "medicação não informada"}
             </p>
           </div>
         </div>
 
         <Card>
           <CardContent className="p-4 space-y-3">
-            <h2 className="text-sm font-bold uppercase text-muted-foreground">Perguntas e respostas</h2>
+            <h2 className="text-sm font-bold uppercase text-muted-foreground">
+              Perguntas e respostas
+            </h2>
             <div className="space-y-2.5">
               {EUSM10_ITEMS.map((item, index) => {
                 const value = answers[index];
                 return (
-                  <div key={item} className="rounded-xl border border-border/70 bg-background p-3">
+                  <div
+                    key={item}
+                    className="rounded-xl border border-border/70 bg-background p-3"
+                  >
                     <div className="flex items-start gap-2">
                       <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                         {index + 1}
                       </span>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-foreground">{item}</p>
-                        <p className="text-sm text-primary">→ {value === undefined ? "—" : SCORE_LABELS[value]}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {item}
+                        </p>
+                        <p className="text-sm text-primary">
+                          → {value === undefined ? "—" : SCORE_LABELS[value]}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -170,36 +153,25 @@ export default function Eusm10Page() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h2 className="text-sm font-bold uppercase text-muted-foreground">Regra prática</h2>
-            <div className="space-y-2 text-sm leading-relaxed text-foreground">
-              <p>Reavaliar rapidamente se houver efeito colateral importante, piora após início ou aumento da dose, sonolência excessiva, insônia intensa, mudança importante de humor, alergia, palpitações, síncope, recusa persistente ou insegurança familiar para manter o uso.</p>
-              <p>Se necessário, considerar ajuste de dose, mudança de horário, mudança de formulação, troca de medicação ou encaminhamento para avaliação complementar.</p>
-              <p>Nunca interromper abruptamente medicação quando houver risco clínico.</p>
-            </div>
-          </CardContent>
-        </Card>
-
         <ClinicalReport
           scaleName="EUSM-10"
           scaleFullName="Escala Universal de Satisfação com Medicação"
-          hideScore
-          classification="Registro de respostas — análise clínica pelo profissional"
-          description={observacoes ? `Observações clínicas: ${observacoes}` : ""}
           items={reportItems}
-          patientAge={tempoUso ? `Tempo de uso: ${tempoUso}` : "Uso medicamentoso"}
+          patientAge={
+            tempoUso ? `Tempo de uso: ${tempoUso}` : "Uso medicamentoso"
+          }
         />
 
         <SaveToPatient
           scaleName={`EUSM-10 — ${medicacao || "Medicação"}`}
-          totalScore={totalScore}
-          classification={result.label}
-          answers={{ medicacao, doseHorario, tempoUso, respondente, observacoes, ...answers }}
-          domainScores={{ total: totalScore }}
+          responses={reportItems}
         />
 
-        <Button onClick={handleReset} variant="outline" className="w-full gap-2">
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full gap-2"
+        >
           <RotateCcw className="w-4 h-4" /> Nova aplicação
         </Button>
       </motion.div>
@@ -213,10 +185,15 @@ export default function Eusm10Page() {
           <Pill className="w-5 h-5 text-white" strokeWidth={1.75} />
         </div>
         <div>
-          <h1 className="text-xl text-foreground leading-tight" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>
+          <h1
+            className="text-xl text-foreground leading-tight"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
             EUSM-10
           </h1>
-          <p className="text-xs text-muted-foreground italic">Escala Universal de Satisfação com Medicação · 10 itens · total máximo 40 pontos</p>
+          <p className="text-xs text-muted-foreground italic">
+            Escala Universal de Satisfação com Medicação · 10 itens
+          </p>
         </div>
       </div>
 
@@ -225,7 +202,9 @@ export default function Eusm10Page() {
           <div className="flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 text-primary mt-0.5" />
             <p className="text-sm leading-relaxed text-foreground">
-              Instrumento breve para acompanhar se uma medicação está trazendo benefício, sendo tolerada e cabendo na rotina do paciente e da família. Período sugerido: últimos 7 a 14 dias.
+              Instrumento breve para acompanhar se uma medicação está trazendo
+              benefício, sendo tolerada e cabendo na rotina do paciente e da
+              família. Período sugerido: últimos 7 a 14 dias.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -244,19 +223,41 @@ export default function Eusm10Page() {
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Medicação</Label>
-              <Input value={medicacao} onChange={(event) => setMedicacao(event.target.value)} placeholder="Ex.: risperidona, atomoxetina..." />
+              <Input
+                value={medicacao}
+                onChange={(event) => setMedicacao(event.target.value)}
+                placeholder="Ex.: risperidona, atomoxetina..."
+              />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Dose / horário</Label>
-              <Input value={doseHorario} onChange={(event) => setDoseHorario(event.target.value)} placeholder="Ex.: 0,5 mL manhã + 1 mL noite" />
+              <Label className="text-xs text-muted-foreground">
+                Dose / horário
+              </Label>
+              <Input
+                value={doseHorario}
+                onChange={(event) => setDoseHorario(event.target.value)}
+                placeholder="Ex.: 0,5 mL manhã + 1 mL noite"
+              />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Tempo de uso</Label>
-              <Input value={tempoUso} onChange={(event) => setTempoUso(event.target.value)} placeholder="Ex.: 14 dias, 2 meses..." />
+              <Label className="text-xs text-muted-foreground">
+                Tempo de uso
+              </Label>
+              <Input
+                value={tempoUso}
+                onChange={(event) => setTempoUso(event.target.value)}
+                placeholder="Ex.: 14 dias, 2 meses..."
+              />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Respondente</Label>
-              <Input value={respondente} onChange={(event) => setRespondente(event.target.value)} placeholder="Família, paciente, cuidador..." />
+              <Label className="text-xs text-muted-foreground">
+                Respondente
+              </Label>
+              <Input
+                value={respondente}
+                onChange={(event) => setRespondente(event.target.value)}
+                placeholder="Família, paciente, cuidador..."
+              />
             </div>
           </div>
         </CardContent>
@@ -271,7 +272,10 @@ export default function Eusm10Page() {
 
           <div className="space-y-3">
             {EUSM10_ITEMS.map((item, index) => (
-              <div key={item} className="rounded-xl border border-border/70 bg-background p-3 space-y-2">
+              <div
+                key={item}
+                className="rounded-xl border border-border/70 bg-background p-3 space-y-2"
+              >
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                     {index + 1}
@@ -288,11 +292,18 @@ export default function Eusm10Page() {
                       key={`${item}-${value}`}
                       className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-border/70 p-2 text-center text-[10px] hover:bg-primary/5"
                     >
-                      <RadioGroupItem value={value.toString()} className="sr-only" />
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${answers[index] === value ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+                      <RadioGroupItem
+                        value={value.toString()}
+                        className="sr-only"
+                      />
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${answers[index] === value ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}
+                      >
                         {value}
                       </span>
-                      <span className="leading-tight text-muted-foreground">{label}</span>
+                      <span className="leading-tight text-muted-foreground">
+                        {label}
+                      </span>
                     </Label>
                   ))}
                 </RadioGroup>
@@ -320,7 +331,11 @@ export default function Eusm10Page() {
             <ArrowLeft className="w-4 h-4" /> Voltar ao filtro
           </Button>
         </Link>
-        <Button onClick={handleSubmit} disabled={!canSubmit} className="w-full gap-2">
+        <Button
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          className="w-full gap-2"
+        >
           <Star className="w-4 h-4" /> Calcular EUSM-10
         </Button>
       </div>

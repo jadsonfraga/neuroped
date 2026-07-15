@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Printer, Mail, Loader2 } from "lucide-react";
+import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-
-const EMAIL_TO = "jadsonfraga@hotmail.com";
+import { ClinicalReport } from "@/components/ClinicalReport";
+import { SaveToPatient } from "@/components/SaveToPatient";
 
 const MUSCLE_GROUPS = [
   "Flexores de cotovelo",
@@ -113,87 +111,60 @@ function AshworthTab() {
     examinador: "",
   });
   const [rows, setRows] = useState<Record<string, AshworthRow>>(
-    Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, { msd: "", mse: "", mid: "", mie: "" }]))
+    Object.fromEntries(
+      MUSCLE_GROUPS.map((group) => [
+        group,
+        { msd: "", mse: "", mid: "", mie: "" },
+      ]),
+    ),
   );
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const { toast } = useToast();
+  const [showResponses, setShowResponses] = useState(false);
 
-  function setCell(group: string, col: keyof AshworthRow, val: string) {
-    setRows((prev) => ({ ...prev, [group]: { ...prev[group], [col]: val } }));
+  function setCell(group: string, column: keyof AshworthRow, value: string) {
+    setRows((previous) => ({
+      ...previous,
+      [group]: { ...previous[group], [column]: value },
+    }));
   }
 
-  function buildHtml() {
-    const dateStr = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-    const rowsHtml = MUSCLE_GROUPS.map((g) => {
-      const r = rows[g];
-      return `<tr><td>${g}</td><td style="text-align:center">${r.msd || "—"}</td><td style="text-align:center">${r.mse || "—"}</td><td style="text-align:center">${r.mid || "—"}</td><td style="text-align:center">${r.mie || "—"}</td></tr>`;
-    }).join("");
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Ashworth Modificada</title>
-<style>
-  @page{margin:2cm;size:A4;}*{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;}
-  .header{border-bottom:3px solid #6d28d9;padding-bottom:12px;margin-bottom:16px;}
-  .header h1{font-size:15pt;color:#6d28d9;}
-  .header .sub{font-size:10pt;color:#555;margin-top:4px;}
-  .pg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:10pt;}
-  .pg .f{background:#f8f7ff;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;}
-  .pg .f .l{font-size:8pt;color:#888;}.pg .f .v{font-weight:bold;}
-  table{width:100%;border-collapse:collapse;font-size:10pt;margin-top:10px;}
-  th{background:#6d28d9;color:white;padding:6px 10px;text-align:left;}
-  td{padding:5px 10px;border-bottom:1px solid #eee;}
-  tr:nth-child(even){background:#faf9ff;}
-  .scale{background:#f3f0ff;border-left:4px solid #6d28d9;padding:8px 12px;margin:12px 0;font-size:9pt;}
-  .footer{margin-top:24px;border-top:2px solid #6d28d9;padding-top:10px;font-size:9pt;color:#555;text-align:center;}
-  .footer .doc{font-size:10pt;font-weight:bold;color:#1a1a1a;}
-  @media print{body{padding:0;}}
-</style></head><body>
-<div class="header"><h1>🧠 NeuroPed — Escala de Ashworth Modificada</h1><div class="sub">Data: ${dateStr}</div></div>
-<div class="pg">
-  <div class="f"><div class="l">Paciente</div><div class="v">${patient.nome || "—"}</div></div>
-  <div class="f"><div class="l">Nascimento</div><div class="v">${patient.nascimento ? new Date(patient.nascimento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div></div>
-  <div class="f"><div class="l">Data da Avaliação</div><div class="v">${patient.data ? new Date(patient.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div></div>
-  <div class="f"><div class="l">Examinador(a)</div><div class="v">${patient.examinador || "—"}</div></div>
-</div>
-<div class="scale"><strong>Escala:</strong> 0=sem aumento do tônus | 1=leve catch no final da ADM | 1+=catch + resistência em menos de 50% da ADM | 2=aumento acentuado do tônus, mas parte passiva fácil | 3=movimento passivo difícil | 4=rigidez em flexão ou extensão</div>
-<table><thead><tr><th>Grupo Muscular</th><th>MSD</th><th>MSE</th><th>MID</th><th>MIE</th></tr></thead>
-<tbody>${rowsHtml}</tbody></table>
-<div class="footer"><div class="doc">Dr. Jadson Fraga Araújo Júnior</div>CRM-PE 25227 | CRM-BA 23384 | RQE 17756 / 14499 / 13119<br>NeuroPed — Escalas de Neuropediatria</div>
-</body></html>`;
-  }
+  const limbLabels: Record<keyof AshworthRow, string> = {
+    msd: "Membro superior direito",
+    mse: "Membro superior esquerdo",
+    mid: "Membro inferior direito",
+    mie: "Membro inferior esquerdo",
+  };
+  const reportItems = MUSCLE_GROUPS.flatMap((group) =>
+    (Object.keys(limbLabels) as Array<keyof AshworthRow>).map((column) => ({
+      question: `${group} — ${limbLabels[column]}`,
+      answer: rows[group]?.[column] || "Não respondida",
+    })),
+  );
+  const allAnswered = MUSCLE_GROUPS.every((group) =>
+    (Object.keys(limbLabels) as Array<keyof AshworthRow>).every((column) =>
+      Boolean(rows[group]?.[column]),
+    ),
+  );
 
-  function buildText() {
-    let t = `ESCALA DE ASHWORTH MODIFICADA\n`;
-    t += `Paciente: ${patient.nome || "—"} | Nasc: ${patient.nascimento || "—"} | Data: ${patient.data || "—"} | Examinador: ${patient.examinador || "—"}\n\n`;
-    MUSCLE_GROUPS.forEach((g) => {
-      const r = rows[g];
-      t += `${g}: MSD=${r.msd || "—"} MSE=${r.mse || "—"} MID=${r.mid || "—"} MIE=${r.mie || "—"}\n`;
-    });
-    t += `\n---\nDr. Jadson Fraga — Neuropediatra | NeuroPed\n`;
-    return t;
-  }
-
-  function handlePrint() {
-    const win = window.open("", "_blank");
-    if (!win) { toast({ title: "Erro", description: "Pop-up bloqueado.", variant: "destructive" }); return; }
-    win.document.write(buildHtml());
-    win.document.close();
-    win.onload = () => win.print();
-    toast({ title: "Impressão", description: "Janela de impressão aberta." });
-  }
-
-  async function handleEmail() {
-    setSending(true);
-    const subject = `[NeuroPed] Ashworth Modificada — ${patient.nome || "Paciente"} — ${new Date().toLocaleDateString("pt-BR")}`;
-    const body = buildText();
-    try {
-      const res = await apiRequest("POST", "/api/send-report", { subject, body });
-      if (res.ok) {
-        setSent(true); toast({ title: "Enviado", description: `Relatório enviado para ${EMAIL_TO}` }); setSending(false); return;
-      }
-    } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
-    window.open(`mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.slice(0, 1800))}`, "_blank");
-    setSent(true); toast({ title: "Email aberto", description: "Seu app de email foi aberto." }); setSending(false);
+  if (showResponses) {
+    return (
+      <div className="space-y-4">
+        <ClinicalReport
+          scaleName="Escala de Ashworth Modificada"
+          items={reportItems}
+        />
+        <SaveToPatient
+          scaleName="Escala de Ashworth Modificada"
+          responses={reportItems}
+        />
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowResponses(false)}
+        >
+          Editar Respostas
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -202,8 +173,8 @@ function AshworthTab() {
 
       <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-3">
         <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-          <strong>Escala de Ashworth Modificada:</strong>{" "}
-          0 = sem aumento | 1 = catch leve no fim | 1+ = catch + resistência &lt;50% da ADM | 2 = aumento acentuado, mas mobilização passiva possível | 3 = mobilização passiva difícil | 4 = rígido
+          Selecione o grau observado em cada grupo muscular e membro. O registro
+          final reproduzirá exatamente as opções escolhidas.
         </p>
       </div>
 
@@ -211,28 +182,45 @@ function AshworthTab() {
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/60">
-              <th className="text-left p-2 border border-border font-semibold">Grupo Muscular</th>
-              {["MSD", "MSE", "MID", "MIE"].map((col) => (
-                <th key={col} className="text-center p-2 border border-border font-semibold w-[18%]">{col}</th>
+              <th className="text-left p-2 border border-border font-semibold">
+                Grupo Muscular
+              </th>
+              {["MSD", "MSE", "MID", "MIE"].map((column) => (
+                <th
+                  key={column}
+                  className="text-center p-2 border border-border font-semibold w-[18%]"
+                >
+                  {column}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {MUSCLE_GROUPS.map((g) => (
-              <tr key={g} className="hover:bg-muted/20">
-                <td className="p-2 border border-border font-medium">{g}</td>
-                {(["msd", "mse", "mid", "mie"] as const).map((col) => (
-                  <td key={col} className="p-1 border border-border text-center">
+            {MUSCLE_GROUPS.map((group) => (
+              <tr key={group} className="hover:bg-muted/20">
+                <td className="p-2 border border-border font-medium">
+                  {group}
+                </td>
+                {(["msd", "mse", "mid", "mie"] as const).map((column) => (
+                  <td
+                    key={column}
+                    className="p-1 border border-border text-center"
+                  >
                     <Select
-                      value={rows[g]?.[col] || ""}
-                      onValueChange={(v) => setCell(g, col, v)}
+                      value={rows[group]?.[column] || ""}
+                      onValueChange={(value) => setCell(group, column, value)}
                     >
-                      <SelectTrigger className="h-7 text-xs" data-testid={`sel-ash-${g}-${col}`}>
+                      <SelectTrigger
+                        className="h-7 text-xs"
+                        data-testid={`sel-ash-${group}-${column}`}
+                      >
                         <SelectValue placeholder="—" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ASHWORTH_GRADES.map((gr) => (
-                          <SelectItem key={gr} value={gr}>{gr}</SelectItem>
+                        {ASHWORTH_GRADES.map((grade) => (
+                          <SelectItem key={grade} value={grade}>
+                            {grade}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -244,15 +232,14 @@ function AshworthTab() {
         </table>
       </div>
 
-      <div className="flex gap-2">
-        <Button onClick={handlePrint} className="flex-1 gap-2 h-9" data-testid="button-print-ashworth">
-          <Printer className="w-4 h-4" /> Imprimir / PDF
-        </Button>
-        <Button variant="outline" onClick={handleEmail} disabled={sending || sent} className="flex-1 gap-2 h-9" data-testid="button-email-ashworth">
-          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-          {sent ? "Enviado" : sending ? "Enviando..." : "Enviar Email"}
-        </Button>
-      </div>
+      <Button
+        onClick={() => setShowResponses(true)}
+        disabled={!allAnswered}
+        className="w-full"
+        data-testid="button-review-ashworth"
+      >
+        Ver todas as perguntas e respostas
+      </Button>
     </div>
   );
 }
@@ -267,95 +254,60 @@ function TardieuTab() {
     examinador: "",
   });
   const [rows, setRows] = useState<Record<string, TardieuRow>>(
-    Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, { r2: "", r1: "", quality: "" }]))
+    Object.fromEntries(
+      MUSCLE_GROUPS.map((group) => [group, { r2: "", r1: "", quality: "" }]),
+    ),
   );
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const { toast } = useToast();
+  const [showResponses, setShowResponses] = useState(false);
 
-  function setCell(group: string, col: keyof TardieuRow, val: string) {
-    setRows((prev) => ({ ...prev, [group]: { ...prev[group], [col]: val } }));
+  function setCell(group: string, column: keyof TardieuRow, value: string) {
+    setRows((previous) => ({
+      ...previous,
+      [group]: { ...previous[group], [column]: value },
+    }));
   }
 
-  function getDynamic(group: string): string {
-    const r = rows[group];
-    const r2 = parseFloat(r.r2);
-    const r1 = parseFloat(r.r1);
-    if (isNaN(r2) || isNaN(r1)) return "—";
-    return `${(r2 - r1).toFixed(0)}°`;
-  }
+  const reportItems = MUSCLE_GROUPS.flatMap((group) => [
+    {
+      question: `${group} — R2 passivo`,
+      answer: rows[group]?.r2 ? `${rows[group].r2}°` : "Não respondida",
+    },
+    {
+      question: `${group} — R1 catch`,
+      answer: rows[group]?.r1 ? `${rows[group].r1}°` : "Não respondida",
+    },
+    {
+      question: `${group} — Qualidade observada`,
+      answer: rows[group]?.quality || "Não respondida",
+    },
+  ]);
+  const allAnswered = MUSCLE_GROUPS.every(
+    (group) =>
+      Boolean(rows[group]?.r2) &&
+      Boolean(rows[group]?.r1) &&
+      Boolean(rows[group]?.quality),
+  );
 
-  function buildHtml() {
-    const dateStr = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-    const rowsHtml = MUSCLE_GROUPS.map((g) => {
-      const r = rows[g];
-      return `<tr><td>${g}</td><td style="text-align:center">${r.r2 ? r.r2 + "°" : "—"}</td><td style="text-align:center">${r.r1 ? r.r1 + "°" : "—"}</td><td style="text-align:center">${getDynamic(g)}</td><td style="text-align:center">${r.quality || "—"}</td></tr>`;
-    }).join("");
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Tardieu Modificada</title>
-<style>
-  @page{margin:2cm;size:A4;}*{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;}
-  .header{border-bottom:3px solid #6d28d9;padding-bottom:12px;margin-bottom:16px;}
-  .header h1{font-size:15pt;color:#6d28d9;}
-  .header .sub{font-size:10pt;color:#555;margin-top:4px;}
-  .pg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:10pt;}
-  .pg .f{background:#f8f7ff;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;}
-  .pg .f .l{font-size:8pt;color:#888;}.pg .f .v{font-weight:bold;}
-  table{width:100%;border-collapse:collapse;font-size:10pt;margin-top:10px;}
-  th{background:#6d28d9;color:white;padding:6px 10px;text-align:left;}
-  td{padding:5px 10px;border-bottom:1px solid #eee;}
-  tr:nth-child(even){background:#faf9ff;}
-  .scale{background:#f3f0ff;border-left:4px solid #6d28d9;padding:8px 12px;margin:12px 0;font-size:9pt;}
-  .footer{margin-top:24px;border-top:2px solid #6d28d9;padding-top:10px;font-size:9pt;color:#555;text-align:center;}
-  .footer .doc{font-size:10pt;font-weight:bold;color:#1a1a1a;}
-  @media print{body{padding:0;}}
-</style></head><body>
-<div class="header"><h1>🧠 NeuroPed — Escala de Tardieu Modificada</h1><div class="sub">Data: ${dateStr}</div></div>
-<div class="pg">
-  <div class="f"><div class="l">Paciente</div><div class="v">${patient.nome || "—"}</div></div>
-  <div class="f"><div class="l">Nascimento</div><div class="v">${patient.nascimento ? new Date(patient.nascimento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div></div>
-  <div class="f"><div class="l">Data da Avaliação</div><div class="v">${patient.data ? new Date(patient.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div></div>
-  <div class="f"><div class="l">Examinador(a)</div><div class="v">${patient.examinador || "—"}</div></div>
-</div>
-<div class="scale"><strong>Escala de Qualidade (X):</strong> 0=sem resistência | 1=leve resistência sem catch | 2=catch claro em velocidade específica | 3=clônus fatigável (&lt;10s) | 4=clônus não fatigável (≥10s) | 5=segmento imóvel. <br><strong>Componente Dinâmico = R2 – R1</strong> (quanto maior, maior a espasticidade dinâmica)</div>
-<table><thead><tr><th>Grupo Muscular</th><th>R2 (Passivo)</th><th>R1 (Catch)</th><th>Din. (R2–R1)</th><th>Qualidade (X)</th></tr></thead>
-<tbody>${rowsHtml}</tbody></table>
-<div class="footer"><div class="doc">Dr. Jadson Fraga Araújo Júnior</div>CRM-PE 25227 | CRM-BA 23384 | RQE 17756 / 14499 / 13119<br>NeuroPed — Escalas de Neuropediatria</div>
-</body></html>`;
-  }
-
-  function buildText() {
-    let t = `ESCALA DE TARDIEU MODIFICADA\n`;
-    t += `Paciente: ${patient.nome || "—"} | Nasc: ${patient.nascimento || "—"} | Data: ${patient.data || "—"} | Examinador: ${patient.examinador || "—"}\n\n`;
-    MUSCLE_GROUPS.forEach((g) => {
-      const r = rows[g];
-      t += `${g}: R2=${r.r2 || "—"}° R1=${r.r1 || "—"}° Dinâmico=${getDynamic(g)} Qualidade=${r.quality || "—"}\n`;
-    });
-    t += `\n---\nDr. Jadson Fraga — Neuropediatra | NeuroPed\n`;
-    return t;
-  }
-
-  function handlePrint() {
-    const win = window.open("", "_blank");
-    if (!win) { toast({ title: "Erro", description: "Pop-up bloqueado.", variant: "destructive" }); return; }
-    win.document.write(buildHtml());
-    win.document.close();
-    win.onload = () => win.print();
-    toast({ title: "Impressão", description: "Janela de impressão aberta." });
-  }
-
-  async function handleEmail() {
-    setSending(true);
-    const subject = `[NeuroPed] Tardieu Modificada — ${patient.nome || "Paciente"} — ${new Date().toLocaleDateString("pt-BR")}`;
-    const body = buildText();
-    try {
-      const res = await apiRequest("POST", "/api/send-report", { subject, body });
-      if (res.ok) {
-        setSent(true); toast({ title: "Enviado", description: `Relatório enviado para ${EMAIL_TO}` }); setSending(false); return;
-      }
-    } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
-    window.open(`mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.slice(0, 1800))}`, "_blank");
-    setSent(true); toast({ title: "Email aberto", description: "Seu app de email foi aberto." }); setSending(false);
+  if (showResponses) {
+    return (
+      <div className="space-y-4">
+        <ClinicalReport
+          scaleName="Escala de Tardieu Modificada"
+          items={reportItems}
+        />
+        <SaveToPatient
+          scaleName="Escala de Tardieu Modificada"
+          responses={reportItems}
+        />
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowResponses(false)}
+        >
+          Editar Respostas
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -364,8 +316,8 @@ function TardieuTab() {
 
       <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 p-3">
         <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-          <strong>Escala de Qualidade (X):</strong> 0=sem resistência | 1=resistência leve sem catch | 2=catch claro | 3=clônus fatigável (&lt;10s) | 4=clônus não fatigável (≥10s) | 5=segmento imóvel.{" "}
-          <strong>Componente Dinâmico = R2 – R1</strong> (estimativa da espasticidade dinâmica).
+          Registre R2, R1 e a qualidade observada. O relatório não calculará
+          diferenças nem apresentará interpretação.
         </p>
       </div>
 
@@ -373,51 +325,66 @@ function TardieuTab() {
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/60">
-              <th className="text-left p-2 border border-border font-semibold">Grupo Muscular</th>
-              <th className="text-center p-2 border border-border font-semibold w-[15%]">R2 (°)</th>
-              <th className="text-center p-2 border border-border font-semibold w-[15%]">R1 (°)</th>
-              <th className="text-center p-2 border border-border font-semibold w-[16%]">Din. (R2–R1)</th>
-              <th className="text-center p-2 border border-border font-semibold w-[18%]">Qualidade (X)</th>
+              <th className="text-left p-2 border border-border font-semibold">
+                Grupo Muscular
+              </th>
+              <th className="text-center p-2 border border-border font-semibold w-[22%]">
+                R2 (°)
+              </th>
+              <th className="text-center p-2 border border-border font-semibold w-[22%]">
+                R1 (°)
+              </th>
+              <th className="text-center p-2 border border-border font-semibold w-[24%]">
+                Qualidade
+              </th>
             </tr>
           </thead>
           <tbody>
-            {MUSCLE_GROUPS.map((g) => (
-              <tr key={g} className="hover:bg-muted/20">
-                <td className="p-2 border border-border font-medium">{g}</td>
+            {MUSCLE_GROUPS.map((group) => (
+              <tr key={group} className="hover:bg-muted/20">
+                <td className="p-2 border border-border font-medium">
+                  {group}
+                </td>
                 <td className="p-1 border border-border text-center">
                   <Input
                     type="number"
                     className="h-7 text-xs text-center"
-                    value={rows[g]?.r2 || ""}
-                    onChange={(e) => setCell(g, "r2", e.target.value)}
+                    value={rows[group]?.r2 || ""}
+                    onChange={(event) =>
+                      setCell(group, "r2", event.target.value)
+                    }
                     placeholder="—"
-                    data-testid={`input-r2-${g}`}
+                    data-testid={`input-r2-${group}`}
                   />
                 </td>
                 <td className="p-1 border border-border text-center">
                   <Input
                     type="number"
                     className="h-7 text-xs text-center"
-                    value={rows[g]?.r1 || ""}
-                    onChange={(e) => setCell(g, "r1", e.target.value)}
+                    value={rows[group]?.r1 || ""}
+                    onChange={(event) =>
+                      setCell(group, "r1", event.target.value)
+                    }
                     placeholder="—"
-                    data-testid={`input-r1-${g}`}
+                    data-testid={`input-r1-${group}`}
                   />
-                </td>
-                <td className="p-2 border border-border text-center font-semibold text-primary">
-                  {getDynamic(g)}
                 </td>
                 <td className="p-1 border border-border text-center">
                   <Select
-                    value={rows[g]?.quality || ""}
-                    onValueChange={(v) => setCell(g, "quality", v)}
+                    value={rows[group]?.quality || ""}
+                    onValueChange={(value) => setCell(group, "quality", value)}
                   >
-                    <SelectTrigger className="h-7 text-xs" data-testid={`sel-tq-${g}`}>
+                    <SelectTrigger
+                      className="h-7 text-xs"
+                      data-testid={`sel-tq-${group}`}
+                    >
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent>
-                      {TARDIEU_QUALITY.map((q) => (
-                        <SelectItem key={q} value={q}>{q}</SelectItem>
+                      {TARDIEU_QUALITY.map((quality) => (
+                        <SelectItem key={quality} value={quality}>
+                          {quality}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -428,15 +395,14 @@ function TardieuTab() {
         </table>
       </div>
 
-      <div className="flex gap-2">
-        <Button onClick={handlePrint} className="flex-1 gap-2 h-9" data-testid="button-print-tardieu">
-          <Printer className="w-4 h-4" /> Imprimir / PDF
-        </Button>
-        <Button variant="outline" onClick={handleEmail} disabled={sending || sent} className="flex-1 gap-2 h-9" data-testid="button-email-tardieu">
-          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-          {sent ? "Enviado" : sending ? "Enviando..." : "Enviar Email"}
-        </Button>
-      </div>
+      <Button
+        onClick={() => setShowResponses(true)}
+        disabled={!allAnswered}
+        className="w-full"
+        data-testid="button-review-tardieu"
+      >
+        Ver todas as perguntas e respostas
+      </Button>
     </div>
   );
 }
@@ -462,10 +428,18 @@ export default function EspasticidadePage() {
         <CardContent className="p-4">
           <Tabs defaultValue="ashworth">
             <TabsList className="w-full mb-4">
-              <TabsTrigger value="ashworth" className="flex-1 text-xs" data-testid="tab-ashworth">
+              <TabsTrigger
+                value="ashworth"
+                className="flex-1 text-xs"
+                data-testid="tab-ashworth"
+              >
                 Ashworth Modificada
               </TabsTrigger>
-              <TabsTrigger value="tardieu" className="flex-1 text-xs" data-testid="tab-tardieu">
+              <TabsTrigger
+                value="tardieu"
+                className="flex-1 text-xs"
+                data-testid="tab-tardieu"
+              >
                 Tardieu Modificada
               </TabsTrigger>
             </TabsList>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,8 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         instruction: "Eu mostro 3 cores. Você repete.",
         options: ["🔴 🟢 🔴", "🟢 🔴 🔴", "🔴 🔴 🟢"],
         correct: 0,
-        explanation: "Memória de sequência visual — tarefa de repetição imediata",
+        explanation:
+          "Memória de sequência visual — tarefa de repetição imediata",
       },
       {
         id: "m2f",
@@ -57,7 +58,8 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         instruction: "Mostro 2 objetos (🎈 🍎), escondo um. Qual falta?",
         options: ["🎈", "🍎", "🎀"],
         correct: 0,
-        explanation: "Reconhecimento de objeto ausente — memória visual simples",
+        explanation:
+          "Reconhecimento de objeto ausente — memória visual simples",
       },
     ],
     medio: [
@@ -76,10 +78,12 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m1d",
         type: "historia",
         question: "Conta a história que escutou",
-        instruction: "Leia: 'João foi ao parque. Viu um cachorro. O cachorro comeu bolo.'",
+        instruction:
+          "Leia: 'João foi ao parque. Viu um cachorro. O cachorro comeu bolo.'",
         options: ["Conta os 3 eventos", "Conta 2 eventos", "Conta 1 ou nenhum"],
         correct: 0,
-        explanation: "Memória narrativa — raro aos 3–4 anos, marcador de avanço",
+        explanation:
+          "Memória narrativa — raro aos 3–4 anos, marcador de avanço",
       },
     ],
   },
@@ -109,7 +113,8 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m3m",
         type: "historia",
         question: "Repete história com 4 eventos",
-        instruction: "Leia: 'Maria entrou na cozinha. Pegou um copo. Colocou água. Bebeu.'",
+        instruction:
+          "Leia: 'Maria entrou na cozinha. Pegou um copo. Colocou água. Bebeu.'",
         options: ["Repete 4 eventos", "Repete 2–3 eventos", "Repete 1 evento"],
         correct: 0,
         explanation: "Memória narrativa estruturada — esperado aos 5–6 anos",
@@ -144,10 +149,12 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m2m",
         type: "objeto",
         question: "Aprendizado por repetição (5 tentativas)",
-        instruction: "Mostro 8 figuras 5 vezes. Criança tenta memorizar sequência.",
+        instruction:
+          "Mostro 8 figuras 5 vezes. Criança tenta memorizar sequência.",
         options: ["Memoriza > 6 em última tentativa", "4–6 itens", "< 4 itens"],
         correct: 0,
-        explanation: "Aprendizagem auditivo-visual — efeito de primazia e recência",
+        explanation:
+          "Aprendizagem auditivo-visual — efeito de primazia e recência",
       },
       {
         id: "m3m",
@@ -156,7 +163,8 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         instruction: "Narrativa mais complexa com detalhes. Criança relata.",
         options: ["Recorda > 5 eventos com detalhes", "3–5 eventos", "< 3"],
         correct: 0,
-        explanation: "Memória episódica — recupera contexto e sequência temporal",
+        explanation:
+          "Memória episódica — recupera contexto e sequência temporal",
       },
     ],
     dificil: [
@@ -164,8 +172,13 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m1d",
         type: "sequencia",
         question: "Memória com interferência (CLPT)",
-        instruction: "Aprende lista A (4 palavras). Aprende lista B similar. Recorda A.",
-        options: ["Pouca interferência", "Interferência moderada", "Esqueceu A"],
+        instruction:
+          "Aprende lista A (4 palavras). Aprende lista B similar. Recorda A.",
+        options: [
+          "Pouca interferência",
+          "Interferência moderada",
+          "Esqueceu A",
+        ],
         correct: 0,
         explanation: "Resistência à interferência — medida de consolidação",
       },
@@ -189,18 +202,25 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         type: "objeto",
         question: "Memória de trabalho: ordena números mentalmente",
         instruction: "Digo: 7, 2, 9, 1, 5. Criança repete em ORDEM CRESCENTE.",
-        options: ["1, 2, 5, 7, 9 — Correto", "Ordem parcial", "Ordem aleatória"],
+        options: [
+          "1, 2, 5, 7, 9 — Correto",
+          "Ordem parcial",
+          "Ordem aleatória",
+        ],
         correct: 0,
-        explanation: "Manipulação e armazenamento simultâneos — função executiva",
+        explanation:
+          "Manipulação e armazenamento simultâneos — função executiva",
       },
       {
         id: "m3m",
         type: "historia",
         question: "Recorda depois de distração (15 min)",
-        instruction: "Conta história aos 9 min. Faz atividades 15 min. Pergunta sobre história.",
+        instruction:
+          "Conta história aos 9 min. Faz atividades 15 min. Pergunta sobre história.",
         options: ["Recorda > 6 elementos", "4–6 elementos", "< 4 elementos"],
         correct: 0,
-        explanation: "Memória de longo prazo consolidada — sem degradação rápida",
+        explanation:
+          "Memória de longo prazo consolidada — sem degradação rápida",
       },
     ],
     dificil: [
@@ -208,8 +228,13 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m1d",
         type: "sequencia",
         question: "Memória verbal complexa (RAVLT — Rey)",
-        instruction: "Lista de 15 palavras, 5 apresentações. Recall imediato e diferido.",
-        options: ["Curva de aprendizagem típica", "Platô precoce", "Sem aprendizagem"],
+        instruction:
+          "Lista de 15 palavras, 5 apresentações. Recall imediato e diferido.",
+        options: [
+          "Curva de aprendizagem típica",
+          "Platô precoce",
+          "Sem aprendizagem",
+        ],
         correct: 0,
         explanation: "RAVLT — teste clássico de aprendizagem e consolidação",
       },
@@ -233,7 +258,11 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         type: "objeto",
         question: "Dígitos em reverso (backward span)",
         instruction: "Digo: 4, 9, 2, 7, 1, 8. Criança repete AO CONTRÁRIO.",
-        options: ["8, 1, 7, 2, 9, 4 — Correto", "Parcialmente correto", "Incorreto"],
+        options: [
+          "8, 1, 7, 2, 9, 4 — Correto",
+          "Parcialmente correto",
+          "Incorreto",
+        ],
         correct: 0,
         explanation: "Digit span reverso — requer reordenação executiva",
       },
@@ -241,10 +270,16 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m3m",
         type: "historia",
         question: "Memória episódica — detalhes contextuais",
-        instruction: "Conta história com múltiplos personagens. Criança responde perguntas sobre contexto.",
-        options: ["Lembra personagens, tempo, lugar", "Alguns contextos", "Apenas fatos principais"],
+        instruction:
+          "Conta história com múltiplos personagens. Criança responde perguntas sobre contexto.",
+        options: [
+          "Lembra personagens, tempo, lugar",
+          "Alguns contextos",
+          "Apenas fatos principais",
+        ],
         correct: 0,
-        explanation: "Memória episódica sofisticada — integração temporal-espacial",
+        explanation:
+          "Memória episódica sofisticada — integração temporal-espacial",
       },
     ],
     dificil: [
@@ -252,10 +287,16 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
         id: "m1d",
         type: "sequencia",
         question: "Teste de Memória Wisconsin (aprendizagem de conceitos)",
-        instruction: "Cartões com regra oculta. Criança aprende regra por feedback.",
-        options: ["Aprende regra em < 50 tentativas", "50–100 tentativas", "> 100"],
+        instruction:
+          "Cartões com regra oculta. Criança aprende regra por feedback.",
+        options: [
+          "Aprende regra em < 50 tentativas",
+          "50–100 tentativas",
+          "> 100",
+        ],
         correct: 0,
-        explanation: "Aprendizagem implícita — envolve funções pré-frontal e estriado",
+        explanation:
+          "Aprendizagem implícita — envolve funções pré-frontal e estriado",
       },
     ],
   },
@@ -263,30 +304,19 @@ const MEMORY_TASKS: Record<AgeGroup, Record<Difficulty, MemoryTask[]>> = {
 
 export default function MemoriaTeste() {
   const [selectedAge, setSelectedAge] = useState<AgeGroup>("7-8");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("facil");
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<Difficulty>("facil");
   const [answers, setAnswers] = useState<Answers>({});
   const [showReport, setShowReport] = useState(false);
 
   const tasks = MEMORY_TASKS[selectedAge][selectedDifficulty];
   // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
   const optionOrders = useShuffledOptionOrders(tasks);
-  const answered = Object.values(answers).filter(a => a !== null).length;
+  const answered = Object.values(answers).filter((a) => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
-  const score = useMemo(() => {
-    let correct = 0;
-    tasks.forEach(task => {
-      const userAnswer = answers[task.id];
-      if (userAnswer === undefined || userAnswer === null) return;
-      if (userAnswer === task.correct) {
-        correct++;
-      }
-    });
-    return correct;
-  }, [answers, tasks]);
-
   const handleAnswer = (taskId: string, value: number) => {
-    setAnswers(prev => ({ ...prev, [taskId]: value }));
+    setAnswers((prev) => ({ ...prev, [taskId]: value }));
   };
 
   const handleReset = () => {
@@ -297,29 +327,33 @@ export default function MemoriaTeste() {
   };
 
   if (showReport) {
+    const reportItems = tasks.map((task) => {
+      const answer = answers[task.id];
+      return {
+        question: `${task.question} — ${task.instruction}`,
+        answer:
+          answer === undefined || answer === null
+            ? "Não respondida"
+            : (task.options[answer] ?? String(answer)),
+      };
+    });
+
     return (
       <div className="space-y-4">
         <ClinicalReport
-          title="Memória — Resultado"
-          sections={[
-            { title: "Faixa Etária", content: AGE_GROUPS[selectedAge].label },
-            { title: "Nível de Dificuldade", content: selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1) },
-            { title: "Desempenho", content: `${score}/${tasks.length} acertos (${Math.round((score/tasks.length)*100)}%)` },
-            { title: "Tipos de Memória Avaliados", content: [
-              "Memória de Curto Prazo (digit span): retenção imediata",
-              "Memória de Trabalho: manipulação e retenção simultânea",
-              "Memória Episódica: narrativa e contexto",
-              "Aprendizagem Verbal: retenção com múltiplas apresentações",
-            ].join('\n') },
-            { title: "Interpretação", content: `Escore ${Math.round((score/tasks.length)*100)}% em nível ${selectedDifficulty} indica capacidade de memória ${
-              Math.round((score/tasks.length)*100) >= 80 ? "dentro ou acima do esperado" :
-              Math.round((score/tasks.length)*100) >= 60 ? "levemente abaixo do esperado" :
-              "significativamente prejudicada — considera avaliação neuropsicológica formal"
-            } para a faixa etária` },
-          ]}
+          scaleName="Memória"
+          scaleFullName={`Tarefas de memória — dificuldade ${selectedDifficulty}`}
+          items={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
         />
-        <SaveToPatient testName="Memória" data={{ score, total: tasks.length, ageGroup: selectedAge, difficulty: selectedDifficulty }} />
-        <Button onClick={handleReset} className="w-full">← Voltar</Button>
+        <SaveToPatient
+          testName="Memória"
+          responses={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
+        />
+        <Button onClick={handleReset} className="w-full">
+          ← Voltar
+        </Button>
       </div>
     );
   }
@@ -334,7 +368,10 @@ export default function MemoriaTeste() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Avaliação lúdica de memória de curto prazo, trabalho, episódica e aprendizagem com progressão de dificuldade.</p>
+          <p className="text-sm text-gray-600">
+            Avaliação lúdica de memória de curto prazo, trabalho, episódica e
+            aprendizagem com progressão de dificuldade.
+          </p>
         </CardContent>
       </Card>
 
@@ -344,11 +381,14 @@ export default function MemoriaTeste() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map(age => (
+            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map((age) => (
               <Button
                 key={age}
                 variant={selectedAge === age ? "default" : "outline"}
-                onClick={() => { setSelectedAge(age); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedAge(age);
+                  setAnswers({});
+                }}
                 className="text-xs sm:text-sm"
               >
                 {AGE_GROUPS[age].label}
@@ -364,14 +404,21 @@ export default function MemoriaTeste() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-2">
-            {(['facil', 'medio', 'dificil'] as Difficulty[]).map(diff => (
+            {(["facil", "medio", "dificil"] as Difficulty[]).map((diff) => (
               <Button
                 key={diff}
                 variant={selectedDifficulty === diff ? "default" : "outline"}
-                onClick={() => { setSelectedDifficulty(diff); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedDifficulty(diff);
+                  setAnswers({});
+                }}
                 className="text-xs sm:text-sm"
               >
-                {diff === 'facil' ? '🟢 Fácil' : diff === 'medio' ? '🟡 Médio' : '🔴 Difícil'}
+                {diff === "facil"
+                  ? "🟢 Fácil"
+                  : diff === "medio"
+                    ? "🟡 Médio"
+                    : "🔴 Difícil"}
               </Button>
             ))}
           </div>
@@ -381,42 +428,58 @@ export default function MemoriaTeste() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>{AGE_GROUPS[selectedAge].label} — {selectedDifficulty.toUpperCase()}</CardTitle>
-            <Badge>{answered}/{tasks.length}</Badge>
+            <CardTitle>
+              {AGE_GROUPS[selectedAge].label} —{" "}
+              {selectedDifficulty.toUpperCase()}
+            </CardTitle>
+            <Badge>
+              {answered}/{tasks.length}
+            </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           {tasks.map((task, idx) => (
-            <div key={task.id} className="border-l-4 border-purple-300 pl-4 py-2">
+            <div
+              key={task.id}
+              className="border-l-4 border-purple-300 pl-4 py-2"
+            >
               <div className="mb-3">
-                <p className="font-semibold text-sm">{idx + 1}. {task.question}</p>
+                <p className="font-semibold text-sm">
+                  {idx + 1}. {task.question}
+                </p>
                 <p className="text-xs text-gray-600 mt-1">{task.instruction}</p>
               </div>
 
-              <RadioGroup value={String(answers[task.id] ?? "")} onValueChange={(v) => handleAnswer(task.id, parseInt(v))}>
+              <RadioGroup
+                value={String(answers[task.id] ?? "")}
+                onValueChange={(v) => handleAnswer(task.id, parseInt(v))}
+              >
                 <div className="space-y-2">
-                  {(optionOrders[task.id] ?? task.options.map((_, oi) => oi)).map((i) => {
+                  {(
+                    optionOrders[task.id] ?? task.options.map((_, oi) => oi)
+                  ).map((i) => {
                     const opt = task.options[i];
                     return (
-                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                        <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
-                        <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      <div
+                        key={i}
+                        className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={String(i)}
+                          id={`${task.id}-${i}`}
+                        />
+                        <Label
+                          htmlFor={`${task.id}-${i}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {opt}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               </RadioGroup>
-
-              {answers[task.id] !== undefined && answers[task.id] !== null && (
-                <div className="mt-3 text-xs text-gray-600">
-                  {answers[task.id] === task.correct ? (
-                    <span className="text-green-600 block">✅ Correto! {task.explanation}</span>
-                  ) : (
-                    <span className="text-red-600 block">❌ Resposta esperada: {task.options[task.correct]}. {task.explanation}</span>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </CardContent>
@@ -433,7 +496,7 @@ export default function MemoriaTeste() {
           className="flex-1"
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          Finalizar e Salvar
+          Revisar Respostas
         </Button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,8 @@ const TASKS: Record<AgeGroup, AttentionTask[]> = {
       id: "d1",
       question: "Escuta bem: quando ouve 'pato', levanta a mão",
       type: "dividida",
-      instruction: "Leia uma lista: gato, pato, cão, pato, rato, pato. Conte quantas vezes ouve 'pato'",
+      instruction:
+        "Leia uma lista: gato, pato, cão, pato, rato, pato. Conte quantas vezes ouve 'pato'",
       options: ["2 vezes", "3 vezes", "4 vezes"],
       correct: 1,
       explanation: "A palavra 'pato' aparece 3 vezes na lista",
@@ -98,10 +99,16 @@ const TASKS: Record<AgeGroup, AttentionTask[]> = {
       id: "d2",
       question: "Dividida: repita mais uma atividade enquanto escuta",
       type: "dividida",
-      instruction: "Criança desenha linhas enquanto você lê números. Deve lembrar número específico.",
-      options: ["Consegue fazer 2 coisas", "Tem dificuldade em dividir atenção", "Não consegue"],
+      instruction:
+        "Criança desenha linhas enquanto você lê números. Deve lembrar número específico.",
+      options: [
+        "Consegue fazer 2 coisas",
+        "Tem dificuldade em dividir atenção",
+        "Não consegue",
+      ],
       correct: 0,
-      explanation: "Crianças de 6-7 anos ainda têm capacidade limitada, mas devem tentar",
+      explanation:
+        "Crianças de 6-7 anos ainda têm capacidade limitada, mas devem tentar",
     },
   ],
   "8-9": [
@@ -127,17 +134,28 @@ const TASKS: Record<AgeGroup, AttentionTask[]> = {
       id: "se1",
       question: "Seletiva visual sob interferência",
       type: "seletiva",
-      instruction: "Encontre todos os ▲ azuis entre ▲ vermelhos e ●: ▲🔴▲🔵●▲🔴▲●▲",
-      options: ["3 triângulos azuis", "4 triângulos azuis", "2 triângulos azuis"],
+      instruction:
+        "Encontre todos os ▲ azuis entre ▲ vermelhos e ●: ▲🔴▲🔵●▲🔴▲●▲",
+      options: [
+        "3 triângulos azuis",
+        "4 triângulos azuis",
+        "2 triângulos azuis",
+      ],
       correct: 0,
-      explanation: "Há 3 símbolos azuis/triângulos na sequência (posições 4, 6, 8 considerando interpretação)",
+      explanation:
+        "Há 3 símbolos azuis/triângulos na sequência (posições 4, 6, 8 considerando interpretação)",
     },
     {
       id: "d1",
       question: "Dividida: realize contagem enquanto segue instruções",
       type: "dividida",
-      instruction: "Conte de 20 até 1, mas quando ouve palma, fala 'STOP' e continua",
-      options: ["Consegue fazer com pouco erro", "Perde concentração", "Muito difícil"],
+      instruction:
+        "Conte de 20 até 1, mas quando ouve palma, fala 'STOP' e continua",
+      options: [
+        "Consegue fazer com pouco erro",
+        "Perde concentração",
+        "Muito difícil",
+      ],
       correct: 0,
       explanation: "Crianças desta idade devem conseguir com algumas falhas",
     },
@@ -147,10 +165,12 @@ const TASKS: Record<AgeGroup, AttentionTask[]> = {
       id: "s1",
       question: "Teste de Vigilância (atenção sustentada prolongada)",
       type: "sustentada",
-      instruction: "Você mostra 50 símbolos misturados. Criança procura figura específica (ex: ★ among ●).",
+      instruction:
+        "Você mostra 50 símbolos misturados. Criança procura figura específica (ex: ★ among ●).",
       options: ["Encontra > 90%", "Encontra 70-90%", "Encontra < 70%"],
       correct: 0,
-      explanation: "Crianças sem TDAH conseguem detectar > 90% em tarefa de 5 minutos",
+      explanation:
+        "Crianças sem TDAH conseguem detectar > 90% em tarefa de 5 minutos",
     },
     {
       id: "s2",
@@ -159,34 +179,49 @@ const TASKS: Record<AgeGroup, AttentionTask[]> = {
       instruction: "Série: ABCDEABCFABCGABCH... Risque cada 'A'",
       options: ["> 95% de acerto", "85-95% de acerto", "< 85% de acerto"],
       correct: 0,
-      explanation: "Crianças desta idade conseguem alta taxa com concentração adequada",
+      explanation:
+        "Crianças desta idade conseguem alta taxa com concentração adequada",
     },
     {
       id: "se1",
       question: "Seletiva auditiva: escuta filtrada",
       type: "seletiva",
-      instruction: "Fala com 2 vozes (você em tom normal, outra pessoa de fundo). Criança segue SUA voz.",
-      options: ["Segue bem a voz alvo", "Distrai com voz de fundo", "Muito difícil"],
+      instruction:
+        "Fala com 2 vozes (você em tom normal, outra pessoa de fundo). Criança segue SUA voz.",
+      options: [
+        "Segue bem a voz alvo",
+        "Distrai com voz de fundo",
+        "Muito difícil",
+      ],
       correct: 0,
-      explanation: "Crianças desta idade conseguem filtrar interferência auditiva",
+      explanation:
+        "Crianças desta idade conseguem filtrar interferência auditiva",
     },
     {
       id: "d1",
       question: "Dividida: múltiplas tarefas simultâneas",
       type: "dividida",
-      instruction: "Monitora 2 sequências: levanta quando vê 'A' em série 1 E quando ouve 'beep' em fundo",
+      instruction:
+        "Monitora 2 sequências: levanta quando vê 'A' em série 1 E quando ouve 'beep' em fundo",
       options: ["Consegue fazer ambas", "Perde uma ou ambas", "Muito difícil"],
       correct: 0,
-      explanation: "Capacidade de atenção dividida está em desenvolvimento nesta faixa",
+      explanation:
+        "Capacidade de atenção dividida está em desenvolvimento nesta faixa",
     },
     {
       id: "d2",
       question: "Task switching: alterna entre tarefas rapidamente",
       type: "dividida",
-      instruction: "Alternadamente: diga número PAR, depois VOGAL de sequência mista",
-      options: ["Alterna suavemente", "Com hesitação/erros menores", "Erra frequentemente"],
+      instruction:
+        "Alternadamente: diga número PAR, depois VOGAL de sequência mista",
+      options: [
+        "Alterna suavemente",
+        "Com hesitação/erros menores",
+        "Erra frequentemente",
+      ],
       correct: 0,
-      explanation: "Task switching é medida sofisticada de atenção e controle executivo",
+      explanation:
+        "Task switching é medida sofisticada de atenção e controle executivo",
     },
   ],
 };
@@ -199,23 +234,11 @@ export default function AtencaoConcentracao() {
   const tasks = TASKS[selectedAge];
   // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
   const optionOrders = useShuffledOptionOrders(tasks);
-  const answered = Object.values(answers).filter(a => a !== null).length;
+  const answered = Object.values(answers).filter((a) => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
-  const score = useMemo(() => {
-    let correct = 0;
-    tasks.forEach(task => {
-      const userAnswer = answers[task.id];
-      if (userAnswer === undefined || userAnswer === null) return;
-      if (userAnswer === task.correct) {
-        correct++;
-      }
-    });
-    return correct;
-  }, [answers, tasks]);
-
   const handleAnswer = (taskId: string, value: number) => {
-    setAnswers(prev => ({ ...prev, [taskId]: value }));
+    setAnswers((prev) => ({ ...prev, [taskId]: value }));
   };
 
   const handleReset = () => {
@@ -225,27 +248,33 @@ export default function AtencaoConcentracao() {
   };
 
   if (showReport) {
+    const reportItems = tasks.map((task) => {
+      const answer = answers[task.id];
+      return {
+        question: `${task.question} — ${task.instruction}`,
+        answer:
+          answer === undefined || answer === null
+            ? "Não respondida"
+            : (task.options[answer] ?? String(answer)),
+      };
+    });
+
     return (
       <div className="space-y-4">
         <ClinicalReport
-          title="Atenção e Concentração — Resultado"
-          sections={[
-            { title: "Faixa Etária", content: AGE_GROUPS[selectedAge].label },
-            { title: "Desempenho", content: `${score}/${tasks.length} acertos (${Math.round((score/tasks.length)*100)}%)` },
-            { title: "Domínios Avaliados", content: [
-              "Atenção Sustentada: capacidade de manter foco prolongado",
-              "Atenção Seletiva: filtragem de estímulos irrelevantes",
-              "Atenção Dividida: processamento simultâneo de múltiplos estímulos",
-            ].join('\n') },
-            { title: "Interpretação", content: `Escore ${Math.round((score/tasks.length)*100)}% indica ${
-              Math.round((score/tasks.length)*100) >= 80 ? "atenção e concentração adequadas" :
-              Math.round((score/tasks.length)*100) >= 60 ? "atenção com dificuldades leves" :
-              "possíveis dificuldades significativas que requerem avaliação neuropsicológica"
-            } para a faixa etária` },
-          ]}
+          scaleName="Atenção e Concentração"
+          scaleFullName="Tarefas de atenção sustentada, seletiva e dividida"
+          items={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
         />
-        <SaveToPatient testName="Atenção e Concentração" data={{ score, total: tasks.length, ageGroup: selectedAge }} />
-        <Button onClick={handleReset} className="w-full">← Voltar</Button>
+        <SaveToPatient
+          testName="Atenção e Concentração"
+          responses={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
+        />
+        <Button onClick={handleReset} className="w-full">
+          ← Voltar
+        </Button>
       </div>
     );
   }
@@ -260,7 +289,10 @@ export default function AtencaoConcentracao() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Avaliação lúdica de atenção sustentada, seletiva e dividida com tarefas interativas.</p>
+          <p className="text-sm text-gray-600">
+            Avaliação lúdica de atenção sustentada, seletiva e dividida com
+            tarefas interativas.
+          </p>
         </CardContent>
       </Card>
 
@@ -270,11 +302,14 @@ export default function AtencaoConcentracao() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map(age => (
+            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map((age) => (
               <Button
                 key={age}
                 variant={selectedAge === age ? "default" : "outline"}
-                onClick={() => { setSelectedAge(age); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedAge(age);
+                  setAnswers({});
+                }}
                 className="text-sm"
               >
                 {AGE_GROUPS[age].label}
@@ -288,7 +323,9 @@ export default function AtencaoConcentracao() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Teste — {AGE_GROUPS[selectedAge].label}</CardTitle>
-            <Badge>{answered}/{tasks.length}</Badge>
+            <Badge>
+              {answered}/{tasks.length}
+            </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
@@ -297,39 +334,49 @@ export default function AtencaoConcentracao() {
             <div key={task.id} className="border-l-4 border-cyan-300 pl-4 py-2">
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="font-semibold text-sm">{idx + 1}. {task.question}</p>
+                  <p className="font-semibold text-sm">
+                    {idx + 1}. {task.question}
+                  </p>
                   <Badge variant="secondary" className="text-xs">
-                    {task.type === "sustentada" ? "⏱️ Sustentada" :
-                     task.type === "seletiva" ? "🎯 Seletiva" :
-                     "🔀 Dividida"}
+                    {task.type === "sustentada"
+                      ? "⏱️ Sustentada"
+                      : task.type === "seletiva"
+                        ? "🎯 Seletiva"
+                        : "🔀 Dividida"}
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-600">{task.instruction}</p>
               </div>
 
-              <RadioGroup value={String(answers[task.id] ?? "")} onValueChange={(v) => handleAnswer(task.id, parseInt(v))}>
+              <RadioGroup
+                value={String(answers[task.id] ?? "")}
+                onValueChange={(v) => handleAnswer(task.id, parseInt(v))}
+              >
                 <div className="space-y-2">
-                  {(optionOrders[task.id] ?? task.options.map((_, oi) => oi)).map((i) => {
+                  {(
+                    optionOrders[task.id] ?? task.options.map((_, oi) => oi)
+                  ).map((i) => {
                     const opt = task.options[i];
                     return (
-                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                        <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
-                        <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      <div
+                        key={i}
+                        className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={String(i)}
+                          id={`${task.id}-${i}`}
+                        />
+                        <Label
+                          htmlFor={`${task.id}-${i}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {opt}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               </RadioGroup>
-
-              {answers[task.id] !== undefined && answers[task.id] !== null && (
-                <div className="mt-3 text-xs text-gray-600">
-                  {answers[task.id] === task.correct ? (
-                    <span className="text-green-600 block">✅ Correto! {task.explanation}</span>
-                  ) : (
-                    <span className="text-red-600 block">❌ Resposta esperada: {task.options[task.correct]}. {task.explanation}</span>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </CardContent>
@@ -346,7 +393,7 @@ export default function AtencaoConcentracao() {
           className="flex-1"
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          Finalizar e Salvar
+          Revisar Respostas
         </Button>
       </div>
     </div>

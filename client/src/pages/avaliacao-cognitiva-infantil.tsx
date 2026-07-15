@@ -1,11 +1,19 @@
 import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ClinicalReport } from "@/components/ClinicalReport";
+import { SaveToPatient } from "@/components/SaveToPatient";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Eye, BookOpen, PenTool, Calculator, ClipboardCheck,
-  RotateCcw, Brain, CheckCircle2, XCircle, ChevronRight,
+  Eye,
+  BookOpen,
+  PenTool,
+  Calculator,
+  RotateCcw,
+  Brain,
+  CheckCircle2,
+  ChevronRight,
 } from "lucide-react";
 
 // ─────────────────────────────── types ───────────────────────────────
@@ -30,8 +38,8 @@ interface ObsBlock {
 type Question = MCQ | ObsBlock;
 
 interface AnswerRecord {
-  prompt: string;          // enunciado da pergunta ou habilidade observada
-  correct?: string;        // resposta correta (apenas MCQ)
+  prompt: string; // enunciado da pergunta ou habilidade observada
+  correct?: string; // resposta correta (apenas MCQ)
   selected: string | null; // o que a criança escolheu / "Observado" no bloco de observação
   isCorrect: boolean;
 }
@@ -64,108 +72,6 @@ const BAND_LABEL: Record<Band, string> = {
   G: "16–19 anos (Ensino Médio)",
 };
 
-function interpret(score: number, max: number): string {
-  const pct = score / max;
-  if (pct >= 0.85) return "Desempenho esperado para a faixa etária";
-  if (pct >= 0.65) return "Desempenho levemente abaixo do esperado — monitorar";
-  if (pct >= 0.45) return "Desempenho abaixo do esperado — avaliar com escala padronizada";
-  return "Desempenho muito abaixo do esperado — encaminhamento especializado sugerido";
-}
-
-// ─────────────────────── relatório qualitativo (por extenso) ───────────────────────
-
-/** Extrai só a pergunta objetiva de um enunciado (descarta o texto do 📖). */
-function shortPrompt(p: string): string {
-  const lines = p.split("\n").map((s) => s.trim()).filter(Boolean);
-  return lines[lines.length - 1] || p;
-}
-
-/** Bloco de observação (pré-escrita) não tem "correto", só "observado". */
-function isObservationResult(r: DomainResult): boolean {
-  return r.answers.length > 0 && r.answers.every((a) => a.correct === undefined);
-}
-
-/** Frase qualitativa, sensata e sem exagero, para um domínio. */
-function domainNarrative(r: DomainResult): string {
-  const pct = Math.round((r.score / r.max) * 100);
-
-  if (isObservationResult(r)) {
-    const naoObs = r.answers.filter((a) => !a.isCorrect).map((a) => shortPrompt(a.prompt));
-    let t = `${r.label}: demonstrou ${r.score} de ${r.max} habilidades de pré-escrita observadas`;
-    t += pct >= 75
-      ? ". As habilidades esperadas para a faixa aparecem de forma consistente."
-      : pct >= 50
-        ? ". Boa parte já aparece; vale estimular e reobservar as demais ao longo das próximas semanas."
-        : ". Ainda aparecem de forma incipiente, o que é comum nesta idade — convém estimular e acompanhar.";
-    if (naoObs.length > 0) t += ` Ainda não observado: ${naoObs.join("; ")}.`;
-    return t;
-  }
-
-  const erros = r.answers.filter((a) => !a.isCorrect).map((a) => shortPrompt(a.prompt));
-  const nivel =
-    pct >= 85 ? "desempenho compatível com o esperado para a faixa etária"
-      : pct >= 65 ? "desempenho um pouco abaixo do esperado — não indica necessariamente um problema, mas vale acompanhar"
-        : pct >= 45 ? "desempenho abaixo do esperado, que merece atenção e, se possível, confirmação com um instrumento padronizado"
-          : "desempenho bastante abaixo do esperado, sugerindo uma dificuldade que convém investigar com avaliação especializada";
-
-  let t = `${r.label}: acertou ${r.score} de ${r.max} itens (${pct}%) — ${nivel}.`;
-  if (erros.length === 0) {
-    t += " Respondeu corretamente a todas as questões deste módulo.";
-  } else if (erros.length === r.max) {
-    t += " Não acertou nenhum item — reavaliar com calma, verificando compreensão do comando e condições da aplicação.";
-  } else {
-    t += ` Errou: ${erros.join("; ")}.`;
-  }
-  return t;
-}
-
-/** Relatório qualitativo completo, por extenso, dos acertos e erros. */
-function buildQualitativeReport(domains: DomainResult[], band: Band): string {
-  const scored = domains.filter((r) => !isObservationResult(r));
-  const totalScore = scored.reduce((s, r) => s + r.score, 0);
-  const totalMax = scored.reduce((s, r) => s + r.max, 0);
-  const globalPct = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : null;
-
-  // síntese global sensata
-  let sintese: string;
-  if (globalPct === null) {
-    sintese = "A avaliação foi predominantemente observacional nesta faixa etária. Veja abaixo, por área, o que a criança já demonstra.";
-  } else {
-    const ordenados = [...scored].sort((a, b) => (b.score / b.max) - (a.score / a.max));
-    const forte = ordenados[0];
-    const fraco = ordenados[ordenados.length - 1];
-    const mesmoNivel = forte && fraco && Math.round((forte.score / forte.max) * 100) === Math.round((fraco.score / fraco.max) * 100);
-    const fecho =
-      globalPct >= 85 ? "No geral, o resultado é consistente com o esperado para a idade."
-        : globalPct >= 65 ? "No geral, o resultado está próximo do esperado, com alguns pontos a acompanhar."
-          : globalPct >= 45 ? "No geral, o resultado ficou abaixo do esperado; vale acompanhar de perto e considerar uma avaliação padronizada."
-            : "No geral, o resultado ficou bastante abaixo do esperado; recomenda-se avaliação especializada para esclarecer.";
-    sintese = `A criança acertou ${totalScore} de ${totalMax} itens nas áreas pontuadas (${globalPct}%). ` +
-      (mesmoNivel
-        ? "O desempenho foi parecido entre as áreas. "
-        : forte && fraco
-          ? `O melhor desempenho foi em ${forte.label} e o mais frágil em ${fraco.label}. `
-          : "") +
-      fecho;
-  }
-
-  const linhas = [
-    `RELATÓRIO — Avaliação Cognitiva Infantil`,
-    `Faixa etária: ${BAND_LABEL[band]}`,
-    "",
-    "Síntese",
-    sintese,
-    "",
-    "Por área",
-    ...domains.map((r) => `• ${domainNarrative(r)}`),
-    "",
-    "Observação: triagem educativa, de caráter orientativo. Não substitui avaliação " +
-    "psicométrica formal nem estabelece diagnóstico. Fatores como cansaço, atenção no " +
-    "momento e compreensão do comando podem influenciar o resultado.",
-  ];
-  return linhas.join("\n");
-}
-
 // ─────────────────────────────── CONTENT BANKS ───────────────────────────────
 
 // NOTA: por questão só há UMA resposta certa e, de propósito, a posição da
@@ -175,203 +81,815 @@ function buildQualitativeReport(domains: DomainResult[], band: Band): string {
 // escolhidos por serem os mais discriminativos.
 const VISUAL_BANK: Record<Band, MCQ[]> = {
   A: [
-    { kind: "mcq", prompt: "Toque no CACHORRO", big: true, options: ["🐱", "🐶", "🐰", "🐸"], answer: "🐶" },
-    { kind: "mcq", prompt: "Qual é a cor VERMELHA?", big: true, options: ["🔵", "🟡", "🔴", "🟢"], answer: "🔴" },
-    { kind: "mcq", prompt: "Toque no CÍRCULO", big: true, options: ["🔺", "🔷", "⭐", "⚫"], answer: "⚫" },
-    { kind: "mcq", prompt: "Toque na BANANA", big: true, options: ["🍌", "🍎", "🍇", "🍊"], answer: "🍌" },
+    {
+      kind: "mcq",
+      prompt: "Toque no CACHORRO",
+      big: true,
+      options: ["🐱", "🐶", "🐰", "🐸"],
+      answer: "🐶",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é a cor VERMELHA?",
+      big: true,
+      options: ["🔵", "🟡", "🔴", "🟢"],
+      answer: "🔴",
+    },
+    {
+      kind: "mcq",
+      prompt: "Toque no CÍRCULO",
+      big: true,
+      options: ["🔺", "🔷", "⭐", "⚫"],
+      answer: "⚫",
+    },
+    {
+      kind: "mcq",
+      prompt: "Toque na BANANA",
+      big: true,
+      options: ["🍌", "🍎", "🍇", "🍊"],
+      answer: "🍌",
+    },
   ],
   B: [
-    { kind: "mcq", prompt: "Qual dessas é a LETRA A?", options: ["4", "A", "🐱", "★"], answer: "A" },
-    { kind: "mcq", prompt: "Qual NÃO é uma fruta?", big: true, options: ["🍎", "🍌", "🍊", "🐶"], answer: "🐶" },
-    { kind: "mcq", prompt: "Qual letra é IGUAL a esta? → M", options: ["M", "N", "W", "H"], answer: "M" },
-    { kind: "mcq", prompt: "Quantas estrelas há aqui? ★★★★", options: ["3", "5", "4", "2"], answer: "4" },
+    {
+      kind: "mcq",
+      prompt: "Qual dessas é a LETRA A?",
+      options: ["4", "A", "🐱", "★"],
+      answer: "A",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual NÃO é uma fruta?",
+      big: true,
+      options: ["🍎", "🍌", "🍊", "🐶"],
+      answer: "🐶",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual letra é IGUAL a esta? → M",
+      options: ["M", "N", "W", "H"],
+      answer: "M",
+    },
+    {
+      kind: "mcq",
+      prompt: "Quantas estrelas há aqui? ★★★★",
+      options: ["3", "5", "4", "2"],
+      answer: "4",
+    },
   ],
   C: [
-    { kind: "mcq", prompt: "Qual letra está FALTANDO? GA_O", options: ["D", "P", "T", "L"], answer: "T" },
-    { kind: "mcq", prompt: "Qual número vem depois? 2 4 6 8 __", options: ["10", "9", "12", "7"], answer: "10" },
-    { kind: "mcq", prompt: "Qual das palavras está escrita CORRETAMENTE?", options: ["BBOLA", "ABOLA", "BOLAA", "BOLA"], answer: "BOLA" },
-    { kind: "mcq", prompt: "Qual figura completa a série? △○△○__", options: ["○", "△", "□", "★"], answer: "△" },
+    {
+      kind: "mcq",
+      prompt: "Qual letra está FALTANDO? GA_O",
+      options: ["D", "P", "T", "L"],
+      answer: "T",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois? 2 4 6 8 __",
+      options: ["10", "9", "12", "7"],
+      answer: "10",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual das palavras está escrita CORRETAMENTE?",
+      options: ["BBOLA", "ABOLA", "BOLAA", "BOLA"],
+      answer: "BOLA",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual figura completa a série? △○△○__",
+      options: ["○", "△", "□", "★"],
+      answer: "△",
+    },
   ],
   D: [
-    { kind: "mcq", prompt: "Qual completa o padrão? 🔴🔵🔴🔵🔴__", options: ["🔴", "🔵", "🟡", "🟢"], answer: "🔵" },
-    { kind: "mcq", prompt: "Qual NÃO pertence ao grupo? 🍎 🍌 🍇 🐶", options: ["🐶", "🍎", "🍌", "🍇"], answer: "🐶" },
-    { kind: "mcq", prompt: "Qual número vem depois? 5 10 15 20 __", options: ["21", "30", "25", "24"], answer: "25" },
-    { kind: "mcq", prompt: "Qual palavra tem MAIS letras?", options: ["GATO", "SOL", "BOLA", "ELEFANTE"], answer: "ELEFANTE" },
+    {
+      kind: "mcq",
+      prompt: "Qual completa o padrão? 🔴🔵🔴🔵🔴__",
+      options: ["🔴", "🔵", "🟡", "🟢"],
+      answer: "🔵",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual NÃO pertence ao grupo? 🍎 🍌 🍇 🐶",
+      options: ["🐶", "🍎", "🍌", "🍇"],
+      answer: "🐶",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois? 5 10 15 20 __",
+      options: ["21", "30", "25", "24"],
+      answer: "25",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra tem MAIS letras?",
+      options: ["GATO", "SOL", "BOLA", "ELEFANTE"],
+      answer: "ELEFANTE",
+    },
   ],
   E: [
-    { kind: "mcq", prompt: "Qual NÃO pertence ao grupo?", options: ["cachorro", "cadeira", "gato", "cavalo"], answer: "cadeira" },
-    { kind: "mcq", prompt: "Qual número vem depois? 10 20 30 40 __", options: ["45", "60", "50", "55"], answer: "50" },
-    { kind: "mcq", prompt: "Se hoje é TERÇA, amanhã é:", options: ["quarta", "segunda", "quinta", "domingo"], answer: "quarta" },
-    { kind: "mcq", prompt: "Qual é o OPOSTO de CHEIO?", options: ["grande", "pesado", "novo", "vazio"], answer: "vazio" },
+    {
+      kind: "mcq",
+      prompt: "Qual NÃO pertence ao grupo?",
+      options: ["cachorro", "cadeira", "gato", "cavalo"],
+      answer: "cadeira",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois? 10 20 30 40 __",
+      options: ["45", "60", "50", "55"],
+      answer: "50",
+    },
+    {
+      kind: "mcq",
+      prompt: "Se hoje é TERÇA, amanhã é:",
+      options: ["quarta", "segunda", "quinta", "domingo"],
+      answer: "quarta",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o OPOSTO de CHEIO?",
+      options: ["grande", "pesado", "novo", "vazio"],
+      answer: "vazio",
+    },
   ],
   F: [
-    { kind: "mcq", prompt: "Qual número vem depois? 3 6 9 12 __", options: ["14", "15", "18", "16"], answer: "15" },
-    { kind: "mcq", prompt: "Qual NÃO pertence ao grupo?", options: ["maçã", "banana", "cenoura", "uva"], answer: "cenoura" },
-    { kind: "mcq", prompt: "Todos os pássaros voam. O canário é um pássaro. Então o canário:", options: ["voa", "nada", "corre", "late"], answer: "voa" },
-    { kind: "mcq", prompt: "DIA está para NOITE assim como SOL está para:", options: ["céu", "estrela", "nuvem", "lua"], answer: "lua" },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois? 3 6 9 12 __",
+      options: ["14", "15", "18", "16"],
+      answer: "15",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual NÃO pertence ao grupo?",
+      options: ["maçã", "banana", "cenoura", "uva"],
+      answer: "cenoura",
+    },
+    {
+      kind: "mcq",
+      prompt:
+        "Todos os pássaros voam. O canário é um pássaro. Então o canário:",
+      options: ["voa", "nada", "corre", "late"],
+      answer: "voa",
+    },
+    {
+      kind: "mcq",
+      prompt: "DIA está para NOITE assim como SOL está para:",
+      options: ["céu", "estrela", "nuvem", "lua"],
+      answer: "lua",
+    },
   ],
   G: [
-    { kind: "mcq", prompt: "Qual número vem depois? 100 90 80 70 __", options: ["65", "60", "50", "75"], answer: "60" },
-    { kind: "mcq", prompt: "Qual número vem depois? 2 4 8 16 __", options: ["32", "24", "20", "18"], answer: "32" },
-    { kind: "mcq", prompt: "MÃO está para LUVA assim como PÉ está para:", options: ["perna", "dedo", "sapato", "chão"], answer: "sapato" },
-    { kind: "mcq", prompt: "Se A é maior que B, e B é maior que C, então A é ___ que C:", options: ["menor", "igual", "não dá para saber", "maior"], answer: "maior" },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois? 100 90 80 70 __",
+      options: ["65", "60", "50", "75"],
+      answer: "60",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois? 2 4 8 16 __",
+      options: ["32", "24", "20", "18"],
+      answer: "32",
+    },
+    {
+      kind: "mcq",
+      prompt: "MÃO está para LUVA assim como PÉ está para:",
+      options: ["perna", "dedo", "sapato", "chão"],
+      answer: "sapato",
+    },
+    {
+      kind: "mcq",
+      prompt: "Se A é maior que B, e B é maior que C, então A é ___ que C:",
+      options: ["menor", "igual", "não dá para saber", "maior"],
+      answer: "maior",
+    },
   ],
 };
 
 const LEITURA_BANK: Record<Band, MCQ[]> = {
   A: [
-    { kind: "mcq", prompt: "Qual desses você usa para ESCREVER palavras?", big: true, options: ["🐱", "A", "★", "🚗"], answer: "A" },
-    { kind: "mcq", prompt: "Em que direção lemos em português? →", options: ["Da direita para esquerda", "De cima para baixo", "Da esquerda para direita", "Tanto faz"], answer: "Da esquerda para direita" },
-    { kind: "mcq", prompt: "Qual desses é um LIVRO?", big: true, options: ["📚", "🎵", "🚗", "🍎"], answer: "📚" },
-    { kind: "mcq", prompt: "O que fica no COMEÇO de uma frase?", options: ["Ponto final", "Vírgula", "Nada", "Letra maiúscula"], answer: "Letra maiúscula" },
+    {
+      kind: "mcq",
+      prompt: "Qual desses você usa para ESCREVER palavras?",
+      big: true,
+      options: ["🐱", "A", "★", "🚗"],
+      answer: "A",
+    },
+    {
+      kind: "mcq",
+      prompt: "Em que direção lemos em português? →",
+      options: [
+        "Da direita para esquerda",
+        "De cima para baixo",
+        "Da esquerda para direita",
+        "Tanto faz",
+      ],
+      answer: "Da esquerda para direita",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual desses é um LIVRO?",
+      big: true,
+      options: ["📚", "🎵", "🚗", "🍎"],
+      answer: "📚",
+    },
+    {
+      kind: "mcq",
+      prompt: "O que fica no COMEÇO de uma frase?",
+      options: ["Ponto final", "Vírgula", "Nada", "Letra maiúscula"],
+      answer: "Letra maiúscula",
+    },
   ],
   B: [
-    { kind: "mcq", prompt: "Qual palavra RIMA com PÃO?", options: ["CASA", "MÃO", "PEIXE", "BOLA"], answer: "MÃO" },
-    { kind: "mcq", prompt: "Qual palavra começa com o mesmo som de SAPO?", options: ["FACA", "RATO", "SINO", "DEDO"], answer: "SINO" },
-    { kind: "mcq", prompt: "Quantas SÍLABAS tem a palavra MA-CA-CO?", options: ["3", "2", "4", "1"], answer: "3" },
-    { kind: "mcq", prompt: "Qual é o PRIMEIRO som da palavra FADA?", options: ["A", "D", "G", "F"], answer: "F" },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra RIMA com PÃO?",
+      options: ["CASA", "MÃO", "PEIXE", "BOLA"],
+      answer: "MÃO",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra começa com o mesmo som de SAPO?",
+      options: ["FACA", "RATO", "SINO", "DEDO"],
+      answer: "SINO",
+    },
+    {
+      kind: "mcq",
+      prompt: "Quantas SÍLABAS tem a palavra MA-CA-CO?",
+      options: ["3", "2", "4", "1"],
+      answer: "3",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o PRIMEIRO som da palavra FADA?",
+      options: ["A", "D", "G", "F"],
+      answer: "F",
+    },
   ],
   C: [
-    { kind: "mcq", prompt: "📖 'O gato Miau dorme no tapete cinza. Ele acorda ao ouvir um barulho.'\n\nComo se chama o gato?", options: ["Cinza", "Miau", "Tapete", "Barulho"], answer: "Miau" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nQual era a cor do gato?", options: ["Preta", "Branca", "Cinza", "Amarela"], answer: "Cinza" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nPor que o gato acordou?", options: ["Ouviu um barulho", "Estava com fome", "Viu um rato", "Alguém chamou"], answer: "Ouviu um barulho" },
-    { kind: "mcq", prompt: "Que palavra está escrita? D-A-D-O", options: ["LADO", "BADO", "DADA", "DADO"], answer: "DADO" },
+    {
+      kind: "mcq",
+      prompt:
+        "📖 'O gato Miau dorme no tapete cinza. Ele acorda ao ouvir um barulho.'\n\nComo se chama o gato?",
+      options: ["Cinza", "Miau", "Tapete", "Barulho"],
+      answer: "Miau",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nQual era a cor do gato?",
+      options: ["Preta", "Branca", "Cinza", "Amarela"],
+      answer: "Cinza",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nPor que o gato acordou?",
+      options: [
+        "Ouviu um barulho",
+        "Estava com fome",
+        "Viu um rato",
+        "Alguém chamou",
+      ],
+      answer: "Ouviu um barulho",
+    },
+    {
+      kind: "mcq",
+      prompt: "Que palavra está escrita? D-A-D-O",
+      options: ["LADO", "BADO", "DADA", "DADO"],
+      answer: "DADO",
+    },
   ],
   D: [
-    { kind: "mcq", prompt: "📖 'Ana foi à biblioteca buscar um livro de astronomia. Ela leu sobre planetas e estrelas. Depois fez um resumo para a professora.'\n\nO que Ana foi buscar?", options: ["Uma revista", "Um livro", "Um notebook", "Um mapa"], answer: "Um livro" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nSobre o que era o livro?", options: ["Animais", "Plantas", "Astronomia", "História"], answer: "Astronomia" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nO que ela fez depois de ler?", options: ["Um resumo", "Uma prova", "Uma redação", "Uma apresentação"], answer: "Um resumo" },
-    { kind: "mcq", prompt: "Qual é o plural de LEÃO?", options: ["LEÃOS", "LEONES", "LEAOS", "LEÕES"], answer: "LEÕES" },
+    {
+      kind: "mcq",
+      prompt:
+        "📖 'Ana foi à biblioteca buscar um livro de astronomia. Ela leu sobre planetas e estrelas. Depois fez um resumo para a professora.'\n\nO que Ana foi buscar?",
+      options: ["Uma revista", "Um livro", "Um notebook", "Um mapa"],
+      answer: "Um livro",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nSobre o que era o livro?",
+      options: ["Animais", "Plantas", "Astronomia", "História"],
+      answer: "Astronomia",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nO que ela fez depois de ler?",
+      options: ["Um resumo", "Uma prova", "Uma redação", "Uma apresentação"],
+      answer: "Um resumo",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o plural de LEÃO?",
+      options: ["LEÃOS", "LEONES", "LEAOS", "LEÕES"],
+      answer: "LEÕES",
+    },
   ],
   E: [
-    { kind: "mcq", prompt: "📖 'O João tem um cachorro chamado Rex. Todo dia, depois da escola, ele leva o Rex para passear no parque.'\n\nComo se chama o cachorro?", options: ["João", "Rex", "Parque", "Bola"], answer: "Rex" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nQuando o João passeia com o Rex?", options: ["De manhã cedo", "À noite", "Depois da escola", "No fim de semana"], answer: "Depois da escola" },
-    { kind: "mcq", prompt: "Qual palavra é SINÔNIMO de ALEGRE?", options: ["Feliz", "Triste", "Cansado", "Bravo"], answer: "Feliz" },
-    { kind: "mcq", prompt: "Complete: 'Não fui à escola ___ estava doente.'", options: ["mas", "então", "ou", "porque"], answer: "porque" },
+    {
+      kind: "mcq",
+      prompt:
+        "📖 'O João tem um cachorro chamado Rex. Todo dia, depois da escola, ele leva o Rex para passear no parque.'\n\nComo se chama o cachorro?",
+      options: ["João", "Rex", "Parque", "Bola"],
+      answer: "Rex",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nQuando o João passeia com o Rex?",
+      options: [
+        "De manhã cedo",
+        "À noite",
+        "Depois da escola",
+        "No fim de semana",
+      ],
+      answer: "Depois da escola",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra é SINÔNIMO de ALEGRE?",
+      options: ["Feliz", "Triste", "Cansado", "Bravo"],
+      answer: "Feliz",
+    },
+    {
+      kind: "mcq",
+      prompt: "Complete: 'Não fui à escola ___ estava doente.'",
+      options: ["mas", "então", "ou", "porque"],
+      answer: "porque",
+    },
   ],
   F: [
-    { kind: "mcq", prompt: "📖 'Maria estudou muito para a prova. Quando recebeu a nota, sorriu e comemorou com os amigos.'\n\nComo Maria ficou com a nota?", options: ["Triste", "Feliz", "Com raiva", "Com medo"], answer: "Feliz" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nO que mostra que ela foi bem?", options: ["Chorou", "Ficou quieta", "Sorriu e comemorou", "Foi embora"], answer: "Sorriu e comemorou" },
-    { kind: "mcq", prompt: "'Ele tem um coração de ouro.' Isso quer dizer que ele é:", options: ["Muito bom", "Muito rico", "Muito forte", "Muito alto"], answer: "Muito bom" },
-    { kind: "mcq", prompt: "O que significa 'quebrar a cabeça'?", options: ["Se machucar", "Dormir", "Correr", "Pensar muito"], answer: "Pensar muito" },
+    {
+      kind: "mcq",
+      prompt:
+        "📖 'Maria estudou muito para a prova. Quando recebeu a nota, sorriu e comemorou com os amigos.'\n\nComo Maria ficou com a nota?",
+      options: ["Triste", "Feliz", "Com raiva", "Com medo"],
+      answer: "Feliz",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nO que mostra que ela foi bem?",
+      options: ["Chorou", "Ficou quieta", "Sorriu e comemorou", "Foi embora"],
+      answer: "Sorriu e comemorou",
+    },
+    {
+      kind: "mcq",
+      prompt: "'Ele tem um coração de ouro.' Isso quer dizer que ele é:",
+      options: ["Muito bom", "Muito rico", "Muito forte", "Muito alto"],
+      answer: "Muito bom",
+    },
+    {
+      kind: "mcq",
+      prompt: "O que significa 'quebrar a cabeça'?",
+      options: ["Se machucar", "Dormir", "Correr", "Pensar muito"],
+      answer: "Pensar muito",
+    },
   ],
   G: [
-    { kind: "mcq", prompt: "📖 'Usar o celular antes de dormir pode atrapalhar o sono, porque a luz da tela deixa o cérebro mais alerta.'\n\nSegundo o texto, o celular à noite pode:", options: ["Melhorar o sono", "Atrapalhar o sono", "Cansar os olhos apenas", "Não mudar nada"], answer: "Atrapalhar o sono" },
-    { kind: "mcq", prompt: "📖 (mesmo texto)\n\nPor que o celular atrapalha o sono?", options: ["Ele é pesado", "Faz muito barulho", "A luz deixa o cérebro alerta", "Fica sem bateria"], answer: "A luz deixa o cérebro alerta" },
-    { kind: "mcq", prompt: "'Ele ficou de olho na situação.' Significa que ele:", options: ["Prestou atenção", "Foi embora", "Dormiu", "Ficou perdido"], answer: "Prestou atenção" },
-    { kind: "mcq", prompt: "Qual frase está no sentido FIGURADO?", options: ["O anel é de ouro.", "Comprei ouro na loja.", "O ouro é um metal.", "Ela tem um coração de ouro."], answer: "Ela tem um coração de ouro." },
+    {
+      kind: "mcq",
+      prompt:
+        "📖 'Usar o celular antes de dormir pode atrapalhar o sono, porque a luz da tela deixa o cérebro mais alerta.'\n\nSegundo o texto, o celular à noite pode:",
+      options: [
+        "Melhorar o sono",
+        "Atrapalhar o sono",
+        "Cansar os olhos apenas",
+        "Não mudar nada",
+      ],
+      answer: "Atrapalhar o sono",
+    },
+    {
+      kind: "mcq",
+      prompt: "📖 (mesmo texto)\n\nPor que o celular atrapalha o sono?",
+      options: [
+        "Ele é pesado",
+        "Faz muito barulho",
+        "A luz deixa o cérebro alerta",
+        "Fica sem bateria",
+      ],
+      answer: "A luz deixa o cérebro alerta",
+    },
+    {
+      kind: "mcq",
+      prompt: "'Ele ficou de olho na situação.' Significa que ele:",
+      options: ["Prestou atenção", "Foi embora", "Dormiu", "Ficou perdido"],
+      answer: "Prestou atenção",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual frase está no sentido FIGURADO?",
+      options: [
+        "O anel é de ouro.",
+        "Comprei ouro na loja.",
+        "O ouro é um metal.",
+        "Ela tem um coração de ouro.",
+      ],
+      answer: "Ela tem um coração de ouro.",
+    },
   ],
 };
 
 const ESCRITA_BANK: Record<Band, Question[]> = {
-  A: [{
-    kind: "obs",
-    intro: "Observe a criança tentando fazer as atividades abaixo (com lápis/caneta). Marque o que ela consegue realizar:",
-    items: [
-      { label: "Segura o lápis/caneta com a mão (mesmo que de forma irregular)" },
-      { label: "Faz marcas intencionais no papel (rabiscos)" },
-      { label: "Imita traços simples (linhas) quando demonstrado" },
-      { label: "Diferencia texto de desenho (sabe que letras são símbolos)" },
-    ],
-  }],
-  B: [{
-    kind: "obs",
-    intro: "Observe e marque as habilidades de pré-escrita que a criança demonstra:",
-    items: [
-      { label: "Escreve (ou tenta escrever) o próprio nome" },
-      { label: "Reconhece o próprio nome escrito entre outros nomes" },
-      { label: "Copia letras simples isoladas (A, O, L, I)" },
-      { label: "Diferencia letras de números ao olhar" },
-    ],
-  }],
+  A: [
+    {
+      kind: "obs",
+      intro:
+        "Observe a criança tentando fazer as atividades abaixo (com lápis/caneta). Marque o que ela consegue realizar:",
+      items: [
+        {
+          label:
+            "Segura o lápis/caneta com a mão (mesmo que de forma irregular)",
+        },
+        { label: "Faz marcas intencionais no papel (rabiscos)" },
+        { label: "Imita traços simples (linhas) quando demonstrado" },
+        { label: "Diferencia texto de desenho (sabe que letras são símbolos)" },
+      ],
+    },
+  ],
+  B: [
+    {
+      kind: "obs",
+      intro:
+        "Observe e marque as habilidades de pré-escrita que a criança demonstra:",
+      items: [
+        { label: "Escreve (ou tenta escrever) o próprio nome" },
+        { label: "Reconhece o próprio nome escrito entre outros nomes" },
+        { label: "Copia letras simples isoladas (A, O, L, I)" },
+        { label: "Diferencia letras de números ao olhar" },
+      ],
+    },
+  ],
   C: [
-    { kind: "mcq", prompt: "Como se escreve o som 'bê-o-lê-a'?", options: ["BÔLA", "BOLA", "VOLA", "BOLLA"], answer: "BOLA" },
-    { kind: "mcq", prompt: "Qual é a grafia CORRETA?", options: ["GATTO", "GATU", "GATO", "GÁTO"], answer: "GATO" },
-    { kind: "mcq", prompt: "Qual palavra está ESCRITA ERRADA?", options: ["DATO", "CASA", "PAÇOCA", "BOLA"], answer: "DATO" },
-    { kind: "mcq", prompt: "Qual é o plural correto de FLOR?", options: ["FLORS", "FLORÊS", "FLORE", "FLORES"], answer: "FLORES" },
+    {
+      kind: "mcq",
+      prompt: "Como se escreve o som 'bê-o-lê-a'?",
+      options: ["BÔLA", "BOLA", "VOLA", "BOLLA"],
+      answer: "BOLA",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é a grafia CORRETA?",
+      options: ["GATTO", "GATU", "GATO", "GÁTO"],
+      answer: "GATO",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra está ESCRITA ERRADA?",
+      options: ["DATO", "CASA", "PAÇOCA", "BOLA"],
+      answer: "DATO",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o plural correto de FLOR?",
+      options: ["FLORS", "FLORÊS", "FLORE", "FLORES"],
+      answer: "FLORES",
+    },
   ],
   D: [
-    { kind: "mcq", prompt: "Qual palavra está escrita CORRETAMENTE?", options: ["kaza", "casa", "caza", "cassa"], answer: "casa" },
-    { kind: "mcq", prompt: "Qual palavra usa ACENTO corretamente?", options: ["cafe", "cafê", "café", "cáfe"], answer: "café" },
-    { kind: "mcq", prompt: "Qual palavra está ESCRITA ERRADA?", options: ["caza", "escola", "amigo", "bola"], answer: "caza" },
-    { kind: "mcq", prompt: "Complete: 'Ontem eu ___ à escola.'", options: ["vou", "vai", "irei", "fui"], answer: "fui" },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra está escrita CORRETAMENTE?",
+      options: ["kaza", "casa", "caza", "cassa"],
+      answer: "casa",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra usa ACENTO corretamente?",
+      options: ["cafe", "cafê", "café", "cáfe"],
+      answer: "café",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra está ESCRITA ERRADA?",
+      options: ["caza", "escola", "amigo", "bola"],
+      answer: "caza",
+    },
+    {
+      kind: "mcq",
+      prompt: "Complete: 'Ontem eu ___ à escola.'",
+      options: ["vou", "vai", "irei", "fui"],
+      answer: "fui",
+    },
   ],
   E: [
-    { kind: "mcq", prompt: "Qual frase está CORRETA?", options: ["Os meninos brincou no parque.", "Os meninos brincaram no parque.", "Os menino brincou no parque.", "O meninos brincaram."], answer: "Os meninos brincaram no parque." },
-    { kind: "mcq", prompt: "Qual é o plural de 'animal'?", options: ["animals", "animales", "animais", "animauis"], answer: "animais" },
-    { kind: "mcq", prompt: "Complete: 'Nós ___ felizes.'", options: ["estamos", "está", "estou", "estão"], answer: "estamos" },
-    { kind: "mcq", prompt: "Qual frase usa a letra maiúscula corretamente?", options: ["meu nome é ana.", "Meu Nome É Ana.", "meu nome É ana.", "Meu nome é Ana."], answer: "Meu nome é Ana." },
+    {
+      kind: "mcq",
+      prompt: "Qual frase está CORRETA?",
+      options: [
+        "Os meninos brincou no parque.",
+        "Os meninos brincaram no parque.",
+        "Os menino brincou no parque.",
+        "O meninos brincaram.",
+      ],
+      answer: "Os meninos brincaram no parque.",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o plural de 'animal'?",
+      options: ["animals", "animales", "animais", "animauis"],
+      answer: "animais",
+    },
+    {
+      kind: "mcq",
+      prompt: "Complete: 'Nós ___ felizes.'",
+      options: ["estamos", "está", "estou", "estão"],
+      answer: "estamos",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual frase usa a letra maiúscula corretamente?",
+      options: [
+        "meu nome é ana.",
+        "Meu Nome É Ana.",
+        "meu nome É ana.",
+        "Meu nome é Ana.",
+      ],
+      answer: "Meu nome é Ana.",
+    },
   ],
   F: [
-    { kind: "mcq", prompt: "Qual frase está CORRETA?", options: ["Ela foram bem na prova.", "Ela foi bem na prova.", "Ela fui bem na prova.", "Ela vai bem na prova ontem."], answer: "Ela foi bem na prova." },
-    { kind: "mcq", prompt: "Qual é o OPOSTO de 'começar'?", options: ["Iniciar", "Abrir", "Terminar", "Andar"], answer: "Terminar" },
-    { kind: "mcq", prompt: "Qual palavra está escrita CERTA?", options: ["exercício", "exercicio", "ezercício", "exersício"], answer: "exercício" },
-    { kind: "mcq", prompt: "Qual frase está no PASSADO?", options: ["Amanhã eu estudo.", "Eu estudo agora.", "Eu vou estudar.", "Ontem eu estudei."], answer: "Ontem eu estudei." },
+    {
+      kind: "mcq",
+      prompt: "Qual frase está CORRETA?",
+      options: [
+        "Ela foram bem na prova.",
+        "Ela foi bem na prova.",
+        "Ela fui bem na prova.",
+        "Ela vai bem na prova ontem.",
+      ],
+      answer: "Ela foi bem na prova.",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o OPOSTO de 'começar'?",
+      options: ["Iniciar", "Abrir", "Terminar", "Andar"],
+      answer: "Terminar",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra está escrita CERTA?",
+      options: ["exercício", "exercicio", "ezercício", "exersício"],
+      answer: "exercício",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual frase está no PASSADO?",
+      options: [
+        "Amanhã eu estudo.",
+        "Eu estudo agora.",
+        "Eu vou estudar.",
+        "Ontem eu estudei.",
+      ],
+      answer: "Ontem eu estudei.",
+    },
   ],
   G: [
-    { kind: "mcq", prompt: "Qual frase está mais bem escrita?", options: ["Precisa economizar nós água.", "Precisamos economizar água.", "Nós precisa economizar água.", "Água economizar precisamos."], answer: "Precisamos economizar água." },
-    { kind: "mcq", prompt: "Qual é o OPOSTO de 'vantagem'?", options: ["Benefício", "Lucro", "Desvantagem", "Ganho"], answer: "Desvantagem" },
-    { kind: "mcq", prompt: "Qual palavra está escrita CORRETA?", options: ["através", "atravez", "atravéz", "atraveiz"], answer: "através" },
-    { kind: "mcq", prompt: "Qual frase é uma OPINIÃO (não um fato)?", options: ["O filme dura duas horas.", "O filme é colorido.", "O filme foi lançado ontem.", "Este é o melhor filme do ano."], answer: "Este é o melhor filme do ano." },
+    {
+      kind: "mcq",
+      prompt: "Qual frase está mais bem escrita?",
+      options: [
+        "Precisa economizar nós água.",
+        "Precisamos economizar água.",
+        "Nós precisa economizar água.",
+        "Água economizar precisamos.",
+      ],
+      answer: "Precisamos economizar água.",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é o OPOSTO de 'vantagem'?",
+      options: ["Benefício", "Lucro", "Desvantagem", "Ganho"],
+      answer: "Desvantagem",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual palavra está escrita CORRETA?",
+      options: ["através", "atravez", "atravéz", "atraveiz"],
+      answer: "através",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual frase é uma OPINIÃO (não um fato)?",
+      options: [
+        "O filme dura duas horas.",
+        "O filme é colorido.",
+        "O filme foi lançado ontem.",
+        "Este é o melhor filme do ano.",
+      ],
+      answer: "Este é o melhor filme do ano.",
+    },
   ],
 };
 
 const ARITMETICA_BANK: Record<Band, MCQ[]> = {
   A: [
-    { kind: "mcq", prompt: "Qual grupo tem MAIS?", big: true, options: ["🍎🍎 (2)", "🍎🍎🍎 (3)", "🍎 (1)", "São iguais"], answer: "🍎🍎🍎 (3)" },
-    { kind: "mcq", prompt: "Quantos há aqui? 🐶🐶", options: ["1", "3", "2", "4"], answer: "2" },
-    { kind: "mcq", prompt: "Quantos dedos tem UMA mão?", options: ["5", "4", "6", "3"], answer: "5" },
-    { kind: "mcq", prompt: "1 + 1 = ?", options: ["3", "1", "4", "2"], answer: "2" },
+    {
+      kind: "mcq",
+      prompt: "Qual grupo tem MAIS?",
+      big: true,
+      options: ["🍎🍎 (2)", "🍎🍎🍎 (3)", "🍎 (1)", "São iguais"],
+      answer: "🍎🍎🍎 (3)",
+    },
+    {
+      kind: "mcq",
+      prompt: "Quantos há aqui? 🐶🐶",
+      options: ["1", "3", "2", "4"],
+      answer: "2",
+    },
+    {
+      kind: "mcq",
+      prompt: "Quantos dedos tem UMA mão?",
+      options: ["5", "4", "6", "3"],
+      answer: "5",
+    },
+    {
+      kind: "mcq",
+      prompt: "1 + 1 = ?",
+      options: ["3", "1", "4", "2"],
+      answer: "2",
+    },
   ],
   B: [
-    { kind: "mcq", prompt: "Qual número vem depois de 9?", options: ["8", "10", "11", "7"], answer: "10" },
-    { kind: "mcq", prompt: "2 + 3 = ?", options: ["4", "6", "5", "3"], answer: "5" },
-    { kind: "mcq", prompt: "Tenho 5 balas e como 2. Quantas restam?", options: ["3", "2", "4", "7"], answer: "3" },
-    { kind: "mcq", prompt: "4 + 4 = ?", options: ["6", "9", "7", "8"], answer: "8" },
+    {
+      kind: "mcq",
+      prompt: "Qual número vem depois de 9?",
+      options: ["8", "10", "11", "7"],
+      answer: "10",
+    },
+    {
+      kind: "mcq",
+      prompt: "2 + 3 = ?",
+      options: ["4", "6", "5", "3"],
+      answer: "5",
+    },
+    {
+      kind: "mcq",
+      prompt: "Tenho 5 balas e como 2. Quantas restam?",
+      options: ["3", "2", "4", "7"],
+      answer: "3",
+    },
+    {
+      kind: "mcq",
+      prompt: "4 + 4 = ?",
+      options: ["6", "9", "7", "8"],
+      answer: "8",
+    },
   ],
   C: [
-    { kind: "mcq", prompt: "8 + 7 = ?", options: ["14", "15", "16", "13"], answer: "15" },
-    { kind: "mcq", prompt: "20 − 6 = ?", options: ["15", "13", "14", "12"], answer: "14" },
-    { kind: "mcq", prompt: "Qual é a metade de 10?", options: ["5", "4", "6", "3"], answer: "5" },
-    { kind: "mcq", prompt: "Tenho 3 grupos de 4 maçãs. Quantas maçãs no total?", options: ["7", "10", "9", "12"], answer: "12" },
+    {
+      kind: "mcq",
+      prompt: "8 + 7 = ?",
+      options: ["14", "15", "16", "13"],
+      answer: "15",
+    },
+    {
+      kind: "mcq",
+      prompt: "20 − 6 = ?",
+      options: ["15", "13", "14", "12"],
+      answer: "14",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é a metade de 10?",
+      options: ["5", "4", "6", "3"],
+      answer: "5",
+    },
+    {
+      kind: "mcq",
+      prompt: "Tenho 3 grupos de 4 maçãs. Quantas maçãs no total?",
+      options: ["7", "10", "9", "12"],
+      answer: "12",
+    },
   ],
   D: [
-    { kind: "mcq", prompt: "6 + 7 = ?", options: ["12", "13", "14", "15"], answer: "13" },
-    { kind: "mcq", prompt: "15 − 8 = ?", options: ["8", "6", "7", "9"], answer: "7" },
-    { kind: "mcq", prompt: "3 × 4 = ?", options: ["12", "7", "9", "14"], answer: "12" },
-    { kind: "mcq", prompt: "Qual número é MAIOR: 34 ou 43?", options: ["34", "São iguais", "Não sei", "43"], answer: "43" },
+    {
+      kind: "mcq",
+      prompt: "6 + 7 = ?",
+      options: ["12", "13", "14", "15"],
+      answer: "13",
+    },
+    {
+      kind: "mcq",
+      prompt: "15 − 8 = ?",
+      options: ["8", "6", "7", "9"],
+      answer: "7",
+    },
+    {
+      kind: "mcq",
+      prompt: "3 × 4 = ?",
+      options: ["12", "7", "9", "14"],
+      answer: "12",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual número é MAIOR: 34 ou 43?",
+      options: ["34", "São iguais", "Não sei", "43"],
+      answer: "43",
+    },
   ],
   E: [
-    { kind: "mcq", prompt: "25 + 48 = ?", options: ["63", "73", "83", "72"], answer: "73" },
-    { kind: "mcq", prompt: "9 × 6 = ?", options: ["56", "45", "54", "63"], answer: "54" },
-    { kind: "mcq", prompt: "50% de 40 = ?", options: ["20", "10", "40", "30"], answer: "20" },
-    { kind: "mcq", prompt: "Tenho 24 figurinhas em 3 pacotes iguais. Cada pacote tem:", options: ["6", "9", "12", "8"], answer: "8" },
+    {
+      kind: "mcq",
+      prompt: "25 + 48 = ?",
+      options: ["63", "73", "83", "72"],
+      answer: "73",
+    },
+    {
+      kind: "mcq",
+      prompt: "9 × 6 = ?",
+      options: ["56", "45", "54", "63"],
+      answer: "54",
+    },
+    {
+      kind: "mcq",
+      prompt: "50% de 40 = ?",
+      options: ["20", "10", "40", "30"],
+      answer: "20",
+    },
+    {
+      kind: "mcq",
+      prompt: "Tenho 24 figurinhas em 3 pacotes iguais. Cada pacote tem:",
+      options: ["6", "9", "12", "8"],
+      answer: "8",
+    },
   ],
   F: [
-    { kind: "mcq", prompt: "100 − 37 = ?", options: ["67", "63", "73", "57"], answer: "63" },
-    { kind: "mcq", prompt: "12 × 5 = ?", options: ["50", "55", "60", "65"], answer: "60" },
-    { kind: "mcq", prompt: "10% de 200 = ?", options: ["20", "10", "200", "2"], answer: "20" },
-    { kind: "mcq", prompt: "Um lápis custa R$ 2. Quanto custam 6 lápis?", options: ["R$ 8", "R$ 10", "R$ 14", "R$ 12"], answer: "R$ 12" },
+    {
+      kind: "mcq",
+      prompt: "100 − 37 = ?",
+      options: ["67", "63", "73", "57"],
+      answer: "63",
+    },
+    {
+      kind: "mcq",
+      prompt: "12 × 5 = ?",
+      options: ["50", "55", "60", "65"],
+      answer: "60",
+    },
+    {
+      kind: "mcq",
+      prompt: "10% de 200 = ?",
+      options: ["20", "10", "200", "2"],
+      answer: "20",
+    },
+    {
+      kind: "mcq",
+      prompt: "Um lápis custa R$ 2. Quanto custam 6 lápis?",
+      options: ["R$ 8", "R$ 10", "R$ 14", "R$ 12"],
+      answer: "R$ 12",
+    },
   ],
   G: [
-    { kind: "mcq", prompt: "Um produto custa R$ 80 e tem 25% de desconto. Preço final:", options: ["R$ 55", "R$ 60", "R$ 20", "R$ 75"], answer: "R$ 60" },
-    { kind: "mcq", prompt: "Qual é a MÉDIA de 4, 6 e 8?", options: ["5", "7", "6", "9"], answer: "6" },
-    { kind: "mcq", prompt: "Se 3 canetas custam R$ 9, uma caneta custa:", options: ["R$ 3", "R$ 6", "R$ 9", "R$ 2"], answer: "R$ 3" },
-    { kind: "mcq", prompt: "Quanto é 15% de 100?", options: ["10", "20", "150", "15"], answer: "15" },
+    {
+      kind: "mcq",
+      prompt: "Um produto custa R$ 80 e tem 25% de desconto. Preço final:",
+      options: ["R$ 55", "R$ 60", "R$ 20", "R$ 75"],
+      answer: "R$ 60",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual é a MÉDIA de 4, 6 e 8?",
+      options: ["5", "7", "6", "9"],
+      answer: "6",
+    },
+    {
+      kind: "mcq",
+      prompt: "Se 3 canetas custam R$ 9, uma caneta custa:",
+      options: ["R$ 3", "R$ 6", "R$ 9", "R$ 2"],
+      answer: "R$ 3",
+    },
+    {
+      kind: "mcq",
+      prompt: "Quanto é 15% de 100?",
+      options: ["10", "20", "150", "15"],
+      answer: "15",
+    },
   ],
 };
 
 // ─────────────────────────────── ObsModule ───────────────────────────────
-function ObsModule({ block, onComplete }: {
+function ObsModule({
+  block,
+  onComplete,
+}: {
   block: ObsBlock;
   onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
 }) {
-  const [answers, setAnswers] = useState<boolean[]>(Array(block.items.length).fill(false));
+  const [answers, setAnswers] = useState<boolean[]>(
+    Array(block.items.length).fill(false),
+  );
   const [done, setDone] = useState(false);
 
   function toggle(i: number) {
     if (done) return;
-    setAnswers((prev) => { const n = [...prev]; n[i] = !n[i]; return n; });
+    setAnswers((prev) => {
+      const n = [...prev];
+      n[i] = !n[i];
+      return n;
+    });
   }
 
   function finish() {
@@ -399,29 +917,37 @@ function ObsModule({ block, onComplete }: {
             className={`w-full text-left flex items-center gap-3 rounded-xl border p-3 transition ${answers[i] ? "border-emerald-400 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30" : "border-border bg-background hover:border-primary/40"}`}
             aria-pressed={answers[i]}
           >
-            <span className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-sm ${answers[i] ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}>
+            <span
+              className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-sm ${answers[i] ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}
+            >
               {answers[i] ? "✓" : ""}
             </span>
             <span className="text-sm text-foreground">{item.label}</span>
           </button>
         ))}
       </div>
-      {!done
-        ? <Button onClick={finish} className="w-full mt-2">Finalizar observação ({score}/{block.items.length} marcados)</Button>
-        : (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="p-4 text-center">
-              <div className="text-3xl mb-1">✅</div>
-              <p className="text-sm font-bold">{score}/{block.items.length} habilidades observadas</p>
-            </CardContent>
-          </Card>
-        )}
+      {!done ? (
+        <Button onClick={finish} className="w-full mt-2">
+          Finalizar observação ({score}/{block.items.length} marcados)
+        </Button>
+      ) : (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-4 text-center">
+            <p className="text-sm font-bold">
+              Respostas de observação registradas
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
 
 // ─────────────────────────────── QuizModule ───────────────────────────────
-function QuizModule({ questions, onComplete }: {
+function QuizModule({
+  questions,
+  onComplete,
+}: {
   questions: MCQ[];
   onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
 }) {
@@ -429,11 +955,11 @@ function QuizModule({ questions, onComplete }: {
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
-  const [phase, setPhase] = useState<"question" | "feedback" | "done">("question");
+  const [phase, setPhase] = useState<"question" | "feedback" | "done">(
+    "question",
+  );
 
   const q = questions[idx];
-  const isCorrect = selected === q?.answer;
-
   // Embaralha a ordem das alternativas por questão para que a resposta correta
   // NÃO fique sempre na primeira posição. A ordem é estável durante a questão
   // (não re-embaralha no feedback) e é sorteada de novo a cada nova questão /
@@ -456,7 +982,10 @@ function QuizModule({ questions, onComplete }: {
     setPhase("feedback");
     const ok = opt === q.answer;
     if (ok) setScore((s) => s + 1);
-    setAnswers((a) => [...a, { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok }]);
+    setAnswers((a) => [
+      ...a,
+      { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok },
+    ]);
   }
 
   function handleComplete() {
@@ -467,9 +996,9 @@ function QuizModule({ questions, onComplete }: {
     return (
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-5 text-center space-y-2">
-          <div className="text-4xl">🏆</div>
-          <p className="text-sm font-bold text-foreground">{score} / {questions.length} corretas</p>
-          <p className="text-xs text-muted-foreground">({Math.round((score / questions.length) * 100)}%)</p>
+          <p className="text-sm font-bold text-foreground">
+            Todas as respostas deste módulo foram registradas
+          </p>
         </CardContent>
       </Card>
     );
@@ -478,27 +1007,39 @@ function QuizModule({ questions, onComplete }: {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Badge variant="outline">Questão {idx + 1} / {questions.length}</Badge>
-        <Badge variant="outline" className="gap-1"><span className="text-emerald-500">●</span> Acertos: {score}</Badge>
+        <Badge variant="outline">
+          Questão {idx + 1} / {questions.length}
+        </Badge>
+        <Badge variant="outline">Resposta por resposta</Badge>
       </div>
 
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 transition-all duration-500 ease-out" style={{ width: `${((idx) / questions.length) * 100}%` }} />
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 transition-all duration-500 ease-out"
+          style={{ width: `${(idx / questions.length) * 100}%` }}
+        />
       </div>
 
       <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-muted/50 to-transparent p-4 sm:p-5 shadow-sm">
-        <p className={`relative text-foreground leading-relaxed whitespace-pre-line ${q.big ? "text-xl font-bold text-center" : "text-sm font-semibold"}`}>{q.prompt}</p>
+        <p
+          className={`relative text-foreground leading-relaxed whitespace-pre-line ${q.big ? "text-xl font-bold text-center" : "text-sm font-semibold"}`}
+        >
+          {q.prompt}
+        </p>
       </div>
 
       <div className={`grid gap-2 ${q.big ? "grid-cols-2" : "grid-cols-1"}`}>
         {displayOptions.map((opt) => {
-          let cls = "rounded-2xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97]";
+          let cls =
+            "rounded-2xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97]";
           if (phase === "feedback") {
-            if (opt === q.answer) cls += " border-emerald-500 bg-emerald-50 shadow-sm shadow-emerald-500/10 dark:border-emerald-600 dark:bg-emerald-950/40";
-            else if (opt === selected) cls += " border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30";
+            if (opt === selected)
+              cls +=
+                " border-primary bg-primary/10 shadow-sm shadow-primary/10";
             else cls += " border-border bg-background opacity-50";
           } else {
-            cls += " border-border bg-background hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/5 hover:shadow-sm cursor-pointer";
+            cls +=
+              " border-border bg-background hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/5 hover:shadow-sm cursor-pointer";
           }
 
           return (
@@ -509,19 +1050,21 @@ function QuizModule({ questions, onComplete }: {
               disabled={phase === "feedback"}
               className={`${cls} ${q.big ? "min-h-[64px] text-2xl text-center flex items-center justify-center" : "text-sm"}`}
             >
-              {q.big ? <span>{opt}</span> : <span className="font-medium">{opt}</span>}
+              {q.big ? (
+                <span>{opt}</span>
+              ) : (
+                <span className="font-medium">{opt}</span>
+              )}
             </button>
           );
         })}
       </div>
 
       {phase === "feedback" && (
-        <div className={`rounded-xl p-3 flex items-center gap-2 ${isCorrect ? "bg-emerald-50 border border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700" : "bg-red-50 border border-red-300 dark:bg-red-950/30 dark:border-red-700"}`}>
-          {isCorrect
-            ? <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-            : <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />}
-          <span className={`text-xs font-semibold ${isCorrect ? "text-emerald-800 dark:text-emerald-200" : "text-red-800 dark:text-red-200"}`}>
-            {isCorrect ? "Correto!" : `Resposta: ${q.answer}`}
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="text-xs font-semibold text-foreground">
+            Resposta registrada
           </span>
           <Button
             size="sm"
@@ -554,7 +1097,12 @@ const DOMAIN_LABELS: Record<Domain, string> = {
   aritmetica: "Aritmética",
 };
 
-function DomainModule({ domain, band, onComplete, result }: {
+function DomainModule({
+  domain,
+  band,
+  onComplete,
+  result,
+}: {
   domain: Domain;
   band: Band;
   onComplete: (r: DomainResult) => void;
@@ -570,9 +1118,12 @@ function DomainModule({ domain, band, onComplete, result }: {
     aritmetica: ARITMETICA_BANK[band],
   }[domain];
 
-  const handleComplete = useCallback((score: number, max: number, answers: AnswerRecord[]) => {
-    onComplete({ domain, label: DOMAIN_LABELS[domain], score, max, answers });
-  }, [domain, onComplete]);
+  const handleComplete = useCallback(
+    (score: number, max: number, answers: AnswerRecord[]) => {
+      onComplete({ domain, label: DOMAIN_LABELS[domain], score, max, answers });
+    },
+    [domain, onComplete],
+  );
 
   if (result && !started) {
     return (
@@ -584,10 +1135,25 @@ function DomainModule({ domain, band, onComplete, result }: {
                 <CheckCircle2 className="h-4 w-4" /> {result.label} — concluído
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {result.score}/{result.max} corretas ({Math.round((result.score / result.max) * 100)}%) · {interpret(result.score, result.max)}
+                Todas as perguntas e respostas deste módulo foram registradas.
               </p>
             </div>
-            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setStarted(false); setReset((r) => r + 1); onComplete({ domain, label: DOMAIN_LABELS[domain], score: 0, max: 0, answers: [] }); }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-xs"
+              onClick={() => {
+                setStarted(false);
+                setReset((r) => r + 1);
+                onComplete({
+                  domain,
+                  label: DOMAIN_LABELS[domain],
+                  score: 0,
+                  max: 0,
+                  answers: [],
+                });
+              }}
+            >
               <RotateCcw className="h-3.5 w-3.5" /> Refazer
             </Button>
           </CardContent>
@@ -598,10 +1164,16 @@ function DomainModule({ domain, band, onComplete, result }: {
 
   if (!started) {
     const descriptions: Record<Domain, string> = {
-      visual: "Tarefas de reconhecimento de objetos, padrões, letras e raciocínio visual adaptadas à faixa etária.",
-      leitura: "Avaliação de habilidades de leitura — consciência fonológica, decodificação e compreensão de texto.",
-      escrita: band <= "B" ? "Lista de observação das habilidades de pré-escrita. Marque o que a criança demonstra." : "Tarefas de ortografia, gramática e estrutura textual adequadas à série.",
-      aritmetica: "Operações matemáticas, raciocínio numérico e resolução de problemas por nível de escolaridade.",
+      visual:
+        "Tarefas de reconhecimento de objetos, padrões, letras e raciocínio visual adaptadas à faixa etária.",
+      leitura:
+        "Avaliação de habilidades de leitura — consciência fonológica, decodificação e compreensão de texto.",
+      escrita:
+        band <= "B"
+          ? "Lista de observação das habilidades de pré-escrita. Marque o que a criança demonstra."
+          : "Tarefas de ortografia, gramática e estrutura textual adequadas à série.",
+      aritmetica:
+        "Operações matemáticas, raciocínio numérico e resolução de problemas por nível de escolaridade.",
     };
     return (
       <div className="space-y-3 text-center py-4">
@@ -619,22 +1191,40 @@ function DomainModule({ domain, band, onComplete, result }: {
     return <ObsModule key={reset} block={block} onComplete={handleComplete} />;
   }
 
-  return <QuizModule key={reset} questions={bank as MCQ[]} onComplete={handleComplete} />;
+  return (
+    <QuizModule
+      key={reset}
+      questions={bank as MCQ[]}
+      onComplete={handleComplete}
+    />
+  );
 }
 
 // ─────────────────────────────── MAIN PAGE ───────────────────────────────
-const DOMAINS: { id: Domain; label: string; icon: typeof Eye; color: string }[] = [
+const DOMAINS: {
+  id: Domain;
+  label: string;
+  icon: typeof Eye;
+  color: string;
+}[] = [
   { id: "visual", label: "Visual", icon: Eye, color: "text-violet-600" },
   { id: "leitura", label: "Leitura", icon: BookOpen, color: "text-blue-600" },
   { id: "escrita", label: "Escrita", icon: PenTool, color: "text-amber-600" },
-  { id: "aritmetica", label: "Aritmética", icon: Calculator, color: "text-emerald-600" },
+  {
+    id: "aritmetica",
+    label: "Aritmética",
+    icon: Calculator,
+    color: "text-emerald-600",
+  },
 ];
 
 export default function AvaliacaoCognitivaInfantilPage() {
   const [ageStr, setAgeStr] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [activeDomain, setActiveDomain] = useState<Domain>("visual");
-  const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>({});
+  const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>(
+    {},
+  );
 
   const age = parseInt(ageStr, 10);
   const validAge = !isNaN(age) && age >= 2 && age <= 19;
@@ -642,39 +1232,36 @@ export default function AvaliacaoCognitivaInfantilPage() {
 
   function handleResult(r: DomainResult) {
     if (r.max === 0) {
-      setResults((prev) => { const n = { ...prev }; delete n[r.domain]; return n; });
+      setResults((prev) => {
+        const n = { ...prev };
+        delete n[r.domain];
+        return n;
+      });
     } else {
       setResults((prev) => ({ ...prev, [r.domain]: r }));
     }
   }
 
   const completedDomains = Object.values(results).filter((r) => r && r.max > 0);
-  const allDone = completedDomains.length === 4;
-
-  const answerLine = (a: AnswerRecord): string =>
-    a.correct !== undefined
-      ? (a.isCorrect ? `respondeu ${a.selected}` : `respondeu ${a.selected ?? "—"} | correto: ${a.correct}`)
-      : `${a.selected}`;
-
-  const reportText = allDone && band
-    ? [
-      buildQualitativeReport(completedDomains as DomainResult[], band),
-      "",
-      "Detalhamento item a item",
-      ...completedDomains.flatMap((r) => [
-        `• ${r!.label}: ${r!.score}/${r!.max} (${Math.round((r!.score / r!.max) * 100)}%)`,
-        ...r!.answers.map((a, i) => `   ${i + 1}. [${a.isCorrect ? "✓" : "✗"}] ${shortPrompt(a.prompt)} → ${answerLine(a)}`),
-        "",
-      ]),
-    ].join("\n").trimEnd()
-    : "";
+  const reportItems = completedDomains.flatMap((result) =>
+    result!.answers.map((answer) => ({
+      question: `[${result!.label}] ${answer.prompt}`,
+      answer: answer.selected ?? "Não respondida",
+    })),
+  );
 
   return (
     <div className="space-y-5 pb-8">
       {/* Header */}
       <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 sm:p-6 shadow-sm backdrop-blur">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-blue-400/20 to-transparent blur-3xl" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-blue-400/20 to-transparent blur-3xl"
+        />
         <div className="relative flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-600/25 ring-1 ring-white/20">
             <Brain className="h-5 w-5" />
@@ -683,10 +1270,13 @@ export default function AvaliacaoCognitivaInfantilPage() {
             <Badge className="mb-2 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300 hover:bg-violet-100">
               avaliação cognitiva · 2–19 anos
             </Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Avaliação Cognitiva Infantil</h1>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">
+              Avaliação Cognitiva Infantil
+            </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Bateria enxuta adaptada por faixa etária: 4 itens em cada área — reconhecimento visual, leitura,
-              escrita e aritmética — com relatório qualitativo ao final. Triagem educativa — não substitui
+              Bateria enxuta adaptada por faixa etária: 4 itens em cada área —
+              reconhecimento visual, leitura, escrita e aritmética — com
+              relatório qualitativo ao final. Triagem educativa — não substitui
               avaliação psicométrica formal.
             </p>
           </div>
@@ -695,14 +1285,21 @@ export default function AvaliacaoCognitivaInfantilPage() {
         {/* Age input */}
         <div className="mt-4 flex items-end gap-3 flex-wrap">
           <div>
-            <label htmlFor="idade-av" className="text-xs font-semibold text-muted-foreground block mb-1">
+            <label
+              htmlFor="idade-av"
+              className="text-xs font-semibold text-muted-foreground block mb-1"
+            >
               Idade da criança (anos)
             </label>
             <Input
               id="idade-av"
               inputMode="numeric"
               value={ageStr}
-              onChange={(e) => { setAgeStr(e.target.value.replace(/\D/g, "").slice(0, 2)); setConfirmed(false); setResults({}); }}
+              onChange={(e) => {
+                setAgeStr(e.target.value.replace(/\D/g, "").slice(0, 2));
+                setConfirmed(false);
+                setResults({});
+              }}
               placeholder="ex.: 7"
               className="h-9 w-24"
             />
@@ -710,7 +1307,10 @@ export default function AvaliacaoCognitivaInfantilPage() {
           <Button
             size="sm"
             disabled={!validAge}
-            onClick={() => { setConfirmed(true); setActiveDomain("visual"); }}
+            onClick={() => {
+              setConfirmed(true);
+              setActiveDomain("visual");
+            }}
           >
             Iniciar avaliação
           </Button>
@@ -726,7 +1326,10 @@ export default function AvaliacaoCognitivaInfantilPage() {
       {confirmed && band && (
         <>
           {/* Domain tabs */}
-          <nav className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Módulos de avaliação">
+          <nav
+            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+            aria-label="Módulos de avaliação"
+          >
             {DOMAINS.map((d) => {
               const Icon = d.icon;
               const isActive = activeDomain === d.id;
@@ -739,9 +1342,17 @@ export default function AvaliacaoCognitivaInfantilPage() {
                   aria-pressed={isActive}
                   className={`group flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl border p-3 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] ${isActive ? "border-primary bg-gradient-to-br from-primary/15 to-primary/[0.04] shadow-sm" : "border-border bg-background hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"}`}
                 >
-                  <Icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-primary" : d.color}`} />
-                  <span className="text-[12px] font-bold text-foreground">{d.label}</span>
-                  {done && <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">✓ feito</span>}
+                  <Icon
+                    className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-primary" : d.color}`}
+                  />
+                  <span className="text-[12px] font-bold text-foreground">
+                    {d.label}
+                  </span>
+                  {done && (
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                      ✓ feito
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -751,11 +1362,17 @@ export default function AvaliacaoCognitivaInfantilPage() {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                {(() => { const d = DOMAINS.find((x) => x.id === activeDomain)!; const Icon = d.icon; return <Icon className={`h-5 w-5 ${d.color}`} />; })()}
+                {(() => {
+                  const d = DOMAINS.find((x) => x.id === activeDomain)!;
+                  const Icon = d.icon;
+                  return <Icon className={`h-5 w-5 ${d.color}`} />;
+                })()}
                 <h2 className="text-base font-black text-foreground">
                   {DOMAINS.find((x) => x.id === activeDomain)?.label}
                 </h2>
-                <Badge variant="outline" className="ml-auto text-[11px]">{BAND_LABEL[band]}</Badge>
+                <Badge variant="outline" className="ml-auto text-[11px]">
+                  {BAND_LABEL[band]}
+                </Badge>
               </div>
               <DomainModule
                 key={`${activeDomain}-${band}`}
@@ -767,93 +1384,20 @@ export default function AvaliacaoCognitivaInfantilPage() {
             </CardContent>
           </Card>
 
-          {/* Progress indicator */}
-          <div className="flex gap-2 flex-wrap">
-            {DOMAINS.map((d) => {
-              const r = results[d.id];
-              const pct = r?.max ? Math.round((r.score / r.max) * 100) : null;
-              return (
-                <div key={d.id} className={`rounded-xl border px-3 py-2 text-xs ${r?.max ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/20" : "border-border bg-background"}`}>
-                  <span className="font-semibold text-foreground">{d.label}</span>
-                  {pct !== null && <span className="ml-1.5 text-muted-foreground">{pct}%</span>}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Results summary */}
           {completedDomains.length > 0 && (
-            <Card className="overflow-hidden border-border/70 bg-gradient-to-br from-primary/[0.05] via-card to-transparent shadow-sm">
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-primary"><ClipboardCheck className="h-4 w-4" /></span>
-                  <h2 className="text-sm font-black text-foreground">
-                    Resultado parcial {completedDomains.length < 4 ? `(${completedDomains.length}/4 módulos)` : "— Completo"}
-                  </h2>
-                </div>
-
-                <div className="space-y-2">
-                  {completedDomains.map((r) => {
-                    if (!r) return null;
-                    const pct = Math.round((r.score / r.max) * 100);
-                    const color = pct >= 85 ? "bg-emerald-500" : pct >= 65 ? "bg-yellow-500" : pct >= 45 ? "bg-orange-500" : "bg-red-500";
-                    return (
-                      <div key={r.domain} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-semibold text-foreground">{r.label}</span>
-                          <span className="text-muted-foreground">{r.score}/{r.max} ({pct}%)</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">{interpret(r.score, r.max)}</p>
-                        {r.answers.length > 0 && (
-                          <details className="mt-1 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1.5">
-                            <summary className="cursor-pointer select-none text-[11px] font-semibold text-primary">
-                              Ver todas as {r.answers.length} perguntas e respostas
-                            </summary>
-                            <ol className="mt-1.5 space-y-1">
-                              {r.answers.map((a, i) => (
-                                <li key={i} className="flex items-start gap-1.5 text-[11px] leading-snug">
-                                  <span className={`mt-px shrink-0 font-bold ${a.isCorrect ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>{a.isCorrect ? "✓" : "✗"}</span>
-                                  <span className="min-w-0">
-                                    <span className="font-medium text-foreground">{i + 1}. {a.prompt}</span>{" "}
-                                    <span className="text-muted-foreground">
-                                      → {a.correct !== undefined
-                                        ? (a.isCorrect ? <>respondeu <strong className="text-foreground">{a.selected}</strong></> : <>respondeu <strong className="text-red-600 dark:text-red-400">{a.selected ?? "—"}</strong> · correto: <strong className="text-emerald-700 dark:text-emerald-300">{a.correct}</strong></>)
-                                        : <strong className="text-foreground">{a.selected}</strong>}
-                                    </span>
-                                  </span>
-                                </li>
-                              ))}
-                            </ol>
-                          </details>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {allDone && (
-                  <div className="pt-2 border-t border-border">
-                    <p className="mb-2 flex items-center gap-1.5 text-sm font-black text-foreground">
-                      <ClipboardCheck className="h-4 w-4 text-primary" /> Relatório qualitativo
-                    </p>
-                    <pre className="whitespace-pre-wrap rounded-xl bg-background p-3 text-xs leading-relaxed text-foreground border border-border">
-                      {reportText}
-                    </pre>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 gap-1.5"
-                      onClick={() => navigator.clipboard?.writeText(reportText)}
-                    >
-                      <ClipboardCheck className="h-3.5 w-3.5" /> Copiar para o laudo
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <ClinicalReport
+                scaleName="Avaliação Cognitiva Infantil"
+                scaleFullName="Reconhecimento visual, leitura, escrita e aritmética"
+                items={reportItems}
+                patientAge={band ? BAND_LABEL[band] : undefined}
+              />
+              <SaveToPatient
+                scaleName="Avaliação Cognitiva Infantil"
+                responses={reportItems}
+                patientAge={band ? BAND_LABEL[band] : undefined}
+              />
+            </div>
           )}
         </>
       )}
@@ -861,7 +1405,10 @@ export default function AvaliacaoCognitivaInfantilPage() {
       {!confirmed && (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
           <Brain className="h-8 w-8 text-muted-foreground mx-auto" />
-          <p className="text-sm text-muted-foreground">Digite a idade da criança (2–19 anos) e clique em <strong>Iniciar avaliação</strong> para ver a bateria adaptada.</p>
+          <p className="text-sm text-muted-foreground">
+            Digite a idade da criança (2–19 anos) e clique em{" "}
+            <strong>Iniciar avaliação</strong> para ver a bateria adaptada.
+          </p>
         </div>
       )}
     </div>
