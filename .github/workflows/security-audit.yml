@@ -33,55 +33,108 @@ jobs:
       - name: Rodar auditoria de segurança
         id: audit
         run: |
-          npm audit --audit-level=high --json > audit-report.json 2>&1 || true
-          CRITICAL=$(cat audit-report.json | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          meta = data.get('metadata', {})
-          vulns = meta.get('vulnerabilities', {})
-          print(vulns.get('critical', 0) + vulns.get('high', 0))
-          " 2>/dev/null || echo "0")
+          npm audit --audit-level=high --json > audit-report.json 2> audit-stderr.log || true
+          cat audit-stderr.log >&2
+          CRITICAL=$(node -e "
+          const data = JSON.parse(require('fs').readFileSync('audit-report.json', 'utf8'));
+          const vulns = data.metadata?.vulnerabilities ?? {};
+          process.stdout.write(String((vulns.critical ?? 0) + (vulns.high ?? 0)));
+          ")
           echo "critical_count=$CRITICAL" >> $GITHUB_OUTPUT
-          cat audit-report.json | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          meta = data.get('metadata', {})
-          vulns = meta.get('vulnerabilities', {})
-          print('Críticas:', vulns.get('critical', 0))
-          print('Altas:', vulns.get('high', 0))
-          print('Moderadas:', vulns.get('moderate', 0))
-          print('Baixas:', vulns.get('low', 0))
-          " 2>/dev/null || npm audit --audit-level=moderate || true
+          node -e "
+          const data = JSON.parse(require('fs').readFileSync('audit-report.json', 'utf8'));
+          const vulns = data.metadata?.vulnerabilities ?? {};
+          console.log('Críticas:', vulns.critical ?? 0);
+          console.log('Altas:', vulns.high ?? 0);
+          console.log('Moderadas:', vulns.moderate ?? 0);
+          console.log('Baixas:', vulns.low ?? 0);
+          "
 
-      - name: Abrir issue se houver vulnerabilidades críticas
+      - name: Sincronizar issue de vulnerabilidades altas ou críticas
         if: steps.audit.outputs.critical_count != '0'
         uses: actions/github-script@v7
         with:
           script: |
             const count = '${{ steps.audit.outputs.critical_count }}';
             const date = new Date().toLocaleDateString('pt-BR');
+            const title = '🔒 Vulnerabilidades altas ou críticas em dependências';
+            const body = `## Auditoria de Segurança Automática
 
-            github.rest.issues.create({
+            **${count}** vulnerabilidade(s) de severidade alta ou crítica foram encontradas.
+
+            ### Ação necessária
+
+            Revise a cadeia afetada e faça uma atualização direcionada, preservando compatibilidade:
+
+            \`\`\`bash
+            npm audit
+            npm audit --omit=dev
+            \`\`\`
+
+            Evite \`npm audit fix --force\` sem revisão, pois ele pode introduzir breaking changes.
+
+            *Última auditoria automática: ${date}*`;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🔒 Vulnerabilidades críticas detectadas — ${date}`,
-              body: `## Auditoria de Segurança Automática
-
-              **${count}** vulnerabilidade(s) de severidade alta ou crítica foram encontradas.
-
-              ### Ação Necessária
-
-              Execute localmente para ver os detalhes:
-              \`\`\`bash
-              npm audit
-              npm audit fix
-              \`\`\`
-
-              Para atualizar dependências com breaking changes:
-              \`\`\`bash
-              npm audit fix --force
-              \`\`\`
-
-              *Auditoria automática rodada em ${date}*`,
-              labels: ['security', 'dependencies']
+              state: 'open',
+              per_page: 100,
             });
+            const existing = openIssues.find((issue) =>
+              !issue.pull_request &&
+              (issue.title === title || issue.title.startsWith('🔒 Vulnerabilidades críticas detectadas'))
+            );
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                title,
+                body,
+              });
+              core.notice(`Issue de segurança #${existing.number} atualizada; nenhuma duplicata criada.`);
+            } else {
+              const { data: created } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['security', 'dependencies'],
+              });
+              core.notice(`Issue de segurança #${created.number} criada.`);
+            }
+
+      - name: Fechar alertas resolvidos
+        if: steps.audit.outputs.critical_count == '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const alerts = openIssues.filter((issue) =>
+              !issue.pull_request &&
+              (issue.title === '🔒 Vulnerabilidades altas ou críticas em dependências' ||
+                issue.title.startsWith('🔒 Vulnerabilidades críticas detectadas'))
+            );
+            for (const issue of alerts) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Auditoria automática atual: nenhuma vulnerabilidade alta ou crítica. Encerrando o alerta.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+            }
+            core.notice(`${alerts.length} alerta(s) de segurança resolvido(s) e encerrado(s).`);

@@ -38,6 +38,8 @@ function getTransporter(): Transporter {
     secure: parseInt(port, 10) === 465,
     auth: { user, pass: password },
     tls: { rejectUnauthorized: true },
+    disableFileAccess: true,
+    disableUrlAccess: true,
   });
 
   return transporter;
@@ -68,6 +70,8 @@ export async function sendEmail(params: SendEmailParams): Promise<{ messageId: s
       text: params.text,
       html: params.html,
       replyTo: params.replyTo,
+      disableFileAccess: true,
+      disableUrlAccess: true,
       headers: {
         "X-NeuroPed-App": "edj",
         "Auto-Submitted": "auto-generated",

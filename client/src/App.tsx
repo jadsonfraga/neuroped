@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { Onboarding } from "@/components/Onboarding";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
@@ -15,7 +14,6 @@ import { AvisoLegalGate } from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
-import { WelcomeTour } from "@/components/WelcomeTour";
 import { FloatingHelp } from "@/components/FloatingHelp";
 
 import NotFound from "@/pages/not-found";
@@ -139,6 +137,8 @@ const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
 const GlossarioPage = lazy(() => import("@/pages/glossario"));
 const InstrumentosPadronizadosPage = lazy(() => import("@/pages/instrumentos-padronizados"));
 const QualidadePage = lazy(() => import("@/pages/qualidade"));
+const Onboarding = lazy(() => import("@/components/Onboarding").then((mod) => ({ default: mod.Onboarding })));
+const WelcomeTour = lazy(() => import("@/components/WelcomeTour").then((mod) => ({ default: mod.WelcomeTour })));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((mod) => ({ default: mod.CommandPalette })));
 
 function LoadingSpinner() {
@@ -336,7 +336,11 @@ function App() {
             <AmbientEffects />
             <Toaster />
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
-            {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
+            {splashComplete && showOnboarding && (
+              <Suspense fallback={null}>
+                <Onboarding onComplete={dismissOnboarding} />
+              </Suspense>
+            )}
             <Router hook={useHashLocation}><AppRouter /></Router>
             {splashComplete && <AvisoLegalGate />}
             <InstallPrompt />
@@ -345,7 +349,11 @@ function App() {
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
-            {splashComplete && <WelcomeTour />}
+            {splashComplete && (
+              <Suspense fallback={null}>
+                <WelcomeTour />
+              </Suspense>
+            )}
           </ToastProvider>
         </TooltipProvider>
       </AuthProvider>

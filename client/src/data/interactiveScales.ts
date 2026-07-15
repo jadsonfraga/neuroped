@@ -493,49 +493,6 @@ const GAD7: InteractiveScaleDef = {
 };
 
 // ============================================================
-// SMFQ — Short Mood and Feelings Questionnaire (autorrelato, criança)
-// Angold A, Costello EJ, et al. 1995. Livre para uso clínico/pesquisa.
-// 13 itens; 0 (Não é verdade) / 1 (Às vezes) / 2 (Verdade); total 0–26.
-// Corte ≥ 8 sugere possíveis sintomas depressivos.
-// ============================================================
-const SMFQ_OPTIONS: InteractiveOption[] = [
-  { label: "Não é verdade", value: 0 },
-  { label: "Às vezes", value: 1 },
-  { label: "Verdade", value: 2 },
-];
-const SMFQ: InteractiveScaleDef = {
-  id: "smfq",
-  name: "SMFQ",
-  fullName: "Short Mood and Feelings Questionnaire — autorrelato",
-  respondent: "Criança/adolescente",
-  ageLabel: "5–12 anos",
-  instructions:
-    "Pensando nas últimas 2 semanas, marque o quanto cada frase descreveu como você se sentiu ou agiu.",
-  validationNote:
-    "Tradução para uso clínico (verifique a redação validada em português antes do uso formal). Corte ≥ 8 sugere sintomas depressivos — se positivo, avalie risco e ideação.",
-  items: [
-    "Eu me senti muito triste ou infeliz.",
-    "Eu não consegui aproveitar ou gostar de nada.",
-    "Eu me senti tão cansado(a) que só queria sentar e não fazer nada.",
-    "Eu fiquei muito agitado(a) ou inquieto(a).",
-    "Eu senti que não valia mais nada.",
-    "Eu chorei bastante.",
-    "Tive dificuldade para pensar ou me concentrar.",
-    "Eu me odiei.",
-    "Eu achei que era uma pessoa ruim.",
-    "Eu me senti sozinho(a).",
-    "Eu achei que ninguém gostava de verdade de mim.",
-    "Eu achei que nunca seria tão bom(boa) quanto as outras crianças.",
-    "Eu senti que fazia tudo errado.",
-  ].map((text) => ({ text, options: SMFQ_OPTIONS })),
-  bands: [
-    { min: 0, max: 7, risk: "Abaixo do corte", description: "Pontuação abaixo de 8. Sem rastreio positivo para sintomas depressivos no momento; reavalie se houver mudança.", tone: "ok" },
-    { min: 8, max: 26, risk: "Rastreio positivo", description: "≥ 8: sugere sintomas depressivos. Aprofunde a avaliação e investigue ativamente risco/ideação suicida. Triagem não confirma diagnóstico.", tone: "alert" },
-  ],
-  source: "Angold A, Costello EJ, et al. (1995). Short Mood and Feelings Questionnaire. Corte ≥ 8.",
-};
-
-// ============================================================
 // PSC-17 — Pediatric Symptom Checklist-17 (pais/cuidador)
 // Gardner W et al. (1999/2007). Domínio público (Massachusetts General Hospital).
 // 17 itens; 0 (Nunca) / 1 (Às vezes) / 2 (Frequentemente); total 0–34.
@@ -602,7 +559,6 @@ export const interactiveScales: Record<string, InteractiveScaleDef> = {
   "mini-macs": MINIMACS,
   bfmf: BFMF,
   "gad7ped": GAD7,
-  "smfq": SMFQ,
 };
 
 export function getInteractiveScale(id: string | undefined): InteractiveScaleDef | null {

@@ -26,6 +26,7 @@ const itemsMod = await imp("client/src/data/interactiveScaleItems.ts");
 const interactiveScaleItems = itemsMod.interactiveScaleItems ?? itemsMod.default ?? {};
 
 const allIds = new Set(allScales.map((s) => s.id));
+const scaleById = new Map(allScales.map((s) => [s.id, s]));
 const catalogIds = new Set(mergeFilterableCatalog(allScales).map((s) => s.id));
 
 let failures = 0;
@@ -77,6 +78,33 @@ for (const [id, def] of itemEntries) {
   ok((def.domains ?? []).every((d) => Array.isArray(d.items) && d.items.length >= 1), `${id}: todo domínio tem ≥1 item`);
   ok(Array.isArray(def.labels) && def.labels.length >= 2, `${id}: ≥2 opções de resposta`);
   if (def.optionPoints) ok(def.optionPoints.length === def.labels.length, `${id}: optionPoints casa com labels`);
+
+  const points = def.optionPoints ?? def.labels.map((_, index) => index);
+  const minScore = totalItems * Math.min(...points);
+  const maxScore = totalItems * Math.max(...points);
+  const declaredRange = def.totalLabel?.match(/\((\d+)[–-](\d+)\)/);
+  if (declaredRange) {
+    ok(Number(declaredRange[1]) === minScore, `${id}: mínimo declarado no totalLabel = ${minScore}`);
+    ok(Number(declaredRange[2]) === maxScore, `${id}: máximo declarado no totalLabel = ${maxScore}`);
+  }
+
+  const catalogScale = scaleById.get(id);
+  if (catalogScale) {
+    const declaredItemCounts = Array.from(
+      new Set(
+        Array.from(
+          `${catalogScale.fullName} ${catalogScale.description}`.matchAll(/\b(\d+)\s+itens?\b/gi),
+          (match) => Number(match[1]),
+        ),
+      ),
+    );
+    if (declaredItemCounts.length > 0 && !declaredItemCounts.includes(totalItems)) {
+      ok(
+        catalogScale.implementationNote?.includes(`${totalItems} itens`),
+        `${id}: divergência catálogo/aplicação (${declaredItemCounts.join("/")} vs ${totalItems}) tem aviso explícito`,
+      );
+    }
+  }
 
   ok(Array.isArray(def.bands) && def.bands.length >= 1, `${id}: tem ≥1 faixa de interpretação`);
   ok(def.bands.every((b) => b.minPct >= 0 && b.minPct <= 100), `${id}: minPct ∈ [0,100]`);

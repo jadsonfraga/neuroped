@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -19,9 +19,8 @@ import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
-import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { navigablePages } from "@/data/navigation";
-import { allScales } from "@/data/scaleFilter";
+import type { ScaleEntry } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { softHover, softTap } from "@/lib/softSounds";
@@ -36,7 +35,23 @@ interface ClinicalFlow {
   emphasis: "primary" | "gold" | "teal" | "blue" | "slate";
 }
 
-const homeSearchCatalog = mergeFilterableCatalog(allScales);
+let homeSearchCatalogPromise: Promise<ScaleEntry[]> | undefined;
+
+function loadHomeSearchCatalog(): Promise<ScaleEntry[]> {
+  if (!homeSearchCatalogPromise) {
+    homeSearchCatalogPromise = Promise.all([
+      import("@/data/scaleFilter"),
+      import("@/data/filterableCatalog"),
+    ])
+      .then(([{ allScales }, { mergeFilterableCatalog }]) => mergeFilterableCatalog(allScales))
+      .catch((error: unknown) => {
+        // Permite uma nova tentativa caso o chunk falhe por oscilação de rede.
+        homeSearchCatalogPromise = undefined;
+        throw error;
+      });
+  }
+  return homeSearchCatalogPromise;
+}
 
 const clinicalFlows: ClinicalFlow[] = [
   {
@@ -151,21 +166,39 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [homeSearchCatalog, setHomeSearchCatalog] = useState<ScaleEntry[] | null>(null);
+  const [searchCatalogFailed, setSearchCatalogFailed] = useState(false);
   const q = normalize(searchQuery.trim());
+
+  useEffect(() => {
+    if (q.length < 2 || homeSearchCatalog || searchCatalogFailed) return;
+    let active = true;
+    void loadHomeSearchCatalog()
+      .then((catalog) => {
+        if (active) setHomeSearchCatalog(catalog);
+      })
+      .catch(() => {
+        if (active) setSearchCatalogFailed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [homeSearchCatalog, q, searchCatalogFailed]);
 
   const searchResults = useMemo(() => {
     if (q.length < 2) return [];
     const pages = navigablePages
       .filter((page) => normalize(`${page.label} ${page.href}`).includes(q))
       .map((page) => ({ href: page.href, title: page.label, detail: "Página do app" }));
-    const scales = homeSearchCatalog
+    const scales = (homeSearchCatalog ?? [])
       .filter((scale) => normalize(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")}`).includes(q))
       .slice(0, 8)
       .map((scale) => ({ href: scale.appRoute || "/filtro", title: scale.name, detail: scale.fullName }));
     return [...pages, ...scales].slice(0, 10);
-  }, [q]);
+  }, [homeSearchCatalog, q]);
 
   const isSearching = q.length >= 2;
+  const isSearchCatalogLoading = isSearching && !homeSearchCatalog && !searchCatalogFailed;
 
   return (
     <div className="page-enter proportion-safe-page space-y-7 pb-10">
@@ -244,10 +277,12 @@ export default function HomePage() {
         <section className="space-y-4" aria-label="Resultados da busca da home">
           <div className="flex items-center gap-2">
             <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Resultados rápidos</h2>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{searchResults.length}</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {isSearchCatalogLoading ? "…" : searchResults.length}
+            </span>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {searchResults.length > 0 ? searchResults.map((item) => (
+            {searchResults.map((item) => (
               <Link key={`${item.href}-${item.title}`} href={item.href}>
                 <div className="group flex cursor-pointer items-center gap-3.5 rounded-2xl border border-border/60 bg-card/80 p-3.5 transition-all duration-200 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -260,11 +295,30 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
                 </div>
               </Link>
-            )) : (
+            ))}
+            {isSearchCatalogLoading ? (
+              <div
+                className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2"
+                role="status"
+              >
+                Carregando o catálogo clínico para completar a busca…
+              </div>
+            ) : searchCatalogFailed ? (
+              <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2" role="alert">
+                Não foi possível carregar o catálogo agora. Use o <Link href="/filtro" className="font-medium text-primary underline-offset-2 hover:underline">Filtro Clínico</Link> para continuar.
+                <button
+                  type="button"
+                  onClick={() => setSearchCatalogFailed(false)}
+                  className="ml-1 font-medium text-primary underline underline-offset-2"
+                >
+                  Tentar novamente.
+                </button>
+              </div>
+            ) : searchResults.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
                 Nenhum atalho direto. Use o <Link href="/filtro" className="font-medium text-primary underline-offset-2 hover:underline">Filtro Clínico</Link> para aproximar por idade e queixa.
               </div>
-            )}
+            ) : null}
           </div>
         </section>
       ) : (

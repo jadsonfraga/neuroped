@@ -28,11 +28,15 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes("node_modules")) return undefined;
-          if (id.includes("react") || id.includes("wouter")) return "vendor-react";
-          if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("lucide-react")) return "vendor-ui";
-          if (id.includes("recharts") || id.includes("date-fns")) return "vendor-charts";
-          return "vendor";
+          const normalizedId = id.replaceAll("\\", "/");
+          if (!normalizedId.includes("/node_modules/")) return undefined;
+          // Casar o pacote exato evita classificar `recharts`,
+          // `react-hook-form` e `@radix-ui/react-*` como React core.
+          if (/\/node_modules\/(?:react|react-dom|scheduler|wouter)\//.test(normalizedId)) return "vendor-react";
+          // Deixe o Rolldown separar as demais dependencias conforme as rotas
+          // dinamicas. Um unico `vendor` fazia bibliotecas de PDF e outras
+          // features tardias entrarem no carregamento inicial do shell.
+          return undefined;
         },
       },
     },

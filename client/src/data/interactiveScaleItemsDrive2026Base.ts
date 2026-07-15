@@ -523,7 +523,7 @@ export const driveImport2026Items: Record<string, InteractiveScaleDef> = {
     labels: ["Nunca", "Raramente", "Às vezes", "Frequentemente", "Sempre"],
     optionPoints: [1, 2, 3, 4, 5],
     scoreDirection: "higher_worse",
-    totalLabel: "ECAM-TEA (não oficial) — escore total (0–120)",
+    totalLabel: "ECAM-TEA (não oficial) — escore total (24–120)",
     domains: [
       { name: "COMPENSAÇÃO (itens 1 a 8)", items: [
         { text: "Eu ensaio mentalmente o que vou dizer antes de iniciar uma conversa.", emoji: "🎬", example: "Ex.: antes de puxar assunto, penso frase por frase na minha cabeça." },

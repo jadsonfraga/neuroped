@@ -96,6 +96,10 @@ export interface ScaleEntry {
   assessmentUse?: AssessmentUse;       // finalidade clínica explícita (sobrepõe a derivação por prioridade)
   applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
   implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
+  // Transparência quando a aplicação operacional embutida tem quantidade de
+  // itens diferente da versão integral mencionada na ficha de referência.
+  // Nunca usar o subtotal adaptado como se fosse o escore oficial.
+  implementationNote?: string;
   signalTags?: string[];               // pistas clínicas/sintomas que refinam o ranking do filtro
   // Exemplo prático em linguagem de pais: o que observar no dia a dia ao
   // responder o questionário (sem jargão, sem sugerir diagnóstico). Populado
@@ -256,7 +260,7 @@ export const scales: ScaleEntry[] = [
   // ===== DEPRESSÃO =====
   { id: "cdi2", name: "CDI-2", fullName: "Children's Depression Inventory 2", ageMin: 84, ageMax: 204, queixas: ["depressao"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "10–15 min", signalTags: ["humor deprimido", "anedonia", "autoestima", "ineficácia", "sintomas negativos"], appRoute: "/cdi2", description: "Inventário de Depressão Infantil — 28 itens.", fonte: "Kovacs M, 2011 - Multi-Health Systems", validacaoBrasil: "Parcial", scoringCutoff: "T-score >=65", licencaUso: "comercial", pendente_validacao_clinica: false },
   { id: "phqa", name: "PHQ-A", fullName: "Patient Health Questionnaire - Adolescentes", ageMin: 132, ageMax: 216, queixas: ["depressao"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "5 min", signalTags: ["humor deprimido", "anedonia", "sono", "apetite", "ideação suicida"], appRoute: "/phqa", description: "9 itens para triagem de depressão em adolescentes.", fonte: "Johnson JG et al., 2002", pubmedId: "PMID 12090817", validacaoBrasil: "Parcial", scoringCutoff: ">=10 depressao moderada", licencaUso: "livre", pendente_validacao_clinica: false },
-  { id: "mfq", name: "MFQ", fullName: "Mood and Feelings Questionnaire", ageMin: 72, ageMax: 216, queixas: ["depressao"], respondente: ["autoaplicavel", "pais"], prioridade: "triagem", tempo: "10 min", description: "33 itens avaliando humor depressivo nas últimas 2 semanas.", signalTags: ["humor deprimido", "tristeza", "choro", "desânimo", "autocrítica"], appRoute: "/generic-scale/mfq"},
+  { id: "mfq", name: "SMFQ", fullName: "Short Mood and Feelings Questionnaire — rota legada mfq", ageMin: 72, ageMax: 216, queixas: ["depressao"], respondente: ["autoaplicavel", "pais"], prioridade: "triagem", tempo: "5 min", description: "Versão curta com 13 itens sobre sintomas depressivos nas últimas 2 semanas. O texto em português no app é uma adaptação operacional e requer conferência com a versão autorizada/validada antes do uso formal.", signalTags: ["humor deprimido", "tristeza", "choro", "desânimo", "autocrítica"], appRoute: "/generic-scale/mfq"},
   { id: "cdrsr", name: "CDRS-R", fullName: "Children's Depression Rating Scale - Revised", ageMin: 72, ageMax: 144, queixas: ["depressao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–20 min", description: "17 itens aplicados pelo clínico. Padrão-ouro para gravidade de depressão infantil.", appRoute: "/generic-scale/cdrsr"},
   { id: "rads2", name: "RADS-2", fullName: "Reynolds Adolescent Depression Scale 2", ageMin: 132, ageMax: 216, queixas: ["depressao"], respondente: ["autoaplicavel"], prioridade: "diagnostica", tempo: "10 min", description: "30 itens de autoaplicação para depressão na adolescência.", appRoute: "/generic-scale/rads2"},
 
@@ -633,7 +637,7 @@ const provenanciaLegado: Record<string, Partial<ScaleEntry>> = {
   rcads: { fonte: "Chorpita BF et al., 2000 (RCADS)", validacaoBrasil: "Parcial", scoringCutoff: "T-score >=65 elevado", licencaUso: "livre" },
   scas: { fonte: "Spence SH, 1998 (Spence Children's Anxiety Scale)", validacaoBrasil: "Parcial", scoringCutoff: "escore total elevado por idade/sexo", licencaUso: "livre" },
   staic: { fonte: "Spielberger CD, 1973 (STAIC)", validacaoBrasil: "Sim (Biaggio, 1980)", scoringCutoff: "percentis estado/traço", licencaUso: "comercial" },
-  mfq: { fonte: "Angold A, Costello EJ, 1987 (Mood and Feelings Questionnaire)", validacaoBrasil: "Parcial", scoringCutoff: ">=27 (versão longa) provável depressão", licencaUso: "livre" },
+  mfq: { fonte: "Angold A, Costello EJ, Messer SC et al., 1995 (Short Mood and Feelings Questionnaire)", validacaoBrasil: "Parcial", scoringCutoff: ">=12 na versão curta sugere aprofundar a avaliação clínica; não confirma diagnóstico", licencaUso: "livre" },
   cdrsr: { fonte: "Poznanski EO, Mokros HB, 1996 (CDRS-R)", validacaoBrasil: "Parcial", scoringCutoff: ">=40 episódio depressivo provável", licencaUso: "comercial" },
   rads2: { fonte: "Reynolds WM, 2002 (RADS-2)", validacaoBrasil: "Não", scoringCutoff: "T-score >=61 clinicamente relevante", licencaUso: "comercial" },
   // ----- Epilepsia -----
@@ -848,18 +852,37 @@ const allScalesBase: ScaleEntry[] = [
 ];
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
+function operationalItemCount(scaleId: string): number | null {
+  const def = interactiveScaleItems[scaleId];
+  if (!def) return null;
+  return def.domains.reduce((total, domain) => total + domain.items.length, 0);
+}
+
+function operationalMismatchNote(scale: ScaleEntry): string | undefined {
+  const actual = operationalItemCount(scale.id);
+  if (actual === null) return undefined;
+  const declared = Array.from(
+    new Set(
+      Array.from(`${scale.fullName} ${scale.description}`.matchAll(/\b(\d+)\s+itens?\b/gi), (match) => Number(match[1])),
+    ),
+  );
+  if (declared.length === 0 || declared.includes(actual)) return undefined;
+  return `Versão operacional do app: ${actual} itens em redação própria/adaptada. A ficha de referência menciona ${declared.join("/")} itens para a versão original ou integral; o subtotal do app não deve ser tratado como o escore oficial dessa versão.`;
+}
+
 const allScalesComDescricoes: ScaleEntry[] = allScalesBase.map(escala => {
   const appRoute = escala.appRoute ?? `/generic-scale/${escala.id}`;
   const exemploPais = escala.exemploPais ?? exemplosPais2026[escala.id];
-  if (descricoesMelhoradas[escala.id]) {
-    return {
+  const enriched: ScaleEntry = descricoesMelhoradas[escala.id]
+    ? {
       ...escala,
       appRoute,
       exemploPais,
       description: descricoesMelhoradas[escala.id],
-    };
-  }
-  return { ...escala, appRoute, exemploPais };
+    }
+    : { ...escala, appRoute, exemploPais };
+  const implementationNote = enriched.implementationNote ?? operationalMismatchNote(enriched);
+  return implementationNote ? { ...enriched, implementationNote } : enriched;
 });
 
 // Deduplicação por id E por nome. O merge de lotes de importação (legado + v25 +

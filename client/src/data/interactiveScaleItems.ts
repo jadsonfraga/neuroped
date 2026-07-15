@@ -125,7 +125,9 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
     gradient: def.gradient ?? "from-primary to-chart-2",
     instruction: def.instruction,
     labels,
-    infoBox: def.infoBox,
+    infoBox: [scale.implementationNote ? `⚠️ ${scale.implementationNote}` : null, def.infoBox]
+      .filter(Boolean)
+      .join(" "),
     scaleId: scale.id,
     domains: def.domains.map((d) => ({
       name: d.name,
@@ -358,7 +360,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
     labels: FREQUENCY_0_3_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",
-    totalLabel: "Carga de ansiedade por domínios (0-72)",
+    totalLabel: "Carga de ansiedade por domínios (0-54)",
     bands: MENTAL_HEALTH_0_3_BANDS,
     domains: [
       { name: "Separação", color: "text-yellow-600 dark:text-yellow-400", items: [{ text: "Medo intenso de ficar longe dos cuidadores", emoji: "🧷", example: "Ex.: Fica desesperada quando precisa se afastar dos pais, mesmo por pouco tempo." }, { text: "Preocupação de algo ruim acontecer aos pais", emoji: "😨", example: "Ex.: Vive preocupada achando que algo ruim vai acontecer com os pais." }, { text: "Dificuldade de dormir longe/cuidador", emoji: "🛏️", example: "Ex.: Só consegue dormir se um dos pais estiver junto na cama." }] },
@@ -1927,7 +1929,7 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
   "mfq": {
     icon: Heart, gradient: "from-blue-500 to-indigo-600",
     instruction: "Pensando nas ÚLTIMAS DUAS SEMANAS, marque o quanto cada frase descreveu você (ou seu filho[a], se respondendo como cuidador).",
-    infoBox: "Questionário de Humor e Sentimentos — versão curta (SMFQ, Angold & Costello; domínio público). Triagem de sintomas depressivos. Corte: ≥12 sugere possível depressão — confirmar com avaliação clínica. Não é diagnóstico.",
+    infoBox: "Questionário de Humor e Sentimentos — versão curta (SMFQ, Angold & Costello). O texto em português é uma adaptação operacional: confirme licença, redação autorizada/validada e ponto de corte antes do uso formal. Escore ≥12 sugere aprofundar a avaliação clínica; não é diagnóstico.",
     labels: ["Não é verdade", "Às vezes verdade", "Verdade"],
     optionPoints: [0, 1, 2],
     scoreDirection: "higher_worse",
@@ -2626,12 +2628,12 @@ const freeBatch3Items: Record<string, InteractiveScaleDef> = {
     domains: [{ name: "Intensidade da dor", color: "text-rose-600 dark:text-rose-400", items: [{ text: "Qual rosto mostra a dor agora?", emoji: "😣", example: "Ex.: Peça à criança para escolher, entre carinhas de sorridente a chorosa, a que mostra a dor agora." }] }],
   },
   ppp: {
-    instruction: "Observando as últimas horas, marque o quanto cada sinal esteve presente. Útil quando a criança tem dificuldade de relatar dor (ex.: deficiência grave). Some (0–60).",
+    instruction: "Observando as últimas horas, marque o quanto cada sinal esteve presente. Útil quando a criança tem dificuldade de relatar dor (ex.: deficiência grave). Some (0–45).",
     infoBox: "Adaptação observacional para triagem de dor (inspirada no Paediatric Pain Profile). Itens em redação própria. Pontuações mais altas indicam mais sinais de dor/desconforto; ≈14+ merece atenção. Não substitui avaliação clínica.",
     labels: P0123_LABELS,
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",
-    totalLabel: "sinais de dor (0–60)",
+    totalLabel: "sinais de dor (0–45)",
     bands: SEV0123_BANDS(40, 20, "Considerar analgesia/medidas de conforto e reavaliar."),
     domains: [{ name: "Sinais observáveis de dor", color: "text-amber-600 dark:text-amber-400", items: [
       { text: "Choramingou, gemeu ou vocalizou sofrimento", emoji: "😢", example: "Ex.: Emitiu gemidos, choramingos ou sons de queixa demonstrando desconforto." }, { text: "Ficou agitado ou inquieto sem se acalmar", emoji: "😖", example: "Ex.: Ficou remexendo, sem parar quieto e sem conseguir se acalmar." }, { text: "Expressão facial de dor (testa franzida, olhos apertados)", emoji: "😧", example: "Ex.: Observe se está de testa franzida e olhos apertados, com cara de dor." },

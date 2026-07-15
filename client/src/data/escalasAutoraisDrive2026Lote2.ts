@@ -19,14 +19,23 @@
 // Cada uma é um instrumento AUTORAL distinto por nome, nº de itens e
 // arranjo de domínios. NENHUMA é um rastreador DEDICADO de risco suicida
 // ou psicose — são matrizes amplas do desenvolvimento que apenas incluem
-// item(ns) sentinela; por isso não recebem suicideRiskInstrument/
-// psychosisRiskInstrument (mesma classificação de NDI-360 e MATRIX-100).
+// item(ns) sentinela. Os overrides abaixo evitam que a presença da queixa
+// "suicidio", de um item sobre psicose ou da palavra "matriz" transforme
+// silenciosamente todo o instrumento em uma escala dedicada de risco ou
+// em um teste não verbal.
 // ============================================================
 import { type ScaleEntry } from "./scaleFilter";
 
 const DOC = (id: string) => `https://docs.google.com/document/d/${id}/edit`;
 
-export const escalasAutoraisDrive2026Lote2: ScaleEntry[] = [
+const NON_DEDICATED_RISK_METADATA = {
+  suicideRiskInstrument: false,
+  psychosisRiskInstrument: false,
+  verbalRequirement: "indiferente",
+  literacyRequirement: "indiferente",
+} as const;
+
+const escalasAutoraisDrive2026Lote2Base: ScaleEntry[] = [
   {
     id: "nef-360",
     name: "NEF-360 — Neuro-Escola Funcional 360",
@@ -373,10 +382,17 @@ export const escalasAutoraisDrive2026Lote2: ScaleEntry[] = [
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — inspirada em SCARED/GAD-7/RCADS; sem validação psicométrica própria publicada",
     scoringCutoff:
-      "25 itens (0 = nunca a 3 = quase sempre). Dimensão A/SCARED (0–40), B/GAD-7 adaptado (0–21), C/RCADS desempenho (0–24). Total máximo 85: 0–24 leve/subclínica; 25–44 leve; 45–64 moderada; ≥65 grave (alto impacto, risco de cronificação). Interpretação qualitativa obrigatória pelo médico.",
+      "25 itens (0 = nunca a 3 = quase todos os dias). Dimensão A — ansiedade global/somática: 8 itens, 0–24; dimensão B — preocupação/ansiedade generalizada: 8 itens, 0–24; dimensão C — desempenho e impacto funcional: 9 itens, 0–27. Total 0–75. Interpretação operacional pelo percentual do máximo: 0–19% baixa carga; 20–39% leve; 40–59% moderada; 60–79% importante; 80–100% muito elevada. Interpretação qualitativa obrigatória pelo médico.",
     assessmentUse: "monitorizacao",
     applicationMode: "autoquestionario_crianca_adolescente",
+    literacyRequirement: "alfabetizado",
     implementationStatus: "metadata_only",
     appRoute: "/generic-scale/escala-maria-clara-ansiedade",
   },
 ];
+
+export const escalasAutoraisDrive2026Lote2: ScaleEntry[] =
+  escalasAutoraisDrive2026Lote2Base.map((scale) => ({
+    ...NON_DEDICATED_RISK_METADATA,
+    ...scale,
+  }));

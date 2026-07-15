@@ -3,9 +3,9 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 226
+- **Total de instrumentos:** 247
 - **Com fonte declarada:** 210
-- **Pendentes de validação/fonte:** 16
+- **Pendentes de validação/fonte:** 37
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
@@ -63,12 +63,16 @@
 | `edacs` | EDACS | Sellers D et al., 2014 (EDACS) | não |
 | `edi` | EDI-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `efdi` | Escala Funcional Dr. Jadson (versões verbal e não verbal) | EFDI-V/NV - Escala Funcional Dr. Jadson - Triagem clínica - uso profissional — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original | não |
+| `eidaf-neuroinfantil` | EIDAF-Neuroinfantil | 2026-06-25_ESCALA_AUTORAL_EIDAF_NEUROINFANTIL_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/ | sim |
+| `einpi-360` | EINPI-360 | 2026-06-19_ESCALA_AUTORAL_EINPI-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/13ExdP3Ogf | sim |
+| `einpi-drj-v1` | EINPI-DrJ v1 | 2026-06-24_ESCALA_AUTORAL_EINPI_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1cjErnbJMJNxBx | sim |
 | `emdi` | EMDI | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ems` | EMS-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não |
 | `epilepsia-diario` | Diário de Crises | Ferramenta de registro clínico NeuroPed (diário de crises) | não |
 | `erc` | ERC | Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist) | não |
 | `erp-np` | ERP-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estados mentais de risco. | sim |
+| `escala-maria-clara-ansiedade` | Escala Maria Clara — Ansiedade | Escala Autoral Maria Clara (PDF) — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://drive.google.com/file/d/1i7LPeeg1CsJX7qnmtC | sim |
 | `esm-edj` | Escala de Satisfação com a Medicação | ESM-EDJ — Escala de Satisfação com a Medicação (ESM-EDJ-2025-v1.0 · PANT v7.2.1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento orig | não |
 | `ess-adol` | ESS Adolescente | Johns MW, 1991 (Epworth Sleepiness Scale); versão pediátrica Melendres MC et al., 2004 (ESS-DASC) | não |
 | `etare` | ETARE-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
@@ -85,6 +89,9 @@
 | `hague-szs` | Hague Seizure Severity | Carpay HA et al., 1997 (Hague Seizure Severity Scale) | não |
 | `hine` | HINE | Dubowitz L et al., 2008 | não |
 | `hsq` | HSQ | Barkley RA, 1987 (Home Situations Questionnaire) | não |
+| `idafeni` | IDAFENI | 2026-06-26_ESCALA_AUTORAL_IDAFENI_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1vkSSue7AB35 | sim |
+| `integra-kids-360` | INTEGRA-KIDS 360 | 2026-07-04_ESCALA_AUTORAL_INTEGRA-KIDS-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ku | sim |
+| `integra-neuroped-90` | INTEGRA-NEUROPED 90 | 2026-06-28_ESCALA_AUTORAL_INTEGRA_NEUROPED_90_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/ | sim |
 | `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ita-adultos` | ITA-Adultos | Instrumento inspirado no AQ (Autism Spectrum Quotient) | não |
 | `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (NEXUS-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
@@ -183,15 +190,24 @@
 | `j26-260` | Protocolo Dr. Jadson — Laboratorial Rotina por Medicação (NEXUS-260) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `lsss` | LSSS | Baker GA et al., 1991 (Liverpool Seizure Severity Scale) | não |
 | `macs` | MACS | Eliasson AC et al., 2006 (MACS) | não |
+| `mapa-360` | MAPA-360 NeuroPed | 2026-07-03_ESCALA_AUTORAL_MAPA-360_NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1N | sim |
 | `mchat` | M-CHAT-R/F | Robins DL et al., 2014 - Pediatrics | não |
-| `mfq` | MFQ | Angold A, Costello EJ, 1987 (Mood and Feelings Questionnaire) | não |
+| `mfq` | SMFQ | Angold A, Costello EJ, Messer SC et al., 1995 (Short Mood and Feelings Questionnaire) | não |
 | `mini-macs` | Mini-MACS | — | sim |
 | `mnp-psi-100` | MATRIX-NEUROPED PSI 100 | 2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.co | não |
+| `mosaico-np-72` | MOSAICO-NP 72 | 2026-07-12_ESCALA_AUTORAL_MOSAICO_NP_72_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1e-1NNgQl2MjbowMNo7Tv6taRVIv7flQDEO9ikYRc | sim |
+| `navi-ped-84` | NAVI-PED 84 | 2026-06-23_ESCALA_AUTORAL_NAVI-PED_84 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/165Y_M33XQ7 | sim |
 | `nddie` | NDDI-E | Gilliam FG et al., 2006 (NDDI-E) | não |
 | `ndi-360` | Escala Integrada Neurodesenvolvimental e Neuropsiquiátrica… | ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://do | não |
+| `nef-360` | NEF-360 — Neuro-Escola Funcional 360 | ESCALA AUTORAL NEF360 V1 (2026-07-06) — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/12_m2Tb8dZW | sim |
+| `nefi-ped-96` | NEFI-PED 96 | 2026-06-27_ESCALA_AUTORAL_NEFI-PED_96_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1w_T-YQm | sim |
 | `nepedq` | Escala Pedagógica Neuropediátrica | NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica \| NeuroPed App — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: htt | não |
+| `neurofunc-360` | NEUROFUNC-360 | 2026-07-05_ESCALA_AUTORAL_NEUROFUNC-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ss2fQ | sim |
+| `nexus-ped-52` | NEXUS-PED 52 | 2026-06-19_ESCALA_AUTORAL_NEXUS-PED_52_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1SdrxKv | sim |
+| `nexus360-neuroped` | NEXUS-360 NeuroPed | Conteúdo autoral criado em 2026-07-09 no projeto Escalas Autorais Dr. Jadson; documento do Drive não confirmado nesta integração. | sim |
 | `nrs-pain` | NRS Pain | — | sim |
 | `oci-cv` | OCI-CV | Foa EB et al., 2010 (OCI-CV) | não |
+| `orbita-neurofuncional` | ORBITA-Neurofuncional | Conteúdo autoral criado em 2026-07-08 no projeto Escalas Autorais Dr. Jadson; documento do Drive não confirmado nesta integração. | sim |
 | `pant` | PANT | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) — Protocolo PANT (100 escalas passivas) | não |
 | `pant-v7-067` | Mastigação e coordenação oral | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não |
 | `pant-v7-068` | Controle postural | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não |
@@ -206,8 +222,10 @@
 | `podj-tea-prime-6-12a` | PODJ-TEA PRIME 6–12A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
 | `podj-tea-prime-escola-terapia` | PODJ-TEA Escola/Terapia | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
 | `podj-tea-prime-familiar` | PODJ-TEA Familiar | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não |
+| `ponte-ped-72` | PONTE-PED 72 | 2026-06-20_ESCALA_AUTORAL_PONTE-PED_72_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/14YSFjE | sim |
 | `ppp` | PPP | Hunt A et al., 2004 (Paediatric Pain Profile) | não |
 | `prime-screen` | PRIME Screen | Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk) | não |
+| `prisma-nf-60` | PRISMA-NF 60 | 2026-07-11_ESCALA_AUTORAL_PRISMA_NF_60_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1hf2yqGeJd2sBW8QFNrTAbNJP_Fqv9Hu8jk3INh2ly | sim |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não |
 | `psn-np` | PSN-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: processamento sensorial. | sim |
 | `q-chat-10` | Q-CHAT-10 | — | sim |
@@ -218,6 +236,9 @@
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não |
 | `scoff` | SCOFF | Morgan JF et al., 1999 - BMJ | não |
 | `sdq` | SDQ | Goodman R, 1997 - Cambridge University | não |
+| `sinaf-neuroped` | SINAF-NeuroPed | 2026-07-02_ESCALA_AUTORAL_SINAF-NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1ohp0 | sim |
+| `sinapse-fi-60` | SINAPSE-FI 60 | 2026-06-20_ESCALA_AUTORAL_SINAPSE-FI_60_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/13F-kr | sim |
+| `sinergi-neuroped` | SINERGI-NeuroPed | 2026-07-07_ESCALA_AUTORAL_SINERGI_NEUROPED_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1gZZlqN3AxgGKnQb94HiU-lohftfdIeEs1NxWu | sim |
 | `snap` | SNAP-IV | Swanson JM et al., 2001 - University of California | não |
 | `ssq` | SSQ | — | sim |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive,  | não |
