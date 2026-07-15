@@ -13,8 +13,21 @@ interface Env {
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    },
   });
+}
+
+function parseResponses(details: unknown): unknown[] {
+  if (typeof details !== "string") return [];
+  try {
+    const parsed = JSON.parse(details);
+    return Array.isArray(parsed?.responses) ? parsed.responses : [];
+  } catch {
+    return [];
+  }
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -25,17 +38,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!env.DB) return json([], 200);
 
   try {
-    const rows = await env.DB
-      .prepare(
-        `SELECT id, patient_id, scale_id, scale_name, score, interpretation, details, applied_at, is_demo
+    const rows = await env.DB.prepare(
+      `SELECT id, patient_id, scale_id, scale_name, details, applied_at, is_demo
          FROM scale_results_demo
          WHERE patient_id = ? AND is_demo = 1
          ORDER BY applied_at DESC
-         LIMIT 200`
-      )
+         LIMIT 200`,
+    )
       .bind(patientId)
       .all();
-    return json(rows.results ?? [], 200);
+    const data = (rows.results ?? []).map((row: any) => ({
+      id: row.id,
+      patientId: row.patient_id,
+      scaleId: row.scale_id,
+      scaleName: row.scale_name,
+      responses: parseResponses(row.details),
+      createdAt: row.applied_at,
+      isDemo: Boolean(row.is_demo),
+    }));
+    return json(data, 200);
   } catch (err) {
     console.error("[patients/:id/results.GET] DB error:", err);
     return json([], 200);

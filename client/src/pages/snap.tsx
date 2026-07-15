@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { snapQuestions, snapLabels, classifySnap } from "@/data/scales";
+import { snapQuestions, snapLabels } from "@/data/scales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Activity, RotateCcw, Eye, Zap } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -20,49 +18,33 @@ export default function SnapPage() {
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const total = snapQuestions.length;
-  const answered = snapQuestions.reduce((count, _, i) => count + (answers[i] !== undefined ? 1 : 0), 0);
+  const answered = snapQuestions.reduce(
+    (count, _, i) => count + (answers[i] !== undefined ? 1 : 0),
+    0,
+  );
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
-  const firstMissingIndex = snapQuestions.findIndex((_, i) => answers[i] === undefined);
+  const firstMissingIndex = snapQuestions.findIndex(
+    (_, i) => answers[i] === undefined,
+  );
   const missingCount = Math.max(total - answered, 0);
-
-  const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/results", data);
-      return res.json();
-    },
-  });
-
-  function calculateScores(): { inattention: number; hyperactivity: number } {
-    let inattention = 0;
-    let hyperactivity = 0;
-    for (let i = 0; i < 9; i++) {
-      inattention += answers[i] ?? 0;
-    }
-    for (let i = 9; i < 18; i++) {
-      hyperactivity += answers[i] ?? 0;
-    }
-    return { inattention, hyperactivity };
-  }
 
   function handleSubmit() {
     setSubmitAttempted(true);
     if (!allAnswered) {
       if (firstMissingIndex >= 0) {
-        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
-        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        window.setTimeout(
+          () =>
+            itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }),
+          250,
+        );
       }
       return;
     }
-    const { inattention, hyperactivity } = calculateScores();
-    const result = classifySnap(inattention, hyperactivity);
-    saveMutation.mutate({
-      scaleName: "SNAP-IV",
-      answers,
-      totalScore: inattention + hyperactivity,
-      classification: result.combinedResult,
-      patientAge: "6-18 anos",
-    });
     setShowResult(true);
   }
 
@@ -73,8 +55,13 @@ export default function SnapPage() {
   }
 
   if (showResult) {
-    const { inattention, hyperactivity } = calculateScores();
-    const result = classifySnap(inattention, hyperactivity);
+    const reportItems = snapQuestions.map((question, index) => ({
+      question,
+      answer:
+        answers[index] !== undefined
+          ? snapLabels[answers[index]]
+          : "Não respondida",
+    }));
 
     return (
       <div className="space-y-6">
@@ -90,15 +77,28 @@ export default function SnapPage() {
 
         <Card className="border-card-border">
           <CardContent className="p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              Perguntas e respostas
+            </h2>
             <div className="space-y-3">
               {snapQuestions.map((q, i) => (
-                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
-                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                <div
+                  key={i}
+                  className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0"
+                >
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-mono flex-shrink-0 mt-0.5"
+                  >
+                    {i + 1}
+                  </Badge>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {q}
+                    </p>
                     <p className="text-sm font-medium text-primary">
-                      → {answers[i] !== undefined ? snapLabels[answers[i]] : "—"}
+                      →{" "}
+                      {answers[i] !== undefined ? snapLabels[answers[i]] : "—"}
                     </p>
                   </div>
                 </div>
@@ -107,24 +107,23 @@ export default function SnapPage() {
           </CardContent>
         </Card>
 
-
         <ClinicalReport
           scaleName="SNAP-IV"
           scaleFullName="Swanson, Nolan and Pelham Questionnaire"
-          hideScore
-          classification="Registro de respostas — análise clínica pelo profissional"
-          description={result.description}
-          items={snapQuestions.map((q, i) => ({ question: q, answer: answers[i] !== undefined ? snapLabels[answers[i]] : "—", value: answers[i] ?? 0 }))}
+          items={reportItems}
           patientAge="6-18 anos"
         />
         <SaveToPatient
           scaleName="SNAP-IV"
-          totalScore={inattention + hyperactivity}
-          classification={result.combinedResult}
-          answers={answers}
-          domainScores={{ "Desatenção": inattention, "Hiperatividade": hyperactivity }}
+          responses={reportItems}
+          patientAge="6-18 anos"
         />
-        <Button onClick={handleReset} variant="outline" className="w-full gap-2" data-testid="button-reset">
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full gap-2"
+          data-testid="button-reset"
+        >
           <RotateCcw className="w-4 h-4" />
           Nova Avaliação
         </Button>
@@ -141,14 +140,18 @@ export default function SnapPage() {
         </div>
         <div>
           <h1 className="text-lg font-bold">SNAP-IV</h1>
-          <p className="text-xs text-muted-foreground">Escala de TDAH — 6 a 18 anos</p>
+          <p className="text-xs text-muted-foreground">
+            Escala de TDAH — 6 a 18 anos
+          </p>
         </div>
       </div>
 
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{answered} de {total} respondidas</span>
+          <span>
+            {answered} de {total} respondidas
+          </span>
           <span>{Math.round(progress)}%</span>
         </div>
         <Progress
@@ -164,7 +167,9 @@ export default function SnapPage() {
       {/* Instruction */}
       <div className="rounded-xl bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/40 p-4">
         <p className="text-xs text-teal-800 dark:text-teal-300 leading-relaxed">
-          <strong>Instruções:</strong> Para cada item, selecione a opção que melhor descreve o comportamento da criança/adolescente nos últimos 6 meses, segundo relato de pais ou professores.
+          <strong>Instruções:</strong> Para cada item, selecione a opção que
+          melhor descreve o comportamento da criança/adolescente nos últimos 6
+          meses, segundo relato de pais ou professores.
         </p>
       </div>
 
@@ -172,7 +177,9 @@ export default function SnapPage() {
       <div className="space-y-1">
         <div className="flex items-center gap-2 py-2">
           <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          <h2 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Desatenção (itens 1-9)</h2>
+          <h2 className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+            Desatenção (itens 1-9)
+          </h2>
         </div>
       </div>
 
@@ -180,48 +187,64 @@ export default function SnapPage() {
         {snapQuestions.slice(0, 9).map((q, i) => {
           const pending = submitAttempted && answers[i] === undefined;
           return (
-          <Card
-            key={i}
-            ref={(node) => { itemRefs.current[i] = node; }}
-            tabIndex={-1}
-            aria-invalid={pending}
-            data-testid={`card-question-${i}`}
-            className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
-          >
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
-                <p className="text-sm text-foreground leading-relaxed">{q}</p>
-              </div>
-              {pending && (
-                <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
-                  Resposta obrigatória para concluir a escala.
-                </p>
-              )}
-              <RadioGroup
-                value={answers[i]?.toString()}
-                onValueChange={(val) => setAnswers({ ...answers, [i]: parseInt(val) })}
-                className="flex flex-wrap gap-2"
-              >
-                {snapLabels.map((label, j) => (
-                  <div key={j} className="flex items-center">
-                    <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="peer sr-only" />
-                    <Label
-                      htmlFor={`q${i}-o${j}`}
-                      aria-pressed={answers[i] === j}
-                      className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
-                        answers[i] === j
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card text-foreground border-border hover:bg-muted"
-                      }`}
-                    >
-                      {label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
+            <Card
+              key={i}
+              ref={(node) => {
+                itemRefs.current[i] = node;
+              }}
+              tabIndex={-1}
+              aria-invalid={pending}
+              data-testid={`card-question-${i}`}
+              className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+            >
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-mono flex-shrink-0 mt-0.5"
+                  >
+                    {i + 1}
+                  </Badge>
+                  <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                </div>
+                {pending && (
+                  <p
+                    className="text-xs font-medium text-amber-700 dark:text-amber-300"
+                    role="alert"
+                  >
+                    Resposta obrigatória para concluir a escala.
+                  </p>
+                )}
+                <RadioGroup
+                  value={answers[i]?.toString()}
+                  onValueChange={(val) =>
+                    setAnswers({ ...answers, [i]: parseInt(val) })
+                  }
+                  className="flex flex-wrap gap-2"
+                >
+                  {snapLabels.map((label, j) => (
+                    <div key={j} className="flex items-center">
+                      <RadioGroupItem
+                        value={j.toString()}
+                        id={`q${i}-o${j}`}
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor={`q${i}-o${j}`}
+                        aria-pressed={answers[i] === j}
+                        className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                          answers[i] === j
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
@@ -230,7 +253,9 @@ export default function SnapPage() {
       <div className="space-y-1">
         <div className="flex items-center gap-2 py-2">
           <Zap className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-          <h2 className="text-sm font-semibold text-orange-600 dark:text-orange-400">Hiperatividade/Impulsividade (itens 10-18)</h2>
+          <h2 className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+            Hiperatividade/Impulsividade (itens 10-18)
+          </h2>
         </div>
       </div>
 
@@ -241,7 +266,9 @@ export default function SnapPage() {
           return (
             <Card
               key={i}
-              ref={(node) => { itemRefs.current[i] = node; }}
+              ref={(node) => {
+                itemRefs.current[i] = node;
+              }}
               tabIndex={-1}
               aria-invalid={pending}
               data-testid={`card-question-${i}`}
@@ -249,22 +276,36 @@ export default function SnapPage() {
             >
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-mono flex-shrink-0 mt-0.5"
+                  >
+                    {i + 1}
+                  </Badge>
                   <p className="text-sm text-foreground leading-relaxed">{q}</p>
                 </div>
                 {pending && (
-                  <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                  <p
+                    className="text-xs font-medium text-amber-700 dark:text-amber-300"
+                    role="alert"
+                  >
                     Resposta obrigatória para concluir a escala.
                   </p>
                 )}
                 <RadioGroup
                   value={answers[i]?.toString()}
-                  onValueChange={(val) => setAnswers({ ...answers, [i]: parseInt(val) })}
+                  onValueChange={(val) =>
+                    setAnswers({ ...answers, [i]: parseInt(val) })
+                  }
                   className="flex flex-wrap gap-2"
                 >
                   {snapLabels.map((label, j) => (
                     <div key={j} className="flex items-center">
-                      <RadioGroupItem value={j.toString()} id={`q${i}-o${j}`} className="peer sr-only" />
+                      <RadioGroupItem
+                        value={j.toString()}
+                        id={`q${i}-o${j}`}
+                        className="peer sr-only"
+                      />
                       <Label
                         htmlFor={`q${i}-o${j}`}
                         aria-pressed={answers[i] === j}
@@ -290,7 +331,8 @@ export default function SnapPage() {
           className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
           role="alert"
         >
-          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A
+          primeira pergunta pendente foi destacada.
         </div>
       )}
 

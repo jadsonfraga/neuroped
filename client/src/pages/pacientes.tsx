@@ -8,11 +8,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Plus, Search, X, Pencil, Trash2, ArrowRight, Calendar, ShieldCheck, Download, Upload, Loader2,
+  Users,
+  Plus,
+  Search,
+  X,
+  Pencil,
+  Trash2,
+  ArrowRight,
+  Calendar,
+  ShieldCheck,
+  Download,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
@@ -39,7 +56,10 @@ export default function PacientesPage() {
   const [formName, setFormName] = useState("");
   const [formBirth, setFormBirth] = useState("");
   const [formNotes, setFormNotes] = useState("");
-  const [confirmingDelete, setConfirmingDelete] = useState<{ id: string; name: string } | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [backupLoading, setBackupLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +69,9 @@ export default function PacientesPage() {
     enabled: true,
   });
   // A API retorna { data: [...] }; aceita também array puro por robustez.
-  const patients: any[] = Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? []);
+  const patients: any[] = Array.isArray(patientsRaw)
+    ? patientsRaw
+    : (patientsRaw?.data ?? []);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -125,7 +147,10 @@ export default function PacientesPage() {
 
   async function handleBackup() {
     if (patients.length === 0) {
-      toast({ title: "Nenhum paciente para exportar.", variant: "destructive" });
+      toast({
+        title: "Nenhum paciente para exportar.",
+        variant: "destructive",
+      });
       return;
     }
     setBackupLoading(true);
@@ -140,18 +165,28 @@ export default function PacientesPage() {
           results[p.id] = [];
         }
       }
-      const backup = { version: "1.0", app: "NeuroPed", exportedAt: new Date().toISOString(), patients, results };
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const backup = {
+        version: "1.0",
+        app: "NeuroPed",
+        exportedAt: new Date().toISOString(),
+        patients,
+        results,
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `neuroped-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      softSuccess(); haptic.success();
+      softSuccess();
+      haptic.success();
       toast({ title: `Backup de ${patients.length} paciente(s) exportado.` });
     } catch {
-      softError(); haptic.error();
+      softError();
+      haptic.error();
       toast({ title: "Erro ao gerar backup.", variant: "destructive" });
     } finally {
       setBackupLoading(false);
@@ -166,40 +201,62 @@ export default function PacientesPage() {
     try {
       const backup = JSON.parse(await file.text());
       if (!backup.version || !Array.isArray(backup.patients)) {
-        toast({ title: "Arquivo inválido. Selecione um backup NeuroPed (.json).", variant: "destructive" });
+        toast({
+          title: "Arquivo inválido. Selecione um backup NeuroPed (.json).",
+          variant: "destructive",
+        });
         return;
       }
-      let imported = 0; let skipped = 0;
+      let imported = 0;
+      let skipped = 0;
       for (const p of backup.patients) {
         try {
           const pd: any = { name: p.name };
           if (p.birthDate) pd.birthDate = p.birthDate;
           if (p.notes) pd.notes = p.notes;
           const res = await apiRequest("POST", "/api/patients", pd);
-          if (!res.ok) { skipped++; continue; }
+          if (!res.ok) {
+            skipped++;
+            continue;
+          }
           const newPatient = await res.json();
-          for (const r of (backup.results?.[p.id] ?? [])) {
+          for (const r of backup.results?.[p.id] ?? []) {
             try {
+              const responses = Array.isArray(r.responses)
+                ? r.responses
+                : Array.isArray(r.answers)
+                  ? r.answers
+                  : [];
+              if (responses.length === 0) continue;
               await apiRequest("POST", "/api/results", {
                 patientId: newPatient.id,
                 scaleName: r.scaleName,
-                answers: r.answers,
-                totalScore: r.totalScore,
-                classification: r.classification,
+                responses,
+                answers: responses,
                 patientAge: r.patientAge,
-                domainScores: r.domainScores ?? null,
               });
-            } catch { /* pula resultados com erro */ }
+            } catch {
+              /* pula resultados com erro */
+            }
           }
           imported++;
-        } catch { skipped++; }
+        } catch {
+          skipped++;
+        }
       }
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      softSuccess(); haptic.success();
-      toast({ title: `${imported} paciente(s) importado(s)${skipped > 0 ? `, ${skipped} ignorado(s)` : ""}.` });
+      softSuccess();
+      haptic.success();
+      toast({
+        title: `${imported} paciente(s) importado(s)${skipped > 0 ? `, ${skipped} ignorado(s)` : ""}.`,
+      });
     } catch {
-      softError(); haptic.error();
-      toast({ title: "Backup corrompido ou formato inválido.", variant: "destructive" });
+      softError();
+      haptic.error();
+      toast({
+        title: "Backup corrompido ou formato inválido.",
+        variant: "destructive",
+      });
     } finally {
       setImportLoading(false);
     }
@@ -217,10 +274,17 @@ export default function PacientesPage() {
     }
   }
 
-  const q = search.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const q = search
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   const filtered = q
     ? patients.filter((p: any) =>
-        (p.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)
+        (p.name || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .includes(q),
       )
     : patients;
 
@@ -243,13 +307,24 @@ export default function PacientesPage() {
           >
             Meus Pacientes
           </h1>
-          <p className="text-xs text-muted-foreground italic">Cadastro, histórico e exportação com aviso de privacidade visível</p>
+          <p className="text-xs text-muted-foreground italic">
+            Cadastro, histórico e exportação com aviso de privacidade visível
+          </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            if (!open) resetForm();
+            setDialogOpen(open);
+          }}
+        >
           <DialogTrigger asChild>
             <Button
               size="sm"
-              onClick={() => { softTap(); haptic.tap(); }}
+              onClick={() => {
+                softTap();
+                haptic.tap();
+              }}
               className="gap-1.5 btn-glow"
               data-testid="button-new-patient"
             >
@@ -258,14 +333,23 @@ export default function PacientesPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editId ? "Editar Paciente" : "Novo Paciente"}</DialogTitle>
+              <DialogTitle>
+                {editId ? "Editar Paciente" : "Novo Paciente"}
+              </DialogTitle>
               <DialogDescription>
-                {editId ? "Atualize os dados do paciente." : "Preencha os dados para cadastrar."}
+                {editId
+                  ? "Atualize os dados do paciente."
+                  : "Preencha os dados para cadastrar."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-2">
               <div className="space-y-1">
-                <label htmlFor="patient-name" className="text-xs text-muted-foreground">Nome completo *</label>
+                <label
+                  htmlFor="patient-name"
+                  className="text-xs text-muted-foreground"
+                >
+                  Nome completo *
+                </label>
                 <Input
                   id="patient-name"
                   placeholder="Nome completo *"
@@ -275,7 +359,12 @@ export default function PacientesPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor="patient-birth" className="text-xs text-muted-foreground">Data de nascimento</label>
+                <label
+                  htmlFor="patient-birth"
+                  className="text-xs text-muted-foreground"
+                >
+                  Data de nascimento
+                </label>
                 <Input
                   id="patient-birth"
                   type="date"
@@ -285,7 +374,12 @@ export default function PacientesPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor="patient-notes" className="text-xs text-muted-foreground">Observações</label>
+                <label
+                  htmlFor="patient-notes"
+                  className="text-xs text-muted-foreground"
+                >
+                  Observações
+                </label>
                 <Textarea
                   id="patient-notes"
                   placeholder="Observações (opcional)"
@@ -296,17 +390,31 @@ export default function PacientesPage() {
                 />
               </div>
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
-                <strong>Consentimento e dados:</strong> registre apenas dados necessários, confirme autorização do responsável e exporte backup antes de excluir informações clínicas.
+                <strong>Consentimento e dados:</strong> registre apenas dados
+                necessários, confirme autorização do responsável e exporte
+                backup antes de excluir informações clínicas.
               </div>
             </div>
             <DialogFooter>
               <Button
-                onClick={() => { softTap(); haptic.tap(); handleSubmit(); }}
-                disabled={!formName.trim() || createMutation.isPending || updateMutation.isPending}
+                onClick={() => {
+                  softTap();
+                  haptic.tap();
+                  handleSubmit();
+                }}
+                disabled={
+                  !formName.trim() ||
+                  createMutation.isPending ||
+                  updateMutation.isPending
+                }
                 className="w-full"
                 data-testid="button-save-patient"
               >
-                {createMutation.isPending || updateMutation.isPending ? "Salvando..." : editId ? "Atualizar" : "Cadastrar"}
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Salvando..."
+                  : editId
+                    ? "Atualizar"
+                    : "Cadastrar"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -318,33 +426,63 @@ export default function PacientesPage() {
           <CardContent className="p-3 flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-bold text-foreground">Dados clínicos sob responsabilidade profissional</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">A API de pacientes não é cacheada pelo service worker. Use PIN, confirme consentimento, exporte backup quando necessário e evite registrar dados excessivos.</p>
+              <p className="text-sm font-bold text-foreground">
+                Dados clínicos sob responsabilidade profissional
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                A API de pacientes não é cacheada pelo service worker. Use PIN,
+                confirme consentimento, exporte backup quando necessário e evite
+                registrar dados excessivos.
+              </p>
             </div>
           </CardContent>
         </Card>
         <div className="grid grid-cols-2 gap-2">
           <Button
-            variant="outline" size="sm"
+            variant="outline"
+            size="sm"
             className="h-full min-h-[52px] flex-col gap-1"
-            onClick={() => { softTap(); haptic.tap(); handleBackup(); }}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              handleBackup();
+            }}
             disabled={backupLoading || patients.length === 0}
             title="Exportar todos os pacientes e resultados como JSON"
           >
-            {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {backupLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
             Backup
           </Button>
           <Button
-            variant="outline" size="sm"
+            variant="outline"
+            size="sm"
             className="h-full min-h-[52px] flex-col gap-1"
-            onClick={() => { softTap(); haptic.tap(); fileInputRef.current?.click(); }}
+            onClick={() => {
+              softTap();
+              haptic.tap();
+              fileInputRef.current?.click();
+            }}
             disabled={importLoading}
             title="Importar pacientes de um backup NeuroPed (.json)"
           >
-            {importLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {importLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
             Importar
           </Button>
-          <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImport}
+          />
         </div>
       </div>
 
@@ -359,7 +497,10 @@ export default function PacientesPage() {
           data-testid="input-search-patients"
         />
         {search && (
-          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
             <X className="w-4 h-4" />
           </button>
         )}
@@ -371,7 +512,11 @@ export default function PacientesPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Users className="w-7 h-7 text-muted-foreground" />}
-          title={patients.length === 0 ? "Nenhum paciente cadastrado" : "Nenhum resultado encontrado"}
+          title={
+            patients.length === 0
+              ? "Nenhum paciente cadastrado"
+              : "Nenhum resultado encontrado"
+          }
           description={
             patients.length === 0
               ? "Cadastre o primeiro paciente para começar o acompanhamento."
@@ -407,15 +552,30 @@ export default function PacientesPage() {
                 key={p.id}
                 variants={{
                   hidden: { opacity: 0, y: 10 },
-                  visible: { opacity: 1, y: 0, transition: { duration: duration.normal, ease: easing.smooth } },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    transition: {
+                      duration: duration.normal,
+                      ease: easing.smooth,
+                    },
+                  },
                 }}
               >
                 <Card className="card-premium group">
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between">
                       <Link href={`/paciente/${p.id}`}>
-                        <div className="cursor-pointer flex-1" onClick={() => { softTap(); haptic.tap(); }}>
-                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</h3>
+                        <div
+                          className="cursor-pointer flex-1"
+                          onClick={() => {
+                            softTap();
+                            haptic.tap();
+                          }}
+                        >
+                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                            {p.name}
+                          </h3>
                           <div className="flex items-center gap-2 mt-0.5">
                             {age && (
                               <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -423,7 +583,11 @@ export default function PacientesPage() {
                               </span>
                             )}
                           </div>
-                          {p.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.notes}</p>}
+                          {p.notes && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {p.notes}
+                            </p>
+                          )}
                         </div>
                       </Link>
                       <div className="flex gap-1">
@@ -431,7 +595,11 @@ export default function PacientesPage() {
                           variant="ghost"
                           size="sm"
                           className="h-7 w-7 p-0"
-                          onClick={() => { softTick(); haptic.tap(); openEdit(p); }}
+                          onClick={() => {
+                            softTick();
+                            haptic.tap();
+                            openEdit(p);
+                          }}
                           data-testid={`button-edit-${p.id}`}
                         >
                           <Pencil className="w-3 h-3" />
@@ -455,7 +623,10 @@ export default function PacientesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { softTap(); haptic.tap(); }}
+                        onClick={() => {
+                          softTap();
+                          haptic.tap();
+                        }}
                         className="w-full gap-1.5 text-xs mt-1"
                       >
                         Ver detalhes <ArrowRight className="w-3 h-3" />
@@ -473,7 +644,9 @@ export default function PacientesPage() {
       <ConfirmDialog
         open={!!confirmingDelete}
         onClose={() => setConfirmingDelete(null)}
-        onConfirm={() => { if (confirmingDelete) deleteMutation.mutate(confirmingDelete.id); }}
+        onConfirm={() => {
+          if (confirmingDelete) deleteMutation.mutate(confirmingDelete.id);
+        }}
         title={`Remover ${confirmingDelete?.name ?? "paciente"}?`}
         description="Esta ação remove o paciente e todos os resultados associados. Não pode ser desfeita."
         confirmLabel="Remover"

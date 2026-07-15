@@ -1,12 +1,10 @@
 import { useRef, useState } from "react";
-import { mchatQuestions, mchatReversedItems, classifyMchat } from "@/data/scales";
+import { mchatQuestions } from "@/data/scales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Baby, RotateCcw } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -19,55 +17,33 @@ export default function MchatPage() {
 
   const total = mchatQuestions.length;
   const answered = mchatQuestions.reduce(
-    (count, _, i) => count + (answers[i] === true || answers[i] === false ? 1 : 0),
+    (count, _, i) =>
+      count + (answers[i] === true || answers[i] === false ? 1 : 0),
     0,
   );
   const progress = (answered / total) * 100;
   const allAnswered = answered === total;
-  const firstMissingIndex = mchatQuestions.findIndex((_, i) => answers[i] !== true && answers[i] !== false);
+  const firstMissingIndex = mchatQuestions.findIndex(
+    (_, i) => answers[i] !== true && answers[i] !== false,
+  );
   const missingCount = Math.max(total - answered, 0);
-
-  const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/results", data);
-      return res.json();
-    },
-  });
-
-  function calculateScore(): number {
-    let score = 0;
-    mchatQuestions.forEach((_, i) => {
-      const answer = answers[i];
-      if (answer === null || answer === undefined) return;
-      // Itens invertidos: "sim" = risco
-      if (mchatReversedItems.includes(i)) {
-        if (answer === true) score++;
-      } else {
-        // Itens normais: "não" = risco
-        if (answer === false) score++;
-      }
-    });
-    return score;
-  }
 
   function handleSubmit() {
     setSubmitAttempted(true);
     if (!allAnswered) {
       if (firstMissingIndex >= 0) {
-        itemRefs.current[firstMissingIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
-        window.setTimeout(() => itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }), 250);
+        itemRefs.current[firstMissingIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        window.setTimeout(
+          () =>
+            itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }),
+          250,
+        );
       }
       return;
     }
-    const score = calculateScore();
-    const result = classifyMchat(score);
-    saveMutation.mutate({
-      scaleName: "M-CHAT-R/F",
-      answers,
-      totalScore: score,
-      classification: result.risk,
-      patientAge: "16-30 meses",
-    });
     setShowResult(true);
   }
 
@@ -78,8 +54,15 @@ export default function MchatPage() {
   }
 
   if (showResult) {
-    const score = calculateScore();
-    const result = classifyMchat(score);
+    const reportItems = mchatQuestions.map((question, index) => ({
+      question,
+      answer:
+        answers[index] === true
+          ? "Sim"
+          : answers[index] === false
+            ? "Não"
+            : "Não respondida",
+    }));
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -94,15 +77,32 @@ export default function MchatPage() {
 
         <Card className="border-card-border">
           <CardContent className="p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">Perguntas e respostas</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              Perguntas e respostas
+            </h2>
             <div className="space-y-3">
               {mchatQuestions.map((q, i) => (
-                <div key={i} className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0">
-                  <Badge variant="outline" className="text-xs font-mono flex-shrink-0 mt-0.5">{i + 1}</Badge>
+                <div
+                  key={i}
+                  className="flex items-start gap-2 pb-3 border-b border-border/50 last:border-0 last:pb-0"
+                >
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-mono flex-shrink-0 mt-0.5"
+                  >
+                    {i + 1}
+                  </Badge>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {q}
+                    </p>
                     <p className="text-sm font-medium text-primary">
-                      → {answers[i] === true ? "Sim" : answers[i] === false ? "Não" : "—"}
+                      →{" "}
+                      {answers[i] === true
+                        ? "Sim"
+                        : answers[i] === false
+                          ? "Não"
+                          : "—"}
                     </p>
                   </div>
                 </div>
@@ -111,23 +111,23 @@ export default function MchatPage() {
           </CardContent>
         </Card>
 
-
         <ClinicalReport
           scaleName="M-CHAT-R/F"
           scaleFullName="Modified Checklist for Autism in Toddlers, Revised with Follow-Up"
-          hideScore
-          classification="Registro de respostas — análise clínica pelo profissional"
-          description={result.description}
-          items={mchatQuestions.map((q, i) => ({ question: q, answer: answers[i] === true ? "Sim" : answers[i] === false ? "Não" : "—", value: answers[i] ? 1 : 0 }))}
+          items={reportItems}
           patientAge="16-30 meses"
         />
         <SaveToPatient
           scaleName="M-CHAT-R/F"
-          totalScore={score}
-          classification={result.risk}
-          answers={answers}
+          responses={reportItems}
+          patientAge="16-30 meses"
         />
-        <Button onClick={handleReset} variant="outline" className="w-full gap-2" data-testid="button-reset">
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full gap-2"
+          data-testid="button-reset"
+        >
           <RotateCcw className="w-4 h-4" />
           Nova Avaliação
         </Button>
@@ -144,14 +144,21 @@ export default function MchatPage() {
         </div>
         <div>
           <h1 className="text-lg font-bold">M-CHAT-R/F</h1>
-          <p className="text-xs text-muted-foreground">Checklist Modificado para Autismo — 16 a 30 meses</p>
+          <p className="text-xs text-muted-foreground">
+            Checklist Modificado para Autismo — 16 a 30 meses
+          </p>
         </div>
       </div>
 
       {/* Progress */}
       <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
-          <span>{answered} de {total} respondidas</span>
+        <div
+          className="flex justify-between text-xs text-muted-foreground"
+          aria-live="polite"
+        >
+          <span>
+            {answered} de {total} respondidas
+          </span>
           <span>{Math.round(progress)}%</span>
         </div>
         <Progress
@@ -167,18 +174,23 @@ export default function MchatPage() {
       {/* Instruction */}
       <div className="rounded-xl bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800/40 p-4">
         <p className="text-xs text-pink-800 dark:text-pink-300 leading-relaxed">
-          <strong>Instruções:</strong> Responda sim ou não para cada pergunta sobre o comportamento da criança. Considere o comportamento habitual. Se viu o comportamento poucas vezes, responda “Não”.
+          <strong>Instruções:</strong> Responda sim ou não para cada pergunta
+          sobre o comportamento da criança. Considere o comportamento habitual.
+          Se viu o comportamento poucas vezes, responda “Não”.
         </p>
       </div>
 
       {/* Questions */}
       <div className="space-y-3">
         {mchatQuestions.map((q, i) => {
-          const pending = submitAttempted && answers[i] !== true && answers[i] !== false;
+          const pending =
+            submitAttempted && answers[i] !== true && answers[i] !== false;
           return (
             <Card
               key={i}
-              ref={(node) => { itemRefs.current[i] = node; }}
+              ref={(node) => {
+                itemRefs.current[i] = node;
+              }}
               tabIndex={-1}
               aria-invalid={pending}
               data-testid={`card-question-${i}`}
@@ -192,13 +204,21 @@ export default function MchatPage() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs font-mono">
+                  <Badge
+                    variant="outline"
+                    className="mt-0.5 flex-shrink-0 text-xs font-mono"
+                  >
                     {i + 1}
                   </Badge>
                   <div className="flex-1 space-y-3">
-                    <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {q}
+                    </p>
                     {pending && (
-                      <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="alert">
+                      <p
+                        className="text-xs font-medium text-amber-700 dark:text-amber-300"
+                        role="alert"
+                      >
                         Resposta obrigatória para concluir a escala.
                       </p>
                     )}
@@ -237,7 +257,8 @@ export default function MchatPage() {
           className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200"
           role="alert"
         >
-          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A primeira pergunta pendente foi destacada.
+          Faltam {missingCount} resposta{missingCount !== 1 ? "s" : ""}. A
+          primeira pergunta pendente foi destacada.
         </div>
       )}
 

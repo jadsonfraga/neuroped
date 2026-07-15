@@ -32,16 +32,36 @@ export function FloatingHelp() {
         </DialogHeader>
         <div className="space-y-3 text-sm">
           <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-3">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-            <p>O NeuroPed organiza triagens, escalas, rotas clínicas e relatórios. Ele não substitui julgamento clínico, anamnese, exame neurológico ou decisão médica.</p>
+            <ShieldAlert
+              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            <p>
+              O NeuroPed organiza triagens, escalas, rotas clínicas e
+              relatórios. Ele não substitui julgamento clínico, anamnese, exame
+              neurológico ou decisão médica.
+            </p>
           </div>
           <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-3">
-            <Search className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-            <p>Use a busca global ou a busca da Home para encontrar escala, página ou ferramenta. O Filtro Clínico ajuda por idade e queixa.</p>
+            <Search
+              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            <p>
+              Use a busca global ou a busca da Home para encontrar escala,
+              página ou ferramenta. O Filtro Clínico ajuda por idade e queixa.
+            </p>
           </div>
           <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-3">
-            <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-            <p>Para aplicar uma escala, responda todos os itens visíveis, revise pendências destacadas e leia a interpretação como apoio, não como diagnóstico isolado.</p>
+            <ClipboardCheck
+              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            <p>
+              Para aplicar uma escala, responda todos os itens visíveis, revise
+              pendências destacadas e confira o registro completo de perguntas e
+              respostas antes de salvar.
+            </p>
           </div>
           <Button asChild variant="outline" className="w-full">
             <Link href="/ajuda">Abrir central de ajuda</Link>

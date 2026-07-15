@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,10 @@ const AGE_GROUPS: Record<AgeGroup, AgeGroupInfo> = {
   "10-12": { label: "10–12 anos", description: "Processamento sofisticado" },
 };
 
-const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> = {
+const PROCESSING_TASKS: Record<
+  AgeGroup,
+  Record<Difficulty, ProcessingTask[]>
+> = {
   "4-5": {
     facil: [
       {
@@ -47,7 +50,8 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         instruction: "Som de cachorro (AU AU) vs gato (MIAU). Qual é?",
         options: ["Cachorro", "Gato", "Pássaro"],
         correct: 0,
-        explanation: "Discriminação auditiva simples — reconhecimento de som familiar",
+        explanation:
+          "Discriminação auditiva simples — reconhecimento de som familiar",
       },
       {
         id: "p2f",
@@ -56,7 +60,8 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         instruction: "Mostro VERMELHO. Depois mostro 3 cores. Qual é igual?",
         options: ["Vermelho", "Rosa", "Laranja"],
         correct: 0,
-        explanation: "Discriminação visual de cores — processamento visual básico",
+        explanation:
+          "Discriminação visual de cores — processamento visual básico",
       },
     ],
     medio: [
@@ -64,7 +69,8 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p1m",
         type: "integrado",
         question: "Escuta som enquanto vê figura",
-        instruction: "Som de gato + figura de gato. Som de cão + figura de cão. Combinam?",
+        instruction:
+          "Som de gato + figura de gato. Som de cão + figura de cão. Combinam?",
         options: ["Sim, combinam", "Não", "Às vezes"],
         correct: 0,
         explanation: "Integração audiovisual — pareamento som-imagem",
@@ -76,9 +82,14 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         type: "integrado",
         question: "Integração com conflito",
         instruction: "Ouve som de gato, mas vê figura de cachorro. O que é?",
-        options: ["Responde ao som (gato)", "Responde à imagem (cão)", "Confunde"],
+        options: [
+          "Responde ao som (gato)",
+          "Responde à imagem (cão)",
+          "Confunde",
+        ],
         correct: 0,
-        explanation: "Conflito audiovisual — quale sentido tem prioridade? (nível 4–5)",
+        explanation:
+          "Conflito audiovisual — quale sentido tem prioridade? (nível 4–5)",
       },
     ],
   },
@@ -88,7 +99,8 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p1f",
         type: "auditivo",
         question: "Sequência auditiva: 3 sons",
-        instruction: "SOM 1 (sino), SOM 2 (sino mais alto), SOM 3 (campainha). Qual vem depois?",
+        instruction:
+          "SOM 1 (sino), SOM 2 (sino mais alto), SOM 3 (campainha). Qual vem depois?",
         options: ["SOM 1 (sino)", "Campainha", "SOM desconhecido"],
         correct: 2,
         explanation: "Sequenciamento auditivo simples",
@@ -109,9 +121,14 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         type: "integrado",
         question: "Áudio-visual sincronizados",
         instruction: "Vê 3 luzes piscando. Escuta 3 beeps. Combinam em tempo?",
-        options: ["Perfeitamente sincronizados", "Ligeiramente dessincronizados", "Completamente dessincronizados"],
+        options: [
+          "Perfeitamente sincronizados",
+          "Ligeiramente dessincronizados",
+          "Completamente dessincronizados",
+        ],
         correct: 0,
-        explanation: "Sincronização audiovisual — janela temporal de integração ~200ms",
+        explanation:
+          "Sincronização audiovisual — janela temporal de integração ~200ms",
       },
     ],
     dificil: [
@@ -119,10 +136,16 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p1d",
         type: "auditivo",
         question: "Discriminação auditiva complexa (ilusão McGurk-like)",
-        instruction: "Ouve /ba/ com vídeo de pessoa falando /ga/. O que escuta?",
-        options: ["/da/ (som intermediário)", "/ba/ (som real)", "/ga/ (vídeo)"],
+        instruction:
+          "Ouve /ba/ com vídeo de pessoa falando /ga/. O que escuta?",
+        options: [
+          "/da/ (som intermediário)",
+          "/ba/ (som real)",
+          "/ga/ (vídeo)",
+        ],
         correct: 0,
-        explanation: "Efeito McGurk — integração audiovisual top-down prejudica som",
+        explanation:
+          "Efeito McGurk — integração audiovisual top-down prejudica som",
       },
     ],
   },
@@ -133,7 +156,11 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         type: "auditivo",
         question: "Processamento auditivo rápido",
         instruction: "3 tons rápidos (10ms cada). Qual a ordem?",
-        options: ["Agudo-Médio-Grave", "Médio-Grave-Agudo", "Grave-Agudo-Médio"],
+        options: [
+          "Agudo-Médio-Grave",
+          "Médio-Grave-Agudo",
+          "Grave-Agudo-Médio",
+        ],
         correct: 0,
         explanation: "Discriminação de ordem temporal em milissegundos",
       },
@@ -143,19 +170,23 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p2m",
         type: "visual",
         question: "Rastreamento visual de múltiplos itens",
-        instruction: "5 pontos vermelhos se movem na tela. Conta quantos ficam vermelhos.",
+        instruction:
+          "5 pontos vermelhos se movem na tela. Conta quantos ficam vermelhos.",
         options: ["5 pontos", "3 pontos", "2 pontos"],
         correct: 0,
-        explanation: "Multiple object tracking (MOT) — limite ~3–4 objetos aos 8–9a",
+        explanation:
+          "Multiple object tracking (MOT) — limite ~3–4 objetos aos 8–9a",
       },
       {
         id: "p3m",
         type: "integrado",
         question: "Integração audiovisual com atraso",
-        instruction: "Vê pessoa falando. Som chega 50ms atrasado. Percebe dessincronização?",
+        instruction:
+          "Vê pessoa falando. Som chega 50ms atrasado. Percebe dessincronização?",
         options: ["Sim, percebe atraso", "Não, parece sincrônico", "Às vezes"],
         correct: 0,
-        explanation: "Janela de integração audiovisual ~200ms (ambíguo em 50ms)",
+        explanation:
+          "Janela de integração audiovisual ~200ms (ambíguo em 50ms)",
       },
     ],
     dificil: [
@@ -163,7 +194,8 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p1d",
         type: "integrado",
         question: "Separação figura-fundo com ruído",
-        instruction: "Escuta voz-alvo em ruído de fundo. Identifica mensagem (cocktail party).",
+        instruction:
+          "Escuta voz-alvo em ruído de fundo. Identifica mensagem (cocktail party).",
         options: ["Identifica mensagem", "Muito difícil", "Impossível"],
         correct: 0,
         explanation: "Atenção auditiva seletiva (efeito cocktail party)",
@@ -177,7 +209,11 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         type: "auditivo",
         question: "Processamento auditivo com filtro",
         instruction: "2 mensagens simultâneas. Escuta APENAS orelha esquerda.",
-        options: ["Consegue focar orelha esquerda", "Confunde com direita", "Não consegue"],
+        options: [
+          "Consegue focar orelha esquerda",
+          "Confunde com direita",
+          "Não consegue",
+        ],
         correct: 0,
         explanation: "Atenção auditiva dicótica — seleção por localização",
       },
@@ -187,7 +223,8 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p2m",
         type: "visual",
         question: "Busca visual conjuntiva (feature binding)",
-        instruction: "Procura triângulo VERMELHO entre quadrados vermelhos e triângulos azuis.",
+        instruction:
+          "Procura triângulo VERMELHO entre quadrados vermelhos e triângulos azuis.",
         options: ["Encontra rápido", "Busca lenta ou erra", "Não encontra"],
         correct: 0,
         explanation: "Binding de features — requer atenção focal vs paralela",
@@ -196,10 +233,12 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p3m",
         type: "integrado",
         question: "Ilusão multissensorial (ventríloqo)",
-        instruction: "Vê boneco falando, som vem do ator. Percebe origem real do som?",
+        instruction:
+          "Vê boneco falando, som vem do ator. Percebe origem real do som?",
         options: ["Percebe origem real", "Crê que boneco fala", "Indeciso"],
         correct: 1,
-        explanation: "Ventrilóquio audiovisual — integração supera informação isolada",
+        explanation:
+          "Ventrilóquio audiovisual — integração supera informação isolada",
       },
     ],
     dificil: [
@@ -207,10 +246,16 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
         id: "p1d",
         type: "integrado",
         question: "Síntese temporal audiovisual (stream segregation)",
-        instruction: "2 frequências alternadas rapido. Escuta 1 som ou 2 streams?",
-        options: ["2 streams (segregação)", "1 som (integração)", "Depende da velocidade"],
+        instruction:
+          "2 frequências alternadas rapido. Escuta 1 som ou 2 streams?",
+        options: [
+          "2 streams (segregação)",
+          "1 som (integração)",
+          "Depende da velocidade",
+        ],
         correct: 2,
-        explanation: "Segregação de stream — depende de freq delta, ISI, padrão (Bregman)",
+        explanation:
+          "Segregação de stream — depende de freq delta, ISI, padrão (Bregman)",
       },
     ],
   },
@@ -218,30 +263,19 @@ const PROCESSING_TASKS: Record<AgeGroup, Record<Difficulty, ProcessingTask[]>> =
 
 export default function ProcessamentoVisuoauditivo() {
   const [selectedAge, setSelectedAge] = useState<AgeGroup>("8-9");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("facil");
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<Difficulty>("facil");
   const [answers, setAnswers] = useState<Answers>({});
   const [showReport, setShowReport] = useState(false);
 
   const tasks = PROCESSING_TASKS[selectedAge][selectedDifficulty];
   // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
   const optionOrders = useShuffledOptionOrders(tasks);
-  const answered = Object.values(answers).filter(a => a !== null).length;
+  const answered = Object.values(answers).filter((a) => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
-  const score = useMemo(() => {
-    let correct = 0;
-    tasks.forEach(task => {
-      const userAnswer = answers[task.id];
-      if (userAnswer === undefined || userAnswer === null) return;
-      if (userAnswer === task.correct) {
-        correct++;
-      }
-    });
-    return correct;
-  }, [answers, tasks]);
-
   const handleAnswer = (taskId: string, value: number) => {
-    setAnswers(prev => ({ ...prev, [taskId]: value }));
+    setAnswers((prev) => ({ ...prev, [taskId]: value }));
   };
 
   const handleReset = () => {
@@ -252,29 +286,33 @@ export default function ProcessamentoVisuoauditivo() {
   };
 
   if (showReport) {
+    const reportItems = tasks.map((task) => {
+      const answer = answers[task.id];
+      return {
+        question: `${task.question} — ${task.instruction}`,
+        answer:
+          answer === undefined || answer === null
+            ? "Não respondida"
+            : (task.options[answer] ?? String(answer)),
+      };
+    });
+
     return (
       <div className="space-y-4">
         <ClinicalReport
-          title="Processamento Visual-Auditivo — Resultado"
-          sections={[
-            { title: "Faixa Etária", content: AGE_GROUPS[selectedAge].label },
-            { title: "Nível de Dificuldade", content: selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1) },
-            { title: "Desempenho", content: `${score}/${tasks.length} acertos (${Math.round((score/tasks.length)*100)}%)` },
-            { title: "Processos Avaliados", content: [
-              "Processamento Auditivo: discriminação, sequenciamento, atenção seletiva",
-              "Processamento Visual: discriminação, rastreamento, busca visual",
-              "Integração Audiovisual: sincronização, pareamento, segregação de stream",
-              "Atenção Multissensorial: seleção, foco, seletividade cruzada",
-            ].join('\n') },
-            { title: "Interpretação Clínica", content: `Escore ${Math.round((score/tasks.length)*100)}% em nível ${selectedDifficulty} sugere capacidade de processamento ${
-              Math.round((score/tasks.length)*100) >= 80 ? "preservada" :
-              Math.round((score/tasks.length)*100) >= 60 ? "levemente prejudicada — considerar defasagem processual" :
-              "significativamente prejudicada — suspeita de TDAH auditivo ou desordem audiovisual"
-            }` },
-          ]}
+          scaleName="Processamento Visual-Auditivo"
+          scaleFullName={`Tarefas multissensoriais — dificuldade ${selectedDifficulty}`}
+          items={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
         />
-        <SaveToPatient testName="Processamento Visual-Auditivo" data={{ score, total: tasks.length, ageGroup: selectedAge, difficulty: selectedDifficulty }} />
-        <Button onClick={handleReset} className="w-full">← Voltar</Button>
+        <SaveToPatient
+          testName="Processamento Visual-Auditivo"
+          responses={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
+        />
+        <Button onClick={handleReset} className="w-full">
+          ← Voltar
+        </Button>
       </div>
     );
   }
@@ -289,7 +327,10 @@ export default function ProcessamentoVisuoauditivo() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Avaliação de discriminação, integração e atenção multissensorial com níveis de complexidade crescente.</p>
+          <p className="text-sm text-gray-600">
+            Avaliação de discriminação, integração e atenção multissensorial com
+            níveis de complexidade crescente.
+          </p>
         </CardContent>
       </Card>
 
@@ -299,11 +340,14 @@ export default function ProcessamentoVisuoauditivo() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map(age => (
+            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map((age) => (
               <Button
                 key={age}
                 variant={selectedAge === age ? "default" : "outline"}
-                onClick={() => { setSelectedAge(age); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedAge(age);
+                  setAnswers({});
+                }}
                 className="text-xs sm:text-sm"
               >
                 {AGE_GROUPS[age].label}
@@ -319,14 +363,21 @@ export default function ProcessamentoVisuoauditivo() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-2">
-            {(['facil', 'medio', 'dificil'] as Difficulty[]).map(diff => (
+            {(["facil", "medio", "dificil"] as Difficulty[]).map((diff) => (
               <Button
                 key={diff}
                 variant={selectedDifficulty === diff ? "default" : "outline"}
-                onClick={() => { setSelectedDifficulty(diff); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedDifficulty(diff);
+                  setAnswers({});
+                }}
                 className="text-xs sm:text-sm"
               >
-                {diff === 'facil' ? '🟢 Fácil' : diff === 'medio' ? '🟡 Médio' : '🔴 Difícil'}
+                {diff === "facil"
+                  ? "🟢 Fácil"
+                  : diff === "medio"
+                    ? "🟡 Médio"
+                    : "🔴 Difícil"}
               </Button>
             ))}
           </div>
@@ -336,8 +387,13 @@ export default function ProcessamentoVisuoauditivo() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>{AGE_GROUPS[selectedAge].label} — {selectedDifficulty.toUpperCase()}</CardTitle>
-            <Badge>{answered}/{tasks.length}</Badge>
+            <CardTitle>
+              {AGE_GROUPS[selectedAge].label} —{" "}
+              {selectedDifficulty.toUpperCase()}
+            </CardTitle>
+            <Badge>
+              {answered}/{tasks.length}
+            </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
@@ -346,39 +402,49 @@ export default function ProcessamentoVisuoauditivo() {
             <div key={task.id} className="border-l-4 border-cyan-300 pl-4 py-2">
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="font-semibold text-sm">{idx + 1}. {task.question}</p>
+                  <p className="font-semibold text-sm">
+                    {idx + 1}. {task.question}
+                  </p>
                   <Badge variant="secondary" className="text-xs">
-                    {task.type === 'auditivo' ? '🎵 Auditivo' :
-                     task.type === 'visual' ? '👁️ Visual' :
-                     '🔗 Integrado'}
+                    {task.type === "auditivo"
+                      ? "🎵 Auditivo"
+                      : task.type === "visual"
+                        ? "👁️ Visual"
+                        : "🔗 Integrado"}
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-600">{task.instruction}</p>
               </div>
 
-              <RadioGroup value={String(answers[task.id] ?? "")} onValueChange={(v) => handleAnswer(task.id, parseInt(v))}>
+              <RadioGroup
+                value={String(answers[task.id] ?? "")}
+                onValueChange={(v) => handleAnswer(task.id, parseInt(v))}
+              >
                 <div className="space-y-2">
-                  {(optionOrders[task.id] ?? task.options.map((_, oi) => oi)).map((i) => {
+                  {(
+                    optionOrders[task.id] ?? task.options.map((_, oi) => oi)
+                  ).map((i) => {
                     const opt = task.options[i];
                     return (
-                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                        <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
-                        <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      <div
+                        key={i}
+                        className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={String(i)}
+                          id={`${task.id}-${i}`}
+                        />
+                        <Label
+                          htmlFor={`${task.id}-${i}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {opt}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               </RadioGroup>
-
-              {answers[task.id] !== undefined && answers[task.id] !== null && (
-                <div className="mt-3 text-xs text-gray-600">
-                  {answers[task.id] === task.correct ? (
-                    <span className="text-green-600 block">✅ Correto! {task.explanation}</span>
-                  ) : (
-                    <span className="text-red-600 block">❌ Resposta esperada: {task.options[task.correct]}. {task.explanation}</span>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </CardContent>
@@ -395,7 +461,7 @@ export default function ProcessamentoVisuoauditivo() {
           className="flex-1"
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          Finalizar e Salvar
+          Revisar Respostas
         </Button>
       </div>
     </div>

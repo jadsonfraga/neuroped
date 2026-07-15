@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,11 @@ const TASKS: Record<AgeGroup, VisualTask[]> = {
       type: "discriminacao",
       question: "Qual desenho tem um detalhe a MAIS?",
       instruction: "Procure o que tem algo que os outros não têm",
-      options: ["Rosto: olhos, nariz, boca", "Rosto: olhos, nariz, boca, orelha", "Rosto: olhos, nariz, boca"],
+      options: [
+        "Rosto: olhos, nariz, boca",
+        "Rosto: olhos, nariz, boca, orelha",
+        "Rosto: olhos, nariz, boca",
+      ],
       correct: 1,
       explanation: "O segundo tem orelha extra",
     },
@@ -191,23 +195,11 @@ export default function ConhecimentoVisual() {
   const tasks = TASKS[selectedAge];
   // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
   const optionOrders = useShuffledOptionOrders(tasks);
-  const answered = Object.values(answers).filter(a => a !== null).length;
+  const answered = Object.values(answers).filter((a) => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
-  const score = useMemo(() => {
-    let correct = 0;
-    tasks.forEach(task => {
-      const userAnswer = answers[task.id];
-      if (userAnswer === undefined || userAnswer === null) return;
-      if (userAnswer === task.correct) {
-        correct++;
-      }
-    });
-    return correct;
-  }, [answers, tasks]);
-
   const handleAnswer = (taskId: string, value: number) => {
-    setAnswers(prev => ({ ...prev, [taskId]: value }));
+    setAnswers((prev) => ({ ...prev, [taskId]: value }));
   };
 
   const handleReset = () => {
@@ -217,23 +209,33 @@ export default function ConhecimentoVisual() {
   };
 
   if (showReport) {
+    const reportItems = tasks.map((task) => {
+      const answer = answers[task.id];
+      return {
+        question: `${task.question} — ${task.instruction}`,
+        answer:
+          answer === undefined || answer === null
+            ? "Não respondida"
+            : (task.options[answer] ?? String(answer)),
+      };
+    });
+
     return (
       <div className="space-y-4">
         <ClinicalReport
-          title="Conhecimento Visual — Resultado"
-          sections={[
-            { title: "Faixa Etária", content: AGE_GROUPS[selectedAge].label },
-            { title: "Desempenho", content: `${score}/${tasks.length} acertos (${Math.round((score/tasks.length)*100)}%)` },
-            { title: "Habilidades Avaliadas", content: [
-              "Discriminação Visual: consegue identificar diferenças",
-              "Figura-Fundo: consegue localizar objetos em contextos complexos",
-              "Simetria: entende equilíbrio visual",
-              "Sequências: reconhece padrões visuais",
-            ].join('\n') },
-          ]}
+          scaleName="Conhecimento Visual"
+          scaleFullName="Discriminação visual, figura-fundo, simetria e sequências"
+          items={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
         />
-        <SaveToPatient testName="Conhecimento Visual" data={{ score, total: tasks.length, ageGroup: selectedAge }} />
-        <Button onClick={handleReset} className="w-full">← Voltar</Button>
+        <SaveToPatient
+          testName="Conhecimento Visual"
+          responses={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
+        />
+        <Button onClick={handleReset} className="w-full">
+          ← Voltar
+        </Button>
       </div>
     );
   }
@@ -248,7 +250,9 @@ export default function ConhecimentoVisual() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Discriminação visual, figura-fundo, simetria e sequências.</p>
+          <p className="text-sm text-gray-600">
+            Discriminação visual, figura-fundo, simetria e sequências.
+          </p>
         </CardContent>
       </Card>
 
@@ -258,11 +262,14 @@ export default function ConhecimentoVisual() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map(age => (
+            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map((age) => (
               <Button
                 key={age}
                 variant={selectedAge === age ? "default" : "outline"}
-                onClick={() => { setSelectedAge(age); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedAge(age);
+                  setAnswers({});
+                }}
                 className="text-sm"
               >
                 {AGE_GROUPS[age].label}
@@ -276,44 +283,63 @@ export default function ConhecimentoVisual() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Teste — {AGE_GROUPS[selectedAge].label}</CardTitle>
-            <Badge>{answered}/{tasks.length}</Badge>
+            <Badge>
+              {answered}/{tasks.length}
+            </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           {tasks.map((task, idx) => (
-            <div key={task.id} className="border-l-4 border-purple-300 pl-4 py-2">
+            <div
+              key={task.id}
+              className="border-l-4 border-purple-300 pl-4 py-2"
+            >
               <div className="mb-3">
-                <p className="font-semibold text-sm">{idx + 1}. {task.question}</p>
+                <p className="font-semibold text-sm">
+                  {idx + 1}. {task.question}
+                </p>
                 <p className="text-xs text-gray-600 mt-1">{task.instruction}</p>
                 <Badge variant="secondary" className="text-xs mt-2">
-                  {task.type === "discriminacao" ? "👁️ Discriminação" : task.type === "figura_fundo" ? "🔍 Figura-Fundo" : task.type === "simetria" ? "🪞 Simetria" : "🔗 Sequência"}
+                  {task.type === "discriminacao"
+                    ? "👁️ Discriminação"
+                    : task.type === "figura_fundo"
+                      ? "🔍 Figura-Fundo"
+                      : task.type === "simetria"
+                        ? "🪞 Simetria"
+                        : "🔗 Sequência"}
                 </Badge>
               </div>
 
-              <RadioGroup value={String(answers[task.id] ?? "")} onValueChange={(v) => handleAnswer(task.id, parseInt(v))}>
+              <RadioGroup
+                value={String(answers[task.id] ?? "")}
+                onValueChange={(v) => handleAnswer(task.id, parseInt(v))}
+              >
                 <div className="space-y-2">
-                  {(optionOrders[task.id] ?? task.options.map((_, oi) => oi)).map((i) => {
+                  {(
+                    optionOrders[task.id] ?? task.options.map((_, oi) => oi)
+                  ).map((i) => {
                     const opt = task.options[i];
                     return (
-                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                        <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
-                        <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      <div
+                        key={i}
+                        className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={String(i)}
+                          id={`${task.id}-${i}`}
+                        />
+                        <Label
+                          htmlFor={`${task.id}-${i}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {opt}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               </RadioGroup>
-
-              {answers[task.id] !== undefined && answers[task.id] !== null && (
-                <div className="mt-3 text-xs text-gray-600">
-                  {answers[task.id] === task.correct ? (
-                    <span className="text-green-600 block">✅ Correto! {task.explanation}</span>
-                  ) : (
-                    <span className="text-red-600 block">❌ Incorreto. Resposta correta: {task.options[task.correct]}. {task.explanation}</span>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </CardContent>
@@ -330,7 +356,7 @@ export default function ConhecimentoVisual() {
           className="flex-1"
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          Finalizar e Salvar
+          Revisar Respostas
         </Button>
       </div>
     </div>

@@ -10,7 +10,6 @@ import { softSuccess, softTap } from "@/lib/softSounds";
 interface WhatsAppShareProps {
   scaleName: string;
   reportText: string;
-  totalScore?: number;
 }
 
 function formatPhoneNumber(phone: string): string {
@@ -23,7 +22,10 @@ function formatPhoneNumber(phone: string): string {
     return `55${digits}`;
   }
   // Já vem com o código do país 55 (12–13 dígitos).
-  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
+  if (
+    (digits.length === 12 || digits.length === 13) &&
+    digits.startsWith("55")
+  ) {
     return digits;
   }
   // Outro internacional já completo.
@@ -38,7 +40,7 @@ function isValidPhone(phone: string): boolean {
   return formatted.length >= 10 && /^\d{10,15}$/.test(formatted);
 }
 
-export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppShareProps) {
+export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -62,8 +64,7 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
     setLoading(true);
     try {
       const formatted = formatPhoneNumber(phone);
-      const scoreLine = totalScore === undefined || totalScore === null ? "" : `Pontuação: ${totalScore}\n\n`;
-      const message = `*${scaleName}*\n\n${scoreLine}${reportText.slice(0, 3000)}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
+      const message = `*${scaleName}*\n\n${reportText}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
 
       // Tenta a API do backend (best-effort). Em hosts estáticos (GitHub Pages/
       // Cloudflare) essa rota NÃO existe e o fallback de SPA responde 200 com o
@@ -91,7 +92,8 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
         if (!win) {
           toast({
             title: "Não foi possível abrir o WhatsApp",
-            description: "Permita pop-ups para este site ou copie o relatório manualmente.",
+            description:
+              "Permita pop-ups para este site ou copie o relatório manualmente.",
             variant: "destructive",
           });
           return;
@@ -144,13 +146,18 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
           <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-              {sentViaApi ? "Relatório enviado!" : "WhatsApp aberto — toque em enviar por lá"}
+              {sentViaApi
+                ? "Relatório enviado!"
+                : "WhatsApp aberto — toque em enviar por lá"}
             </span>
           </div>
         ) : (
           <form onSubmit={handleSendWhatsApp} className="space-y-3">
             <div className="space-y-2">
-              <label htmlFor="whatsapp" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="whatsapp"
+                className="text-sm font-medium text-foreground"
+              >
                 WhatsApp da Mãe
               </label>
               <Input
@@ -164,7 +171,8 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
                 autoComplete="tel"
               />
               <p className="text-xs text-muted-foreground">
-                Número com DDD (Brasil). Pode incluir parênteses, traços e espaços.
+                Número com DDD (Brasil). Pode incluir parênteses, traços e
+                espaços.
               </p>
             </div>
 
@@ -188,7 +196,8 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
 
             {phone && !isValidPhone(phone) && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                ⚠️ Número inválido. Digite apenas números ou use: (XX) XXXXX-XXXX
+                ⚠️ Número inválido. Digite apenas números ou use: (XX)
+                XXXXX-XXXX
               </p>
             )}
           </form>
@@ -196,8 +205,8 @@ export function WhatsAppShare({ scaleName, reportText, totalScore }: WhatsAppSha
 
         <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-3">
           <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-            <strong>Privacidade:</strong> O número é usado apenas para este compartilhamento.
-            Não é salvo em nossos servidores.
+            <strong>Privacidade:</strong> O número é usado apenas para este
+            compartilhamento. Não é salvo em nossos servidores.
           </p>
         </div>
       </CardContent>

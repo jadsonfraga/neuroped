@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,14 +63,19 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       instruction: "Peça à criança para apontar ou tocar seu olho",
       options: ["Aponta corretamente", "Aponta região errada", "Não consegue"],
       correct: 0,
-      explanation: "Compreensão de palavras de partes do corpo é marco esperado",
+      explanation:
+        "Compreensão de palavras de partes do corpo é marco esperado",
     },
     {
       id: "e1",
       question: "Expressão: como a criança fala palavras?",
       type: "expressao",
       instruction: "Observe se pronuncia palavras com clareza ou com trocas",
-      options: ["Claro e inteligível", "Alguns sons imprecisos", "Muito impreciso"],
+      options: [
+        "Claro e inteligível",
+        "Alguns sons imprecisos",
+        "Muito impreciso",
+      ],
       correct: 1,
       explanation: "Aos 3-4 anos alguns sons ainda estão em desenvolvimento",
     },
@@ -80,7 +85,8 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       id: "f1",
       question: "Segmentação silábica: quantas sílabas em 'borboleta'?",
       type: "fonologica",
-      instruction: "Peça à criança para bater palmas para cada sílaba: bor-bo-le-ta",
+      instruction:
+        "Peça à criança para bater palmas para cada sílaba: bor-bo-le-ta",
       options: ["3 sílabas", "4 sílabas", "5 sílabas"],
       correct: 1,
       explanation: "Borboleta tem 4 sílabas (bor-bo-le-ta)",
@@ -107,7 +113,8 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       id: "c1",
       question: "Compreensão: 'Pega a colher vermelha'",
       type: "compreensao",
-      instruction: "Apresente 3 colheres (cores diferentes). Criança pega a correta.",
+      instruction:
+        "Apresente 3 colheres (cores diferentes). Criança pega a correta.",
       options: ["Pega corretamente", "Hesita", "Não consegue"],
       correct: 0,
       explanation: "Crianças desta idade devem compreender cor + objeto",
@@ -117,7 +124,11 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       question: "Expressão: frase de 4-5 palavras",
       type: "expressao",
       instruction: "Peça: 'Fale uma frase sobre esse brinquedo'",
-      options: ["Forma frase de 4-5+ palavras", "2-3 palavras", "1 palavra ou sons"],
+      options: [
+        "Forma frase de 4-5+ palavras",
+        "2-3 palavras",
+        "1 palavra ou sons",
+      ],
       correct: 0,
       explanation: "Aos 5-6 anos crianças devem formar frases simples",
     },
@@ -154,8 +165,13 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       id: "c1",
       question: "Compreensão narrativa: história de 3 eventos",
       type: "compreensao",
-      instruction: "Conte: 'João acordou, comeu pão, foi à escola'. Depois pergunte ordem dos eventos.",
-      options: ["Responde correto a 2-3 perguntas", "Responde 1 corretamente", "Não consegue"],
+      instruction:
+        "Conte: 'João acordou, comeu pão, foi à escola'. Depois pergunte ordem dos eventos.",
+      options: [
+        "Responde correto a 2-3 perguntas",
+        "Responde 1 corretamente",
+        "Não consegue",
+      ],
       correct: 0,
       explanation: "Compreensão de sequência narrativa esperada nesta faixa",
     },
@@ -164,9 +180,14 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       question: "Expressão: conta experiência pessoal",
       type: "expressao",
       instruction: "Peça: 'Conte o que fez ontem'",
-      options: ["Narra com 5+ eventos", "Narra 2-3 eventos", "Resposta muito curta"],
+      options: [
+        "Narra com 5+ eventos",
+        "Narra 2-3 eventos",
+        "Resposta muito curta",
+      ],
       correct: 0,
-      explanation: "Crianças desta idade conseguem narrar experiências sequenciadas",
+      explanation:
+        "Crianças desta idade conseguem narrar experiências sequenciadas",
     },
   ],
   "9-10": [
@@ -186,7 +207,8 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       instruction: "Peça para ler palavra inventada",
       options: ["DRÁ-TO", "DA-RA-TO", "DRAT-O"],
       correct: 0,
-      explanation: "Leitura fonética de pseudo-palavras indica decodificação adequada",
+      explanation:
+        "Leitura fonética de pseudo-palavras indica decodificação adequada",
     },
     {
       id: "v1",
@@ -201,17 +223,27 @@ const TASKS: Record<AgeGroup, LanguageTask[]> = {
       id: "c1",
       question: "Compreensão: explique uma anedota simples",
       type: "compreensao",
-      instruction: "Conte piada ou anedota infantil. Pergunte o quê que é engraçado.",
-      options: ["Explica ponto de humor", "Entende mas não explica bem", "Não entende"],
+      instruction:
+        "Conte piada ou anedota infantil. Pergunte o quê que é engraçado.",
+      options: [
+        "Explica ponto de humor",
+        "Entende mas não explica bem",
+        "Não entende",
+      ],
       correct: 0,
-      explanation: "Compreensão de humor requer conhecimento cognitivo sofisticado",
+      explanation:
+        "Compreensão de humor requer conhecimento cognitivo sofisticado",
     },
     {
       id: "e1",
       question: "Expressão: define palavra com característica",
       type: "expressao",
       instruction: "Peça: 'O que é um livro?'",
-      options: ["Oferece definição com características", "Resposta vaga", "Resposta não-funcional"],
+      options: [
+        "Oferece definição com características",
+        "Resposta vaga",
+        "Resposta não-funcional",
+      ],
       correct: 0,
       explanation: "Definições categóricas esperadas em crianças desta idade",
     },
@@ -226,23 +258,11 @@ export default function LinguagemFonologia() {
   const tasks = TASKS[selectedAge];
   // Ordem de exibição das alternativas embaralhada por aplicação (anti-padrão "primeira é a certa").
   const optionOrders = useShuffledOptionOrders(tasks);
-  const answered = Object.values(answers).filter(a => a !== null).length;
+  const answered = Object.values(answers).filter((a) => a !== null).length;
   const progress = (answered / tasks.length) * 100;
 
-  const score = useMemo(() => {
-    let correct = 0;
-    tasks.forEach(task => {
-      const userAnswer = answers[task.id];
-      if (userAnswer === undefined || userAnswer === null) return;
-      if (userAnswer === task.correct) {
-        correct++;
-      }
-    });
-    return correct;
-  }, [answers, tasks]);
-
   const handleAnswer = (taskId: string, value: number) => {
-    setAnswers(prev => ({ ...prev, [taskId]: value }));
+    setAnswers((prev) => ({ ...prev, [taskId]: value }));
   };
 
   const handleReset = () => {
@@ -252,28 +272,33 @@ export default function LinguagemFonologia() {
   };
 
   if (showReport) {
+    const reportItems = tasks.map((task) => {
+      const answer = answers[task.id];
+      return {
+        question: `${task.question} — ${task.instruction}`,
+        answer:
+          answer === undefined || answer === null
+            ? "Não respondida"
+            : (task.options[answer] ?? String(answer)),
+      };
+    });
+
     return (
       <div className="space-y-4">
         <ClinicalReport
-          title="Linguagem e Fonologia — Resultado"
-          sections={[
-            { title: "Faixa Etária", content: AGE_GROUPS[selectedAge].label },
-            { title: "Desempenho", content: `${score}/${tasks.length} acertos (${Math.round((score/tasks.length)*100)}%)` },
-            { title: "Domínios Avaliados", content: [
-              "Consciência Fonológica: segmentação, rima, aliteração",
-              "Vocabulário: palavras receptivas e expressivas",
-              "Compreensão: entendimento de instruções e narrativas",
-              "Expressão: produção de fala e linguagem narrativa",
-            ].join('\n') },
-            { title: "Interpretação", content: `Escore ${Math.round((score/tasks.length)*100)}% indica ${
-              Math.round((score/tasks.length)*100) >= 80 ? "desenvolvimento linguístico adequado" :
-              Math.round((score/tasks.length)*100) >= 60 ? "linguagem com algumas dificuldades leves" :
-              "possíveis atrasos linguísticos que requerem fonoaudiológico"
-            } para a faixa etária` },
-          ]}
+          scaleName="Linguagem e Fonologia"
+          scaleFullName="Consciência fonológica, vocabulário, compreensão e expressão"
+          items={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
         />
-        <SaveToPatient testName="Linguagem e Fonologia" data={{ score, total: tasks.length, ageGroup: selectedAge }} />
-        <Button onClick={handleReset} className="w-full">← Voltar</Button>
+        <SaveToPatient
+          testName="Linguagem e Fonologia"
+          responses={reportItems}
+          patientAge={AGE_GROUPS[selectedAge].label}
+        />
+        <Button onClick={handleReset} className="w-full">
+          ← Voltar
+        </Button>
       </div>
     );
   }
@@ -288,7 +313,10 @@ export default function LinguagemFonologia() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Avaliação lúdica de consciência fonológica, vocabulário, compreensão e expressão linguística.</p>
+          <p className="text-sm text-gray-600">
+            Avaliação lúdica de consciência fonológica, vocabulário, compreensão
+            e expressão linguística.
+          </p>
         </CardContent>
       </Card>
 
@@ -298,11 +326,14 @@ export default function LinguagemFonologia() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map(age => (
+            {(Object.keys(AGE_GROUPS) as AgeGroup[]).map((age) => (
               <Button
                 key={age}
                 variant={selectedAge === age ? "default" : "outline"}
-                onClick={() => { setSelectedAge(age); setAnswers({}); }}
+                onClick={() => {
+                  setSelectedAge(age);
+                  setAnswers({});
+                }}
                 className="text-sm"
               >
                 {AGE_GROUPS[age].label}
@@ -316,49 +347,65 @@ export default function LinguagemFonologia() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Teste — {AGE_GROUPS[selectedAge].label}</CardTitle>
-            <Badge>{answered}/{tasks.length}</Badge>
+            <Badge>
+              {answered}/{tasks.length}
+            </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           {tasks.map((task, idx) => (
-            <div key={task.id} className="border-l-4 border-orange-300 pl-4 py-2">
+            <div
+              key={task.id}
+              className="border-l-4 border-orange-300 pl-4 py-2"
+            >
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="font-semibold text-sm">{idx + 1}. {task.question}</p>
+                  <p className="font-semibold text-sm">
+                    {idx + 1}. {task.question}
+                  </p>
                   <Badge variant="secondary" className="text-xs">
-                    {task.type === "fonologica" ? "🔤 Fonologia" :
-                     task.type === "vocabulario" ? "📚 Vocabulário" :
-                     task.type === "compreensao" ? "👂 Compreensão" :
-                     "💬 Expressão"}
+                    {task.type === "fonologica"
+                      ? "🔤 Fonologia"
+                      : task.type === "vocabulario"
+                        ? "📚 Vocabulário"
+                        : task.type === "compreensao"
+                          ? "👂 Compreensão"
+                          : "💬 Expressão"}
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-600">{task.instruction}</p>
               </div>
 
-              <RadioGroup value={String(answers[task.id] ?? "")} onValueChange={(v) => handleAnswer(task.id, parseInt(v))}>
+              <RadioGroup
+                value={String(answers[task.id] ?? "")}
+                onValueChange={(v) => handleAnswer(task.id, parseInt(v))}
+              >
                 <div className="space-y-2">
-                  {(optionOrders[task.id] ?? task.options.map((_, oi) => oi)).map((i) => {
+                  {(
+                    optionOrders[task.id] ?? task.options.map((_, oi) => oi)
+                  ).map((i) => {
                     const opt = task.options[i];
                     return (
-                      <div key={i} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
-                        <RadioGroupItem value={String(i)} id={`${task.id}-${i}`} />
-                        <Label htmlFor={`${task.id}-${i}`} className="text-sm cursor-pointer flex-1">{opt}</Label>
+                      <div
+                        key={i}
+                        className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={String(i)}
+                          id={`${task.id}-${i}`}
+                        />
+                        <Label
+                          htmlFor={`${task.id}-${i}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {opt}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               </RadioGroup>
-
-              {answers[task.id] !== undefined && answers[task.id] !== null && (
-                <div className="mt-3 text-xs text-gray-600">
-                  {answers[task.id] === task.correct ? (
-                    <span className="text-green-600 block">✅ Correto! {task.explanation}</span>
-                  ) : (
-                    <span className="text-red-600 block">❌ Resposta esperada: {task.options[task.correct]}. {task.explanation}</span>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </CardContent>
@@ -375,7 +422,7 @@ export default function LinguagemFonologia() {
           className="flex-1"
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          Finalizar e Salvar
+          Revisar Respostas
         </Button>
       </div>
     </div>

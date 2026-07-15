@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { Heart, Zap, ShieldAlert, Moon, Apple, Users, BookOpen,
-  RotateCcw, ChevronRight, ChevronLeft, CheckCircle2, AlertTriangle,
-  AlertCircle, Info, BarChart3, ClipboardList
+import {
+  Heart,
+  Zap,
+  ShieldAlert,
+  Moon,
+  Apple,
+  Users,
+  BookOpen,
+  RotateCcw,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +34,7 @@ interface InventoryDef {
   title: string;
   subtitle: string;
   icon: React.ElementType;
-  color: string;        // tailwind accent color key
+  color: string; // tailwind accent color key
   bgLight: string;
   bgDark: string;
   items: string[];
@@ -47,17 +58,63 @@ const SCALE_OPTIONS = [
 
 function stdClassify(score: number, max: number): Classification {
   const pct = score / max;
-  if (pct < 0.2)  return { label: "Normal / Sem indícios", description: "Suas respostas não mostram sinais preocupantes nessa área. Continue assim!", level: "normal" };
-  if (pct < 0.4)  return { label: "Leve", description: "Há alguns sinais que merecem atenção, mas ainda são poucos. Vale conversar com um adulto de confiança.", level: "leve" };
-  if (pct < 0.67) return { label: "Moderado", description: "Você marcou várias coisas que podem estar te incomodando. É importante conversar com um médico ou psicólogo.", level: "moderado" };
-  return { label: "Alto — Atenção!", description: "Suas respostas mostram muitas coisas difíceis. Fale com um médico ou profissional de saúde logo.", level: "alto" };
+  if (pct < 0.2)
+    return {
+      label: "Normal / Sem indícios",
+      description:
+        "Suas respostas não mostram sinais preocupantes nessa área. Continue assim!",
+      level: "normal",
+    };
+  if (pct < 0.4)
+    return {
+      label: "Leve",
+      description:
+        "Há alguns sinais que merecem atenção, mas ainda são poucos. Vale conversar com um adulto de confiança.",
+      level: "leve",
+    };
+  if (pct < 0.67)
+    return {
+      label: "Moderado",
+      description:
+        "Você marcou várias coisas que podem estar te incomodando. É importante conversar com um médico ou psicólogo.",
+      level: "moderado",
+    };
+  return {
+    label: "Alto — Atenção!",
+    description:
+      "Suas respostas mostram muitas coisas difíceis. Fale com um médico ou profissional de saúde logo.",
+    level: "alto",
+  };
 }
 
 function humClassify(score: number): Classification {
-  if (score <= 5)  return { label: "Normal / Sem indícios", description: "Suas respostas não mostram sinais de tristeza ou depressão. Continue cuidando de você!", level: "normal" };
-  if (score <= 11) return { label: "Leve", description: "Você está sentindo algumas coisas difíceis. Vale conversar com alguém de confiança sobre como você está se sentindo.", level: "leve" };
-  if (score <= 19) return { label: "Moderado", description: "Você está sentindo muitas coisas pesadas. É muito importante conversar com um médico ou psicólogo.", level: "moderado" };
-  return { label: "Alto — Atenção Urgente!", description: "Suas respostas mostram um sofrimento muito grande. Por favor, fale com um adulto de confiança ou com um médico hoje.", level: "alto" };
+  if (score <= 5)
+    return {
+      label: "Normal / Sem indícios",
+      description:
+        "Suas respostas não mostram sinais de tristeza ou depressão. Continue cuidando de você!",
+      level: "normal",
+    };
+  if (score <= 11)
+    return {
+      label: "Leve",
+      description:
+        "Você está sentindo algumas coisas difíceis. Vale conversar com alguém de confiança sobre como você está se sentindo.",
+      level: "leve",
+    };
+  if (score <= 19)
+    return {
+      label: "Moderado",
+      description:
+        "Você está sentindo muitas coisas pesadas. É muito importante conversar com um médico ou psicólogo.",
+      level: "moderado",
+    };
+  return {
+    label: "Alto — Atenção Urgente!",
+    description:
+      "Suas respostas mostram um sofrimento muito grande. Por favor, fale com um adulto de confiança ou com um médico hoje.",
+    level: "alto",
+  };
 }
 
 const INVENTORIES: InventoryDef[] = [
@@ -248,29 +305,39 @@ const INVENTORIES: InventoryDef[] = [
 ];
 
 // ─── Colour helpers ────────────────────────────────────────────────────────────
-const LEVEL_COLORS: Record<string, { bg: string; text: string; border: string; badge: string }> = {
-  normal:   { bg: "bg-emerald-50 dark:bg-emerald-950/20", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-300 dark:border-emerald-700", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
-  leve:     { bg: "bg-amber-50 dark:bg-amber-950/20",     text: "text-amber-700 dark:text-amber-300",     border: "border-amber-300 dark:border-amber-700",   badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"   },
-  moderado: { bg: "bg-orange-50 dark:bg-orange-950/20",   text: "text-orange-700 dark:text-orange-300",   border: "border-orange-300 dark:border-orange-700", badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300" },
-  alto:     { bg: "bg-red-50 dark:bg-red-950/20",         text: "text-red-700 dark:text-red-300",         border: "border-red-300 dark:border-red-700",       badge: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"         },
-};
-
-const LEVEL_ICON: Record<string, React.ElementType> = {
-  normal: CheckCircle2,
-  leve: Info,
-  moderado: AlertTriangle,
-  alto: AlertCircle,
-};
-
 const INVENTORY_ACCENT: Record<string, { iconBg: string; tab: string }> = {
-  humor:          { iconBg: "from-rose-500 to-pink-500",    tab: "data-[state=active]:text-rose-600 data-[state=active]:border-rose-400"    },
-  ansiedade:      { iconBg: "from-amber-500 to-yellow-500", tab: "data-[state=active]:text-amber-600 data-[state=active]:border-amber-400"  },
-  atencao:        { iconBg: "from-blue-500 to-cyan-500",    tab: "data-[state=active]:text-blue-600 data-[state=active]:border-blue-400"    },
-  comportamento:  { iconBg: "from-orange-500 to-red-400",   tab: "data-[state=active]:text-orange-600 data-[state=active]:border-orange-400" },
-  sono:           { iconBg: "from-indigo-500 to-violet-500",tab: "data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-400" },
-  alimentacao:    { iconBg: "from-green-500 to-emerald-500",tab: "data-[state=active]:text-green-600 data-[state=active]:border-green-400"  },
-  social:         { iconBg: "from-purple-500 to-fuchsia-500",tab:"data-[state=active]:text-purple-600 data-[state=active]:border-purple-400"},
-  escola:         { iconBg: "from-teal-500 to-cyan-500",    tab: "data-[state=active]:text-teal-600 data-[state=active]:border-teal-400"    },
+  humor: {
+    iconBg: "from-rose-500 to-pink-500",
+    tab: "data-[state=active]:text-rose-600 data-[state=active]:border-rose-400",
+  },
+  ansiedade: {
+    iconBg: "from-amber-500 to-yellow-500",
+    tab: "data-[state=active]:text-amber-600 data-[state=active]:border-amber-400",
+  },
+  atencao: {
+    iconBg: "from-blue-500 to-cyan-500",
+    tab: "data-[state=active]:text-blue-600 data-[state=active]:border-blue-400",
+  },
+  comportamento: {
+    iconBg: "from-orange-500 to-red-400",
+    tab: "data-[state=active]:text-orange-600 data-[state=active]:border-orange-400",
+  },
+  sono: {
+    iconBg: "from-indigo-500 to-violet-500",
+    tab: "data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-400",
+  },
+  alimentacao: {
+    iconBg: "from-green-500 to-emerald-500",
+    tab: "data-[state=active]:text-green-600 data-[state=active]:border-green-400",
+  },
+  social: {
+    iconBg: "from-purple-500 to-fuchsia-500",
+    tab: "data-[state=active]:text-purple-600 data-[state=active]:border-purple-400",
+  },
+  escola: {
+    iconBg: "from-teal-500 to-cyan-500",
+    tab: "data-[state=active]:text-teal-600 data-[state=active]:border-teal-400",
+  },
 };
 
 // ─── InventoryQuestions sub-component ─────────────────────────────────────────
@@ -280,8 +347,14 @@ interface InventoryQuestionsProps {
   onChange: (idx: number, val: number) => void;
 }
 
-function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps) {
-  const answered = Object.keys(answers).filter(k => answers[+k] !== undefined).length;
+function InventoryQuestions({
+  inv,
+  answers,
+  onChange,
+}: InventoryQuestionsProps) {
+  const answered = Object.keys(answers).filter(
+    (k) => answers[+k] !== undefined,
+  ).length;
   const progress = (answered / inv.items.length) * 100;
   const accent = INVENTORY_ACCENT[inv.id];
   const Icon = inv.icon;
@@ -290,12 +363,18 @@ function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps)
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${accent.iconBg} flex items-center justify-center shadow-sm flex-shrink-0`}>
+        <div
+          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${accent.iconBg} flex items-center justify-center shadow-sm flex-shrink-0`}
+        >
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-bold text-foreground truncate">{inv.title}</h2>
-          <p className="text-xs text-muted-foreground">{inv.subtitle} • {inv.items.length} perguntas</p>
+          <h2 className="text-base font-bold text-foreground truncate">
+            {inv.title}
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {inv.subtitle} • {inv.items.length} perguntas
+          </p>
         </div>
         <Badge variant="outline" className="text-xs shrink-0">
           {answered}/{inv.items.length}
@@ -305,13 +384,18 @@ function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps)
       {/* Progress */}
       <div className="space-y-1">
         <Progress value={progress} className="h-2" />
-        <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}% respondido</p>
+        <p className="text-xs text-muted-foreground text-right">
+          {Math.round(progress)}% respondido
+        </p>
       </div>
 
       {/* Scale legend */}
       <div className="flex gap-2 flex-wrap">
-        {SCALE_OPTIONS.map(opt => (
-          <span key={opt.value} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+        {SCALE_OPTIONS.map((opt) => (
+          <span
+            key={opt.value}
+            className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+          >
             {opt.value} = {opt.label}
           </span>
         ))}
@@ -329,7 +413,9 @@ function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps)
             >
               <CardContent className="p-4 space-y-3">
                 <p className="text-sm font-medium text-foreground leading-snug">
-                  <span className="text-muted-foreground mr-2 text-xs font-normal">{i + 1}.</span>
+                  <span className="text-muted-foreground mr-2 text-xs font-normal">
+                    {i + 1}.
+                  </span>
                   {item}
                 </p>
                 <RadioGroup
@@ -337,7 +423,7 @@ function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps)
                   onValueChange={(v) => onChange(i, parseInt(v))}
                   className="flex gap-2 flex-wrap"
                 >
-                  {SCALE_OPTIONS.map(opt => (
+                  {SCALE_OPTIONS.map((opt) => (
                     <div key={opt.value} className="flex items-center gap-1.5">
                       <RadioGroupItem
                         value={String(opt.value)}
@@ -347,9 +433,10 @@ function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps)
                       <Label
                         htmlFor={`${inv.id}-q${i}-v${opt.value}`}
                         className={`cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition-all select-none
-                          ${val === opt.value
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                            : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-primary/5"
+                          ${
+                            val === opt.value
+                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                              : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-primary/5"
                           }`}
                       >
                         {opt.value} — {opt.label}
@@ -366,77 +453,6 @@ function InventoryQuestions({ inv, answers, onChange }: InventoryQuestionsProps)
   );
 }
 
-// ─── InventoryResult sub-component ────────────────────────────────────────────
-interface InventoryResultProps {
-  inv: InventoryDef;
-  score: number;
-  classification: Classification;
-  compact?: boolean;
-}
-
-function InventoryResult({ inv, score, classification, compact }: InventoryResultProps) {
-  const Icon = inv.icon;
-  const LevelIcon = LEVEL_ICON[classification.level];
-  const colors = LEVEL_COLORS[classification.level];
-  const accent = INVENTORY_ACCENT[inv.id];
-  const pct = (score / inv.maxScore) * 100;
-
-  if (compact) {
-    return (
-      <Card className={`border ${colors.border} ${colors.bg}`}>
-        <CardContent className="p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${accent.iconBg} flex items-center justify-center flex-shrink-0`}>
-              <Icon className="w-3.5 h-3.5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-foreground truncate">{inv.title}</p>
-              <p className="text-xs text-muted-foreground">{inv.subtitle}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={`text-lg font-bold ${colors.text}`}>{score}<span className="text-xs font-normal text-muted-foreground">/{inv.maxScore}</span></span>
-            <Badge className={`text-xs ${colors.badge}`}>{classification.label}</Badge>
-          </div>
-          <Progress value={pct} className="h-1.5" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className={`border ${colors.border} ${colors.bg}`}>
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${accent.iconBg} flex items-center justify-center shadow-sm`}>
-            <Icon className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h3 className="font-bold text-foreground">{inv.title}</h3>
-            <p className="text-xs text-muted-foreground">{inv.subtitle}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-center">
-            <p className={`text-3xl font-bold ${colors.text}`}>{score}</p>
-            <p className="text-xs text-muted-foreground">de {inv.maxScore}</p>
-          </div>
-          <div className="flex-1 space-y-1">
-            <Progress value={pct} className="h-2" />
-            <div className="flex items-center gap-1">
-              <LevelIcon className={`w-3.5 h-3.5 ${colors.text}`} />
-              <Badge className={`text-xs ${colors.badge}`}>{classification.label}</Badge>
-            </div>
-          </div>
-        </div>
-
-        <p className={`text-sm ${colors.text} leading-snug`}>{classification.description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function InventariosAutoPage() {
   const [childName, setChildName] = useState("");
@@ -444,7 +460,7 @@ export default function InventariosAutoPage() {
 
   // One answers map per inventory, keyed by inventory id
   const [allAnswers, setAllAnswers] = useState<Record<string, ScaleAnswer>>(
-    Object.fromEntries(INVENTORIES.map(inv => [inv.id, {}]))
+    Object.fromEntries(INVENTORIES.map((inv) => [inv.id, {}])),
   );
 
   const [activeTab, setActiveTab] = useState(INVENTORIES[0].id);
@@ -452,28 +468,30 @@ export default function InventariosAutoPage() {
   const [showProfile, setShowProfile] = useState(false);
 
   function handleAnswer(invId: string, idx: number, val: number) {
-    setAllAnswers(prev => ({
+    setAllAnswers((prev) => ({
       ...prev,
       [invId]: { ...prev[invId], [idx]: val },
     }));
-  }
-
-  function getScore(invId: string) {
-    const inv = INVENTORIES.find(i => i.id === invId)!;
-    const ans = allAnswers[invId];
-    return inv.items.reduce((sum, _, i) => sum + (ans[i] ?? 0), 0);
   }
 
   function getAnsweredCount(invId: string) {
     return Object.keys(allAnswers[invId]).length;
   }
 
-  const totalAnswered = INVENTORIES.reduce((sum, inv) => sum + getAnsweredCount(inv.id), 0);
-  const totalQuestions = INVENTORIES.reduce((sum, inv) => sum + inv.items.length, 0);
-  const allDone = INVENTORIES.every(inv => getAnsweredCount(inv.id) === inv.items.length);
+  const totalAnswered = INVENTORIES.reduce(
+    (sum, inv) => sum + getAnsweredCount(inv.id),
+    0,
+  );
+  const totalQuestions = INVENTORIES.reduce(
+    (sum, inv) => sum + inv.items.length,
+    0,
+  );
+  const allDone = INVENTORIES.every(
+    (inv) => getAnsweredCount(inv.id) === inv.items.length,
+  );
 
   function handleReset() {
-    setAllAnswers(Object.fromEntries(INVENTORIES.map(inv => [inv.id, {}])));
+    setAllAnswers(Object.fromEntries(INVENTORIES.map((inv) => [inv.id, {}])));
     setShowResult(false);
     setShowProfile(false);
     setActiveTab(INVENTORIES[0].id);
@@ -483,36 +501,27 @@ export default function InventariosAutoPage() {
 
   // Build ClinicalReport items — ALL questions from ALL inventories
   function buildReportItems() {
-    const items: { question: string; answer: string; value: number }[] = [];
-    INVENTORIES.forEach(inv => {
+    const items: { question: string; answer: string }[] = [];
+    INVENTORIES.forEach((inv) => {
       const ans = allAnswers[inv.id];
       inv.items.forEach((q, i) => {
         const val = ans[i];
-        const opt = val === undefined ? undefined : SCALE_OPTIONS.find(o => o.value === val);
+        const opt =
+          val === undefined
+            ? undefined
+            : SCALE_OPTIONS.find((o) => o.value === val);
         items.push({
           question: `[${inv.title}] ${q}`,
-          answer: opt?.label ?? "—",
-          value: val ?? 0,
+          answer: opt?.label ?? "Não respondida",
         });
       });
     });
     return items;
   }
 
-  function buildAnswersForSave() {
-    const obj: Record<string, any> = {};
-    INVENTORIES.forEach(inv => {
-      obj[inv.id] = allAnswers[inv.id];
-    });
-    return obj;
-  }
-
-  const totalScore = INVENTORIES.reduce((sum, inv) => sum + getScore(inv.id), 0);
-
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6 pb-10">
-
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
@@ -520,12 +529,21 @@ export default function InventariosAutoPage() {
             <ClipboardList className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Inventários Autoaplicáveis</h1>
-            <p className="text-xs text-muted-foreground">Para crianças e adolescentes de 8 a 17 anos — 8 áreas clínicas</p>
+            <h1 className="text-xl font-bold text-foreground">
+              Inventários Autoaplicáveis
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Para crianças e adolescentes de 8 a 17 anos — 8 áreas clínicas
+            </p>
           </div>
         </div>
         {(showResult || showProfile) && (
-          <Button variant="outline" size="sm" onClick={handleReset} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            className="gap-2"
+          >
             <RotateCcw className="w-4 h-4" /> Reiniciar
           </Button>
         )}
@@ -534,25 +552,31 @@ export default function InventariosAutoPage() {
       {/* Child Info */}
       <Card className="border-border">
         <CardContent className="p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Informações da Criança / Adolescente</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Informações da Criança / Adolescente
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="childName" className="text-xs">Meu nome</Label>
+              <Label htmlFor="childName" className="text-xs">
+                Meu nome
+              </Label>
               <Input
                 id="childName"
                 placeholder="Como você se chama?"
                 value={childName}
-                onChange={e => setChildName(e.target.value)}
+                onChange={(e) => setChildName(e.target.value)}
                 className="text-sm"
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="childAge" className="text-xs">Minha idade</Label>
+              <Label htmlFor="childAge" className="text-xs">
+                Minha idade
+              </Label>
               <Input
                 id="childAge"
                 placeholder="Quantos anos você tem?"
                 value={childAge}
-                onChange={e => setChildAge(e.target.value)}
+                onChange={(e) => setChildAge(e.target.value)}
                 className="text-sm"
               />
             </div>
@@ -564,12 +588,19 @@ export default function InventariosAutoPage() {
       <Card className="border-border">
         <CardContent className="p-4 space-y-2">
           <div className="flex justify-between items-center">
-            <p className="text-xs font-semibold text-muted-foreground">Progresso geral</p>
-            <span className="text-xs text-muted-foreground">{totalAnswered} de {totalQuestions} perguntas</span>
+            <p className="text-xs font-semibold text-muted-foreground">
+              Progresso geral
+            </p>
+            <span className="text-xs text-muted-foreground">
+              {totalAnswered} de {totalQuestions} perguntas
+            </span>
           </div>
-          <Progress value={(totalAnswered / totalQuestions) * 100} className="h-2.5" />
+          <Progress
+            value={(totalAnswered / totalQuestions) * 100}
+            className="h-2.5"
+          />
           <div className="flex flex-wrap gap-1.5 mt-1">
-            {INVENTORIES.map(inv => {
+            {INVENTORIES.map((inv) => {
               const cnt = getAnsweredCount(inv.id);
               const done = cnt === inv.items.length;
               const _accent = INVENTORY_ACCENT[inv.id];
@@ -579,17 +610,22 @@ export default function InventariosAutoPage() {
                   key={inv.id}
                   onClick={() => setActiveTab(inv.id)}
                   className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-all
-                    ${done
-                      ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300"
-                      : cnt > 0
-                        ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300"
-                        : "border-border bg-background text-muted-foreground"
+                    ${
+                      done
+                        ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300"
+                        : cnt > 0
+                          ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300"
+                          : "border-border bg-background text-muted-foreground"
                     }`}
                 >
                   <Icon className="w-3 h-3" />
                   {inv.tabLabel}
                   {done && <CheckCircle2 className="w-3 h-3" />}
-                  {!done && <span className="text-xs opacity-70">{cnt}/{inv.items.length}</span>}
+                  {!done && (
+                    <span className="text-xs opacity-70">
+                      {cnt}/{inv.items.length}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -613,7 +649,9 @@ export default function InventariosAutoPage() {
                 <Icon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{inv.tabLabel}</span>
                 {done && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
-                {!done && cnt > 0 && <span className="text-amber-500 text-xs">{cnt}</span>}
+                {!done && cnt > 0 && (
+                  <span className="text-amber-500 text-xs">{cnt}</span>
+                )}
               </TabsTrigger>
             );
           })}
@@ -627,21 +665,10 @@ export default function InventariosAutoPage() {
               onChange={(idx, val) => handleAnswer(inv.id, idx, val)}
             />
 
-            {/* Per-inventory result preview */}
-            {getAnsweredCount(inv.id) === inv.items.length && (() => {
-              const score = getScore(inv.id);
-              const cl = inv.classify(score);
-              return (
-                <div className="mt-5">
-                  <InventoryResult inv={inv} score={score} classification={cl} />
-                </div>
-              );
-            })()}
-
             {/* Navigation between tabs */}
             <div className="flex justify-between gap-3 mt-5">
               {(() => {
-                const idx = INVENTORIES.findIndex(i => i.id === inv.id);
+                const idx = INVENTORIES.findIndex((i) => i.id === inv.id);
                 const prev = INVENTORIES[idx - 1];
                 const next = INVENTORIES[idx + 1];
                 return (
@@ -669,11 +696,14 @@ export default function InventariosAutoPage() {
                       <Button
                         size="sm"
                         className="gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
-                        onClick={() => { setShowResult(true); setShowProfile(true); }}
+                        onClick={() => {
+                          setShowResult(true);
+                          setShowProfile(true);
+                        }}
                         disabled={!allDone}
                       >
-                        <BarChart3 className="w-4 h-4" />
-                        Ver Meu Perfil Completo
+                        <ClipboardList className="w-4 h-4" />
+                        Ver Todas as Respostas
                       </Button>
                     )}
                   </>
@@ -689,7 +719,8 @@ export default function InventariosAutoPage() {
         <Card className="border-dashed border-muted-foreground/30">
           <CardContent className="p-4 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              Responda todas as perguntas dos {INVENTORIES.length} inventários para ver seu perfil completo.
+              Responda todas as perguntas dos {INVENTORIES.length} inventários
+              para ver seu perfil completo.
             </p>
             <p className="text-xs text-muted-foreground">
               Faltam {totalQuestions - totalAnswered} respostas
@@ -699,121 +730,134 @@ export default function InventariosAutoPage() {
       )}
 
       {/* ── RESULTS SECTION ── */}
-      {showResult && showProfile && allDone && (() => {
-        const results = INVENTORIES.map(inv => ({
-          inv,
-          score: getScore(inv.id),
-          classification: inv.classify(getScore(inv.id)),
-        }));
+      {showResult &&
+        showProfile &&
+        allDone &&
+        (() => {
+          const reportItems = buildReportItems();
 
-        // Mantido apenas para SaveToPatient (não é exibido na tela).
-        const highCount = results.filter(r => r.classification.level === "alto").length;
-        const modCount = results.filter(r => r.classification.level === "moderado").length;
-
-        const reportItems = buildReportItems();
-
-        return (
-          <div className="space-y-6 mt-2">
-            {/* Cabeçalho */}
-            <Card className="border-border">
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
-                    <ClipboardList className="w-6 h-6 text-white" />
+          return (
+            <div className="space-y-6 mt-2">
+              {/* Cabeçalho */}
+              <Card className="border-border">
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
+                      <ClipboardList className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">
+                        {childName
+                          ? `Respostas de ${childName}`
+                          : "Minhas Respostas"}
+                      </h2>
+                      {childAge && (
+                        <p className="text-xs text-muted-foreground">
+                          {childAge} anos
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">
-                      {childName ? `Respostas de ${childName}` : "Minhas Respostas"}
-                    </h2>
-                    {childAge && <p className="text-xs text-muted-foreground">{childAge} anos</p>}
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Registro integral do que foi perguntado e respondido, para
+                    revisão do profissional responsável.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Perguntas e respostas por inventário */}
+              <div>
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-primary" />
+                  Perguntas e respostas
+                </h3>
+                <div className="space-y-4">
+                  {INVENTORIES.map((inv) => {
+                    const ans = allAnswers[inv.id];
+                    const Icon = inv.icon;
+                    const accent = INVENTORY_ACCENT[inv.id];
+                    return (
+                      <Card key={inv.id} className="border-border">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-7 h-7 rounded-lg bg-gradient-to-br ${accent.iconBg} flex items-center justify-center flex-shrink-0`}
+                            >
+                              <Icon className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-foreground">
+                                {inv.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {inv.subtitle}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {inv.items.map((q, i) => {
+                              const val = ans[i];
+                              const opt =
+                                val === undefined
+                                  ? undefined
+                                  : SCALE_OPTIONS.find((o) => o.value === val);
+                              return (
+                                <div
+                                  key={i}
+                                  className="rounded-lg border border-border/70 bg-background p-2.5"
+                                >
+                                  <p className="text-sm text-foreground leading-snug">
+                                    <span className="text-muted-foreground mr-1.5 text-xs font-normal">
+                                      {i + 1}.
+                                    </span>
+                                    {q}
+                                  </p>
+                                  <p className="text-sm text-primary mt-1">
+                                    → {opt?.label ?? "—"}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Este inventário é uma ferramenta de rastreio e não substitui avaliação médica profissional.
-                  Converse com um especialista sobre os resultados.
-                </p>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Perguntas e respostas por inventário */}
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-primary" />
-                Perguntas e respostas
-              </h3>
-              <div className="space-y-4">
-                {INVENTORIES.map(inv => {
-                  const ans = allAnswers[inv.id];
-                  const Icon = inv.icon;
-                  const accent = INVENTORY_ACCENT[inv.id];
-                  return (
-                    <Card key={inv.id} className="border-border">
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${accent.iconBg} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className="w-3.5 h-3.5 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-foreground">{inv.title}</p>
-                            <p className="text-xs text-muted-foreground">{inv.subtitle}</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {inv.items.map((q, i) => {
-                            const val = ans[i];
-                            const opt = val === undefined ? undefined : SCALE_OPTIONS.find(o => o.value === val);
-                            return (
-                              <div key={i} className="rounded-lg border border-border/70 bg-background p-2.5">
-                                <p className="text-sm text-foreground leading-snug">
-                                  <span className="text-muted-foreground mr-1.5 text-xs font-normal">{i + 1}.</span>
-                                  {q}
-                                </p>
-                                <p className="text-sm text-primary mt-1">→ {opt?.label ?? "—"}</p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+              {/* Clinical Report */}
+              <ClinicalReport
+                scaleName="Inventários Autoaplicáveis — 8 Áreas Clínicas"
+                scaleFullName={
+                  childName
+                    ? `Respondido por: ${childName}${childAge ? `, ${childAge} anos` : ""}`
+                    : undefined
+                }
+                items={reportItems}
+                patientAge={childAge ? `${childAge} anos` : "8–17 anos"}
+              />
+
+              {/* Save to Patient */}
+              <SaveToPatient
+                scaleName="Inventários Autoaplicáveis"
+                responses={reportItems}
+                patientAge={childAge || "8-17 anos"}
+              />
+
+              {/* Reset */}
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={handleReset}
+                  className="gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" /> Fazer Novamente
+                </Button>
               </div>
             </div>
-
-            {/* Clinical Report */}
-            <ClinicalReport
-              scaleName="Inventários Autoaplicáveis — 8 Áreas Clínicas"
-              scaleFullName={childName ? `Respondido por: ${childName}${childAge ? `, ${childAge} anos` : ""}` : undefined}
-              hideScore
-              classification="Registro de respostas — análise clínica pelo profissional"
-              description=""
-              items={reportItems}
-              patientAge={childAge ? `${childAge} anos` : "8–17 anos"}
-            />
-
-            {/* Save to Patient */}
-            <SaveToPatient
-              scaleName="Inventários Autoaplicáveis"
-              totalScore={totalScore}
-              classification={
-                highCount > 0 ? "Alto risco" :
-                modCount >= 2 ? "Moderado" :
-                modCount === 1 ? "Leve" : "Normal"
-              }
-              answers={buildAnswersForSave()}
-              domainScores={Object.fromEntries(results.map(r => [r.inv.id, r.score]))}
-              patientAge={childAge || "8-17 anos"}
-            />
-
-            {/* Reset */}
-            <div className="text-center">
-              <Button variant="outline" onClick={handleReset} className="gap-2">
-                <RotateCcw className="w-4 h-4" /> Fazer Novamente
-              </Button>
-            </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
     </div>
   );
 }

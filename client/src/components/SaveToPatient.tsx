@@ -22,28 +22,21 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
+import {
+  normalizeScaleResponseItems,
+  type ScaleResponseItem,
+} from "@/lib/scaleResponseReport";
 
 interface SaveToPatientProps {
   scaleName?: string;
-  totalScore?: number;
-  classification?: string;
-  answers?: any;
-  domainScores?: any;
   patientAge?: string;
-  // Forma legada usada pelas páginas de teste direto:
+  responses: ScaleResponseItem[];
   testName?: string;
-  data?: any;
 }
 
 export function SaveToPatient(rawProps: SaveToPatientProps) {
-  const data = rawProps.data ?? {};
   const scaleName = rawProps.scaleName ?? rawProps.testName ?? "Teste";
-  const totalScore = rawProps.totalScore ?? data.score ?? data.totalScore ?? 0;
-  const classification = rawProps.classification ?? "";
-  const answers = rawProps.answers ?? data;
-  const domainScores = rawProps.domainScores;
-  const patientAge =
-    rawProps.patientAge ?? (data.ageGroup != null ? String(data.ageGroup) : undefined);
+  const patientAge = rawProps.patientAge;
   const { toast } = useToast();
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [newPatientName, setNewPatientName] = useState("");
@@ -58,7 +51,9 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     queryKey: ["/api/patients"],
   });
   // A API retorna { data: [...] }; aceita também array puro por robustez.
-  const patients: any[] = Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? []);
+  const patients: any[] = Array.isArray(patientsRaw)
+    ? patientsRaw
+    : (patientsRaw?.data ?? []);
 
   const createPatientMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -83,14 +78,18 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
 
   const saveResultMutation = useMutation({
     mutationFn: async (patientId: string) => {
+      const responses = normalizeScaleResponseItems(rawProps.responses);
+      if (responses.length === 0) {
+        throw new Error(
+          "A escala precisa fornecer perguntas e respostas por extenso antes de ser salva.",
+        );
+      }
       const res = await apiRequest("POST", "/api/results", {
         patientId,
         scaleName,
-        answers,
-        totalScore,
-        classification,
+        responses,
+        answers: responses,
         patientAge: patientAge || null,
-        domainScores: domainScores || null,
       });
       return res.json();
     },
@@ -102,7 +101,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
       });
       toast({
         title: "Salvo!",
-        description: "Resultado vinculado ao paciente.",
+        description: "Perguntas e respostas vinculadas ao paciente.",
       });
     },
     onError: () => {
@@ -150,7 +149,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <p className="text-sm font-medium text-foreground">
-              Resultado salvo com sucesso!
+              Respostas salvas com sucesso!
             </p>
           </div>
           <Link href={`/paciente/${savedPatientId}`}>
@@ -172,12 +171,15 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     createPatientMutation.isPending || saveResultMutation.isPending;
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-chart-2/5 dark:from-primary/10 dark:to-chart-2/10">
+    <Card
+      data-scale-response-action
+      className="border-primary/20 bg-gradient-to-br from-primary/5 to-chart-2/5 dark:from-primary/10 dark:to-chart-2/10"
+    >
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <UserPlus className="w-4 h-4 text-primary" />
           <p className="text-sm font-semibold text-foreground">
-            Vincular a Paciente
+            Vincular Respostas a Paciente
           </p>
           <Badge variant="secondary" className="text-xs">
             Opcional
@@ -261,7 +263,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           ) : (
             <Save className="w-3 h-3" />
           )}
-          {isLoading ? "Salvando com segurança..." : "Salvar Resultado"}
+          {isLoading ? "Salvando com segurança..." : "Salvar Respostas"}
         </Button>
       </CardContent>
     </Card>
