@@ -16,7 +16,10 @@ interface Env {
   CORS_ORIGINS?: string;         // Comma-separated allowed origins
   ENVIRONMENT?: string;
   DEMO_API_WRITES_ENABLED?: string;
+  NEUROPED_JWT_SECRET?: string;
 }
+
+import { verifyJwt } from "./auth/_crypto";
 
 // Rate limit em memÃ³ria (fallback quando KV nÃ£o disponÃ­vel)
 // Cloudflare Workers reusam instÃ¢ncias no mesmo pop â€” suficiente para burst bÃ¡sico
@@ -40,9 +43,13 @@ function getAllowedOrigins(env: Env): string[] {
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-function getCorsHeaders(origin: string | null, allowedOrigins: string[]): Record<string, string> {
+function getCorsHeaders(
+  origin: string | null,
+  requestOrigin: string,
+  allowedOrigins: string[],
+): Record<string, string> {
   const allowed =
-    allowedOrigins.length === 0 || // sem restriÃ§Ã£o configurada
+    origin === requestOrigin ||
     (origin && allowedOrigins.includes(origin)) ||
     allowedOrigins.includes("*");
 
@@ -55,6 +62,53 @@ function getCorsHeaders(origin: string | null, allowedOrigins: string[]): Record
     "Access-Control-Max-Age": "600",
     "Vary": "Origin",
   };
+}
+
+const PUBLIC_API_PATHS = new Set([
+  "/api/health",
+  "/api/version",
+  "/api/auth/login",
+  "/api/auth/refresh",
+  "/api/auth/logout",
+]);
+
+function apiError(message: string, code: string, status: number): Response {
+  return new Response(JSON.stringify({ error: message, code }), {
+    status,
+    headers: { "Content-Type": "application/json", ...SECURITY_HEADERS },
+  });
+}
+
+/**
+ * Um banco D1 ativo pode conter dados clínicos, ainda que as tabelas históricas
+ * tenham o sufixo `_demo`. Nesse cenário toda rota não pública exige access JWT.
+ * Sem D1, o catálogo fictício continua disponível para demonstração/offline.
+ */
+async function authorizeClinicalApi(request: Request, env: Env): Promise<Response | null> {
+  if (!env.DB) return null;
+
+  const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  if (PUBLIC_API_PATHS.has(path)) return null;
+
+  const secret = env.NEUROPED_JWT_SECRET;
+  if (!secret?.trim()) {
+    return apiError(
+      "Autenticação do servidor não configurada.",
+      "AUTH_NOT_CONFIGURED",
+      503,
+    );
+  }
+
+  const authorization = request.headers.get("Authorization") ?? "";
+  const token = authorization.startsWith("Bearer ")
+    ? authorization.slice(7).trim()
+    : "";
+  const payload = token ? await verifyJwt(token, secret) : null;
+  if (!payload || payload.type !== "access") {
+    return apiError("Não autenticado.", "UNAUTHENTICATED", 401);
+  }
+
+  return null;
 }
 
 function getRateLimitKey(request: Request): string {
@@ -96,7 +150,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const origin = request.headers.get("Origin");
   const allowedOrigins = getAllowedOrigins(env);
-  const corsHeaders = getCorsHeaders(origin, allowedOrigins);
+  const corsHeaders = getCorsHeaders(origin, new URL(request.url).origin, allowedOrigins);
 
   // Preflight CORS
   if (request.method === "OPTIONS") {
@@ -150,13 +204,23 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
+  const authFailure = await authorizeClinicalApi(request, env);
+  if (authFailure) {
+    const headers = new Headers(authFailure.headers);
+    for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
+    return new Response(authFailure.body, {
+      status: authFailure.status,
+      headers,
+    });
+  }
+
   // Executa a funÃ§Ã£o real
   const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
   const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
   // Auth (login/refresh/logout) é backend real, não escrita clínica demo — sempre
   // liberado, senão o login (POST) cairia no bloqueio read-only.
   const isAuthRoute = new URL(request.url).pathname.startsWith("/api/auth/");
-  if (isProduction && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+  if (isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
     return new Response(
       JSON.stringify({
         error: "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",

@@ -60,6 +60,7 @@ import { softHover, softTap, softTick } from "@/lib/softSounds";
 import { buildFilterCsv, buildFilterPdf, downloadBlob, type FilterExportRow, type FilterExportMeta } from "@/lib/filterExport";
 
 type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "Questionário Escolar" | "Satisfação Medicação";
+type AvailabilityMode = "complete" | "all";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
@@ -737,6 +738,7 @@ interface PersistedFilter {
   literacy?: "literate" | "preliterate" | null;
   assessment?: "diagnostic" | "monitoring" | null;
   signals?: string[];
+  availability?: AvailabilityMode;
 }
 function loadFilterState(): PersistedFilter {
   try {
@@ -758,6 +760,9 @@ export default function FiltroPage() {
   const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(flashMode ? null : initial.literacy ?? null);
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(flashMode ? null : initial.assessment ?? null);
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(flashMode ? [] : initial.signals ?? []);
+  const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
+    flashMode ? "complete" : initial.availability === "all" ? "all" : "complete",
+  );
   const [copiedRec, setCopiedRec] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
@@ -809,9 +814,10 @@ export default function FiltroPage() {
         search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,
         communication: selectedCommunication, literacy: selectedLiteracy,
         assessment: selectedAssessmentType, signals: selectedSignalIds,
+        availability: availabilityMode,
       } satisfies PersistedFilter));
     } catch { /* persistência best-effort */ }
-  }, [flashMode, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds]);
+  }, [flashMode, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, availabilityMode]);
 
   useEffect(() => {
     let alive = true;
@@ -835,14 +841,15 @@ export default function FiltroPage() {
     return world.filter((s) => !(s.id.startsWith("world-") && appNames.has(norm(s.name))));
   }, [world]);
 
-  // Catálogo do filtro = apenas escalas que abrem uma APLICAÇÃO completa e
-  // preenchível dentro do app. Fichas técnicas (/generic-scale), catálogo mundial
-  // genérico e instrumentos externos/licenciados não aparecem no ranking.
+  // O padrão preserva somente aplicações completas. A opção "Todas" acrescenta
+  // fichas/referências que possuem rota real, sempre rotuladas como não
+  // preenchíveis; itens sem destino continuam excluídos.
   const catalog = useMemo(() => {
-    return unique([...CORE_FILTERABLE_CATALOG, ...dedupedWorld]).filter((scale) => opensInApp(scale) && isFullApp(scale));
-  }, [dedupedWorld]);
+    const routed = unique([...CORE_FILTERABLE_CATALOG, ...dedupedWorld]).filter(opensInApp);
+    return availabilityMode === "all" ? routed : routed.filter(isFullApp);
+  }, [dedupedWorld, availabilityMode]);
 
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType);
+  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType) || selectedSignalIds.length > 0 || availabilityMode === "all";
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
@@ -1084,7 +1091,7 @@ export default function FiltroPage() {
   }, [selectedQueixas]);
 
   const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]);
+    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]); setAvailabilityMode("complete");
   };
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
@@ -1256,15 +1263,33 @@ export default function FiltroPage() {
 
         <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
           <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
-          {/* Nota informativa (não é botão): explica honestamente o recorte do
-              filtro em vez de simular um controle que não existe. */}
-          <div
-            role="note"
-            className="w-full rounded-xl border border-border bg-muted/40 px-3 py-2 text-[11px] leading-snug text-muted-foreground flex items-start gap-1.5"
-          >
-            <span aria-hidden="true" className="mt-px">ℹ️</span>
-            <span>Mostrando apenas escalas que <strong className="font-semibold text-foreground">abrem no app</strong> para preencher. Fichas técnicas e instrumentos externos/licenciados ficam no catálogo, fora do ranking.</span>
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2" role="group" aria-label="Filtrar escalas pela forma de uso">
+            <button
+              type="button"
+              aria-pressed={availabilityMode === "complete"}
+              onMouseEnter={() => softHover()}
+              onClick={() => setAvailabilityMode("complete")}
+              className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "complete" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span aria-hidden="true">✅</span> Completas
+              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">preenchíveis</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={availabilityMode === "all"}
+              onMouseEnter={() => softHover()}
+              onClick={() => setAvailabilityMode("all")}
+              className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span aria-hidden="true">📚</span> Todas
+              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">inclui fichas</span>
+            </button>
           </div>
+          <p className="text-[10px] leading-relaxed text-muted-foreground">
+            {availabilityMode === "all"
+              ? "Fichas técnicas aparecem com identificação clara; nenhuma é apresentada como aplicação completa."
+              : "Mostrando somente instrumentos com aplicação preenchível dentro do app."}
+          </p>
         </div>
       </section>
 
@@ -1578,7 +1603,7 @@ export default function FiltroPage() {
           </section>
         )}
 
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> o filtro mostra apenas escalas que abrem como ferramenta usável no app — itens preenchíveis e cálculo de escore. Fichas de referência que não permitem aplicação não aparecem aqui, para você abrir só o que dá para usar de verdade.</CardContent></Card>
+        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> {availabilityMode === "all" ? "o modo Todas inclui aplicações e fichas técnicas com rota real; confirme o selo antes de abrir." : "o modo Completas mostra apenas instrumentos preenchíveis no app."} O filtro organiza opções e não substitui avaliação clínica.</CardContent></Card>
         </section>
         )}
 
@@ -1653,7 +1678,7 @@ export default function FiltroPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}{(() => { const lc = licenseChip(s); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}</div>
+                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{isFullApp(s) ? "Aplicação completa" : "Ficha técnica"}</Badge><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}{(() => { const lc = licenseChip(s); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}</div>
                     </div>
                     <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" · ")} · {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)} anos</p>
                   </div>

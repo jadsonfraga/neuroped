@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
+import { shareTextDocument } from "@/lib/shareText";
+import { authFetch } from "@/lib/authClient";
 
 interface WhatsAppShareProps {
   scaleName: string;
@@ -45,6 +47,7 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [sentViaApi, setSentViaApi] = useState(false);
+  const [sentAsFile, setSentAsFile] = useState(false);
   const { toast } = useToast();
 
   const handleSendWhatsApp = async (e: React.FormEvent) => {
@@ -72,8 +75,9 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       // pela API se a resposta for OK e realmente JSON. Caso contrário, abro o
       // WhatsApp Web (wa.me), que é o caminho de entrega confiável.
       let deliveredViaApi = false;
+      let sharedAsFile = false;
       try {
-        const res = await fetch("/api/send-whatsapp", {
+        const res = await authFetch("/api/send-whatsapp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone: formatted, message }),
@@ -85,18 +89,32 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       }
 
       if (!deliveredViaApi) {
-        const whatsappUrl = `https://wa.me/${formatted}?text=${encodeURIComponent(message)}`;
-        const win = window.open(whatsappUrl, "_blank");
+        const encodedMessage = encodeURIComponent(message);
+        if (encodedMessage.length > 1_800) {
+          const outcome = await shareTextDocument({
+            title: `${scaleName} — respostas completas`,
+            text: message,
+            filename: `${scaleName}-respostas-completas`,
+          });
+          if (outcome === "cancelled") return;
+          if (outcome === "failed") throw new Error("share failed");
+          sharedAsFile = true;
+          setSentAsFile(true);
+        } else {
+          const whatsappUrl = `https://wa.me/${formatted}?text=${encodedMessage}`;
+          const win = window.open(whatsappUrl, "_blank");
+          if (win) win.opener = null;
         // Popup bloqueado: nada foi aberto. Não anuncie sucesso — seria mentir
         // para o clínico que o relatório chegou. Oriente e mantenha o formulário.
-        if (!win) {
-          toast({
-            title: "Não foi possível abrir o WhatsApp",
-            description:
-              "Permita pop-ups para este site ou copie o relatório manualmente.",
-            variant: "destructive",
-          });
-          return;
+          if (!win) {
+            toast({
+              title: "Não foi possível abrir o WhatsApp",
+              description:
+                "Permita pop-ups para este site ou copie o relatório manualmente.",
+              variant: "destructive",
+            });
+            return;
+          }
         }
       }
 
@@ -105,10 +123,12 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       setSentViaApi(deliveredViaApi);
       setSent(true);
       toast({
-        title: deliveredViaApi ? "Enviado!" : "Abrindo o WhatsApp…",
+        title: deliveredViaApi ? "Enviado!" : sharedAsFile ? "Arquivo preparado" : "Abrindo o WhatsApp…",
         description: deliveredViaApi
           ? "Relatório compartilhado com sucesso."
-          : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
+          : sharedAsFile
+            ? "Escolha o WhatsApp e o destinatário para enviar o relatório integral."
+            : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
       });
 
       // Reset after 3 seconds
@@ -116,6 +136,7 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
         setPhone("");
         setSent(false);
         setSentViaApi(false);
+        setSentAsFile(false);
       }, 3000);
     } catch (_error) {
       toast({
@@ -148,7 +169,9 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
               {sentViaApi
                 ? "Relatório enviado!"
-                : "WhatsApp aberto — toque em enviar por lá"}
+                : sentAsFile
+                  ? "Arquivo integral preparado para compartilhar"
+                  : "WhatsApp aberto — toque em enviar por lá"}
             </span>
           </div>
         ) : (

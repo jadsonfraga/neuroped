@@ -4,10 +4,12 @@ import { motion } from "framer-motion";
 import {
   CheckCircle2,
   Copy,
+  Download,
   FileText,
   Home,
   Loader2,
   Mail,
+  MessageCircle,
   Printer,
   RotateCcw,
 } from "lucide-react";
@@ -27,6 +29,12 @@ import {
   type ScaleResponseItem,
   type ScaleResponseReport,
 } from "@/lib/scaleResponseReport";
+import {
+  copyText,
+  downloadTextDocument,
+  safeTextFilename,
+  shareTextDocument,
+} from "@/lib/shareText";
 
 const EMAIL_TO = "drjadsonfraga@proton.me";
 const PROFESSIONAL_SIGNATURE = {
@@ -89,7 +97,19 @@ async function sendEmail(
   }
 
   try {
-    const mailtoUrl = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(reportText)}`;
+    const encodedReport = encodeURIComponent(reportText);
+    const isUrlSafe = encodedReport.length <= 1_800;
+    let copied = false;
+    if (!isUrlSafe) {
+      copied = await copyText(reportText);
+      downloadTextDocument(reportText, `${safeTextFilename(scaleName)}-respostas.txt`);
+    }
+    const body = isUrlSafe
+      ? reportText
+      : copied
+        ? "O relatório integral foi copiado e baixado como arquivo .txt. Anexe o arquivo ou cole o conteúdo neste email."
+        : "O relatório integral foi baixado como arquivo .txt. Anexe o arquivo neste email.";
+    const mailtoUrl = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     // location.href abre o app de email sem criar aba em branco (window.open
     // em "_blank" deixava uma aba vazia quando não há cliente de email).
     window.location.href = mailtoUrl;
@@ -97,7 +117,11 @@ async function sendEmail(
     toast({
       title: "✉️ Email aberto",
       description:
-        "Seu app de email foi aberto com o relatório. Envie para completar.",
+        isUrlSafe
+          ? "Seu app de email foi aberto com o relatório. Envie para completar."
+          : copied
+            ? "Relatório integral copiado e baixado. Anexe o arquivo no email aberto."
+            : "Relatório integral baixado. Anexe o arquivo no email aberto.",
     });
   } catch {
     toast({
@@ -128,7 +152,8 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(reportText);
+      const copiedSuccessfully = await copyText(reportText);
+      if (!copiedSuccessfully) throw new Error("clipboard unavailable");
       setCopied(true);
       softSuccess();
       haptic.success();
@@ -210,7 +235,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     });
   }
 
-  function handleSendWhatsApp() {
+  async function handleSendWhatsApp() {
     if (!reportReady) {
       toast({
         title: "Relatório incompleto",
@@ -220,15 +245,41 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
       return;
     }
 
-    navigator.clipboard.writeText(reportText).catch(() => undefined);
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(reportText)}`;
-    window.open(whatsappUrl, "_blank");
+    const outcome = await shareTextDocument({
+      title: `${props.scaleName} — respostas completas`,
+      text: reportText,
+      filename: `${props.scaleName}-respostas-completas`,
+    });
+    if (outcome === "cancelled") return;
+    if (outcome === "failed") {
+      toast({
+        title: "Não foi possível compartilhar",
+        description: "Use Copiar texto ou Gerar PDF para preservar todas as respostas.",
+        variant: "destructive",
+      });
+      return;
+    }
     softSuccess();
     haptic.success();
     toast({
-      title: "WhatsApp / Zap",
+      title: outcome === "shared" ? "Compartilhamento aberto" : "Relatório preservado",
       description:
-        "Relatório integral preparado com todas as perguntas e respostas.",
+        outcome === "shared"
+          ? "Escolha o WhatsApp para enviar o arquivo com todas as perguntas e respostas."
+          : outcome === "copied-and-downloaded"
+            ? "O texto integral foi copiado e o arquivo .txt foi baixado."
+            : "O arquivo .txt com o relatório integral foi baixado.",
+    });
+  }
+
+  function handleDownload() {
+    downloadTextDocument(
+      reportText,
+      `${safeTextFilename(props.scaleName)}-respostas-completas.txt`,
+    );
+    toast({
+      title: "Arquivo baixado",
+      description: "O arquivo contém todas as perguntas e respostas por extenso.",
     });
   }
 
@@ -362,11 +413,11 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             disabled={!reportReady}
             data-testid="button-whatsapp-report"
           >
-            <Mail className="h-5 w-5" />
-            Encaminhar pelo WhatsApp / Zap
+            <MessageCircle className="h-5 w-5" />
+            Compartilhar arquivo pelo WhatsApp / Zap
           </Button>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -380,6 +431,17 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
                 <Copy className="h-4 w-4" />
               )}
               {copied ? "Copiado" : "Copiar Texto"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={!reportReady}
+              className="h-9 gap-2"
+              data-testid="button-download-report"
+            >
+              <Download className="h-4 w-4" />
+              Baixar
             </Button>
             <Button
               variant="outline"

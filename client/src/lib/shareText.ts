@@ -4,6 +4,66 @@ export function formatForWhatsApp(title: string, body: string): string {
   return `*${safeTitle}*\n\n${safeBody}`.trim();
 }
 
+export type ShareTextOutcome = "shared" | "copied-and-downloaded" | "downloaded" | "cancelled" | "failed";
+
+export function safeTextFilename(value: string, fallback = "neuroped-relatorio"): string {
+  const normalized = String(value || fallback)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return normalized || fallback;
+}
+
+export function downloadTextDocument(text: string, filename: string): void {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".txt") ? filename : `${filename}.txt`;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
+
+/** Compartilha o relatório como arquivo, sem colocar conteúdo clínico na URL. */
+export async function shareTextDocument(options: {
+  title: string;
+  text: string;
+  filename?: string;
+}): Promise<ShareTextOutcome> {
+  const text = String(options.text || "").trim();
+  if (!text) return "failed";
+
+  try {
+    if (typeof File !== "undefined") {
+      const filename = `${safeTextFilename(options.filename || options.title)}.txt`;
+      const file = new File([text], filename, { type: "text/plain;charset=utf-8" });
+      const shareData: ShareData = { title: options.title, files: [file] };
+      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData);
+        return "shared";
+      }
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
+    // Compartilhamento de arquivo indisponível: usa fallback local abaixo.
+  }
+
+  const filename = `${safeTextFilename(options.filename || options.title)}.txt`;
+  const copied = await copyText(text);
+  try {
+    downloadTextDocument(text, filename);
+    return copied ? "copied-and-downloaded" : "downloaded";
+  } catch {
+    return copied ? "copied-and-downloaded" : "failed";
+  }
+}
+
 export async function copyText(text: string): Promise<boolean> {
   const value = String(text || "").trim();
   if (!value) return false;
@@ -33,9 +93,16 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export function openWhatsAppShare(text: string): void {
+export async function openWhatsAppShare(text: string): Promise<void> {
   const value = String(text || "").trim();
   if (!value) return;
+  // Relatórios longos em wa.me podem ser truncados pelo navegador/app. Nesses
+  // casos compartilha um arquivo íntegro e deixa o usuário escolher WhatsApp.
+  if (encodeURIComponent(value).length > 1_800) {
+    await shareTextDocument({ title: "Relatório NeuroPed", text: value });
+    return;
+  }
   const url = `https://wa.me/?text=${encodeURIComponent(value)}`;
-  window.open(url, "_blank", "noopener,noreferrer");
+  const opened = window.open(url, "_blank");
+  if (opened) opened.opener = null;
 }

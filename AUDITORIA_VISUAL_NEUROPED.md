@@ -9,7 +9,7 @@
 
 ### 1.1 Logo e Marca
 - ✅ **Master Shield Logo** (Dr. Jadson Fraga) — base64 em drJadsonMasterShieldLogo.ts
-- ✅ **Legacy NeuroPed Logo** (símbolo roxo) — neuroped-logo.png
+- ✅ **Legacy NeuroPed Logo** (símbolo roxo) — neuroped-logo.webp
 - ✅ **Dr. Jadson Shield** (SVG) — client/public/dr-jadson-shield-logo.svg
 
 ### 1.2 Mascotes (Identidade Dr. Jadson)

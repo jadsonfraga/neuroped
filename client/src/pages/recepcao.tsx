@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -23,21 +23,37 @@ function idade(record: PreConsultaRecord) {
 }
 
 export default function RecepcaoPage() {
-  const [items, setItems] = useState<PreConsultaRecord[]>(() => loadPreConsultas());
-  const [selected, setSelected] = useState<PreConsultaRecord | null>(items[0] || null);
+  const [items, setItems] = useState<PreConsultaRecord[]>([]);
+  const [selected, setSelected] = useState<PreConsultaRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    void loadPreConsultas().then((loaded) => {
+      if (!active) return;
+      setItems(loaded);
+      setSelected(loaded[0] || null);
+      setIsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const resumo = useMemo(() => selected ? buildPreConsultaSummary(selected) : "Nenhuma pré-consulta selecionada.", [selected]);
 
-  function refresh() {
-    const loaded = loadPreConsultas();
+  async function refresh() {
+    setIsLoading(true);
+    const loaded = await loadPreConsultas();
     setItems(loaded);
     setSelected(loaded[0] || null);
+    setIsLoading(false);
   }
 
-  function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
+  async function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
     const updated = items.map((item) => item.id === record.id ? { ...item, status } : item);
     setItems(updated);
-    savePreConsultas(updated);
+    await savePreConsultas(updated);
     setSelected((current) => current?.id === record.id ? { ...record, status } : current);
   }
 
@@ -84,7 +100,11 @@ export default function RecepcaoPage() {
               <p className="text-sm font-black text-foreground">Pré-consultas salvas</p>
               <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
             </div>
-            {items.length === 0 ? (
+            {isLoading ? (
+              <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground" role="status">
+                Carregando pré-consultas protegidas…
+              </div>
+            ) : items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
                 Nenhuma pré-consulta salva neste dispositivo. Clique em “Pré-consulta”.
               </div>

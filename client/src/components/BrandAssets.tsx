@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Brain, ImageOff, ShieldCheck, Zap } from "lucide-react";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import drJadsonLogoFile from "@assets/dr-jadson-logo.jpeg";
-import neuroPedLegacyLogo from "@assets/neuroped-logo.png";
+import neuroPedLegacyLogo from "@assets/neuroped-logo.webp";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
 import drConsultorioHero from "@assets/images/dr-jadson-consultorio-superman.jpeg";
 import drArteMascot from "@assets/images/dr-jadson-arte.jpeg";
@@ -66,7 +66,7 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     id: "neuroped-legacy-logo",
     group: "Logo histórica",
     name: "Símbolo NeuroPed roxo",
-    path: "attached_assets/neuroped-logo.png",
+    path: "attached_assets/neuroped-logo.webp",
     src: brandAssets.legacyNeuroPedSymbol,
     status: "secundario",
     usage: "marca secundária/legado, acento histórico e apoio visual discreto",

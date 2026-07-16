@@ -12,6 +12,9 @@ import { OfflineBanner } from "@/components/ui/VisualStates";
 import { navSections, getNavigationMatch } from "@/data/navigation";
 import { isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
+import { clearAuth } from "@/lib/authClient";
+import { secureClearAll } from "@/lib/secureStorage";
+import { clearMasterPinUnlock } from "@/lib/masterPin";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
@@ -184,15 +187,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     : navSections;
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
-  function handleLocalLock() {
+  async function handleLocalLock() {
     softTap();
     haptic.tap();
     try {
       sessionStorage.removeItem("neuroped:pin-ok");
-      sessionStorage.removeItem("neuroped:access");
       sessionStorage.removeItem("neuroped:local-unlocked");
       localStorage.removeItem("neuroped:local-unlocked-persistent");
     } catch { /* storage indisponível — recarregar ainda força rechecagem do gate */ }
+    clearMasterPinUnlock();
+    clearAuth();
+    await secureClearAll();
     window.location.hash = "#/";
     window.location.reload();
   }

@@ -1,5 +1,5 @@
 /**
- * NeuroPed Service Worker — v7
+ * NeuroPed Service Worker — cache versionado pelo build
  * Estratégia de cache auditada e corrigida (sessão 2026-06-12)
  *
  * ESTRATÉGIAS:
@@ -14,7 +14,14 @@
  * LGPD: este SW NÃO cacheia nenhum dado de paciente ou resposta de API.
  */
 
-const CACHE_NAME = "neuroped-v7";
+try {
+  importScripts("./sw-build.js");
+} catch {
+  // Desenvolvimento/primeira instalação: usa um identificador seguro abaixo.
+}
+
+const BUILD_ID = String(self.__NEUROPED_BUILD_ID__ || "development").replace(/[^a-zA-Z0-9._-]/g, "-");
+const CACHE_NAME = `neuroped-${BUILD_ID}`;
 
 // App shell — apenas recursos estáticos sem dados clínicos
 const APP_SHELL = [
@@ -29,7 +36,14 @@ const APP_SHELL = [
 // ---------- Install ----------
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        APP_SHELL.map(async (asset) => {
+          const response = await fetch(asset, { cache: "reload" });
+          if (response.ok) await cache.put(asset, response);
+        }),
+      ),
+    ),
   );
   self.skipWaiting();
 });
@@ -39,9 +53,15 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-      )
+      .then((keys) => {
+        // Mantém o cache imediatamente anterior: abas ainda abertas podem
+        // solicitar chunks lazy do build antigo antes de aceitar o reload.
+        const previousCaches = keys.filter(
+          (key) => key.startsWith("neuroped-") && key !== CACHE_NAME,
+        );
+        const obsoleteCaches = previousCaches.slice(0, -1);
+        return Promise.all(obsoleteCaches.map((key) => caches.delete(key)));
+      })
       .then(() => {
         self.clients.claim();
         // Notifica todas as abas que um novo SW está ativo
@@ -110,6 +130,9 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "CHECK_ONLINE") {
     event.source?.postMessage({ type: "ONLINE_STATUS", online: true });
   }
+  if (event.data?.type === "GET_VERSION") {
+    event.source?.postMessage({ type: "SW_VERSION", version: CACHE_NAME });
+  }
 });
 
 // ============================================================
@@ -128,7 +151,7 @@ async function cacheFirst(request) {
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+      await cache.put(request, response.clone());
     }
     return response;
   } catch {
@@ -147,7 +170,7 @@ async function networkFirst(request) {
   try {
     const response = await fetch(request);
     if (response.ok) {
-      cache.put(request, response.clone());
+      await cache.put(request, response.clone());
     }
     return response;
   } catch {
@@ -171,12 +194,12 @@ async function networkFirst(request) {
 .card{text-align:center;padding:2rem;max-width:380px;}
 h1{color:#a78bfa;font-size:1.5rem;margin-bottom:.5rem;}
 p{color:#94a3b8;line-height:1.6;}
-button{margin-top:1.5rem;padding:.75rem 1.5rem;background:#7c3aed;color:#fff;border:none;border-radius:.5rem;cursor:pointer;font-size:1rem;}
-button:hover{background:#6d28d9;}</style></head>
+a{display:inline-block;margin-top:1.5rem;padding:.75rem 1.5rem;background:#7c3aed;color:#fff;border:none;border-radius:.5rem;cursor:pointer;font-size:1rem;text-decoration:none;}
+a:hover{background:#6d28d9;}</style></head>
 <body><div class="card">
 <h1>🧠 NeuroPed</h1>
 <p>Você está offline. Verifique sua conexão e tente novamente.</p>
-<button onclick="location.reload()">Tentar novamente</button>
+<a href="./">Tentar novamente</a>
 </div></body></html>`,
     { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }
   );

@@ -28,11 +28,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes("node_modules")) return undefined;
-          if (id.includes("react") || id.includes("wouter")) return "vendor-react";
-          if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("lucide-react")) return "vendor-ui";
-          if (id.includes("recharts") || id.includes("date-fns")) return "vendor-charts";
-          return "vendor";
+          const normalizedId = id.replaceAll("\\", "/");
+          if (!normalizedId.includes("/node_modules/")) return undefined;
+          // Só o núcleo React entra no chunk inicial compartilhado. O match
+          // exato evita puxar recharts/react-hook-form e bibliotecas tardias.
+          if (/\/node_modules\/(?:react|react-dom|scheduler|wouter)\//.test(normalizedId)) {
+            return "vendor-react";
+          }
+          // As demais dependências acompanham suas rotas dinâmicas. Um único
+          // mega-vendor forçava PDF, gráficos e polyfills no primeiro acesso.
+          return undefined;
         },
       },
     },

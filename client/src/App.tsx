@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { Onboarding } from "@/components/Onboarding";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
@@ -15,8 +14,11 @@ import { AvisoLegalGate } from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
-import { WelcomeTour } from "@/components/WelcomeTour";
 import { FloatingHelp } from "@/components/FloatingHelp";
+import { PrivateGate } from "@/components/PrivateGate";
+import { RouteGuard } from "@/components/RouteGuard";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
+import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
 
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
@@ -139,6 +141,8 @@ const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
 const GlossarioPage = lazy(() => import("@/pages/glossario"));
 const InstrumentosPadronizadosPage = lazy(() => import("@/pages/instrumentos-padronizados"));
 const QualidadePage = lazy(() => import("@/pages/qualidade"));
+const Onboarding = lazy(() => import("@/components/Onboarding").then((mod) => ({ default: mod.Onboarding })));
+const WelcomeTour = lazy(() => import("@/components/WelcomeTour").then((mod) => ({ default: mod.WelcomeTour })));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((mod) => ({ default: mod.CommandPalette })));
 
 function LoadingSpinner() {
@@ -166,7 +170,8 @@ function AppRouter() {
   return (
     <Layout>
       <Suspense fallback={<LoadingSpinner />}>
-        <Switch>
+        <RouteGuard>
+          <Switch>
           <Route path="/login" component={LoginPage} />
           <Route path="/sessao-expirada" component={SessionExpiredPage} />
           <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
@@ -289,8 +294,9 @@ function AppRouter() {
           <Route path="/glossario" component={GlossarioPage} />
           <Route path="/instrumentos-padronizados" component={InstrumentosPadronizadosPage} />
           <Route path="/qualidade" component={QualidadePage} />
-          <Route component={NotFound} />
-        </Switch>
+            <Route component={NotFound} />
+          </Switch>
+        </RouteGuard>
       </Suspense>
     </Layout>
   );
@@ -329,27 +335,40 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
         <TooltipProvider>
           <ToastProvider>
             <AmbientEffects />
             <Toaster />
             <SplashScreen awaiting={!appReady} onComplete={() => setSplashComplete(true)} />
-            {splashComplete && showOnboarding && <Onboarding onComplete={dismissOnboarding} />}
-            <Router hook={useHashLocation}><AppRouter /></Router>
+            {splashComplete && showOnboarding && (
+              <Suspense fallback={null}>
+                <Onboarding onComplete={dismissOnboarding} />
+              </Suspense>
+            )}
+            <PrivateGate>
+              <Router hook={useHashLocation}><AppRouter /></Router>
+              <Suspense fallback={null}>
+                <CommandPalette />
+              </Suspense>
+              {splashComplete && (
+                <Suspense fallback={null}>
+                  <WelcomeTour />
+                </Suspense>
+              )}
+            </PrivateGate>
             {splashComplete && <AvisoLegalGate />}
             <InstallPrompt />
             <PreferencesPanel />
             <FloatingHelp />
-            <Suspense fallback={null}>
-              <CommandPalette />
-            </Suspense>
-            {splashComplete && <WelcomeTour />}
+            <ServiceWorkerManager />
           </ToastProvider>
         </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
 

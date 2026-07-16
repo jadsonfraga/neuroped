@@ -5,7 +5,7 @@ const root = process.cwd();
 
 const expectedAssets = [
   "attached_assets/dr-jadson-logo.jpeg",
-  "attached_assets/neuroped-logo.png",
+  "attached_assets/neuroped-logo.webp",
   "attached_assets/images/dr-jadson-logo-super.jpeg",
   "attached_assets/images/dr-jadson-consultorio-superman.jpeg",
   "attached_assets/images/dr-jadson-arte.jpeg",

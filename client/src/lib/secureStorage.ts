@@ -19,23 +19,23 @@
  *  - Deve ser usado apenas para rascunhos/contexto de sessão clínica
  *  - Use exclusivamente para dados SEM identificação direta quando possível
  *
- * AUDITORIA DE localStorage (sessão 2 — 2026-05-08):
- *  Todos os usos mapeados são NÃO SENSÍVEIS:
- *    neuroped:onboarding-seen → flag de UI (sem dados pessoais)
- *    neuroped:sound-enabled   → preferência de UI
- *    neuroped:haptic-enabled  → preferência de UI
- *  Tokens de auth estão em sessionStorage (volátil) — correto.
- *  Nenhum dado de paciente encontrado em localStorage.
+ * Dados de pré-consulta/pré-retorno são migrados para este armazenamento e
+ * expiram ao fim da sessão clínica. A cifra reduz exposição de dados em repouso,
+ * mas não protege contra código malicioso executando na mesma origem (XSS).
  */
 
 const NAMESPACE = "neuroped:secure:";
+const LEGACY_SENSITIVE_KEYS = [
+  "neuroped:pre-consultas",
+  "neuroped:pre-retornos",
+];
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de sessão clínica
 const PBKDF2_ITERATIONS = 100_000;
 
 interface StoredEnvelope {
-  iv: string;         // Base64 — 12 bytes aleatórios
-  ct: string;         // Base64 — ciphertext AES-GCM
-  exp: number;        // Timestamp de expiração (ms desde epoch)
+  iv: string; // Base64 — 12 bytes aleatórios
+  ct: string; // Base64 — ciphertext AES-GCM
+  exp: number; // Timestamp de expiração (ms desde epoch)
 }
 
 // ---------- Chave de sessão em memória ----------
@@ -51,11 +51,19 @@ async function getSessionKey(): Promise<CryptoKey> {
   if (_sessionKey) return _sessionKey;
 
   // Recupera ou gera salt da sessão
-  _sessionSalt = sessionStorage.getItem("neuroped:secure-salt") ?? null;
+  try {
+    _sessionSalt = sessionStorage.getItem("neuroped:secure-salt") ?? null;
+  } catch {
+    _sessionSalt = null;
+  }
   if (!_sessionSalt) {
     const rawSalt = crypto.getRandomValues(new Uint8Array(16));
     _sessionSalt = btoa(String.fromCharCode(...rawSalt));
-    sessionStorage.setItem("neuroped:secure-salt", _sessionSalt);
+    try {
+      sessionStorage.setItem("neuroped:secure-salt", _sessionSalt);
+    } catch {
+      // O salt permanece apenas em memória quando sessionStorage não existe.
+    }
   }
 
   const saltBytes = Uint8Array.from(atob(_sessionSalt), (c) => c.charCodeAt(0));
@@ -70,7 +78,12 @@ async function getSessionKey(): Promise<CryptoKey> {
   );
 
   _sessionKey = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: saltBytes, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    {
+      name: "PBKDF2",
+      salt: saltBytes,
+      iterations: PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
     baseKey,
     { name: "AES-GCM", length: 256 },
     false, // não exportável
@@ -93,11 +106,20 @@ function unb64(str: string): Uint8Array {
 /**
  * Armazena valor cifrado no localStorage com expiração de sessão.
  */
-export async function secureSet<T>(key: string, value: T, ttlMs = SESSION_TTL_MS): Promise<void> {
+export async function secureSet<T>(
+  key: string,
+  value: T,
+  ttlMs = SESSION_TTL_MS,
+): Promise<boolean> {
   const aesKey = await getSessionKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const plaintext = new TextEncoder().encode(JSON.stringify(value));
-  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, plaintext);
+  const additionalData = new TextEncoder().encode(NAMESPACE + key);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData },
+    aesKey,
+    plaintext,
+  );
 
   const envelope: StoredEnvelope = {
     iv: b64(iv),
@@ -107,8 +129,10 @@ export async function secureSet<T>(key: string, value: T, ttlMs = SESSION_TTL_MS
 
   try {
     localStorage.setItem(NAMESPACE + key, JSON.stringify(envelope));
+    return true;
   } catch (e) {
     console.warn("[secureStorage] localStorage cheio ou indisponível.", e);
+    return false;
   }
 }
 
@@ -116,7 +140,12 @@ export async function secureSet<T>(key: string, value: T, ttlMs = SESSION_TTL_MS
  * Recupera e decifra valor do localStorage. Retorna null se expirado, ausente ou corrompido.
  */
 export async function secureGet<T>(key: string): Promise<T | null> {
-  const raw = localStorage.getItem(NAMESPACE + key);
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(NAMESPACE + key);
+  } catch {
+    return null;
+  }
   if (!raw) return null;
 
   let envelope: StoredEnvelope;
@@ -137,7 +166,12 @@ export async function secureGet<T>(key: string): Promise<T | null> {
     const aesKey = await getSessionKey();
     const iv = unb64(envelope.iv);
     const ct = unb64(envelope.ct);
-    const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, aesKey, ct);
+    const additionalData = new TextEncoder().encode(NAMESPACE + key);
+    const plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv, additionalData },
+      aesKey,
+      ct,
+    );
     return JSON.parse(new TextDecoder().decode(plaintext)) as T;
   } catch {
     // Dados corrompidos ou chave diferente (nova sessão) → remove
@@ -150,23 +184,36 @@ export async function secureGet<T>(key: string): Promise<T | null> {
  * Remove entrada cifrada específica.
  */
 export async function secureClear(key: string): Promise<void> {
-  localStorage.removeItem(NAMESPACE + key);
+  try {
+    localStorage.removeItem(NAMESPACE + key);
+  } catch {
+    // Nada mais a fazer quando o armazenamento do navegador está bloqueado.
+  }
 }
 
 /**
  * Remove todos os itens gerenciados pelo secureStorage.
  */
 export async function secureClearAll(): Promise<void> {
-  const toRemove: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k?.startsWith(NAMESPACE)) toRemove.push(k);
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k?.startsWith(NAMESPACE)) toRemove.push(k);
+    }
+    toRemove.push(...LEGACY_SENSITIVE_KEYS);
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // A chave em memória ainda será invalidada abaixo.
   }
-  toRemove.forEach((k) => localStorage.removeItem(k));
   // Invalida chave de sessão em memória
   _sessionKey = null;
   _sessionSalt = null;
-  sessionStorage.removeItem("neuroped:secure-salt");
+  try {
+    sessionStorage.removeItem("neuroped:secure-salt");
+  } catch {
+    // Armazenamento indisponível; a chave em memória já foi invalidada.
+  }
 }
 
 /**
@@ -174,16 +221,20 @@ export async function secureClearAll(): Promise<void> {
  * Chamar na inicialização do app para liberar espaço.
  */
 export function securePurgeExpired(): void {
-  const toRemove: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (!k?.startsWith(NAMESPACE)) continue;
-    try {
-      const env = JSON.parse(localStorage.getItem(k)!) as StoredEnvelope;
-      if (Date.now() > env.exp) toRemove.push(k);
-    } catch {
-      toRemove.push(k!);
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k?.startsWith(NAMESPACE)) continue;
+      try {
+        const env = JSON.parse(localStorage.getItem(k)!) as StoredEnvelope;
+        if (Date.now() > env.exp) toRemove.push(k);
+      } catch {
+        toRemove.push(k!);
+      }
     }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // Limpeza preventiva não deve interromper a inicialização do app.
   }
-  toRemove.forEach((k) => localStorage.removeItem(k));
 }

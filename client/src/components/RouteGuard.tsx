@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { Redirect, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import { isClinicalRoute } from "@/security/accessPolicy";
 
 export const SENSITIVE_ROUTES = [
   "/pant",
@@ -21,8 +24,18 @@ export function isRouteSensitive(path: string): boolean {
   return SENSITIVE_ROUTES.some((p) => path.startsWith(p));
 }
 
-// Acesso controlado exclusivamente pelo PrivateGate (PIN master).
-// Este componente é transparente — não bloqueia nenhuma rota.
 export function RouteGuard({ children }: { children: ReactNode; roles?: Array<"admin" | "professional" | "reader" | "operator"> }) {
+  const [location] = useLocation();
+  const { accessMode, isAuthenticated, isLoading } = useAuth();
+
+  if (
+    !isLoading &&
+    accessMode === "remote" &&
+    isClinicalRoute(location) &&
+    !isAuthenticated
+  ) {
+    return <Redirect to={`/login?next=${encodeURIComponent(location)}`} />;
+  }
+
   return <>{children}</>;
 }

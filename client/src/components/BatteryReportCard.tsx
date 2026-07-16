@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClinicalPattern, getBatteryForPattern } from "@/data/smartRecommendations";
 import { allScales } from "@/data/scaleFilter";
+import { printPlainTextDocument } from "@/lib/printDocument";
+import { downloadTextDocument, safeTextFilename, shareTextDocument } from "@/lib/shareText";
 
 interface BatteryReportCardProps {
   pattern: ClinicalPattern;
@@ -78,23 +80,23 @@ Relatório gerado automaticamente pelo Sistema NeuroPed
 
   const handlePrint = () => {
     const report = generateReport();
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(`<pre>${report}</pre>`);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    printPlainTextDocument({ title: "Recomendação de bateria", text: report });
   };
 
   const handleDownload = () => {
     const report = generateReport();
-    const blob = new Blob([report], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `bateria-${patientName}-${new Date().toISOString().split("T")[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextDocument(
+      report,
+      `bateria-${safeTextFilename(patientName)}-${new Date().toISOString().split("T")[0]}.txt`,
+    );
+  };
+
+  const handleShare = async () => {
+    await shareTextDocument({
+      title: "Recomendação de bateria NeuroPed",
+      text: generateReport(),
+      filename: `bateria-${patientName}`,
+    });
   };
 
   return (
@@ -126,7 +128,7 @@ Relatório gerado automaticamente pelo Sistema NeuroPed
             Baixar
           </Button>
           <Button
-            onClick={() => alert("Compartilhamento em desenvolvimento")}
+            onClick={handleShare}
             variant="outline"
             className="bg-purple-800/20 border-purple-600 text-white text-xs h-auto py-2"
           >
