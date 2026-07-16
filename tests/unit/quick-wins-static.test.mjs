@@ -66,4 +66,9 @@ assert.match(sanitizer, /FORBID_TAGS/);
 const main = read("client/src/main.tsx");
 assert.match(main, /installChunkRecovery\(\)/);
 
+const routeGuard = read("client/src/components/RouteGuard.tsx");
+assert.match(routeGuard, /decideRouteAccess/);
+assert.match(routeGuard, /decision === "checking"/);
+assert.match(routeGuard, /decision === "login"/);
+
 console.log("✓ proteções das melhorias críticas permanecem conectadas ao app");

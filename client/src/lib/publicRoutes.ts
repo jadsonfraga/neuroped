@@ -10,6 +10,8 @@
 // (ex.: Cloudflare Access num subdomínio médico). Ver docs/SEGURANCA-ACESSO.md.
 
 export const PUBLIC_ROUTE_PREFIXES: string[] = [
+  "/login",                 // Entrada da autenticação remota
+  "/sessao-expirada",       // Recuperação de sessão remota
   "/familia",               // Capa pública (home das famílias)
   "/orientacao-parental",   // Orientação aos Pais
   "/glossario",             // Glossário (linguagem acessível)
