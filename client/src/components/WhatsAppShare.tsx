@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
-import { shareTextDocument } from "@/lib/shareText";
+import { shareScaleViaWhatsApp } from "@/lib/shareText";
 
 interface WhatsAppShareProps {
   scaleName: string;
@@ -45,7 +45,6 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [sentAsFile, setSentAsFile] = useState(false);
   const { toast } = useToast();
 
   const handleSendWhatsApp = async (e: React.FormEvent) => {
@@ -67,52 +66,28 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       const formatted = formatPhoneNumber(phone);
       const message = `*${scaleName}*\n\n${reportText}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
 
-      let sharedAsFile = false;
-      const encodedMessage = encodeURIComponent(message);
-      if (encodedMessage.length > 1_800) {
-        const outcome = await shareTextDocument({
-          title: `${scaleName} — respostas completas`,
-          text: message,
-          filename: `${scaleName}-respostas-completas`,
-        });
-        if (outcome === "cancelled") return;
-        if (outcome === "failed") throw new Error("share failed");
-        sharedAsFile = true;
-        setSentAsFile(true);
-      } else {
-        // Abre ainda no gesto de clique. A antiga tentativa assíncrona a uma API
-        // inexistente fazia navegadores bloquearem esta janela como popup tardio.
-        const whatsappUrl = `https://wa.me/${formatted}?text=${encodedMessage}`;
-        const win = window.open(whatsappUrl, "_blank");
-        if (win) win.opener = null;
-        // Popup bloqueado: nada foi aberto. Não anuncie sucesso — seria mentir
-        // para o clínico que o relatório chegou. Oriente e mantenha o formulário.
-        if (!win) {
-          toast({
-            title: "Não foi possível abrir o WhatsApp",
-            description:
-              "Permita pop-ups para este site ou copie o relatório manualmente.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+      const outcome = await shareScaleViaWhatsApp({
+        title: `${scaleName} — respostas completas`,
+        text: message,
+        filename: `${scaleName}-respostas-completas`,
+        phone: formatted,
+      });
+      if (outcome === "cancelled") return;
+      if (outcome === "failed") throw new Error("share failed");
 
       softSuccess();
       haptic.success();
       setSent(true);
       toast({
-        title: sharedAsFile ? "Arquivo preparado" : "Abrindo o WhatsApp…",
-        description: sharedAsFile
-          ? "Escolha o WhatsApp e o destinatário para enviar o relatório integral."
-          : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
+        title: "WhatsApp aberto",
+        description:
+          "A conversa foi aberta com todas as perguntas e respostas. Toque em enviar por lá.",
       });
 
       // Reset after 3 seconds
       setTimeout(() => {
         setPhone("");
         setSent(false);
-        setSentAsFile(false);
       }, 3000);
     } catch (_error) {
       toast({
@@ -143,9 +118,7 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
           <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-              {sentAsFile
-                ? "Arquivo integral preparado para compartilhar"
-                : "WhatsApp aberto — toque em enviar por lá"}
+              WhatsApp aberto — toque em enviar por lá
             </span>
           </div>
         ) : (

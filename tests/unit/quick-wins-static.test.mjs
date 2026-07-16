@@ -17,7 +17,10 @@ assert.match(
   authClient,
   /const refreshToken = getRefreshToken\(\);[\s\S]*?clearAuth\(\);[\s\S]*?keepalive: true/,
 );
-assert.match(auth, /async function logout\(\) \{\s*setUser\(null\);\s*await logoutRequest\(\)/);
+assert.match(
+  auth,
+  /async function logout\(\) \{\s*setUser\(null\);\s*await logoutRequest\(\)/,
+);
 
 const app = read("client/src/App.tsx");
 for (const component of [
@@ -103,7 +106,8 @@ for (const route of [
 }
 
 const report = read("client/src/components/ClinicalReport.tsx");
-assert.match(report, /shareTextDocument/);
+assert.match(report, /shareScaleViaWhatsApp/);
+assert.doesNotMatch(report, /shareTextDocument/);
 assert.doesNotMatch(report, /\/api\/send-report/);
 assert.doesNotMatch(
   report,
@@ -153,7 +157,11 @@ const layout = read("client/src/components/Layout.tsx");
 assert.match(layout, /clearMasterPinUnlock\(\)/);
 assert.match(layout, /secureClearAll\(\)/);
 assert.match(layout, /const \{ accessMode, logout \} = useAuth\(\)/);
-assert.match(layout, /await logout\(\)/, "bloqueio remoto deve revogar refresh no servidor");
+assert.match(
+  layout,
+  /await logout\(\)/,
+  "bloqueio remoto deve revogar refresh no servidor",
+);
 assert.doesNotMatch(layout, /clearAuth\(\)/);
 
 const filter = read("client/src/pages/filtro.tsx");
@@ -254,9 +262,15 @@ assert.match(d1Schema, /owner_user_id/);
 assert.match(d1Schema, /CREATE TABLE IF NOT EXISTS auth_refresh_sessions/);
 assert.match(d1Schema, /token_hash TEXT NOT NULL UNIQUE/);
 assert.match(d1Schema, /CREATE TABLE IF NOT EXISTS consents/);
-assert.match(d1Schema, /UNIQUE \(user_id, consent_type, consent_version, accepted_at\)/);
+assert.match(
+  d1Schema,
+  /UNIQUE \(user_id, consent_type, consent_version, accepted_at\)/,
+);
 const refreshMigration = read("db/migrations/0003_refresh_sessions.sql");
-assert.match(refreshMigration, /CREATE TABLE IF NOT EXISTS auth_refresh_sessions/);
+assert.match(
+  refreshMigration,
+  /CREATE TABLE IF NOT EXISTS auth_refresh_sessions/,
+);
 assert.doesNotMatch(refreshMigration, /DROP|DELETE\s+FROM/i);
 const consentMigration = read("db/migrations/0004_consents.sql");
 assert.match(consentMigration, /CREATE TABLE IF NOT EXISTS consents/);
@@ -282,7 +296,10 @@ assert.match(memorySearch, /n\.patient_id IN/);
 assert.match(memorySearch, /p\.owner_user_id = \?/);
 
 const consentUi = read("client/src/pages/lgpd-consent.tsx");
-assert.match(consentUi, /authFetch\("\/api\/consents"[\s\S]*JSON\.stringify\(payload\)/);
+assert.match(
+  consentUi,
+  /authFetch\("\/api\/consents"[\s\S]*JSON\.stringify\(payload\)/,
+);
 assert.match(consentUi, /localOnly:\s*true/);
 assert.match(consentUi, /Não há sessão autenticada/);
 assert.doesNotMatch(consentUi, /for \(const item of payload\.consents\)/);

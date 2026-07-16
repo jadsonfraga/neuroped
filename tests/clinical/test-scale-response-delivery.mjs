@@ -135,6 +135,7 @@ assert.deepEqual(legacy, [
 
 const clinicalReportSource = source("client/src/components/ClinicalReport.tsx");
 const whatsAppSource = source("client/src/components/WhatsAppShare.tsx");
+const shareTextSource = source("client/src/lib/shareText.ts");
 const saveSource = source("client/src/components/SaveToPatient.tsx");
 const patientSource = source("client/src/pages/paciente-detalhe.tsx");
 const genericSource = source("client/src/components/GenericScale.tsx");
@@ -150,13 +151,27 @@ assert.doesNotMatch(
 );
 assert.match(
   clinicalReportSource,
-  /shareTextDocument\(\{[\s\S]*?text:\s*reportText,/,
+  /shareScaleViaWhatsApp\(\{[\s\S]*?text:\s*reportText,/,
   "compartilhamento deve receber o relatório integral",
 );
 assert.doesNotMatch(clinicalReportSource, /reportText\.slice/);
 assert.doesNotMatch(whatsAppSource, /scoreLine|reportText\.slice|totalScore/);
 assert.doesNotMatch(whatsAppSource, /send-whatsapp|authFetch/);
-assert.match(whatsAppSource, /window\.open\(whatsappUrl, "_blank"\)/);
+assert.match(
+  whatsAppSource,
+  /shareScaleViaWhatsApp\(\{[\s\S]*?text:\s*message,[\s\S]*?phone:\s*formatted,/,
+);
+assert.doesNotMatch(whatsAppSource, /encodedMessage\.length|shareTextDocument/);
+assert.match(
+  shareTextSource,
+  /navigator\.share\(\{ title: options\.title, text \}\)/,
+);
+assert.match(shareTextSource, /openWhatsAppShare\(text, options\.phone\)/);
+assert.doesNotMatch(
+  shareTextSource.slice(shareTextSource.indexOf("shareScaleViaWhatsApp")),
+  /copyText\(|downloadTextDocument\(/,
+  "botão de WhatsApp nunca deve regredir para cópia/download silencioso",
+);
 
 assert.match(saveSource, /responses:\s*ScaleResponseItem\[\]/);
 assert.match(saveSource, /normalizeScaleResponseItems\(rawProps\.responses\)/);
@@ -252,7 +267,9 @@ for (const [id, min, max] of [
 ]) {
   assert.match(
     directTestsSource,
-    new RegExp(`id: "${id}"[\\s\\S]{0,220}?ageMin: ${min},[\\s\\S]{0,80}?ageMax: ${max}`),
+    new RegExp(
+      `id: "${id}"[\\s\\S]{0,220}?ageMin: ${min},[\\s\\S]{0,80}?ageMax: ${max}`,
+    ),
     `${id} deve anunciar exatamente ${min}–${max} anos`,
   );
 }
@@ -348,7 +365,9 @@ assert.doesNotMatch(
   "backup antigo não pode reintroduzir pontuação",
 );
 
-const centralizedResponseValidation = source("functions/api/_clinicalValidation.ts");
+const centralizedResponseValidation = source(
+  "functions/api/_clinicalValidation.ts",
+);
 assert.match(centralizedResponseValidation, /code:\s*"RESPONSES_REQUIRED"/);
 
 for (const apiPath of [

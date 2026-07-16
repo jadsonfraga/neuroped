@@ -4,10 +4,27 @@ export function formatForWhatsApp(title: string, body: string): string {
   return `*${safeTitle}*\n\n${safeBody}`.trim();
 }
 
-export type ShareTextOutcome = "shared" | "copied-and-downloaded" | "downloaded" | "cancelled" | "failed";
-export type EmailDraftOutcome = "inline" | "copied-and-downloaded" | "downloaded";
+export type ShareTextOutcome =
+  | "shared"
+  | "copied-and-downloaded"
+  | "downloaded"
+  | "cancelled"
+  | "failed";
+export type EmailDraftOutcome =
+  | "inline"
+  | "copied-and-downloaded"
+  | "downloaded";
+export type WhatsAppShareOutcome =
+  | "shared"
+  | "opened"
+  | "navigated"
+  | "cancelled"
+  | "failed";
 
-export function safeTextFilename(value: string, fallback = "neuroped-relatorio"): string {
+export function safeTextFilename(
+  value: string,
+  fallback = "neuroped-relatorio",
+): string {
   const normalized = String(value || fallback)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -31,7 +48,7 @@ export function downloadTextDocument(text: string, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
-/** Compartilha o relatório como arquivo, sem colocar conteúdo clínico na URL. */
+/** Compartilha o relatório como arquivo ou texto nativo, sem truncar conteúdo. */
 export async function shareTextDocument(options: {
   title: string;
   text: string;
@@ -41,18 +58,27 @@ export async function shareTextDocument(options: {
   if (!text) return "failed";
 
   try {
-    if (typeof File !== "undefined") {
-      const filename = `${safeTextFilename(options.filename || options.title)}.txt`;
-      const file = new File([text], filename, { type: "text/plain;charset=utf-8" });
-      const shareData: ShareData = { title: options.title, files: [file] };
-      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
-        await navigator.share(shareData);
-        return "shared";
+    if (navigator.share) {
+      // O compartilhamento de arquivo não é uniforme entre Safari, PWA e
+      // navegadores desktop. Só usa `files` quando o navegador confirma essa
+      // capacidade; caso contrário, abre a folha nativa com o texto integral.
+      if (typeof File !== "undefined") {
+        const filename = `${safeTextFilename(options.filename || options.title)}.txt`;
+        const file = new File([text], filename, { type: "text/plain" });
+        const shareData: ShareData = { title: options.title, files: [file] };
+        if (navigator.canShare?.(shareData) === true) {
+          await navigator.share(shareData);
+          return "shared";
+        }
       }
+
+      await navigator.share({ title: options.title, text });
+      return "shared";
     }
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
-    // Compartilhamento de arquivo indisponível: usa fallback local abaixo.
+    if (error instanceof DOMException && error.name === "AbortError")
+      return "cancelled";
+    // Compartilhamento nativo indisponível: usa fallback local abaixo.
   }
 
   const filename = `${safeTextFilename(options.filename || options.title)}.txt`;
@@ -128,16 +154,86 @@ export async function openEmailDraft(options: {
   return outcome;
 }
 
-export async function openWhatsAppShare(text: string): Promise<void> {
+export function buildWhatsAppShareUrl(
+  text: string,
+  phone?: string,
+): string | null {
   const value = String(text || "").trim();
-  if (!value) return;
-  // Relatórios longos em wa.me podem ser truncados pelo navegador/app. Nesses
-  // casos compartilha um arquivo íntegro e deixa o usuário escolher WhatsApp.
-  if (encodeURIComponent(value).length > 1_800) {
-    await shareTextDocument({ title: "Relatório NeuroPed", text: value });
-    return;
+  if (!value) return null;
+  const digits = String(phone || "").replace(/\D/g, "");
+  return `https://wa.me/${digits}?text=${encodeURIComponent(value)}`;
+}
+
+/**
+ * Abre o WhatsApp diretamente, sem clipboard e sem o antigo corte de 1.800
+ * caracteres. Se a nova aba for bloqueada, navega a aba atual — isso preserva
+ * o gesto do usuário em Safari/iOS/PWA e evita o falso estado de envio.
+ */
+export function openWhatsAppShare(
+  text: string,
+  phone?: string,
+): Exclude<WhatsAppShareOutcome, "shared" | "cancelled"> {
+  const url = buildWhatsAppShareUrl(text, phone);
+  if (!url) return "failed";
+
+  try {
+    const opened = window.open(url, "_blank");
+    if (opened) {
+      opened.opener = null;
+      return "opened";
+    }
+  } catch {
+    // Alguns WebViews bloqueiam `window.open`; navegação direta abaixo.
   }
-  const url = `https://wa.me/?text=${encodeURIComponent(value)}`;
-  const opened = window.open(url, "_blank");
-  if (opened) opened.opener = null;
+
+  try {
+    window.location.assign(url);
+    return "navigated";
+  } catch {
+    return "failed";
+  }
+}
+
+/**
+ * Fluxo específico para escalas: nunca transforma silenciosamente o botão de
+ * WhatsApp em "copiar". Com telefone, abre a conversa diretamente. Sem
+ * telefone, prefere o compartilhamento nativo de arquivo/texto e deixa o
+ * usuário escolher WhatsApp e destinatário; sem Web Share, abre `wa.me`.
+ */
+export async function shareScaleViaWhatsApp(options: {
+  title: string;
+  text: string;
+  filename?: string;
+  phone?: string;
+}): Promise<WhatsAppShareOutcome> {
+  const text = String(options.text || "").trim();
+  if (!text) return "failed";
+
+  // Executa antes de qualquer `await`, mantendo a ativação transitória do
+  // clique para Safari/PWA e preservando o número informado.
+  if (options.phone) return openWhatsAppShare(text, options.phone);
+
+  try {
+    if (navigator.share) {
+      if (typeof File !== "undefined") {
+        const filename = `${safeTextFilename(options.filename || options.title)}.txt`;
+        const file = new File([text], filename, { type: "text/plain" });
+        const fileShare: ShareData = { title: options.title, files: [file] };
+        if (navigator.canShare?.(fileShare) === true) {
+          await navigator.share(fileShare);
+          return "shared";
+        }
+      }
+
+      await navigator.share({ title: options.title, text });
+      return "shared";
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return "cancelled";
+    }
+    // Uma falha de Web Share ainda pode navegar diretamente para o WhatsApp.
+  }
+
+  return openWhatsAppShare(text);
 }
