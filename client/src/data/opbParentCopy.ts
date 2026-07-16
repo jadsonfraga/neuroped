@@ -27,11 +27,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: 'Você responde ~20 perguntas como: "Ele aponta para mostrar algo que achou interessante?", "Olha quando você chama o nome?", "Brinca de faz-de-conta?".',
     whyUseful: "Rastreio de 1ª linha para TEA aos 16–30 meses; alta sensibilidade para encaminhar cedo.",
   },
-  "j26-021": {
-    mainQuestion: "A criança compartilha atenção e olhar com o outro?",
-    parentExample: "O clínico observa se ela segue seu olhar/apontar, alterna o olhar entre você e um brinquedo e mostra objetos espontaneamente.",
-    whyUseful: "Atenção conjunta é um dos marcadores sociais mais precoces e específicos do TEA.",
-  },
   "tea-checklists": {
     mainQuestion: "Quais sinais do espectro estão presentes no dia a dia?",
     parentExample: "Revisão estruturada de comportamentos: contato visual, resposta ao nome, interesses restritos, movimentos repetitivos e reação a sons/texturas.",
@@ -51,11 +46,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     mainQuestion: "Qual a gravidade dos sintomas do espectro autista?",
     parentExample: "A partir da observação e da sua entrevista, avaliam-se 15 áreas: relação social, imitação, resposta emocional, uso do corpo e da fala.",
     whyUseful: "Quantifica a intensidade do espectro e apoia a definição do nível de suporte.",
-  },
-  "j26-020": {
-    mainQuestion: "A criança usa a linguagem para se relacionar (não só para pedir)?",
-    parentExample: "Avalia-se se ela inicia conversa, mantém o turno, entende ironia/expressões e adapta a fala ao contexto.",
-    whyUseful: "A pragmática (uso social da linguagem) costuma ser o ponto mais afetado no TEA.",
   },
   ecsm: {
     mainQuestion: "Como estão a cognição social e a comunicação?",
@@ -99,11 +89,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "Você responde uma lista ampla: agitação, agressividade, tristeza, medos, queixas físicas e isolamento.",
     whyUseful: "Padrão de perfil internalizante/externalizante para situar onde está o problema.",
   },
-  "j26-051": {
-    mainQuestion: "A criança lida bem com mudanças e frustração?",
-    parentExample: "Perguntas sobre birras na mudança de rotina, rigidez, transições e tolerância à frustração.",
-    whyUseful: "Diferencia a rigidez/inflexibilidade que acompanha TDAH e TEA.",
-  },
 
   // ================================= ATRASO =================================
   denver: {
@@ -115,11 +100,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     mainQuestion: "Há atraso global ou apenas em uma área?",
     parentExample: 'Você responde se a criança "sobe escada com ajuda", "faz frases", "rabisca" e "brinca com outras crianças".',
     whyUseful: "Traz o olhar dos pais sobre o cotidiano nos cinco domínios.",
-  },
-  "j26-010": {
-    mainQuestion: "O desenvolvimento global está no esperado aos 2–3 anos?",
-    parentExample: "Checklist de marcos de linguagem, motor, cognição e social para a faixa de 24–36 meses.",
-    whyUseful: "Triagem ampla na janela crítica do segundo/terceiro ano.",
   },
   "j26-001": {
     mainQuestion: "Os marcos motores do primeiro semestre estão presentes?",
@@ -187,11 +167,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     mainQuestion: "A criança evoca palavras com facilidade?",
     parentExample: "Em 1 minuto, diz o máximo de palavras de uma categoria (ex.: animais) ou começadas por uma letra.",
     whyUseful: "Avalia o acesso lexical e a função executiva verbal.",
-  },
-  "j26-089": {
-    mainQuestion: "A criança precisa de comunicação alternativa/aumentativa (CAA)?",
-    parentExample: "Avalia-se como ela comunica desejos hoje e quais recursos (figuras, gestos, app) ajudariam.",
-    whyUseful: "Define o suporte de comunicação para quem fala pouco ou não fala.",
   },
 
   // =============================== ANSIEDADE ================================
@@ -261,11 +236,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "Você responde sobre hora de dormir, resistência, despertares, pesadelos, ronco e sonolência diurna.",
     whyUseful: "Questionário validado que cobre as principais áreas do sono infantil.",
   },
-  "j26-130": {
-    mainQuestion: "A rotina e o ambiente de sono estão adequados?",
-    parentExample: "Avaliam-se horários, uso de telas antes de dormir, ambiente do quarto e rituais.",
-    whyUseful: "Primeira linha não-farmacológica para o sono.",
-  },
   "j26-137": {
     mainQuestion: "Existe uma rotina noturna previsível?",
     parentExample: "Você descreve a sequência da noite (banho, história, luz) e a consistência dos horários.",
@@ -298,11 +268,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "A criança desenha e escreve; observam-se preensão, traçado, pressão e organização na folha.",
     whyUseful: "Detecta disgrafia e dificuldade motora fina.",
   },
-  "j26-117": {
-    mainQuestion: "O bebê prematuro está evoluindo bem no motor?",
-    parentExample: "Acompanham-se tônus, postura e marcos motores corrigidos para a prematuridade.",
-    whyUseful: "Vigia sequelas motoras da prematuridade.",
-  },
   "j26-107": {
     mainQuestion: "Os marcos motores grossos de 1–5 anos estão presentes?",
     parentExample: "Você responde se a criança corre, pula, sobe escada, chuta bola e fica em um pé só.",
@@ -317,16 +282,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     mainQuestion: "O equilíbrio e a marcha estão adequados?",
     parentExample: "Observam-se a forma de andar, o equilíbrio em um pé e as mudanças de direção.",
     whyUseful: "Detecta alterações de marcha e de equilíbrio.",
-  },
-  "j26-115": {
-    mainQuestion: "A criança participa de atividades motoras/esportivas?",
-    parentExample: "Você responde sobre correr, pular corda, andar de bicicleta e jogos com bola.",
-    whyUseful: "Mostra o impacto funcional da coordenação no lazer e no esporte.",
-  },
-  "j26-111": {
-    mainQuestion: "Qual a funcionalidade motora na paralisia cerebral?",
-    parentExample: "Avaliam-se mobilidade, transferências e uso das mãos no dia a dia.",
-    whyUseful: "Acompanha a função motora na PC.",
   },
   "j26-240": {
     mainQuestion: "Como a criança usa as mãos para manusear objetos?",

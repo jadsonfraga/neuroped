@@ -181,7 +181,7 @@ const steps = [
         {[
           { icon: Printer, gradient: "from-violet-500 to-purple-600", title: "PDF / Imprimir", desc: "Ao finalizar uma escala aplicável, gere documento para consulta e acompanhamento." },
           { icon: Mail, gradient: "from-blue-500 to-indigo-600", title: "Envio e registro", desc: "Relatórios podem ser organizados no fluxo clínico quando a rota estiver disponível." },
-          { icon: Smartphone, gradient: "from-emerald-500 to-teal-500", title: "Instalar offline", desc: "Funciona como app no celular e computador. Sem conexão depois de instalado." },
+          { icon: Smartphone, gradient: "from-emerald-500 to-teal-500", title: "Instalar como app", desc: "Home e atalhos principais abrem offline; áreas clínicas remotas continuam exigindo conexão." },
         ].map((item, i) => {
           const Icon = item.icon;
           return (

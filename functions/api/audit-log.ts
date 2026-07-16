@@ -1,20 +1,25 @@
-﻿/**
- * GET /api/audit-log  â€” lista entradas do log de auditoria (admin only)
+/**
+ * GET /api/audit-log — lista entradas do log de auditoria (admin only)
  *
- * ParÃ¢metros:
+ * Parâmetros:
  *  ?page=1&limit=50
  *  ?resource=patients
  *  ?action=login
  *  ?from=2025-01-01
  *  ?to=2025-12-31
  *
- * LGPD: Este endpoint expÃµe metadados de acesso (quem acessou o quÃª e quando).
- * Deve ser restrito a administradores. NÃ£o expÃµe conteÃºdo clÃ­nico.
+ * LGPD: Este endpoint expõe metadados de acesso (quem acessou o quê e quando).
+ * Deve ser restrito a administradores. Não expõe conteúdo clínico.
  */
 
 interface Env {
   DB?: D1Database;
 }
+
+import {
+  canReadAuditLog,
+  getContextUser,
+} from "./auth/_authorization";
 
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -55,6 +60,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    const user = getContextUser(context);
+    if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
+    if (!canReadAuditLog(user)) {
+      return errorResponse("Acesso restrito ao administrador.", "FORBIDDEN", 403);
+    }
+
     let sql = "SELECT id, action, resource, resource_id, user_id, ip, details, created_at FROM audit_logs WHERE 1=1";
     const binds: unknown[] = [];
 

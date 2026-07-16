@@ -23,9 +23,10 @@ const dbPath = process.env.DATABASE_PATH || "neuroped.db";
 const dbDir = path.dirname(path.resolve(dbPath));
 if (dbDir && !fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
-const sqlite = new Database(dbPath);
+export const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
+sqlite.pragma("busy_timeout = 5000");
 
 export const db = drizzle(sqlite);
 
@@ -72,6 +73,7 @@ sqlite.exec(`
 
   CREATE TABLE IF NOT EXISTS consents (
     id TEXT PRIMARY KEY,
+    batch_id TEXT,
     user_id TEXT,
     patient_id TEXT,
     consent_type TEXT NOT NULL,
@@ -79,6 +81,7 @@ sqlite.exec(`
     consent_text TEXT NOT NULL,
     granted INTEGER NOT NULL,
     granted_at TEXT NOT NULL,
+    accepted_at TEXT,
     revoked_at TEXT,
     ip_address TEXT,
     user_agent TEXT,
@@ -188,6 +191,30 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS files_owner_idx ON files(owner_user_id);
   CREATE INDEX IF NOT EXISTS files_patient_idx ON files(patient_id);
   CREATE INDEX IF NOT EXISTS files_key_idx ON files(storage_key);
+`);
+
+/**
+ * Migração aditiva para bancos SQLite já existentes. SQLite não oferece
+ * `ADD COLUMN IF NOT EXISTS` de forma portável, então inspecionamos a tabela
+ * antes de acrescentar os campos do contrato transacional de consentimentos.
+ */
+function ensureConsentColumn(name: string, definition: string): void {
+  const columns = sqlite.prepare("PRAGMA table_info(consents)").all() as Array<{
+    name: string;
+  }>;
+  if (!columns.some((column) => column.name === name)) {
+    sqlite.exec(`ALTER TABLE consents ADD COLUMN ${definition}`);
+  }
+}
+
+ensureConsentColumn("batch_id", "batch_id TEXT");
+ensureConsentColumn("accepted_at", "accepted_at TEXT");
+sqlite.exec(`
+  CREATE INDEX IF NOT EXISTS consents_batch_idx ON consents(batch_id);
+  CREATE INDEX IF NOT EXISTS consents_user_accepted_idx
+    ON consents(user_id, accepted_at DESC);
+  CREATE UNIQUE INDEX IF NOT EXISTS consents_idempotency_idx
+    ON consents(user_id, consent_type, consent_version, accepted_at);
 `);
 
 /* =========================================================================

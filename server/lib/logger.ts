@@ -124,7 +124,10 @@ export function logQuery(sql: string, params?: any[]) {
     logger.debug({
       msg: "SQL Query",
       sql,
-      params: params?.map((p) => (typeof p === "string" ? p.substring(0, 50) : p)),
+      // Nunca grave valores clínicos. Quantidade e tipos bastam para depurar a
+      // forma da consulta sem vazar nomes, documentos ou texto livre.
+      paramTypes: params?.map((p) => (p === null ? "null" : typeof p)),
+      paramCount: params?.length ?? 0,
     });
   }
 }

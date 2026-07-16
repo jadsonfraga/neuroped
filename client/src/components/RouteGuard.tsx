@@ -1,37 +1,26 @@
 import type { ReactNode } from "react";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { decideRouteAccess } from "@/security/routeGuardPolicy";
+import {
+  decideRouteAccess,
+  isRouteSensitive,
+  SENSITIVE_ROUTES,
+} from "@/security/routeGuardPolicy";
 
-export const SENSITIVE_ROUTES = [
-  "/pant",
-  "/assinatura-digital",
-  "/documentos",
-  "/pacientes",
-  "/paciente/",
-  "/prontuario",
-  "/calculadora-dose",
-  "/farmacologia",
-  "/medicamentos",
-  "/satisfacao-medicacao",
-  "/plano-terapeutico",
-  "/plano-intervencao",
-  "/avaliacao-multiprofissional",
-  "/fichas-registro",
-] as const;
+export { isRouteSensitive, SENSITIVE_ROUTES };
 
-export function isRouteSensitive(path: string): boolean {
-  return SENSITIVE_ROUTES.some((p) => path.startsWith(p));
-}
+type RouteRole = "admin" | "professional" | "reader" | "operator";
 
-export function RouteGuard({ children }: { children: ReactNode; roles?: Array<"admin" | "professional" | "reader" | "operator"> }) {
+export function RouteGuard({ children, roles }: { children: ReactNode; roles?: RouteRole[] }) {
   const [location] = useLocation();
-  const { accessMode, isAuthenticated, isLoading } = useAuth();
+  const { accessMode, isAuthenticated, isLoading, user } = useAuth();
   const decision = decideRouteAccess({
     path: location,
     accessMode,
     isAuthenticated,
     isLoading,
+    userRole: user?.role,
+    allowedRoles: roles,
   });
 
   if (decision === "checking") {
@@ -57,6 +46,20 @@ export function RouteGuard({ children }: { children: ReactNode; roles?: Array<"a
 
   if (decision === "login") {
     return <Redirect to={`/login?next=${encodeURIComponent(location)}`} />;
+  }
+
+  if (decision === "forbidden") {
+    return (
+      <section
+        className="mx-auto my-10 max-w-lg rounded-2xl border border-destructive/25 bg-card p-6 text-center shadow-sm"
+        role="alert"
+      >
+        <h1 className="text-lg font-bold text-foreground">Acesso não autorizado</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Seu perfil não possui permissão para abrir esta área clínica.
+        </p>
+      </section>
+    );
   }
 
   return <>{children}</>;

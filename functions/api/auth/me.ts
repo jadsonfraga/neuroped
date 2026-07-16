@@ -3,12 +3,13 @@
  */
 import { type Env, json, publicUser, getUserById } from "./_shared";
 import { verifyJwt } from "./_crypto";
+import { isSessionFamilyActive } from "./_sessions";
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
 
   const secret = env.NEUROPED_JWT_SECRET;
-  if (!secret || !env.DB) {
+  if (!secret || secret.trim().length < 32 || !env.DB) {
     return json({ error: "Auth indisponível.", code: "AUTH_UNAVAILABLE" }, 503);
   }
 
@@ -22,6 +23,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const user = await getUserById(env.DB, payload.sub);
   if (!user || !user.is_active) {
     return json({ error: "Sessão inválida.", code: "INVALID_SESSION" }, 401);
+  }
+  if (!(await isSessionFamilyActive(env.DB, user.id, payload.sid))) {
+    return json({ error: "Sessão revogada.", code: "INVALID_SESSION" }, 401);
   }
 
   return json(publicUser(user), 200);

@@ -11,11 +11,12 @@
 | Camada | Tecnologia |
 |--------|-----------|
 | Frontend | React 18 + Vite 7 + Tailwind + Radix UI + wouter |
-| Backend | Express 5 + TypeScript via tsx |
+| Backend canônico | Cloudflare Pages Functions + D1 |
+| Backend local | Express 5 + TypeScript via tsx |
 | ORM | Drizzle |
-| Banco | SQLite (better-sqlite3) em dev, Postgres em producao |
+| Banco | D1 em produção; SQLite (better-sqlite3) no Express local |
 | Auth | JWT (HS256) access + opaque refresh com rotacao + bcrypt |
-| Cripto | AES-256-GCM com chave derivada via PBKDF2 |
+| Cripto | AES-256-GCM server-side; rascunhos locais com chave efêmera não persistida |
 | Email | nodemailer com SMTP (Brevo/Resend/SES recomendado) |
 | Seguranca | helmet + rate-limit + CORS restrito + audit logs |
 

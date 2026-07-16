@@ -5,6 +5,7 @@ export function formatForWhatsApp(title: string, body: string): string {
 }
 
 export type ShareTextOutcome = "shared" | "copied-and-downloaded" | "downloaded" | "cancelled" | "failed";
+export type EmailDraftOutcome = "inline" | "copied-and-downloaded" | "downloaded";
 
 export function safeTextFilename(value: string, fallback = "neuroped-relatorio"): string {
   const normalized = String(value || fallback)
@@ -91,6 +92,40 @@ export async function copyText(text: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Abre o cliente de email sem depender de um endpoint de envio. Conteúdo longo
+ * nunca é truncado: fica em um .txt local e, quando possível, no clipboard.
+ * "Preparado" não significa "enviado" — o usuário ainda confirma no cliente.
+ */
+export async function openEmailDraft(options: {
+  to: string;
+  subject: string;
+  body: string;
+  filename?: string;
+}): Promise<EmailDraftOutcome> {
+  const body = String(options.body || "").trim();
+  const encodedBody = encodeURIComponent(body);
+  let emailBody = body;
+  let outcome: EmailDraftOutcome = "inline";
+
+  if (encodedBody.length > 1_800) {
+    const copied = await copyText(body);
+    downloadTextDocument(
+      body,
+      `${safeTextFilename(options.filename || options.subject)}.txt`,
+    );
+    emailBody = copied
+      ? "O conteúdo integral foi copiado e baixado como arquivo .txt. Anexe o arquivo ou cole o conteúdo neste email."
+      : "O conteúdo integral foi baixado como arquivo .txt. Anexe o arquivo neste email.";
+    outcome = copied ? "copied-and-downloaded" : "downloaded";
+  }
+
+  window.location.href =
+    `mailto:${options.to}?subject=${encodeURIComponent(options.subject)}` +
+    `&body=${encodeURIComponent(emailBody)}`;
+  return outcome;
 }
 
 export async function openWhatsAppShare(text: string): Promise<void> {

@@ -1,5 +1,7 @@
 -- ============================================================
 -- NeuroPed — Schema D1 (Cloudflare D1 / SQLite)
+-- ARQUIVO LEGADO DE REFERÊNCIA. Para provisionar/deployar, use
+-- db/schema.d1.sql seguido das migrações aditivas em db/migrations/.
 -- Branch: feat/auditoria-total-ui-backend-memoria
 -- Criado: 2026-05-08
 --
@@ -24,6 +26,11 @@ CREATE TABLE IF NOT EXISTS users (
   crm          TEXT,
   specialty    TEXT,
   pin_hash     TEXT,               -- SHA-256 hex do PIN local (somente se habilitado)
+  password_hash TEXT,
+  must_change_password INTEGER NOT NULL DEFAULT 0 CHECK (must_change_password IN (0, 1)),
+  failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until DATETIME,
+  last_login_at DATETIME,
   role         TEXT NOT NULL DEFAULT 'professional'
                CHECK (role IN ('admin', 'professional', 'reader', 'operator')),
   is_active    INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
@@ -33,11 +40,30 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+-- Sessões revogáveis: refresh tokens ficam apenas como SHA-256.
+CREATE TABLE IF NOT EXISTS auth_refresh_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  family_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  parent_session_id TEXT REFERENCES auth_refresh_sessions(id) ON DELETE SET NULL,
+  replaced_by_session_id TEXT REFERENCES auth_refresh_sessions(id) ON DELETE SET NULL,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME,
+  revoke_reason TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at DATETIME
+);
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_sessions_user ON auth_refresh_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_sessions_family ON auth_refresh_sessions(family_id);
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_sessions_expiry ON auth_refresh_sessions(expires_at);
+
 -- ============================================================
 -- Pacientes demo (dados fictícios — is_demo = 1 sempre)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS patients_demo (
   id             TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  owner_user_id  TEXT REFERENCES users(id) ON DELETE SET NULL,
   name           TEXT NOT NULL,                  -- fictício em modo demo
   birth_date     DATE,
   guardian_name  TEXT,
@@ -50,6 +76,7 @@ CREATE TABLE IF NOT EXISTS patients_demo (
 );
 
 CREATE INDEX IF NOT EXISTS idx_patients_demo_name ON patients_demo(name);
+CREATE INDEX IF NOT EXISTS idx_patients_demo_owner ON patients_demo(owner_user_id);
 
 -- ============================================================
 -- Consultas demo (SOAP — Subjetivo, Objetivo, Avaliação, Plano)
@@ -77,9 +104,9 @@ CREATE TABLE IF NOT EXISTS scale_results_demo (
   patient_id     TEXT NOT NULL,
   scale_id       TEXT NOT NULL,        -- ex: "mchat", "snap-iv", "scared"
   scale_name     TEXT NOT NULL,        -- ex: "M-CHAT-R/F", "SNAP-IV"
-  score          REAL,                 -- pontuação total
-  interpretation TEXT,                 -- interpretação clínica automática
-  details        TEXT,                 -- JSON com itens individuais e subescores
+  score          REAL,                 -- coluna legada; novas gravações usam NULL
+  interpretation TEXT,                 -- coluna legada; novas gravações usam NULL
+  details        TEXT,                 -- JSON com perguntas e respostas integrais
   is_demo        INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   applied_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

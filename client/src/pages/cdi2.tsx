@@ -11,14 +11,43 @@ import { cdi2Questions, cdi2Labels } from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+const CDI2_DRAFT_VALUES = indexedAllowedValues(
+  cdi2Questions.length,
+  cdi2Labels.length,
+);
 
 export default function Cdi2Page() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:cdi-2",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, CDI2_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const total = cdi2Questions.length;
   const answered = Object.keys(answers).length;
   const progress = (answered / total) * 100;
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = cdi2Questions.map((question, index) => ({
@@ -35,7 +64,7 @@ export default function Cdi2Page() {
             <CloudRain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — CDI-2</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — CDI-2</h1>
             <p className="text-xs text-muted-foreground">
               Inventário de Depressão Infantil
             </p>
@@ -82,7 +111,7 @@ export default function Cdi2Page() {
         />
         <Button
           onClick={() => {
-            setAnswers({});
+            void clearDraft();
             setShowResult(false);
           }}
           variant="outline"
@@ -97,6 +126,13 @@ export default function Cdi2Page() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice
+        visible={draftRestored}
+        onClear={() => {
+          void clearDraft();
+          setShowResult(false);
+        }}
+      />
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-sm">
           <CloudRain className="w-5 h-5 text-white" />
@@ -170,7 +206,7 @@ export default function Cdi2Page() {
         data-testid="button-submit"
       >
         {answered >= total
-          ? "Ver Resultado"
+          ? "Ver respostas"
           : `Responda todas as ${total} perguntas`}
       </Button>
       <ScaleReference scaleId="cdi2" />

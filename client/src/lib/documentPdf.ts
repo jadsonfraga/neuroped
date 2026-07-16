@@ -5,6 +5,7 @@
 // ============================================================
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
+import { buildAppHashUrl } from "@/lib/appUrl";
 
 export interface DocSection {
   heading: string;
@@ -65,8 +66,7 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
 }
 
 function defaultValidationUrl(): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://neuroped.pages.dev";
-  return `${origin}/#/verificar`;
+  return buildAppHashUrl("/verificar");
 }
 
 async function embedValidationQr(pdf: PDFDocument, url: string) {

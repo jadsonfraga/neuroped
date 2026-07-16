@@ -21,7 +21,6 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ANTICIPATION_MS, computeStats, evaluateValidity, mulberry32 } from "./stats";
-import { saveSession } from "./storage";
 import { ResultsPanel } from "./ResultsPanel";
 import type { CognitiveSession, CognitiveTaskConfig, TrialRecord, TrialSpec } from "./types";
 
@@ -102,7 +101,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
     const stats = computeStats(ref.current.records);
     const validity = evaluateValidity(ref.current.records, task.validity);
     const s: CognitiveSession = {
-      id: `${task.id}-${Date.now().toString(36)}`,
+      id: `${task.id}-${crypto.randomUUID()}`,
       taskId: task.id,
       taskName: task.name,
       startedAtIso: ref.current.startedAtIso,
@@ -112,7 +111,6 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
       stats,
       validity,
     };
-    saveSession(s);
     setSession(s);
     setPhase("results");
   }

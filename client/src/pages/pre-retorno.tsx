@@ -44,25 +44,35 @@ async function loadRecords(): Promise<PreRetornoRecord[]> {
   if (Array.isArray(protectedRecords)) return protectedRecords;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    localStorage.removeItem(STORAGE_KEY);
     const legacy = raw ? JSON.parse(raw) : [];
     if (Array.isArray(legacy) && legacy.length > 0) {
-      await secureSet(SECURE_STORAGE_KEY, legacy);
+      const migrated = await secureSet(SECURE_STORAGE_KEY, legacy);
+      if (migrated && localStorage.getItem(STORAGE_KEY) === raw) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
       return legacy;
     }
+    if (raw !== null) localStorage.removeItem(STORAGE_KEY);
     return [];
   } catch {
     return [];
   }
 }
 
-async function saveRecords(items: PreRetornoRecord[]): Promise<void> {
+async function saveRecords(items: PreRetornoRecord[]): Promise<boolean> {
+  let stored = false;
+  try {
+    stored = await secureSet(SECURE_STORAGE_KEY, items);
+  } catch {
+    return false;
+  }
+  if (!stored) return false;
   try {
     localStorage.removeItem(STORAGE_KEY);
-    await secureSet(SECURE_STORAGE_KEY, items);
   } catch {
-    // localStorage pode estar indisponível; o resumo segue utilizável na sessão.
+    // A cópia cifrada já foi confirmada; a limpeza legada é best-effort.
   }
+  return true;
 }
 
 async function clearRecords(): Promise<void> {
@@ -75,7 +85,7 @@ async function clearRecords(): Promise<void> {
 }
 
 function buildRecord(data: Omit<PreRetornoRecord, "id" | "createdAt">): PreRetornoRecord {
-  return { ...data, id: `pr-${Date.now()}`, createdAt: new Date().toISOString() };
+  return { ...data, id: `pr-${crypto.randomUUID()}`, createdAt: new Date().toISOString() };
 }
 
 function listAlertas(record: PreRetornoRecord) {
@@ -136,6 +146,7 @@ export default function PreRetornoPage() {
   const [prioridade, setPrioridade] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [saved, setSaved] = useState<PreRetornoRecord | null>(null);
+  const [storageError, setStorageError] = useState("");
 
   const ageValidation = useMemo(() => validateAge({ years: anos, months: meses }), [anos, meses]);
   const idade = ageValidation.label;
@@ -147,13 +158,19 @@ export default function PreRetornoPage() {
   );
 
   async function salvar() {
+    setStorageError("");
     if (!ageValidation.isValid) {
       setSaved(null);
       return;
     }
     const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
     const current = await loadRecords();
-    await saveRecords([record, ...current].slice(0, 50));
+    const stored = await saveRecords([record, ...current].slice(0, 50));
+    if (!stored) {
+      setSaved(null);
+      setStorageError("Não foi possível salvar neste dispositivo. Mantenha o formulário aberto e verifique o espaço ou as permissões de armazenamento do navegador.");
+      return;
+    }
     setSaved(record);
   }
 
@@ -161,6 +178,7 @@ export default function PreRetornoPage() {
     if (!window.confirm("Apagar todos os pré-retornos protegidos deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearRecords();
     setSaved(null);
+    setStorageError("");
   }
 
   function copiarResumo() {
@@ -259,6 +277,11 @@ export default function PreRetornoPage() {
             <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
             <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
           </div>
+          {storageError && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+              {storageError}
+            </p>
+          )}
         </CardContent></Card>
 
         <Card><CardContent className="space-y-3 p-4">

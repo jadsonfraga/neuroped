@@ -87,7 +87,7 @@ export function ExpertOverrideForm({
 
     const category = selectedCategory as OverrideReason["category"];
     const overrideReason: OverrideReason = {
-      id: `override-${Date.now()}`,
+      id: `override-${crypto.randomUUID()}`,
       category,
       description: overrideCategories.find((c) => c.id === category)?.label || category,
       evidence: evidence.trim(),

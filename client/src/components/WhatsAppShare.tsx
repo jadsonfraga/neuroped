@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
 import { shareTextDocument } from "@/lib/shareText";
-import { authFetch } from "@/lib/authClient";
 
 interface WhatsAppShareProps {
   scaleName: string;
@@ -46,7 +45,6 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [sentViaApi, setSentViaApi] = useState(false);
   const [sentAsFile, setSentAsFile] = useState(false);
   const { toast } = useToast();
 
@@ -69,73 +67,51 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       const formatted = formatPhoneNumber(phone);
       const message = `*${scaleName}*\n\n${reportText}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
 
-      // Tenta a API do backend (best-effort). Em hosts estáticos (GitHub Pages/
-      // Cloudflare) essa rota NÃO existe e o fallback de SPA responde 200 com o
-      // index.html — por isso não basta o fetch resolver: só considero enviado
-      // pela API se a resposta for OK e realmente JSON. Caso contrário, abro o
-      // WhatsApp Web (wa.me), que é o caminho de entrega confiável.
-      let deliveredViaApi = false;
       let sharedAsFile = false;
-      try {
-        const res = await authFetch("/api/send-whatsapp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: formatted, message }),
+      const encodedMessage = encodeURIComponent(message);
+      if (encodedMessage.length > 1_800) {
+        const outcome = await shareTextDocument({
+          title: `${scaleName} — respostas completas`,
+          text: message,
+          filename: `${scaleName}-respostas-completas`,
         });
-        const contentType = res.headers.get("content-type") ?? "";
-        deliveredViaApi = res.ok && contentType.includes("application/json");
-      } catch {
-        deliveredViaApi = false;
-      }
-
-      if (!deliveredViaApi) {
-        const encodedMessage = encodeURIComponent(message);
-        if (encodedMessage.length > 1_800) {
-          const outcome = await shareTextDocument({
-            title: `${scaleName} — respostas completas`,
-            text: message,
-            filename: `${scaleName}-respostas-completas`,
-          });
-          if (outcome === "cancelled") return;
-          if (outcome === "failed") throw new Error("share failed");
-          sharedAsFile = true;
-          setSentAsFile(true);
-        } else {
-          const whatsappUrl = `https://wa.me/${formatted}?text=${encodedMessage}`;
-          const win = window.open(whatsappUrl, "_blank");
-          if (win) win.opener = null;
+        if (outcome === "cancelled") return;
+        if (outcome === "failed") throw new Error("share failed");
+        sharedAsFile = true;
+        setSentAsFile(true);
+      } else {
+        // Abre ainda no gesto de clique. A antiga tentativa assíncrona a uma API
+        // inexistente fazia navegadores bloquearem esta janela como popup tardio.
+        const whatsappUrl = `https://wa.me/${formatted}?text=${encodedMessage}`;
+        const win = window.open(whatsappUrl, "_blank");
+        if (win) win.opener = null;
         // Popup bloqueado: nada foi aberto. Não anuncie sucesso — seria mentir
         // para o clínico que o relatório chegou. Oriente e mantenha o formulário.
-          if (!win) {
-            toast({
-              title: "Não foi possível abrir o WhatsApp",
-              description:
-                "Permita pop-ups para este site ou copie o relatório manualmente.",
-              variant: "destructive",
-            });
-            return;
-          }
+        if (!win) {
+          toast({
+            title: "Não foi possível abrir o WhatsApp",
+            description:
+              "Permita pop-ups para este site ou copie o relatório manualmente.",
+            variant: "destructive",
+          });
+          return;
         }
       }
 
       softSuccess();
       haptic.success();
-      setSentViaApi(deliveredViaApi);
       setSent(true);
       toast({
-        title: deliveredViaApi ? "Enviado!" : sharedAsFile ? "Arquivo preparado" : "Abrindo o WhatsApp…",
-        description: deliveredViaApi
-          ? "Relatório compartilhado com sucesso."
-          : sharedAsFile
-            ? "Escolha o WhatsApp e o destinatário para enviar o relatório integral."
-            : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
+        title: sharedAsFile ? "Arquivo preparado" : "Abrindo o WhatsApp…",
+        description: sharedAsFile
+          ? "Escolha o WhatsApp e o destinatário para enviar o relatório integral."
+          : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
       });
 
       // Reset after 3 seconds
       setTimeout(() => {
         setPhone("");
         setSent(false);
-        setSentViaApi(false);
         setSentAsFile(false);
       }, 3000);
     } catch (_error) {
@@ -160,18 +136,16 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Informe o número de WhatsApp para receber o resultado da avaliação.
+          Informe o número de WhatsApp para compartilhar as respostas completas.
         </p>
 
         {sent ? (
           <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-              {sentViaApi
-                ? "Relatório enviado!"
-                : sentAsFile
-                  ? "Arquivo integral preparado para compartilhar"
-                  : "WhatsApp aberto — toque em enviar por lá"}
+              {sentAsFile
+                ? "Arquivo integral preparado para compartilhar"
+                : "WhatsApp aberto — toque em enviar por lá"}
             </span>
           </div>
         ) : (

@@ -19,7 +19,7 @@
 import type { Express, Request, Response } from "express";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "../lib/db.js";
+import { db } from "../storage.js";
 import { requireAuth, requireProfessional } from "../middleware/auth.js";
 import { writeRateLimit } from "../middleware/security.js";
 import {
@@ -32,13 +32,10 @@ import {
 } from "../lib/cloudStorage.js";
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { oneParam } from "../lib/http.js";
+import { patientReferenceDecision } from "../lib/ownership.js";
 
-// IMPORTACAO CONDICIONAL DO SCHEMA — usa schema.ts (sqlite) ou schema-pg.ts conforme provider.
-// Em producao com Postgres, alterar este import para "@shared/schema-pg".
-// Para simplicidade no dev, usamos sqlite por padrao.
-import { files as sqliteFiles } from "@shared/schema";
+import { files as sqliteFiles, patients } from "@shared/schema";
 
-// Em producao, trocar dinamicamente:
 const filesTable = sqliteFiles;
 
 const MAX_FILE_SIZE_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB || "50", 10) * 1024 * 1024;
@@ -96,6 +93,20 @@ export function registerFileRoutes(app: Express): void {
       }
       if (!VALID_CATEGORIES.has(parsed.category)) {
         return res.status(400).json({ error: "Categoria invalida", code: "CATEGORY_INVALID" });
+      }
+      if (parsed.patientId) {
+        const patient = db
+          .select()
+          .from(patients)
+          .where(eq(patients.id, parsed.patientId))
+          .get();
+        const decision = patientReferenceDecision(req.user!, patient);
+        if (decision === "not_found") {
+          return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+        }
+        if (decision === "forbidden") {
+          return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+        }
       }
 
       const key = generateStorageKey({

@@ -20,6 +20,14 @@ export function isRecoverableChunkError(reason: unknown): boolean {
   );
 }
 
+/** Offline não é um deploy quebrado; recarregar só perderia estado local. */
+export function shouldAutoRecoverChunkError(
+  reason: unknown,
+  online: boolean,
+): boolean {
+  return online && isRecoverableChunkError(reason);
+}
+
 function reloadOnce(): boolean {
   try {
     const previous = Number(window.sessionStorage.getItem(RELOAD_MARKER));
@@ -48,11 +56,14 @@ export function installChunkRecovery(): void {
   installed = true;
 
   window.addEventListener("vite:preloadError", (event) => {
-    if (reloadOnce()) event.preventDefault();
+    if (navigator.onLine !== false && reloadOnce()) event.preventDefault();
   });
 
   window.addEventListener("unhandledrejection", (event) => {
-    if (isRecoverableChunkError(event.reason) && reloadOnce()) {
+    if (
+      shouldAutoRecoverChunkError(event.reason, navigator.onLine !== false) &&
+      reloadOnce()
+    ) {
       event.preventDefault();
     }
   });

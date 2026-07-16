@@ -15,9 +15,10 @@
  *   → copie o output → Cloudflare Pages → Variáveis de ambiente → CERT_P12_B64
  */
 
-import { verifyJwt } from "./auth/_crypto";
+import { canUseCertificate, getContextUser } from "./auth/_authorization";
 
 interface Env {
+  DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
   CERT_P12_B64?: string;
   CERT_P12_PASSWORD?: string;
@@ -31,22 +32,22 @@ function json(data: unknown, status = 200): Response {
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { env, request } = context;
+  const { env } = context;
 
-  // Verificação JWT — não precisa de DB, só da assinatura do token.
-  const secret = env.NEUROPED_JWT_SECRET;
-  if (!secret) {
+  // O middleware valida o JWT contra o usuário atual no D1 e injeta apenas
+  // contas ativas. Não basta confiar nas claims antigas do token.
+  if (!env.DB || (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) < 32) {
     return json({ error: "Auth indisponível.", code: "AUTH_UNAVAILABLE" }, 503);
   }
-
-  const auth = request.headers.get("Authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
-  const payload = token ? await verifyJwt(token, secret) : null;
-  if (!payload || payload.type !== "access") {
+  const user = getContextUser(context);
+  if (!user) {
     return json({ error: "Não autenticado.", code: "UNAUTHENTICATED" }, 401);
   }
+  if (!canUseCertificate(user)) {
+    return json({ error: "Acesso ao certificado não autorizado.", code: "FORBIDDEN" }, 403);
+  }
 
-  // Certificado armazenado como secret.
+  // Certificado compartilhado armazenado como secret (exportação admin-only).
   const certB64 = env.CERT_P12_B64?.trim();
   const password = env.CERT_P12_PASSWORD ?? "";
 

@@ -7,6 +7,21 @@ interface Env {
   DB?: D1Database;
 }
 
+import {
+  canWriteClinicalData,
+  getContextUser,
+  getPatientAccess,
+  isAdmin,
+} from "../auth/_authorization";
+import {
+  CLINICAL_INPUT_LIMITS,
+  createClinicalRecordId,
+  hasBoundedIdentifier,
+  isValidIsoDateTime,
+  normalizeClinicalResponses,
+} from "../_clinicalValidation";
+import { isPlainObject } from "../_request";
+
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -22,29 +37,13 @@ function errorResponse(
   return jsonResponse({ error: message, code }, status);
 }
 
-function normalizeResponses(
-  value: unknown,
-): Array<{ question: string; answer: string }> {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const question = String((item as any).question ?? "").trim();
-      const answer = String((item as any).answer ?? "").trim();
-      if (!question) return null;
-      return { question, answer: answer || "Não respondida" };
-    })
-    .filter(
-      (item): item is { question: string; answer: string } => item !== null,
-    );
-}
-
 function presentResult(row: any) {
   let responses: unknown[] = [];
   if (typeof row.details === "string") {
     try {
       const parsed = JSON.parse(row.details);
-      responses = normalizeResponses(parsed?.responses);
+      const normalized = normalizeClinicalResponses(parsed?.responses);
+      responses = normalized.ok ? normalized.responses : [];
     } catch {
       responses = [];
     }
@@ -97,6 +96,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const patientId = url.searchParams.get("patient_id")?.trim();
   const scaleId = url.searchParams.get("scale_id")?.trim();
 
+  if (patientId && !hasBoundedIdentifier(patientId)) {
+    return errorResponse("'patient_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
+  }
+  if (scaleId && !hasBoundedIdentifier(scaleId)) {
+    return errorResponse("'scale_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
+  }
+
   if (!env.DB) {
     let results = DEMO_RESULTS;
     if (patientId) results = results.filter((r) => r.patient_id === patientId);
@@ -109,6 +115,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    const user = getContextUser(context);
+    if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
+    if (patientId) {
+      const access = await getPatientAccess(env.DB, patientId, user);
+      if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
+      if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
+    }
+
     let sql =
       "SELECT id, patient_id, scale_id, scale_name, details, applied_at, is_demo FROM scale_results_demo WHERE is_demo = 1";
     const binds: unknown[] = [];
@@ -119,6 +133,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (scaleId) {
       sql += " AND scale_id = ?";
       binds.push(scaleId);
+    }
+    if (!isAdmin(user)) {
+      sql += " AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ? AND is_demo = 1)";
+      binds.push(user.id);
     }
     sql += " ORDER BY applied_at DESC LIMIT 50";
 
@@ -136,16 +154,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
 
-  let body: Record<string, unknown>;
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
     return errorResponse("Corpo da requisição inválido.", "INVALID_JSON", 400);
   }
+  if (!isPlainObject(parsed)) {
+    return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);
+  }
+  const body = parsed;
 
-  const patient_id = (body.patient_id as string)?.trim();
-  const scale_id = (body.scale_id as string)?.trim();
-  const scale_name = (body.scale_name as string)?.trim();
+  const patient_id = typeof body.patient_id === "string" ? body.patient_id.trim() : "";
+  const scale_id = typeof body.scale_id === "string" ? body.scale_id.trim() : "";
+  const scale_name = typeof body.scale_name === "string" ? body.scale_name.trim() : "";
 
   if (!patient_id)
     return errorResponse(
@@ -161,18 +183,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       "VALIDATION_ERROR",
       400,
     );
-
-  const responses = normalizeResponses(body.responses ?? body.answers);
-  if (responses.length === 0) {
+  if (!hasBoundedIdentifier(patient_id)) {
+    return errorResponse("'patient_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
+  }
+  if (!hasBoundedIdentifier(scale_id)) {
+    return errorResponse("'scale_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
+  }
+  if (scale_name.length > CLINICAL_INPUT_LIMITS.scaleName) {
     return errorResponse(
-      "Envie todas as perguntas e respostas por extenso.",
-      "RESPONSES_REQUIRED",
+      `'scale_name' deve ter no máximo ${CLINICAL_INPUT_LIMITS.scaleName} caracteres.`,
+      "VALIDATION_ERROR",
       400,
     );
   }
 
-  const id = `scale-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  const applied_at = (body.applied_at as string) ?? new Date().toISOString();
+  const normalizedResponses = normalizeClinicalResponses(body.responses ?? body.answers);
+  if (!normalizedResponses.ok) {
+    return errorResponse(
+      normalizedResponses.message,
+      normalizedResponses.code,
+      400,
+    );
+  }
+  const responses = normalizedResponses.responses;
+
+  const id = createClinicalRecordId("scale");
+  if (body.applied_at != null && typeof body.applied_at !== "string") {
+    return errorResponse("'applied_at' deve ser texto.", "VALIDATION_ERROR", 400);
+  }
+  const applied_at = body.applied_at?.trim() || new Date().toISOString();
+  if (!isValidIsoDateTime(applied_at)) {
+    return errorResponse(
+      "'applied_at' deve ser um instante ISO 8601 válido com timezone.",
+      "VALIDATION_ERROR",
+      400,
+    );
+  }
 
   const payload = {
     id,
@@ -197,6 +243,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    const user = getContextUser(context);
+    if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
+    if (!canWriteClinicalData(user)) {
+      return errorResponse(
+        "Perfil sem permissão para registrar resultados.",
+        "FORBIDDEN",
+        403,
+      );
+    }
+    const access = await getPatientAccess(env.DB, patient_id, user);
+    if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
+    if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
+
     await env.DB.prepare(
       `INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,

@@ -7,6 +7,20 @@ interface Env {
   DB?: D1Database;
 }
 
+import {
+  canWriteClinicalData,
+  getContextUser,
+  getPatientAccess,
+  isAdmin,
+} from "../auth/_authorization";
+import {
+  CLINICAL_INPUT_LIMITS,
+  createClinicalRecordId,
+  hasBoundedIdentifier,
+  isValidIsoDate,
+} from "../_clinicalValidation";
+import { isPlainObject } from "../_request";
+
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -48,6 +62,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const url = new URL(request.url);
   const patientId = url.searchParams.get("patient_id")?.trim();
 
+  if (patientId && !hasBoundedIdentifier(patientId)) {
+    return errorResponse("'patient_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
+  }
+
   if (!env.DB) {
     let results = DEMO_CONSULTATIONS;
     if (patientId) results = results.filter((c) => c.patient_id === patientId);
@@ -55,8 +73,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const whereClause = patientId ? "WHERE patient_id = ? AND is_demo = 1" : "WHERE is_demo = 1";
-    const binds = patientId ? [patientId] : [];
+    const user = getContextUser(context);
+    if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
+    if (patientId) {
+      const access = await getPatientAccess(env.DB, patientId, user);
+      if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
+      if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
+    }
+
+    let whereClause = patientId ? "WHERE patient_id = ? AND is_demo = 1" : "WHERE is_demo = 1";
+    const binds: unknown[] = patientId ? [patientId] : [];
+    if (!isAdmin(user)) {
+      whereClause += " AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ? AND is_demo = 1)";
+      binds.push(user.id);
+    }
 
     const rows = await env.DB
       .prepare(
@@ -77,31 +107,81 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
 
-  let body: Record<string, unknown>;
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
     return errorResponse("Corpo da requisição inválido.", "INVALID_JSON", 400);
   }
+  if (!isPlainObject(parsed)) {
+    return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);
+  }
+  const body = parsed;
 
-  const patient_id = (body.patient_id as string)?.trim();
-  const date = (body.date as string) ?? new Date().toISOString();
+  const patient_id = typeof body.patient_id === "string" ? body.patient_id.trim() : "";
+  if (body.date != null && typeof body.date !== "string") {
+    return errorResponse("'date' deve ser texto.", "VALIDATION_ERROR", 400);
+  }
+  const clinicalFields = ["subjective", "objective", "assessment", "plan"] as const;
+  for (const field of clinicalFields) {
+    if (body[field] != null && typeof body[field] !== "string") {
+      return errorResponse(`'${field}' deve ser texto ou nulo.`, "VALIDATION_ERROR", 400);
+    }
+  }
+  const date = typeof body.date === "string" ? body.date.trim() : new Date().toISOString();
 
   if (!patient_id) {
     return errorResponse("'patient_id' é obrigatório.", "VALIDATION_ERROR", 400);
   }
+  if (!hasBoundedIdentifier(patient_id)) {
+    return errorResponse("'patient_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
+  }
+  if (!isValidIsoDate(date)) {
+    return errorResponse(
+      "'date' deve ser uma data ISO válida (YYYY-MM-DD) ou um instante ISO 8601 com timezone.",
+      "VALIDATION_ERROR",
+      400,
+    );
+  }
 
-  const id = `cons-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const sections: Record<(typeof clinicalFields)[number], string | null> = {
+    subjective: null,
+    objective: null,
+    assessment: null,
+    plan: null,
+  };
+  let totalSectionCharacters = 0;
+  for (const field of clinicalFields) {
+    const text = typeof body[field] === "string" ? body[field].trim() : "";
+    if (text.length > CLINICAL_INPUT_LIMITS.consultationSection) {
+      return errorResponse(
+        `'${field}' deve ter no máximo ${CLINICAL_INPUT_LIMITS.consultationSection} caracteres.`,
+        "VALIDATION_ERROR",
+        400,
+      );
+    }
+    totalSectionCharacters += text.length;
+    sections[field] = text || null;
+  }
+  if (totalSectionCharacters > CLINICAL_INPUT_LIMITS.consultationTotal) {
+    return errorResponse(
+      `Os campos clínicos devem somar no máximo ${CLINICAL_INPUT_LIMITS.consultationTotal} caracteres.`,
+      "VALIDATION_ERROR",
+      400,
+    );
+  }
+
+  const id = createClinicalRecordId("cons");
   const now = new Date().toISOString();
 
   const payload = {
     id,
     patient_id,
     date,
-    subjective: (body.subjective as string) ?? null,
-    objective: (body.objective as string) ?? null,
-    assessment: (body.assessment as string) ?? null,
-    plan: (body.plan as string) ?? null,
+    subjective: sections.subjective,
+    objective: sections.objective,
+    assessment: sections.assessment,
+    plan: sections.plan,
     is_demo: true,
     created_at: now,
   };
@@ -111,6 +191,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    const user = getContextUser(context);
+    if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
+    if (!canWriteClinicalData(user)) {
+      return errorResponse(
+        "Perfil sem permissão para registrar consultas.",
+        "FORBIDDEN",
+        403,
+      );
+    }
+    const access = await getPatientAccess(env.DB, patient_id, user);
+    if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
+    if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
+
     await env.DB
       .prepare(
         `INSERT INTO consultations_demo (id, patient_id, date, subjective, objective, assessment, plan, is_demo, created_at)

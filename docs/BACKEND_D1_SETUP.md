@@ -10,8 +10,8 @@ Cloudflare. Isso é feito por um workflow.
 1. GitHub → aba **Actions** → workflow **"Provision D1 backend"** → **Run workflow** (branch `main`).
 2. O workflow:
    - cria o D1 `neuroped-db` e o KV `RATE_LIMIT_KV` (idempotente);
-   - aplica o schema `db/schema.sql`;
-   - grava os bindings (IDs) no `wrangler.toml` e commita na `main`;
+   - aplica `db/schema.d1.sql` e as migrações aditivas de ownership, sessões e consentimentos;
+   - configura os bindings no projeto Pages sem alterar nem commitar a `main`;
    - faz o deploy já com o backend ativo;
    - testa `https://neuroped.pages.dev/api/health`.
 3. Confirme em `https://neuroped.pages.dev/api/health` → deve retornar `"database": "ok"`.
@@ -29,15 +29,17 @@ escopos em Cloudflare → My Profile → API Tokens.
 ## O que o backend oferece
 
 `functions/api/*`: pacientes, consultas, resultados de escalas, documentos,
-auditoria, health. Tabelas em `db/schema.sql`: `users`, `patients_demo`,
+auditoria, health. Tabelas em `db/schema.d1.sql`: `users`,
+`auth_refresh_sessions`, `consents`, `patients_demo`,
 `consultations_demo`, `scale_results_demo`, `documents_demo`, `audit_logs`,
 `memory_notes`, `app_settings`.
 
 ## LGPD / dados clínicos
 
-As tabelas `_demo` são para dados fictícios. Dados reais de paciente só devem
-entrar **criptografados** (server-side, via `server/lib/patientCrypto.ts`).
-Configure a chave de criptografia antes de uso real.
+As tabelas `_demo` do D1 são exclusivamente para dados fictícios. Não grave
+pacientes reais nelas. O backend Express possui criptografia server-side em
+`server/lib/patientCrypto.ts`; o uso real exige `NEUROPED_MASTER_KEY` e revisão
+operacional/LGPD antes da ativação.
 
 ## Busca semântica (opcional, depois)
 

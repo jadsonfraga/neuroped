@@ -11,10 +11,14 @@ import {
 import { CAA_CATEGORIES, CAA_QUICK, type CaaSymbol, type CaaCategory } from "@/data/caaBoard";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useToast } from "@/hooks/use-toast";
+import { secureGet, secureSet } from "@/lib/secureStorage";
 
 const LS_BOARD = "neuroped:caa:board:v1";
 const LS_FAVS = "neuroped:caa:favs:v1";
 const LS_HIST = "neuroped:caa:hist:v1";
+const SECURE_CAA_KEY = "caa:workspace:v2";
+const MAX_CAA_CATEGORIES = 30;
+const MAX_CAA_ITEMS_PER_CATEGORY = 100;
 
 type Board = Record<string, CaaCategory>;
 type Token = { icon: string; label: string; text: string };
@@ -44,16 +48,38 @@ const usageModes: Record<UsageMode, { label: string; badge: string; description:
 function clone<T>(o: T): T {
   return JSON.parse(JSON.stringify(o)) as T;
 }
-function load<T>(key: string, fallback: T): T {
-  try {
-    const v = JSON.parse(localStorage.getItem(key) || "null");
-    return (v ?? clone(fallback)) as T;
-  } catch {
-    return clone(fallback);
-  }
-}
 function clean(s: string): string {
   return String(s || "").replace(/[<>]/g, "").trim().slice(0, 90);
+}
+function sanitizeBoard(value: unknown): Board {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return clone(CAA_CATEGORIES);
+  }
+  const normalized: Board = {};
+  for (const [rawName, rawCategory] of Object.entries(value).slice(0, MAX_CAA_CATEGORIES)) {
+    if (!rawCategory || typeof rawCategory !== "object" || Array.isArray(rawCategory)) continue;
+    const category = rawCategory as Partial<CaaCategory>;
+    const name = clean(rawName).slice(0, 60);
+    if (!name || !Array.isArray(category.items)) continue;
+    const items = category.items.slice(0, MAX_CAA_ITEMS_PER_CATEGORY).flatMap((rawItem) => {
+      if (!Array.isArray(rawItem) || rawItem.length < 3) return [];
+      const icon = clean(String(rawItem[0] ?? "")).slice(0, 20);
+      const label = clean(String(rawItem[1] ?? ""));
+      const speech = clean(String(rawItem[2] ?? ""));
+      return label && speech ? [[icon || "🔹", label, speech] as CaaSymbol] : [];
+    });
+    normalized[name] = {
+      icon: clean(String(category.icon ?? "🔹")).slice(0, 20) || "🔹",
+      hint: clean(String(category.hint ?? "")).slice(0, 120),
+      items,
+    };
+  }
+  return Object.keys(normalized).length > 0 ? normalized : clone(CAA_CATEGORIES);
+}
+function sanitizeKeys(value: unknown, limit: number): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.flatMap((item) => typeof item === "string" ? [item.slice(0, 240)] : []))]
+    .slice(0, limit);
 }
 function symKey(item: CaaSymbol): string {
   return item[1] + "|" + item[2];
@@ -63,9 +89,13 @@ export default function CaaPage() {
   const { speak, supported } = useSpeech();
   const { toast } = useToast();
 
-  const [board, setBoard] = useState<Board>(() => load<Board>(LS_BOARD, CAA_CATEGORIES));
-  const [favs, setFavs] = useState<string[]>(() => load<string[]>(LS_FAVS, []));
-  const [hist, setHist] = useState<string[]>(() => load<string[]>(LS_HIST, []));
+  const [board, setBoard] = useState<Board>(() => clone(CAA_CATEGORIES));
+  const [favs, setFavs] = useState<string[]>([]);
+  const [hist, setHist] = useState<string[]>([]);
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageStatus, setStorageStatus] = useState<"saving" | "saved" | "error">("saving");
+  const storageQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const storageRevision = useRef(0);
   const [cat, setCat] = useState<string>(() => Object.keys(CAA_CATEGORIES)[0]);
   const [mode, setMode] = useState<"cat" | "fav" | "hist">("cat");
   const [usageMode, setUsageMode] = useState<UsageMode>("crianca");
@@ -75,22 +105,74 @@ export default function CaaPage() {
   const [custom, setCustom] = useState("");
   const importRef = useRef<HTMLInputElement>(null);
 
-  // Persistência
+  // Persistência temporária cifrada + migração das três chaves legadas.
   useEffect(() => {
-    try {
-      localStorage.setItem(LS_BOARD, JSON.stringify(board));
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [board]);
+    let active = true;
+    void (async () => {
+      const protectedWorkspace = await secureGet<{ board: unknown; favs: unknown; hist: unknown }>(SECURE_CAA_KEY);
+      let restoredBoard = clone(CAA_CATEGORIES);
+      let restoredFavs: string[] = [];
+      let restoredHist: string[] = [];
+
+      if (protectedWorkspace !== null) {
+        restoredBoard = sanitizeBoard(protectedWorkspace.board);
+        restoredFavs = sanitizeKeys(protectedWorkspace.favs, 500);
+        restoredHist = sanitizeKeys(protectedWorkspace.hist, 30);
+        for (const key of [LS_BOARD, LS_FAVS, LS_HIST]) {
+          try { localStorage.removeItem(key); } catch { /* legado indisponível */ }
+        }
+      } else {
+        try {
+          const rawBoard = localStorage.getItem(LS_BOARD);
+          const rawFavs = localStorage.getItem(LS_FAVS);
+          const rawHist = localStorage.getItem(LS_HIST);
+          restoredBoard = sanitizeBoard(rawBoard ? JSON.parse(rawBoard) : CAA_CATEGORIES);
+          restoredFavs = sanitizeKeys(rawFavs ? JSON.parse(rawFavs) : [], 500);
+          restoredHist = sanitizeKeys(rawHist ? JSON.parse(rawHist) : [], 30);
+          const migrated = await secureSet(SECURE_CAA_KEY, {
+            board: restoredBoard,
+            favs: restoredFavs,
+            hist: restoredHist,
+          });
+          if (migrated) {
+            if (localStorage.getItem(LS_BOARD) === rawBoard) localStorage.removeItem(LS_BOARD);
+            if (localStorage.getItem(LS_FAVS) === rawFavs) localStorage.removeItem(LS_FAVS);
+            if (localStorage.getItem(LS_HIST) === rawHist) localStorage.removeItem(LS_HIST);
+          }
+        } catch {
+          // A prancha padrão continua utilizável em memória.
+        }
+      }
+
+      if (!active) return;
+      setBoard(restoredBoard);
+      setFavs(restoredFavs);
+      setHist(restoredHist);
+      setCat(Object.keys(restoredBoard)[0] || Object.keys(CAA_CATEGORIES)[0]);
+      setStorageReady(true);
+    })();
+    return () => { active = false; };
+  }, []);
+
   useEffect(() => {
-    try {
-      localStorage.setItem(LS_FAVS, JSON.stringify(favs));
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [favs]);
-  useEffect(() => {
-    try {
-      localStorage.setItem(LS_HIST, JSON.stringify(hist.slice(0, 30)));
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [hist]);
+    if (!storageReady) return;
+    const snapshot = {
+      board: sanitizeBoard(board),
+      favs: sanitizeKeys(favs, 500),
+      hist: sanitizeKeys(hist, 30),
+    };
+    const revision = ++storageRevision.current;
+    setStorageStatus("saving");
+    const operation = storageQueue.current
+      .catch(() => undefined)
+      .then(() => secureSet(SECURE_CAA_KEY, snapshot));
+    storageQueue.current = operation;
+    void operation.then((stored) => {
+      if (revision === storageRevision.current) {
+        setStorageStatus(stored === true ? "saved" : "error");
+      }
+    });
+  }, [board, favs, hist, storageReady]);
 
   const activeUsage = usageModes[usageMode];
 
@@ -160,14 +242,21 @@ export default function CaaPage() {
   function importBoard(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (f.size > 2_000_000) {
+      toast({ title: "Arquivo muito grande", description: "Use uma prancha JSON de até 2 MB.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
     const r = new FileReader();
     r.onload = (ev) => {
       try {
-        const j = JSON.parse(String(ev.target?.result || "{}"));
-        if (j.board) setBoard(j.board);
-        if (j.favs) setFavs(j.favs);
-        if (j.hist) setHist(j.hist);
-        toast({ title: "Prancha importada" });
+        const j = JSON.parse(String(ev.target?.result || "{}")) as Record<string, unknown>;
+        const nextBoard = sanitizeBoard(j.board);
+        setBoard(nextBoard);
+        setFavs(sanitizeKeys(j.favs, 500));
+        setHist(sanitizeKeys(j.hist, 30));
+        setCat(Object.keys(nextBoard)[0] || Object.keys(CAA_CATEGORIES)[0]);
+        toast({ title: "Prancha importada", description: "Salvando temporariamente nesta sessão…" });
       } catch {
         toast({ title: "Arquivo inválido", variant: "destructive" });
       }
@@ -185,8 +274,21 @@ export default function CaaPage() {
           ? "🔍 Resultados"
           : (board[cat]?.icon || "") + " " + cat;
 
+  if (!storageReady) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground" role="status">
+        Carregando prancha protegida…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12">
+      {storageStatus === "error" && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+          A prancha continua visível, mas não pôde ser salva neste dispositivo. Exporte o JSON antes de sair desta tela.
+        </div>
+      )}
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent border border-border p-6">
         <div className="flex items-center justify-between gap-3 mb-2">
@@ -373,7 +475,15 @@ export default function CaaPage() {
               <Button size="sm" className="flex-1" onClick={addCustom}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar
               </Button>
-              <Button size="sm" variant="outline" onClick={() => toast({ title: "Prancha salva" })}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => toast({
+                  title: storageStatus === "saved" ? "Prancha salva na sessão" : storageStatus === "saving" ? "Salvamento em andamento" : "Prancha não salva",
+                  description: storageStatus === "error" ? "Exporte o JSON antes de sair desta tela." : undefined,
+                  variant: storageStatus === "error" ? "destructive" : "default",
+                })}
+              >
                 <Save className="w-3.5 h-3.5" />
               </Button>
             </div>

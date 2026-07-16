@@ -9,7 +9,7 @@
  *   POST /api/auth/logout   → { ok }
  */
 
-import { hashPassword, signJwt } from "./_crypto";
+import { hashPassword } from "./_crypto";
 
 export interface Env {
   DB?: D1Database;
@@ -39,8 +39,8 @@ export interface PublicUser {
   mustChangePassword: boolean;
 }
 
-// TTLs em segundos: access curto (refresh automático no client em 401),
-// refresh moderado. Tokens stateless (sem revogação server-side nesta v1).
+// TTLs em segundos: access curto (refresh automático no client em 401) e
+// refresh moderado. O estado revogável é gerenciado em _sessions.ts.
 export const ACCESS_TTL = 15 * 60; // 15 min
 export const REFRESH_TTL = 7 * 24 * 60 * 60; // 7 dias
 
@@ -112,16 +112,6 @@ export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promi
     )
     .bind(new Date().toISOString(), u.id)
     .run();
-}
-
-export async function issueTokens(
-  u: UserRow,
-  secret: string,
-): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
-  const claims = { sub: u.id, email: u.email, name: u.name, role: u.role };
-  const accessToken = await signJwt({ ...claims, type: "access" }, secret, ACCESS_TTL);
-  const refreshToken = await signJwt({ ...claims, type: "refresh" }, secret, REFRESH_TTL);
-  return { accessToken, refreshToken, expiresIn: ACCESS_TTL };
 }
 
 /**

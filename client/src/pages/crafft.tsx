@@ -7,16 +7,75 @@ import { crafftPartA, crafftPartB } from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedKeys,
+  sanitizeBooleanRecord,
+} from "@/lib/scaleDraftCore";
+
+interface CrafftDraft {
+  partAAnswers: Record<number, boolean>;
+  partBAnswers: Record<number, boolean>;
+}
+
+const CRAFFT_PART_A_KEYS = indexedKeys(crafftPartA.length);
+const CRAFFT_PART_B_KEYS = indexedKeys(crafftPartB.length);
+const emptyCrafftDraft = (): CrafftDraft => ({
+  partAAnswers: {},
+  partBAnswers: {},
+});
+
+function sanitizeCrafftDraft(value: unknown): CrafftDraft {
+  const source =
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Partial<CrafftDraft>)
+      : {};
+  return {
+    partAAnswers: sanitizeBooleanRecord(
+      source.partAAnswers,
+      CRAFFT_PART_A_KEYS,
+    ),
+    partBAnswers: sanitizeBooleanRecord(
+      source.partBAnswers,
+      CRAFFT_PART_B_KEYS,
+    ),
+  };
+}
+
+function hasCrafftContent(value: CrafftDraft): boolean {
+  return (
+    hasRecordEntries(value.partAAnswers) || hasRecordEntries(value.partBAnswers)
+  );
+}
 
 export default function CrafftPage() {
-  const [partAAnswers, setPartAAnswers] = useState<Record<number, boolean>>({});
-  const [partBAnswers, setPartBAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
+  const {
+    value: draft,
+    setValue: setDraft,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<CrafftDraft>({
+    draftId: "dedicated:crafft",
+    schemaVersion: 1,
+    createEmpty: emptyCrafftDraft,
+    sanitize: sanitizeCrafftDraft,
+    hasContent: hasCrafftContent,
+  });
+  const { partAAnswers, partBAnswers } = draft;
 
   const _anyPartAYes = Object.values(partAAnswers).some((v) => v === true);
   const partAComplete = Object.keys(partAAnswers).length === crafftPartA.length;
   const partBComplete = Object.keys(partBAnswers).length === crafftPartB.length;
   const allDone = partAComplete && partBComplete;
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = [
@@ -46,7 +105,7 @@ export default function CrafftPage() {
             <Wine className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — CRAFFT</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — CRAFFT</h1>
             <p className="text-xs text-muted-foreground">
               Screening de Uso de Substâncias
             </p>
@@ -126,8 +185,7 @@ export default function CrafftPage() {
         />
         <Button
           onClick={() => {
-            setPartAAnswers({});
-            setPartBAnswers({});
+            void clearDraft();
             setShowResult(false);
           }}
           variant="outline"
@@ -141,6 +199,13 @@ export default function CrafftPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice
+        visible={draftRestored}
+        onClear={() => {
+          void clearDraft();
+          setShowResult(false);
+        }}
+      />
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center shadow-sm">
           <Wine className="w-5 h-5 text-white" />
@@ -171,7 +236,12 @@ export default function CrafftPage() {
               {[true, false].map((val) => (
                 <button
                   key={val.toString()}
-                  onClick={() => setPartAAnswers({ ...partAAnswers, [i]: val })}
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      partAAnswers: { ...current.partAAnswers, [i]: val },
+                    }))
+                  }
                   className={`text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors ${partAAnswers[i] === val ? (val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500") : "bg-card text-foreground border-border hover:bg-muted"}`}
                 >
                   {val ? "Sim" : "Não"}
@@ -198,7 +268,12 @@ export default function CrafftPage() {
               {[true, false].map((val) => (
                 <button
                   key={val.toString()}
-                  onClick={() => setPartBAnswers({ ...partBAnswers, [i]: val })}
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      partBAnswers: { ...current.partBAnswers, [i]: val },
+                    }))
+                  }
                   className={`text-xs px-4 py-1.5 rounded-full border cursor-pointer transition-colors ${partBAnswers[i] === val ? (val ? "bg-red-500 text-white border-red-500" : "bg-emerald-500 text-white border-emerald-500") : "bg-card text-foreground border-border hover:bg-muted"}`}
                 >
                   {val ? "Sim" : "Não"}
@@ -215,7 +290,7 @@ export default function CrafftPage() {
         className="w-full"
         size="lg"
       >
-        {allDone ? "Ver Resultado" : "Responda todas as perguntas"}
+        {allDone ? "Ver respostas" : "Responda todas as perguntas"}
       </Button>
       <ScaleReference scaleId="crafft" />
     </div>

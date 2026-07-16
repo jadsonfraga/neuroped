@@ -56,6 +56,12 @@ const CONSENT_BLOCKS = [
 
 type ConsentType = (typeof CONSENT_BLOCKS)[number]["type"];
 
+class RemoteConsentError extends Error {
+  constructor(readonly status: number) {
+    super(`Registro remoto indisponível (${status}).`);
+  }
+}
+
 export default function LgpdConsentPage() {
   const [, setLocation] = useLocation();
   const [granted, setGranted] = useState<Record<ConsentType, boolean>>({
@@ -111,27 +117,47 @@ export default function LgpdConsentPage() {
     };
 
     try {
-      for (const item of payload.consents) {
-        const r = await authFetch("/api/consents", {
-          method: "POST",
-          body: JSON.stringify(item),
-        });
-        if (!r.ok) throw new Error("Backend indisponível para registro remoto.");
-      }
+      // Um único lote evita que apenas parte dos três consentimentos seja
+      // persistida quando a conexão falha durante o envio.
+      const response = await authFetch("/api/consents", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new RemoteConsentError(response.status);
       try {
-        localStorage.setItem(LOCAL_CONSENT_KEY, JSON.stringify(payload));
+        localStorage.setItem(
+          LOCAL_CONSENT_KEY,
+          JSON.stringify({ ...payload, localOnly: false }),
+        );
       } catch {
         // Registro remoto foi suficiente.
       }
       softSuccess();
       haptic.success();
-      setMessage("Consentimento registrado. Você pode continuar usando o app normalmente.");
-    } catch {
+      setMessage("Consentimentos registrados com segurança na sua conta.");
+    } catch (reason) {
+      const remoteStatus = reason instanceof RemoteConsentError ? reason.status : null;
+      const localReason =
+        remoteStatus === 401
+          ? "Não há sessão autenticada; o aceite não foi enviado ao servidor."
+          : remoteStatus === 403
+            ? "A sessão atual não autorizou o registro remoto."
+            : "O servidor não estava disponível para confirmar o registro.";
       try {
-        localStorage.setItem(LOCAL_CONSENT_KEY, JSON.stringify({ ...payload, localOnly: true }));
+        localStorage.setItem(
+          LOCAL_CONSENT_KEY,
+          JSON.stringify({
+            ...payload,
+            localOnly: true,
+            pendingRemoteSync: true,
+            remoteStatus,
+          }),
+        );
         softSuccess();
         haptic.success();
-        setMessage("Consentimento salvo localmente neste dispositivo. O app continua liberado.");
+        setMessage(
+          `${localReason} Consentimentos salvos somente neste dispositivo; o app continua liberado.`,
+        );
       } catch {
         softError();
         haptic.error();

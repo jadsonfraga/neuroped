@@ -19,7 +19,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
 const imp = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 
-const { allScales } = await imp("client/src/data/scaleFilter.ts");
+const {
+  allScales,
+  allScalesComFichas,
+  EXPECTED_INTERACTIVE_ITEM_COUNTS,
+  getDeliveredInteractiveItemCount,
+} = await imp("client/src/data/scaleFilter.ts");
 const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
 const { interactiveScales, maxScoreOf } = await imp("client/src/data/interactiveScales.ts");
 const itemsMod = await imp("client/src/data/interactiveScaleItems.ts");
@@ -27,6 +32,11 @@ const interactiveScaleItems = itemsMod.interactiveScaleItems ?? itemsMod.default
 
 const allIds = new Set(allScales.map((s) => s.id));
 const catalogIds = new Set(mergeFilterableCatalog(allScales).map((s) => s.id));
+const incompleteIds = new Set(
+  Object.entries(EXPECTED_INTERACTIVE_ITEM_COUNTS)
+    .filter(([id, expected]) => getDeliveredInteractiveItemCount(id) !== expected)
+    .map(([id]) => id),
+);
 
 let failures = 0;
 let checks = 0;
@@ -62,8 +72,13 @@ for (const [id, def] of runnerEntries) {
   ok(contiguous, `${id}: faixas contíguas (sem buraco/sobreposição)`);
   ok(bands.every((b) => b.risk && b.description && b.tone), `${id}: toda faixa tem rótulo, descrição e tom`);
 
-  // Abre: id no catálogo OU alias conhecido (ex.: "faces" = FPS-R).
-  ok(catalogIds.has(id) || allIds.has(id) || id === "faces", `${id}: existe no catálogo/allScales (abre via rota)`);
+  // Aplicações parciais permanecem documentadas, mas são bloqueadas até que
+  // todos os itens autoritativos existam. As demais precisam abrir no catálogo.
+  if (incompleteIds.has(id)) {
+    ok(!allIds.has(id), `${id}: aplicação parcial não é oferecida como completa`);
+  } else {
+    ok(catalogIds.has(id) || allIds.has(id) || id === "faces", `${id}: existe no catálogo/allScales (abre via rota)`);
+  }
 }
 
 // ---------- B) Acervo de ITENS (interactiveScaleItems) — bandas {minPct} ----------
@@ -89,7 +104,7 @@ for (const [id, def] of itemEntries) {
   // catálogo são órfãs (não selecionáveis, não alcançáveis) — apenas reportadas.
   if (catalogIds.has(id)) {
     ok(allIds.has(id), `${id}: SELECIONÁVEL e abre como aplicação (existe em allScales)`);
-  } else if (!allIds.has(id)) {
+  } else if (!allIds.has(id) && !incompleteIds.has(id)) {
     orphans.push(id);
   }
 }
@@ -106,10 +121,21 @@ console.log(`  runner=${runnerEntries.length} | acervo=${itemEntries.length} | i
 ok(interactiveInCatalog.size >= 100, `≥100 escalas interativas selecionáveis no filtro (=${interactiveInCatalog.size})`);
 const priorityClinicalPack = [
   "engel", "bears", "flacc", "rflacc", "comfort-b", "bars", "uku",
-  "psc17", "erc", "hine", "catclams", "fas-fluencia", "bisq", "nddie", "scas", "rcads", "fas-pr",
+  "psc17", "erc", "hine", "catclams", "fas-fluencia", "bisq", "nddie", "scas", "fas-pr",
 ];
 for (const id of priorityClinicalPack) {
   ok(interactiveInCatalog.has(id), `${id}: pacote prioritario abre como escala preenchivel`);
+}
+
+head("D) Contratos de extensão — parciais nunca aparecem como completos");
+for (const [id, expected] of Object.entries(EXPECTED_INTERACTIVE_ITEM_COUNTS)) {
+  const delivered = getDeliveredInteractiveItemCount(id);
+  const documented = allScalesComFichas.find((scale) => scale.id === id);
+  ok(!!documented, `${id}: instrumento parcial permanece documentado`);
+  if (delivered !== expected) {
+    ok(documented?.implementationStatus === "metadata_only", `${id}: marcado metadata_only (${delivered}/${expected})`);
+    ok(!allIds.has(id), `${id}: bloqueado no catálogo aplicável (${delivered}/${expected})`);
+  }
 }
 
 console.log(`\n${"=".repeat(48)}`);

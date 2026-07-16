@@ -2,7 +2,8 @@ name: Deploy Cloudflare Pages
 
 # Deploy do frontend (Vite) para o Cloudflare Pages, em paralelo ao GitHub Pages.
 # Usa as secrets do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
-# Este workflow publica somente o frontend estatico; dados reais exigem a API oficial autenticada.
+# Publica frontend + Pages Functions. Com D1 vinculado, autenticação nominal
+# configurada é requisito de release e qualquer ausência falha antes do deploy.
 
 on:
   push:
@@ -23,6 +24,27 @@ jobs:
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
+
+      - name: Validar secrets obrigatórios antes de qualquer publicação
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          JWT_SECRET: ${{ secrets.NEUROPED_JWT_SECRET }}
+          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in CF_TOKEN CF_ACCOUNT JWT_SECRET ADMIN_MAIL ADMIN_PW; do
+            value="${!name:-}"
+            if [ -z "$value" ]; then
+              echo "::error::GitHub Secret obrigatório ausente: $name"
+              exit 1
+            fi
+          done
+          [ "${#JWT_SECRET}" -ge 32 ] || { echo "::error::NEUROPED_JWT_SECRET deve ter ao menos 32 caracteres"; exit 1; }
+          [ "${#ADMIN_PW}" -ge 12 ] || { echo "::error::ADMIN_INITIAL_PASSWORD deve ter ao menos 12 caracteres"; exit 1; }
+          case "$ADMIN_MAIL" in *@*) ;; *) echo "::error::ADMIN_EMAIL inválido"; exit 1;; esac
+          echo "Secrets obrigatórios presentes (valores não exibidos)."
 
       - name: Configurar Node.js 20
         uses: actions/setup-node@v4
@@ -80,7 +102,7 @@ jobs:
           npx wrangler@4 pages project create neuroped --production-branch main \
             || echo "Projeto 'neuroped' já existe ou criação ignorada — seguindo para o deploy."
 
-      - name: Migrar D1 — colunas de auth (idempotente)
+      - name: Migrar D1 — auth, ownership e sessões (idempotente)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -106,6 +128,54 @@ jobs:
           done
           echo "Colunas de auth OK."
 
+          echo "ALTER patients_demo ADD owner_user_id"
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --command "ALTER TABLE patients_demo ADD COLUMN owner_user_id TEXT;" 2>&1 | tail -2 || true
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --command "CREATE INDEX IF NOT EXISTS idx_patients_demo_owner ON patients_demo(owner_user_id);"
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM pragma_table_info('patients_demo');" > /tmp/patient-cols.txt 2>&1 || true
+          cat /tmp/patient-cols.txt
+          grep -q "\bowner_user_id\b" /tmp/patient-cols.txt || {
+            echo "::error::coluna de ownership ausente: patients_demo.owner_user_id"
+            exit 1
+          }
+          echo "Coluna de ownership OK."
+
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0003_refresh_sessions.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name='auth_refresh_sessions';" \
+            > /tmp/session-table.txt 2>&1
+          cat /tmp/session-table.txt
+          grep -q "auth_refresh_sessions" /tmp/session-table.txt || {
+            echo "::error::tabela de sessões revogáveis ausente"
+            exit 1
+          }
+          echo "Tabela de sessões revogáveis OK."
+
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0004_consents.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM pragma_table_info('consents');" \
+            > /tmp/consent-cols.txt 2>&1
+          cat /tmp/consent-cols.txt
+          for column in batch_id user_id consent_type accepted_at; do
+            grep -q "\b$column\b" /tmp/consent-cols.txt || {
+              echo "::error::coluna de consentimento ausente: $column"
+              exit 1
+            }
+          done
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_consents_user_accepted';" \
+            > /tmp/consent-index.txt 2>&1
+          cat /tmp/consent-index.txt
+          grep -q "idx_consents_user_accepted" /tmp/consent-index.txt || {
+            echo "::error::índice de ownership dos consentimentos ausente"
+            exit 1
+          }
+          echo "Tabela de consentimentos LGPD OK."
+
       - name: Configurar secrets/vars de auth no Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -117,20 +187,24 @@ jobs:
           CERT_B64: ${{ secrets.CERT_P12_B64 }}
           CERT_PW: ${{ secrets.CERT_P12_PASSWORD }}
         run: |
-          put() {
+          set -euo pipefail
+          put_required() {
+            [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
+            printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
+            echo "secret $1: definido"
+          }
+          put_optional() {
             if [ -n "$2" ]; then
-              printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null 2>&1 \
-                && echo "secret $1: definido" || echo "::warning::falha ao definir $1"
-            else
-              echo "::notice::$1 ausente (crie o GitHub Secret) — pulando"
+              printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
+              echo "secret opcional $1: definido"
             fi
           }
-          put NEUROPED_JWT_SECRET "$JWT_SECRET"
-          put ADMIN_INITIAL_PASSWORD "$ADMIN_PW"
-          put ADMIN_EMAIL "$ADMIN_MAIL"
-          put ADMIN_NAME "$ADMIN_NM"
-          put CERT_P12_B64 "$CERT_B64"
-          put CERT_P12_PASSWORD "$CERT_PW"
+          put_required NEUROPED_JWT_SECRET "$JWT_SECRET"
+          put_required ADMIN_INITIAL_PASSWORD "$ADMIN_PW"
+          put_required ADMIN_EMAIL "$ADMIN_MAIL"
+          put_optional ADMIN_NAME "$ADMIN_NM"
+          put_optional CERT_P12_B64 "$CERT_B64"
+          put_optional CERT_P12_PASSWORD "$CERT_PW"
 
       - name: Deploy para Cloudflare Pages
         env:
@@ -144,8 +218,7 @@ jobs:
           # O `wrangler pages deploy` já concluiu com sucesso; aqui só confirmamos
           # que o apex (neuroped.pages.dev) já serve o commit novo. A promoção do
           # apex pode levar alguns minutos — então fazemos poll em vez de um único
-          # sleep. Se após ~3 min ainda estiver defasado, avisamos SEM falhar o
-          # deploy (que já foi concluído), evitando vermelho falso por timing de CDN.
+          # sleep. Release só fica verde quando o commit esperado estiver público.
           ok=0
           for i in $(seq 1 12); do
             sleep 15
@@ -160,29 +233,47 @@ jobs:
           done
           cat /tmp/cloudflare-deploy-check.json 2>/dev/null || true
           if [ "$ok" -ne 1 ]; then
-            echo "::warning::Deploy do Cloudflare concluído com sucesso, mas o apex ainda servia o commit anterior após ~3 min (promoção de CDN). Não é falha de deploy."
+            echo "::error::O apex não serviu o commit esperado após ~3 min."
+            exit 1
           fi
+
+      - name: Validar health autenticado do backend publicado
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 12); do
+            if curl -fsSL "https://neuroped.pages.dev/api/health?run=${GITHUB_RUN_ID}&try=$i" \
+                 -o /tmp/cloudflare-health.json 2>/dev/null \
+               && jq -e '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
+                    /tmp/cloudflare-health.json >/dev/null; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          cat /tmp/cloudflare-health.json 2>/dev/null || true
+          [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth plenamente configurados"; exit 1; }
+          echo "✅ HEALTH OK — D1 e autenticação nominal configurados."
 
       - name: Verificar login (auth e2e)
         env:
           ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
-          if [ -z "$ADMIN_MAIL" ] || [ -z "$ADMIN_PW" ]; then
-            echo "::notice::ADMIN_EMAIL/ADMIN_INITIAL_PASSWORD ausentes — pulando verificação de login."
-            exit 0
-          fi
+          set -euo pipefail
           BASE=https://neuroped.pages.dev
           sleep 10
           # 1) senha errada → 401
+          wrong_payload=$(jq -nc --arg email "$ADMIN_MAIL" --arg password "senha_errada___" '{email:$email,password:$password}')
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/auth/login" \
             -H "Content-Type: application/json" \
-            -d "{\"email\":\"$ADMIN_MAIL\",\"password\":\"senha_errada___\"}")
+            --data "$wrong_payload")
           echo "login (senha errada): HTTP $code"
           [ "$code" = "401" ] || { echo "::error::esperado 401 para senha errada"; exit 1; }
           # 2) correto → 200 + accessToken (token nunca é impresso)
+          login_payload=$(jq -nc --arg email "$ADMIN_MAIL" --arg password "$ADMIN_PW" '{email:$email,password:$password}')
           resp=$(curl -s -X POST "$BASE/api/auth/login" -H "Content-Type: application/json" \
-            -d "{\"email\":\"$ADMIN_MAIL\",\"password\":\"$ADMIN_PW\"}")
+            --data "$login_payload")
           tok=$(printf '%s' "$resp" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).accessToken||'')}catch{process.stdout.write('')}})")
           [ -n "$tok" ] || { echo "::error::login correto não retornou accessToken"; exit 1; }
           echo "login (correto): OK — token recebido (mascarado)"

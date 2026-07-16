@@ -2,11 +2,13 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { UnauthorizedCopyScreen } from "./components/UnauthorizedCopyScreen";
 import { installChunkRecovery } from "./lib/chunkRecovery";
+import { purgeLegacyCertificateCache } from "./lib/certificateSession";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
 import "./index.css";
 import "./styles/proportion-guards.css";
 
 installChunkRecovery();
+void purgeLegacyCertificateCache();
 
 try {
   const savedTheme = window.localStorage.getItem("neuroped:theme");

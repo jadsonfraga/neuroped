@@ -7,12 +7,20 @@
  * - Eventos: emite "auth:expired" quando refresh falhar.
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const API_BASE = (import.meta.env?.VITE_API_URL ?? "").replace(/\/$/, "");
 
 const ACCESS_KEY = "neuroped:access";
 const REFRESH_KEY = "neuroped:refresh";
 const USER_KEY = "neuroped:user";
 const CAPABILITY_KEY = "neuroped:auth-capability";
+interface RefreshFlight {
+  epoch: number;
+  refreshToken: string;
+  promise: Promise<string | null>;
+}
+
+let refreshInFlight: RefreshFlight | null = null;
+let authEpoch = 0;
 
 export interface AuthUser {
   id: string;
@@ -69,6 +77,7 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function clearAuth(): void {
+  authEpoch += 1;
   writeToken(ACCESS_KEY, null);
   writeToken(REFRESH_KEY, null);
   writeToken(USER_KEY, null);
@@ -145,15 +154,14 @@ export async function loginRequest(email: string, password: string): Promise<Log
     throw new Error(err.error || `Login falhou (${r.status})`);
   }
   const data: LoginResponse = await r.json();
+  authEpoch += 1;
   writeToken(ACCESS_KEY, data.accessToken);
   writeToken(REFRESH_KEY, data.refreshToken);
   writeToken(USER_KEY, JSON.stringify(data.user));
   return data;
 }
 
-export async function refreshTokenRequest(): Promise<string | null> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
+async function performRefresh(refreshToken: string, epochAtStart: number): Promise<string | null> {
   try {
     const r = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: "POST",
@@ -162,6 +170,9 @@ export async function refreshTokenRequest(): Promise<string | null> {
     });
     if (!r.ok) return null;
     const data = await r.json();
+    // Logout ou novo login ocorreu enquanto a chamada estava no ar: a resposta
+    // antiga não pode ressuscitar credenciais descartadas.
+    if (authEpoch !== epochAtStart) return null;
     writeToken(ACCESS_KEY, data.accessToken);
     writeToken(REFRESH_KEY, data.refreshToken);
     return data.accessToken;
@@ -170,16 +181,51 @@ export async function refreshTokenRequest(): Promise<string | null> {
   }
 }
 
+/**
+ * Single-flight obrigatório com refresh rotativo: vários 401 simultâneos usam
+ * a mesma promessa, evitando reutilizar o token anterior e revogar a família.
+ */
+export function refreshTokenRequest(): Promise<string | null> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return Promise.resolve(null);
+
+  const epochAtStart = authEpoch;
+  if (
+    refreshInFlight?.epoch === epochAtStart
+    && refreshInFlight.refreshToken === refreshToken
+  ) {
+    return refreshInFlight.promise;
+  }
+
+  const promise = performRefresh(refreshToken, epochAtStart).finally(() => {
+    // Um login pode iniciar outro refresh enquanto o anterior termina. A
+    // conclusão velha jamais deve desmontar o single-flight da sessão nova.
+    if (refreshInFlight?.promise === promise) refreshInFlight = null;
+  });
+  refreshInFlight = { epoch: epochAtStart, refreshToken, promise };
+  return promise;
+}
+
 export async function logoutRequest(): Promise<void> {
   const refreshToken = getRefreshToken();
+  // Fecha a sessão local antes de qualquer I/O. Isso também incrementa authEpoch
+  // e impede que um refresh concorrente ressuscite tokens após o logout.
+  clearAuth();
+  if (!refreshToken) return;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 3_000);
   try {
     await fetch(`${API_BASE}/api/auth/logout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
+      signal: controller.signal,
+      keepalive: true,
     });
+  } catch {
+    // Logout local já foi concluído; revogação remota é best-effort quando offline.
   } finally {
-    clearAuth();
+    window.clearTimeout(timeout);
   }
 }
 
@@ -187,6 +233,7 @@ export async function logoutRequest(): Promise<void> {
  * fetch wrapper que insere Authorization header e tenta refresh em 401.
  */
 export async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
+  const requestEpoch = authEpoch;
   let token = getAccessToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -198,12 +245,21 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
 
   let response = await fetch(requestUrl, { ...init, headers });
 
-  if (response.status === 401) {
+  // Um 401 numa chamada pública/anonimamente tentada não significa que uma
+  // sessão expirou. Só inicia refresh e emite o evento quando havia credencial.
+  if (
+    response.status === 401
+    && authEpoch === requestEpoch
+    && (token || getRefreshToken())
+  ) {
+    const epochBeforeRefresh = authEpoch;
     const newToken = await refreshTokenRequest();
-    if (newToken) {
+    if (newToken && authEpoch === epochBeforeRefresh) {
       headers.set("Authorization", `Bearer ${newToken}`);
       response = await fetch(requestUrl, { ...init, headers });
-    } else {
+    } else if (authEpoch === epochBeforeRefresh) {
+      // Um login/logout mais novo pode ter acontecido enquanto o refresh antigo
+      // estava em voo. Nesse caso a falha antiga não pode apagar a sessão nova.
       clearAuth();
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }

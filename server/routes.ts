@@ -16,17 +16,11 @@ import { z } from "zod";
 import { db, storage } from "./storage.js";
 import {
   patients,
-  consents,
   dataRequests,
   patientApiSchema,
   insertScaleResultSchema,
-  insertConsentSchema,
 } from "@shared/schema";
-import {
-  requireAuth,
-  requireProfessional,
-  optionalAuth,
-} from "./middleware/auth.js";
+import { requireAuth, requireProfessional } from "./middleware/auth.js";
 import { writeRateLimit, emailRateLimit } from "./middleware/security.js";
 import { patientToStorage, patientToPlaintext } from "./lib/patientCrypto.js";
 import { oneParam } from "./lib/http.js";
@@ -34,11 +28,14 @@ import { logAudit, getAuditContextFromRequest } from "./lib/audit.js";
 import { sendEmail } from "./lib/email.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerFileRoutes } from "./routes/files.js";
+import { registerConsentRoutes } from "./routes/consents.js";
 import {
   canAccessPatient,
   canAccessScaleResult,
   isAdmin,
+  patientReferenceDecision,
 } from "./lib/ownership.js";
+import { buildExpressHealth } from "./lib/healthContract.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 
@@ -54,17 +51,19 @@ function normalizeScaleResponses(
     }
   }
   if (!Array.isArray(parsed)) return [];
-  return parsed
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const question = String((item as any).question ?? "").trim();
-      const answer = String((item as any).answer ?? "").trim();
-      if (!question) return null;
-      return { question, answer: answer || "Não respondida" };
-    })
-    .filter(
-      (item): item is { question: string; answer: string } => item !== null,
-    );
+  const normalized: Array<{ question: string; answer: string }> = [];
+  for (const item of parsed) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const questionValue = (item as Record<string, unknown>).question;
+    const answerValue = (item as Record<string, unknown>).answer;
+    if (typeof questionValue !== "string") return [];
+    if (answerValue != null && typeof answerValue !== "string") return [];
+    const question = questionValue.trim();
+    const answer = typeof answerValue === "string" ? answerValue.trim() : "";
+    if (!question) return [];
+    normalized.push({ question, answer: answer || "Não respondida" });
+  }
+  return normalized;
 }
 
 function presentScaleResponseRecord(result: any) {
@@ -87,15 +86,13 @@ export async function registerRoutes(
   // ----- Files: upload/download/list com URLs assinadas + cloud storage -----
   registerFileRoutes(app);
 
+  // ----- Consentimentos: lote autenticado, atômico, idempotente e auditado -----
+  registerConsentRoutes(app);
+
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {
-    res.json({
-      status: "ok",
-      time: new Date().toISOString(),
-      version: "2.1.0-cloud",
-      storage: process.env.STORAGE_PROVIDER || "not-configured",
-      database: process.env.DATABASE_URL ? "postgres" : "sqlite",
-    });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(buildExpressHealth());
   });
 
   // =========================================================================
@@ -191,6 +188,7 @@ export async function registerRoutes(
             .json({ error: "Sem permissao", code: "FORBIDDEN" });
 
         const merged = patientToStorage({
+          ownerUserId: existing.ownerUserId,
           name: parsed.name ?? patientToPlaintext(existing).name,
           birthDate: parsed.birthDate ?? existing.birthDate ?? undefined,
           cpf: parsed.cpf ?? patientToPlaintext(existing).cpf ?? undefined,
@@ -260,11 +258,11 @@ export async function registerRoutes(
   // =========================================================================
   // RESULTADOS DE ESCALAS
   // =========================================================================
-  app.post("/api/results", requireAuth, writeRateLimit, async (req, res) => {
+  app.post("/api/results", requireAuth, requireProfessional, writeRateLimit, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
     try {
       const responses = normalizeScaleResponses(
-        req.body.responses ?? req.body.answers,
+        req.body?.responses ?? req.body?.answers,
       );
       if (responses.length === 0) {
         return res.status(400).json({
@@ -282,6 +280,20 @@ export async function registerRoutes(
         domainScores: null,
         appliedByUserId: req.user!.id,
       });
+      if (parsed.patientId) {
+        const patient = db
+          .select()
+          .from(patients)
+          .where(eq(patients.id, parsed.patientId))
+          .get();
+        const decision = patientReferenceDecision(req.user!, patient);
+        if (decision === "not_found") {
+          return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+        }
+        if (decision === "forbidden") {
+          return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+        }
+      }
       const created = storage.saveResult(parsed);
       await logAudit({
         eventType: "result.create",
@@ -308,13 +320,13 @@ export async function registerRoutes(
     const accessible = isAdmin(_req.user!)
       ? rows
       : rows.filter((result) => {
-          if (result.appliedByUserId === _req.user!.id) return true;
-          if (!result.patientId) return false;
-          const patient = db
-            .select()
-            .from(patients)
-            .where(eq(patients.id, result.patientId))
-            .get();
+          const patient = result.patientId
+            ? db
+                .select()
+                .from(patients)
+                .where(eq(patients.id, result.patientId))
+                .get()
+            : null;
           return canAccessScaleResult(_req.user!, result, patient);
         });
     return res.json(accessible.map(presentScaleResponseRecord));
@@ -384,54 +396,31 @@ export async function registerRoutes(
   });
 
   // =========================================================================
-  // CONSENTIMENTOS LGPD
-  // =========================================================================
-  app.post("/api/consents", optionalAuth, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    try {
-      const parsed = insertConsentSchema.parse({
-        ...req.body,
-        userId: req.user?.id,
-        ipAddress: ctx.ipAddress,
-        userAgent: ctx.userAgent,
-      });
-      const created = db.insert(consents).values(parsed).returning().get();
-      await logAudit({
-        eventType: parsed.granted ? "consent.granted" : "consent.revoked",
-        context: ctx,
-        targetType: "consent",
-        targetId: created.id,
-        metadata: { type: parsed.consentType, version: parsed.consentVersion },
-      });
-      return res.status(201).json({
-        id: created.id,
-        consentType: created.consentType,
-        granted: created.granted,
-        grantedAt: created.grantedAt,
-      });
-    } catch (e: any) {
-      if (e instanceof z.ZodError)
-        return res
-          .status(400)
-          .json({ error: "Dados invalidos", details: e.errors });
-      return res.status(500).json({ error: "Erro interno" });
-    }
-  });
-
-  app.get("/api/consents", requireAuth, (req, res) => {
-    const userConsents = db
-      .select()
-      .from(consents)
-      .where(eq(consents.userId, req.user!.id))
-      .all();
-    res.json(userConsents);
-  });
-
-  // =========================================================================
   // LGPD — direitos do titular (art. 18)
   // =========================================================================
   app.post("/api/lgpd/export-request", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
+    const parsed = z
+      .object({ patientId: z.string().uuid().optional() })
+      .strict()
+      .safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.errors });
+    }
+    if (parsed.data.patientId) {
+      const patient = db
+        .select()
+        .from(patients)
+        .where(eq(patients.id, parsed.data.patientId))
+        .get();
+      const decision = patientReferenceDecision(req.user!, patient);
+      if (decision === "not_found") {
+        return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+      }
+      if (decision === "forbidden") {
+        return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+      }
+    }
     const created = db
       .insert(dataRequests)
       .values({
@@ -439,7 +428,7 @@ export async function registerRoutes(
         requesterName: req.user!.name,
         requestType: "export",
         status: "pending",
-        relatedPatientId: req.body?.patientId,
+        relatedPatientId: parsed.data.patientId,
       })
       .returning()
       .get();
@@ -459,6 +448,30 @@ export async function registerRoutes(
 
   app.post("/api/lgpd/delete-request", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
+    const parsed = z
+      .object({
+        patientId: z.string().uuid().optional(),
+        reason: z.string().trim().min(1).max(2_000).optional(),
+      })
+      .strict()
+      .safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.errors });
+    }
+    if (parsed.data.patientId) {
+      const patient = db
+        .select()
+        .from(patients)
+        .where(eq(patients.id, parsed.data.patientId))
+        .get();
+      const decision = patientReferenceDecision(req.user!, patient);
+      if (decision === "not_found") {
+        return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+      }
+      if (decision === "forbidden") {
+        return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+      }
+    }
     const created = db
       .insert(dataRequests)
       .values({
@@ -466,8 +479,8 @@ export async function registerRoutes(
         requesterName: req.user!.name,
         requestType: "delete",
         status: "pending",
-        relatedPatientId: req.body?.patientId,
-        notes: req.body?.reason,
+        relatedPatientId: parsed.data.patientId,
+        notes: parsed.data.reason,
       })
       .returning()
       .get();

@@ -104,8 +104,20 @@ export interface JwtPayload {
   name: string;
   role: string;
   type: "access" | "refresh";
+  /** Identificador estável da família/sessão autenticada. */
+  sid?: string;
+  /** Identificador único do refresh token; ausente em access tokens. */
+  jti?: string;
   iat?: number;
   exp?: number;
+}
+
+/** Hash unidirecional usado para nunca persistir refresh tokens em claro. */
+export async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", enc.encode(value));
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 export async function signJwt(

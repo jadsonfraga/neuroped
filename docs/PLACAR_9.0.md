@@ -2,8 +2,10 @@
 
 | Eixo | Atual | Meta/base | Status |
 | --- | ---: | ---: | --- |
-| Catálogo | 583 | 583 | OK |
-| Proveniência | 583 | 577 | OK |
+| Instrumentos executáveis | 203 | 203 | OK |
+| Executáveis revisados com fonte | 165 | 165 | OK |
+| Fichas documentadas | 701 | 701 | OK |
+| Fichas com fonte | 546 | 546 | OK |
 | TypeScript | 0 | 0 | OK |
 | Casos clínicos mínimos | validado por npm run test:clinical | 150 | OK |
 

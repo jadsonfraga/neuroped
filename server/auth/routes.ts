@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Rotas de autenticacao:
  *  POST /api/auth/register  â€” cria conta (apenas admin pode em producao)
  *  POST /api/auth/login     â€” emite access + refresh token
@@ -192,7 +192,9 @@ export function registerAuthRoutes(app: Express): void {
   // ----- Refresh -----
   app.post("/api/auth/refresh", async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
-    const refreshTokenInput = z.object({ refreshToken: z.string().min(1) });
+    const refreshTokenInput = z
+      .object({ refreshToken: z.string().min(1).max(4_096) })
+      .strict();
     try {
       const { refreshToken } = refreshTokenInput.parse(req.body);
       const tokenHash = hashRefreshToken(refreshToken);
@@ -281,7 +283,9 @@ export function registerAuthRoutes(app: Express): void {
   // ----- Logout -----
   app.post("/api/auth/logout", async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
-    const schema = z.object({ refreshToken: z.string().optional() });
+    const schema = z
+      .object({ refreshToken: z.string().max(4_096).optional() })
+      .strict();
     try {
       const { refreshToken } = schema.parse(req.body || {});
       if (refreshToken) {
@@ -333,7 +337,7 @@ export function registerAuthRoutes(app: Express): void {
   app.post("/api/auth/change-password", requireAuth, async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
     const schema = z.object({
-      currentPassword: z.string().min(1),
+      currentPassword: z.string().min(1).max(256),
       newPassword: z
         .string()
         .min(12)
@@ -342,7 +346,7 @@ export function registerAuthRoutes(app: Express): void {
         .regex(/[a-z]/)
         .regex(/[0-9]/)
         .regex(/[^A-Za-z0-9]/),
-    });
+    }).strict();
     try {
       const { currentPassword, newPassword } = schema.parse(req.body);
       const user = db.select().from(users).where(eq(users.id, req.user!.id)).get();

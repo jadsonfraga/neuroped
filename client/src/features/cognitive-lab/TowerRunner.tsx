@@ -13,7 +13,6 @@ import { ArrowLeft, Play, RotateCcw, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { computeStats } from "./stats";
-import { saveSession } from "./storage";
 import { ResultsPanel } from "./ResultsPanel";
 import type { CognitiveSession, TrialRecord } from "./types";
 
@@ -285,7 +284,7 @@ export function TowerRunner() {
       ? Math.round(r.latencies.reduce((a, b) => a + b, 0) / r.latencies.length)
       : null;
     const s: CognitiveSession = {
-      id: `${TASK_ID}-${Date.now().toString(36)}`,
+      id: `${TASK_ID}-${crypto.randomUUID()}`,
       taskId: TASK_ID,
       taskName: TASK_NAME,
       startedAtIso: r.startedAtIso,
@@ -324,7 +323,6 @@ export function TowerRunner() {
         },
       ],
     };
-    saveSession(s);
     setSession(s);
     setPhase("results");
   }

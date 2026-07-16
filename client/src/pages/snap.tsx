@@ -10,12 +10,39 @@ import { Activity, RotateCcw, Eye, Zap } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+const SNAP_DRAFT_VALUES = indexedAllowedValues(
+  snapQuestions.length,
+  snapLabels.length,
+);
 
 export default function SnapPage() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:snap-iv",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, SNAP_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const total = snapQuestions.length;
   const answered = snapQuestions.reduce(
@@ -49,10 +76,12 @@ export default function SnapPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = snapQuestions.map((question, index) => ({
@@ -70,7 +99,7 @@ export default function SnapPage() {
             <Activity className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — SNAP-IV</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — SNAP-IV</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -133,6 +162,7 @@ export default function SnapPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow-sm">
@@ -344,7 +374,7 @@ export default function SnapPage() {
         size="lg"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
+        {allAnswered ? "Ver respostas" : `Responda todas as ${total} perguntas`}
       </Button>
       <ScaleReference scaleId="snap" />
     </div>

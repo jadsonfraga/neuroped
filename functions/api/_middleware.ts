@@ -1,13 +1,13 @@
-﻿/**
- * _middleware.ts â€” Middleware global para todas as functions/api/*
+/**
+ * _middleware.ts — Middleware global para todas as functions/api/*
  * Aplicado automaticamente pelo Cloudflare Pages a todas as rotas filhas.
  *
  * Responsabilidades:
  *  - CORS configurado (origin allowlist via env CORS_ORIGINS)
- *  - Rate limiting bÃ¡sico por IP (via KV ou memÃ³ria temporÃ¡ria)
- *  - Headers de seguranÃ§a (X-Content-Type-Options, X-Frame-Options, etc.)
- *  - ValidaÃ§Ã£o de Content-Type em POSTs
- *  - Log de auditoria mÃ­nimo
+ *  - Rate limiting básico por IP (via KV ou memória temporária)
+ *  - Headers de segurança (X-Content-Type-Options, X-Frame-Options, etc.)
+ *  - Validação de Content-Type em POSTs
+ *  - Log de auditoria mínimo
  */
 
 interface Env {
@@ -20,9 +20,17 @@ interface Env {
 }
 
 import { verifyJwt } from "./auth/_crypto";
+import { getUserById, publicUser, type PublicUser } from "./auth/_shared";
+import { isSessionFamilyActive } from "./auth/_sessions";
+import {
+  canReadAuditLog,
+  canUseCertificate,
+  canWriteClinicalData,
+  type AuthContextData,
+} from "./auth/_authorization";
 
-// Rate limit em memÃ³ria (fallback quando KV nÃ£o disponÃ­vel)
-// Cloudflare Workers reusam instÃ¢ncias no mesmo pop â€” suficiente para burst bÃ¡sico
+// Rate limit em memória (fallback quando KV não disponível)
+// Cloudflare Workers reusam instâncias no mesmo pop — suficiente para burst básico
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
 
 const RATE_LIMIT_WINDOW_MS = 60_000;   // 1 minuto
@@ -84,19 +92,48 @@ function apiError(message: string, code: string, status: number): Response {
  * tenham o sufixo `_demo`. Nesse cenário toda rota não pública exige access JWT.
  * Sem D1, o catálogo fictício continua disponível para demonstração/offline.
  */
-async function authorizeClinicalApi(request: Request, env: Env): Promise<Response | null> {
-  if (!env.DB) return null;
+interface AuthorizationResult {
+  failure: Response | null;
+  user: PublicUser | null;
+}
+
+function roleFailure(request: Request, user: PublicUser): Response | null {
+  const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const method = request.method.toUpperCase();
+
+  if (path === "/api/audit-log" && !canReadAuditLog(user)) {
+    return apiError("Acesso restrito ao administrador.", "FORBIDDEN", 403);
+  }
+  if (path === "/api/cert" && !canUseCertificate(user)) {
+    return apiError("Acesso ao certificado não autorizado.", "FORBIDDEN", 403);
+  }
+  const isOwnConsentWrite = path === "/api/consents" && method === "POST";
+  if (
+    ["POST", "PATCH", "PUT", "DELETE"].includes(method) &&
+    !isOwnConsentWrite &&
+    !canWriteClinicalData(user)
+  ) {
+    return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
+  }
+  return null;
+}
+
+async function authorizeClinicalApi(request: Request, env: Env): Promise<AuthorizationResult> {
+  if (!env.DB) return { failure: null, user: null };
 
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-  if (PUBLIC_API_PATHS.has(path)) return null;
+  if (PUBLIC_API_PATHS.has(path)) return { failure: null, user: null };
 
   const secret = env.NEUROPED_JWT_SECRET;
-  if (!secret?.trim()) {
-    return apiError(
-      "Autenticação do servidor não configurada.",
-      "AUTH_NOT_CONFIGURED",
-      503,
-    );
+  if (!secret?.trim() || secret.trim().length < 32) {
+    return {
+      failure: apiError(
+        "Autenticação do servidor não configurada.",
+        "AUTH_NOT_CONFIGURED",
+        503,
+      ),
+      user: null,
+    };
   }
 
   const authorization = request.headers.get("Authorization") ?? "";
@@ -105,10 +142,37 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Respons
     : "";
   const payload = token ? await verifyJwt(token, secret) : null;
   if (!payload || payload.type !== "access") {
-    return apiError("Não autenticado.", "UNAUTHENTICATED", 401);
+    return {
+      failure: apiError("Não autenticado.", "UNAUTHENTICATED", 401),
+      user: null,
+    };
   }
 
-  return null;
+  let row;
+  try {
+    row = await getUserById(env.DB, payload.sub);
+    if (!row || !row.is_active) {
+      return {
+        failure: apiError("Sessão inválida.", "INVALID_SESSION", 401),
+        user: null,
+      };
+    }
+    if (!(await isSessionFamilyActive(env.DB, row.id, payload.sid))) {
+      return {
+        failure: apiError("Sessão revogada.", "INVALID_SESSION", 401),
+        user: null,
+      };
+    }
+  } catch {
+    return {
+      failure: apiError("Autenticação temporariamente indisponível.", "AUTH_UNAVAILABLE", 503),
+      user: null,
+    };
+  }
+
+  const user = publicUser(row);
+  const forbidden = roleFailure(request, user);
+  return { failure: forbidden, user };
 }
 
 function getRateLimitKey(request: Request): string {
@@ -166,7 +230,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (!rl.allowed) {
     return new Response(
       JSON.stringify({
-        error: "Muitas requisiÃ§Ãµes. Aguarde antes de tentar novamente.",
+        error: "Muitas requisições. Aguarde antes de tentar novamente.",
         code: "RATE_LIMIT_EXCEEDED",
         retryAfter: Math.ceil((rl.resetAt - Date.now()) / 1000),
       }),
@@ -204,17 +268,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
-  const authFailure = await authorizeClinicalApi(request, env);
-  if (authFailure) {
-    const headers = new Headers(authFailure.headers);
+  const authorization = await authorizeClinicalApi(request, env);
+  if (authorization.failure) {
+    const headers = new Headers(authorization.failure.headers);
     for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
-    return new Response(authFailure.body, {
-      status: authFailure.status,
+    return new Response(authorization.failure.body, {
+      status: authorization.failure.status,
       headers,
     });
   }
+  if (authorization.user) {
+    const mutableContext = context as typeof context & { data?: AuthContextData };
+    if (!mutableContext.data) mutableContext.data = {};
+    mutableContext.data.authUser = authorization.user;
+  }
 
-  // Executa a funÃ§Ã£o real
+  // Executa a função real
   const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
   const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
   // Auth (login/refresh/logout) é backend real, não escrita clínica demo — sempre
@@ -239,7 +308,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const response = await next();
 
-  // Clona e adiciona headers de seguranÃ§a e CORS
+  // Clona e adiciona headers de segurança e CORS
   const newHeaders = new Headers(response.headers);
   for (const [k, v] of Object.entries({ ...corsHeaders, ...SECURITY_HEADERS })) {
     newHeaders.set(k, v);

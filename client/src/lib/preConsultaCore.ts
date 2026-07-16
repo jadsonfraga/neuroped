@@ -155,29 +155,41 @@ export async function loadPreConsultas(): Promise<PreConsultaRecord[]> {
   const protectedRecords = await secureGet<PreConsultaRecord[]>(PRE_CONSULTA_SECURE_KEY);
   if (Array.isArray(protectedRecords)) return protectedRecords;
 
-  // Migração única do formato legado em texto puro. Remove primeiro para que
-  // uma falha posterior nunca mantenha PII esquecida no localStorage antigo.
+  // Migração única do formato legado em texto puro. Só apaga a origem depois
+  // que a cópia cifrada foi confirmada, evitando perda silenciosa por quota,
+  // modo privado ou falha transitória do Web Crypto.
   try {
     const raw = localStorage.getItem(PRE_CONSULTA_STORAGE_KEY);
-    localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
     const legacy = raw ? JSON.parse(raw) : [];
     if (Array.isArray(legacy) && legacy.length > 0) {
-      await secureSet(PRE_CONSULTA_SECURE_KEY, legacy);
+      const migrated = await secureSet(PRE_CONSULTA_SECURE_KEY, legacy);
+      if (migrated && localStorage.getItem(PRE_CONSULTA_STORAGE_KEY) === raw) {
+        localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
+      }
       return legacy;
     }
+    if (raw !== null) localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
     return [];
   } catch {
     return [];
   }
 }
 
-export async function savePreConsultas(items: PreConsultaRecord[]): Promise<void> {
+export async function savePreConsultas(items: PreConsultaRecord[]): Promise<boolean> {
+  let stored = false;
+  try {
+    stored = await secureSet(PRE_CONSULTA_SECURE_KEY, items);
+  } catch {
+    // A interface informa a falha e mantém o registro somente no formulário.
+    return false;
+  }
+  if (!stored) return false;
   try {
     localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
-    await secureSet(PRE_CONSULTA_SECURE_KEY, items);
   } catch {
-    // localStorage pode estar indisponível; neste caso a sessão segue sem persistência.
+    // A cópia cifrada já foi confirmada; a limpeza legada é best-effort.
   }
+  return true;
 }
 
 export async function clearPreConsultas(): Promise<void> {
@@ -202,7 +214,7 @@ export function buildPreConsultaSummary(record: PreConsultaRecord, recommendatio
 export function createPreConsultaRecord(input: Omit<PreConsultaRecord, "id" | "status" | "createdAt">): PreConsultaRecord {
   return {
     ...input,
-    id: `pc-${Date.now()}`,
+    id: `pc-${crypto.randomUUID()}`,
     status: "aguardando",
     createdAt: new Date().toISOString(),
   };

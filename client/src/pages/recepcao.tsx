@@ -26,6 +26,7 @@ export default function RecepcaoPage() {
   const [items, setItems] = useState<PreConsultaRecord[]>([]);
   const [selected, setSelected] = useState<PreConsultaRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [storageError, setStorageError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -52,8 +53,13 @@ export default function RecepcaoPage() {
 
   async function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
     const updated = items.map((item) => item.id === record.id ? { ...item, status } : item);
+    setStorageError("");
+    const stored = await savePreConsultas(updated);
+    if (!stored) {
+      setStorageError("Não foi possível salvar a mudança de status neste dispositivo. Verifique o espaço ou as permissões de armazenamento e tente novamente.");
+      return;
+    }
     setItems(updated);
-    await savePreConsultas(updated);
     setSelected((current) => current?.id === record.id ? { ...record, status } : current);
   }
 
@@ -84,6 +90,12 @@ export default function RecepcaoPage() {
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-black text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
         <Card><CardContent className="flex h-full flex-col gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Pré-consulta</Link></Button><Button asChild variant="outline" className="w-full gap-2"><Link href="/pre-retorno"><ClipboardCheck className="h-4 w-4" />Pré-retorno</Link></Button></CardContent></Card>
       </section>
+
+      {storageError && (
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+          {storageError}
+        </p>
+      )}
 
       <PremiumVisualPanel
         src={brandAssets.illustrations.teamMultiprofessional}

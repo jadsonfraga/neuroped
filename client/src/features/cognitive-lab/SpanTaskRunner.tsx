@@ -12,7 +12,6 @@ import { ArrowLeft, Delete, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { computeStats, mulberry32 } from "./stats";
-import { saveSession } from "./storage";
 import { ResultsPanel } from "./ResultsPanel";
 import {
   CORSI_POSITIONS,
@@ -166,7 +165,7 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
           { label: "Sequências corretas", value: String(correctSeqs) },
         ];
     const s: CognitiveSession = {
-      id: `${meta.id}-${Date.now().toString(36)}`,
+      id: `${meta.id}-${crypto.randomUUID()}`,
       taskId: meta.id,
       taskName: meta.name,
       startedAtIso: r.startedAtIso,
@@ -180,7 +179,6 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
       },
       customSummary,
     };
-    saveSession(s);
     setSession(s);
     setPhase("results");
   }

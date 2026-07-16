@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { openEmailDraft } from "@/lib/shareText";
+import { escapeHtml } from "@/lib/htmlEscape";
 
 const EMAIL_TO = "jadsonfraga@hotmail.com";
 
@@ -253,10 +254,10 @@ function buildHtml(
     .map((d) => {
       const row = scores[d.domain] ?? { bruto: "—", padronizado: "—" };
       return `<tr>
-        <td>${d.domain}</td>
-        <td style="color:#555">${d.description}</td>
-        <td style="text-align:center">${row.bruto || "—"}</td>
-        <td style="text-align:center">${row.padronizado || "—"}</td>
+        <td>${escapeHtml(d.domain)}</td>
+        <td style="color:#555">${escapeHtml(d.description)}</td>
+        <td style="text-align:center">${escapeHtml(row.bruto || "—")}</td>
+        <td style="text-align:center">${escapeHtml(row.padronizado || "—")}</td>
       </tr>`;
     })
     .join("");
@@ -265,7 +266,7 @@ function buildHtml(
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Ficha ${scale.label} — ${patient.nome || "Paciente"}</title>
+  <title>Ficha ${escapeHtml(scale.label)} — ${escapeHtml(patient.nome || "Paciente")}</title>
   <style>
     @page { margin: 2cm; size: A4; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -291,20 +292,20 @@ function buildHtml(
 <body>
   <div class="header">
     <h1>🧠 NeuroPed — Ficha de Registro Comercial</h1>
-    <div class="sub">Escala: ${scale.label} | Data: ${dateStr}</div>
+    <div class="sub">Escala: ${escapeHtml(scale.label)} | Data: ${escapeHtml(dateStr)}</div>
   </div>
   <div class="patient-grid">
-    <div class="field"><div class="lbl">Paciente</div><div class="val">${patient.nome || "—"}</div></div>
-    <div class="field"><div class="lbl">Nascimento</div><div class="val">${patient.nascimento ? new Date(patient.nascimento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div></div>
-    <div class="field"><div class="lbl">Data da Avaliação</div><div class="val">${patient.data ? new Date(patient.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div></div>
-    <div class="field"><div class="lbl">Examinador(a)</div><div class="val">${patient.examinador || "—"}</div></div>
+    <div class="field"><div class="lbl">Paciente</div><div class="val">${escapeHtml(patient.nome || "—")}</div></div>
+    <div class="field"><div class="lbl">Nascimento</div><div class="val">${escapeHtml(patient.nascimento ? new Date(patient.nascimento + "T00:00:00").toLocaleDateString("pt-BR") : "—")}</div></div>
+    <div class="field"><div class="lbl">Data da Avaliação</div><div class="val">${escapeHtml(patient.data ? new Date(patient.data + "T00:00:00").toLocaleDateString("pt-BR") : "—")}</div></div>
+    <div class="field"><div class="lbl">Examinador(a)</div><div class="val">${escapeHtml(patient.examinador || "—")}</div></div>
   </div>
-  <div class="norm"><strong>Normatização:</strong> ${scale.normInfo}</div>
+  <div class="norm"><strong>Normatização:</strong> ${escapeHtml(scale.normInfo)}</div>
   <table>
     <thead><tr><th>Domínio</th><th>Descrição</th><th>Bruto</th><th>Padronizado</th></tr></thead>
     <tbody>${rowsHtml}</tbody>
   </table>
-  <p class="note">${scale.note}</p>
+  <p class="note">${escapeHtml(scale.note)}</p>
   <div class="footer">
     <div class="doc">Dr. Jadson Fraga Araújo Júnior</div>
     CRM-PE 25227 | CRM-BA 23384 | RQE 17756 / 14499 / 13119<br>
@@ -353,6 +354,7 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
       toast({ title: "Erro", description: "Pop-up bloqueado. Permita pop-ups para imprimir.", variant: "destructive" });
       return;
     }
+    win.opener = null;
     win.document.write(buildHtml(scaleKey, patient, scores));
     win.document.close();
     win.onload = () => win.print();
@@ -364,19 +366,25 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
     const subject = `[NeuroPed] Ficha ${scale.label} — ${patient.nome || "Paciente"} — ${new Date().toLocaleDateString("pt-BR")}`;
     const body = buildText(scaleKey, patient, scores);
     try {
-      const res = await apiRequest("POST", "/api/send-report", { subject, body });
-      if (res.ok) {
-        setSent(true);
-        toast({ title: "Enviado", description: `Ficha enviada para ${EMAIL_TO}` });
-        setSending(false);
-        return;
-      }
-    } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
-    const truncated = body.length > 1800 ? body.slice(0, 1800) + "\n[truncado]" : body;
-    window.open(`mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(truncated)}`, "_blank");
-    setSent(true);
-    toast({ title: "Email aberto", description: "Seu app de email foi aberto com a ficha." });
-    setSending(false);
+      const outcome = await openEmailDraft({
+        to: EMAIL_TO,
+        subject,
+        body,
+        filename: `ficha-${scale.label}-${patient.nome || "paciente"}`,
+      });
+      setSent(true);
+      toast({
+        title: "Email preparado",
+        description:
+          outcome === "inline"
+            ? "Seu app de email foi aberto com a ficha integral. Confirme o envio."
+            : "A ficha integral foi baixada em .txt. Anexe o arquivo ao email aberto.",
+      });
+    } catch {
+      toast({ title: "Não foi possível preparar", description: "Use Imprimir/PDF para preservar a ficha integral.", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -406,7 +414,7 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
           data-testid={`button-email-${scaleKey}`}
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-          {sent ? "Enviado" : sending ? "Enviando..." : "Enviar Email"}
+          {sent ? "Preparado" : sending ? "Preparando..." : "Preparar Email"}
         </Button>
       </div>
     </div>

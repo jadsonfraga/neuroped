@@ -170,7 +170,9 @@ wrangler login
 wrangler d1 create neuroped-prod
 
 # 4. Aplicar schema
-wrangler d1 execute neuroped-prod --file=schema.sql
+wrangler d1 execute neuroped-prod --file=db/schema.d1.sql
+# Depois use o workflow oficial "Provision D1 backend", que verifica ownership
+# e aplica as migrações idempotentes de sessões e consentimentos.
 
 # 5. Criar namespace KV
 wrangler kv:namespace create CACHE

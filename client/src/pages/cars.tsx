@@ -10,12 +10,37 @@ import { ClipboardCheck, RotateCcw } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import { hasRecordEntries, sanitizeNumberRecord } from "@/lib/scaleDraftCore";
+
+const CARS_DRAFT_VALUES = Object.fromEntries(
+  carsCategories.map((category, index) => [
+    String(index),
+    new Set(category.options.map((_, option) => option)),
+  ]),
+);
 
 export default function CarsPage() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:cars-2",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, CARS_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const total = carsCategories.length;
   const answered = carsCategories.reduce(
@@ -49,10 +74,12 @@ export default function CarsPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = carsCategories.map((category, index) => ({
@@ -69,7 +96,7 @@ export default function CarsPage() {
             <ClipboardCheck className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — CARS-2</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — CARS-2</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -132,6 +159,7 @@ export default function CarsPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-sm">
@@ -167,12 +195,11 @@ export default function CarsPage() {
       <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40 p-4">
         <p className="text-xs text-violet-800 dark:text-violet-300 leading-relaxed">
           <strong>Instruções:</strong> Para cada categoria, selecione a opção
-          que melhor descreve o comportamento da criança. Cada item pontua de 1
-          (normal) a 4 (gravemente anormal).
+          que melhor descreve o comportamento da criança entre as quatro opções
+          apresentadas.
           <span className="mt-2 block">
-            Nota técnica: este módulo usa a nomenclatura CARS-2 de forma
-            consistente no app e mantém os pontos de corte clínicos apresentados
-            abaixo.
+            O registro final apresenta cada categoria e a descrição selecionada
+            por extenso, sem soma, ponto de corte, classificação ou interpretação.
           </span>
         </p>
       </div>
@@ -259,7 +286,7 @@ export default function CarsPage() {
         size="lg"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver Resultado" : `Avalie todas as ${total} categorias`}
+        {allAnswered ? "Ver respostas" : `Avalie todas as ${total} categorias`}
       </Button>
       <ScaleReference scaleId="cars" />
     </div>

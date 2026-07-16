@@ -139,6 +139,7 @@ export default function LaudoNeuropedPage() {
   const handlePrint = () => {
     const win = window.open("", "_blank");
     if (!win) return;
+    win.opener = null;
     win.document.write(buildPrintHtml(texto));
     win.document.close();
     win.focus();

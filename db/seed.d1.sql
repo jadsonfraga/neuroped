@@ -1,13 +1,7 @@
 -- Seed demo D1-safe (gerado de db/seed_demo.sql; sem comentarios inline e sem FTS).
 -- Dados 100% ficticios, is_demo=1.
 
-DELETE FROM scale_results_demo WHERE is_demo = 1;
-DELETE FROM documents_demo WHERE is_demo = 1;
-DELETE FROM consultations_demo WHERE is_demo = 1;
-DELETE FROM patients_demo WHERE is_demo = 1;
-DELETE FROM memory_notes WHERE is_demo = 1;
-
-INSERT INTO patients_demo (id, name, birth_date, guardian_name, guardian_phone, diagnosis_code, notes, is_demo, created_at) VALUES
+INSERT OR IGNORE INTO patients_demo (id, name, birth_date, guardian_name, guardian_phone, diagnosis_code, notes, is_demo, created_at) VALUES
 (
   'demo-001',
   'Demo Paciente 1 — Fictício',
@@ -42,7 +36,7 @@ INSERT INTO patients_demo (id, name, birth_date, guardian_name, guardian_phone, 
   '2025-03-01T09:00:00Z'
 );
 
-INSERT INTO consultations_demo (id, patient_id, date, subjective, objective, assessment, plan, is_demo, created_at) VALUES
+INSERT OR IGNORE INTO consultations_demo (id, patient_id, date, subjective, objective, assessment, plan, is_demo, created_at) VALUES
 (
   'cons-demo-001',
   'demo-001',
@@ -66,7 +60,7 @@ INSERT INTO consultations_demo (id, patient_id, date, subjective, objective, ass
   '2025-04-15T10:45:00Z'
 );
 
-INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at) VALUES
+INSERT OR IGNORE INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at) VALUES
 (
   'scale-demo-001',
   'demo-001',
@@ -79,7 +73,7 @@ INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, int
   '2025-04-05T11:00:00Z'
 );
 
-INSERT INTO documents_demo (id, patient_id, type, title, content, is_family_visible, is_demo, created_at) VALUES
+INSERT OR IGNORE INTO documents_demo (id, patient_id, type, title, content, is_family_visible, is_demo, created_at) VALUES
 (
   'doc-demo-001',
   'demo-001',
@@ -109,7 +103,7 @@ Este documento é inteiramente fictício, destinado exclusivamente a demonstraç
   '2025-04-20T16:00:00Z'
 );
 
-INSERT INTO memory_notes (id, title, content, category, source, patient_id, tags, is_demo, created_at) VALUES
+INSERT OR IGNORE INTO memory_notes (id, title, content, category, source, patient_id, tags, is_demo, created_at) VALUES
 (
   'mem-demo-001',
   'M-CHAT-R/F — Pontos de corte',

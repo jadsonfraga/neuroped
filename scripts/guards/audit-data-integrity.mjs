@@ -3,6 +3,7 @@
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 import { readFileSync } from "node:fs";
+import { hasRegisteredRoute } from "./lib/route-matcher.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..", "..");
 const imp = (r) => import(pathToFileURL(resolve(root, r)).href);
@@ -39,7 +40,7 @@ for (const s of allScales) {
       const rid = s.appRoute.slice(15);
       if (rid !== s.id) bugs.push(["ROUTE_MISMATCH", `${where} -> ${s.appRoute}`]);
     } else {
-      if (!routes.has(s.appRoute)) bugs.push(["ROUTE_404", `${where} -> ${s.appRoute}`]);
+      if (!hasRegisteredRoute([...routes], s.appRoute)) bugs.push(["ROUTE_404", `${where} -> ${s.appRoute}`]);
       const arr = routeUsers.get(s.appRoute) || []; arr.push(s.id); routeUsers.set(s.appRoute, arr);
     }
   }
@@ -53,3 +54,9 @@ console.log(`[audit] allScales=${allScales.length} | rotas registradas=${routes.
 console.log(`[audit] TOTAL=${bugs.length}`);
 console.log(JSON.stringify(byType, null, 2));
 for (const [t, m] of bugs) console.log(`  ${t}: ${m}`);
+
+if (bugs.length > 0) {
+  process.exitCode = 1;
+} else {
+  console.log("[audit] ✓ catálogo, filtros e rotas estão íntegros.");
+}

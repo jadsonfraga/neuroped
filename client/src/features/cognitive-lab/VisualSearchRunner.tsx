@@ -12,7 +12,6 @@ import { ArrowLeft, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { computeStats, mean, mulberry32, shuffleWith } from "./stats";
-import { saveSession } from "./storage";
 import { ResultsPanel } from "./ResultsPanel";
 import type { CognitiveSession, TrialRecord } from "./types";
 
@@ -182,7 +181,7 @@ export function VisualSearchRunner() {
     const rt24 = rtOf("24-itens");
     const costPerItem = rt12 !== null && rt24 !== null ? ((rt24 - rt12) / 12).toFixed(1) : null;
     const s: CognitiveSession = {
-      id: `busca-visual-${Date.now().toString(36)}`,
+      id: `busca-visual-${crypto.randomUUID()}`,
       taskId: "busca-visual",
       taskName: "Busca Visual",
       startedAtIso: r.startedAtIso,
@@ -216,7 +215,6 @@ export function VisualSearchRunner() {
         { label: "Erros totais", value: String(errors) },
       ],
     };
-    saveSession(s);
     setSession(s);
     setPhase("results");
   }

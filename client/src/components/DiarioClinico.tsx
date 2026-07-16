@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -12,6 +12,7 @@ import {
   Plus, Trash2, FileDown, TrendingUp, ListChecks, BarChart3, Info,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MAX_SECURE_PLAINTEXT_BYTES, secureGet, secureSet } from "@/lib/secureStorage";
 
 /**
  * Motor genérico de diários clínicos longitudinais.
@@ -52,13 +53,44 @@ export interface DiarioEntry {
   [key: string]: string | number;
 }
 
-function loadEntries(key: string): DiarioEntry[] {
-  try {
-    const raw = JSON.parse(localStorage.getItem(key) || "null");
-    return Array.isArray(raw) ? raw : [];
-  } catch {
-    return [];
+const MAX_DIARY_ENTRIES = 250;
+const MAX_DIARY_FIELD_LENGTH = 2_000;
+const MAX_DIARY_BYTES = Math.min(1_500_000, MAX_SECURE_PLAINTEXT_BYTES);
+
+function sanitizeEntries(value: unknown, fields: DiarioField[]): DiarioEntry[] {
+  if (!Array.isArray(value)) return [];
+  const allowed = new Set(fields.map((field) => field.key));
+  const normalized = value.slice(-MAX_DIARY_ENTRIES).flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const source = candidate as Record<string, unknown>;
+    if (
+      typeof source.id !== "string" ||
+      typeof source.createdAt !== "number" ||
+      !Number.isFinite(source.createdAt)
+    ) return [];
+
+    const entry: DiarioEntry = {
+      id: source.id.slice(0, 128),
+      createdAt: source.createdAt,
+    };
+    for (const key of allowed) {
+      const fieldValue = source[key];
+      if (typeof fieldValue === "string") entry[key] = fieldValue.slice(0, MAX_DIARY_FIELD_LENGTH);
+      else if (typeof fieldValue === "number" && Number.isFinite(fieldValue)) entry[key] = fieldValue;
+    }
+    return [entry];
+  });
+
+  const selected: DiarioEntry[] = [];
+  let totalBytes = 2;
+  for (let index = normalized.length - 1; index >= 0; index -= 1) {
+    const entry = normalized[index];
+    const bytes = new TextEncoder().encode(JSON.stringify(entry)).byteLength + 1;
+    if (totalBytes + bytes > MAX_DIARY_BYTES) continue;
+    selected.unshift(entry);
+    totalBytes += bytes;
   }
+  return selected;
 }
 
 function emptyForm(fields: DiarioField[]): Record<string, string> {
@@ -85,15 +117,58 @@ function fmtDate(entry: DiarioEntry): string {
 
 export function DiarioClinico({ config }: { config: DiarioConfig }) {
   const { toast } = useToast();
-  const [entries, setEntries] = useState<DiarioEntry[]>(() => loadEntries(config.storageKey));
+  const [entries, setEntries] = useState<DiarioEntry[]>([]);
+  const [entriesReady, setEntriesReady] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [tab, setTab] = useState<"add" | "history" | "trend">("add");
   const [form, setForm] = useState<Record<string, string>>(() => emptyForm(config.fields));
 
   useEffect(() => {
-    try {
-      localStorage.setItem(config.storageKey, JSON.stringify(entries));
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [entries, config.storageKey]);
+    let active = true;
+    const secureKey = `diario:${config.id}`;
+    setEntriesReady(false);
+    void (async () => {
+      const protectedEntries = await secureGet<DiarioEntry[]>(secureKey);
+      let restored = sanitizeEntries(protectedEntries, config.fields);
+
+      if (protectedEntries === null) {
+        try {
+          const raw = localStorage.getItem(config.storageKey);
+          const legacy = sanitizeEntries(raw ? JSON.parse(raw) : [], config.fields);
+          if (legacy.length > 0) {
+            restored = legacy;
+            const migrated = await secureSet(secureKey, legacy);
+            if (migrated && localStorage.getItem(config.storageKey) === raw) {
+              localStorage.removeItem(config.storageKey);
+            }
+          } else if (raw !== null && legacy.length === 0) {
+            localStorage.removeItem(config.storageKey);
+          }
+        } catch {
+          // Sem armazenamento, o diário permanece disponível apenas em memória.
+        }
+      } else {
+        try { localStorage.removeItem(config.storageKey); } catch { /* legado indisponível */ }
+      }
+
+      if (!active) return;
+      setEntries(restored);
+      setEntriesReady(true);
+    })();
+    return () => { active = false; };
+  }, [config.fields, config.id, config.storageKey]);
+
+  useEffect(() => {
+    if (!entriesReady) return;
+    const secureKey = `diario:${config.id}`;
+    const snapshot = sanitizeEntries(entries, config.fields);
+    const operation = saveQueue.current
+      .catch(() => undefined)
+      .then(() => secureSet(secureKey, snapshot));
+    saveQueue.current = operation;
+    void operation.then((stored) => setStorageError(stored !== true));
+  }, [config.fields, config.id, entries, entriesReady]);
 
   const Icon = config.icon;
   const trendField = config.fields.find((f) => f.trend);
@@ -124,12 +199,12 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     }
     const entry: DiarioEntry = {
       ...(form as Record<string, string>),
-      id: "ep-" + Date.now().toString(36),
+      id: `ep-${crypto.randomUUID()}`,
       createdAt: Date.now(),
     };
     setEntries((prev) => [...prev, entry]);
     setForm(emptyForm(config.fields));
-    toast({ title: "Registro salvo" });
+    toast({ title: "Registro adicionado à sessão" });
     setTab("history");
   }
 
@@ -160,8 +235,21 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     URL.revokeObjectURL(a.href);
   }
 
+  if (!entriesReady) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground" role="status">
+        Carregando diário clínico protegido…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12">
+      {storageError && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+          Os registros continuam visíveis, mas não puderam ser salvos neste dispositivo. Exporte o CSV antes de sair da tela.
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-sm`}>

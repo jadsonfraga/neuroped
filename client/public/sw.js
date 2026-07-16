@@ -19,9 +19,17 @@ try {
 } catch {
   // Desenvolvimento/primeira instalação: usa um identificador seguro abaixo.
 }
+try {
+  importScripts("./sw-assets.js");
+} catch {
+  // Em desenvolvimento o manifesto só existe depois do build do Vite.
+}
 
 const BUILD_ID = String(self.__NEUROPED_BUILD_ID__ || "development").replace(/[^a-zA-Z0-9._-]/g, "-");
 const CACHE_NAME = `neuroped-${BUILD_ID}`;
+const PRECACHE_ASSETS = Array.isArray(self.__NEUROPED_PRECACHE_ASSETS__)
+  ? self.__NEUROPED_PRECACHE_ASSETS__
+  : [];
 
 // App shell — apenas recursos estáticos sem dados clínicos
 const APP_SHELL = [
@@ -31,16 +39,20 @@ const APP_SHELL = [
   "./offline.html",
   "./icon-192.png",
   "./icon-512.png",
+  ...PRECACHE_ASSETS,
 ];
 
 // ---------- Install ----------
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      Promise.allSettled(
+      Promise.all(
         APP_SHELL.map(async (asset) => {
           const response = await fetch(asset, { cache: "reload" });
-          if (response.ok) await cache.put(asset, response);
+          if (!response.ok) {
+            throw new Error(`Falha ao instalar recurso obrigatório: ${asset}`);
+          }
+          await cache.put(asset, response);
         }),
       ),
     ),
@@ -63,13 +75,16 @@ self.addEventListener("activate", (event) => {
         return Promise.all(obsoleteCaches.map((key) => caches.delete(key)));
       })
       .then(() => {
-        self.clients.claim();
-        // Notifica todas as abas que um novo SW está ativo
-        self.clients.matchAll({ type: "window" }).then((clients) => {
-          clients.forEach((c) =>
-            c.postMessage({ type: "SW_UPDATED", version: CACHE_NAME })
-          );
-        });
+        // A ativação só termina depois de assumir e avisar as abas. Sem retornar
+        // estas promessas, o runtime podia encerrar o worker antes da mensagem.
+        return Promise.all([
+          self.clients.claim(),
+          self.clients.matchAll({ type: "window" }).then((clients) => {
+            clients.forEach((client) =>
+              client.postMessage({ type: "SW_UPDATED", version: CACHE_NAME })
+            );
+          }),
+        ]);
       })
   );
 });
@@ -127,9 +142,6 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
-  if (event.data?.type === "CHECK_ONLINE") {
-    event.source?.postMessage({ type: "ONLINE_STATUS", online: true });
-  }
   if (event.data?.type === "GET_VERSION") {
     event.source?.postMessage({ type: "SW_VERSION", version: CACHE_NAME });
   }
@@ -171,6 +183,12 @@ async function networkFirst(request) {
     const response = await fetch(request);
     if (response.ok) {
       await cache.put(request, response.clone());
+    } else if (request.mode === "navigate" && response.status >= 500) {
+      // Uma falha transitória do host não deve inutilizar um shell já instalado.
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      const appShell = await cache.match("./index.html");
+      if (appShell) return appShell;
     }
     return response;
   } catch {

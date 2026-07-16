@@ -11,6 +11,7 @@ import {
   AlertTriangle, KeyRound, QrCode,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { secureGet, secureSet } from "@/lib/secureStorage";
 
 /**
  * Assinatura Digital (registro local de documentos).
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
  */
 
 const LS_KEY = "neuroped:assinatura:registros:v1";
+const SECURE_REGISTRY_KEY = "assinatura:registros:v2";
 const TIPOS = ["Laudo", "Relatório", "Receita/Prescrição", "Atestado", "Parecer", "Encaminhamento", "Outro"];
 
 interface Registro {
@@ -30,7 +32,6 @@ interface Registro {
   createdText: string;
   hash: string;
   chars: number;
-  pin?: string;
 }
 
 const enc = (s: string) => new TextEncoder().encode(String(s || ""));
@@ -45,12 +46,32 @@ async function sha256Text(text: string): Promise<string> {
 async function sha256File(file: File): Promise<string> {
   return hex(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()));
 }
-function loadRegs(): Registro[] {
-  try {
-    return JSON.parse(localStorage.getItem(LS_KEY) || "[]");
-  } catch {
-    return [];
-  }
+function sanitizeRegs(value: unknown): Registro[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 80).flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const item = candidate as Partial<Registro>;
+    if (
+      typeof item.id !== "string" ||
+      typeof item.tipo !== "string" ||
+      typeof item.paciente !== "string" ||
+      typeof item.createdText !== "string" ||
+      typeof item.hash !== "string" ||
+      !/^[a-f0-9]{64}$/i.test(item.hash) ||
+      typeof item.chars !== "number" ||
+      !Number.isFinite(item.chars)
+    ) {
+      return [];
+    }
+    return [{
+      id: item.id.slice(0, 128),
+      tipo: item.tipo.slice(0, 80),
+      paciente: item.paciente.slice(0, 200),
+      createdText: item.createdText.slice(0, 80),
+      hash: item.hash.toLowerCase(),
+      chars: Math.max(0, Math.floor(item.chars)),
+    }];
+  });
 }
 
 function HashBlock({ hash }: { hash: string }) {
@@ -69,7 +90,11 @@ export default function AssinaturaDigitalPage() {
   const [texto, setTexto] = useState("");
   const [gerado, setGerado] = useState<Registro | null>(null);
   const [qrUrl, setQrUrl] = useState("");
-  const [regs, setRegs] = useState<Registro[]>(() => loadRegs());
+  const [regs, setRegs] = useState<Registro[]>([]);
+  const [regsReady, setRegsReady] = useState(false);
+  const [registryStatus, setRegistryStatus] = useState<"saving" | "saved" | "error">("saving");
+  const registrySaveQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const registryRevision = useRef(0);
 
   // Verificação de arquivo
   const [fileName, setFileName] = useState("");
@@ -79,10 +104,54 @@ export default function AssinaturaDigitalPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(regs.slice(0, 80)));
-    } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
-  }, [regs]);
+    let active = true;
+    void (async () => {
+      let restored = sanitizeRegs(await secureGet<Registro[]>(SECURE_REGISTRY_KEY));
+
+      // Migra uma única vez o histórico legado em texto puro. A cópia antiga
+      // só é removida depois que a gravação cifrada foi confirmada.
+      if (restored.length === 0) {
+        try {
+          const raw = localStorage.getItem(LS_KEY);
+          const legacy = sanitizeRegs(raw ? JSON.parse(raw) : []);
+          if (legacy.length > 0) {
+            restored = legacy;
+            const migrated = await secureSet(SECURE_REGISTRY_KEY, legacy);
+            if (migrated && localStorage.getItem(LS_KEY) === raw) {
+              localStorage.removeItem(LS_KEY);
+            }
+          } else if (legacy.length === 0) {
+            localStorage.removeItem(LS_KEY);
+          }
+        } catch {
+          // Sem armazenamento, a ferramenta segue funcional somente em memória.
+        }
+      } else {
+        try { localStorage.removeItem(LS_KEY); } catch { /* legado indisponível */ }
+      }
+
+      if (!active) return;
+      setRegs(restored);
+      setRegsReady(true);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!regsReady) return;
+    const snapshot = sanitizeRegs(regs);
+    const revision = ++registryRevision.current;
+    setRegistryStatus("saving");
+    const operation = registrySaveQueue.current
+      .catch(() => undefined)
+      .then(() => secureSet(SECURE_REGISTRY_KEY, snapshot));
+    registrySaveQueue.current = operation;
+    void operation.then((stored) => {
+      if (revision === registryRevision.current) {
+        setRegistryStatus(stored === true ? "saved" : "error");
+      }
+    });
+  }, [regs, regsReady]);
 
   // Gera QR sempre que houver um registro gerado
   useEffect(() => {
@@ -125,17 +194,16 @@ export default function AssinaturaDigitalPage() {
     ].join("\n");
     const hash = await sha256Text(base);
     const item: Registro = {
-      id: "doc_" + Date.now(),
+      id: `doc_${crypto.randomUUID()}`,
       tipo,
       paciente: pac,
       createdText: nowBR(),
       hash,
       chars: base.length,
-      pin: pin.trim() || undefined,
     };
     setGerado(item);
     setRegs((prev) => [item, ...prev].slice(0, 80));
-    toast({ title: "Registro gerado" });
+    toast({ title: "Registro gerado", description: "Salvando temporariamente nesta sessão…" });
   }
 
   function copiarHash(hash: string) {
@@ -177,6 +245,11 @@ export default function AssinaturaDigitalPage() {
 
   return (
     <div className="space-y-6 pb-12">
+      {registryStatus === "error" && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+          O registro gerado continua visível, mas o histórico não pôde ser salvo neste dispositivo. Baixe o registro antes de sair desta tela.
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-sm">
           <FileSignature className="w-6 h-6 text-white" />
@@ -324,7 +397,9 @@ export default function AssinaturaDigitalPage() {
                 variant="ghost"
                 className="text-destructive"
                 onClick={() => {
-                  if (confirm("Limpar registros locais deste navegador?")) setRegs([]);
+                  if (confirm("Limpar registros locais desta sessão?")) {
+                    setRegs([]);
+                  }
                 }}
               >
                 <Trash2 className="w-4 h-4 mr-1" /> Limpar
