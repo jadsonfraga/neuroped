@@ -5,15 +5,17 @@ import {
   loginRequest,
   logoutRequest,
   authFetch,
+  getAuthCapability,
 } from "@/lib/authClient";
 
-const FIXED_EMAIL = "medicina119@gmail.com";
-const APP_SECRET = (import.meta.env.VITE_APP_SECRET as string | undefined)?.trim();
+export type AccessMode = "checking" | "remote" | "local";
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  accessMode: AccessMode;
+  remoteConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -24,10 +26,24 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessMode, setAccessMode] = useState<AccessMode>("checking");
+  const [remoteConfigured, setRemoteConfigured] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function bootstrap() {
+      const capability = await getAuthCapability();
+      if (cancelled) return;
+      const nextMode: AccessMode = capability.required ? "remote" : "local";
+      setAccessMode(nextMode);
+      setRemoteConfigured(capability.configured);
+
+      if (nextMode === "local") {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       const stored = getStoredUser();
       if (stored) setUser(stored);
       try {
@@ -35,31 +51,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (r.ok) {
           const fresh = await r.json();
           if (!cancelled) setUser(fresh);
-        } else if (APP_SECRET) {
-          const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
-          if (!cancelled) setUser(data.user);
+        } else if (!cancelled) {
+          setUser(null);
         }
       } catch {
-        if (APP_SECRET) {
-          try {
-            const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
-            if (!cancelled) setUser(data.user);
-          } catch { /* backend indisponível — PIN master é suficiente */ }
-        }
+        // A capacidade informou backend clínico: falhar fechado, sem auto-login.
+        if (!cancelled) setUser(null);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     }
     bootstrap();
 
-    async function handleExpired() {
-      if (APP_SECRET) {
-        try {
-          const data = await loginRequest(FIXED_EMAIL, APP_SECRET);
-          setUser(data.user);
-          return;
-        } catch { /* tentativa de renovação falhou */ }
-      }
+    function handleExpired() {
       setUser(null);
     }
     window.addEventListener("auth:expired", handleExpired as EventListener);
@@ -92,6 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+        accessMode,
+        remoteConfigured,
         login,
         logout,
         refreshUser,

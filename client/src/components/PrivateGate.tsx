@@ -9,6 +9,7 @@ import {
 } from "@/lib/masterPin";
 import { currentHashPath, isPublicRoute, PUBLIC_HOME } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE, MEDICAL_URL } from "@/lib/zone";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Estilos de cor compartilhados entre a tela do PIN e o aviso "área do
 // profissional" — definidos uma vez (sem duplicar literais de cor).
@@ -28,6 +29,7 @@ function LockIcon() {
 }
 
 export function PrivateGate({ children }: { children: React.ReactNode }) {
+  const { accessMode } = useAuth();
   const [unlocked, setUnlocked] = useState<boolean>(() => isMasterPinUnlocked());
   const [pin, setPin] = useState("");
   const [remember, setRemember] = useState(true);
@@ -48,10 +50,29 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
   // Na ZONA PÚBLICA (host das famílias) nunca há PIN: rota pública abre o app;
   // rota médica mostra um aviso apontando para a área do profissional. Fora dela
   // (full/medical), rota médica exige PIN.
-  const showGate = !IS_PUBLIC_ZONE && !unlocked && !onPublicRoute;
+  // Com backend clínico ativo, o RouteGuard usa login/JWT. O PIN permanece como
+  // proteção do modo estático/offline e nunca substitui autorização do servidor.
+  const showGate = accessMode === "local" && !IS_PUBLIC_ZONE && !unlocked && !onPublicRoute;
   const showProfessionalRedirect = IS_PUBLIC_ZONE && !onPublicRoute;
+  const showAccessCheck = accessMode === "checking" && !IS_PUBLIC_ZONE && !onPublicRoute;
 
   useEffect(() => { if (showGate) document.title = "NeuroPed — área médica (acesso restrito)"; }, [showGate]);
+
+  // Não renderiza conteúdo médico enquanto o app decide se esta instalação
+  // exige login remoto ou PIN local. Isso evita um flash de dados protegidos.
+  if (showAccessCheck) {
+    return (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: GATE_BG }} role="status" aria-live="polite">
+        <div className="w-full max-w-sm rounded-3xl border border-white/10 p-8 text-center shadow-2xl" style={{ background: CARD_BG, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: BUBBLE_BG, border: BUBBLE_BORDER }}>
+            <LockIcon />
+          </div>
+          <p className="font-bold text-white">Verificando acesso seguro…</p>
+          <p className="mt-2 text-xs text-white/60">Nenhum conteúdo clínico será exibido antes da validação.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (showProfessionalRedirect) {
     return (
@@ -93,6 +114,8 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
       const ok = await verifyMasterPin(pin);
       if (!ok) { setErro("PIN incorreto."); setPin(""); return; }
       liberar();
+    } catch {
+      setErro("Não foi possível proteger o acesso neste dispositivo.");
     } finally { setBusy(false); }
   }
 

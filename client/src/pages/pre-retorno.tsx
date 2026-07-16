@@ -1,13 +1,15 @@
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Copy, MessageCircle, Printer, Save } from "lucide-react";
+import { ClipboardCheck, Copy, MessageCircle, Printer, Save, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { sanitizeAgeInput, validateAge } from "@/lib/preConsultaCore";
 import { copyText, formatForWhatsApp, openWhatsAppShare } from "@/lib/shareText";
+import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
 
 const STORAGE_KEY = "neuroped:pre-retornos";
+const SECURE_STORAGE_KEY = "pre-retornos";
 
 interface PreRetornoRecord {
   id: string;
@@ -37,21 +39,39 @@ const opcoesAlimentacao = ["melhorou", "igual", "piorou", "seletividade importan
 const opcoesCrises = ["não tem", "sem crises", "reduziu", "aumentou", "mudou padrão"];
 const opcoesMedicacao = ["sem medicação", "usando corretamente", "esquece doses", "suspendeu", "mudou por conta própria", "teve efeitos colaterais"];
 
-function loadRecords(): PreRetornoRecord[] {
+async function loadRecords(): Promise<PreRetornoRecord[]> {
+  const protectedRecords = await secureGet<PreRetornoRecord[]>(SECURE_STORAGE_KEY);
+  if (Array.isArray(protectedRecords)) return protectedRecords;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    localStorage.removeItem(STORAGE_KEY);
+    const legacy = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(legacy) && legacy.length > 0) {
+      await secureSet(SECURE_STORAGE_KEY, legacy);
+      return legacy;
+    }
+    return [];
   } catch {
     return [];
   }
 }
 
-function saveRecords(items: PreRetornoRecord[]) {
+async function saveRecords(items: PreRetornoRecord[]): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.removeItem(STORAGE_KEY);
+    await secureSet(SECURE_STORAGE_KEY, items);
   } catch {
     // localStorage pode estar indisponível; o resumo segue utilizável na sessão.
   }
+}
+
+async function clearRecords(): Promise<void> {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // A entrada protegida ainda será removida abaixo.
+  }
+  await secureClear(SECURE_STORAGE_KEY);
 }
 
 function buildRecord(data: Omit<PreRetornoRecord, "id" | "createdAt">): PreRetornoRecord {
@@ -126,14 +146,21 @@ export default function PreRetornoPage() {
     [ageValidation.isValid, saved, draft],
   );
 
-  function salvar() {
+  async function salvar() {
     if (!ageValidation.isValid) {
       setSaved(null);
       return;
     }
     const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
-    saveRecords([record, ...loadRecords()].slice(0, 50));
+    const current = await loadRecords();
+    await saveRecords([record, ...current].slice(0, 50));
     setSaved(record);
+  }
+
+  async function apagarDadosLocais() {
+    if (!window.confirm("Apagar todos os pré-retornos protegidos deste dispositivo? Esta ação não pode ser desfeita.")) return;
+    await clearRecords();
+    setSaved(null);
   }
 
   function copiarResumo() {
@@ -230,6 +257,7 @@ export default function PreRetornoPage() {
             <Button variant="outline" onClick={copiarResumo} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
             <Button variant="outline" onClick={compartilharWhatsApp} aria-disabled={!ageValidation.isValid} className="gap-2"><MessageCircle className="h-4 w-4" /> Copiar para WhatsApp</Button>
             <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
+            <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
           </div>
         </CardContent></Card>
 

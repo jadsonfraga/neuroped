@@ -53,6 +53,8 @@ export function SafeImage({
     <img
       src={src}
       alt={alt}
+      loading={props.loading ?? "lazy"}
+      decoding={props.decoding ?? "async"}
       className={className}
       onError={(event) => {
         setFailed(true);

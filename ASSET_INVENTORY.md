@@ -17,7 +17,7 @@ Este inventário consolida os assets premium reaproveitados na identidade atual,
 | Asset | Classificação | Uso definido |
 | --- | --- | --- |
 | `attached_assets/dr-jadson-logo.jpeg` — Escudo Dr. Jadson Fraga | A — premium e reutilizável | Logo mestre do ecossistema; também renderizado em `/qualidade` para provar carregamento do arquivo físico do repositório. |
-| `attached_assets/neuroped-logo.png` — símbolo histórico NeuroPed roxo | A — premium e reutilizável | Marca secundária/legado; renderizado em `/qualidade` como asset histórico preservado. |
+| `attached_assets/neuroped-logo.webp` — símbolo histórico NeuroPed roxo | A — premium e reutilizável | Marca secundária/legado otimizada para a web; renderizada em `/qualidade` como asset histórico preservado. |
 
 ## Mascotes e personagens
 

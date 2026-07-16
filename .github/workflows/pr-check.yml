@@ -82,6 +82,12 @@ jobs:
               body
             });
 
-      - name: Falhar se build quebrou
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+      - name: Falhar se qualquer verificação crítica quebrou
+        if: always()
+        run: |
+          if [ "${{ steps.typecheck.outcome }}" != "success" ] || \
+             [ "${{ steps.build.outcome }}" != "success" ] || \
+             [ "${{ steps.lint.outputs.lint_status }}" = "failed" ]; then
+            echo "Uma ou mais verificações críticas falharam."
+            exit 1
+          fi

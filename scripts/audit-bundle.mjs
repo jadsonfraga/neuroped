@@ -1,29 +1,20 @@
 // @ts-check
-/**
- * audit-bundle.mjs — Gate de performance (Bloco 2, Consolidação 9.0).
- *
- * Lighthouse headless (puppeteer/chrome-launcher) NÃO é confiável no ambiente
- * alvo (Windows desktop sem Chrome headless garantido + CI). Por decisão
- * documentada na própria spec do Bloco 2.2, usamos o FALLBACK sancionado:
- * medir o tamanho do bundle de entrada (gzip) e falhar se exceder o teto.
- *
- * O teto vem de scripts/guards/baseline.json -> bundleMaxGzipKb (250 KB).
- * O chunk de entrada atual gzip ~184 KB, então 250 KB é uma catraca real.
- *
- * Mede o módulo de entrada referenciado em dist/public/index.html (carga
- * inicial). Se o build não existir, dispara `vite build` automaticamente.
- */
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve, join } from "node:path";
+import { dirname, resolve, join, sep } from "node:path";
+import { parseInitialJsAssets } from "./lib/bundle-audit-utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
 const distPublic = resolve(repoRoot, "dist/public");
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "guards/baseline.json"), "utf8"));
-const maxKb = typeof baseline.bundleMaxGzipKb === "number" ? baseline.bundleMaxGzipKb : 250;
+const entryMaxKb = typeof baseline.bundleMaxGzipKb === "number" ? baseline.bundleMaxGzipKb : 250;
+const initialMaxKb = typeof baseline.initialJsMaxGzipKb === "number" ? baseline.initialJsMaxGzipKb : entryMaxKb;
+const forbiddenInitialChunks = Array.isArray(baseline.initialJsForbiddenChunks)
+  ? baseline.initialJsForbiddenChunks.filter((value) => typeof value === "string" && value.length > 0)
+  : [];
 
 if (!existsSync(join(distPublic, "index.html"))) {
   console.log("[bundle] dist/public ausente — rodando `vite build`...");
@@ -31,36 +22,60 @@ if (!existsSync(join(distPublic, "index.html"))) {
 }
 
 const html = readFileSync(join(distPublic, "index.html"), "utf8");
-// Entrada = <script type="module" ... src="...index-XXXX.js">
-const entryMatch = html.match(/<script[^>]+type="module"[^>]+src="([^"]+)"/);
-let entryFiles = [];
-if (entryMatch) {
-  entryFiles.push(entryMatch[1].replace(/^\.?\//, ""));
-} else {
-  // Fallback: maior chunk index-*.js em assets/
+const parsed = parseInitialJsAssets(html);
+let entryFiles = parsed.entryFiles;
+const modulePreloadFiles = parsed.modulePreloadFiles;
+
+if (!entryFiles.length) {
   const assets = resolve(distPublic, "assets");
-  const idx = readdirSync(assets).filter((f) => /^index-.*\.js$/.test(f));
-  if (idx.length) entryFiles.push(join("assets", idx[0]));
+  const candidates = readdirSync(assets)
+    .filter((file) => /^index-.*\.js$/.test(file))
+    .sort((left, right) => statSync(join(assets, right)).size - statSync(join(assets, left)).size);
+  if (candidates.length) entryFiles = [join("assets", candidates[0])];
 }
 
 if (!entryFiles.length) {
-  console.error("[bundle] ✗ não foi possível localizar o chunk de entrada em dist/public.");
+  console.error("[bundle] ✗ não foi possível localizar o chunk de entrada.");
   process.exit(1);
 }
 
-let totalGzip = 0;
-for (const rel of entryFiles) {
-  const buf = readFileSync(resolve(distPublic, rel));
-  const gz = gzipSync(buf).length;
-  totalGzip += gz;
-  console.log(`[bundle] entrada ${rel}: ${(gz / 1024).toFixed(2)} KB gzip`);
+const gzipCache = new Map();
+function gzipKb(relativePath) {
+  if (gzipCache.has(relativePath)) return gzipCache.get(relativePath);
+  const absolutePath = resolve(distPublic, relativePath);
+  if (!absolutePath.startsWith(`${distPublic}${sep}`) || !existsSync(absolutePath)) {
+    throw new Error(`[bundle] asset inicial ausente ou inseguro: ${relativePath}`);
+  }
+  const size = gzipSync(readFileSync(absolutePath)).length / 1024;
+  gzipCache.set(relativePath, size);
+  return size;
 }
 
-const totalKb = totalGzip / 1024;
-console.log(`[bundle] carga inicial (gzip) = ${totalKb.toFixed(2)} KB (teto ${maxKb} KB)`);
+const entryKb = entryFiles.reduce((sum, file) => sum + gzipKb(file), 0);
+const initialFiles = Array.from(new Set([...entryFiles, ...modulePreloadFiles]));
+const initialKb = initialFiles.reduce((sum, file) => sum + gzipKb(file), 0);
 
-if (totalKb > maxKb) {
-  console.error(`[bundle] ✗ REGRESSÃO: ${totalKb.toFixed(2)} KB > ${maxKb} KB. Reduza o bundle ou ajuste bundleMaxGzipKb conscientemente.`);
+for (const file of entryFiles) console.log(`[bundle] entrada ${file}: ${gzipKb(file).toFixed(2)} KB gzip`);
+for (const file of modulePreloadFiles) console.log(`[bundle] preload ${file}: ${gzipKb(file).toFixed(2)} KB gzip`);
+console.log(`[bundle] entrypoint = ${entryKb.toFixed(2)} KB gzip (teto ${entryMaxKb} KB)`);
+console.log(`[bundle] JS inicial real = ${initialKb.toFixed(2)} KB gzip (teto ${initialMaxKb} KB)`);
+
+if (entryKb > entryMaxKb) {
+  console.error(`[bundle] ✗ entrypoint acima do teto: ${entryKb.toFixed(2)} KB.`);
   process.exit(1);
 }
-console.log("[bundle] ✓ dentro do teto de performance.");
+
+const forbidden = modulePreloadFiles.filter((file) =>
+  forbiddenInitialChunks.some((pattern) => file.toLowerCase().includes(pattern.toLowerCase())),
+);
+if (forbidden.length) {
+  console.error(`[bundle] ✗ chunk proibido no preload inicial: ${forbidden.join(", ")}.`);
+  process.exit(1);
+}
+
+if (initialKb > initialMaxKb) {
+  console.error(`[bundle] ✗ carga inicial acima do teto: ${initialKb.toFixed(2)} KB.`);
+  process.exit(1);
+}
+
+console.log("[bundle] ✓ carga inicial dentro do teto.");

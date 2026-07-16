@@ -62,38 +62,8 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
-      - name: TypeScript check
-        run: npm run check
-
-      - name: Lint (impede código morto/import órfão de chegar à produção)
-        run: npm run lint
-
-      - name: Validate clinical catalog
-        run: npm run validate:catalog
-
-      - name: Validate clinical ranking
-        run: npm run validate:ranking
-
-      - name: Audit access policy
-        run: npm run audit:access
-
-      - name: Audit institutional identity
-        run: npm run audit:identity
-
-      - name: Audit navigation
-        run: npm run audit:navigation
-
-      - name: Audit visual assets
-        run: npm run audit:assets
-
-      - name: Run clinical tests
-        run: npm run test:clinical
-
-      - name: Test scale-filter podium
-        run: npm run test:podium
-
-      - name: Audit 100 practical scale-filter cases
-        run: npm run test:practical-filter
+      - name: Run hard release verification gate
+        run: npm run verify:release
 
       - name: Create deploy sentinel
         run: |
@@ -114,10 +84,12 @@ jobs:
       - name: Build client
         env:
           NODE_ENV: production
-          # PIN da trava privada (PrivateGate). Fallback = verificador PBKDF2 do PIN atual.
-          # Para um PIN mais forte e fora do repositório público, defina o secret VITE_PIN_HASH.
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH || 'pbkdf2$310000$a6d0e1fe27681677ad56a811598c0d6f$13dd5fb77e08a456234eae5e2397792dd4d8cf33e2bf11911a4e9a52adcb6b24' }}
+          # Nunca embutir verificador de PIN no repositório público.
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
+
+      - name: Audit real initial JavaScript payload
+        run: npm run test:bundle-audit && npm run audit:bundle
 
       - name: Verify build output
         run: |

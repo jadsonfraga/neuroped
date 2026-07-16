@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ClipboardCheck, Copy, Printer, Save, ShieldCheck } from "lucide-react";
+import { ArrowRight, ClipboardCheck, Copy, Printer, Save, ShieldCheck, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
 import {
   buildPreConsultaSummary,
+  clearPreConsultas,
   createPreConsultaRecord,
   loadPreConsultas,
   preConsultaQueixas,
@@ -65,15 +66,21 @@ export default function PreConsultaPage() {
     [ageValidation.isValid, saved, draft, recommendations],
   );
 
-  function salvar() {
+  async function salvar() {
     if (!ageValidation.isValid) {
       setSaved(null);
       return;
     }
     const record = { ...draft, status: "pronto-medico" as const };
-    const current = loadPreConsultas();
-    savePreConsultas([record, ...current].slice(0, 50));
+    const current = await loadPreConsultas();
+    await savePreConsultas([record, ...current].slice(0, 50));
     setSaved(record);
+  }
+
+  async function apagarDadosLocais() {
+    if (!window.confirm("Apagar todas as pré-consultas protegidas deste dispositivo? Esta ação não pode ser desfeita.")) return;
+    await clearPreConsultas();
+    setSaved(null);
   }
 
   async function copiar() {
@@ -191,6 +198,7 @@ export default function PreConsultaPage() {
               <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-consulta</Button>
               <Button variant="outline" onClick={copiar} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
               <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
+              <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
             </div>
           </CardContent>
         </Card>

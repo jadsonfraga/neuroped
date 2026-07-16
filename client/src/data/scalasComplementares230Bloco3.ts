@@ -418,7 +418,10 @@ export const humorAnsiedadeToc: ScaleEntry[] = [
     prioridade: "triagem",
     tempo: "5 min",
     description: "Depressão breve. Versão reduzida do MFQ.",
-    licencaUso: "comercial",
+    // O formulário é disponibilizado pelos autores/Duke e pode ser usado como
+    // instrumento de triagem com a devida citação. Mantê-lo como "comercial"
+    // fazia a regra de ouro ocultar uma aplicação interativa já implementada.
+    licencaUso: "livre",
     modoApp: "aplicar",
     duplicataStatus: "nova",
   },

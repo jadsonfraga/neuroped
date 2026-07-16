@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowLeft, Sparkles, Stethoscope, Filter,
   Printer, Mail, Smartphone, HeartHandshake,
 } from "lucide-react";
-import neuropedLogo from "@assets/neuroped-logo.png";
+import neuropedLogo from "@assets/neuroped-logo.webp";
 import childAssessmentImg from "@assets/images/child-assessment.webp";
 import teamImg from "@assets/images/team-multiprofessional.webp";
 import { appMetrics } from "@/data/appMetrics";

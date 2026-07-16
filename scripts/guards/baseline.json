@@ -8,5 +8,7 @@
   "lighthouseAccessibility": null,
   "axeSeriousCriticalViolations": 0,
   "bundleMaxGzipKb": 250,
+  "initialJsMaxGzipKb": 300,
+  "initialJsForbiddenChunks": ["scaleFilter"],
   "designRawValues": 387
 }

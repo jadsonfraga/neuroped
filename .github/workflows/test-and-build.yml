@@ -62,15 +62,21 @@ jobs:
         run: npm run build:client
         continue-on-error: false
 
+      - name: Validate Critical Security and Recovery Improvements
+        run: npm run test:quick-wins
+
+      - name: Audit Initial JavaScript Payload
+        run: npm run test:bundle-audit && npm run audit:bundle
+
       # Clinical audit (existing)
       - name: Clinical Scales Audit
         run: npm run audit:scales:clinical
         continue-on-error: false
 
-      # Blocking rules unit tests
-      - name: Run Unit Tests
-        run: npx tsx tests/unit/blockingRules.test.ts 2>&1 || echo "Tests ran with exit code $?"
-        continue-on-error: true
+      # Ownership isolation unit tests
+      - name: Test Patient And Result Ownership
+        run: npm run test:ownership
+        continue-on-error: false
 
       # Type check
       - name: Full Type Check
@@ -80,7 +86,7 @@ jobs:
       # Health check
       - name: Verify Catalog
         run: npm run validate:catalog
-        continue-on-error: true
+        continue-on-error: false
 
   production-readiness:
     runs-on: ubuntu-latest
@@ -98,19 +104,19 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Full Verification Suite
-        run: npm run verify
-        continue-on-error: true
+      - name: Hard Release Verification Suite
+        run: npm run verify:release
+        continue-on-error: false
 
   # Block merge if critical jobs failed
   require-checks:
     runs-on: ubuntu-latest
-    needs: [quality, build]
+    needs: [quality, build, production-readiness]
     if: always()
     steps:
       - name: Check CI Status
         run: |
-          if [ "${{ needs.quality.result }}" = "failure" ] || [ "${{ needs.build.result }}" = "failure" ]; then
+          if [ "${{ needs.quality.result }}" = "failure" ] || [ "${{ needs.build.result }}" = "failure" ] || [ "${{ needs.production-readiness.result }}" = "failure" ]; then
             echo "❌ CI Pipeline failed. Fix issues before merge."
             exit 1
           fi

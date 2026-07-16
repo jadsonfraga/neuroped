@@ -37,35 +37,14 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
-      - name: TypeScript check
-        run: npm run check
-
-      - name: Validate clinical catalog
-        run: npm run validate:catalog
-
-      - name: Validate clinical ranking
-        run: npm run validate:ranking
-
-      - name: Audit access policy
-        run: npm run audit:access
-
-      - name: Audit institutional identity
-        run: npm run audit:identity
-
-      - name: Auditar rotas de navegação
-        run: npm run audit:navigation
-
-      - name: Audit visual assets
-        run: npm run audit:assets
-
-      - name: Run clinical tests
-        run: npm run test:clinical
-
-      - name: Test scale-filter podium
-        run: npm run test:podium
-
-      - name: Audit 100 practical scale-filter cases
-        run: npm run test:practical-filter
+      # Gate técnico determinístico. `validate:safety` permanece no `npm run
+      # verify` e exige homologação clínica explícita para instrumentos ainda
+      # não congelados; não é mascarado nem reclassificado pelo CI.
+      - name: Run hard release verification gate
+        run: npm run verify:release
 
       - name: Build application
         run: npm run build
+
+      - name: Audit real initial JavaScript payload
+        run: npm run test:bundle-audit && npm run audit:bundle

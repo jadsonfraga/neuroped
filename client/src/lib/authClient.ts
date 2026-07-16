@@ -12,6 +12,7 @@ const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 const ACCESS_KEY = "neuroped:access";
 const REFRESH_KEY = "neuroped:refresh";
 const USER_KEY = "neuroped:user";
+const CAPABILITY_KEY = "neuroped:auth-capability";
 
 export interface AuthUser {
   id: string;
@@ -26,6 +27,12 @@ export interface LoginResponse {
   refreshToken: string;
   expiresIn: number;
   user: AuthUser;
+}
+
+export interface AuthCapability {
+  required: boolean;
+  configured: boolean;
+  reachable: boolean;
 }
 
 function readToken(key: string): string | null {
@@ -65,6 +72,66 @@ export function clearAuth(): void {
   writeToken(ACCESS_KEY, null);
   writeToken(REFRESH_KEY, null);
   writeToken(USER_KEY, null);
+}
+
+function cachedAuthCapability(): AuthCapability {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CAPABILITY_KEY) || "null");
+    if (cached?.required === true) {
+      return {
+        required: true,
+        configured: cached.configured === true,
+        reachable: false,
+      };
+    }
+  } catch {
+    // Instalação ainda não conhecida ou armazenamento indisponível.
+  }
+  return { required: false, configured: false, reachable: false };
+}
+
+function rememberAuthCapability(capability: AuthCapability): void {
+  try {
+    localStorage.setItem(CAPABILITY_KEY, JSON.stringify({
+      required: capability.required,
+      configured: capability.configured,
+    }));
+  } catch {
+    // A resposta atual continua valendo mesmo sem persistência.
+  }
+}
+
+/**
+ * Descobre se esta instalação possui backend clínico. Mirrors estáticos e uso
+ * offline caem no modo PIN local; D1 ativo exige autenticação remota.
+ */
+export async function getAuthCapability(): Promise<AuthCapability> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 4_000);
+  try {
+    const response = await fetch(`${API_BASE}/api/health`, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return cachedAuthCapability();
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      return cachedAuthCapability();
+    }
+    const data = await response.json();
+    const capability = {
+      required: data?.authentication?.required === true,
+      configured: data?.authentication?.configured === true,
+      reachable: true,
+    };
+    rememberAuthCapability(capability);
+    return capability;
+  } catch {
+    return cachedAuthCapability();
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 export async function loginRequest(email: string, password: string): Promise<LoginResponse> {

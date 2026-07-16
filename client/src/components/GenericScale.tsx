@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
+import { useSecureScaleDraft } from "@/hooks/useSecureScaleDraft";
 
 /**
  * Item de escala. Pode ser uma string simples (compatível com todo o acervo
@@ -77,37 +78,12 @@ export interface ScaleConfig {
   };
 }
 
-/** Igualdade rasa entre dois mapas de respostas (chave → índice escolhido). */
-function sameAnswers(
-  a: Record<string, number>,
-  b: Record<string, number>,
-): boolean {
-  const ak = Object.keys(a);
-  if (ak.length !== Object.keys(b).length) return false;
-  return ak.every((k) => a[k] === b[k]);
-}
-
 export function GenericScale({ config }: { config: ScaleConfig }) {
-  const draftKey = `neuroped:scale-draft:${config.title.replace(/\s+/g, "-").toLowerCase()}`;
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const draftSlug = config.title.replace(/\s+/g, "-").toLowerCase();
+  const legacyDraftKey = `neuroped:scale-draft:${draftSlug}`;
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const [draftRestored, setDraftRestored] = useState(false);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  // Domínios via ref: o effect de restauração lê as chaves válidas sem depender
-  // reativamente de `config.domains` (que muda de referência a cada render e
-  // reexecutaria o effect em loop).
-  const domainsRef = useRef(config.domains);
-  domainsRef.current = config.domains;
-  // Instantâneo do rascunho restaurado (respostas + updatedAt original). Serve
-  // para NÃO renovar o relógio de expiração de 12h ao apenas reabrir a escala:
-  // enquanto as respostas seguem idênticas às restauradas, preservamos o
-  // updatedAt original ("12h desde a última EDIÇÃO", não "desde a última
-  // abertura"), mantendo a proteção contra vazamento de rascunho entre pacientes.
-  const restoredSnapshotRef = useRef<{
-    answers: Record<string, number>;
-    updatedAt: string;
-  } | null>(null);
 
   const allItems = useMemo(
     () =>
@@ -124,89 +100,31 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       ),
     [config.domains],
   );
+  const validDraftOptions = useMemo(
+    () =>
+      Object.fromEntries(
+        allItems.map((item) => [item.key, config.labels.length]),
+      ),
+    [allItems, config.labels.length],
+  );
+  const {
+    answers,
+    setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    status: draftStatus,
+    clearDraft,
+  } = useSecureScaleDraft({
+    draftId: `generic:${config.scaleId ?? draftSlug}`,
+    validOptions: validDraftOptions,
+    legacyKey: legacyDraftKey,
+  });
   const total = allItems.length;
   const answered = Object.keys(answers).length;
   const progress = total > 0 ? (answered / total) * 100 : 0;
   const allAnswered = total > 0 && answered === total;
   const missingCount = Math.max(total - answered, 0);
   const firstMissing = allItems.find((item) => answers[item.key] === undefined);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(draftKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        answers?: Record<string, number>;
-        showResult?: boolean;
-        updatedAt?: string;
-      };
-      // Rascunho com mais de 12h é descartado: evita restaurar respostas de um
-      // atendimento anterior (vazamento de rascunho entre pacientes).
-      if (parsed.updatedAt) {
-        const ageMs = Date.now() - new Date(parsed.updatedAt).getTime();
-        if (Number.isFinite(ageMs) && ageMs > 12 * 60 * 60 * 1000) {
-          window.localStorage.removeItem(draftKey);
-          return;
-        }
-      }
-      if (parsed.answers && typeof parsed.answers === "object") {
-        // Só restaura respostas de itens que AINDA existem nesta escala. Sem
-        // isso, chaves órfãs de uma versão anterior da config fariam
-        // `answered > total` e travariam a conclusão em "Faltam 0 respostas".
-        const validKeys = new Set(
-          domainsRef.current.flatMap((d, di) =>
-            d.items.map((_, ii) => `${di}-${ii}`),
-          ),
-        );
-        const restored = Object.fromEntries(
-          Object.entries(parsed.answers).filter(([k]) => validKeys.has(k)),
-        );
-        if (Object.keys(restored).length > 0) {
-          setAnswers(restored);
-          setDraftRestored(true);
-          // Guarda o updatedAt ORIGINAL para não reiniciar a expiração ao reabrir.
-          if (parsed.updatedAt) {
-            restoredSnapshotRef.current = {
-              answers: restored,
-              updatedAt: parsed.updatedAt,
-            };
-          }
-        }
-      }
-      // Intencionalmente NÃO reabrimos a tela de RESULTADO automaticamente: isso
-      // exibiria, sem aviso, o resultado de um atendimento anterior ao reabrir a
-      // mesma escala para outro paciente. O rascunho volta como formulário, com
-      // o aviso de "respostas restauradas" e o botão "Começar do zero".
-    } catch {
-      // Rascunho inválido não deve interromper a escala.
-    }
-  }, [draftKey, total]);
-
-  useEffect(() => {
-    try {
-      if (answered === 0 && !showResult) {
-        window.localStorage.removeItem(draftKey);
-        return;
-      }
-      // Enquanto as respostas seguem idênticas ao rascunho restaurado (o clínico
-      // apenas reabriu, sem editar nem ver resultado), preservamos o updatedAt
-      // original — do contrário, reabrir renovaria a janela de 12h e um rascunho
-      // que deveria expirar sobreviveria para o próximo paciente.
-      const snap = restoredSnapshotRef.current;
-      const stillPristine =
-        snap != null && !showResult && sameAnswers(answers, snap.answers);
-      window.localStorage.setItem(
-        draftKey,
-        JSON.stringify({
-          answers,
-          showResult,
-          updatedAt: stillPristine ? snap.updatedAt : new Date().toISOString(),
-        }),
-      );
-    } catch {
-      // Persistência local é apoio; a aplicação da escala continua funcional sem ela.
-    }
-  }, [answers, answered, draftKey, showResult]);
 
   function handleSubmit() {
     setSubmitAttempted(true);
@@ -235,14 +153,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   function handleReset() {
     softTap();
     haptic.tap();
-    setAnswers({});
     setShowResult(false);
     setSubmitAttempted(false);
-    try {
-      window.localStorage.removeItem(draftKey);
-    } catch {
-      /* storage indisponível — ignora limpeza local */
-    }
+    void clearDraft();
   }
 
   // Leva à primeira pendência sem enviar — usado pela barra sticky para virar um
@@ -255,6 +168,16 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       behavior: "smooth",
       block: "center",
     });
+  }
+
+  if (!draftReady) {
+    return (
+      <Card className="border-card-border" role="status" aria-live="polite">
+        <CardContent className="p-6 text-sm text-muted-foreground">
+          Preparando rascunho protegido…
+        </CardContent>
+      </Card>
+    );
   }
 
   if (showResult) {
@@ -438,15 +361,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             type="button"
             data-testid="button-clear-draft"
             onClick={() => {
-              try {
-                window.localStorage.removeItem(draftKey);
-              } catch {
-                /* sem storage */
-              }
-              setAnswers({});
               setShowResult(false);
               setSubmitAttempted(false);
-              setDraftRestored(false);
+              void clearDraft();
             }}
             className="shrink-0 rounded-lg border border-amber-400/70 px-2.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
           >
@@ -474,8 +391,21 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         />
         <div className="flex items-center justify-between gap-2">
           {answered > 0 ? (
-            <span className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
-              <Save className="h-3.5 w-3.5" /> Progresso salvo
+            <span
+              className={`flex items-center gap-1.5 text-[11px] ${
+                draftStatus === "error"
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-emerald-700 dark:text-emerald-300"
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {draftStatus === "saving"
+                ? "Criptografando…"
+                : draftStatus === "error"
+                  ? "Não foi possível salvar"
+                  : "Rascunho criptografado"}
             </span>
           ) : (
             <span className="text-[11px] text-muted-foreground">

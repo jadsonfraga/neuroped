@@ -36,6 +36,10 @@ export const BUILD_INFO = ${JSON.stringify(info, null, 2)} as const;
 `;
 
 writeFileSync(new URL("../functions/api/_buildInfo.ts", import.meta.url), out);
+writeFileSync(
+  new URL("../client/public/sw-build.js", import.meta.url),
+  `// GERADO AUTOMATICAMENTE por scripts/gen-build-info.mjs — não editar à mão.\nself.__NEUROPED_BUILD_ID__ = ${JSON.stringify(`${pkg.version}-${commit}`)};\n`,
+);
 console.log(`[gen-build-info] ${info.version} · ${info.commit} · ${info.branch} · ${info.buildDate}`);
 
 // No VERCEL, sobrescreve o deploy-check.json com o commit REAL do build. Os
