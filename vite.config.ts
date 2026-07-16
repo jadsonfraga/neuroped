@@ -2,6 +2,66 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import path from "path";
+import { readFile, writeFile } from "node:fs/promises";
+import { resolveOfflineShellRoots } from "./scripts/guards/lib/offline-shell-roots.mjs";
+
+const publicOutDir = path.resolve(import.meta.dirname, "dist/public");
+
+function serviceWorkerPrecacheManifest() {
+  return {
+    name: "neuroped-service-worker-precache-manifest",
+    apply: "build" as const,
+    async closeBundle() {
+      const manifestPath = path.join(publicOutDir, ".vite", "manifest.json");
+      const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Record<
+        string,
+        {
+          file: string;
+          isEntry?: boolean;
+          imports?: string[];
+          css?: string[];
+          assets?: string[];
+        }
+      >;
+      const [appSource, webManifestSource] = await Promise.all([
+        readFile(path.resolve(import.meta.dirname, "client", "src", "App.tsx"), "utf8"),
+        readFile(path.resolve(import.meta.dirname, "client", "public", "manifest.json"), "utf8"),
+      ]);
+      const { roots } = resolveOfflineShellRoots({
+        appSource,
+        webManifest: JSON.parse(webManifestSource),
+        buildManifest: manifest,
+      });
+      const visited = new Set<string>();
+      const assets = new Set<string>();
+
+      const includeChunk = (source: string) => {
+        if (visited.has(source)) return;
+        visited.add(source);
+        const chunk = manifest[source];
+        if (!chunk) {
+          throw new Error(`Chunk ausente no manifesto do build: ${source}`);
+        }
+        assets.add(`./${chunk.file}`);
+        chunk.css?.forEach((file) => assets.add(`./${file}`));
+        chunk.assets?.forEach((file) => assets.add(`./${file}`));
+        chunk.imports?.forEach(includeChunk);
+      };
+      roots.forEach(includeChunk);
+      const sortedAssets = [...assets].sort();
+
+      if (sortedAssets.length === 0) {
+        throw new Error("Build sem shell para o precache offline.");
+      }
+
+      await writeFile(
+        path.join(publicOutDir, "sw-assets.js"),
+        `// GERADO PELO BUILD — não editar.\nself.__NEUROPED_PRECACHE_ASSETS__ = ${JSON.stringify(sortedAssets, null, 2)};\n`,
+        "utf8",
+      );
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
@@ -9,6 +69,7 @@ export default defineConfig({
     // Polyfills mínimos para a assinatura PDF (PAdES) no navegador: @signpdf
     // usa Buffer/process. A chave privada do certificado NUNCA sai do dispositivo.
     nodePolyfills({ include: ["buffer", "process", "util", "stream"], globals: { Buffer: true, process: true } }),
+    serviceWorkerPrecacheManifest(),
   ],
   resolve: {
     alias: {
@@ -22,8 +83,9 @@ export default defineConfig({
   // O roteamento é hash-based (wouter + useHashLocation), portanto não precisa de basename absoluto
   base: "./",
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: publicOutDir,
     emptyOutDir: true,
+    manifest: true,
     cssMinify: "esbuild",
     rollupOptions: {
       output: {

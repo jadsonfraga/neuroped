@@ -7,8 +7,9 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { exportSessionCsv, exportSessionJson } from "./storage";
+import { exportSessionCsv, exportSessionJson, saveSession } from "./storage";
 import type { CognitiveSession } from "./types";
+import { useEffect, useState } from "react";
 
 const GRID = "hsl(var(--border))";
 const MUTED = "hsl(var(--muted-foreground))";
@@ -29,6 +30,17 @@ const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 const ms = (x: number | null) => (x === null ? "—" : `${x} ms`);
 
 export function ResultsPanel({ session }: { session: CognitiveSession }) {
+  const [persistence, setPersistence] = useState<"saving" | "saved" | "error">("saving");
+
+  useEffect(() => {
+    let active = true;
+    setPersistence("saving");
+    void saveSession(session).then((stored) => {
+      if (active) setPersistence(stored ? "saved" : "error");
+    });
+    return () => { active = false; };
+  }, [session]);
+
   const s = session.stats;
   const rtSeries = session.trials
     .filter((t) => t.phase === "test" && t.rtMs !== null && !t.anticipated)
@@ -47,6 +59,15 @@ export function ResultsPanel({ session }: { session: CognitiveSession }) {
 
   return (
     <div className="space-y-4">
+      {persistence === "error" ? (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" role="alert">
+          O resultado está visível, mas não pôde ser salvo neste dispositivo. Exporte CSV ou JSON antes de sair desta tela.
+        </div>
+      ) : (
+        <p className="text-[10px] text-muted-foreground" role="status">
+          {persistence === "saving" ? "Salvando sessão temporária…" : "Sessão temporária salva neste dispositivo."}
+        </p>
+      )}
       <div
         className={`rounded-xl border px-3 py-2 text-xs leading-relaxed ${
           session.validity.valid

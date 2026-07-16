@@ -98,7 +98,7 @@ function generateSuggestedBattery(
   const phrasedAge = input.age < 12 ? `${input.age}m` : `${Math.floor(input.age / 12)}a`;
 
   return {
-    id: `battery-${Date.now()}`,
+    id: `battery-${crypto.randomUUID()}`,
     name: `Bateria Otimizada — ${templateId} (${phrasedAge})`,
     totalDuration,
     phases,

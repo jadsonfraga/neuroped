@@ -22,16 +22,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
 
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "baseline.json"), "utf8"));
-const { allScales } = await import(
+const { allScales, allScalesComFichas } = await import(
   pathToFileURL(resolve(repoRoot, "client/src/data/scaleFilter.ts")).href
 );
 
 const current = {
-  catalogInstruments: allScales.length,
-  catalogWithFonte: allScales.filter((s) => {
+  catalogRunnableInstruments: allScales.length,
+  catalogRunnableReviewedWithFonte: allScales.filter((s) => {
     const hasFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
     return hasFonte && s.pendente_validacao_clinica !== true;
   }).length,
+  catalogDocumentedInstruments: allScalesComFichas.length,
+  catalogDocumentedWithFonte: allScalesComFichas.filter(
+    (s) => typeof s.fonte === "string" && s.fonte.trim().length > 0,
+  ).length,
 };
 
 /** @type {string[]} */
@@ -43,10 +47,17 @@ function noLessThan(key) {
   }
 }
 
-noLessThan("catalogInstruments");
-noLessThan("catalogWithFonte");
+noLessThan("catalogRunnableInstruments");
+noLessThan("catalogRunnableReviewedWithFonte");
+noLessThan("catalogDocumentedInstruments");
+noLessThan("catalogDocumentedWithFonte");
 
-console.log(`[baseline] instrumentos=${current.catalogInstruments} (min ${baseline.catalogInstruments}) | comFonte=${current.catalogWithFonte} (min ${baseline.catalogWithFonte})`);
+console.log(
+  `[baseline] executáveis=${current.catalogRunnableInstruments} (min ${baseline.catalogRunnableInstruments})` +
+  ` | executáveis revisados+fonte=${current.catalogRunnableReviewedWithFonte} (min ${baseline.catalogRunnableReviewedWithFonte})` +
+  ` | fichas=${current.catalogDocumentedInstruments} (min ${baseline.catalogDocumentedInstruments})` +
+  ` | fichas+fonte=${current.catalogDocumentedWithFonte} (min ${baseline.catalogDocumentedWithFonte})`,
+);
 
 if (regressions.length > 0) {
   console.error(`[baseline] ✗ REGRESSÃO detectada:`);

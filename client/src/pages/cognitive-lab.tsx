@@ -10,10 +10,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cognitiveTasks } from "@/features/cognitive-lab/tasks";
 import { customCognitiveTasks } from "@/features/cognitive-lab/customTasks";
 import { deleteSession, exportSessionCsv, exportSessionJson, listSessions } from "@/features/cognitive-lab/storage";
-import { useState } from "react";
+import type { CognitiveSession } from "@/features/cognitive-lab/types";
+import { useEffect, useState } from "react";
 
 export default function CognitiveLabPage() {
-  const [sessions, setSessions] = useState(() => listSessions());
+  const [sessions, setSessions] = useState<CognitiveSession[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void listSessions().then((storedSessions) => {
+      if (active) setSessions(storedSessions);
+    });
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
@@ -105,7 +114,11 @@ export default function CognitiveLabPage() {
                     variant="ghost"
                     className="h-7 px-2 text-destructive"
                     aria-label="Excluir sessão"
-                    onClick={() => { deleteSession(s.id); setSessions(listSessions()); }}
+                    onClick={() => {
+                      void deleteSession(s.id)
+                        .then(() => listSessions())
+                        .then(setSessions);
+                    }}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

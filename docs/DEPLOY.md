@@ -1,5 +1,7 @@
 ﻿# Deploy AutomÃ¡tico â€” NeuroPed
 
+> **Arquitetura vigente:** produção canônica em Cloudflare Pages Functions + D1. GitHub Pages e Vercel são mirrors estáticos. As instruções antigas de Render/Postgres abaixo são apenas histórico e não devem ser usadas para dados clínicos; consulte `docs/DEPLOY_OFICIAL.md` e `docs/BACKEND_D1_SETUP.md`.
+
 Guia completo para colocar o NeuroPed em produÃ§Ã£o usando **apenas serviÃ§os gratuitos**, com deploy totalmente automÃ¡tico apÃ³s um Ãºnico `git push`.
 
 ---
@@ -112,7 +114,7 @@ https://neuroped-api.onrender.com
 2. Autentique: `npx wrangler login`
 3. Crie o banco: `npx wrangler d1 create neuroped-db`
 4. Substitua o `database_id` em `wrangler.toml` pelo ID gerado
-5. Aplique o schema: `npx wrangler d1 execute neuroped-db --file=./schema.sql`
+5. Aplique o schema e as migrações aditivas pelo workflow **Provision D1 backend**. Ele verifica a coluna de ownership antes de criá-la e aplica, de modo idempotente, sessões e consentimentos. Para evitar `ALTER TABLE` duplicado, prefira o workflow à execução manual.
 
 ---
 

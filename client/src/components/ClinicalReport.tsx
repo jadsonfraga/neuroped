@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { softBell, softSuccess, softTap } from "@/lib/softSounds";
@@ -32,6 +31,7 @@ import {
 import {
   copyText,
   downloadTextDocument,
+  openEmailDraft,
   safeTextFilename,
   shareTextDocument,
 } from "@/lib/shareText";
@@ -78,48 +78,20 @@ async function sendEmail(
   const subject = `[NeuroPed] ${scaleName} — ${new Date().toLocaleDateString("pt-BR")}`;
 
   try {
-    const res = await apiRequest("POST", "/api/send-report", {
+    const outcome = await openEmailDraft({
       to: EMAIL_TO,
       subject,
       body: reportText,
+      filename: `${safeTextFilename(scaleName)}-respostas`,
     });
-    if (res.ok) {
-      setSent(true);
-      play1Up();
-      toast({
-        title: "✉️ Enviado",
-        description: `Relatório enviado para ${EMAIL_TO}`,
-      });
-      return;
-    }
-  } catch {
-    // Em app estático/offline, segue para fallback mailto.
-  }
-
-  try {
-    const encodedReport = encodeURIComponent(reportText);
-    const isUrlSafe = encodedReport.length <= 1_800;
-    let copied = false;
-    if (!isUrlSafe) {
-      copied = await copyText(reportText);
-      downloadTextDocument(reportText, `${safeTextFilename(scaleName)}-respostas.txt`);
-    }
-    const body = isUrlSafe
-      ? reportText
-      : copied
-        ? "O relatório integral foi copiado e baixado como arquivo .txt. Anexe o arquivo ou cole o conteúdo neste email."
-        : "O relatório integral foi baixado como arquivo .txt. Anexe o arquivo neste email.";
-    const mailtoUrl = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    // location.href abre o app de email sem criar aba em branco (window.open
-    // em "_blank" deixava uma aba vazia quando não há cliente de email).
-    window.location.href = mailtoUrl;
     setSent(true);
+    play1Up();
     toast({
       title: "✉️ Email aberto",
       description:
-        isUrlSafe
+        outcome === "inline"
           ? "Seu app de email foi aberto com o relatório. Envie para completar."
-          : copied
+          : outcome === "copied-and-downloaded"
             ? "Relatório integral copiado e baixado. Anexe o arquivo no email aberto."
             : "Relatório integral baixado. Anexe o arquivo no email aberto.",
     });
@@ -203,6 +175,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
         // Fallback raríssimo: nova aba (pode pedir liberação de pop-up).
         const w = window.open("", "_blank");
         if (w) {
+          w.opener = null;
           w.document.write(html);
           w.document.close();
           w.onload = () => w.print();

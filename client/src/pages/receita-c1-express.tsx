@@ -19,16 +19,13 @@ import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
+import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
+import { buildAppHashUrl } from "@/lib/appUrl";
 
 /* ──────────────────────────────────────────────────────────────
    Receita C1 Express — Receita de Controle Especial
    Certificado acoplado: preencha a receita + insira apenas a senha
 ──────────────────────────────────────────────────────────────── */
-
-// ── IndexedDB: cache do certificado (bytes) sem senha ───────────
-const DB_NAME = "neuroped-icp";
-const DB_STORE = "cert";
-const DB_KEY = "saved";
 
 const CLINIC_NAME = "NeuroPed SDG";
 const DOCTOR_NAME = "Dr. Jadson Fraga Araújo Júnior";
@@ -41,42 +38,6 @@ const CLINIC_ADDRESS_2 = "Petrolina/PE — CEP 56302-470";
 const CLINIC_PHONE = "Telefone: (87) 9 9109-7371";
 const CLINIC_ADDRESS_HTML = `${CLINIC_ADDRESS_1} · ${CLINIC_ADDRESS_2} · ${CLINIC_PHONE}`;
 const CLINIC_ADDRESS_PDF = "Rua Raimundo Lacerda, 001 - Bairro Sao Jose, Petrolina/PE - CEP 56302-470 - Telefone: (87) 9 9109-7371";
-
-async function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function loadCachedP12(): Promise<ArrayBuffer | null> {
-  try {
-    const db = await openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction(DB_STORE, "readonly");
-      const req = tx.objectStore(DB_STORE).get(DB_KEY);
-      req.onsuccess = () => resolve(req.result?.p12 ?? null);
-      req.onerror = () => resolve(null);
-    });
-  } catch { return null; }
-}
-
-async function saveP12ToCache(p12: ArrayBuffer): Promise<void> {
-  try {
-    const db = await openDb();
-    return new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(DB_STORE, "readwrite");
-      const getReq = tx.objectStore(DB_STORE).get(DB_KEY);
-      getReq.onsuccess = () => {
-        tx.objectStore(DB_STORE).put({ p12, senha: getReq.result?.senha ?? "" }, DB_KEY);
-      };
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  } catch { /* best-effort */ }
-}
 
 // ── Helpers ──────────────────────────────────────────────────────
 function todayBr(): string {
@@ -224,7 +185,7 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   // Adobe/ITI). Sem hash na URL: um hash de texto não é conferível por terceiros
   // e o hash dos bytes do PDF final não cabe no QR embutido nele. A conferência
   // por SHA-256 dos bytes é feita pelo comprovante pós-assinatura.
-  const validationUrl = `${window.location.origin}/#/verificar`;
+  const validationUrl = buildAppHashUrl("/verificar");
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 220, margin: 1, errorCorrectionLevel: "M" });
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
   const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
@@ -508,33 +469,32 @@ export default function ReceitaC1ExpressPage() {
   const [ok, setOk] = useState("");
   const [showPreview, setShowPreview] = useState(false);
 
-  // ── Carrega certificado automaticamente ───────────────────────
+  // ── Carrega certificado somente na memória da aba ─────────────
   useEffect(() => {
     (async () => {
-      // 1. IndexedDB — exibição rápida enquanto backend responde
-      const cached = await loadCachedP12();
-      if (cached) {
-        setP12(cached);
-        setCertStatus("ready");
-        // Não retorna: backend sempre tem precedência para garantir cert PF correto
-      }
-      // 2. Backend /api/cert — autoridade final (cert configurado no Cloudflare Pages)
+      await purgeLegacyCertificateCache();
+      // Backend /api/cert — RBAC no servidor; nada é persistido no navegador.
       try {
-        const { authFetch } = await import("@/lib/authClient");
+        const { authFetch, getStoredUser } = await import("@/lib/authClient");
+        if (getStoredUser()?.role !== "admin") {
+          // Profissionais não podem buscar o certificado administrativo, mas
+          // ainda precisam enxergar imediatamente o fluxo de upload local.
+          setCertStatus("missing");
+          return;
+        }
         const r = await authFetch("/api/cert");
-        if (!r.ok) { if (!cached) setCertStatus("missing"); return; }
+        if (!r.ok) { setCertStatus("missing"); return; }
         const { cert: b64, password: pwd } = await r.json();
-        if (!b64) { if (!cached) setCertStatus("missing"); return; }
+        if (!b64) { setCertStatus("missing"); return; }
         const bin = atob(b64);
         const buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
         const ab = buf.buffer;
-        await saveP12ToCache(ab);
         setP12(ab);
         if (pwd) setSenha(pwd);
         setCertStatus("ready");
       } catch {
-        if (!cached) setCertStatus("missing");
+        setCertStatus("missing");
       }
     })();
   }, []);
@@ -560,11 +520,10 @@ export default function ReceitaC1ExpressPage() {
     const f = e.target.files?.[0];
     if (!f) return;
     const ab = await f.arrayBuffer();
-    await saveP12ToCache(ab);
     setP12(ab);
     setCertStatus("ready");
     setShowUpload(false);
-    setOk("Certificado carregado e salvo neste dispositivo.");
+    setOk("Certificado carregado somente nesta aba; não foi salvo no navegador.");
   }
 
   // ── Gerar PDF + assinar ───────────────────────────────────────
@@ -612,6 +571,7 @@ export default function ReceitaC1ExpressPage() {
     setError("");
     const win = window.open("", "_blank");
     if (!win) return;
+    win.opener = null;
     win.document.write(buildC1PrintHtml(form));
     win.document.close();
     win.focus();
@@ -646,7 +606,7 @@ export default function ReceitaC1ExpressPage() {
         icon={Pill}
         eyebrow="receita c1 · emissão rápida"
         title="Emissão Rápida — Receita C1"
-        subtitle="Preencha os dados da prescrição e informe a senha do certificado digital. O certificado ICP-Brasil é carregado automaticamente — nenhum arquivo precisa ser selecionado."
+        subtitle="Preencha os dados da prescrição e informe a senha do certificado digital. O certificado fica somente na memória desta aba e não é salvo no navegador."
         gradient="from-primary to-chart-2"
       />
 
@@ -957,7 +917,7 @@ export default function ReceitaC1ExpressPage() {
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
-          A chave privada do certificado opera exclusivamente neste dispositivo — nenhum dado é enviado ao servidor.
+          A chave privada e a senha permanecem somente na memória desta aba e são descartadas ao fechá-la.
           Assinatura no padrão PAdES-BES com certificado A1 ICP-Brasil. Validade da receita: <strong>30 dias</strong>.
         </p>
       </section>

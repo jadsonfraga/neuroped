@@ -10,12 +10,39 @@ import { RotateCcw, Info, HeartPulse } from "lucide-react";
 import { phqaQuestions, phqaLabels } from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+const PHQA_DRAFT_VALUES = indexedAllowedValues(
+  phqaQuestions.length,
+  phqaLabels.length,
+);
 
 export default function PhqaPage() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:phq-a",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, PHQA_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const total = phqaQuestions.length;
   const answered = phqaQuestions.reduce(
@@ -49,10 +76,12 @@ export default function PhqaPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = phqaQuestions.map((question, index) => ({
@@ -69,7 +98,7 @@ export default function PhqaPage() {
             <HeartPulse className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — PHQ-A</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — PHQ-A</h1>
             <p className="text-xs text-muted-foreground">
               Patient Health Questionnaire — Adolescentes
             </p>
@@ -136,6 +165,7 @@ export default function PhqaPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-600 flex items-center justify-center shadow-sm">
           <HeartPulse className="w-5 h-5 text-white" />
@@ -243,7 +273,7 @@ export default function PhqaPage() {
         size="lg"
       >
         {allAnswered
-          ? "Ver Resultado"
+          ? "Ver respostas"
           : `Responder pendências (${answered}/${total})`}
       </Button>
       <ScaleReference scaleId="phqa" />

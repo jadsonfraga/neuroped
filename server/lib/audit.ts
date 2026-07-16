@@ -71,23 +71,33 @@ export async function logAudit(params: LogAuditParams): Promise<void> {
 function redactSensitive(obj: Record<string, unknown>): Record<string, unknown> {
   const SENSITIVE_KEYS = new Set([
     "password",
-    "passwordHash",
-    "newPassword",
-    "oldPassword",
+    "passwordhash",
+    "newpassword",
+    "oldpassword",
     "token",
-    "tokenHash",
-    "refreshToken",
-    "accessToken",
+    "tokenhash",
+    "refreshtoken",
+    "accesstoken",
     "cpf",
-    "cpfEncrypted",
+    "cpfencrypted",
     "authorization",
     "cookie",
+    "email",
+    "recipient",
+    "filename",
   ]);
 
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
-    if (SENSITIVE_KEYS.has(k.toLowerCase())) {
+    const normalizedKey = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (SENSITIVE_KEYS.has(normalizedKey)) {
       out[k] = "[REDACTED]";
+    } else if (Array.isArray(v)) {
+      out[k] = v.map((item) =>
+        typeof item === "object" && item !== null
+          ? redactSensitive(item as Record<string, unknown>)
+          : item,
+      );
     } else if (typeof v === "object" && v !== null) {
       out[k] = redactSensitive(v as Record<string, unknown>);
     } else {

@@ -10,12 +10,39 @@ import { Label } from "@/components/ui/label";
 import { BarChart3, RotateCcw } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+const SDQ_DRAFT_VALUES = indexedAllowedValues(
+  sdqQuestions.length,
+  sdqLabels.length,
+);
 
 export default function SdqPage() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:sdq",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, SDQ_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const total = sdqQuestions.length;
   const answered = sdqQuestions.reduce(
@@ -49,10 +76,12 @@ export default function SdqPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = sdqQuestions.map((question, index) => ({
@@ -70,7 +99,7 @@ export default function SdqPage() {
             <BarChart3 className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — SDQ</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — SDQ</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -132,6 +161,7 @@ export default function SdqPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-sm">
@@ -168,8 +198,8 @@ export default function SdqPage() {
         <p className="text-xs text-green-800 dark:text-green-300 leading-relaxed">
           <strong>Instruções:</strong> Para cada afirmação, indique o quanto ela
           se aplica ao comportamento da criança/adolescente nos últimos 6 meses.
-          Os itens aparecem em ordem sequencial; as subescalas são calculadas
-          apenas no resultado.
+          Os itens aparecem em ordem sequencial e o registro final mostra cada
+          pergunta com a resposta selecionada, sem cálculo automático.
         </p>
       </div>
 
@@ -260,7 +290,7 @@ export default function SdqPage() {
         size="lg"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
+        {allAnswered ? "Ver respostas" : `Responda todas as ${total} perguntas`}
       </Button>
       <ScaleReference scaleId="sdq" />
     </div>

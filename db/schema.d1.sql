@@ -1,24 +1,11 @@
--- NeuroPed -- Schema D1 (Cloudflare D1 / SQLite) -- versao "wrangler-safe"
--- ASCII puro, sem comentarios inline, sem triggers e sem FTS5, para evitar
--- problemas do splitter de statements do `wrangler d1 execute --file`.
---
--- ATENCAO: este arquivo RECONSTROI o schema (DROP + CREATE). E seguro no
--- provisionamento inicial (apenas dados demo, is_demo=1). NAO rode em producao
--- com dados reais -- nesse caso use migracoes aditivas.
+-- NeuroPed -- Schema D1 (Cloudflare D1 / SQLite) -- versao "wrangler-safe".
+-- Idempotente e nao destrutivo: pode ser reaplicado sem apagar tabelas ou dados.
+-- Alteracoes em tabelas existentes devem ser feitas por migracoes aditivas.
 --
 -- Tabelas identicas as usadas pelas functions/api/*. Extras (triggers de
 -- updated_at, FTS5 de memory_notes) ficam em db/schema.sql.
 
-DROP TABLE IF EXISTS consultations_demo;
-DROP TABLE IF EXISTS scale_results_demo;
-DROP TABLE IF EXISTS documents_demo;
-DROP TABLE IF EXISTS audit_logs;
-DROP TABLE IF EXISTS memory_notes;
-DROP TABLE IF EXISTS app_settings;
-DROP TABLE IF EXISTS patients_demo;
-DROP TABLE IF EXISTS users;
-
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   name TEXT NOT NULL,
   email TEXT UNIQUE,
@@ -36,10 +23,54 @@ CREATE TABLE users (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
-CREATE TABLE patients_demo (
+CREATE TABLE IF NOT EXISTS auth_refresh_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  family_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  parent_session_id TEXT REFERENCES auth_refresh_sessions(id) ON DELETE SET NULL,
+  replaced_by_session_id TEXT REFERENCES auth_refresh_sessions(id) ON DELETE SET NULL,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME,
+  revoke_reason TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at DATETIME
+);
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_sessions_user ON auth_refresh_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_sessions_family ON auth_refresh_sessions(family_id);
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_sessions_expiry ON auth_refresh_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS consents (
+  id TEXT PRIMARY KEY,
+  batch_id TEXT NOT NULL,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  consent_type TEXT NOT NULL CHECK (
+    consent_type IN (
+      'termo_uso',
+      'politica_privacidade',
+      'tratamento_dados_saude'
+    )
+  ),
+  consent_version TEXT NOT NULL,
+  consent_text TEXT NOT NULL,
+  granted INTEGER NOT NULL CHECK (granted IN (0, 1)),
+  accepted_at DATETIME NOT NULL,
+  legal_basis TEXT NOT NULL,
+  purpose TEXT NOT NULL,
+  ip TEXT,
+  user_agent TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, consent_type, consent_version, accepted_at)
+);
+CREATE INDEX IF NOT EXISTS idx_consents_user_accepted ON consents(user_id, accepted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_consents_user_type ON consents(user_id, consent_type, accepted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_consents_batch ON consents(batch_id);
+
+CREATE TABLE IF NOT EXISTS patients_demo (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  owner_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
   birth_date DATE,
   guardian_name TEXT,
@@ -50,9 +81,9 @@ CREATE TABLE patients_demo (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_patients_demo_name ON patients_demo(name);
+CREATE INDEX IF NOT EXISTS idx_patients_demo_name ON patients_demo(name);
 
-CREATE TABLE consultations_demo (
+CREATE TABLE IF NOT EXISTS consultations_demo (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   patient_id TEXT NOT NULL REFERENCES patients_demo(id) ON DELETE CASCADE,
   date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -63,25 +94,25 @@ CREATE TABLE consultations_demo (
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_consultations_demo_patient ON consultations_demo(patient_id);
-CREATE INDEX idx_consultations_demo_date ON consultations_demo(date);
+CREATE INDEX IF NOT EXISTS idx_consultations_demo_patient ON consultations_demo(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_demo_date ON consultations_demo(date);
 
-CREATE TABLE scale_results_demo (
+CREATE TABLE IF NOT EXISTS scale_results_demo (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   patient_id TEXT NOT NULL,
   scale_id TEXT NOT NULL,
   scale_name TEXT NOT NULL,
-  score REAL,
-  interpretation TEXT,
-  details TEXT,
+  score REAL,               -- coluna legada; novas gravações usam NULL
+  interpretation TEXT,      -- coluna legada; novas gravações usam NULL
+  details TEXT,             -- JSON com perguntas e respostas integrais
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_scale_results_patient ON scale_results_demo(patient_id);
-CREATE INDEX idx_scale_results_scale_id ON scale_results_demo(scale_id);
+CREATE INDEX IF NOT EXISTS idx_scale_results_patient ON scale_results_demo(patient_id);
+CREATE INDEX IF NOT EXISTS idx_scale_results_scale_id ON scale_results_demo(scale_id);
 
-CREATE TABLE documents_demo (
+CREATE TABLE IF NOT EXISTS documents_demo (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   patient_id TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('laudo', 'relatorio', 'encaminhamento', 'prescricao', 'atestado', 'orientacao')),
@@ -92,10 +123,10 @@ CREATE TABLE documents_demo (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_documents_demo_patient ON documents_demo(patient_id);
-CREATE INDEX idx_documents_demo_type ON documents_demo(type);
+CREATE INDEX IF NOT EXISTS idx_documents_demo_patient ON documents_demo(patient_id);
+CREATE INDEX IF NOT EXISTS idx_documents_demo_type ON documents_demo(type);
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   action TEXT NOT NULL,
   resource TEXT,
@@ -105,11 +136,11 @@ CREATE TABLE audit_logs (
   details TEXT,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_audit_logs_action ON audit_logs(action);
-CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at);
 
-CREATE TABLE memory_notes (
+CREATE TABLE IF NOT EXISTS memory_notes (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   title TEXT,
   content TEXT NOT NULL,
@@ -121,9 +152,9 @@ CREATE TABLE memory_notes (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_memory_notes_category ON memory_notes(category);
+CREATE INDEX IF NOT EXISTS idx_memory_notes_category ON memory_notes(category);
 
-CREATE TABLE app_settings (
+CREATE TABLE IF NOT EXISTS app_settings (
   key TEXT PRIMARY KEY,
   value TEXT,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

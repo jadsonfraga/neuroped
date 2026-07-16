@@ -79,8 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await logoutRequest();
     setUser(null);
+    await logoutRequest();
   }
 
   async function refreshUser() {

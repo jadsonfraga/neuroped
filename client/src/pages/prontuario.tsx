@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
+import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ function formatInputDate(iso: string): string {
 }
 
 function uid() {
-  return Math.random().toString(36).slice(2, 9);
+  return crypto.randomUUID();
 }
 
 // ─── types ──────────────────────────────────────────────────────────────────
@@ -355,6 +356,7 @@ function printReport(
 ) {
   const w = window.open("", "_blank");
   if (!w) return false;
+  w.opener = null;
 
   const dateStr = formatInputDate(id.dataConsulta || today);
   const dn = id.dataNascimento ? new Date(id.dataNascimento + "T12:00:00").toLocaleDateString("pt-BR") : "—";
@@ -366,39 +368,39 @@ function printReport(
     const col = status === "normal" ? "#059669" : status === "borderline" ? "#d97706" : status === "delayed" ? "#dc2626" : "#9ca3af";
     const suffix = /^\d+$/.test(v.trim()) ? " m" : "";
     return `<tr>
-      <td>${cfg.label}</td>
-      <td>${cfg.domain}</td>
-      <td style="font-weight:bold;color:${col}">${v}${suffix}</td>
-      <td style="color:${col}">${statusColors[status].label}</td>
+      <td>${escapeHtml(cfg.label)}</td>
+      <td>${escapeHtml(cfg.domain)}</td>
+      <td style="font-weight:bold;color:${col}">${escapeHtml(v)}${suffix}</td>
+      <td style="color:${col}">${escapeHtml(statusColors[status].label)}</td>
     </tr>`;
   }).filter(Boolean).join("");
 
   const medRows = medicacoes.map((m, i) => `
     <div class="med-card">
-      <b>${i + 1}. ${m.nome} ${m.dose}</b> &nbsp;—&nbsp; ${m.posologia}<br>
-      ${m.peso ? `<span class="sub">Peso: ${m.peso} kg | mg/kg: ${calcMgKg(m.dose, m.peso)}</span><br>` : ""}
-      ${m.dataInicio ? `<span class="sub">Início: ${m.dataInicio}</span><br>` : ""}
-      ${m.objetivo ? `<span class="sub">Objetivo: ${m.objetivo}</span><br>` : ""}
-      ${m.resposta ? `<span class="sub">Resposta: ${m.resposta}</span><br>` : ""}
-      ${m.efeitosAdversos ? `<span class="sub">Efeitos adversos: ${m.efeitosAdversos}</span>` : ""}
+      <b>${i + 1}. ${escapeHtml(m.nome)} ${escapeHtml(m.dose)}</b> &nbsp;—&nbsp; ${escapeHtml(m.posologia)}<br>
+      ${m.peso ? `<span class="sub">Peso: ${escapeHtml(m.peso)} kg | mg/kg: ${escapeHtml(calcMgKg(m.dose, m.peso))}</span><br>` : ""}
+      ${m.dataInicio ? `<span class="sub">Início: ${escapeHtml(m.dataInicio)}</span><br>` : ""}
+      ${m.objetivo ? `<span class="sub">Objetivo: ${escapeHtmlWithBreaks(m.objetivo)}</span><br>` : ""}
+      ${m.resposta ? `<span class="sub">Resposta: ${escapeHtmlWithBreaks(m.resposta)}</span><br>` : ""}
+      ${m.efeitosAdversos ? `<span class="sub">Efeitos adversos: ${escapeHtmlWithBreaks(m.efeitosAdversos)}</span>` : ""}
     </div>
   `).join("");
 
   const terRows = terapias.map((t, i) => `
     <div class="med-card">
-      <b>${i + 1}. ${t.tipo}</b>${t.profissional ? ` — ${t.profissional}` : ""}<br>
-      ${t.frequencia ? `<span class="sub">${t.frequencia}${t.local ? ` | ${t.local}` : ""}</span><br>` : ""}
-      ${t.objetivo ? `<span class="sub">Objetivo: ${t.objetivo}</span><br>` : ""}
-      ${t.inicio ? `<span class="sub">Início: ${t.inicio}</span><br>` : ""}
-      ${t.evolucao ? `<span class="sub">Evolução: ${t.evolucao}</span>` : ""}
+      <b>${i + 1}. ${escapeHtml(t.tipo)}</b>${t.profissional ? ` — ${escapeHtml(t.profissional)}` : ""}<br>
+      ${t.frequencia ? `<span class="sub">${escapeHtml(t.frequencia)}${t.local ? ` | ${escapeHtml(t.local)}` : ""}</span><br>` : ""}
+      ${t.objetivo ? `<span class="sub">Objetivo: ${escapeHtmlWithBreaks(t.objetivo)}</span><br>` : ""}
+      ${t.inicio ? `<span class="sub">Início: ${escapeHtml(t.inicio)}</span><br>` : ""}
+      ${t.evolucao ? `<span class="sub">Evolução: ${escapeHtmlWithBreaks(t.evolucao)}</span>` : ""}
     </div>
   `).join("");
 
   const examRows = exames.map((e, i) => `
     <div class="med-card">
-      <b>${i + 1}. ${e.tipo}</b>${e.data ? ` — ${e.data}` : ""} &nbsp;
-      <span class="badge ${e.status === "Normal" ? "badge-ok" : e.status === "Alterado" ? "badge-err" : "badge-pend"}">${e.status || "Pendente"}</span><br>
-      ${e.resultado ? `<span class="sub">${e.resultado}</span>` : ""}
+      <b>${i + 1}. ${escapeHtml(e.tipo)}</b>${e.data ? ` — ${escapeHtml(e.data)}` : ""} &nbsp;
+      <span class="badge ${e.status === "Normal" ? "badge-ok" : e.status === "Alterado" ? "badge-err" : "badge-pend"}">${escapeHtml(e.status || "Pendente")}</span><br>
+      ${e.resultado ? `<span class="sub">${escapeHtmlWithBreaks(e.resultado)}</span>` : ""}
     </div>
   `).join("");
 
@@ -406,7 +408,7 @@ function printReport(
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Prontuário — ${id.nomeCompleto || "Paciente"} — ${dateStr}</title>
+<title>Prontuário — ${escapeHtml(id.nomeCompleto || "Paciente")} — ${escapeHtml(dateStr)}</title>
 <style>
 @page { margin: 2cm; size: A4; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -443,22 +445,22 @@ table.milestones tr:nth-child(even) td { background: #faf5ff; }
 <div class="header">
   <h1>🧠 NeuroPed — Prontuário Clínico</h1>
   <div class="sub"><b>Dr. Jadson Fraga Araújo Júnior</b> — Neuropediatra | CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119</div>
-  <div class="sub">Data da consulta: ${dateStr}</div>
+  <div class="sub">Data da consulta: ${escapeHtml(dateStr)}</div>
 </div>
 
 <div class="section">
   <h2>Identificação do Paciente</h2>
   <div class="grid2">
-    <div class="row"><span class="lbl">Paciente:</span><span class="val">${id.nomeCompleto || "—"}</span></div>
-    <div class="row"><span class="lbl">Nasc.:</span><span class="val">${dn}</span></div>
-    <div class="row"><span class="lbl">Sexo:</span><span class="val">${id.sexo || "—"}</span></div>
-    <div class="row"><span class="lbl">Responsável:</span><span class="val">${id.nomeResponsavel || "—"} (${id.parentesco || "—"})</span></div>
-    <div class="row"><span class="lbl">Telefone:</span><span class="val">${id.telefone || "—"}</span></div>
-    <div class="row"><span class="lbl">E-mail:</span><span class="val">${id.email || "—"}</span></div>
-    <div class="row"><span class="lbl">Convênio/SUS:</span><span class="val">${id.convenio || "—"}</span></div>
-    <div class="row"><span class="lbl">Médico resp.:</span><span class="val">${id.medicoResponsavel || "—"}</span></div>
-    <div class="row"><span class="lbl">CID:</span><span class="val">${id.cid || "—"}</span></div>
-    <div class="row"><span class="lbl">Hipótese diagn.:</span><span class="val">${id.hipoteseDiagnostica || "—"}</span></div>
+    <div class="row"><span class="lbl">Paciente:</span><span class="val">${escapeHtml(id.nomeCompleto || "—")}</span></div>
+    <div class="row"><span class="lbl">Nasc.:</span><span class="val">${escapeHtml(dn)}</span></div>
+    <div class="row"><span class="lbl">Sexo:</span><span class="val">${escapeHtml(id.sexo || "—")}</span></div>
+    <div class="row"><span class="lbl">Responsável:</span><span class="val">${escapeHtml(id.nomeResponsavel || "—")} (${escapeHtml(id.parentesco || "—")})</span></div>
+    <div class="row"><span class="lbl">Telefone:</span><span class="val">${escapeHtml(id.telefone || "—")}</span></div>
+    <div class="row"><span class="lbl">E-mail:</span><span class="val">${escapeHtml(id.email || "—")}</span></div>
+    <div class="row"><span class="lbl">Convênio/SUS:</span><span class="val">${escapeHtml(id.convenio || "—")}</span></div>
+    <div class="row"><span class="lbl">Médico resp.:</span><span class="val">${escapeHtml(id.medicoResponsavel || "—")}</span></div>
+    <div class="row"><span class="lbl">CID:</span><span class="val">${escapeHtml(id.cid || "—")}</span></div>
+    <div class="row"><span class="lbl">Hipótese diagn.:</span><span class="val">${escapeHtml(id.hipoteseDiagnostica || "—")}</span></div>
   </div>
 </div>
 
@@ -471,8 +473,8 @@ ${[
   { label: "Histórico Escolar", value: anamnese.escolar },
 ].filter(s => s.value.trim()).map(s => `
 <div class="section">
-  <h2>${s.label}</h2>
-  <p class="narrative">${s.value.replace(/\n/g, "<br>")}</p>
+  <h2>${escapeHtml(s.label)}</h2>
+  <p class="narrative">${escapeHtmlWithBreaks(s.value)}</p>
 </div>`).join("")}
 
 ${milestoneRows ? `
@@ -482,8 +484,8 @@ ${milestoneRows ? `
     <thead><tr><th>Marco</th><th>Domínio</th><th>Idade</th><th>Status</th></tr></thead>
     <tbody>${milestoneRows}</tbody>
   </table>
-  ${marcos.regressao === "Sim" ? `<div class="alerts-box" style="margin-top:8px"><b>⚠ Regressão:</b> ${marcos.regressaoDesc || "Sim"}</div>` : ""}
-  ${marcos.crises === "Sim" ? `<div class="alerts-box"><b>⚠ Crises convulsivas:</b> ${marcos.crisesDesc || "Sim"}</div>` : ""}
+  ${marcos.regressao === "Sim" ? `<div class="alerts-box" style="margin-top:8px"><b>⚠ Regressão:</b> ${escapeHtmlWithBreaks(marcos.regressaoDesc || "Sim")}</div>` : ""}
+  ${marcos.crises === "Sim" ? `<div class="alerts-box"><b>⚠ Crises convulsivas:</b> ${escapeHtmlWithBreaks(marcos.crisesDesc || "Sim")}</div>` : ""}
 </div>` : ""}
 
 ${medRows ? `<div class="section"><h2>Medicações Atuais</h2>${medRows}</div>` : ""}

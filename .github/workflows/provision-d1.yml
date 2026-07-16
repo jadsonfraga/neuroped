@@ -2,14 +2,15 @@ name: Provision D1 backend
 
 # Provisiona o backend em nuvem do NeuroPed na Cloudflare:
 #  1. Cria (idempotente) o banco D1 "neuroped-db" e o KV "RATE_LIMIT_KV"
-#  2. Aplica o schema db/schema.d1.sql no D1 remoto
+#  2. Aplica schema idempotente + migrações aditivas no D1 remoto
 #  3. Configura os bindings D1/KV no PROJETO Cloudflare Pages via API
 #     (para Pages, bindings nao vem do wrangler.toml -- tem que ser no projeto)
 #  4. Faz o deploy para o Cloudflare Pages, agora com o backend ativo
 #
 # Rode em Actions -> "Provision D1 backend" -> Run workflow.
 # Requer os secrets: CLOUDFLARE_API_TOKEN (D1 + Workers KV + Pages) e
-# CLOUDFLARE_ACCOUNT_ID.
+# CLOUDFLARE_ACCOUNT_ID, NEUROPED_JWT_SECRET, ADMIN_EMAIL e
+# ADMIN_INITIAL_PASSWORD. Sem autenticação completa, nada é publicado.
 
 on:
   workflow_dispatch:
@@ -28,6 +29,10 @@ env:
   PAGES_PROJECT: "neuroped"
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  JWT_SECRET: ${{ secrets.NEUROPED_JWT_SECRET }}
+  ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+  ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+  ADMIN_NM: ${{ secrets.ADMIN_NAME }}
 
 jobs:
   provision:
@@ -35,6 +40,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validar secrets obrigatórios antes de provisionar
+        run: |
+          set -euo pipefail
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID JWT_SECRET ADMIN_MAIL ADMIN_PW; do
+            value="${!name:-}"
+            if [ -z "$value" ]; then
+              echo "::error::Secret obrigatório ausente: $name"
+              exit 1
+            fi
+          done
+          [ "${#JWT_SECRET}" -ge 32 ] || { echo "::error::NEUROPED_JWT_SECRET deve ter ao menos 32 caracteres"; exit 1; }
+          [ "${#ADMIN_PW}" -ge 12 ] || { echo "::error::ADMIN_INITIAL_PASSWORD deve ter ao menos 12 caracteres"; exit 1; }
+          case "$ADMIN_MAIL" in *@*) ;; *) echo "::error::ADMIN_EMAIL inválido"; exit 1;; esac
+          echo "Secrets obrigatórios presentes (valores não exibidos)."
 
       - name: Node.js 20
         uses: actions/setup-node@v4
@@ -64,11 +84,81 @@ jobs:
           echo "id=$ID" >> "$GITHUB_OUTPUT"
           echo "D1 $D1_NAME -> $ID"
 
-      - name: Aplicar schema no D1 (reconstrói tabelas)
+      - name: Aplicar schema idempotente no D1
         run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/schema.d1.sql --yes
 
-      - name: Semear dados demo (fictícios, is_demo=1)
-        continue-on-error: true
+      - name: Aplicar migrações aditivas de auth, ownership e sessões
+        run: |
+          set -euo pipefail
+          add_column() {
+            local definition="$1"
+            local output
+            if output="$($WRANGLER d1 execute "$D1_NAME" --remote --yes \
+              --command "ALTER TABLE users ADD COLUMN ${definition};" 2>&1)"; then
+              echo "users.${definition%% *}: adicionada"
+            elif echo "$output" | grep -qi "duplicate column"; then
+              echo "users.${definition%% *}: já existe"
+            else
+              echo "$output"
+              return 1
+            fi
+          }
+          add_column "password_hash TEXT"
+          add_column "must_change_password INTEGER NOT NULL DEFAULT 0"
+          add_column "failed_login_attempts INTEGER NOT NULL DEFAULT 0"
+          add_column "locked_until DATETIME"
+          add_column "last_login_at DATETIME"
+
+          owner_output=""
+          if owner_output="$($WRANGLER d1 execute "$D1_NAME" --remote --yes \
+            --command "ALTER TABLE patients_demo ADD COLUMN owner_user_id TEXT;" 2>&1)"; then
+            echo "patients_demo.owner_user_id: adicionada"
+          elif echo "$owner_output" | grep -qi "duplicate column"; then
+            echo "patients_demo.owner_user_id: já existe"
+          else
+            echo "$owner_output"
+            exit 1
+          fi
+          $WRANGLER d1 execute "$D1_NAME" --remote --yes \
+            --command "CREATE INDEX IF NOT EXISTS idx_patients_demo_owner ON patients_demo(owner_user_id);"
+
+          cols="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM pragma_table_info('patients_demo');")"
+          echo "$cols"
+          echo "$cols" | grep -q "owner_user_id" || {
+            echo "::error::coluna patients_demo.owner_user_id ausente"
+            exit 1
+          }
+
+          $WRANGLER d1 execute "$D1_NAME" --remote --yes \
+            --file=./db/migrations/0003_refresh_sessions.sql
+          session_table="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name='auth_refresh_sessions';")"
+          echo "$session_table"
+          echo "$session_table" | grep -q "auth_refresh_sessions" || {
+            echo "::error::tabela auth_refresh_sessions ausente"
+            exit 1
+          }
+
+          $WRANGLER d1 execute "$D1_NAME" --remote --yes \
+            --file=./db/migrations/0004_consents.sql
+          consent_columns="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM pragma_table_info('consents');")"
+          echo "$consent_columns"
+          for column in batch_id user_id consent_type accepted_at; do
+            echo "$consent_columns" | grep -q "$column" || {
+              echo "::error::coluna consents.$column ausente"
+              exit 1
+            }
+          done
+          consent_index="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_consents_user_accepted';")"
+          echo "$consent_index" | grep -q "idx_consents_user_accepted" || {
+            echo "::error::índice de ownership dos consentimentos ausente"
+            exit 1
+          }
+
+      - name: Semear dados demo sem substituir registros existentes
         run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/seed.d1.sql --yes
 
       # ── 2. KV: cria se não existir e resolve o id (best-effort) ───────────
@@ -118,6 +208,22 @@ jobs:
           echo "$RESP" | jq -e '.success == true' >/dev/null || { echo "::error::PATCH dos bindings no projeto Pages falhou."; exit 1; }
           echo "Bindings D1/KV configurados no projeto Pages '$PAGES_PROJECT'."
 
+      - name: Configurar autenticação nominal no projeto Pages
+        run: |
+          set -euo pipefail
+          put_required() {
+            [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
+            printf '%s' "$2" | $WRANGLER pages secret put "$1" --project-name "$PAGES_PROJECT" >/dev/null
+            echo "secret $1: definido"
+          }
+          put_required NEUROPED_JWT_SECRET "$JWT_SECRET"
+          put_required ADMIN_EMAIL "$ADMIN_MAIL"
+          put_required ADMIN_INITIAL_PASSWORD "$ADMIN_PW"
+          if [ -n "$ADMIN_NM" ]; then
+            printf '%s' "$ADMIN_NM" | $WRANGLER pages secret put ADMIN_NAME --project-name "$PAGES_PROJECT" >/dev/null
+            echo "secret opcional ADMIN_NAME: definido"
+          fi
+
       # ── 4. Build + deploy já com o backend ativo ──────────────────────────
       - name: Build do frontend
         env:
@@ -129,10 +235,32 @@ jobs:
 
       - name: Smoke test do backend (/api/health)
         run: |
-          echo "Aguardando propagação..."
-          sleep 25
-          OUT="$(curl -fsSL "https://${PAGES_PROJECT}.pages.dev/api/health?t=$GITHUB_RUN_ID" || true)"
-          echo "$OUT"
-          echo "$OUT" | grep -q '"database":"ok"' \
-            && echo "✅ Backend conectado ao D1 (database: ok)." \
-            || echo "::warning::database ainda não está 'ok' — pode levar alguns minutos para propagar; re-cheque /api/health."
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 18); do
+            if curl -fsSL "https://${PAGES_PROJECT}.pages.dev/api/health?run=${GITHUB_RUN_ID}&try=$i" \
+                 -o /tmp/provision-health.json 2>/dev/null \
+               && jq -e '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
+                    /tmp/provision-health.json >/dev/null; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          cat /tmp/provision-health.json 2>/dev/null || true
+          [ "$ok" -eq 1 ] || { echo "::error::D1/auth não ficaram prontos após o provisionamento"; exit 1; }
+          echo "✅ Backend conectado ao D1 com autenticação configurada."
+
+      - name: Verificar login nominal após provisionamento
+        run: |
+          set -euo pipefail
+          BASE="https://${PAGES_PROJECT}.pages.dev"
+          payload=$(jq -nc --arg email "$ADMIN_MAIL" --arg password "$ADMIN_PW" '{email:$email,password:$password}')
+          response=$(curl -fsSL -X POST "$BASE/api/auth/login" \
+            -H "Content-Type: application/json" --data "$payload")
+          token=$(printf '%s' "$response" | jq -r '.accessToken // empty')
+          [ -n "$token" ] || { echo "::error::login não retornou accessToken"; exit 1; }
+          code=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/auth/me" \
+            -H "Authorization: Bearer $token")
+          [ "$code" = "200" ] || { echo "::error::/api/auth/me retornou HTTP $code"; exit 1; }
+          echo "✅ AUTH E2E OK — conta administrativa e sessão nominal operantes."

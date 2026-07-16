@@ -17,11 +17,12 @@ export function applySecurity(app: Express): void {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
           imgSrc: ["'self'", "data:", "blob:"],
-          connectSrc: ["'self'"],
+          // Uploads usam URLs HTTPS pré-assinadas do provedor de objetos.
+          connectSrc: ["'self'", "https:"],
           frameAncestors: ["'none'"],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],

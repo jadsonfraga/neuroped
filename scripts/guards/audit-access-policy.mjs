@@ -1,17 +1,16 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-// POLÍTICA DE ACESSO — atualizada para o app ABERTO.
+// POLÍTICA DE ACESSO — zona pública allowlisted + área clínica fail-closed.
 //
-// Decisão do responsável (Dr. Jadson): as áreas de dados de paciente e de
-// documentos (pacientes, prontuário, receitas, laudos, fichas, planos…) foram
-// REMOVIDAS do app, e o restante passou a abrir SEM senha. Portanto este guard
-// deixou de exigir PrivateGate/Protected. O que ele ainda protege (e é o que
-// importa num app estático público):
+// Rotas familiares explícitas ficam abertas. Todo caminho desconhecido ou
+// clínico passa pelo PrivateGate no modo local e pelo RouteGuard/JWT no backend.
+// Este guard protege:
 //   · nenhum segredo/PIN/token hardcoded no código-fonte;
 //   · nenhum PIN/hash embutido no PasswordGate;
 //   · nenhuma liberação de área por "desbloqueio local" frágil;
-//   · sanidade: rotas públicas existem e não exigem Protected.
+//   · os gates globais continuam montados;
+//   · rotas públicas essenciais existem e não recebem wrapper clínico por papel.
 
 const root = process.cwd();
 const appPath = join(root, "client/src/App.tsx");
@@ -42,10 +41,24 @@ const app = read(appPath);
 const guard = read(routeGuardPath);
 const passwordGate = read(passwordGatePath);
 
-// Rotas públicas que devem existir e NÃO podem exigir Protected (app aberto).
-const publicRoutes = ["/", "/filtro", "/familia", "/portal-familia", "/qualidade", "/consentimento-lgpd"];
+const publicRoutes = [
+  "/familia",
+  "/pre-consulta",
+  "/pre-retorno",
+  "/efeitos-colaterais",
+  "/verificar",
+  "/portal-familia",
+  "/consentimento-lgpd",
+];
 
-console.log("Auditando politica de acesso NeuroPed (app aberto)...");
+console.log("Auditando política de acesso NeuroPed (público allowlisted + clínico protegido)...");
+
+if (!app.includes("<PrivateGate>") || !app.includes("<RouteGuard>")) {
+  fail("App.tsx deve manter PrivateGate e RouteGuard montados globalmente.");
+}
+if (!guard.includes("decideRouteAccess")) {
+  fail("RouteGuard.tsx deve decidir acesso remoto antes de montar a página.");
+}
 
 if (app.includes("LocalUnlockGate")) {
   fail("App.tsx nao deve importar/renderizar LocalUnlockGate global.");
@@ -65,9 +78,12 @@ for (const route of publicRoutes) {
     fail(`Rota publica esperada nao encontrada em App.tsx: ${route}`);
     continue;
   }
-  const routeSnippet = app.slice(routeIndex, routeIndex + 180);
-  if (routeSnippet.includes("<Protected")) {
-    fail(`Rota publica nao deve exigir Protected: ${route}`);
+  const escaped = route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const directPublicRoute = new RegExp(
+    `<Route\\s+path="${escaped}"[^>]*component=\\{\\w+\\}[^>]*/>`,
+  );
+  if (!directPublicRoute.test(app)) {
+    fail(`Rota pública deve montar componente direto, sem wrapper clínico: ${route}`);
   }
 }
 
@@ -107,4 +123,4 @@ if (process.exitCode) {
   process.exit(process.exitCode);
 }
 
-console.log("Politica de acesso aprovada: app aberto, sem segredos em texto no codigo-fonte.");
+console.log("Política de acesso aprovada: allowlist pública, gates clínicos e nenhum segredo hardcoded.");

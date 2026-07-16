@@ -43,14 +43,14 @@ export const clinicalRanking: ClinicalTierRule[] = [
   // ============================ TEA / AUTISMO ============================
   {
     queixa: "tea", ageMin: 16, ageMax: 30,
-    ouro: "mchat", prata: "j26-021", bronze: "tea-checklists",
-    reason: "M-CHAT-R/F é o rastreio de primeira linha para TEA entre 16–30 meses (alta sensibilidade na primeira infância).",
+    ouro: "mchat", prata: "j26-009", bronze: "tea-checklists",
+    reason: "M-CHAT-R/F é o rastreio de primeira linha para TEA entre 16–30 meses; atenção conjunta precoce e checklist ampliam a observação.",
   },
   { queixa: "tea", ageMin: 0, ageMax: 16,
-    ouro: "j26-009", prata: "j26-007", bronze: "j26-021",
+    ouro: "j26-009", prata: "j26-007", bronze: "podj-tea-prime-1-6a",
     reason: "Antes dos 16 meses, atenção conjunta e marcos socioemocionais precoces são os melhores sinais de alerta para TEA." },
   { queixa: "tea", ageMin: 30, ageMax: 72,
-    ouro: "cars", prata: "j26-020", bronze: "tea-checklists",
+    ouro: "cars", prata: "j26-235", bronze: "tea-checklists",
     reason: "CARS-2 estrutura a observação clínica do espectro no pré-escolar; pragmática e checklists detalham o perfil." },
   { queixa: "tea", ageMin: 72, ageMax: 216,
     ouro: "cars", prata: "ecsm", bronze: "j26-205",
@@ -64,8 +64,8 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "snap", prata: "conners", bronze: "brief2",
     reason: "No adolescente, SNAP-IV mantém o núcleo DSM; Conners 3 cobre comorbidade disruptiva e BRIEF-2 a função executiva." },
   { queixa: "tdah", ageMin: 0, ageMax: 72,
-    ouro: "sdq", prata: "cbcl", bronze: "j26-051",
-    reason: "Antes dos 6 anos as escalas específicas de TDAH não estão validadas; SDQ/CBCL rastreiam amplamente e flexibilidade comportamental detalha." },
+    ouro: "sdq", prata: "cbcl", bronze: "eci-fraga-qdce",
+    reason: "Antes dos 6 anos as escalas específicas de TDAH não estão validadas; SDQ, CBCL e ECI-Fraga QDCe rastreiam desenvolvimento e comportamento amplamente." },
 
   // ============================ COMPORTAMENTO ============================
   { queixa: "comportamento", ageMin: 24, ageMax: 72,
@@ -124,12 +124,12 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "linguagem-fonologia", prata: "j26-085", bronze: "j26-090",
     reason: "No escolar, fonologia, vocabulário e compreensão oral complexa caracterizam o perfil linguístico." },
   { queixa: "linguagem", ageMin: 144, ageMax: 216,
-    ouro: "j26-086", prata: "j26-020", bronze: "j26-089",
-    reason: "No adolescente, fluência verbal e pragmática guiam; CAA cobre necessidades de comunicação alternativa." },
+    ouro: "j26-086", prata: "cfcs", bronze: "podj-tea-prime-12-19a",
+    reason: "No adolescente, fluência verbal, comunicação funcional e linguagem social caracterizam o uso comunicativo no cotidiano." },
 
   // =============================== ATRASO ===============================
   { queixa: "atraso", ageMin: 12, ageMax: 48,
-    ouro: "denver", prata: "asq3", bronze: "j26-010",
+    ouro: "denver", prata: "asq3", bronze: "emdi",
     reason: "Denver II rastreia marcos nos 4 domínios; ASQ-3 traz o olhar dos pais e a triagem global complementa." },
   { queixa: "atraso", ageMin: 0, ageMax: 6,
     ouro: "j26-001", prata: "j26-003", bronze: "j26-004",
@@ -152,8 +152,8 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "j26-084", prata: "linguagem-fonologia", bronze: "conhecimento-visual",
     reason: "Na pré-alfabetização, consciência fonológica é o melhor preditor de leitura; fonologia e percepção visual complementam." },
   { queixa: "aprendizagem", ageMin: 168, ageMax: 216,
-    ouro: "j26-098", prata: "j26-104", bronze: "portal-familia-psicoeducacao",
-    reason: "No adolescente, habilidades de estudo e suporte de inclusão escolar orientam o acompanhamento acadêmico." },
+    ouro: "pdae", prata: "j26-221", bronze: "portal-familia-psicoeducacao",
+    reason: "No adolescente, desempenho acadêmico estruturado, acompanhamento escolar e psicoeducação orientam o plano de suporte." },
 
   // ============================== COGNIÇÃO ==============================
   { queixa: "cognicao", ageMin: 72, ageMax: 216,
@@ -163,7 +163,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "conhecimento-visual", prata: "j26-022", bronze: "ecsm",
     reason: "No pré-escolar, percepção visual e teoria da mente avaliam pré-requisitos cognitivos." },
   { queixa: "cognicao", ageMin: 0, ageMax: 36,
-    ouro: "j26-004", prata: "testes-reconhecimento", bronze: "j26-011",
+    ouro: "j26-004", prata: "testes-reconhecimento", bronze: "efdi",
     reason: "Cognição precoce 0–18m e tarefas de reconhecimento são a base da avaliação no lactente/toddler." },
 
   // ================================ MOTOR ===============================
@@ -171,38 +171,38 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "motricidade-teste", prata: "j26-108", bronze: "escrita-desenho",
     reason: "Teste de motricidade rastreia coordenação; integração visomotora e escrita/desenho avaliam o motor fino." },
   { queixa: "motor", ageMin: 0, ageMax: 12,
-    ouro: "j26-001", prata: "j26-117", bronze: "j26-002",
+    ouro: "j26-001", prata: "tdn-bebe", bronze: "j26-002",
     reason: "Triagem motora 0–6/6–12m e follow-up do prematuro detectam desvios motores precoces." },
   { queixa: "motor", ageMin: 12, ageMax: 48,
     ouro: "j26-107", prata: "j26-008", bronze: "j26-112",
     reason: "Marcos de motor grosso 1–5a, motor fino e equilíbrio/marcha cobrem a coordenação no toddler/pré-escolar." },
   { queixa: "motor", ageMin: 144, ageMax: 216,
-    ouro: "j26-115", prata: "j26-111", bronze: "j26-240",
-    reason: "No adolescente, habilidades esportivas e funcionalidade motora orientam; função manual (MACS) acompanha a destreza." },
+    ouro: "j26-240", prata: "j26-242", bronze: "bfmf",
+    reason: "No adolescente, função manual, postura/marcha e motricidade fina funcional caracterizam o impacto motor no cotidiano." },
 
   // ======================= PARALISIA CEREBRAL ===========================
   { queixa: "pc", ageMin: 0, ageMax: 216,
-    ouro: "gmfcs", prata: "j26-111", bronze: "ashworth",
+    ouro: "gmfcs", prata: "macs", bronze: "ashworth",
     reason: "GMFCS é o padrão de classificação da função motora grossa na PC; funcionalidade e Ashworth (tônus) complementam." },
 
   // ================================ SONO ================================
   { queixa: "sono", ageMin: 48, ageMax: 120,
-    ouro: "cshq", prata: "j26-130", bronze: "j26-137",
-    reason: "CSHQ é o questionário de hábitos de sono validado; higiene do sono e rotina noturna guiam a intervenção." },
+    ouro: "cshq", prata: "bears", bronze: "j26-137",
+    reason: "CSHQ é o questionário de hábitos de sono validado; BEARS e a rotina noturna ampliam a investigação e guiam a intervenção." },
   { queixa: "sono", ageMin: 12, ageMax: 48,
-    ouro: "j26-130", prata: "j26-137", bronze: "j26-136",
-    reason: "No toddler, higiene do sono e rotina noturna são primeira linha; resposta à melatonina monitoriza quando indicada." },
+    ouro: "bisq", prata: "j26-137", bronze: "j26-136",
+    reason: "No toddler, BISQ e rotina noturna estruturam a avaliação; resposta à melatonina monitoriza quando indicada." },
   { queixa: "sono", ageMin: 120, ageMax: 216,
-    ouro: "j26-136", prata: "inventarios-auto", bronze: "j26-130",
-    reason: "No adolescente, monitorização da resposta à melatonina e autoavaliação do sono orientam o manejo." },
+    ouro: "ess-adol", prata: "bears", bronze: "j26-136",
+    reason: "No adolescente, sonolência diurna, rastreio BEARS e monitorização da resposta à melatonina orientam o manejo." },
 
   // ============================ ALIMENTAÇÃO =============================
   { queixa: "alimentacao", ageMin: 24, ageMax: 216,
     ouro: "etare", prata: "j26-146", bronze: "inventarios-auto",
     reason: "ETARE avalia o comportamento alimentar restritivo/seletivo; autonomia alimentar detalha a refeição." },
   { queixa: "alimentacao", ageMin: 0, ageMax: 24,
-    ouro: "j26-146", prata: "j26-191", bronze: "etare",
-    reason: "No lactente, autonomia alimentar e prontidão alimentar do prematuro são a avaliação inicial." },
+    ouro: "j26-146", prata: "pant-v7-067", bronze: "etare",
+    reason: "No lactente, autonomia alimentar e coordenação de mastigação/deglutição estruturam a avaliação inicial." },
 
   // ============================= EPILEPSIA ==============================
   { queixa: "epilepsia", ageMin: 0, ageMax: 216,
@@ -221,38 +221,38 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // =============================== SOCIAL ===============================
   { queixa: "social", ageMin: 36, ageMax: 72,
-    ouro: "j26-203", prata: "j26-022", bronze: "j26-026",
-    reason: "Comunicação social 3–7a é o rastreio chave; teoria da mente e habilidades de brincar detalham a cognição social." },
+    ouro: "j26-216", prata: "j26-022", bronze: "j26-217",
+    reason: "Contato visual e atenção conjunta são o rastreio chave; teoria da mente e brincadeira simbólica detalham a cognição social." },
   { queixa: "social", ageMin: 0, ageMax: 36,
-    ouro: "j26-007", prata: "j26-021", bronze: "j26-009",
+    ouro: "j26-007", prata: "j26-216", bronze: "j26-009",
     reason: "Desenvolvimento socioemocional 0–3a e atenção conjunta são os melhores marcadores sociais precoces." },
   { queixa: "social", ageMin: 72, ageMax: 216,
-    ouro: "j26-022", prata: "j26-181", bronze: "j26-176",
-    reason: "No escolar/adolescente, teoria da mente, participação social e resiliência caracterizam o funcionamento social." },
+    ouro: "j26-022", prata: "j26-211", bronze: "j26-205",
+    reason: "No escolar/adolescente, teoria da mente, evolução da comunicação e cognição social caracterizam o funcionamento social." },
 
   // ============================= SENSORIAL ==============================
   { queixa: "sensorial", ageMin: 0, ageMax: 24,
-    ouro: "j26-013", prata: "j26-014", bronze: "j26-005",
-    reason: "Triagem auditiva e visual funcional e regulação sensorial neonatal são a avaliação sensorial inicial." },
+    ouro: "j26-013", prata: "j26-014", bronze: "pant-v7-068",
+    reason: "Triagem auditiva, visual funcional e controle postural compõem a avaliação sensorial inicial." },
   { queixa: "sensorial", ageMin: 24, ageMax: 144,
-    ouro: "psn-np", prata: "j26-126", bronze: "j26-013",
-    reason: "Eficácia da dieta sensorial monitoriza a integração sensorial na criança em terapia." },
+    ouro: "psn-np", prata: "pant-v7-074", bronze: "podj-tea-prime-escola-terapia",
+    reason: "Perfil sensorial, autorregulação corporal e observação escola/terapia caracterizam a integração sensorial." },
 
   // ============================== NEONATAL ==============================
   { queixa: "neonatal", ageMin: 0, ageMax: 6,
-    ouro: "j26-001", prata: "j26-005", bronze: "j26-192",
-    reason: "Triagem motora 0–6m, regulação sensorial neonatal e follow-up do método canguru cobrem o recém-nascido de risco." },
+    ouro: "j26-001", prata: "ballard", bronze: "cries",
+    reason: "Triagem motora, maturidade pelo Ballard e avaliação de desconforto/dor cobrem o recém-nascido de risco." },
   { queixa: "neonatal", ageMin: 6, ageMax: 30,
-    ouro: "j26-195", prata: "tdn-bebe", bronze: "j26-117",
-    reason: "Follow-up do prematuro até 2 anos e acompanhamento motor detectam sequelas da prematuridade." },
+    ouro: "hine", prata: "tdn-bebe", bronze: "j26-014",
+    reason: "HINE, triagem do desenvolvimento do bebê e avaliação visual funcional detectam desvios precoces no seguimento neonatal." },
 
   // ============================= AUTONOMIA ==============================
   { queixa: "autonomia", ageMin: 24, ageMax: 144,
-    ouro: "j26-180", prata: "j26-015", bronze: "j26-146",
-    reason: "AVDs infantis é o rastreio de autonomia; autocuidado 2–5a e autonomia alimentar detalham." },
+    ouro: "j26-015", prata: "j26-213", bronze: "j26-146",
+    reason: "Autocuidado, habilidades adaptativas e autonomia alimentar detalham as atividades de vida diária." },
   { queixa: "autonomia", ageMin: 144, ageMax: 216,
-    ouro: "j26-208", prata: "j26-187", bronze: "j26-180",
-    reason: "No adolescente, habilidades de vida independente e autonomia em necessidades especiais orientam a transição." },
+    ouro: "j26-213", prata: "ead-np", bronze: "efdi",
+    reason: "No adolescente, habilidades adaptativas, comportamento adaptativo e funcionalidade orientam a transição para a vida adulta." },
 
   // ========================== FUNCIONALIDADE ============================
   { queixa: "funcionalidade", ageMin: 24, ageMax: 216,
@@ -264,8 +264,8 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ============================== EFEITOS ===============================
   { queixa: "efeitos", ageMin: 0, ageMax: 216,
-    ouro: "eusm10", prata: "j26-260", bronze: "j26-201",
-    reason: "EUSM-10 monitoriza efeitos colaterais de medicação; rotina laboratorial e adesão completam a farmacovigilância." },
+    ouro: "eusm10", prata: "j26-260", bronze: "esm-edj",
+    reason: "EUSM-10 monitoriza efeitos colaterais; rotina laboratorial e satisfação com a medicação completam a farmacovigilância." },
 
   // ============================== EVOLUÇÃO ==============================
   { queixa: "evolucao", ageMin: 0, ageMax: 216,

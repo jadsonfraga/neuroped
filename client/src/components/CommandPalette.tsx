@@ -7,6 +7,8 @@ import { useRecents } from "@/hooks/useFavorites";
 import { navigablePages } from "@/data/navigation";
 import { Clock, Search } from "lucide-react";
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/lib/commandPaletteBus";
+import { isPublicRoute } from "@/lib/publicRoutes";
+import { IS_PUBLIC_ZONE } from "@/lib/zone";
 
 /**
  * CommandPalette — Bloco D2.
@@ -53,7 +55,7 @@ export function CommandPalette() {
   // Carrega o catálogo (pesado) sob demanda na primeira abertura, mantendo-o
   // fora do bundle inicial (A3).
   useEffect(() => {
-    if (!open || navigableScales.length > 0) return;
+    if (IS_PUBLIC_ZONE || !open || navigableScales.length > 0) return;
     let cancelled = false;
     import("@/data/scaleFilter").then((mod) => {
       if (cancelled) return;
@@ -82,6 +84,10 @@ export function CommandPalette() {
   const recentScales = useMemo(
     () => recents.map((id) => navigableScales.find((s) => s.id === id)).filter(Boolean) as NavScale[],
     [recents, navigableScales],
+  );
+  const visiblePages = useMemo(
+    () => IS_PUBLIC_ZONE ? navigablePages.filter((page) => isPublicRoute(page.href)) : navigablePages,
+    [],
   );
 
   useEffect(() => {
@@ -139,24 +145,26 @@ export function CommandPalette() {
           </CommandGroup>
         )}
 
-        <CommandGroup heading="Escalas">
-          {navigableScales.map((s) => (
-            <CommandItem
-              key={`scale-${s.id}`}
-              value={`${s.name} ${s.fullName}`}
-              onSelect={() => goScale(s.id, s.appRoute!)}
-            >
-              <Search className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <span className="flex flex-col">
-                <span className="text-sm"><Highlight text={s.name} query={search} /></span>
-                <span className="text-xs text-muted-foreground"><Highlight text={s.fullName} query={search} /></span>
-              </span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
+        {!IS_PUBLIC_ZONE && (
+          <CommandGroup heading="Escalas">
+            {navigableScales.map((s) => (
+              <CommandItem
+                key={`scale-${s.id}`}
+                value={`${s.name} ${s.fullName}`}
+                onSelect={() => goScale(s.id, s.appRoute!)}
+              >
+                <Search className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span className="flex flex-col">
+                  <span className="text-sm"><Highlight text={s.name} query={search} /></span>
+                  <span className="text-xs text-muted-foreground"><Highlight text={s.fullName} query={search} /></span>
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
         <CommandGroup heading="Páginas">
-          {navigablePages.map((p) => (
+          {visiblePages.map((p) => (
             <CommandItem key={`page-${p.href}`} value={`pagina ${p.label}`} onSelect={() => goPage(p.href)}>
               <p.icon className="mr-2 h-4 w-4 text-muted-foreground" />
               <Highlight text={p.label} query={search} />

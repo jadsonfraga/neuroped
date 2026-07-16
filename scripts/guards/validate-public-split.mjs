@@ -3,7 +3,7 @@
  * validate-public-split.mjs — Catraca da separação PÚBLICO × MÉDICO.
  *
  * Trava o invariante de segurança: rotas clínicas/sensíveis NUNCA podem cair na
- * allowlist pública (que dispensa o PIN). Se alguém adicionar, por engano, uma
+ * allowlist pública (que dispensa PIN/JWT). Se alguém adicionar, por engano, uma
  * rota de receita/prontuário/escala à lista pública, o CI falha.
  *
  * Executado via tsx:  npm run validate:public  (e dentro de `npm run verify`)
@@ -24,13 +24,14 @@ const MUST_BE_GATED = [
   "/", "/filtro", "/filtro-escalas", "/pacientes", "/prontuario",
   "/receita-c1", "/receita-c1-express", "/laudo-neuroped", "/documentos",
   "/medicamentos", "/farmacologia", "/calculadora-dose", "/valores-referencia",
-  "/pant", "/fichas-registro", "/prescricao", "/verificar",
+  "/pant", "/fichas-registro", "/prescricao",
   "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
 ];
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/orientacao-parental", "/glossario", "/portal-familia",
+  "/login", "/sessao-expirada", "/familia", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  "/orientacao-parental", "/glossario", "/portal-familia",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
   "/sobre", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
 ];
@@ -51,4 +52,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`[public-split] ✓ ${PUBLIC_ROUTE_PREFIXES.length} rotas públicas; ${MUST_BE_GATED.length} rotas sensíveis confirmadas atrás do PIN.`);
+console.log(`[public-split] ✓ ${PUBLIC_ROUTE_PREFIXES.length} rotas públicas; ${MUST_BE_GATED.length} rotas sensíveis confirmadas atrás dos gates clínicos.`);

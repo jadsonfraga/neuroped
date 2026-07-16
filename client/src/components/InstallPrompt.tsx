@@ -78,7 +78,7 @@ export function InstallPrompt() {
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Monitor className="w-3.5 h-3.5" />
-          <span>Funciona offline · Abre em janela própria · Atalho na área de trabalho</span>
+          <span>Shell e atalhos principais offline · Janela própria · Atalho na área de trabalho</span>
         </div>
 
         <div className="flex gap-2">

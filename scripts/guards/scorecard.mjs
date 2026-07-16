@@ -12,20 +12,42 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "baseline.json"), "utf8"));
-const { allScales } = await import(pathToFileURL(resolve(repoRoot, "client/src/data/scaleFilter.ts")).href);
+const { allScales, allScalesComFichas } = await import(pathToFileURL(resolve(repoRoot, "client/src/data/scaleFilter.ts")).href);
+
+const runnableReviewedWithFonte = allScales.filter(
+  (scale) =>
+    typeof scale.fonte === "string" &&
+    scale.fonte.trim().length > 0 &&
+    scale.pendente_validacao_clinica !== true,
+).length;
+const documentedWithFonte = allScalesComFichas.filter(
+  (scale) => typeof scale.fonte === "string" && scale.fonte.trim().length > 0,
+).length;
 
 const metrics = [
   {
-    eixo: "Catálogo",
+    eixo: "Instrumentos executáveis",
     atual: allScales.length,
-    meta: baseline.catalogInstruments,
-    ok: allScales.length >= baseline.catalogInstruments,
+    meta: baseline.catalogRunnableInstruments,
+    ok: allScales.length >= baseline.catalogRunnableInstruments,
   },
   {
-    eixo: "Proveniência",
-    atual: allScales.filter((scale) => typeof scale.fonte === "string" && scale.fonte.trim().length > 0).length,
-    meta: baseline.catalogWithFonte,
-    ok: allScales.filter((scale) => typeof scale.fonte === "string" && scale.fonte.trim().length > 0).length >= baseline.catalogWithFonte,
+    eixo: "Executáveis revisados com fonte",
+    atual: runnableReviewedWithFonte,
+    meta: baseline.catalogRunnableReviewedWithFonte,
+    ok: runnableReviewedWithFonte >= baseline.catalogRunnableReviewedWithFonte,
+  },
+  {
+    eixo: "Fichas documentadas",
+    atual: allScalesComFichas.length,
+    meta: baseline.catalogDocumentedInstruments,
+    ok: allScalesComFichas.length >= baseline.catalogDocumentedInstruments,
+  },
+  {
+    eixo: "Fichas com fonte",
+    atual: documentedWithFonte,
+    meta: baseline.catalogDocumentedWithFonte,
+    ok: documentedWithFonte >= baseline.catalogDocumentedWithFonte,
   },
   {
     eixo: "TypeScript",

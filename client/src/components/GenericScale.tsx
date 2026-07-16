@@ -213,7 +213,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               className="text-xl text-foreground leading-tight"
               style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
             >
-              Resultado — {config.title}
+              Respostas registradas — {config.title}
             </h1>
             <p className="text-xs text-muted-foreground italic">
               Avaliação concluída

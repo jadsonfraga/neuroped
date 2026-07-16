@@ -14,10 +14,37 @@ import { Label } from "@/components/ui/label";
 import { ClipboardList, RotateCcw } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+const CONNERS_DRAFT_VALUES = indexedAllowedValues(
+  connersQuestions.length,
+  connersLabels.length,
+);
 
 export default function ConnersPage() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:conners-abreviada",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, CONNERS_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const answered = Object.keys(answers).length;
   const total = connersQuestions.length;
@@ -29,9 +56,11 @@ export default function ConnersPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = connersQuestions.map((question, index) => ({
@@ -49,7 +78,7 @@ export default function ConnersPage() {
             <ClipboardList className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — Conners Abreviada</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — Conners Abreviada</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -114,6 +143,7 @@ export default function ConnersPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-red-500 flex items-center justify-center shadow-sm">
@@ -228,7 +258,7 @@ export default function ConnersPage() {
         size="lg"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
+        {allAnswered ? "Ver respostas" : `Responda todas as ${total} perguntas`}
       </Button>
       <ScaleReference scaleId="conners" />
     </div>

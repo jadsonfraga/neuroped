@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import { OfflineBanner } from "@/components/ui/VisualStates";
 import { navSections, getNavigationMatch } from "@/data/navigation";
 import { isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
-import { clearAuth } from "@/lib/authClient";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearMasterPinUnlock } from "@/lib/masterPin";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
@@ -22,6 +22,8 @@ import { clearMasterPinUnlock } from "@/lib/masterPin";
 // Cognitiva Infantil. Cartões desenhados à mão (não mapeados) para manter as
 // classes Tailwind estáticas e o visual polido de cada acento.
 function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; activeHref?: string }) {
+  if (IS_PUBLIC_ZONE) return null;
+
   const onPick = () => { softTap(); haptic.select(); };
 
   const FullCards = (
@@ -124,6 +126,7 @@ function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; acti
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { accessMode, logout } = useAuth();
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("neuroped:theme");
@@ -136,6 +139,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return localStorage.getItem("neuroped:sidebar-collapsed") === "1";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches,
+  );
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileCloseButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const mobileHeaderRef = useRef<HTMLElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
+  const mobileMenuWasOpen = useRef(false);
   // Chaves = títulos REAIS das seções (navigation.ts). Abre por padrão as duas
   // mais usadas; as demais começam recolhidas (a seção da rota atual auto-expande).
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
@@ -156,6 +168,73 @@ export function Layout({ children }: { children: React.ReactNode }) {
       localStorage.setItem("neuroped:sidebar-collapsed", collapsed ? "1" : "0");
     } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
   }, [collapsed]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const update = () => {
+      setIsDesktop(media.matches);
+      if (media.matches) setMobileOpen(false);
+    };
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const setInert = (element: HTMLElement | null, disabled: boolean) => {
+      if (disabled) element?.setAttribute("inert", "");
+      else element?.removeAttribute("inert");
+    };
+
+    if (!mobileOpen || isDesktop) {
+      setInert(sidebarRef.current, !isDesktop);
+      setInert(mobileHeaderRef.current, false);
+      setInert(mainContentRef.current, false);
+      if (mobileMenuWasOpen.current) mobileMenuButtonRef.current?.focus();
+      mobileMenuWasOpen.current = false;
+      return;
+    }
+
+    // Remova `inert` antes de mover o foco. Focusar um descendente inerte e só
+    // depois liberar a árvore falha silenciosamente em navegadores modernos.
+    setInert(sidebarRef.current, false);
+    setInert(mobileHeaderRef.current, true);
+    setInert(mainContentRef.current, true);
+    mobileMenuWasOpen.current = true;
+    mobileCloseButtonRef.current?.focus();
+    const sidebar = sidebarRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !sidebar) return;
+
+      const focusable = [...sidebar.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )].filter((element) => !element.hasAttribute("hidden"));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isDesktop, mobileOpen]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -196,7 +275,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("neuroped:local-unlocked-persistent");
     } catch { /* storage indisponível — recarregar ainda força rechecagem do gate */ }
     clearMasterPinUnlock();
-    clearAuth();
+    // No modo remoto, logout também revoga a família de refresh no servidor.
+    // No modo local ele apenas encerra qualquer credencial residual da aba.
+    await logout();
     await secureClearAll();
     window.location.hash = "#/";
     window.location.reload();
@@ -208,7 +289,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <OfflineBanner />
 
       {/* Mobile top header bar */}
-      <header className="print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md md:hidden">
+      <header
+        ref={mobileHeaderRef}
+        className="print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md md:hidden"
+      >
         <div className="flex items-center gap-3">
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
@@ -259,6 +343,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {dark ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
           </Button>
           <Button
+            ref={mobileMenuButtonRef}
             variant="ghost"
             size="sm"
             className="px-2"
@@ -297,6 +382,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
+        aria-hidden={!isDesktop && !mobileOpen ? true : undefined}
+        role={!isDesktop ? "dialog" : undefined}
+        aria-modal={!isDesktop && mobileOpen ? true : undefined}
+        aria-label={!isDesktop ? "Menu de navegação" : undefined}
         className={[
           "print:hidden",
           "fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
@@ -336,6 +426,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
           {/* Mobile close button */}
           <Button
+            ref={mobileCloseButtonRef}
             variant="ghost"
             size="sm"
             className="px-2 md:hidden ml-auto"
@@ -496,11 +587,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
             onClick={handleLocalLock}
             data-testid="button-local-lock"
-            aria-label="Bloquear acesso local"
+            aria-label={accessMode === "remote" ? "Encerrar sessão" : "Bloquear acesso local"}
           >
             <KeyRound className="w-4 h-4" />
-            {!collapsed && <span className="ml-2 text-sm">Bloquear acesso</span>}
-            {collapsed && <span className="ml-2 text-sm md:hidden">Bloquear acesso</span>}
+            {!collapsed && <span className="ml-2 text-sm">{accessMode === "remote" ? "Sair" : "Bloquear acesso"}</span>}
+            {collapsed && <span className="ml-2 text-sm md:hidden">{accessMode === "remote" ? "Sair" : "Bloquear acesso"}</span>}
           </Button>
           <Button
             variant="ghost"
@@ -523,7 +614,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main
+        ref={mainContentRef}
         id="main-content"
+        tabIndex={-1}
         className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 print:!ml-0 print:!pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
       >
         {showClinicalFlow && (

@@ -12,7 +12,6 @@ import { ArrowLeft, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { computeStats, mulberry32, shuffleWith } from "./stats";
-import { saveSession } from "./storage";
 import { ResultsPanel } from "./ResultsPanel";
 import type { CognitiveSession, TrialRecord } from "./types";
 
@@ -192,7 +191,7 @@ export function TrailMakingRunner() {
       },
     ];
     const s: CognitiveSession = {
-      id: `${TASK_ID}-${Date.now().toString(36)}`,
+      id: `${TASK_ID}-${crypto.randomUUID()}`,
       taskId: TASK_ID,
       taskName: TASK_NAME,
       startedAtIso: r.startedAtIso,
@@ -203,7 +202,6 @@ export function TrailMakingRunner() {
       validity: { valid: true, issues: [] },
       customSummary,
     };
-    saveSession(s);
     setSession(s);
     setPhase("results");
   }

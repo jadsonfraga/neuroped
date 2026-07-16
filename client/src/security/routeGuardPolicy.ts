@@ -1,13 +1,42 @@
 import { isClinicalRoute } from "@/security/accessPolicy";
 
 export type RouteAccessMode = "checking" | "remote" | "local";
-export type RouteAccessDecision = "allow" | "checking" | "login";
+export type RouteUserRole = "admin" | "professional" | "reader" | "operator";
+export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
+
+export const SENSITIVE_ROUTES = [
+  "/pant",
+  "/assinatura-digital",
+  "/documentos",
+  "/pacientes",
+  "/paciente",
+  "/prontuario",
+  "/calculadora-dose",
+  "/farmacologia",
+  "/medicamentos",
+  "/satisfacao-medicacao",
+  "/plano-terapeutico",
+  "/plano-intervencao",
+  "/avaliacao-multiprofissional",
+  "/fichas-registro",
+] as const;
+
+const DEFAULT_SENSITIVE_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
+
+export function isRouteSensitive(path: string): boolean {
+  const pathname = path.split(/[?#]/, 1)[0] || "/";
+  return SENSITIVE_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
 
 interface RouteAccessInput {
   path: string;
   accessMode: RouteAccessMode;
   isAuthenticated: boolean;
   isLoading: boolean;
+  userRole?: RouteUserRole | null;
+  allowedRoles?: readonly RouteUserRole[];
 }
 
 /**
@@ -22,8 +51,15 @@ export function decideRouteAccess({
   accessMode,
   isAuthenticated,
   isLoading,
+  userRole,
+  allowedRoles,
 }: RouteAccessInput): RouteAccessDecision {
   if (!isClinicalRoute(path) || accessMode === "local") return "allow";
   if (accessMode === "checking" || isLoading) return "checking";
-  return isAuthenticated ? "allow" : "login";
+  if (!isAuthenticated) return "login";
+  const effectiveRoles = allowedRoles ?? (isRouteSensitive(path) ? DEFAULT_SENSITIVE_ROLES : undefined);
+  if (effectiveRoles?.length && (!userRole || !effectiveRoles.includes(userRole))) {
+    return "forbidden";
+  }
+  return "allow";
 }

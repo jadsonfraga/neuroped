@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
+import { buildAppHashUrl } from "@/lib/appUrl";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -110,7 +111,7 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
   // conferível por terceiros, e o hash dos bytes do PDF final não pode ser
   // embutido no QR que já faz parte desse PDF. A conferência por SHA-256 dos
   // bytes é feita pelo comprovante gerado após a assinatura (AssinaturaIcpPanel).
-  const validationUrl = `${window.location.origin}/#/verificar`;
+  const validationUrl = buildAppHashUrl("/verificar");
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 240, margin: 1, errorCorrectionLevel: "M" });
   const qrImage = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
 
@@ -436,6 +437,7 @@ export default function ReceitaC1Page() {
     }
     const win = window.open("", "_blank");
     if (!win) return;
+    win.opener = null;
     win.document.write(buildReceitaC1Html(f));
     win.document.close();
     win.focus();

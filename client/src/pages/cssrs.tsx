@@ -12,12 +12,36 @@ import {
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import { hasRecordEntries, sanitizeBooleanRecord } from "@/lib/scaleDraftCore";
+
+const CSSRS_DRAFT_KEYS = new Set(cssrsQuestions.map((question) => question.id));
+
+function sanitizeCssrsDraft(value: unknown): Record<number, boolean> {
+  return pruneCssrsAnswers(sanitizeBooleanRecord(value, CSSRS_DRAFT_KEYS));
+}
 
 export default function CssrsPage() {
-  const [answers, setAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, boolean>>({
+    draftId: "dedicated:c-ssrs",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: sanitizeCssrsDraft,
+    hasContent: hasRecordEntries,
+  });
 
   const visibleIds = useMemo(
     () => getVisibleCssrsQuestionIds(answers),
@@ -60,10 +84,12 @@ export default function CssrsPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const resultVisibleIds = getVisibleCssrsQuestionIds(answers);
@@ -87,7 +113,7 @@ export default function CssrsPage() {
             <ShieldAlert className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — C-SSRS</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — C-SSRS</h1>
             <p className="text-xs text-muted-foreground">
               Escala Columbia de Gravidade de Ideação Suicida
             </p>
@@ -174,6 +200,7 @@ export default function CssrsPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-sm">
           <ShieldAlert className="w-5 h-5 text-white" />
@@ -291,7 +318,7 @@ export default function CssrsPage() {
         size="lg"
       >
         {allAnswered
-          ? "Ver Resultado"
+          ? "Ver respostas"
           : `Responder pendências (${answered}/${total})`}
       </Button>
       <ScaleReference scaleId="cssrs" />

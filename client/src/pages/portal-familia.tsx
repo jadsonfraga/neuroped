@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,9 +98,16 @@ const parentResources = [
 ];
 
 export default function PortalFamiliaPage() {
+  const { accessMode, isAuthenticated } = useAuth();
   const [patientId, setPatientId] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // ID de paciente nunca é credencial familiar. A consulta só existe como
+  // demonstração local fictícia ou prévia de um profissional autenticado.
+  const canPreviewDocuments =
+    accessMode === "local" ||
+    (accessMode === "remote" && isAuthenticated);
 
   const {
     data: documents = [],
@@ -108,7 +116,7 @@ export default function PortalFamiliaPage() {
     refetch,
   } = useQuery<FamilyDocument[]>({
     queryKey: [`/api/documents?patient_id=${patientId}&family_only=true`],
-    enabled: !!patientId,
+    enabled: canPreviewDocuments && !!patientId,
     queryFn: async () => {
       const res = await apiRequest(
         "GET",
@@ -136,7 +144,7 @@ export default function PortalFamiliaPage() {
         src={brandAssets.illustrations.childDevelopment}
         badge="Família e desenvolvimento"
         title="Orientação clara para a rotina, a escola e os próximos passos."
-        subtitle="Conteúdos educativos ficam acessíveis aos pais; documentos individuais aparecem apenas quando liberados pelo médico."
+        subtitle="Conteúdos educativos ficam acessíveis aos pais; documentos individuais seguem somente por acesso autenticado ou canal seguro do médico."
         className="min-h-44"
       />
 
@@ -156,7 +164,8 @@ export default function PortalFamiliaPage() {
             Esta aba reúne psicoeducação, orientação familiar, materiais escolares e documentos expressamente liberados. Prontuário, dados médicos individualizados e documentos sensíveis não ficam abertos aqui.
           </p>
           <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
-            Em produção, documentos exigem código/link de acesso familiar com liberação profissional.
+            O ID do paciente nunca funciona como senha. Um acesso familiar a
+            documentos exige link/token próprio e liberação profissional.
           </p>
         </div>
       </div>
@@ -195,33 +204,53 @@ export default function PortalFamiliaPage() {
       <Card className="border-border">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Documentos liberados pelo médico
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Documentos individuais
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 p-4 pt-0">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>Insira o código de acesso fornecido pelo médico para visualizar apenas documentos autorizados.</span>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Código de acesso do paciente..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-              className="h-10 flex-1"
-              aria-label="Código de acesso"
-              data-testid="input-family-access-code"
-            />
-            <Button
-              onClick={handleSearch}
-              disabled={!inputValue.trim()}
-              className="h-10 gap-2"
-              data-testid="button-search-documents"
+          {!canPreviewDocuments ? (
+            <div
+              className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-muted-foreground"
+              role="status"
             >
-              <Eye className="h-4 w-4" /> Buscar
-            </Button>
-          </div>
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <span>
+                Por segurança, esta instalação não abre documentos usando ID,
+                data de nascimento ou sobrenome. Solicite o documento pelo
+                canal seguro informado pelo consultório.
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>
+                  {accessMode === "local"
+                    ? "Demonstração com dados fictícios: use demo-001."
+                    : "Prévia profissional autenticada: informe o ID interno do paciente."}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder={accessMode === "local" ? "ID fictício (ex.: demo-001)" : "ID interno do paciente"}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  className="h-10 flex-1"
+                  aria-label="ID interno do paciente para prévia"
+                  data-testid="input-family-access-code"
+                />
+                <Button
+                  onClick={handleSearch}
+                  disabled={!inputValue.trim()}
+                  className="h-10 gap-2"
+                  data-testid="button-search-documents"
+                >
+                  <Eye className="h-4 w-4" /> Visualizar
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

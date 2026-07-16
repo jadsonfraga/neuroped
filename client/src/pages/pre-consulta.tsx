@@ -46,6 +46,7 @@ export default function PreConsultaPage() {
   const [contexto, setContexto] = useState<PreConsultaContexto>("primeira-consulta");
   const [observacoes, setObservacoes] = useState("");
   const [saved, setSaved] = useState<PreConsultaRecord | null>(null);
+  const [storageError, setStorageError] = useState("");
 
   const ageValidation = useMemo(() => validateAge({ years: anos, months: meses }), [anos, meses]);
 
@@ -67,13 +68,19 @@ export default function PreConsultaPage() {
   );
 
   async function salvar() {
+    setStorageError("");
     if (!ageValidation.isValid) {
       setSaved(null);
       return;
     }
     const record = { ...draft, status: "pronto-medico" as const };
     const current = await loadPreConsultas();
-    await savePreConsultas([record, ...current].slice(0, 50));
+    const stored = await savePreConsultas([record, ...current].slice(0, 50));
+    if (!stored) {
+      setSaved(null);
+      setStorageError("Não foi possível salvar neste dispositivo. Mantenha o formulário aberto e verifique o espaço ou as permissões de armazenamento do navegador.");
+      return;
+    }
     setSaved(record);
   }
 
@@ -81,6 +88,7 @@ export default function PreConsultaPage() {
     if (!window.confirm("Apagar todas as pré-consultas protegidas deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearPreConsultas();
     setSaved(null);
+    setStorageError("");
   }
 
   async function copiar() {
@@ -200,6 +208,11 @@ export default function PreConsultaPage() {
               <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
               <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
             </div>
+            {storageError && (
+              <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+                {storageError}
+              </p>
+            )}
           </CardContent>
         </Card>
 

@@ -11,8 +11,9 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
+import { escapeHtml } from "@/lib/htmlEscape";
 import childAssessmentImg from "@assets/images/child-assessment.webp";
-import { apiRequest } from "@/lib/queryClient";
+import { openEmailDraft } from "@/lib/shareText";
 
 const EMAIL_TO = "jadsonfraga@hotmail.com";
 
@@ -149,22 +150,22 @@ async function sendPtiEmail(
   body += `\n— Dr. Jadson Fraga Araújo Júnior — Neuropediatra`;
 
   try {
-    const res = await apiRequest("POST", "/api/send-report", { subject, body });
-    if (res.ok) {
-      setSent(true);
-      toast({ title: "✉️ Enviado", description: `PTI enviado para ${EMAIL_TO}` });
-      return;
-    }
-  } catch { /* envio via API falhou — cai no fallback mailto abaixo */ }
-
-  try {
-    const truncated = body.length > 1800 ? body.slice(0, 1800) + "\n\n[...PTI truncado — use Imprimir para versão completa]" : body;
-    const mailtoUrl = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(truncated)}`;
-    window.open(mailtoUrl, "_blank");
+    const outcome = await openEmailDraft({
+      to: EMAIL_TO,
+      subject,
+      body,
+      filename: `plano-terapeutico-${patient.name || "paciente"}`,
+    });
     setSent(true);
-    toast({ title: "✉️ Email aberto", description: "Seu app de email foi aberto com o PTI." });
+    toast({
+      title: "✉️ Email preparado",
+      description:
+        outcome === "inline"
+          ? "Seu app de email foi aberto com o PTI integral. Confirme o envio."
+          : "O PTI integral foi baixado em .txt. Anexe o arquivo ao email aberto.",
+    });
   } catch {
-    toast({ title: "Use Imprimir", description: "Não foi possível enviar. Use o botão Imprimir para salvar o PTI.", variant: "destructive" });
+    toast({ title: "Use Imprimir", description: "Não foi possível preparar o email. Use o botão Imprimir para salvar o PTI.", variant: "destructive" });
   }
 }
 
@@ -253,7 +254,7 @@ export default function PlanoTerapeuticoPage() {
     const content = `
       <html>
       <head>
-        <title>Plano Terapêutico Individualizado — ${patient.name}</title>
+        <title>Plano Terapêutico Individualizado — ${escapeHtml(patient.name || "Paciente")}</title>
         <style>
           body { font-family: Arial, sans-serif; font-size: 11pt; margin: 2cm; color: #1a1a1a; }
           h1 { font-size: 14pt; text-align: center; margin-bottom: 4px; color: #064e3b; }
@@ -274,9 +275,9 @@ export default function PlanoTerapeuticoPage() {
         <p class="subtitle">NeuroPed — Dr. Jadson Fraga Araújo Júnior — Neuropediatra</p>
         <p class="subtitle">Data de elaboração: ${dateStr}</p>
         <div class="patient-info">
-          <p><strong>Paciente:</strong> ${patient.name}</p>
-          <p><strong>Idade:</strong> ${patient.age}</p>
-          <p><strong>Diagnóstico / Hipótese:</strong> ${patient.diagnosis}</p>
+          <p><strong>Paciente:</strong> ${escapeHtml(patient.name || "—")}</p>
+          <p><strong>Idade:</strong> ${escapeHtml(patient.age || "—")}</p>
+          <p><strong>Diagnóstico / Hipótese:</strong> ${escapeHtml(patient.diagnosis || "—")}</p>
         </div>
         <div class="section">
           <p class="section-title">Plano por Área Terapêutica</p>
@@ -295,13 +296,13 @@ export default function PlanoTerapeuticoPage() {
             <tbody>
               ${completedPlans.map((p) => `
                 <tr>
-                  <td><strong>${p.area}</strong></td>
-                  <td>${p.profissional}</td>
-                  <td>${p.objetivos}</td>
-                  <td>${p.estrategias}</td>
-                  <td>${p.frequencia}</td>
-                  <td>${p.avaliacao}</td>
-                  <td>${p.prazo}</td>
+                  <td><strong>${escapeHtml(p.area)}</strong></td>
+                  <td>${escapeHtml(p.profissional)}</td>
+                  <td>${escapeHtml(p.objetivos)}</td>
+                  <td>${escapeHtml(p.estrategias)}</td>
+                  <td>${escapeHtml(p.frequencia)}</td>
+                  <td>${escapeHtml(p.avaliacao)}</td>
+                  <td>${escapeHtml(p.prazo)}</td>
                 </tr>
               `).join("")}
             </tbody>
@@ -316,6 +317,7 @@ export default function PlanoTerapeuticoPage() {
     `;
     const win = window.open("", "_blank");
     if (win) {
+      win.opener = null;
       win.document.write(content);
       win.document.close();
       win.focus();

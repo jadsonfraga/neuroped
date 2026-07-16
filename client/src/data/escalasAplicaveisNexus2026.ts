@@ -12,6 +12,9 @@
 // ============================================================
 import { type ScaleEntry } from "./scaleFilter";
 
+const PENDENCIA_VALIDACAO_AUTORAL =
+  "Instrumento autoral em desenvolvimento; conteúdo, propriedades psicométricas e uso clínico aguardam validação formal.";
+
 export const escalasAplicaveisNexus2026: ScaleEntry[] = [
   {
     id: "ead-np",
@@ -30,6 +33,7 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     validacaoBrasil: "Autoral — pendente de validação formal.",
     licencaUso: "autoral",
     pendente_validacao_clinica: true,
+    pendencia: PENDENCIA_VALIDACAO_AUTORAL,
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     signalTags: ["autonomia", "autocuidado", "comunicação funcional", "socialização", "atividades de vida diária", "independência", "prejuízo funcional"],
@@ -51,6 +55,7 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     validacaoBrasil: "Autoral — pendente de validação formal.",
     licencaUso: "autoral",
     pendente_validacao_clinica: true,
+    pendencia: PENDENCIA_VALIDACAO_AUTORAL,
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     signalTags: ["marcos motores", "sustento de cabeça", "sentar", "andar", "balbucio", "primeiras palavras", "atenção compartilhada", "interação"],
@@ -72,6 +77,7 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     validacaoBrasil: "Autoral — pendente de validação formal.",
     licencaUso: "autoral",
     pendente_validacao_clinica: true,
+    pendencia: PENDENCIA_VALIDACAO_AUTORAL,
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     signalTags: ["sobrecarga do cuidador", "exaustão", "rede de apoio", "impacto familiar", "rotina da casa"],
@@ -93,6 +99,7 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     validacaoBrasil: "Autoral — pendente de validação formal.",
     licencaUso: "autoral",
     pendente_validacao_clinica: true,
+    pendencia: PENDENCIA_VALIDACAO_AUTORAL,
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     signalTags: ["sensorialidade", "hipersensibilidade", "busca sensorial", "seletividade alimentar", "texturas", "sons", "defensividade tátil"],
@@ -114,6 +121,7 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     validacaoBrasil: "Autoral — pendente de validação formal.",
     licencaUso: "autoral",
     pendente_validacao_clinica: true,
+    pendencia: PENDENCIA_VALIDACAO_AUTORAL,
     suicideRiskInstrument: false,
     psychosisRiskInstrument: true,
     assessmentUse: "triagem",
@@ -137,6 +145,7 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     validacaoBrasil: "Autoral — pendente de validação formal.",
     licencaUso: "autoral",
     pendente_validacao_clinica: true,
+    pendencia: PENDENCIA_VALIDACAO_AUTORAL,
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     signalTags: ["revivescência", "pesadelos", "evitação", "sobressalto", "regressão", "irritabilidade", "brincar repetitivo do evento"],

@@ -21,7 +21,7 @@ function getJwtSecret(): string {
   const secret = process.env.NEUROPED_JWT_SECRET;
   if (!secret) {
     throw new JwtConfigurationError(
-      "NEUROPED_JWT_SECRET ausente. Defina com pelo menos 64 caracteres aleatorios em .env.",
+      "NEUROPED_JWT_SECRET ausente. Defina com pelo menos 32 caracteres aleatorios em .env.",
     );
   }
   if (secret.length < 32) {

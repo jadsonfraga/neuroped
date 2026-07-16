@@ -14,10 +14,28 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const now = new Date().toISOString();
 
   let dbStatus = "not_configured";
+  let authSchemaReady: boolean | null = null;
   if (env.DB) {
     try {
       await env.DB.prepare("SELECT 1").first();
       dbStatus = "ok";
+      const sessionTable = await env.DB
+        .prepare(
+          "SELECT 1 AS present FROM sqlite_master WHERE type = 'table' AND name = 'auth_refresh_sessions' LIMIT 1",
+        )
+        .first<{ present: number }>();
+      const authColumns = await env.DB
+        .prepare(
+          `SELECT COUNT(*) AS present
+             FROM pragma_table_info('users')
+            WHERE name IN (
+              'password_hash', 'must_change_password', 'failed_login_attempts',
+              'locked_until', 'last_login_at'
+            )`,
+        )
+        .first<{ present: number }>();
+      authSchemaReady =
+        sessionTable?.present === 1 && Number(authColumns?.present) === 5;
     } catch {
       dbStatus = "error";
     }
@@ -35,7 +53,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       // dados clínicos. Mesmo com o banco temporariamente indisponível, o
       // cliente deve falhar fechado e continuar exigindo login.
       required: Boolean(env.DB),
-      configured: Boolean(env.DB) && Boolean(env.NEUROPED_JWT_SECRET?.trim()),
+      configured:
+        Boolean(env.DB) &&
+        authSchemaReady !== false &&
+        (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) >= 32,
     },
     semanticSearch: {
       status: "not_configured",

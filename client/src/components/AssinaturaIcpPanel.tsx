@@ -7,11 +7,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   QrCode,
-  Save,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
+import { buildAppHashUrl } from "@/lib/appUrl";
 
 interface Props {
   /** Constrói os bytes do PDF do documento a partir do estado atual da página. */
@@ -25,58 +25,15 @@ interface Props {
   widgetPageIndex?: number;
 }
 
-const DB_NAME = "neuroped-icp";
-const DB_STORE = "cert";
-const DB_KEY = "saved";
-
-async function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function saveCert(p12: ArrayBuffer, senha: string): Promise<void> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(DB_STORE, "readwrite");
-    tx.objectStore(DB_STORE).put({ p12, senha }, DB_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function loadCert(): Promise<{ p12: ArrayBuffer; senha: string } | null> {
-  const db = await openDb();
-  return new Promise((resolve) => {
-    const tx = db.transaction(DB_STORE, "readonly");
-    const req = tx.objectStore(DB_STORE).get(DB_KEY);
-    req.onsuccess = () => resolve(req.result ?? null);
-    req.onerror = () => resolve(null);
-  });
-}
-
-async function deleteCert(): Promise<void> {
-  const db = await openDb();
-  return new Promise((resolve) => {
-    const tx = db.transaction(DB_STORE, "readwrite");
-    tx.objectStore(DB_STORE).delete(DB_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => resolve();
-  });
-}
-
 function signingErrorMessage(error: unknown): string {
   const msg = error instanceof Error ? error.message : "";
   return msg || "Falha ao assinar. Confira a senha do certificado e tente novamente.";
 }
 
 /**
- * Assinatura digital ICP-Brasil (certificado A1 .p12) — 100% no navegador.
- * A chave privada NUNCA sai do dispositivo; nada é enviado ao servidor.
- * O certificado pode ser salvo no IndexedDB do dispositivo para uso automático.
+ * Assinatura digital ICP-Brasil (certificado A1 .p12) processada no navegador.
+ * O arquivo pode vir do seletor local ou do backend autorizado, mas permanece
+ * somente na memória da aba e nunca é persistido pelo cliente.
  */
 export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex }: Props) {
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
@@ -87,22 +44,15 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   const [erro, setErro] = useState("");
   const [okMsg, setOkMsg] = useState("");
   const [verif, setVerif] = useState<{ hash: string; qr: string; url: string } | null>(null);
-  const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
-      // 1. IndexedDB — exibição rápida enquanto backend responde
-      const saved = await loadCert();
-      if (saved) {
-        setHasSaved(true);
-        setP12(saved.p12);
-        setP12Name("certificado salvo no dispositivo");
-        setSenha(saved.senha);
-        // Não retorna: backend tem precedência para garantir cert PF correto
-      }
-      // 2. Backend — autoridade final; substitui IndexedDB se tiver cert configurado
+      // Apaga versões anteriores que persistiam a chave privada e a senha.
+      await purgeLegacyCertificateCache();
+      // Backend autorizado — certificado fica apenas na memória desta aba.
       try {
-        const { authFetch } = await import("@/lib/authClient");
+        const { authFetch, getStoredUser } = await import("@/lib/authClient");
+        if (getStoredUser()?.role !== "admin") return;
         const r = await authFetch("/api/cert");
         if (!r.ok) return;
         const { cert: certB64, password: pwd } = await r.json();
@@ -111,13 +61,11 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         const buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
         const ab = buf.buffer;
-        await saveCert(ab, pwd ?? "");
-        setHasSaved(true);
         setP12(ab);
-        setP12Name("certificado do consultório");
+        setP12Name("certificado do consultório · somente nesta sessão");
         setSenha(pwd ?? "");
       } catch {
-        /* backend sem cert — segue com IndexedDB se disponível */
+        /* backend sem certificado — o seletor local continua disponível */
       }
     })();
   }, []);
@@ -126,7 +74,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     try {
       const { sha256Hex } = await import("@/lib/icpSign");
       const hash = await sha256Hex(bytes);
-      const url = `${window.location.origin}/#/verificar?h=${hash}`;
+      const url = buildAppHashUrl("/verificar", { h: hash });
       const QRCode = (await import("qrcode")).default;
       const qr = await QRCode.toDataURL(url, { width: 240, margin: 1, errorCorrectionLevel: "M" });
       setVerif({ hash, qr, url });
@@ -141,7 +89,6 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     if (!f) return;
     setP12Name(f.name);
     setP12(await f.arrayBuffer());
-    setHasSaved(false);
   }
 
   async function verificar() {
@@ -155,28 +102,6 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       setErro(signingErrorMessage(error));
       return;
     } finally { setBusy(""); }
-  }
-
-  async function salvarNoDispositivo() {
-    if (!p12) { setErro("Selecione o certificado antes de salvar."); return; }
-    setBusy("save");
-    try {
-      await saveCert(p12, senha);
-      setHasSaved(true);
-      setOkMsg("Certificado salvo no dispositivo. Será carregado automaticamente nas próximas sessões.");
-    } catch {
-      setErro("Não foi possível salvar o certificado no dispositivo.");
-    } finally { setBusy(""); }
-  }
-
-  async function removerDoDispositivo() {
-    await deleteCert();
-    setHasSaved(false);
-    setP12(null);
-    setP12Name("");
-    setSenha("");
-    setCert(null);
-    setOkMsg("Certificado removido do dispositivo.");
   }
 
   async function baixarSemAssinar() {
@@ -221,25 +146,16 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         <h3 className="text-sm font-bold text-foreground">Assinatura digital ICP-Brasil (certificado A1)</h3>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Selecione seu certificado <strong>.p12 / .pfx</strong> (A1). A chave privada é usada só no seu
-        dispositivo — <strong>nada é enviado ao servidor</strong>. O PDF é gerado e assinado em padrão PAdES.
+        Selecione seu certificado <strong>.p12 / .pfx</strong> (A1). A assinatura ocorre localmente e o
+        certificado permanece somente na memória desta aba. O PDF é gerado e assinado em padrão PAdES.
       </p>
 
-      {hasSaved && (
-        <div className="mb-3 rounded-lg border border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-2 flex items-center justify-between gap-2">
-          <p className="text-xs text-blue-800 dark:text-blue-200 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-            Certificado salvo neste dispositivo — carregado automaticamente.
+      {p12 && (
+        <div className="mb-3 rounded-lg border border-blue-300 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/30">
+          <p className="flex items-center gap-1.5 text-xs text-blue-800 dark:text-blue-200">
+            <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+            Certificado carregado somente na memória desta aba; não será salvo no navegador.
           </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-xs text-red-600 hover:text-red-700 h-auto py-0.5 px-2"
-            onClick={removerDoDispositivo}
-          >
-            <Trash2 className="w-3 h-3 mr-1" /> Remover
-          </Button>
         </div>
       )}
 
@@ -305,19 +221,6 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           {busy === "plain" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           PDF sem assinar
         </Button>
-        {p12 && !hasSaved && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={salvarNoDispositivo}
-            disabled={!!busy}
-            className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50 dark:text-blue-300 dark:border-blue-700"
-          >
-            {busy === "save" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar no dispositivo
-          </Button>
-        )}
       </div>
 
       {cert && (
@@ -392,9 +295,8 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       )}
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-snug">
-        Perfil PAdES-BES com seu certificado A1 ICP-Brasil. A chave privada permanece apenas neste
-        dispositivo — nunca é transmitida. &quot;Salvar no dispositivo&quot; armazena o certificado no
-        IndexedDB do navegador para carregamento automático futuro.
+        Perfil PAdES-BES com seu certificado A1 ICP-Brasil. A chave privada e a senha permanecem
+        somente na memória da aba atual e são descartadas ao recarregar ou fechar a página.
       </p>
     </section>
   );

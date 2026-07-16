@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { easing } from "@/lib/motion";
@@ -32,6 +32,7 @@ export function SplashScreen({
 }: SplashScreenProps) {
   const [show, setShow] = useState(true);
   const [minTimeReached, setMinTimeReached] = useState(false);
+  const reduceMotion = useReducedMotion() ?? false;
 
   useEffect(() => {
     const t = setTimeout(() => setMinTimeReached(true), minDurationMs);
@@ -55,7 +56,7 @@ export function SplashScreen({
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: easing.smooth }}
+          transition={{ duration: reduceMotion ? 0 : 0.4, ease: easing.smooth }}
           className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden"
           style={{
             background:
@@ -84,15 +85,15 @@ export function SplashScreen({
           <div className="relative z-10 flex flex-col items-center gap-8 px-6 max-w-lg">
             {/* Escudo Dr. Jadson animado com glow premium */}
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
+              initial={{ scale: reduceMotion ? 1 : 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.7, ease: easing.spring, delay: 0.08 }}
+              transition={{ duration: reduceMotion ? 0 : 0.7, ease: easing.spring, delay: reduceMotion ? 0 : 0.08 }}
               className="relative"
             >
               {/* Glow externo premium — teal + vinho */}
               <motion.div
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ scale: reduceMotion ? 1 : [1, 1.08, 1] }}
+                transition={reduceMotion ? { duration: 0 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute inset-0 rounded-full blur-3xl -z-10"
                 style={{
                   background:
@@ -124,9 +125,9 @@ export function SplashScreen({
 
             {/* Wordmark — tipografia premium */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: easing.smooth, delay: 0.35 }}
+              transition={{ duration: reduceMotion ? 0 : 0.6, ease: easing.smooth, delay: reduceMotion ? 0 : 0.35 }}
               className="text-center space-y-2"
             >
               <h1
@@ -152,9 +153,9 @@ export function SplashScreen({
 
             {/* Linha decorativa premium */}
             <motion.div
-              initial={{ scaleX: 0, opacity: 0 }}
+              initial={{ scaleX: reduceMotion ? 1 : 0, opacity: 0 }}
               animate={{ scaleX: 1, opacity: 0.7 }}
-              transition={{ duration: 0.6, ease: easing.smooth, delay: 0.52 }}
+              transition={{ duration: reduceMotion ? 0 : 0.6, ease: easing.smooth, delay: reduceMotion ? 0 : 0.52 }}
               className="h-0.5 w-32"
               style={{
                 background:
@@ -164,9 +165,9 @@ export function SplashScreen({
 
             {/* Credenciais institucionais */}
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: easing.smooth, delay: 0.62 }}
+              transition={{ duration: reduceMotion ? 0 : 0.5, ease: easing.smooth, delay: reduceMotion ? 0 : 0.62 }}
               className="text-center space-y-1.5"
             >
               <div
@@ -188,20 +189,24 @@ export function SplashScreen({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.75, duration: 0.4 }}
+              transition={{ delay: reduceMotion ? 0 : 0.75, duration: reduceMotion ? 0 : 0.4 }}
               className="flex items-center gap-2 mt-6"
               aria-hidden="true"
             >
               {[0, 1, 2].map((i) => (
                 <motion.span
                   key={i}
-                  animate={{ scale: [0.7, 1.1, 0.7], opacity: [0.4, 1, 0.4] }}
-                  transition={{
-                    duration: 1.4,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                    ease: "easeInOut",
-                  }}
+                  animate={reduceMotion
+                    ? { scale: 1, opacity: 0.8 }
+                    : { scale: [0.7, 1.1, 0.7], opacity: [0.4, 1, 0.4] }}
+                  transition={reduceMotion
+                    ? { duration: 0 }
+                    : {
+                        duration: 1.4,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                        ease: "easeInOut",
+                      }}
                   className="rounded-full"
                   style={{
                     width: "6px",

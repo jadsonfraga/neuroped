@@ -139,7 +139,7 @@ export interface ValidityResult {
   issues: string[];
 }
 
-/** Sessão persistida (offline-first, localStorage). */
+/** Sessão temporária persistida no armazenamento cifrado da sessão clínica. */
 export interface CognitiveSession {
   id: string;
   taskId: string;

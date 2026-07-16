@@ -1,4 +1,10 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -127,6 +133,8 @@ export const consents = sqliteTable(
   "consents",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    /** Nulo apenas em registros legados anteriores ao contrato em lote. */
+    batchId: text("batch_id"),
     userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
     patientId: text("patient_id"),
     consentType: text("consent_type", { enum: consentTypes }).notNull(),
@@ -134,6 +142,8 @@ export const consents = sqliteTable(
     consentText: text("consent_text").notNull(),
     granted: integer("granted", { mode: "boolean" }).notNull(),
     grantedAt: text("granted_at").notNull().$defaultFn(() => new Date().toISOString()),
+    /** Instante declarado pelo cliente; obrigatório para todas as novas gravações. */
+    acceptedAt: text("accepted_at"),
     revokedAt: text("revoked_at"),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
@@ -144,6 +154,17 @@ export const consents = sqliteTable(
     userIdx: index("consents_user_idx").on(t.userId),
     patientIdx: index("consents_patient_idx").on(t.patientId),
     typeIdx: index("consents_type_idx").on(t.consentType),
+    batchIdx: index("consents_batch_idx").on(t.batchId),
+    userAcceptedIdx: index("consents_user_accepted_idx").on(
+      t.userId,
+      t.acceptedAt,
+    ),
+    idempotencyIdx: uniqueIndex("consents_idempotency_idx").on(
+      t.userId,
+      t.consentType,
+      t.consentVersion,
+      t.acceptedAt,
+    ),
   }),
 );
 
@@ -186,6 +207,7 @@ export const auditEventTypes = [
   "result.read",
   "result.update",
   "result.delete",
+  "consent.batch.granted",
   "consent.granted",
   "consent.revoked",
   "data.export.request",

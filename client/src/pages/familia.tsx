@@ -19,7 +19,7 @@ const LINKS: FamilyLink[] = [
   { href: "/curvas-crescimento", title: "Curvas de Crescimento", desc: "Peso e altura por idade (referência OMS).", icon: TrendingUp, gradient: "from-emerald-500 to-teal-500" },
   { href: "/glossario", title: "Glossário", desc: "Termos da neuropediatria explicados sem jargão.", icon: BookText, gradient: "from-indigo-500 to-blue-600" },
   { href: "/caa", title: "CAA · Vou Falar", desc: "Comunicação alternativa para apoiar a fala.", icon: MessageCircle, gradient: "from-violet-600 to-purple-600" },
-  { href: "/portal-familia", title: "Meus documentos", desc: "Acesse laudos e orientações que o médico compartilhou (com código).", icon: FileText, gradient: "from-cyan-500 to-sky-600" },
+  { href: "/portal-familia", title: "Portal e orientações", desc: "Conteúdos para a família; documentos individuais seguem por canal seguro.", icon: FileText, gradient: "from-cyan-500 to-sky-600" },
 ];
 
 export default function FamiliaPage() {

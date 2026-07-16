@@ -13,6 +13,20 @@ interface Env {
   DB?: D1Database;
 }
 
+import {
+  canWriteClinicalData,
+  getContextUser,
+  getPatientAccess,
+} from "./auth/_authorization";
+import {
+  CLINICAL_INPUT_LIMITS,
+  createClinicalRecordId,
+  hasBoundedIdentifier,
+  isValidIsoDateTime,
+  normalizeClinicalResponses,
+} from "./_clinicalValidation";
+import { isPlainObject } from "./_request";
+
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -35,72 +49,101 @@ function slug(s: string): string {
   );
 }
 
-function normalizeResponses(
-  value: unknown,
-): Array<{ question: string; answer: string }> {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const question = String((item as any).question ?? "").trim();
-      const answer = String((item as any).answer ?? "").trim();
-      if (!question) return null;
-      return { question, answer: answer || "Não respondida" };
-    })
-    .filter(
-      (item): item is { question: string; answer: string } => item !== null,
-    );
-}
-
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
 
-  let body: Record<string, any>;
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
     return json(
       { error: "Corpo da requisição inválido.", code: "INVALID_JSON" },
       400,
     );
   }
-
-  const patient_id = String(body.patientId ?? body.patient_id ?? "").trim();
-  // Sem paciente vinculado (ex.: aplicação avulsa de escala): não há onde
-  // persistir (scale_results_demo exige patient_id). Responde suave, sem erro.
-  if (!patient_id) {
+  if (!isPlainObject(parsed)) {
     return json(
-      {
-        stored: false,
-        note: "Resultado não vinculado a paciente — não persistido.",
-      },
-      200,
-    );
-  }
-
-  const scale_name = String(
-    body.scaleName ?? body.scale_name ?? "Escala",
-  ).trim();
-  const scale_id = String(
-    body.scaleId ?? body.scale_id ?? slug(scale_name),
-  ).trim();
-  const responses = normalizeResponses(body.responses ?? body.answers);
-  if (responses.length === 0) {
-    return json(
-      {
-        error: "Envie todas as perguntas e respostas por extenso.",
-        code: "RESPONSES_REQUIRED",
-      },
+      { error: "Corpo deve ser um objeto JSON.", code: "INVALID_JSON" },
       400,
     );
   }
+  const body = parsed;
+
+  const rawPatientId = body.patientId ?? body.patient_id;
+  if (rawPatientId != null && typeof rawPatientId !== "string") {
+    return json({ error: "'patientId' deve ser texto.", code: "VALIDATION_ERROR" }, 400);
+  }
+  const patient_id = rawPatientId?.trim() ?? "";
+  if (patient_id && !hasBoundedIdentifier(patient_id)) {
+    return json(
+      { error: "'patientId' é inválido ou excede 128 caracteres.", code: "VALIDATION_ERROR" },
+      400,
+    );
+  }
+
+  const rawScaleName = body.scaleName ?? body.scale_name;
+  if (rawScaleName != null && typeof rawScaleName !== "string") {
+    return json({ error: "'scaleName' deve ser texto.", code: "VALIDATION_ERROR" }, 400);
+  }
+  const scale_name = rawScaleName?.trim() || "Escala";
+  if (scale_name.length > CLINICAL_INPUT_LIMITS.scaleName) {
+    return json(
+      { error: `'scaleName' deve ter no máximo ${CLINICAL_INPUT_LIMITS.scaleName} caracteres.`, code: "VALIDATION_ERROR" },
+      400,
+    );
+  }
+  const rawScaleId = body.scaleId ?? body.scale_id;
+  if (rawScaleId != null && typeof rawScaleId !== "string") {
+    return json({ error: "'scaleId' deve ser texto.", code: "VALIDATION_ERROR" }, 400);
+  }
+  const scale_id = rawScaleId?.trim() || slug(scale_name);
+  if (!hasBoundedIdentifier(scale_id)) {
+    return json(
+      { error: "'scaleId' é inválido ou excede 128 caracteres.", code: "VALIDATION_ERROR" },
+      400,
+    );
+  }
+
+  const normalizedResponses = normalizeClinicalResponses(body.responses ?? body.answers);
+  if (!normalizedResponses.ok) {
+    return json(
+      { error: normalizedResponses.message, code: normalizedResponses.code },
+      400,
+    );
+  }
+  const responses = normalizedResponses.responses;
+  if (
+    body.patientAge != null &&
+    typeof body.patientAge !== "string" &&
+    typeof body.patientAge !== "number"
+  ) {
+    return json({ error: "'patientAge' deve ser texto ou número.", code: "VALIDATION_ERROR" }, 400);
+  }
+  if (
+    (typeof body.patientAge === "string" && body.patientAge.trim().length > 80) ||
+    (typeof body.patientAge === "number" &&
+      (!Number.isFinite(body.patientAge) || body.patientAge < 0 || body.patientAge > 130))
+  ) {
+    return json({ error: "'patientAge' é inválido ou excede o limite permitido.", code: "VALIDATION_ERROR" }, 400);
+  }
   const details = JSON.stringify({
     responses,
-    patientAge: body.patientAge ?? null,
+    patientAge: typeof body.patientAge === "string"
+      ? body.patientAge.trim() || null
+      : body.patientAge ?? null,
   });
 
-  const id = `scale-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  const applied_at = String(body.applied_at ?? new Date().toISOString());
+  const id = createClinicalRecordId("scale");
+  if (body.applied_at != null && typeof body.applied_at !== "string") {
+    return json({ error: "'applied_at' deve ser texto.", code: "VALIDATION_ERROR" }, 400);
+  }
+  const applied_at = body.applied_at?.trim() || new Date().toISOString();
+  if (!isValidIsoDateTime(applied_at)) {
+    return json(
+      { error: "'applied_at' deve ser um instante ISO 8601 válido com timezone.", code: "VALIDATION_ERROR" },
+      400,
+    );
+  }
 
   const payload = {
     id,
@@ -110,6 +153,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     responses,
     applied_at,
   };
+
+  // Aplicação avulsa continua aceita, mas somente depois de validar integralmente
+  // perguntas/respostas e tipos; payload malformado nunca vira falso sucesso.
+  if (!patient_id) {
+    return json(
+      {
+        ...payload,
+        stored: false,
+        note: "Resultado não vinculado a paciente — não persistido.",
+      },
+      200,
+    );
+  }
 
   if (!env.DB) {
     return json(
@@ -123,6 +179,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    const user = getContextUser(context);
+    if (!user) {
+      return json({ error: "Não autenticado.", code: "UNAUTHENTICATED" }, 401);
+    }
+    if (!canWriteClinicalData(user)) {
+      return json(
+        { error: "Perfil sem permissão para registrar resultados.", code: "FORBIDDEN" },
+        403,
+      );
+    }
+    const access = await getPatientAccess(env.DB, patient_id, user);
+    if (!access.exists) {
+      return json({ error: "Paciente não encontrado.", code: "NOT_FOUND" }, 404);
+    }
+    if (!access.allowed) {
+      return json({ error: "Sem permissão para este paciente.", code: "FORBIDDEN" }, 403);
+    }
+
     await env.DB.prepare(
       `INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,

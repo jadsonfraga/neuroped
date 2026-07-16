@@ -847,19 +847,95 @@ const allScalesBase: ScaleEntry[] = [
   // Histórico preservado no git (escalasAutoraisDrive2026Lote2.ts, removido).
 ];
 
+/**
+ * Extensão declarada pela fonte/curadoria para instrumentos que já tiveram uma
+ * aplicação parcial detectada. Eles permanecem no catálogo documental, mas não
+ * podem aparecer como `complete` até que a quantidade autoritativa de itens
+ * esteja realmente presente. Nunca completamos perguntas clínicas por inferência.
+ */
+export const EXPECTED_INTERACTIVE_ITEM_COUNTS: Readonly<Record<string, number>> = {
+  rcads: 47,
+  mfq: 33,
+  ppp: 20,
+  "pediatric-feeding-q": 23,
+  hsq: 16,
+  "eci-fraga-qief": 10,
+  "j26-005": 20,
+  "j26-010": 30,
+  "j26-011": 30,
+  "j26-012": 40,
+  "j26-020": 20,
+  "j26-021": 16,
+  "j26-026": 20,
+  "j26-027": 18,
+  "j26-051": 16,
+  "j26-082": 20,
+  "j26-089": 18,
+  "j26-092": 20,
+  "j26-093": 16,
+  "j26-097": 20,
+  "j26-098": 16,
+  "j26-104": 18,
+  "j26-106": 16,
+  "j26-111": 24,
+  "j26-113": 20,
+  "j26-115": 14,
+  "j26-117": 20,
+  "j26-126": 14,
+  "j26-130": 14,
+  "j26-176": 16,
+  "j26-180": 24,
+  "j26-181": 16,
+  "j26-185": 14,
+  "j26-186": 18,
+  "j26-187": 20,
+  "j26-189": 30,
+  "j26-191": 14,
+  "j26-192": 14,
+  "j26-194": 20,
+  "j26-195": 30,
+  "j26-201": 14,
+  "j26-203": 18,
+  "j26-208": 24,
+  "j26-209": 18,
+  "j26-210": 24,
+};
+
+export function getDeliveredInteractiveItemCount(scaleId: string): number {
+  const domainRunner = interactiveScaleItems[scaleId];
+  if (domainRunner) {
+    return domainRunner.domains.reduce((total, domain) => total + domain.items.length, 0);
+  }
+  return interactiveScales[scaleId]?.items.length ?? 0;
+}
+
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
 const allScalesComDescricoes: ScaleEntry[] = allScalesBase.map(escala => {
   const appRoute = escala.appRoute ?? `/generic-scale/${escala.id}`;
   const exemploPais = escala.exemploPais ?? exemplosPais2026[escala.id];
+  const expectedItems = EXPECTED_INTERACTIVE_ITEM_COUNTS[escala.id];
+  const deliveredItems = expectedItems === undefined
+    ? undefined
+    : getDeliveredInteractiveItemCount(escala.id);
+  const hasIncompleteItemContract =
+    expectedItems !== undefined && deliveredItems !== expectedItems;
+  const completenessPatch: Partial<ScaleEntry> = hasIncompleteItemContract
+    ? {
+        implementationStatus: "metadata_only",
+        pendente_validacao_clinica: true,
+        pendencia: `Aplicação incompleta: fonte declara ${expectedItems} itens, mas há ${deliveredItems} disponíveis. Aguardando conteúdo autoritativo.`,
+      }
+    : {};
   if (descricoesMelhoradas[escala.id]) {
     return {
       ...escala,
+      ...completenessPatch,
       appRoute,
       exemploPais,
       description: descricoesMelhoradas[escala.id],
     };
   }
-  return { ...escala, appRoute, exemploPais };
+  return { ...escala, ...completenessPatch, appRoute, exemploPais };
 });
 
 // Deduplicação por id E por nome. O merge de lotes de importação (legado + v25 +

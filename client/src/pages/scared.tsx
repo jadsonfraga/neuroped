@@ -10,12 +10,39 @@ import { Label } from "@/components/ui/label";
 import { ShieldAlert, RotateCcw } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+const SCARED_DRAFT_VALUES = indexedAllowedValues(
+  scaredQuestions.length,
+  scaredLabels.length,
+);
 
 export default function ScaredPage() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const {
+    value: answers,
+    setValue: setAnswers,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<Record<number, number>>({
+    draftId: "dedicated:scared",
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => sanitizeNumberRecord(value, SCARED_DRAFT_VALUES),
+    hasContent: hasRecordEntries,
+  });
 
   const total = scaredQuestions.length;
   const answered = scaredQuestions.reduce(
@@ -49,10 +76,12 @@ export default function ScaredPage() {
   }
 
   function handleReset() {
-    setAnswers({});
+    void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
   }
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const reportItems = scaredQuestions.map((question, index) => ({
@@ -70,7 +99,7 @@ export default function ScaredPage() {
             <ShieldAlert className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — SCARED</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — SCARED</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -135,6 +164,7 @@ export default function ScaredPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice visible={draftRestored} onClear={handleReset} />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-sm">
@@ -260,7 +290,7 @@ export default function ScaredPage() {
         size="lg"
         data-testid="button-submit"
       >
-        {allAnswered ? "Ver Resultado" : `Responda todas as ${total} perguntas`}
+        {allAnswered ? "Ver respostas" : `Responda todas as ${total} perguntas`}
       </Button>
       <ScaleReference scaleId="scared" />
     </div>

@@ -15,17 +15,85 @@ import {
 import { ScaleReference } from "@/components/ScaleReference";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { ClinicalReport } from "@/components/ClinicalReport";
+import {
+  ScaleDraftLoading,
+  ScaleDraftRestoredNotice,
+} from "@/components/ScaleDraftLoading";
+import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  hasRecordEntries,
+  indexedAllowedValues,
+  sanitizeNumberRecord,
+} from "@/lib/scaleDraftCore";
+
+interface YgtssDraft {
+  motorAnswers: Record<number, number>;
+  vocalAnswers: Record<number, number>;
+  impairment: number;
+}
+
+const YGTSS_MOTOR_VALUES = indexedAllowedValues(
+  ygtssMotorTics.length,
+  ygtssFrequencyLabels.length,
+);
+const YGTSS_VOCAL_VALUES = indexedAllowedValues(
+  ygtssVocalTics.length,
+  ygtssFrequencyLabels.length,
+);
+const YGTSS_IMPAIRMENT_VALUES = new Set([0, 10, 20, 30, 40, 50]);
+const emptyYgtssDraft = (): YgtssDraft => ({
+  motorAnswers: {},
+  vocalAnswers: {},
+  impairment: 0,
+});
+
+function sanitizeYgtssDraft(value: unknown): YgtssDraft {
+  const source =
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Partial<YgtssDraft>)
+      : {};
+  return {
+    motorAnswers: sanitizeNumberRecord(source.motorAnswers, YGTSS_MOTOR_VALUES),
+    vocalAnswers: sanitizeNumberRecord(source.vocalAnswers, YGTSS_VOCAL_VALUES),
+    impairment:
+      typeof source.impairment === "number" &&
+      YGTSS_IMPAIRMENT_VALUES.has(source.impairment)
+        ? source.impairment
+        : 0,
+  };
+}
+
+function hasYgtssContent(value: YgtssDraft): boolean {
+  return (
+    hasRecordEntries(value.motorAnswers) ||
+    hasRecordEntries(value.vocalAnswers) ||
+    value.impairment !== 0
+  );
+}
 
 export default function YgtssPage() {
-  const [motorAnswers, setMotorAnswers] = useState<Record<number, number>>({});
-  const [vocalAnswers, setVocalAnswers] = useState<Record<number, number>>({});
-  const [impairment, setImpairment] = useState<number>(0);
   const [showResult, setShowResult] = useState(false);
+  const {
+    value: draft,
+    setValue: setDraft,
+    ready: draftReady,
+    restored: draftRestored,
+    clearDraft,
+  } = useSecureTypedScaleDraft<YgtssDraft>({
+    draftId: "dedicated:ygtss",
+    schemaVersion: 1,
+    createEmpty: emptyYgtssDraft,
+    sanitize: sanitizeYgtssDraft,
+    hasContent: hasYgtssContent,
+  });
+  const { motorAnswers, vocalAnswers, impairment } = draft;
 
   const totalQ = ygtssMotorTics.length + ygtssVocalTics.length;
   const answered =
     Object.keys(motorAnswers).length + Object.keys(vocalAnswers).length;
   const progress = (answered / totalQ) * 100;
+
+  if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
     const freqOrDash = (v: number | undefined) =>
@@ -60,7 +128,7 @@ export default function YgtssPage() {
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Resultado — YGTSS</h1>
+            <h1 className="text-lg font-bold">Respostas registradas — YGTSS</h1>
             <p className="text-xs text-muted-foreground">
               Yale Global Tic Severity Scale
             </p>
@@ -136,9 +204,7 @@ export default function YgtssPage() {
         />
         <Button
           onClick={() => {
-            setMotorAnswers({});
-            setVocalAnswers({});
-            setImpairment(0);
+            void clearDraft();
             setShowResult(false);
           }}
           variant="outline"
@@ -152,6 +218,13 @@ export default function YgtssPage() {
 
   return (
     <div className="space-y-6">
+      <ScaleDraftRestoredNotice
+        visible={draftRestored}
+        onClear={() => {
+          void clearDraft();
+          setShowResult(false);
+        }}
+      />
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-sm">
           <Sparkles className="w-5 h-5 text-white" />
@@ -198,7 +271,13 @@ export default function YgtssPage() {
             <RadioGroup
               value={motorAnswers[i]?.toString()}
               onValueChange={(val) =>
-                setMotorAnswers({ ...motorAnswers, [i]: parseInt(val) })
+                setDraft((current) => ({
+                  ...current,
+                  motorAnswers: {
+                    ...current.motorAnswers,
+                    [i]: parseInt(val),
+                  },
+                }))
               }
               className="flex flex-wrap gap-2"
             >
@@ -240,7 +319,13 @@ export default function YgtssPage() {
             <RadioGroup
               value={vocalAnswers[i]?.toString()}
               onValueChange={(val) =>
-                setVocalAnswers({ ...vocalAnswers, [i]: parseInt(val) })
+                setDraft((current) => ({
+                  ...current,
+                  vocalAnswers: {
+                    ...current.vocalAnswers,
+                    [i]: parseInt(val),
+                  },
+                }))
               }
               className="flex flex-wrap gap-2"
             >
@@ -277,7 +362,9 @@ export default function YgtssPage() {
             <span className="text-xs text-muted-foreground">0</span>
             <Slider
               value={[impairment]}
-              onValueChange={([v]) => setImpairment(v)}
+              onValueChange={([v]) =>
+                setDraft((current) => ({ ...current, impairment: v }))
+              }
               max={50}
               step={10}
               className="flex-1"
@@ -303,7 +390,7 @@ export default function YgtssPage() {
         size="lg"
       >
         {answered >= totalQ
-          ? "Ver Resultado"
+          ? "Ver respostas"
           : `Avalie todos os ${totalQ} tiques`}
       </Button>
       <ScaleReference scaleId="ygtss" />

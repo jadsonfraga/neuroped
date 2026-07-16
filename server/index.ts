@@ -20,7 +20,6 @@ import { registerRoutes } from "./routes.js";
 import { serveStatic } from "./static.js";
 import { applySecurity } from "./middleware/security.js";
 import { bootstrapAdmin } from "./storage.js";
-import { initDb } from "./lib/db.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -75,13 +74,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Inicializa banco (no-op para SQLite; conecta Postgres se DATABASE_URL configurado)
-  try {
-    await initDb();
-  } catch (e) {
-    console.error("[db] Falha ao inicializar banco:", e);
-  }
-
   // Bootstrap (cria admin inicial se ADMIN_EMAIL/ADMIN_INITIAL_PASSWORD definidos)
   try {
     await bootstrapAdmin();
