@@ -103,7 +103,7 @@ for (const route of [
 }
 
 const report = read("client/src/components/ClinicalReport.tsx");
-assert.match(report, /shareTextDocument/);
+assert.match(report, /shareWhatsAppDocument/);
 assert.doesNotMatch(report, /\/api\/send-report/);
 assert.doesNotMatch(
   report,
