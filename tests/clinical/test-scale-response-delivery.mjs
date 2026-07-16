@@ -135,6 +135,7 @@ assert.deepEqual(legacy, [
 
 const clinicalReportSource = source("client/src/components/ClinicalReport.tsx");
 const whatsAppSource = source("client/src/components/WhatsAppShare.tsx");
+const shareTextSource = source("client/src/lib/shareText.ts");
 const saveSource = source("client/src/components/SaveToPatient.tsx");
 const patientSource = source("client/src/pages/paciente-detalhe.tsx");
 const genericSource = source("client/src/components/GenericScale.tsx");
@@ -150,13 +151,18 @@ assert.doesNotMatch(
 );
 assert.match(
   clinicalReportSource,
-  /shareTextDocument\(\{[\s\S]*?text:\s*reportText,/,
+  /shareWhatsAppDocument\(\{[\s\S]*?text:\s*reportText,/,
   "compartilhamento deve receber o relatório integral",
 );
 assert.doesNotMatch(clinicalReportSource, /reportText\.slice/);
 assert.doesNotMatch(whatsAppSource, /scoreLine|reportText\.slice|totalScore/);
 assert.doesNotMatch(whatsAppSource, /send-whatsapp|authFetch/);
-assert.match(whatsAppSource, /window\.open\(whatsappUrl, "_blank"\)/);
+assert.match(whatsAppSource, /shareWhatsAppDocument\(\{/);
+assert.match(
+  shareTextSource,
+  /navigator\.share\(\{ title: options\.title, text \}\)/,
+);
+assert.match(shareTextSource, /https:\/\/wa\.me/);
 
 assert.match(saveSource, /responses:\s*ScaleResponseItem\[\]/);
 assert.match(saveSource, /normalizeScaleResponseItems\(rawProps\.responses\)/);
