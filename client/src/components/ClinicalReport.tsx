@@ -227,8 +227,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     if (outcome === "failed") {
       toast({
         title: "Não foi possível compartilhar",
-        description:
-          "Use Copiar texto ou Gerar PDF para preservar todas as respostas.",
+        description: "Use Copiar texto ou Gerar PDF para preservar todas as respostas.",
         variant: "destructive",
       });
       return;
@@ -236,8 +235,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     softSuccess();
     haptic.success();
     toast({
-      title:
-        outcome === "shared" ? "Compartilhamento aberto" : "WhatsApp aberto",
+      title: outcome === "shared" ? "Compartilhamento aberto" : "WhatsApp aberto",
       description:
         outcome === "shared"
           ? "Escolha o WhatsApp para enviar o arquivo com todas as perguntas e respostas."
@@ -252,8 +250,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     );
     toast({
       title: "Arquivo baixado",
-      description:
-        "O arquivo contém todas as perguntas e respostas por extenso.",
+      description: "O arquivo contém todas as perguntas e respostas por extenso.",
     });
   }
 

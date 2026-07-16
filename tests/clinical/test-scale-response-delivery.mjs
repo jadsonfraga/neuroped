@@ -267,9 +267,7 @@ for (const [id, min, max] of [
 ]) {
   assert.match(
     directTestsSource,
-    new RegExp(
-      `id: "${id}"[\\s\\S]{0,220}?ageMin: ${min},[\\s\\S]{0,80}?ageMax: ${max}`,
-    ),
+    new RegExp(`id: "${id}"[\\s\\S]{0,220}?ageMin: ${min},[\\s\\S]{0,80}?ageMax: ${max}`),
     `${id} deve anunciar exatamente ${min}–${max} anos`,
   );
 }
@@ -365,9 +363,7 @@ assert.doesNotMatch(
   "backup antigo não pode reintroduzir pontuação",
 );
 
-const centralizedResponseValidation = source(
-  "functions/api/_clinicalValidation.ts",
-);
+const centralizedResponseValidation = source("functions/api/_clinicalValidation.ts");
 assert.match(centralizedResponseValidation, /code:\s*"RESPONSES_REQUIRED"/);
 
 for (const apiPath of [
