@@ -33,7 +33,7 @@ import {
   downloadTextDocument,
   openEmailDraft,
   safeTextFilename,
-  shareTextDocument,
+  shareWhatsAppDocument,
 } from "@/lib/shareText";
 
 const EMAIL_TO = "drjadsonfraga@proton.me";
@@ -218,7 +218,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
       return;
     }
 
-    const outcome = await shareTextDocument({
+    const outcome = await shareWhatsAppDocument({
       title: `${props.scaleName} — respostas completas`,
       text: reportText,
       filename: `${props.scaleName}-respostas-completas`,
@@ -227,7 +227,8 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     if (outcome === "failed") {
       toast({
         title: "Não foi possível compartilhar",
-        description: "Use Copiar texto ou Gerar PDF para preservar todas as respostas.",
+        description:
+          "Use Copiar texto ou Gerar PDF para preservar todas as respostas.",
         variant: "destructive",
       });
       return;
@@ -235,13 +236,16 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     softSuccess();
     haptic.success();
     toast({
-      title: outcome === "shared" ? "Compartilhamento aberto" : "Relatório preservado",
+      title:
+        outcome === "opened-whatsapp"
+          ? "WhatsApp aberto"
+          : "Compartilhamento aberto",
       description:
-        outcome === "shared"
+        outcome === "shared-file"
           ? "Escolha o WhatsApp para enviar o arquivo com todas as perguntas e respostas."
-          : outcome === "copied-and-downloaded"
-            ? "O texto integral foi copiado e o arquivo .txt foi baixado."
-            : "O arquivo .txt com o relatório integral foi baixado.",
+          : outcome === "shared-text"
+            ? "Escolha o WhatsApp para enviar todas as perguntas e respostas por extenso."
+            : "O WhatsApp foi aberto com o relatório integral pronto para encaminhar.",
     });
   }
 
@@ -252,7 +256,8 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     );
     toast({
       title: "Arquivo baixado",
-      description: "O arquivo contém todas as perguntas e respostas por extenso.",
+      description:
+        "O arquivo contém todas as perguntas e respostas por extenso.",
     });
   }
 
@@ -387,7 +392,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             data-testid="button-whatsapp-report"
           >
             <MessageCircle className="h-5 w-5" />
-            Compartilhar arquivo pelo WhatsApp / Zap
+            Enviar relatório pelo WhatsApp / Zap
           </Button>
 
           <div className="grid grid-cols-3 gap-2">
