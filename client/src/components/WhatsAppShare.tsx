@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
-import { shareTextDocument } from "@/lib/shareText";
+import { shareWhatsAppDocument } from "@/lib/shareText";
 
 interface WhatsAppShareProps {
   scaleName: string;
@@ -67,36 +67,16 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       const formatted = formatPhoneNumber(phone);
       const message = `*${scaleName}*\n\n${reportText}\n\n📱 NeuroPed — Escalas de Neuropediatria`;
 
-      let sharedAsFile = false;
-      const encodedMessage = encodeURIComponent(message);
-      if (encodedMessage.length > 1_800) {
-        const outcome = await shareTextDocument({
-          title: `${scaleName} — respostas completas`,
-          text: message,
-          filename: `${scaleName}-respostas-completas`,
-        });
-        if (outcome === "cancelled") return;
-        if (outcome === "failed") throw new Error("share failed");
-        sharedAsFile = true;
-        setSentAsFile(true);
-      } else {
-        // Abre ainda no gesto de clique. A antiga tentativa assíncrona a uma API
-        // inexistente fazia navegadores bloquearem esta janela como popup tardio.
-        const whatsappUrl = `https://wa.me/${formatted}?text=${encodedMessage}`;
-        const win = window.open(whatsappUrl, "_blank");
-        if (win) win.opener = null;
-        // Popup bloqueado: nada foi aberto. Não anuncie sucesso — seria mentir
-        // para o clínico que o relatório chegou. Oriente e mantenha o formulário.
-        if (!win) {
-          toast({
-            title: "Não foi possível abrir o WhatsApp",
-            description:
-              "Permita pop-ups para este site ou copie o relatório manualmente.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+      const outcome = await shareWhatsAppDocument({
+        title: `${scaleName} — respostas completas`,
+        text: message,
+        filename: `${scaleName}-respostas-completas`,
+        phone: formatted,
+      });
+      if (outcome === "cancelled") return;
+      if (outcome === "failed") throw new Error("share failed");
+      const sharedAsFile = outcome === "shared-file";
+      setSentAsFile(sharedAsFile);
 
       softSuccess();
       haptic.success();
