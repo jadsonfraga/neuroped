@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   authCapabilityFromHealth,
   fallbackAuthCapability,
   resolveAuthMode,
 } from "../../client/src/lib/authCapabilityPolicy.ts";
+
+const source = (path: string) =>
+  readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 assert.equal(
   resolveAuthMode(undefined, true),
@@ -39,6 +43,50 @@ assert.deepEqual(
     authentication: { required: true, configured: true },
   }),
   { required: true, configured: true, reachable: true },
+);
+
+const authClientSource = source("client/src/lib/authClient.ts");
+const authContextSource = source("client/src/contexts/AuthContext.tsx");
+const pagesWorkflow = source(".github/workflows/deploy.yml");
+const cloudflareWorkflow = source(".github/workflows/deploy-cloudflare.yml");
+const vercelConfig = source("vercel.json");
+
+assert.match(authClientSource, /VITE_AUTH_MODE/);
+assert.match(authClientSource, /cachedAuthCapability\(mode\)/);
+assert.match(
+  authContextSource,
+  /queryClient\.cancelQueries\(\)[\s\S]*queryClient\.clear\(\)[\s\S]*secureClearAll\(\)/,
+  "troca de sessão deve eliminar cache clínico e rascunhos",
+);
+assert.match(
+  authContextSource,
+  /function handleExpired\(\) \{[\s\S]{0,160}setUser\(null\);[\s\S]{0,160}clearSessionScopedClientState\(\)/,
+  "expiração deve limpar estado clínico da conta anterior",
+);
+assert.match(
+  authContextSource,
+  /async function login\([\s\S]{0,260}loginRequest\([\s\S]{0,160}clearSessionScopedClientState\(\)[\s\S]{0,100}setUser\(data\.user\)/,
+  "login de outra conta deve limpar o cache antes de expor a nova sessão",
+);
+assert.match(
+  authContextSource,
+  /async function logout\(\) \{\s*setUser\(null\);\s*await logoutRequest\(\);\s*await clearSessionScopedClientState\(\)/,
+  "logout deve revogar credenciais e limpar estado clínico",
+);
+assert.match(
+  pagesWorkflow,
+  /VITE_AUTH_MODE:\s*local/,
+  "GitHub Pages é mirror estático e deve declarar modo local",
+);
+assert.match(
+  vercelConfig,
+  /VITE_AUTH_MODE=local/,
+  "Vercel estático deve declarar modo local no build canônico",
+);
+assert.doesNotMatch(
+  cloudflareWorkflow,
+  /VITE_AUTH_MODE:\s*local/,
+  "Cloudflare full-stack jamais pode ser compilado em modo local",
 );
 
 class MemoryStorage implements Storage {
@@ -183,4 +231,4 @@ assert.equal(
 );
 assert.equal(expiredEvents, 0, "401 anônimo não representa sessão expirada");
 
-console.log("✓ auth fail-closed e refresh concorrente isolado por sessão");
+console.log("✓ auth fail-closed, cache isolado e refresh concorrente seguro");
