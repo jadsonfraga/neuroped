@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/podium-max-100-questions-2026-07-17
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
