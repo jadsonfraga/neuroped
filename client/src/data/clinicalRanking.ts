@@ -47,7 +47,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     reason: "M-CHAT-R/F é o rastreio de primeira linha para TEA entre 16–30 meses; atenção conjunta precoce e checklist ampliam a observação.",
   },
   { queixa: "tea", ageMin: 0, ageMax: 16,
-    ouro: "j26-009", prata: "j26-007", bronze: "podj-tea-prime-1-6a",
+    ouro: "j26-009", prata: "j26-007", bronze: "eci-fraga-qdce",
     reason: "Antes dos 16 meses, atenção conjunta e marcos socioemocionais precoces são os melhores sinais de alerta para TEA." },
   { queixa: "tea", ageMin: 30, ageMax: 72,
     ouro: "cars", prata: "j26-235", bronze: "tea-checklists",
@@ -124,7 +124,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "linguagem-fonologia", prata: "j26-085", bronze: "j26-090",
     reason: "No escolar, fonologia, vocabulário e compreensão oral complexa caracterizam o perfil linguístico." },
   { queixa: "linguagem", ageMin: 144, ageMax: 216,
-    ouro: "j26-086", prata: "cfcs", bronze: "podj-tea-prime-12-19a",
+    ouro: "j26-086", prata: "cfcs", bronze: "fas-fluencia",
     reason: "No adolescente, fluência verbal, comunicação funcional e linguagem social caracterizam o uso comunicativo no cotidiano." },
 
   // =============================== ATRASO ===============================
@@ -235,7 +235,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "j26-013", prata: "j26-014", bronze: "pant-v7-068",
     reason: "Triagem auditiva, visual funcional e controle postural compõem a avaliação sensorial inicial." },
   { queixa: "sensorial", ageMin: 24, ageMax: 144,
-    ouro: "psn-np", prata: "pant-v7-074", bronze: "podj-tea-prime-escola-terapia",
+    ouro: "psn-np", prata: "pant-v7-074", bronze: "j26-013",
     reason: "Perfil sensorial, autorregulação corporal e observação escola/terapia caracterizam a integração sensorial." },
 
   // ============================== NEONATAL ==============================

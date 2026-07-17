@@ -46,8 +46,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 18,
         tiers: {
           ouro: ["mchat", "q-chat-10"],
-          prata: ["podj-tea-prime-1-6a", "j26-009", "tea-comportamentos"],
-          bronze: ["podj-tea-prime-familiar", "j26-007"],
+          prata: ["j26-009", "psn-np"],
+          bronze: ["j26-007", "eci-fraga-qdce"],
         },
       },
       {
@@ -55,8 +55,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 18,
         maxMonths: 36,
         tiers: {
-          ouro: ["mchat", "podj-tea-prime-1-6a"],
-          prata: ["cars", "podj-tea-prime-familiar", "j26-216"],
+          ouro: ["mchat"],
+          prata: ["cars", "j26-216"],
           bronze: ["j26-217", "atec"],
         },
       },
@@ -65,9 +65,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 36,
         maxMonths: 72,
         tiers: {
-          ouro: ["cars", "podj-tea-prime-1-6a"],
-          prata: ["podj-tea-prime-escola-terapia", "cars"],
-          bronze: ["podj-tea-prime-familiar", "j26-235", "j26-022"],
+          ouro: ["cars"],
+          prata: ["tea-checklists", "ecsm"],
+          bronze: ["j26-235", "j26-022"],
         },
       },
       {
@@ -75,9 +75,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 72,
         maxMonths: 144,
         tiers: {
-          ouro: ["podj-tea-prime-6-12a", "cars"],
-          prata: ["podj-tea-prime-escola-terapia", "atec"],
-          bronze: ["podj-tea-prime-familiar", "j26-205"],
+          ouro: ["cars"],
+          prata: ["tea-checklists", "ahsd-tea-triagem"],
+          bronze: ["j26-205", "j26-022"],
         },
       },
       {
@@ -85,9 +85,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 144,
         maxMonths: 192,
         tiers: {
-          ouro: ["podj-tea-prime-12-19a"],
-          prata: ["podj-tea-prime-familiar", "aq10"],
-          bronze: ["podj-tea-prime-escola-terapia", "j26-213"],
+          ouro: ["cars"],
+          prata: ["aq10-adolescente", "tea-checklists"],
+          bronze: ["j26-213", "ahsd-tea-triagem"],
         },
       },
       {
@@ -95,16 +95,16 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 192,
         maxMonths: 216,
         tiers: {
-          ouro: ["podj-tea-prime-12-19a"],
-          prata: ["aq10", "q-chat-10"],
-          bronze: ["podj-tea-prime-familiar", "podj-tea-prime-escola-terapia"],
+          ouro: ["aq10-adolescente"],
+          prata: ["cars", "camuflagem-tea-neuroped"],
+          bronze: ["tea-checklists", "ahsd-tea-triagem"],
         },
       },
     ],
     monitoring: {
       ouro: ["atec"],
-      prata: ["podj-tea-prime-familiar", "j26-030"],
-      bronze: ["podj-tea-prime-escola-terapia"],
+      prata: ["j26-030", "tea-checklists"],
+      bronze: ["cars"],
     },
   },
 
@@ -377,7 +377,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["j26-086"],
           prata: ["cfcs"],
-          bronze: ["podj-tea-prime-12-19a"],
+          bronze: ["fas-fluencia"],
         },
       },
     ],
@@ -889,7 +889,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["psn-np"],
           prata: ["pant-v7-074"],
-          bronze: ["podj-tea-prime-escola-terapia"],
+          bronze: ["j26-013"],
         },
       },
       {
@@ -899,13 +899,13 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["psn-np"],
           prata: ["inventarios-auto"],
-          bronze: ["podj-tea-prime-familiar"],
+          bronze: ["pant-v7-074"],
         },
       },
     ],
     monitoring: {
       ouro: ["psn-np"],
-      prata: ["podj-tea-prime-familiar"],
+      prata: ["pant-v7-074"],
       bronze: ["j26-013"],
     },
   },

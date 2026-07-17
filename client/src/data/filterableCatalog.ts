@@ -253,6 +253,20 @@ function uniqueById(items: ScaleEntry[]): ScaleEntry[] {
   });
 }
 
+// Escalas retiradas do FILTRO/pódio (as páginas e os dados seguem acessíveis,
+// mas o filtro nunca as recomenda em nenhuma faixa etária). PODJ-TEA PRIME saiu
+// por decisão clínica do autor (jul/2026): é longa demais (≈80 itens) e as
+// famílias não compreendem bem as opções de resposta.
+export const FILTER_EXCLUDED_IDS: ReadonlySet<string> = new Set([
+  "podj-tea-prime-familiar",
+  "podj-tea-prime-escola-terapia",
+  "podj-tea-prime-1-6a",
+  "podj-tea-prime-6-12a",
+  "podj-tea-prime-12-19a",
+]);
+
 export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
-  return uniqueById([...primary, ...supplementalFilterableInstruments]);
+  return uniqueById([...primary, ...supplementalFilterableInstruments]).filter(
+    (scale) => !FILTER_EXCLUDED_IDS.has(scale.id),
+  );
 }
