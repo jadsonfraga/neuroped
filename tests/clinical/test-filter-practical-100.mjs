@@ -23,7 +23,7 @@ const {
   getApplicationMode,
   getBroadbandFallback,
 } = await imp("client/src/data/advancedFilterLogic.ts");
-const { selectCuratedTiers, selectPodium } = await imp("client/src/data/filterPodium.ts");
+const { selectCuratedTiers, selectPodium, PODIUM_QUESTION_CAP, estimatedQuestionCount } = await imp("client/src/data/filterPodium.ts");
 
 const allIds = new Set(allScales.map((s) => s.id));
 const uniqueById = (items) => {
@@ -138,6 +138,18 @@ function scoreCase(ctx) {
   const isFallback = matches.length > 0 && matches.every((m) => m.isBroadbandFallback);
   const issues = [];
   let score = 0;
+  const feasibleCounts = matches
+    .filter((m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths)
+    .map((m) => estimatedQuestionCount(m.scale))
+    .filter((count) => Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP)
+    .sort((a, b) => a - b);
+  const trioFitsBudget =
+    feasibleCounts.length >= 3 &&
+    feasibleCounts[0] + feasibleCounts[1] + feasibleCounts[2] <= PODIUM_QUESTION_CAP;
+  const podiumQuestionTotal = slots.reduce(
+    (sum, slot) => sum + estimatedQuestionCount(slot.scale),
+    0,
+  );
 
   const add = (ok, points, issue) => {
     if (ok) score += points;
@@ -146,7 +158,8 @@ function scoreCase(ctx) {
 
   add(matches.length > 0, 1.0, "nao encontrou candidatos seguros");
   add(Boolean(podium.ouro), 1.0, "nao definiu escala Ouro");
-  add(slots.length === 3, 1.0, "podio incompleto");
+  add(!trioFitsBudget || slots.length === 3, 1.0, "podio incompleto apesar de trio viavel");
+  add(podiumQuestionTotal <= PODIUM_QUESTION_CAP, 0, "podio ultrapassou 100 perguntas");
   add(new Set(slotIds).size === slotIds.length, 1.0, "podio repetiu escala");
   add(slots.every((slot) => Boolean(resolveRoute(slot.scale))), 1.0, "alguma escala do podio nao abre internamente");
   add(slots.every((slot) => clinicalHardBlock(slot.scale, ctx) === null), 1.5, "alguma escala viola bloqueio clinico duro");
@@ -212,7 +225,8 @@ const min = Math.min(...results.map((result) => result.score));
  */
 const SAFETY_ISSUES = new Set([
   "nao encontrou candidatos seguros",
-  "podio incompleto",
+  "podio incompleto apesar de trio viavel",
+  "podio ultrapassou 100 perguntas",
   "podio repetiu escala",
   "alguma escala do podio nao abre internamente",
   "alguma escala viola bloqueio clinico duro",

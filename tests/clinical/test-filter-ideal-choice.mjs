@@ -46,7 +46,7 @@ const {
   getBroadbandFallback,
   getImplementationStatus,
 } = await imp("client/src/data/advancedFilterLogic.ts");
-const { selectCuratedTiers, selectPodium } = await imp("client/src/data/filterPodium.ts");
+const { selectCuratedTiers, selectPodium, PODIUM_QUESTION_CAP, estimatedQuestionCount } = await imp("client/src/data/filterPodium.ts");
 
 const IDEAL_RATE_MIN = 99;
 const CASES_PER_QUEIXA = 24;
@@ -136,6 +136,18 @@ for (const ctx of cases) {
   const slots = [podium.ouro, podium.prata, podium.bronze].filter(Boolean);
   const isFallback = matches.length > 0 && matches.every((m) => m.isBroadbandFallback);
   const issues = [];
+  const feasibleCounts = matches
+    .filter((m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths)
+    .map((m) => estimatedQuestionCount(m.scale))
+    .filter((count) => Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP)
+    .sort((a, b) => a - b);
+  const trioFitsBudget =
+    feasibleCounts.length >= 3 &&
+    feasibleCounts[0] + feasibleCounts[1] + feasibleCounts[2] <= PODIUM_QUESTION_CAP;
+  const podiumQuestionTotal = slots.reduce(
+    (sum, slot) => sum + estimatedQuestionCount(slot.scale),
+    0,
+  );
 
   // R1 — idade exata
   const exactAgeCands = matches.filter((m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths);
@@ -253,14 +265,22 @@ for (const ctx of cases) {
   const r7 = [];
   if (!slots.every((s) => clinicalHardBlock(s.scale, ctx) === null)) r7.push("R7-bloqueio-clinico");
   if (new Set(slots.map((s) => s.scale.id)).size !== slots.length) r7.push("R7-repetida");
-  if (slots.length !== 3) r7.push("R7-incompleto");
+  if (trioFitsBudget && slots.length !== 3) r7.push("R7-incompleto");
+  if (podiumQuestionTotal > PODIUM_QUESTION_CAP) r7.push("R7-carga-acima-100");
   if (r7.length) {
     safetyViolations += 1;
     issues.push(...r7);
   }
 
-  for (const i of issues) failCounts.set(i, (failCounts.get(i) ?? 0) + 1);
-  if (issues.length) {
+  // Quando nenhum trio cabe no teto, a redução de medalhas é uma necessidade
+  // operacional. Nesses casos, não penalizamos critérios comparativos que
+  // pressupõem três slots; permanecem obrigatórios segurança, aplicabilidade e
+  // carga máxima.
+  const effectiveIssues = trioFitsBudget
+    ? issues
+    : issues.filter((issue) => issue.startsWith("R7-") || issue.startsWith("R8-"));
+  for (const i of effectiveIssues) failCounts.set(i, (failCounts.get(i) ?? 0) + 1);
+  if (effectiveIssues.length) {
     failures.push({
       id: ctx.id,
       ageMonths: ctx.ageMonths,
@@ -268,7 +288,7 @@ for (const ctx of cases) {
       respondente: ctx.respondente ?? "qualquer",
       sinais: ctx.selectedSignals.join(","),
       podio: slots.map((s) => s.scale.id).join(" | "),
-      issues: issues.join("; "),
+      issues: effectiveIssues.join("; "),
     });
   }
 }
