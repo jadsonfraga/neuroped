@@ -1,0 +1,28 @@
+name: Aplicar teste prático compatível com teto absoluto
+
+on:
+  push:
+    branches:
+      - agent/podium-hard-cap-100-2026-07-17
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/podium-hard-cap-100-2026-07-17
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: node scripts/apply-practical-cap-test.mjs
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/clinical/test-filter-practical-100.mjs
+          git commit -m 'test: alinha filtro prático ao teto absoluto de 100 perguntas'
+          git push origin HEAD:agent/podium-hard-cap-100-2026-07-17
