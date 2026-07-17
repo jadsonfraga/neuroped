@@ -16,7 +16,6 @@ const imp = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 
 const { allScales, faixasEtarias, queixas } = await imp("client/src/data/scaleFilter.ts");
 const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
-const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
 const {
   filterScalesIntelligently,
   filterScalesWithClinicalRescue,
@@ -39,8 +38,6 @@ const resolveRoute = (s) => {
   return null;
 };
 
-// Pool = a MESMA do app pós-regra-de-ouro-total: allScales já contém só
-// escalas aplicáveis; cards mundiais (não aplicáveis) ficam fora.
 const catalog = uniqueById(mergeFilterableCatalog(allScales)).filter(resolveRoute);
 const queixaIds = queixas.map((q) => q.id);
 const respondents = [null, "pais", "professor", "clinico", "autoaplicavel", "teste_direto_crianca"];
@@ -82,12 +79,31 @@ function auditContext(ctx) {
   const podiumQuestionTotal = questionCounts.reduce((sum, count) => sum + count, 0);
   const exactMatches = filterScalesIntelligently(catalog, ctx);
 
+  const feasibleCounts = matches
+    .filter((m) => ctx.ageMonths == null || (m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths))
+    .map((m) => estimatedQuestionCount(m.scale))
+    .filter((count) => Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP)
+    .sort((a, b) => a - b);
+  const trioFitsBudget =
+    feasibleCounts.length >= 3 &&
+    feasibleCounts[0] + feasibleCounts[1] + feasibleCounts[2] <= PODIUM_QUESTION_CAP;
+
   ok(matches.length > 0, "contexto com queixa/idade deve produzir ao menos uma recomendacao segura ou fallback", ctx);
-  ok(slots.length === 3, "todo contexto com idade/queixa deve produzir Ouro, Prata e Bronze", {
-    ...ctx,
-    slots: ids,
-    candidatos: matches.map((m) => m.scale.id),
-  });
+  if (trioFitsBudget) {
+    ok(slots.length === 3, "quando existe trio viavel, o podio deve produzir Ouro, Prata e Bronze", {
+      ...ctx,
+      slots: ids,
+      candidatos: matches.map((m) => m.scale.id),
+      menoresCargas: feasibleCounts.slice(0, 3),
+    });
+  } else {
+    ok(slots.length <= 2, "sem trio viavel, o teto absoluto deve prevalecer sobre a terceira medalha", {
+      ...ctx,
+      slots: ids,
+      menoresCargas: feasibleCounts.slice(0, 3),
+    });
+  }
+
   const hasQualifiedCandidate = matches.some((m) => m.relevanceScore >= 60);
   if (hasQualifiedCandidate) {
     ok(Boolean(podium.ouro), "podio deve ter Ouro quando ha candidato com score >= 60", ctx);
@@ -121,12 +137,10 @@ function auditContext(ctx) {
   }
 }
 
-// Toda queixa precisa ter regra curada para o fluxograma/podio.
 for (const q of queixaIds) {
   ok(Boolean(getClinicalTiers(q, null)), "toda queixa deve ter regra curada representativa", { q });
 }
 
-// Varredura completa das variaveis para queixa unica.
 for (const q of queixaIds) {
   for (const age of ageContexts) {
     for (const respondente of respondents) {
@@ -150,7 +164,6 @@ for (const q of queixaIds) {
   }
 }
 
-// Pares de queixas: todas as combinacoes, com idade e respondente.
 for (let i = 0; i < queixaIds.length; i++) {
   for (let j = i + 1; j < queixaIds.length; j++) {
     for (const age of ageContexts) {
@@ -176,4 +189,4 @@ if (failures > 0) {
   for (const e of examples) console.error("  - " + e);
   process.exit(1);
 }
-console.log("[filter-podium] OK — podio robusto em todas as variaveis auditadas.");
+console.log("[filter-podium] OK — teto absoluto <=100 e medalhas clinicamente viaveis auditados.");
