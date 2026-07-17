@@ -58,6 +58,8 @@ jobs:
       - name: Compilar frontend para Pages
         env:
           NODE_ENV: production
+          # Mirror estático deliberado: sem backend clínico, usa o PIN local.
+          VITE_AUTH_MODE: local
           # Nunca embutir verificador de PIN no repositório público.
           VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: npm run build:client
