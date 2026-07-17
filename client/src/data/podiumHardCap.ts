@@ -19,6 +19,14 @@ export interface HardCapResult {
   totalQuestions: number;
 }
 
+interface BudgetState {
+  slotMask: number;
+  coverageMask: bigint;
+  totalQuestions: number;
+  qualityScore: number;
+  picks: Array<RefinedScaleMatch | undefined>;
+}
+
 function uniqueById(items: RefinedScaleMatch[]): RefinedScaleMatch[] {
   const seen = new Set<string>();
   return items.filter((item) => {
@@ -28,10 +36,23 @@ function uniqueById(items: RefinedScaleMatch[]): RefinedScaleMatch[] {
   });
 }
 
+function bitCount(mask: bigint): number {
+  let value = mask;
+  let count = 0;
+  while (value > 0n) {
+    count += Number(value & 1n);
+    value >>= 1n;
+  }
+  return count;
+}
+
 /**
  * Regra absoluta: a soma de Ouro + Prata + Bronze nunca excede 100 perguntas.
- * Procura a melhor combinação possível; quando não existe trio seguro dentro do
- * teto, reduz a quantidade de medalhas em vez de publicar uma bateria excessiva.
+ *
+ * A busca usa programação dinâmica em vez de combinações cúbicas. Cada escala é
+ * processada uma única vez e pode ocupar no máximo um slot, portanto não há
+ * duplicação. O estado mantém orçamento, slots preenchidos e cobertura das
+ * queixas, permitindo auditar milhares de contextos sem degradar o filtro.
  */
 export function enforcePodiumHardCap({
   ouro,
@@ -54,88 +75,97 @@ export function enforcePodiumHardCap({
   const containsAge = (item: RefinedScaleMatch) =>
     ageMonths === null ||
     (item.scale.ageMin <= ageMonths && item.scale.ageMax >= ageMonths);
-  const eligible = candidates
+
+  const eligible = uniqueById([
+    ...original.filter((item): item is RefinedScaleMatch => Boolean(item)),
+    ...candidates,
+  ])
     .filter(containsAge)
     .filter((item) => {
       const count = countQuestions(item);
       return Number.isFinite(count) && count > 0 && count <= MAX_PODIUM_QUESTIONS;
     });
 
-  // Inclui alta relevância e baixa carga. A busca só roda nos casos que já
-  // excederam o teto, mantendo a auditoria exaustiva rápida e determinística.
-  const originalItems = original.filter(
-    (item): item is RefinedScaleMatch => Boolean(item),
+  const queixaIndex = new Map(
+    selectedQueixas.slice(0, 20).map((queixa, index) => [queixa, index]),
   );
-  const highRelevance = eligible.slice(0, 8);
-  const lowBurden = [...eligible]
-    .sort((a, b) => {
-      const burden = countQuestions(a) - countQuestions(b);
-      return burden || b.relevanceScore - a.relevanceScore;
-    })
-    .slice(0, 8);
-  const pool = uniqueById([
-    ...originalItems,
-    ...highRelevance,
-    ...lowBurden,
-  ]).slice(0, 18);
-  const options: Array<RefinedScaleMatch | undefined> = [undefined, ...pool];
+  const coverageOf = (item: RefinedScaleMatch): bigint => {
+    let mask = 0n;
+    for (const queixa of item.scale.queixas) {
+      const index = queixaIndex.get(queixa);
+      if (index !== undefined) mask |= 1n << BigInt(index);
+    }
+    return mask;
+  };
 
-  let best: HardCapResult = { totalQuestions: 0 };
-  let bestScore = Number.NEGATIVE_INFINITY;
+  const initial: BudgetState = {
+    slotMask: 0,
+    coverageMask: 0n,
+    totalQuestions: 0,
+    qualityScore: 0,
+    picks: [undefined, undefined, undefined],
+  };
+  let states = new Map<string, BudgetState>([["0|0|0", initial]]);
 
-  for (const gold of options) {
-    for (const silver of options) {
-      if (gold && silver && gold.scale.id === silver.scale.id) continue;
-      for (const bronzeCandidate of options) {
-        const trio = [gold, silver, bronzeCandidate] as const;
-        const ids = trio
-          .filter((item): item is RefinedScaleMatch => Boolean(item))
-          .map((item) => item.scale.id);
-        if (new Set(ids).size !== ids.length) continue;
+  for (const item of eligible) {
+    const burden = countQuestions(item);
+    const coverage = coverageOf(item);
+    const next = new Map(states);
 
-        const total = trio.reduce(
-          (sum, item) => sum + (item ? countQuestions(item) : 0),
-          0,
-        );
-        if (total > MAX_PODIUM_QUESTIONS) continue;
+    for (const state of states.values()) {
+      for (let slot = 0; slot < 3; slot += 1) {
+        if ((state.slotMask & (1 << slot)) !== 0) continue;
+        const totalQuestions = state.totalQuestions + burden;
+        if (totalQuestions > MAX_PODIUM_QUESTIONS) continue;
 
-        const slotCount = trio.filter(Boolean).length;
-        const covered = new Set<string>();
-        for (const item of trio) {
-          if (!item) continue;
-          for (const queixa of selectedQueixas) {
-            if (item.scale.queixas.includes(queixa)) covered.add(queixa);
-          }
-        }
-        const originalSlotBonus = trio.reduce(
-          (sum, item, index) =>
-            sum +
-            (item && item.scale.id === original[index]?.scale.id ? 500 : 0),
-          0,
-        );
-        const relevance = trio.reduce(
-          (sum, item) => sum + (item?.relevanceScore ?? 0),
-          0,
-        );
-        const score =
-          slotCount * 1_000_000 +
-          covered.size * 25_000 +
-          originalSlotBonus +
-          relevance * 5 -
-          total * 0.1;
-
-        if (score > bestScore) {
-          bestScore = score;
-          best = {
-            ouro: gold,
-            prata: silver,
-            bronze: bronzeCandidate,
-            totalQuestions: total,
-          };
+        const slotMask = state.slotMask | (1 << slot);
+        const coverageMask = state.coverageMask | coverage;
+        const originalBonus =
+          item.scale.id === original[slot]?.scale.id ? 600 : 0;
+        const qualityScore =
+          state.qualityScore +
+          item.relevanceScore * 5 +
+          originalBonus -
+          burden * 0.1;
+        const picks = [...state.picks];
+        picks[slot] = item;
+        const candidate: BudgetState = {
+          slotMask,
+          coverageMask,
+          totalQuestions,
+          qualityScore,
+          picks,
+        };
+        const key = `${slotMask}|${coverageMask.toString()}|${totalQuestions}`;
+        const previous = next.get(key);
+        if (!previous || candidate.qualityScore > previous.qualityScore) {
+          next.set(key, candidate);
         }
       }
     }
+
+    states = next;
   }
 
-  return best;
+  let best = initial;
+  let bestRank = Number.NEGATIVE_INFINITY;
+  for (const state of states.values()) {
+    const slotCount = bitCount(BigInt(state.slotMask));
+    const coverageCount = bitCount(state.coverageMask);
+    const rank =
+      slotCount * 1_000_000 +
+      coverageCount * 25_000 +
+      state.qualityScore;
+    if (rank > bestRank) {
+      bestRank = rank;
+      best = state;
+    }
+  }
+
+  return {
+    ouro: best.picks[0],
+    prata: best.picks[1],
+    bronze: best.picks[2],
+    totalQuestions: best.totalQuestions,
+  };
 }
