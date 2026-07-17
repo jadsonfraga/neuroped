@@ -98,12 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     setUser(null);
-    const revocation = logoutRequest();
-    try {
-      await clearSessionScopedClientState();
-    } finally {
-      await revocation;
-    }
+    await logoutRequest();
+    await clearSessionScopedClientState();
   }
 
   async function refreshUser() {
