@@ -1,6 +1,7 @@
 import { getApplicationMode, getImplementationStatus, type RefinedScaleMatch } from "./advancedFilterLogic";
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
+import { enforcePodiumHardCap } from "./podiumHardCap";
 
 // Limite total do pódio: a soma ESTIMADA de perguntas de Ouro + Prata + Bronze
 // nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
@@ -539,54 +540,28 @@ export function selectPodium(
     }
   }
 
-  // ── LIMITE TOTAL DO PÓDIO (≤ 100 perguntas estimadas) ─────────────────────
-  // A soma estimada de perguntas de Ouro + Prata + Bronze nunca deve ultrapassar
-  // PODIUM_QUESTION_CAP. O Ouro (1ª linha) é sempre preservado; Bronze e depois
-  // Prata cedem para a alternativa mais LEVE que ainda é aplicável, contém a
-  // idade e preserva a cobertura ÚNICA de queixa do selo. Mantém sempre 3
-  // medalhas (invariante do pódio) — é um "aliviar", nunca "cortar".
-  const questionsOf = (m: RefinedScaleMatch | undefined) =>
-    m ? estimatedQuestionCount(m.scale) : 0;
-  const lightenForCap = (
-    current: RefinedScaleMatch | undefined,
-    others: (RefinedScaleMatch | undefined)[],
-  ): RefinedScaleMatch | undefined => {
-    if (!current) return current;
-    const budgetForSlot = PODIUM_QUESTION_CAP - others.reduce((sum, m) => sum + questionsOf(m), 0);
-    const currentQ = questionsOf(current);
-    if (currentQ <= budgetForSlot) return current; // já cabe no orçamento
-    const mustKeep = uniqueQueixasOf(current, others);
-    const eligible = sorted
-      .filter(
-        (m) =>
-          !used.has(m.scale.id) &&
-          containsAge(m) &&
-          isApplicable(m) &&
-          m.relevanceScore >= 40 &&
-          (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
-          mustKeep.every((q) => m.scale.queixas.includes(q)),
-      )
-      .map((m) => ({ m, q: questionsOf(m) }))
-      .filter(({ q }) => q < currentQ);
-    if (eligible.length === 0) return current; // nada mais leve preserva a cobertura
-    // Prefere a de MAIOR relevância que CABE no orçamento; se nenhuma cabe, pega
-    // a MAIS LEVE (reduz o total ao máximo possível para o próximo slot ajustar).
-    const fits = eligible.filter(({ q }) => q <= budgetForSlot);
-    const chosen = (fits.length > 0
-      ? fits.sort((a, b) => b.m.relevanceScore - a.m.relevanceScore || a.q - b.q)
-      : eligible.sort((a, b) => a.q - b.q || b.m.relevanceScore - a.m.relevanceScore))[0];
-    used.delete(current.scale.id);
-    used.add(chosen.m.scale.id);
-    return chosen.m;
-  };
-  if (questionsOf(ouro) + questionsOf(prata) + questionsOf(bronze) > PODIUM_QUESTION_CAP) {
-    bronze = lightenForCap(bronze, [ouro, prata]);
-    prata = lightenForCap(prata, [ouro, bronze]);
-    // Aliviar a Prata pode ter liberado orçamento; se ainda estoura, reavalia o
-    // Bronze no novo contexto (2 passadas bastam para convergir na prática).
-    if (questionsOf(ouro) + questionsOf(prata) + questionsOf(bronze) > PODIUM_QUESTION_CAP) {
-      bronze = lightenForCap(bronze, [ouro, prata]);
-    }
+  // ── REGRA DE OURO ABSOLUTA: PÓDIO ≤ 100 PERGUNTAS ────────────────
+  // Diferentemente do passe flexível anterior, esta catraca nunca admite resíduo.
+  // Se não existir trio seguro dentro do teto, reduz medalhas em vez de entregar
+  // uma bateria excessiva. A combinação preserva cobertura, relevância e curadoria.
+  const cappedPodium = enforcePodiumHardCap({
+    ouro,
+    prata,
+    bronze,
+    candidates: sorted,
+    selectedQueixas,
+    ageMonths: exactAge,
+    countQuestions: (match) => estimatedQuestionCount(match.scale),
+  });
+  ouro = cappedPodium.ouro;
+  prata = cappedPodium.prata;
+  bronze = cappedPodium.bronze;
+  used.clear();
+  usedModes.clear();
+  for (const medal of [ouro, prata, bronze]) {
+    if (!medal) continue;
+    used.add(medal.scale.id);
+    usedModes.add(medal.applicationMode ?? "");
   }
 
   // Direct and school also join the used set to prevent deduplication with medals.
