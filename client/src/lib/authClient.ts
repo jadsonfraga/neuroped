@@ -7,6 +7,17 @@
  * - Eventos: emite "auth:expired" quando refresh falhar.
  */
 
+import {
+  authCapabilityFromHealth,
+  fallbackAuthCapability,
+  localAuthCapability,
+  resolveAuthMode,
+  type AuthCapability,
+  type AuthMode,
+} from "./authCapabilityPolicy";
+
+export type { AuthCapability } from "./authCapabilityPolicy";
+
 const API_BASE = (import.meta.env?.VITE_API_URL ?? "").replace(/\/$/, "");
 
 const ACCESS_KEY = "neuroped:access";
@@ -37,10 +48,11 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-export interface AuthCapability {
-  required: boolean;
-  configured: boolean;
-  reachable: boolean;
+function configuredAuthMode(): AuthMode {
+  return resolveAuthMode(
+    import.meta.env?.VITE_AUTH_MODE,
+    import.meta.env?.PROD === true,
+  );
 }
 
 function readToken(key: string): string | null {
@@ -83,20 +95,14 @@ export function clearAuth(): void {
   writeToken(USER_KEY, null);
 }
 
-function cachedAuthCapability(): AuthCapability {
+function cachedAuthCapability(mode: AuthMode): AuthCapability {
+  let cached: unknown = null;
   try {
-    const cached = JSON.parse(localStorage.getItem(CAPABILITY_KEY) || "null");
-    if (cached?.required === true) {
-      return {
-        required: true,
-        configured: cached.configured === true,
-        reachable: false,
-      };
-    }
+    cached = JSON.parse(localStorage.getItem(CAPABILITY_KEY) || "null");
   } catch {
     // Instalação ainda não conhecida ou armazenamento indisponível.
   }
-  return { required: false, configured: false, reachable: false };
+  return fallbackAuthCapability(mode, cached);
 }
 
 function rememberAuthCapability(capability: AuthCapability): void {
@@ -111,10 +117,16 @@ function rememberAuthCapability(capability: AuthCapability): void {
 }
 
 /**
- * Descobre se esta instalação possui backend clínico. Mirrors estáticos e uso
- * offline caem no modo PIN local; D1 ativo exige autenticação remota.
+ * Descobre se esta instalação possui backend clínico.
+ *
+ * - `remote`: produção canônica; qualquer falha de health mantém login obrigatório.
+ * - `local`: mirror estático/offline declarado explicitamente; usa o PIN local.
+ * - `auto`: apenas desenvolvimento, preservando descoberta dinâmica.
  */
 export async function getAuthCapability(): Promise<AuthCapability> {
+  const mode = configuredAuthMode();
+  if (mode === "local") return localAuthCapability();
+
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 4_000);
   try {
@@ -123,21 +135,17 @@ export async function getAuthCapability(): Promise<AuthCapability> {
       signal: controller.signal,
       headers: { Accept: "application/json" },
     });
-    if (!response.ok) return cachedAuthCapability();
+    if (!response.ok) return cachedAuthCapability(mode);
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.includes("application/json")) {
-      return cachedAuthCapability();
+      return cachedAuthCapability(mode);
     }
-    const data = await response.json();
-    const capability = {
-      required: data?.authentication?.required === true,
-      configured: data?.authentication?.configured === true,
-      reachable: true,
-    };
+    const data: unknown = await response.json();
+    const capability = authCapabilityFromHealth(mode, data);
     rememberAuthCapability(capability);
     return capability;
   } catch {
-    return cachedAuthCapability();
+    return cachedAuthCapability(mode);
   } finally {
     window.clearTimeout(timeout);
   }
