@@ -162,10 +162,17 @@ export function enforcePodiumHardCap({
     }
   }
 
+  // Nunca retornar Prata/Bronze sem Ouro: quando o orçamento comporta menos de
+  // três instrumentos, compacta os escolhidos para a esquerda preservando a
+  // ordem relativa definida pela otimização.
+  const compactPicks = best.picks.filter(
+    (item): item is RefinedScaleMatch => Boolean(item),
+  );
+
   return {
-    ouro: best.picks[0],
-    prata: best.picks[1],
-    bronze: best.picks[2],
+    ouro: compactPicks[0],
+    prata: compactPicks[1],
+    bronze: compactPicks[2],
     totalQuestions: best.totalQuestions,
   };
 }
