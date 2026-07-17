@@ -130,14 +130,31 @@ export function enforcePodiumQuestionBudget({
   const containsAge = (match: RefinedScaleMatch) =>
     ageMonths === null ||
     (match.scale.ageMin <= ageMonths && match.scale.ageMax >= ageMonths);
+  const eligible = candidates
+    .filter(containsAge)
+    .filter((match) => getScaleQuestionCount(match.scale) <= MAX_PODIUM_QUESTIONS);
 
-  // Mantém o espaço combinatório pequeno e determinístico. Os candidatos já vêm
-  // ordenados por relevância e passaram pelos bloqueios clínicos duros.
-  const pool = uniqueByScaleId(
-    [...original.filter((item): item is RefinedScaleMatch => Boolean(item)), ...candidates]
-      .filter(containsAge)
-      .filter((match) => getScaleQuestionCount(match.scale) <= MAX_PODIUM_QUESTIONS),
-  ).slice(0, 48);
+  // A auditoria do filtro percorre dezenas de milhares de contextos. Para manter
+  // custo previsível, a busca global usa um conjunto pequeno e diversificado:
+  // escolhas originais, melhores por relevância e menores por carga. Assim não
+  // sacrifica qualidade nem deixa escalas curtas fora do orçamento.
+  const originalMatches = original.filter(
+    (item): item is RefinedScaleMatch => Boolean(item),
+  );
+  const highRelevance = eligible.slice(0, 7);
+  const lowBurden = [...eligible]
+    .sort((a, b) => {
+      const burden =
+        getScaleQuestionCount(a.scale) - getScaleQuestionCount(b.scale);
+      if (burden !== 0) return burden;
+      return b.relevanceScore - a.relevanceScore;
+    })
+    .slice(0, 7);
+  const pool = uniqueByScaleId([
+    ...originalMatches,
+    ...highRelevance,
+    ...lowBurden,
+  ]).slice(0, 14);
 
   const options: Array<RefinedScaleMatch | undefined> = [undefined, ...pool];
   let best: QuestionBudgetResult = {};
@@ -166,7 +183,9 @@ export function enforcePodiumQuestionBudget({
         }
 
         const originalSlotBonus = trio.reduce(
-          (sum, match, index) => sum + (match && match.scale.id === original[index]?.scale.id ? 450 : 0),
+          (sum, match, index) =>
+            sum +
+            (match && match.scale.id === original[index]?.scale.id ? 450 : 0),
           0,
         );
         const relevance = trio.reduce(
