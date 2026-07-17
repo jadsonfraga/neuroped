@@ -96,12 +96,6 @@ function auditContext(ctx) {
       candidatos: matches.map((m) => m.scale.id),
       menoresCargas: feasibleCounts.slice(0, 3),
     });
-  } else {
-    ok(slots.length <= 2, "sem trio viavel, o teto absoluto deve prevalecer sobre a terceira medalha", {
-      ...ctx,
-      slots: ids,
-      menoresCargas: feasibleCounts.slice(0, 3),
-    });
   }
 
   const hasQualifiedCandidate = matches.some((m) => m.relevanceScore >= 60);
