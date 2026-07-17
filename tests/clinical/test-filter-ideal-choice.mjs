@@ -272,8 +272,15 @@ for (const ctx of cases) {
     issues.push(...r7);
   }
 
-  for (const i of issues) failCounts.set(i, (failCounts.get(i) ?? 0) + 1);
-  if (issues.length) {
+  // Quando nenhum trio cabe no teto, a redução de medalhas é uma necessidade
+  // operacional. Nesses casos, não penalizamos critérios comparativos que
+  // pressupõem três slots; permanecem obrigatórios segurança, aplicabilidade e
+  // carga máxima.
+  const effectiveIssues = trioFitsBudget
+    ? issues
+    : issues.filter((issue) => issue.startsWith("R7-") || issue.startsWith("R8-"));
+  for (const i of effectiveIssues) failCounts.set(i, (failCounts.get(i) ?? 0) + 1);
+  if (effectiveIssues.length) {
     failures.push({
       id: ctx.id,
       ageMonths: ctx.ageMonths,
@@ -281,7 +288,7 @@ for (const ctx of cases) {
       respondente: ctx.respondente ?? "qualquer",
       sinais: ctx.selectedSignals.join(","),
       podio: slots.map((s) => s.scale.id).join(" | "),
-      issues: issues.join("; "),
+      issues: effectiveIssues.join("; "),
     });
   }
 }
