@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   apply:
+    # Workflow transitório: materializa o patch uma única vez na branch.
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
