@@ -1,6 +1,23 @@
 import { getApplicationMode, getImplementationStatus, type RefinedScaleMatch } from "./advancedFilterLogic";
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
-import type { Respondente } from "./scaleFilter";
+import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
+
+// Limite total do pódio: a soma ESTIMADA de perguntas de Ouro + Prata + Bronze
+// nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
+export const PODIUM_QUESTION_CAP = 100;
+
+// Estimativa do número de perguntas de uma escala. Aplicações interativas têm a
+// contagem REAL de itens; para as demais (páginas dedicadas/fichas) extraímos
+// "N perguntas/itens/questões/afirmações" da descrição e, na ausência, usamos
+// uma estimativa conservadora.
+export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): number {
+  const interactive = getDeliveredInteractiveItemCount(scale.id);
+  if (interactive > 0) return interactive;
+  const txt = `${scale.description ?? ""} ${scale.scoringCutoff ?? ""}`;
+  const m = txt.match(/(\d{1,3})\s*(perguntas|itens|quest|quesitos|afirma|sim\/n)/i);
+  if (m) return Math.min(Number(m[1]), 120);
+  return 20;
+}
 
 export type PodiumSlot = "ouro" | "prata" | "bronze" | "direct" | "school";
 export type PodiumSelection = Record<PodiumSlot, RefinedScaleMatch | undefined>;
@@ -519,6 +536,56 @@ export function selectPodium(
         if (targetSlot === "prata") prata = rescue;
         else bronze = rescue;
       }
+    }
+  }
+
+  // ── LIMITE TOTAL DO PÓDIO (≤ 100 perguntas estimadas) ─────────────────────
+  // A soma estimada de perguntas de Ouro + Prata + Bronze nunca deve ultrapassar
+  // PODIUM_QUESTION_CAP. O Ouro (1ª linha) é sempre preservado; Bronze e depois
+  // Prata cedem para a alternativa mais LEVE que ainda é aplicável, contém a
+  // idade e preserva a cobertura ÚNICA de queixa do selo. Mantém sempre 3
+  // medalhas (invariante do pódio) — é um "aliviar", nunca "cortar".
+  const questionsOf = (m: RefinedScaleMatch | undefined) =>
+    m ? estimatedQuestionCount(m.scale) : 0;
+  const lightenForCap = (
+    current: RefinedScaleMatch | undefined,
+    others: (RefinedScaleMatch | undefined)[],
+  ): RefinedScaleMatch | undefined => {
+    if (!current) return current;
+    const budgetForSlot = PODIUM_QUESTION_CAP - others.reduce((sum, m) => sum + questionsOf(m), 0);
+    const currentQ = questionsOf(current);
+    if (currentQ <= budgetForSlot) return current; // já cabe no orçamento
+    const mustKeep = uniqueQueixasOf(current, others);
+    const eligible = sorted
+      .filter(
+        (m) =>
+          !used.has(m.scale.id) &&
+          containsAge(m) &&
+          isApplicable(m) &&
+          m.relevanceScore >= 40 &&
+          (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
+          mustKeep.every((q) => m.scale.queixas.includes(q)),
+      )
+      .map((m) => ({ m, q: questionsOf(m) }))
+      .filter(({ q }) => q < currentQ);
+    if (eligible.length === 0) return current; // nada mais leve preserva a cobertura
+    // Prefere a de MAIOR relevância que CABE no orçamento; se nenhuma cabe, pega
+    // a MAIS LEVE (reduz o total ao máximo possível para o próximo slot ajustar).
+    const fits = eligible.filter(({ q }) => q <= budgetForSlot);
+    const chosen = (fits.length > 0
+      ? fits.sort((a, b) => b.m.relevanceScore - a.m.relevanceScore || a.q - b.q)
+      : eligible.sort((a, b) => a.q - b.q || b.m.relevanceScore - a.m.relevanceScore))[0];
+    used.delete(current.scale.id);
+    used.add(chosen.m.scale.id);
+    return chosen.m;
+  };
+  if (questionsOf(ouro) + questionsOf(prata) + questionsOf(bronze) > PODIUM_QUESTION_CAP) {
+    bronze = lightenForCap(bronze, [ouro, prata]);
+    prata = lightenForCap(prata, [ouro, bronze]);
+    // Aliviar a Prata pode ter liberado orçamento; se ainda estoura, reavalia o
+    // Bronze no novo contexto (2 passadas bastam para convergir na prática).
+    if (questionsOf(ouro) + questionsOf(prata) + questionsOf(bronze) > PODIUM_QUESTION_CAP) {
+      bronze = lightenForCap(bronze, [ouro, prata]);
     }
   }
 
