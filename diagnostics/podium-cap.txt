@@ -5,7 +5,7 @@ exit=1
 > node --import tsx tests/clinical/test-filter-podium.mjs
 
 [filter-podium] catalog=224 | queixas=29 | checks=731044
-[filter-podium] 3435 falha(s). Exemplos:
+[filter-podium] 2726 falha(s). Exemplos:
   - sem trio viavel, o teto absoluto deve prevalecer sobre a terceira medalha :: {"queixas":["atraso"],"ageMonths":108,"ageBand":{"min":72,"max":143.99},"respondente":"teste_direto_crianca","isVerbal":null,"isLiterate":null,"assessmentUse":null,"selectedSignals":[],"slots":["testes-diretos","motricidade-teste","testes-reconhecimento"],"menoresCargas":[20,20]}
   - sem trio viavel, o teto absoluto deve prevalecer sobre a terceira medalha :: {"queixas":["atraso"],"ageMonths":108,"ageBand":{"min":72,"max":143.99},"respondente":"teste_direto_crianca","isVerbal":null,"isLiterate":null,"assessmentUse":"diagnostico","selectedSignals":[],"slots":["testes-diretos","motricidade-teste","testes-reconhecimento"],"menoresCargas":[20,20]}
   - sem trio viavel, o teto absoluto deve prevalecer sobre a terceira medalha :: {"queixas":["atraso"],"ageMonths":108,"ageBand":{"min":72,"max":143.99},"respondente":"teste_direto_crianca","isVerbal":null,"isLiterate":null,"assessmentUse":"monitorizacao","selectedSignals":[],"slots":["testes-diretos","motricidade-teste","testes-reconhecimento"],"menoresCargas":[20,20]}
@@ -38,17 +38,14 @@ exit=1
 > neuroped-edj@2.0.0-fullstack test:practical-filter
 > node --import tsx tests/clinical/test-filter-practical-100.mjs
 
-[filter-practical-100] casos=100 | media=9.91 | minimo=7.4 | piso=8 | abaixo-de-9.5=6
+[filter-practical-100] casos=100 | media=9.94 | minimo=9.0 | piso=8 | abaixo-de-9.5=6
 [filter-practical-100] 6 caso(s) violaram invariante de seguranca:
-  - caso-001 nota=7.4 idade=2m respondente=pais queixas=tea podio={"prata":"j26-007","bronze":"efdi"} motivos=nao definiu escala Ouro; podio incompleto; relevancia pratica baixa
+  - caso-001 nota=9 idade=2m respondente=pais queixas=tea podio={"ouro":"j26-007","prata":"efdi"} motivos=podio incompleto
   - caso-040 nota=9 idade=96m respondente=pais queixas=linguagem podio={"ouro":"efdi","prata":"podj-tea-prime-familiar"} motivos=podio incompleto
-  - caso-061 nota=7.4 idade=54m respondente=pais queixas=tdah podio={"prata":"cbcl","bronze":"tdl-aprendizagem"} motivos=nao definiu escala Ouro; podio incompleto; relevancia pratica baixa
+  - caso-061 nota=9 idade=54m respondente=pais queixas=tdah podio={"ouro":"cbcl","prata":"tdl-aprendizagem"} motivos=podio incompleto
   - caso-067 nota=9 idade=120m respondente=pais queixas=linguagem podio={"ouro":"efdi","prata":"podj-tea-prime-familiar"} motivos=podio incompleto
   - caso-089 nota=9 idade=84m respondente=professor queixas=tea podio={"ouro":"podj-tea-prime-6-12a","prata":"podj-tea-prime-escola-terapia"} motivos=podio incompleto
   - caso-096 nota=9 idade=168m respondente=pais queixas=linguagem podio={"ouro":"podj-tea-prime-12-19a","prata":"podj-tea-prime-familiar"} motivos=podio incompleto
-[filter-practical-100] 2 caso(s) abaixo do piso por caso 8:
-  - caso-001 nota=7.4 idade=2m respondente=pais queixas=tea podio={"prata":"j26-007","bronze":"efdi"} motivos=nao definiu escala Ouro; podio incompleto; relevancia pratica baixa
-  - caso-061 nota=7.4 idade=54m respondente=pais queixas=tdah podio={"prata":"cbcl","bronze":"tdl-aprendizagem"} motivos=nao definiu escala Ouro; podio incompleto; relevancia pratica baixa
 
 ===== ideal-choice =====
 exit=0
