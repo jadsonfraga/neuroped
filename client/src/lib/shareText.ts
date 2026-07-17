@@ -21,6 +21,8 @@ export type WhatsAppShareOutcome =
   | "cancelled"
   | "failed";
 
+const WHATSAPP_URL_TEXT_LIMIT = 1_800;
+
 export function safeTextFilename(
   value: string,
   fallback = "neuroped-relatorio",
@@ -96,7 +98,13 @@ function shareWasCancelled(error: unknown): boolean {
   );
 }
 
+function fitsWhatsAppUrl(text: string): boolean {
+  return encodeURIComponent(text).length <= WHATSAPP_URL_TEXT_LIMIT;
+}
+
 function openWhatsAppUrl(text: string, phone?: string): boolean {
+  if (!fitsWhatsAppUrl(text)) return false;
+
   const recipient = String(phone || "").replace(/\D/g, "");
   const path = recipient ? `/${recipient}` : "/";
   const url = `https://wa.me${path}?text=${encodeURIComponent(text)}`;
@@ -124,14 +132,14 @@ function openWhatsAppUrl(text: string, phone?: string): boolean {
  * Compartilha no WhatsApp sem transformar o CTA em "Copiar + Baixar".
  *
  * Ordem de compatibilidade:
- * 1. arquivo .txt pela Web Share API, quando o navegador confirma suporte;
- * 2. texto integral pela Web Share API (corrige Androids que compartilham texto,
- *    mas retornam false para navigator.canShare({ files }));
- * 3. wa.me com o texto integral, sem truncamento e sem download automático.
+ * 1. quando há telefone e o texto cabe com margem conservadora, abre wa.me
+ *    imediatamente para preservar o destinatário e o gesto do usuário;
+ * 2. para relatórios extensos, usa arquivo .txt ou texto pela Web Share API;
+ * 3. sem telefone, prefere Web Share e usa wa.me apenas para textos curtos.
  *
- * Quando há um telefone explícito, o wa.me é usado imediatamente para manter o
- * destinatário selecionado pelo usuário. Copiar e baixar permanecem ações
- * independentes nos respectivos botões da interface.
+ * Relatórios extensos nunca são colocados em query string. Se o navegador não
+ * oferecer Web Share, retorna "failed" para a interface orientar o envio manual
+ * sem truncar respostas e sem copiar ou baixar silenciosamente.
  */
 export async function shareWhatsAppDocument(options: {
   title: string;
@@ -142,7 +150,8 @@ export async function shareWhatsAppDocument(options: {
   const text = String(options.text || "").trim();
   if (!text) return "failed";
 
-  if (options.phone) {
+  const canUseWhatsAppUrl = fitsWhatsAppUrl(text);
+  if (options.phone && canUseWhatsAppUrl) {
     return openWhatsAppUrl(text, options.phone) ? "opened-whatsapp" : "failed";
   }
 
@@ -173,10 +182,11 @@ export async function shareWhatsAppDocument(options: {
       return "shared-text";
     } catch (error) {
       if (shareWasCancelled(error)) return "cancelled";
-      // Web Share indisponível/bloqueada: mantém o fluxo no WhatsApp abaixo.
+      // Web Share indisponível/bloqueada: só usa URL se o conteúdo couber.
     }
   }
 
+  if (!canUseWhatsAppUrl) return "failed";
   return openWhatsAppUrl(text) ? "opened-whatsapp" : "failed";
 }
 

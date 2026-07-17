@@ -46,6 +46,7 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [sentAsFile, setSentAsFile] = useState(false);
+  const [sentViaShareSheet, setSentViaShareSheet] = useState(false);
   const { toast } = useToast();
 
   const handleSendWhatsApp = async (e: React.FormEvent) => {
@@ -75,17 +76,26 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
       });
       if (outcome === "cancelled") return;
       if (outcome === "failed") throw new Error("share failed");
+
       const sharedAsFile = outcome === "shared-file";
+      const sharedAsText = outcome === "shared-text";
+      const sharedViaShareSheet = sharedAsFile || sharedAsText;
       setSentAsFile(sharedAsFile);
+      setSentViaShareSheet(sharedViaShareSheet);
 
       softSuccess();
       haptic.success();
       setSent(true);
       toast({
-        title: sharedAsFile ? "Arquivo preparado" : "Abrindo o WhatsApp…",
+        title:
+          outcome === "opened-whatsapp"
+            ? "WhatsApp aberto"
+            : "Relatório compartilhado",
         description: sharedAsFile
-          ? "Escolha o WhatsApp e o destinatário para enviar o relatório integral."
-          : "Abrimos o WhatsApp com a mensagem pronta — toque em enviar por lá.",
+          ? "O arquivo integral foi entregue ao aplicativo escolhido."
+          : sharedAsText
+            ? "O texto integral foi entregue ao aplicativo escolhido."
+            : "A conversa foi aberta com a mensagem pronta — toque em enviar por lá.",
       });
 
       // Reset after 3 seconds
@@ -93,11 +103,13 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
         setPhone("");
         setSent(false);
         setSentAsFile(false);
+        setSentViaShareSheet(false);
       }, 3000);
     } catch (_error) {
       toast({
-        title: "Erro ao enviar",
-        description: "Tente novamente ou copie o relatório manualmente.",
+        title: "Não foi possível compartilhar sem cortar o relatório",
+        description:
+          "Use Copiar texto ou Baixar .txt e anexe o conteúdo no WhatsApp.",
         variant: "destructive",
       });
     } finally {
@@ -124,8 +136,10 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
               {sentAsFile
-                ? "Arquivo integral preparado para compartilhar"
-                : "WhatsApp aberto — toque em enviar por lá"}
+                ? "Arquivo integral compartilhado"
+                : sentViaShareSheet
+                  ? "Relatório integral compartilhado"
+                  : "WhatsApp aberto — toque em enviar por lá"}
             </span>
           </div>
         ) : (
