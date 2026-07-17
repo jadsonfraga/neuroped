@@ -1,0 +1,50 @@
+name: Aplicar limite de 100 perguntas no pódio
+
+on:
+  push:
+    branches:
+      - agent/podium-max-100-questions-2026-07-17
+
+permissions:
+  contents: write
+
+concurrency:
+  group: podium-question-budget-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/podium-max-100-questions-2026-07-17
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Aplicar patch determinístico
+        run: node scripts/apply-podium-question-budget.mjs
+      - name: Validar TypeScript e pódio
+        run: |
+          npm run check
+          npm run test:podium
+          npm run test:practical-filter
+          npm run test:ideal-choice
+      - name: Commitar implementação
+        run: |
+          if git diff --quiet; then
+            echo 'Nenhuma alteração pendente.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/data/filterPodium.ts tests/clinical/test-filter-podium.mjs
+          git commit -m 'fix: limita pódio a 100 perguntas no total'
+          git push origin HEAD:agent/podium-max-100-questions-2026-07-17
