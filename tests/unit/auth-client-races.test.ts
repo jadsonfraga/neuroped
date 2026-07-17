@@ -1,4 +1,45 @@
 import assert from "node:assert/strict";
+import {
+  authCapabilityFromHealth,
+  fallbackAuthCapability,
+  resolveAuthMode,
+} from "../../client/src/lib/authCapabilityPolicy.ts";
+
+assert.equal(
+  resolveAuthMode(undefined, true),
+  "remote",
+  "build de produção sem declaração explícita deve falhar fechado",
+);
+assert.equal(resolveAuthMode(undefined, false), "auto");
+assert.equal(resolveAuthMode("local", true), "local");
+assert.deepEqual(fallbackAuthCapability("remote", null), {
+  required: true,
+  configured: false,
+  reachable: false,
+});
+assert.deepEqual(
+  fallbackAuthCapability("remote", { required: false, configured: true }),
+  { required: true, configured: true, reachable: false },
+  "modo remoto nunca pode herdar required=false do storage",
+);
+assert.deepEqual(fallbackAuthCapability("auto", null), {
+  required: false,
+  configured: false,
+  reachable: false,
+});
+assert.deepEqual(
+  authCapabilityFromHealth("remote", {
+    authentication: { required: false, configured: true },
+  }),
+  { required: true, configured: false, reachable: true },
+  "health inesperado não pode desligar autenticação de um build remoto",
+);
+assert.deepEqual(
+  authCapabilityFromHealth("auto", {
+    authentication: { required: true, configured: true },
+  }),
+  { required: true, configured: true, reachable: true },
+);
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -142,4 +183,4 @@ assert.equal(
 );
 assert.equal(expiredEvents, 0, "401 anônimo não representa sessão expirada");
 
-console.log("✓ refresh concorrente é isolado por sessão e não apaga login mais novo");
+console.log("✓ auth fail-closed e refresh concorrente isolado por sessão");
