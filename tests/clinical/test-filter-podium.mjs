@@ -24,6 +24,7 @@ const {
   getApplicationMode,
 } = await imp("client/src/data/advancedFilterLogic.ts");
 const { selectCuratedTiers, selectPodium } = await imp("client/src/data/filterPodium.ts");
+const { MAX_PODIUM_QUESTIONS, getScaleQuestionCount, podiumQuestionTotal } = await imp("client/src/data/podiumQuestionBudget.ts");
 const { getClinicalTiers } = await imp("client/src/data/clinicalRanking.ts");
 
 const uniqueById = (items) => {
@@ -78,6 +79,8 @@ function auditContext(ctx) {
   const podium = selectPodium(matches, curated, { selectedQueixas: ctx.queixas, ageMonths: ctx.ageMonths ?? null, selectedSignals: ctx.selectedSignals ?? [] });
   const slots = [podium.ouro, podium.prata, podium.bronze].filter(Boolean);
   const ids = slots.map((m) => m.scale.id);
+  const questionCounts = slots.map((m) => getScaleQuestionCount(m.scale));
+  const questionTotal = podiumQuestionTotal(slots);
   const exactMatches = filterScalesIntelligently(catalog, ctx);
 
   ok(matches.length > 0, "contexto com queixa/idade deve produzir ao menos uma recomendacao segura ou fallback", ctx);
@@ -91,6 +94,11 @@ function auditContext(ctx) {
     ok(Boolean(podium.ouro), "podio deve ter Ouro quando ha candidato com score >= 60", ctx);
   }
   ok(new Set(ids).size === ids.length, "Ouro/Prata/Bronze nao podem repetir escala", { ...ctx, ids });
+  ok(
+    questionTotal <= MAX_PODIUM_QUESTIONS,
+    "REGRA DE OURO: Ouro + Prata + Bronze nao podem ultrapassar 100 perguntas",
+    { ...ctx, ids, questionCounts, questionTotal, max: MAX_PODIUM_QUESTIONS },
+  );
 
   for (const slot of slots) {
     ok(refinedById.has(slot.scale.id), "slot do podio precisa vir dos candidatos seguros/fallback", { ...ctx, slot: slot.scale.id });

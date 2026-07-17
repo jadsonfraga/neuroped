@@ -1,6 +1,7 @@
 import { getApplicationMode, getImplementationStatus, type RefinedScaleMatch } from "./advancedFilterLogic";
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import type { Respondente } from "./scaleFilter";
+import { enforcePodiumQuestionBudget } from "./podiumQuestionBudget";
 
 export type PodiumSlot = "ouro" | "prata" | "bronze" | "direct" | "school";
 export type PodiumSelection = Record<PodiumSlot, RefinedScaleMatch | undefined>;
@@ -521,6 +522,19 @@ export function selectPodium(
       }
     }
   }
+
+  // REGRA DE OURO DE CARGA: a soma real/estimada das perguntas de Ouro,
+  // Prata e Bronze nunca ultrapassa 100. O pós-passe procura uma combinação
+  // global que preserve três medalhas, cobertura, idade e relevância sempre
+  // que o catálogo contenha trio seguro dentro do orçamento.
+  ({ ouro, prata, bronze } = enforcePodiumQuestionBudget({
+    ouro,
+    prata,
+    bronze,
+    candidates: sorted,
+    ageMonths: exactAge,
+    selectedQueixas,
+  }));
 
   // Direct and school also join the used set to prevent deduplication with medals.
   const direct = (() => {
