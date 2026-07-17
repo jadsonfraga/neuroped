@@ -16,7 +16,7 @@ function setGlobal(name: GlobalName, value: unknown) {
   });
 }
 
-function restoreGlobals() {
+function resetGlobals() {
   for (const [name, descriptor] of originalGlobals) {
     if (descriptor) Object.defineProperty(globalThis, name, descriptor);
     else Reflect.deleteProperty(globalThis, name);
@@ -24,13 +24,20 @@ function restoreGlobals() {
 }
 
 const title = "Escala NeuroPed — respostas completas";
+const shortMessage = "Pergunta 1: resposta preservada.";
 const sentinel =
   "INÍCIO DO RELATÓRIO\n" +
   "pergunta e resposta\n".repeat(250) +
   "FIM-SENTINELA";
 
+assert.ok(
+  encodeURIComponent(sentinel).length > 1_800,
+  "a regressão precisa usar um relatório maior que o limite seguro da URL",
+);
+
 try {
   {
+    resetGlobals();
     const shared: ShareData[] = [];
     let clipboardCalls = 0;
     let popupCalls = 0;
@@ -62,10 +69,11 @@ try {
     assert.equal(outcome, "shared-text");
     assert.deepEqual(shared, [{ title, text: sentinel }]);
     assert.equal(clipboardCalls, 0, "WhatsApp não deve copiar automaticamente");
-    assert.equal(popupCalls, 0, "Web Share de texto deve anteceder wa.me");
+    assert.equal(popupCalls, 0, "relatório longo não deve entrar em wa.me");
   }
 
   {
+    resetGlobals();
     class FakeFile {
       readonly name: string;
       readonly type: string;
@@ -107,9 +115,10 @@ try {
   }
 
   {
+    resetGlobals();
     let clipboardCalls = 0;
-    let openedUrl = "";
-    const openedWindow: { opener?: unknown } = { opener: "origin" };
+    let popupCalls = 0;
+    let assignedCalls = 0;
     setGlobal("navigator", {
       clipboard: {
         writeText: async () => {
@@ -118,27 +127,62 @@ try {
       },
     });
     setGlobal("window", {
-      open: (url: string) => {
-        openedUrl = url;
-        return openedWindow;
+      open: () => {
+        popupCalls += 1;
+        return {};
       },
-      location: { assign: () => undefined },
+      location: {
+        assign: () => {
+          assignedCalls += 1;
+        },
+      },
     });
 
     const outcome = await shareWhatsAppDocument({ title, text: sentinel });
 
-    assert.equal(outcome, "opened-whatsapp");
-    assert.ok(openedUrl.startsWith("https://wa.me/?text="));
-    assert.equal(
-      decodeURIComponent(openedUrl.split("?text=")[1]),
-      sentinel,
-      "o fallback deve preservar inclusive a cauda do relatório",
-    );
-    assert.equal(openedWindow.opener, null);
-    assert.equal(clipboardCalls, 0, "wa.me não deve copiar automaticamente");
+    assert.equal(outcome, "failed");
+    assert.equal(popupCalls, 0, "relatório longo não deve abrir wa.me");
+    assert.equal(assignedCalls, 0, "relatório longo não deve navegar para wa.me");
+    assert.equal(clipboardCalls, 0, "o fallback não deve copiar automaticamente");
   }
 
   {
+    resetGlobals();
+    let nativeShareCalls = 0;
+    let popupCalls = 0;
+    const shared: ShareData[] = [];
+    setGlobal("navigator", {
+      share: async (data: ShareData) => {
+        nativeShareCalls += 1;
+        shared.push(data);
+      },
+    });
+    setGlobal("window", {
+      open: () => {
+        popupCalls += 1;
+        return {};
+      },
+      location: { assign: () => undefined },
+    });
+
+    const outcome = await shareWhatsAppDocument({
+      title,
+      text: sentinel,
+      phone: "+55 (87) 99999-0000",
+    });
+
+    assert.equal(outcome, "shared-text");
+    assert.equal(nativeShareCalls, 1);
+    assert.deepEqual(shared, [{ title, text: sentinel }]);
+    assert.equal(
+      popupCalls,
+      0,
+      "telefone não deve forçar relatório longo para dentro da URL",
+    );
+  }
+
+  {
+    resetGlobals();
     let nativeShareCalls = 0;
     let openedUrl = "";
     setGlobal("navigator", {
@@ -156,21 +200,18 @@ try {
 
     const outcome = await shareWhatsAppDocument({
       title,
-      text: sentinel,
+      text: shortMessage,
       phone: "+55 (87) 99999-0000",
     });
 
     assert.equal(outcome, "opened-whatsapp");
-    assert.equal(
-      nativeShareCalls,
-      0,
-      "o destinatário informado deve ser mantido",
-    );
+    assert.equal(nativeShareCalls, 0, "texto curto deve preservar o destinatário");
     assert.ok(openedUrl.startsWith("https://wa.me/5587999990000?text="));
-    assert.equal(decodeURIComponent(openedUrl.split("?text=")[1]), sentinel);
+    assert.equal(decodeURIComponent(openedUrl.split("?text=")[1]), shortMessage);
   }
 
   {
+    resetGlobals();
     let popupCalls = 0;
     setGlobal("navigator", {
       canShare: () => false,
@@ -197,6 +238,7 @@ try {
   }
 
   {
+    resetGlobals();
     let assignedUrl = "";
     setGlobal("navigator", {
       canShare: () => false,
@@ -213,16 +255,52 @@ try {
       },
     });
 
-    const outcome = await shareWhatsAppDocument({ title, text: sentinel });
+    const outcome = await shareWhatsAppDocument({
+      title,
+      text: shortMessage,
+    });
 
     assert.equal(outcome, "opened-whatsapp");
     assert.ok(assignedUrl.startsWith("https://wa.me/?text="));
-    assert.equal(decodeURIComponent(assignedUrl.split("?text=")[1]), sentinel);
+    assert.equal(decodeURIComponent(assignedUrl.split("?text=")[1]), shortMessage);
+  }
+
+  {
+    resetGlobals();
+    let popupCalls = 0;
+    let assignedCalls = 0;
+    setGlobal("navigator", {
+      canShare: () => false,
+      share: async () => {
+        throw new TypeError("Web Share indisponível");
+      },
+    });
+    setGlobal("window", {
+      open: () => {
+        popupCalls += 1;
+        return {};
+      },
+      location: {
+        assign: () => {
+          assignedCalls += 1;
+        },
+      },
+    });
+
+    const outcome = await shareWhatsAppDocument({
+      title,
+      text: sentinel,
+      phone: "+55 (87) 99999-0000",
+    });
+
+    assert.equal(outcome, "failed");
+    assert.equal(popupCalls, 0);
+    assert.equal(assignedCalls, 0);
   }
 } finally {
-  restoreGlobals();
+  resetGlobals();
 }
 
 console.log(
-  "✓ compartilhamento WhatsApp: arquivo, texto e wa.me sem cópia/download",
+  "✓ compartilhamento WhatsApp: relatórios longos nunca entram em wa.me",
 );
