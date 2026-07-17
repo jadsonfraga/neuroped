@@ -7,6 +7,8 @@ import {
   authFetch,
   getAuthCapability,
 } from "@/lib/authClient";
+import { queryClient } from "@/lib/queryClient";
+import { secureClearAll } from "@/lib/secureStorage";
 
 export type AccessMode = "checking" | "remote" | "local";
 
@@ -22,6 +24,20 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+/**
+ * Dados do React Query e rascunhos cifrados pertencem à sessão clínica atual.
+ * Nunca podem sobreviver a expiração, logout ou troca de conta no mesmo SPA.
+ */
+async function clearSessionScopedClientState(): Promise<void> {
+  try {
+    await queryClient.cancelQueries();
+  } catch {
+    // A limpeza abaixo continua obrigatória mesmo se algum observer falhar.
+  }
+  queryClient.clear();
+  await secureClearAll();
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -65,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     function handleExpired() {
       setUser(null);
+      void clearSessionScopedClientState();
     }
     window.addEventListener("auth:expired", handleExpired as EventListener);
     return () => {
@@ -75,12 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const data = await loginRequest(email, password);
+    await clearSessionScopedClientState();
     setUser(data.user);
   }
 
   async function logout() {
     setUser(null);
-    await logoutRequest();
+    const revocation = logoutRequest();
+    try {
+      await clearSessionScopedClientState();
+    } finally {
+      await revocation;
+    }
   }
 
   async function refreshUser() {
