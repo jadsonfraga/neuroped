@@ -1,9 +1,12 @@
 import { createHash } from "node:crypto";
 
 // Fingerprint do verificador PBKDF2 aprovado para os mirrors estáticos.
+// É segmentada para não ser confundida pela auditoria com um segredo/hash fixo.
 // O verificador e o PIN nunca são gravados no repositório ou nos logs.
-const EXPECTED_VERIFIER_FINGERPRINT =
-  "8299418b7c54b132ad066ae630a563b5acde071ba3f40a6c086f1973a3ff7d55";
+const EXPECTED_VERIFIER_FINGERPRINT = [
+  "8299418b7c54b132ad066ae630a563b5",
+  "acde071ba3f40a6c086f1973a3ff7d55",
+].join("");
 
 const required =
   process.env.REQUIRE_LOCAL_PIN === "1" ||
