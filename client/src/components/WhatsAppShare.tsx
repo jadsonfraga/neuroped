@@ -7,38 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { softSuccess, softTap } from "@/lib/softSounds";
 import { shareWhatsAppDocument } from "@/lib/shareText";
+import { formatPhoneNumber, isValidPhone } from "@/lib/phoneBr";
 
 interface WhatsAppShareProps {
   scaleName: string;
   reportText: string;
-}
-
-function formatPhoneNumber(phone: string): string {
-  // Remove non-digits
-  const digits = phone.replace(/\D/g, "");
-  // Número nacional (DDD + fixo de 8 ou celular de 9 dígitos): sempre prefixa o
-  // país 55 — inclusive quando o DDD é o próprio 55 (Santa Maria/RS), caso que a
-  // versão anterior tratava errado ao usar startsWith("55").
-  if (digits.length === 10 || digits.length === 11) {
-    return `55${digits}`;
-  }
-  // Já vem com o código do país 55 (12–13 dígitos).
-  if (
-    (digits.length === 12 || digits.length === 13) &&
-    digits.startsWith("55")
-  ) {
-    return digits;
-  }
-  // Outro internacional já completo.
-  if (digits.length >= 12 && digits.length <= 15) {
-    return digits;
-  }
-  return "";
-}
-
-function isValidPhone(phone: string): boolean {
-  const formatted = formatPhoneNumber(phone);
-  return formatted.length >= 10 && /^\d{10,15}$/.test(formatted);
 }
 
 export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
@@ -132,7 +105,11 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
         </p>
 
         {sent ? (
-          <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+          >
             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
               {sentAsFile
@@ -186,7 +163,7 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
             </Button>
 
             {phone && !isValidPhone(phone) && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
+              <p role="alert" className="text-xs text-amber-600 dark:text-amber-400">
                 ⚠️ Número inválido. Digite apenas números ou use: (XX)
                 XXXXX-XXXX
               </p>
