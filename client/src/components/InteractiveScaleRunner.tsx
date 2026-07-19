@@ -129,45 +129,64 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
         {/* RESULTADO = perguntas e respostas por extenso. Sem escore, corte ou
             classificação (pedido do autor, 2026). */}
         <Card className="border-card-border">
-          <CardContent className="space-y-3 p-6">
-            <h3 className="text-sm font-semibold text-foreground">
-              Perguntas e respostas ({answered}/{total})
-            </h3>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                className="text-lg text-foreground"
+                style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              >
+                Perguntas e respostas
+              </h3>
+              <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                {answered}/{total}
+              </span>
+            </div>
             <ol className="space-y-2">
-              {def.items.map((item, i) => (
-                <li
-                  key={i}
-                  className="border-b border-border/40 pb-2 last:border-0"
-                >
-                  <p className="text-sm leading-snug text-foreground">
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {i + 1}.
-                    </span>{" "}
-                    {item.emoji && (
-                      <span
-                        className="mr-0.5 text-xs opacity-60"
-                        aria-hidden="true"
-                      >
-                        {item.emoji}
+              {def.items.map((item, i) => {
+                const answeredItem = answers[i] != null;
+                const resp = answeredItem
+                  ? formatScaleResponseAnswer(item.options[answers[i]].label)
+                  : "Não respondida";
+                return (
+                  <li
+                    key={i}
+                    className="rounded-xl border border-card-border bg-card/60 p-3 shadow-xs transition-shadow hover:shadow-sm"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold tabular-nums text-primary">
+                        {i + 1}
                       </span>
-                    )}
-                    {item.text}
-                  </p>
-                  {item.example && (
-                    <p className="mt-1 border-l-2 border-primary/20 pl-2 text-xs italic leading-snug text-muted-foreground">
-                      {item.example}
-                    </p>
-                  )}
-                  <p className="mt-0.5 text-sm font-semibold text-primary">
-                    →{" "}
-                    {answers[i] != null
-                      ? formatScaleResponseAnswer(
-                          item.options[answers[i]].label,
-                        )
-                      : "Não respondida"}
-                  </p>
-                </li>
-              ))}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm leading-snug text-foreground">
+                          {item.emoji && (
+                            <span
+                              className="mr-1 opacity-70"
+                              aria-hidden="true"
+                            >
+                              {item.emoji}
+                            </span>
+                          )}
+                          {item.text}
+                        </p>
+                        {item.example && (
+                          <p className="mt-1.5 rounded-lg border-l-2 border-primary/25 bg-muted/40 py-1 pl-2.5 pr-2 text-xs italic leading-snug text-muted-foreground">
+                            {item.example}
+                          </p>
+                        )}
+                        <p
+                          className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-semibold ${
+                            answeredItem
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {resp}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </CardContent>
         </Card>

@@ -233,26 +233,40 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 corte, percentual ou classificação — o registro fiel do que foi
                 perguntado e do que foi respondido, para o profissional fazer a
                 própria análise clínica (pedido do autor, 2026). */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">
-                Perguntas e respostas ({answered}/{allItems.length})
-              </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3
+                  className="text-lg text-foreground"
+                  style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+                >
+                  Perguntas e respostas
+                </h3>
+                <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  {answered}/{allItems.length}
+                </span>
+              </div>
               {config.domains.map((d, di) => (
-                <div key={di} className="space-y-1.5">
+                <div key={di} className="space-y-2">
                   {config.domains.length > 1 && (
-                    <p className="mb-1 text-xs font-bold uppercase tracking-wide text-primary">
-                      {d.name}
-                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                        aria-hidden="true"
+                      />
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                        {d.name}
+                      </p>
+                    </div>
                   )}
                   <ol className="space-y-2">
                     {d.items.map((item, ii) => {
                       const idx = answers[`${di}-${ii}`];
-                      const resp =
-                        idx === undefined
-                          ? "Não respondida"
-                          : formatScaleResponseAnswer(
-                              config.labels[idx] ?? `Opção ${idx + 1}`,
-                            );
+                      const answeredItem = idx !== undefined;
+                      const resp = answeredItem
+                        ? formatScaleResponseAnswer(
+                            config.labels[idx] ?? `Opção ${idx + 1}`,
+                          )
+                        : "Não respondida";
                       const globalN =
                         config.domains
                           .slice(0, di)
@@ -264,30 +278,40 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                       return (
                         <li
                           key={ii}
-                          className="border-b border-border/40 pb-2 last:border-0"
+                          className="rounded-xl border border-card-border bg-card/60 p-3 shadow-xs transition-shadow hover:shadow-sm"
                         >
-                          <p className="text-sm text-foreground leading-snug">
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {globalN}.
-                            </span>{" "}
-                            {emoji && (
-                              <span
-                                className="mr-0.5 text-xs opacity-60"
-                                aria-hidden="true"
+                          <div className="flex items-start gap-2.5">
+                            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold tabular-nums text-primary">
+                              {globalN}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm leading-snug text-foreground">
+                                {emoji && (
+                                  <span
+                                    className="mr-1 opacity-70"
+                                    aria-hidden="true"
+                                  >
+                                    {emoji}
+                                  </span>
+                                )}
+                                {itemText(item)}
+                              </p>
+                              {example && (
+                                <p className="mt-1.5 rounded-lg border-l-2 border-primary/25 bg-muted/40 py-1 pl-2.5 pr-2 text-xs italic leading-snug text-muted-foreground">
+                                  {example}
+                                </p>
+                              )}
+                              <p
+                                className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-semibold ${
+                                  answeredItem
+                                    ? "bg-primary/10 text-primary"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
                               >
-                                {emoji}
-                              </span>
-                            )}
-                            {itemText(item)}
-                          </p>
-                          {example && (
-                            <p className="mt-1 border-l-2 border-primary/20 pl-2 text-xs italic leading-snug text-muted-foreground">
-                              {example}
-                            </p>
-                          )}
-                          <p className="mt-0.5 text-sm font-semibold text-primary">
-                            → {resp}
-                          </p>
+                                {resp}
+                              </p>
+                            </div>
+                          </div>
                         </li>
                       );
                     })}

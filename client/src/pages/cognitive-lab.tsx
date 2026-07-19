@@ -26,9 +26,15 @@ export default function CognitiveLabPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
-      <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight">
-          <FlaskConical className="h-6 w-6 text-primary" aria-hidden="true" /> Cognitive Lab
+      <header className="space-y-2">
+        <h1
+          className="flex items-center gap-2.5 text-2xl text-foreground"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-chart-2/15 shadow-sm">
+            <FlaskConical className="h-5 w-5 text-primary" aria-hidden="true" />
+          </span>
+          Cognitive Lab
         </h1>
         <p className="text-sm text-muted-foreground">
           Tarefas cognitivas computadorizadas com cronometria em milissegundos: atenção, inibição,
@@ -40,10 +46,10 @@ export default function CognitiveLabPage() {
       <section aria-label="Tarefas com runner próprio" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {customCognitiveTasks.map((t) => (
           <Link key={t.id} href={`/cognitive-lab/${t.id}`} className="group">
-            <Card className="h-full transition hover:border-primary/50">
+            <Card className="h-full overflow-hidden rounded-2xl border-card-border shadow-xs transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/40 group-hover:shadow-lg">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-start gap-2 text-base">
-                  <span className="text-2xl" aria-hidden="true">{t.emoji}</span>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-chart-2/10 text-2xl shadow-sm" aria-hidden="true">{t.emoji}</span>
                   <span className="min-w-0">
                     {t.name}
                     <span className="block text-[11px] font-semibold text-muted-foreground">{t.domain}</span>
@@ -63,10 +69,10 @@ export default function CognitiveLabPage() {
         ))}
         {cognitiveTasks.map((t) => (
           <Link key={t.id} href={`/cognitive-lab/${t.id}`} className="group">
-            <Card className="h-full transition hover:border-primary/50">
+            <Card className="h-full overflow-hidden rounded-2xl border-card-border shadow-xs transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/40 group-hover:shadow-lg">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-start gap-2 text-base">
-                  <span className="text-2xl" aria-hidden="true">{t.emoji}</span>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-chart-2/10 text-2xl shadow-sm" aria-hidden="true">{t.emoji}</span>
                   <span className="min-w-0">
                     {t.name}
                     <span className="block text-[11px] font-semibold text-muted-foreground">{t.domain}</span>
