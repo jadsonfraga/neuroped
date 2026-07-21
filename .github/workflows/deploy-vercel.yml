@@ -16,9 +16,8 @@ concurrency:
 
 jobs:
   # Pré-checagem: o deploy do Vercel só roda se os secrets existirem. Sem eles,
-  # este job termina VERDE e o deploy é pulado (o site é publicado por Cloudflare
-  # Pages + GitHub Pages). Evita o "vermelho" em todo push quando o Vercel não
-  # está configurado.
+  # o job informa a configuração ausente e o deploy é pulado; Cloudflare Pages
+  # e GitHub Pages continuam independentes deste provedor.
   preflight:
     runs-on: ubuntu-latest
     outputs:
@@ -50,7 +49,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Configure Node.js 20
+      - name: Configure Node.js 24
         uses: actions/setup-node@v6
         with:
           node-version: "24"
@@ -140,11 +139,23 @@ jobs:
             url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
             echo "$name deployment: $url"
 
+            check_sentinel() {
+              node -e '
+                const fs = require("node:fs");
+                const check = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+                const full = process.env.GITHUB_SHA;
+                if (check.commit !== full && check.commit !== full.slice(0, 12)) {
+                  console.error(`Sentinela divergente: ${check.commit ?? "ausente"}`);
+                  process.exit(1);
+                }
+              ' "$1"
+            }
+
             ok=0
             for i in $(seq 1 12); do
               if curl -fsSL "$url/deploy-check.json?try=$i" \
                    -o "/tmp/vercel-${name}-deploy-check.json" \
-                && grep -q "${GITHUB_SHA}" "/tmp/vercel-${name}-deploy-check.json"; then
+                && check_sentinel "/tmp/vercel-${name}-deploy-check.json"; then
                 ok=1
                 break
               fi
@@ -153,6 +164,24 @@ jobs:
             cat "/tmp/vercel-${name}-deploy-check.json" 2>/dev/null || true
             [ "$ok" -eq 1 ] || {
               echo "::error::$name não publicou o commit ${GITHUB_SHA}."
+              exit 1
+            }
+
+            # Confirma também o alias estável que os usuários acessam em produção.
+            production_url="https://${name}.vercel.app"
+            alias_ok=0
+            for i in $(seq 1 18); do
+              if curl -fsSL "$production_url/deploy-check.json?try=$i" \
+                   -o "/tmp/vercel-${name}-production-check.json" \
+                && check_sentinel "/tmp/vercel-${name}-production-check.json"; then
+                alias_ok=1
+                break
+              fi
+              sleep 10
+            done
+            cat "/tmp/vercel-${name}-production-check.json" 2>/dev/null || true
+            [ "$alias_ok" -eq 1 ] || {
+              echo "::error::O alias $production_url não serve ${GITHUB_SHA}."
               exit 1
             }
           done
