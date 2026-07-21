@@ -32,56 +32,163 @@ jobs:
 
       - name: Rodar auditoria de segurança
         id: audit
+        shell: bash
         run: |
-          npm audit --audit-level=high --json > audit-report.json 2>&1 || true
-          CRITICAL=$(cat audit-report.json | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          meta = data.get('metadata', {})
-          vulns = meta.get('vulnerabilities', {})
-          print(vulns.get('critical', 0) + vulns.get('high', 0))
-          " 2>/dev/null || echo "0")
-          echo "critical_count=$CRITICAL" >> $GITHUB_OUTPUT
-          cat audit-report.json | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          meta = data.get('metadata', {})
-          vulns = meta.get('vulnerabilities', {})
-          print('Críticas:', vulns.get('critical', 0))
-          print('Altas:', vulns.get('high', 0))
-          print('Moderadas:', vulns.get('moderate', 0))
-          print('Baixas:', vulns.get('low', 0))
-          " 2>/dev/null || npm audit --audit-level=moderate || true
+          set -euo pipefail
 
-      - name: Abrir issue se houver vulnerabilidades críticas
-        if: steps.audit.outputs.critical_count != '0'
+          run_audit() {
+            local report="$1"
+            shift
+            set +e
+            npm audit --json "$@" > "$report"
+            local audit_exit=$?
+            set -e
+
+            # npm audit retorna 1 quando encontra vulnerabilidades. Qualquer
+            # outro código, ou JSON inválido, é uma auditoria inconclusiva e
+            # precisa falhar — nunca pode virar um falso "zero".
+            if [ "$audit_exit" -gt 1 ]; then
+              echo "npm audit falhou antes de concluir (exit $audit_exit)." >&2
+              if [ -f "$report" ]; then
+                cat "$report" >&2
+              fi
+              return "$audit_exit"
+            fi
+
+            python3 - "$report" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as report:
+              data = json.load(report)
+          vulnerabilities = data.get("metadata", {}).get("vulnerabilities", {})
+          values = []
+          for severity in ("high", "critical", "moderate", "low"):
+              value = vulnerabilities.get(severity, 0)
+              if not isinstance(value, int) or value < 0:
+                  raise ValueError(f"contagem inválida para {severity}: {value!r}")
+              values.append(str(value))
+          print(" ".join(values))
+          PY
+          }
+
+          full_counts="$(run_audit audit-report.json)"
+          production_counts="$(run_audit audit-production-report.json --omit=dev)"
+          read -r all_high all_critical all_moderate all_low <<< "$full_counts"
+          read -r production_high production_critical production_moderate production_low <<< "$production_counts"
+
+          {
+            echo "all_high=$all_high"
+            echo "all_critical=$all_critical"
+            echo "all_moderate=$all_moderate"
+            echo "all_low=$all_low"
+            echo "production_high=$production_high"
+            echo "production_critical=$production_critical"
+            echo "production_moderate=$production_moderate"
+            echo "production_low=$production_low"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Dependências completas — críticas: $all_critical; altas: $all_high; moderadas: $all_moderate; baixas: $all_low"
+          echo "Produção (--omit=dev) — críticas: $production_critical; altas: $production_high; moderadas: $production_moderate; baixas: $production_low"
+
+      - name: Sincronizar alerta de vulnerabilidades high/critical
         uses: actions/github-script@v7
+        env:
+          ALL_HIGH: ${{ steps.audit.outputs.all_high }}
+          ALL_CRITICAL: ${{ steps.audit.outputs.all_critical }}
+          ALL_MODERATE: ${{ steps.audit.outputs.all_moderate }}
+          ALL_LOW: ${{ steps.audit.outputs.all_low }}
+          PRODUCTION_HIGH: ${{ steps.audit.outputs.production_high }}
+          PRODUCTION_CRITICAL: ${{ steps.audit.outputs.production_critical }}
+          PRODUCTION_MODERATE: ${{ steps.audit.outputs.production_moderate }}
+          PRODUCTION_LOW: ${{ steps.audit.outputs.production_low }}
         with:
           script: |
-            const count = '${{ steps.audit.outputs.critical_count }}';
-            const date = new Date().toLocaleDateString('pt-BR');
+            const counts = Object.fromEntries(
+              Object.entries({
+                allHigh: process.env.ALL_HIGH,
+                allCritical: process.env.ALL_CRITICAL,
+                allModerate: process.env.ALL_MODERATE,
+                allLow: process.env.ALL_LOW,
+                productionHigh: process.env.PRODUCTION_HIGH,
+                productionCritical: process.env.PRODUCTION_CRITICAL,
+                productionModerate: process.env.PRODUCTION_MODERATE,
+                productionLow: process.env.PRODUCTION_LOW,
+              }).map(([key, value]) => [key, Number(value ?? "0")]),
+            );
+            if (Object.values(counts).some((value) => !Number.isInteger(value) || value < 0)) {
+              throw new Error("Contagens inválidas recebidas do npm audit.");
+            }
 
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🔒 Vulnerabilidades críticas detectadas — ${date}`,
-              body: `## Auditoria de Segurança Automática
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const title = "🔒 Alerta de vulnerabilidades high/critical (npm audit)";
+            const legacyTitle = /^🔒 Vulnerabilidades críticas detectadas(?: — .*)?$/u;
+            const body = `<!-- neuroped-security-audit -->
+            ## Auditoria de segurança automática
 
-              **${count}** vulnerabilidade(s) de severidade alta ou crítica foram encontradas.
+            | Escopo | Críticas | Altas | Moderadas | Baixas |
+            |---|---:|---:|---:|---:|
+            | Todas as dependências | ${counts.allCritical} | ${counts.allHigh} | ${counts.allModerate} | ${counts.allLow} |
+            | Produção (\`--omit=dev\`) | ${counts.productionCritical} | ${counts.productionHigh} | ${counts.productionModerate} | ${counts.productionLow} |
 
-              ### Ação Necessária
+            A auditoria foi concluída com JSON válido. Dependências de desenvolvimento são registradas separadamente e não devem ser confundidas com exposição em runtime.
 
-              Execute localmente para ver os detalhes:
-              \`\`\`bash
-              npm audit
-              npm audit fix
-              \`\`\`
+            [Ver execução](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})`;
+            const alerts = (await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: "all",
+              per_page: 100,
+            })).filter((issue) => !issue.pull_request && (issue.title === title || legacyTitle.test(issue.title)));
+            const openAlerts = alerts.filter((issue) => issue.state === "open");
+            const blocking = counts.allHigh + counts.allCritical > 0;
 
-              Para atualizar dependências com breaking changes:
-              \`\`\`bash
-              npm audit fix --force
-              \`\`\`
+            if (!blocking) {
+              for (const issue of openAlerts) {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: issue.number,
+                  state: "closed",
+                  state_reason: "completed",
+                  body: `${body}\n\n✅ Fechado automaticamente: nenhuma vulnerabilidade high/critical foi encontrada nesta auditoria completa válida.`,
+                });
+              }
+              return;
+            }
 
-              *Auditoria automática rodada em ${date}*`,
-              labels: ['security', 'dependencies']
-            });
+            const [primary, ...duplicates] = openAlerts.length > 0 ? openAlerts : alerts;
+            if (primary) {
+              const update = {
+                owner,
+                repo,
+                issue_number: primary.number,
+                title,
+                body,
+                labels: ["security", "dependencies"],
+              };
+              if (primary.state !== "open") {
+                update.state = "open";
+                update.state_reason = "reopened";
+              }
+              await github.rest.issues.update(update);
+            } else {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: ["security", "dependencies"],
+              });
+            }
+            for (const issue of duplicates.filter((issue) => issue.state === "open")) {
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: issue.number,
+                state: "closed",
+                state_reason: "not_planned",
+                body: "Fechado como alerta duplicado; a contagem atual é mantida no alerta único de auditoria de segurança.",
+              });
+            }

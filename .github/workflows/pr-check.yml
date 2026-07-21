@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -40,14 +41,9 @@ jobs:
         run: npm run build
         continue-on-error: true
 
-      - name: Lint (se script existir)
+      - name: Lint
         id: lint
-        run: |
-          if npm run lint --if-present; then
-            echo "lint_status=passed" >> $GITHUB_OUTPUT
-          else
-            echo "lint_status=failed" >> $GITHUB_OUTPUT
-          fi
+        run: npm run lint
         continue-on-error: true
 
       - name: Comentar resultado no PR
@@ -56,12 +52,15 @@ jobs:
           script: |
             const buildStatus = '${{ steps.build.outcome }}' === 'success';
             const typecheckStatus = '${{ steps.typecheck.outcome }}' === 'success';
-            const lintStatus = '${{ steps.lint.outputs.lint_status }}' !== 'failed';
+            const lintStatus = '${{ steps.lint.outcome }}' === 'success';
+            const ready = buildStatus && typecheckStatus && lintStatus;
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
 
-            const body = `## NeuroPed — Verificação de PR
+            const marker = '<!-- neuroped-pr-check -->';
+            const body = `${marker}
+            ## NeuroPed — Verificação de PR
 
             | Etapa | Status |
             |-------|--------|
@@ -69,25 +68,43 @@ jobs:
             | ${icon(buildStatus)} Build | ${label(buildStatus)} |
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
 
-            ${buildStatus
+            ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Build falhou.** Corrija os erros antes de solicitar revisão.'}
+              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build e lint antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body
+              issue_number: context.issue.number,
+              per_page: 100,
             });
+            const previous = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
 
       - name: Falhar se qualquer verificação crítica quebrou
         if: always()
         run: |
           if [ "${{ steps.typecheck.outcome }}" != "success" ] || \
              [ "${{ steps.build.outcome }}" != "success" ] || \
-             [ "${{ steps.lint.outputs.lint_status }}" = "failed" ]; then
+             [ "${{ steps.lint.outcome }}" != "success" ]; then
             echo "Uma ou mais verificações críticas falharam."
             exit 1
           fi

@@ -63,30 +63,32 @@ assert.match(authClientSource, /VITE_AUTH_MODE/);
 assert.match(authClientSource, /cachedAuthCapability\(mode\)/);
 assert.match(
   authContextSource,
-  /queryClient\.cancelQueries\(\)[\s\S]*queryClient\.clear\(\)[\s\S]*secureClearAll\(\)/,
-  "troca de sessão deve eliminar cache clínico e rascunhos",
+  /import \{ clearAuth, type AuthUser \} from "@\/lib\/authClient"/,
+  "modo aberto deve poder remover credenciais remotas herdadas",
 );
 assert.match(
   authContextSource,
-  /function handleExpired\(\) \{[\s\S]{0,160}setUser\(null\);[\s\S]{0,160}clearSessionScopedClientState\(\)/,
-  "expiração deve limpar estado clínico da conta anterior",
+  /const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;[\s\S]{0,360}clearAuth\(\);/,
+  "a inicialização do modo aberto deve limpar o bearer token antes dos filhos",
 );
 assert.match(
   authContextSource,
-  /async function login\([\s\S]{0,260}loginRequest\([\s\S]{0,160}clearSessionScopedClientState\(\)[\s\S]{0,100}setUser\(data\.user\)/,
-  "login de outra conta deve limpar o cache antes de expor a nova sessão",
+  /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,120}clearAuth\(\);[\s\S]{0,180}secureClearAll\(\);/,
+  "limpeza explícita deve eliminar credenciais e cache clínico",
 );
-assert.match(
+assert.doesNotMatch(
   authContextSource,
-  /async function logout\(\) \{\s*setUser\(null\);\s*await logoutRequest\(\);\s*await clearSessionScopedClientState\(\)/,
-  "logout deve revogar credenciais e limpar estado clínico",
+  /Referência de migração para as catracas históricas/,
 );
 assert.match(
   pagesWorkflow,
   /path:\s*dist\/github-pages/,
   "GitHub Pages deve publicar somente o artefato de redirecionamento",
 );
-assert.doesNotMatch(pagesWorkflow, /VITE_PIN_HASH|verify-local-pin-env|npm run build:client/);
+assert.doesNotMatch(
+  pagesWorkflow,
+  /VITE_PIN_HASH|verify-local-pin-env|npm run build:client/,
+);
 assert.match(pagesWorkflow, /test ! -d dist\/github-pages\/assets/);
 assert.match(pagesRedirectHtml, /https:\/\/neuroped\.pages\.dev/);
 assert.doesNotMatch(pagesRedirectHtml, /id="root"|type="module"/);
@@ -137,7 +139,10 @@ assert.match(
   /deploy-check\.json[\s\S]*\.provider == "cloudflare-pages" and \.commit == \$sha/,
   "Vercel só pode publicar após o backend canônico confirmar o mesmo SHA",
 );
-assert.doesNotMatch(vercelWorkflow, /secrets\.VITE_PIN_HASH|env add VITE_PIN_HASH/);
+assert.doesNotMatch(
+  vercelWorkflow,
+  /secrets\.VITE_PIN_HASH|env add VITE_PIN_HASH/,
+);
 
 const vercelJobStart = vercelWorkflow.indexOf("  deploy-vercel:");
 const vercelStepsStart = vercelWorkflow.indexOf("    steps:", vercelJobStart);
@@ -160,12 +165,23 @@ for (const marker of [
   vercelAuthStart,
   vercelStatusStart,
 ]) {
-  assert.notEqual(marker, -1, "workflow Vercel deve preservar os steps de segurança");
+  assert.notEqual(
+    marker,
+    -1,
+    "workflow Vercel deve preservar os steps de segurança",
+  );
 }
 const vercelJobHeader = vercelWorkflow.slice(vercelJobStart, vercelStepsStart);
-const vercelDeployStep = vercelWorkflow.slice(vercelDeployStart, vercelAuthStart);
+const vercelDeployStep = vercelWorkflow.slice(
+  vercelDeployStart,
+  vercelAuthStart,
+);
 const vercelAuthStep = vercelWorkflow.slice(vercelAuthStart, vercelStatusStart);
-assert.doesNotMatch(vercelJobHeader, /secrets\./, "secrets não podem ter escopo de job");
+assert.doesNotMatch(
+  vercelJobHeader,
+  /secrets\./,
+  "secrets não podem ter escopo de job",
+);
 assert.match(vercelDeployStep, /secrets\.VERCEL_TOKEN/);
 assert.match(
   vercelDeployStep,
@@ -179,18 +195,36 @@ assert.doesNotMatch(vercelAuthStep, /VERCEL_TOKEN|VERCEL_ORG_ID/);
 assert.match(vercelAuthStep, /https:\/\/superneuroped\.vercel\.app/);
 assert.doesNotMatch(vercelAuthStep, /https:\/\/neuroped\.vercel\.app/);
 assert.doesNotMatch(vercelWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
-assert.match(vercelAuthStep, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
+assert.match(
+  vercelAuthStep,
+  /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/,
+);
 assert.match(cloudflareWorkflow, /VITE_AUTH_MODE:\s*remote/);
 assert.doesNotMatch(
   cloudflareWorkflow,
   /VITE_AUTH_MODE:\s*local|secrets\.VITE_PIN_HASH/,
   "Cloudflare full-stack jamais compila em modo local nem recebe o verificador",
 );
-assert.match(cloudflareWorkflow, /E2E_MAIL:\s*\$\{\{ secrets\.NEUROPED_E2E_EMAIL \}\}/);
-assert.match(cloudflareWorkflow, /FALLBACK_MAIL:\s*\$\{\{ secrets\.ADMIN_EMAIL \}\}/);
-assert.doesNotMatch(cloudflareWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
-assert.match(cloudflareWorkflow, /if \[ -n "\$E2E_MAIL" \] \|\| \[ -n "\$E2E_PW" \]/);
-assert.match(cloudflareWorkflow, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
+assert.match(
+  cloudflareWorkflow,
+  /E2E_MAIL:\s*\$\{\{ secrets\.NEUROPED_E2E_EMAIL \}\}/,
+);
+assert.match(
+  cloudflareWorkflow,
+  /FALLBACK_MAIL:\s*\$\{\{ secrets\.ADMIN_EMAIL \}\}/,
+);
+assert.doesNotMatch(
+  cloudflareWorkflow,
+  /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./,
+);
+assert.match(
+  cloudflareWorkflow,
+  /if \[ -n "\$E2E_MAIL" \] \|\| \[ -n "\$E2E_PW" \]/,
+);
+assert.match(
+  cloudflareWorkflow,
+  /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/,
+);
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -272,7 +306,10 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     });
   }
   protectedRequests += 1;
-  if (new Headers(init?.headers).get("Authorization") === "Bearer access-refreshed") {
+  if (
+    new Headers(init?.headers).get("Authorization") ===
+    "Bearer access-refreshed"
+  ) {
     return jsonResponse({ ok: true });
   }
   return new Response(null, { status: 401 });
@@ -299,7 +336,10 @@ session.setItem(
 );
 
 const staleRequest = auth.authFetch("/api/patients");
-await waitFor(() => resolveRefreshes.length === 1, "refresh antigo não iniciou");
+await waitFor(
+  () => resolveRefreshes.length === 1,
+  "refresh antigo não iniciou",
+);
 
 await auth.loginRequest("new@example.com", "valid-password");
 const newSessionRequest = auth.authFetch("/api/consents");
@@ -308,10 +348,12 @@ await waitFor(
   "401 da sessão nova reutilizou incorretamente o refresh antigo",
 );
 
-resolveRefreshes[1](jsonResponse({
-  accessToken: "access-refreshed",
-  refreshToken: "refresh-rotated",
-}));
+resolveRefreshes[1](
+  jsonResponse({
+    accessToken: "access-refreshed",
+    refreshToken: "refresh-rotated",
+  }),
+);
 const newSessionResponse = await newSessionRequest;
 assert.equal(newSessionResponse.status, 200);
 
@@ -333,5 +375,23 @@ assert.equal(
   "401 anônimo não deve tentar refresh sem credenciais",
 );
 assert.equal(expiredEvents, 0, "401 anônimo não representa sessão expirada");
+
+// Regressão crítica: uma aba que chega de uma release autenticada para o modo
+// aberto não pode manter tokens capazes de alcançar o backend remoto.
+session.setItem("neuroped:access", "legacy-admin-token");
+session.setItem("neuroped:refresh", "legacy-refresh-token");
+session.setItem(
+  "neuroped:user",
+  JSON.stringify({
+    id: "legacy-admin",
+    email: "admin@example.test",
+    name: "Admin",
+    role: "admin",
+  }),
+);
+await import("../../client/src/contexts/AuthContext.tsx");
+assert.equal(auth.getAccessToken(), null);
+assert.equal(auth.getRefreshToken(), null);
+assert.equal(auth.getStoredUser(), null);
 
 console.log("✓ auth fail-closed, cache isolado e refresh concorrente seguro");

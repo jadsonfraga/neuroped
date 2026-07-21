@@ -56,7 +56,10 @@ assert.deepEqual(await secureGet("pre-consulta"), {
 // Regressão: a conversão Base64 não pode estourar a pilha com payloads grandes.
 const largePayload = "x".repeat(1_500_000);
 assert.equal(await secureSet("payload-grande", largePayload), true);
-assert.equal((await secureGet<string>("payload-grande"))?.length, largePayload.length);
+assert.equal(
+  (await secureGet<string>("payload-grande"))?.length,
+  largePayload.length,
+);
 
 sessionStorage.setItem("neuroped:secure:pre-retorno", raw);
 assert.equal(
@@ -123,7 +126,9 @@ assert.equal(
   sharedLocalStorage.getItem("neuroped:secure:scale-draft:multiaba"),
   null,
 );
-const remigratedTabARaw = tabASession.getItem("neuroped:secure:scale-draft:multiaba");
+const remigratedTabARaw = tabASession.getItem(
+  "neuroped:secure:scale-draft:multiaba",
+);
 assert.ok(remigratedTabARaw);
 assert.notEqual(remigratedTabARaw, tabARaw);
 
@@ -136,9 +141,12 @@ sharedLocalStorage.setItem(
   JSON.stringify([{ paciente: "Preservar legado" }]),
 );
 assert.equal(await secureSet("quota-falha", { paciente: "Dado" }), false);
-const { savePreConsultas } = await import("../../client/src/lib/preConsultaCore.ts");
+const { savePreConsultas } =
+  await import("../../client/src/lib/preConsultaCore.ts");
 assert.equal(await savePreConsultas([]), false);
-assert.ok(localStorage.getItem("neuroped:pre-consultas")?.includes("Preservar legado"));
+assert.ok(
+  localStorage.getItem("neuroped:pre-consultas")?.includes("Preservar legado"),
+);
 activeSessionStorage = tabASession;
 
 localStorage.setItem(
@@ -149,8 +157,29 @@ localStorage.setItem(
   "neuroped:pre-retornos",
   JSON.stringify([{ paciente: "Legado" }]),
 );
+localStorage.setItem(
+  "neuroped:scale-draft:asq-3",
+  JSON.stringify({ answers: { 0: 1 }, updatedAt: new Date().toISOString() }),
+);
+localStorage.setItem(
+  "np_filtro_state_v1",
+  JSON.stringify({ idade: 7, queixa: "linguagem" }),
+);
+localStorage.setItem(
+  "neuroped:filter-flash",
+  JSON.stringify({ sintomas: ["sono"] }),
+);
+localStorage.setItem("neuroped:theme", "dark");
 await secureClearAll();
-assert.equal(localStorage.length, 0);
+assert.equal(
+  localStorage.getItem("neuroped:scale-draft:asq-3"),
+  null,
+  "limpeza global deve remover rascunho clínico legado em texto puro",
+);
+assert.equal(localStorage.getItem("np_filtro_state_v1"), null);
+assert.equal(localStorage.getItem("neuroped:filter-flash"), null);
+assert.equal(localStorage.getItem("neuroped:theme"), "dark");
+assert.equal(localStorage.length, 1);
 assert.equal(sessionStorage.length, 0);
 console.log(
   "✓ rascunhos clínicos cifram, isolam abas, migram, expiram e podem ser apagados",
