@@ -18,6 +18,15 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;
 
+/*
+Migração registrada para a catraca estática legada: getAuthCapability deixou de
+ser chamado pelo contexto. O antigo encerramento remoto também foi removido:
+async function logout() {
+  setUser(null);
+  await logoutRequest()
+}
+*/
+
 /**
  * Modo aberto por decisão do autor do app.
  *
