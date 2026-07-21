@@ -17,6 +17,8 @@ export const PUBLIC_ROUTE_PREFIXES: string[] = [
   "/pre-retorno", // Atualização familiar antes do retorno
   "/efeitos-colaterais", // Alias familiar seguro do pré-retorno
   "/verificar", // Validação pública de documento/QR; processamento somente local
+  "/filtro", // Filtro Clínico de Escalas — recomenda escalas por queixa/idade;
+  "/filtro-escalas", // não exibe/armazena dado de paciente (aberto por decisão do autor)
   "/orientacao-parental", // Orientação aos Pais
   "/glossario", // Glossário (linguagem acessível)
   "/portal-familia", // Portal da Família (home pública)

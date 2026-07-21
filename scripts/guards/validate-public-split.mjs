@@ -21,7 +21,7 @@ const { isPublicRoute, PUBLIC_ROUTE_PREFIXES } = await import(
 
 // Rotas que DEVEM ficar SEMPRE atrás do PIN (nunca públicas).
 const MUST_BE_GATED = [
-  "/", "/filtro", "/filtro-escalas", "/pacientes", "/prontuario",
+  "/", "/pacientes", "/prontuario",
   "/receita-c1", "/receita-c1-express", "/laudo-neuroped", "/documentos",
   "/medicamentos", "/farmacologia", "/calculadora-dose", "/valores-referencia",
   "/pant", "/fichas-registro", "/prescricao",
@@ -34,6 +34,9 @@ const MUST_BE_PUBLIC = [
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
   "/sobre", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
+  // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
+  // nem armazenar dado de paciente — aberto por decisão do autor.
+  "/filtro", "/filtro-escalas",
 ];
 
 const errors = [];

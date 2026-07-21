@@ -9,7 +9,6 @@ for (const path of [
   "/",
   "/mchat",
   "/cars",
-  "/filtro",
   "/generic-scale/smfq",
   "/recepcao",
   "/prontuario",
@@ -41,6 +40,8 @@ for (const path of [
   "/efeitos-colaterais",
   "/verificar",
   "/portal-familia/novidades",
+  "/filtro",
+  "/filtro-escalas",
 ]) {
   assert.equal(
     getAccessLevel(path),
