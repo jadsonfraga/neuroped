@@ -430,9 +430,10 @@ export default function PacientesPage() {
                 Dados clínicos sob responsabilidade profissional
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A API de pacientes não é cacheada pelo service worker. Use PIN,
-                confirme consentimento, exporte backup quando necessário e evite
-                registrar dados excessivos.
+                A API de pacientes não é cacheada pelo service worker. Neste modo
+                sem senha, qualquer pessoa no mesmo perfil do navegador pode ver
+                os registros. Confirme consentimento, exporte backup e use “Apagar
+                dados locais” ao terminar em dispositivo compartilhado.
               </p>
             </div>
           </CardContent>

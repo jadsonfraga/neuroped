@@ -49,7 +49,7 @@ const REGRAS = [
   "O modo aberto elimina credenciais da interface, mas não transforma o banco remoto em base pública.",
   "Não use CPF, data de nascimento ou sobrenome como mecanismo improvisado de autenticação.",
   "Faça backups periódicos e guarde-os em local institucional protegido.",
-  "Ao usar aparelho compartilhado, remova os dados locais ao terminar.",
+  "Ao usar aparelho compartilhado, use “Apagar dados locais” no menu ao terminar.",
 ];
 
 const TONE: Record<string, string> = {
