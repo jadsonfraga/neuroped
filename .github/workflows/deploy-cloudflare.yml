@@ -351,7 +351,11 @@ jobs:
               exit 1
             fi
 
-            denied_code=$(curl -sS -o /dev/null -D "$denied_preflight_headers"               -w "%{http_code}" -X OPTIONS "$BASE/api/auth/login"               -H "Origin: $denied_origin"               -H "Access-Control-Request-Method: POST"               -H "Access-Control-Request-Headers: Content-Type, Authorization")
+            denied_code=$(curl -sS -o /dev/null -D "$denied_preflight_headers" \
+              -w "%{http_code}" -X OPTIONS "$BASE/api/auth/login" \
+              -H "Origin: $denied_origin" \
+              -H "Access-Control-Request-Method: POST" \
+              -H "Access-Control-Request-Headers: Content-Type, Authorization")
             [ "$denied_code" = "204" ] || {
               echo "::error::Preflight negado retornou HTTP $denied_code: $denied_origin"
               exit 1
