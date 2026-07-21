@@ -1,89 +1,94 @@
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Users, Lock, AlertTriangle, KeyRound } from "lucide-react";
-
-/**
- * Política de Acesso Familiar — portada de politica-acesso-familiar.html (app legado).
- * Explica o modelo de acesso: o que é livre para famílias e o que permanece protegido.
- */
+import {
+  AlertTriangle,
+  DoorOpen,
+  Download,
+  HardDrive,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
 const SECOES = [
   {
     n: "1",
-    titulo: "Médico",
+    titulo: "Acesso direto",
     texto:
-      "O acesso ao app é protegido pelo PIN master. Nenhum email, CPF ou senha adicional é exigido em nenhuma tela.",
+      "Todas as áreas do NeuroPed abrem diretamente, sem e-mail, PIN, senha ou bloqueio adicional.",
     tone: "ok" as const,
+    icon: DoorOpen,
   },
   {
     n: "2",
-    titulo: "Família — parte pública",
+    titulo: "Workspace local",
     texto:
-      "Conteúdos educativos, CAA gratuita, diário local, mapa de instrumentos e orientações ficam livres, sem CPF e sem senha.",
+      "Pacientes e resultados de escalas ficam armazenados somente neste navegador. O modo aberto não consulta nem libera anonimamente o banco clínico remoto.",
     tone: "ok" as const,
+    icon: HardDrive,
   },
   {
     n: "3",
-    titulo: "Família — área leve do filho",
+    titulo: "Backup sob responsabilidade do usuário",
     texto:
-      "A identificação por data de nascimento e último sobrenome pode ser usada apenas para personalização local e ferramentas familiares sem dado clínico sensível.",
+      "Como os dados são locais, use a função de exportação de backup antes de trocar de aparelho, limpar o navegador ou reinstalar o aplicativo.",
     tone: "warn" as const,
+    icon: Download,
   },
   {
     n: "4",
-    titulo: "Dados sensíveis",
+    titulo: "Dispositivos compartilhados",
     texto:
-      "Documentos, mensagens clínicas, laudos, prescrições, prontuário e histórico identificável não devem ser liberados apenas por data de nascimento e sobrenome.",
+      "Evite cadastrar dados identificáveis em computadores compartilhados. Quem tiver acesso ao mesmo perfil do navegador poderá abrir o workspace local.",
     tone: "danger" as const,
+    icon: AlertTriangle,
   },
 ];
 
 const REGRAS = [
-  "Não usar CPF como senha.",
-  "Não usar data de nascimento sozinha como senha.",
-  "Não expor prontuário real em página estática.",
-  "Para dados sensíveis, usar liberação do consultório ou backend seguro por paciente.",
+  "O modo aberto elimina credenciais da interface, mas não transforma o banco remoto em base pública.",
+  "Não use CPF, data de nascimento ou sobrenome como mecanismo improvisado de autenticação.",
+  "Faça backups periódicos e guarde-os em local institucional protegido.",
+  "Ao usar aparelho compartilhado, remova os dados locais ao terminar.",
 ];
 
-const TONE: Record<string, { border: string; icon: typeof ShieldCheck }> = {
-  ok: { border: "border-l-emerald-500", icon: ShieldCheck },
-  warn: { border: "border-l-amber-500", icon: AlertTriangle },
-  danger: { border: "border-l-rose-500", icon: Lock },
+const TONE: Record<string, string> = {
+  ok: "border-l-emerald-500",
+  warn: "border-l-amber-500",
+  danger: "border-l-rose-500",
 };
 
 export default function PortalAcessoPage() {
   return (
     <div className="space-y-6 pb-12">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent border border-border p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <KeyRound className="w-6 h-6 text-primary" />
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent p-6">
+        <div className="mb-2 flex items-center gap-2">
+          <DoorOpen className="h-6 w-6 text-primary" />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Portal da Família
+            NeuroPed
           </span>
         </div>
-        <h1 className="text-2xl font-black">Política de Acesso Familiar</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Modelo adotado para equilibrar facilidade de uso, proteção de dados e segurança clínica.
+        <h1 className="text-2xl font-black">Política do Modo Aberto</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          Acesso simples, sem credenciais, com dados operacionais mantidos no navegador e sem exposição anônima do backend clínico.
         </p>
         <Link href="/portal-familia">
           <Button variant="outline" size="sm" className="mt-3 gap-1">
-            <Users className="w-4 h-4" /> Voltar ao Portal da Família
+            <Users className="h-4 w-4" /> Voltar ao Portal da Família
           </Button>
         </Link>
       </div>
 
       <div className="space-y-3">
-        {SECOES.map((s) => {
-          const t = TONE[s.tone];
-          const Icon = t.icon;
+        {SECOES.map((secao) => {
+          const Icon = secao.icon;
           return (
-            <Card key={s.n} className={`border-l-4 ${t.border}`}>
+            <Card key={secao.n} className={`border-l-4 ${TONE[secao.tone]}`}>
               <CardContent className="p-4">
-                <h2 className="text-sm font-bold flex items-center gap-2 mb-1">
-                  <Icon className="w-4 h-4" /> {s.n}. {s.titulo}
+                <h2 className="mb-1 flex items-center gap-2 text-sm font-bold">
+                  <Icon className="h-4 w-4" /> {secao.n}. {secao.titulo}
                 </h2>
-                <p className="text-sm text-muted-foreground">{s.texto}</p>
+                <p className="text-sm text-muted-foreground">{secao.texto}</p>
               </CardContent>
             </Card>
           );
@@ -92,19 +97,21 @@ export default function PortalAcessoPage() {
 
       <Card>
         <CardContent className="p-5">
-          <h2 className="text-sm font-bold mb-2">5. Regra final</h2>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-bold">
+            <ShieldCheck className="h-4 w-4" /> Regras de uso
+          </h2>
           <ul className="space-y-1.5">
-            {REGRAS.map((r, i) => (
-              <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                <span className="text-primary mt-0.5">•</span> {r}
+            {REGRAS.map((regra) => (
+              <li key={regra} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-0.5 text-primary">•</span> {regra}
               </li>
             ))}
           </ul>
         </CardContent>
       </Card>
 
-      <p className="text-[11px] text-muted-foreground border-t border-border pt-3">
-        Dr. Jadson Fraga Araújo Júnior · Neuropediatria · CRM-PE 25227 · RQE 17756
+      <p className="border-t border-border pt-3 text-[11px] text-muted-foreground">
+        Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756
       </p>
     </div>
   );

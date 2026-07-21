@@ -1,13 +1,17 @@
 import type { ReactNode } from "react";
 
-// PrivateGate (PIN master) é o único portão de acesso do app.
-// Este componente é mantido por compatibilidade mas não bloqueia mais nada.
-export function PinGate(_props: {
+/**
+ * Adaptador legado mantido para imports antigos.
+ *
+ * Antes este componente retornava null e podia apagar silenciosamente qualquer
+ * conteúdo envolvido por ele. No modo aberto, ele apenas preserva os filhos.
+ */
+export function PinGate({ children }: {
   onUnlock?: () => void;
   inputTestId?: string;
   buttonTestId?: string;
   buttonClassName?: string;
   children?: ReactNode;
 }) {
-  return null;
+  return <>{children}</>;
 }
