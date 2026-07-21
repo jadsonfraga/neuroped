@@ -174,6 +174,37 @@ assert.doesNotMatch(
   /branches feature criam preview environments/i,
 );
 
+const cloudflareWorkflow = read(".github/workflows/deploy-cloudflare.yml");
+assert.match(cloudflareWorkflow, /denied_ok=0/);
+assert.match(
+  cloudflareWorkflow,
+  /cors-denied=\$\{GITHUB_RUN_ID\}&origin=\$\{denied_index\}&try=\$\{attempt\}/,
+);
+assert.match(
+  cloudflareWorkflow,
+  /Negação CORS ainda propagando[^\n]+tentativa \$attempt\/12/,
+);
+assert.match(cloudflareWorkflow, /for attempt in \$\(seq 1 12\); do/);
+assert.match(cloudflareWorkflow, /\[ "\$denied_get_code" = "200" \]/);
+assert.match(cloudflareWorkflow, /\[ "\$denied_code" = "204" \]/);
+assert.match(
+  cloudflareWorkflow,
+  /header_present\(\) \{[\s\S]*?grep -qi "\^\$\{2\}:"[\s\S]*?\}/,
+  "presença de ACAO deve ser detectada mesmo com valor vazio ou sem espaço",
+);
+assert.doesNotMatch(
+  cloudflareWorkflow,
+  /-z "\$\(header_value "\$denied(?:_preflight)?_headers" Access-Control-Allow-Origin\)"/,
+);
+const deniedHeaderChecks = cloudflareWorkflow.match(
+  /! header_present "\$denied(?:_preflight)?_headers" Access-Control-Allow-Origin/g,
+);
+assert.equal(
+  deniedHeaderChecks?.length,
+  2,
+  "GET e OPTIONS negados devem exigir ausência completa de ACAO",
+);
+
 for (const manifest of ["railway.json", "railway.toml", "nixpacks.toml"]) {
   assert.equal(
     existsSync(join(root, manifest)),
