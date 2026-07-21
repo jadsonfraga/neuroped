@@ -210,13 +210,16 @@ jobs:
           DEPLOY_RESULT: ${{ needs.deploy-frontend.result }}
           GH_TOKEN: ${{ github.token }}
           PAGE_URL: ${{ needs.deploy-frontend.outputs.page_url }}
+          PENDING_RESULT: ${{ needs.status-pending.result }}
           SENTINEL_RESULT: ${{ steps.sentinel.outcome }}
         run: |
           set -euo pipefail
           target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           state="failure"
 
-          if [ "$BUILD_RESULT" != "success" ]; then
+          if [ "$PENDING_RESULT" != "success" ]; then
+            description="Falha ao publicar o estado inicial do deploy."
+          elif [ "$BUILD_RESULT" != "success" ]; then
             description="Build ou validação técnica falhou."
           elif [ "$DEPLOY_RESULT" != "success" ]; then
             description="Publicação no GitHub Pages falhou."
