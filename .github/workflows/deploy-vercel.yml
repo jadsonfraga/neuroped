@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: vercel-production
@@ -15,9 +16,8 @@ concurrency:
 
 jobs:
   # Pré-checagem: o deploy do Vercel só roda se os secrets existirem. Sem eles,
-  # este job termina VERDE e o deploy é pulado (o site é publicado por Cloudflare
-  # Pages + GitHub Pages). Evita o "vermelho" em todo push quando o Vercel não
-  # está configurado.
+  # o job informa a configuração ausente e o deploy é pulado; Cloudflare Pages
+  # e GitHub Pages continuam independentes deste provedor.
   preflight:
     runs-on: ubuntu-latest
     outputs:
@@ -27,15 +27,14 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: |
-          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ] && [ -n "$VITE_PIN_HASH" ]; then
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VITE_PIN_HASH" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
             echo "Secrets do Vercel e verificador local presentes — deploy habilitado."
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Configuração segura do Vercel incompleta — deploy IGNORADO. O site é publicado por Cloudflare Pages + GitHub Pages. Configure VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID e VITE_PIN_HASH para habilitar."
+            echo "::notice::Configuração segura do Vercel incompleta — deploy IGNORADO. O site é publicado por Cloudflare Pages + GitHub Pages. Configure VERCEL_TOKEN, VERCEL_ORG_ID e VITE_PIN_HASH para habilitar."
           fi
 
   deploy-vercel:
@@ -45,13 +44,12 @@ jobs:
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Configure Node.js 20
+      - name: Configure Node.js 24
         uses: actions/setup-node@v6
         with:
           node-version: "24"
@@ -108,25 +106,101 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-
-      - name: Build with Vercel
+      - name: Sync verifier and deploy both Vercel projects
+        id: vercel-deploy
         env:
           VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: vercel build --prod --token="$VERCEL_TOKEN"
-
-      - name: Deploy to Vercel production
-        id: vercel-deploy
         run: |
-          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
-          echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
-          echo "Vercel deployment: $url"
+          set -euo pipefail
 
-      - name: Verify public Vercel deploy sentinel
+          projects=(
+            "neuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
+            "superneuroped:prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC"
+          )
+
+          for entry in "${projects[@]}"; do
+            name="${entry%%:*}"
+            export VERCEL_PROJECT_ID="${entry#*:}"
+            echo "Configurando e publicando projeto: $name"
+
+            rm -rf .vercel
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+            # O valor vem do GitHub Secret e segue por stdin; nunca é impresso.
+            printf '%s' "$VITE_PIN_HASH" \
+              | vercel env add VITE_PIN_HASH production --sensitive --force \
+                  --token="$VERCEL_TOKEN"
+
+            # Recarrega a configuração após a sincronização para o build local.
+            rm -rf .vercel
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            VITE_PIN_HASH="$VITE_PIN_HASH" vercel build --prod --token="$VERCEL_TOKEN"
+
+            url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+            echo "$name deployment: $url"
+
+            check_sentinel() {
+              node -e '
+                const fs = require("node:fs");
+                const check = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+                const full = process.env.GITHUB_SHA;
+                if (check.commit !== full && check.commit !== full.slice(0, 12)) {
+                  console.error(`Sentinela divergente: ${check.commit ?? "ausente"}`);
+                  process.exit(1);
+                }
+              ' "$1"
+            }
+
+            ok=0
+            for i in $(seq 1 12); do
+              if curl -fsSL "$url/deploy-check.json?try=$i" \
+                   -o "/tmp/vercel-${name}-deploy-check.json" \
+                && check_sentinel "/tmp/vercel-${name}-deploy-check.json"; then
+                ok=1
+                break
+              fi
+              sleep 10
+            done
+            cat "/tmp/vercel-${name}-deploy-check.json" 2>/dev/null || true
+            [ "$ok" -eq 1 ] || {
+              echo "::error::$name não publicou o commit ${GITHUB_SHA}."
+              exit 1
+            }
+
+            # Confirma também o alias estável que os usuários acessam em produção.
+            production_url="https://${name}.vercel.app"
+            alias_ok=0
+            for i in $(seq 1 18); do
+              if curl -fsSL "$production_url/deploy-check.json?try=$i" \
+                   -o "/tmp/vercel-${name}-production-check.json" \
+                && check_sentinel "/tmp/vercel-${name}-production-check.json"; then
+                alias_ok=1
+                break
+              fi
+              sleep 10
+            done
+            cat "/tmp/vercel-${name}-production-check.json" 2>/dev/null || true
+            [ "$alias_ok" -eq 1 ] || {
+              echo "::error::O alias $production_url não serve ${GITHUB_SHA}."
+              exit 1
+            }
+          done
+
+      - name: Publish consolidated Vercel production status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
         run: |
-          url="${{ steps.vercel-deploy.outputs.deployment_url }}"
-          echo "Checking $url/deploy-check.json"
-          curl -fsSL "$url/deploy-check.json" -o /tmp/vercel-deploy-check.json
-          cat /tmp/vercel-deploy-check.json
-          grep "${GITHUB_SHA}" /tmp/vercel-deploy-check.json
+          state=failure
+          description="Deploy Vercel falhou; consulte o workflow."
+          if [ "$JOB_STATUS" = "success" ]; then
+            state=success
+            description="neuroped e superneuroped publicados e verificados."
+          fi
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="$state" \
+            -f context="NeuroPed / Vercel production" \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
