@@ -145,6 +145,7 @@ assert.doesNotMatch(vercelDeployStep, /ADMIN_MAIL|ADMIN_PW|NEUROPED_E2E_/);
 assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_EMAIL/);
 assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_PASSWORD/);
 assert.doesNotMatch(vercelAuthStep, /VERCEL_TOKEN|VERCEL_ORG_ID/);
+assert.doesNotMatch(vercelWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
 assert.match(vercelAuthStep, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
 assert.match(cloudflareWorkflow, /VITE_AUTH_MODE:\s*remote/);
 assert.doesNotMatch(
@@ -152,8 +153,10 @@ assert.doesNotMatch(
   /VITE_AUTH_MODE:\s*local|secrets\.VITE_PIN_HASH/,
   "Cloudflare full-stack jamais compila em modo local nem recebe o verificador",
 );
-assert.match(cloudflareWorkflow, /secrets\.NEUROPED_E2E_EMAIL \|\| secrets\.ADMIN_EMAIL/);
-assert.match(cloudflareWorkflow, /secrets\.NEUROPED_E2E_PASSWORD \|\| secrets\.ADMIN_INITIAL_PASSWORD/);
+assert.match(cloudflareWorkflow, /E2E_MAIL:\s*\$\{\{ secrets\.NEUROPED_E2E_EMAIL \}\}/);
+assert.match(cloudflareWorkflow, /FALLBACK_MAIL:\s*\$\{\{ secrets\.ADMIN_EMAIL \}\}/);
+assert.doesNotMatch(cloudflareWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
+assert.match(cloudflareWorkflow, /if \[ -n "\$E2E_MAIL" \] \|\| \[ -n "\$E2E_PW" \]/);
 assert.match(cloudflareWorkflow, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
 
 class MemoryStorage implements Storage {

@@ -32,11 +32,22 @@ jobs:
           JWT_SECRET: ${{ secrets.NEUROPED_JWT_SECRET }}
           BOOTSTRAP_MAIL: ${{ secrets.ADMIN_EMAIL }}
           BOOTSTRAP_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
-          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL || secrets.ADMIN_EMAIL }}
-          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD || secrets.ADMIN_INITIAL_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
         run: |
           set -euo pipefail
-          for name in CF_TOKEN CF_ACCOUNT JWT_SECRET E2E_MAIL E2E_PW; do
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || {
+              echo "::error::NEUROPED_E2E_EMAIL e NEUROPED_E2E_PASSWORD devem existir juntos"
+              exit 1
+            }
+            ACTIVE_MAIL="$E2E_MAIL"
+            ACTIVE_PW="$E2E_PW"
+          else
+            ACTIVE_MAIL="$BOOTSTRAP_MAIL"
+            ACTIVE_PW="$BOOTSTRAP_PW"
+          fi
+          for name in CF_TOKEN CF_ACCOUNT JWT_SECRET ACTIVE_MAIL ACTIVE_PW; do
             value="${!name:-}"
             if [ -z "$value" ]; then
               echo "::error::GitHub Secret obrigatório ausente: $name"
@@ -44,8 +55,8 @@ jobs:
             fi
           done
           [ "${#JWT_SECRET}" -ge 32 ] || { echo "::error::NEUROPED_JWT_SECRET deve ter ao menos 32 caracteres"; exit 1; }
-          [ "${#E2E_PW}" -ge 12 ] || { echo "::error::senha da jornada E2E deve ter ao menos 12 caracteres"; exit 1; }
-          case "$E2E_MAIL" in *@*) ;; *) echo "::error::e-mail da jornada E2E inválido"; exit 1;; esac
+          [ "${#ACTIVE_PW}" -ge 12 ] || { echo "::error::senha da jornada E2E deve ter ao menos 12 caracteres"; exit 1; }
+          case "$ACTIVE_MAIL" in *@*) ;; *) echo "::error::e-mail da jornada E2E inválido"; exit 1;; esac
           if [ -n "$BOOTSTRAP_MAIL" ] || [ -n "$BOOTSTRAP_PW" ]; then
             [ -n "$BOOTSTRAP_MAIL" ] && [ -n "$BOOTSTRAP_PW" ] || {
               echo "::error::ADMIN_EMAIL e ADMIN_INITIAL_PASSWORD devem existir juntos"
@@ -344,14 +355,22 @@ jobs:
 
       - name: Verificar login (auth e2e)
         env:
-          ADMIN_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL || secrets.ADMIN_EMAIL }}
-          ADMIN_PW: ${{ secrets.NEUROPED_E2E_PASSWORD || secrets.ADMIN_INITIAL_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           BASE=https://neuroped.pages.dev
-          admin_mail="$ADMIN_MAIL"
-          admin_pw="$ADMIN_PW"
-          unset ADMIN_MAIL ADMIN_PW
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
+            admin_mail="$E2E_MAIL"
+            admin_pw="$E2E_PW"
+          else
+            admin_mail="$FALLBACK_MAIL"
+            admin_pw="$FALLBACK_PW"
+          fi
+          unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
           sleep 10
           # 1) senha errada → 401
           wrong_payload=$(jq -nc --arg email "ci-negative-${GITHUB_RUN_ID}@invalid.example" \

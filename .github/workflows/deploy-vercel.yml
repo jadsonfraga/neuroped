@@ -27,16 +27,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          ADMIN_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL || secrets.ADMIN_EMAIL }}
-          ADMIN_PW: ${{ secrets.NEUROPED_E2E_PASSWORD || secrets.ADMIN_INITIAL_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           missing=()
           [ -n "$VERCEL_TOKEN" ] || missing+=("VERCEL_TOKEN")
           [ -n "$VERCEL_ORG_ID" ] || missing+=("VERCEL_ORG_ID")
-          [ -n "$ADMIN_MAIL" ] || missing+=("NEUROPED_E2E_EMAIL/ADMIN_EMAIL")
-          [ -n "$ADMIN_PW" ] || missing+=("NEUROPED_E2E_PASSWORD/ADMIN_INITIAL_PASSWORD")
-          unset VERCEL_TOKEN VERCEL_ORG_ID ADMIN_MAIL ADMIN_PW
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] \
+              || missing+=("NEUROPED_E2E_EMAIL+NEUROPED_E2E_PASSWORD")
+            ACTIVE_MAIL="$E2E_MAIL"
+            ACTIVE_PW="$E2E_PW"
+          else
+            ACTIVE_MAIL="$FALLBACK_MAIL"
+            ACTIVE_PW="$FALLBACK_PW"
+          fi
+          [ -n "$ACTIVE_MAIL" ] || missing+=("NEUROPED_E2E_EMAIL/ADMIN_EMAIL")
+          [ -n "$ACTIVE_PW" ] || missing+=("NEUROPED_E2E_PASSWORD/ADMIN_INITIAL_PASSWORD")
+          unset VERCEL_TOKEN VERCEL_ORG_ID E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW ACTIVE_MAIL ACTIVE_PW
 
           target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -209,14 +220,22 @@ jobs:
 
       - name: Validate remote authentication from stable Vercel origins
         env:
-          ADMIN_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL || secrets.ADMIN_EMAIL }}
-          ADMIN_PW: ${{ secrets.NEUROPED_E2E_PASSWORD || secrets.ADMIN_INITIAL_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           api_base="https://neuroped.pages.dev"
-          admin_mail="$ADMIN_MAIL"
-          admin_pw="$ADMIN_PW"
-          unset ADMIN_MAIL ADMIN_PW
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
+            admin_mail="$E2E_MAIL"
+            admin_pw="$E2E_PW"
+          else
+            admin_mail="$FALLBACK_MAIL"
+            admin_pw="$FALLBACK_PW"
+          fi
+          unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
 
           header_value() {
             tr -d '\r' < "$1" | awk -F': ' -v target="$2" \
