@@ -95,7 +95,7 @@ export const alimentacao: ScaleEntry[] = [
     suicideRiskInstrument: false,
     psychosisRiskInstrument: false,
     verbalRequirement: "indiferente",
-    literacyRequirement: "alfabetizado",
+    literacyRequirement: "indiferente",
     modoApp: "aplicar",
     duplicataStatus: "nova",
   },
@@ -426,6 +426,10 @@ export const humorAnsiedadeToc: ScaleEntry[] = [
     // instrumento de triagem com a devida citação. Mantê-lo como "comercial"
     // fazia a regra de ouro ocultar uma aplicação interativa já implementada.
     licencaUso: "livre",
+    suicideRiskInstrument: false,
+    psychosisRiskInstrument: false,
+    verbalRequirement: "indiferente",
+    literacyRequirement: "alfabetizado",
     modoApp: "aplicar",
     duplicataStatus: "nova",
   },
