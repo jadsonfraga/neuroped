@@ -294,6 +294,10 @@ jobs:
               'tolower($1) == tolower(target) { print $2 }' | tail -1
           }
 
+          header_present() {
+            tr -d '\r' < "$1" | grep -qi "^${2}:"
+          }
+
           for origin in https://superneuroped.vercel.app; do
             cors_ok=0
             for attempt in $(seq 1 12); do
@@ -362,9 +366,9 @@ jobs:
                 -H "Access-Control-Request-Headers: Content-Type, Authorization" || true)
 
               if [ "$denied_get_code" = "200" ] \
-                && [ -z "$(header_value "$denied_headers" Access-Control-Allow-Origin)" ] \
+                && ! header_present "$denied_headers" Access-Control-Allow-Origin \
                 && [ "$denied_code" = "204" ] \
-                && [ -z "$(header_value "$denied_preflight_headers" Access-Control-Allow-Origin)" ]; then
+                && ! header_present "$denied_preflight_headers" Access-Control-Allow-Origin; then
                 denied_ok=1
                 break
               fi
