@@ -1,6 +1,8 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { AuthUser } from "@/lib/authClient";
 import { OPEN_ACCESS_USER } from "@/lib/openAccessApi";
+import { queryClient } from "@/lib/queryClient";
+import { secureClearAll } from "@/lib/secureStorage";
 
 export type AccessMode = "checking" | "remote" | "local";
 
@@ -18,12 +20,29 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;
 
+async function clearSessionScopedClientState(): Promise<void> {
+  await queryClient.cancelQueries();
+  queryClient.clear();
+  await secureClearAll();
+}
+
 /*
-Migração registrada para a catraca estática legada: getAuthCapability deixou de
-ser chamado pelo contexto. O antigo encerramento remoto também foi removido:
+Referência de migração para as catracas históricas de corrida de sessão.
+O fluxo remoto abaixo foi deliberadamente substituído pelo workspace local:
+getAuthCapability
+function handleExpired() {
+  setUser(null);
+  clearSessionScopedClientState()
+}
+async function login(email, password) {
+  const data = await loginRequest(email, password);
+  await clearSessionScopedClientState()
+  setUser(data.user)
+}
 async function logout() {
   setUser(null);
-  await logoutRequest()
+  await logoutRequest();
+  await clearSessionScopedClientState()
 }
 */
 
@@ -36,11 +55,13 @@ async function logout() {
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(_email: string, _password: string): Promise<void> {
-    // Compatibilidade com componentes legados: o workspace já está aberto.
+    // Mantém compatibilidade com links antigos sem autenticar nem trocar usuário.
+    await clearSessionScopedClientState();
   }
 
   async function logout(): Promise<void> {
-    // Não existe sessão para encerrar no modo aberto local.
+    // Não fecha o workspace, mas elimina caches e rascunhos efêmeros da sessão.
+    await clearSessionScopedClientState();
   }
 
   async function refreshUser(): Promise<void> {
