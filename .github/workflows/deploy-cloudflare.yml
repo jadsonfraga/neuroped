@@ -338,32 +338,43 @@ jobs:
             echo "CORS oficial OK: $origin"
           done
 
+          # A propagação entre edges não é atômica. A política negativa também
+          # precisa convergir no commit novo antes de reprovar o release.
+          denied_index=0
           for denied_origin in \
             https://neuroped.vercel.app \
             https://neuroped.vercel.app.evil.example \
             https://jadsonfraga.github.io; do
-            denied_headers=$(mktemp)
-            denied_preflight_headers=$(mktemp)
-            curl -fsS -D "$denied_headers" -o /dev/null \
-              -H "Origin: $denied_origin" "$BASE/api/health"
-            if grep -qi '^access-control-allow-origin:' "$denied_headers"; then
-              echo "::error::Origin não autorizada recebeu CORS: $denied_origin"
-              exit 1
-            fi
+            denied_index=$((denied_index + 1))
+            denied_ok=0
+            for attempt in $(seq 1 12); do
+              denied_headers=$(mktemp)
+              denied_preflight_headers=$(mktemp)
+              cache_key="cors-denied=${GITHUB_RUN_ID}&origin=${denied_index}&try=${attempt}"
 
-            denied_code=$(curl -sS -o /dev/null -D "$denied_preflight_headers" \
-              -w "%{http_code}" -X OPTIONS "$BASE/api/auth/login" \
-              -H "Origin: $denied_origin" \
-              -H "Access-Control-Request-Method: POST" \
-              -H "Access-Control-Request-Headers: Content-Type, Authorization")
-            [ "$denied_code" = "204" ] || {
-              echo "::error::Preflight negado retornou HTTP $denied_code: $denied_origin"
+              denied_get_code=$(curl -sS -o /dev/null -D "$denied_headers" \
+                -w "%{http_code}" -H "Origin: $denied_origin" \
+                "$BASE/api/health?$cache_key" || true)
+              denied_code=$(curl -sS -o /dev/null -D "$denied_preflight_headers" \
+                -w "%{http_code}" -X OPTIONS "$BASE/api/auth/login?$cache_key" \
+                -H "Origin: $denied_origin" \
+                -H "Access-Control-Request-Method: POST" \
+                -H "Access-Control-Request-Headers: Content-Type, Authorization" || true)
+
+              if [ "$denied_get_code" = "200" ] \
+                && [ -z "$(header_value "$denied_headers" Access-Control-Allow-Origin)" ] \
+                && [ "$denied_code" = "204" ] \
+                && [ -z "$(header_value "$denied_preflight_headers" Access-Control-Allow-Origin)" ]; then
+                denied_ok=1
+                break
+              fi
+              echo "Negação CORS ainda propagando para $denied_origin (tentativa $attempt/12)."
+              sleep 10
+            done
+            [ "$denied_ok" -eq 1 ] || {
+              echo "::error::Origem não autorizada ainda recebeu CORS ou resposta inválida: $denied_origin"
               exit 1
             }
-            if grep -qi '^access-control-allow-origin:' "$denied_preflight_headers"; then
-              echo "::error::Origin não autorizada recebeu ACAO no preflight: $denied_origin"
-              exit 1
-            fi
           done
           echo "✅ CORS exato do mirror comprovado; origem externa e lookalikes rejeitados."
 
