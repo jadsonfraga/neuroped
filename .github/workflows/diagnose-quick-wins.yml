@@ -1,0 +1,33 @@
+name: Diagnose Quick Wins
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Capture quick-wins output
+        run: |
+          set +e
+          npm run test:quick-wins > quick-wins.log 2>&1
+          code=$?
+          echo "quick-wins exit code: $code" >> quick-wins.log
+          tail -n 250 quick-wins.log
+          exit 0
+      - name: Upload diagnostic log
+        uses: actions/upload-artifact@v6
+        with:
+          name: quick-wins-diagnostic
+          path: quick-wins.log
+          retention-days: 1
