@@ -122,13 +122,13 @@ npm run audit:filter
 
 ### Step 3: Deploy to Production
 ```bash
-# Using existing deployment setup
-./deploy-production.sh
-
-# OR manually
-git push origin main  # Already done ✅
-# Trigger CloudFlare deployment
+# O deploy ocorre somente pelos workflows versionados após merge aprovado.
+git push origin main
 ```
+
+Não execute `deploy-production.sh`: o fluxo interativo Vercel/Railway foi
+desativado por segurança. Consulte `docs/DEPLOY_OFICIAL.md` e confirme as
+sentinelas públicas do mesmo commit.
 
 ---
 

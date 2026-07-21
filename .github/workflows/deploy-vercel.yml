@@ -242,7 +242,7 @@ jobs:
 
           done
 
-      - name: Validate remote authentication from stable Vercel origins
+      - name: Validate remote authentication from the stable Vercel origin
         env:
           E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
