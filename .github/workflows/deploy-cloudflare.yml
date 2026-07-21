@@ -30,11 +30,24 @@ jobs:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JWT_SECRET: ${{ secrets.NEUROPED_JWT_SECRET }}
-          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+          BOOTSTRAP_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          BOOTSTRAP_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
         run: |
           set -euo pipefail
-          for name in CF_TOKEN CF_ACCOUNT JWT_SECRET ADMIN_MAIL ADMIN_PW; do
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || {
+              echo "::error::NEUROPED_E2E_EMAIL e NEUROPED_E2E_PASSWORD devem existir juntos"
+              exit 1
+            }
+            ACTIVE_MAIL="$E2E_MAIL"
+            ACTIVE_PW="$E2E_PW"
+          else
+            ACTIVE_MAIL="$BOOTSTRAP_MAIL"
+            ACTIVE_PW="$BOOTSTRAP_PW"
+          fi
+          for name in CF_TOKEN CF_ACCOUNT JWT_SECRET ACTIVE_MAIL ACTIVE_PW; do
             value="${!name:-}"
             if [ -z "$value" ]; then
               echo "::error::GitHub Secret obrigatório ausente: $name"
@@ -42,8 +55,16 @@ jobs:
             fi
           done
           [ "${#JWT_SECRET}" -ge 32 ] || { echo "::error::NEUROPED_JWT_SECRET deve ter ao menos 32 caracteres"; exit 1; }
-          [ "${#ADMIN_PW}" -ge 12 ] || { echo "::error::ADMIN_INITIAL_PASSWORD deve ter ao menos 12 caracteres"; exit 1; }
-          case "$ADMIN_MAIL" in *@*) ;; *) echo "::error::ADMIN_EMAIL inválido"; exit 1;; esac
+          [ "${#ACTIVE_PW}" -ge 12 ] || { echo "::error::senha da jornada E2E deve ter ao menos 12 caracteres"; exit 1; }
+          case "$ACTIVE_MAIL" in *@*) ;; *) echo "::error::e-mail da jornada E2E inválido"; exit 1;; esac
+          if [ -n "$BOOTSTRAP_MAIL" ] || [ -n "$BOOTSTRAP_PW" ]; then
+            [ -n "$BOOTSTRAP_MAIL" ] && [ -n "$BOOTSTRAP_PW" ] || {
+              echo "::error::ADMIN_EMAIL e ADMIN_INITIAL_PASSWORD devem existir juntos"
+              exit 1
+            }
+            [ "${#BOOTSTRAP_PW}" -ge 12 ] || { echo "::error::ADMIN_INITIAL_PASSWORD deve ter ao menos 12 caracteres"; exit 1; }
+            case "$BOOTSTRAP_MAIL" in *@*) ;; *) echo "::error::ADMIN_EMAIL inválido"; exit 1;; esac
+          fi
           echo "Secrets obrigatórios presentes (valores não exibidos)."
 
       - name: Configurar Node.js 20
@@ -80,13 +101,14 @@ jobs:
       - name: Compilar frontend para Cloudflare Pages
         env:
           NODE_ENV: production
-          # Sem fallback público: em modo local o primeiro acesso configura o PIN
-          # do próprio dispositivo; produção pode fornecer VITE_PIN_HASH por secret.
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: npm run build:client
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
 
       - name: Auditar carga inicial real do JavaScript
-        run: npm run test:bundle-audit && npm run audit:bundle
+        run: npm run test:bundle-audit && npm run audit:bundle && npm run audit:built-pin
 
       - name: Verificar output do build
         run: |
@@ -188,6 +210,13 @@ jobs:
           CERT_PW: ${{ secrets.CERT_P12_PASSWORD }}
         run: |
           set -euo pipefail
+          jwt_secret="$JWT_SECRET"
+          admin_pw="$ADMIN_PW"
+          admin_mail="$ADMIN_MAIL"
+          admin_name="$ADMIN_NM"
+          cert_b64="$CERT_B64"
+          cert_pw="$CERT_PW"
+          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM CERT_B64 CERT_PW
           put_required() {
             [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
             printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
@@ -199,12 +228,12 @@ jobs:
               echo "secret opcional $1: definido"
             fi
           }
-          put_required NEUROPED_JWT_SECRET "$JWT_SECRET"
-          put_required ADMIN_INITIAL_PASSWORD "$ADMIN_PW"
-          put_required ADMIN_EMAIL "$ADMIN_MAIL"
-          put_optional ADMIN_NAME "$ADMIN_NM"
-          put_optional CERT_P12_B64 "$CERT_B64"
-          put_optional CERT_P12_PASSWORD "$CERT_PW"
+          put_required NEUROPED_JWT_SECRET "$jwt_secret"
+          put_optional ADMIN_INITIAL_PASSWORD "$admin_pw"
+          put_optional ADMIN_EMAIL "$admin_mail"
+          put_optional ADMIN_NAME "$admin_name"
+          put_optional CERT_P12_B64 "$cert_b64"
+          put_optional CERT_P12_PASSWORD "$cert_pw"
 
       - name: Deploy para Cloudflare Pages
         env:
@@ -326,28 +355,49 @@ jobs:
 
       - name: Verificar login (auth e2e)
         env:
-          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           BASE=https://neuroped.pages.dev
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
+            admin_mail="$E2E_MAIL"
+            admin_pw="$E2E_PW"
+          else
+            admin_mail="$FALLBACK_MAIL"
+            admin_pw="$FALLBACK_PW"
+          fi
+          unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
           sleep 10
           # 1) senha errada → 401
-          wrong_payload=$(jq -nc --arg email "$ADMIN_MAIL" --arg password "senha_errada___" '{email:$email,password:$password}')
+          wrong_payload=$(jq -nc --arg email "ci-negative-${GITHUB_RUN_ID}@invalid.example" \
+            --arg password "senha_errada___" '{email:$email,password:$password}')
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/auth/login" \
             -H "Content-Type: application/json" \
             --data "$wrong_payload")
           echo "login (senha errada): HTTP $code"
           [ "$code" = "401" ] || { echo "::error::esperado 401 para senha errada"; exit 1; }
           # 2) correto → 200 + accessToken (token nunca é impresso)
-          login_payload=$(jq -nc --arg email "$ADMIN_MAIL" --arg password "$ADMIN_PW" '{email:$email,password:$password}')
+          login_payload=$(jq -nc --arg email "$admin_mail" --arg password "$admin_pw" '{email:$email,password:$password}')
           resp=$(curl -s -X POST "$BASE/api/auth/login" -H "Content-Type: application/json" \
             --data "$login_payload")
           tok=$(printf '%s' "$resp" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).accessToken||'')}catch{process.stdout.write('')}})")
-          [ -n "$tok" ] || { echo "::error::login correto não retornou accessToken"; exit 1; }
-          echo "login (correto): OK — token recebido (mascarado)"
+          refresh=$(printf '%s' "$resp" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).refreshToken||'')}catch{process.stdout.write('')}})")
+          [ -n "$tok" ] && [ -n "$refresh" ] || { echo "::error::login correto não retornou o par de tokens"; exit 1; }
+          echo "login (correto): OK — tokens recebidos (mascarados)"
           # 3) /me com o token → 200
           mecode=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/auth/me" -H "Authorization: Bearer $tok")
           echo "me: HTTP $mecode"
           [ "$mecode" = "200" ] || { echo "::error::/api/auth/me esperado 200"; exit 1; }
-          echo "✅ AUTH E2E OK — login nominal no ar."
+          # 4) logout revoga a família da sessão e invalida o access token
+          logout_payload=$(jq -nc --arg refreshToken "$refresh" '{refreshToken:$refreshToken}')
+          logoutcode=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/auth/logout" \
+            -H "Content-Type: application/json" --data "$logout_payload")
+          [ "$logoutcode" = "200" ] || { echo "::error::logout esperado 200"; exit 1; }
+          revokedcode=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/auth/me" \
+            -H "Authorization: Bearer $tok")
+          [ "$revokedcode" = "401" ] || { echo "::error::sessão de teste não foi revogada"; exit 1; }
+          echo "✅ AUTH E2E OK — login nominal e logout revogável no ar."

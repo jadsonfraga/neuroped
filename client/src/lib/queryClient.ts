@@ -2,11 +2,9 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { authFetch } from "@/lib/authClient";
 
 // Origem da API. Vazio = mesma origem (padrão; funciona no Cloudflare Pages, que
-// serve frontend + Functions juntos). Para que os mirrors estáticos (GitHub Pages
-// e Vercel) consumam a API do Cloudflare, defina VITE_API_URL no build deles
-// (ex.: VITE_API_URL=https://neuroped.pages.dev) e inclua a origem em CORS_ORIGINS
-// no Cloudflare. Atenção: fluxos autenticados por cookie exigem ajustes de CORS
-// (credentials + SameSite=None) — cross-origin só é seguro p/ endpoints públicos.
+// serve frontend + Functions juntos). Os aliases Vercel usam a URL canônica do
+// Cloudflare e autenticação nominal por Bearer token. Cada alias precisa constar
+// na allowlist CORS exata; cookies cross-origin não fazem parte desse contrato.
 const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 async function throwIfResNotOk(res: Response) {

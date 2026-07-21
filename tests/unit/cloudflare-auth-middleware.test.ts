@@ -115,7 +115,11 @@ const configuredCors = await call(
   undefined,
   configuredOrigin,
 );
-assert.equal(configuredCors.headers.get("Access-Control-Allow-Origin"), configuredOrigin);
+assert.equal(
+  configuredCors.headers.get("Access-Control-Allow-Origin"),
+  null,
+  "configuração externa não amplia a allowlist compilada",
+);
 
 const productionWildcard = await call(
   "/api/health",
@@ -127,6 +131,18 @@ assert.equal(
   productionWildcard.headers.get("Access-Control-Allow-Origin"),
   null,
   "CORS wildcard nunca abre a API",
+);
+
+const sharedPagesOrigin = await call(
+  "/api/health",
+  { CORS_ORIGINS: "https://jadsonfraga.github.io" },
+  undefined,
+  "https://jadsonfraga.github.io",
+);
+assert.equal(
+  sharedPagesOrigin.headers.get("Access-Control-Allow-Origin"),
+  null,
+  "origin compartilhada do GitHub Pages não pode ser liberada por configuração",
 );
 
 const preflight = await onRequest({

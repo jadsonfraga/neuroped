@@ -27,13 +27,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           missing=()
           [ -n "$VERCEL_TOKEN" ] || missing+=("VERCEL_TOKEN")
           [ -n "$VERCEL_ORG_ID" ] || missing+=("VERCEL_ORG_ID")
-          [ -n "$VITE_PIN_HASH" ] || missing+=("VITE_PIN_HASH")
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] \
+              || missing+=("NEUROPED_E2E_EMAIL+NEUROPED_E2E_PASSWORD")
+            ACTIVE_MAIL="$E2E_MAIL"
+            ACTIVE_PW="$E2E_PW"
+          else
+            ACTIVE_MAIL="$FALLBACK_MAIL"
+            ACTIVE_PW="$FALLBACK_PW"
+          fi
+          [ -n "$ACTIVE_MAIL" ] || missing+=("NEUROPED_E2E_EMAIL/ADMIN_EMAIL")
+          [ -n "$ACTIVE_PW" ] || missing+=("NEUROPED_E2E_PASSWORD/ADMIN_INITIAL_PASSWORD")
+          unset VERCEL_TOKEN VERCEL_ORG_ID E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW ACTIVE_MAIL ACTIVE_PW
 
           target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -56,15 +70,12 @@ jobs:
             -f context="NeuroPed / Vercel production" \
             -f description="Configuração validada; deploy em execução." \
             -f target_url="$target_url"
-          echo "Secrets do Vercel e verificador local presentes — deploy habilitado."
+          echo "Secrets do Vercel e da jornada nominal presentes — deploy habilitado."
 
   deploy-vercel:
     needs: preflight
     if: needs.preflight.outputs.ready == 'true'
     runs-on: ubuntu-latest
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
 
     steps:
       - name: Checkout repository
@@ -85,11 +96,30 @@ jobs:
       - name: Run hard release verification gate
         run: npm run verify
 
-      - name: Validate production PIN verifier
-        env:
-          REQUIRE_LOCAL_PIN: "1"
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: node scripts/verify-local-pin-env.mjs
+      - name: Wait for matching Cloudflare backend release
+        run: |
+          set -euo pipefail
+          sentinel=https://neuroped.pages.dev/deploy-check.json
+          health=https://neuroped.pages.dev/api/health
+          for attempt in $(seq 1 36); do
+            cache_buster="run=${GITHUB_RUN_ID}&attempt=$attempt"
+            if curl -fsSL "$sentinel?$cache_buster" -o /tmp/cloudflare-sentinel.json \
+              && jq -e --arg sha "$GITHUB_SHA" \
+                '.provider == "cloudflare-pages" and .commit == $sha' \
+                /tmp/cloudflare-sentinel.json >/dev/null \
+              && curl -fsSL "$health?$cache_buster" -o /tmp/cloudflare-health.json \
+              && jq -e \
+                '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
+                /tmp/cloudflare-health.json >/dev/null; then
+              echo "Backend canônico confirma ${GITHUB_SHA}."
+              exit 0
+            fi
+            echo "Aguardando backend canônico do mesmo commit ($attempt/36)."
+            sleep 10
+          done
+          cat /tmp/cloudflare-sentinel.json 2>/dev/null || true
+          echo "::error::Cloudflare não confirmou ${GITHUB_SHA}; Vercel não será publicado."
+          exit 1
 
       - name: Create deploy sentinel
         run: |
@@ -110,12 +140,14 @@ jobs:
       - name: Build client
         env:
           NODE_ENV: production
-          # Nunca embutir verificador de PIN no repositório público.
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: npm run build:client
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: https://neuroped.pages.dev
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
 
       - name: Audit real initial JavaScript payload
-        run: npm run test:bundle-audit && npm run audit:bundle
+        run: npm run test:bundle-audit && npm run audit:bundle && npm run audit:built-pin
 
       - name: Verify build output
         run: |
@@ -127,12 +159,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Sync verifier and deploy both Vercel projects
+      - name: Deploy and verify both Vercel projects
         id: vercel-deploy
         env:
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         run: |
           set -euo pipefail
+          token="$VERCEL_TOKEN"
+          unset VERCEL_TOKEN
 
           projects=(
             "neuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
@@ -145,19 +180,19 @@ jobs:
             echo "Configurando e publicando projeto: $name"
 
             rm -rf .vercel
-            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            vercel pull --yes --environment=production --token="$token"
 
-            # O valor vem do GitHub Secret e segue por stdin; nunca é impresso.
-            printf '%s' "$VITE_PIN_HASH" \
-              | vercel env add VITE_PIN_HASH production --sensitive --force \
-                  --token="$VERCEL_TOKEN"
+            # Sobrescreve toda variável VITE_* relevante para que configurações
+            # antigas do projeto nunca mudem autenticação, zona ou allowlist.
+            VITE_AUTH_MODE=remote \
+            VITE_API_URL=https://neuroped.pages.dev \
+            VITE_PIN_HASH= \
+            VITE_ZONE=full \
+            VITE_ALLOWED_HOSTS= \
+              vercel build --prod --token="$token"
+            npm run audit:built-pin
 
-            # Recarrega a configuração após a sincronização para o build local.
-            rm -rf .vercel
-            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-            VITE_PIN_HASH="$VITE_PIN_HASH" vercel build --prod --token="$VERCEL_TOKEN"
-
-            url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+            url=$(vercel deploy --prebuilt --prod --token="$token")
             echo "$name deployment: $url"
 
             check_sentinel() {
@@ -205,6 +240,148 @@ jobs:
               echo "::error::O alias $production_url não serve ${GITHUB_SHA}."
               exit 1
             }
+
+          done
+
+      - name: Validate remote authentication from stable Vercel origins
+        env:
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
+          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+        run: |
+          set -euo pipefail
+          api_base="https://neuroped.pages.dev"
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
+            admin_mail="$E2E_MAIL"
+            admin_pw="$E2E_PW"
+          else
+            admin_mail="$FALLBACK_MAIL"
+            admin_pw="$FALLBACK_PW"
+          fi
+          unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
+
+          header_value() {
+            tr -d '\r' < "$1" | awk -F': ' -v target="$2" \
+              'tolower($1) == tolower(target) { print $2 }' | tail -1
+          }
+
+          for production_url in \
+            https://neuroped.vercel.app \
+            https://superneuroped.vercel.app; do
+            preflight_headers=$(mktemp)
+            preflight_code=$(curl -sS -o /dev/null -D "$preflight_headers" \
+              -w "%{http_code}" -X OPTIONS "$api_base/api/auth/login" \
+              -H "Origin: $production_url" \
+              -H "Access-Control-Request-Method: POST" \
+              -H "Access-Control-Request-Headers: Content-Type, Authorization")
+            [ "$preflight_code" = "204" ] || {
+              echo "::error::Preflight de $production_url retornou HTTP $preflight_code."
+              exit 1
+            }
+            [ "$(header_value "$preflight_headers" Access-Control-Allow-Origin)" = "$production_url" ] || {
+              echo "::error::Preflight sem CORS exato para $production_url."
+              exit 1
+            }
+            allowed_headers=$(header_value "$preflight_headers" Access-Control-Allow-Headers)
+            printf '%s' "$allowed_headers" | grep -qi 'Content-Type' || {
+              echo "::error::Preflight sem Content-Type para $production_url."
+              exit 1
+            }
+            printf '%s' "$allowed_headers" | grep -qi 'Authorization' || {
+              echo "::error::Preflight sem Authorization para $production_url."
+              exit 1
+            }
+
+            wrong_payload=$(jq -nc --arg email "ci-negative-${GITHUB_RUN_ID}@invalid.example" \
+              --arg password "senha_errada___" '{email:$email,password:$password}')
+            wrong_headers=$(mktemp)
+            wrong_code=$(curl -sS -o /dev/null -D "$wrong_headers" -w "%{http_code}" \
+              -X POST "$api_base/api/auth/login" \
+              -H "Origin: $production_url" \
+              -H "Content-Type: application/json" \
+              --data "$wrong_payload")
+            [ "$wrong_code" = "401" ] || {
+              echo "::error::Login inválido deveria retornar 401; recebeu $wrong_code."
+              exit 1
+            }
+            [ "$(header_value "$wrong_headers" Access-Control-Allow-Origin)" = "$production_url" ] || {
+              echo "::error::Resposta 401 sem CORS exato para $production_url."
+              exit 1
+            }
+
+            login_payload=$(jq -nc --arg email "$admin_mail" --arg password "$admin_pw" \
+              '{email:$email,password:$password}')
+            login_headers=$(mktemp)
+            login_body=$(mktemp)
+            login_code=$(curl -sS -o "$login_body" -D "$login_headers" -w "%{http_code}" \
+              -X POST "$api_base/api/auth/login" \
+              -H "Origin: $production_url" \
+              -H "Content-Type: application/json" \
+              --data "$login_payload")
+            [ "$login_code" = "200" ] || {
+              echo "::error::Login nominal de $production_url retornou HTTP $login_code."
+              exit 1
+            }
+            [ "$(header_value "$login_headers" Access-Control-Allow-Origin)" = "$production_url" ] || {
+              echo "::error::Login nominal sem CORS exato para $production_url."
+              exit 1
+            }
+            access_token=$(node -e '
+              const fs = require("node:fs");
+              const body = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              process.stdout.write(body.accessToken || "");
+            ' "$login_body")
+            refresh_token=$(node -e '
+              const fs = require("node:fs");
+              const body = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              process.stdout.write(body.refreshToken || "");
+            ' "$login_body")
+            [ -n "$access_token" ] && [ -n "$refresh_token" ] || {
+              echo "::error::Login nominal não retornou o par de tokens."
+              exit 1
+            }
+
+            me_headers=$(mktemp)
+            me_code=$(curl -sS -o /dev/null -D "$me_headers" -w "%{http_code}" \
+              "$api_base/api/auth/me" \
+              -H "Origin: $production_url" \
+              -H "Authorization: Bearer $access_token")
+            [ "$me_code" = "200" ] || {
+              echo "::error::/api/auth/me retornou HTTP $me_code para $production_url."
+              exit 1
+            }
+            [ "$(header_value "$me_headers" Access-Control-Allow-Origin)" = "$production_url" ] || {
+              echo "::error::/api/auth/me sem CORS exato para $production_url."
+              exit 1
+            }
+
+            logout_payload=$(jq -nc --arg refreshToken "$refresh_token" '{refreshToken:$refreshToken}')
+            logout_headers=$(mktemp)
+            logout_code=$(curl -sS -o /dev/null -D "$logout_headers" -w "%{http_code}" \
+              -X POST "$api_base/api/auth/logout" \
+              -H "Origin: $production_url" \
+              -H "Content-Type: application/json" \
+              --data "$logout_payload")
+            [ "$logout_code" = "200" ] || {
+              echo "::error::Logout retornou HTTP $logout_code para $production_url."
+              exit 1
+            }
+            [ "$(header_value "$logout_headers" Access-Control-Allow-Origin)" = "$production_url" ] || {
+              echo "::error::Logout sem CORS exato para $production_url."
+              exit 1
+            }
+
+            revoked_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+              "$api_base/api/auth/me" \
+              -H "Origin: $production_url" \
+              -H "Authorization: Bearer $access_token")
+            [ "$revoked_code" = "401" ] || {
+              echo "::error::Sessão de teste não foi revogada para $production_url."
+              exit 1
+            }
+            echo "Auth nominal e logout confirmados em $production_url."
           done
 
       - name: Publish consolidated Vercel production status
@@ -217,7 +394,7 @@ jobs:
           description="Deploy Vercel falhou; consulte o workflow."
           if [ "$JOB_STATUS" = "success" ]; then
             state=success
-            description="neuroped e superneuroped publicados e verificados."
+            description="Dois aliases publicados com auth nominal validada."
           fi
           gh api --method POST \
             "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \

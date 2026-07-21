@@ -49,7 +49,10 @@ const authClientSource = source("client/src/lib/authClient.ts");
 const authContextSource = source("client/src/contexts/AuthContext.tsx");
 const pagesWorkflow = source(".github/workflows/deploy.yml");
 const cloudflareWorkflow = source(".github/workflows/deploy-cloudflare.yml");
+const vercelWorkflow = source(".github/workflows/deploy-vercel.yml");
 const vercelConfig = source("vercel.json");
+const pagesRedirectHtml = source("github-pages-redirect/index.html");
+const pagesRedirectScript = source("github-pages-redirect/redirect.js");
 
 assert.match(authClientSource, /VITE_AUTH_MODE/);
 assert.match(authClientSource, /cachedAuthCapability\(mode\)/);
@@ -75,19 +78,92 @@ assert.match(
 );
 assert.match(
   pagesWorkflow,
-  /VITE_AUTH_MODE:\s*local/,
-  "GitHub Pages é mirror estático e deve declarar modo local",
+  /path:\s*dist\/github-pages/,
+  "GitHub Pages deve publicar somente o artefato de redirecionamento",
 );
+assert.doesNotMatch(pagesWorkflow, /VITE_PIN_HASH|verify-local-pin-env|npm run build:client/);
+assert.match(pagesWorkflow, /test ! -d dist\/github-pages\/assets/);
+assert.match(pagesRedirectHtml, /https:\/\/neuroped\.pages\.dev/);
+assert.doesNotMatch(pagesRedirectHtml, /id="root"|type="module"/);
+for (const contract of [
+  /const TARGET = "https:\/\/neuroped\.pages\.dev"/,
+  /startsWith\("neuroped:"\)/,
+  /startsWith\("np_"\)/,
+  /registration\.unregister\(\)/,
+  /startsWith\("neuroped-"\)/,
+  /deleteDatabase\("neuroped-icp"\)/,
+  /window\.location\.replace\(destination\)/,
+]) {
+  assert.match(pagesRedirectScript, contract);
+}
 assert.match(
   vercelConfig,
-  /VITE_AUTH_MODE=local/,
-  "Vercel estático deve declarar modo local no build canônico",
+  /VITE_AUTH_MODE=remote/,
+  "Vercel deve exigir autenticação nominal remota",
 );
+assert.match(vercelConfig, /VITE_API_URL=https:\/\/neuroped\.pages\.dev/);
+assert.match(vercelConfig, /VITE_PIN_HASH=\s/);
+assert.match(vercelConfig, /VITE_ZONE=full/);
+assert.match(vercelConfig, /VITE_ALLOWED_HOSTS=\s/);
+assert.match(vercelWorkflow, /VITE_AUTH_MODE:\s*remote/);
+assert.match(vercelWorkflow, /VITE_API_URL:\s*https:\/\/neuroped\.pages\.dev/);
+assert.match(vercelWorkflow, /VITE_PIN_HASH=\s*\\/);
+assert.match(vercelWorkflow, /api\/auth\/login/);
+assert.match(vercelWorkflow, /api\/auth\/me/);
+assert.match(vercelWorkflow, /api\/auth\/logout/);
+assert.match(vercelWorkflow, /Wait for matching Cloudflare backend release/);
+assert.match(
+  vercelWorkflow,
+  /deploy-check\.json[\s\S]*\.provider == "cloudflare-pages" and \.commit == \$sha/,
+  "Vercel só pode publicar após o backend canônico confirmar o mesmo SHA",
+);
+assert.doesNotMatch(vercelWorkflow, /secrets\.VITE_PIN_HASH|env add VITE_PIN_HASH/);
+
+const vercelJobStart = vercelWorkflow.indexOf("  deploy-vercel:");
+const vercelStepsStart = vercelWorkflow.indexOf("    steps:", vercelJobStart);
+const vercelDeployStart = vercelWorkflow.indexOf(
+  "      - name: Deploy and verify both Vercel projects",
+  vercelStepsStart,
+);
+const vercelAuthStart = vercelWorkflow.indexOf(
+  "      - name: Validate remote authentication from stable Vercel origins",
+  vercelDeployStart,
+);
+const vercelStatusStart = vercelWorkflow.indexOf(
+  "      - name: Publish consolidated Vercel production status",
+  vercelAuthStart,
+);
+for (const marker of [
+  vercelJobStart,
+  vercelStepsStart,
+  vercelDeployStart,
+  vercelAuthStart,
+  vercelStatusStart,
+]) {
+  assert.notEqual(marker, -1, "workflow Vercel deve preservar os steps de segurança");
+}
+const vercelJobHeader = vercelWorkflow.slice(vercelJobStart, vercelStepsStart);
+const vercelDeployStep = vercelWorkflow.slice(vercelDeployStart, vercelAuthStart);
+const vercelAuthStep = vercelWorkflow.slice(vercelAuthStart, vercelStatusStart);
+assert.doesNotMatch(vercelJobHeader, /secrets\./, "secrets não podem ter escopo de job");
+assert.match(vercelDeployStep, /secrets\.VERCEL_TOKEN/);
+assert.doesNotMatch(vercelDeployStep, /ADMIN_MAIL|ADMIN_PW|NEUROPED_E2E_/);
+assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_EMAIL/);
+assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_PASSWORD/);
+assert.doesNotMatch(vercelAuthStep, /VERCEL_TOKEN|VERCEL_ORG_ID/);
+assert.doesNotMatch(vercelWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
+assert.match(vercelAuthStep, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
+assert.match(cloudflareWorkflow, /VITE_AUTH_MODE:\s*remote/);
 assert.doesNotMatch(
   cloudflareWorkflow,
-  /VITE_AUTH_MODE:\s*local/,
-  "Cloudflare full-stack jamais pode ser compilado em modo local",
+  /VITE_AUTH_MODE:\s*local|secrets\.VITE_PIN_HASH/,
+  "Cloudflare full-stack jamais compila em modo local nem recebe o verificador",
 );
+assert.match(cloudflareWorkflow, /E2E_MAIL:\s*\$\{\{ secrets\.NEUROPED_E2E_EMAIL \}\}/);
+assert.match(cloudflareWorkflow, /FALLBACK_MAIL:\s*\$\{\{ secrets\.ADMIN_EMAIL \}\}/);
+assert.doesNotMatch(cloudflareWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
+assert.match(cloudflareWorkflow, /if \[ -n "\$E2E_MAIL" \] \|\| \[ -n "\$E2E_PW" \]/);
+assert.match(cloudflareWorkflow, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
