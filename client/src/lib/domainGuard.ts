@@ -14,7 +14,6 @@
 
 /** Domínios oficiais onde o NeuroPed pode rodar. */
 const DEFAULT_ALLOWED_HOSTS: string[] = [
-  "jadsonfraga.github.io",
   "neuroped.pages.dev",
   "neuroped.vercel.app",
   "superneuroped.vercel.app",
@@ -47,7 +46,8 @@ function fromEnv(): string[] {
  * - hostname vazio (SSR/testes) → true (não bloqueia ambientes sem window).
  * - localhost e afins → true (desenvolvimento).
  * - domínios do env VITE_ALLOWED_HOSTS → true (override configurável).
- * - qualquer *.vercel.app do projeto (previews) → true.
+ * Previews Vercel e GitHub Pages permanecem bloqueados: somente aliases com
+ * origem exclusiva recebem autenticação remota e dados clínicos.
  */
 export function isAuthorizedHost(hostname: string | undefined | null): boolean {
   const host = (hostname ?? "").trim().toLowerCase();
@@ -62,10 +62,6 @@ export function isAuthorizedHost(hostname: string | undefined | null): boolean {
   for (const suffix of DEFAULT_ALLOWED_SUFFIXES) {
     if (host.endsWith(suffix)) return true;
   }
-
-  // Deploys e previews oficiais dos dois projetos Vercel.
-  if (/^(?:neuroped|superneuroped)[a-z0-9-]*\.vercel\.app$/.test(host))
-    return true;
 
   return false;
 }

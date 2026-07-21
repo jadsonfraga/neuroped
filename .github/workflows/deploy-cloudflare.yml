@@ -80,13 +80,14 @@ jobs:
       - name: Compilar frontend para Cloudflare Pages
         env:
           NODE_ENV: production
-          # Sem fallback público: em modo local o primeiro acesso configura o PIN
-          # do próprio dispositivo; produção pode fornecer VITE_PIN_HASH por secret.
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: npm run build:client
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
 
       - name: Auditar carga inicial real do JavaScript
-        run: npm run test:bundle-audit && npm run audit:bundle
+        run: npm run test:bundle-audit && npm run audit:bundle && npm run audit:built-pin
 
       - name: Verificar output do build
         run: |

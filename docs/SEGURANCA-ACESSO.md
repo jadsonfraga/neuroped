@@ -1,59 +1,42 @@
-# Segurança de acesso — Público × Médico
+# Segurança de acesso — produção
 
-## O que já está feito (nível 1 — tranca de UI)
+## Arquitetura vigente
 
-- **Separação por rota** (`client/src/lib/publicRoutes.ts`): seguro por padrão —
-  só a allowlist pública abre sem PIN; todo o resto é área médica.
-- **PIN só na área médica** (`PrivateGate` ciente de rota). Famílias acessam o
-  conteúdo aberto sem senha; profissional entra com PIN.
-- **Guard de CI** (`validate:public`) impede que rotas clínicas (receita,
-  prontuário, escalas…) caiam na lista pública por engano.
-- **PIN protegido**: hash guardado em *secret* (`VITE_PIN_HASH`), PBKDF2 310k
-  iterações, bloqueio após 5 tentativas com espera exponencial.
+- `https://neuroped.pages.dev` é o full-stack canônico: frontend, Pages
+  Functions e D1.
+- `https://neuroped.vercel.app` e `https://superneuroped.vercel.app` executam o
+  mesmo cliente em modo `remote` e usam a API canônica com login nominal, JWT
+  de curta duração e refresh revogável.
+- `https://jadsonfraga.github.io/neuroped/` não executa o aplicativo. Publica
+  somente um redirecionador para o domínio canônico e remove estado legado do
+  NeuroPed no navegador.
 
-## A verdade honesta (por que isso ainda NÃO é "impossível de hackear")
+## Por que o GitHub Pages não recebe login remoto
 
-Este app é um **site estático** (Pages/Cloudflare/Vercel). Nesse modelo:
+Todo projeto publicado por essa conta compartilha a origin
+`https://jadsonfraga.github.io`. Como `sessionStorage` é isolado por origin, e
+não por caminho, outro projeto sob o mesmo host poderia ler os tokens do app.
+Até existir um domínio exclusivo, o GitHub Pages não entra na allowlist CORS e
+jamais recebe o bundle clínico.
 
-1. **O conteúdo médico já é baixado pelo navegador** dentro do JS. O PIN esconde
-   a *tela*, não o *conteúdo*: quem sabe abrir o bundle lê as escalas mesmo sem o
-   PIN.
-2. **Roteamento por hash** (`#/filtro`): o servidor só vê `/`. Logo, um firewall
-   de borda não consegue distinguir rota pública de médica no mesmo domínio.
+## Contrato de produção
 
-Conclusão: tranca de cliente é **ofuscação**, não isolamento. Para segurança de
-verdade, o conteúdo médico precisa ser **entregue pelo servidor só após login**.
+- Builds públicos usam `VITE_AUTH_MODE=remote` e API fixa no Cloudflare.
+- Os aliases Vercel são autorizados por comparação CORS exata; wildcard,
+  previews, esquema HTTP, portas alternativas e hosts parecidos são negados.
+- Nenhum verificador PBKDF2 pode aparecer no artefato final. A catraca
+  `audit:built-pin` falha a release se encontrar um.
+- Rotas clínicas continuam protegidas no backend por autenticação, papel e
+  ownership. Uma trava de interface nunca substitui autorização do servidor.
+- O modo de PIN permanece apenas para instalação local/offline explicitamente
+  configurada e não é usado por nenhum host público oficial.
 
-## Nível 2 (recomendado, segurança REAL de borda) — Cloudflare Access
+## Evidência exigida a cada deploy
 
-Ideia: publicar a **área médica num subdomínio próprio** protegido por Cloudflare
-Access (Zero Trust). O conteúdo nem chega a quem não autenticou.
-
-1. **Subdomínio médico**: crie um projeto/host separado, ex. `med.seudominio` (ou
-   um segundo Cloudflare Pages), servindo o build do app. O domínio público atual
-   continua aberto só com o conteúdo das famílias.
-2. **Cloudflare Zero Trust → Access → Applications → Add self-hosted**:
-   - Application domain: `med.seudominio`.
-   - Session duration: ex. 24h.
-3. **Policy**: *Allow* apenas o seu e-mail (regra "Emails" → seu e-mail). Método
-   de login: **One-time PIN por e-mail** (não precisa de conta) ou Google.
-4. Pronto: abrir `med.seudominio` exige login verificado **no servidor da
-   Cloudflare** antes de qualquer arquivo ser servido. Impossível burlar pelo
-   navegador, e a "senha" nunca vai no bundle.
-
-> Enquanto o Nível 2 não existe, mantenha o conteúdo verdadeiramente sensível
-> (dados de pacientes reais) **fora** do site estático.
-
-## Nível 3 (máximo) — backend com autenticação
-
-Mover catálogo e dados médicos para trás de uma API autenticada (ex.: Supabase
-Auth + Postgres). O cliente só recebe o que o servidor liberar após login. Maior
-esforço, controle total, e o único modelo adequado para **dados de pacientes**.
-
-## Higiene do PIN (faça agora)
-
-- **Mantenha o PIN só no secret** `VITE_PIN_HASH` (GitHub → Settings → Secrets →
-  Actions) e na env do projeto Vercel — nunca no fallback público do workflow.
-- **Use PBKDF2** (formato `pbkdf2$310000$salt$hash`), não SHA-256 cru.
-- **PIN longo**: 6 dígitos são força-bruta-veis; prefira 10+ caracteres
-  alfanuméricos. Aí, mesmo que o hash vaze, quebrar fica inviável.
+1. sentinela pública com o SHA exato;
+2. health com D1 e autenticação configurados;
+3. preflight CORS exato para cada alias Vercel;
+4. login inválido rejeitado e login nominal aceito;
+5. `/api/auth/me` autenticado;
+6. logout com revogação comprovada;
+7. ausência de verificador PBKDF2 no bundle.

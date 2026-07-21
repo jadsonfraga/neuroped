@@ -27,8 +27,8 @@ export function resolveAuthMode(
     return mode;
   }
 
-  // Builds de produção falham fechados por padrão. Mirrors estáticos precisam
-  // declarar VITE_AUTH_MODE=local explicitamente no pipeline de publicação.
+  // Builds de produção falham fechados por padrão. Modo local só pode ser
+  // declarado por uma instalação local/offline, nunca por mirror público.
   return isProduction ? "remote" : "auto";
 }
 

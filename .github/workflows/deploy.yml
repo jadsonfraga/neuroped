@@ -54,13 +54,19 @@ jobs:
       - name: Catraca técnica completa de release
         run: npm run verify
 
-      - name: Criar sentinela de deploy
+      - name: Construir redirecionador seguro e sentinela
         run: |
-          mkdir -p client/public
-          cat > client/public/deploy-check.json <<EOF
+          set -euo pipefail
+          rm -rf dist/github-pages
+          mkdir -p dist/github-pages
+          cp github-pages-redirect/index.html dist/github-pages/index.html
+          cp github-pages-redirect/index.html dist/github-pages/404.html
+          cp github-pages-redirect/redirect.js dist/github-pages/redirect.js
+          cat > dist/github-pages/deploy-check.json <<EOF
           {
             "app": "NeuroPed",
             "provider": "github-pages",
+            "mode": "canonical-redirect",
             "branch": "${GITHUB_REF_NAME}",
             "commit": "${GITHUB_SHA}",
             "run_id": "${GITHUB_RUN_ID}",
@@ -69,35 +75,21 @@ jobs:
             "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-          cat client/public/deploy-check.json
-
-      - name: Validar verificador do PIN local
-        env:
-          REQUIRE_LOCAL_PIN: "1"
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: node scripts/verify-local-pin-env.mjs
-
-      - name: Compilar frontend para Pages
-        env:
-          NODE_ENV: production
-          # Mirror estático deliberado: sem backend clínico, usa o PIN local.
-          VITE_AUTH_MODE: local
-          # Nunca embutir verificador de PIN no repositório público.
-          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
-        run: npm run build:client
-
-      - name: Auditar carga inicial real do JavaScript
-        run: npm run test:bundle-audit && npm run audit:bundle
-
-      - name: Verificar output do build
-        run: |
-          echo "=== dist/public ==="
-          ls -la dist/public/
-          echo "=== deploy-check ==="
-          test -f dist/public/deploy-check.json
-          cat dist/public/deploy-check.json
-          echo "=== assets ==="
-          ls -la dist/public/assets/ | head -20
+          expected=$'404.html\ndeploy-check.json\nindex.html\nredirect.js'
+          actual=$(find dist/github-pages -maxdepth 1 -type f -printf '%f\n' | sort)
+          [ "$actual" = "$expected" ] || {
+            echo "::error::Artefato Pages contém arquivos inesperados."
+            printf 'Esperado:\n%s\nAtual:\n%s\n' "$expected" "$actual"
+            exit 1
+          }
+          test ! -d dist/github-pages/assets
+          grep -Fq 'https://neuroped.pages.dev' dist/github-pages/index.html
+          grep -Fq 'const TARGET = "https://neuroped.pages.dev"' dist/github-pages/redirect.js
+          if grep -Eqi 'pbkdf2\$|type="module"|id="root"' dist/github-pages/*; then
+            echo "::error::O redirecionador contém bundle, gate local ou verificador."
+            exit 1
+          fi
+          cat dist/github-pages/deploy-check.json
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v4
@@ -105,7 +97,7 @@ jobs:
       - name: Upload artefato para Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/public
+          path: dist/github-pages
 
   deploy-frontend:
     needs: build
@@ -165,6 +157,7 @@ jobs:
               const valid =
                 payload.app === "NeuroPed" &&
                 payload.provider === "github-pages" &&
+                payload.mode === "canonical-redirect" &&
                 payload.commit === process.env.EXPECTED_SHA &&
                 payload.run_id === process.env.EXPECTED_RUN_ID &&
                 payload.run_attempt === process.env.EXPECTED_RUN_ATTEMPT;
@@ -172,27 +165,28 @@ jobs:
             ' 2>/dev/null; then
               index="$(curl --fail --silent --show-error --location --max-time 15 \
                 "${base_url}?${cache_buster}" || true)"
-              if INDEX_HTML="$index" node --input-type=module -e '
-                const root = /<div\b[^>]*id="root"[^>]*>\s*<\/div>/i;
-                if (!root.test(process.env.INDEX_HTML)) process.exit(1);
+              redirect="$(curl --fail --silent --show-error --location --max-time 15 \
+                "${base_url}redirect.js?${cache_buster}" || true)"
+              if INDEX_HTML="$index" REDIRECT_JS="$redirect" node --input-type=module -e '
+                const html = process.env.INDEX_HTML || "";
+                const script = process.env.REDIRECT_JS || "";
+                const fixedTarget = "https://neuroped.pages.dev";
+                const valid =
+                  html.includes(fixedTarget) &&
+                  html.includes("/neuroped/redirect.js") &&
+                  !/id="root"|type="module"/i.test(html) &&
+                  script.includes(`const TARGET = "${fixedTarget}"`) &&
+                  script.includes("neuroped:") &&
+                  script.includes("np_") &&
+                  script.includes("registration.unregister()") &&
+                  script.includes("neuroped-") &&
+                  script.includes("neuroped-icp") &&
+                  script.includes("window.location.replace(destination)");
+                if (!valid) process.exit(1);
               ' 2>/dev/null; then
-                if module_path="$(INDEX_HTML="$index" node --input-type=module -e '
-                  const match = process.env.INDEX_HTML.match(
-                    /<script[^>]*type="module"[^>]*src="([^"]+)"/,
-                  );
-                  if (!match) process.exit(1);
-                  console.log(match[1]);
-                ')" && \
-                  module_url="$(BASE_URL="$base_url" MODULE_PATH="$module_path" \
-                    node --input-type=module -e '
-                      console.log(new URL(process.env.MODULE_PATH, process.env.BASE_URL).href);
-                    ')" && \
-                  curl --fail --silent --show-error --location --max-time 15 \
-                    "${module_url}?${cache_buster}" >/dev/null; then
-                  echo "Sentinela pública confirma o commit ${EXPECTED_SHA}."
-                  echo "sentinel_url=${sentinel_url}" >> "$GITHUB_OUTPUT"
-                  exit 0
-                fi
+                echo "Redirecionador público confirma o commit ${EXPECTED_SHA}."
+                echo "sentinel_url=${sentinel_url}" >> "$GITHUB_OUTPUT"
+                exit 0
               fi
             fi
 
@@ -200,7 +194,7 @@ jobs:
             sleep 10
           done
 
-          echo "::error::A sentinela pública não confirmou o commit ${EXPECTED_SHA}."
+          echo "::error::A sentinela/redirecionador não confirmou o commit ${EXPECTED_SHA}."
           exit 1
 
       - name: Publicar resultado verificável
@@ -227,7 +221,7 @@ jobs:
             description="Deploy sem confirmação da sentinela pública."
           else
             state="success"
-            description="Commit publicado e confirmado pela sentinela pública."
+            description="Redirecionador canônico publicado e confirmado."
             target_url="${PAGE_URL%/}/"
           fi
 
@@ -243,7 +237,8 @@ jobs:
   # NOTA: jobs deploy-vercel e deploy-railway antigos removidos — referenciavam
   # actions inexistentes e falhavam sempre.
   # Arquitetura atual: o full-stack canônico é o Cloudflare Pages
-  # (frontend + Functions + D1, deploy-cloudflare.yml). GitHub Pages (acima) e
-  # Vercel (deploy-vercel.yml) são mirrors ESTÁTICOS do frontend. O backend
+  # (frontend + Functions + D1, deploy-cloudflare.yml). O GitHub Pages publica
+  # somente um redirecionador sem bundle/tokens; Vercel usa o backend canônico.
+  # O backend
   # Express (server/) serve apenas o `npm run dev` local — Render foi aposentado
   # (render.yaml removido).

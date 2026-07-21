@@ -50,12 +50,20 @@ const OFFICIAL_CROSS_ORIGINS = [
   "https://superneuroped.vercel.app",
 ] as const;
 
+const FORBIDDEN_CROSS_ORIGINS = new Set([
+  "https://jadsonfraga.github.io",
+]);
+
 function getAllowedOrigins(env: Env): string[] {
   const raw = env.CORS_ORIGINS ?? "";
   const configured = raw
     .split(",")
     .map((s) => s.trim())
-    .filter((origin) => Boolean(origin) && origin !== "*");
+    .filter((origin) =>
+      Boolean(origin) &&
+      origin !== "*" &&
+      !FORBIDDEN_CROSS_ORIGINS.has(origin)
+    );
   return [...new Set([...OFFICIAL_CROSS_ORIGINS, ...configured])];
 }
 

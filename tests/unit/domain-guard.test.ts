@@ -2,18 +2,20 @@ import assert from "node:assert/strict";
 import { isAuthorizedHost } from "../../client/src/lib/domainGuard";
 
 for (const host of [
+  "neuroped.pages.dev",
   "neuroped.vercel.app",
-  "neuroped-git-main-jadsonfragas-projects.vercel.app",
   "superneuroped.vercel.app",
-  "superneuroped-git-main-jadsonfragas-projects.vercel.app",
 ]) {
   assert.equal(isAuthorizedHost(host), true, `${host} deve ser autorizado`);
 }
 
 for (const host of [
   "evil-neuroped.vercel.app",
+  "neuroped-git-main-jadsonfragas-projects.vercel.app",
+  "superneuroped-git-main-jadsonfragas-projects.vercel.app",
   "neuroped.vercel.app.example.com",
   "neuroped-attacker.example.com",
+  "jadsonfraga.github.io",
 ]) {
   assert.equal(
     isAuthorizedHost(host),

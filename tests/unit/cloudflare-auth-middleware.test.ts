@@ -129,6 +129,18 @@ assert.equal(
   "CORS wildcard nunca abre a API",
 );
 
+const sharedPagesOrigin = await call(
+  "/api/health",
+  { CORS_ORIGINS: "https://jadsonfraga.github.io" },
+  undefined,
+  "https://jadsonfraga.github.io",
+);
+assert.equal(
+  sharedPagesOrigin.headers.get("Access-Control-Allow-Origin"),
+  null,
+  "origin compartilhada do GitHub Pages não pode ser liberada por configuração",
+);
+
 const preflight = await onRequest({
   request: new Request("https://neuroped.test/api/auth/login", {
     method: "OPTIONS",

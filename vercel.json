@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/verify-local-pin-env.mjs && npx cross-env VITE_AUTH_MODE=local npm run build:client",
+  "buildCommand": "npx cross-env VITE_AUTH_MODE=remote VITE_API_URL=https://neuroped.pages.dev VITE_PIN_HASH= VITE_ZONE=full VITE_ALLOWED_HOSTS= npm run build:client && npm run audit:built-pin",
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",
   "framework": "vite",
