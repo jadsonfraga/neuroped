@@ -45,10 +45,18 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
 };
 
+const OFFICIAL_CROSS_ORIGINS = [
+  "https://neuroped.vercel.app",
+  "https://superneuroped.vercel.app",
+] as const;
+
 function getAllowedOrigins(env: Env): string[] {
   const raw = env.CORS_ORIGINS ?? "";
-  if (!raw) return [];
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  const configured = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((origin) => Boolean(origin) && origin !== "*");
+  return [...new Set([...OFFICIAL_CROSS_ORIGINS, ...configured])];
 }
 
 function getCorsHeaders(
@@ -58,8 +66,7 @@ function getCorsHeaders(
 ): Record<string, string> {
   const allowed =
     origin === requestOrigin ||
-    (origin && allowedOrigins.includes(origin)) ||
-    allowedOrigins.includes("*");
+    (origin && allowedOrigins.includes(origin));
 
   if (!allowed || !origin) return {};
 
