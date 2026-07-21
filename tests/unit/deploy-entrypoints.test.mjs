@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -132,6 +133,7 @@ for (const path of [
 }
 
 for (const path of [
+  "CLOUD-STORAGE.md",
   "DEPLOYMENT_FINAL_SESSION.md",
   "DEPLOYMENT_SUMMARY.md",
   "DEPLOYMENT_READY.md",
@@ -143,6 +145,47 @@ for (const path of [
     read(path).slice(0, 320),
     /NEUROPED_HISTORICAL_DEPLOY_RECORD/,
     `registro histórico sem aviso de segurança: ${path}`,
+  );
+}
+
+const packageJson = JSON.parse(read("package.json"));
+assert.equal(
+  packageJson.scripts["db:push"],
+  "node scripts/guards/deny-external-db-push.mjs",
+  "db:push deve falhar fechado sem alcançar Postgres externo",
+);
+
+const dbPushGuard = "scripts/guards/deny-external-db-push.mjs";
+assert.match(read(dbPushGuard), /NEUROPED_LEGACY_DEPLOY_DISABLED/);
+const dbPushResult = spawnSync(process.execPath, [join(root, dbPushGuard)], {
+  encoding: "utf8",
+});
+assert.equal(dbPushResult.status, 1, "guard de db:push deve encerrar com erro");
+
+for (const manifest of ["railway.json", "railway.toml", "nixpacks.toml"]) {
+  assert.equal(
+    existsSync(join(root, manifest)),
+    false,
+    `manifest legado autodetectável não pode existir: ${manifest}`,
+  );
+}
+
+const drizzleConfig = read("drizzle.config.ts");
+assert.match(drizzleConfig, /NEUROPED_ALLOW_LOCAL_SCHEMA_TOOLS/);
+assert.match(drizzleConfig, /localhost.*127\.0\.0\.1.*::1/s);
+assert.doesNotMatch(drizzleConfig, /url:\s*process\.env\.DATABASE_URL/);
+
+for (const path of [
+  "db/schema.sql",
+  "db/seed_demo.sql",
+  "db/migrations/0001_users_auth.sql",
+  "wrangler.toml",
+  "wrangler.toml.example",
+]) {
+  assert.doesNotMatch(
+    read(path),
+    /wrangler[^\n]*(?:--remote|secret\s+put|pages\s+deploy)|d1\s+execute[^\n]*(?:produção|remote)/i,
+    `arquivo contém instrução manual de mutação remota: ${path}`,
   );
 }
 

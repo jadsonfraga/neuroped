@@ -7,9 +7,8 @@
 --     Nomes, datas, diagnósticos e contatos NÃO representam pessoas reais.
 --     is_demo = 1 em todos os registros.
 --
--- USO:
---  wrangler d1 execute neuroped-db --local --file=db/seed_demo.sql
---  wrangler d1 execute neuroped-db --file=db/seed_demo.sql  (produção)
+-- USO: somente ambiente local de demonstração. Não aplicar manualmente em
+-- produção; o fluxo oficial não publica este seed.
 -- ============================================================
 
 -- Limpar dados demo existentes antes do seed
