@@ -87,6 +87,68 @@ const authorized = await call(
 assert.equal(authorized.status, 200);
 assert.equal(authorized.headers.get("Access-Control-Allow-Origin"), null, "CORS não abre por padrão");
 
+for (const origin of [
+  "https://neuroped.vercel.app",
+  "https://superneuroped.vercel.app",
+]) {
+  const response = await call("/api/health", {}, undefined, origin);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), origin);
+  assert.equal(response.headers.get("Vary"), "Origin");
+}
+
+for (const origin of [
+  "https://evil-neuroped.vercel.app",
+  "https://neuroped.vercel.app.evil.example",
+  "http://neuroped.vercel.app",
+  "https://neuroped.vercel.app:444",
+  "https://jadsonfraga.github.io",
+  "https://jadsonfraga.github.io.evil.example",
+]) {
+  const response = await call("/api/health", {}, undefined, origin);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), null);
+}
+
+const configuredOrigin = "https://console.neuroped.example";
+const configuredCors = await call(
+  "/api/health",
+  { CORS_ORIGINS: configuredOrigin, ENVIRONMENT: "production" },
+  undefined,
+  configuredOrigin,
+);
+assert.equal(configuredCors.headers.get("Access-Control-Allow-Origin"), configuredOrigin);
+
+const productionWildcard = await call(
+  "/api/health",
+  { CORS_ORIGINS: "*" },
+  undefined,
+  "https://evil.example",
+);
+assert.equal(
+  productionWildcard.headers.get("Access-Control-Allow-Origin"),
+  null,
+  "CORS wildcard nunca abre a API",
+);
+
+const preflight = await onRequest({
+  request: new Request("https://neuroped.test/api/auth/login", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://neuroped.vercel.app",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "Content-Type, Authorization",
+    },
+  }),
+  env: {},
+  next,
+  data: {},
+} as never);
+assert.equal(preflight.status, 204);
+assert.equal(
+  preflight.headers.get("Access-Control-Allow-Origin"),
+  "https://neuroped.vercel.app",
+);
+assert.match(preflight.headers.get("Access-Control-Allow-Headers") ?? "", /Authorization/);
+
 const refreshToken = await signJwt(
   { sub: "user-1", email: "medico@example.com", name: "Médico", role: "professional", type: "refresh", sid: "session-1", jti: "refresh-1" },
   secret,
