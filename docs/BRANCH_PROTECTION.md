@@ -13,16 +13,27 @@ npm run verify
 
 Que encadeia, falhando no primeiro erro:
 
-| Etapa | Comando | O que garante |
-| --- | --- | --- |
-| 1. Tipos | `tsc --noEmit` | **0 erros** TypeScript (baseline `typescriptErrors: 0`) |
-| 2. Catálogo | `tsx scripts/guards/validate-catalog.mjs` | sem id duplicado, sem faixa etária invertida, campos obrigatórios presentes; regenera `docs/PROVENIENCIA_CLINICA.md` |
-| 3. Clínico | `tsx tests/clinical/test-clinical.mjs` | ≥ 150 casos clínicos do motor de filtro (hoje **347**) sem NaN/undefined, com monotonicidade de scoreFit e não-vazamento de diários |
-| 4. Baseline | `tsx scripts/guards/check-baseline.mjs` | o catálogo não encolhe (instrumentos e proveniência declarada não regridem) |
+| Etapa                 | Comando                                             | O que garante                                                                                                                                           |
+| --------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Segurança clínica  | `npm run validate:safety`                           | nenhuma escala nova ou alterada muda silenciosamente os bloqueios de suicídio, psicose, verbalidade ou alfabetização                                    |
+| 2. Catraca de release | `npm run verify:release`                            | lint, tipos, auditoria de dependências, contratos, segurança/LGPD, catálogo, filtros, pódio ≤100, identidade, acessibilidade, design e build do cliente |
+| 3. Build completo     | `npm run build`                                     | cliente e servidor compilam no ambiente de CI                                                                                                           |
+| 4. Carga inicial      | `npm run test:bundle-audit && npm run audit:bundle` | o JavaScript inicial respeita o teto versionado e não antecipa chunks proibidos                                                                         |
 
-O workflow correspondente é [`.github/workflows/test.yml`](../.github/workflows/test.yml),
-disparado em `pull_request` e em `push` para `main`, **sem `continue-on-error`**
-(gate duro).
+O workflow automático correspondente é
+[`.github/workflows/verify.yml`](../.github/workflows/verify.yml), disparado em
+`pull_request` e em `push` para `main`, sem `continue-on-error` (gate duro). O
+workflow [`.github/workflows/test.yml`](../.github/workflows/test.yml) é legado e
+somente manual; ele não deve ser usado como status obrigatório da branch.
+
+No GitHub Actions, o check real é o job:
+
+```
+TypeScript, catalog, access, identity, assets, clinical tests and build
+```
+
+Na interface de regras de branch ele pode aparecer qualificado como
+`Verify NeuroPed / TypeScript, catalog, access, identity, assets, clinical tests and build`.
 
 ## Baseline
 
@@ -33,11 +44,17 @@ Os números de referência ficam em
 {
   "typescriptErrors": 0,
   "clinicalCasesMin": 150,
-  "catalogInstruments": 565,
-  "catalogWithFonte": 98,
+  "catalogRunnableInstruments": 203,
+  "catalogRunnableReviewedWithFonte": 165,
+  "catalogDocumentedInstruments": 701,
+  "catalogDocumentedWithFonte": 546,
   "lighthousePerformance": null,
   "lighthouseAccessibility": null,
-  "axeSeriousCriticalViolations": null
+  "axeSeriousCriticalViolations": 0,
+  "bundleMaxGzipKb": 250,
+  "initialJsMaxGzipKb": 300,
+  "initialJsForbiddenChunks": ["scaleFilter"],
+  "designRawValues": 387,
 }
 ```
 
@@ -48,13 +65,10 @@ Os números de referência ficam em
 
 ### Lighthouse e axe (pendente de automação)
 
-`lighthousePerformance`, `lighthouseAccessibility` e
-`axeSeriousCriticalViolations` estão como `null` porque ainda **não há browser
-headless no CI**. São medidos manualmente (Chrome DevTools › Lighthouse e a
-extensão axe DevTools) nas telas-chave: Home, Filtro, M-CHAT, CAA, Prontuário.
-Quando forem automatizados (ex.: `@lhci/cli` + `axe-playwright`, já que
-`playwright` está instalado), basta preencher estes campos e estender
-`check-baseline.mjs` para compará-los.
+`lighthousePerformance` e `lighthouseAccessibility` continuam como `null`
+porque ainda não há browser headless no CI. A catraca de acessibilidade mantém
+`axeSeriousCriticalViolations: 0`; sem browser, ela usa o fallback estático
+determinístico documentado em `scripts/audit-a11y.mjs`.
 
 ## Configurar a proteção da branch `main` (GitHub)
 
@@ -66,7 +80,8 @@ Em **Settings › Branches › Branch protection rules › Add rule**, para `mai
 2. ✅ **Require status checks to pass before merging**
    - ✅ Require branches to be up to date before merging
    - Status checks obrigatórios:
-     - `tsc + catálogo + testes clínicos + baseline` (job do `test.yml`)
+     - `TypeScript, catalog, access, identity, assets, clinical tests and build`
+       (job `verify` do workflow `Verify NeuroPed`)
 3. ✅ **Require conversation resolution before merging**
 4. ✅ **Do not allow bypassing the above settings** (aplica inclusive a admins)
 

@@ -105,7 +105,7 @@ jobs:
         run: npm ci
 
       - name: Hard Release Verification Suite
-        run: npm run verify:release
+        run: npm run verify
         continue-on-error: false
 
   # Block merge if critical jobs failed

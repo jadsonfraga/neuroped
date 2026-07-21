@@ -63,7 +63,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Run hard release verification gate
-        run: npm run verify:release
+        run: npm run verify
 
       - name: Create deploy sentinel
         run: |
