@@ -35,6 +35,7 @@ export default function CarsPage() {
     restored: draftRestored,
     clearDraft,
   } = useSecureTypedScaleDraft<Record<number, number>>({
+    // Mantido para preservar rascunhos já salvos na versão anterior.
     draftId: "dedicated:cars-2",
     schemaVersion: 1,
     createEmpty: () => ({}),
@@ -96,7 +97,9 @@ export default function CarsPage() {
             <ClipboardCheck className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Respostas registradas — CARS-2</h1>
+            <h1 className="text-lg font-bold">
+              Respostas registradas — CARS (15 domínios)
+            </h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
@@ -134,13 +137,13 @@ export default function CarsPage() {
         </Card>
 
         <ClinicalReport
-          scaleName="CARS-2"
-          scaleFullName="Childhood Autism Rating Scale, Second Edition"
+          scaleName="CARS — registro clínico"
+          scaleFullName="Registro descritivo dos 15 domínios da Childhood Autism Rating Scale"
           items={reportItems}
           patientAge="≥ 2 anos"
         />
         <SaveToPatient
-          scaleName="CARS-2"
+          scaleName="CARS — registro clínico"
           responses={reportItems}
           patientAge="≥ 2 anos"
         />
@@ -166,9 +169,9 @@ export default function CarsPage() {
           <ClipboardCheck className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">CARS-2</h1>
+          <h1 className="text-lg font-bold">CARS — registro clínico</h1>
           <p className="text-xs text-muted-foreground">
-            Childhood Autism Rating Scale, Second Edition — a partir de 2 anos
+            Registro descritivo de 15 domínios — não equivale à aplicação oficial CARS-2
           </p>
         </div>
       </div>
@@ -194,12 +197,14 @@ export default function CarsPage() {
       {/* Instruction */}
       <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40 p-4">
         <p className="text-xs text-violet-800 dark:text-violet-300 leading-relaxed">
-          <strong>Instruções:</strong> Para cada categoria, selecione a opção
-          que melhor descreve o comportamento da criança entre as quatro opções
-          apresentadas.
+          <strong>Instruções:</strong> Registro clínico interno. Para cada
+          categoria, selecione a opção que melhor descreve o comportamento da
+          criança entre as quatro opções apresentadas.
           <span className="mt-2 block">
             O registro final apresenta cada categoria e a descrição selecionada
-            por extenso, sem soma, ponto de corte, classificação ou interpretação.
+            por extenso, sem soma, ponto de corte, classificação ou
+            interpretação. A CARS2-ST, CARS2-HF e CARS2-QPC oficiais estão
+            catalogadas separadamente e exigem material licenciado.
           </span>
         </p>
       </div>

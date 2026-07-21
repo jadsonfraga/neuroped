@@ -1,4 +1,5 @@
 import type { ScaleEntry } from "@/data/scaleFilter";
+import { applyUploadedInstrumentOverridesForApp } from "@/data/uploadedInstrumentFilterBridge";
 
 /**
  * Itens aplicaveis que existem como paginas/ferramentas do app, mas nao estavam
@@ -266,7 +267,8 @@ export const FILTER_EXCLUDED_IDS: ReadonlySet<string> = new Set([
 ]);
 
 export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
-  return uniqueById([...primary, ...supplementalFilterableInstruments]).filter(
-    (scale) => !FILTER_EXCLUDED_IDS.has(scale.id),
-  );
+  return uniqueById([
+    ...primary.map(applyUploadedInstrumentOverridesForApp),
+    ...supplementalFilterableInstruments,
+  ]).filter((scale) => !FILTER_EXCLUDED_IDS.has(scale.id));
 }

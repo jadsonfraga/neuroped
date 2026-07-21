@@ -34,11 +34,12 @@ import { Input } from "@/components/ui/input";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
-import { allScales, faixasEtarias, queixas, QUEIXA_COOCORRENCIA, type ScaleEntry } from "@/data/scaleFilter";
+import { allScales, scales, faixasEtarias, queixas, QUEIXA_COOCORRENCIA, type ScaleEntry } from "@/data/scaleFilter";
 import { interactiveScaleItems } from "@/data/interactiveScaleItems";
 import { interactiveScales } from "@/data/interactiveScales";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
+import { buildUploadedReferenceCatalogForApp } from "@/data/uploadedInstrumentFilterBridge";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterRecommendationsOPB";
 import { getClinicalTiers } from "@/data/clinicalRanking";
@@ -68,6 +69,7 @@ const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/mai
 // EUSM-10 agora vive no catálogo canônico (filterableCatalog, id "eusm10") — sem
 // duplicata. CORE_FILTERABLE_CATALOG já o inclui.
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
+const REFERENCE_ONLY_CATALOG = buildUploadedReferenceCatalogForApp(scales);
 
 // Conjunto canônico de ids que abrem como ficha técnica via catch-all
 // (/generic-scale/:id renderiza qualquer escala de allScales — página real).
@@ -845,7 +847,12 @@ export default function FiltroPage() {
   // fichas/referências que possuem rota real, sempre rotuladas como não
   // preenchíveis; itens sem destino continuam excluídos.
   const catalog = useMemo(() => {
-    const routed = unique([...CORE_FILTERABLE_CATALOG, ...dedupedWorld]).filter(opensInApp);
+    const references = availabilityMode === "all" ? REFERENCE_ONLY_CATALOG : [];
+    const routed = unique([
+      ...CORE_FILTERABLE_CATALOG,
+      ...dedupedWorld,
+      ...references,
+    ]).filter(opensInApp);
     return availabilityMode === "all" ? routed : routed.filter(isFullApp);
   }, [dedupedWorld, availabilityMode]);
 
