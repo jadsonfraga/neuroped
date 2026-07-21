@@ -255,6 +255,61 @@ jobs:
           [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth plenamente configurados"; exit 1; }
           echo "✅ HEALTH OK — D1 e autenticação nominal configurados."
 
+      - name: Validar CORS restrito dos mirrors oficiais
+        run: |
+          set -euo pipefail
+          BASE=https://neuroped.pages.dev
+          for origin in \
+            https://neuroped.vercel.app \
+            https://superneuroped.vercel.app; do
+            headers=$(mktemp)
+            curl -fsS -D "$headers" -o /tmp/cors-health.json \
+              -H "Origin: $origin" "$BASE/api/health?cors=${GITHUB_RUN_ID}"
+            allowed_origin=$(tr -d '\r' < "$headers" | awk -F': ' \
+              'tolower($1) == "access-control-allow-origin" { print $2 }' | tail -1)
+            [ "$allowed_origin" = "$origin" ] || {
+              echo "::error::Origin oficial sem CORS exato: $origin"
+              exit 1
+            }
+            jq -e '.database == "ok" and .authentication.configured == true' \
+              /tmp/cors-health.json >/dev/null
+
+            preflight_headers=$(mktemp)
+            code=$(curl -sS -o /dev/null -D "$preflight_headers" -w "%{http_code}" \
+              -X OPTIONS "$BASE/api/auth/login" \
+              -H "Origin: $origin" \
+              -H "Access-Control-Request-Method: POST" \
+              -H "Access-Control-Request-Headers: Content-Type, Authorization")
+            [ "$code" = "204" ] || {
+              echo "::error::Preflight de $origin retornou HTTP $code"
+              exit 1
+            }
+            preflight_origin=$(tr -d '\r' < "$preflight_headers" | awk -F': ' \
+              'tolower($1) == "access-control-allow-origin" { print $2 }' | tail -1)
+            [ "$preflight_origin" = "$origin" ] || {
+              echo "::error::Preflight sem CORS exato: $origin"
+              exit 1
+            }
+            grep -Eqi '^access-control-allow-headers:.*Authorization' "$preflight_headers" || {
+              echo "::error::Preflight sem Authorization para $origin"
+              exit 1
+            }
+            echo "CORS oficial OK: $origin"
+          done
+
+          for denied_origin in \
+            https://neuroped.vercel.app.evil.example \
+            https://jadsonfraga.github.io; do
+            denied_headers=$(mktemp)
+            curl -fsS -D "$denied_headers" -o /dev/null \
+              -H "Origin: $denied_origin" "$BASE/api/health"
+            if grep -qi '^access-control-allow-origin:' "$denied_headers"; then
+              echo "::error::Origin não autorizada recebeu CORS: $denied_origin"
+              exit 1
+            fi
+          done
+          echo "✅ CORS exato dos mirrors comprovado; lookalike rejeitado."
+
       - name: Verificar login (auth e2e)
         env:
           ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
