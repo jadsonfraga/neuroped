@@ -3,7 +3,7 @@
  * Aplicado automaticamente pelo Cloudflare Pages a todas as rotas filhas.
  *
  * Responsabilidades:
- *  - CORS configurado (origin allowlist via env CORS_ORIGINS)
+ *  - CORS fail-closed para os aliases públicos oficiais
  *  - Rate limiting básico por IP (via KV ou memória temporária)
  *  - Headers de segurança (X-Content-Type-Options, X-Frame-Options, etc.)
  *  - Validação de Content-Type em POSTs
@@ -13,7 +13,6 @@
 interface Env {
   DB?: D1Database;
   RATE_LIMIT_KV?: KVNamespace;
-  CORS_ORIGINS?: string;         // Comma-separated allowed origins
   ENVIRONMENT?: string;
   DEMO_API_WRITES_ENABLED?: string;
   NEUROPED_JWT_SECRET?: string;
@@ -45,36 +44,18 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
 };
 
-const OFFICIAL_CROSS_ORIGINS = [
+const OFFICIAL_CROSS_ORIGINS: ReadonlySet<string> = new Set([
   "https://neuroped.vercel.app",
   "https://superneuroped.vercel.app",
-] as const;
-
-const FORBIDDEN_CROSS_ORIGINS = new Set([
-  "https://jadsonfraga.github.io",
-]);
-
-function getAllowedOrigins(env: Env): string[] {
-  const raw = env.CORS_ORIGINS ?? "";
-  const configured = raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter((origin) =>
-      Boolean(origin) &&
-      origin !== "*" &&
-      !FORBIDDEN_CROSS_ORIGINS.has(origin)
-    );
-  return [...new Set([...OFFICIAL_CROSS_ORIGINS, ...configured])];
-}
+] as const);
 
 function getCorsHeaders(
   origin: string | null,
   requestOrigin: string,
-  allowedOrigins: string[],
 ): Record<string, string> {
   const allowed =
     origin === requestOrigin ||
-    (origin && allowedOrigins.includes(origin));
+    Boolean(origin && OFFICIAL_CROSS_ORIGINS.has(origin));
 
   if (!allowed || !origin) return {};
 
@@ -228,8 +209,7 @@ function checkRateLimit(key: string): { allowed: boolean; remaining: number; res
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const origin = request.headers.get("Origin");
-  const allowedOrigins = getAllowedOrigins(env);
-  const corsHeaders = getCorsHeaders(origin, new URL(request.url).origin, allowedOrigins);
+  const corsHeaders = getCorsHeaders(origin, new URL(request.url).origin);
 
   // Preflight CORS
   if (request.method === "OPTIONS") {

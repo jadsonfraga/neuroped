@@ -4,7 +4,7 @@
 
 > Aplicativo clinico de neuropediatria com backend real, autenticacao, criptografia AES-GCM, conformidade LGPD substantiva e route guards. Construido para uso profissional do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756).
 
-> ⚠️ **Uso clínico restrito.** Este sistema processa dados de saúde de crianças. Operar em conformidade com LGPD e normas do CFM. URL de produção: https://jadsonfraga.github.io/neuroped/
+> ⚠️ **Uso clínico restrito.** Este sistema processa dados de saúde de crianças. Operar em conformidade com LGPD e normas do CFM. URL canônica de produção: https://neuroped.pages.dev
 
 ## Visao geral
 

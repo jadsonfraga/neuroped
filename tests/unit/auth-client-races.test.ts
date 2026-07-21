@@ -112,12 +112,49 @@ assert.match(vercelWorkflow, /api\/auth\/login/);
 assert.match(vercelWorkflow, /api\/auth\/me/);
 assert.match(vercelWorkflow, /api\/auth\/logout/);
 assert.doesNotMatch(vercelWorkflow, /secrets\.VITE_PIN_HASH|env add VITE_PIN_HASH/);
+
+const vercelJobStart = vercelWorkflow.indexOf("  deploy-vercel:");
+const vercelStepsStart = vercelWorkflow.indexOf("    steps:", vercelJobStart);
+const vercelDeployStart = vercelWorkflow.indexOf(
+  "      - name: Deploy and verify both Vercel projects",
+  vercelStepsStart,
+);
+const vercelAuthStart = vercelWorkflow.indexOf(
+  "      - name: Validate remote authentication from stable Vercel origins",
+  vercelDeployStart,
+);
+const vercelStatusStart = vercelWorkflow.indexOf(
+  "      - name: Publish consolidated Vercel production status",
+  vercelAuthStart,
+);
+for (const marker of [
+  vercelJobStart,
+  vercelStepsStart,
+  vercelDeployStart,
+  vercelAuthStart,
+  vercelStatusStart,
+]) {
+  assert.notEqual(marker, -1, "workflow Vercel deve preservar os steps de segurança");
+}
+const vercelJobHeader = vercelWorkflow.slice(vercelJobStart, vercelStepsStart);
+const vercelDeployStep = vercelWorkflow.slice(vercelDeployStart, vercelAuthStart);
+const vercelAuthStep = vercelWorkflow.slice(vercelAuthStart, vercelStatusStart);
+assert.doesNotMatch(vercelJobHeader, /secrets\./, "secrets não podem ter escopo de job");
+assert.match(vercelDeployStep, /secrets\.VERCEL_TOKEN/);
+assert.doesNotMatch(vercelDeployStep, /ADMIN_MAIL|ADMIN_PW|NEUROPED_E2E_/);
+assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_EMAIL/);
+assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_PASSWORD/);
+assert.doesNotMatch(vercelAuthStep, /VERCEL_TOKEN|VERCEL_ORG_ID/);
+assert.match(vercelAuthStep, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
 assert.match(cloudflareWorkflow, /VITE_AUTH_MODE:\s*remote/);
 assert.doesNotMatch(
   cloudflareWorkflow,
   /VITE_AUTH_MODE:\s*local|secrets\.VITE_PIN_HASH/,
   "Cloudflare full-stack jamais compila em modo local nem recebe o verificador",
 );
+assert.match(cloudflareWorkflow, /secrets\.NEUROPED_E2E_EMAIL \|\| secrets\.ADMIN_EMAIL/);
+assert.match(cloudflareWorkflow, /secrets\.NEUROPED_E2E_PASSWORD \|\| secrets\.ADMIN_INITIAL_PASSWORD/);
+assert.match(cloudflareWorkflow, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();

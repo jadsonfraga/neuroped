@@ -13,6 +13,7 @@ for (const host of [
   "evil-neuroped.vercel.app",
   "neuroped-git-main-jadsonfragas-projects.vercel.app",
   "superneuroped-git-main-jadsonfragas-projects.vercel.app",
+  "e30b5544.neuroped.pages.dev",
   "neuroped.vercel.app.example.com",
   "neuroped-attacker.example.com",
   "jadsonfraga.github.io",

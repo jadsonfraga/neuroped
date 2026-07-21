@@ -19,11 +19,6 @@ const DEFAULT_ALLOWED_HOSTS: string[] = [
   "superneuroped.vercel.app",
 ];
 
-/** Sufixos de domínio permitidos (previews oficiais das plataformas). */
-const DEFAULT_ALLOWED_SUFFIXES: string[] = [
-  ".neuroped.pages.dev", // previews de branch do Cloudflare Pages
-];
-
 /** Hosts de desenvolvimento local — sempre liberados. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", ""]);
 
@@ -46,8 +41,8 @@ function fromEnv(): string[] {
  * - hostname vazio (SSR/testes) → true (não bloqueia ambientes sem window).
  * - localhost e afins → true (desenvolvimento).
  * - domínios do env VITE_ALLOWED_HOSTS → true (override configurável).
- * Previews Vercel e GitHub Pages permanecem bloqueados: somente aliases com
- * origem exclusiva recebem autenticação remota e dados clínicos.
+ * Previews de plataforma e GitHub Pages permanecem bloqueados: somente hosts
+ * estáveis com origem exclusiva recebem autenticação remota e dados clínicos.
  */
 export function isAuthorizedHost(hostname: string | undefined | null): boolean {
   const host = (hostname ?? "").trim().toLowerCase();
@@ -58,10 +53,6 @@ export function isAuthorizedHost(hostname: string | undefined | null): boolean {
 
   const exact = new Set([...DEFAULT_ALLOWED_HOSTS, ...envHosts]);
   if (exact.has(host)) return true;
-
-  for (const suffix of DEFAULT_ALLOWED_SUFFIXES) {
-    if (host.endsWith(suffix)) return true;
-  }
 
   return false;
 }

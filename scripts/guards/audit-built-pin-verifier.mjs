@@ -2,7 +2,10 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(process.cwd(), "dist/public");
-const verifier = /pbkdf2\$[1-9][0-9]{5,}\$[0-9a-f]{16,128}\$[0-9a-f]{64}/i;
+const verifierPatterns = [
+  /pbkdf2\$[1-9][0-9]{5,}\$[0-9a-f]{16,128}\$[0-9a-f]{64}/i,
+  /["'`][0-9a-f]{64}["'`]/i,
+];
 
 function walk(directory, files = []) {
   for (const entry of readdirSync(directory)) {
@@ -15,10 +18,11 @@ function walk(directory, files = []) {
 
 for (const path of walk(root)) {
   const content = readFileSync(path);
-  if (verifier.test(content.toString("latin1"))) {
-    console.error(`ERRO: verificador PBKDF2 embutido no build: ${path}`);
+  const text = content.toString("latin1");
+  if (verifierPatterns.some((pattern) => pattern.test(text))) {
+    console.error(`ERRO: verificador de PIN embutido no build: ${path}`);
     process.exit(1);
   }
 }
 
-console.log("Build aprovado: nenhum verificador PBKDF2 foi incorporado.");
+console.log("Build aprovado: nenhum verificador de PIN foi incorporado.");

@@ -115,7 +115,11 @@ const configuredCors = await call(
   undefined,
   configuredOrigin,
 );
-assert.equal(configuredCors.headers.get("Access-Control-Allow-Origin"), configuredOrigin);
+assert.equal(
+  configuredCors.headers.get("Access-Control-Allow-Origin"),
+  null,
+  "configuração externa não amplia a allowlist compilada",
+);
 
 const productionWildcard = await call(
   "/api/health",

@@ -24,8 +24,8 @@ jamais recebe o bundle clínico.
 - Builds públicos usam `VITE_AUTH_MODE=remote` e API fixa no Cloudflare.
 - Os aliases Vercel são autorizados por comparação CORS exata; wildcard,
   previews, esquema HTTP, portas alternativas e hosts parecidos são negados.
-- Nenhum verificador PBKDF2 pode aparecer no artefato final. A catraca
-  `audit:built-pin` falha a release se encontrar um.
+- Nenhum verificador de PIN (PBKDF2 ou SHA-256 legado) pode aparecer no
+  artefato final. A catraca `audit:built-pin` falha a release se encontrar um.
 - Rotas clínicas continuam protegidas no backend por autenticação, papel e
   ownership. Uma trava de interface nunca substitui autorização do servidor.
 - O modo de PIN permanece apenas para instalação local/offline explicitamente
@@ -39,4 +39,4 @@ jamais recebe o bundle clínico.
 4. login inválido rejeitado e login nominal aceito;
 5. `/api/auth/me` autenticado;
 6. logout com revogação comprovada;
-7. ausência de verificador PBKDF2 no bundle.
+7. ausência de qualquer verificador de PIN no bundle.

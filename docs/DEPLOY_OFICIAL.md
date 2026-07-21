@@ -10,7 +10,14 @@ clínicos trafegam somente pela API oficial autenticada. O GitHub Pages da conta
 
 O backend canônico de produção é Cloudflare Pages Functions (`functions/api`) com D1. Ele exige autenticação nominal, sessões refresh revogáveis, autorização por proprietário e auditoria. O provisionamento oficial aplica `db/schema.d1.sql` e todas as migrações em `db/migrations/`.
 
-Secrets mínimos de produção: `NEUROPED_JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_NAME` e `ADMIN_INITIAL_PASSWORD` apenas no primeiro provisionamento. Remova a senha inicial após criar/trocar a conta administrativa.
+Secrets de bootstrap: `NEUROPED_JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_NAME` e
+`ADMIN_INITIAL_PASSWORD`. O par administrativo nunca é sobrescrito quando a
+conta já possui senha. Para a jornada sentinela de cada deploy, prefira uma
+conta técnica ativa e sem dados clínicos, configurada em
+`NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD`; enquanto ela não existir, o
+workflow usa o par administrativo como compatibilidade. Depois de validar a
+conta sentinela, remova `ADMIN_INITIAL_PASSWORD` do GitHub e do Cloudflare — o
+deploy deixa de depender dele quando os dois secrets E2E estiverem presentes.
 
 ## Express local
 

@@ -27,15 +27,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+          ADMIN_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL || secrets.ADMIN_EMAIL }}
+          ADMIN_PW: ${{ secrets.NEUROPED_E2E_PASSWORD || secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           missing=()
           [ -n "$VERCEL_TOKEN" ] || missing+=("VERCEL_TOKEN")
           [ -n "$VERCEL_ORG_ID" ] || missing+=("VERCEL_ORG_ID")
-          [ -n "$ADMIN_MAIL" ] || missing+=("ADMIN_EMAIL")
-          [ -n "$ADMIN_PW" ] || missing+=("ADMIN_INITIAL_PASSWORD")
+          [ -n "$ADMIN_MAIL" ] || missing+=("NEUROPED_E2E_EMAIL/ADMIN_EMAIL")
+          [ -n "$ADMIN_PW" ] || missing+=("NEUROPED_E2E_PASSWORD/ADMIN_INITIAL_PASSWORD")
+          unset VERCEL_TOKEN VERCEL_ORG_ID ADMIN_MAIL ADMIN_PW
 
           target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -64,11 +65,6 @@ jobs:
     needs: preflight
     if: needs.preflight.outputs.ready == 'true'
     runs-on: ubuntu-latest
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
-      ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -129,13 +125,13 @@ jobs:
 
       - name: Deploy and verify both Vercel projects
         id: vercel-deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         run: |
           set -euo pipefail
-
-          header_value() {
-            tr -d '\r' < "$1" | awk -F': ' -v target="$2" \
-              'tolower($1) == tolower(target) { print $2 }' | tail -1
-          }
+          token="$VERCEL_TOKEN"
+          unset VERCEL_TOKEN
 
           projects=(
             "neuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
@@ -148,7 +144,7 @@ jobs:
             echo "Configurando e publicando projeto: $name"
 
             rm -rf .vercel
-            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            vercel pull --yes --environment=production --token="$token"
 
             # Sobrescreve toda variável VITE_* relevante para que configurações
             # antigas do projeto nunca mudem autenticação, zona ou allowlist.
@@ -157,10 +153,10 @@ jobs:
             VITE_PIN_HASH= \
             VITE_ZONE=full \
             VITE_ALLOWED_HOSTS= \
-              vercel build --prod --token="$VERCEL_TOKEN"
+              vercel build --prod --token="$token"
             npm run audit:built-pin
 
-            url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+            url=$(vercel deploy --prebuilt --prod --token="$token")
             echo "$name deployment: $url"
 
             check_sentinel() {
@@ -209,7 +205,27 @@ jobs:
               exit 1
             }
 
-            api_base="https://neuroped.pages.dev"
+          done
+
+      - name: Validate remote authentication from stable Vercel origins
+        env:
+          ADMIN_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL || secrets.ADMIN_EMAIL }}
+          ADMIN_PW: ${{ secrets.NEUROPED_E2E_PASSWORD || secrets.ADMIN_INITIAL_PASSWORD }}
+        run: |
+          set -euo pipefail
+          api_base="https://neuroped.pages.dev"
+          admin_mail="$ADMIN_MAIL"
+          admin_pw="$ADMIN_PW"
+          unset ADMIN_MAIL ADMIN_PW
+
+          header_value() {
+            tr -d '\r' < "$1" | awk -F': ' -v target="$2" \
+              'tolower($1) == tolower(target) { print $2 }' | tail -1
+          }
+
+          for production_url in \
+            https://neuroped.vercel.app \
+            https://superneuroped.vercel.app; do
             preflight_headers=$(mktemp)
             preflight_code=$(curl -sS -o /dev/null -D "$preflight_headers" \
               -w "%{http_code}" -X OPTIONS "$api_base/api/auth/login" \
@@ -234,7 +250,7 @@ jobs:
               exit 1
             }
 
-            wrong_payload=$(jq -nc --arg email "$ADMIN_MAIL" \
+            wrong_payload=$(jq -nc --arg email "ci-negative-${GITHUB_RUN_ID}@invalid.example" \
               --arg password "senha_errada___" '{email:$email,password:$password}')
             wrong_headers=$(mktemp)
             wrong_code=$(curl -sS -o /dev/null -D "$wrong_headers" -w "%{http_code}" \
@@ -251,7 +267,7 @@ jobs:
               exit 1
             }
 
-            login_payload=$(jq -nc --arg email "$ADMIN_MAIL" --arg password "$ADMIN_PW" \
+            login_payload=$(jq -nc --arg email "$admin_mail" --arg password "$admin_pw" \
               '{email:$email,password:$password}')
             login_headers=$(mktemp)
             login_body=$(mktemp)
