@@ -169,9 +169,11 @@ jobs:
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
 
+          # Os rótulos são os aliases públicos esperados. Os nomes internos dos
+          # projetos Vercel são históricos e não coincidem com esses aliases.
           projects=(
-            "neuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
-            "superneuroped:prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC"
+            "superneuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
+            "neuroped:prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC"
           )
 
           for entry in "${projects[@]}"; do
@@ -189,6 +191,8 @@ jobs:
             VITE_PIN_HASH= \
             VITE_ZONE=full \
             VITE_ALLOWED_HOSTS= \
+            VERCEL_GIT_COMMIT_SHA="$GITHUB_SHA" \
+            VERCEL_GIT_COMMIT_REF="$GITHUB_REF_NAME" \
               vercel build --prod --token="$token"
             npm run audit:built-pin
 
@@ -200,34 +204,29 @@ jobs:
                 const fs = require("node:fs");
                 const check = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
                 const full = process.env.GITHUB_SHA;
-                if (check.commit !== full && check.commit !== full.slice(0, 12)) {
-                  console.error(`Sentinela divergente: ${check.commit ?? "ausente"}`);
+                const validCommit = check.commit === full || check.commit === full.slice(0, 12);
+                const validArtifact =
+                  check.app === "NeuroPed" &&
+                  check.provider === "vercel" &&
+                  check.status === "deployed";
+                if (!validCommit || !validArtifact) {
+                  console.error(
+                    `Sentinela Vercel inválida: provider=${check.provider ?? "ausente"}, ` +
+                    `status=${check.status ?? "ausente"}, commit=${check.commit ?? "ausente"}`,
+                  );
                   process.exit(1);
                 }
               ' "$1"
             }
 
-            ok=0
-            for i in $(seq 1 12); do
-              if curl -fsSL "$url/deploy-check.json?try=$i" \
-                   -o "/tmp/vercel-${name}-deploy-check.json" \
-                && check_sentinel "/tmp/vercel-${name}-deploy-check.json"; then
-                ok=1
-                break
-              fi
-              sleep 10
-            done
-            cat "/tmp/vercel-${name}-deploy-check.json" 2>/dev/null || true
-            [ "$ok" -eq 1 ] || {
-              echo "::error::$name não publicou o commit ${GITHUB_SHA}."
-              exit 1
-            }
-
-            # Confirma também o alias estável que os usuários acessam em produção.
+            # A URL imutável pode estar protegida pelo Vercel Authentication e
+            # responder com a tela de SSO mesmo após um deploy válido. O gate
+            # observável é o alias público efetivamente acessado pelos usuários.
             production_url="https://${name}.vercel.app"
             alias_ok=0
             for i in $(seq 1 18); do
-              if curl -fsSL "$production_url/deploy-check.json?try=$i" \
+              if curl -fsS --proto '=https' --max-time 20 \
+                   "$production_url/deploy-check.json?try=$i" \
                    -o "/tmp/vercel-${name}-production-check.json" \
                 && check_sentinel "/tmp/vercel-${name}-production-check.json"; then
                 alias_ok=1
