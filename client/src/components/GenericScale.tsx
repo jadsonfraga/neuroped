@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -114,19 +114,11 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     restored: draftRestored,
     status: draftStatus,
     clearDraft,
-    clearPersistedDraft,
   } = useSecureScaleDraft({
     draftId: `generic:${config.scaleId ?? draftSlug}`,
     validOptions: validDraftOptions,
     legacyKey: legacyDraftKey,
   });
-
-  // Ao concluir a escala, apaga o rascunho ARMAZENADO (o resultado em tela é
-  // preservado): evita restaurar as respostas de um paciente ao reabrir a mesma
-  // escala para o próximo. Uma nova edição re-arma a persistência.
-  useEffect(() => {
-    if (showResult) void clearPersistedDraft();
-  }, [showResult, clearPersistedDraft]);
   const total = allItems.length;
   const answered = Object.keys(answers).length;
   const progress = total > 0 ? (answered / total) * 100 : 0;

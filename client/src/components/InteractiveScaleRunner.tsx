@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardCheck,
@@ -46,17 +46,10 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
     restored: draftRestored,
     status: draftStatus,
     clearDraft,
-    clearPersistedDraft,
   } = useSecureScaleDraft({
     draftId: `interactive:${def.id}`,
     validOptions: validDraftOptions,
   });
-
-  // Ao concluir, apaga o rascunho armazenado (mantém o resultado em tela) —
-  // impede vazar respostas entre pacientes ao reabrir a mesma escala.
-  useEffect(() => {
-    if (showResult) void clearPersistedDraft();
-  }, [showResult, clearPersistedDraft]);
 
   const total = def.items.length;
   const answered = Object.keys(answers).length;

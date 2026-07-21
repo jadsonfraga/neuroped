@@ -36,12 +36,7 @@ export function PageHero({
           {eyebrow && (
             <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">{eyebrow}</p>
           )}
-          <h1
-            className="text-[1.6rem] leading-tight tracking-tight text-foreground"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
-          >
-            {title}
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">{title}</h1>
           {subtitle && (
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
           )}
