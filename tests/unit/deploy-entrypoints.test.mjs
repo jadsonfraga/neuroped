@@ -174,6 +174,17 @@ assert.doesNotMatch(
   /branches feature criam preview environments/i,
 );
 
+const cloudflareWorkflow = read(".github/workflows/deploy-cloudflare.yml");
+assert.match(cloudflareWorkflow, /denied_ok=0/);
+assert.match(
+  cloudflareWorkflow,
+  /cors-denied=\$\{GITHUB_RUN_ID\}&origin=\$\{denied_index\}&try=\$\{attempt\}/,
+);
+assert.match(
+  cloudflareWorkflow,
+  /Negação CORS ainda propagando[^\n]+tentativa \$attempt\/12/,
+);
+
 for (const manifest of ["railway.json", "railway.toml", "nixpacks.toml"]) {
   assert.equal(
     existsSync(join(root, manifest)),
