@@ -1,0 +1,61 @@
+name: Aplicar instrumentos enviados
+
+on:
+  push:
+    branches:
+      - feat/escalas-upload-filtro-2026-07
+    paths:
+      - client/src/data/uploadedInstrumentCatalog.ts
+      - client/src/pages/instrumento-importado.tsx
+      - scripts/apply-uploaded-instrument-import.mjs
+      - tests/clinical/test-uploaded-instrument-catalog.mjs
+      - .github/workflows/apply-uploaded-instrument-import.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: uploaded-instrument-import-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  integrate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout da branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/escalas-upload-filtro-2026-07
+          fetch-depth: 0
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: Aplicar integração idempotente
+        run: node scripts/apply-uploaded-instrument-import.mjs
+
+      - name: Verificar TypeScript
+        run: npm run check
+
+      - name: Testar catálogo e filtros
+        run: node --import tsx tests/clinical/test-uploaded-instrument-catalog.mjs
+
+      - name: Commitar arquivos integrados
+        run: |
+          if git diff --quiet; then
+            echo "Integração já aplicada; nenhuma alteração pendente."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/App.tsx client/src/data/filterableCatalog.ts client/src/pages/cars.tsx
+          git commit -m "feat(escalas): integrar instrumentos enviados ao app e filtro"
+          git push origin HEAD:feat/escalas-upload-filtro-2026-07
