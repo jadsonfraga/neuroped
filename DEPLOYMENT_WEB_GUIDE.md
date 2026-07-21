@@ -22,9 +22,9 @@ NeuroPed.
 3. Faça merge somente com todos os gates verdes.
 4. Confirme os workflows de produção e as sentinelas públicas do mesmo commit.
 
-Não use `deploy-production.sh`, `vercel --prod`, `railway up` nem criação manual
-de projetos. O script legado permanece no repositório apenas como trava
-fail-closed e sempre termina com erro.
+Não use scripts legados, comandos manuais de provedor nem criação paralela de
+projetos. Os helpers antigos permanecem no repositório apenas como travas
+fail-closed e sempre terminam com erro.
 
 A configuração completa, os secrets necessários e os contratos de verificação
 estão em [`docs/DEPLOY_OFICIAL.md`](docs/DEPLOY_OFICIAL.md).

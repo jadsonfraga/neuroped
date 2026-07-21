@@ -1,3 +1,7 @@
+> **NEUROPED_HISTORICAL_DEPLOY_RECORD — NÃO EXECUTAR.**
+> Este plano foi superado pela topologia atual. Não execute os comandos abaixo;
+> use somente `docs/DEPLOY_OFICIAL.md`.
+
 # PLANO DE BACKEND GRATUITO — NeuroPed EDJ
 > Estratégia de deploy 100% gratuito com Cloudflare  
 > Atualizado: 2026-05-08
