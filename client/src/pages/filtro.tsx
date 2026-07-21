@@ -1,1693 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "wouter";
-import {
-  Activity,
-  ArrowRight,
-  Award,
-  Baby,
-  BookOpen,
-  Brain,
-  ClipboardCheck,
-  FileDown,
-  Filter,
-  GraduationCap,
-  HeartPulse,
-  Medal,
-  MessageCircle,
-  Moon,
-  Pill,
-  RotateCcw,
-  School,
-  Search,
-  ShieldAlert,
-  Star,
-  Table,
-  Users,
-  X,
-  type LucideIcon,
-} from "lucide-react";
-import { brandAssets } from "@/components/BrandAssets";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
-import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
-import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
-import { allScales, faixasEtarias, queixas, QUEIXA_COOCORRENCIA, type ScaleEntry } from "@/data/scaleFilter";
-import { interactiveScaleItems } from "@/data/interactiveScaleItems";
-import { interactiveScales } from "@/data/interactiveScales";
-import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
-import { mergeFilterableCatalog } from "@/data/filterableCatalog";
-import { noCostWorldScales } from "@/data/noCostWorldScales";
-import type { QueixaAgeRecommendations, RecommendationOPB } from "@/data/filterRecommendationsOPB";
-import { getClinicalTiers } from "@/data/clinicalRanking";
-import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
-import { opbParentCopy } from "@/data/opbParentCopy";
-import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
-import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
-import {
-  filterScalesWithClinicalRescue,
-  getBroadbandFallback,
-  generateContextualRecommendation,
-  getImplementationStatus,
-  SAFE_EMPTY_MESSAGE,
-  type FilterContext,
-  type RefinedScaleMatch,
-} from "@/data/advancedFilterLogic";
-import { haptic } from "@/lib/haptic";
-import { softHover, softTap, softTick } from "@/lib/softSounds";
-import { buildFilterCsv, buildFilterPdf, downloadBlob, type FilterExportRow, type FilterExportMeta } from "@/lib/filterExport";
-
-type Slot = "Ouro" | "Prata" | "Bronze" | "Teste Direto" | "QuestionÃ¡rio Escolar" | "SatisfaÃ§Ã£o MedicaÃ§Ã£o";
-type AvailabilityMode = "complete" | "all";
-type Tier = "ouro" | "prata" | "bronze";
-type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
-
-const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
-// EUSM-10 agora vive no catÃ¡logo canÃ´nico (filterableCatalog, id "eusm10") â€” sem
-// duplicata. CORE_FILTERABLE_CATALOG jÃ¡ o inclui.
-const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
-
-// Conjunto canÃ´nico de ids que abrem como ficha tÃ©cnica via catch-all
-// (/generic-scale/:id renderiza qualquer escala de allScales â€” pÃ¡gina real).
-const ALL_SCALE_IDS = new Set(allScales.map((s) => s.id));
-
-/**
- * Rota REAL para a qual uma escala abre (pÃ¡gina renderizada de verdade):
- *  1. appRoute dedicado (validado contra App.tsx pelo guard audit:data â€” ROUTE_404);
- *  2. ficha tÃ©cnica /generic-scale/:id quando o id existe em allScales (catch-all);
- *  3. catÃ¡logo mundial /escalas-neuropsiquiatria para escalas "world-*".
- * Retorna null quando a escala NÃƒO abre em lugar nenhum (deve sair do filtro).
- */
-function resolveAppRoute(scale: ScaleEntry): string | null {
-  if (scale.appRoute) return scale.appRoute;
-  if (ALL_SCALE_IDS.has(scale.id)) return `/generic-scale/${scale.id}`;
-  if (scale.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
-  return null;
-}
-
-// ids que renderizam APLICAÃ‡ÃƒO INTERATIVA real em /generic-scale/:id
-// (itens respondÃ­veis + cÃ¡lculo de escore) â€” ver generic-scale.tsx. Inclui os
-// dois acervos: itens (interactiveScaleItems) e runner (interactiveScales).
-const INTERACTIVE_SCALE_IDS = new Set([
-  ...Object.keys(interactiveScaleItems),
-  ...Object.keys(interactiveScales),
-]);
-
-// Rota dedicada = pÃ¡gina implementada de verdade (ex.: /mchat, /asq3), NÃƒO o
-// catch-all /generic-scale/:id (que pode ser sÃ³ ficha tÃ©cnica) nem o catÃ¡logo
-// mundial.
-function hasDedicatedRoute(scale: ScaleEntry): boolean {
-  const r = scale.appRoute;
-  return (
-    !!r &&
-    !r.startsWith("/generic-scale/") &&
-    r !== "/escalas-neuropsiquiatria" &&
-    r !== "/filtro"
-  );
-}
-
-// Abre uma FERRAMENTA USÃVEL (aplicaÃ§Ã£o real), nÃ£o apenas uma ficha tÃ©cnica.
-// Usado nos rÃ³tulos/CTA do pÃ³dio e como base do ranking clÃ­nico curado.
-function opensAsUsableTool(scale: ScaleEntry): boolean {
-  return hasDedicatedRoute(scale) || INTERACTIVE_SCALE_IDS.has(scale.id);
-}
-
-// SÃ³ permanecem no filtro escalas que ABREM uma pÃ¡gina prÃ³pria. Escala sem rota
-// real â€” ou cuja Ãºnica rota Ã© o catÃ¡logo mundial genÃ©rico
-// (/escalas-neuropsiquiatria), que NÃƒO abre a escala especÃ­fica â€” Ã© removida.
-function opensInApp(scale: ScaleEntry): boolean {
-  const route = resolveAppRoute(scale);
-  if (!route) return false;
-  if (route === "/escalas-neuropsiquiatria") return false;
-  return true;
-}
-
-// AplicaÃ§Ã£o COMPLETA e preenchÃ­vel dentro do app: deve ter itens/fluxo interno
-// respondÃ­vel e cÃ¡lculo/registro. Fichas tÃ©cnicas, catÃ¡logo mundial e escalas
-// externas/licenciadas nÃ£o entram no filtro principal.
-function isFullApp(scale: ScaleEntry): boolean {
-  // PsicoeducaÃ§Ã£o / portais informativos NÃƒO sÃ£o escalas preenchÃ­veis â€” abrem
-  // conteÃºdo de leitura, nÃ£o uma aplicaÃ§Ã£o com itens+escore. Fora do filtro.
-  if (scale.applicationMode === "psicoeducacao") return false;
-  return getImplementationStatus(scale) === "complete" && opensAsUsableTool(scale);
-}
-
-function unique(scales: ScaleEntry[]) {
-  const seen = new Set<string>();
-  return scales.filter((s) => seen.has(s.id) ? false : (seen.add(s.id), true));
-}
-
-function ageMonths(range: string) {
-  const m = range.replace(",", ".").match(/([0-9.]+)\s*[â€“-]\s*([0-9.]+)/);
-  return m ? { min: Math.round(Number(m[1]) * 12), max: Math.round(Number(m[2]) * 12) } : { min: 0, max: 216 };
-}
-
-
-function rowToScale(row: Row): ScaleEntry {
-  const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
-  const a = ageMonths(idade);
-  return {
-    id: `world-registry-${String(n).padStart(3, "0")}`,
-    name: sigla,
-    fullName: nome,
-    ageMin: a.min,
-    ageMax: a.max,
-    queixas: guessQueixas(categoria, `${sigla} ${nome}`),
-    respondente: guessRespondente(respondente),
-    prioridade: selo === "Bronze" ? "monitorizacao" : "triagem",
-    tempo: "3â€“10 min",
-    description: `Escala mundial sem custo. PolÃ­tica: ${politica}. Usar como triagem/monitoramento, nunca diagnÃ³stico isolado.`,
-    fonte: "CatÃ¡logo NeuroPed 100 escalas Â· verificar fonte oficial antes de embutir itens",
-    licencaUso: politica === "embed" ? "livre" : "restrita",
-  };
-}
-
-function matchAge(scale: ScaleEntry, selectedAge: string | null) {
-  const age = faixasEtarias.find((a) => a.id === selectedAge);
-  return !age || (scale.ageMax >= age.min && scale.ageMin <= age.max);
-}
-
-const SEARCH_SYNONYMS: Record<string, string[]> = {
-  atraso: ["desenvolvimento", "marcos", "bebe", "bebÃª", "lactente", "prematuro"],
-  tea: ["autismo", "autista", "espectro", "social", "mchat", "m-chat"],
-  tdah: ["adhd", "atencao", "atenÃ§Ã£o", "hiperatividade", "impulsividade", "desatencao", "desatenÃ§Ã£o"],
-  linguagem: ["fala", "comunicacao", "comunicaÃ§Ã£o", "fonologia", "vocabulario", "vocabulÃ¡rio"],
-  aprendizagem: ["escola", "escolar", "leitura", "escrita", "dislexia", "matematica", "matemÃ¡tica"],
-  ansiedade: ["medo", "panico", "pÃ¢nico", "fobia", "preocupacao", "preocupaÃ§Ã£o"],
-  depressao: ["humor", "tristeza", "depressivo"],
-  comportamento: ["conduta", "oposicao", "oposiÃ§Ã£o", "agressividade", "irritabilidade"],
-  sono: ["dormir", "insonia", "insÃ´nia", "ronco"],
-  epilepsia: ["crise", "convulsao", "convulsÃ£o"],
-  pc: ["paralisia", "cerebral", "espasticidade"],
-  motor: ["coordenacao", "coordenaÃ§Ã£o", "motricidade", "fino", "grossa"],
-  sensorial: ["sensorial", "integracao", "integraÃ§Ã£o", "hipersensibilidade"],
-  suicidio: ["suicidio", "suicÃ­dio", "autolesao", "autolesÃ£o", "risco"],
-  efeitos: ["medicacao", "medicaÃ§Ã£o", "remedio", "remÃ©dio", "efeito colateral", "adesao", "adesÃ£o"],
-};
-
-function expandSearchText(query: string): string {
-  const normalized = norm(query);
-  const extra: string[] = [];
-  for (const [queixa, words] of Object.entries(SEARCH_SYNONYMS)) {
-    if (normalized.includes(queixa) || words.some((w) => normalized.includes(norm(w)))) {
-      extra.push(queixa, ...words);
-    }
-  }
-  return `${query} ${extra.join(" ")}`;
-}
-
-function inferQueixasFromSearch(query: string): string[] {
-  const normalized = norm(query);
-  if (normalized.length < 2) return [];
-  return queixas
-    .filter((q) => {
-      const words = SEARCH_SYNONYMS[q.id] ?? [];
-      return normalized.includes(norm(q.id)) || normalized.includes(norm(q.label)) || words.some((w) => normalized.includes(norm(w)));
-    })
-    .map((q) => q.id);
-}
-
-function inferAgeMonthsFromSearch(query: string): number | null {
-  const normalized = norm(query).replace(",", ".");
-  const month = normalized.match(/\b(\d{1,2})\s*(m|mes|meses)\b/);
-  if (month) return Number(month[1]);
-  const year = normalized.match(/\b(\d{1,2})(?:\s*(a|ano|anos)|a\b)/);
-  if (year) return Number(year[1]) * 12;
-  return null;
-}
-// Realce textual leve para a busca livre. NÃƒO decide pertinÃªncia clÃ­nica â€”
-// apenas reordena, dentro dos candidatos jÃ¡ validados pelo motor, os que casam
-// com o termo digitado. (A seguranÃ§a/score clÃ­nico vem do advancedFilterLogic.)
-function searchBoost(scale: ScaleEntry, query: string) {
-  const tokens = norm(expandSearchText(query)).split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return 0;
-  const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
-  let value = 0;
-  for (const token of tokens) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
-  return value;
-}
-
-// Idade representativa (meses) da faixa selecionada â€” usada para consultar o
-// ranking clÃ­nico curado (clinicalRanking). null quando a idade nÃ£o foi escolhida.
-function ageMonthsFromBand(selectedAge: string | null): number | null {
-  const band = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
-  return band ? Math.round((band.min + band.max) / 2) : null;
-}
-
-// Primeira frase de uma descriÃ§Ã£o (corta em quebra de linha ou ponto).
-function firstSentence(text?: string): string {
-  return (text ?? "").split(/[\n.]/)[0].trim();
-}
-
-const RESP_LABEL: Record<string, string> = {
-  pais: "os pais/cuidadores",
-  clinico: "o clÃ­nico",
-  professor: "o professor",
-  autoaplicavel: "o prÃ³prio adolescente",
-  crianca: "a crianÃ§a",
-  teste_direto_crianca: "a crianÃ§a (teste direto)",
-};
-
-// Monta um card OPB (parent-friendly). Usa o texto curado Ã  mÃ£o (opbParentCopy)
-// quando existe; senÃ£o, deriva um fallback honesto dos dados da prÃ³pria escala.
-// whyUseful do OURO vem da regra (racional contextual); PRATA/BRONZE preferem o
-// texto curado da escala e caem para o genÃ©rico passado.
-function buildOPB(
-  seal: "ouro" | "prata" | "bronze",
-  scale: ScaleEntry,
-  whyUsefulFallback: string,
-  queixaLabel: string
-): RecommendationOPB {
-  const copy = opbParentCopy[scale.id];
-  const resp = scale.respondente.map((r) => RESP_LABEL[r] ?? r).filter(Boolean).join(", ") || "o avaliador";
-  return {
-    seal,
-    scaleId: scale.id,
-    scaleName: scale.name,
-    time: scale.tempo || "â€”",
-    mainQuestion: copy?.mainQuestion || firstSentence(scale.description) || scale.fullName || scale.name,
-    parentExample:
-      copy?.parentExample ||
-      // Exemplo concreto em linguagem de pais (auditoria escala-a-escala 2026-07):
-      // o que observar no dia a dia ao responder â€” melhor que o fallback genÃ©rico.
-      scale.exemploPais ||
-      `Aplicada com ${resp}; os itens avaliam ${queixaLabel.toLowerCase()} de forma ajustada Ã  faixa etÃ¡ria da crianÃ§a.`,
-    whyUseful: seal === "ouro" ? whyUsefulFallback : copy?.whyUseful || whyUsefulFallback,
-  };
-}
-
-const OPB_WHY: Record<"prata" | "bronze", string> = {
-  prata: "Complementa o OURO com outra modalidade, respondente ou domÃ­nio de avaliaÃ§Ã£o.",
-  bronze: "Perspectiva adicional, aprofundamento ou monitorizaÃ§Ã£o quando OURO + PRATA deixam dÃºvidas.",
-};
-
-const FLASH_STORAGE_KEY = "neuroped:filter-flash";
-
-function isFlashRoute(): boolean {
-  if (typeof window === "undefined") return false;
-  const raw = `${window.location.hash || ""}${window.location.search || ""}`;
-  // A rota /filtro-escalas ("Triar sem cadastrar", no menu) Ã© SEMPRE efÃªmera:
-  // o clÃ­nico que escolhe triar sem cadastrar nÃ£o deve ter nada persistido em
-  // localStorage. Sem esta linha o link caÃ­a no filtro normal COM persistÃªncia
-  // ligada â€” quebrando a promessa de "sem cadastro" (privacidade/LGPD). O modo
-  // flash usa apenas sessionStorage e Ã© apagado ao sair da tela.
-  if (/\/filtro-escalas(?:[/?#&]|$)/.test(raw)) return true;
-  return /[?&]mode=flash(?:&|$)/.test(raw);
-}
-
-// Fonte ÃšNICA de verdade: roda o motor clÃ­nico (advancedFilterLogic) sobre o
-// catÃ¡logo e, dentro dos candidatos seguros, aplica o realce de busca.
-// Pode retornar [] â€” NUNCA cai para o catÃ¡logo inteiro (sem fallback perigoso).
-function rankSafely(catalog: ScaleEntry[], ctx: FilterContext, query: string): RefinedScaleMatch[] {
-  const uniq = unique(catalog);
-  let matches = filterScalesWithClinicalRescue(uniq, ctx);
-  if (query.trim()) {
-    // Busca FILTRA de verdade: entre os candidatos seguros, mantÃ©m sÃ³ os que casam
-    // com o termo digitado. Se nada casar (ex.: erro de digitaÃ§Ã£o), nÃ£o esvazia â€”
-    // cai para o conjunto seguro completo, reordenado por relevÃ¢ncia.
-    const scored = matches.map((m) => ({ m, b: searchBoost(m.scale, query) }));
-    const anyMatch = scored.some((x) => x.b > 0);
-    const kept = anyMatch ? scored.filter((x) => x.b > 0) : scored;
-    matches = kept.sort((a, b) => b.m.relevanceScore + b.b - (a.m.relevanceScore + a.b)).map((x) => x.m);
-  }
-  // Nunca dar vazio para uma queixa+idade real: se nÃ£o hÃ¡ instrumento especÃ­fico
-  // seguro, oferece rastreio AMPLO apropriado Ã  idade (escalas reais), rotulado.
-  if (matches.length === 0 && (ctx.queixas.length > 0 || ctx.ageBand != null || ctx.ageMonths != null)) {
-    matches = getBroadbandFallback(uniq, ctx);
-  }
-  return matches;
-}
-
-function tierFromSlot(slot: Slot): Tier | null {
-  if (slot === "Ouro") return "ouro";
-  if (slot === "Prata") return "prata";
-  if (slot === "Bronze") return "bronze";
-  return null;
-}
-
-// Label reflects the podium slot, not the score-based tier, so the badge on
-// the Ouro card always reads "1Âª linha clÃ­nica" regardless of the raw score.
-const SLOT_CLINICAL_LABEL: Partial<Record<Slot, string>> = {
-  "Ouro": "1Âª linha clÃ­nica",
-  "Prata": "complementar",
-  "Bronze": "apoio adicional",
-  "Teste Direto": "teste direto",
-  "QuestionÃ¡rio Escolar": "perspectiva escolar",
-};
-
-// Selo de licenÃ§a do instrumento â€” deixa explÃ­cito ao clÃ­nico se a escala
-// recomendada Ã© gratuita, autoral (Dr. Jadson) ou licenciada/comercial. Agora
-// que o filtro nomeia instrumentos padrÃ£o-ouro licenciados (Denver, CBCLâ€¦),
-// a origem/licenÃ§a precisa ficar visÃ­vel em cada card.
-function licenseChip(scale?: ScaleEntry): { label: string; cls: string } | null {
-  const lic = scale?.licencaUso;
-  if (!lic) return null;
-  if (lic === "livre")
-    return { label: "Gratuita", cls: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" };
-  if (lic === "autoral")
-    return { label: "Autoral", cls: "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200" };
-  return { label: "Licenciada", cls: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200" };
-}
-
-// QUALIFICAÃ‡ÃƒO CLÃNICA â€” sinal de validaÃ§Ã£o brasileira derivado do campo REAL
-// `validacaoBrasil` (nunca inventado). Para um neuropediatra no Brasil, saber se
-// a escala tem adaptaÃ§Ã£o/validaÃ§Ã£o nacional Ã© o principal marcador de confianÃ§a.
-// AusÃªncia do campo NÃƒO vira "sem validaÃ§Ã£o": simplesmente nÃ£o exibimos o selo
-// (metadado ausente â‰  escala nÃ£o validada) â€” evita esconder bons instrumentos.
-function brValidationChip(scale?: ScaleEntry): { label: string; cls: string } | null {
-  const v = scale?.validacaoBrasil?.trim();
-  if (!v) return null;
-  const head = norm(v).split(/[\s\-â€”]+/)[0];
-  if (head === "sim")
-    return { label: "ğŸ‡§ğŸ‡· Validada no Brasil", cls: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" };
-  if (head === "parcial")
-    return { label: "ğŸ‡§ğŸ‡· AdaptaÃ§Ã£o parcial (BR)", cls: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200" };
-  if (head === "nao")
-    return { label: "Sem validaÃ§Ã£o BR", cls: "border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300" };
-  // Autoral / observacional / outros textos curados â€” mostra o prÃ³prio rÃ³tulo.
-  return { label: `ğŸ‡§ğŸ‡· ${v.length > 26 ? v.slice(0, 26) + "â€¦" : v}`, cls: "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200" };
-}
-
-// Tempo de aplicaÃ§Ã£o como chip curto â€” carga do instrumento num relance.
-function timeChip(scale?: ScaleEntry): string | null {
-  const t = scale?.tempo?.trim();
-  return t && t !== "â€”" ? t : null;
-}
-
-// Link PubMed a partir do campo REAL `pubmedId` (ex.: "PMID 24422648"). O dado
-// jÃ¡ existe no catÃ¡logo mas nunca era exibido no filtro â€” para um neuropediatra,
-// poder abrir o estudo de validaÃ§Ã£o Ã© o que separa uma "recomendaÃ§Ã£o" de uma
-// decisÃ£o embasada. SÃ³ retorna link quando hÃ¡ um PMID numÃ©rico real.
-function pubmedRef(scale?: ScaleEntry): { pmid: string; href: string } | null {
-  const raw = scale?.pubmedId?.trim();
-  if (!raw) return null;
-  const digits = raw.match(/\d{4,}/)?.[0];
-  if (!digits) return null;
-  return { pmid: digits, href: `https://pubmed.ncbi.nlm.nih.gov/${digits}/` };
-}
-
-// Atalhos clÃ­nicos comuns â€” 1 toque preenche idade + queixa e jÃ¡ traz o pÃ³dio.
-// Reduz a fricÃ§Ã£o do primeiro uso e faz o filtro parecer "esperto".
-const QUICK_STARTS: { emoji: string; label: string; sub: string; age: string; queixas: string[] }[] = [
-  { emoji: "âš¡", label: "TDAH", sub: "6â€“12 anos", age: "6-12a", queixas: ["tdah"] },
-  { emoji: "ğŸ§©", label: "TEA", sub: "2â€“4 anos", age: "2-4a", queixas: ["tea"] },
-  { emoji: "ğŸŒ±", label: "Atraso", sub: "1â€“2 anos", age: "1-2a", queixas: ["atraso"] },
-  { emoji: "ğŸŒ™", label: "Sono", sub: "4â€“6 anos", age: "4-6a", queixas: ["sono"] },
-  { emoji: "ğŸ’­", label: "Ansiedade", sub: "12â€“18 anos", age: "12-18a", queixas: ["ansiedade"] },
-];
-
-function rec(slot: Slot, match: RefinedScaleMatch | undefined, reason: string, tone: string) {
-  const scale = match?.scale;
-  // Estado HONESTO vindo do motor (req. 3): aplicaÃ§Ã£o completa vs ficha vs externo.
-  const state = match
-    ? match.implementationLabel
-    : "Sem opÃ§Ã£o complementar segura para este perfil.";
-  return {
-    slot,
-    tier: tierFromSlot(slot),
-    // A prÃ³pria escala (quando hÃ¡ match) â€” usada para derivar os motivos sem
-    // refazer busca frÃ¡gil por nome no pool.
-    scale,
-    // Toda escala recomendada abre uma pÃ¡gina real: aplicaÃ§Ã£o completa, ficha
-    // tÃ©cnica (/generic-scale/:id) ou catÃ¡logo mundial. Nunca mais o loop /filtro.
-    route: scale ? (resolveAppRoute(scale) ?? `/generic-scale/${scale.id}`) : "/filtro",
-    title: scale?.name || "Sem escala segura",
-    subtitle: scale?.fullName || (slot === "Ouro" ? "Sem instrumento padrÃ£o-ouro para este perfil" : "Refine idade, queixa ou respondente"),
-    reason,
-    state,
-    source: scale?.fonte,
-    tone,
-    hasScale: Boolean(scale),
-    // SaÃ­da do motor de filtragem avanÃ§ada (advancedFilterLogic)
-    clinicalTier: match ? (SLOT_CLINICAL_LABEL[slot] ?? slot.toLowerCase()) : null,
-    confidence: match?.confidenceLevel ?? null,
-    warnings: match?.warningFlags ?? [],
-    clinicalReason: match?.clinicalReason ?? null,
-    implementationStatus: match?.implementationStatus ?? null,
-    isBroadbandFallback: match?.isBroadbandFallback ?? false,
-  };
-}
-
-// Slot vazio HONESTO: explica ao clÃ­nico POR QUE aquele lugar do pÃ³dio ficou
-// sem escala e o que ajustar â€” em vez de sumir ou mostrar card genÃ©rico.
-function emptySlotReason(
-  slot: Slot,
-  sel: { hasQueixa: boolean; hasAge: boolean; respondente: string | null; communication: "verbal" | "nonverbal" | null }
-): string {
-  if (slot === "QuestionÃ¡rio Escolar") {
-    if (sel.respondente && sel.respondente !== "professor")
-      return "Nenhum questionÃ¡rio com o professor como respondente bate com o filtro atual â€” remova o filtro â€œQuem respondeâ€ para incluir a perspectiva escolar.";
-    return "Sem questionÃ¡rio escolar (professor) preenchÃ­vel para esta idade/queixa. A perspectiva escolar pode entrar por relato livre.";
-  }
-  if (slot === "Teste Direto") {
-    if (sel.communication === "nonverbal")
-      return "Nenhum teste aplicado diretamente com a crianÃ§a Ã© compatÃ­vel com perfil nÃ£o-verbal aqui â€” priorize instrumentos respondidos por pais/clÃ­nico.";
-    return "Nenhum teste aplicado diretamente com a crianÃ§a para este perfil (comum quando a queixa depende do relato de pais/escola ou a crianÃ§a Ã© muito nova).";
-  }
-  if (slot === "Ouro") {
-    if (!sel.hasQueixa && !sel.hasAge)
-      return "Selecione idade e/ou queixa para o filtro encontrar o instrumento principal.";
-    return "Nenhum instrumento padrÃ£o-ouro preenchÃ­vel cruza idade + queixa + respondente selecionados. Amplie a faixa etÃ¡ria ou remova o filtro de respondente para ver mais opÃ§Ãµes aplicÃ¡veis.";
-  }
-  return "Sem complementar seguro alÃ©m dos jÃ¡ listados para este perfil â€” os instrumentos acima cobrem o essencial, ou faltam escalas preenchÃ­veis validadas nesta faixa.";
-}
-
-function icon(slot: Slot) {
-  if (slot === "Ouro") return <Award className="h-5 w-5" />;
-  if (slot === "Prata") return <Medal className="h-5 w-5" />;
-  if (slot === "Bronze") return <Star className="h-5 w-5" />;
-  if (slot === "Teste Direto") return <ClipboardCheck className="h-5 w-5" />;
-  return <School className="h-5 w-5" />;
-}
-
-// Emoji didÃ¡tico da medalha â€” reforÃ§a visualmente a prioridade do ranking.
-function slotEmoji(slot: Slot): string {
-  if (slot === "Ouro") return "ğŸ¥‡";
-  if (slot === "Prata") return "ğŸ¥ˆ";
-  if (slot === "Bronze") return "ğŸ¥‰";
-  if (slot === "Teste Direto") return "ğŸ§’";
-  if (slot === "QuestionÃ¡rio Escolar") return "ğŸ«";
-  if (slot === "SatisfaÃ§Ã£o MedicaÃ§Ã£o") return "ğŸ’Š";
-  return "ğŸ…";
-}
-
-interface ScaleVisual {
-  label: string;
-  Icon: LucideIcon;
-  tone: string;
-}
-
-function getScaleVisual(scale: ScaleEntry): ScaleVisual {
-  const t = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")}`);
-
-  if (/tea|autis|social|assq|m-chat|q-chat|cast|aq/.test(t)) return { label: "TEA / social", Icon: Brain, tone: "from-violet-600 via-purple-700 to-slate-950" };
-  if (/tdah|adhd|snap|vanderbilt|aten|weiss|wfirs/.test(t)) return { label: "atenÃ§Ã£o", Icon: Activity, tone: "from-amber-500 via-orange-600 to-red-800" };
-  if (/linguagem|fala|comunic|language|speech/.test(t)) return { label: "linguagem", Icon: MessageCircle, tone: "from-cyan-600 via-blue-700 to-slate-950" };
-  if (/school|professor|teacher|aprendiz|leitura|escrita|aritmet|academ/.test(t)) return { label: "escola", Icon: GraduationCap, tone: "from-emerald-600 via-teal-700 to-slate-950" };
-  if (/sono|sleep|bears|psq|cshq/.test(t)) return { label: "sono", Icon: Moon, tone: "from-indigo-700 via-blue-900 to-slate-950" };
-  if (/ansiedade|depress|humor|mood|phq|gad|scared|rcads|scas/.test(t)) return { label: "humor", Icon: HeartPulse, tone: "from-rose-600 via-red-700 to-slate-950" };
-  if (/desenvolvimento|milestone|cdc|swyc|atraso|motor|gmfcs/.test(t)) return { label: "desenvolvimento", Icon: Baby, tone: "from-blue-600 via-indigo-700 to-slate-950" };
-  if (/eusm|medic|dose|farmaco|risperidona|metilfenidato|tolerab|adesao|efeito/.test(t)) return { label: "medicaÃ§Ã£o", Icon: Pill, tone: "from-teal-600 via-cyan-700 to-slate-950" };
-  if (/pais|parent|cuidador|family/.test(t)) return { label: "famÃ­lia", Icon: Users, tone: "from-slate-600 via-slate-800 to-slate-950" };
-
-  return { label: "clÃ­nico", Icon: ClipboardCheck, tone: "from-primary via-chart-2 to-slate-950" };
-}
-
-function getRecommendationReasons(scale: ScaleEntry | undefined, selectedQueixas: string[], selectedAge: string | null): string[] {
-  if (!scale) return [];
-  const reasons: string[] = [];
-
-  // Motivo contextual por idade
-  if (selectedAge && matchAge(scale, selectedAge)) {
-    if (scale.ageMin > 0) {
-      const minYears = Math.round(scale.ageMin / 12);
-      reasons.push(`âœ“ Recomendado a partir de ${minYears} anos`);
-    } else {
-      reasons.push("âœ“ AplicÃ¡vel nesta faixa etÃ¡ria");
-    }
-  } else if (selectedAge && !matchAge(scale, selectedAge)) {
-    const minYears = Math.round(scale.ageMin / 12);
-    reasons.push(`âš  Recomendado apenas a partir de ${minYears} anos`);
-  }
-
-  // Motivo contextual por queixa
-  if (selectedQueixas.length > 0) {
-    const matchedQueixas = scale.queixas.filter((q) => selectedQueixas.includes(q));
-    if (matchedQueixas.length > 0) {
-      if (matchedQueixas.length === 1) {
-        reasons.push(`âœ“ Cobre sintoma: ${matchedQueixas[0]}`);
-      } else {
-        reasons.push(`âœ“ Cobre ${matchedQueixas.length} sintomas selecionados`);
-      }
-    }
-  }
-
-  // Motivo contextual por respondente
-  if (scale.respondente.includes("professor")) {
-    reasons.push("âœ“ Respondente: Professor");
-  } else if (scale.respondente.includes("pais")) {
-    reasons.push("âœ“ Respondente: Pais/Cuidador");
-  } else if (scale.respondente.includes("clinico")) {
-    reasons.push("âœ“ Respondente: ClÃ­nico (observaÃ§Ã£o direta)");
-  }
-
-  // Toda escala do filtro abre uma ferramenta usÃ¡vel: rota dedicada,
-  // itens interativos ou marcada "complete".
-  if (opensAsUsableTool(scale) || getImplementationStatus(scale) === "complete") {
-    reasons.push("âœ“ AplicaÃ§Ã£o completa no app");
-  } else if (resolveAppRoute(scale)) {
-    reasons.push("âœ“ Ficha tÃ©cnica no app");
-  }
-  if (scale.prioridade === "triagem") reasons.push("âœ“ Instrumento de triagem");
-
-  return reasons.length ? reasons : ["âœ“ Compatibilidade geral"];
-}
-
-type RecommendationItem = ReturnType<typeof rec>;
-type AssessmentFilterType = "diagnostic" | "monitoring" | null;
-
-const QUAL_RESP_LABEL: Record<ScaleEntry["respondente"][number], string> = {
-  pais: "pais/cuidadores",
-  clinico: "clÃ­nico",
-  professor: "professor/escola",
-  autoaplicavel: "autorrelato",
-  crianca: "crianÃ§a/adolescente",
-  teste_direto_crianca: "teste direto com a crianÃ§a",
-};
-
-function tidySentence(value?: string | null): string {
-  return (value ?? "").replace(/\s+/g, " ").trim().replace(/[.;:]+$/g, "");
-}
-
-function joinNatural(items: string[]): string {
-  const clean = items.map((item) => item.trim()).filter(Boolean);
-  if (clean.length === 0) return "";
-  if (clean.length === 1) return clean[0];
-  if (clean.length === 2) return `${clean[0]} e ${clean[1]}`;
-  return `${clean.slice(0, -1).join(", ")} e ${clean[clean.length - 1]}`;
-}
-
-function getAgeLabel(selectedAge: string | null): string {
-  return selectedAge ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge) : "idade nÃ£o especificada";
-}
-
-function getQueixaLabels(selectedQueixas: string[]): string[] {
-  return selectedQueixas.map((id) => queixas.find((q) => q.id === id)?.label ?? id);
-}
-
-function getSignalLabels(selectedQueixas: string[], selectedSignalIds: string[]): string[] {
-  if (selectedSignalIds.length === 0 || selectedQueixas.length === 0) return [];
-  const selected = new Set(selectedSignalIds);
-  const seen = new Set<string>();
-  const labels: string[] = [];
-  for (const queixaId of selectedQueixas) {
-    for (const signal of getAllSignalsForQueixa(queixaId)) {
-      if (!selected.has(signal.id) || seen.has(signal.id)) continue;
-      seen.add(signal.id);
-      labels.push(signal.label);
-    }
-  }
-  return labels;
-}
-
-function scaleDetailLine(scale: ScaleEntry | undefined): string {
-  if (!scale) return "";
-  const details = [
-    scale.validacaoBrasil ? `validaÃ§Ã£o BR: ${scale.validacaoBrasil}` : "",
-    scale.tempo ? `tempo: ${scale.tempo}` : "",
-    scale.scoringCutoff ? `interpretaÃ§Ã£o/corte: ${scale.scoringCutoff}` : "",
-  ].filter(Boolean);
-  return details.length ? ` Metadados Ãºteis: ${details.join("; ")}.` : "";
-}
-
-function itemCoverageLabel(item: RecommendationItem, selectedQueixas: string[]): string {
-  if (!item.scale || selectedQueixas.length === 0) return "";
-  const covered = selectedQueixas
-    .filter((queixaId) => item.scale?.queixas.includes(queixaId))
-    .map((queixaId) => queixas.find((q) => q.id === queixaId)?.label ?? queixaId);
-  return covered.length ? `Cobre ${joinNatural(covered)}.` : "";
-}
-
-function buildQualitativeFilterReport(args: {
-  ranking: RecommendationItem[];
-  refinedMatches: RefinedScaleMatch[];
-  clinicalRecommendation: string;
-  selectedQueixas: string[];
-  selectedAge: string | null;
-  selectedRespondente: ScaleEntry["respondente"][number] | null;
-  selectedAssessmentType: AssessmentFilterType;
-  selectedSignalIds: string[];
-  usingBroadbandFallback: boolean;
-}): string {
-  const {
-    ranking,
-    refinedMatches,
-    clinicalRecommendation,
-    selectedQueixas,
-    selectedAge,
-    selectedRespondente,
-    selectedAssessmentType,
-    selectedSignalIds,
-    usingBroadbandFallback,
-  } = args;
-  if (refinedMatches.length === 0) return "";
-
-  const ageLabel = getAgeLabel(selectedAge);
-  const queixaLabel = selectedQueixas.length ? joinNatural(getQueixaLabels(selectedQueixas)) : "queixa nÃ£o especificada";
-  const respondentLabel = selectedRespondente ? QUAL_RESP_LABEL[selectedRespondente] : "sem restringir respondente";
-  const assessmentLabel =
-    selectedAssessmentType === "diagnostic"
-      ? "avaliaÃ§Ã£o diagnÃ³stica/estruturaÃ§Ã£o inicial"
-      : selectedAssessmentType === "monitoring"
-        ? "monitoramento evolutivo"
-        : "triagem e apoio Ã  decisÃ£o";
-  const signalLabels = getSignalLabels(selectedQueixas, selectedSignalIds).slice(0, 6);
-
-  const ouro = ranking.find((item) => item.slot === "Ouro" && item.hasScale);
-  const prata = ranking.find((item) => item.slot === "Prata" && item.hasScale);
-  const bronze = ranking.find((item) => item.slot === "Bronze" && item.hasScale);
-  const direct = ranking.find((item) => item.slot === "Teste Direto" && item.hasScale);
-  const school = ranking.find((item) => item.slot === "QuestionÃ¡rio Escolar" && item.hasScale);
-  const paragraphs: string[] = [];
-
-  paragraphs.push(
-    `Para este perfil (${ageLabel}; ${queixaLabel}; ${respondentLabel}; finalidade: ${assessmentLabel}), o filtro priorizou escalas que cruzam seguranÃ§a por idade, aderÃªncia Ã  queixa, modo de aplicaÃ§Ã£o e disponibilidade real dentro do app. ${tidySentence(clinicalRecommendation)}.`
-  );
-
-  if (signalLabels.length > 0) {
-    paragraphs.push(
-      `Os sinais refinados selecionados (${joinNatural(signalLabels)}) aumentaram o peso das escalas mais especÃ­ficas para o padrÃ£o descrito, em vez de favorecer apenas instrumentos amplos.`
-    );
-  }
-
-  if (usingBroadbandFallback) {
-    paragraphs.push(
-      "Como nÃ£o havia instrumento especÃ­fico seguro e preenchÃ­vel para esta combinaÃ§Ã£o, a recomendaÃ§Ã£o foi rebaixada para triagem ampla apropriada Ã  idade. Use esse resultado como porta de entrada e complemente com anamnese, exame neurolÃ³gico e dados escolares/terapÃªuticos."
-    );
-  } else {
-    const broadbandComplements = [ouro, prata, bronze]
-      .filter((item): item is RecommendationItem => Boolean(item?.scale && item.isBroadbandFallback));
-    if (broadbandComplements.length > 0) {
-      paragraphs.push(
-        `Para manter trÃªs escolhas clinicamente utilizÃ¡veis sem forÃ§ar escala inadequada, o pÃ³dio foi completado com ${joinNatural(broadbandComplements.map((item) => item.title))}, usado aqui como complemento de banda larga apropriado Ã  idade. Esse complemento ajuda a medir impacto global, funcionamento e carga emocional/comportamental enquanto a escala principal responde Ã  queixa central.`
-      );
-    }
-  }
-
-  if (ouro?.scale) {
-    const coverage = itemCoverageLabel(ouro, selectedQueixas);
-    const reason = tidySentence(ouro.reason || ouro.clinicalReason || ouro.scale.description);
-    paragraphs.push(
-      `A melhor primeira escolha Ã© ${ouro.title}: ${reason}. ${coverage} Por isso ela deve ser aplicada primeiro, pois tende a responder a pergunta clÃ­nica central antes de abrir instrumentos secundÃ¡rios.${scaleDetailLine(ouro.scale)}`
-    );
-  }
-
-  const complements = [prata, bronze].filter((item): item is RecommendationItem => Boolean(item?.scale));
-  if (complements.length > 0) {
-    const complementText = complements
-      .map((item) => {
-        const reason = tidySentence(item.reason || item.clinicalReason || item.scale?.description);
-        const coverage = itemCoverageLabel(item, selectedQueixas);
-        return `${item.slot}: ${item.title}${reason ? ` (${reason})` : ""}${coverage ? ` ${coverage}` : ""}`;
-      })
-      .join(" ");
-    paragraphs.push(
-      `Como composiÃ§Ã£o qualitativa, ${complementText} Essas escolhas evitam uma leitura estreita do caso: uma escala ancora a prioridade principal e as demais acrescentam perspectiva funcional, comportamental, escolar ou de acompanhamento.`
-    );
-  }
-
-  if (selectedQueixas.length > 1) {
-    const coveredQueixas = selectedQueixas.filter((queixaId) =>
-      ranking.some((item) => item.scale?.queixas.includes(queixaId))
-    );
-    const missingQueixas = selectedQueixas.filter((queixaId) => !coveredQueixas.includes(queixaId));
-    const coveredLabel = coveredQueixas.length ? joinNatural(getQueixaLabels(coveredQueixas)) : "nenhuma queixa principal";
-    const missingLabel = missingQueixas.length ? joinNatural(getQueixaLabels(missingQueixas)) : "";
-    paragraphs.push(
-      missingQueixas.length
-        ? `Cobertura das queixas: o pÃ³dio cobre ${coveredLabel}. Ainda fica menos coberto: ${missingLabel}; nesse caso, use a prÃ©via do catÃ¡logo ou uma escala complementar dirigida depois da primeira rodada.`
-        : `Cobertura das queixas: o pÃ³dio cobre todas as queixas marcadas (${coveredLabel}), reduzindo o risco de escolher trÃªs instrumentos bons isoladamente, mas redundantes entre si.`
-    );
-  }
-
-  const perspectiveItems = [direct, school].filter((item): item is RecommendationItem => Boolean(item?.scale));
-  if (perspectiveItems.length > 0) {
-    paragraphs.push(
-      `Perspectivas adicionais disponÃ­veis: ${perspectiveItems.map((item) => `${item.slot}: ${item.title}`).join("; ")}. Use-as quando houver divergÃªncia entre relato familiar, observaÃ§Ã£o em consulta e funcionamento escolar.`
-    );
-  }
-
-  paragraphs.push(
-    "Leitura prÃ¡tica final: aplique o Ouro primeiro, use Prata/Bronze para confirmar gravidade, impacto e contexto, e interprete divergÃªncias entre respondentes como dado clÃ­nico relevante. O resultado organiza a escolha das escalas, mas nÃ£o substitui julgamento clÃ­nico, entrevista, exame e seguimento."
-  );
-
-  return paragraphs.join("\n\n");
-}
-
-// PersistÃªncia das seleÃ§Ãµes do filtro â€” o clÃ­nico volta ao /filtro e mantÃ©m o
-// contexto (idade, queixa, respondenteâ€¦) em vez de recomeÃ§ar do zero.
-const FILTER_STATE_KEY = "np_filtro_state_v1";
-interface PersistedFilter {
-  search?: string;
-  queixas?: string[];
-  age?: string | null;
-  respondente?: ScaleEntry["respondente"][number] | null;
-  communication?: "verbal" | "nonverbal" | null;
-  literacy?: "literate" | "preliterate" | null;
-  assessment?: "diagnostic" | "monitoring" | null;
-  signals?: string[];
-  availability?: AvailabilityMode;
-}
-function loadFilterState(): PersistedFilter {
-  try {
-    if (typeof localStorage === "undefined") return {};
-    return (JSON.parse(localStorage.getItem(FILTER_STATE_KEY) || "{}") || {}) as PersistedFilter;
-  } catch {
-    return {};
-  }
-}
-
-export default function FiltroPage() {
-  const flashMode = isFlashRoute();
-  const [initial] = useState(loadFilterState);
-  const [search, setSearch] = useState<string>(flashMode ? "" : initial.search ?? "");
-  const [selectedQueixas, setSelectedQueixas] = useState<string[]>(flashMode ? [] : initial.queixas ?? []);
-  const [selectedAge, setSelectedAge] = useState<string | null>(flashMode ? null : initial.age ?? null);
-  const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(flashMode ? null : initial.respondente ?? null);
-  const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(flashMode ? null : initial.communication ?? null);
-  const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(flashMode ? null : initial.literacy ?? null);
-  const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(flashMode ? null : initial.assessment ?? null);
-  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(flashMode ? [] : initial.signals ?? []);
-  const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
-    flashMode ? "complete" : initial.availability === "all" ? "all" : "complete",
-  );
-  const [copiedRec, setCopiedRec] = useState(false);
-  const [compareIds, setCompareIds] = useState<string[]>([]);
-  const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
-  const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
-
-  useEffect(() => {
-    if (!flashMode) return;
-    return () => {
-      try {
-        sessionStorage.removeItem(FLASH_STORAGE_KEY);
-      } catch { /* sessionStorage indisponÃ­vel â€” nada a limpar */ }
-    };
-  }, [flashMode]);
-
-  useEffect(() => {
-    if (!flashMode) return;
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(FLASH_STORAGE_KEY) || "{}") as {
-        search?: string;
-        selectedAge?: string | null;
-        selectedQueixas?: string[];
-      };
-      if (typeof saved.search === "string") setSearch(saved.search);
-      if (typeof saved.selectedAge === "string" || saved.selectedAge === null) setSelectedAge(saved.selectedAge);
-      if (Array.isArray(saved.selectedQueixas)) setSelectedQueixas(saved.selectedQueixas);
-    } catch { /* sessionStorage indisponÃ­vel â€” modo flash segue sem persistir */ }
-  }, [flashMode]);
-
-  useEffect(() => {
-    if (!flashMode) return;
-    try {
-      sessionStorage.setItem(FLASH_STORAGE_KEY, JSON.stringify({ search, selectedAge, selectedQueixas }));
-    } catch { /* sessionStorage indisponÃ­vel â€” modo flash segue sem persistir */ }
-  }, [flashMode, search, selectedAge, selectedQueixas]);
-
-  // Auto-close welcome tour on /filtro â€” ensures filter content is visible immediately
-  useEffect(() => {
-    try {
-      localStorage.setItem("np_tour_v2_done", "1");
-      localStorage.setItem("np_tour_intro_v2", "1");
-    } catch { /* tour Ã© best-effort */ }
-  }, []);
-
-  // Persiste as seleÃ§Ãµes sempre que mudam (best-effort).
-  useEffect(() => {
-    if (flashMode) return;
-    try {
-      localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
-        search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,
-        communication: selectedCommunication, literacy: selectedLiteracy,
-        assessment: selectedAssessmentType, signals: selectedSignalIds,
-        availability: availabilityMode,
-      } satisfies PersistedFilter));
-    } catch { /* persistÃªncia best-effort */ }
-  }, [flashMode, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, availabilityMode]);
-
-  useEffect(() => {
-    let alive = true;
-    fetch(REGISTRY_URL, { cache: "no-store" })
-      .then((r) => r.ok ? r.json() : Promise.reject(r))
-      .then((data: { escalas?: Row[] }) => {
-        const parsed = (data.escalas || []).map(rowToScale);
-        if (parsed.length !== 100) throw new Error("registro incompleto");
-        if (alive) { setWorld(unique([...noCostWorldScales, ...parsed])); setStatus("ok"); }
-      })
-      .catch(() => { if (alive) setStatus("fallback"); });
-    return () => { alive = false; };
-  }, []);
-
-  // Dedup de instrumento: uma escala mundial (world-*) que duplica um instrumento
-  // jÃ¡ presente no app (mesmo nome â€” ex.: SDQ, M-CHAT-R/F, Vanderbilt, SCAREDâ€¦) Ã©
-  // redundante. A versÃ£o do app Ã© a canÃ´nica; a cÃ³pia mundial sai do catÃ¡logo do
-  // filtro para nÃ£o contar/aparecer o mesmo instrumento duas vezes.
-  const dedupedWorld = useMemo(() => {
-    const appNames = new Set(CORE_FILTERABLE_CATALOG.map((s) => norm(s.name)));
-    return world.filter((s) => !(s.id.startsWith("world-") && appNames.has(norm(s.name))));
-  }, [world]);
-
-  // O padrÃ£o preserva somente aplicaÃ§Ãµes completas. A opÃ§Ã£o "Todas" acrescenta
-  // fichas/referÃªncias que possuem rota real, sempre rotuladas como nÃ£o
-  // preenchÃ­veis; itens sem destino continuam excluÃ­dos.
-  const catalog = useMemo(() => {
-    const routed = unique([...CORE_FILTERABLE_CATALOG, ...dedupedWorld]).filter(opensInApp);
-    return availabilityMode === "all" ? routed : routed.filter(isFullApp);
-  }, [dedupedWorld, availabilityMode]);
-
-  const hasSearch = search.trim().length >= 2 || selectedQueixas.length > 0 || Boolean(selectedAge) || Boolean(selectedRespondente) || Boolean(selectedCommunication) || Boolean(selectedLiteracy) || Boolean(selectedAssessmentType) || selectedSignalIds.length > 0 || availabilityMode === "all";
-
-  // === MOTOR CLÃNICO (advancedFilterLogic) â€” fonte ÃšNICA de verdade ===
-  const filterContext = useMemo<FilterContext>(() => {
-    const ageRange = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
-    const inferredAgeMonths = !ageRange ? inferAgeMonthsFromSearch(search) : null;
-    const ageMonths = ageRange ? Math.round((ageRange.min + ageRange.max) / 2) : inferredAgeMonths;
-    const inferredQueixas = selectedQueixas.length === 0 ? inferQueixasFromSearch(search) : [];
-    return {
-      queixas: selectedQueixas.length > 0 ? selectedQueixas : inferredQueixas,
-      ageMonths,
-      ageBand: ageRange ? { min: ageRange.min, max: ageRange.max } : null,
-      respondente: selectedRespondente ?? null,
-      isVerbal: selectedCommunication === "verbal" ? true : selectedCommunication === "nonverbal" ? false : null,
-      isLiterate: selectedLiteracy === "literate" ? true : selectedLiteracy === "preliterate" ? false : null,
-      assessmentUse:
-        selectedAssessmentType === "diagnostic" ? "diagnostico" : selectedAssessmentType === "monitoring" ? "monitorizacao" : null,
-      selectedSignals: selectedSignalIds,
-    };
-  }, [selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, search]);
-
-  // Candidatos seguros, jÃ¡ ordenados por pertinÃªncia clÃ­nica. PODE SER VAZIO.
-  const refinedMatches = useMemo(() => rankSafely(catalog, filterContext, search), [catalog, filterContext, search]);
-  const refinedById = useMemo(() => new Map(refinedMatches.map((m) => [m.scale.id, m])), [refinedMatches]);
-  const catalogById = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
-  // Mapa de TODAS as escalas (inclui fichas/licenciadas metadata_only). Usado sÃ³
-  // para resolver recomendaÃ§Ãµes curadas cujo padrÃ£o-ouro Ã© um instrumento
-  // licenciado (ex.: Vineland-3 na funcionalidade): ele deve APARECER como
-  // recomendaÃ§Ã£o de referÃªncia em vez de sumir silenciosamente do bloco OPB.
-  const allScalesById = useMemo(() => new Map(allScales.map((s) => [s.id, s])), []);
-  // Mapa do catÃ¡logo filtrÃ¡vel CANÃ”NICO (inclui os instrumentos suplementares:
-  // portais de psicoeducaÃ§Ã£o e testes diretos). Esses ids existem sÃ³ aqui â€” nÃ£o
-  // em `allScales` â€” e ficam de fora de `catalogById` por nÃ£o serem escalas
-  // preenchÃ­veis (isFullApp). Sem este fallback, um selo curado que aponta para
-  // eles (ex.: bronze `orientacao-parental`) fica irresolÃºvel e derruba TODO o
-  // card OPB, sumindo a recomendaÃ§Ã£o para queixas/idades inteiras.
-  const coreFilterableById = useMemo(
-    () => new Map(CORE_FILTERABLE_CATALOG.map((s) => [s.id, s])),
-    [],
-  );
-  // Idade para a curadoria do pÃ³dio/OPB: uma faixa larga (ex.: "2â€“4 anos") vira
-  // um Ãºnico ponto (midpoint) ao consultar o fluxograma, o que pode pular o
-  // rastreio de 1Âª linha do extremo mais novo (ex.: M-CHAT numa crianÃ§a de 2a).
-  // Se o profissional digitou a idade exata na busca (ex.: "24 meses"), usamos
-  // ela â€” mais precisa; senÃ£o, o midpoint da faixa (comportamento padrÃ£o).
-  const curatedAgeMonths = useMemo(
-    () => inferAgeMonthsFromSearch(search) ?? ageMonthsFromBand(selectedAge),
-    [search, selectedAge],
-  );
-  const rankedPool = useMemo(() => refinedMatches.map((m) => m.scale), [refinedMatches]);
-  const hasSafeResults = refinedMatches.length > 0;
-  // Resultado veio do fallback de triagem ampla (sem instrumento especÃ­fico).
-  const usingBroadbandFallback = refinedMatches.length > 0 && refinedMatches.every((m) => m.isBroadbandFallback);
-
-  // Ranking clÃ­nico curado (clinicalRanking) para a queixa primÃ¡ria + idade.
-  // Ã‰ a FONTE de verdade do pÃ³dio: define explicitamente quem Ã© ouro/prata/bronze
-  // por idadeÃ—queixa. Cai para null quando nÃ£o hÃ¡ queixa selecionada.
-  const curatedTiers = useMemo(
-    () => selectCuratedTiers(selectedQueixas, curatedAgeMonths, refinedById, selectedRespondente),
-    [selectedQueixas, curatedAgeMonths, selectedRespondente, refinedById]
-  );
-
-  // === PÃ“DIO: score-ordered, curated tiers as soft tiebreaker, quality threshold â‰¥60 ===
-  const auditedPodium = useMemo(
-    () =>
-      selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers, {
-        selectedQueixas,
-        ageMonths: curatedAgeMonths,
-        selectedSignals: selectedSignalIds,
-      }),
-    [refinedMatches, hasSafeResults, curatedTiers, selectedQueixas, curatedAgeMonths, selectedSignalIds]
-  );
-
-  // SÃ­ntese clÃ­nica referencia o Ouro do pÃ³dio directamente (elimina divergÃªncia).
-  const clinicalRecommendation = useMemo(
-    () => generateContextualRecommendation(refinedMatches, auditedPodium.ouro),
-    [refinedMatches, auditedPodium],
-  );
-
-  // Ouro veio da tabela curada? EntÃ£o mostramos o racional clÃ­nico especÃ­fico.
-  const podium = auditedPodium;
-  const isCuratedOuro = Boolean(curatedTiers?.ouro && podium.ouro?.scale.id === curatedTiers.ouro);
-  const ranking = [
-    rec(
-      "Ouro",
-      podium.ouro,
-      isCuratedOuro
-        ? curatedTiers!.reason
-        : "Melhor instrumento para idade, queixa, finalidade e respondente.",
-      "from-amber-500 via-yellow-600 to-red-800"
-    ),
-    rec("Prata", podium.prata, "Complementar: domÃ­nio ou modo de aplicaÃ§Ã£o diferente do Ouro.", "from-slate-400 via-slate-500 to-slate-700"),
-    rec("Bronze", podium.bronze, "Apoio secundÃ¡rio ou triagem breve adicional.", "from-orange-500 via-amber-700 to-stone-800"),
-    rec("Teste Direto", podium.direct, "Instrumento aplicado diretamente com a crianÃ§a.", "from-blue-600 via-indigo-700 to-slate-950"),
-    rec("QuestionÃ¡rio Escolar", podium.school, "QuestionÃ¡rio respondido por professor/contexto escolar.", "from-emerald-600 via-teal-700 to-slate-950"),
-  ];
-  const qualitativeReportText = hasSafeResults
-    ? buildQualitativeFilterReport({
-        ranking,
-        refinedMatches,
-        clinicalRecommendation,
-        selectedQueixas,
-        selectedAge,
-        selectedRespondente,
-        selectedAssessmentType,
-        selectedSignalIds,
-        usingBroadbandFallback,
-      })
-    : "";
-  const qualitativeReportParagraphs = qualitativeReportText.split(/\n\n+/).filter(Boolean);
-
-  // Texto pronto para o laudo â€” pÃ³dio recomendado + contexto do filtro.
-  // CÃ¡lculo direto (barato) para nÃ£o depender do array `ranking` recriado a cada render.
-  const recommendationText = ((): string => {
-    if (!hasSafeResults) return "";
-    const ageLbl = selectedAge ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge) : "nÃ£o especificada";
-    const queixasLbl = selectedQueixas.length
-      ? selectedQueixas.map((id) => queixas.find((q) => q.id === id)?.label ?? id).join(", ")
-      : "nÃ£o especificada";
-    const respLbl = selectedRespondente ?? "qualquer";
-    const lines = ranking
-      .filter((r) => r.hasScale)
-      .map((r) => `â€¢ ${r.slot}${r.clinicalTier ? ` (${r.clinicalTier})` : ""}: ${r.title}${r.source ? ` â€” ${r.source}` : ""}`);
-    return [
-      "RecomendaÃ§Ã£o de escalas â€” NeuroPed",
-      `Idade: ${ageLbl} Â· Queixa(s): ${queixasLbl} Â· Respondente: ${respLbl}`,
-      "",
-      ...lines,
-      "",
-      "Relato qualitativo por extenso",
-      qualitativeReportText,
-      "",
-      "Gerado pelo Filtro ClÃ­nico Inteligente â€” triagem de apoio; nÃ£o substitui o julgamento clÃ­nico.",
-    ].join("\n");
-  })();
-
-  const copyRecommendation = () => {
-    if (!recommendationText) return;
-    softTick(); haptic.select();
-    navigator.clipboard?.writeText(recommendationText).then(
-      () => { setCopiedRec(true); setTimeout(() => setCopiedRec(false), 1800); },
-      () => { /* clipboard indisponÃ­vel â€” best-effort */ }
-    );
-  };
-
-  // Linhas estruturadas para exportaÃ§Ã£o (PDF/CSV) â€” sÃ³ escalas que abrem, com
-  // os mesmos qualificadores clÃ­nicos exibidos nos cards.
-  const exportRows: FilterExportRow[] = ranking
-    .filter((r) => r.hasScale && r.scale)
-    .map((r) => {
-      const s = r.scale!;
-      return {
-        slot: r.slot,
-        clinicalTier: r.clinicalTier ?? "",
-        name: s.name,
-        fullName: s.fullName,
-        ageRange: `${Math.round(s.ageMin / 12)}â€“${Math.round(s.ageMax / 12)} anos`,
-        respondente: s.respondente.join(" Â· "),
-        validacaoBrasil: s.validacaoBrasil ?? "",
-        tempo: s.tempo ?? "",
-        scoringCutoff: s.scoringCutoff ?? "",
-        fonte: s.fonte ?? "",
-        reason: r.reason ?? "",
-      };
-    });
-
-  const buildExportMeta = (): FilterExportMeta => ({
-    age: selectedAge ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge) : "nÃ£o especificada",
-    queixas: selectedQueixas.length
-      ? selectedQueixas.map((id) => queixas.find((q) => q.id === id)?.label ?? id).join(", ")
-      : "nÃ£o especificada",
-    respondente: selectedRespondente ?? "qualquer",
-    generatedAtLabel: new Date().toLocaleDateString("pt-BR"),
-    qualitativeReport: qualitativeReportText,
-  });
-
-  const exportCsv = () => {
-    if (!exportRows.length) return;
-    softTick(); haptic.select();
-    downloadBlob("neuroped-recomendacao-escalas.csv", "text/csv;charset=utf-8", buildFilterCsv(buildExportMeta(), exportRows));
-  };
-
-  const exportPdf = async () => {
-    if (!exportRows.length) return;
-    softTick(); haptic.select();
-    try {
-      const bytes = await buildFilterPdf(buildExportMeta(), exportRows);
-      downloadBlob("neuroped-recomendacao-escalas.pdf", "application/pdf", bytes);
-    } catch { /* exportaÃ§Ã£o best-effort â€” nÃ£o quebra a pÃ¡gina */ }
-  };
-
-  // Pool comparÃ¡vel = escalas preenchÃ­veis do pÃ³dio, deduplicadas. Permite
-  // comparar, p.ex., SCARED-pais Ã— SCARED-crianÃ§a â€” sÃ³ instrumentos aplicÃ¡veis.
-  const comparablePool: ScaleEntry[] = (() => {
-    const seen = new Set<string>();
-    const out: ScaleEntry[] = [];
-    for (const r of ranking) if (r.hasScale && r.scale && !seen.has(r.scale.id)) { seen.add(r.scale.id); out.push(r.scale); }
-    return out;
-  })();
-  const comparing = compareIds.map((id) => comparablePool.find((s) => s.id === id)).filter(Boolean) as ScaleEntry[];
-  const toggleCompare = (id: string) => {
-    softTick(); haptic.select();
-    setCompareIds((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 3 ? cur : [...cur, id]);
-  };
-  // Linhas do quadro comparativo â€” mesmos qualificadores clÃ­nicos dos cards.
-  const COMPARE_ATTRS: { label: string; get: (s: ScaleEntry) => string }[] = [
-    { label: "Faixa etÃ¡ria", get: (s) => `${Math.round(s.ageMin / 12)}â€“${Math.round(s.ageMax / 12)} anos` },
-    { label: "Respondente", get: (s) => s.respondente.join(" Â· ") },
-    { label: "â±ï¸ Tempo", get: (s) => (s.tempo && s.tempo !== "â€”" ? s.tempo : "â€”") },
-    { label: "ğŸ‡§ğŸ‡· ValidaÃ§Ã£o BR", get: (s) => s.validacaoBrasil || "â€”" },
-    { label: "ğŸ¯ Ponto de corte", get: (s) => s.scoringCutoff || "â€”" },
-    { label: "LicenÃ§a", get: (s) => licenseChip(s)?.label || "â€”" },
-    { label: "AplicaÃ§Ã£o", get: (s) => (isFullApp(s) ? "PreenchÃ­vel no app" : "Ficha tÃ©cnica / referÃªncia") },
-    { label: "Fonte", get: (s) => s.fonte || "â€”" },
-  ];
-
-  const toggleQueixa = (id: string) => {
-    softTick(); haptic.select();
-    setSelectedQueixas((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
-  };
-
-  // SugestÃ£o de co-ocorrÃªncia (comorbidade): ao marcar uma queixa, sugere marcar
-  // TAMBÃ‰M outra que costuma vir junto (ex.: autismo â†’ sensorial). Agrega as
-  // companheiras de todas as queixas marcadas, tira as jÃ¡ selecionadas, e mostra
-  // as 3 mais comuns como chips clicÃ¡veis. Ajuda o pai/mÃ£e a nÃ£o perder o quadro
-  // associado que quase sempre acompanha a queixa principal.
-  const suggestedCompanions = useMemo(() => {
-    if (selectedQueixas.length === 0) return [] as typeof queixas;
-    const selected = new Set(selectedQueixas);
-    const seen = new Set<string>();
-    const out: typeof queixas = [];
-    for (const qid of selectedQueixas) {
-      for (const compId of (QUEIXA_COOCORRENCIA[qid] || [])) {
-        if (selected.has(compId) || seen.has(compId)) continue;
-        const cat = queixas.find((q) => q.id === compId);
-        if (cat) { seen.add(compId); out.push(cat); }
-      }
-    }
-    return out.slice(0, 3);
-  }, [selectedQueixas]);
-
-  const clearAll = () => {
-    softTap(); haptic.tap(); setSearch(""); setSelectedAge(null); setSelectedQueixas([]); setSelectedRespondente(null); setSelectedCommunication(null); setSelectedLiteracy(null); setSelectedAssessmentType(null); setSelectedSignalIds([]); setAvailabilityMode("complete");
-  };
-
-  const resultsSectionRef = useRef<HTMLDivElement>(null);
-
-  // Scroll suavemente para resultados quando aparecem
-  useEffect(() => {
-    if (hasSearch && resultsSectionRef.current) {
-      setTimeout(() => {
-        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [hasSearch]);
-
-  return (
-    <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
-      {/* Full-width header â€” premium calmo (consistente com a Home) */}
-      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-sm backdrop-blur mb-4 sm:mb-5">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-primary/15 to-chart-2/10 blur-3xl" />
-        <div className="relative flex items-center gap-3.5 sm:gap-4">
-          <div className="filter-260-iconbox flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/15 shadow-sm"><Filter className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.9} /></div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Ranking clÃ­nico</p>
-            <h1 className="mt-0.5 text-2xl sm:text-[30px] leading-tight tracking-[-0.01em] text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>Filtro ClÃ­nico Inteligente</h1>
-            <p className="mt-1 text-[13px] sm:text-sm leading-relaxed text-muted-foreground">
-              {flashMode
-                ? "Triagem rÃ¡pida sem cadastro: informe idade e queixa para receber o ranking imediato."
-                : "Cruze idade, queixa, respondente e contexto â€” incluindo 100 escalas mundiais sem custo."}
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {flashMode && (
-        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/25 dark:text-amber-100">
-          Modo efÃªmero â€” saia da tela e os dados somem
-        </div>
-      )}
-
-      {/* MÃ©tricas â€” faixa fina com divisores (consistente com a Home) */}
-      <section className="mb-4 sm:mb-6 flex divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card/70 to-card/30 shadow-sm" aria-label="MÃ©tricas do filtro">
-        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">FiltrÃ¡veis</p></div>
-        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{dedupedWorld.length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Mundiais</p></div>
-        <div className="flex-1 px-3.5 py-3 sm:px-4 transition-colors hover:bg-muted/30"><div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{catalog.filter((s) => s.licencaUso === "livre").length}</div><p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Gratuitas</p></div>
-      </section>
-
-      {/* Two-column grid: Controls (left) + Results (right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
-
-        {/* LEFT COLUMN â€” Controls (Sticky on Desktop) */}
-        <div className={hasSearch ? "lg:col-span-1 space-y-3 sm:space-y-4 lg:sticky lg:top-5 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto" : "lg:col-span-3 space-y-3 sm:space-y-4"}>
-
-          {/* Search & Filters */}
-          <section className="space-y-2 sm:space-y-3 rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label={flashMode ? "Idade e queixa para triagem sem cadastro" : "Buscar por medicaÃ§Ã£o, queixa ou nome da escala"}
-            placeholder={flashMode ? "Ex.: 7 anos, nÃ£o dorme, crise, desatenÃ§Ã£o..." : "MedicaÃ§Ã£o, autismo, TDAH, ansiedade..."}
-            className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm"
-            data-testid="input-search"
-          />
-          {search && <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar busca"><X className="h-4 w-4" /></button>}
-        </div>
-
-        {!hasSearch && (
-          <div className="space-y-1.5 sm:space-y-2">
-            <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">âœ¨ SugestÃµes rÃ¡pidas</p>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {QUICK_STARTS.map((q) => (
-                <button
-                  key={q.label}
-                  type="button"
-                  onMouseEnter={() => softHover()}
-                  onClick={() => { softTap(); haptic.tap(); setSelectedAge(q.age); setSelectedQueixas(q.queixas); }}
-                  aria-label={`SugestÃ£o rÃ¡pida: ${q.label}, ${q.sub}`}
-                  className="group flex items-center gap-1.5 rounded-2xl border border-border bg-background px-2.5 py-1.5 text-xs font-bold transition hover:border-primary/50 hover:bg-primary/5 active:scale-[0.97]"
-                >
-                  <span aria-hidden="true" className="text-sm leading-none transition-transform group-hover:scale-110">{q.emoji}</span>
-                  <span className="text-foreground">{q.label}</span>
-                  <span className="text-[10px] font-medium text-muted-foreground">Â· {q.sub}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-1.5 sm:space-y-2">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Idade da crianÃ§a</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            {faixasEtarias.map((age) => <button key={age.id} type="button" aria-pressed={selectedAge === age.id} aria-label={`Faixa etÃ¡ria ${age.label}`} onMouseEnter={() => softHover()} onClick={() => setSelectedAge((v) => v === age.id ? null : age.id)} className={`shrink-0 rounded-2xl border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>{age.label}</button>)}
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2">
-          <div className="flex items-center justify-between gap-2 sm:gap-3">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">O que vocÃª observa Â· sintomas</p>
-              {isCuratedOuro && podium.ouro && <span className="shrink-0 inline-block px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[9px] sm:text-[10px] font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">ğŸ§  1Âª linha: {podium.ouro.scale.name}</span>}
-            </div>
-            {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
-          </div>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.map((q) => { const sel = selectedQueixas.includes(q.id); return <button key={q.id} type="button" aria-pressed={sel} aria-label={q.parentHint ? `${q.label} â€” ${q.parentHint}` : q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${sel ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
-              {q.emoji && <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">{q.emoji}</span>}
-              {/* Sem truncate: rÃ³tulo POR EXTENSO + dica em linguagem de pai/mÃ£e
-                  (o que a crianÃ§a faz), pra um leigo escolher a queixa certa. */}
-              <span className="min-w-0 flex flex-col">
-                <span className="whitespace-normal break-words text-[10px] sm:text-xs leading-tight">{q.label}</span>
-                {q.parentHint && <span className={`whitespace-normal break-words text-[8px] sm:text-[9px] font-medium leading-tight ${sel ? "text-primary-foreground/75" : "text-muted-foreground"}`}>{q.parentHint}</span>}
-              </span>
-            </button>; })}
-          </div>
-          {suggestedCompanions.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-1" aria-label="Queixas que costumam vir junto">
-              <span className="text-[10px] font-semibold text-muted-foreground">ğŸ’¡ Costuma vir junto:</span>
-              {suggestedCompanions.map((q) => (
-                <button
-                  key={q.id}
-                  type="button"
-                  onClick={() => toggleQueixa(q.id)}
-                  onMouseEnter={() => softHover()}
-                  aria-label={`Adicionar tambÃ©m a queixa ${q.label}`}
-                  className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary transition hover:-translate-y-0.5 hover:bg-primary/20"
-                >
-                  {q.emoji && <span aria-hidden="true">{q.emoji}</span>}
-                  {q.label}
-                  <span aria-hidden="true" className="text-primary/70">ï¼‹</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quem responde</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="crianca" type="button" aria-pressed={selectedRespondente === "teste_direto_crianca"} aria-label="Respondente: crianÃ§a (teste direto preenchÃ­vel)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "teste_direto_crianca" ? null : "teste_direto_crianca")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "teste_direto_crianca" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ§’</span> <span className="hidden sm:inline">Direto</span></button>
-            <button key="pais" type="button" aria-pressed={selectedRespondente === "pais"} aria-label="Respondente: pais ou cuidador" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "pais" ? null : "pais")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ‘¨â€ğŸ‘©â€ğŸ‘§</span> <span className="hidden sm:inline">Pais</span></button>
-            <button key="professor" type="button" aria-pressed={selectedRespondente === "professor"} aria-label="Respondente: professor ou escola" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "professor" ? null : "professor")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ‘¨â€ğŸ«</span> <span className="hidden sm:inline">Escola</span></button>
-            <button key="clinico" type="button" aria-pressed={selectedRespondente === "clinico"} aria-label="Respondente: clÃ­nico (observaÃ§Ã£o direta)" onMouseEnter={() => softHover()} onClick={() => setSelectedRespondente((v) => v === "clinico" ? null : "clinico")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ‘¨â€âš•ï¸</span> <span className="hidden sm:inline">ClÃ­nico</span></button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">ComunicaÃ§Ã£o</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="verbal" type="button" aria-pressed={selectedCommunication === "verbal"} aria-label="ComunicaÃ§Ã£o: crianÃ§a verbal (fala)" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "verbal" ? null : "verbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "verbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ—£ï¸</span> <span className="hidden sm:inline">Fala</span></button>
-            <button key="nonverbal" type="button" aria-pressed={selectedCommunication === "nonverbal"} aria-label="ComunicaÃ§Ã£o: crianÃ§a nÃ£o-verbal" onMouseEnter={() => softHover()} onClick={() => setSelectedCommunication((v) => v === "nonverbal" ? null : "nonverbal")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "nonverbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ¤</span> <span className="hidden sm:inline">NÃ£o-Verbal</span></button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">AlfabetizaÃ§Ã£o</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="literate" type="button" aria-pressed={selectedLiteracy === "literate"} aria-label="AlfabetizaÃ§Ã£o: crianÃ§a alfabetizada" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "literate" ? null : "literate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "literate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ“–</span> <span className="hidden sm:inline">Alfabetizada</span></button>
-            <button key="preliterate" type="button" aria-pressed={selectedLiteracy === "preliterate"} aria-label="AlfabetizaÃ§Ã£o: crianÃ§a prÃ©-alfabetizada" onMouseEnter={() => softHover()} onClick={() => setSelectedLiteracy((v) => v === "preliterate" ? null : "preliterate")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "preliterate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ‘¶</span> <span className="hidden sm:inline">PrÃ©-Alfab.</span></button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Tipo de avaliaÃ§Ã£o</p>
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button key="diagnostic" type="button" aria-pressed={selectedAssessmentType === "diagnostic"} aria-label="Tipo de avaliaÃ§Ã£o: diagnÃ³stico" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "diagnostic" ? null : "diagnostic")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ”</span> <span className="hidden sm:inline">DiagnÃ³stico</span></button>
-            <button key="monitoring" type="button" aria-pressed={selectedAssessmentType === "monitoring"} aria-label="Tipo de avaliaÃ§Ã£o: monitorizaÃ§Ã£o" onMouseEnter={() => softHover()} onClick={() => setSelectedAssessmentType((v) => v === "monitoring" ? null : "monitoring")} className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}><span aria-hidden="true">ğŸ“Š</span> <span className="hidden sm:inline">MonitorizaÃ§Ã£o</span></button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponibilidade no app</p>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2" role="group" aria-label="Filtrar escalas pela forma de uso">
-            <button
-              type="button"
-              aria-pressed={availabilityMode === "complete"}
-              onMouseEnter={() => softHover()}
-              onClick={() => setAvailabilityMode("complete")}
-              className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "complete" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
-            >
-              <span aria-hidden="true">âœ…</span> Completas
-              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">preenchÃ­veis</span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={availabilityMode === "all"}
-              onMouseEnter={() => softHover()}
-              onClick={() => setAvailabilityMode("all")}
-              className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
-            >
-              <span aria-hidden="true">ğŸ“š</span> Todas
-              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">inclui fichas</span>
-            </button>
-          </div>
-          <p className="text-[10px] leading-relaxed text-muted-foreground">
-            {availabilityMode === "all"
-              ? "Fichas tÃ©cnicas aparecem com identificaÃ§Ã£o clara; nenhuma Ã© apresentada como aplicaÃ§Ã£o completa."
-              : "Mostrando somente instrumentos com aplicaÃ§Ã£o preenchÃ­vel dentro do app."}
-          </p>
-        </div>
-      </section>
-
-      {/* Mascote Inteligente â€” muda com padrÃ£o detectado */}
-      {!hasSearch && (
-        <div className="flex justify-center mt-4">
-          <img
-            src={brandAssets.mascots.superDoctor}
-            alt="Dr. Jadson â€” seu assistente de diagnÃ³stico"
-            className="w-32 h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform"
-            loading="lazy"
-          />
-        </div>
-      )}
-
-      {/* Sintomas populares â€” aparece assim que uma queixa Ã© marcada (nÃ£o exige
-          idade). Muitos sinais em linguagem de pai/mÃ£e, tocÃ¡veis, estilo Lovable. */}
-      {selectedQueixas.length >= 1 && (
-        <div className="mt-4">
-          <PopularSymptomPicker
-            selectedQueixas={selectedQueixas}
-            selectedSignalIds={selectedSignalIds}
-            onToggle={(signalId) => {
-              softTick(); haptic.select();
-              setSelectedSignalIds(prev =>
-                prev.includes(signalId) ? prev.filter(x => x !== signalId) : [...prev, signalId]
-              );
-            }}
-            onClear={() => { softTap(); haptic.tap(); setSelectedSignalIds([]); }}
-            onHover={() => softHover()}
-          />
-        </div>
-      )}
-        </div>
-
-        {/* RIGHT COLUMN â€” Results (lg:col-span-2) */}
-        {hasSearch && (
-      <section ref={resultsSectionRef} className="space-y-3 lg:col-span-2">
-        <div className="flex items-start justify-between gap-3">
-          <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">saÃ­da obrigatÃ³ria</p><h2 className="text-xl text-foreground" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>RecomendaÃ§Ãµes por prioridade clÃ­nica</h2></div>
-          {hasSafeResults && (
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Button variant="outline" size="sm" onClick={copyRecommendation} className="gap-1.5" aria-label="Copiar recomendaÃ§Ã£o para o laudo">
-                <ClipboardCheck className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{copiedRec ? "Copiado!" : "Copiar"}</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5" aria-label="Exportar recomendaÃ§Ã£o em PDF">
-                <FileDown className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">PDF</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5" aria-label="Exportar recomendaÃ§Ã£o em CSV (Excel)">
-                <Table className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">CSV</span>
-              </Button>
-            </div>
-          )}
-        </div>
-        {usingBroadbandFallback && (
-          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100" role="note">
-            Sem instrumento <strong>especÃ­fico</strong> validado para esta combinaÃ§Ã£o nesta idade. Mostrando <strong>triagem ampla</strong> apropriada Ã  idade (instrumentos reais) â€” use como rastreio inicial, nÃ£o como avaliaÃ§Ã£o especÃ­fica.
-          </div>
-        )}
-        <p className="sr-only" role="status" aria-live="polite">
-          {hasSafeResults ? `${refinedMatches.length} escala${refinedMatches.length === 1 ? "" : "s"} segura${refinedMatches.length === 1 ? "" : "s"} encontrada${refinedMatches.length === 1 ? "" : "s"} para este perfil.` : "Nenhuma escala segura para este perfil. Refine idade, queixa ou respondente."}
-        </p>
-
-        {/* SÃ­ntese clÃ­nica do motor de filtragem avanÃ§ada */}
-        {refinedMatches.length > 0 && (
-          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-3 sm:p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">sÃ­ntese clÃ­nica</p>
-            <p className="mt-1 text-sm font-bold text-foreground">{clinicalRecommendation}</p>
-          </div>
-        )}
-
-        {/* RecomendaÃ§Ãµes OPB Estruturadas (queixa Ãºnica) â€” derivadas do ranking
-            clÃ­nico curado; sÃ³ aparecem quando hÃ¡ trio ouro+prata+bronze que ABRE. */}
-        {(() => {
-          if (selectedQueixas.length !== 1) return null;
-          const queixaId = selectedQueixas[0];
-          const rule = getClinicalTiers(queixaId, curatedAgeMonths);
-          if (!rule || !rule.prata || !rule.bronze) return null;
-
-          // Resolve em trÃªs camadas: (1) catÃ¡logo preenchÃ­vel; (2) catÃ¡logo
-          // filtrÃ¡vel canÃ´nico â€” portais de psicoeducaÃ§Ã£o e testes diretos, que
-          // nÃ£o sÃ£o preenchÃ­veis mas ABREM e devem aparecer como recomendaÃ§Ã£o;
-          // (3) catÃ¡logo completo â€” fichas licenciadas (ex.: Vineland-3) como
-          // referÃªncia. Assim nenhum selo curado some silenciosamente o card.
-          const resolveScale = (id: string) =>
-            catalogById.get(id) ?? coreFilterableById.get(id) ?? allScalesById.get(id);
-          const sOuro = resolveScale(rule.ouro);
-          const sPrata = resolveScale(rule.prata);
-          const sBronze = resolveScale(rule.bronze);
-          if (!sOuro || !sPrata || !sBronze) return null;
-
-          // Nota honesta sobre COMO a escala abre, quando nÃ£o Ã© preenchÃ­vel aqui.
-          const refNote = (s: ScaleEntry) => {
-            if (catalogById.has(s.id)) return "";
-            if (s.applicationMode === "psicoeducacao")
-              return " Â· Recurso de psicoeducaÃ§Ã£o â€” abre como conteÃºdo para a famÃ­lia, nÃ£o Ã© uma escala preenchÃ­vel.";
-            if (opensInApp(s))
-              return " Â· Abre como recurso complementar (teste direto/ficha), nÃ£o como escala de itens preenchÃ­vel aqui.";
-            return " Â· Instrumento licenciado/de referÃªncia â€” abre como ficha tÃ©cnica, nÃ£o Ã© preenchÃ­vel no app.";
-          };
-
-          const queixaLabel = queixas.find((q) => q.id === queixaId)?.label ?? queixaId;
-          const ageBand = selectedAge ? faixasEtarias.find((a) => a.id === selectedAge) : null;
-          const ageRangeLabel = ageBand ? ageBand.label : `${rule.ageMin}â€“${rule.ageMax} meses`;
-
-          const recommendations: QueixaAgeRecommendations = {
-            queixa: queixaId,
-            ageRange: ageRangeLabel,
-            ageMin: rule.ageMin,
-            ageMax: rule.ageMax,
-            ouro: buildOPB("ouro", sOuro, rule.reason + refNote(sOuro), queixaLabel),
-            prata: buildOPB("prata", sPrata, OPB_WHY.prata + refNote(sPrata), queixaLabel),
-            bronze: buildOPB("bronze", sBronze, OPB_WHY.bronze + refNote(sBronze), queixaLabel),
-          };
-
-          return (
-            <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 sm:p-6">
-              <OPBRecommendationCards recommendations={recommendations} />
-            </div>
-          );
-        })()}
-
-        {/* Testes Diretos / para Pais â€” sÃ³ quando o motor achou escala segura.
-            CoerÃªncia: nÃ£o sugerir testes quando a saÃ­da Ã© "nenhuma escala segura". */}
-        {hasSafeResults && (
-          <>
-            <DirectTestsRecommender
-              selectedQueixas={selectedQueixas}
-              selectedAge={selectedAge}
-              faixasEtarias={faixasEtarias}
-            />
-            <ParentTestsRecommender
-              selectedQueixas={selectedQueixas}
-              selectedAge={selectedAge}
-              faixasEtarias={faixasEtarias}
-            />
-          </>
-        )}
-
-        {hasSafeResults && (
-          <div className="flex items-center gap-2.5 px-0.5 pt-1">
-            <span className="text-lg" aria-hidden="true">ğŸ¯</span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">PÃ³dio clÃ­nico para este perfil</p>
-              <p className="text-[12px] leading-snug text-muted-foreground">Priorizado por idade, queixa e respondente. Cada card mostra <strong className="text-foreground">ğŸ‡§ğŸ‡· validaÃ§Ã£o no Brasil</strong>, <strong className="text-foreground">â±ï¸ tempo</strong> e <strong className="text-foreground">ğŸ¯ ponto de corte</strong> quando disponÃ­veis â€” toque para abrir.</p>
-            </div>
-          </div>
-        )}
-
-        {!hasSafeResults ? (
-          <Card className="border-2 border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
-            <CardContent className="flex items-start gap-3 p-5 text-sm font-bold text-amber-900 dark:text-amber-100">
-              <ShieldAlert className="h-5 w-5 shrink-0" />
-              <span>{SAFE_EMPTY_MESSAGE}</span>
-            </CardContent>
-          </Card>
-        ) : (
-        <div className="filter-260-grid">
-          {ranking.map((item) => {
-            const reasons = item.hasScale
-              ? getRecommendationReasons(item.scale, selectedQueixas, selectedAge)
-              : [];
-            const ctaLabel = !item.hasScale
-              ? "â€”"
-              : item.implementationStatus === "complete" || (item.scale && opensAsUsableTool(item.scale))
-                ? "Abrir aplicaÃ§Ã£o"
-                : "Abrir uso interno";
-            const cardInner = (
-                <Card className={`filter-260-card group h-full border-border/70 bg-card/90 transition-all duration-200 ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}>
-                  <CardContent className="filter-260-card-content">
-                    <div className="filter-260-medalrow flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`filter-260-medal ${item.tier ? `medal-${item.tier}` : "medal-direto"}`}><span aria-hidden="true">{slotEmoji(item.slot)}</span> {item.slot}</Badge>
-                      {item.clinicalTier && <Badge variant="secondary" className="filter-260-badge text-[10px]">{item.clinicalTier}</Badge>}
-                      {item.confidence !== null && (
-                        <span
-                          className="inline-block rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground"
-                          title="AderÃªncia ao perfil informado â€” combina a forÃ§a do casamento clÃ­nico (idade, queixa, respondente) com quantos filtros vocÃª preencheu. NÃƒO Ã© sensibilidade/especificidade do instrumento."
-                        >
-                          {item.confidence}% aderÃªncia
-                        </span>
-                      )}
-                      {(() => { const lc = licenseChip(item.scale); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}
-                      {(() => { const bv = brValidationChip(item.scale); return bv ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${bv.cls}`}>{bv.label}</span> : null; })()}
-                      {(() => { const t = timeChip(item.scale); return t ? <span className="inline-block rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">â±ï¸ {t}</span> : null; })()}
-                    </div>
-                    {item.warnings.length > 0 && (
-                      <div className="rounded-lg border border-red-300 bg-red-50 px-2 py-1.5 text-[11px] font-bold leading-snug text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-                        {item.warnings.map((w) => <p key={w}>{w}</p>)}
-                      </div>
-                    )}
-                    <div className="filter-260-head">
-                      <div className={`filter-260-symbol bg-gradient-to-br ${item.tone}`}>{icon(item.slot)}</div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="filter-260-title group-hover:text-primary">{item.title}</h3>
-                        <p className="filter-260-subtitle">{item.subtitle}</p>
-                      </div>
-                    </div>
-                    {reasons.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {reasons.map((r) => <Badge key={r} variant="secondary" className="filter-260-badge text-[10px]">{r}</Badge>)}
-                      </div>
-                    )}
-                    {!item.hasScale && (
-                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-snug text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-                        <strong>Por que vazio:</strong> {emptySlotReason(item.slot, { hasQueixa: selectedQueixas.length > 0, hasAge: Boolean(selectedAge), respondente: selectedRespondente, communication: selectedCommunication })}
-                      </div>
-                    )}
-                    {item.hasScale && <div className="filter-260-evidence"><strong>Motivo:</strong> {item.reason}</div>}
-                    {item.hasScale && item.clinicalReason && <div className="filter-260-evidence"><strong>Por que ranqueou:</strong> {item.clinicalReason}</div>}
-                    {item.hasScale && <div className="filter-260-why"><strong>Estado:</strong> {item.state}</div>}
-                    {item.scale?.scoringCutoff && <div className="filter-260-source line-clamp-2"><strong>ğŸ¯ Ponto de corte:</strong> {item.scale.scoringCutoff}</div>}
-                    {item.source && <div className="filter-260-source"><strong>Fonte:</strong> {item.source}</div>}
-                    {(() => { const pm = pubmedRef(item.scale); return pm ? <div className="filter-260-source"><a href={pm.href} target="_blank" rel="noopener noreferrer" className="font-bold text-primary underline underline-offset-2 hover:opacity-80" onClick={(e) => e.stopPropagation()}>ğŸ“„ Estudo (PubMed {pm.pmid})</a></div> : null; })()}
-                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary"><span>{ctaLabel}</span>{item.hasScale && <ArrowRight className="h-4 w-4" />}</div>
-                  </CardContent>
-                </Card>
-            );
-            return item.hasScale ? (
-              <Link key={item.slot} href={item.route} className="block h-full">{cardInner}</Link>
-            ) : (
-              <div key={item.slot} className="block h-full">{cardInner}</div>
-            );
-          })}
-        </div>
-        )}
-
-        {/* ComparaÃ§Ã£o lado a lado â€” 2 a 3 escalas recomendadas, atributo a
-            atributo (idade, respondente, tempo, validaÃ§Ã£o BR, corte, licenÃ§a). */}
-        {hasSafeResults && comparablePool.length >= 2 && (
-          <section className="space-y-2.5 rounded-2xl border border-border/70 bg-card/60 p-3 sm:p-4">
-            <div className="flex items-center gap-2.5 px-0.5">
-              <span className="text-lg" aria-hidden="true">âš–ï¸</span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Comparar lado a lado</p>
-                <p className="text-[12px] leading-snug text-muted-foreground">Escolha 2 a 3 escalas para comparar atributo a atributo (ex.: versÃ£o dos pais Ã— da crianÃ§a).</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {comparablePool.map((s) => {
-                const on = compareIds.includes(s.id);
-                const disabled = !on && compareIds.length >= 3;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => toggleCompare(s.id)}
-                    disabled={disabled}
-                    aria-pressed={on}
-                    onMouseEnter={() => softHover()}
-                    className={`rounded-2xl border px-2.5 py-1.5 text-xs font-bold transition ${on ? "border-primary bg-primary text-primary-foreground shadow-sm" : disabled ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground/60" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
-                  >
-                    {on ? "âœ“ " : ""}{s.name}
-                  </button>
-                );
-              })}
-              {compareIds.length > 0 && (
-                <button type="button" onClick={() => { softTap(); haptic.tap(); setCompareIds([]); }} className="rounded-2xl border border-border bg-background px-2.5 py-1.5 text-xs font-bold text-muted-foreground transition hover:border-primary/40">
-                  limpar
-                </button>
-              )}
-            </div>
-            {comparing.length >= 2 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[420px] border-collapse text-left text-xs">
-                  <thead>
-                    <tr>
-                      <th className="w-28 border-b border-border/60 px-2 py-2 align-bottom text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Atributo</th>
-                      {comparing.map((s) => (
-                        <th key={s.id} className="border-b border-border/60 px-2 py-2 align-bottom">
-                          <span className="block font-black leading-tight text-foreground">{s.name}</span>
-                          <span className="block text-[10px] font-medium leading-tight text-muted-foreground line-clamp-2">{s.fullName}</span>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARE_ATTRS.map((attr) => (
-                      <tr key={attr.label} className="align-top">
-                        <td className="border-b border-border/40 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">{attr.label}</td>
-                        {comparing.map((s) => (
-                          <td key={s.id} className="border-b border-border/40 px-2 py-1.5 text-[11px] leading-snug text-foreground">{attr.get(s)}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="px-0.5 text-[11px] italic text-muted-foreground">Selecione pelo menos 2 escalas acima para ver o quadro comparativo.</p>
-            )}
-          </section>
-        )}
-
-        {hasSafeResults && qualitativeReportParagraphs.length > 0 && (
-          <section className="space-y-3 rounded-2xl border border-primary/20 bg-card/70 p-4 sm:p-5">
-            <div className="flex items-start gap-2.5">
-              <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">relato qualitativo final</p>
-                <h3 className="text-sm font-black text-foreground">InterpretaÃ§Ã£o por extenso do pÃ³dio</h3>
-              </div>
-            </div>
-            <div className="space-y-2.5 text-[12px] leading-relaxed text-foreground">
-              {qualitativeReportParagraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20"><CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100"><strong>Leitura prudente:</strong> {availabilityMode === "all" ? "o modo Todas inclui aplicaÃ§Ãµes e fichas tÃ©cnicas com rota real; confirme o selo antes de abrir." : "o modo Completas mostra apenas instrumentos preenchÃ­veis no app."} O filtro organiza opÃ§Ãµes e nÃ£o substitui avaliaÃ§Ã£o clÃ­nica.</CardContent></Card>
-        </section>
-        )}
-
-        {!hasSearch && (
-        <section className="lg:col-span-2 space-y-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><BookOpen className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">SÃ³ o que abre pra usar</h2><p className="text-xs leading-relaxed text-muted-foreground">O filtro mostra apenas escalas que abrem como ferramenta aplicÃ¡vel â€” itens preenchÃ­veis e cÃ¡lculo de escore. Nada de ficha que sÃ³ dÃ¡ pra ler.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><School className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">Escola aparece</h2><p className="text-xs leading-relaxed text-muted-foreground">O bloco escolar prioriza instrumentos com professor como respondente.</p></CardContent></Card>
-          <Card className="border-dashed"><CardContent className="space-y-2 p-4"><ShieldAlert className="h-5 w-5 text-primary" /><h2 className="text-sm font-black text-foreground">LicenÃ§a visÃ­vel</h2><p className="text-xs leading-relaxed text-muted-foreground">Escalas restritas abrem modo interno com PIN master; quando nÃ£o puder copiar, o app usa adaptaÃ§Ã£o autoral em portuguÃªs brasileiro regional sem reproduzir itens protegidos.</p></CardContent></Card>
-        </div>
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-5 sm:p-6">
-          <CardContent className="space-y-5 p-0">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="text-4xl sm:text-5xl">ğŸ§ </div>
-              <div className="flex-1">
-                <h3 className="font-black text-foreground">Como usar o Filtro em 4 passos</h3>
-                <p className="text-xs text-muted-foreground">Combine os critÃ©rios Ã  esquerda e o filtro monta o ranking de escalas para vocÃª. ğŸ˜‰</p>
-              </div>
-            </div>
-
-            {/* Passo a passo ilustrado */}
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
-                <span className="text-2xl leading-none" aria-hidden="true">1ï¸âƒ£</span>
-                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">ğŸ‚</span> Escolha a <strong className="text-foreground">idade</strong> da crianÃ§a.</p>
-              </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
-                <span className="text-2xl leading-none" aria-hidden="true">2ï¸âƒ£</span>
-                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">ğŸ©º</span> Marque a <strong className="text-foreground">queixa</strong> e os sintomas observados.</p>
-              </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
-                <span className="text-2xl leading-none" aria-hidden="true">3ï¸âƒ£</span>
-                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">ğŸ™‹</span> Diga <strong className="text-foreground">quem vai responder</strong> (crianÃ§a, pais, escola ou clÃ­nico).</p>
-              </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
-                <span className="text-2xl leading-none" aria-hidden="true">4ï¸âƒ£</span>
-                <p className="text-xs leading-relaxed text-muted-foreground"><span className="text-base" aria-hidden="true">ğŸ‘†</span> <strong className="text-foreground">Toque na escala</strong> recomendada para abri-la.</p>
-              </div>
-            </div>
-
-            {/* Legenda didÃ¡tica das medalhas */}
-            <div className="rounded-2xl border border-border/60 bg-background/70 p-3 sm:p-4">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">Como ler o ranking ğŸ…</p>
-              <ul className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                <li><span aria-hidden="true">ğŸ¥‡</span> <strong className="text-foreground">Ouro</strong> â€” a escala principal, que melhor responde Ã  sua dÃºvida.</li>
-                <li><span aria-hidden="true">ğŸ¥ˆ</span> <strong className="text-foreground">Prata</strong> â€” complementa e detalha o que o Ouro nÃ£o cobre.</li>
-                <li><span aria-hidden="true">ğŸ¥‰</span> <strong className="text-foreground">Bronze</strong> â€” uma perspectiva adicional, quando ainda restam dÃºvidas.</li>
-              </ul>
-            </div>
-
-            {/* Aviso prudente, em tom acolhedor */}
-            <p className="flex items-start gap-2 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 px-3 py-2 text-[11px] leading-relaxed text-amber-900 dark:text-amber-100">
-              <span aria-hidden="true">ğŸ’¡</span>
-              <span>O filtro <strong>organiza e sugere</strong> instrumentos â€” ele nunca substitui a avaliaÃ§Ã£o clÃ­nica nem fecha diagnÃ³stico sozinho.</span>
-            </p>
-          </CardContent>
-        </Card>
-        </section>
-        )}
-
-      </div>
-
-      {/* CatÃ¡logo resumido â€” Full Width */}
-      <section className="rounded-3xl border border-border/70 bg-card/70 p-4">
-        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">prÃ©via do catÃ¡logo filtrado</p><h2 className="text-sm font-black text-foreground">{rankedPool.slice(0, 24).length} principais resultados</h2></div><Link href="/escalas-neuropsiquiatria" className="text-xs font-bold text-primary">Ver catÃ¡logo mundial</Link></div>
-        <div className="filter-260-grid compact">
-          {rankedPool.slice(0, 24).map((s) => { const visual = getScaleVisual(s); const Icon = visual.Icon; return (
-            <Link key={s.id} href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`} className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:bg-background hover:shadow-md hover:-translate-y-0.5 active:translate-y-0">
-              <div className="filter-260-card-content compact">
-                <div className="filter-260-head">
-                  <div className={`filter-260-symbol small bg-gradient-to-br ${visual.tone}`}><Icon className="h-4 w-4" strokeWidth={1.9} /></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0"><p className="filter-260-title small">{s.name}</p><p className="filter-260-subtitle line-clamp-2">{s.fullName}</p></div>
-                      <div className="flex shrink-0 flex-col items-end gap-1"><Badge variant="outline" className="filter-260-badge">{isFullApp(s) ? "AplicaÃ§Ã£o completa" : "Ficha tÃ©cnica"}</Badge><Badge variant="outline" className="filter-260-badge">{visual.label}</Badge>{s.id.startsWith("world-") && <Badge variant="outline" className="filter-260-badge">mundial</Badge>}{(() => { const lc = licenseChip(s); return lc ? <span className={`inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${lc.cls}`}>{lc.label}</span> : null; })()}</div>
-                    </div>
-                    <p className="mt-2 text-[11px] text-muted-foreground">{s.respondente.join(" Â· ")} Â· {Math.round(s.ageMin / 12)}â€“{Math.round(s.ageMax / 12)} anos</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ); })}
-        </div>
-      </section>
-    </div>
-  );
-}
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíßöÙ:-jZ.¶›­–)Ş³V–×÷'B²W6TVffV7BÂW6TÖVÖòÂW6U&VbÂW6U7FFRÒg&öÒ'&V7B#°¦–×÷'B²Æ–æ²Òg&öÒ'v÷WFW"#°¦–×÷'B°¢7F—f—G’À¢'&÷u&–v‡BÀ¢v&BÀ¢&'’À¢&öö´÷VâÀ¢'&–âÀ¢6Æ—&ö&D6†V6²À¢f–ÆTF÷vâÀ¢f–ÇFW"À¢w&GVF–öä6À¢†V'EVÇ6RÀ¢ÖVFÂÀ¢ÖW76vT6—&6ÆRÀ¢ÖööâÀ¢–ÆÂÀ¢&÷FFT67rÀ¢66†ööÂÀ¢6V&6‚À¢6†–VÆDÆW'BÀ¢7F"À¢F&ÆRÀ¢W6W'2À¢‚À¢G—RÇV6–FT–6öâÀ§Òg&öÒ&ÇV6–FR×&V7B#°¦–×÷'B²'&æD76WG2Òg&öÒ$ö6ö×öæVçG2ô'&æD76WG2#°¦–×÷'B²&FvRÒg&öÒ$ö6ö×öæVçG2÷V’ö&FvR#°¦–×÷'B²'WGFöâÒg&öÒ$ö6ö×öæVçG2÷V’ö'WGFöâ#°¦–×÷'B²6&BÂ6&D6öçFVçBÒg&öÒ$ö6ö×öæVçG2÷V’ö6&B#°¦–×÷'B²–çWBÒg&öÒ$ö6ö×öæVçG2÷V’ö–çWB#°¦–×÷'B²F—&V7EFW7G5&V6öÖÖVæFW"Òg&öÒ$ö6ö×öæVçG2ôF—&V7EFW7G5&V6öÖÖVæFW"#°¦–×÷'B²&VçEFW7G5&V6öÖÖVæFW"Òg&öÒ$ö6ö×öæVçG2õ&VçEFW7G5&V6öÖÖVæFW"#°¦–×÷'B²õ%&V6öÖÖVæFF–öä6&G2Òg&öÒ$ö6ö×öæVçG2ôõ%&V6öÖÖVæFF–öä6&G2#°¦–×÷'B²ÆÅ66ÆW2Â66ÆW2Âf—†4WF&–2ÂVV—†2ÂTT•„ô4ôô4õ%$Tä4”ÂG—R66ÆTVçG'’Òg&öÒ$öFF÷66ÆTf–ÇFW"#°¦–×÷'B²–çFW&7F—fU66ÆT—FV×2Òg&öÒ$öFFö–çFW&7F—fU66ÆT—FV×2#°¦–×÷'B²–çFW&7F—fU66ÆW2Òg&öÒ$öFFö–çFW&7F—fU66ÆW2#°¦–×÷'B²æ÷&ÒÂwVW75VV—†2ÂwVW75&W7öæFVçFRÒg&öÒ$öFF÷VV—†Ö–ær#°¦–×÷'B²ÖW&vTf–ÇFW&&ÆT6FÆörÒg&öÒ$öFFöf–ÇFW&&ÆT6FÆör#°¦–×÷'B²'V–ÆEWÆöFVE&VfW&Væ6T6FÆötf÷$Òg&öÒ$öFF÷WÆöFVD–ç7G'VÖVçDf–ÇFW$'&–FvR#°¦–×÷'B²æô6÷7Ev÷&ÆE66ÆW2Òg&öÒ$öFFöæô6÷7Ev÷&ÆE66ÆW2#°¦–×÷'BG—R²VV—†vU&V6öÖÖVæFF–öç2Â&V6öÖÖVæFF–öäõ"Òg&öÒ$öFFöf–ÇFW%&V6öÖÖVæFF–öç4õ"#°¦–×÷'B²vWD6Æ–æ–6ÅF–W'2Òg&öÒ$öFFö6Æ–æ–6Å&æ¶–ær#°¦–×÷'B²6VÆV7D7W&FVEF–W'2Â6VÆV7EöF—VÒÒg&öÒ$öFFöf–ÇFW%öF—VÒ#°¦–×÷'B²÷%&VçD6÷’Òg&öÒ$öFFö÷%&VçD6÷’#°¦–×÷'B²÷VÆ%7–×FöÕ–6¶W"Òg&öÒ$ö6ö×öæVçG2õ÷VÆ%7–×FöÕ–6¶W"#°¦–×÷'B²vWDÆÅ6–væÇ4f÷%VV—†Òg&öÒ$öFF÷6–væÇ4æE7–×Fö×2#°¦–×÷'B°¢f–ÇFW%66ÆW5v—F„6Æ–æ–6Å&W67VRÀ¢vWD'&öF&æDfÆÆ&6²À¢vVæW&FT6öçFW‡GVÅ&V6öÖÖVæFF–öâÀ¢vWD–×ÆVÖVçFF–öå7FGW2À¢4dUôTÕE•ôÔU54tRÀ¢G—Rf–ÇFW$6öçFW‡BÀ¢G—R&Vf–æVE66ÆTÖF6‚À§Òg&öÒ$öFFöGfæ6VDf–ÇFW$Æöv–2#°¦–×÷'B²†F–2Òg&öÒ$öÆ–"ö†F–2#°¦–×÷'B²6ögD†÷fW"Â6ögEFÂ6ögEF–6²Òg&öÒ$öÆ–"÷6ögE6÷VæG2#°¦–×÷'B²'V–ÆDf–ÇFW$77bÂ'V–ÆDf–ÇFW%FbÂF÷væÆöD&Æö"ÂG—Rf–ÇFW$W‡÷'E&÷rÂG—Rf–ÇFW$W‡÷'DÖWFÒg&öÒ$öÆ–"öf–ÇFW$W‡÷'B#° §G—R6Æ÷BÒ$÷W&ò"Â%&F"Â$'&öç¦R"Â%FW7FRF—&WFò"Â%VW7F–öì:&–òW66öÆ""Â%6F—6f:|:6òÖVF–6:|:6ò#°§G—Rf–Æ&–Æ—G”ÖöFRÒ&6ö×ÆWFR"Â&ÆÂ#°§G—RF–W"Ò&÷W&ò"Â'&F"Â&'&öç¦R#°§G—R&÷rÒ¶çVÖ&W"Â7G&–ærÂ7G&–ærÂ7G&–ærÂ7G&–ærÂ7G&–ærÂ$÷W&ò"Â%&F"Â$'&öç¦R"Â&VÖ&VB"Â'W&Ö—76–öâ"Â&Æ–æ²%Ó° ¦6öç7B$Tt•5E%•õU$ÂÒ&‡GG3¢ò÷&ræv—F‡V'W6W&6öçFVçBæ6öÒö¦G6öæg&vöæWW&÷VBöÖ–âöFFöæWW&÷VEöW66Æ5öæWW&÷6—V–G&–ö–æfçF–Åóæ§6öâ#°¢òòUU4ÒÓv÷&f—fRæò6L:Æövò6ì;Fæ–6ò†f–ÇFW&&ÆT6FÆörÂ–B&WW6Ó"’(	B6VĞ¢òòGWÆ–6Fâ4õ$Uôd”ÅDU$$ÄUô4DÄôr¬:ò–æ6ÇV’à¦6öç7B4õ$Uôd”ÅDU$$ÄUô4DÄôrÒÖW&vTf–ÇFW&&ÆT6FÆör†ÆÅ66ÆW2“°¦6öç7B$TdU$Tä4UôôäÅ•ô4DÄôrÒ'V–ÆEWÆöFVE&VfW&Væ6T6FÆötf÷$‡66ÆW2“° ¢òò6öæ§VçFò6ì;Fæ–6òFR–G2VR'&VÒ6öÖòf–6†L:–6æ–6f–6F6‚ÖÆÀ¢òò‚övVæW&–2×66ÆRó¦–B&VæFW&—¦VÇVW"W66ÆFRÆÅ66ÆW2(	B:v–æ&VÂ’à¦6öç7BÄÅõ44ÄUô”E2ÒæWr6WB†ÆÅ66ÆW2æÖ‚‡2’Óâ2æ–B’“° ¢ò¢ ¢¢&÷F$TÂ&VÂVÖW66Æ'&R‡:v–æ&VæFW&—¦FFRfW&FFR“ ¢¢â&÷WFRFVF–6Fò‡fÆ–FFò6öçG&çG7‚VÆòwV&BVF—C¦FF(	B$õUDUóCB“°¢¢"âf–6†L:–6æ–6övVæW&–2×66ÆRó¦–BVæFòò–BW†—7FRVÒÆÅ66ÆW2†6F6‚ÖÆÂ“°¢¢2â6L:Æövò×VæF–ÂöW66Æ2ÖæWW&÷6—V–G&–&W66Æ2'v÷&ÆBÒ¢"à¢¢&WF÷&æçVÆÂVæFòW66Æì84ò'&RVÒÇVv"æVæ‡VÒ†FWfR6—"Fòf–ÇG&ò’à¢¢ğ¦gVæ7F–öâ&W6öÇfT&÷WFR‡66ÆS¢66ÆTVçG'’“¢7G&–ærÂçVÆÂ°¢–b‡66ÆRæ&÷WFR’&WGW&â66ÆRæ&÷WFS°¢–b„ÄÅõ44ÄUô”E2æ†2‡66ÆRæ–B’’&WGW&âövVæW&–2×66ÆRòG·66ÆRæ–GÖ°¢–b‡66ÆRæ–Bç7F'G5v—F‚‚'v÷&ÆBÒ"’’&WGW&â"öW66Æ2ÖæWW&÷6—V–G&–#°¢&WGW&âçVÆÃ°§Ğ ¢òò–G2VR&VæFW&—¦ÒÄ”48|84ò”åDU$D•d&VÂVÒövVæW&–2×66ÆRó¦–@¢òò†—FVç2&W7öæL:×fV—2²<:Æ7VÆòFRW66÷&R’(	BfW"vVæW&–2×66ÆRçG7‚â–æ6ÇV’÷0¢òòFö—26W'f÷3¢—FVç2†–çFW&7F—fU66ÆT—FV×2’R'VææW"†–çFW&7F—fU66ÆW2’à¦6öç7B”åDU$5D•dUõ44ÄUô”E2ÒæWr6WB…°¢ââäö&¦V7Bæ¶W—2†–çFW&7F—fU66ÆT—FV×2’À¢ââäö&¦V7Bæ¶W—2†–çFW&7F—fU66ÆW2’À¥Ò“° ¢òò&÷FFVF–6FÒ:v–æ–×ÆVÖVçFFFRfW&FFR†W‚ã¢öÖ6†BÂö72’Âì84òğ¢òò6F6‚ÖÆÂövVæW&–2×66ÆRó¦–B‡VRöFR6W"<;2f–6†L:–6æ–6’æVÒò6L:Æövğ¢òò×VæF–Âà¦gVæ7F–öâ†4FVF–6FVE&÷WFR‡66ÆS¢66ÆTVçG'’“¢&ööÆVâ°¢6öç7B"Ò66ÆRæ&÷WFS°¢&WGW&â€¢"b`¢"ç7F'G5v—F‚‚"övVæW&–2×66ÆRò"’b`¢"ÓÒ"öW66Æ2ÖæWW&÷6—V–G&–"b`¢"ÓÒ"öf–ÇG&ò ¢“°§Ğ ¢òò'&RVÖdU%$ÔTåDU<8dTÂ†Æ–6:|:6ò&VÂ’Âì:6òVæ2VÖf–6†L:–6æ–6à¢òòW6Fòæ÷2,;7GVÆ÷2ô5DFò;6F–òR6öÖò&6RFò&æ¶–ær6Ì:Öæ–6ò7W&Fòà¦gVæ7F–öâ÷Vç45W6&ÆUFööÂ‡66ÆS¢66ÆTVçG'’“¢&ööÆVâ°¢&WGW&â†4FVF–6FVE&÷WFR‡66ÆR’ÇÂ”åDU$5D•dUõ44ÄUô”E2æ†2‡66ÆRæ–B“°§Ğ ¢òò<;2W&ÖæV6VÒæòf–ÇG&òW66Æ2VR%$TÒVÖ:v–æ,;7&–âW66Æ6VÒ&÷F¢òò&VÂ(	B÷R7V¦;¦æ–6&÷F:’ò6L:Æövò×VæF–ÂvVì:—&–6ğ¢òò‚öW66Æ2ÖæWW&÷6—V–G&–’ÂVRì84ò'&RW66ÆW7V<:Öf–6(	B:’&VÖ÷f–Fà¦gVæ7F–öâ÷Vç4–ä‡66ÆS¢66ÆTVçG'’“¢&ööÆVâ°¢6öç7B&÷WFRÒ&W6öÇfT&÷WFR‡66ÆR“°¢–b‚&÷WFR’&WGW&âfÇ6S°¢–b‡&÷WFRÓÓÒ"öW66Æ2ÖæWW&÷6—V–G&–"’&WGW&âfÇ6S°¢&WGW&âG'VS°§Ğ ¢òòÆ–6:|:6ò4ôÕÄUDR&VVæ6Œ:×fVÂFVçG&òFò¢FWfRFW"—FVç2öfÇW†ò–çFW&æğ¢òò&W7öæL:×fVÂR<:Æ7VÆò÷&Vv—7G&òâf–6†2L:–6æ–62Â6L:Æövò×VæF–ÂRW66Æ0¢òòW‡FW&æ2öÆ–6Væ6–F2ì:6òVçG&Òæòf–ÇG&ò&–æ6—Âà¦gVæ7F–öâ—4gVÆÄ‡66ÆS¢66ÆTVçG'’“¢&ööÆVâ°¢òò6–6öVGV6:|:6òò÷'F—2–æf÷&ÖF—f÷2ì84ò<:6òW66Æ2&VVæ6Œ:×fV—2(	B'&VĞ¢òò6öçF\;¦FòFRÆV—GW&Âì:6òVÖÆ–6:|:6ò6öÒ—FVç2¶W66÷&Râf÷&Fòf–ÇG&òà¢–b‡66ÆRæÆ–6F–öäÖöFRÓÓÒ'6–6öVGV66ò"’&WGW&âfÇ6S°¢&WGW&âvWD–×ÆVÖVçFF–öå7FGW2‡66ÆR’ÓÓÒ&6ö×ÆWFR"bb÷Vç45W6&ÆUFööÂ‡66ÆR“°§Ğ ¦gVæ7F–öâVæ—VR‡66ÆW3¢66ÆTVçG'•µÒ’°¢6öç7B6VVâÒæWr6WCÇ7G&–æsâ‚“°¢&WGW&â66ÆW2æf–ÇFW"‚‡2’Óâ6VVâæ†2‡2æ–B’òfÇ6R¢‡6VVâæFB‡2æ–B’ÂG'VR’“°§Ğ ¦gVæ7F–öâvTÖöçF‡2‡&ævS¢7G&–ær’°¢6öç7BÒÒ&ævRç&WÆ6R‚"Â"Â"â"’æÖF6‚‚ò…³Ó’åÒ²•Ç2¥¾(	2ÕÕÇ2¢…³Ó’åÒ²’ò“°¢&WGW&âÒò²Ö–ã¢ÖF‚ç&÷VæB„çVÖ&W"†Õ³Ò’¢"’ÂÖƒ¢ÖF‚ç&÷VæB„çVÖ&W"†Õ³%Ò’¢"’Ò¢²Ö–ã¢ÂÖƒ¢#bÓ°§Ğ  ¦gVæ7F–öâ&÷uFõ66ÆR‡&÷s¢&÷r“¢66ÆTVçG'’°¢6öç7B¶âÂ6–vÆÂæöÖRÂ6FVv÷&–Â–FFRÂ&W7öæFVçFRÂ6VÆòÂöÆ—F–6ÒÒ&÷s°¢6öç7BÒvTÖöçF‡2†–FFR“°¢&WGW&â°¢–C¢v÷&ÆB×&Vv—7G'’ÒGµ7G&–ær†â’çE7F'Bƒ2Â#"—ÖÀ¢æÖS¢6–vÆÀ¢gVÆÄæÖS¢æöÖRÀ¢vTÖ–ã¢æÖ–âÀ¢vTÖƒ¢æÖ‚À¢VV—†3¢wVW75VV—†2†6FVv÷&–ÂG·6–vÆÒG¶æöÖWÖ’À¢&W7öæFVçFS¢wVW75&W7öæFVçFR‡&W7öæFVçFR’À¢&–÷&–FFS¢6VÆòÓÓÒ$'&öç¦R"ò&Ööæ—F÷&—¦6ò"¢'G&–vVÒ"À¢FV×ó¢#>(	3Ö–â"À¢FW67&—F–öã¢W66Æ×VæF–Â6VÒ7W7FòâöÌ:×F–6¢G·öÆ—F–6ÒâW6"6öÖòG&–vVÒöÖöæ—F÷&ÖVçFòÂçVæ6F–vì;77F–6ò—6öÆFòæÀ¢föçFS¢$6L:ÆövòæWW&õVBW66Æ2+rfW&–f–6"föçFRöf–6–ÂçFW2FRVÖ'WF—"—FVç2"À¢Æ–6Væ6W6ó¢öÆ—F–6ÓÓÒ&VÖ&VB"ò&Æ—g&R"¢'&W7G&—F"À¢Ó°§Ğ ¦gVæ7F–öâÖF6„vR‡66ÆS¢66ÆTVçG'’Â6VÆV7FVDvS¢7G&–ærÂçVÆÂ’°¢6öç7BvRÒf—†4WF&–2æf–æB‚†’Óâæ–BÓÓÒ6VÆV7FVDvR“°¢&WGW&âvRÇÂ‡66ÆRævTÖ‚ãÒvRæÖ–âbb66ÆRævTÖ–âÃÒvRæÖ‚“°§Ğ ¦6öç7B4T$4…õ5”äôå”Õ3¢&V6÷&CÇ7G&–ærÂ7G&–æuµÓâÒ°¢G&6ó¢²&FW6VçföÇf–ÖVçFò"Â&Ö&6÷2"Â&&V&R"Â&&V,:¢"Â&Æ7FVçFR"Â'&VÖGW&ò%ÒÀ¢FV¢²&WF—6Öò"Â&WF—7F"Â&W7V7G&ò"Â'6ö6–Â"Â&Ö6†B"Â&ÒÖ6†B%ÒÀ¢FFƒ¢²&F†B"Â&FVæ6ò"Â&FVì:|:6ò"Â&†—W&F—f–FFR"Â&–×VÇ6—f–FFR"Â&FW6FVæ6ò"Â&FW6FVì:|:6ò%ÒÀ¢Æ–æwVvVÓ¢²&fÆ"Â&6ö×Væ–66ò"Â&6ö×Væ–6:|:6ò"Â&föæöÆöv–"Â'fö6'VÆ&–ò"Â'fö6'VÌ:&–ò%ÒÀ¢&VæF—¦vVÓ¢²&W66öÆ"Â&W66öÆ""Â&ÆV—GW&"Â&W67&—F"Â&F—6ÆW†–"Â&ÖFVÖF–6"Â&ÖFVÜ:F–6%ÒÀ¢ç6–VFFS¢²&ÖVFò"Â'æ–6ò"Â':&æ–6ò"Â&fö&–"Â'&Vö7W6ò"Â'&Vö7W:|:6ò%ÒÀ¢FW&W76ó¢²&‡VÖ÷""Â'G&—7FW¦"Â&FW&W76—fò%ÒÀ¢6ö×÷'FÖVçFó¢²&6öæGWF"Â&÷÷6–6ò"Â&÷÷6œ:|:6ò"Â&w&W76—f–FFR"Â&—'&—F&–Æ–FFR%ÒÀ¢6öæó¢²&F÷&Ö—""Â&–ç6öæ–"Â&–ç<;Fæ–"Â'&öæ6ò%ÒÀ¢W–ÆW6–¢²&7&—6R"Â&6öçgVÇ6ò"Â&6öçgVÇ<:6ò%ÒÀ¢3¢²'&Æ—6–"Â&6W&V'&Â"Â&W77F–6–FFR%ÒÀ¢Ö÷F÷#¢²&6ö÷&FVæ6ò"Â&6ö÷&FVæ:|:6ò"Â&Ö÷G&–6–FFR"Â&f–æò"Â&w&÷76%ÒÀ¢6Vç6÷&–Ã¢²'6Vç6÷&–Â"Â&–çFVw&6ò"Â&–çFVw&:|:6ò"Â&†—W'6Vç6–&–Æ–FFR%ÒÀ¢7V–6–F–ó¢²'7V–6–F–ò"Â'7V–<:ÖF–ò"Â&WFöÆW6ò"Â&WFöÆW<:6ò"Â'&—66ò%ÒÀ¢VfV—F÷3¢²&ÖVF–66ò"Â&ÖVF–6:|:6ò"Â'&VÖVF–ò"Â'&VÜ:–F–ò"Â&VfV—Fò6öÆFW&Â"Â&FW6ò"Â&FW<:6ò%ÒÀ§Ó° ¦gVæ7F–öâW‡æE6V&6…FW‡B‡VW'“¢7G&–ær“¢7G&–ær°¢6öç7Bæ÷&ÖÆ—¦VBÒæ÷&Ò‡VW'’“°¢6öç7BW‡G&¢7G&–æuµÒÒµÓ°¢f÷"†6öç7B·VV—†Âv÷&G5Òöbö&¦V7BæVçG&–W2…4T$4…õ5”äôå”Õ2’’°¢–b†æ÷&ÖÆ—¦VBæ–æ6ÇVFW2‡VV—†’ÇÂv÷&G2ç6öÖR‚‡r’Óâæ÷&ÖÆ—¦VBæ–æ6ÇVFW2†æ÷&Ò‡r’’’’°¢W‡G&çW6‚‡VV—†Âââçv÷&G2“°¢Ğ¢Ğ¢&WGW&âG·VW'—ÒG¶W‡G&æ¦ö–â‚""—Ö°§Ğ ¦gVæ7F–öâ–æfW%VV—†4g&öÕ6V&6‚‡VW'“¢7G&–ær“¢7G&–æuµÒ°¢6öç7Bæ÷&ÖÆ—¦VBÒæ÷&Ò‡VW'’“°¢–b†æ÷&ÖÆ—¦VBæÆVæwF‚Â"’&WGW&âµÓ°¢&WGW&âVV—†0¢æf–ÇFW"‚‡’Óâ°¢6öç7Bv÷&G2Ò4T$4…õ5”äôå”Õ5·æ–EÒóòµÓ°¢&WGW&âæ÷&ÖÆ—¦VBæ–æ6ÇVFW2†æ÷&Ò‡æ–B’’ÇÂæ÷&ÖÆ—¦VBæ–æ6ÇVFW2†æ÷&Ò‡æÆ&VÂ’’ÇÂv÷&G2ç6öÖR‚‡r’Óâæ÷&ÖÆ—¦VBæ–æ6ÇVFW2†æ÷&Ò‡r’’“°¢Ò¢æÖ‚‡’Óâæ–B“°§Ğ ¦gVæ7F–öâ–æfW$vTÖöçF‡4g&öÕ6V&6‚‡VW'“¢7G&–ær“¢çVÖ&W"ÂçVÆÂ°¢6öç7Bæ÷&ÖÆ—¦VBÒæ÷&Ò‡VW'’’ç&WÆ6R‚"Â"Â"â"“°¢6öç7BÖöçF‚Òæ÷&ÖÆ—¦VBæÖF6‚‚õÆ"…ÆG³Ã'Ò•Ç2¢†×ÆÖW7ÆÖW6W2•Æ"ò“°¢–b†ÖöçF‚’&WGW&âçVÖ&W"†ÖöçF…³Ò“°¢6öç7B–V"Òæ÷&ÖÆ—¦VBæÖF6‚‚õÆ"…ÆG³Ã'Ò’ƒó¥Ç2¢†Ææ÷Ææ÷2—ÆÆ"’ò“°¢–b‡–V"’&WGW&âçVÖ&W"‡–V%³Ò’¢#°¢&WGW&âçVÆÃ°§Ğ¢òò&VÆ6RFW‡GVÂÆWfR&'W66Æ—g&Râì84òFV6–FRW'F–ì:¦æ6–6Ì:Öæ–6(	@¢òòVæ2&V÷&FVæÂFVçG&òF÷26æF–FF÷2¬:fÆ–FF÷2VÆòÖ÷F÷"Â÷2VR66Ğ¢òò6öÒòFW&ÖòF–v—FFòâ„6VwW&ì:v÷66÷&R6Ì:Öæ–6òfVÒFòGfæ6VDf–ÇFW$Æöv–2â¦gVæ7F–öâ6V&6„&ö÷7B‡66ÆS¢66ÆTVçG'’ÂVW'“¢7G&–ær’°¢6öç7BFö¶Vç2Òæ÷&Ò†W‡æE6V&6…FW‡B‡VW'’’’ç7Æ—B‚õÇ2²ò’æf–ÇFW"„&ööÆVâ“°¢–b‡Fö¶Vç2æÆVæwF‚ÓÓÒ’&WGW&â°¢6öç7BFW‡BÒæ÷&Ò†G·66ÆRææÖWÒG·66ÆRægVÆÄæÖWÒG·66ÆRæFW67&—F–öçÒG·66ÆRçVV—†2æ¦ö–â‚""—ÒG·66ÆRç&W7öæFVçFRæ¦ö–â‚""—ÒG·66ÆRæföçFRÇÂ"'Ö“°¢ÆWBfÇVRÒ°¢f÷"†6öç7BFö¶VâöbFö¶Vç2’–b‡FW‡Bæ–æ6ÇVFW2‡Fö¶Vâ’’fÇVR³Òæ÷&Ò‡66ÆRææÖR’æ–æ6ÇVFW2‡Fö¶Vâ’òr¢#°¢&WGW&âfÇVS°§Ğ ¢òò–FFR&W&W6VçFF—f†ÖW6W2’Ff—†6VÆV6–öæF(	BW6F&6öç7VÇF"ğ¢òò&æ¶–ær6Ì:Öæ–6ò7W&Fò†6Æ–æ–6Å&æ¶–ær’âçVÆÂVæFò–FFRì:6òfö’W66öÆ†–Fà¦gVæ7F–öâvTÖöçF‡4g&öÔ&æB‡6VÆV7FVDvS¢7G&–ærÂçVÆÂ“¢çVÖ&W"ÂçVÆÂ°¢6öç7B&æBÒ6VÆV7FVDvRòf—†4WF&–2æf–æB‚†’Óâæ–BÓÓÒ6VÆV7FVDvR’¢çVÆÃ°¢&WGW&â&æBòÖF‚ç&÷VæB‚†&æBæÖ–â²&æBæÖ‚’ò"’¢çVÆÃ°§Ğ ¢òò&–ÖV—&g&6RFRVÖFW67&œ:|:6ò†6÷'FVÒVV'&FRÆ–æ†÷RöçFò’à¦gVæ7F–öâf—'7E6VçFVæ6R‡FW‡Có¢7G&–ær“¢7G&–ær°¢&WGW&â‡FW‡Bóò""’ç7Æ—B‚õµÆâåÒò•³ÒçG&–Ò‚“°§Ğ ¦6öç7B$U5ôÄ$TÃ¢&V6÷&CÇ7G&–ærÂ7G&–æsâÒ°¢—3¢&÷2—2ö7V–FF÷&W2"À¢6Æ–æ–6ó¢&ò6Ì:Öæ–6ò"À¢&öfW76÷#¢&ò&öfW76÷""À¢WFöÆ–6fVÃ¢&ò,;7&–òFöÆW66VçFR"À¢7&–æ6¢&7&–ì:v"À¢FW7FUöF—&WFõö7&–æ6¢&7&–ì:v‡FW7FRF—&WFò’"À§Ó° ¢òòÖöçFVÒ6&Bõ"‡&VçBÖg&–VæFÇ’’âW6òFW‡Fò7W&Fò:Ü:6ò†÷%&VçD6÷’¢òòVæFòW†—7FS²6Vì:6òÂFW&—fVÒfÆÆ&6²†öæW7FòF÷2FF÷2F,;7&–W66Æà¢òòv‡•W6VgVÂFòõU$òfVÒF&Vw&‡&6–öæÂ6öçFW‡GVÂ“²$Dô%$ôå¤R&VfW&VÒğ¢òòFW‡Fò7W&FòFW66ÆR6VÒ&òvVì:—&–6ò76Fòà¦gVæ7F–öâ'V–ÆDõ"€¢6VÃ¢&÷W&ò"Â'&F"Â&'&öç¦R"À¢66ÆS¢66ÆTVçG'’À¢v‡•W6VgVÄfÆÆ&6³¢7G&–ærÀ¢VV—†Æ&VÃ¢7G&–æp¢“¢&V6öÖÖVæFF–öäõ"°¢6öç7B6÷’Ò÷%&VçD6÷•·66ÆRæ–EÓ°¢6öç7B&W7Ò66ÆRç&W7öæFVçFRæÖ‚‡"’Óâ$U5ôÄ$TÅ·%Òóò"’æf–ÇFW"„&ööÆVâ’æ¦ö–â‚"Â"’ÇÂ&òfÆ–F÷"#°¢&WGW&â°¢6VÂÀ¢66ÆT–C¢66ÆRæ–BÀ¢66ÆTæÖS¢66ÆRææÖRÀ¢F–ÖS¢66ÆRçFV×òÇÂ.(	B"À¢Ö–åVW7F–öã¢6÷“òæÖ–åVW7F–öâÇÂf—'7E6VçFVæ6R‡66ÆRæFW67&—F–öâ’ÇÂ66ÆRægVÆÄæÖRÇÂ66ÆRææÖRÀ¢&VçDW†×ÆS ¢6÷“òç&VçDW†×ÆRÇÀ¢òòW†V×Æò6öæ7&WFòVÒÆ–æwVvVÒFR—2†VF—F÷&–W66ÆÖÖW66Æ##bÓr“ ¢òòòVRö'6W'f"æòF–F–ò&W7öæFW"(	BÖVÆ†÷"VRòfÆÆ&6²vVì:—&–6òà¢66ÆRæW†V×Æõ—2ÇÀ¢Æ–6F6öÒG·&W7Ó²÷2—FVç2fÆ–ÒG·VV—†Æ&VÂçFôÆ÷vW$66R‚—ÒFRf÷&Ö§W7FF:f—†WL:&–F7&–ì:væÀ¢v‡•W6VgVÃ¢6VÂÓÓÒ&÷W&ò"òv‡•W6VgVÄfÆÆ&6²¢6÷“òçv‡•W6VgVÂÇÂv‡•W6VgVÄfÆÆ&6²À¢Ó°§Ğ ¦6öç7Bõ%õt…“¢&V6÷&CÂ'&F"Â&'&öç¦R"Â7G&–æsâÒ°¢&F¢$6ö×ÆVÖVçFòõU$ò6öÒ÷WG&ÖöFÆ–FFRÂ&W7öæFVçFR÷RFöÜ:Öæ–òFRfÆ–:|:6òâ"À¢'&öç¦S¢%W'7V7F—fF–6–öæÂÂ&ögVæFÖVçFò÷RÖöæ—F÷&—¦:|:6òVæFòõU$ò²$DFV—†ÒL;§f–F2â"À§Ó° ¦6öç7BdÄ4…õ5Dõ$tUô´U’Ò&æWW&÷VC¦f–ÇFW"ÖfÆ6‚#° ¦gVæ7F–öâ—4fÆ6…&÷WFR‚“¢&ööÆVâ°¢–b‡G—Vöbv–æF÷rÓÓÒ'VæFVf–æVB"’&WGW&âfÇ6S°¢6öç7B&rÒG·v–æF÷ræÆö6F–öâæ†6‚ÇÂ"'ÒG·v–æF÷ræÆö6F–öâç6V&6‚ÇÂ"'Ö°¢òò&÷Föf–ÇG&òÖW66Æ2‚%G&–"6VÒ6F7G&""ÂæòÖVçR’:’4TÕ$RVl:¦ÖW& ¢òòò6Ì:Öæ–6òVRW66öÆ†RG&–"6VÒ6F7G&"ì:6òFWfRFW"æFW'6—7F–FòVĞ¢òòÆö6Å7F÷&vRâ6VÒW7FÆ–æ†òÆ–æ²6:Öæòf–ÇG&òæ÷&ÖÂ4ôÒW'6—7L:¦æ6–¢òòÆ–vF(	BVV'&æFò&öÖW76FR'6VÒ6F7G&ò"‡&—f6–FFRôÄuB’âòÖöFğ¢òòfÆ6‚W6Væ26W76–öå7F÷&vRR:’vFòò6—"FFVÆà¢–b‚õÂöf–ÇG&òÖW66Æ2ƒó¥²óò2e×ÂB’òçFW7B‡&r’’&WGW&âG'VS°¢&WGW&âõ³òeÖÖöFSÖfÆ6‚ƒó¢gÂB’òçFW7B‡&r“°§Ğ ¢òòföçFR9¤ä”4FRfW&FFS¢&öFòÖ÷F÷"6Ì:Öæ–6ò†Gfæ6VDf–ÇFW$Æöv–2’6ö'&Rğ¢òò6L:ÆövòRÂFVçG&òF÷26æF–FF÷26VwW&÷2ÂÆ–6ò&VÆ6RFR'W66à¢òòöFR&WF÷&æ"µÒ(	BåTä46’&ò6L:Æövò–çFV—&ò‡6VÒfÆÆ&6²W&–v÷6ò’à¦gVæ7F–öâ&æµ6fVÇ’†6FÆös¢66ÆTVçG'•µÒÂ7Gƒ¢f–ÇFW$6öçFW‡BÂVW'“¢7G&–ær“¢&Vf–æVE66ÆTÖF6…µÒ°¢6öç7BVæ—ÒVæ—VR†6FÆör“°¢ÆWBÖF6†W2Òf–ÇFW%66ÆW5v—F„6Æ–æ–6Å&W67VR‡Væ—Â7G‚“°¢–b‡VW'’çG&–Ò‚’’°¢òò'W66d”ÅE$FRfW&FFS¢VçG&R÷26æF–FF÷26VwW&÷2ÂÖçL:–Ò<;2÷2VR66Ğ¢òò6öÒòFW&ÖòF–v—FFòâ6RæF66"†W‚ã¢W'&òFRF–v—F:|:6ò’Âì:6òW7f¦–(	@¢òò6’&ò6öæ§VçFò6VwW&ò6ö×ÆWFòÂ&V÷&FVæFò÷"&VÆWl:&æ6–à¢6öç7B66÷&VBÒÖF6†W2æÖ‚†Ò’Óâ‡²ÒÂ#¢6V&6„&ö÷7B†Òç66ÆRÂVW'’’Ò’“°¢6öç7Bç”ÖF6‚Ò66÷&VBç6öÖR‚‡‚’Óâ‚æ"â“°¢6öç7B¶WBÒç”ÖF6‚ò66÷&VBæf–ÇFW"‚‡‚’Óâ‚æ"â’¢66÷&VC°¢ÖF6†W2Ò¶WBç6÷'B‚†Â"’Óâ"æÒç&VÆWfæ6U66÷&R²"æ"Ò†æÒç&VÆWfæ6U66÷&R²æ"’’æÖ‚‡‚’Óâ‚æÒ“°¢Ğ¢òòçVæ6F"f¦–ò&VÖVV—†¶–FFR&VÃ¢6Rì:6òŒ:–ç7G'VÖVçFòW7V<:Öf–6ğ¢òò6VwW&òÂöfW&V6R&7G&V–òÕÄò&÷&–Fò:–FFR†W66Æ2&V—2’Â&÷GVÆFòà¢–b†ÖF6†W2æÆVæwF‚ÓÓÒbb†7G‚çVV—†2æÆVæwF‚âÇÂ7G‚ævT&æBÒçVÆÂÇÂ7G‚ævTÖöçF‡2ÒçVÆÂ’’°¢ÖF6†W2ÒvWD'&öF&æDfÆÆ&6²‡Væ—Â7G‚“°¢Ğ¢&WGW&âÖF6†W3°§Ğ ¦gVæ7F–öâF–W$g&öÕ6Æ÷B‡6Æ÷C¢6Æ÷B“¢F–W"ÂçVÆÂ°¢–b‡6Æ÷BÓÓÒ$÷W&ò"’&WGW&â&÷W&ò#°¢–b‡6Æ÷BÓÓÒ%&F"’&WGW&â'&F#°¢–b‡6Æ÷BÓÓÒ$'&öç¦R"’&WGW&â&'&öç¦R#°¢&WGW&âçVÆÃ°§Ğ ¢òòÆ&VÂ&VfÆV7G2F†RöF—VÒ6Æ÷BÂæ÷BF†R66÷&RÖ&6VBF–W"Â6òF†R&FvRöà¢òòF†R÷W&ò6&BÇv—2&VG2#*¢Æ–æ†6Ì:Öæ–6"&Vv&FÆW72öbF†R&r66÷&Rà¦6öç7B4ÄõEô4Ä”ä”4ÅôÄ$TÃ¢'F–ÃÅ&V6÷&CÅ6Æ÷BÂ7G&–æsãâÒ°¢$÷W&ò#¢#*¢Æ–æ†6Ì:Öæ–6"À¢%&F#¢&6ö×ÆVÖVçF""À¢$'&öç¦R#¢&ö–òF–6–öæÂ"À¢%FW7FRF—&WFò#¢'FW7FRF—&WFò"À¢%VW7F–öì:&–òW66öÆ"#¢'W'7V7F—fW66öÆ""À§Ó° ¢òò6VÆòFRÆ–6Vì:vFò–ç7G'VÖVçFò(	BFV—†W‡Ì:Ö6—Fòò6Ì:Öæ–6ò6RW66Æ¢òò&V6öÖVæFF:’w&GV—FÂWF÷&Â„G"â¦G6öâ’÷RÆ–6Væ6–Fö6öÖW&6–Ââv÷&¢òòVRòf–ÇG&òæöÖV––ç7G'VÖVçF÷2G,:6òÖ÷W&òÆ–6Væ6–F÷2„FVçfW"Â4$4Î(
+b’À¢òò÷&–vVÒöÆ–6Vì:v&V6—6f–6"f—<:×fVÂVÒ6F6&Bà¦gVæ7F–öâÆ–6Vç6T6†—‡66ÆSó¢66ÆTVçG'’“¢²Æ&VÃ¢7G&–æs²6Ç3¢7G&–ærÒÂçVÆÂ°¢6öç7BÆ–2Ò66ÆSòæÆ–6Væ6W6ó°¢–b‚Æ–2’&WGW&âçVÆÃ°¢–b†Æ–2ÓÓÒ&Æ—g&R"¢&WGW&â²Æ&VÃ¢$w&GV—F"Â6Ç3¢&&÷&FW"ÖVÖW&ÆBÓ3&rÖVÖW&ÆBÓSFW‡BÖVÖW&ÆBÓƒF&³¦&÷&FW"ÖVÖW&ÆBÓƒF&³¦&rÖVÖW&ÆBÓ“SóCF&³§FW‡BÖVÖW&ÆBÓ#"Ó°¢–b†Æ–2ÓÓÒ&WF÷&Â"¢&WGW&â²Æ&VÃ¢$WF÷&Â"Â6Ç3¢&&÷&FW"Ö–æF–vòÓ3&rÖ–æF–vòÓSFW‡BÖ–æF–vòÓƒF&³¦&÷&FW"Ö–æF–vòÓƒF&³¦&rÖ–æF–vòÓ“SóCF&³§FW‡BÖ–æF–vòÓ#"Ó°¢&WGW&â²Æ&VÃ¢$Æ–6Væ6–F"Â6Ç3¢&&÷&FW"ÖÖ&W"Ó3&rÖÖ&W"ÓSFW‡BÖÖ&W"Ó“F&³¦&÷&FW"ÖÖ&W"ÓƒF&³¦&rÖÖ&W"Ó“SóCF&³§FW‡BÖÖ&W"Ó#"Ó°§Ğ ¢òòTÄ”d”48|84ò4Ì8Ôä”4(	B6–æÂFRfÆ–F:|:6ò'&6–ÆV—&FW&—fFòFò6×ò$TÀ¢òòfÆ–F6ô'&6–Æ†çVæ6–çfVçFFò’â&VÒæWW&÷VF–G&æò'&6–ÂÂ6&W"6P¢òòW66ÆFVÒFF:|:6ò÷fÆ–F:|:6òæ6–öæÂ:’ò&–æ6—ÂÖ&6F÷"FR6öæf–ì:và¢òòW<:¦æ6–Fò6×òì84òf—&'6VÒfÆ–F:|:6ò#¢6–×ÆW6ÖVçFRì:6òW†–&–Ö÷2ò6VÆğ¢òò†ÖWFFFòW6VçFR(šW66Æì:6òfÆ–FF’(	BWf—FW66öæFW"&öç2–ç7G'VÖVçF÷2à¦gVæ7F–öâ'%fÆ–FF–öä6†—‡66ÆSó¢66ÆTVçG'’“¢²Æ&VÃ¢7G&–æs²6Ç3¢7G&–ærÒÂçVÆÂ°¢6öç7BbÒ66ÆSòçfÆ–F6ô'&6–ÃòçG&–Ò‚“°¢–b‚b’&WGW&âçVÆÃ°¢6öç7B†VBÒæ÷&Ò‡b’ç7Æ—B‚õµÇ5ÂŞ(	EÒ²ò•³Ó°¢–b††VBÓÓÒ'6–Ò"¢&WGW&â²Æ&VÃ¢/	øz	ø{rfÆ–FFæò'&6–Â"Â6Ç3¢&&÷&FW"ÖVÖW&ÆBÓ3&rÖVÖW&ÆBÓSFW‡BÖVÖW&ÆBÓƒF&³¦&÷&FW"ÖVÖW&ÆBÓƒF&³¦&rÖVÖW&ÆBÓ“SóCF&³§FW‡BÖVÖW&ÆBÓ#"Ó°¢–b††VBÓÓÒ'&6–Â"¢&WGW&â²Æ&VÃ¢/	øz	ø{rFF:|:6ò&6–Â„%"’"Â6Ç3¢&&÷&FW"ÖÖ&W"Ó3&rÖÖ&W"ÓSFW‡BÖÖ&W"Ó“F&³¦&÷&FW"ÖÖ&W"ÓƒF&³¦&rÖÖ&W"Ó“SóCF&³§FW‡BÖÖ&W"Ó#"Ó°¢–b††VBÓÓÒ&æò"¢&WGW&â²Æ&VÃ¢%6VÒfÆ–F:|:6ò%""Â6Ç3¢&&÷&FW"×6ÆFRÓ3&r×6ÆFRÓSFW‡B×6ÆFRÓcF&³¦&÷&FW"×6ÆFRÓsF&³¦&r×6ÆFRÓ“óCF&³§FW‡B×6ÆFRÓ3"Ó°¢òòWF÷&Âòö'6W'f6–öæÂò÷WG&÷2FW‡F÷27W&F÷2(	BÖ÷7G&ò,;7&–ò,;7GVÆòà¢&WGW&â²Æ&VÃ¢	øz	ø{rG·bæÆVæwF‚â#bòbç6Æ–6RƒÂ#b’².(
+b"¢gÖÂ6Ç3¢&&÷&FW"Ö–æF–vòÓ3&rÖ–æF–vòÓSFW‡BÖ–æF–vòÓƒF&³¦&÷&FW"Ö–æF–vòÓƒF&³¦&rÖ–æF–vòÓ“SóCF&³§FW‡BÖ–æF–vòÓ#"Ó°§Ğ ¢òòFV×òFRÆ–6:|:6ò6öÖò6†—7W'Fò(	B6&vFò–ç7G'VÖVçFòçVÒ&VÆæ6Rà¦gVæ7F–öâF–ÖT6†—‡66ÆSó¢66ÆTVçG'’“¢7G&–ærÂçVÆÂ°¢6öç7BBÒ66ÆSòçFV×óòçG&–Ò‚“°¢&WGW&âBbbBÓÒ.(	B"òB¢çVÆÃ°§Ğ ¢òòÆ–æ²V$ÖVB'F—"Fò6×ò$TÂV&ÖVD–F†W‚ã¢%Ô”B#CC##cC‚"’âòFFğ¢òò¬:W†—7FRæò6L:ÆövòÖ2çVæ6W&W†–&–Fòæòf–ÇG&ò(	B&VÒæWW&÷VF–G&À¢òòöFW"'&—"òW7GVFòFRfÆ–F:|:6ò:’òVR6W&VÖ'&V6öÖVæF:|:6ò"FRVÖ¢òòFV6—<:6òVÖ&6Fâ<;2&WF÷&æÆ–æ²VæFòŒ:VÒÔ”BçVÜ:—&–6ò&VÂà¦gVæ7F–öâV&ÖVE&Vb‡66ÆSó¢66ÆTVçG'’“¢²Ö–C¢7G&–æs²‡&Vc¢7G&–ærÒÂçVÆÂ°¢6öç7B&rÒ66ÆSòçV&ÖVD–CòçG&–Ò‚“°¢–b‚&r’&WGW&âçVÆÃ°¢6öç7BF–v—G2Ò&ræÖF6‚‚õÆG³BÇÒò“òå³Ó°¢–b‚F–v—G2’&WGW&âçVÆÃ°¢&WGW&â²Ö–C¢F–v—G2Â‡&Vc¢‡GG3¢ò÷V&ÖVBææ6&’ææÆÒææ–‚æv÷bòG¶F–v—G7ÒöÓ°§Ğ ¢òòFÆ†÷26Ì:Öæ–6÷26ö×Vç2(	BF÷VR&VVæ6†R–FFR²VV—†R¬:G&¢ò;6F–òà¢òò&VGW¢g&–<:|:6òFò&–ÖV—&òW6òRf¢òf–ÇG&ò&V6W"&W7W'Fò"à¦6öç7BT”4µõ5D%E3¢²VÖö¦“¢7G&–æs²Æ&VÃ¢7G&–æs²7V#¢7G&–æs²vS¢7G&–æs²VV—†3¢7G&–æuµÒÕµÒÒ°¢²VÖö¦“¢.)ª"ÂÆ&VÃ¢%DD‚"Â7V#¢#n(	3"æ÷2"ÂvS¢#bÓ&"ÂVV—†3¢²'FF‚%ÒÒÀ¢²VÖö¦“¢/	úz’"ÂÆ&VÃ¢%DT"Â7V#¢#.(	3Bæ÷2"ÂvS¢#"ÓF"ÂVV—†3¢²'FV%ÒÒÀ¢²VÖö¦“¢/	øË"ÂÆ&VÃ¢$G&6ò"Â7V#¢#(	3"æ÷2"ÂvS¢#Ó&"ÂVV—†3¢²&G&6ò%ÒÒÀ¢²VÖö¦“¢/	øÉ’"ÂÆ&VÃ¢%6öæò"Â7V#¢#N(	3bæ÷2"ÂvS¢#BÓf"ÂVV—†3¢²'6öæò%ÒÒÀ¢²VÖö¦“¢/	ù*Ò"ÂÆ&VÃ¢$ç6–VFFR"Â7V#¢#.(	3‚æ÷2"ÂvS¢#"Ó†"ÂVV—†3¢²&ç6–VFFR%ÒÒÀ¥Ó° ¦gVæ7F–öâ&V2‡6Æ÷C¢6Æ÷BÂÖF6ƒ¢&Vf–æVE66ÆTÖF6‚ÂVæFVf–æVBÂ&V6öã¢7G&–ærÂFöæS¢7G&–ær’°¢6öç7B66ÆRÒÖF6ƒòç66ÆS°¢òòW7FFò„ôäU5Dòf–æFòFòÖ÷F÷"‡&Wâ2“¢Æ–6:|:6ò6ö×ÆWFg2f–6†g2W‡FW&æòà¢6öç7B7FFRÒÖF6€¢òÖF6‚æ–×ÆVÖVçFF–öäÆ&VÀ¢¢%6VÒ÷:|:6ò6ö×ÆVÖVçF"6VwW&&W7FRW&f–Ââ#°¢&WGW&â°¢6Æ÷BÀ¢F–W#¢F–W$g&öÕ6Æ÷B‡6Æ÷B’À¢òò,;7&–W66Æ‡VæFòŒ:ÖF6‚’(	BW6F&FW&—f"÷2Ö÷F—f÷26VĞ¢òò&Vf¦W"'W66g,:v–Â÷"æöÖRæòööÂà¢66ÆRÀ¢òòFöFW66Æ&V6öÖVæFF'&RVÖ:v–æ&VÃ¢Æ–6:|:6ò6ö×ÆWFÂf–6†¢òòL:–6æ–6‚övVæW&–2×66ÆRó¦–B’÷R6L:Æövò×VæF–ÂâçVæ6Ö—2òÆö÷öf–ÇG&òà¢&÷WFS¢66ÆRò‡&W6öÇfT&÷WFR‡66ÆR’óòövVæW&–2×66ÆRòG·66ÆRæ–GÖ’¢"öf–ÇG&ò"À¢F—FÆS¢66ÆSòææÖRÇÂ%6VÒW66Æ6VwW&"À¢7V'F—FÆS¢66ÆSòægVÆÄæÖRÇÂ‡6Æ÷BÓÓÒ$÷W&ò"ò%6VÒ–ç7G'VÖVçFòG,:6òÖ÷W&ò&W7FRW&f–Â"¢%&Vf–æR–FFRÂVV—†÷R&W7öæFVçFR"’À¢&V6öâÀ¢7FFRÀ¢6÷W&6S¢66ÆSòæföçFRÀ¢FöæRÀ¢†566ÆS¢&ööÆVâ‡66ÆR’À¢òò6:ÖFFòÖ÷F÷"FRf–ÇG&vVÒfì:vF†Gfæ6VDf–ÇFW$Æöv–2¢6Æ–æ–6ÅF–W#¢ÖF6‚ò…4ÄõEô4Ä”ä”4ÅôÄ$TÅ·6Æ÷EÒóò6Æ÷BçFôÆ÷vW$66R‚’’¢çVÆÂÀ¢6öæf–FVæ6S¢ÖF6ƒòæ6öæf–FVæ6TÆWfVÂóòçVÆÂÀ¢v&æ–æw3¢ÖF6ƒòçv&æ–ætfÆw2óòµÒÀ¢6Æ–æ–6Å&V6öã¢ÖF6ƒòæ6Æ–æ–6Å&V6öâóòçVÆÂÀ¢–×ÆVÖVçFF–öå7FGW3¢ÖF6ƒòæ–×ÆVÖVçFF–öå7FGW2óòçVÆÂÀ¢—4'&öF&æDfÆÆ&6³¢ÖF6ƒòæ—4'&öF&æDfÆÆ&6²óòfÇ6RÀ¢Ó°§Ğ ¢òò6Æ÷Bf¦–ò„ôäU5Dó¢W‡Æ–6ò6Ì:Öæ–6òõ"TRVVÆRÇVv"Fò;6F–òf–6÷P¢òò6VÒW66ÆRòVR§W7F"(	BVÒfW¢FR7VÖ—"÷RÖ÷7G&"6&BvVì:—&–6òà¦gVæ7F–öâV×G•6Æ÷E&V6öâ€¢6Æ÷C¢6Æ÷BÀ¢6VÃ¢²†5VV—†¢&ööÆVã²†4vS¢&ööÆVã²&W7öæFVçFS¢7G&–ærÂçVÆÃ²6öÖ×Væ–6F–öã¢'fW&&Â"Â&æöçfW&&Â"ÂçVÆÂĞ¢“¢7G&–ær°¢–b‡6Æ÷BÓÓÒ%VW7F–öì:&–òW66öÆ""’°¢–b‡6VÂç&W7öæFVçFRbb6VÂç&W7öæFVçFRÓÒ'&öfW76÷""¢&WGW&â$æVæ‡VÒVW7F–öì:&–ò6öÒò&öfW76÷"6öÖò&W7öæFVçFR&FR6öÒòf–ÇG&òGVÂ(	B&VÖ÷fòf–ÇG&ò(	ÅVVÒ&W7öæF^(	Ò&–æ6ÇV—"W'7V7F—fW66öÆ"â#°¢&WGW&â%6VÒVW7F–öì:&–òW66öÆ"‡&öfW76÷"’&VVæ6Œ:×fVÂ&W7F–FFR÷VV—†âW'7V7F—fW66öÆ"öFRVçG&"÷"&VÆFòÆ—g&Râ#°¢Ğ¢–b‡6Æ÷BÓÓÒ%FW7FRF—&WFò"’°¢–b‡6VÂæ6öÖ×Væ–6F–öâÓÓÒ&æöçfW&&Â"¢&WGW&â$æVæ‡VÒFW7FRÆ–6FòF—&WFÖVçFR6öÒ7&–ì:v:’6ö×L:×fVÂ6öÒW&f–Âì:6ò×fW&&ÂV’(	B&–÷&—¦R–ç7G'VÖVçF÷2&W7öæF–F÷2÷"—2ö6Ì:Öæ–6òâ#°¢&WGW&â$æVæ‡VÒFW7FRÆ–6FòF—&WFÖVçFR6öÒ7&–ì:v&W7FRW&f–Â†6ö×VÒVæFòVV—†FWVæFRFò&VÆFòFR—2öW66öÆ÷R7&–ì:v:’×V—Fòæ÷f’â#°¢Ğ¢–b‡6Æ÷BÓÓÒ$÷W&ò"’°¢–b‚6VÂæ†5VV—†bb6VÂæ†4vR¢&WGW&â%6VÆV6–öæR–FFRRö÷RVV—†&òf–ÇG&òVæ6öçG&"ò–ç7G'VÖVçFò&–æ6—Ââ#°¢&WGW&â$æVæ‡VÒ–ç7G'VÖVçFòG,:6òÖ÷W&ò&VVæ6Œ:×fVÂ7'W¦–FFR²VV—†²&W7öæFVçFR6VÆV6–öæF÷2â×Æ–Rf—†WL:&–÷R&VÖ÷fòf–ÇG&òFR&W7öæFVçFR&fW"Ö—2÷:|;VW2Æ–<:fV—2â#°¢Ğ¢&WGW&â%6VÒ6ö×ÆVÖVçF"6VwW&òÌ:–ÒF÷2¬:Æ—7FF÷2&W7FRW&f–Â(	B÷2–ç7G'VÖVçF÷26–Ö6ö'&VÒòW76Væ6–ÂÂ÷RfÇFÒW66Æ2&VVæ6Œ:×fV—2fÆ–FF2æW7Ff—†â#°§Ğ ¦gVæ7F–öâ–6öâ‡6Æ÷C¢6Æ÷B’°¢–b‡6Æ÷BÓÓÒ$÷W&ò"’&WGW&âÄv&B6Æ74æÖSÒ&‚ÓRrÓR"óã°¢–b‡6Æ÷BÓÓÒ%&F"’&WGW&âÄÖVFÂ6Æ74æÖSÒ&‚ÓRrÓR"óã°¢–b‡6Æ÷BÓÓÒ$'&öç¦R"’&WGW&âÅ7F"6Æ74æÖSÒ&‚ÓRrÓR"óã°¢–b‡6Æ÷BÓÓÒ%FW7FRF—&WFò"’&WGW&âÄ6Æ—&ö&D6†V6²6Æ74æÖSÒ&‚ÓRrÓR"óã°¢&WGW&âÅ66†ööÂ6Æ74æÖSÒ&‚ÓRrÓR"óã°§Ğ ¢òòVÖö¦’F–L:F–6òFÖVFÆ†(	B&Vf÷,:vf—7VÆÖVçFR&–÷&–FFRFò&æ¶–ærà¦gVæ7F–öâ6Æ÷DVÖö¦’‡6Æ÷C¢6Æ÷B“¢7G&–ær°¢–b‡6Æ÷BÓÓÒ$÷W&ò"’&WGW&â/	úXr#°¢–b‡6Æ÷BÓÓÒ%&F"’&WGW&â/	úX‚#°¢–b‡6Æ÷BÓÓÒ$'&öç¦R"’&WGW&â/	úX’#°¢–b‡6Æ÷BÓÓÒ%FW7FRF—&WFò"’&WGW&â/	úy"#°¢–b‡6Æ÷BÓÓÒ%VW7F–öì:&–òW66öÆ""’&WGW&â/	øú²#°¢–b‡6Æ÷BÓÓÒ%6F—6f:|:6òÖVF–6:|:6ò"’&WGW&â/	ù(¢#°¢&WGW&â/	øøR#°§Ğ ¦–çFW&f6R66ÆUf—7VÂ°¢Æ&VÃ¢7G&–æs°¢–6öã¢ÇV6–FT–6öã°¢FöæS¢7G&–æs°§Ğ ¦gVæ7F–öâvWE66ÆUf—7VÂ‡66ÆS¢66ÆTVçG'’“¢66ÆUf—7VÂ°¢6öç7BBÒæ÷&Ò†G·66ÆRææÖWÒG·66ÆRægVÆÄæÖWÒG·66ÆRæFW67&—F–öçÒG·66ÆRçVV—†2æ¦ö–â‚""—ÒG·66ÆRç&W7öæFVçFRæ¦ö–â‚""—Ö“° ¢–b‚÷FVÆWF—7Ç6ö6–ÇÆ77ÆÒÖ6†GÇÖ6†GÆ67GÆòçFW7B‡B’’&WGW&â²Æ&VÃ¢%DTò6ö6–Â"Â–6öã¢'&–âÂFöæS¢&g&öÒ×f–öÆWBÓcf–×W'ÆRÓsFò×6ÆFRÓ“S"Ó°¢–b‚÷FF‡ÆF†GÇ6æÇfæFW&&–ÇGÆFVçÇvV—77Çvf—'2òçFW7B‡B’’&WGW&â²Æ&VÃ¢&FVì:|:6ò"Â–6öã¢7F—f—G’ÂFöæS¢&g&öÒÖÖ&W"ÓSf–Ö÷&ævRÓcFò×&VBÓƒ"Ó°¢–b‚öÆ–æwVvV×ÆfÆÆ6ö×Væ–7ÆÆæwVvWÇ7VV6‚òçFW7B‡B’’&WGW&â²Æ&VÃ¢&Æ–æwVvVÒ"Â–6öã¢ÖW76vT6—&6ÆRÂFöæS¢&g&öÒÖ7–âÓcf–Ö&ÇVRÓsFò×6ÆFRÓ“S"Ó°¢–b‚÷66†ööÇÇ&öfW76÷'ÇFV6†W'Æ&VæF—§ÆÆV—GW&ÆW67&—FÆ&—FÖWGÆ6FVÒòçFW7B‡B’’&WGW&â²Æ&VÃ¢&W66öÆ"Â–6öã¢w&GVF–öä6ÂFöæS¢&g&öÒÖVÖW&ÆBÓcf–×FVÂÓsFò×6ÆFRÓ“S"Ó°¢–b‚÷6öæ÷Ç6ÆVWÆ&V'7Ç7Æ76‡òçFW7B‡B’’&WGW&â²Æ&VÃ¢'6öæò"Â–6öã¢ÖööâÂFöæS¢&g&öÒÖ–æF–vòÓsf–Ö&ÇVRÓ“Fò×6ÆFRÓ“S"Ó°¢–b‚öç6–VFFWÆFW&W77Æ‡VÖ÷'ÆÖööGÇ‡ÆvGÇ66&VGÇ&6G7Ç662òçFW7B‡B’’&WGW&â²Æ&VÃ¢&‡VÖ÷""Â–6öã¢†V'EVÇ6RÂFöæS¢&g&öÒ×&÷6RÓcf–×&VBÓsFò×6ÆFRÓ“S"Ó°¢–b‚öFW6VçföÇf–ÖVçF÷ÆÖ–ÆW7FöæWÆ6F7Ç7w–7ÆG&6÷ÆÖ÷F÷'ÆvÖf72òçFW7B‡B’’&WGW&â²Æ&VÃ¢&FW6VçföÇf–ÖVçFò"Â–6öã¢&'’ÂFöæS¢&g&öÒÖ&ÇVRÓcf–Ö–æF–vòÓsFò×6ÆFRÓ“S"Ó°¢–b‚öWW6×ÆÖVF–7ÆF÷6WÆf&Ö6÷Ç&—7W&–FöæÆÖWF–ÆfVæ–FF÷ÇFöÆW&'ÆFW6÷ÆVfV—FòòçFW7B‡B’’&WGW&â²Æ&VÃ¢&ÖVF–6:|:6ò"Â–6öã¢–ÆÂÂFöæS¢&g&öÒ×FVÂÓcf–Ö7–âÓsFò×6ÆFRÓ“S"Ó°¢–b‚÷—7Ç&VçGÆ7V–FF÷'ÆfÖ–Ç’òçFW7B‡B’’&WGW&â²Æ&VÃ¢&fÜ:ÖÆ–"Â–6öã¢W6W'2ÂFöæS¢&g&öÒ×6ÆFRÓcf–×6ÆFRÓƒFò×6ÆFRÓ“S"Ó° ¢&WGW&â²Æ&VÃ¢&6Ì:Öæ–6ò"Â–6öã¢6Æ—&ö&D6†V6²ÂFöæS¢&g&öÒ×&–Ö'’f–Ö6†'BÓ"Fò×6ÆFRÓ“S"Ó°§Ğ ¦gVæ7F–öâvWE&V6öÖÖVæFF–öå&V6öç2‡66ÆS¢66ÆTVçG'’ÂVæFVf–æVBÂ6VÆV7FVEVV—†3¢7G&–æuµÒÂ6VÆV7FVDvS¢7G&–ærÂçVÆÂ“¢7G&–æuµÒ°¢–b‚66ÆR’&WGW&âµÓ°¢6öç7B&V6öç3¢7G&–æuµÒÒµÓ° ¢òòÖ÷F—fò6öçFW‡GVÂ÷"–FFP¢–b‡6VÆV7FVDvRbbÖF6„vR‡66ÆRÂ6VÆV7FVDvR’’°¢–b‡66ÆRævTÖ–ââ’°¢6öç7BÖ–å–V'2ÒÖF‚ç&÷VæB‡66ÆRævTÖ–âò"“°¢&V6öç2çW6‚†)É2&V6öÖVæFFò'F—"FRG¶Ö–å–V'7Òæ÷6“°¢ÒVÇ6R°¢&V6öç2çW6‚‚.)É2Æ–<:fVÂæW7Ff—†WL:&–"“°¢Ğ¢ÒVÇ6R–b‡6VÆV7FVDvRbbÖF6„vR‡66ÆRÂ6VÆV7FVDvR’’°¢6öç7BÖ–å–V'2ÒÖF‚ç&÷VæB‡66ÆRævTÖ–âò"“°¢&V6öç2çW6‚†)ª&V6öÖVæFFòVæ2'F—"FRG¶Ö–å–V'7Òæ÷6“°¢Ğ ¢òòÖ÷F—fò6öçFW‡GVÂ÷"VV—†¢–b‡6VÆV7FVEVV—†2æÆVæwF‚â’°¢6öç7BÖF6†VEVV—†2Ò66ÆRçVV—†2æf–ÇFW"‚‡’Óâ6VÆV7FVEVV—†2æ–æ6ÇVFW2‡’“°¢–b†ÖF6†VEVV—†2æÆVæwF‚â’°¢–b†ÖF6†VEVV—†2æÆVæwF‚ÓÓÒ’°¢&V6öç2çW6‚†)É26ö'&R6–çFöÖ¢G¶ÖF6†VEVV—†5³×Ö“°¢ÒVÇ6R°¢&V6öç2çW6‚†)É26ö'&RG¶ÖF6†VEVV—†2æÆVæwF‡Ò6–çFöÖ26VÆV6–öæF÷6“°¢Ğ¢Ğ¢Ğ ¢òòÖ÷F—fò6öçFW‡GVÂ÷"&W7öæFVçFP¢–b‡66ÆRç&W7öæFVçFRæ–æ6ÇVFW2‚'&öfW76÷""’’°¢&V6öç2çW6‚‚.)É2&W7öæFVçFS¢&öfW76÷""“°¢ÒVÇ6R–b‡66ÆRç&W7öæFVçFRæ–æ6ÇVFW2‚'—2"’’°¢&V6öç2çW6‚‚.)É2&W7öæFVçFS¢—2ô7V–FF÷""“°¢ÒVÇ6R–b‡66ÆRç&W7öæFVçFRæ–æ6ÇVFW2‚&6Æ–æ–6ò"’’°¢&V6öç2çW6‚‚.)É2&W7öæFVçFS¢6Ì:Öæ–6ò†ö'6W'f:|:6òF—&WF’"“°¢Ğ ¢òòFöFW66ÆFòf–ÇG&ò'&RVÖfW'&ÖVçFW<:fVÃ¢&÷FFVF–6FÀ¢òò—FVç2–çFW&F—f÷2÷RÖ&6F&6ö×ÆWFR"à¢–b†÷Vç45W6&ÆUFööÂ‡66ÆR’ÇÂvWD–×ÆVÖVçFF–öå7FGW2‡66ÆR’ÓÓÒ&6ö×ÆWFR"’°¢&V6öç2çW6‚‚.)É2Æ–6:|:6ò6ö×ÆWFæò"“°¢ÒVÇ6R–b‡&W6öÇfT&÷WFR‡66ÆR’’°¢&V6öç2çW6‚‚.)É2f–6†L:–6æ–6æò"“°¢Ğ¢–b‡66ÆRç&–÷&–FFRÓÓÒ'G&–vVÒ"’&V6öç2çW6‚‚.)É2–ç7G'VÖVçFòFRG&–vVÒ"“° ¢&WGW&â&V6öç2æÆVæwF‚ò&V6öç2¢².)É26ö×F–&–Æ–FFRvW&Â%Ó°§Ğ §G—R&V6öÖÖVæFF–öä—FVÒÒ&WGW&åG—SÇG—Vöb&V3ã°§G—R76W76ÖVçDf–ÇFW%G—RÒ&F–væ÷7F–2"Â&Ööæ—F÷&–ær"ÂçVÆÃ° ¦6öç7BTÅõ$U5ôÄ$TÃ¢&V6÷&CÅ66ÆTVçG'•²'&W7öæFVçFR%Õ¶çVÖ&W%ÒÂ7G&–æsâÒ°¢—3¢'—2ö7V–FF÷&W2"À¢6Æ–æ–6ó¢&6Ì:Öæ–6ò"À¢&öfW76÷#¢'&öfW76÷"öW66öÆ"À¢WFöÆ–6fVÃ¢&WF÷'&VÆFò"À¢7&–æ6¢&7&–ì:vöFöÆW66VçFR"À¢FW7FUöF—&WFõö7&–æ6¢'FW7FRF—&WFò6öÒ7&–ì:v"À§Ó° ¦gVæ7F–öâF–G•6VçFVæ6R‡fÇVSó¢7G&–ærÂçVÆÂ“¢7G&–ær°¢&WGW&â‡fÇVRóò""’ç&WÆ6R‚õÇ2²örÂ""’çG&–Ò‚’ç&WÆ6R‚õ²ã³¥Ò²BörÂ""“°§Ğ ¦gVæ7F–öâ¦ö–äæGW&Â†—FV×3¢7G&–æuµÒ“¢7G&–ær°¢6öç7B6ÆVâÒ—FV×2æÖ‚†—FVÒ’Óâ—FVÒçG&–Ò‚’’æf–ÇFW"„&ööÆVâ“°¢–b†6ÆVâæÆVæwF‚ÓÓÒ’&WGW&â"#°¢–b†6ÆVâæÆVæwF‚ÓÓÒ’&WGW&â6ÆVå³Ó°¢–b†6ÆVâæÆVæwF‚ÓÓÒ"’&WGW&âG¶6ÆVå³×ÒRG¶6ÆVå³×Ö°¢&WGW&âG¶6ÆVâç6Æ–6RƒÂÓ’æ¦ö–â‚"Â"—ÒRG¶6ÆVå¶6ÆVâæÆVæwF‚Ò×Ö°§Ğ ¦gVæ7F–öâvWDvTÆ&VÂ‡6VÆV7FVDvS¢7G&–ærÂçVÆÂ“¢7G&–ær°¢&WGW&â6VÆV7FVDvRò†f—†4WF&–2æf–æB‚†’Óâæ–BÓÓÒ6VÆV7FVDvR“òæÆ&VÂóò6VÆV7FVDvR’¢&–FFRì:6òW7V6–f–6F#°§Ğ ¦gVæ7F–öâvWEVV—†Æ&VÇ2‡6VÆV7FVEVV—†3¢7G&–æuµÒ“¢7G&–æuµÒ°¢&WGW&â6VÆV7FVEVV—†2æÖ‚†–B’ÓâVV—†2æf–æB‚‡’Óâæ–BÓÓÒ–B“òæÆ&VÂóò–B“°§Ğ ¦gVæ7F–öâvWE6–væÄÆ&VÇ2‡6VÆV7FVEVV—†3¢7G&–æuµÒÂ6VÆV7FVE6–væÄ–G3¢7G&–æuµÒ“¢7G&–æuµÒ°¢–b‡6VÆV7FVE6–væÄ–G2æÆVæwF‚ÓÓÒÇÂ6VÆV7FVEVV—†2æÆVæwF‚ÓÓÒ’&WGW&âµÓ°¢6öç7B6VÆV7FVBÒæWr6WB‡6VÆV7FVE6–væÄ–G2“°¢6öç7B6VVâÒæWr6WCÇ7G&–æsâ‚“°¢6öç7BÆ&VÇ3¢7G&–æuµÒÒµÓ°¢f÷"†6öç7BVV—†–Böb6VÆV7FVEVV—†2’°¢f÷"†6öç7B6–væÂöbvWDÆÅ6–væÇ4f÷%VV—†‡VV—†–B’’°¢–b‚6VÆV7FVBæ†2‡6–væÂæ–B’ÇÂ6VVâæ†2‡6–væÂæ–B’’6öçF–çVS°¢6VVâæFB‡6–væÂæ–B“°¢Æ&VÇ2çW6‚‡6–væÂæÆ&VÂ“°¢Ğ¢Ğ¢&WGW&âÆ&VÇ3°§Ğ ¦gVæ7F–öâ66ÆTFWF–ÄÆ–æR‡66ÆS¢66ÆTVçG'’ÂVæFVf–æVB“¢7G&–ær°¢–b‚66ÆR’&WGW&â"#°¢6öç7BFWF–Ç2Ò°¢66ÆRçfÆ–F6ô'&6–ÂòfÆ–F:|:6ò%#¢G·66ÆRçfÆ–F6ô'&6–ÇÖ¢""À¢66ÆRçFV×òòFV×ó¢G·66ÆRçFV×÷Ö¢""À¢66ÆRç66÷&–æt7WFöfbò–çFW'&WF:|:6òö6÷'FS¢G·66ÆRç66÷&–æt7WFöfgÖ¢""À¢Òæf–ÇFW"„&ööÆVâ“°¢&WGW&âFWF–Ç2æÆVæwF‚òÖWFFF÷2;§FV—3¢G¶FWF–Ç2æ¦ö–â‚#²"—Òæ¢"#°§Ğ ¦gVæ7F–öâ—FVÔ6÷fW&vTÆ&VÂ†—FVÓ¢&V6öÖÖVæFF–öä—FVÒÂ6VÆV7FVEVV—†3¢7G&–æuµÒ“¢7G&–ær°¢–b‚—FVÒç66ÆRÇÂ6VÆV7FVEVV—†2æÆVæwF‚ÓÓÒ’&WGW&â"#°¢6öç7B6÷fW&VBÒ6VÆV7FVEVV—†0¢æf–ÇFW"‚‡VV—†–B’Óâ—FVÒç66ÆSòçVV—†2æ–æ6ÇVFW2‡VV—†–B’¢æÖ‚‡VV—†–B’ÓâVV—†2æf–æB‚‡’Óâæ–BÓÓÒVV—†–B“òæÆ&VÂóòVV—†–B“°¢&WGW&â6÷fW&VBæÆVæwF‚ò6ö'&RG¶¦ö–äæGW&Â†6÷fW&VB—Òæ¢"#°§Ğ ¦gVæ7F–öâ'V–ÆEVÆ—FF—fTf–ÇFW%&W÷'B†&w3¢°¢&æ¶–æs¢&V6öÖÖVæFF–öä—FVÕµÓ°¢&Vf–æVDÖF6†W3¢&Vf–æVE66ÆTÖF6…µÓ°¢6Æ–æ–6Å&V6öÖÖVæFF–öã¢7G&–æs°¢6VÆV7FVEVV—†3¢7G&–æuµÓ°¢6VÆV7FVDvS¢7G&–ærÂçVÆÃ°¢6VÆV7FVE&W7öæFVçFS¢66ÆTVçG'•²'&W7öæFVçFR%Õ¶çVÖ&W%ÒÂçVÆÃ°¢6VÆV7FVD76W76ÖVçEG—S¢76W76ÖVçDf–ÇFW%G—S°¢6VÆV7FVE6–væÄ–G3¢7G&–æuµÓ°¢W6–æt'&öF&æDfÆÆ&6³¢&ööÆVã°§Ò“¢7G&–ær°¢6öç7B°¢&æ¶–ærÀ¢&Vf–æVDÖF6†W2À¢6Æ–æ–6Å&V6öÖÖVæFF–öâÀ¢6VÆV7FVEVV—†2À¢6VÆV7FVDvRÀ¢6VÆV7FVE&W7öæFVçFRÀ¢6VÆV7FVD76W76ÖVçEG—RÀ¢6VÆV7FVE6–væÄ–G2À¢W6–æt'&öF&æDfÆÆ&6²À¢ÒÒ&w3°¢–b‡&Vf–æVDÖF6†W2æÆVæwF‚ÓÓÒ’&WGW&â"#° ¢6öç7BvTÆ&VÂÒvWDvTÆ&VÂ‡6VÆV7FVDvR“°¢6öç7BVV—†Æ&VÂÒ6VÆV7FVEVV—†2æÆVæwF‚ò¦ö–äæGW&Â†vWEVV—†Æ&VÇ2‡6VÆV7FVEVV—†2’’¢'VV—†ì:6òW7V6–f–6F#°¢6öç7B&W7öæFVçDÆ&VÂÒ6VÆV7FVE&W7öæFVçFRòTÅõ$U5ôÄ$TÅ·6VÆV7FVE&W7öæFVçFUÒ¢'6VÒ&W7G&–æv—"&W7öæFVçFR#°¢6öç7B76W76ÖVçDÆ&VÂĞ¢6VÆV7FVD76W76ÖVçEG—RÓÓÒ&F–væ÷7F–2 ¢ò&fÆ–:|:6òF–vì;77F–6öW7G'WGW&:|:6ò–æ–6–Â ¢¢6VÆV7FVD76W76ÖVçEG—RÓÓÒ&Ööæ—F÷&–ær ¢ò&Ööæ—F÷&ÖVçFòWföÇWF—fò ¢¢'G&–vVÒRö–ò:FV6—<:6ò#°¢6öç7B6–væÄÆ&VÇ2ÒvWE6–væÄÆ&VÇ2‡6VÆV7FVEVV—†2Â6VÆV7FVE6–væÄ–G2’ç6Æ–6RƒÂb“° ¢6öç7B÷W&òÒ&æ¶–æræf–æB‚†—FVÒ’Óâ—FVÒç6Æ÷BÓÓÒ$÷W&ò"bb—FVÒæ†566ÆR“°¢6öç7B&FÒ&æ¶–æræf–æB‚†—FVÒ’Óâ—FVÒç6Æ÷BÓÓÒ%&F"bb—FVÒæ†566ÆR“°¢6öç7B'&öç¦RÒ&æ¶–æræf–æB‚†—FVÒ’Óâ—FVÒç6Æ÷BÓÓÒ$'&öç¦R"bb—FVÒæ†566ÆR“°¢6öç7BF—&V7BÒ&æ¶–æræf–æB‚†—FVÒ’Óâ—FVÒç6Æ÷BÓÓÒ%FW7FRF—&WFò"bb—FVÒæ†566ÆR“°¢6öç7B66†ööÂÒ&æ¶–æræf–æB‚†—FVÒ’Óâ—FVÒç6Æ÷BÓÓÒ%VW7F–öì:&–òW66öÆ""bb—FVÒæ†566ÆR“°¢6öç7B&w&‡3¢7G&–æuµÒÒµÓ° ¢&w&‡2çW6‚€¢&W7FRW&f–Â‚G¶vTÆ&VÇÓ²G·VV—†Æ&VÇÓ²G·&W7öæFVçDÆ&VÇÓ²f–æÆ–FFS¢G¶76W76ÖVçDÆ&VÇÒ’Âòf–ÇG&ò&–÷&—¦÷RW66Æ2VR7'W¦Ò6VwW&ì:v÷"–FFRÂFW,:¦æ6–:VV—†ÂÖöFòFRÆ–6:|:6òRF—7öæ–&–Æ–FFR&VÂFVçG&òFòâG·F–G•6VçFVæ6R†6Æ–æ–6Å&V6öÖÖVæFF–öâ—Òæ ¢“° ¢–b‡6–væÄÆ&VÇ2æÆVæwF‚â’°¢&w&‡2çW6‚€¢÷26–æ—2&Vf–æF÷26VÆV6–öæF÷2‚G¶¦ö–äæGW&Â‡6–væÄÆ&VÇ2—Ò’VÖVçF&ÒòW6òF2W66Æ2Ö—2W7V<:Öf–62&òG,:6òFW67&—FòÂVÒfW¢FRff÷&V6W"Væ2–ç7G'VÖVçF÷2×Æ÷2æ ¢“°¢Ğ ¢–b‡W6–æt'&öF&æDfÆÆ&6²’°¢&w&‡2çW6‚€¢$6öÖòì:6ò†f––ç7G'VÖVçFòW7V<:Öf–6ò6VwW&òR&VVæ6Œ:×fVÂ&W7F6öÖ&–æ:|:6òÂ&V6öÖVæF:|:6òfö’&V&—†F&G&–vVÒ×Æ&÷&–F:–FFRâW6RW76R&W7VÇFFò6öÖò÷'FFRVçG&FR6ö×ÆVÖVçFR6öÒæÖæW6RÂW†ÖRæWW&öÌ;6v–6òRFF÷2W66öÆ&W2÷FW&:§WF–6÷2â ¢“°¢ÒVÇ6R°¢6öç7B'&öF&æD6ö×ÆVÖVçG2Ò¶÷W&òÂ&FÂ'&öç¦UĞ¢æf–ÇFW"‚†—FVÒ“¢—FVÒ—2&V6öÖÖVæFF–öä—FVÒÓâ&ööÆVâ†—FVÓòç66ÆRbb—FVÒæ—4'&öF&æDfÆÆ&6²’“°¢–b†'&öF&æD6ö×ÆVÖVçG2æÆVæwF‚â’°¢&w&‡2çW6‚€¢&ÖçFW"G,:§2W66öÆ†26Æ–æ–6ÖVçFRWF–Æ—¬:fV—26VÒf÷,:v"W66Æ–æFWVFÂò;6F–òfö’6ö×ÆWFFò6öÒG¶¦ö–äæGW&Â†'&öF&æD6ö×ÆVÖVçG2æÖ‚†—FVÒ’Óâ—FVÒçF—FÆR’—ÒÂW6FòV’6öÖò6ö×ÆVÖVçFòFR&æFÆ&v&÷&–Fò:–FFRâW76R6ö×ÆVÖVçFò§VFÖVF—"–×7FòvÆö&ÂÂgVæ6–öæÖVçFòR6&vVÖö6–öæÂö6ö×÷'FÖVçFÂVçVçFòW66Æ&–æ6—Â&W7öæFR:VV—†6VçG&Âæ ¢“°¢Ğ¢Ğ ¢–b†÷W&óòç66ÆR’°¢6öç7B6÷fW&vRÒ—FVÔ6÷fW&vTÆ&VÂ†÷W&òÂ6VÆV7FVEVV—†2“°¢6öç7B&V6öâÒF–G•6VçFVæ6R†÷W&òç&V6öâÇÂ÷W&òæ6Æ–æ–6Å&V6öâÇÂ÷W&òç66ÆRæFW67&—F–öâ“°¢&w&‡2çW6‚€¢ÖVÆ†÷"&–ÖV—&W66öÆ†:’G¶÷W&òçF—FÆWÓ¢G·&V6öçÒâG¶6÷fW&vWÒ÷"—76òVÆFWfR6W"Æ–6F&–ÖV—&òÂö—2FVæFR&W7öæFW"W&wVçF6Ì:Öæ–66VçG&ÂçFW2FR'&—"–ç7G'VÖVçF÷26V7VæL:&–÷2âG·66ÆTFWF–ÄÆ–æR†÷W&òç66ÆR—Ö ¢“°¢Ğ ¢6öç7B6ö×ÆVÖVçG2Ò·&FÂ'&öç¦UÒæf–ÇFW"‚†—FVÒ“¢—FVÒ—2&V6öÖÖVæFF–öä—FVÒÓâ&ööÆVâ†—FVÓòç66ÆR’“°¢–b†6ö×ÆVÖVçG2æÆVæwF‚â’°¢6öç7B6ö×ÆVÖVçEFW‡BÒ6ö×ÆVÖVçG0¢æÖ‚†—FVÒ’Óâ°¢6öç7B&V6öâÒF–G•6VçFVæ6R†—FVÒç&V6öâÇÂ—FVÒæ6Æ–æ–6Å&V6öâÇÂ—FVÒç66ÆSòæFW67&—F–öâ“°¢6öç7B6÷fW&vRÒ—FVÔ6÷fW&vTÆ&VÂ†—FVÒÂ6VÆV7FVEVV—†2“°¢&WGW&âG¶—FVÒç6Æ÷GÓ¢G¶—FVÒçF—FÆWÒG·&V6öâò‚G·&V6öçÒ–¢"'ÒG¶6÷fW&vRòG¶6÷fW&vWÖ¢"'Ö°¢Ò¢æ¦ö–â‚""“°¢&w&‡2çW6‚€¢6öÖò6ö×÷6œ:|:6òVÆ—FF—fÂG¶6ö×ÆVÖVçEFW‡GÒW762W66öÆ†2Wf—FÒVÖÆV—GW&W7G&V—FFò66ó¢VÖW66Ææ6÷&&–÷&–FFR&–æ6—ÂR2FVÖ—27&W66VçFÒW'7V7F—fgVæ6–öæÂÂ6ö×÷'FÖVçFÂÂW66öÆ"÷RFR6ö×æ†ÖVçFòæ ¢“°¢Ğ ¢–b‡6VÆV7FVEVV—†2æÆVæwF‚â’°¢6öç7B6÷fW&VEVV—†2Ò6VÆV7FVEVV—†2æf–ÇFW"‚‡VV—†–B’Óà¢&æ¶–ærç6öÖR‚†—FVÒ’Óâ—FVÒç66ÆSòçVV—†2æ–æ6ÇVFW2‡VV—†–B’¢“°¢6öç7BÖ—76–æuVV—†2Ò6VÆV7FVEVV—†2æf–ÇFW"‚‡VV—†–B’Óâ6÷fW&VEVV—†2æ–æ6ÇVFW2‡VV—†–B’“°¢6öç7B6÷fW&VDÆ&VÂÒ6÷fW&VEVV—†2æÆVæwF‚ò¦ö–äæGW&Â†vWEVV—†Æ&VÇ2†6÷fW&VEVV—†2’’¢&æVæ‡VÖVV—†&–æ6—Â#°¢6öç7BÖ—76–ætÆ&VÂÒÖ—76–æuVV—†2æÆVæwF‚ò¦ö–äæGW&Â†vWEVV—†Æ&VÇ2†Ö—76–æuVV—†2’’¢"#°¢&w&‡2çW6‚€¢Ö—76–æuVV—†2æÆVæwF€¢ò6ö&W'GW&F2VV—†3¢ò;6F–ò6ö'&RG¶6÷fW&VDÆ&VÇÒâ–æFf–6ÖVæ÷26ö&W'Fó¢G¶Ö—76–ætÆ&VÇÓ²æW76R66òÂW6R,:—f–Fò6L:Æövò÷RVÖW66Æ6ö×ÆVÖVçF"F—&–v–FFWö—2F&–ÖV—&&öFFæ ¢¢6ö&W'GW&F2VV—†3¢ò;6F–ò6ö'&RFöF22VV—†2Ö&6F2‚G¶6÷fW&VDÆ&VÇÒ’Â&VGW¦–æFòò&—66òFRW66öÆ†W"G,:§2–ç7G'VÖVçF÷2&öç2—6öÆFÖVçFRÂÖ2&VGVæFçFW2VçG&R6’æ ¢“°¢Ğ ¢6öç7BW'7V7F—fT—FV×2Ò¶F—&V7BÂ66†ööÅÒæf–ÇFW"‚†—FVÒ“¢—FVÒ—2&V6öÖÖVæFF–öä—FVÒÓâ&ööÆVâ†—FVÓòç66ÆR’“°¢–b‡W'7V7F—fT—FV×2æÆVæwF‚â’°¢&w&‡2çW6‚€¢W'7V7F—f2F–6–öæ—2F—7öì:×fV—3¢G·W'7V7F—fT—FV×2æÖ‚†—FVÒ’ÓâG¶—FVÒç6Æ÷GÓ¢G¶—FVÒçF—FÆWÖ’æ¦ö–â‚#²"—ÒâW6RÖ2VæFò†÷WfW"F—fW&|:¦æ6–VçG&R&VÆFòfÖ–Æ–"Âö'6W'f:|:6òVÒ6öç7VÇFRgVæ6–öæÖVçFòW66öÆ"æ ¢“°¢Ğ ¢&w&‡2çW6‚€¢$ÆV—GW&,:F–6f–æÃ¢Æ—VRò÷W&ò&–ÖV—&òÂW6R&Fô'&öç¦R&6öæf—&Ö"w&f–FFRÂ–×7FòR6öçFW‡FòÂR–çFW'&WFRF—fW&|:¦æ6–2VçG&R&W7öæFVçFW26öÖòFFò6Ì:Öæ–6ò&VÆWfçFRâò&W7VÇFFò÷&væ—¦W66öÆ†F2W66Æ2ÂÖ2ì:6ò7V'7F—GV’§VÆvÖVçFò6Ì:Öæ–6òÂVçG&Wf—7FÂW†ÖRR6VwV–ÖVçFòâ ¢“° ¢&WGW&â&w&‡2æ¦ö–â‚%ÆåÆâ"“°§Ğ ¢òòW'6—7L:¦æ6–F26VÆ\:|;VW2Fòf–ÇG&ò(	Bò6Ì:Öæ–6òföÇFòöf–ÇG&òRÖçL:–Òğ¢òò6öçFW‡Fò†–FFRÂVV—†Â&W7öæFVçF^(
+b’VÒfW¢FR&V6öÖ\:v"Fò¦W&òà¦6öç7Bd”ÅDU%õ5DDUô´U’Ò&çöf–ÇG&õ÷7FFU÷c#°¦–çFW&f6RW'6—7FVDf–ÇFW"°¢6V&6ƒó¢7G&–æs°¢VV—†3ó¢7G&–æuµÓ°¢vSó¢7G&–ærÂçVÆÃ°¢&W7öæFVçFSó¢66ÆTVçG'•²'&W7öæFVçFR%Õ¶çVÖ&W%ÒÂçVÆÃ°¢6öÖ×Væ–6F–öãó¢'fW&&Â"Â&æöçfW&&Â"ÂçVÆÃ°¢Æ—FW&7“ó¢&Æ—FW&FR"Â'&VÆ—FW&FR"ÂçVÆÃ°¢76W76ÖVçCó¢&F–væ÷7F–2"Â&Ööæ—F÷&–ær"ÂçVÆÃ°¢6–væÇ3ó¢7G&–æuµÓ°¢f–Æ&–Æ—G“ó¢f–Æ&–Æ—G”ÖöFS°§Ğ¦gVæ7F–öâÆöDf–ÇFW%7FFR‚“¢W'6—7FVDf–ÇFW"°¢G'’°¢–b‡G—VöbÆö6Å7F÷&vRÓÓÒ'VæFVf–æVB"’&WGW&â·Ó°¢&WGW&â„¥4ôâç'6R†Æö6Å7F÷&vRævWD—FVÒ„d”ÅDU%õ5DDUô´U’’ÇÂ'·Ò"’ÇÂ·Ò’2W'6—7FVDf–ÇFW#°¢Ò6F6‚°¢&WGW&â·Ó°¢Ğ§Ğ ¦W‡÷'BFVfVÇBgVæ7F–öâf–ÇG&õvR‚’°¢6öç7BfÆ6„ÖöFRÒ—4fÆ6…&÷WFR‚“°¢6öç7B¶–æ—F–ÅÒÒW6U7FFR†ÆöDf–ÇFW%7FFR“°¢6öç7B·6V&6‚Â6WE6V&6…ÒÒW6U7FFSÇ7G&–æsâ†fÆ6„ÖöFRò""¢–æ—F–Âç6V&6‚óò""“°¢6öç7B·6VÆV7FVEVV—†2Â6WE6VÆV7FVEVV—†5ÒÒW6U7FFSÇ7G&–æuµÓâ†fÆ6„ÖöFRòµÒ¢–æ—F–ÂçVV—†2óòµÒ“°¢6öç7B·6VÆV7FVDvRÂ6WE6VÆV7FVDvUÒÒW6U7FFSÇ7G&–ærÂçVÆÃâ†fÆ6„ÖöFRòçVÆÂ¢–æ—F–ÂævRóòçVÆÂ“°¢6öç7B·6VÆV7FVE&W7öæFVçFRÂ6WE6VÆV7FVE&W7öæFVçFUÒÒW6U7FFSÅ66ÆTVçG'•²'&W7öæFVçFR%Õ¶çVÖ&W%ÒÂçVÆÃâ†fÆ6„ÖöFRòçVÆÂ¢–æ—F–Âç&W7öæFVçFRóòçVÆÂ“°¢6öç7B·6VÆV7FVD6öÖ×Væ–6F–öâÂ6WE6VÆV7FVD6öÖ×Væ–6F–öåÒÒW6U7FFSÂ'fW&&Â"Â&æöçfW&&Â"ÂçVÆÃâ†fÆ6„ÖöFRòçVÆÂ¢–æ—F–Âæ6öÖ×Væ–6F–öâóòçVÆÂ“°¢6öç7B·6VÆV7FVDÆ—FW&7’Â6WE6VÆV7FVDÆ—FW&7•ÒÒW6U7FFSÂ&Æ—FW&FR"Â'&VÆ—FW&FR"ÂçVÆÃâ†fÆ6„ÖöFRòçVÆÂ¢–æ—F–ÂæÆ—FW&7’óòçVÆÂ“°¢6öç7B·6VÆV7FVD76W76ÖVçEG—RÂ6WE6VÆV7FVD76W76ÖVçEG—UÒÒW6U7FFSÂ&F–væ÷7F–2"Â&Ööæ—F÷&–ær"ÂçVÆÃâ†fÆ6„ÖöFRòçVÆÂ¢–æ—F–Âæ76W76ÖVçBóòçVÆÂ“°¢6öç7B·6VÆV7FVE6–væÄ–G2Â6WE6VÆV7FVE6–væÄ–G5ÒÒW6U7FFSÇ7G&–æuµÓâ†fÆ6„ÖöFRòµÒ¢–æ—F–Âç6–væÇ2óòµÒ“°¢6öç7B¶f–Æ&–Æ—G”ÖöFRÂ6WDf–Æ&–Æ—G”ÖöFUÒÒW6U7FFSÄf–Æ&–Æ—G”ÖöFSâ€¢fÆ6„ÖöFRò&6ö×ÆWFR"¢–æ—F–Âæf–Æ&–Æ—G’ÓÓÒ&ÆÂ"ò&ÆÂ"¢&6ö×ÆWFR"À¢“°¢6öç7B¶6÷–VE&V2Â6WD6÷–VE&V5ÒÒW6U7FFR†fÇ6R“°¢6öç7B¶6ö×&T–G2Â6WD6ö×&T–G5ÒÒW6U7FFSÇ7G&–æuµÓâ…µÒ“°¢6öç7B·v÷&ÆBÂ6WEv÷&ÆEÒÒW6U7FFSÅ66ÆTVçG'•µÓâ†æô6÷7Ev÷&ÆE66ÆW2“°¢6öç7B²Â6WE7FGW5ÒÒW6U7FFSÂ&ÆöF–ær"Â&ö²"Â&fÆÆ&6²#â‚&ÆöF–ær"“° ¢W6TVffV7B‚‚’Óâ°¢–b‚fÆ6„ÖöFR’&WGW&ã°¢&WGW&â‚’Óâ°¢G'’°¢6W76–öå7F÷&vRç&VÖ÷fT—FVÒ„dÄ4…õ5Dõ$tUô´U’“°¢Ò6F6‚²ò¢6W76–öå7F÷&vR–æF—7öì:×fVÂ(	BæFÆ–×"¢òĞ¢Ó°¢ÒÂ¶fÆ6„ÖöFUÒ“° ¢W6TVffV7B‚‚’Óâ°¢–b‚fÆ6„ÖöFR’&WGW&ã°¢G'’°¢6öç7B6fVBÒ¥4ôâç'6R‡6W76–öå7F÷&vRævWD—FVÒ„dÄ4…õ5Dõ$tUô´U’’ÇÂ'·Ò"’2°¢6V&6ƒó¢7G&–æs°¢6VÆV7FVDvSó¢7G&–ærÂçVÆÃ°¢6VÆV7FVEVV—†3ó¢7G&–æuµÓ°¢Ó°¢–b‡G—Vöb6fVBç6V&6‚ÓÓÒ'7G&–ær"’6WE6V&6‚‡6fVBç6V&6‚“°¢–b‡G—Vöb6fVBç6VÆV7FVDvRÓÓÒ'7G&–ær"ÇÂ6fVBç6VÆV7FVDvRÓÓÒçVÆÂ’6WE6VÆV7FVDvR‡6fVBç6VÆV7FVDvR“°¢–b„'&’æ—4'&’‡6fVBç6VÆV7FVEVV—†2’’6WE6VÆV7FVEVV—†2‡6fVBç6VÆV7FVEVV—†2“°¢Ò6F6‚²ò¢6W76–öå7F÷&vR–æF—7öì:×fVÂ(	BÖöFòfÆ6‚6VwVR6VÒW'6—7F—"¢òĞ¢ÒÂ¶fÆ6„ÖöFUÒ“° ¢W6TVffV7B‚‚’Óâ°¢–b‚fÆ6„ÖöFR’&WGW&ã°¢G'’°¢6W76–öå7F÷&vRç6WD—FVÒ„dÄ4…õ5Dõ$tUô´U’Â¥4ôâç7G&–æv–g’‡²6V&6‚Â6VÆV7FVDvRÂ6VÆV7FVEVV—†2Ò’“°¢Ò6F6‚²ò¢6W76–öå7F÷&vR–æF—7öì:×fVÂ(	BÖöFòfÆ6‚6VwVR6VÒW'6—7F—"¢òĞ¢ÒÂ¶fÆ6„ÖöFRÂ6V&6‚Â6VÆV7FVDvRÂ6VÆV7FVEVV—†5Ò“° ¢òòWFòÖ6Æ÷6RvVÆ6öÖRF÷W"öâöf–ÇG&ò(	BVç7W&W2f–ÇFW"6öçFVçB—2f—6–&ÆR–ÖÖVF–FVÇ¢W6TVffV7B‚‚’Óâ°¢G'’°¢Æö6Å7F÷&vRç6WD—FVÒ‚&ç÷F÷W%÷c%öFöæR"Â#"“°¢Æö6Å7F÷&vRç6WD—FVÒ‚&ç÷F÷W%ö–çG&õ÷c""Â#"“°¢Ò6F6‚²ò¢F÷W":’&W7BÖVff÷'B¢òĞ¢ÒÂµÒ“° ¢òòW'6—7FR26VÆ\:|;VW26V×&RVR×VFÒ†&W7BÖVff÷'B’à¢W6TVffV7B‚‚’Óâ°¢–b†fÆ6„ÖöFR’&WGW&ã°¢G'’°¢Æö6Å7F÷&vRç6WD—FVÒ„d”ÅDU%õ5DDUô´U’Â¥4ôâç7G&–æv–g’‡°¢6V&6‚ÂVV—†3¢6VÆV7FVEVV—†2ÂvS¢6VÆV7FVDvRÂ&W7öæFVçFS¢6VÆV7FVE&W7öæFVçFRÀ¢6öÖ×Væ–6F–öã¢6VÆV7FVD6öÖ×Væ–6F–öâÂÆ—FW&7“¢6VÆV7FVDÆ—FW&7’À¢76W76ÖVçC¢6VÆV7FVD76W76ÖVçEG—RÂ6–væÇ3¢6VÆV7FVE6–væÄ–G2À¢f–Æ&–Æ—G“¢f–Æ&–Æ—G”ÖöFRÀ¢Ò6F—6f–W2W'6—7FVDf–ÇFW"’“°¢Ò6F6‚²ò¢W'6—7L:¦æ6–&W7BÖVff÷'B¢òĞ¢ÒÂ¶fÆ6„ÖöFRÂ6V&6‚Â6VÆV7FVEVV—†2Â6VÆV7FVDvRÂ6VÆV7FVE&W7öæFVçFRÂ6VÆV7FVD6öÖ×Væ–6F–öâÂ6VÆV7FVDÆ—FW&7’Â6VÆV7FVD76W76ÖVçEG—RÂ6VÆV7FVE6–væÄ–G2Âf–Æ&–Æ—G”ÖöFUÒ“° ¢W6TVffV7B‚‚’Óâ°¢ÆWBÆ—fRÒG'VS°¢fWF6‚…$Tt•5E%•õU$ÂÂ²66†S¢&æò×7F÷&R"Ò¢çF†Vâ‚‡"’Óâ"æö²ò"æ§6öâ‚’¢&öÖ—6Rç&V¦V7B‡"’¢çF†Vâ‚†FF¢²W66Æ3ó¢&÷uµÒÒ’Óâ°¢6öç7B'6VBÒ†FFæW66Æ2ÇÂµÒ’æÖ‡&÷uFõ66ÆR“°¢–b‡'6VBæÆVæwF‚ÓÒ’F‡&÷ræWrW'&÷"‚'&Vv—7G&ò–æ6ö×ÆWFò"“°¢–b†Æ—fR’²6WEv÷&ÆB‡Væ—VR…²ââææô6÷7Ev÷&ÆE66ÆW2Âââç'6VEÒ’“²6WE7FGW2‚&ö²"“²Ğ¢Ò¢æ6F6‚‚‚’Óâ²–b†Æ—fR’6WE7FGW2‚&fÆÆ&6²"“²Ò“°¢&WGW&â‚’Óâ²Æ—fRÒfÇ6S²Ó°¢ÒÂµÒ“° ¢òòFVGWFR–ç7G'VÖVçFó¢VÖW66Æ×VæF–Â‡v÷&ÆBÒ¢’VRGWÆ–6VÒ–ç7G'VÖVçFğ¢òò¬:&W6VçFRæò†ÖW6ÖòæöÖR(	BW‚ã¢4EÂÒÔ4„BÕ"ôbÂfæFW&&–ÇBÂ44$TN(
+b’:¢òò&VGVæFçFRâfW'<:6òFò:’6ì;Fæ–6²<;7–×VæF–Â6’Fò6L:ÆövòFğ¢òòf–ÇG&ò&ì:6ò6öçF"ö&V6W"òÖW6Öò–ç7G'VÖVçFòGV2fW¦W2à¢6öç7BFVGWVEv÷&ÆBÒW6TÖVÖò‚‚’Óâ°¢6öç7BæÖW2ÒæWr6WB„4õ$Uôd”ÅDU$$ÄUô4DÄôræÖ‚‡2’Óâæ÷&Ò‡2ææÖR’’“°¢&WGW&âv÷&ÆBæf–ÇFW"‚‡2’Óâ‡2æ–Bç7F'G5v—F‚‚'v÷&ÆBÒ"’bbæÖW2æ†2†æ÷&Ò‡2ææÖR’’’“°¢ÒÂ·v÷&ÆEÒ“° ¢òòòG,:6ò&W6W'f6öÖVçFRÆ–6:|;VW26ö×ÆWF2â÷:|:6ò%FöF2"7&W66VçF¢òòf–6†2÷&VfW,:¦æ6–2VR÷77VVÒ&÷F&VÂÂ6V×&R&÷GVÆF26öÖòì:6ğ¢òò&VVæ6Œ:×fV—3²—FVç26VÒFW7F–æò6öçF–çVÒW†6Ç\:ÖF÷2à¢6öç7B6FÆörÒW6TÖVÖò‚‚’Óâ°¢6öç7B&VfW&Væ6W2Òf–Æ&–Æ—G”ÖöFRÓÓÒ&ÆÂ"ò$TdU$Tä4UôôäÅ•ô4DÄôr¢µÓ°¢6öç7B&÷WFVBÒVæ—VR…°¢ââä4õ$Uôd”ÅDU$$ÄUô4DÄôrÀ¢ââæFVGWVEv÷&ÆBÀ¢ââç&VfW&Væ6W2À¢Ò’æf–ÇFW"†÷Vç4–ä“°¢&WGW&âf–Æ&–Æ—G”ÖöFRÓÓÒ&ÆÂ"ò&÷WFVB¢&÷WFVBæf–ÇFW"†—4gVÆÄ“°¢ÒÂ¶FVGWVEv÷&ÆBÂf–Æ&–Æ—G”ÖöFUÒ“° ¢6öç7B†56V&6‚Ò6V&6‚çG&–Ò‚’æÆVæwF‚ãÒ"ÇÂ6VÆV7FVEVV—†2æÆVæwF‚âÇÂ&ööÆVâ‡6VÆV7FVDvR’ÇÂ&ööÆVâ‡6VÆV7FVE&W7öæFVçFR’ÇÂ&ööÆVâ‡6VÆV7FVD6öÖ×Væ–6F–öâ’ÇÂ&ööÆVâ‡6VÆV7FVDÆ—FW&7’’ÇÂ&ööÆVâ‡6VÆV7FVD76W76ÖVçEG—R’ÇÂ6VÆV7FVE6–væÄ–G2æÆVæwF‚âÇÂf–Æ&–Æ—G”ÖöFRÓÓÒ&ÆÂ#° ¢òòÓÓÒÔõDõ"4Ì8Ôä”4ò†Gfæ6VDf–ÇFW$Æöv–2’(	BföçFR9¤ä”4FRfW&FFRÓÓĞ¢6öç7Bf–ÇFW$6öçFW‡BÒW6TÖVÖóÄf–ÇFW$6öçFW‡Câ‚‚’Óâ°¢6öç7BvU&ævRÒ6VÆV7FVDvRòf—†4WF&–2æf–æB‚†’Óâæ–BÓÓÒ6VÆV7FVDvR’¢çVÆÃ°¢6öç7B–æfW'&VDvTÖöçF‡2ÒvU&ævRò–æfW$vTÖöçF‡4g&öÕ6V&6‚‡6V&6‚’¢çVÆÃ°¢6öç7BvTÖöçF‡2ÒvU&ævRòÖF‚ç&÷VæB‚†vU&ævRæÖ–â²vU&ævRæÖ‚’ò"’¢–æfW'&VDvTÖöçF‡3°¢6öç7B–æfW'&VEVV—†2Ò6VÆV7FVEVV—†2æÆVæwF‚ÓÓÒò–æfW%VV—†4g&öÕ6V&6‚‡6V&6‚’¢µÓ°¢&WGW&â°¢VV—†3¢6VÆV7FVEVV—†2æÆVæwF‚âò6VÆV7FVEVV—†2¢–æfW'&VEVV—†2À¢vTÖöçF‡2À¢vT&æC¢vU&ævRò²Ö–ã¢vU&ævRæÖ–âÂÖƒ¢vU&ævRæÖ‚Ò¢çVÆÂÀ¢&W7öæFVçFS¢6VÆV7FVE&W7öæFVçFRóòçVÆÂÀ¢—5fW&&Ã¢6VÆV7FVD6öÖ×Væ–6F–öâÓÓÒ'fW&&Â"òG'VR¢6VÆV7FVD6öÖ×Væ–6F–öâÓÓÒ&æöçfW&&Â"òfÇ6R¢çVÆÂÀ¢—4Æ—FW&FS¢6VÆV7FVDÆ—FW&7’ÓÓÒ&Æ—FW&FR"òG'VR¢6VÆV7FVDÆ—FW&7’ÓÓÒ'&VÆ—FW&FR"òfÇ6R¢çVÆÂÀ¢76W76ÖVçEW6S ¢6VÆV7FVD76W76ÖVçEG—RÓÓÒ&F–væ÷7F–2"ò&F–væ÷7F–6ò"¢6VÆV7FVD76W76ÖVçEG—RÓÓÒ&Ööæ—F÷&–ær"ò&Ööæ—F÷&—¦6ò"¢çVÆÂÀ¢6VÆV7FVE6–væÇ3¢6VÆV7FVE6–væÄ–G2À¢Ó°¢ÒÂ·6VÆV7FVEVV—†2Â6VÆV7FVDvRÂ6VÆV7FVE&W7öæFVçFRÂ6VÆV7FVD6öÖ×Væ–6F–öâÂ6VÆV7FVDÆ—FW&7’Â6VÆV7FVD76W76ÖVçEG—RÂ6VÆV7FVE6–væÄ–G2Â6V&6…Ò“° ¢òò6æF–FF÷26VwW&÷2Â¬:÷&FVæF÷2÷"W'F–ì:¦æ6–6Ì:Öæ–6âôDR4U"d¤”òà¢6öç7B&Vf–æVDÖF6†W2ÒW6TÖVÖò‚‚’Óâ&æµ6fVÇ’†6FÆörÂf–ÇFW$6öçFW‡BÂ6V&6‚’Â¶6FÆörÂf–ÇFW$6öçFW‡BÂ6V&6…Ò“°¢6öç7B&Vf–æVD'”–BÒW6TÖVÖò‚‚’ÓâæWrÖ‡&Vf–æVDÖF6†W2æÖ‚†Ò’Óâ¶Òç66ÆRæ–BÂÕÒ’’Â·&Vf–æVDÖF6†W5Ò“°¢6öç7B6FÆöt'”–BÒW6TÖVÖò‚‚’ÓâæWrÖ†6FÆöræÖ‚‡2’Óâ·2æ–BÂ5Ò’’Â¶6FÆöuÒ“°¢òòÖFRDôD22W66Æ2†–æ6ÇV’f–6†2öÆ–6Væ6–F2ÖWFFFööæÇ’’âW6Fò<;0¢òò&&W6öÇfW"&V6öÖVæF:|;VW27W&F27V¦òG,:6òÖ÷W&ò:’VÒ–ç7G'VÖVçFğ¢òòÆ–6Væ6–Fò†W‚ã¢f–æVÆæBÓ2ægVæ6–öæÆ–FFR“¢VÆRFWfR$T4U"6öÖğ¢òò&V6öÖVæF:|:6òFR&VfW,:¦æ6–VÒfW¢FR7VÖ—"6–ÆVæ6–÷6ÖVçFRFò&Æö6òõ"à¢6öç7BÆÅ66ÆW4'”–BÒW6TÖVÖò‚‚’ÓâæWrÖ†ÆÅ66ÆW2æÖ‚‡2’Óâ·2æ–BÂ5Ò’’ÂµÒ“°¢òòÖFò6L:Æövòf–ÇG,:fVÂ4ì9Dä”4ò†–æ6ÇV’÷2–ç7G'VÖVçF÷27WÆVÖVçF&W3 ¢òò÷'F—2FR6–6öVGV6:|:6òRFW7FW2F—&WF÷2’âW76W2–G2W†—7FVÒ<;2V’(	Bì:6ğ¢òòVÒÆÅ66ÆW6(	BRf–6ÒFRf÷&FR6FÆöt'”–F÷"ì:6ò6W&VÒW66Æ0¢òò&VVæ6Œ:×fV—2†—4gVÆÄ’â6VÒW7FRfÆÆ&6²Â;Ûkh‘éì¶»§q«^t‰ÍÁ…”µä´ÈÍ´éÍÁ…”µä´ÌÉ½Õ¹‘•µlÄ¸ÕÉ•µt‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ÜÀ‰œµ…É¼àÀÀ´ÌÍ´éÀ´Ğˆø(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É•±…Ñ¥Ù”ˆø(€€€€€€€€€€ñM•…É ±…ÍÍ9…µ”ô‰…‰Í½±ÕÑ”±•™Ğ´ÌÑ½À´Ä¼È ´ĞÜ´Ğ€µÑÉ…¹Í±…Ñ”µä´Ä¼ÈÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆ€¼ø(€€€€€€€€€€ñ%¹ÁÕĞ(€€€€€€€€€€€Ù…±Õ”õíÍ•…É¡ô(€€€€€€€€€€€½¹¡…¹”õì¡”¤€ôøÍ•ÑM•…É ¡”¹Ñ…É•Ğ¹Ù…±Õ”¥ô(€€€€€€€€€€€…É¥„µ±…‰•°õí™±…Í¡5½‘”€ü€‰%‘…‘””ÅÕ•¥á„Á…É„ÑÉ¥…•´Í•´…‘…ÍÑÉ¼ˆ€è€‰	ÕÍ…ÈÁ½Èµ•‘¥‡Ÿ¼°ÅÕ•¥á„½Ô¹½µ”‘„•Í…±„‰ô(€€€€€€€€€€€Á±…•¡½±‘•Èõí™±…Í¡5½‘”€ü€‰à¸è€Ü…¹½Ì°»¼‘½Éµ”°É¥Í”°‘•Í…Ñ•»Ÿ¼¸¸¸ˆ€è€‰5•‘¥‡Ÿ¼°…ÕÑ¥Íµ¼°Q °…¹Í¥•‘…‘”¸¸¸‰ô(€€€€€€€€€€€±…ÍÍ9…µ”ô‰ ´äÍ´é ´ÄÄÉ½Õ¹‘•´Éá°Á°´ÄÀÁÈ´ÄÀÑ•áĞµÍ´ˆ(€€€€€€€€€€€‘…Ñ„µÑ•ÍÑ¥ô‰¥¹ÁÕĞµÍ•…É ˆ(€€€€€€€€€€¼ø(€€€€€€€€€íÍ•…É €˜˜€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬õì ¤€ôøÍ•ÑM•…É  ˆˆ¥ô±…ÍÍ9…µ”ô‰…‰Í½±ÕÑ”É¥¡Ğ´ÌÑ½À´Ä¼È€µÑÉ…¹Í±…Ñ”µä´Ä¼ÈÑ•áĞµµÕÑ•µ™½É•É½Õ¹¡½Ù•ÈéÑ•áĞµ™½É•É½Õ¹ˆ…É¥„µ±…‰•°ô‰1¥µÁ…È‰ÕÍ„ˆøñ`±…ÍÍ9…µ”ô‰ ´ĞÜ´Ğˆ€¼øğ½‰ÕÑÑ½¸ùô(€€€€€€€€ğ½‘¥Øø((€€€€€€€ì…¡…ÍM•…É €˜˜€ (€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´Èˆø(€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…ÉäˆûŠr MÕ•ÍÓÕ•ÌË…Á¥‘…Ìğ½Àø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à™±•àµİÉ…À…À´Ä¸ÔÍ´é…À´Èˆø(€€€€€€€€€€€€€íEU%-}MQIQL¹µ…À ¡Ä¤€ôø€ (€€€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€€€€€­•äõíÄ¹±…‰•±ô(€€€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€€€½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô(€€€€€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøìÍ½™ÑQ…À ¤ì¡…ÁÑ¥Œ¹Ñ…À ¤ìÍ•ÑM•±•Ñ•‘”¡Ä¹…”¤ìÍ•ÑM•±•Ñ•‘EÕ•¥á…Ì¡Ä¹ÅÕ•¥á…Ì¤ìõô(€€€€€€€€€€€€€€€€€…É¥„µ±…‰•°õíMÕ•ÍÓ¼Ë…Á¥‘„è€‘íÄ¹±…‰•±ô°€‘íÄ¹ÍÕ‰õô(€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰É½ÕÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´Ä¸ÔÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹Áà´È¸ÔÁä´Ä¸ÔÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ÔÀ¡½Ù•Èé‰œµÁÉ¥µ…Éä¼Ô…Ñ¥Ù”éÍ…±”µlÀ¸äİtˆ(€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆ±…ÍÍ9…µ”ô‰Ñ•áĞµÍ´±•…‘¥¹œµ¹½¹”ÑÉ…¹Í¥Ñ¥½¸µÑÉ…¹Í™½É´É½ÕÀµ¡½Ù•ÈéÍ…±”´ÄÄÀˆùíÄ¹•µ½©¥ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆùíÄ¹±…‰•±ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁát™½¹Ğµµ•‘¥Õ´Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆû
+ÜíÄ¹ÍÕ‰ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€¥ô((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´Èˆø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù%‘…‘”‘„É¥…»„ğ½Àø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à…À´ÄÍ´é…À´È½Ù•É™±½Üµàµ…ÕÑ¼Áˆ´Äˆø(€€€€€€€€€€€í™…¥á…ÍÑ…É¥…Ì¹µ…À ¡…”¤€ôø€ñ‰ÕÑÑ½¸­•äõí…”¹¥‘ôÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘”€ôôô…”¹¥‘ô…É¥„µ±…‰•°õí…¥á„•Ó…É¥„€‘í…”¹±…‰•±õô½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘” ¡Ø¤€ôøØ€ôôô…”¹¥€ü¹Õ±°€è…”¹¥¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´È¸ÔÁä´Ä¸ÔÍ´éÁà´ÌÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸€‘íÍ•±•Ñ•‘”€ôôô…”¹¥€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôùí…”¹±…‰•±ôğ½‰ÕÑÑ½¸ø¥ô(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´Èˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•Ñİ••¸…À´ÈÍ´é…À´Ìˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È…À´Ä¸ÔÍ´é…À´Èµ¥¸µÜ´Àˆø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ÑÉÕ¹…Ñ”ˆù<ÅÕ”Ù½¨½‰Í•ÉÙ„ƒ
+ÜÍ¥¹Ñ½µ…Ìğ½Àø(€€€€€€€€€€€€€í¥ÍÕÉ…Ñ•‘=ÕÉ¼€˜˜Á½‘¥Õ´¹½ÕÉ¼€˜˜€ñÍÁ…¸±…ÍÍ9…µ”ô‰Í¡É¥¹¬´À¥¹±¥¹”µ‰±½¬Áà´Ä¸ÔÁä´À¸ÔÉ½Õ¹‘•µ™Õ±°‰œµ…µ‰•È´ÄÀÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ĞÀÑ•áĞµlåÁátÍ´éÑ•áĞµlÄÁÁát™½¹Ğµ‰½±Ñ•áĞµ…µ‰•È´äÀÀ‘…É¬éÑ•áĞµ…µ‰•È´ÈÀÀİ¡¥Ñ•ÍÁ…”µ¹½İÉ…ÀˆûÂ~€€Ç
+¨±¥¹¡„èíÁ½‘¥Õ´¹½ÕÉ¼¹Í…±”¹¹…µ•ôğ½ÍÁ…¸ùô(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€í¡…ÍM•…É €˜˜€ñ	ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆÙ…É¥…¹Ğô‰¡½ÍĞˆÍ¥é”ô‰Í´ˆ½¹±¥¬õí±•…É±±ô±…ÍÍ9…µ”ô‰ ´ØÍ´é ´Ü…À´ÄÁà´ÈÑ•áĞµáÌˆøñI½Ñ…Ñ•Ü±…ÍÍ9…µ”ô‰ ´ÌÍ´é ´Ì¸ÔÜ´ÌÍ´éÜ´Ì¸Ôˆ€¼ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù±¥µÁ…Èğ½ÍÁ…¸øğ½	ÕÑÑ½¸ùô(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É¥É¥µ½±Ì´È…À´Ä¸ÔÍ´é…À´ÈÍ´éÉ¥µ½±Ì´Ì±œéÉ¥µ½±Ì´Ğˆø(€€€€€€€€€€€íÅÕ•¥á…Ì¹µ…À ¡Ä¤€ôøì½¹ÍĞÍ•°€ôÍ•±•Ñ•‘EÕ•¥á…Ì¹¥¹±Õ‘•Ì¡Ä¹¥¤ìÉ•ÑÕÉ¸€ñ‰ÕÑÑ½¸­•äõíÄ¹¥‘ôÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±ô…É¥„µ±…‰•°õíÄ¹Á…É•¹Ñ!¥¹Ğ€ü€‘íÄ¹±…‰•±ôƒŠP€‘íÄ¹Á…É•¹Ñ!¥¹Ñõ€€èÄ¹±…‰•±ô½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÑ½±•EÕ•¥á„¡Ä¹¥¥ô±…ÍÍ9…µ”õíÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´Ä¸ÔÍ´éÁä´ÈÑ•áĞµ±•™ĞÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸™±•à¥Ñ•µÌµ•¹Ñ•È…À´Ä¸ÔÍ´é…À´Èµ¥¸µ ´äÍ´éµ¥¸µ µ…ÕÑ¼€‘íÍ•°€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹Í¡…‘½ÜµÍ´ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ¡½Ù•Èé‰œµµÕÑ•¼ØÀ‰õôø(€€€€€€€€€€€€€íÄ¹•µ½©¤€˜˜€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆ±…ÍÍ9…µ”ô‰Í¡É¥¹¬´ÀÑ•áĞµÍ´Í´éÑ•áĞµ‰…Í”±•…‘¥¹œµ¹½¹”ˆùíÄ¹•µ½©¥ôğ½ÍÁ…¸ùô(€€€€€€€€€€€€€ì¼¨M•´ÑÉÕ¹…Ñ”èËÍÑÕ±¼A=HaQ9M<€¬‘¥„•´±¥¹Õ…•´‘”Á…¤½·”(€€€€€€€€€€€€€€€€€€¡¼ÅÕ”„É¥…»„™…è¤°ÁÉ„Õ´±•¥¼•Í½±¡•È„ÅÕ•¥á„•ÉÑ„¸€¨½ô(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µ¥¸µÜ´À™±•à™±•àµ½°ˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰İ¡¥Ñ•ÍÁ…”µ¹½Éµ…°‰É•…¬µİ½É‘ÌÑ•áĞµlÄÁÁátÍ´éÑ•áĞµáÌ±•…‘¥¹œµÑ¥¡ĞˆùíÄ¹±…‰•±ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€íÄ¹Á…É•¹Ñ!¥¹Ğ€˜˜€ñÍÁ…¸±…ÍÍ9…µ”õíİ¡¥Ñ•ÍÁ…”µ¹½Éµ…°‰É•…¬µİ½É‘ÌÑ•áĞµláÁátÍ´éÑ•áĞµlåÁát™½¹Ğµµ•‘¥Õ´±•…‘¥¹œµÑ¥¡Ğ€‘íÍ•°€ü€‰Ñ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹¼ÜÔˆ€è€‰Ñ•áĞµµÕÑ•µ™½É•É½Õ¹‰õôùíÄ¹Á…É•¹Ñ!¥¹Ñôğ½ÍÁ…¸ùô(€€€€€€€€€€€€€€ğ½ÍÁ…¸ø(€€€€€€€€€€€€ğ½‰ÕÑÑ½¸øìô¥ô(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€íÍÕ•ÍÑ•‘½µÁ…¹¥½¹Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à™±•àµİÉ…À¥Ñ•µÌµ•¹Ñ•È…À´Ä¸ÔÁĞ´Äˆ…É¥„µ±…‰•°ô‰EÕ•¥á…ÌÅÕ”½ÍÑÕµ…´Ù¥È©Õ¹Ñ¼ˆø(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁát™½¹ĞµÍ•µ¥‰½±Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆûÂ~J„½ÍÑÕµ„Ù¥È©Õ¹Ñ¼èğ½ÍÁ…¸ø(€€€€€€€€€€€€€íÍÕ•ÍÑ•‘½µÁ…¹¥½¹Ì¹µ…À ¡Ä¤€ôø€ (€€€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€€€€€­•äõíÄ¹¥‘ô(€€€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøÑ½±•EÕ•¥á„¡Ä¹¥¥ô(€€€€€€€€€€€€€€€€€½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô(€€€€€€€€€€€€€€€€€…É¥„µ±…‰•°õí‘¥¥½¹…ÈÑ…µ‹¥´„ÅÕ•¥á„€‘íÄ¹±…‰•±õô(€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰¥¹±¥¹”µ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÉ½Õ¹‘•µ™Õ±°‰½É‘•È‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰œµÁÉ¥µ…Éä¼ÄÀÁà´ÈÁä´À¸ÔÑ•áĞµlÄÁÁát™½¹Ğµ‰½±Ñ•áĞµÁÉ¥µ…ÉäÑÉ…¹Í¥Ñ¥½¸¡½Ù•ÈèµÑÉ…¹Í±…Ñ”µä´À¸Ô¡½Ù•Èé‰œµÁÉ¥µ…Éä¼ÈÀˆ(€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€íÄ¹•µ½©¤€˜˜€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆùíÄ¹•µ½©¥ôğ½ÍÁ…¸ùô(€€€€€€€€€€€€€€€€€íÄ¹±…‰•±ô(€€€€€€€€€€€€€€€€€€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆ±…ÍÍ9…µ”ô‰Ñ•áĞµÁÉ¥µ…Éä¼ÜÀˆû¾ò,ğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€¥ô(€€€€€€€€ğ½‘¥Øø((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´ÈÁĞ´Ä¸ÔÍ´éÁĞ´È‰½É‘•ÈµĞ‰½É‘•Èµ‰½É‘•È¼ÔÀˆø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùEÕ•´É•ÍÁ½¹‘”ğ½Àø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à…À´ÄÍ´é…À´È½Ù•É™±½Üµàµ…ÕÑ¼Áˆ´Äˆø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰É¥…¹„ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰Ñ•ÍÑ•}‘¥É•Ñ½}É¥…¹„‰ô…É¥„µ±…‰•°ô‰I•ÍÁ½¹‘•¹Ñ”èÉ¥…»„€¡Ñ•ÍÑ”‘¥É•Ñ¼ÁÉ••¹£µÙ•°¤ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ” ¡Ø¤€ôøØ€ôôô€‰Ñ•ÍÑ•}‘¥É•Ñ½}É¥…¹„ˆ€ü¹Õ±°€è€‰Ñ•ÍÑ•}‘¥É•Ñ½}É¥…¹„ˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰Ñ•ÍÑ•}‘¥É•Ñ½}É¥…¹„ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~Hğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù¥É•Ñ¼ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰Á…¥ÌˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰Á…¥Ì‰ô…É¥„µ±…‰•°ô‰I•ÍÁ½¹‘•¹Ñ”èÁ…¥Ì½ÔÕ¥‘…‘½Èˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ” ¡Ø¤€ôøØ€ôôô€‰Á…¥Ìˆ€ü¹Õ±°€è€‰Á…¥Ìˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰Á…¥Ìˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~F£Š7Â~F§Š7Â~Fœğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆùA…¥Ìğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰ÁÉ½™•ÍÍ½ÈˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰ÁÉ½™•ÍÍ½È‰ô…É¥„µ±…‰•°ô‰I•ÍÁ½¹‘•¹Ñ”èÁÉ½™•ÍÍ½È½Ô•Í½±„ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ” ¡Ø¤€ôøØ€ôôô€‰ÁÉ½™•ÍÍ½Èˆ€ü¹Õ±°€è€‰ÁÉ½™•ÍÍ½Èˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰ÁÉ½™•ÍÍ½Èˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~F£Š7Â~>¬ğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆùÍ½±„ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰±¥¹¥¼ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰±¥¹¥¼‰ô…É¥„µ±…‰•°ô‰I•ÍÁ½¹‘•¹Ñ”è³µ¹¥¼€¡½‰Í•ÉÙ‡Ÿ¼‘¥É•Ñ„¤ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ” ¡Ø¤€ôøØ€ôôô€‰±¥¹¥¼ˆ€ü¹Õ±°€è€‰±¥¹¥¼ˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”€ôôô€‰±¥¹¥¼ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~F£Š7ŠjW¾â<ğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù³µ¹¥¼ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´ÈÁĞ´Ä¸ÔÍ´éÁĞ´È‰½É‘•ÈµĞ‰½É‘•Èµ‰½É‘•È¼ÔÀˆø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù½µÕ¹¥‡Ÿ¼ğ½Àø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à…À´ÄÍ´é…À´È½Ù•É™±½Üµàµ…ÕÑ¼Áˆ´Äˆø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰Ù•É‰…°ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸€ôôô€‰Ù•É‰…°‰ô…É¥„µ±…‰•°ô‰½µÕ¹¥‡Ÿ¼èÉ¥…»„Ù•É‰…°€¡™…±„¤ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸ ¡Ø¤€ôøØ€ôôô€‰Ù•É‰…°ˆ€ü¹Õ±°€è€‰Ù•É‰…°ˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸€ôôô€‰Ù•É‰…°ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~^¾â<ğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù…±„ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰¹½¹Ù•É‰…°ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸€ôôô€‰¹½¹Ù•É‰…°‰ô…É¥„µ±…‰•°ô‰½µÕ¹¥‡Ÿ¼èÉ¥…»„»¼µÙ•É‰…°ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸ ¡Ø¤€ôøØ€ôôô€‰¹½¹Ù•É‰…°ˆ€ü¹Õ±°€è€‰¹½¹Ù•É‰…°ˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸€ôôô€‰¹½¹Ù•É‰…°ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~’@ğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù;¼µY•É‰…°ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´ÈÁĞ´Ä¸ÔÍ´éÁĞ´È‰½É‘•ÈµĞ‰½É‘•Èµ‰½É‘•È¼ÔÀˆø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù±™…‰•Ñ¥é‡Ÿ¼ğ½Àø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à…À´ÄÍ´é…À´È½Ù•É™±½Üµàµ…ÕÑ¼Áˆ´Äˆø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰±¥Ñ•É…Ñ”ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘1¥Ñ•É…ä€ôôô€‰±¥Ñ•É…Ñ”‰ô…É¥„µ±…‰•°ô‰±™…‰•Ñ¥é‡Ÿ¼èÉ¥…»„…±™…‰•Ñ¥é…‘„ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘1¥Ñ•É…ä ¡Ø¤€ôøØ€ôôô€‰±¥Ñ•É…Ñ”ˆ€ü¹Õ±°€è€‰±¥Ñ•É…Ñ”ˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘1¥Ñ•É…ä€ôôô€‰±¥Ñ•É…Ñ”ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~NXğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù±™…‰•Ñ¥é…‘„ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰ÁÉ•±¥Ñ•É…Ñ”ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘1¥Ñ•É…ä€ôôô€‰ÁÉ•±¥Ñ•É…Ñ”‰ô…É¥„µ±…‰•°ô‰±™…‰•Ñ¥é‡Ÿ¼èÉ¥…»„ÁË¤µ…±™…‰•Ñ¥é…‘„ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘1¥Ñ•É…ä ¡Ø¤€ôøØ€ôôô€‰ÁÉ•±¥Ñ•É…Ñ”ˆ€ü¹Õ±°€è€‰ÁÉ•±¥Ñ•É…Ñ”ˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘1¥Ñ•É…ä€ôôô€‰ÁÉ•±¥Ñ•É…Ñ”ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~FØğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆùAË¤µ±™…ˆ¸ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´ÈÁĞ´Ä¸ÔÍ´éÁĞ´È‰½É‘•ÈµĞ‰½É‘•Èµ‰½É‘•È¼ÔÀˆø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùQ¥Á¼‘”…Ù…±¥‡Ÿ¼ğ½Àø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à…À´ÄÍ´é…À´È½Ù•É™±½Üµàµ…ÕÑ¼Áˆ´Äˆø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰‘¥…¹½ÍÑ¥ŒˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘ÍÍ•ÍÍµ•¹ÑQåÁ”€ôôô€‰‘¥…¹½ÍÑ¥Œ‰ô…É¥„µ±…‰•°ô‰Q¥Á¼‘”…Ù…±¥‡Ÿ¼è‘¥…»ÍÍÑ¥¼ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘ÍÍ•ÍÍµ•¹ÑQåÁ” ¡Ø¤€ôøØ€ôôô€‰‘¥…¹½ÍÑ¥Œˆ€ü¹Õ±°€è€‰‘¥…¹½ÍÑ¥Œˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘ÍÍ•ÍÍµ•¹ÑQåÁ”€ôôô€‰‘¥…¹½ÍÑ¥Œˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~R4ğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù¥…»ÍÍÑ¥¼ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸­•äô‰µ½¹¥Ñ½É¥¹œˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µÁÉ•ÍÍ•õíÍ•±•Ñ•‘ÍÍ•ÍÍµ•¹ÑQåÁ”€ôôô€‰µ½¹¥Ñ½É¥¹œ‰ô…É¥„µ±…‰•°ô‰Q¥Á¼‘”…Ù…±¥‡Ÿ¼èµ½¹¥Ñ½É¥é‡Ÿ¼ˆ½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘ÍÍ•ÍÍµ•¹ÑQåÁ” ¡Ø¤€ôøØ€ôôô€‰µ½¹¥Ñ½É¥¹œˆ€ü¹Õ±°€è€‰µ½¹¥Ñ½É¥¹œˆ¥ô±…ÍÍ9…µ”õíÍ¡É¥¹¬´ÀÉ½Õ¹‘•µá°Í´éÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´ÈÍ´éÁà´ÌÁä´ÄÍ´éÁä´ÈÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ¥¸µ ´àÍ´éµ¥¸µ ´ÄÀ™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÄÍ´é…À´Èİ¡¥Ñ•ÍÁ…”µ¹½İÉ…À€‘íÍ•±•Ñ•‘ÍÍ•ÍÍµ•¹ÑQåÁ”€ôôô€‰µ½¹¥Ñ½É¥¹œˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~N(ğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆù5½¹¥Ñ½É¥é‡Ÿ¼ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø((€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÍ´éÍÁ…”µä´ÈÁĞ´Ä¸ÔÍ´éÁĞ´È‰½É‘•ÈµĞ‰½É‘•Èµ‰½É‘•È¼ÔÀˆø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁátÍ´éÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù¥ÍÁ½¹¥‰¥±¥‘…‘”¹¼…ÁÀğ½Àø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É¥É¥µ½±Ì´È…À´Ä¸ÔÍ´é…À´ÈˆÉ½±”ô‰É½ÕÀˆ…É¥„µ±…‰•°ô‰¥±ÑÉ…È•Í…±…ÌÁ•±„™½Éµ„‘”ÕÍ¼ˆø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€…É¥„µÁÉ•ÍÍ•õí…Ù…¥±…‰¥±¥Ñå5½‘”€ôôô€‰½µÁ±•Ñ”‰ô(€€€€€€€€€€€€€½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô(€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøÍ•ÑÙ…¥±…‰¥±¥Ñå5½‘” ‰½µÁ±•Ñ”ˆ¥ô(€€€€€€€€€€€€€±…ÍÍ9…µ”õíµ¥¸µ ´ÄÀÉ½Õ¹‘•µá°‰½É‘•ÈÁà´ÈÁä´ÈÑ•áĞµ±•™ĞÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸Í´éÉ½Õ¹‘•´Éá°Í´éÁà´Ì€‘í…Ù…¥±…‰¥±¥Ñå5½‘”€ôôô€‰½µÁ±•Ñ”ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õô(€€€€€€€€€€€€ø(€€€€€€€€€€€€€€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠrğ½ÍÁ…¸ø½µÁ±•Ñ…Ì(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µĞ´À¸Ô‰±½¬Ñ•áĞµlÄÁÁát™½¹ĞµÍ•µ¥‰½±½Á…¥Ñä´ÜÔˆùÁÉ••¹£µÙ•¥Ìğ½ÍÁ…¸ø(€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€…É¥„µÁÉ•ÍÍ•õí…Ù…¥±…‰¥±¥Ñå5½‘”€ôôô€‰…±°‰ô(€€€€€€€€€€€€€½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô(€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøÍ•ÑÙ…¥±…‰¥±¥Ñå5½‘” ‰…±°ˆ¥ô(€€€€€€€€€€€€€±…ÍÍ9…µ”õíµ¥¸µ ´ÄÀÉ½Õ¹‘•µá°‰½É‘•ÈÁà´ÈÁä´ÈÑ•áĞµ±•™ĞÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸Í´éÉ½Õ¹‘•´Éá°Í´éÁà´Ì€‘í…Ù…¥±…‰¥±¥Ñå5½‘”€ôôô€‰…±°ˆ€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ‰õô(€€€€€€€€€€€€ø(€€€€€€€€€€€€€€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~Nhğ½ÍÁ…¸øQ½‘…Ì(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µĞ´À¸Ô‰±½¬Ñ•áĞµlÄÁÁát™½¹ĞµÍ•µ¥‰½±½Á…¥Ñä´ÜÔˆù¥¹±Õ¤™¥¡…Ìğ½ÍÁ…¸ø(€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁát±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€í…Ù…¥±…‰¥±¥Ñå5½‘”€ôôô€‰…±°ˆ(€€€€€€€€€€€€€€ü€‰¥¡…ÌÓ¥¹¥…Ì…Á…É••´½´¥‘•¹Ñ¥™¥‡Ÿ¼±…É„ì¹•¹¡Õµ„ƒ¤…ÁÉ•Í•¹Ñ…‘„½µ¼…Á±¥‡Ÿ¼½µÁ±•Ñ„¸ˆ(€€€€€€€€€€€€€€è€‰5½ÍÑÉ…¹‘¼Í½µ•¹Ñ”¥¹ÍÑÉÕµ•¹Ñ½Ì½´…Á±¥‡Ÿ¼ÁÉ••¹£µÙ•°‘•¹ÑÉ¼‘¼…ÁÀ¸‰ô(€€€€€€€€€€ğ½Àø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½Í•Ñ¥½¸ø((€€€€€ì¼¨5…Í½Ñ”%¹Ñ•±¥•¹Ñ”ƒŠPµÕ‘„½´Á…‘Ë¼‘•Ñ•Ñ…‘¼€¨½ô(€€€€€ì…¡…ÍM•…É €˜˜€ (€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à©ÕÍÑ¥™äµ•¹Ñ•ÈµĞ´Ğˆø(€€€€€€€€€€ñ¥µœ(€€€€€€€€€€€ÍÉŒõí‰É…¹‘ÍÍ•ÑÌ¹µ…Í½ÑÌ¹ÍÕÁ•É½Ñ½Éô(€€€€€€€€€€€…±Ğô‰È¸)…‘Í½¸ƒŠPÍ•Ô…ÍÍ¥ÍÑ•¹Ñ”‘”‘¥…»ÍÍÑ¥¼ˆ(€€€€€€€€€€€±…ÍÍ9…µ”ô‰Ü´ÌÈ µ…ÕÑ¼É½Õ¹‘•´Éá°Í¡…‘½Üµ±œ¡½Ù•ÈéÍ…±”´ÄÀÔÑÉ…¹Í¥Ñ¥½¸µÑÉ…¹Í™½É´ˆ(€€€€€€€€€€€±½…‘¥¹œô‰±…éäˆ(€€€€€€€€€€¼ø(€€€€€€€€ğ½‘¥Øø(€€€€€€¥ô((€€€€€ì¼¨M¥¹Ñ½µ…ÌÁ½ÁÕ±…É•ÌƒŠP…Á…É•”…ÍÍ¥´ÅÕ”Õµ„ÅÕ•¥á„ƒ¤µ…É…‘„€¡»¼•á¥”(€€€€€€€€€¥‘…‘”¤¸5Õ¥Ñ½ÌÍ¥¹…¥Ì•´±¥¹Õ…•´‘”Á…¤½·”°Ñ½…Ù•¥Ì°•ÍÑ¥±¼1½Ù…‰±”¸€¨½ô(€€€€€íÍ•±•Ñ•‘EÕ•¥á…Ì¹±•¹Ñ €øô€Ä€˜˜€ (€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µĞ´Ğˆø(€€€€€€€€€€ñA½ÁÕ±…ÉMåµÁÑ½µA¥­•È(€€€€€€€€€€€Í•±•Ñ•‘EÕ•¥á…ÌõíÍ•±•Ñ•‘EÕ•¥á…Íô(€€€€€€€€€€€Í•±•Ñ•‘M¥¹…±%‘ÌõíÍ•±•Ñ•‘M¥¹…±%‘Íô(€€€€€€€€€€€½¹Q½±”õì¡Í¥¹…±%¤€ôøì(€€€€€€€€€€€€€Í½™ÑQ¥¬ ¤ì¡…ÁÑ¥Œ¹Í•±•Ğ ¤ì(€€€€€€€€€€€€€Í•ÑM•±•Ñ•‘M¥¹…±%‘Ì¡ÁÉ•Ø€ôø(€€€€€€€€€€€€€€€ÁÉ•Ø¹¥¹±Õ‘•Ì¡Í¥¹…±%¤€üÁÉ•Ø¹™¥±Ñ•È¡à€ôøà€„ôôÍ¥¹…±%¤€èl¸¸¹ÁÉ•Ø°Í¥¹…±%‘t(€€€€€€€€€€€€€€¤ì(€€€€€€€€€€€õô(€€€€€€€€€€€½¹±•…Èõì ¤€ôøìÍ½™ÑQ…À ¤ì¡…ÁÑ¥Œ¹Ñ…À ¤ìÍ•ÑM•±•Ñ•‘M¥¹…±%‘Ì¡mt¤ìõô(€€€€€€€€€€€½¹!½Ù•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô(€€€€€€€€€€¼ø(€€€€€€€€ğ½‘¥Øø(€€€€€€¥ô(€€€€€€€€ğ½‘¥Øø((€€€€€€€ì¼¨I%!P=1U58ƒŠPI•ÍÕ±ÑÌ€¡±œé½°µÍÁ…¸´È¤€¨½ô(€€€€€€€í¡…ÍM•…É €˜˜€ (€€€€€€ñÍ•Ñ¥½¸É•˜õíÉ•ÍÕ±ÑÍM•Ñ¥½¹I•™ô±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ì±œé½°µÍÁ…¸´Èˆø(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ©ÕÍÑ¥™äµ‰•Ñİ••¸…À´Ìˆø(€€€€€€€€€€ñ‘¥ØøñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…ÉäˆùÍ‡µ‘„½‰É¥…ÓÍÉ¥„ğ½Àøñ È±…ÍÍ9…µ”ô‰Ñ•áĞµá°Ñ•áĞµ™½É•É½Õ¹ˆÍÑå±”õíì™½¹Ñ…µ¥±äè€‰Ù…È ´µ™½¹Ğµ‘¥ÍÁ±…ä¤ˆ°™½¹Ñ]•¥¡Ğè€ØÀÀõôùI•½µ•¹‘‡ŸÕ•ÌÁ½ÈÁÉ¥½É¥‘…‘”³µ¹¥„ğ½ Èøğ½‘¥Øø(€€€€€€€€€í¡…ÍM…™•I•ÍÕ±ÑÌ€˜˜€ (€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•àÍ¡É¥¹¬´À¥Ñ•µÌµ•¹Ñ•È…À´Ä¸Ôˆø(€€€€€€€€€€€€€€ñ	ÕÑÑ½¸Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆÍ¥é”ô‰Í´ˆ½¹±¥¬õí½ÁåI•½µµ•¹‘…Ñ¥½¹ô±…ÍÍ9…µ”ô‰…À´Ä¸Ôˆ…É¥„µ±…‰•°ô‰½Á¥…ÈÉ•½µ•¹‘‡Ÿ¼Á…É„¼±…Õ‘¼ˆø(€€€€€€€€€€€€€€€€ñ±¥Á‰½…É‘¡•¬±…ÍÍ9…µ”ô‰ ´Ì¸ÔÜ´Ì¸Ôˆ€¼ø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆùí½Á¥•‘I•Œ€ü€‰½Á¥…‘¼„ˆ€è€‰½Á¥…È‰ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€ğ½	ÕÑÑ½¸ø(€€€€€€€€€€€€€€ñ	ÕÑÑ½¸Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆÍ¥é”ô‰Í´ˆ½¹±¥¬õí•áÁ½ÉÑA‘™ô±…ÍÍ9…µ”ô‰…À´Ä¸Ôˆ…É¥„µ±…‰•°ô‰áÁ½ÉÑ…ÈÉ•½µ•¹‘‡Ÿ¼•´Aˆø(€€€€€€€€€€€€€€€€ñ¥±•½İ¸±…ÍÍ9…µ”ô‰ ´Ì¸ÔÜ´Ì¸Ôˆ€¼ø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆùAğ½ÍÁ…¸ø(€€€€€€€€€€€€€€ğ½	ÕÑÑ½¸ø(€€€€€€€€€€€€€€ñ	ÕÑÑ½¸Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆÍ¥é”ô‰Í´ˆ½¹±¥¬õí•áÁ½ÉÑÍÙô±…ÍÍ9…µ”ô‰…À´Ä¸Ôˆ…É¥„µ±…‰•°ô‰áÁ½ÉÑ…ÈÉ•½µ•¹‘‡Ÿ¼•´MX€¡á•°¤ˆø(€€€€€€€€€€€€€€€€ñQ…‰±”±…ÍÍ9…µ”ô‰ ´Ì¸ÔÜ´Ì¸Ôˆ€¼ø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰¡¥‘‘•¸Í´é¥¹±¥¹”ˆùMXğ½ÍÁ…¸ø(€€€€€€€€€€€€€€ğ½	ÕÑÑ½¸ø(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€¥ô(€€€€€€€€ğ½‘¥Øø(€€€€€€€íÕÍ¥¹	É½…‘‰…¹‘…±±‰…¬€˜˜€ (€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ…µ‰•È´ÌÀÀ‰œµ…µ‰•È´ÔÀÀ´ÌÑ•áĞµáÌ™½¹ĞµÍ•µ¥‰½±Ñ•áĞµ…µ‰•È´äÀÀ‘…É¬é‰½É‘•Èµ…µ‰•È´àÀÀ¼ØÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ÌÀ‘…É¬éÑ•áĞµ…µ‰•È´ÄÀÀˆÉ½±”ô‰¹½Ñ”ˆø(€€€€€€€€€€€M•´¥¹ÍÑÉÕµ•¹Ñ¼€ñÍÑÉ½¹œù•ÍÁ•µ™¥¼ğ½ÍÑÉ½¹œøÙ…±¥‘…‘¼Á…É„•ÍÑ„½µ‰¥¹‡Ÿ¼¹•ÍÑ„¥‘…‘”¸5½ÍÑÉ…¹‘¼€ñÍÑÉ½¹œùÑÉ¥…•´…µÁ±„ğ½ÍÑÉ½¹œø…ÁÉ½ÁÉ¥…‘„ƒ€¥‘…‘”€¡¥¹ÍÑÉÕµ•¹Ñ½ÌÉ•…¥Ì¤ƒŠPÕÍ”½µ¼É…ÍÑÉ•¥¼¥¹¥¥…°°»¼½µ¼…Ù…±¥‡Ÿ¼•ÍÁ•µ™¥„¸(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€¥ô(€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰ÍÈµ½¹±äˆÉ½±”ô‰ÍÑ…ÑÕÌˆ…É¥„µ±¥Ù”ô‰Á½±¥Ñ”ˆø(€€€€€€€€€í¡…ÍM…™•I•ÍÕ±ÑÌ€ü€‘íÉ•™¥¹•‘5…Ñ¡•Ì¹±•¹Ñ¡ô•Í…±„‘íÉ•™¥¹•‘5…Ñ¡•Ì¹±•¹Ñ €ôôô€Ä€ü€ˆˆ€è€‰Ì‰ôÍ•ÕÉ„‘íÉ•™¥¹•‘5…Ñ¡•Ì¹±•¹Ñ €ôôô€Ä€ü€ˆˆ€è€‰Ì‰ô•¹½¹ÑÉ…‘„‘íÉ•™¥¹•‘5…Ñ¡•Ì¹±•¹Ñ €ôôô€Ä€ü€ˆˆ€è€‰Ì‰ôÁ…É„•ÍÑ”Á•É™¥°¹€€è€‰9•¹¡Õµ„•Í…±„Í•ÕÉ„Á…É„•ÍÑ”Á•É™¥°¸I•™¥¹”¥‘…‘”°ÅÕ•¥á„½ÔÉ•ÍÁ½¹‘•¹Ñ”¸‰ô(€€€€€€€€ğ½Àø((€€€€€€€ì¼¨Oµ¹Ñ•Í”³µ¹¥„‘¼µ½Ñ½È‘”™¥±ÑÉ…•´…Ù…»…‘„€¨½ô(€€€€€€€íÉ•™¥¹•‘5…Ñ¡•Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•´Éá°‰½É‘•È‰½É‘•ÈµÁÉ¥µ…Éä¼ÈÀ‰œµÉ…‘¥•¹ĞµÑ¼µ‰È™É½´µÁÉ¥µ…Éä¼ÔÙ¥„µÑÉ…¹ÍÁ…É•¹ĞÑ¼µ¡…ÉĞ´È¼ÔÀ´ÌÍ´éÀ´Ğˆø(€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÁÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…ÉäˆùÏµ¹Ñ•Í”³µ¹¥„ğ½Àø(€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰µĞ´ÄÑ•áĞµÍ´™½¹Ğµ‰½±Ñ•áĞµ™½É•É½Õ¹ˆùí±¥¹¥…±I•½µµ•¹‘…Ñ¥½¹ôğ½Àø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€¥ô((€€€€€€€ì¼¨I•½µ•¹‘‡ŸÕ•Ì=AÍÑÉÕÑÕÉ…‘…Ì€¡ÅÕ•¥á„ƒé¹¥„¤ƒŠP‘•É¥Ù…‘…Ì‘¼É…¹­¥¹œ(€€€€€€€€€€€³µ¹¥¼ÕÉ…‘¼ìÏÌ…Á…É••´ÅÕ…¹‘¼£„ÑÉ¥¼½ÕÉ¼­ÁÉ…Ñ„­‰É½¹é”ÅÕ”	I¸€¨½ô(€€€€€€€ì  ¤€ôøì(€€€€€€€€€¥˜€¡Í•±•Ñ•‘EÕ•¥á…Ì¹±•¹Ñ €„ôô€Ä¤É•ÑÕÉ¸¹Õ±°ì(€€€€€€€€€½¹ÍĞÅÕ•¥á…%€ôÍ•±•Ñ•‘EÕ•¥á…ÍlÁtì(€€€€€€€€€½¹ÍĞÉÕ±”€ô•Ñ±¥¹¥…±Q¥•ÉÌ¡ÅÕ•¥á…%°ÕÉ…Ñ•‘•5½¹Ñ¡Ì¤ì(€€€€€€€€€¥˜€ …ÉÕ±”ñğ€…ÉÕ±”¹ÁÉ…Ñ„ñğ€…ÉÕ±”¹‰É½¹é”¤É•ÑÕÉ¸¹Õ±°ì((€€€€€€€€€€¼¼I•Í½±Ù”•´ÑË©Ì…µ…‘…Ìè€ Ä¤…Ó…±½¼ÁÉ••¹£µÙ•°ì€ È¤…Ó…±½¼(€€€€€€€€€€¼¼™¥±ÑË…Ù•°…»Ñ¹¥¼ƒŠPÁ½ÉÑ…¥Ì‘”ÁÍ¥½•‘Õ‡Ÿ¼”Ñ•ÍÑ•Ì‘¥É•Ñ½Ì°ÅÕ”(€€€€€€€€€€¼¼»¼Ï¼ÁÉ••¹£µÙ•¥Ìµ…Ì	I4”‘•Ù•´…Á…É••È½µ¼É•½µ•¹‘‡Ÿ¼ì(€€€€€€€€€€¼¼€ Ì¤…Ó…±½¼½µÁ±•Ñ¼ƒŠP™¥¡…Ì±¥•¹¥…‘…Ì€¡•à¸èY¥¹•±…¹´Ì¤½µ¼(€€€€€€€€€€¼¼É•™•Ë©¹¥„¸ÍÍ¥´¹•¹¡Õ´Í•±¼ÕÉ…‘¼Í½µ”Í¥±•¹¥½Í…µ•¹Ñ”¼…É¸(€€€€€€€€€½¹ÍĞÉ•Í½±Ù•M…±”€ô€¡¥èÍÑÉ¥¹œ¤€ôø(€€€€€€€€€€€…Ñ…±½	å%¹•Ğ¡¥¤€üü½É•¥±Ñ•É…‰±•	å%¹•Ğ¡¥¤€üü…±±M…±•Í	å%¹•Ğ¡¥¤ì(€€€€€€€€€½¹ÍĞÍ=ÕÉ¼€ôÉ•Í½±Ù•M…±”¡ÉÕ±”¹½ÕÉ¼¤ì(€€€€€€€€€½¹ÍĞÍAÉ…Ñ„€ôÉ•Í½±Ù•M…±”¡ÉÕ±”¹ÁÉ…Ñ„¤ì(€€€€€€€€€½¹ÍĞÍ	É½¹é”€ôÉ•Í½±Ù•M…±”¡ÉÕ±”¹‰É½¹é”¤ì(€€€€€€€€€¥˜€ …Í=ÕÉ¼ñğ€…ÍAÉ…Ñ„ñğ€…Í	É½¹é”¤É•ÑÕÉ¸¹Õ±°ì((€€€€€€€€€€¼¼9½Ñ„¡½¹•ÍÑ„Í½‰É”=5<„•Í…±„…‰É”°ÅÕ…¹‘¼»¼ƒ¤ÁÉ••¹£µÙ•°…ÅÕ¤¸(€€€€€€€€€½¹ÍĞÉ•™9½Ñ”€ô€¡ÌèM…±•¹ÑÉä¤€ôøì(€€€€€€€€€€€¥˜€¡…Ñ…±½	å%¹¡…Ì¡Ì¹¥¤¤É•ÑÕÉ¸€ˆˆì(€€€€€€€€€€€¥˜€¡Ì¹…ÁÁ±¥…Ñ¥½¹5½‘”€ôôô€‰ÁÍ¥½•‘Õ……¼ˆ¤(€€€€€€€€€€€€€É•ÑÕÉ¸€ˆƒ
+ÜI•ÕÉÍ¼‘”ÁÍ¥½•‘Õ‡Ÿ¼ƒŠP…‰É”½µ¼½¹Ñ—é‘¼Á…É„„™…·µ±¥„°»¼ƒ¤Õµ„•Í…±„ÁÉ••¹£µÙ•°¸ˆì(€€€€€€€€€€€¥˜€¡½Á•¹Í%¹ÁÀ¡Ì¤¤(€€€€€€€€€€€€€É•ÑÕÉ¸€ˆƒ
+Ü‰É”½µ¼É•ÕÉÍ¼½µÁ±•µ•¹Ñ…È€¡Ñ•ÍÑ”‘¥É•Ñ¼½™¥¡„¤°»¼½µ¼•Í…±„‘”¥Ñ•¹ÌÁÉ••¹£µÙ•°…ÅÕ¤¸ˆì(€€€€€€€€€€€É•ÑÕÉ¸€ˆƒ
+Ü%¹ÍÑÉÕµ•¹Ñ¼±¥•¹¥…‘¼½‘”É•™•Ë©¹¥„ƒŠP…‰É”½µ¼™¥¡„Ó¥¹¥„°»¼ƒ¤ÁÉ••¹£µÙ•°¹¼…ÁÀ¸ˆì(€€€€€€€€€ôì((€€€€€€€€€½¹ÍĞÅÕ•¥á…1…‰•°€ôÅÕ•¥á…Ì¹™¥¹ ¡Ä¤€ôøÄ¹¥€ôôôÅÕ•¥á…%¤ü¹±…‰•°€üüÅÕ•¥á…%ì(€€€€€€€€€½¹ÍĞ…•	…¹€ôÍ•±•Ñ•‘”€ü™…¥á…ÍÑ…É¥…Ì¹™¥¹ ¡„¤€ôø„¹¥€ôôôÍ•±•Ñ•‘”¤€è¹Õ±°ì(€€€€€€€€€½¹ÍĞ…•I…¹•1…‰•°€ô…•	…¹€ü…•	…¹¹±…‰•°€è€‘íÉÕ±”¹…•5¥¹÷ŠL‘íÉÕ±”¹…•5…áôµ•Í•Í€ì((€€€€€€€€€½¹ÍĞÉ•½µµ•¹‘…Ñ¥½¹ÌèEÕ•¥á…•I•½µµ•¹‘…Ñ¥½¹Ì€ôì(€€€€€€€€€€€ÅÕ•¥á„èÅÕ•¥á…%°(€€€€€€€€€€€…•I…¹”è…•I…¹•1…‰•°°(€€€€€€€€€€€…•5¥¸èÉÕ±”¹…•5¥¸°(€€€€€€€€€€€…•5…àèÉÕ±”¹…•5…à°(€€€€€€€€€€€½ÕÉ¼è‰Õ¥±‘=A ‰½ÕÉ¼ˆ°Í=ÕÉ¼°ÉÕ±”¹É•…Í½¸€¬É•™9½Ñ”¡Í=ÕÉ¼¤°ÅÕ•¥á…1…‰•°¤°(€€€€€€€€€€€ÁÉ…Ñ„è‰Õ¥±‘=A ‰ÁÉ…Ñ„ˆ°ÍAÉ…Ñ„°=A	}]!d¹ÁÉ…Ñ„€¬É•™9½Ñ”¡ÍAÉ…Ñ„¤°ÅÕ•¥á…1…‰•°¤°(€€€€€€€€€€€‰É½¹é”è‰Õ¥±‘=A ‰‰É½¹é”ˆ°Í	É½¹é”°=A	}]!d¹‰É½¹é”€¬É•™9½Ñ”¡Í	É½¹é”¤°ÅÕ•¥á…1…‰•°¤°(€€€€€€€€€ôì((€€€€€€€€€É•ÑÕÉ¸€ (€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•´Éá°‰½É‘•È´È‰½É‘•Èµ…µ‰•È´ÈÀÀ‘…É¬é‰½É‘•Èµ…µ‰•È´àÀÀ‰œµ…µ‰•È´ÔÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ÌÀÀ´ĞÍ´éÀ´Øˆø(€€€€€€€€€€€€€€ñ=A	I•½µµ•¹‘…Ñ¥½¹…É‘ÌÉ•½µµ•¹‘…Ñ¥½¹ÌõíÉ•½µµ•¹‘…Ñ¥½¹Íô€¼ø(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€¤ì(€€€€€€€ô¤ ¥ô((€€€€€€€ì¼¨Q•ÍÑ•Ì¥É•Ñ½Ì€¼Á…É„A…¥ÌƒŠPÏÌÅÕ…¹‘¼¼µ½Ñ½È…¡½Ô•Í…±„Í•ÕÉ„¸(€€€€€€€€€€€½•Ë©¹¥„è»¼ÍÕ•É¥ÈÑ•ÍÑ•ÌÅÕ…¹‘¼„Í‡µ‘„ƒ¤€‰¹•¹¡Õµ„•Í…±„Í•ÕÉ„ˆ¸€¨½ô(€€€€€€€í¡…ÍM…™•I•ÍÕ±ÑÌ€˜˜€ (€€€€€€€€€€ğø(€€€€€€€€€€€€ñ¥É•ÑQ•ÍÑÍI•½µµ•¹‘•È(€€€€€€€€€€€€€Í•±•Ñ•‘EÕ•¥á…ÌõíÍ•±•Ñ•‘EÕ•¥á…Íô(€€€€€€€€€€€€€Í•±•Ñ•‘”õíÍ•±•Ñ•‘•ô(€€€€€€€€€€€€€™…¥á…ÍÑ…É¥…Ìõí™…¥á…ÍÑ…É¥…Íô(€€€€€€€€€€€€¼ø(€€€€€€€€€€€€ñA…É•¹ÑQ•ÍÑÍI•½µµ•¹‘•È(€€€€€€€€€€€€€Í•±•Ñ•‘EÕ•¥á…ÌõíÍ•±•Ñ•‘EÕ•¥á…Íô(€€€€€€€€€€€€€Í•±•Ñ•‘”õíÍ•±•Ñ•‘•ô(€€€€€€€€€€€€€™…¥á…ÍÑ…É¥…Ìõí™…¥á…ÍÑ…É¥…Íô(€€€€€€€€€€€€¼ø(€€€€€€€€€€ğ¼ø(€€€€€€€€¥ô((€€€€€€€í¡…ÍM…™•I•ÍÕ±ÑÌ€˜˜€ (€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È…À´È¸ÔÁà´À¸ÔÁĞ´Äˆø(€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ±œˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~:¼ğ½ÍÁ…¸ø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´Àˆø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…ÉäˆùCÍ‘¥¼³µ¹¥¼Á…É„•ÍÑ”Á•É™¥°ğ½Àø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÉÁát±•…‘¥¹œµÍ¹ÕœÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùAÉ¥½É¥é…‘¼Á½È¥‘…‘”°ÅÕ•¥á„”É•ÍÁ½¹‘•¹Ñ”¸…‘„…Éµ½ÍÑÉ„€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆûÂ~ŸÂ~ÜÙ…±¥‘‡Ÿ¼¹¼	É…Í¥°ğ½ÍÑÉ½¹œø°€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆûŠ>Ç¾â<Ñ•µÁ¼ğ½ÍÑÉ½¹œø”€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆûÂ~:¼Á½¹Ñ¼‘”½ÉÑ”ğ½ÍÑÉ½¹œøÅÕ…¹‘¼‘¥ÍÁ½»µÙ•¥ÌƒŠPÑ½ÅÕ”Á…É„…‰É¥È¸ğ½Àø(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€¥ô((€€€€€€€ì…¡…ÍM…™•I•ÍÕ±ÑÌ€ü€ (€€€€€€€€€€ñ…É±…ÍÍ9…µ”ô‰‰½É‘•È´È‰½É‘•Èµ…µ‰•È´ÌÀÀ‰œµ…µ‰•È´ÔÀ‘…É¬é‰½É‘•Èµ…µ‰•È´àÀÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ÌÀˆø(€€€€€€€€€€€€ñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÌÀ´ÔÑ•áĞµÍ´™½¹Ğµ‰½±Ñ•áĞµ…µ‰•È´äÀÀ‘…É¬éÑ•áĞµ…µ‰•È´ÄÀÀˆø(€€€€€€€€€€€€€€ñM¡¥•±‘±•ÉĞ±…ÍÍ9…µ”ô‰ ´ÔÜ´ÔÍ¡É¥¹¬´Àˆ€¼ø(€€€€€€€€€€€€€€ñÍÁ…¸ùíM}5AQe}5MMôğ½ÍÁ…¸ø(€€€€€€€€€€€€ğ½…É‘½¹Ñ•¹Ğø(€€€€€€€€€€ğ½…Éø(€€€€€€€€¤€è€ (€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÉ¥ˆø(€€€€€€€€€íÉ…¹­¥¹œ¹µ…À ¡¥Ñ•´¤€ôøì(€€€€€€€€€€€½¹ÍĞÉ•…Í½¹Ì€ô¥Ñ•´¹¡…ÍM…±”(€€€€€€€€€€€€€€ü•ÑI•½µµ•¹‘…Ñ¥½¹I•…Í½¹Ì¡¥Ñ•´¹Í…±”°Í•±•Ñ•‘EÕ•¥á…Ì°Í•±•Ñ•‘”¤(€€€€€€€€€€€€€€èmtì(€€€€€€€€€€€½¹ÍĞÑ…1…‰•°€ô€…¥Ñ•´¹¡…ÍM…±”(€€€€€€€€€€€€€€ü€‹ŠPˆ(€€€€€€€€€€€€€€è¥Ñ•´¹¥µÁ±•µ•¹Ñ…Ñ¥½¹MÑ…ÑÕÌ€ôôô€‰½µÁ±•Ñ”ˆñğ€¡¥Ñ•´¹Í…±”€˜˜½Á•¹ÍÍUÍ…‰±•Q½½°¡¥Ñ•´¹Í…±”¤¤(€€€€€€€€€€€€€€€€ü€‰‰É¥È…Á±¥‡Ÿ¼ˆ(€€€€€€€€€€€€€€€€è€‰‰É¥ÈÕÍ¼¥¹Ñ•É¹¼ˆì(€€€€€€€€€€€½¹ÍĞ…É‘%¹¹•È€ô€ (€€€€€€€€€€€€€€€€ñ…É±…ÍÍ9…µ”õí™¥±Ñ•È´ÈØÀµ…ÉÉ½ÕÀ µ™Õ±°‰½É‘•Èµ‰½É‘•È¼ÜÀ‰œµ…É¼äÀÑÉ…¹Í¥Ñ¥½¸µ…±°‘ÕÉ…Ñ¥½¸´ÈÀÀ€‘í¥Ñ•´¹¡…ÍM…±”€ü€‰ÕÉÍ½ÈµÁ½¥¹Ñ•È¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ¡½Ù•ÈéÍ¡…‘½Üµ±œ¡½Ù•ÈèµÑÉ…¹Í±…Ñ”µä´À¸Ô…Ñ¥Ù”éÑÉ…¹Í±…Ñ”µä´Àˆ€è€‰½Á…¥Ñä´ÜÀ‰ô€‘í¥Ñ•´¹Ñ¥•È€üÑ¥•È´‘í¥Ñ•´¹Ñ¥•Éõ€€è€ˆ‰õôø(€€€€€€€€€€€€€€€€€€ñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ…Éµ½¹Ñ•¹Ğˆø(€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµµ•‘…±É½Ü™±•à™±•àµİÉ…À¥Ñ•µÌµ•¹Ñ•È…À´Ä¸Ôˆø(€€€€€€€€€€€€€€€€€€€€€€ñ	…‘”Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆ±…ÍÍ9…µ”õí™¥±Ñ•È´ÈØÀµµ•‘…°€‘í¥Ñ•´¹Ñ¥•È€üµ•‘…°´‘í¥Ñ•´¹Ñ¥•Éõ€€è€‰µ•‘…°µ‘¥É•Ñ¼‰õôøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆùíÍ±½Ñµ½©¤¡¥Ñ•´¹Í±½Ğ¥ôğ½ÍÁ…¸øí¥Ñ•´¹Í±½Ñôğ½	…‘”ø(€€€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹±¥¹¥…±Q¥•È€˜˜€ñ	…‘”Ù…É¥…¹Ğô‰Í•½¹‘…Éäˆ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ‰…‘”Ñ•áĞµlÄÁÁátˆùí¥Ñ•´¹±¥¹¥…±Q¥•Éôğ½	…‘”ùô(€€€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹½¹™¥‘•¹”€„ôô¹Õ±°€˜˜€ (€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸(€€€€€€€€€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰¥¹±¥¹”µ‰±½¬É½Õ¹‘•µ™Õ±°‰½É‘•È‰½É‘•Èµ‰½É‘•È‰œµµÕÑ•¼ÔÀÁà´Ä¸ÔÁä´À¸ÔÑ•áĞµlåÁát™½¹Ğµ‰½±Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€Ñ¥Ñ±”ô‰‘•Ë©¹¥„…¼Á•É™¥°¥¹™½Éµ…‘¼ƒŠP½µ‰¥¹„„™½Ë„‘¼…Í…µ•¹Ñ¼³µ¹¥¼€¡¥‘…‘”°ÅÕ•¥á„°É•ÍÁ½¹‘•¹Ñ”¤½´ÅÕ…¹Ñ½Ì™¥±ÑÉ½ÌÙ½¨ÁÉ••¹¡•Ô¸;<ƒ¤Í•¹Í¥‰¥±¥‘…‘”½•ÍÁ•¥™¥¥‘…‘”‘¼¥¹ÍÑÉÕµ•¹Ñ¼¸ˆ(€€€€€€€€€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹½¹™¥‘•¹•ô”…‘•Ë©¹¥„(€€€€€€€€€€€€€€€€€€€€€€€€ğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€€€€€€€€ì  ¤€ôøì½¹ÍĞ±Œ€ô±¥•¹Í•¡¥À¡¥Ñ•´¹Í…±”¤ìÉ•ÑÕÉ¸±Œ€ü€ñÍÁ…¸±…ÍÍ9…µ”õí¥¹±¥¹”µ‰±½¬É½Õ¹‘•µ™Õ±°‰½É‘•ÈÁà´Ä¸ÔÁä´À¸ÔÑ•áĞµlåÁát™½¹Ğµ‰½±€‘í±Œ¹±Íõôùí±Œ¹±…‰•±ôğ½ÍÁ…¸ø€è¹Õ±°ìô¤ ¥ô(€€€€€€€€€€€€€€€€€€€€€ì  ¤€ôøì½¹ÍĞ‰Ø€ô‰ÉY…±¥‘…Ñ¥½¹¡¥À¡¥Ñ•´¹Í…±”¤ìÉ•ÑÕÉ¸‰Ø€ü€ñÍÁ…¸±…ÍÍ9…µ”õí¥¹±¥¹”µ‰±½¬É½Õ¹‘•µ™Õ±°‰½É‘•ÈÁà´Ä¸ÔÁä´À¸ÔÑ•áĞµlåÁát™½¹Ğµ‰½±€‘í‰Ø¹±Íõôùí‰Ø¹±…‰•±ôğ½ÍÁ…¸ø€è¹Õ±°ìô¤ ¥ô(€€€€€€€€€€€€€€€€€€€€€ì  ¤€ôøì½¹ÍĞĞ€ôÑ¥µ•¡¥À¡¥Ñ•´¹Í…±”¤ìÉ•ÑÕÉ¸Ğ€ü€ñÍÁ…¸±…ÍÍ9…µ”ô‰¥¹±¥¹”µ‰±½¬É½Õ¹‘•µ™Õ±°‰½É‘•È‰½É‘•Èµ‰½É‘•È‰œµµÕÑ•¼ÔÀÁà´Ä¸ÔÁä´À¸ÔÑ•áĞµlåÁát™½¹Ğµ‰½±Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆûŠ>Ç¾â<íÑôğ½ÍÁ…¸ø€è¹Õ±°ìô¤ ¥ô(€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹İ…É¹¥¹Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•µ±œ‰½É‘•È‰½É‘•ÈµÉ•´ÌÀÀ‰œµÉ•´ÔÀÁà´ÈÁä´Ä¸ÔÑ•áĞµlÄÅÁát™½¹Ğµ‰½±±•…‘¥¹œµÍ¹ÕœÑ•áĞµÉ•´ÜÀÀ‘…É¬é‰½É‘•ÈµÉ•´äÀÀ¼ÔÀ‘…É¬é‰œµÉ•´äÔÀ¼ÌÀ‘…É¬éÑ•áĞµÉ•´ÌÀÀˆø(€€€€€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹İ…É¹¥¹Ì¹µ…À ¡Ü¤€ôø€ñÀ­•äõíİôùíİôğ½Àø¥ô(€€€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ¡•…ˆø(€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”õí™¥±Ñ•È´ÈØÀµÍåµ‰½°‰œµÉ…‘¥•¹ĞµÑ¼µ‰È€‘í¥Ñ•´¹Ñ½¹•õôùí¥½¸¡¥Ñ•´¹Í±½Ğ¥ôğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´À™±•à´Äˆø(€€€€€€€€€€€€€€€€€€€€€€€€ñ Ì±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÑ¥Ñ±”É½ÕÀµ¡½Ù•ÈéÑ•áĞµÁÉ¥µ…Éäˆùí¥Ñ•´¹Ñ¥Ñ±•ôğ½ Ìø(€€€€€€€€€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÍÕ‰Ñ¥Ñ±”ˆùí¥Ñ•´¹ÍÕ‰Ñ¥Ñ±•ôğ½Àø(€€€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€íÉ•…Í½¹Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à™±•àµİÉ…À…À´Äˆø(€€€€€€€€€€€€€€€€€€€€€€€íÉ•…Í½¹Ì¹µ…À ¡È¤€ôø€ñ	…‘”­•äõíÉôÙ…É¥…¹Ğô‰Í•½¹‘…Éäˆ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ‰…‘”Ñ•áĞµlÄÁÁátˆùíÉôğ½	…‘”ø¥ô(€€€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€€€€€€ì…¥Ñ•´¹¡…ÍM…±”€˜˜€ (€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•µ±œ‰½É‘•È‰½É‘•Èµ…µ‰•È´ÈÀÀ‰œµ…µ‰•È´ÔÀÁà´È¸ÔÁä´ÈÑ•áĞµlÄÅÁát±•…‘¥¹œµÍ¹ÕœÑ•áĞµ…µ‰•È´äÀÀ‘…É¬é‰½É‘•Èµ…µ‰•È´äÀÀ¼ÔÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ÌÀ‘…É¬éÑ•áĞµ…µ‰•È´ÈÀÀˆø(€€€€€€€€€€€€€€€€€€€€€€€€ñÍÑÉ½¹œùA½ÈÅÕ”Ù…é¥¼èğ½ÍÑÉ½¹œøí•µÁÑåM±½ÑI•…Í½¸¡¥Ñ•´¹Í±½Ğ°ì¡…ÍEÕ•¥á„èÍ•±•Ñ•‘EÕ•¥á…Ì¹±•¹Ñ €ø€À°¡…Í”è	½½±•…¸¡Í•±•Ñ•‘”¤°É•ÍÁ½¹‘•¹Ñ”èÍ•±•Ñ•‘I•ÍÁ½¹‘•¹Ñ”°½µµÕ¹¥…Ñ¥½¸èÍ•±•Ñ•‘½µµÕ¹¥…Ñ¥½¸ô¥ô(€€€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹¡…ÍM…±”€˜˜€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ•Ù¥‘•¹”ˆøñÍÑÉ½¹œù5½Ñ¥Ù¼èğ½ÍÑÉ½¹œøí¥Ñ•´¹É•…Í½¹ôğ½‘¥Øùô(€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹¡…ÍM…±”€˜˜¥Ñ•´¹±¥¹¥…±I•…Í½¸€˜˜€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ•Ù¥‘•¹”ˆøñÍÑÉ½¹œùA½ÈÅÕ”É…¹ÅÕ•½Ôèğ½ÍÑÉ½¹œøí¥Ñ•´¹±¥¹¥…±I•…Í½¹ôğ½‘¥Øùô(€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹¡…ÍM…±”€˜˜€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµİ¡äˆøñÍÑÉ½¹œùÍÑ…‘¼èğ½ÍÑÉ½¹œøí¥Ñ•´¹ÍÑ…Ñ•ôğ½‘¥Øùô(€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹Í…±”ü¹Í½É¥¹ÕÑ½™˜€˜˜€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÍ½ÕÉ”±¥¹”µ±…µÀ´ÈˆøñÍÑÉ½¹œûÂ~:¼A½¹Ñ¼‘”½ÉÑ”èğ½ÍÑÉ½¹œøí¥Ñ•´¹Í…±”¹Í½É¥¹ÕÑ½™™ôğ½‘¥Øùô(€€€€€€€€€€€€€€€€€€€í¥Ñ•´¹Í½ÕÉ”€˜˜€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÍ½ÕÉ”ˆøñÍÑÉ½¹œù½¹Ñ”èğ½ÍÑÉ½¹œøí¥Ñ•´¹Í½ÕÉ•ôğ½‘¥Øùô(€€€€€€€€€€€€€€€€€€€ì  ¤€ôøì½¹ÍĞÁ´€ôÁÕ‰µ•‘I•˜¡¥Ñ•´¹Í…±”¤ìÉ•ÑÕÉ¸Á´€ü€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÍ½ÕÉ”ˆøñ„¡É•˜õíÁ´¹¡É•™ôÑ…É•Ğô‰}‰±…¹¬ˆÉ•°ô‰¹½½Á•¹•È¹½É•™•ÉÉ•Èˆ±…ÍÍ9…µ”ô‰™½¹Ğµ‰½±Ñ•áĞµÁÉ¥µ…ÉäÕ¹‘•É±¥¹”Õ¹‘•É±¥¹”µ½™™Í•Ğ´È¡½Ù•Èé½Á…¥Ñä´àÀˆ½¹±¥¬õì¡”¤€ôø”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¥ôûÂ~NÍÑÕ‘¼€¡AÕ‰5•íÁ´¹Áµ¥‘ô¤ğ½„øğ½‘¥Øø€è¹Õ±°ìô¤ ¥ô(€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µĞµ…ÕÑ¼™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•Ñİ••¸Ñ•áĞµáÌ™½¹Ğµ‰½±Ñ•áĞµÁÉ¥µ…ÉäˆøñÍÁ…¸ùíÑ…1…‰•±ôğ½ÍÁ…¸ùí¥Ñ•´¹¡…ÍM…±”€˜˜€ñÉÉ½İI¥¡Ğ±…ÍÍ9…µ”ô‰ ´ĞÜ´Ğˆ€¼ùôğ½‘¥Øø(€€€€€€€€€€€€€€€€€€ğ½…É‘½¹Ñ•¹Ğø(€€€€€€€€€€€€€€€€ğ½…Éø(€€€€€€€€€€€€¤ì(€€€€€€€€€€€É•ÑÕÉ¸¥Ñ•´¹¡…ÍM…±”€ü€ (€€€€€€€€€€€€€€ñ1¥¹¬­•äõí¥Ñ•´¹Í±½Ñô¡É•˜õí¥Ñ•´¹É½ÕÑ•ô±…ÍÍ9…µ”ô‰‰±½¬ µ™Õ±°ˆùí…É‘%¹¹•Éôğ½1¥¹¬ø(€€€€€€€€€€€€¤€è€ (€€€€€€€€€€€€€€ñ‘¥Ø­•äõí¥Ñ•´¹Í±½Ñô±…ÍÍ9…µ”ô‰‰±½¬ µ™Õ±°ˆùí…É‘%¹¹•Éôğ½‘¥Øø(€€€€€€€€€€€€¤ì(€€€€€€€€€ô¥ô(€€€€€€€€ğ½‘¥Øø(€€€€€€€€¥ô((€€€€€€€ì¼¨½µÁ…É‡Ÿ¼±…‘¼„±…‘¼ƒŠP€È„€Ì•Í…±…ÌÉ•½µ•¹‘…‘…Ì°…ÑÉ¥‰ÕÑ¼„(€€€€€€€€€€€…ÑÉ¥‰ÕÑ¼€¡¥‘…‘”°É•ÍÁ½¹‘•¹Ñ”°Ñ•µÁ¼°Ù…±¥‘‡Ÿ¼	H°½ÉÑ”°±¥•»„¤¸€¨½ô(€€€€€€€í¡…ÍM…™•I•ÍÕ±ÑÌ€˜˜½µÁ…É…‰±•A½½°¹±•¹Ñ €øô€È€˜˜€ (€€€€€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰ÍÁ…”µä´È¸ÔÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ÜÀ‰œµ…É¼ØÀÀ´ÌÍ´éÀ´Ğˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È…À´È¸ÔÁà´À¸Ôˆø(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ±œˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠj[¾â<ğ½ÍÁ…¸ø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´Àˆø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…Éäˆù½µÁ…É…È±…‘¼„±…‘¼ğ½Àø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÉÁát±•…‘¥¹œµÍ¹ÕœÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùÍ½±¡„€È„€Ì•Í…±…ÌÁ…É„½µÁ…É…È…ÑÉ¥‰ÕÑ¼„…ÑÉ¥‰ÕÑ¼€¡•à¸èÙ•ÉÏ¼‘½ÌÁ…¥Ìƒ\‘„É¥…»„¤¸ğ½Àø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à™±•àµİÉ…À…À´Ä¸Ôˆø(€€€€€€€€€€€€€í½µÁ…É…‰±•A½½°¹µ…À ¡Ì¤€ôøì(€€€€€€€€€€€€€€€½¹ÍĞ½¸€ô½µÁ…É•%‘Ì¹¥¹±Õ‘•Ì¡Ì¹¥¤ì(€€€€€€€€€€€€€€€½¹ÍĞ‘¥Í…‰±•€ô€…½¸€˜˜½µÁ…É•%‘Ì¹±•¹Ñ €øô€Ìì(€€€€€€€€€€€€€€€É•ÑÕÉ¸€ (€€€€€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€€€€€€€­•äõíÌ¹¥‘ô(€€€€€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøÑ½±•½µÁ…É”¡Ì¹¥¥ô(€€€€€€€€€€€€€€€€€€€‘¥Í…‰±•õí‘¥Í…‰±•‘ô(€€€€€€€€€€€€€€€€€€€…É¥„µÁÉ•ÍÍ•õí½¹ô(€€€€€€€€€€€€€€€€€€€½¹5½ÕÍ•¹Ñ•Èõì ¤€ôøÍ½™Ñ!½Ù•È ¥ô(€€€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”õíÉ½Õ¹‘•´Éá°‰½É‘•ÈÁà´È¸ÔÁä´Ä¸ÔÑ•áĞµáÌ™½¹Ğµ‰½±ÑÉ…¹Í¥Ñ¥½¸€‘í½¸€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áĞµÁÉ¥µ…Éäµ™½É•É½Õ¹Í¡…‘½ÜµÍ´ˆ€è‘¥Í…‰±•€ü€‰ÕÉÍ½Èµ¹½Ğµ…±±½İ•‰½É‘•Èµ‰½É‘•È‰œµµÕÑ•¼ĞÀÑ•áĞµµÕÑ•µ™½É•É½Õ¹¼ØÀˆ€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀ¡½Ù•Èé‰œµµÕÑ•¼ØÀ‰õô(€€€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€€€í½¸€ü€‹ŠrL€ˆ€è€ˆ‰õíÌ¹¹…µ•ô(€€€€€€€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€€€€€¤ì(€€€€€€€€€€€€€ô¥ô(€€€€€€€€€€€€€í½µÁ…É•%‘Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬õì ¤€ôøìÍ½™ÑQ…À ¤ì¡…ÁÑ¥Œ¹Ñ…À ¤ìÍ•Ñ½µÁ…É•%‘Ì¡mt¤ìõô±…ÍÍ9…µ”ô‰É½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹Áà´È¸ÔÁä´Ä¸ÔÑ•áĞµáÌ™½¹Ğµ‰½±Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ÑÉ…¹Í¥Ñ¥½¸¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ĞÀˆø(€€€€€€€€€€€€€€€€€±¥µÁ…È(€€€€€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€í½µÁ…É¥¹œ¹±•¹Ñ €øô€È€ü€ (€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰½Ù•É™±½Üµàµ…ÕÑ¼ˆø(€€€€€€€€€€€€€€€€ñÑ…‰±”±…ÍÍ9…µ”ô‰Üµ™Õ±°µ¥¸µÜµlĞÈÁÁát‰½É‘•Èµ½±±…ÁÍ”Ñ•áĞµ±•™ĞÑ•áĞµáÌˆø(€€€€€€€€€€€€€€€€€€ñÑ¡•…ø(€€€€€€€€€€€€€€€€€€€€ñÑÈø(€€€€€€€€€€€€€€€€€€€€€€ñÑ ±…ÍÍ9…µ”ô‰Ü´Èà‰½É‘•Èµˆ‰½É‘•Èµ‰½É‘•È¼ØÀÁà´ÈÁä´È…±¥¸µ‰½ÑÑ½´Ñ•áĞµlÄÁÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµİ¥‘”Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùÑÉ¥‰ÕÑ¼ğ½Ñ ø(€€€€€€€€€€€€€€€€€€€€€í½µÁ…É¥¹œ¹µ…À ¡Ì¤€ôø€ (€€€€€€€€€€€€€€€€€€€€€€€€ñÑ ­•äõíÌ¹¥‘ô±…ÍÍ9…µ”ô‰‰½É‘•Èµˆ‰½É‘•Èµ‰½É‘•È¼ØÀÁà´ÈÁä´È…±¥¸µ‰½ÑÑ½´ˆø(€€€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰‰±½¬™½¹Ğµ‰±…¬±•…‘¥¹œµÑ¥¡ĞÑ•áĞµ™½É•É½Õ¹ˆùíÌ¹¹…µ•ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰‰±½¬Ñ•áĞµlÄÁÁát™½¹Ğµµ•‘¥Õ´±•…‘¥¹œµÑ¥¡ĞÑ•áĞµµÕÑ•µ™½É•É½Õ¹±¥¹”µ±…µÀ´ÈˆùíÌ¹™Õ±±9…µ•ôğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€€€ğ½Ñ ø(€€€€€€€€€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€€€€€€€€€ğ½ÑÈø(€€€€€€€€€€€€€€€€€€ğ½Ñ¡•…ø(€€€€€€€€€€€€€€€€€€ñÑ‰½‘äø(€€€€€€€€€€€€€€€€€€€í=5AI}QQIL¹µ…À ¡…ÑÑÈ¤€ôø€ (€€€€€€€€€€€€€€€€€€€€€€ñÑÈ­•äõí…ÑÑÈ¹±…‰•±ô±…ÍÍ9…µ”ô‰…±¥¸µÑ½Àˆø(€€€€€€€€€€€€€€€€€€€€€€€€ñÑ±…ÍÍ9…µ”ô‰‰½É‘•Èµˆ‰½É‘•Èµ‰½É‘•È¼ĞÀÁà´ÈÁä´Ä¸ÔÑ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùí…ÑÑÈ¹±…‰•±ôğ½Ñø(€€€€€€€€€€€€€€€€€€€€€€€í½µÁ…É¥¹œ¹µ…À ¡Ì¤€ôø€ (€€€€€€€€€€€€€€€€€€€€€€€€€€ñÑ­•äõíÌ¹¥‘ô±…ÍÍ9…µ”ô‰‰½É‘•Èµˆ‰½É‘•Èµ‰½É‘•È¼ĞÀÁà´ÈÁä´Ä¸ÔÑ•áĞµlÄÅÁát±•…‘¥¹œµÍ¹ÕœÑ•áĞµ™½É•É½Õ¹ˆùí…ÑÑÈ¹•Ğ¡Ì¥ôğ½Ñø(€€€€€€€€€€€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€€€€€€€€€€€ğ½ÑÈø(€€€€€€€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€€€€€€€ğ½Ñ‰½‘äø(€€€€€€€€€€€€€€€€ğ½Ñ…‰±”ø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€¤€è€ (€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Áà´À¸ÔÑ•áĞµlÄÅÁát¥Ñ…±¥ŒÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùM•±•¥½¹”Á•±¼µ•¹½Ì€È•Í…±…Ì…¥µ„Á…É„Ù•È¼ÅÕ…‘É¼½µÁ…É…Ñ¥Ù¼¸ğ½Àø(€€€€€€€€€€€€¥ô(€€€€€€€€€€ğ½Í•Ñ¥½¸ø(€€€€€€€€¥ô((€€€€€€€í¡…ÍM…™•I•ÍÕ±ÑÌ€˜˜ÅÕ…±¥Ñ…Ñ¥Ù•I•Á½ÉÑA…É…É…Á¡Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰ÍÁ…”µä´ÌÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•ÈµÁÉ¥µ…Éä¼ÈÀ‰œµ…É¼ÜÀÀ´ĞÍ´éÀ´Ôˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´È¸Ôˆø(€€€€€€€€€€€€€€ñ±¥Á‰½…É‘¡•¬±…ÍÍ9…µ”ô‰µĞ´À¸Ô ´ĞÜ´ĞÍ¡É¥¹¬´ÀÑ•áĞµÁÉ¥µ…Éäˆ€¼ø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´Àˆø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…ÉäˆùÉ•±…Ñ¼ÅÕ…±¥Ñ…Ñ¥Ù¼™¥¹…°ğ½Àø(€€€€€€€€€€€€€€€€ñ Ì±…ÍÍ9…µ”ô‰Ñ•áĞµÍ´™½¹Ğµ‰±…¬Ñ•áĞµ™½É•É½Õ¹ˆù%¹Ñ•ÉÁÉ•Ñ‡Ÿ¼Á½È•áÑ•¹Í¼‘¼ÃÍ‘¥¼ğ½ Ìø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´È¸ÔÑ•áĞµlÄÉÁát±•…‘¥¹œµÉ•±…á•Ñ•áĞµ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€íÅÕ…±¥Ñ…Ñ¥Ù•I•Á½ÉÑA…É…É…Á¡Ì¹µ…À ¡Á…É…É…Á °¥¹‘•à¤€ôø€ (€€€€€€€€€€€€€€€€ñÀ­•äõí¥¹‘•áôùíÁ…É…É…Á¡ôğ½Àø(€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ğ½Í•Ñ¥½¸ø(€€€€€€€€¥ô((€€€€€€€€ñ…É±…ÍÍ9…µ”ô‰‰½É‘•Èµ…µ‰•È´ÈÀÀ¼ÜÀ‰œµ…µ‰•È´ÔÀ¼ÜÀ‘…É¬é‰½É‘•Èµ…µ‰•È´äÀÀ¼ĞÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ÈÀˆøñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰À´ĞÑ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµ…µ‰•È´äÀÀ‘…É¬éÑ•áĞµ…µ‰•È´ÄÀÀˆøñÍÑÉ½¹œù1•¥ÑÕÉ„ÁÉÕ‘•¹Ñ”èğ½ÍÑÉ½¹œøí…Ù…¥±…‰¥±¥Ñå5½‘”€ôôô€‰…±°ˆ€ü€‰¼µ½‘¼Q½‘…Ì¥¹±Õ¤…Á±¥‡ŸÕ•Ì”™¥¡…ÌÓ¥¹¥…Ì½´É½Ñ„É•…°ì½¹™¥Éµ”¼Í•±¼…¹Ñ•Ì‘”…‰É¥È¸ˆ€è€‰¼µ½‘¼½µÁ±•Ñ…Ìµ½ÍÑÉ„…Á•¹…Ì¥¹ÍÑÉÕµ•¹Ñ½ÌÁÉ••¹£µÙ•¥Ì¹¼…ÁÀ¸‰ô<™¥±ÑÉ¼½É…¹¥é„½ÃŸÕ•Ì”»¼ÍÕ‰ÍÑ¥ÑÕ¤…Ù…±¥‡Ÿ¼³µ¹¥„¸ğ½…É‘½¹Ñ•¹Ğøğ½…Éø(€€€€€€€€ğ½Í•Ñ¥½¸ø(€€€€€€€€¥ô((€€€€€€€ì…¡…ÍM•…É €˜˜€ (€€€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰±œé½°µÍÁ…¸´ÈÍÁ…”µä´Ôˆø(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É¥…À´ÌµéÉ¥µ½±Ì´Ìˆø(€€€€€€€€€€ñ…É±…ÍÍ9…µ”ô‰‰½É‘•Èµ‘…Í¡•ˆøñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰ÍÁ…”µä´ÈÀ´Ğˆøñ	½½­=Á•¸±…ÍÍ9…µ”ô‰ ´ÔÜ´ÔÑ•áĞµÁÉ¥µ…Éäˆ€¼øñ È±…ÍÍ9…µ”ô‰Ñ•áĞµÍ´™½¹Ğµ‰±…¬Ñ•áĞµ™½É•É½Õ¹ˆùOÌ¼ÅÕ”…‰É”ÁÉ„ÕÍ…Èğ½ ÈøñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù<™¥±ÑÉ¼µ½ÍÑÉ„…Á•¹…Ì•Í…±…ÌÅÕ”…‰É•´½µ¼™•ÉÉ…µ•¹Ñ„…Á±¥…Ù•°ƒŠP¥Ñ•¹ÌÁÉ••¹£µÙ•¥Ì”…±Õ±¼‘”•Í½É”¸9…‘„‘”™¥¡„ÅÕ”ÏÌ“„ÁÉ„±•È¸ğ½Àøğ½…É‘½¹Ñ•¹Ğøğ½…Éø(€€€€€€€€€€ñ…É±…ÍÍ9…µ”ô‰‰½É‘•Èµ‘…Í¡•ˆøñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰ÍÁ…”µä´ÈÀ´ĞˆøñM¡½½°±…ÍÍ9…µ”ô‰ ´ÔÜ´ÔÑ•áĞµÁÉ¥µ…Éäˆ€¼øñ È±…ÍÍ9…µ”ô‰Ñ•áĞµÍ´™½¹Ğµ‰±…¬Ñ•áĞµ™½É•É½Õ¹ˆùÍ½±„…Á…É•”ğ½ ÈøñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù<‰±½¼•Í½±…ÈÁÉ¥½É¥é„¥¹ÍÑÉÕµ•¹Ñ½Ì½´ÁÉ½™•ÍÍ½È½µ¼É•ÍÁ½¹‘•¹Ñ”¸ğ½Àøğ½…É‘½¹Ñ•¹Ğøğ½…Éø(€€€€€€€€€€ñ…É±…ÍÍ9…µ”ô‰‰½É‘•Èµ‘…Í¡•ˆøñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰ÍÁ…”µä´ÈÀ´ĞˆøñM¡¥•±‘±•ÉĞ±…ÍÍ9…µ”ô‰ ´ÔÜ´ÔÑ•áĞµÁÉ¥µ…Éäˆ€¼øñ È±…ÍÍ9…µ”ô‰Ñ•áĞµÍ´™½¹Ğµ‰±…¬Ñ•áĞµ™½É•É½Õ¹ˆù1¥•»„Ù¥ÏµÙ•°ğ½ ÈøñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùÍ…±…ÌÉ•ÍÑÉ¥Ñ…Ì…‰É•´µ½‘¼¥¹Ñ•É¹¼½´A%8µ…ÍÑ•ÈìÅÕ…¹‘¼»¼ÁÕ‘•È½Á¥…È°¼…ÁÀÕÍ„…‘…ÁÑ‡Ÿ¼…ÕÑ½É…°•´Á½ÉÑÕ×©Ì‰É…Í¥±•¥É¼É•¥½¹…°Í•´É•ÁÉ½‘Õé¥È¥Ñ•¹ÌÁÉ½Ñ•¥‘½Ì¸ğ½Àøğ½…É‘½¹Ñ•¹Ğøğ½…Éø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ…É±…ÍÍ9…µ”ô‰‰½É‘•È‰½É‘•ÈµÁÉ¥µ…Éä¼ÈÀ‰œµÉ…‘¥•¹ĞµÑ¼µ‰È™É½´µÁÉ¥µ…Éä¼ÔÙ¥„µÑÉ…¹ÍÁ…É•¹ĞÑ¼µ¡…ÉĞ´È¼ÔÀ´ÔÍ´éÀ´Øˆø(€€€€€€€€€€ñ…É‘½¹Ñ•¹Ğ±…ÍÍ9…µ”ô‰ÍÁ…”µä´ÔÀ´Àˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÌÍ´é…À´Ğˆø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰Ñ•áĞ´Ñá°Í´éÑ•áĞ´Õá°ˆûÂ~€ğ½‘¥Øø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à´Äˆø(€€€€€€€€€€€€€€€€ñ Ì±…ÍÍ9…µ”ô‰™½¹Ğµ‰±…¬Ñ•áĞµ™½É•É½Õ¹ˆù½µ¼ÕÍ…È¼¥±ÑÉ¼•´€ĞÁ…ÍÍ½Ìğ½ Ìø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆù½µ‰¥¹”½ÌÉ¥Ó¥É¥½Ìƒ€•ÍÅÕ•É‘„”¼™¥±ÑÉ¼µ½¹Ñ„¼É…¹­¥¹œ‘”•Í…±…ÌÁ…É„Ù½¨¸ƒÂ~b$ğ½Àø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ğ½‘¥Øø((€€€€€€€€€€€ì¼¨A…ÍÍ¼„Á…ÍÍ¼¥±ÕÍÑÉ…‘¼€¨½ô(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É¥…À´È¸ÔÍ´éÉ¥µ½±Ì´Èˆø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÌÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ØÀ‰œµ‰…­É½Õ¹¼ÜÀÀ´Ìˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞ´Éá°±•…‘¥¹œµ¹½¹”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøÇ¾â?ŠŒğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆøñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ‰…Í”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~:ğ½ÍÁ…¸øÍ½±¡„„€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆù¥‘…‘”ğ½ÍÑÉ½¹œø‘„É¥…»„¸ğ½Àø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÌÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ØÀ‰œµ‰…­É½Õ¹¼ÜÀÀ´Ìˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞ´Éá°±•…‘¥¹œµ¹½¹”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøË¾â?ŠŒğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆøñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ‰…Í”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~¦èğ½ÍÁ…¸ø5…ÉÅÕ”„€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆùÅÕ•¥á„ğ½ÍÑÉ½¹œø”½ÌÍ¥¹Ñ½µ…Ì½‰Í•ÉÙ…‘½Ì¸ğ½Àø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÌÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ØÀ‰œµ‰…­É½Õ¹¼ÜÀÀ´Ìˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞ´Éá°±•…‘¥¹œµ¹½¹”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøÏ¾â?ŠŒğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆøñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ‰…Í”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~f,ğ½ÍÁ…¸ø¥„€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆùÅÕ•´Ù…¤É•ÍÁ½¹‘•Èğ½ÍÑÉ½¹œø€¡É¥…»„°Á…¥Ì°•Í½±„½Ô³µ¹¥¼¤¸ğ½Àø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÌÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ØÀ‰œµ‰…­É½Õ¹¼ÜÀÀ´Ìˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞ´Éá°±•…‘¥¹œµ¹½¹”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøÓ¾â?ŠŒğ½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆøñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áĞµ‰…Í”ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~Fğ½ÍÁ…¸ø€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆùQ½ÅÕ”¹„•Í…±„ğ½ÍÑÉ½¹œøÉ•½µ•¹‘…‘„Á…É„…‰É¤µ±„¸ğ½Àø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ğ½‘¥Øø((€€€€€€€€€€€ì¼¨1••¹‘„‘¥“…Ñ¥„‘…Ìµ•‘…±¡…Ì€¨½ô(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ØÀ‰œµ‰…­É½Õ¹¼ÜÀÀ´ÌÍ´éÀ´Ğˆø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰µˆ´ÈÑ•áĞµlÄÅÁát™½¹Ğµ‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…Éäˆù½µ¼±•È¼É…¹­¥¹œƒÂ~>ğ½Àø(€€€€€€€€€€€€€€ñÕ°±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ä¸ÔÑ•áĞµáÌ±•…‘¥¹œµÉ•±…á•Ñ•áĞµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€ñ±¤øñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~–ğ½ÍÁ…¸ø€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆù=ÕÉ¼ğ½ÍÑÉ½¹œøƒŠP„•Í…±„ÁÉ¥¹¥Á…°°ÅÕ”µ•±¡½ÈÉ•ÍÁ½¹‘”ƒ€ÍÕ„“éÙ¥‘„¸ğ½±¤ø(€€€€€€€€€€€€€€€€ñ±¤øñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~– ğ½ÍÁ…¸ø€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆùAÉ…Ñ„ğ½ÍÑÉ½¹œøƒŠP½µÁ±•µ•¹Ñ„”‘•Ñ…±¡„¼ÅÕ”¼=ÕÉ¼»¼½‰É”¸ğ½±¤ø(€€€€€€€€€€€€€€€€ñ±¤øñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~–$ğ½ÍÁ…¸ø€ñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰Ñ•áĞµ™½É•É½Õ¹ˆù	É½¹é”ğ½ÍÑÉ½¹œøƒŠPÕµ„Á•ÉÍÁ•Ñ¥Ù„…‘¥¥½¹…°°ÅÕ…¹‘¼…¥¹‘„É•ÍÑ…´“éÙ¥‘…Ì¸ğ½±¤ø(€€€€€€€€€€€€€€ğ½Õ°ø(€€€€€€€€€€€€ğ½‘¥Øø((€€€€€€€€€€€ì¼¨Ù¥Í¼ÁÉÕ‘•¹Ñ”°•´Ñ½´…½±¡•‘½È€¨½ô(€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ…À´ÈÉ½Õ¹‘•´Éá°‰œµ…µ‰•È´ÔÀ¼ÜÀ‘…É¬é‰œµ…µ‰•È´äÔÀ¼ÈÀÁà´ÌÁä´ÈÑ•áĞµlÄÅÁát±•…‘¥¹œµÉ•±…á•Ñ•áĞµ…µ‰•È´äÀÀ‘…É¬éÑ•áĞµ…µ‰•È´ÄÀÀˆø(€€€€€€€€€€€€€€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûÂ~J„ğ½ÍÁ…¸ø(€€€€€€€€€€€€€€ñÍÁ…¸ù<™¥±ÑÉ¼€ñÍÑÉ½¹œù½É…¹¥é„”ÍÕ•É”ğ½ÍÑÉ½¹œø¥¹ÍÑÉÕµ•¹Ñ½ÌƒŠP•±”¹Õ¹„ÍÕ‰ÍÑ¥ÑÕ¤„…Ù…±¥‡Ÿ¼³µ¹¥„¹•´™•¡„‘¥…»ÍÍÑ¥¼Í½é¥¹¡¼¸ğ½ÍÁ…¸ø(€€€€€€€€€€€€ğ½Àø(€€€€€€€€€€ğ½…É‘½¹Ñ•¹Ğø(€€€€€€€€ğ½…Éø(€€€€€€€€ğ½Í•Ñ¥½¸ø(€€€€€€€€¥ô((€€€€€€ğ½‘¥Øø((€€€€€ì¼¨…Ó…±½¼É•ÍÕµ¥‘¼ƒŠPÕ±°]¥‘Ñ €¨½ô(€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰É½Õ¹‘•´Íá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ÜÀ‰œµ…É¼ÜÀÀ´Ğˆø(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µˆ´Ì™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•Ñİ••¸…À´Ìˆøñ‘¥ØøñÀ±…ÍÍ9…µ”ô‰Ñ•áĞµlÄÅÁát™½¹ĞµÍ•µ¥‰½±ÕÁÁ•É…Í”ÑÉ…­¥¹œµlÀ¸ÄÑ•µtÑ•áĞµÁÉ¥µ…ÉäˆùÁË¥Ù¥„‘¼…Ó…±½¼™¥±ÑÉ…‘¼ğ½Àøñ È±…ÍÍ9…µ”ô‰Ñ•áĞµÍ´™½¹Ğµ‰±…¬Ñ•áĞµ™½É•É½Õ¹ˆùíÉ…¹­•‘A½½°¹Í±¥” À°€ÈĞ¤¹±•¹Ñ¡ôÁÉ¥¹¥Á…¥ÌÉ•ÍÕ±Ñ…‘½Ìğ½ Èøğ½‘¥Øøñ1¥¹¬¡É•˜ôˆ½•Í…±…Ìµ¹•ÕÉ½ÁÍ¥ÅÕ¥…ÑÉ¥„ˆ±…ÍÍ9…µ”ô‰Ñ•áĞµáÌ™½¹Ğµ‰½±Ñ•áĞµÁÉ¥µ…ÉäˆùY•È…Ó…±½¼µÕ¹‘¥…°ğ½1¥¹¬øğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÉ¥½µÁ…Ğˆø(€€€€€€€€€íÉ…¹­•‘A½½°¹Í±¥” À°€ÈĞ¤¹µ…À ¡Ì¤€ôøì½¹ÍĞÙ¥ÍÕ…°€ô•ÑM…±•Y¥ÍÕ…°¡Ì¤ì½¹ÍĞ%½¸€ôÙ¥ÍÕ…°¹%½¸ìÉ•ÑÕÉ¸€ (€€€€€€€€€€€€ñ1¥¹¬­•äõíÌ¹¥‘ô¡É•˜õíÉ•Í½±Ù•ÁÁI½ÕÑ”¡Ì¤€üü€½•¹•É¥ŒµÍ…±”¼‘íÌ¹¥‘õô±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ…É½µÁ…Ğ‰±½¬É½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ÜÀ‰œµ‰…­É½Õ¹¼ÜÀÑÉ…¹Í¥Ñ¥½¸µ…±°‘ÕÉ…Ñ¥½¸´ÈÀÀÕÉÍ½ÈµÁ½¥¹Ñ•È¡½Ù•Èé‰½É‘•ÈµÁÉ¥µ…Éä¼ÌÀ¡½Ù•Èé‰œµ‰…­É½Õ¹¡½Ù•ÈéÍ¡…‘½Üµµ¡½Ù•ÈèµÑÉ…¹Í±…Ñ”µä´À¸Ô…Ñ¥Ù”éÑÉ…¹Í±…Ñ”µä´Àˆø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ…Éµ½¹Ñ•¹Ğ½µÁ…Ğˆø(€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ¡•…ˆø(€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”õí™¥±Ñ•È´ÈØÀµÍåµ‰½°Íµ…±°‰œµÉ…‘¥•¹ĞµÑ¼µ‰È€‘íÙ¥ÍÕ…°¹Ñ½¹•õôøñ%½¸±…ÍÍ9…µ”ô‰ ´ĞÜ´ĞˆÍÑÉ½­•]¥‘Ñ õìÄ¸åô€¼øğ½‘¥Øø(€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´À™±•à´Äˆø(€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉĞ©ÕÍÑ¥™äµ‰•Ñİ••¸…À´Èˆø(€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´ÀˆøñÀ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÑ¥Ñ±”Íµ…±°ˆùíÌ¹¹…µ•ôğ½ÀøñÀ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµÍÕ‰Ñ¥Ñ±”±¥¹”µ±…µÀ´ÈˆùíÌ¹™Õ±±9…µ•ôğ½Àøğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•àÍ¡É¥¹¬´À™±•àµ½°¥Ñ•µÌµ•¹…À´Äˆøñ	…‘”Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ‰…‘”ˆùí¥ÍÕ±±ÁÀ¡Ì¤€ü€‰Á±¥‡Ÿ¼½µÁ±•Ñ„ˆ€è€‰¥¡„Ó¥¹¥„‰ôğ½	…‘”øñ	…‘”Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ‰…‘”ˆùíÙ¥ÍÕ…°¹±…‰•±ôğ½	…‘”ùíÌ¹¥¹ÍÑ…ÉÑÍ]¥Ñ  ‰İ½É±´ˆ¤€˜˜€ñ	…‘”Ù…É¥…¹Ğô‰½ÕÑ±¥¹”ˆ±…ÍÍ9…µ”ô‰™¥±Ñ•È´ÈØÀµ‰…‘”ˆùµÕ¹‘¥…°ğ½	…‘”ùõì  ¤€ôøì½¹ÍĞ±Œ€ô±¥•¹Í•¡¥À¡Ì¤ìÉ•ÑÕÉ¸±Œ€ü€ñÍÁ…¸±…ÍÍ9…µ”õí¥¹±¥¹”µ‰±½¬É½Õ¹‘•µ™Õ±°‰½É‘•ÈÁà´Ä¸ÔÁä´À¸ÔÑ•áĞµlåÁát™½¹Ğµ‰½±€‘í±Œ¹±Íõôùí±Œ¹±…‰•±ôğ½ÍÁ…¸ø€è¹Õ±°ìô¤ ¥ôğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰µĞ´ÈÑ•áĞµlÄÅÁátÑ•áĞµµÕÑ•µ™½É•É½Õ¹ˆùíÌ¹É•ÍÁ½¹‘•¹Ñ”¹©½¥¸ ˆƒ
+Ü€ˆ¥ôƒ
+Üí5…Ñ ¹É½Õ¹¡Ì¹…•5¥¸€¼€ÄÈ¥÷ŠMí5…Ñ ¹É½Õ¹¡Ì¹…•5…à€¼€ÄÈ¥ô…¹½Ìğ½Àø(€€€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€€€ğ½1¥¹¬ø(€€€€€€€€€€¤ìô¥ô(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½Í•Ñ¥½¸ø(€€€€ğ½‘¥Øø(€€¤ì)ô(

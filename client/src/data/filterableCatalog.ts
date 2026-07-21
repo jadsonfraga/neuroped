@@ -1,8 +1,5 @@
 import type { ScaleEntry } from "@/data/scaleFilter";
-import {
-  applyUploadedInstrumentOverridesForApp,
-  uploadedFilterInstrumentsForApp,
-} from "@/data/uploadedInstrumentFilterBridge";
+import { applyUploadedInstrumentOverridesForApp } from "@/data/uploadedInstrumentFilterBridge";
 
 /**
  * Itens aplicaveis que existem como paginas/ferramentas do app, mas nao estavam
@@ -10,7 +7,6 @@ import {
  * catalogo clinico principal.
  */
 export const supplementalFilterableInstruments: ScaleEntry[] = [
-  ...uploadedFilterInstrumentsForApp,
   {
     id: "testes-diretos",
     name: "Testes Diretos",

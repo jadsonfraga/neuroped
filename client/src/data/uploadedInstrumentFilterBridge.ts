@@ -26,3 +26,20 @@ export function applyUploadedInstrumentOverridesForApp(
   }
   return patched;
 }
+
+/**
+ * Referências que devem aparecer somente no modo "Todas" do filtro.
+ * Elas continuam pesquisáveis, mas ficam fora do catálogo recomendável usado
+ * pelo pódio e pela pré-consulta. O SCQ/ASQ é incluído a partir do catálogo
+ * bruto porque a versão filtrada remove instrumentos externos.
+ */
+export function buildUploadedReferenceCatalogForApp(
+  primary: ScaleEntry[],
+): ScaleEntry[] {
+  const scq = primary.find((scale) => scale.id === "scq");
+
+  return [
+    ...uploadedFilterInstrumentsForApp,
+    ...(scq ? [applyUploadedInstrumentOverridesForApp(scq)] : []),
+  ];
+}
