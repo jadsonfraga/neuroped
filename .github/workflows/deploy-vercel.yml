@@ -159,7 +159,7 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Deploy and verify both Vercel projects
+      - name: Deploy and verify the public Vercel mirror
         id: vercel-deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -169,11 +169,11 @@ jobs:
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
 
-          # Os rótulos são os aliases públicos esperados. Os nomes internos dos
-          # projetos Vercel são históricos e não coincidem com esses aliases.
+          # Apenas este projeto possui alias público exclusivo e controlado.
+          # O host neuroped.vercel.app pertence a outro aplicativo e nunca deve
+          # receber confiança da API NeuroPed.
           projects=(
             "superneuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
-            "neuroped:prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC"
           )
 
           for entry in "${projects[@]}"; do
@@ -266,9 +266,7 @@ jobs:
               'tolower($1) == tolower(target) { print $2 }' | tail -1
           }
 
-          for production_url in \
-            https://neuroped.vercel.app \
-            https://superneuroped.vercel.app; do
+          for production_url in https://superneuroped.vercel.app; do
             preflight_headers=$(mktemp)
             preflight_code=$(curl -sS -o /dev/null -D "$preflight_headers" \
               -w "%{http_code}" -X OPTIONS "$api_base/api/auth/login" \
@@ -393,7 +391,7 @@ jobs:
           description="Deploy Vercel falhou; consulte o workflow."
           if [ "$JOB_STATUS" = "success" ]; then
             state=success
-            description="Dois aliases publicados com auth nominal validada."
+            description="Mirror público publicado com auth nominal validada."
           fi
           gh api --method POST \
             "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \

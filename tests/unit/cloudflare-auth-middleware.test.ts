@@ -12,12 +12,18 @@ import { onRequestPost as documentHandler } from "../../functions/api/documents/
 import { onRequestPost as consultationHandler } from "../../functions/api/consultations/index";
 
 const secret = "segredo-de-teste-com-comprimento-suficiente-123456";
-const next = async () => new Response(JSON.stringify({ ok: true }), {
-  status: 200,
-  headers: { "Content-Type": "application/json" },
-});
+const next = async () =>
+  new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 
-async function call(path: string, env: Record<string, unknown>, token?: string, origin?: string) {
+async function call(
+  path: string,
+  env: Record<string, unknown>,
+  token?: string,
+  origin?: string,
+) {
   const headers = new Headers();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (origin) headers.set("Origin", origin);
@@ -33,36 +39,58 @@ function authDb(role = "professional", active = 1, sessionActive = 1) {
   return {
     prepare: (sql: string) => ({
       bind: () => ({
-        first: async () => sql.includes("auth_refresh_sessions")
-          ? (sessionActive ? { active: 1 } : null)
-          : ({
-              id: "user-1",
-              name: "Usuário",
-              email: "medico@example.com",
-              role,
-              is_active: active,
-              password_hash: "irrelevante",
-              must_change_password: 0,
-              failed_login_attempts: 0,
-              locked_until: null,
-            }),
+        first: async () =>
+          sql.includes("auth_refresh_sessions")
+            ? sessionActive
+              ? { active: 1 }
+              : null
+            : {
+                id: "user-1",
+                name: "Usuário",
+                email: "medico@example.com",
+                role,
+                is_active: active,
+                password_hash: "irrelevante",
+                must_change_password: 0,
+                failed_login_attempts: 0,
+                locked_until: null,
+              },
       }),
     }),
   };
 }
 
-assert.equal((await call("/api/patients", {})).status, 200, "demo sem D1 permanece disponível");
-assert.equal((await call("/api/patients", { DB: {} })).status, 503, "D1 sem segredo falha fechado");
-assert.equal((await call("/api/patients", { DB: {}, NEUROPED_JWT_SECRET: secret })).status, 401);
-assert.equal((await call("/api/health", { DB: {} })).status, 200, "health é público");
+assert.equal(
+  (await call("/api/patients", {})).status,
+  200,
+  "demo sem D1 permanece disponível",
+);
+assert.equal(
+  (await call("/api/patients", { DB: {} })).status,
+  503,
+  "D1 sem segredo falha fechado",
+);
+assert.equal(
+  (await call("/api/patients", { DB: {}, NEUROPED_JWT_SECRET: secret })).status,
+  401,
+);
+assert.equal(
+  (await call("/api/health", { DB: {} })).status,
+  200,
+  "health é público",
+);
 
 const unhealthyDb = {
-  prepare: () => ({ first: async () => { throw new Error("database unavailable"); } }),
+  prepare: () => ({
+    first: async () => {
+      throw new Error("database unavailable");
+    },
+  }),
 };
 const healthResponse = await healthCheck({
   env: { DB: unhealthyDb, NEUROPED_JWT_SECRET: secret },
 } as never);
-const healthBody = await healthResponse.json() as {
+const healthBody = (await healthResponse.json()) as {
   database: string;
   authentication: { required: boolean; configured: boolean };
 };
@@ -74,7 +102,14 @@ assert.deepEqual(
 );
 
 const token = await signJwt(
-  { sub: "user-1", email: "medico@example.com", name: "Médico", role: "professional", type: "access", sid: "session-1" },
+  {
+    sub: "user-1",
+    email: "medico@example.com",
+    name: "Médico",
+    role: "professional",
+    type: "access",
+    sid: "session-1",
+  },
   secret,
   60,
 );
@@ -85,18 +120,20 @@ const authorized = await call(
   "https://evil.example",
 );
 assert.equal(authorized.status, 200);
-assert.equal(authorized.headers.get("Access-Control-Allow-Origin"), null, "CORS não abre por padrão");
+assert.equal(
+  authorized.headers.get("Access-Control-Allow-Origin"),
+  null,
+  "CORS não abre por padrão",
+);
 
-for (const origin of [
-  "https://neuroped.vercel.app",
-  "https://superneuroped.vercel.app",
-]) {
+for (const origin of ["https://superneuroped.vercel.app"]) {
   const response = await call("/api/health", {}, undefined, origin);
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), origin);
   assert.equal(response.headers.get("Vary"), "Origin");
 }
 
 for (const origin of [
+  "https://neuroped.vercel.app",
   "https://evil-neuroped.vercel.app",
   "https://neuroped.vercel.app.evil.example",
   "http://neuroped.vercel.app",
@@ -149,7 +186,7 @@ const preflight = await onRequest({
   request: new Request("https://neuroped.test/api/auth/login", {
     method: "OPTIONS",
     headers: {
-      Origin: "https://neuroped.vercel.app",
+      Origin: "https://superneuroped.vercel.app",
       "Access-Control-Request-Method": "POST",
       "Access-Control-Request-Headers": "Content-Type, Authorization",
     },
@@ -161,35 +198,71 @@ const preflight = await onRequest({
 assert.equal(preflight.status, 204);
 assert.equal(
   preflight.headers.get("Access-Control-Allow-Origin"),
-  "https://neuroped.vercel.app",
+  "https://superneuroped.vercel.app",
 );
-assert.match(preflight.headers.get("Access-Control-Allow-Headers") ?? "", /Authorization/);
+assert.match(
+  preflight.headers.get("Access-Control-Allow-Headers") ?? "",
+  /Authorization/,
+);
 
 const refreshToken = await signJwt(
-  { sub: "user-1", email: "medico@example.com", name: "Médico", role: "professional", type: "refresh", sid: "session-1", jti: "refresh-1" },
+  {
+    sub: "user-1",
+    email: "medico@example.com",
+    name: "Médico",
+    role: "professional",
+    type: "refresh",
+    sid: "session-1",
+    jti: "refresh-1",
+  },
   secret,
   60,
 );
 assert.equal(
-  (await call("/api/patients", { DB: authDb(), NEUROPED_JWT_SECRET: secret }, refreshToken)).status,
+  (
+    await call(
+      "/api/patients",
+      { DB: authDb(), NEUROPED_JWT_SECRET: secret },
+      refreshToken,
+    )
+  ).status,
   401,
   "refresh token nunca autoriza rota clínica",
 );
 
 const readerToken = await signJwt(
-  { sub: "user-1", email: "reader@example.com", name: "Leitor", role: "reader", type: "access", sid: "session-1" },
+  {
+    sub: "user-1",
+    email: "reader@example.com",
+    name: "Leitor",
+    role: "reader",
+    type: "access",
+    sid: "session-1",
+  },
   secret,
   60,
 );
 assert.equal(
-  (await call("/api/patients", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret }, readerToken)).status,
+  (
+    await call(
+      "/api/patients",
+      { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret },
+      readerToken,
+    )
+  ).status,
   200,
   "reader pode passar pela autenticação em leitura; ownership ainda filtra os registros",
 );
 
-async function callWithMethod(path: string, method: string, role: string, token: string) {
+async function callWithMethod(
+  path: string,
+  method: string,
+  role: string,
+  token: string,
+) {
   const headers = new Headers({ Authorization: `Bearer ${token}` });
-  if (["POST", "PATCH", "PUT"].includes(method)) headers.set("Content-Type", "application/json");
+  if (["POST", "PATCH", "PUT"].includes(method))
+    headers.set("Content-Type", "application/json");
   return onRequest({
     request: new Request(`https://neuroped.test${path}`, {
       method,
@@ -202,22 +275,59 @@ async function callWithMethod(path: string, method: string, role: string, token:
   } as never);
 }
 
-assert.equal((await callWithMethod("/api/patients", "POST", "reader", readerToken)).status, 403);
+assert.equal(
+  (await callWithMethod("/api/patients", "POST", "reader", readerToken)).status,
+  403,
+);
 assert.equal(
   (await callWithMethod("/api/consents", "POST", "reader", readerToken)).status,
   200,
   "reader autenticado pode registrar somente o próprio consentimento",
 );
-assert.equal((await callWithMethod("/api/results/x", "DELETE", "reader", readerToken)).status, 403);
-assert.equal((await call("/api/cert", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret }, readerToken)).status, 403);
-assert.equal((await call("/api/audit-log", { DB: authDb(), NEUROPED_JWT_SECRET: secret }, token)).status, 403);
 assert.equal(
-  (await call("/api/patients", { DB: authDb("professional", 0), NEUROPED_JWT_SECRET: secret }, token)).status,
+  (await callWithMethod("/api/results/x", "DELETE", "reader", readerToken))
+    .status,
+  403,
+);
+assert.equal(
+  (
+    await call(
+      "/api/cert",
+      { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret },
+      readerToken,
+    )
+  ).status,
+  403,
+);
+assert.equal(
+  (
+    await call(
+      "/api/audit-log",
+      { DB: authDb(), NEUROPED_JWT_SECRET: secret },
+      token,
+    )
+  ).status,
+  403,
+);
+assert.equal(
+  (
+    await call(
+      "/api/patients",
+      { DB: authDb("professional", 0), NEUROPED_JWT_SECRET: secret },
+      token,
+    )
+  ).status,
   401,
   "token assinado não reativa conta desabilitada",
 );
 assert.equal(
-  (await call("/api/patients", { DB: authDb("professional", 1, 0), NEUROPED_JWT_SECRET: secret }, token)).status,
+  (
+    await call(
+      "/api/patients",
+      { DB: authDb("professional", 1, 0), NEUROPED_JWT_SECRET: secret },
+      token,
+    )
+  ).status,
   401,
   "access token de família revogada falha imediatamente",
 );
@@ -240,7 +350,11 @@ const readerCertificate = await certificateHandler({
     },
   },
 } as never);
-assert.equal(readerCertificate.status, 403, "reader nunca recebe o certificado A1");
+assert.equal(
+  readerCertificate.status,
+  403,
+  "reader nunca recebe o certificado A1",
+);
 
 const professionalCertificate = await certificateHandler({
   env: certificateEnv,
@@ -272,7 +386,11 @@ const adminCertificate = await certificateHandler({
     },
   },
 } as never);
-assert.equal(adminCertificate.status, 200, "somente admin exporta o certificado compartilhado");
+assert.equal(
+  adminCertificate.status,
+  200,
+  "somente admin exporta o certificado compartilhado",
+);
 
 const readerContext = {
   env: { DB: {} },
@@ -322,6 +440,10 @@ const readerWriteCases = [
   callReaderWrite(consultationHandler as never, { patient_id: "demo-001" }),
 ];
 for (const response of await Promise.all(readerWriteCases)) {
-  assert.equal(response.status, 403, "handler clínico também bloqueia escrita do reader");
+  assert.equal(
+    response.status,
+    403,
+    "handler clínico também bloqueia escrita do reader",
+  );
 }
 console.log("✓ Functions clínicas exigem JWT quando D1 está ativo");

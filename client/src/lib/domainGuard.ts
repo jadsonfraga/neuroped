@@ -15,7 +15,6 @@
 /** Domínios oficiais onde o NeuroPed pode rodar. */
 const DEFAULT_ALLOWED_HOSTS: string[] = [
   "neuroped.pages.dev",
-  "neuroped.vercel.app",
   "superneuroped.vercel.app",
 ];
 

@@ -32,8 +32,8 @@ import {
 // Cloudflare Workers reusam instâncias no mesmo pop — suficiente para burst básico
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
 
-const RATE_LIMIT_WINDOW_MS = 60_000;   // 1 minuto
-const RATE_LIMIT_MAX = 60;             // 60 req/min por IP
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minuto
+const RATE_LIMIT_MAX = 60; // 60 req/min por IP
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
@@ -45,7 +45,6 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 const OFFICIAL_CROSS_ORIGINS: ReadonlySet<string> = new Set([
-  "https://neuroped.vercel.app",
   "https://superneuroped.vercel.app",
 ] as const);
 
@@ -62,9 +61,10 @@ function getCorsHeaders(
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, X-Requested-With",
     "Access-Control-Max-Age": "600",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
 
@@ -109,12 +109,19 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
     !isOwnConsentWrite &&
     !canWriteClinicalData(user)
   ) {
-    return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
+    return apiError(
+      "Perfil sem permissão para alterar dados clínicos.",
+      "FORBIDDEN",
+      403,
+    );
   }
   return null;
 }
 
-async function authorizeClinicalApi(request: Request, env: Env): Promise<AuthorizationResult> {
+async function authorizeClinicalApi(
+  request: Request,
+  env: Env,
+): Promise<AuthorizationResult> {
   if (!env.DB) return { failure: null, user: null };
 
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
@@ -161,7 +168,11 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
     }
   } catch {
     return {
-      failure: apiError("Autenticação temporariamente indisponível.", "AUTH_UNAVAILABLE", 503),
+      failure: apiError(
+        "Autenticação temporariamente indisponível.",
+        "AUTH_UNAVAILABLE",
+        503,
+      ),
       user: null,
     };
   }
@@ -180,7 +191,11 @@ function getRateLimitKey(request: Request): string {
   return `rl:${ip}`;
 }
 
-function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetAt: number } {
+function checkRateLimit(key: string): {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+} {
   const now = Date.now();
   let entry = inMemoryRateMap.get(key);
 
@@ -238,7 +253,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           ...corsHeaders,
           ...SECURITY_HEADERS,
         },
-      }
+      },
     );
   }
 
@@ -258,7 +273,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
             ...corsHeaders,
             ...SECURITY_HEADERS,
           },
-        }
+        },
       );
     }
   }
@@ -266,14 +281,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const authorization = await authorizeClinicalApi(request, env);
   if (authorization.failure) {
     const headers = new Headers(authorization.failure.headers);
-    for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
+    for (const [key, value] of Object.entries(corsHeaders))
+      headers.set(key, value);
     return new Response(authorization.failure.body, {
       status: authorization.failure.status,
       headers,
     });
   }
   if (authorization.user) {
-    const mutableContext = context as typeof context & { data?: AuthContextData };
+    const mutableContext = context as typeof context & {
+      data?: AuthContextData;
+    };
     if (!mutableContext.data) mutableContext.data = {};
     mutableContext.data.authUser = authorization.user;
   }
@@ -284,10 +302,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Auth (login/refresh/logout) é backend real, não escrita clínica demo — sempre
   // liberado, senão o login (POST) cairia no bloqueio read-only.
   const isAuthRoute = new URL(request.url).pathname.startsWith("/api/auth/");
-  if (isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+  if (
+    isProduction &&
+    !env.DB &&
+    !demoWritesEnabled &&
+    !isAuthRoute &&
+    ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)
+  ) {
     return new Response(
       JSON.stringify({
-        error: "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",
+        error:
+          "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",
         code: "DEMO_API_READ_ONLY",
       }),
       {
@@ -297,7 +322,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           ...corsHeaders,
           ...SECURITY_HEADERS,
         },
-      }
+      },
     );
   }
 
@@ -305,7 +330,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // Clona e adiciona headers de segurança e CORS
   const newHeaders = new Headers(response.headers);
-  for (const [k, v] of Object.entries({ ...corsHeaders, ...SECURITY_HEADERS })) {
+  for (const [k, v] of Object.entries({
+    ...corsHeaders,
+    ...SECURITY_HEADERS,
+  })) {
     newHeaders.set(k, v);
   }
   newHeaders.set("X-RateLimit-Remaining", String(rl.remaining));

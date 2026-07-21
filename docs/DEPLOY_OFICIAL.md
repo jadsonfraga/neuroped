@@ -26,9 +26,10 @@ deploy deixa de depender dele quando os dois secrets E2E estiverem presentes.
 ## Frontends oficiais
 
 - Cloudflare Pages: frontend e API na mesma origin, em modo remoto.
-- Vercel (`neuroped` e `superneuroped`): frontend em modo remoto com
-  `VITE_API_URL=https://neuroped.pages.dev`; CORS aceita somente os dois aliases
-  estáveis.
+- Vercel (`https://superneuroped.vercel.app`): mirror público em modo remoto com
+  `VITE_API_URL=https://neuroped.pages.dev`; é o único alias Vercel aceito pelo
+  CORS. `https://neuroped.vercel.app` pertence a outro aplicativo e não é uma
+  origem oficial do NeuroPed.
 - GitHub Pages: redirecionador para o Cloudflare. Não contém React, assets do
   app, PIN ou tokens.
 

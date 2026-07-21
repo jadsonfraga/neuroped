@@ -294,9 +294,7 @@ jobs:
               'tolower($1) == tolower(target) { print $2 }' | tail -1
           }
 
-          for origin in \
-            https://neuroped.vercel.app \
-            https://superneuroped.vercel.app; do
+          for origin in https://superneuroped.vercel.app; do
             cors_ok=0
             for attempt in $(seq 1 12); do
               headers=$(mktemp)
@@ -341,6 +339,7 @@ jobs:
           done
 
           for denied_origin in \
+            https://neuroped.vercel.app \
             https://neuroped.vercel.app.evil.example \
             https://jadsonfraga.github.io; do
             denied_headers=$(mktemp)

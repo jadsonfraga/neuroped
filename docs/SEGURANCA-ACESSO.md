@@ -4,9 +4,10 @@
 
 - `https://neuroped.pages.dev` é o full-stack canônico: frontend, Pages
   Functions e D1.
-- `https://neuroped.vercel.app` e `https://superneuroped.vercel.app` executam o
-  mesmo cliente em modo `remote` e usam a API canônica com login nominal, JWT
-  de curta duração e refresh revogável.
+- `https://superneuroped.vercel.app` executa o mesmo cliente em modo `remote` e
+  usa a API canônica com login nominal, JWT de curta duração e refresh revogável.
+  `https://neuroped.vercel.app` pertence a outro aplicativo e é explicitamente
+  rejeitado pelo CORS e pelo guard de domínio.
 - `https://jadsonfraga.github.io/neuroped/` não executa o aplicativo. Publica
   somente um redirecionador para o domínio canônico e remove estado legado do
   NeuroPed no navegador.
