@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// Integração idempotente acionada após a criação do catálogo seguro.
 const root = process.cwd();
 
 function read(relativePath) {
