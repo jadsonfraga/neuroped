@@ -52,6 +52,8 @@ export interface SecureTypedScaleDraftState<T> {
   restored: boolean;
   status: ScaleDraftStatus;
   clearDraft: () => Promise<void>;
+  /** Apaga só o armazenamento (mantém o valor em memória). Ver hook. */
+  clearPersistedDraft: () => Promise<void>;
 }
 
 function removeLegacyDraft(key: string | undefined): void {
@@ -112,6 +114,11 @@ export function useSecureTypedScaleDraft<T>({
   const lastSerializedRef = useRef(stableDraftSerialization(sanitize(value)));
   const writeRevisionRef = useRef(0);
   const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  // Suspende a persistência após a escala ser CONCLUÍDA: o rascunho armazenado é
+  // apagado (evita vazar respostas de um paciente para o próximo ao reabrir a
+  // mesma escala), mas as respostas em memória seguem intactas para a tela de
+  // resultado. Qualquer NOVA edição real re-arma a persistência.
+  const suppressPersistRef = useRef(false);
   latestValueRef.current = value;
 
   useEffect(() => {
@@ -182,10 +189,15 @@ export function useSecureTypedScaleDraft<T>({
     const normalized = sanitizeRef.current(value);
     const nextSerialized = stableDraftSerialization(normalized);
     if (nextSerialized === lastSerializedRef.current) return;
+    // Uma mudança real de conteúdo após a conclusão re-arma a persistência.
+    suppressPersistRef.current = false;
 
     const revision = ++writeRevisionRef.current;
     setStatus(hasContentRef.current(normalized) ? "saving" : "idle");
     const timer = window.setTimeout(() => {
+      // Um clear por conclusão (clearPersistedDraft) avança a revisão e cancela
+      // este save pendente — senão a última resposta re-criaria o rascunho.
+      if (revision !== writeRevisionRef.current) return;
       saveQueueRef.current = saveQueueRef.current
         .catch(() => undefined)
         .then(async () => {
@@ -214,8 +226,9 @@ export function useSecureTypedScaleDraft<T>({
   useEffect(
     () => () => {
       // Se a leitura inicial ainda não acabou, o estado vazio local não pode
-      // apagar um rascunho válido já existente.
-      if (!readyRef.current) return;
+      // apagar um rascunho válido já existente. E, após a conclusão, não
+      // re-persistimos ao trocar de rota (senão o rascunho apagado voltaria).
+      if (!readyRef.current || suppressPersistRef.current) return;
       const latest = sanitizeRef.current(latestValueRef.current);
       saveQueueRef.current = saveQueueRef.current
         .catch(() => undefined)
@@ -241,6 +254,7 @@ export function useSecureTypedScaleDraft<T>({
     setRestored(false);
     setStatus("idle");
     lastSerializedRef.current = stableDraftSerialization(empty);
+    suppressPersistRef.current = false;
     removeLegacyDraft(legacyKey);
     saveQueueRef.current = saveQueueRef.current
       .catch(() => undefined)
@@ -248,7 +262,31 @@ export function useSecureTypedScaleDraft<T>({
     await saveQueueRef.current;
   }, [legacyKey, storageKey]);
 
-  return { value, setValue, ready, restored, status, clearDraft };
+  // Apaga APENAS o rascunho armazenado, preservando as respostas em memória.
+  // Usado ao concluir a escala: o resultado continua exibido, mas nada fica
+  // guardado para restaurar no próximo paciente. A persistência fica suspensa
+  // até uma nova edição real.
+  const clearPersistedDraft = useCallback(async () => {
+    suppressPersistRef.current = true;
+    ++writeRevisionRef.current;
+    lastSerializedRef.current = stableDraftSerialization(createEmptyRef.current());
+    setRestored(false);
+    removeLegacyDraft(legacyKey);
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => clearScaleDraft(secureDraftStore, storageKey));
+    await saveQueueRef.current;
+  }, [legacyKey, storageKey]);
+
+  return {
+    value,
+    setValue,
+    ready,
+    restored,
+    status,
+    clearDraft,
+    clearPersistedDraft,
+  };
 }
 
 interface SecureScaleDraftOptions {
@@ -265,6 +303,7 @@ export interface SecureScaleDraftState {
   restored: boolean;
   status: ScaleDraftStatus;
   clearDraft: () => Promise<void>;
+  clearPersistedDraft: () => Promise<void>;
 }
 
 /** Remove respostas órfãs, fracionárias ou fora das opções da escala atual. */
@@ -315,5 +354,6 @@ export function useSecureScaleDraft({
     restored: state.restored,
     status: state.status,
     clearDraft: state.clearDraft,
+    clearPersistedDraft: state.clearPersistedDraft,
   };
 }
