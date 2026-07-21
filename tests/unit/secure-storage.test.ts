@@ -169,6 +169,10 @@ localStorage.setItem(
   "neuroped:filter-flash",
   JSON.stringify({ sintomas: ["sono"] }),
 );
+sessionStorage.setItem(
+  "neuroped:filter-flash",
+  JSON.stringify({ queixas: ["linguagem"] }),
+);
 localStorage.setItem("neuroped:theme", "dark");
 await secureClearAll();
 assert.equal(
@@ -178,6 +182,11 @@ assert.equal(
 );
 assert.equal(localStorage.getItem("np_filtro_state_v1"), null);
 assert.equal(localStorage.getItem("neuroped:filter-flash"), null);
+assert.equal(
+  sessionStorage.getItem("neuroped:filter-flash"),
+  null,
+  "limpeza global deve remover contexto clínico efêmero desta aba",
+);
 assert.equal(localStorage.getItem("neuroped:theme"), "dark");
 assert.equal(localStorage.length, 1);
 assert.equal(sessionStorage.length, 0);

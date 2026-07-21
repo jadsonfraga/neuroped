@@ -393,6 +393,10 @@ export async function secureClearAll(): Promise<void> {
         toRemove.push(k);
       }
     }
+    // Alguns fluxos efêmeros (por exemplo, o filtro em modo flash) usam
+    // sessionStorage com as mesmas chaves legadas. A limpeza explícita deve
+    // removê-las também deste escopo, sem preservar contexto clínico por aba.
+    toRemove.push(...LEGACY_SENSITIVE_KEYS);
     toRemove.forEach((k) => removeStorage(scoped, k));
   } catch {
     // A chave em memória ainda será invalidada abaixo.
