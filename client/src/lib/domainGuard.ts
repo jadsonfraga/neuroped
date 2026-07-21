@@ -16,6 +16,7 @@
 const DEFAULT_ALLOWED_HOSTS: string[] = [
   "jadsonfraga.github.io",
   "neuroped.pages.dev",
+  "neuroped.vercel.app",
   "superneuroped.vercel.app",
 ];
 
@@ -29,7 +30,8 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", ""]);
 
 function fromEnv(): string[] {
   try {
-    const raw = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_ALLOWED_HOSTS;
+    const raw = (import.meta as { env?: Record<string, string | undefined> })
+      .env?.VITE_ALLOWED_HOSTS;
     if (!raw) return [];
     return raw
       .split(",")
@@ -61,8 +63,9 @@ export function isAuthorizedHost(hostname: string | undefined | null): boolean {
     if (host.endsWith(suffix)) return true;
   }
 
-  // Previews oficiais do Vercel: superneuroped-*.vercel.app
-  if (/^superneuroped[a-z0-9-]*\.vercel\.app$/.test(host)) return true;
+  // Deploys e previews oficiais dos dois projetos Vercel.
+  if (/^(?:neuroped|superneuroped)[a-z0-9-]*\.vercel\.app$/.test(host))
+    return true;
 
   return false;
 }
