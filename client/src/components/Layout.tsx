@@ -14,7 +14,10 @@ import { isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearMasterPinUnlock } from "@/lib/masterPin";
-import { clearOpenAccessWorkspace } from "@/lib/openAccessApi";
+import {
+  clearOpenAccessWorkspace,
+  subscribeToOpenAccessWorkspaceClear,
+} from "@/lib/openAccessApi";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
@@ -242,6 +245,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (location !== "/") softWhoosh();
   }, [location]);
+
+  useEffect(() => {
+    if (accessMode !== "local") return;
+
+    return subscribeToOpenAccessWorkspaceClear(() => {
+      // Oculta imediatamente qualquer dado já renderizado enquanto esta aba
+      // descarta caches e rascunhos antes de recarregar o workspace vazio.
+      document.body.style.visibility = "hidden";
+      try {
+        sessionStorage.removeItem("neuroped:pin-ok");
+        sessionStorage.removeItem("neuroped:local-unlocked");
+        localStorage.removeItem("neuroped:local-unlocked-persistent");
+      } catch { /* storage indisponível — o reload ainda elimina o estado em memória */ }
+      clearMasterPinUnlock();
+      void (async () => {
+        try {
+          await logout();
+        } finally {
+          window.location.hash = "#/";
+          window.location.reload();
+        }
+      })();
+    });
+  }, [accessMode, logout]);
 
   // Auto-expande a seção que contém a rota atual e rola o item ativo para a vista
   // — o usuário sempre vê onde está e os instrumentos vizinhos, sem abrir nada.

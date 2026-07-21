@@ -36,6 +36,7 @@ class RejectingRemovalStorage extends MemoryStorage {
 }
 
 let activeStorage: Storage = new MemoryStorage();
+const storageListeners = new Set<(event: StorageEvent) => void>();
 Object.defineProperty(globalThis, "window", {
   configurable: true,
   value: {
@@ -43,10 +44,20 @@ Object.defineProperty(globalThis, "window", {
       return activeStorage;
     },
     location: { origin: "https://neuroped.pages.dev" },
+    addEventListener(type: string, listener: (event: StorageEvent) => void) {
+      if (type === "storage") storageListeners.add(listener);
+    },
+    removeEventListener(type: string, listener: (event: StorageEvent) => void) {
+      if (type === "storage") storageListeners.delete(listener);
+    },
   },
 });
 
-const { clearOpenAccessWorkspace, openAccessFetch } = await import(
+const {
+  clearOpenAccessWorkspace,
+  openAccessFetch,
+  subscribeToOpenAccessWorkspaceClear,
+} = await import(
   "../../client/src/lib/openAccessApi.ts"
 );
 
@@ -74,6 +85,47 @@ assert.equal(((await beforeClear?.json()) as unknown[]).length, 1);
 assert.equal(clearOpenAccessWorkspace(), true);
 assert.equal(activeStorage.getItem("neuroped:theme"), "dark");
 
+let peerClearCount = 0;
+const unsubscribe = subscribeToOpenAccessWorkspaceClear(() => {
+  peerClearCount += 1;
+});
+for (const listener of storageListeners) {
+  listener({
+    storageArea: activeStorage,
+    key: "neuroped:theme",
+    oldValue: "dark",
+    newValue: null,
+  } as StorageEvent);
+  listener({
+    storageArea: activeStorage,
+    key: "neuroped:open-workspace:v1",
+    oldValue: "anterior",
+    newValue: "atualizado",
+  } as StorageEvent);
+  listener({
+    storageArea: activeStorage,
+    key: "neuroped:open-workspace-clear-generation:v1",
+    oldValue: "geracao-a",
+    newValue: "geracao-b",
+  } as StorageEvent);
+  listener({
+    storageArea: activeStorage,
+    key: "neuroped:open-workspace:v1",
+    oldValue: "anterior",
+    newValue: null,
+  } as StorageEvent);
+}
+assert.equal(peerClearCount, 1, "a remoção deve limpar também as outras abas");
+unsubscribe();
+assert.equal(storageListeners.size, 0);
+
+const staleWrite = await openAccessFetch("/api/patients", {
+  method: "POST",
+  body: JSON.stringify({ name: "case_ref-stale" }),
+});
+assert.equal(staleWrite?.status, 507, "uma aba antiga não pode recriar o workspace apagado");
+assert.equal(activeStorage.getItem("neuroped:open-workspace:v1"), null);
+
 const patientsAfterClear = await openAccessFetch("/api/patients");
 const resultsAfterClear = await openAccessFetch("/api/results");
 assert.deepEqual(await patientsAfterClear?.json(), []);
@@ -97,6 +149,8 @@ const authSource = readFileSync(
 );
 assert.match(layoutSource, /button-clear-local-data/);
 assert.match(layoutSource, /clearOpenAccessWorkspace/);
+assert.match(layoutSource, /subscribeToOpenAccessWorkspaceClear/);
+assert.match(layoutSource, /document\.body\.style\.visibility = "hidden"/);
 assert.doesNotMatch(authSource, /button-local-lock.*display:\s*none/s);
 
-console.log("✓ workspace aberto persiste, limpa dados clínicos e preserva preferências");
+console.log("✓ workspace aberto limpa dados clínicos em todas as abas e preserva preferências");

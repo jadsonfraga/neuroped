@@ -36,6 +36,19 @@ interface LocalStore {
 }
 
 const STORAGE_KEY = "neuroped:open-workspace:v1";
+const CLEAR_GENERATION_KEY = "neuroped:open-workspace-clear-generation:v1";
+
+function readClearGeneration(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(CLEAR_GENERATION_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+const initialClearGeneration = readClearGeneration();
+let workspaceInvalidated = false;
 
 function emptyStore(): LocalStore {
   return { version: 1, patients: [], results: [] };
@@ -62,6 +75,9 @@ function readStore(): LocalStore {
 
 function writeStore(store: LocalStore): boolean {
   try {
+    // Uma aba aberta antes da última limpeza não pode recriar dados apagados
+    // com uma mutação que terminou atrasada.
+    if (workspaceInvalidated || readClearGeneration() !== initialClearGeneration) return false;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     return true;
   } catch {
@@ -75,12 +91,60 @@ function writeStore(store: LocalStore): boolean {
  */
 export function clearOpenAccessWorkspace(): boolean {
   if (typeof window === "undefined") return false;
+  const previousGeneration = readClearGeneration();
+  const nextGeneration = makeId("clear");
   try {
+    // Publica primeiro uma nova geração: escritores de outras abas passam a
+    // falhar fechados antes que o workspace seja removido.
+    window.localStorage.setItem(CLEAR_GENERATION_KEY, nextGeneration);
     window.localStorage.removeItem(STORAGE_KEY);
-    return window.localStorage.getItem(STORAGE_KEY) === null;
+    const cleared =
+      window.localStorage.getItem(STORAGE_KEY) === null &&
+      window.localStorage.getItem(CLEAR_GENERATION_KEY) === nextGeneration;
+    if (cleared) workspaceInvalidated = true;
+    return cleared;
   } catch {
+    // Evita deixar uma geração parcialmente avançada se a remoção falhar.
+    try {
+      if (previousGeneration) {
+        window.localStorage.setItem(CLEAR_GENERATION_KEY, previousGeneration);
+      } else {
+        window.localStorage.removeItem(CLEAR_GENERATION_KEY);
+      }
+    } catch { /* a função já retornará falha, sem anunciar limpeza */ }
     return false;
   }
+}
+
+/**
+ * A remoção de uma chave do localStorage emite `storage` nas outras abas da
+ * mesma origem. Cada aba deve descartar também o estado clínico mantido em
+ * memória; caso contrário, a interface ainda poderia exibir dados já apagados.
+ */
+export function subscribeToOpenAccessWorkspaceClear(
+  onClear: () => void,
+): () => void {
+  if (typeof window === "undefined" || !window.addEventListener) return () => undefined;
+
+  let handling = false;
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.storageArea !== window.localStorage || handling) return;
+    const workspaceRemoved =
+      event.key === STORAGE_KEY && event.oldValue !== null && event.newValue === null;
+    const generationAdvanced =
+      event.key === CLEAR_GENERATION_KEY &&
+      event.newValue !== null &&
+      event.newValue !== event.oldValue;
+    if (!workspaceRemoved && !generationAdvanced) return;
+
+    handling = true;
+    workspaceInvalidated = true;
+    onClear();
+  };
+
+  window.addEventListener("storage", handleStorage);
+  return () => window.removeEventListener("storage", handleStorage);
 }
 
 function json(body: unknown, status = 200): Response {
