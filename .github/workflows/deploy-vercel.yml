@@ -15,9 +15,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Pré-checagem: o deploy do Vercel só roda se os secrets existirem. Sem eles,
-  # o job informa a configuração ausente e o deploy é pulado; Cloudflare Pages
-  # e GitHub Pages continuam independentes deste provedor.
+  # Pré-checagem fail-closed: nunca transforma configuração ausente em sucesso.
+  # O status informa somente os NOMES ausentes; valores continuam protegidos.
   preflight:
     runs-on: ubuntu-latest
     outputs:
@@ -25,17 +24,39 @@ jobs:
     steps:
       - id: check
         env:
+          GH_TOKEN: ${{ github.token }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: |
-          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VITE_PIN_HASH" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "Secrets do Vercel e verificador local presentes — deploy habilitado."
-          else
+          set -euo pipefail
+          missing=()
+          [ -n "$VERCEL_TOKEN" ] || missing+=("VERCEL_TOKEN")
+          [ -n "$VERCEL_ORG_ID" ] || missing+=("VERCEL_ORG_ID")
+          [ -n "$VITE_PIN_HASH" ] || missing+=("VITE_PIN_HASH")
+
+          target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "${#missing[@]}" -gt 0 ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Configuração segura do Vercel incompleta — deploy IGNORADO. O site é publicado por Cloudflare Pages + GitHub Pages. Configure VERCEL_TOKEN, VERCEL_ORG_ID e VITE_PIN_HASH para habilitar."
+            description="Configuração ausente: ${missing[*]}"
+            echo "::error::$description"
+            gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              -f state="failure" \
+              -f context="NeuroPed / Vercel production" \
+              -f description="$description" \
+              -f target_url="$target_url"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="pending" \
+            -f context="NeuroPed / Vercel production" \
+            -f description="Configuração validada; deploy em execução." \
+            -f target_url="$target_url"
+          echo "Secrets do Vercel e verificador local presentes — deploy habilitado."
 
   deploy-vercel:
     needs: preflight
