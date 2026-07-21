@@ -98,7 +98,10 @@ Rode `npm run test` antes de abrir PR.
 
 ## Deploy
 
-PRs em main disparam deploy automatico (em producao). PRs em branches feature criam preview environments (se provedor suportar).
+O Git auto-deploy da Vercel permanece desativado. Publicacoes oficiais ocorrem
+somente pelos workflows versionados em `.github/workflows/`, apos os gates de
+teste e correspondencia de commit. Pull requests nao criam previews automaticos
+nos projetos Vercel.
 
 ## Contato
 

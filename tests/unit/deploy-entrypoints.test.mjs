@@ -162,6 +162,18 @@ const dbPushResult = spawnSync(process.execPath, [join(root, dbPushGuard)], {
 });
 assert.equal(dbPushResult.status, 1, "guard de db:push deve encerrar com erro");
 
+const vercelConfig = JSON.parse(read("vercel.json"));
+assert.equal(
+  vercelConfig.git?.deploymentEnabled,
+  false,
+  "Vercel Git auto-deploy deve ficar desativado; somente o workflow oficial publica",
+);
+assert.match(read("CONTRIBUTING.md"), /Git auto-deploy da Vercel permanece desativado/);
+assert.doesNotMatch(
+  read("CONTRIBUTING.md"),
+  /branches feature criam preview environments/i,
+);
+
 for (const manifest of ["railway.json", "railway.toml", "nixpacks.toml"]) {
   assert.equal(
     existsSync(join(root, manifest)),
