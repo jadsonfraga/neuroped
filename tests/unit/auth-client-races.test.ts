@@ -53,6 +53,11 @@ const vercelWorkflow = source(".github/workflows/deploy-vercel.yml");
 const vercelConfig = source("vercel.json");
 const pagesRedirectHtml = source("github-pages-redirect/index.html");
 const pagesRedirectScript = source("github-pages-redirect/redirect.js");
+const legacyDeployHelper = source("deploy.sh");
+const legacyDeployScript = source("deploy-production.sh");
+const deploymentWebGuide = source("DEPLOYMENT_WEB_GUIDE.md");
+const deploymentFinalSession = source("DEPLOYMENT_FINAL_SESSION.md");
+const envExample = source(".env.example");
 
 assert.match(authClientSource, /VITE_AUTH_MODE/);
 assert.match(authClientSource, /cachedAuthCapability\(mode\)/);
@@ -85,6 +90,21 @@ assert.doesNotMatch(pagesWorkflow, /VITE_PIN_HASH|verify-local-pin-env|npm run b
 assert.match(pagesWorkflow, /test ! -d dist\/github-pages\/assets/);
 assert.match(pagesRedirectHtml, /https:\/\/neuroped\.pages\.dev/);
 assert.doesNotMatch(pagesRedirectHtml, /id="root"|type="module"/);
+assert.match(legacyDeployHelper, /exit 1/);
+assert.doesNotMatch(
+  legacyDeployHelper,
+  /npm install -g|vercel\s+(?:deploy|--prod|login)|railway\s+(?:init|up|login)/,
+  "helper legado deve falhar fechado sem orientar publicação manual",
+);
+assert.match(legacyDeployScript, /exit 1/);
+assert.doesNotMatch(
+  legacyDeployScript,
+  /npm install -g|vercel\s+(?:deploy|--prod|login)|railway\s+(?:init|up|login)/,
+  "script legado deve falhar fechado sem publicar em provedores",
+);
+assert.doesNotMatch(deploymentFinalSession, /\.\/deploy-production\.sh/);
+assert.doesNotMatch(deploymentWebGuide, /vercel\.com\/new|railway\.app/);
+assert.doesNotMatch(envExample, /domínios oficiais \([^\n]*github\.io/);
 for (const contract of [
   /const TARGET = "https:\/\/neuroped\.pages\.dev"/,
   /startsWith\("neuroped:"\)/,
@@ -122,11 +142,11 @@ assert.doesNotMatch(vercelWorkflow, /secrets\.VITE_PIN_HASH|env add VITE_PIN_HAS
 const vercelJobStart = vercelWorkflow.indexOf("  deploy-vercel:");
 const vercelStepsStart = vercelWorkflow.indexOf("    steps:", vercelJobStart);
 const vercelDeployStart = vercelWorkflow.indexOf(
-  "      - name: Deploy and verify both Vercel projects",
+  "      - name: Deploy and verify the public Vercel mirror",
   vercelStepsStart,
 );
 const vercelAuthStart = vercelWorkflow.indexOf(
-  "      - name: Validate remote authentication from stable Vercel origins",
+  "      - name: Validate remote authentication from the stable Vercel origin",
   vercelDeployStart,
 );
 const vercelStatusStart = vercelWorkflow.indexOf(
@@ -147,10 +167,17 @@ const vercelDeployStep = vercelWorkflow.slice(vercelDeployStart, vercelAuthStart
 const vercelAuthStep = vercelWorkflow.slice(vercelAuthStart, vercelStatusStart);
 assert.doesNotMatch(vercelJobHeader, /secrets\./, "secrets não podem ter escopo de job");
 assert.match(vercelDeployStep, /secrets\.VERCEL_TOKEN/);
+assert.match(
+  vercelDeployStep,
+  /"superneuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"/,
+);
+assert.doesNotMatch(vercelDeployStep, /prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC/);
 assert.doesNotMatch(vercelDeployStep, /ADMIN_MAIL|ADMIN_PW|NEUROPED_E2E_/);
 assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_EMAIL/);
 assert.match(vercelAuthStep, /secrets\.NEUROPED_E2E_PASSWORD/);
 assert.doesNotMatch(vercelAuthStep, /VERCEL_TOKEN|VERCEL_ORG_ID/);
+assert.match(vercelAuthStep, /https:\/\/superneuroped\.vercel\.app/);
+assert.doesNotMatch(vercelAuthStep, /https:\/\/neuroped\.vercel\.app/);
 assert.doesNotMatch(vercelWorkflow, /secrets\.[A-Z0-9_]+\s*\|\|\s*secrets\./);
 assert.match(vercelAuthStep, /ci-negative-\$\{GITHUB_RUN_ID\}@invalid\.example/);
 assert.match(cloudflareWorkflow, /VITE_AUTH_MODE:\s*remote/);

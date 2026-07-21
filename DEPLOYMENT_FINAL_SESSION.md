@@ -1,3 +1,7 @@
+> **NEUROPED_HISTORICAL_DEPLOY_RECORD — NÃO EXECUTAR.**
+> Este registro preserva contexto de 10/06/2026. Use somente
+> `docs/DEPLOY_OFICIAL.md` para qualquer release atual.
+
 # 🚀 DEPLOYMENT FINAL - Session Complete
 **Data:** 2026-06-10 | **Status:** ✅ READY FOR PRODUCTION
 
@@ -121,14 +125,13 @@ npm run audit:filter
 ```
 
 ### Step 3: Deploy to Production
-```bash
-# Using existing deployment setup
-./deploy-production.sh
 
-# OR manually
-git push origin main  # Already done ✅
-# Trigger CloudFlare deployment
-```
+Abra um pull request, aguarde todos os gates e faça o merge aprovado em
+`main`. Os workflows versionados publicam e verificam o commit.
+
+Não execute `deploy-production.sh`: o fluxo interativo Vercel/Railway foi
+desativado por segurança. Consulte `docs/DEPLOY_OFICIAL.md` e confirme as
+sentinelas públicas do mesmo commit.
 
 ---
 
@@ -188,11 +191,9 @@ git push origin main  # Already done ✅
 4. Monitor performance metrics
 
 ### Rollback Plan
-```bash
-git revert 7c1c5e1  # Latest merge commit
-git push origin main
-# Redeploy previous version
-```
+
+Abra um pull request de reversão, valide os mesmos gates e faça merge somente
+após aprovação. Não publique diretamente a partir deste registro histórico.
 
 ---
 
@@ -236,4 +237,3 @@ All requested features implemented:
 **Last Updated:** 2026-06-10 20:45 UTC
 **Deployed By:** Claude Code Agent
 **Version:** v2.0-WhatsApp+UI
-

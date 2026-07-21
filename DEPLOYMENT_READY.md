@@ -1,3 +1,7 @@
+> **NEUROPED_HISTORICAL_DEPLOY_RECORD — NÃO EXECUTAR.**
+> Este é um registro histórico. Comandos abaixo não representam o fluxo atual.
+> Use somente `docs/DEPLOY_OFICIAL.md`.
+
 # 🚀 DEPLOYMENT READY — NeuroPed Surgical Reconstruction Complete
 
 **Status:** ✅ **PRONTO PARA PRODUÇÃO**
@@ -262,4 +266,3 @@ After deployment, future work could include:
 **Implementation Time:** ~4 hours  
 **Lines of Code:** 3433+ (infrastructure + generators)  
 **Commits:** 9 (organized by phase)
-

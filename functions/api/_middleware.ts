@@ -45,7 +45,6 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 const OFFICIAL_CROSS_ORIGINS: ReadonlySet<string> = new Set([
-  "https://neuroped.vercel.app",
   "https://superneuroped.vercel.app",
 ] as const);
 

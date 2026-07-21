@@ -3,13 +3,13 @@ import { isAuthorizedHost } from "../../client/src/lib/domainGuard";
 
 for (const host of [
   "neuroped.pages.dev",
-  "neuroped.vercel.app",
   "superneuroped.vercel.app",
 ]) {
   assert.equal(isAuthorizedHost(host), true, `${host} deve ser autorizado`);
 }
 
 for (const host of [
+  "neuroped.vercel.app",
   "evil-neuroped.vercel.app",
   "neuroped-git-main-jadsonfragas-projects.vercel.app",
   "superneuroped-git-main-jadsonfragas-projects.vercel.app",

@@ -1,3 +1,7 @@
+> **NEUROPED_HISTORICAL_DEPLOY_RECORD — NÃO EXECUTAR.**
+> Este arquivo preserva evidências antigas; os comandos não são instruções
+> vigentes. Use somente `docs/DEPLOY_OFICIAL.md`.
+
 # Deploy recente — janela de 60 minutos
 
 Registro operacional da consolidacao solicitada em 2026-06-06 para os commits recentes na branch `work`.

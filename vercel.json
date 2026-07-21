@@ -4,6 +4,9 @@
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",
   "framework": "vite",
+  "git": {
+    "deploymentEnabled": false
+  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",

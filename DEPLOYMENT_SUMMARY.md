@@ -1,3 +1,7 @@
+> **NEUROPED_HISTORICAL_DEPLOY_RECORD — NÃO EXECUTAR.**
+> Este é um registro histórico. Comandos e provedores abaixo não representam o
+> fluxo atual. Use somente `docs/DEPLOY_OFICIAL.md`.
+
 # 🚀 Deployment Summary — Filter Expansion System
 
 **Date:** 2026-06-10

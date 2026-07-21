@@ -1,3 +1,7 @@
+> **NEUROPED_HISTORICAL_DEPLOY_RECORD — NÃO EXECUTAR.**
+> Qualquer comando de publicação neste registro está obsoleto. Use somente
+> `docs/DEPLOY_OFICIAL.md`.
+
 # 🎯 PROMPT ESTRATÉGICO CIRÚRGICO PARA CLAUDE COWORK
 ## NeuroPed Escalas Audit & Deep Bug Fix - Fases 3 e 4
 
@@ -286,4 +290,3 @@ Após todas 15 iterações (F3-I1 até F4-I1):
 **Status inicial:** Pronto para FASE 3
 
 Boa sorte! 🚀
-

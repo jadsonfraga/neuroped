@@ -88,7 +88,6 @@ assert.equal(authorized.status, 200);
 assert.equal(authorized.headers.get("Access-Control-Allow-Origin"), null, "CORS não abre por padrão");
 
 for (const origin of [
-  "https://neuroped.vercel.app",
   "https://superneuroped.vercel.app",
 ]) {
   const response = await call("/api/health", {}, undefined, origin);
@@ -97,6 +96,7 @@ for (const origin of [
 }
 
 for (const origin of [
+  "https://neuroped.vercel.app",
   "https://evil-neuroped.vercel.app",
   "https://neuroped.vercel.app.evil.example",
   "http://neuroped.vercel.app",
@@ -149,7 +149,7 @@ const preflight = await onRequest({
   request: new Request("https://neuroped.test/api/auth/login", {
     method: "OPTIONS",
     headers: {
-      Origin: "https://neuroped.vercel.app",
+      Origin: "https://superneuroped.vercel.app",
       "Access-Control-Request-Method": "POST",
       "Access-Control-Request-Headers": "Content-Type, Authorization",
     },
@@ -161,9 +161,25 @@ const preflight = await onRequest({
 assert.equal(preflight.status, 204);
 assert.equal(
   preflight.headers.get("Access-Control-Allow-Origin"),
-  "https://neuroped.vercel.app",
+  "https://superneuroped.vercel.app",
 );
 assert.match(preflight.headers.get("Access-Control-Allow-Headers") ?? "", /Authorization/);
+
+const deniedPreflight = await onRequest({
+  request: new Request("https://neuroped.test/api/auth/login", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://neuroped.vercel.app",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "Content-Type, Authorization",
+    },
+  }),
+  env: {},
+  next,
+  data: {},
+} as never);
+assert.equal(deniedPreflight.status, 204);
+assert.equal(deniedPreflight.headers.get("Access-Control-Allow-Origin"), null);
 
 const refreshToken = await signJwt(
   { sub: "user-1", email: "medico@example.com", name: "Médico", role: "professional", type: "refresh", sid: "session-1", jti: "refresh-1" },

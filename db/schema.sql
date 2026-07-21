@@ -11,9 +11,8 @@
 --  - Campos sensíveis (nome, guardian_phone) devem ser criptografados via patientCrypto.ts
 --    antes de inserção em produção
 --
--- USO:
---  wrangler d1 execute neuroped-db --local --file=db/schema.sql
---  wrangler d1 execute neuroped-db --file=db/schema.sql  (produção)
+-- USO: somente referência local. Produção usa db/schema.d1.sql e migrações
+-- aplicadas exclusivamente pelo workflow oficial.
 -- ============================================================
 
 -- ============================================================

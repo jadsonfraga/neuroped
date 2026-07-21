@@ -1,8 +1,8 @@
 -- ============================================================================
 -- Migração 0001 — colunas de autenticação nominal na tabela `users`.
 --
--- Aplicar UMA vez no D1 já provisionado (sem recriar tabelas / sem perder dados):
---   npx wrangler d1 execute neuroped-db --remote --file=./db/migrations/0001_users_auth.sql --yes
+-- Produção: aplicada de forma idempotente apenas pelo workflow oficial.
+-- Não executar manualmente contra D1 remoto.
 --
 -- Observação: SQLite/D1 não tem "ADD COLUMN IF NOT EXISTS". Se uma coluna já
 -- existir, o comando falha nessa linha — é seguro ignorar ("duplicate column").

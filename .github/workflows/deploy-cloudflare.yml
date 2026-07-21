@@ -284,7 +284,7 @@ jobs:
           [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth plenamente configurados"; exit 1; }
           echo "✅ HEALTH OK — D1 e autenticação nominal configurados."
 
-      - name: Validar CORS restrito dos mirrors oficiais
+      - name: Validar CORS restrito do mirror oficial
         run: |
           set -euo pipefail
           BASE=https://neuroped.pages.dev
@@ -294,9 +294,7 @@ jobs:
               'tolower($1) == tolower(target) { print $2 }' | tail -1
           }
 
-          for origin in \
-            https://neuroped.vercel.app \
-            https://superneuroped.vercel.app; do
+          for origin in https://superneuroped.vercel.app; do
             cors_ok=0
             for attempt in $(seq 1 12); do
               headers=$(mktemp)
@@ -341,17 +339,33 @@ jobs:
           done
 
           for denied_origin in \
+            https://neuroped.vercel.app \
             https://neuroped.vercel.app.evil.example \
             https://jadsonfraga.github.io; do
             denied_headers=$(mktemp)
+            denied_preflight_headers=$(mktemp)
             curl -fsS -D "$denied_headers" -o /dev/null \
               -H "Origin: $denied_origin" "$BASE/api/health"
             if grep -qi '^access-control-allow-origin:' "$denied_headers"; then
               echo "::error::Origin não autorizada recebeu CORS: $denied_origin"
               exit 1
             fi
+
+            denied_code=$(curl -sS -o /dev/null -D "$denied_preflight_headers" \
+              -w "%{http_code}" -X OPTIONS "$BASE/api/auth/login" \
+              -H "Origin: $denied_origin" \
+              -H "Access-Control-Request-Method: POST" \
+              -H "Access-Control-Request-Headers: Content-Type, Authorization")
+            [ "$denied_code" = "204" ] || {
+              echo "::error::Preflight negado retornou HTTP $denied_code: $denied_origin"
+              exit 1
+            }
+            if grep -qi '^access-control-allow-origin:' "$denied_preflight_headers"; then
+              echo "::error::Origin não autorizada recebeu ACAO no preflight: $denied_origin"
+              exit 1
+            fi
           done
-          echo "✅ CORS exato dos mirrors comprovado; lookalike rejeitado."
+          echo "✅ CORS exato do mirror comprovado; origem externa e lookalikes rejeitados."
 
       - name: Verificar login (auth e2e)
         env:
