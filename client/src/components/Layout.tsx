@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Filter } from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
@@ -14,6 +14,7 @@ import { isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearMasterPinUnlock } from "@/lib/masterPin";
+import { clearOpenAccessWorkspace } from "@/lib/openAccessApi";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
@@ -266,9 +267,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
     : navSections;
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
-  async function handleLocalLock() {
+  async function handleSessionAction() {
     softTap();
     haptic.tap();
+    if (accessMode === "local") {
+      const confirmed = window.confirm(
+        "Apagar permanentemente pacientes e resultados deste navegador? Faça um backup antes. Downloads e conteúdo já copiado não serão apagados.",
+      );
+      if (!confirmed) return;
+      if (!clearOpenAccessWorkspace()) {
+        window.alert("Não foi possível apagar os dados locais. Feche outras abas do NeuroPed e tente novamente.");
+        return;
+      }
+    }
     try {
       sessionStorage.removeItem("neuroped:pin-ok");
       sessionStorage.removeItem("neuroped:local-unlocked");
@@ -585,13 +596,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="sm"
             className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
-            onClick={handleLocalLock}
-            data-testid="button-local-lock"
-            aria-label={accessMode === "remote" ? "Encerrar sessão" : "Bloquear acesso local"}
+            onClick={handleSessionAction}
+            data-testid={accessMode === "remote" ? "button-session-exit" : "button-clear-local-data"}
+            aria-label={accessMode === "remote" ? "Encerrar sessão" : "Apagar dados clínicos locais deste navegador"}
           >
-            <KeyRound className="w-4 h-4" />
-            {!collapsed && <span className="ml-2 text-sm">{accessMode === "remote" ? "Sair" : "Bloquear acesso"}</span>}
-            {collapsed && <span className="ml-2 text-sm md:hidden">{accessMode === "remote" ? "Sair" : "Bloquear acesso"}</span>}
+            {accessMode === "remote" ? <KeyRound className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
+            {!collapsed && <span className="ml-2 text-sm">{accessMode === "remote" ? "Sair" : "Apagar dados locais"}</span>}
+            {collapsed && <span className="ml-2 text-sm md:hidden">{accessMode === "remote" ? "Sair" : "Apagar dados locais"}</span>}
           </Button>
           <Button
             variant="ghost"

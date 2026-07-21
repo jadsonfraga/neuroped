@@ -69,6 +69,20 @@ function writeStore(store: LocalStore): boolean {
   }
 }
 
+/**
+ * Apaga somente o workspace clínico persistido pelo modo aberto.
+ * Preferências não clínicas do navegador (tema, som etc.) são preservadas.
+ */
+export function clearOpenAccessWorkspace(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return window.localStorage.getItem(STORAGE_KEY) === null;
+  } catch {
+    return false;
+  }
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,

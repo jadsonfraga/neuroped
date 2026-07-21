@@ -81,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
       }}
     >
-      <style>{`[data-testid="button-local-lock"] { display: none !important; }`}</style>
       {children}
     </AuthContext.Provider>
   );
