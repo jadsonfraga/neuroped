@@ -169,9 +169,11 @@ jobs:
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
 
+          # Os rótulos são os aliases públicos esperados. Os nomes internos dos
+          # projetos Vercel são históricos e não coincidem com esses aliases.
           projects=(
-            "neuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
-            "superneuroped:prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC"
+            "superneuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
+            "neuroped:prj_4gm4R9pG7oJqqtBL9QFMjhNakzxC"
           )
 
           for entry in "${projects[@]}"; do
@@ -207,23 +209,9 @@ jobs:
               ' "$1"
             }
 
-            ok=0
-            for i in $(seq 1 12); do
-              if curl -fsSL "$url/deploy-check.json?try=$i" \
-                   -o "/tmp/vercel-${name}-deploy-check.json" \
-                && check_sentinel "/tmp/vercel-${name}-deploy-check.json"; then
-                ok=1
-                break
-              fi
-              sleep 10
-            done
-            cat "/tmp/vercel-${name}-deploy-check.json" 2>/dev/null || true
-            [ "$ok" -eq 1 ] || {
-              echo "::error::$name não publicou o commit ${GITHUB_SHA}."
-              exit 1
-            }
-
-            # Confirma também o alias estável que os usuários acessam em produção.
+            # A URL imutável pode estar protegida pelo Vercel Authentication e
+            # responder com a tela de SSO mesmo após um deploy válido. O gate
+            # observável é o alias público efetivamente acessado pelos usuários.
             production_url="https://${name}.vercel.app"
             alias_ok=0
             for i in $(seq 1 18); do
