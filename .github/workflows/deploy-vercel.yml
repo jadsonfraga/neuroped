@@ -96,6 +96,31 @@ jobs:
       - name: Run hard release verification gate
         run: npm run verify
 
+      - name: Wait for matching Cloudflare backend release
+        run: |
+          set -euo pipefail
+          sentinel=https://neuroped.pages.dev/deploy-check.json
+          health=https://neuroped.pages.dev/api/health
+          for attempt in $(seq 1 36); do
+            cache_buster="run=${GITHUB_RUN_ID}&attempt=$attempt"
+            if curl -fsSL "$sentinel?$cache_buster" -o /tmp/cloudflare-sentinel.json \
+              && jq -e --arg sha "$GITHUB_SHA" \
+                '.provider == "cloudflare-pages" and .commit == $sha' \
+                /tmp/cloudflare-sentinel.json >/dev/null \
+              && curl -fsSL "$health?$cache_buster" -o /tmp/cloudflare-health.json \
+              && jq -e \
+                '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
+                /tmp/cloudflare-health.json >/dev/null; then
+              echo "Backend canônico confirma ${GITHUB_SHA}."
+              exit 0
+            fi
+            echo "Aguardando backend canônico do mesmo commit ($attempt/36)."
+            sleep 10
+          done
+          cat /tmp/cloudflare-sentinel.json 2>/dev/null || true
+          echo "::error::Cloudflare não confirmou ${GITHUB_SHA}; Vercel não será publicado."
+          exit 1
+
       - name: Create deploy sentinel
         run: |
           mkdir -p client/public

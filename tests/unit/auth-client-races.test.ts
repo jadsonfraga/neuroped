@@ -111,6 +111,12 @@ assert.match(vercelWorkflow, /VITE_PIN_HASH=\s*\\/);
 assert.match(vercelWorkflow, /api\/auth\/login/);
 assert.match(vercelWorkflow, /api\/auth\/me/);
 assert.match(vercelWorkflow, /api\/auth\/logout/);
+assert.match(vercelWorkflow, /Wait for matching Cloudflare backend release/);
+assert.match(
+  vercelWorkflow,
+  /deploy-check\.json[\s\S]*\.provider == "cloudflare-pages" and \.commit == \$sha/,
+  "Vercel só pode publicar após o backend canônico confirmar o mesmo SHA",
+);
 assert.doesNotMatch(vercelWorkflow, /secrets\.VITE_PIN_HASH|env add VITE_PIN_HASH/);
 
 const vercelJobStart = vercelWorkflow.indexOf("  deploy-vercel:");
