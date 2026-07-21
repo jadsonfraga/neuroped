@@ -40,7 +40,13 @@ const LEGACY_SENSITIVE_KEYS = [
   "neuroped:caa:board:v1",
   "neuroped:caa:favs:v1",
   "neuroped:caa:hist:v1",
+  "np_filtro_state_v1",
+  "neuroped:filter-flash",
 ];
+// Rascunhos antigos de escalas eram gravados em texto puro no localStorage.
+// A limpeza global precisa removê-los mesmo quando ainda não foram migrados
+// para o envelope cifrado do useSecureScaleDraft.
+const LEGACY_SENSITIVE_PREFIXES = ["neuroped:scale-draft:"];
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de sessão clínica
 const LEGACY_PBKDF2_ITERATIONS = 100_000;
 export const MAX_SECURE_PLAINTEXT_BYTES = 2_000_000;
@@ -100,7 +106,6 @@ async function getLegacySessionKey(): Promise<CryptoKey | null> {
     false, // não exportável
     ["encrypt", "decrypt"],
   );
-
 }
 
 function b64(buf: ArrayBuffer): string {
@@ -109,7 +114,9 @@ function b64(buf: ArrayBuffer): string {
   // Espalhar buffers clínicos grandes como argumentos excede a pilha do V8.
   // Blocos mantêm a conversão estável sem depender de Buffer (indisponível no browser).
   for (let offset = 0; offset < bytes.length; offset += BASE64_CHUNK_BYTES) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + BASE64_CHUNK_BYTES));
+    binary += String.fromCharCode(
+      ...bytes.subarray(offset, offset + BASE64_CHUNK_BYTES),
+    );
   }
   return btoa(binary);
 }
@@ -191,9 +198,8 @@ async function decryptEnvelope<T>(
   key: string,
   envelope: StoredEnvelope,
 ): Promise<T> {
-  const aesKey = envelope.v === 2
-    ? await getSessionKey()
-    : await getLegacySessionKey();
+  const aesKey =
+    envelope.v === 2 ? await getSessionKey() : await getLegacySessionKey();
   if (!aesKey) throw new Error("legacy secure-storage key unavailable");
   const iv = unb64(envelope.iv);
   const ct = unb64(envelope.ct);
@@ -222,7 +228,9 @@ export async function secureSet<T>(
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const plaintext = new TextEncoder().encode(JSON.stringify(value));
     if (plaintext.byteLength > MAX_SECURE_PLAINTEXT_BYTES) {
-      console.warn("[secureStorage] conteúdo excede o limite seguro da sessão.");
+      console.warn(
+        "[secureStorage] conteúdo excede o limite seguro da sessão.",
+      );
       return false;
     }
     const additionalData = new TextEncoder().encode(NAMESPACE + key);
@@ -249,7 +257,9 @@ export async function secureSet<T>(
     }
     return stored;
   } catch {
-    console.warn("[secureStorage] não foi possível proteger o conteúdo da sessão.");
+    console.warn(
+      "[secureStorage] não foi possível proteger o conteúdo da sessão.",
+    );
     return false;
   }
 }
@@ -358,7 +368,13 @@ export async function secureClearAll(): Promise<void> {
     const toRemove: string[] = [];
     for (let i = 0; i < (local?.length ?? 0); i++) {
       const k = local?.key(i);
-      if (k?.startsWith(NAMESPACE)) toRemove.push(k);
+      if (
+        k &&
+        (k.startsWith(NAMESPACE) ||
+          LEGACY_SENSITIVE_PREFIXES.some((prefix) => k.startsWith(prefix)))
+      ) {
+        toRemove.push(k);
+      }
     }
     toRemove.push(...LEGACY_SENSITIVE_KEYS);
     toRemove.forEach((k) => removeStorage(local, k));
@@ -369,7 +385,13 @@ export async function secureClearAll(): Promise<void> {
     const toRemove: string[] = [];
     for (let i = 0; i < (scoped?.length ?? 0); i++) {
       const k = scoped?.key(i);
-      if (k?.startsWith(NAMESPACE)) toRemove.push(k);
+      if (
+        k &&
+        (k.startsWith(NAMESPACE) ||
+          LEGACY_SENSITIVE_PREFIXES.some((prefix) => k.startsWith(prefix)))
+      ) {
+        toRemove.push(k);
+      }
     }
     toRemove.forEach((k) => removeStorage(scoped, k));
   } catch {

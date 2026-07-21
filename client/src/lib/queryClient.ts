@@ -5,7 +5,7 @@ import { openAccessFetch } from "@/lib/openAccessApi";
 // Origem da API. Vazio = mesma origem (padrão; funciona no Cloudflare Pages, que
 // serve frontend + Functions juntos). No modo aberto, as rotas de trabalho
 // clínico são atendidas primeiro pelo workspace local do navegador.
-const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const API_BASE = (import.meta.env?.VITE_API_URL ?? "").replace(/\/$/, "");
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {

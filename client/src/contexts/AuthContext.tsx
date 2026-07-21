@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import type { AuthUser } from "@/lib/authClient";
+import { clearAuth, type AuthUser } from "@/lib/authClient";
 import { OPEN_ACCESS_USER } from "@/lib/openAccessApi";
 import { queryClient } from "@/lib/queryClient";
 import { secureClearAll } from "@/lib/secureStorage";
@@ -20,31 +20,18 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;
 
+// Esta build opera exclusivamente no modo aberto. Limpa de forma síncrona
+// qualquer sessão remota herdada antes que um filho possa usar authFetch.
+// Assim, trocar de uma release autenticada para esta não mantém um bearer
+// token administrativo em sessionStorage.
+clearAuth();
+
 async function clearSessionScopedClientState(): Promise<void> {
+  clearAuth();
   await queryClient.cancelQueries();
   queryClient.clear();
   await secureClearAll();
 }
-
-/*
-Referência de migração para as catracas históricas de corrida de sessão.
-O fluxo remoto abaixo foi deliberadamente substituído pelo workspace local:
-getAuthCapability
-function handleExpired() {
-  setUser(null);
-  clearSessionScopedClientState()
-}
-async function login(email, password) {
-  const data = await loginRequest(email, password);
-  await clearSessionScopedClientState()
-  setUser(data.user)
-}
-async function logout() {
-  setUser(null);
-  await logoutRequest();
-  await clearSessionScopedClientState()
-}
-*/
 
 /**
  * Modo aberto por decisão do autor do app.
