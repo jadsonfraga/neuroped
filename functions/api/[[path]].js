@@ -26,16 +26,3 @@ export async function onRequest(context) {
     }
   );
 }
-
-// Preflight CORS (o _middleware tambem trata; mantido por seguranca)
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,PATCH,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type,Authorization",
-      "Access-Control-Max-Age": "86400",
-    },
-  });
-}
