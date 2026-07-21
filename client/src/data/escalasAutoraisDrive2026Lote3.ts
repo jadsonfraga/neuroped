@@ -11,7 +11,14 @@ import { type ScaleEntry } from "./scaleFilter";
 
 const COMMON_QUEIXAS = ["atraso", "tea", "tdah", "comportamento", "ansiedade", "depressao", "epilepsia", "linguagem", "sono", "cognicao", "aprendizagem", "funcionalidade", "motor", "social", "autonomia", "sensorial", "alimentacao", "suicidio", "evolucao"];
 
-export const escalasAutoraisDrive2026Lote3: ScaleEntry[] = [
+const NON_DEDICATED_RISK_METADATA = {
+  suicideRiskInstrument: false,
+  psychosisRiskInstrument: false,
+  verbalRequirement: "indiferente",
+  literacyRequirement: "indiferente",
+} as const;
+
+const escalasAutoraisDrive2026Lote3Base: ScaleEntry[] = [
   {
     id: "sinergi-neuroped",
     name: "SINERGI-NeuroPed",
@@ -123,3 +130,9 @@ export const escalasAutoraisDrive2026Lote3: ScaleEntry[] = [
     pendencia: "Versão operacional harmonizada no app; requer estudo psicométrico e revisão formal do autor.",
   },
 ];
+
+export const escalasAutoraisDrive2026Lote3: ScaleEntry[] =
+  escalasAutoraisDrive2026Lote3Base.map((scale) => ({
+    ...NON_DEDICATED_RISK_METADATA,
+    ...scale,
+  }));

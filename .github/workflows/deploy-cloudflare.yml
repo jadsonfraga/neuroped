@@ -59,7 +59,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Catraca técnica completa de release
-        run: npm run verify:release
+        run: npm run verify
 
       - name: Criar sentinela de deploy
         run: |

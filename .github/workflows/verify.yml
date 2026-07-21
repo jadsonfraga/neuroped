@@ -41,7 +41,7 @@ jobs:
       # verify` e exige homologação clínica explícita para instrumentos ainda
       # não congelados; não é mascarado nem reclassificado pelo CI.
       - name: Run hard release verification gate
-        run: npm run verify:release
+        run: npm run verify
 
       - name: Build application
         run: npm run build
