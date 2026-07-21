@@ -27,6 +27,7 @@ const imp = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 const { allScales, faixasEtarias } = await imp("client/src/data/scaleFilter.ts");
 const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
 const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
+const { alimentacao } = await imp("client/src/data/scalasComplementares230Bloco3.ts");
 const {
   filterScalesIntelligently,
   getBroadbandFallback,
@@ -192,6 +193,17 @@ head("H) Metadados derivados — comunicação e alfabetização");
   // Pictórico/visual-analógico autorrelato NÃO exige leitura (criança aponta)
   const eva = byId("eva-ped");
   if (eva) ok(getLiteracyRequirement(eva) === "indiferente", "EVA pictórica => alfabetização indiferente");
+
+  // STEP é aplicado pelo clínico entre 0–60 meses; nunca pode ser bloqueado
+  // por alfabetização da criança.
+  const step = alimentacao.find((scale) => scale.id === "step");
+  ok(Boolean(step), "STEP deve permanecer no catálogo documental");
+  if (step) {
+    ok(
+      getLiteracyRequirement(step) === "indiferente",
+      "STEP (clínico, 0–60m) => alfabetização indiferente"
+    );
+  }
 
   // assessmentUse: seguimento (reavaliação/evolução) vs override explícito
   const segScale = { id: "x", name: "Reavaliação X", fullName: "", queixas: ["evolucao"], prioridade: "monitorizacao", respondente: ["clinico"] };

@@ -28,13 +28,14 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: |
-          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ] && [ -n "$VITE_PIN_HASH" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "Secrets do Vercel presentes — deploy do Vercel habilitado."
+            echo "Secrets do Vercel e verificador local presentes — deploy habilitado."
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Secrets do Vercel ausentes — deploy do Vercel IGNORADO. O site é publicado por Cloudflare Pages + GitHub Pages. Configure VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_PROJECT_ID para habilitar."
+            echo "::notice::Configuração segura do Vercel incompleta — deploy IGNORADO. O site é publicado por Cloudflare Pages + GitHub Pages. Configure VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID e VITE_PIN_HASH para habilitar."
           fi
 
   deploy-vercel:
@@ -64,6 +65,12 @@ jobs:
 
       - name: Run hard release verification gate
         run: npm run verify
+
+      - name: Validate production PIN verifier
+        env:
+          REQUIRE_LOCAL_PIN: "1"
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
+        run: node scripts/verify-local-pin-env.mjs
 
       - name: Create deploy sentinel
         run: |
@@ -105,6 +112,8 @@ jobs:
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build with Vercel
+        env:
+          VITE_PIN_HASH: ${{ secrets.VITE_PIN_HASH }}
         run: vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy to Vercel production
