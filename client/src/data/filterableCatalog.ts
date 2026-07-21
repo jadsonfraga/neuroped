@@ -1,4 +1,8 @@
 import type { ScaleEntry } from "@/data/scaleFilter";
+import {
+  applyUploadedInstrumentOverridesForApp,
+  uploadedFilterInstrumentsForApp,
+} from "@/data/uploadedInstrumentFilterBridge";
 
 /**
  * Itens aplicaveis que existem como paginas/ferramentas do app, mas nao estavam
@@ -6,6 +10,7 @@ import type { ScaleEntry } from "@/data/scaleFilter";
  * catalogo clinico principal.
  */
 export const supplementalFilterableInstruments: ScaleEntry[] = [
+  ...uploadedFilterInstrumentsForApp,
   {
     id: "testes-diretos",
     name: "Testes Diretos",
@@ -266,7 +271,8 @@ export const FILTER_EXCLUDED_IDS: ReadonlySet<string> = new Set([
 ]);
 
 export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
-  return uniqueById([...primary, ...supplementalFilterableInstruments]).filter(
-    (scale) => !FILTER_EXCLUDED_IDS.has(scale.id),
-  );
+  return uniqueById([
+    ...primary.map(applyUploadedInstrumentOverridesForApp),
+    ...supplementalFilterableInstruments,
+  ]).filter((scale) => !FILTER_EXCLUDED_IDS.has(scale.id));
 }
