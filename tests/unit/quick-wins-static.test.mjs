@@ -227,7 +227,10 @@ assert.match(routeGuard, /hasConfiguredMasterPin/);
 assert.match(routeGuard, /isMasterPinUnlocked/);
 
 const accessPolicy = read("client/src/security/accessPolicy.ts");
-assert.doesNotMatch(accessPolicy, /OPEN_ACCESS/);
+// ACESSO ABERTO (decisão explícita do autor): o app inteiro navega sem senha.
+// A flag OPEN_ACCESS é intencional e reversível; getAccessLevel retorna "public"
+// quando ela está ativa. A proteção real do dado de paciente permanece na API.
+assert.match(accessPolicy, /export const OPEN_ACCESS/);
 const privateGate = read("client/src/components/PrivateGate.tsx");
 assert.match(privateGate, /pinConfigured && unlocked/);
 assert.match(privateGate, /showLocalConfigurationError/);
