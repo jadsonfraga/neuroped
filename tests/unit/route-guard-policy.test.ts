@@ -1,25 +1,9 @@
 import assert from "node:assert/strict";
-import { getAccessLevel, OPEN_ACCESS } from "../../client/src/security/accessPolicy.ts";
+import { getAccessLevel } from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
   isRouteSensitive,
 } from "../../client/src/security/routeGuardPolicy.ts";
-
-// Modo ACESSO ABERTO (decisão do autor): sem qualquer senha, TODA rota é pública
-// e o RouteGuard sempre libera. As asserções de fail-closed abaixo valem apenas
-// no modelo padrão (OPEN_ACCESS === false).
-if (OPEN_ACCESS) {
-  for (const path of ["/", "/prontuario", "/pacientes", "/documentos", "/mchat", "/filtro"]) {
-    assert.equal(getAccessLevel(path), "public", `${path} deve abrir sem senha no modo aberto`);
-    assert.equal(
-      decideRouteAccess({ path, accessMode: "remote", isAuthenticated: false, isLoading: false }),
-      "allow",
-      `${path} deve liberar no modo aberto`,
-    );
-  }
-  console.log("✓ modo ACESSO ABERTO: app inteiro libera sem PIN nem login");
-  process.exit(0);
-}
 
 for (const path of [
   "/",
@@ -179,6 +163,41 @@ assert.equal(
     accessMode: "local",
     isAuthenticated: false,
     isLoading: false,
+  }),
+  "forbidden",
+  "modo local sem PIN configurado deve falhar fechado",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/mchat",
+    accessMode: "local",
+    isAuthenticated: false,
+    isLoading: false,
+    localPinConfigured: false,
+    localPinUnlocked: true,
+  }),
+  "forbidden",
+  "marcador de desbloqueio antigo não substitui um verificador configurado",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/mchat",
+    accessMode: "local",
+    isAuthenticated: false,
+    isLoading: false,
+    localPinConfigured: true,
+    localPinUnlocked: false,
+  }),
+  "forbidden",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/mchat",
+    accessMode: "local",
+    isAuthenticated: false,
+    isLoading: false,
+    localPinConfigured: true,
+    localPinUnlocked: true,
   }),
   "allow",
 );

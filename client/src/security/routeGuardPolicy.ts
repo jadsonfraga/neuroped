@@ -37,6 +37,8 @@ interface RouteAccessInput {
   isLoading: boolean;
   userRole?: RouteUserRole | null;
   allowedRoles?: readonly RouteUserRole[];
+  localPinConfigured?: boolean;
+  localPinUnlocked?: boolean;
 }
 
 /**
@@ -53,9 +55,14 @@ export function decideRouteAccess({
   isLoading,
   userRole,
   allowedRoles,
+  localPinConfigured = false,
+  localPinUnlocked = false,
 }: RouteAccessInput): RouteAccessDecision {
-  if (!isClinicalRoute(path) || accessMode === "local") return "allow";
+  if (!isClinicalRoute(path)) return "allow";
   if (accessMode === "checking" || isLoading) return "checking";
+  if (accessMode === "local") {
+    return localPinConfigured && localPinUnlocked ? "allow" : "forbidden";
+  }
   if (!isAuthenticated) return "login";
   const effectiveRoles = allowedRoles ?? (isRouteSensitive(path) ? DEFAULT_SENSITIVE_ROLES : undefined);
   if (effectiveRoles?.length && (!userRole || !effectiveRoles.includes(userRole))) {

@@ -63,17 +63,22 @@ assert.match(authClientSource, /VITE_AUTH_MODE/);
 assert.match(authClientSource, /cachedAuthCapability\(mode\)/);
 assert.match(
   authContextSource,
-  /import \{ clearAuth, type AuthUser \} from "@\/lib\/authClient"/,
-  "modo aberto deve poder remover credenciais remotas herdadas",
+  /getStoredUser,[\s\S]{0,120}loginRequest,[\s\S]{0,120}logoutRequest,[\s\S]{0,120}getAuthCapability/,
+  "o contexto deve restaurar a autenticação remota nominal",
+);
+assert.doesNotMatch(
+  authContextSource,
+  /OPEN_ACCESS_USER|const LOCAL_USER|accessMode:\s*"local"/,
+  "nenhum usuário administrativo local pode ser injetado automaticamente",
 );
 assert.match(
   authContextSource,
-  /const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;[\s\S]{0,360}clearAuth\(\);/,
-  "a inicialização do modo aberto deve limpar o bearer token antes dos filhos",
+  /useState<AccessMode>\("checking"\)[\s\S]{0,900}getAuthCapability\(\)/,
+  "o bootstrap deve começar fechado e descobrir a capacidade do backend",
 );
 assert.match(
   authContextSource,
-  /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,120}clearAuth\(\);[\s\S]{0,180}secureClearAll\(\);/,
+  /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,260}queryClient\.clear\(\);[\s\S]{0,80}secureClearAll\(\);/,
   "limpeza explícita deve eliminar credenciais e cache clínico",
 );
 assert.doesNotMatch(
@@ -376,8 +381,9 @@ assert.equal(
 );
 assert.equal(expiredEvents, 0, "401 anônimo não representa sessão expirada");
 
-// Regressão crítica: uma aba que chega de uma release autenticada para o modo
-// aberto não pode manter tokens capazes de alcançar o backend remoto.
+// O contexto autenticado não pode apagar de forma síncrona uma sessão candidata
+// antes de validá-la em /api/auth/me; expiração e logout continuam chamando
+// clearAuth pelo cliente autenticado.
 session.setItem("neuroped:access", "legacy-admin-token");
 session.setItem("neuroped:refresh", "legacy-refresh-token");
 session.setItem(
@@ -390,8 +396,9 @@ session.setItem(
   }),
 );
 await import("../../client/src/contexts/AuthContext.tsx");
-assert.equal(auth.getAccessToken(), null);
-assert.equal(auth.getRefreshToken(), null);
-assert.equal(auth.getStoredUser(), null);
+assert.equal(auth.getAccessToken(), "legacy-admin-token");
+assert.equal(auth.getRefreshToken(), "legacy-refresh-token");
+assert.equal(auth.getStoredUser()?.id, "legacy-admin");
+auth.clearAuth();
 
 console.log("✓ auth fail-closed, cache isolado e refresh concorrente seguro");

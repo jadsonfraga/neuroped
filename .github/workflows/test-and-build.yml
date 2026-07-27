@@ -104,6 +104,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Audit Full Dependency Graph
+        run: npm audit --audit-level=high
+        continue-on-error: false
+
       - name: Hard Release Verification Suite
         run: npm run verify
         continue-on-error: false

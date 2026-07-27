@@ -32,8 +32,8 @@ function signingErrorMessage(error: unknown): string {
 
 /**
  * Assinatura digital ICP-Brasil (certificado A1 .p12) processada no navegador.
- * O arquivo pode vir do seletor local ou do backend autorizado, mas permanece
- * somente na memória da aba e nunca é persistido pelo cliente.
+ * O arquivo vem exclusivamente do seletor local, permanece somente na memória
+ * da aba e nunca é persistido ou transferido pelo cliente.
  */
 export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex }: Props) {
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
@@ -46,28 +46,8 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   const [verif, setVerif] = useState<{ hash: string; qr: string; url: string } | null>(null);
 
   useEffect(() => {
-    (async () => {
-      // Apaga versões anteriores que persistiam a chave privada e a senha.
-      await purgeLegacyCertificateCache();
-      // Backend autorizado — certificado fica apenas na memória desta aba.
-      try {
-        const { authFetch, getStoredUser } = await import("@/lib/authClient");
-        if (getStoredUser()?.role !== "admin") return;
-        const r = await authFetch("/api/cert");
-        if (!r.ok) return;
-        const { cert: certB64, password: pwd } = await r.json();
-        if (!certB64) return;
-        const bin = atob(certB64);
-        const buf = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-        const ab = buf.buffer;
-        setP12(ab);
-        setP12Name("certificado do consultório · somente nesta sessão");
-        setSenha(pwd ?? "");
-      } catch {
-        /* backend sem certificado — o seletor local continua disponível */
-      }
-    })();
+    // Apaga versões anteriores que persistiam a chave privada e a senha.
+    void purgeLegacyCertificateCache();
   }, []);
 
   async function gerarComprovante(bytes: Uint8Array) {

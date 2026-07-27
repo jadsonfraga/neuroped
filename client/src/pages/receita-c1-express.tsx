@@ -451,7 +451,7 @@ const EMPTY_FORM: FormFields = {
   instrucoes: "", cid: "",
 };
 
-type CertStatus = "loading" | "ready" | "missing";
+type CertStatus = "ready" | "missing";
 
 // ── Componente principal ──────────────────────────────────────────
 export default function ReceitaC1ExpressPage() {
@@ -459,7 +459,7 @@ export default function ReceitaC1ExpressPage() {
   const [senha, setSenha] = useState("");
   const [showSenha, setShowSenha] = useState(false);
 
-  const [certStatus, setCertStatus] = useState<CertStatus>("loading");
+  const [certStatus, setCertStatus] = useState<CertStatus>("missing");
   const [certInfo, setCertInfo] = useState<{ commonName: string; notAfter: Date } | null>(null);
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -469,34 +469,9 @@ export default function ReceitaC1ExpressPage() {
   const [ok, setOk] = useState("");
   const [showPreview, setShowPreview] = useState(false);
 
-  // ── Carrega certificado somente na memória da aba ─────────────
+  // ── Elimina qualquer cache legado; o certificado só entra por upload local ─
   useEffect(() => {
-    (async () => {
-      await purgeLegacyCertificateCache();
-      // Backend /api/cert — RBAC no servidor; nada é persistido no navegador.
-      try {
-        const { authFetch, getStoredUser } = await import("@/lib/authClient");
-        if (getStoredUser()?.role !== "admin") {
-          // Profissionais não podem buscar o certificado administrativo, mas
-          // ainda precisam enxergar imediatamente o fluxo de upload local.
-          setCertStatus("missing");
-          return;
-        }
-        const r = await authFetch("/api/cert");
-        if (!r.ok) { setCertStatus("missing"); return; }
-        const { cert: b64, password: pwd } = await r.json();
-        if (!b64) { setCertStatus("missing"); return; }
-        const bin = atob(b64);
-        const buf = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-        const ab = buf.buffer;
-        setP12(ab);
-        if (pwd) setSenha(pwd);
-        setCertStatus("ready");
-      } catch {
-        setCertStatus("missing");
-      }
-    })();
+    void purgeLegacyCertificateCache();
   }, []);
 
   // ── Verifica info do certificado quando p12 + senha disponíveis ─
@@ -628,17 +603,12 @@ export default function ReceitaC1ExpressPage() {
         </div>
 
         {/* Status do certificado */}
-        {certStatus === "loading" && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-            <Loader2 className="h-4 w-4 animate-spin" /> Carregando certificado…
-          </div>
-        )}
         {certStatus === "ready" && (
           <div className="mb-4 rounded-xl border border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/30 px-3 py-2 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200">
               <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
               <span>
-                Certificado carregado automaticamente
+                Certificado carregado somente nesta aba
                 {certInfo && ` · válido até ${certInfo.notAfter.toLocaleDateString("pt-BR")}`}
               </span>
             </div>
@@ -655,7 +625,7 @@ export default function ReceitaC1ExpressPage() {
           <div className="mb-4 rounded-xl border border-amber-300/70 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              Certificado não configurado no servidor. Selecione o arquivo .p12 manualmente.
+              Selecione seu arquivo .p12 / .pfx localmente. O certificado e a senha não serão enviados ao servidor.
             </div>
             <button
               type="button"
@@ -667,7 +637,7 @@ export default function ReceitaC1ExpressPage() {
           </div>
         )}
 
-        {/* Upload manual (fallback) */}
+        {/* Upload exclusivamente local */}
         {(showUpload || certStatus === "missing") && (
           <div className="mb-4 rounded-xl border border-border bg-background/50 p-3 space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">

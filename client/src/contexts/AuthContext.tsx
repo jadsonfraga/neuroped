@@ -1,6 +1,12 @@
-import { createContext, useContext, type ReactNode } from "react";
-import { clearAuth, type AuthUser } from "@/lib/authClient";
-import { OPEN_ACCESS_USER } from "@/lib/openAccessApi";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  type AuthUser,
+  getStoredUser,
+  loginRequest,
+  logoutRequest,
+  authFetch,
+  getAuthCapability,
+} from "@/lib/authClient";
 import { queryClient } from "@/lib/queryClient";
 import { secureClearAll } from "@/lib/secureStorage";
 
@@ -18,51 +24,101 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;
 
-// Esta build opera exclusivamente no modo aberto. Limpa de forma síncrona
-// qualquer sessão remota herdada antes que um filho possa usar authFetch.
-// Assim, trocar de uma release autenticada para esta não mantém um bearer
-// token administrativo em sessionStorage.
-clearAuth();
-
+/**
+ * Dados do React Query e rascunhos cifrados pertencem à sessão clínica atual.
+ * Nunca podem sobreviver a expiração, logout ou troca de conta no mesmo SPA.
+ */
 async function clearSessionScopedClientState(): Promise<void> {
-  clearAuth();
-  await queryClient.cancelQueries();
+  try {
+    await queryClient.cancelQueries();
+  } catch {
+    // A limpeza abaixo continua obrigatória mesmo se algum observer falhar.
+  }
   queryClient.clear();
   await secureClearAll();
 }
 
-/**
- * Modo aberto por decisão do autor do app.
- *
- * A interface opera como um workspace local administrativo, sem e-mail, PIN ou
- * senha. Dados de pacientes e resultados são persistidos somente no navegador
- * pela API local; este contexto não concede acesso anônimo ao backend remoto.
- */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  async function login(_email: string, _password: string): Promise<void> {
-    // Mantém compatibilidade com links antigos sem autenticar nem trocar usuário.
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [accessMode, setAccessMode] = useState<AccessMode>("checking");
+  const [remoteConfigured, setRemoteConfigured] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function bootstrap() {
+      const capability = await getAuthCapability();
+      if (cancelled) return;
+      const nextMode: AccessMode = capability.required ? "remote" : "local";
+      setAccessMode(nextMode);
+      setRemoteConfigured(capability.configured);
+
+      if (nextMode === "local") {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const stored = getStoredUser();
+      if (stored) setUser(stored);
+      try {
+        const response = await authFetch("/api/auth/me");
+        if (response.ok) {
+          const fresh = await response.json();
+          if (!cancelled) setUser(fresh);
+        } else if (!cancelled) {
+          setUser(null);
+        }
+      } catch {
+        // A capacidade informou backend clínico: falhar fechado, sem auto-login.
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    void bootstrap();
+
+    function handleExpired() {
+      setUser(null);
+      void clearSessionScopedClientState();
+    }
+    window.addEventListener("auth:expired", handleExpired as EventListener);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("auth:expired", handleExpired as EventListener);
+    };
+  }, []);
+
+  async function login(email: string, password: string): Promise<void> {
+    const data = await loginRequest(email, password);
     await clearSessionScopedClientState();
+    setUser(data.user);
   }
 
   async function logout(): Promise<void> {
-    // Não fecha o workspace, mas elimina caches e rascunhos efêmeros da sessão.
+    setUser(null);
+    await logoutRequest();
     await clearSessionScopedClientState();
   }
 
   async function refreshUser(): Promise<void> {
-    // O usuário administrativo local é estável durante toda a sessão do app.
+    try {
+      const response = await authFetch("/api/auth/me");
+      if (response.ok) setUser(await response.json());
+    } catch {
+      // Sessão não validada (offline/sem backend): mantém o estado atual.
+    }
   }
 
   return (
     <AuthContext.Provider
       value={{
-        user: LOCAL_USER,
-        isAuthenticated: true,
-        isLoading: false,
-        accessMode: "local",
-        remoteConfigured: false,
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        accessMode,
+        remoteConfigured,
         login,
         logout,
         refreshUser,

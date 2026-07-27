@@ -225,7 +225,11 @@ assert.equal(
   "reader autenticado pode registrar somente o próprio consentimento",
 );
 assert.equal((await callWithMethod("/api/results/x", "DELETE", "reader", readerToken)).status, 403);
-assert.equal((await call("/api/cert", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret }, readerToken)).status, 403);
+assert.equal(
+  (await call("/api/cert", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret }, readerToken)).status,
+  200,
+  "middleware autentica a rota aposentada; o handler sempre responde 410",
+);
 assert.equal((await call("/api/audit-log", { DB: authDb(), NEUROPED_JWT_SECRET: secret }, token)).status, 403);
 assert.equal(
   (await call("/api/patients", { DB: authDb("professional", 0), NEUROPED_JWT_SECRET: secret }, token)).status,
@@ -256,7 +260,7 @@ const readerCertificate = await certificateHandler({
     },
   },
 } as never);
-assert.equal(readerCertificate.status, 403, "reader nunca recebe o certificado A1");
+assert.equal(readerCertificate.status, 410, "endpoint aposentado não exporta certificado");
 
 const professionalCertificate = await certificateHandler({
   env: certificateEnv,
@@ -272,8 +276,8 @@ const professionalCertificate = await certificateHandler({
 } as never);
 assert.equal(
   professionalCertificate.status,
-  403,
-  "profissional usa certificado próprio local, mas não exporta o P12 compartilhado",
+  410,
+  "profissional usa certificado próprio local; endpoint remoto está aposentado",
 );
 
 const adminCertificate = await certificateHandler({
@@ -288,7 +292,13 @@ const adminCertificate = await certificateHandler({
     },
   },
 } as never);
-assert.equal(adminCertificate.status, 200, "somente admin exporta o certificado compartilhado");
+assert.equal(adminCertificate.status, 410, "nem admin exporta o certificado compartilhado");
+for (const response of [readerCertificate, professionalCertificate, adminCertificate]) {
+  const body = await response.json() as Record<string, unknown>;
+  assert.equal(body.code, "CERT_ENDPOINT_RETIRED");
+  assert.equal("cert" in body, false);
+  assert.equal("password" in body, false);
+}
 
 const readerContext = {
   env: { DB: {} },

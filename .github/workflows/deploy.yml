@@ -51,6 +51,9 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      - name: Auditar grafo completo de dependências
+        run: npm audit --audit-level=high
+
       - name: Catraca técnica completa de release
         run: npm run verify
 

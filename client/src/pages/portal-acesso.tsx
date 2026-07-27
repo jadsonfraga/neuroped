@@ -3,9 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
-  DoorOpen,
   Download,
   HardDrive,
+  LockKeyhole,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -13,17 +13,17 @@ import {
 const SECOES = [
   {
     n: "1",
-    titulo: "Acesso direto",
+    titulo: "Acesso protegido",
     texto:
-      "Todas as áreas do NeuroPed abrem diretamente, sem e-mail, PIN, senha ou bloqueio adicional.",
+      "Conteúdos educativos são públicos. Áreas clínicas exigem sessão profissional válida ou PIN previamente provisionado em uma instalação local.",
     tone: "ok" as const,
-    icon: DoorOpen,
+    icon: LockKeyhole,
   },
   {
     n: "2",
-    titulo: "Workspace local",
+    titulo: "Instalação local",
     texto:
-      "Pacientes e resultados de escalas ficam armazenados somente neste navegador. O modo aberto não consulta nem libera anonimamente o banco clínico remoto.",
+      "Quando o modo local é explicitamente configurado, pacientes e resultados permanecem neste navegador e o backend clínico remoto não é liberado anonimamente.",
     tone: "ok" as const,
     icon: HardDrive,
   },
@@ -39,17 +39,17 @@ const SECOES = [
     n: "4",
     titulo: "Dispositivos compartilhados",
     texto:
-      "Evite cadastrar dados identificáveis em computadores compartilhados. Quem tiver acesso ao mesmo perfil do navegador poderá abrir o workspace local.",
+      "Evite cadastrar dados identificáveis em computadores compartilhados. Encerre a sessão, bloqueie a área clínica e remova os dados locais ao terminar.",
     tone: "danger" as const,
     icon: AlertTriangle,
   },
 ];
 
 const REGRAS = [
-  "O modo aberto elimina credenciais da interface, mas não transforma o banco remoto em base pública.",
+  "Rotas clínicas falham fechadas: sem sessão ou PIN válido, o conteúdo não é exibido.",
   "Não use CPF, data de nascimento ou sobrenome como mecanismo improvisado de autenticação.",
   "Faça backups periódicos e guarde-os em local institucional protegido.",
-  "Ao usar aparelho compartilhado, use “Apagar dados locais” no menu ao terminar.",
+  "Ao usar aparelho compartilhado, encerre a sessão e use “Apagar dados locais” no menu ao terminar.",
 ];
 
 const TONE: Record<string, string> = {
@@ -63,14 +63,15 @@ export default function PortalAcessoPage() {
     <div className="space-y-6 pb-12">
       <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent p-6">
         <div className="mb-2 flex items-center gap-2">
-          <DoorOpen className="h-6 w-6 text-primary" />
+          <LockKeyhole className="h-6 w-6 text-primary" />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             NeuroPed
           </span>
         </div>
-        <h1 className="text-2xl font-black">Política do Modo Aberto</h1>
+        <h1 className="text-2xl font-black">Política de Acesso</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Acesso simples, sem credenciais, com dados operacionais mantidos no navegador e sem exposição anônima do backend clínico.
+          Conteúdo educativo público e dados clínicos protegidos por autenticação
+          remota ou PIN local previamente provisionado.
         </p>
         <Link href="/portal-familia">
           <Button variant="outline" size="sm" className="mt-3 gap-1">
