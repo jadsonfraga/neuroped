@@ -23,7 +23,6 @@ import { getUserById, publicUser, type PublicUser } from "./auth/_shared";
 import { isSessionFamilyActive } from "./auth/_sessions";
 import {
   canReadAuditLog,
-  canUseCertificate,
   canWriteClinicalData,
   type AuthContextData,
 } from "./auth/_authorization";
@@ -39,6 +38,9 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Content-Security-Policy":
+    "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
   "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -98,9 +100,6 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
 
   if (path === "/api/audit-log" && !canReadAuditLog(user)) {
     return apiError("Acesso restrito ao administrador.", "FORBIDDEN", 403);
-  }
-  if (path === "/api/cert" && !canUseCertificate(user)) {
-    return apiError("Acesso ao certificado não autorizado.", "FORBIDDEN", 403);
   }
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
   if (

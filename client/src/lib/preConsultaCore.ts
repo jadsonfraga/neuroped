@@ -176,7 +176,7 @@ export async function loadPreConsultas(): Promise<PreConsultaRecord[]> {
 }
 
 export async function savePreConsultas(items: PreConsultaRecord[]): Promise<boolean> {
-  let stored = false;
+  let stored: boolean;
   try {
     stored = await secureSet(PRE_CONSULTA_SECURE_KEY, items);
   } catch {

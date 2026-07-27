@@ -93,6 +93,9 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      - name: Audit full dependency graph
+        run: npm audit --audit-level=high
+
       - name: Run hard release verification gate
         run: npm run verify
 
@@ -157,7 +160,7 @@ jobs:
           cat dist/public/deploy-check.json
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: npm install --global vercel@56.4.1
 
       - name: Deploy and verify the public Vercel mirror
         id: vercel-deploy

@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
-import reactPlugin from "eslint-plugin-react";
+import reactPlugin from "@eslint-react/eslint-plugin";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import unusedImports from "eslint-plugin-unused-imports";
 
@@ -82,21 +82,24 @@ export default [
     files: ["client/**/*.{ts,tsx}"],
     plugins: {
       "@typescript-eslint": tsPlugin,
-      react: reactPlugin,
+      "@eslint-react": reactPlugin,
       "react-hooks": reactHooksPlugin,
     },
-    settings: { react: { version: "18" } },
+    settings: { ...reactPlugin.configs["recommended-typescript"].settings },
     rules: {
-      ...reactPlugin.configs.recommended.rules,
-      // React Hooks — regras explícitas (compatível com v4 e v5)
+      // Mantém os gates de React historicamente aplicados pelo projeto sem
+      // reintroduzir a cadeia vulnerável do eslint-plugin-react legado.
+      "@eslint-react/no-duplicate-key": "error",
+      "@eslint-react/no-missing-component-display-name": "error",
+      "@eslint-react/no-missing-key": "error",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-      // React 17+ JSX transform: import React não é necessário
-      "react/react-in-jsx-scope": "off",
-      "react/prop-types": "off",
       // cmdk-input-wrapper é atributo exigido pela lib cmdk (shadcn/ui Command);
       // seu CSS interno seleciona [cmdk-input-wrapper]. Não é prop desconhecida.
-      "react/no-unknown-property": ["error", { ignore: ["cmdk-input-wrapper"] }],
+      "@eslint-react/dom-no-unknown-property": [
+        "error",
+        { ignore: ["cmdk-input-wrapper"] },
+      ],
     },
   },
 ];

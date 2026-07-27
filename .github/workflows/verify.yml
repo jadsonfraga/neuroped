@@ -37,6 +37,9 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      - name: Audit full dependency graph
+        run: npm audit --audit-level=high
+
       # Gate técnico determinístico. `validate:safety` permanece no `npm run
       # verify` e exige homologação clínica explícita para instrumentos ainda
       # não congelados; não é mascarado nem reclassificado pelo CI.

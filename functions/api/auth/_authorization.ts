@@ -34,13 +34,6 @@ export function canWriteClinicalData(user: PublicUser): boolean {
   return user.role === "admin" || user.role === "professional";
 }
 
-export function canUseCertificate(user: PublicUser): boolean {
-  // O endpoint exporta o P12 compartilhado e sua senha; somente o administrador
-  // pode receber esse material. Profissionais continuam podendo selecionar seu
-  // próprio certificado local, mantido apenas em memória.
-  return user.role === "admin";
-}
-
 export function canReadAuditLog(user: PublicUser): boolean {
   return user.role === "admin";
 }

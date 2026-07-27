@@ -15,9 +15,9 @@ import { IS_PUBLIC_ZONE } from "@/lib/zone";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearMasterPinUnlock } from "@/lib/masterPin";
 import {
-  clearOpenAccessWorkspace,
-  subscribeToOpenAccessWorkspaceClear,
-} from "@/lib/openAccessApi";
+  clearLegacyOpenWorkspace,
+  subscribeToLegacyOpenWorkspaceClear,
+} from "@/lib/openWorkspaceCleanup";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
@@ -249,7 +249,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (accessMode !== "local") return;
 
-    return subscribeToOpenAccessWorkspaceClear(() => {
+    return subscribeToLegacyOpenWorkspaceClear(() => {
       // Oculta imediatamente qualquer dado já renderizado enquanto esta aba
       // descarta caches e rascunhos antes de recarregar o workspace vazio.
       document.body.style.visibility = "hidden";
@@ -302,7 +302,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         "Apagar permanentemente pacientes e resultados deste navegador? Faça um backup antes. Downloads e conteúdo já copiado não serão apagados.",
       );
       if (!confirmed) return;
-      if (!clearOpenAccessWorkspace()) {
+      if (!clearLegacyOpenWorkspace()) {
         window.alert("Não foi possível apagar os dados locais. Feche outras abas do NeuroPed e tente novamente.");
         return;
       }

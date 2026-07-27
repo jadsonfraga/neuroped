@@ -60,7 +60,7 @@ async function loadRecords(): Promise<PreRetornoRecord[]> {
 }
 
 async function saveRecords(items: PreRetornoRecord[]): Promise<boolean> {
-  let stored = false;
+  let stored: boolean;
   try {
     stored = await secureSet(SECURE_STORAGE_KEY, items);
   } catch {

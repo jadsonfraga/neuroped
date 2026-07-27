@@ -8,19 +8,19 @@ const auth = read("client/src/contexts/AuthContext.tsx");
 assert.doesNotMatch(auth, /VITE_APP_SECRET|FIXED_EMAIL/);
 assert.match(
   auth,
-  /import \{ clearAuth, type AuthUser \} from "@\/lib\/authClient"/,
+  /getStoredUser,[\s\S]{0,120}loginRequest,[\s\S]{0,120}logoutRequest,[\s\S]{0,120}getAuthCapability/,
+  "o fluxo autenticado deve usar a capacidade e a sessão remota",
+);
+assert.doesNotMatch(
+  auth,
+  /OPEN_ACCESS_USER|const LOCAL_USER|accessMode:\s*"local"/,
+  "não pode existir usuário administrativo local automático",
 );
 assert.match(
   auth,
-  /const LOCAL_USER: AuthUser = OPEN_ACCESS_USER;[\s\S]{0,360}clearAuth\(\);/,
-  "modo aberto deve eliminar sessão remota herdada antes de montar filhos",
+  /useState<AccessMode>\("checking"\)[\s\S]{0,900}getAuthCapability\(\)/,
+  "a autenticação deve iniciar fechada durante o bootstrap",
 );
-assert.match(
-  auth,
-  /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,120}clearAuth\(\);/,
-  "limpeza local deve remover tokens remotos residuais",
-);
-assert.match(auth, /accessMode: "local"/);
 
 const authClient = read("client/src/lib/authClient.ts");
 assert.match(authClient, /CAPABILITY_KEY/);
@@ -223,6 +223,19 @@ assert.match(routeGuard, /decideRouteAccess/);
 assert.match(routeGuard, /decision === "checking"/);
 assert.match(routeGuard, /decision === "login"/);
 assert.match(routeGuard, /decision === "forbidden"/);
+assert.match(routeGuard, /hasConfiguredMasterPin/);
+assert.match(routeGuard, /isMasterPinUnlocked/);
+
+const accessPolicy = read("client/src/security/accessPolicy.ts");
+assert.doesNotMatch(accessPolicy, /OPEN_ACCESS/);
+const privateGate = read("client/src/components/PrivateGate.tsx");
+assert.match(privateGate, /pinConfigured && unlocked/);
+assert.match(privateGate, /showLocalConfigurationError/);
+assert.doesNotMatch(privateGate, /storeDeviceMasterPin/);
+
+const queryClient = read("client/src/lib/queryClient.ts");
+assert.match(queryClient, /authFetch/);
+assert.doesNotMatch(queryClient, /openAccessFetch|routedFetch/);
 
 for (const certificateUi of [
   read("client/src/components/AssinaturaIcpPanel.tsx"),
@@ -230,12 +243,17 @@ for (const certificateUi of [
 ]) {
   assert.doesNotMatch(certificateUi, /indexedDB\.open/);
   assert.doesNotMatch(certificateUi, /objectStore\([^)]*\)\.put/);
+  assert.doesNotMatch(certificateUi, /\/api\/cert|CERT_P12|authFetch/);
   assert.match(certificateUi, /purgeLegacyCertificateCache/);
+  assert.match(certificateUi, /type="file"/);
 }
-assert.match(
-  read("client/src/pages/receita-c1-express.tsx"),
-  /role !== "admin"\) \{[\s\S]{0,240}setCertStatus\("missing"\)/,
-  "profissional sem certificado administrativo deve receber upload manual",
+const retiredCertificateEndpoint = read("functions/api/cert.ts");
+assert.match(retiredCertificateEndpoint, /CERT_ENDPOINT_RETIRED/);
+assert.match(retiredCertificateEndpoint, /status:\s*410/);
+assert.doesNotMatch(
+  retiredCertificateEndpoint,
+  /CERT_P12|password|cert:\s*/,
+  "endpoint aposentado nunca pode serializar certificado ou senha",
 );
 
 const secureStorage = read("client/src/lib/secureStorage.ts");
@@ -300,9 +318,10 @@ for (const workflow of [
 }
 
 const authorization = read("functions/api/auth/_authorization.ts");
-assert.match(
+assert.doesNotMatch(
   authorization,
-  /function canUseCertificate[\s\S]*return user\.role === "admin"/,
+  /canUseCertificate/,
+  "autorização não deve manter caminho de exportação de certificado",
 );
 const memorySearch = read("functions/api/memory/search.ts");
 assert.match(memorySearch, /n\.patient_id IN/);

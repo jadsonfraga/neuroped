@@ -6,6 +6,10 @@ import {
   isRouteSensitive,
   SENSITIVE_ROUTES,
 } from "@/security/routeGuardPolicy";
+import {
+  hasConfiguredMasterPin,
+  isMasterPinUnlocked,
+} from "@/lib/masterPin";
 
 export { isRouteSensitive, SENSITIVE_ROUTES };
 
@@ -21,6 +25,10 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     isLoading,
     userRole: user?.role,
     allowedRoles: roles,
+    localPinConfigured:
+      accessMode === "local" && hasConfiguredMasterPin(),
+    localPinUnlocked:
+      accessMode === "local" && isMasterPinUnlocked(),
   });
 
   if (decision === "checking") {

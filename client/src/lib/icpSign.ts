@@ -5,11 +5,12 @@
 // ============================================================
 import { Buffer } from "buffer";
 import { PDFDocument } from "pdf-lib";
-import { SignPdf } from "@signpdf/signpdf";
-import { P12Signer } from "@signpdf/signer-p12";
-import { pdflibAddPlaceholder } from "@signpdf/placeholder-pdf-lib";
-import { SUBFILTER_ETSI_CADES_DETACHED } from "@signpdf/utils";
 import forge from "node-forge";
+
+// @signpdf ainda publica módulos CommonJS que esperam `Buffer` como global.
+// O carregamento dinâmico abaixo acontece somente depois deste shim mínimo,
+// evitando incluir toda a stdlib/crypto do Node no navegador.
+(globalThis as typeof globalThis & { Buffer?: typeof Buffer }).Buffer ??= Buffer;
 
 export interface SignMeta {
   reason?: string;
@@ -139,6 +140,17 @@ async function signPreparedPdf(
   signatureLength: number,
   meta: SignMeta,
 ): Promise<Uint8Array> {
+  const [
+    { SignPdf },
+    { P12Signer },
+    { pdflibAddPlaceholder },
+    { SUBFILTER_ETSI_CADES_DETACHED },
+  ] = await Promise.all([
+    import("@signpdf/signpdf"),
+    import("@signpdf/signer-p12"),
+    import("@signpdf/placeholder-pdf-lib"),
+    import("@signpdf/utils"),
+  ]);
   const doc = await PDFDocument.load(pdfBytes);
   const pages = doc.getPages();
   const signaturePage = pages[Math.min(Math.max(meta.widgetPageIndex ?? 0, 0), pages.length - 1)];
