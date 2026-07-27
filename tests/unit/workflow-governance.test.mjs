@@ -10,6 +10,7 @@ const testAndBuild = read(".github/workflows/test-and-build.yml");
 const vercelDeploy = read(".github/workflows/deploy-vercel.yml");
 const verify = read(".github/workflows/verify.yml");
 const prCheck = read(".github/workflows/pr-check.yml");
+const vercelConfig = read("vercel.json");
 
 assert.match(securityAudit, /set -euo pipefail/);
 assert.match(securityAudit, /if \[ "\$audit_exit" -gt 1 \]/);
@@ -62,6 +63,16 @@ assert.match(
   "Vercel CLI deve usar versão reproduzível",
 );
 assert.doesNotMatch(vercelDeploy, /vercel@latest/);
+assert.match(
+  vercelConfig,
+  /connect-src 'self' https:\/\/neuroped\.pages\.dev https:\/\/raw\.githubusercontent\.com/,
+  "o mirror Vercel deve autorizar somente os destinos de rede necessários",
+);
+assert.doesNotMatch(
+  vercelConfig,
+  /connect-src 'self' https:;/,
+  "o mirror Vercel não pode liberar conexões para qualquer origem HTTPS",
+);
 
 assert.match(cloudflareDeploy, /A project with this name already exists\./);
 assert.match(cloudflareDeploy, /\[code: 8000002\]/);
