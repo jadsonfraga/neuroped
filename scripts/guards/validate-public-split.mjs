@@ -20,8 +20,6 @@ const { isPublicRoute, PUBLIC_ROUTE_PREFIXES } = await import(
 );
 
 // Rotas que DEVEM ficar SEMPRE atrás do PIN (nunca públicas).
-// Dado de paciente, receita/prescrição, laudo, documentos, fichas e testes
-// diretos que capturam a resposta da criança (/pant) permanecem FECHADOS.
 const MUST_BE_GATED = [
   "/", "/pacientes", "/prontuario", "/recepcao",
   "/receita-c1", "/receita-c1-express", "/laudo-neuroped", "/documentos",
@@ -29,6 +27,7 @@ const MUST_BE_GATED = [
   "/pant", "/fichas-registro", "/prescricao",
   "/diario-escola", "/inventarios-escola", "/assinatura-digital",
   "/plano-terapeutico", "/plano-intervencao",
+  "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
 ];
 
 // Rotas que DEVEM ficar públicas (para as famílias).
@@ -40,10 +39,6 @@ const MUST_BE_PUBLIC = [
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",
-  // Escalas/instrumentos recomendados pelo Filtro abrem sem login (decisão do
-  // autor): são formulários de avaliação, não prontuário.
-  "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
-  "/generic-scale/smfq", "/classificacao/macs",
 ];
 
 const errors = [];

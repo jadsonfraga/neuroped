@@ -1,28 +1,15 @@
 import assert from "node:assert/strict";
-import { getAccessLevel, OPEN_ACCESS } from "../../client/src/security/accessPolicy.ts";
+import { getAccessLevel } from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
   isRouteSensitive,
 } from "../../client/src/security/routeGuardPolicy.ts";
 
-// Modo ACESSO ABERTO (decisão do autor): sem qualquer senha, TODA rota é pública
-// e o RouteGuard sempre libera. As asserções de fail-closed abaixo valem apenas
-// no modelo padrão (OPEN_ACCESS === false).
-if (OPEN_ACCESS) {
-  for (const path of ["/", "/prontuario", "/pacientes", "/documentos", "/mchat", "/filtro"]) {
-    assert.equal(getAccessLevel(path), "public", `${path} deve abrir sem senha no modo aberto`);
-    assert.equal(
-      decideRouteAccess({ path, accessMode: "remote", isAuthenticated: false, isLoading: false }),
-      "allow",
-      `${path} deve liberar no modo aberto`,
-    );
-  }
-  console.log("✓ modo ACESSO ABERTO: app inteiro libera sem PIN nem login");
-  process.exit(0);
-}
-
 for (const path of [
   "/",
+  "/mchat",
+  "/cars",
+  "/generic-scale/smfq",
   "/recepcao",
   "/prontuario",
   "/documentos",
@@ -55,10 +42,6 @@ for (const path of [
   "/portal-familia/novidades",
   "/filtro",
   "/filtro-escalas",
-  "/mchat",
-  "/cars",
-  "/generic-scale/smfq",
-  "/classificacao/macs",
 ]) {
   assert.equal(
     getAccessLevel(path),

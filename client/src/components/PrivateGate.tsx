@@ -9,7 +9,6 @@ import {
 import { currentHashPath, isPublicRoute, PUBLIC_HOME } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE, MEDICAL_URL } from "@/lib/zone";
 import { useAuth } from "@/contexts/AuthContext";
-import { OPEN_ACCESS } from "@/security/accessPolicy";
 
 // Estilos compartilhados entre o PIN, o bloqueio de configuração e o aviso da
 // zona pública. Mantê-los centralizados evita estados visualmente divergentes.
@@ -71,18 +70,14 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
   // Com backend clínico ativo, o RouteGuard usa login/JWT. O PIN protege apenas
   // instalações explicitamente locais. Sem verificador provisionado, o modo
   // local falha fechado: um visitante nunca pode cadastrar a própria credencial.
-  // ACESSO ABERTO (decisão do autor): sem qualquer PIN local — nenhuma tranca
-  // de UI é exibida; o conteúdo renderiza direto.
   const showGate =
-    !OPEN_ACCESS &&
     accessMode === "local" &&
     !IS_PUBLIC_ZONE &&
     !localAccessGranted &&
     !onPublicRoute;
   const showLocalConfigurationError = showGate && !pinConfigured;
-  const showProfessionalRedirect = !OPEN_ACCESS && IS_PUBLIC_ZONE && !onPublicRoute;
+  const showProfessionalRedirect = IS_PUBLIC_ZONE && !onPublicRoute;
   const showAccessCheck =
-    !OPEN_ACCESS &&
     accessMode === "checking" &&
     !IS_PUBLIC_ZONE &&
     !onPublicRoute;
