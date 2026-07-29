@@ -1,15 +1,15 @@
 // Separação PÚBLICO × MÉDICO.
 //
-// SEGURO POR PADRÃO: só as rotas listadas aqui ficam abertas (sem PIN) — para as
-// famílias. QUALQUER outra rota é tratada como área médica e exige o PIN. Assim,
-// nenhum conteúdo clínico (escalas, receitas, prontuário, doses…) vaza por
-// esquecimento — o padrão é fechado.
+// SEGURO POR PADRÃO: só as rotas exatas listadas aqui ficam abertas (sem PIN) —
+// para as famílias. QUALQUER outra rota, inclusive uma subrota nova sob um
+// caminho público, é tratada como área médica e exige o PIN. Assim, nenhum
+// conteúdo clínico (escalas, receitas, prontuário, doses…) vaza por esquecimento.
 //
 // ATENÇÃO DE SEGURANÇA: num site estático o PIN é apenas uma tranca de UI — o
 // conteúdo já está no bundle. Isolamento REAL exige autenticação no servidor
 // (ex.: Cloudflare Access num subdomínio médico). Ver docs/SEGURANCA-ACESSO.md.
 
-export const PUBLIC_ROUTE_PREFIXES: string[] = [
+export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
   "/sessao-expirada", // Recuperação de sessão remota
   "/familia", // Capa pública (home das famílias)
@@ -22,6 +22,8 @@ export const PUBLIC_ROUTE_PREFIXES: string[] = [
   "/orientacao-parental", // Orientação aos Pais
   "/glossario", // Glossário (linguagem acessível)
   "/portal-familia", // Portal da Família (home pública)
+  "/portal-familia/novidades", // Conteúdo editorial público do portal
+  "/portal-familia/acesso", // Orientação pública de acesso ao portal
   "/marcos-desenvolvimento", // Marcos do Desenvolvimento
   "/curvas-crescimento", // Curvas de Crescimento (OMS)
   "/caa", // CAA · Vou Falar
@@ -30,7 +32,9 @@ export const PUBLIC_ROUTE_PREFIXES: string[] = [
   "/ajuda", // Ajuda
   "/acessibilidade", // Acessibilidade
   "/consentimento-lgpd", // Consentimento LGPD
-];
+] as const;
+
+const PUBLIC_ROUTE_SET = new Set<string>(PUBLIC_ROUTES);
 
 /** Home pública para onde mandamos as famílias a partir da tela do PIN. */
 export const PUBLIC_HOME = "/familia";
@@ -42,12 +46,9 @@ export function normalizePath(input: string | null | undefined): string {
   return withSlash !== "/" ? withSlash.replace(/\/+$/, "") : "/";
 }
 
-/** Rota pública? Casa por igualdade OU por prefixo de segmento (…/algo). */
+/** Rota pública? Somente igualdade após normalização; subrotas não herdam acesso. */
 export function isPublicRoute(input: string | null | undefined): boolean {
-  const path = normalizePath(input);
-  return PUBLIC_ROUTE_PREFIXES.some(
-    (p) => path === p || path.startsWith(`${p}/`),
-  );
+  return PUBLIC_ROUTE_SET.has(normalizePath(input));
 }
 
 /** Caminho da rota atual a partir do hash (roteamento por hash). */
