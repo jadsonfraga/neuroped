@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 # Evita deploys concorrentes do Pages. cancel-in-progress: true faz o commit
 # mais novo cancelar um deploy anterior ainda em andamento — o último main é o
