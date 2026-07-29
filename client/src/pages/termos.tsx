@@ -58,9 +58,11 @@ export default function TermosPage() {
           uso da ferramenta.
         </Section>
         <Section title="6. Privacidade (LGPD)">
-          O app, nesta versão pública, <strong className="font-semibold text-foreground">não coleta nem armazena dados
-          identificáveis de pacientes</strong>. Preferências locais (ex.: tema) podem ficar no seu navegador. Não
-          insira dados pessoais sensíveis de terceiros.
+          Alguns fluxos públicos podem manter <strong className="font-semibold text-foreground">preferências e
+          rascunhos locais no navegador</strong>, inclusive informações identificáveis que o usuário decidir inserir
+          nos formulários. Use apenas um dispositivo confiável e com base/autorização adequadas. Em dispositivo
+          compartilhado, não salve dados identificáveis ou use a opção de apagar os dados locais ao concluir. Esse
+          armazenamento local não equivale ao envio para um prontuário clínico.
         </Section>
         <Section title="7. Propriedade intelectual">
           Marcas, escalas e materiais de terceiros pertencem aos respectivos titulares e são citados de forma
