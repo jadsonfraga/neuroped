@@ -176,7 +176,7 @@ export function isReaderClinicalRoute(path: string): boolean {
 function getDefaultClinicalRoles(path: string): readonly RouteUserRole[] {
   const pathname = normalizePathname(path);
   const override = CLINICAL_ROLE_OVERRIDES.find(
-    ({ route }) => pathname === route || pathname.startsWith(`${route}/`),
+    ({ route }) => pathname === route,
   );
   if (override) return override.roles;
   return isReaderClinicalRoute(pathname)
