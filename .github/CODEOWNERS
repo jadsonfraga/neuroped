@@ -1,12 +1,16 @@
 # Superfícies que podem abrir dados clínicos ou publicar produção.
 # A efetividade como gate depende de a proteção da branch exigir revisão de Code Owner.
+/.github/CODEOWNERS @jadsonfraga
 /.github/workflows/ @jadsonfraga
 /package.json @jadsonfraga
+/package-lock.json @jadsonfraga
 /client/src/components/PrivateGate.tsx @jadsonfraga
 /client/src/components/RouteGuard.tsx @jadsonfraga
 /client/src/lib/publicRoutes.ts @jadsonfraga
+/client/src/pages/termos.tsx @jadsonfraga
 /client/src/security/ @jadsonfraga
 /scripts/guards/audit-access-policy.mjs @jadsonfraga
 /scripts/guards/validate-public-split.mjs @jadsonfraga
+/tests/unit/quick-wins-static.test.mjs @jadsonfraga
 /tests/unit/route-guard-policy.test.ts @jadsonfraga
 /tests/unit/workflow-governance.test.mjs @jadsonfraga
