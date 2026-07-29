@@ -359,6 +359,14 @@ assert.match(
   /filter\(\(page\) => isPublicRoute\(page\.href\)\)/,
 );
 
+const terms = read("client/src/pages/termos.tsx");
+assert.match(terms, /rascunhos locais no navegador/);
+assert.doesNotMatch(
+  terms,
+  /não coleta nem armazena dados\s+identificáveis de pacientes/,
+  "o aviso público deve refletir o armazenamento local dos formulários",
+);
+
 const familyPortal = read("client/src/pages/portal-familia.tsx");
 assert.match(familyPortal, /const canPreviewDocuments/);
 assert.match(familyPortal, /enabled: canPreviewDocuments && !!patientId/);
