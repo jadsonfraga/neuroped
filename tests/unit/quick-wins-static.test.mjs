@@ -231,6 +231,12 @@ assert.doesNotMatch(accessPolicy, /OPEN_ACCESS/);
 const privateGate = read("client/src/components/PrivateGate.tsx");
 assert.match(privateGate, /pinConfigured && unlocked/);
 assert.match(privateGate, /showLocalConfigurationError/);
+assert.match(
+  privateGate,
+  /const \[remember, setRemember\] = useState\(false\)/,
+  "perfil compartilhado não deve persistir desbloqueio por padrão",
+);
+assert.match(privateGate, /desbloqueado por 14 dias/);
 assert.doesNotMatch(privateGate, /storeDeviceMasterPin/);
 
 const queryClient = read("client/src/lib/queryClient.ts");
