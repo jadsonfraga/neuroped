@@ -40,13 +40,14 @@ const MUST_BE_PUBLIC = [
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
-  "/sobre", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
+  "/sobre", "/sobre-neuroped", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",
 ];
 
 const errors = [];
+const expectedPublicRouteSet = new Set(MUST_BE_PUBLIC);
 
 for (const route of MUST_BE_GATED) {
   if (isPublicRoute(route)) {
@@ -64,6 +65,9 @@ if (new Set(PUBLIC_ROUTES).size !== PUBLIC_ROUTES.length) {
 }
 
 for (const route of PUBLIC_ROUTES) {
+  if (!expectedPublicRouteSet.has(route)) {
+    errors.push(`Rota pública não aprovada pelo contrato independente: "${route}".`);
+  }
   if (normalizePath(route) !== route || route.includes(":") || route.includes("*")) {
     errors.push(`Entrada pública não canônica ou dinâmica: "${route}".`);
   }
@@ -75,6 +79,16 @@ for (const route of PUBLIC_ROUTES) {
   if (isPublicRoute(descendantProbe)) {
     errors.push(
       `A subrota futura "${descendantProbe}" herdou acesso público de "${route}".`,
+    );
+  }
+}
+
+for (const registeredRoute of registeredRoutes) {
+  const samplePath = registeredRoute.replace(/:[^/]+/g, "__test_param__");
+  const expectedPublic = expectedPublicRouteSet.has(registeredRoute);
+  if (isPublicRoute(samplePath) !== expectedPublic) {
+    errors.push(
+      `Classificação divergente em App.tsx: "${registeredRoute}" deveria ser ${expectedPublic ? "pública" : "clínica"}.`,
     );
   }
 }
