@@ -36,13 +36,14 @@ export const SENSITIVE_ROUTES = [
 
 type SensitiveRoute = (typeof SENSITIVE_ROUTES)[number];
 
-const DEFAULT_SENSITIVE_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
-const SENSITIVE_ROLE_OVERRIDES: Partial<
-  Record<SensitiveRoute, readonly RouteUserRole[]>
-> = {
+const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
+const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
+  route: string;
+  roles: readonly RouteUserRole[];
+}> = [
   // A recepção opera a fila, mas não recebe acesso às demais áreas clínicas.
-  "/recepcao": ["admin", "professional", "operator"],
-};
+  { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+];
 
 function findSensitiveRoute(path: string): SensitiveRoute | undefined {
   const pathname = path.split(/[?#]/, 1)[0] || "/";
@@ -55,11 +56,12 @@ export function isRouteSensitive(path: string): boolean {
   return findSensitiveRoute(path) !== undefined;
 }
 
-function getDefaultSensitiveRoles(
-  path: string,
-): readonly RouteUserRole[] | undefined {
-  const route = findSensitiveRoute(path);
-  return route ? SENSITIVE_ROLE_OVERRIDES[route] ?? DEFAULT_SENSITIVE_ROLES : undefined;
+function getDefaultClinicalRoles(path: string): readonly RouteUserRole[] {
+  const pathname = path.split(/[?#]/, 1)[0] || "/";
+  const override = CLINICAL_ROLE_OVERRIDES.find(
+    ({ route }) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+  return override?.roles ?? DEFAULT_CLINICAL_ROLES;
 }
 
 interface RouteAccessInput {
@@ -96,7 +98,7 @@ export function decideRouteAccess({
     return localPinConfigured && localPinUnlocked ? "allow" : "forbidden";
   }
   if (!isAuthenticated) return "login";
-  const effectiveRoles = allowedRoles ?? getDefaultSensitiveRoles(path);
+  const effectiveRoles = allowedRoles ?? getDefaultClinicalRoles(path);
   if (effectiveRoles?.length && (!userRole || !effectiveRoles.includes(userRole))) {
     return "forbidden";
   }
