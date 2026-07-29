@@ -34,7 +34,107 @@ export const SENSITIVE_ROUTES = [
   "/recepcao",
 ] as const;
 
+/**
+ * Rotas clínicas já existentes nas quais o papel `reader` preserva acesso à UI.
+ * A allowlist é exata (parâmetros `:id` ocupam um único segmento) e não autoriza
+ * novas rotas ou descendentes. Escritas continuam bloqueadas pelo backend.
+ */
+export const READER_CLINICAL_ROUTES = [
+  "/",
+  "/mchat",
+  "/cars",
+  "/snap",
+  "/denver",
+  "/sdq",
+  "/scared",
+  "/conners",
+  "/vineland",
+  "/fluxograma",
+  "/cdi2",
+  "/phqa",
+  "/cssrs",
+  "/crafft",
+  "/cbcl",
+  "/vanderbilt",
+  "/brief2",
+  "/abc",
+  "/asq3",
+  "/pedsql",
+  "/gmfcs",
+  "/cshq",
+  "/ygtss",
+  "/tea",
+  "/tea-comportamentos",
+  "/psiquiatria",
+  "/bateria-jadson",
+  "/emdi",
+  "/eaf",
+  "/ecsm",
+  "/ips",
+  "/ecar-si",
+  "/edi",
+  "/eai",
+  "/easi",
+  "/ems",
+  "/etare",
+  "/eaah",
+  "/escalas-neuropsiquiatria",
+  "/neuropsicologia",
+  "/pac",
+  "/ahsd-tea",
+  "/tde2",
+  "/testes-reconhecimento",
+  "/testes-academicos",
+  "/avaliacao-cognitiva-infantil",
+  "/academico-interativo",
+  "/escrita-desenho",
+  "/conhecimento-visual",
+  "/motricidade-teste",
+  "/conhecimentos-gerais",
+  "/funcoes-executivas",
+  "/atencao-concentracao",
+  "/linguagem-fonologia",
+  "/memoria-teste",
+  "/processamento-visuoauditivo",
+  "/inventarios-auto",
+  "/psc17",
+  "/gad7",
+  "/aq10",
+  "/aq50",
+  "/classificacao/:id",
+  "/ballard",
+  "/biblioteca-instrumentos",
+  "/espasticidade",
+  "/classificacoes",
+  "/fluxogramas",
+  "/valores-referencia",
+  "/pdae",
+  "/eusm10",
+  "/bayley",
+  "/griffiths",
+  "/rcads",
+  "/masc2",
+  "/leiter3",
+  "/nepsy2",
+  "/raven",
+  "/wisc5",
+  "/wppsi",
+  "/pedicat",
+  "/tde",
+  "/confias",
+  "/portage",
+  "/vineland-completo",
+  "/cbcl-interativo",
+  "/instrumentos-padronizados",
+  "/qualidade",
+] as const;
+
 const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
+const READER_CLINICAL_ROLES: readonly RouteUserRole[] = [
+  "admin",
+  "professional",
+  "reader",
+];
 const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   route: string;
   roles: readonly RouteUserRole[];
@@ -43,19 +143,45 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
 ];
 
-export function isRouteSensitive(path: string): boolean {
+function normalizePathname(path: string): string {
   const pathname = path.split(/[?#]/, 1)[0] || "/";
+  return pathname !== "/" ? pathname.replace(/\/+$/, "") : "/";
+}
+
+function matchesExactRoutePattern(pathname: string, pattern: string): boolean {
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const patternSegments = pattern.split("/").filter(Boolean);
+  return (
+    pathSegments.length === patternSegments.length &&
+    patternSegments.every(
+      (segment, index) => segment.startsWith(":") || segment === pathSegments[index],
+    )
+  );
+}
+
+export function isRouteSensitive(path: string): boolean {
+  const pathname = normalizePathname(path);
   return SENSITIVE_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 }
 
+export function isReaderClinicalRoute(path: string): boolean {
+  const pathname = normalizePathname(path);
+  return READER_CLINICAL_ROUTES.some((pattern) =>
+    matchesExactRoutePattern(pathname, pattern),
+  );
+}
+
 function getDefaultClinicalRoles(path: string): readonly RouteUserRole[] {
-  const pathname = path.split(/[?#]/, 1)[0] || "/";
+  const pathname = normalizePathname(path);
   const override = CLINICAL_ROLE_OVERRIDES.find(
     ({ route }) => pathname === route || pathname.startsWith(`${route}/`),
   );
-  return override?.roles ?? DEFAULT_CLINICAL_ROLES;
+  if (override) return override.roles;
+  return isReaderClinicalRoute(pathname)
+    ? READER_CLINICAL_ROLES
+    : DEFAULT_CLINICAL_ROLES;
 }
 
 interface RouteAccessInput {
