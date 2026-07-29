@@ -43,15 +43,11 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
 ];
 
-function findSensitiveRoute(path: string): SensitiveRoute | undefined {
+export function isRouteSensitive(path: string): boolean {
   const pathname = path.split(/[?#]/, 1)[0] || "/";
-  return SENSITIVE_ROUTES.find(
+  return SENSITIVE_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
-}
-
-export function isRouteSensitive(path: string): boolean {
-  return findSensitiveRoute(path) !== undefined;
 }
 
 function getDefaultClinicalRoles(path: string): readonly RouteUserRole[] {
