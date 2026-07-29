@@ -198,7 +198,8 @@ assert.equal(
     isAuthenticated: true,
     isLoading: false,
   }),
-  "allow",
+  "forbidden",
+  "sessão remota sem papel atribuído deve falhar fechada",
 );
 
 assert.equal(
