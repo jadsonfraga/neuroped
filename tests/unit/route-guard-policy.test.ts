@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { getAccessLevel } from "../../client/src/security/accessPolicy.ts";
+import { getAccessLevel, OPEN_ACCESS } from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
   isReaderClinicalRoute,
@@ -8,6 +8,24 @@ import {
   READER_CLINICAL_ROUTES,
   SENSITIVE_ROUTES,
 } from "../../client/src/security/routeGuardPolicy.ts";
+
+// Modo ACESSO ABERTO (decisão do autor): sem qualquer senha, TODA rota é pública
+// e o RouteGuard sempre libera. As asserções de fail-closed abaixo (o modelo
+// seguro por padrão) valem apenas quando OPEN_ACCESS === false.
+if (OPEN_ACCESS) {
+  for (const path of ["/", "/prontuario", "/pacientes", "/documentos", "/mchat", "/filtro", "/receita-c1"]) {
+    assert.equal(getAccessLevel(path), "public", `${path} deve abrir sem senha no modo aberto`);
+    assert.equal(
+      decideRouteAccess({ path, accessMode: "remote", isAuthenticated: false, isLoading: false }),
+      "allow",
+      `${path} deve liberar no modo aberto`,
+    );
+  }
+  // Referencia os símbolos importados para não disparar no-unused sob o early-exit.
+  void isReaderClinicalRoute; void isRouteSensitive; void READER_CLINICAL_ROUTES; void SENSITIVE_ROUTES; void readFileSync;
+  console.log("✓ modo ACESSO ABERTO: app inteiro libera sem PIN nem login");
+  process.exit(0);
+}
 
 for (const path of [
   "/",
