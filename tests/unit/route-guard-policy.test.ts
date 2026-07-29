@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import { getAccessLevel } from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
+  isReaderClinicalRoute,
   isRouteSensitive,
+  READER_CLINICAL_ROUTES,
   SENSITIVE_ROUTES,
 } from "../../client/src/security/routeGuardPolicy.ts";
 
@@ -122,17 +124,43 @@ const appSource = readFileSync(
 const registeredRoutePatterns = [
   ...appSource.matchAll(/<Route\s+path="([^"]+)"/g),
 ].map((match) => match[1]);
-const clinicalRouteSamples = [
-  ...registeredRoutePatterns.map((route) =>
-    route.replace(/:[^/]+/g, "__test_param__"),
-  ),
-  "/rota-clinica-adicionada-no-futuro",
-].filter((path) => getAccessLevel(path) === "clinical");
+const registeredRouteSet = new Set(registeredRoutePatterns);
+assert.equal(registeredRouteSet.size, registeredRoutePatterns.length);
+
+const materializeRoute = (route: string) =>
+  route.replace(/:[^/]+/g, "__test_param__");
+const clinicalRouteSamples = registeredRoutePatterns
+  .map(materializeRoute)
+  .filter((path) => getAccessLevel(path) === "clinical");
+
+const readerRouteSet = new Set<string>(READER_CLINICAL_ROUTES);
+assert.equal(readerRouteSet.size, READER_CLINICAL_ROUTES.length);
+for (const route of READER_CLINICAL_ROUTES) {
+  assert.equal(
+    registeredRouteSet.has(route),
+    true,
+    `${route} deve corresponder a uma rota real antes de liberar reader`,
+  );
+  const samplePath = materializeRoute(route);
+  assert.equal(getAccessLevel(samplePath), "clinical");
+  assert.equal(isRouteSensitive(samplePath), false);
+  assert.equal(isReaderClinicalRoute(samplePath), true);
+}
 
 for (const path of clinicalRouteSamples) {
+  assert.equal(
+    isRouteSensitive(path) || isReaderClinicalRoute(path),
+    true,
+    `${path} precisa ser classificada explicitamente como sensível ou reader`,
+  );
+
   for (const userRole of ["reader", "operator"] as const) {
     const expected =
-      path === "/recepcao" && userRole === "operator" ? "allow" : "forbidden";
+      userRole === "reader" && isReaderClinicalRoute(path)
+        ? "allow"
+        : path === "/recepcao" && userRole === "operator"
+          ? "allow"
+          : "forbidden";
     assert.equal(
       decideRouteAccess({
         path,
@@ -160,6 +188,12 @@ for (const path of clinicalRouteSamples) {
   }
 }
 
+assert.equal(isReaderClinicalRoute("/classificacao/exemplo"), true);
+assert.equal(isReaderClinicalRoute("/classificacao/exemplo/extra"), false);
+assert.equal(isReaderClinicalRoute("/mchat?origem=menu"), true);
+assert.equal(isReaderClinicalRoute("/mchat/"), true);
+assert.equal(isReaderClinicalRoute("/mchat/interno"), false);
+assert.equal(isReaderClinicalRoute("/rota-clinica-adicionada-no-futuro"), false);
 assert.equal(isRouteSensitive("/pant"), true);
 assert.equal(isRouteSensitive("/pant/relatorio?print=1"), true);
 assert.equal(isRouteSensitive("/pantanal"), false, "prefixo deve respeitar segmento");
@@ -200,6 +234,17 @@ assert.equal(
   }),
   "forbidden",
   "sessão remota sem papel atribuído deve falhar fechada",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/rota-clinica-adicionada-no-futuro",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "reader",
+  }),
+  "forbidden",
+  "rota clínica futura não pode herdar acesso reader",
 );
 
 assert.equal(
@@ -303,5 +348,5 @@ assert.equal(
 );
 
 console.log(
-  "✓ rotas remotas falham fechadas, sem herança pública e com RBAC defensivo",
+  "✓ rotas remotas falham fechadas, preservam reader inventariado e aplicam RBAC defensivo",
 );
