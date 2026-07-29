@@ -52,7 +52,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
   const { accessMode } = useAuth();
   const [unlocked, setUnlocked] = useState<boolean>(() => isMasterPinUnlocked());
   const [pin, setPin] = useState("");
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(false);
   const [erro, setErro] = useState("");
   const [busy, setBusy] = useState(false);
   const [path, setPath] = useState<string>(() => currentHashPath());
@@ -273,7 +273,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
             onChange={(e) => setRemember(e.target.checked)}
             className="h-3.5 w-3.5 accent-violet-400"
           />
-          Manter este dispositivo desbloqueado
+          Manter este dispositivo desbloqueado por 14 dias
         </label>
         <button
           type="submit"

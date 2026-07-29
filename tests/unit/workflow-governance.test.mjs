@@ -37,7 +37,12 @@ assert.match(prCheck, /- name: Lint\s+id: lint\s+run: npm run lint/);
 assert.doesNotMatch(prCheck, /npm run lint --if-present/);
 assert.match(
   prCheck,
-  /const ready = buildStatus && typecheckStatus && lintStatus/,
+  /const ready = buildStatus && typecheckStatus && lintStatus && accessStatus/,
+);
+assert.match(
+  prCheck,
+  /id: access[\s\S]{0,240}npm run validate:public && npm run audit:access[\s\S]{0,160}route-guard-policy\.test\.ts/,
+  "o status do PR deve incluir a política de acesso fail-closed",
 );
 assert.match(prCheck, /<!-- neuroped-pr-check -->/);
 assert.match(prCheck, /github\.paginate\(github\.rest\.issues\.listComments/);
@@ -54,6 +59,53 @@ for (const [name, workflow] of [
     workflow,
     /npm audit --audit-level=high/,
     `${name} deve bloquear high/critical no grafo completo`,
+  );
+}
+
+assert.match(testAndBuild, /permissions:\s*\n\s*contents: read/);
+assert.match(
+  testAndBuild,
+  /require-checks:[\s\S]{0,180}if: always\(\)/,
+  "o agregador deve executar mesmo após falha, cancelamento ou skip",
+);
+assert.match(
+  testAndBuild,
+  /- name: Check CI Status[\s\S]{0,700}exit 1/,
+  "o agregador deve reprovar explicitamente qualquer resultado não-success",
+);
+assert.match(
+  prCheck,
+  /- name: Falhar se qualquer verificação crítica quebrou[\s\S]{0,650}steps\.access\.outcome[\s\S]{0,160}exit 1/,
+  "o PR Check deve falhar quando o gate de acesso falhar",
+);
+for (const dependency of ["quality", "build", "production-readiness"]) {
+  assert.match(
+    testAndBuild,
+    new RegExp(`needs\\.${dependency.replace("-", "\\-")}\\.result \\}\\}" != "success"`),
+    `o agregador deve falhar se ${dependency} for skipped/cancelled`,
+  );
+}
+
+for (const [name, workflow, firstJob] of [
+  ["Cloudflare", cloudflareDeploy, "status-pending"],
+  ["GitHub Pages", githubPagesDeploy, "status-pending"],
+  ["Vercel", vercelDeploy, "preflight"],
+]) {
+  assert.doesNotMatch(
+    workflow,
+    /workflow_dispatch:/,
+    `${name} não deve executar YAML ou secrets a partir de uma ref escolhida manualmente`,
+  );
+  assert.match(workflow, /assert-main:/, `${name} deve validar a origem do deploy`);
+  assert.match(
+    workflow,
+    /if \[ "\$GITHUB_REF" != "refs\/heads\/main" \]; then[\s\S]{0,180}exit 1/,
+    `${name} deve falhar explicitamente fora da main`,
+  );
+  assert.match(
+    workflow,
+    new RegExp(`${firstJob}:\\n\\s*needs: assert-main`),
+    `${name} deve bloquear todos os jobs de publicação atrás de assert-main`,
   );
 }
 

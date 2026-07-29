@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 # Evita deploys concorrentes do Pages. cancel-in-progress: true faz o commit
 # mais novo cancelar um deploy anterior ainda em andamento — o último main é o
@@ -15,7 +14,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  assert-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy de produção permitido somente a partir de main."
+            exit 1
+          fi
+
   status-pending:
+    needs: assert-main
     runs-on: ubuntu-latest
     permissions:
       statuses: write

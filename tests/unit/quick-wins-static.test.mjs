@@ -231,6 +231,12 @@ assert.doesNotMatch(accessPolicy, /OPEN_ACCESS/);
 const privateGate = read("client/src/components/PrivateGate.tsx");
 assert.match(privateGate, /pinConfigured && unlocked/);
 assert.match(privateGate, /showLocalConfigurationError/);
+assert.match(
+  privateGate,
+  /const \[remember, setRemember\] = useState\(false\)/,
+  "perfil compartilhado não deve persistir desbloqueio por padrão",
+);
+assert.match(privateGate, /desbloqueado por 14 dias/);
 assert.doesNotMatch(privateGate, /storeDeviceMasterPin/);
 
 const queryClient = read("client/src/lib/queryClient.ts");
@@ -351,6 +357,14 @@ assert.match(commandPalette, /IS_PUBLIC_ZONE/);
 assert.match(
   commandPalette,
   /filter\(\(page\) => isPublicRoute\(page\.href\)\)/,
+);
+
+const terms = read("client/src/pages/termos.tsx");
+assert.match(terms, /rascunhos locais no navegador/);
+assert.doesNotMatch(
+  terms,
+  /não coleta nem armazena dados\s+identificáveis de pacientes/,
+  "o aviso público deve refletir o armazenamento local dos formulários",
 );
 
 const familyPortal = read("client/src/pages/portal-familia.tsx");
