@@ -19,15 +19,40 @@ export const SENSITIVE_ROUTES = [
   "/plano-intervencao",
   "/avaliacao-multiprofissional",
   "/fichas-registro",
+  "/laudo-neuroped",
+  "/receita-c1",
+  "/receita-c1-express",
+  "/diario-escola",
+  "/inventarios-escola",
+  "/recepcao",
 ] as const;
 
-const DEFAULT_SENSITIVE_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
+type SensitiveRoute = (typeof SENSITIVE_ROUTES)[number];
 
-export function isRouteSensitive(path: string): boolean {
+const DEFAULT_SENSITIVE_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
+const SENSITIVE_ROLE_OVERRIDES: Partial<
+  Record<SensitiveRoute, readonly RouteUserRole[]>
+> = {
+  // A recepção opera a fila, mas não recebe acesso às demais áreas clínicas.
+  "/recepcao": ["admin", "professional", "operator"],
+};
+
+function findSensitiveRoute(path: string): SensitiveRoute | undefined {
   const pathname = path.split(/[?#]/, 1)[0] || "/";
-  return SENSITIVE_ROUTES.some(
+  return SENSITIVE_ROUTES.find(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
+}
+
+export function isRouteSensitive(path: string): boolean {
+  return findSensitiveRoute(path) !== undefined;
+}
+
+function getDefaultSensitiveRoles(
+  path: string,
+): readonly RouteUserRole[] | undefined {
+  const route = findSensitiveRoute(path);
+  return route ? SENSITIVE_ROLE_OVERRIDES[route] ?? DEFAULT_SENSITIVE_ROLES : undefined;
 }
 
 interface RouteAccessInput {
@@ -64,7 +89,7 @@ export function decideRouteAccess({
     return localPinConfigured && localPinUnlocked ? "allow" : "forbidden";
   }
   if (!isAuthenticated) return "login";
-  const effectiveRoles = allowedRoles ?? (isRouteSensitive(path) ? DEFAULT_SENSITIVE_ROLES : undefined);
+  const effectiveRoles = allowedRoles ?? getDefaultSensitiveRoles(path);
   if (effectiveRoles?.length && (!userRole || !effectiveRoles.includes(userRole))) {
     return "forbidden";
   }
