@@ -37,7 +37,12 @@ assert.match(prCheck, /- name: Lint\s+id: lint\s+run: npm run lint/);
 assert.doesNotMatch(prCheck, /npm run lint --if-present/);
 assert.match(
   prCheck,
-  /const ready = buildStatus && typecheckStatus && lintStatus/,
+  /const ready = buildStatus && typecheckStatus && lintStatus && accessStatus/,
+);
+assert.match(
+  prCheck,
+  /id: access[\s\S]{0,240}npm run validate:public && npm run audit:access[\s\S]{0,160}route-guard-policy\.test\.ts/,
+  "o status do PR deve incluir a política de acesso fail-closed",
 );
 assert.match(prCheck, /<!-- neuroped-pr-check -->/);
 assert.match(prCheck, /github\.paginate\(github\.rest\.issues\.listComments/);
@@ -54,6 +59,33 @@ for (const [name, workflow] of [
     workflow,
     /npm audit --audit-level=high/,
     `${name} deve bloquear high/critical no grafo completo`,
+  );
+}
+
+assert.match(testAndBuild, /permissions:\s*\n\s*contents: read/);
+for (const dependency of ["quality", "build", "production-readiness"]) {
+  assert.match(
+    testAndBuild,
+    new RegExp(`needs\\.${dependency.replace("-", "\\-")}\\.result \\}\\}" != "success"`),
+    `o agregador deve falhar se ${dependency} for skipped/cancelled`,
+  );
+}
+
+for (const [name, workflow, firstJob] of [
+  ["Cloudflare", cloudflareDeploy, "status-pending"],
+  ["GitHub Pages", githubPagesDeploy, "status-pending"],
+  ["Vercel", vercelDeploy, "preflight"],
+]) {
+  assert.match(workflow, /assert-main:/, `${name} deve validar a origem do deploy`);
+  assert.match(
+    workflow,
+    /GITHUB_REF"[\s\S]{0,80}refs\/heads\/main/,
+    `${name} não pode publicar uma branch arbitrária via workflow_dispatch`,
+  );
+  assert.match(
+    workflow,
+    new RegExp(`${firstJob}:\\n\\s*needs: assert-main`),
+    `${name} deve bloquear todos os jobs de publicação atrás de assert-main`,
   );
 }
 
