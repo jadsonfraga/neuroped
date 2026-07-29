@@ -3,6 +3,7 @@ import { getAccessLevel } from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
   isRouteSensitive,
+  SENSITIVE_ROUTES,
 } from "../../client/src/security/routeGuardPolicy.ts";
 
 for (const path of [
@@ -26,6 +27,15 @@ for (const path of [
   "/rota-clinica-adicionada-no-futuro",
   "/familiares",
   "/login-admin",
+  "/login/admin",
+  "/login%2Fadmin",
+  "/familia/prontuario",
+  "/pre-consulta/interno",
+  "/verificar/relatorio",
+  "/filtro/paciente",
+  "/caa/prontuario",
+  "/portal-familia/paciente/123",
+  "/portal-familia/novidades/interno",
 ]) {
   assert.equal(getAccessLevel(path), "clinical", `${path} deve falhar fechado`);
 }
@@ -40,6 +50,9 @@ for (const path of [
   "/efeitos-colaterais",
   "/verificar",
   "/portal-familia/novidades",
+  "/portal-familia/novidades/",
+  "/portal-familia/acesso",
+  "/portal-familia/acesso?origem=app",
   "/filtro",
   "/filtro-escalas",
 ]) {
@@ -60,7 +73,8 @@ assert.equal(
   "checking",
 );
 
-for (const path of ["/pant", "/pacientes", "/paciente/abc", "/calculadora-dose"]) {
+for (const path of SENSITIVE_ROUTES.filter((route) => route !== "/recepcao")) {
+  assert.equal(isRouteSensitive(path), true, `${path} deve ter defesa RBAC global`);
   for (const userRole of ["reader", "operator"] as const) {
     assert.equal(
       decideRouteAccess({
@@ -85,6 +99,29 @@ for (const path of ["/pant", "/pacientes", "/paciente/abc", "/calculadora-dose"]
     "allow",
   );
 }
+
+assert.equal(
+  decideRouteAccess({
+    path: "/recepcao",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "reader",
+  }),
+  "forbidden",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/recepcao",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "o gate global deve preservar o acesso operacional específico da recepção",
+);
+
 assert.equal(isRouteSensitive("/pant"), true);
 assert.equal(isRouteSensitive("/pant/relatorio?print=1"), true);
 assert.equal(isRouteSensitive("/pantanal"), false, "prefixo deve respeitar segmento");
@@ -227,5 +264,5 @@ assert.equal(
 );
 
 console.log(
-  "✓ rotas remotas falham fechadas e aguardam o bootstrap de autenticação",
+  "✓ rotas remotas falham fechadas, sem herança pública e com RBAC defensivo",
 );
