@@ -271,6 +271,17 @@ assert.equal(
 );
 assert.equal(
   decideRouteAccess({
+    path: "/recepcao/interno",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "forbidden",
+  "descendente futuro da recepção não pode herdar a exceção de operator",
+);
+assert.equal(
+  decideRouteAccess({
     path: "/familia",
     accessMode: "remote",
     isAuthenticated: false,
