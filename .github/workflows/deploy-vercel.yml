@@ -15,9 +15,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  assert-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy de produção permitido somente a partir de main."
+            exit 1
+          fi
+
   # Pré-checagem fail-closed: nunca transforma configuração ausente em sucesso.
   # O status informa somente os NOMES ausentes; valores continuam protegidos.
   preflight:
+    needs: assert-main
     runs-on: ubuntu-latest
     outputs:
       ready: ${{ steps.check.outputs.ready }}
