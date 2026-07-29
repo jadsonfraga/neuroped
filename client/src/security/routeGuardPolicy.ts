@@ -34,8 +34,6 @@ export const SENSITIVE_ROUTES = [
   "/recepcao",
 ] as const;
 
-type SensitiveRoute = (typeof SENSITIVE_ROUTES)[number];
-
 const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
 const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   route: string;
