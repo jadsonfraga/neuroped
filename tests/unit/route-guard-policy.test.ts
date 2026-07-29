@@ -44,6 +44,7 @@ for (const path of [
   "/login",
   "/login?next=%2Fpacientes",
   "/sessao-expirada",
+  "/termos",
   "/familia",
   "/pre-consulta",
   "/pre-retorno",
