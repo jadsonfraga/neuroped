@@ -1,34 +1,22 @@
 // @ts-check
 /**
- * assert-open-access.mjs — TRAVA ANTI-REGRESSÃO DO ACESSO ABERTO.
+ * TRAVA ANTI-REGRESSÃO DO ACESSO ABERTO.
  *
- * Decisão explícita e permanente do autor (Dr. Jadson Fraga): o NeuroPed deve
- * navegar SEM qualquer senha — nem PIN local, nem login por email. Este guard
- * é o oposto de uma catraca de fechamento: ele FALHA o build se alguém tentar
- * re-introduzir cobrança de email/senha nas telas do app.
+ * Decisão explícita e permanente do autor: a interface do NeuroPed deve navegar
+ * sem senha, e-mail de login ou PIN. Este guard falha o CI se uma catraca de UI
+ * reaparecer, inclusive fora dos componentes globais de acesso.
  *
- * Trava, de forma verificável:
- *   1. accessPolicy.OPEN_ACCESS === true (a flag existe e está ligada);
- *   2. getAccessLevel() retorna "public" para TODA rota — inclusive as clínicas
- *      (prontuário, pacientes, receita, laudo, escalas…);
- *   3. decideRouteAccess() LIBERA ("allow") rota clínica mesmo sem autenticação,
- *      em modo remoto — ou seja, o RouteGuard nunca manda para /login;
- *   4. o PrivateGate curto-circuita em OPEN_ACCESS (nenhum PIN local aparece).
+ * A senha local do certificado A1 (.p12/.pfx) é a única exceção: ela pertence ao
+ * arquivo criptográfico escolhido pelo próprio usuário, é processada em memória
+ * e não funciona como credencial de entrada no aplicativo.
  *
- * Se qualquer um falhar, o deploy quebra. Para reabrir o modelo com senha é
- * preciso, conscientemente, remover este guard — nunca acontece por acidente,
- * merge paralelo ou regressão silenciosa.
- *
- * NOTA: isto trava apenas as TRANCAS DE INTERFACE. A proteção real do dado de
- * paciente permanece na API (Functions Cloudflare/D1 exigem JWT). Abrir a UI
- * não serve o prontuário armazenado sem sessão.
- *
- * Executado via tsx:  npm run guard:open-access  (e dentro de `npm run verify`)
+ * A autorização dos dados persistidos permanece na API e não é alterada por
+ * esta política de interface.
  */
-import { pathToFileURL, fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
@@ -36,39 +24,48 @@ const repoRoot = resolve(__dirname, "..", "..");
 const read = (rel) => readFileSync(resolve(repoRoot, rel), "utf8");
 const importTs = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 
+function walk(directory, files = []) {
+  for (const entry of readdirSync(directory)) {
+    const absolute = resolve(directory, entry);
+    if (statSync(absolute).isDirectory()) walk(absolute, files);
+    else files.push(absolute);
+  }
+  return files;
+}
+
 const errors = [];
-const check = (label, fn) => {
+async function check(label, assertion) {
   try {
-    fn();
+    await assertion();
     console.log(`  ✓ ${label}`);
-  } catch (e) {
-    errors.push(`${label}: ${e && e.message ? e.message : e}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`${label}: ${message}`);
     console.error(`  ✗ ${label}`);
   }
-};
+}
 
 console.log("[open-access] verificando trava anti-regressão de senha…");
 
-// 1. A flag existe e está ligada no código-fonte.
 const accessPolicySrc = read("client/src/security/accessPolicy.ts");
-check("OPEN_ACCESS declarado e ligado em accessPolicy.ts", () => {
+await check("OPEN_ACCESS permanece declarado e ligado", () => {
   assert.match(
     accessPolicySrc,
     /export const OPEN_ACCESS\s*=\s*true\s*;/,
-    "esperado `export const OPEN_ACCESS = true;` — a cobrança de senha NÃO pode voltar",
+    "esperado `export const OPEN_ACCESS = true;`",
   );
 });
 
-// 2. getAccessLevel → "public" para toda rota, inclusive clínicas.
 const { getAccessLevel, OPEN_ACCESS } = await importTs(
   "client/src/security/accessPolicy.ts",
 );
-check("OPEN_ACCESS exportado === true", () => {
+await check("OPEN_ACCESS exportado é true", () => {
   assert.equal(OPEN_ACCESS, true);
 });
 
-const CLINICAL_ROUTES = [
+const ROUTE_SENTINELS = [
   "/",
+  "/login",
   "/prontuario",
   "/pacientes",
   "/paciente/abc",
@@ -86,22 +83,17 @@ const CLINICAL_ROUTES = [
   "/pant",
   "/rota-clinica-inventada-no-futuro",
 ];
-check("getAccessLevel() === public para toda rota clínica", () => {
-  for (const path of CLINICAL_ROUTES) {
-    assert.equal(
-      getAccessLevel(path),
-      "public",
-      `${path} deveria abrir sem senha`,
-    );
+await check("toda rota sentinela é pública na interface", () => {
+  for (const path of ROUTE_SENTINELS) {
+    assert.equal(getAccessLevel(path), "public", `${path} deveria abrir sem senha`);
   }
 });
 
-// 3. decideRouteAccess LIBERA rota clínica sem autenticação (modo remoto).
 const { decideRouteAccess } = await importTs(
   "client/src/security/routeGuardPolicy.ts",
 );
-check("decideRouteAccess() === allow sem login (modo remoto)", () => {
-  for (const path of CLINICAL_ROUTES) {
+await check("RouteGuard nunca redireciona ao login no modo aberto", () => {
+  for (const path of ROUTE_SENTINELS) {
     assert.equal(
       decideRouteAccess({
         path,
@@ -115,29 +107,107 @@ check("decideRouteAccess() === allow sem login (modo remoto)", () => {
   }
 });
 
-// 4. O PrivateGate curto-circuita em OPEN_ACCESS (nenhum PIN local aparece).
-const privateGateSrc = read("client/src/components/PrivateGate.tsx");
-check("PrivateGate desarma o gate local sob OPEN_ACCESS", () => {
-  assert.match(
-    privateGateSrc,
-    /OPEN_ACCESS/,
-    "PrivateGate deve honrar OPEN_ACCESS e não exibir PIN",
-  );
-  assert.match(
-    privateGateSrc,
-    /!OPEN_ACCESS\s*&&/,
-    "as condições de gate do PrivateGate devem ser neutralizadas por !OPEN_ACCESS",
+const appSrc = read("client/src/App.tsx");
+const loginPageSrc = read("client/src/pages/login.tsx");
+await check("rota legada /login é somente redirecionamento", () => {
+  assert.match(appSrc, /<Route\s+path="\/login"\s+component=\{LoginPage\}\s*\/>/);
+  assert.match(loginPageSrc, /<Redirect\s+to="\/"\s*\/>/);
+  assert.doesNotMatch(
+    loginPageSrc,
+    /type\s*=\s*["']password["']|loginRequest|useAuth|input-login-password|Acesso profissional/i,
+    "a página /login não pode conter formulário ou chamada de autenticação",
   );
 });
 
+const privateGateSrc = read("client/src/components/PrivateGate.tsx");
+await check("PrivateGate permanece neutralizado por OPEN_ACCESS", () => {
+  assert.match(privateGateSrc, /OPEN_ACCESS/);
+  assert.match(
+    privateGateSrc,
+    /const showGate\s*=\s*[\s\S]{0,80}!OPEN_ACCESS\s*&&/,
+  );
+  assert.match(privateGateSrc, /if \(!showGate\) return <>{children}<\/>;/);
+});
+
+const masterPinSrc = read("client/src/lib/masterPin.ts");
+const masterPin = await importTs("client/src/lib/masterPin.ts");
+await check("PIN legado está funcionalmente desativado", async () => {
+  assert.equal(masterPin.hasConfiguredMasterPin(), true);
+  assert.equal(masterPin.isMasterPinUnlocked(), true);
+  assert.equal(masterPin.getMasterPinLockSeconds(), 0);
+  assert.equal(await masterPin.verifyMasterPin("qualquer-valor"), true);
+});
+await check("módulo de PIN não cria nem persiste segredo", () => {
+  assert.doesNotMatch(
+    masterPinSrc,
+    /VITE_PIN_HASH|PBKDF2|crypto\.subtle|DEVICE_HASH_KEY|sessionStorage|localStorage/,
+    "masterPin.ts não pode voltar a armazenar ou comparar credenciais",
+  );
+});
+
+const genericScaleSrc = read("client/src/pages/generic-scale.tsx");
+await check("prompt legado de escala permanece inalcançável", () => {
+  assert.match(
+    genericScaleSrc,
+    /useState\(\(\) => isMasterPinUnlocked\(\)\)/,
+    "a escala genérica deve iniciar pelo estado central, que é sempre aberto",
+  );
+});
+
+const clientSourceRoot = resolve(repoRoot, "client", "src");
+const passwordInputFiles = walk(clientSourceRoot)
+  .filter((path) => /\.(?:ts|tsx|js|jsx)$/.test(path))
+  .filter((path) => /type\s*=\s*["']password["']/i.test(readFileSync(path, "utf8")))
+  .map((path) => relative(repoRoot, path).replaceAll("\\", "/"))
+  .sort();
+
+const EXPECTED_PASSWORD_INPUT_FILES = [
+  "client/src/components/AssinaturaIcpPanel.tsx",
+  "client/src/components/PrivateGate.tsx",
+  "client/src/pages/generic-scale.tsx",
+].sort();
+
+await check("nenhum novo campo de senha foi criado na interface", () => {
+  assert.deepEqual(
+    passwordInputFiles,
+    EXPECTED_PASSWORD_INPUT_FILES,
+    "campo type=password novo ou remoção não revisada detectada",
+  );
+});
+
+const certificatePanelSrc = read("client/src/components/AssinaturaIcpPanel.tsx");
+await check("única senha operacional é a do certificado A1 local", () => {
+  assert.match(certificatePanelSrc, /Senha do certificado/);
+  assert.match(certificatePanelSrc, /accept="\.p12,\.pfx"/);
+  assert.match(certificatePanelSrc, /input-p12-senha/);
+  assert.doesNotMatch(certificatePanelSrc, /loginRequest|\/api\/auth\/login|input-login-password/);
+});
+
+const pageAndComponentFiles = walk(clientSourceRoot)
+  .filter((path) => /\.(?:tsx|jsx)$/.test(path))
+  .map((path) => ({
+    path: relative(repoRoot, path).replaceAll("\\", "/"),
+    source: readFileSync(path, "utf8"),
+  }));
+
+await check("nenhuma tela nova chama o login da API", () => {
+  const offenders = pageAndComponentFiles
+    .filter(({ path }) => path !== "client/src/contexts/AuthContext.tsx")
+    .filter(({ source }) => /loginRequest\s*\(|\/api\/auth\/login/.test(source))
+    .map(({ path }) => path);
+  assert.deepEqual(offenders, [], `telas com chamada de login: ${offenders.join(", ")}`);
+});
+
 if (errors.length) {
-  console.error(`\n[open-access] ✗ ${errors.length} regressão(ões) de senha detectada(s):`);
-  for (const e of errors) console.error(`  · ${e}`);
+  console.error(`\n[open-access] ✗ ${errors.length} regressão(ões) detectada(s):`);
+  for (const error of errors) console.error(`  · ${error}`);
   console.error(
-    "\nO NeuroPed deve permanecer ABERTO (decisão do autor). Para reverter é\n" +
-      "preciso remover conscientemente esta trava em scripts/guards/assert-open-access.mjs.",
+    "\nO NeuroPed deve permanecer aberto. Mudança de política exige decisão explícita\n" +
+      "do autor e remoção consciente desta catraca — nunca uma regressão silenciosa.",
   );
   process.exit(1);
 }
 
-console.log("[open-access] ✓ app inteiro permanece aberto — nenhuma cobrança de email/senha nas telas.");
+console.log(
+  "[open-access] ✓ interface aberta; login e PIN de acesso não podem reaparecer",
+);
