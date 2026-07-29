@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { getAccessLevel } from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
@@ -74,9 +75,64 @@ assert.equal(
   "checking",
 );
 
-for (const path of SENSITIVE_ROUTES.filter((route) => route !== "/recepcao")) {
-  assert.equal(isRouteSensitive(path), true, `${path} deve ter defesa RBAC global`);
+const REQUIRED_SENSITIVE_ROUTES = [
+  "/pant",
+  "/assinatura-digital",
+  "/documentos",
+  "/pacientes",
+  "/paciente",
+  "/prontuario",
+  "/calculadora-dose",
+  "/farmacologia",
+  "/medicamentos",
+  "/satisfacao-medicacao",
+  "/plano-terapeutico",
+  "/plano-intervencao",
+  "/avaliacao-multiprofissional",
+  "/fichas-registro",
+  "/laudo-neuroped",
+  "/receita-c1",
+  "/receita-c1-express",
+  "/diario-escola",
+  "/inventarios-escola",
+  "/generic-scale",
+  "/cognitive-lab",
+  "/testes-diretos",
+  "/epilepsia",
+  "/cefaleia",
+  "/diario-sono",
+  "/diario-alimentar",
+  "/recepcao",
+] as const;
+const sensitiveRouteSet = new Set<string>(SENSITIVE_ROUTES);
+assert.equal(sensitiveRouteSet.size, SENSITIVE_ROUTES.length);
+for (const path of REQUIRED_SENSITIVE_ROUTES) {
+  assert.equal(
+    sensitiveRouteSet.has(path),
+    true,
+    `${path} não pode desaparecer do inventário sensível`,
+  );
+  assert.equal(isRouteSensitive(path), true);
+}
+
+const appSource = readFileSync(
+  new URL("../../client/src/App.tsx", import.meta.url),
+  "utf8",
+);
+const registeredRoutePatterns = [
+  ...appSource.matchAll(/<Route\\s+path="([^"]+)"/g),
+].map((match) => match[1]);
+const clinicalRouteSamples = [
+  ...registeredRoutePatterns.map((route) =>
+    route.replace(/:[^/]+/g, "__test_param__"),
+  ),
+  "/rota-clinica-adicionada-no-futuro",
+].filter((path) => getAccessLevel(path) === "clinical");
+
+for (const path of clinicalRouteSamples) {
   for (const userRole of ["reader", "operator"] as const) {
+    const expected =
+      path === "/recepcao" && userRole === "operator" ? "allow" : "forbidden";
     assert.equal(
       decideRouteAccess({
         path,
@@ -85,43 +141,24 @@ for (const path of SENSITIVE_ROUTES.filter((route) => route !== "/recepcao")) {
         isLoading: false,
         userRole,
       }),
-      "forbidden",
-      `${userRole} não pode abrir rota sensível ${path} sem RBAC explícito`,
+      expected,
+      `${userRole} recebeu decisão incorreta em ${path}`,
     );
   }
-  assert.equal(
-    decideRouteAccess({
-      path,
-      accessMode: "remote",
-      isAuthenticated: true,
-      isLoading: false,
-      userRole: "professional",
-    }),
-    "allow",
-  );
+  for (const userRole of ["admin", "professional"] as const) {
+    assert.equal(
+      decideRouteAccess({
+        path,
+        accessMode: "remote",
+        isAuthenticated: true,
+        isLoading: false,
+        userRole,
+      }),
+      "allow",
+      `${userRole} deve abrir a rota clínica ${path}`,
+    );
+  }
 }
-
-assert.equal(
-  decideRouteAccess({
-    path: "/recepcao",
-    accessMode: "remote",
-    isAuthenticated: true,
-    isLoading: false,
-    userRole: "reader",
-  }),
-  "forbidden",
-);
-assert.equal(
-  decideRouteAccess({
-    path: "/recepcao",
-    accessMode: "remote",
-    isAuthenticated: true,
-    isLoading: false,
-    userRole: "operator",
-  }),
-  "allow",
-  "o gate global deve preservar o acesso operacional específico da recepção",
-);
 
 assert.equal(isRouteSensitive("/pant"), true);
 assert.equal(isRouteSensitive("/pant/relatorio?print=1"), true);
