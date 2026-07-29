@@ -120,7 +120,7 @@ const appSource = readFileSync(
   "utf8",
 );
 const registeredRoutePatterns = [
-  ...appSource.matchAll(/<Route\\s+path="([^"]+)"/g),
+  ...appSource.matchAll(/<Route\s+path="([^"]+)"/g),
 ].map((match) => match[1]);
 const clinicalRouteSamples = [
   ...registeredRoutePatterns.map((route) =>
