@@ -16,7 +16,7 @@
     "check": "tsc --noEmit",
     "test:clinical": "node --import tsx tests/clinical/test-clinical.mjs",
     "test:ownership": "node --import tsx tests/unit/ownership.test.ts",
-    "test:filter": "node --import tsx tests/clinical/test-filter-safety.mjs",
+    "test:filter": "node --import tsx tests/clinical/test-filter-safety.mjs && node --import tsx tests/clinical/test-ipn-tea-filter.mjs",
     "audit:filter-fillable": "node --import tsx scripts/guards/audit-filter-fillable.mjs",
     "test:podium": "node --import tsx tests/clinical/test-filter-podium.mjs",
     "test:ideal-choice": "node --import tsx tests/clinical/test-filter-ideal-choice.mjs",
