@@ -2,7 +2,7 @@
 // Instrumentos AUTORAIS aplicáveis (NEXUS-NP, 2026-07-12).
 // Origem: regra de ouro TOTAL retirou do banco os padrões-ouro
 // COMERCIAIS (Vineland, Bayley, PSI, Sensory Profile 2, SIPS,
-// TSCYC…) — a pedido do Dr. Jadson, estes 6 instrumentos autorais
+// TSCYC…) — a pedido do Dr. Jadson, estes instrumentos autorais
 // cobrem os MESMOS CONSTRUTOS com aplicação completa no app.
 //
 // Política: redação 100% própria; nenhum item, estrutura ou norma
@@ -11,6 +11,7 @@
 // Todos pendentes de validação clínica formal (triagem descritiva).
 // ============================================================
 import { type ScaleEntry } from "./scaleFilter";
+import { escalasIpnTea200 } from "./escalasIpnTea200";
 
 const PENDENCIA_VALIDACAO_AUTORAL =
   "Instrumento autoral em desenvolvimento; conteúdo, propriedades psicométricas e uso clínico aguardam validação formal.";
@@ -150,4 +151,5 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     applicationMode: "questionario_pais",
     signalTags: ["revivescência", "pesadelos", "evitação", "sobressalto", "regressão", "irritabilidade", "brincar repetitivo do evento"],
   },
+  ...escalasIpnTea200,
 ];
