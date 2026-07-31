@@ -17,10 +17,16 @@ import {
   type FilterRecommendationTone,
 } from "@/components/FilterRecommendationLinkCard";
 import {
-  recommendDirectTests,
+  testesDiretosRecommendations,
   getClinicPath,
   type DirectTestRecommendation,
 } from "@/data/testesDiretosRecommendations";
+import {
+  formatRecommendationAgeRange,
+  getRecommendationAgeFitLabel,
+  rankRecommendationsForAgeBand,
+  type RecommendationAgeMatch,
+} from "@/data/recommendationAgeFit";
 
 const iconMap: Record<string, LucideIcon> = {
   Eye,
@@ -34,22 +40,25 @@ const iconMap: Record<string, LucideIcon> = {
 
 const priorityMeta: Record<
   DirectTestRecommendation["prioridade"],
-  { heading: string; eyebrow: string; tone: FilterRecommendationTone }
+  { heading: string; eyebrow: string; tone: FilterRecommendationTone; order: number }
 > = {
   primaria: {
     heading: "Testes recomendados primeiro",
     eyebrow: "recomendação primária",
     tone: "primary",
+    order: 0,
   },
   secundaria: {
     heading: "Testes complementares",
     eyebrow: "recomendação complementar",
     tone: "secondary",
+    order: 1,
   },
   complementar: {
     heading: "Opções adicionais",
     eyebrow: "opção adicional",
     tone: "optional",
+    order: 2,
   },
 };
 
@@ -69,8 +78,12 @@ export function DirectTestsRecommender({
   const ageRange = faixasEtarias.find((age) => age.id === selectedAge);
   if (!ageRange) return null;
 
-  const ageMonths = Math.round((ageRange.min + ageRange.max) / 2);
-  const recommendations = recommendDirectTests(selectedQueixas, ageMonths);
+  const recommendations = rankRecommendationsForAgeBand(
+    testesDiretosRecommendations,
+    selectedQueixas,
+    { min: ageRange.min, max: ageRange.max },
+    (recommendation) => priorityMeta[recommendation.prioridade].order,
+  );
   if (!recommendations.length) return null;
 
   const clinicalPath =
@@ -78,7 +91,9 @@ export function DirectTestsRecommender({
   const grouped = (["primaria", "secundaria", "complementar"] as const)
     .map((priority) => ({
       priority,
-      items: recommendations.filter((item) => item.prioridade === priority),
+      items: recommendations.filter(
+        (match) => match.recommendation.prioridade === priority,
+      ),
     }))
     .filter((group) => group.items.length > 0);
 
@@ -98,10 +113,15 @@ export function DirectTestsRecommender({
                 {clinicalPath.description}
               </p>
             </div>
-            <Badge variant="outline" className="w-fit shrink-0 gap-1.5">
-              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-              {clinicalPath.duration}
-            </Badge>
+            <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
+              <Badge variant="outline" className="w-fit gap-1.5">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                {clinicalPath.duration}
+              </Badge>
+              <Badge variant="secondary" className="w-fit">
+                Faixa analisada: {ageRange.label}
+              </Badge>
+            </div>
           </CardHeader>
         </Card>
       )}
@@ -130,9 +150,9 @@ export function DirectTestsRecommender({
               </h3>
             </div>
             <div role="list" className="grid gap-3 xl:grid-cols-2">
-              {items.map((test) => (
-                <div role="listitem" key={test.id}>
-                  <TestCard test={test} tone={meta.tone} eyebrow={meta.eyebrow} />
+              {items.map((match) => (
+                <div role="listitem" key={match.recommendation.id}>
+                  <TestCard match={match} tone={meta.tone} eyebrow={meta.eyebrow} />
                 </div>
               ))}
             </div>
@@ -144,13 +164,15 @@ export function DirectTestsRecommender({
 }
 
 interface TestCardProps {
-  test: DirectTestRecommendation;
+  match: RecommendationAgeMatch<DirectTestRecommendation>;
   tone: FilterRecommendationTone;
   eyebrow: string;
 }
 
-function TestCard({ test, tone, eyebrow }: TestCardProps) {
+function TestCard({ match, tone, eyebrow }: TestCardProps) {
+  const test = match.recommendation;
   const Icon = iconMap[test.icon] ?? Eye;
+  const ageFitLabel = getRecommendationAgeFitLabel(match.ageFit);
 
   return (
     <FilterRecommendationLinkCard
@@ -162,9 +184,16 @@ function TestCard({ test, tone, eyebrow }: TestCardProps) {
       tone={tone}
       badges={[
         { label: test.tempo },
-        { label: "Teste direto", variant: "outline" },
+        {
+          label: formatRecommendationAgeRange(test.ageMin, test.ageMax),
+          variant: "outline",
+        },
+        {
+          label: ageFitLabel,
+          variant: match.ageFit === "full" ? "secondary" : "outline",
+        },
       ]}
-      ariaLabel={`Abrir ${test.name}, ${eyebrow}`}
+      ariaLabel={`Abrir ${test.name}, ${eyebrow}. ${ageFitLabel}`}
       testId={`direct-test-${test.id}`}
     />
   );
