@@ -16,7 +16,13 @@ export const IPN_TDAH_FE_OBSERVATION_LABELS = [
   "N/O · Não foi possível observar",
 ];
 
-export const IPN_TDAH_FE_TEXT_LABELS = ["Registro qualitativo"];
+// O componente genérico exige ao menos duas opções configuradas. Nos módulos
+// integralmente textuais elas funcionam apenas como contrato estrutural e nunca
+// aparecem como resposta nem geram pontuação.
+export const IPN_TDAH_FE_TEXT_LABELS = [
+  "Registro qualitativo",
+  "Sem registro aplicável",
+];
 
 export const IPN_TDAH_FE_BANDS: InteractiveBand[] = [
   {
