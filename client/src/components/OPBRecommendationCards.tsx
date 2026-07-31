@@ -78,7 +78,7 @@ export function OPBRecommendationCards({
     return (
       <article key={seal} data-tier={seal} className="h-full">
         <Card
-          className={`relative h-full overflow-hidden rounded-3xl border ${visual.border} bg-gradient-to-br ${visual.wash} shadow-sm`}
+          className={`relative flex h-full flex-col overflow-hidden rounded-3xl border ${visual.border} bg-gradient-to-br ${visual.wash} shadow-sm`}
         >
           <span
             aria-hidden="true"
@@ -115,7 +115,7 @@ export function OPBRecommendationCards({
             </div>
           </CardHeader>
 
-          <CardContent className="flex h-[calc(100%-9.5rem)] flex-col gap-4 p-5 pt-2">
+          <CardContent className="flex flex-1 flex-col gap-4 p-5 pt-2">
             <section aria-label="Pergunta clínica principal">
               <div className="mb-1.5 flex items-center gap-1.5 text-primary">
                 <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
