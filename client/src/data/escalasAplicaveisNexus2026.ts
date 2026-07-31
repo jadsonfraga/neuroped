@@ -12,6 +12,7 @@
 // ============================================================
 import { type ScaleEntry } from "./scaleFilter";
 import { escalasIpnTea200 } from "./escalasIpnTea200";
+import { escalasIpnTdahFe200 } from "./escalasIpnTdahFe200";
 
 const PENDENCIA_VALIDACAO_AUTORAL =
   "Instrumento autoral em desenvolvimento; conteúdo, propriedades psicométricas e uso clínico aguardam validação formal.";
@@ -152,4 +153,5 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     signalTags: ["revivescência", "pesadelos", "evitação", "sobressalto", "regressão", "irritabilidade", "brincar repetitivo do evento"],
   },
   ...escalasIpnTea200,
+  ...escalasIpnTdahFe200,
 ];
