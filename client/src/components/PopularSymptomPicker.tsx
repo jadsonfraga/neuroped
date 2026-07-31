@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, RotateCcw } from "lucide-react";
 import { queixas } from "@/data/scaleFilter";
 import { getPopularSymptoms } from "@/data/popularSymptoms";
-import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
+import { getOrphanFilterSignalIds } from "@/data/filterSignalState";
 
 interface PopularSymptomPickerProps {
   selectedQueixas: string[];
@@ -38,22 +38,13 @@ export function PopularSymptomPicker({
     [selectedQueixas],
   );
 
-  const validSignalIds = useMemo(
-    () =>
-      new Set(
-        selectedQueixas.flatMap((queixaId) =>
-          getAllSignalsForQueixa(queixaId).map((signal) => signal.id),
-        ),
-      ),
-    [selectedQueixas],
-  );
-
   useEffect(() => {
-    const orphanSignals = selectedSignalIds.filter(
-      (signalId) => !validSignalIds.has(signalId),
+    const orphanSignals = getOrphanFilterSignalIds(
+      selectedQueixas,
+      selectedSignalIds,
     );
     for (const signalId of orphanSignals) onToggle(signalId);
-  }, [onToggle, selectedSignalIds, validSignalIds]);
+  }, [onToggle, selectedQueixas, selectedSignalIds]);
 
   if (groups.length === 0) return null;
 
