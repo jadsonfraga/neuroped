@@ -55,6 +55,8 @@ interface ScaleTextItem extends ScaleItemBase {
   responseType: "text";
   placeholder?: string;
   maxLength?: number;
+  /** Campos qualitativos podem ser opcionais sem exigir texto fictício. */
+  required?: boolean;
 }
 
 export type ScaleItem = string | ScaleChoiceItem | ScaleTextItem;
@@ -87,6 +89,11 @@ export function itemMaxLength(item: ScaleItem): number {
   return typeof item === "string" || item.responseType !== "text"
     ? 0
     : (item.maxLength ?? 600);
+}
+export function itemRequired(item: ScaleItem): boolean {
+  return typeof item === "string" || item.responseType !== "text"
+    ? true
+    : (item.required ?? true);
 }
 
 function normalizeTextAnswers(
@@ -161,6 +168,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           sentinel: itemSentinel(item),
           placeholder: itemPlaceholder(item),
           maxLength: itemMaxLength(item),
+          required: itemRequired(item),
           domain: d.name,
           domainIdx: di,
           color: d.color,
@@ -224,15 +232,27 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     }
   }, [showResult, clearPersistedDraft, clearPersistedTextDraft]);
   const total = allItems.length;
-  const isAnswered = (item: (typeof allItems)[number]) =>
+  const hasResponse = (item: (typeof allItems)[number]) =>
     item.responseType === "text"
       ? Boolean(textAnswers[item.key]?.trim())
       : answers[item.key] !== undefined;
-  const answered = allItems.filter(isAnswered).length;
-  const progress = total > 0 ? (answered / total) * 100 : 0;
-  const allAnswered = total > 0 && answered === total;
-  const missingCount = Math.max(total - answered, 0);
-  const firstMissing = allItems.find((item) => !isAnswered(item));
+  const isCompleteForSubmit = (item: (typeof allItems)[number]) =>
+    !item.required || hasResponse(item);
+  const answered = allItems.filter(hasResponse).length;
+  const requiredItems = allItems.filter((item) => item.required);
+  const requiredAnswered = requiredItems.filter(hasResponse).length;
+  const progress =
+    total === 0
+      ? 0
+      : requiredItems.length === 0
+        ? 100
+        : (requiredAnswered / requiredItems.length) * 100;
+  const allAnswered = total > 0 && allItems.every(isCompleteForSubmit);
+  const missingCount = Math.max(
+    requiredItems.length - requiredAnswered,
+    0,
+  );
+  const firstMissing = requiredItems.find((item) => !hasResponse(item));
   const triggeredSafetyItems = allItems.filter(
     (item) =>
       item.sentinel?.positiveOptionIndexes.includes(
@@ -446,8 +466,8 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 </p>
                 <p className="mt-1 text-sm text-red-900 dark:text-red-100">
                   O registro contém resposta de ideação suicida e/ou autolesão.
-                  A avaliação de segurança é imediata e independente de qualquer
-                  leitura do IPN‑TEA.
+                  A avaliação de segurança é imediata e independe da
+                  interpretação global deste instrumento.
                 </p>
               </div>
             </CardContent>
@@ -761,10 +781,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
 
             {domain.items.map((item, ii) => {
               const key = `${di}-${ii}`;
-              const itemAnswered =
+              const itemHasResponse =
                 itemResponseType(item) === "text"
                   ? Boolean(textAnswers[key]?.trim())
                   : answers[key] !== undefined;
+              const itemComplete =
+                !itemRequired(item) || itemHasResponse;
               return (
                 <Card
                   key={key}
@@ -772,11 +794,11 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                     itemRefs.current[key] = node;
                   }}
                   tabIndex={-1}
-                  aria-invalid={submitAttempted && !itemAnswered}
+                  aria-invalid={submitAttempted && !itemComplete}
                   className={`rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    submitAttempted && !itemAnswered
+                    submitAttempted && !itemComplete
                       ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
-                      : itemAnswered
+                      : itemHasResponse
                         ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
                         : "bg-card/70 hover:bg-card hover:shadow-md"
                   }`}
@@ -812,7 +834,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         )}
                       </div>
                     </div>
-                    {submitAttempted && !itemAnswered && (
+                    {submitAttempted && !itemComplete && (
                       <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
                         Resposta obrigatória para concluir a escala.
                       </p>
@@ -826,6 +848,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                           "Descreva de forma concreta e objetiva."
                         }
                         aria-label={`Resposta aberta: ${itemText(item)}`}
+                        aria-required={itemRequired(item)}
                         onChange={(event) => {
                           setTextAnswers((current) => ({
                             ...current,
@@ -838,12 +861,23 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                       <RadioGroup
                         value={answers[key]?.toString()}
                         onValueChange={(val) => {
+                          const selectedIndex = Number.parseInt(val, 10);
                           softTick();
                           haptic.select();
                           setAnswers((current) => ({
                             ...current,
-                            [key]: Number.parseInt(val, 10),
+                            [key]: selectedIndex,
                           }));
+                          if (
+                            itemSentinel(item)?.positiveOptionIndexes.includes(
+                              selectedIndex,
+                            )
+                          ) {
+                            softTap();
+                            haptic.notify();
+                            setShowSafetyGate(true);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }
                         }}
                         className="flex flex-wrap gap-2"
                       >
