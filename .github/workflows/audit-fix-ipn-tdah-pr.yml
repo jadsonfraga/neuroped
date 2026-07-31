@@ -51,16 +51,19 @@ jobs:
       - name: Production client build
         run: npm run build:client
 
-      - name: Commit verified corrections
+      - name: Commit verified non-workflow corrections
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/audit-fix-ipn-tdah-6h.yml
-          rm .github/workflows/audit-fix-ipn-tdah-pr.yml
-          rm scripts/apply-audit-fix-ipn-tdah-6h.py
+          git restore .github/workflows/scale-pdf-contract.yml
           git config user.name "NeuroPed Audit Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add -A
+          git add \
+            client/src/components/GenericScale.tsx \
+            client/src/data/interactiveScaleItemsIpnTdahFeAnamnesis.ts \
+            client/src/data/interactiveScaleItemsIpnTdahFeDifferentials.ts \
+            client/src/data/interactiveScaleItemsIpnTdahFeSynthesis.ts \
+            tests/clinical/test-ipn-tdah-fe-safety-filter.mjs
           git diff --cached --check
           git commit -m "fix(escalas): fechar sentinelas e campos opcionais do IPN-TDAH/FE"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
