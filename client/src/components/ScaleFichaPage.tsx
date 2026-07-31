@@ -101,6 +101,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
   }
 
   const pm = pubmedRef(scale.pubmedId);
+  const description = scale.description;
   const infos: InfoCard[] = [
     { icon: Clock, label: "Tempo", value: scale.tempo || "Não informado" },
     {
@@ -129,7 +130,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
       if (!navigator.clipboard?.writeText) {
         throw new Error("clipboard unavailable");
       }
-      await navigator.clipboard.writeText(scale.description);
+      await navigator.clipboard.writeText(description);
       setCopyStatus("success");
     } catch {
       setCopyStatus("error");
@@ -176,7 +177,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
         ))}
       </section>
 
-      {scale.description && (
+      {description && (
         <Card className="rounded-2xl border-border/70">
           <CardContent className="p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -204,7 +205,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
               </Button>
             </div>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {scale.description}
+              {description}
             </p>
           </CardContent>
         </Card>
