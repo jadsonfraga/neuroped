@@ -1,5 +1,9 @@
 import type { InteractiveScaleDef } from "./interactiveScaleItems";
-import { IPN_BANDS, IPN_LABELS } from "./interactiveScaleItemsIpnTeaCommon";
+import {
+  IPN_BANDS,
+  IPN_LABELS,
+  IPN_OBSERVATION_LABELS,
+} from "./interactiveScaleItemsIpnTeaCommon";
 import { ipnTeaFamilyDomainsPart1 } from "./interactiveScaleItemsIpnTeaFamilyPart1";
 import { ipnTeaFamilyDomainsPart2 } from "./interactiveScaleItemsIpnTeaFamilyPart2";
 import { ipnTeaFamilyDomainsPart3 } from "./interactiveScaleItemsIpnTeaFamilyPart3";
@@ -23,7 +27,8 @@ const INSTRUCTION =
 export const ipnTeaCoreItems: Record<string, InteractiveScaleDef> = {
   "ipn-tea-familia-100": {
     instruction: INSTRUCTION,
-    infoBox: "IPN-TEA 200 — versão Família. Instrumento autoral de apoio clínico, sem validação psicométrica e sem ponto de corte diagnóstico. N/O deve ser excluído de qualquer cálculo; um domínio só pode ser sintetizado com pelo menos 70% de respostas válidas. Alertas sentinela exigem ação própria antes de qualquer soma.",
+    infoBox:
+      "IPN-TEA 200 — versão Família. Instrumento autoral de apoio clínico, sem validação psicométrica e sem ponto de corte diagnóstico. N/O deve ser excluído de qualquer cálculo; um domínio só pode ser sintetizado com pelo menos 70% de respostas válidas. Alertas sentinela exigem ação própria antes de qualquer soma.",
     labels: IPN_LABELS,
     optionPoints: [0, 1, 2, 3, 0],
     scoreDirection: "higher_worse",
@@ -39,7 +44,8 @@ export const ipnTeaCoreItems: Record<string, InteractiveScaleDef> = {
   },
   "ipn-tea-escola-100": {
     instruction: INSTRUCTION,
-    infoBox: "IPN-TEA 200 — versão Escola. Instrumento autoral multicontextual, sem validação psicométrica e sem ponto de corte diagnóstico. Solicite exemplos em sala, recreio e transições. Bullying, fuga, exploração, recusa escolar ou fala de morte têm fluxo de proteção independente.",
+    infoBox:
+      "IPN-TEA 200 — versão Escola. Instrumento autoral multicontextual, sem validação psicométrica e sem ponto de corte diagnóstico. Solicite exemplos em sala, recreio e transições. Bullying, fuga, exploração, recusa escolar ou fala de morte têm fluxo de proteção independente.",
     labels: IPN_LABELS,
     optionPoints: [0, 1, 2, 3, 0],
     scoreDirection: "higher_worse",
@@ -55,7 +61,8 @@ export const ipnTeaCoreItems: Record<string, InteractiveScaleDef> = {
   },
   "ipn-tea-adolescente-60": {
     instruction: INSTRUCTION,
-    infoBox: "IPN-TEA 200 — autorrelato do adolescente. Instrumento autoral, sem validação psicométrica e sem ponto de corte diagnóstico. Deve ser respondido com privacidade e linguagem acessível. Abuso, exploração, autolesão ou ideação suicida exigem avaliação imediata.",
+    infoBox:
+      "IPN-TEA 200 — autorrelato do adolescente. Instrumento autoral, sem validação psicométrica e sem ponto de corte diagnóstico. Deve ser respondido com privacidade e linguagem acessível. Abuso, exploração, autolesão ou ideação suicida exigem avaliação imediata.",
     labels: IPN_LABELS,
     optionPoints: [0, 1, 2, 3, 0],
     scoreDirection: "higher_worse",
@@ -68,9 +75,11 @@ export const ipnTeaCoreItems: Record<string, InteractiveScaleDef> = {
     ],
   },
   "ipn-tea-observacao-60": {
-    instruction: INSTRUCTION,
-    infoBox: "IPN-TEA 200 — observação clínica. Registro autoral descritivo; uma consulta isolada não representa todos os contextos. Itens têm redação positiva e negativa, portanto não use o total como medida diagnóstica. Integre história, família, escola, autorrelato, acessibilidade e diferenciais.",
-    labels: IPN_LABELS,
+    instruction:
+      "Registre a frequência com que cada comportamento descrito foi observado na consulta. Os itens incluem habilidades esperadas e dificuldades; interprete cada resposta qualitativamente, sem somar ou inverter respostas.",
+    infoBox:
+      "IPN-TEA 200 — observação clínica. Registro autoral descritivo; uma consulta isolada não representa todos os contextos. As alternativas registram somente a ocorrência do comportamento descrito. Não gere escore total: integre cada item com história, família, escola, autorrelato, acessibilidade e diferenciais.",
+    labels: IPN_OBSERVATION_LABELS,
     optionPoints: [0, 1, 2, 3, 0],
     scoreDirection: "higher_worse",
     totalLabel: "Registro clínico descritivo — IPN-TEA Observação 60",
