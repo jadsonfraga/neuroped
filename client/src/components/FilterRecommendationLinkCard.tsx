@@ -82,14 +82,14 @@ export function FilterRecommendationLinkCard({
           className={`absolute inset-y-0 left-0 w-1 ${visual.accent}`}
         />
         <CardContent className="flex h-full items-start gap-3 p-4 pl-5">
-          <span
+          <div
             aria-hidden="true"
             className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${visual.icon}`}
           >
             {icon}
-          </span>
+          </div>
 
-          <span className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1">
             <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
               {eyebrow}
             </span>
@@ -100,7 +100,10 @@ export function FilterRecommendationLinkCard({
               {description}
             </span>
             {badges.length > 0 && (
-              <span className="mt-3 flex flex-wrap gap-1.5" aria-label="Características da recomendação">
+              <div
+                className="mt-3 flex flex-wrap gap-1.5"
+                aria-label="Características da recomendação"
+              >
                 {badges.map((badge) => (
                   <Badge
                     key={`${badge.variant ?? "secondary"}-${badge.label}`}
@@ -110,9 +113,9 @@ export function FilterRecommendationLinkCard({
                     {badge.label}
                   </Badge>
                 ))}
-              </span>
+              </div>
             )}
-          </span>
+          </div>
 
           <span
             aria-hidden="true"
