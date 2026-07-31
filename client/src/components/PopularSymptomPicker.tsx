@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Check, RotateCcw } from "lucide-react";
 import { queixas } from "@/data/scaleFilter";
@@ -27,6 +27,9 @@ export function PopularSymptomPicker({
   onClear,
   onHover,
 }: PopularSymptomPickerProps) {
+  const selectedSignalIdsRef = useRef(selectedSignalIds);
+  const onClearRef = useRef(onClear);
+
   const groups = useMemo(
     () =>
       selectedQueixas
@@ -39,12 +42,38 @@ export function PopularSymptomPicker({
   );
 
   useEffect(() => {
+    selectedSignalIdsRef.current = selectedSignalIds;
+    onClearRef.current = onClear;
+  }, [onClear, selectedSignalIds]);
+
+  useEffect(() => {
     const orphanSignals = getOrphanFilterSignalIds(
       selectedQueixas,
       selectedSignalIds,
     );
     for (const signalId of orphanSignals) onToggle(signalId);
   }, [onToggle, selectedQueixas, selectedSignalIds]);
+
+  useEffect(() => {
+    return () => {
+      if (!onClearRef.current || selectedSignalIdsRef.current.length === 0) return;
+
+      // O seletor desmonta quando a última queixa é removida. A limpeza é
+      // adiada um ciclo para distinguir esse caso do remount de desenvolvimento
+      // do React StrictMode e de uma simples troca entre as rotas-alias.
+      window.setTimeout(() => {
+        const currentPath =
+          window.location.hash.replace(/^#/, "").split(/[?#]/, 1)[0] || "/";
+        const pickerStillMounted = document.querySelector(
+          '[data-testid="popular-symptom-picker"]',
+        );
+        const remainsInFilter =
+          currentPath === "/filtro" || currentPath === "/filtro-escalas";
+
+        if (!pickerStillMounted && remainsInFilter) onClearRef.current?.();
+      }, 0);
+    };
+  }, []);
 
   if (groups.length === 0) return null;
 
