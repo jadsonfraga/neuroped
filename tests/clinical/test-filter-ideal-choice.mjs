@@ -38,7 +38,9 @@ const repoRoot = resolve(__dirname, "..", "..");
 const imp = (rel) => import(pathToFileURL(resolve(repoRoot, rel)).href);
 
 const { allScales, queixas } = await imp("client/src/data/scaleFilter.ts");
-const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
+const { mergeFilterableCatalog } = await imp(
+  "client/src/data/filterableCatalog.ts",
+);
 const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
 const {
   clinicalHardBlock,
@@ -46,7 +48,12 @@ const {
   getBroadbandFallback,
   getImplementationStatus,
 } = await imp("client/src/data/advancedFilterLogic.ts");
-const { selectCuratedTiers, selectPodium, PODIUM_QUESTION_CAP, estimatedQuestionCount } = await imp("client/src/data/filterPodium.ts");
+const {
+  selectCuratedTiers,
+  selectPodium,
+  PODIUM_QUESTION_CAP,
+  estimatedQuestionCount,
+} = await imp("client/src/data/filterPodium.ts");
 
 const IDEAL_RATE_MIN = 99;
 const CASES_PER_QUEIXA = 24;
@@ -74,10 +81,15 @@ for (const s of catalog) {
     for (const t of s.signalTags ?? []) signalsByQueixa.get(q).add(t);
   }
 }
-const AGE_GRID = [3, 6, 9, 12, 18, 24, 30, 36, 48, 60, 72, 84, 96, 120, 144, 168, 192, 210];
+const AGE_GRID = [
+  3, 6, 9, 12, 18, 24, 30, 36, 48, 60, 72, 84, 96, 120, 144, 168, 192, 210,
+];
 function plausibleAges(q) {
   return AGE_GRID.filter(
-    (a) => catalog.filter((s) => s.queixas.includes(q) && s.ageMin <= a && s.ageMax >= a).length >= 3,
+    (a) =>
+      catalog.filter(
+        (s) => s.queixas.includes(q) && s.ageMin <= a && s.ageMax >= a,
+      ).length >= 3,
   );
 }
 
@@ -85,7 +97,8 @@ const queixaIds = queixas.map((q) => q.id);
 const respondents = ["pais", "clinico", "professor", "autoaplicavel", null];
 // LCG deterministico: bateria reprodutivel, sem Math.random.
 let rngState = 42;
-const rng = () => (rngState = (rngState * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+const rng = () =>
+  (rngState = (rngState * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
 const pick = (arr) => arr[Math.floor(rng() * arr.length)];
 
 const cases = [];
@@ -109,7 +122,10 @@ for (const q of queixaIds) {
       id: `ideal-${String(++caseNum).padStart(3, "0")}`,
       queixas: combo,
       ageMonths,
-      ageBand: { min: Math.max(0, ageMonths - 6), max: Math.min(216, ageMonths + 6) },
+      ageBand: {
+        min: Math.max(0, ageMonths - 6),
+        max: Math.min(216, ageMonths + 6),
+      },
       respondente: pick(respondents),
       isVerbal: k % 4 === 0 ? false : null,
       isLiterate: ageMonths >= 84 ? null : false,
@@ -127,33 +143,49 @@ for (const ctx of cases) {
   let matches = filterScalesWithClinicalRescue(catalog, ctx);
   if (!matches.length) matches = getBroadbandFallback(catalog, ctx);
   const refinedById = new Map(matches.map((m) => [m.scale.id, m]));
-  const curated = selectCuratedTiers(ctx.queixas, ctx.ageMonths, refinedById, ctx.respondente ?? null);
+  const curated = selectCuratedTiers(
+    ctx.queixas,
+    ctx.ageMonths,
+    refinedById,
+    ctx.respondente ?? null,
+  );
   const podium = selectPodium(matches, curated, {
     selectedQueixas: ctx.queixas,
     ageMonths: ctx.ageMonths,
     selectedSignals: ctx.selectedSignals,
   });
   const slots = [podium.ouro, podium.prata, podium.bronze].filter(Boolean);
-  const isFallback = matches.length > 0 && matches.every((m) => m.isBroadbandFallback);
+  const isFallback =
+    matches.length > 0 && matches.every((m) => m.isBroadbandFallback);
   const issues = [];
   const feasibleCounts = matches
-    .filter((m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths)
+    .filter(
+      (m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths,
+    )
     .map((m) => estimatedQuestionCount(m.scale))
-    .filter((count) => Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP)
+    .filter(
+      (count) =>
+        Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP,
+    )
     .sort((a, b) => a - b);
   const trioFitsBudget =
     feasibleCounts.length >= 3 &&
-    feasibleCounts[0] + feasibleCounts[1] + feasibleCounts[2] <= PODIUM_QUESTION_CAP;
+    feasibleCounts[0] + feasibleCounts[1] + feasibleCounts[2] <=
+      PODIUM_QUESTION_CAP;
   const podiumQuestionTotal = slots.reduce(
     (sum, slot) => sum + estimatedQuestionCount(slot.scale),
     0,
   );
 
   // R1 — idade exata
-  const exactAgeCands = matches.filter((m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths);
+  const exactAgeCands = matches.filter(
+    (m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths,
+  );
   if (
     exactAgeCands.length >= 3 &&
-    !slots.every((s) => s.scale.ageMin <= ctx.ageMonths && s.scale.ageMax >= ctx.ageMonths)
+    !slots.every(
+      (s) => s.scale.ageMin <= ctx.ageMonths && s.scale.ageMax >= ctx.ageMonths,
+    )
   )
     issues.push("R1-idade-exata");
 
@@ -173,36 +205,91 @@ for (const ctx of cases) {
   // so conta entre aplicaveis nesse caso.
   // Candidata "viavel para Ouro" precisa CONTER a idade exata — rel>=70 fora
   // da faixa do paciente nao e alternativa real.
-  const inAge = (m) => m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths;
-  const ouroApplicable = podium.ouro && getImplementationStatus(podium.ouro.scale) === "complete";
+  const inAge = (m) =>
+    m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths;
+  const ouroApplicable =
+    podium.ouro && getImplementationStatus(podium.ouro.scale) === "complete";
   const feasible70 = ouroApplicable
-    ? matches.some((m) => m.relevanceScore >= 70 && inAge(m) && getImplementationStatus(m.scale) === "complete")
+    ? matches.some(
+        (m) =>
+          m.relevanceScore >= 70 &&
+          inAge(m) &&
+          getImplementationStatus(m.scale) === "complete",
+      )
     : matches.some((m) => m.relevanceScore >= 70 && inAge(m));
-  const avg = slots.length ? slots.reduce((t, s) => t + s.relevanceScore, 0) / slots.length : 0;
-  const curatedIds = [curated?.ouro, curated?.prata, curated?.bronze].filter(Boolean);
+  const avg = slots.length
+    ? slots.reduce((t, s) => t + s.relevanceScore, 0) / slots.length
+    : 0;
+  const curatedIds = [curated?.ouro, curated?.prata, curated?.bronze].filter(
+    Boolean,
+  );
   const ouroIsClinicalChoice =
-    podium.ouro && (curatedIds.includes(podium.ouro.scale.id) || podium.ouro.scale.licencaUso === "autoral");
-  if (!isFallback && feasible70 && !ouroIsClinicalChoice && (podium.ouro?.relevanceScore ?? 0) < 70)
+    podium.ouro &&
+    (curatedIds.includes(podium.ouro.scale.id) ||
+      podium.ouro.scale.licencaUso === "autoral");
+  if (
+    !isFallback &&
+    feasible70 &&
+    !ouroIsClinicalChoice &&
+    (podium.ouro?.relevanceScore ?? 0) < 70
+  )
     issues.push("R3-relevancia-ouro");
   if (!isFallback && avg < 60) issues.push("R3-media-baixa");
 
   // R4 — sinais marcados
   if (ctx.selectedSignals.length) {
-    const hit = (s) => (s.scale.signalTags ?? []).some((t) => ctx.selectedSignals.includes(t));
+    const hit = (s) =>
+      (s.scale.signalTags ?? []).some((t) => ctx.selectedSignals.includes(t));
     const viable = (m) =>
-      hit(m) && m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths && m.relevanceScore >= 45;
+      hit(m) &&
+      m.scale.ageMin <= ctx.ageMonths &&
+      m.scale.ageMax >= ctx.ageMonths &&
+      m.relevanceScore >= 45;
+    // Uma candidata que sozinha consome todo o teto de 100 itens não pode ser
+    // exigida dentro de um pódio de três instrumentos. A obrigação por sinal só
+    // vale quando a escala consegue coexistir com duas alternativas seguras no
+    // mesmo orçamento; caso contrário, R4 e R7 seriam matematicamente
+    // incompatíveis.
+    const fitsBudgetedTrio = (candidate) => {
+      const candidateCount = estimatedQuestionCount(candidate.scale);
+      const companionCounts = matches
+        .filter((other) => other.scale.id !== candidate.scale.id)
+        .filter(
+          (other) =>
+            other.scale.ageMin <= ctx.ageMonths &&
+            other.scale.ageMax >= ctx.ageMonths,
+        )
+        .map((other) => estimatedQuestionCount(other.scale))
+        .filter((count) => Number.isFinite(count) && count > 0)
+        .sort((a, b) => a - b);
+      return (
+        Number.isFinite(candidateCount) &&
+        candidateCount > 0 &&
+        companionCounts.length >= 2 &&
+        candidateCount + companionCounts[0] + companionCounts[1] <=
+          PODIUM_QUESTION_CAP
+      );
+    };
     // Regra de ouro: se o podio inteiro e APLICAVEL e toda candidata que bate o
     // sinal e ficha/licenciada, manter o podio aplicavel e o acerto — nao flagra.
-    const podiumAllApplicable = slots.every((s) => getImplementationStatus(s.scale) === "complete");
-    const viableApplicable = (m) => viable(m) && getImplementationStatus(m.scale) === "complete";
-    const exigivel = podiumAllApplicable ? matches.some(viableApplicable) : matches.some(viable);
+    const podiumAllApplicable = slots.every(
+      (s) => getImplementationStatus(s.scale) === "complete",
+    );
+    const viableApplicable = (m) =>
+      viable(m) &&
+      fitsBudgetedTrio(m) &&
+      getImplementationStatus(m.scale) === "complete";
+    const exigivel = podiumAllApplicable
+      ? matches.some(viableApplicable)
+      : matches.some((match) => viable(match) && fitsBudgetedTrio(match));
     if (exigivel && !slots.some(hit)) issues.push("R4-sinais-ignorados");
   }
 
   // R5 — respondente
   if (ctx.respondente) {
     const fits = (m) => m.scale.respondente.includes(ctx.respondente);
-    if (matches.filter(fits).length >= 3 && !slots.every(fits)) issues.push("R5-respondente");
+    if (matches.filter(fits).length >= 3 && !slots.every(fits))
+      issues.push("R5-respondente");
   }
 
   // R6 — implementacao (mesma semantica do implFixSlot do motor)
@@ -212,7 +299,9 @@ for (const ctx of cases) {
     const uniqueQ = ctx.queixas.filter(
       (q) =>
         slot.scale.queixas.includes(q) &&
-        !slots.some((o) => o.scale.id !== slot.scale.id && o.scale.queixas.includes(q)),
+        !slots.some(
+          (o) => o.scale.id !== slot.scale.id && o.scale.queixas.includes(q),
+        ),
     );
     const alt = matches.find(
       (m) =>
@@ -240,7 +329,9 @@ for (const ctx of cases) {
     const uniqueQ8 = ctx.queixas.filter(
       (q) =>
         slot.scale.queixas.includes(q) &&
-        !slots.some((o) => o.scale.id !== slot.scale.id && o.scale.queixas.includes(q)),
+        !slots.some(
+          (o) => o.scale.id !== slot.scale.id && o.scale.queixas.includes(q),
+        ),
     );
     const alt8 = matches.find(
       (m) =>
@@ -263,8 +354,10 @@ for (const ctx of cases) {
 
   // R7 — seguranca (invariante duro, zero tolerancia)
   const r7 = [];
-  if (!slots.every((s) => clinicalHardBlock(s.scale, ctx) === null)) r7.push("R7-bloqueio-clinico");
-  if (new Set(slots.map((s) => s.scale.id)).size !== slots.length) r7.push("R7-repetida");
+  if (!slots.every((s) => clinicalHardBlock(s.scale, ctx) === null))
+    r7.push("R7-bloqueio-clinico");
+  if (new Set(slots.map((s) => s.scale.id)).size !== slots.length)
+    r7.push("R7-repetida");
   if (trioFitsBudget && slots.length !== 3) r7.push("R7-incompleto");
   if (podiumQuestionTotal > PODIUM_QUESTION_CAP) r7.push("R7-carga-acima-100");
   if (r7.length) {
@@ -278,8 +371,11 @@ for (const ctx of cases) {
   // carga máxima.
   const effectiveIssues = trioFitsBudget
     ? issues
-    : issues.filter((issue) => issue.startsWith("R7-") || issue.startsWith("R8-"));
-  for (const i of effectiveIssues) failCounts.set(i, (failCounts.get(i) ?? 0) + 1);
+    : issues.filter(
+        (issue) => issue.startsWith("R7-") || issue.startsWith("R8-"),
+      );
+  for (const i of effectiveIssues)
+    failCounts.set(i, (failCounts.get(i) ?? 0) + 1);
   if (effectiveIssues.length) {
     failures.push({
       id: ctx.id,
@@ -298,15 +394,25 @@ console.log(
   `[filter-ideal-choice] casos=${cases.length} | ideais=${cases.length - failures.length} | taxa-ideal=${idealRate.toFixed(1)}% | gate>=${IDEAL_RATE_MIN}% | seguranca=${safetyViolations === 0 ? "integra" : `${safetyViolations} VIOLACAO(OES)`}`,
 );
 if (failures.length) {
-  console.log("[filter-ideal-choice] falhas por criterio:", Object.fromEntries([...failCounts.entries()].sort((a, b) => b[1] - a[1])));
-  for (const f of failures.slice(0, 20)) console.error("  -", JSON.stringify(f));
+  console.log(
+    "[filter-ideal-choice] falhas por criterio:",
+    Object.fromEntries([...failCounts.entries()].sort((a, b) => b[1] - a[1])),
+  );
+  for (const f of failures.slice(0, 20))
+    console.error("  -", JSON.stringify(f));
 }
 if (safetyViolations > 0) {
-  console.error(`[filter-ideal-choice] ${safetyViolations} caso(s) com violacao de SEGURANCA — inaceitavel.`);
+  console.error(
+    `[filter-ideal-choice] ${safetyViolations} caso(s) com violacao de SEGURANCA — inaceitavel.`,
+  );
   process.exit(1);
 }
 if (idealRate < IDEAL_RATE_MIN) {
-  console.error(`[filter-ideal-choice] taxa-ideal ${idealRate.toFixed(1)}% abaixo do gate ${IDEAL_RATE_MIN}%.`);
+  console.error(
+    `[filter-ideal-choice] taxa-ideal ${idealRate.toFixed(1)}% abaixo do gate ${IDEAL_RATE_MIN}%.`,
+  );
   process.exit(1);
 }
-console.log(`[filter-ideal-choice] OK — piso real de escolha ideal >= ${IDEAL_RATE_MIN}% respeitado.`);
+console.log(
+  `[filter-ideal-choice] OK — piso real de escolha ideal >= ${IDEAL_RATE_MIN}% respeitado.`,
+);

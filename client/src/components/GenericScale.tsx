@@ -6,11 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   RotateCcw,
   CheckCircle2,
   ChevronDown,
   Save,
+  ShieldAlert,
   type LucideIcon,
 } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
@@ -23,7 +25,11 @@ import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
-import { useSecureScaleDraft } from "@/hooks/useSecureScaleDraft";
+import {
+  useSecureScaleDraft,
+  useSecureTypedScaleDraft,
+} from "@/hooks/useSecureScaleDraft";
+import { hasRecordEntries } from "@/lib/scaleDraftCore";
 
 /**
  * Item de escala. Pode ser uma string simples (compatível com todo o acervo
@@ -31,9 +37,27 @@ import { useSecureScaleDraft } from "@/hooks/useSecureScaleDraft";
  * linguagem do dia a dia, o que a pergunta está querendo saber — facilita a
  * resposta da família por dar um exemplo concreto do comportamento.
  */
-export type ScaleItem =
-  | string
-  | { text: string; emoji?: string; example?: string };
+interface ScaleItemBase {
+  text: string;
+  emoji?: string;
+  example?: string;
+}
+
+interface ScaleChoiceItem extends ScaleItemBase {
+  responseType?: "choice";
+  sentinel?: {
+    positiveOptionIndexes: number[];
+    label: string;
+  };
+}
+
+interface ScaleTextItem extends ScaleItemBase {
+  responseType: "text";
+  placeholder?: string;
+  maxLength?: number;
+}
+
+export type ScaleItem = string | ScaleChoiceItem | ScaleTextItem;
 
 export function itemText(item: ScaleItem): string {
   return typeof item === "string" ? item : item.text;
@@ -43,6 +67,45 @@ export function itemEmoji(item: ScaleItem): string | undefined {
 }
 export function itemExample(item: ScaleItem): string | undefined {
   return typeof item === "string" ? undefined : item.example;
+}
+export function itemResponseType(item: ScaleItem): "choice" | "text" {
+  return typeof item === "string" ? "choice" : (item.responseType ?? "choice");
+}
+export function itemSentinel(
+  item: ScaleItem,
+): ScaleChoiceItem["sentinel"] | undefined {
+  return typeof item === "string" || item.responseType === "text"
+    ? undefined
+    : item.sentinel;
+}
+export function itemPlaceholder(item: ScaleItem): string | undefined {
+  return typeof item === "string" || item.responseType !== "text"
+    ? undefined
+    : item.placeholder;
+}
+export function itemMaxLength(item: ScaleItem): number {
+  return typeof item === "string" || item.responseType !== "text"
+    ? 0
+    : (item.maxLength ?? 600);
+}
+
+function normalizeTextAnswers(
+  value: unknown,
+  validItems: Readonly<Record<string, number>>,
+): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const normalized: Record<string, string> = {};
+  for (const [key, answer] of Object.entries(value)) {
+    const maxLength = validItems[key];
+    if (
+      Number.isInteger(maxLength) &&
+      maxLength > 0 &&
+      typeof answer === "string"
+    ) {
+      normalized[key] = answer.slice(0, maxLength);
+    }
+  }
+  return normalized;
 }
 
 interface DomainConfig {
@@ -82,6 +145,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const draftSlug = config.title.replace(/\s+/g, "-").toLowerCase();
   const legacyDraftKey = `neuroped:scale-draft:${draftSlug}`;
   const [showResult, setShowResult] = useState(false);
+  const [showSafetyGate, setShowSafetyGate] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -93,6 +157,10 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           text: itemText(item),
           emoji: itemEmoji(item),
           example: itemExample(item),
+          responseType: itemResponseType(item),
+          sentinel: itemSentinel(item),
+          placeholder: itemPlaceholder(item),
+          maxLength: itemMaxLength(item),
           domain: d.name,
           domainIdx: di,
           color: d.color,
@@ -103,7 +171,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const validDraftOptions = useMemo(
     () =>
       Object.fromEntries(
-        allItems.map((item) => [item.key, config.labels.length]),
+        allItems
+          .filter((item) => item.responseType === "choice")
+          .map((item) => [item.key, config.labels.length]),
       ),
     [allItems, config.labels.length],
   );
@@ -120,19 +190,64 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     validOptions: validDraftOptions,
     legacyKey: legacyDraftKey,
   });
+  const validTextItems = useMemo(
+    () =>
+      Object.fromEntries(
+        allItems
+          .filter((item) => item.responseType === "text")
+          .map((item) => [item.key, item.maxLength]),
+      ),
+    [allItems],
+  );
+  const {
+    value: textAnswers,
+    setValue: setTextAnswers,
+    ready: textDraftReady,
+    restored: textDraftRestored,
+    status: textDraftStatus,
+    clearDraft: clearTextDraft,
+    clearPersistedDraft: clearPersistedTextDraft,
+  } = useSecureTypedScaleDraft<Record<string, string>>({
+    draftId: `generic:${config.scaleId ?? draftSlug}:text`,
+    schemaVersion: 1,
+    createEmpty: () => ({}),
+    sanitize: (value) => normalizeTextAnswers(value, validTextItems),
+    hasContent: hasRecordEntries,
+  });
 
   // Ao concluir a escala, apaga o rascunho ARMAZENADO (o resultado em tela é
   // preservado): evita restaurar as respostas de um paciente ao reabrir a mesma
   // escala para o próximo. Uma nova edição re-arma a persistência.
   useEffect(() => {
-    if (showResult) void clearPersistedDraft();
-  }, [showResult, clearPersistedDraft]);
+    if (showResult) {
+      void Promise.all([clearPersistedDraft(), clearPersistedTextDraft()]);
+    }
+  }, [showResult, clearPersistedDraft, clearPersistedTextDraft]);
   const total = allItems.length;
-  const answered = Object.keys(answers).length;
+  const isAnswered = (item: (typeof allItems)[number]) =>
+    item.responseType === "text"
+      ? Boolean(textAnswers[item.key]?.trim())
+      : answers[item.key] !== undefined;
+  const answered = allItems.filter(isAnswered).length;
   const progress = total > 0 ? (answered / total) * 100 : 0;
   const allAnswered = total > 0 && answered === total;
   const missingCount = Math.max(total - answered, 0);
-  const firstMissing = allItems.find((item) => answers[item.key] === undefined);
+  const firstMissing = allItems.find((item) => !isAnswered(item));
+  const triggeredSafetyItems = allItems.filter(
+    (item) =>
+      item.sentinel?.positiveOptionIndexes.includes(
+        answers[item.key] ?? Number.NaN,
+      ) ?? false,
+  );
+  const draftRestoredAny = draftRestored || textDraftRestored;
+  const draftStatusAny =
+    draftStatus === "error" || textDraftStatus === "error"
+      ? "error"
+      : draftStatus === "saving" || textDraftStatus === "saving"
+        ? "saving"
+        : draftStatus === "saved" || textDraftStatus === "saved"
+          ? "saved"
+          : "idle";
 
   function handleSubmit() {
     setSubmitAttempted(true);
@@ -152,6 +267,13 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       }
       return;
     }
+    if (triggeredSafetyItems.length > 0) {
+      softTap();
+      haptic.notify();
+      setShowSafetyGate(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     softSuccess();
     haptic.success();
     celebrate();
@@ -162,8 +284,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     softTap();
     haptic.tap();
     setShowResult(false);
+    setShowSafetyGate(false);
     setSubmitAttempted(false);
-    void clearDraft();
+    void Promise.all([clearDraft(), clearTextDraft()]);
   }
 
   // Leva à primeira pendência sem enviar — usado pela barra sticky para virar um
@@ -178,7 +301,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     });
   }
 
-  if (!draftReady) {
+  if (!draftReady || !textDraftReady) {
     return (
       <Card className="border-card-border" role="status" aria-live="polite">
         <CardContent className="p-6 text-sm text-muted-foreground">
@@ -188,15 +311,87 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     );
   }
 
+  if (showSafetyGate) {
+    return (
+      <Card
+        className="border-red-500 bg-red-50 dark:bg-red-950/30"
+        role="alert"
+        aria-live="assertive"
+      >
+        <CardContent className="space-y-5 p-6">
+          <div className="flex items-start gap-3">
+            <ShieldAlert
+              className="mt-0.5 h-7 w-7 shrink-0 text-red-700 dark:text-red-300"
+              aria-hidden="true"
+            />
+            <div className="space-y-2">
+              <h1 className="text-xl font-bold text-red-900 dark:text-red-100">
+                Alerta de segurança — interrompa a aplicação
+              </h1>
+              <p className="text-sm leading-relaxed text-red-900 dark:text-red-100">
+                Uma ou mais respostas indicam possível ideação suicida ou
+                autolesão. Não trate esta tela como conclusão rotineira: faça
+                avaliação clínica imediata, mantenha o adolescente acompanhado e
+                acione a rede de cuidado ou o serviço de emergência local
+                conforme o risco atual.
+              </p>
+            </div>
+          </div>
+          <ul className="space-y-2">
+            {triggeredSafetyItems.map((item) => (
+              <li
+                key={item.key}
+                className="rounded-xl border border-red-300 bg-white/70 p-3 text-sm text-red-950 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100"
+              >
+                <span className="font-bold">{item.sentinel?.label}:</span>{" "}
+                {item.text}
+              </li>
+            ))}
+          </ul>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowSafetyGate(false)}
+              className="border-red-400 text-red-800 hover:bg-red-100 dark:text-red-200"
+            >
+              Voltar e revisar respostas
+            </Button>
+            <Button
+              onClick={() => {
+                setShowSafetyGate(false);
+                setShowResult(true);
+              }}
+              className="bg-red-700 text-white hover:bg-red-800"
+            >
+              Abrir registro para avaliação imediata
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (showResult) {
     // Transcrição por extenso: perguntas + respostas selecionadas. É o resultado
     // que o app entrega — sem escore, corte ou classificação (pedido do autor).
-    const qaItems = allItems.map((item) => ({
-      question: item.text,
-      answer: formatScaleResponseAnswer(
-        config.labels[answers[item.key] ?? -1] ?? "Não respondida",
-      ),
-    }));
+    const qaItems = allItems.map((item) => {
+      const answer =
+        item.responseType === "text"
+          ? textAnswers[item.key]?.trim() || "Não respondida"
+          : formatScaleResponseAnswer(
+              config.labels[answers[item.key] ?? -1] ?? "Não respondida",
+            );
+      const isPositiveSentinel =
+        item.sentinel?.positiveOptionIndexes.includes(
+          answers[item.key] ?? Number.NaN,
+        ) ?? false;
+      return {
+        question: item.text,
+        answer: isPositiveSentinel
+          ? `⚠️ ALERTA SENTINELA POSITIVO — ${answer}`
+          : answer,
+      };
+    });
     const qaTranscript = qaItems
       .map((it, i) => `${i + 1}. ${it.question}\n→ ${it.answer}`)
       .join("\n\n");
@@ -235,6 +430,30 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           fala="Respostas registradas! Abaixo estão as perguntas e as respostas selecionadas, por extenso — a análise clínica fica com você, profissional."
         />
 
+        {triggeredSafetyItems.length > 0 && (
+          <Card
+            className="border-red-500 bg-red-50 dark:bg-red-950/30"
+            role="alert"
+          >
+            <CardContent className="flex items-start gap-3 p-4">
+              <ShieldAlert
+                className="mt-0.5 h-5 w-5 shrink-0 text-red-700 dark:text-red-300"
+                aria-hidden="true"
+              />
+              <div>
+                <p className="font-bold text-red-900 dark:text-red-100">
+                  Alerta sentinela positivo
+                </p>
+                <p className="mt-1 text-sm text-red-900 dark:text-red-100">
+                  O registro contém resposta de ideação suicida e/ou autolesão.
+                  A avaliação de segurança é imediata e independente de qualquer
+                  leitura do IPN‑TEA.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="border-card-border overflow-hidden">
           <CardContent className="p-6 space-y-5">
             {/* RESULTADO = perguntas e respostas por extenso. Sem escore, ponto de
@@ -268,13 +487,28 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                   )}
                   <ol className="space-y-2">
                     {d.items.map((item, ii) => {
-                      const idx = answers[`${di}-${ii}`];
-                      const answeredItem = idx !== undefined;
-                      const resp = answeredItem
-                        ? formatScaleResponseAnswer(
-                            config.labels[idx] ?? `Opção ${idx + 1}`,
-                          )
-                        : "Não respondida";
+                      const key = `${di}-${ii}`;
+                      const idx = answers[key];
+                      const textResponse = textAnswers[key]?.trim();
+                      const answeredItem =
+                        itemResponseType(item) === "text"
+                          ? Boolean(textResponse)
+                          : idx !== undefined;
+                      const positiveSentinel =
+                        itemSentinel(item)?.positiveOptionIndexes.includes(
+                          idx ?? Number.NaN,
+                        ) ?? false;
+                      const rawResponse =
+                        itemResponseType(item) === "text"
+                          ? textResponse || "Não respondida"
+                          : idx !== undefined
+                            ? formatScaleResponseAnswer(
+                                config.labels[idx] ?? `Opção ${idx + 1}`,
+                              )
+                            : "Não respondida";
+                      const resp = positiveSentinel
+                        ? `⚠️ ALERTA POSITIVO — ${rawResponse}`
+                        : rawResponse;
                       const globalN =
                         config.domains
                           .slice(0, di)
@@ -383,7 +617,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         </div>
       </motion.div>
 
-      {draftRestored && !showResult && (
+      {draftRestoredAny && !showResult && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 px-3 py-2">
           <p className="text-xs text-amber-800 dark:text-amber-200">
             Respostas de uma aplicação anterior foram restauradas. Novo
@@ -395,7 +629,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             onClick={() => {
               setShowResult(false);
               setSubmitAttempted(false);
-              void clearDraft();
+              void Promise.all([clearDraft(), clearTextDraft()]);
             }}
             className="shrink-0 rounded-lg border border-amber-400/70 px-2.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
           >
@@ -425,7 +659,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           {answered > 0 ? (
             <span
               className={`flex items-center gap-1.5 text-[11px] ${
-                draftStatus === "error"
+                draftStatusAny === "error"
                   ? "text-red-700 dark:text-red-300"
                   : "text-emerald-700 dark:text-emerald-300"
               }`}
@@ -433,9 +667,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               aria-live="polite"
             >
               <Save className="h-3.5 w-3.5" />
-              {draftStatus === "saving"
+              {draftStatusAny === "saving"
                 ? "Criptografando…"
-                : draftStatus === "error"
+                : draftStatusAny === "error"
                   ? "Não foi possível salvar"
                   : "Rascunho criptografado"}
             </span>
@@ -475,10 +709,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
 
       {config.domains.map((domain, di) => {
         const domTotal = domain.items.length;
-        const domAnswered = domain.items.reduce(
-          (s, _, ii) => s + (answers[`${di}-${ii}`] !== undefined ? 1 : 0),
-          0,
-        );
+        const domAnswered = domain.items.reduce((s, item, ii) => {
+          const key = `${di}-${ii}`;
+          const itemAnswered =
+            itemResponseType(item) === "text"
+              ? Boolean(textAnswers[key]?.trim())
+              : answers[key] !== undefined;
+          return s + (itemAnswered ? 1 : 0);
+        }, 0);
         const domComplete = domTotal > 0 && domAnswered === domTotal;
         return (
           <div key={di} className="space-y-3">
@@ -523,6 +761,10 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
 
             {domain.items.map((item, ii) => {
               const key = `${di}-${ii}`;
+              const itemAnswered =
+                itemResponseType(item) === "text"
+                  ? Boolean(textAnswers[key]?.trim())
+                  : answers[key] !== undefined;
               return (
                 <Card
                   key={key}
@@ -530,11 +772,11 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                     itemRefs.current[key] = node;
                   }}
                   tabIndex={-1}
-                  aria-invalid={submitAttempted && answers[key] === undefined}
+                  aria-invalid={submitAttempted && !itemAnswered}
                   className={`rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    submitAttempted && answers[key] === undefined
+                    submitAttempted && !itemAnswered
                       ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
-                      : answers[key] !== undefined
+                      : itemAnswered
                         ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
                         : "bg-card/70 hover:bg-card hover:shadow-md"
                   }`}
@@ -570,56 +812,75 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         )}
                       </div>
                     </div>
-                    {submitAttempted && answers[key] === undefined && (
+                    {submitAttempted && !itemAnswered && (
                       <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
                         Resposta obrigatória para concluir a escala.
                       </p>
                     )}
-                    <RadioGroup
-                      value={answers[key]?.toString()}
-                      onValueChange={(val) => {
-                        softTick();
-                        haptic.select();
-                        setAnswers((current) => ({
-                          ...current,
-                          [key]: Number.parseInt(val, 10),
-                        }));
-                      }}
-                      className="flex flex-wrap gap-2"
-                    >
-                      {config.labels.map((label, j) => {
-                        const maxIdx = config.labels.length - 1;
-                        const ratio = maxIdx > 0 ? j / maxIdx : 0;
-                        const selectedColor =
-                          ratio === 0
-                            ? "bg-emerald-500 text-white border-emerald-500"
-                            : ratio <= 0.33
-                              ? "bg-lime-500 text-white border-lime-500"
-                              : ratio <= 0.66
-                                ? "bg-amber-500 text-white border-amber-500"
-                                : "bg-red-500 text-white border-red-500";
-                        return (
-                          <div key={j} className="flex items-center">
-                            <RadioGroupItem
-                              value={j.toString()}
-                              id={`q-${key}-o${j}`}
-                              className="peer sr-only"
-                            />
-                            <Label
-                              htmlFor={`q-${key}-o${j}`}
-                              aria-pressed={answers[key] === j}
-                              className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
-                                answers[key] === j
-                                  ? selectedColor
-                                  : "bg-card text-foreground border-border hover:bg-muted"
-                              }`}
-                            >
-                              {label}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </RadioGroup>
+                    {itemResponseType(item) === "text" ? (
+                      <Textarea
+                        value={textAnswers[key] ?? ""}
+                        maxLength={itemMaxLength(item)}
+                        placeholder={
+                          itemPlaceholder(item) ??
+                          "Descreva de forma concreta e objetiva."
+                        }
+                        aria-label={`Resposta aberta: ${itemText(item)}`}
+                        onChange={(event) => {
+                          setTextAnswers((current) => ({
+                            ...current,
+                            [key]: event.target.value,
+                          }));
+                        }}
+                        className="min-h-24 resize-y"
+                      />
+                    ) : (
+                      <RadioGroup
+                        value={answers[key]?.toString()}
+                        onValueChange={(val) => {
+                          softTick();
+                          haptic.select();
+                          setAnswers((current) => ({
+                            ...current,
+                            [key]: Number.parseInt(val, 10),
+                          }));
+                        }}
+                        className="flex flex-wrap gap-2"
+                      >
+                        {config.labels.map((label, j) => {
+                          const maxIdx = config.labels.length - 1;
+                          const ratio = maxIdx > 0 ? j / maxIdx : 0;
+                          const selectedColor =
+                            ratio === 0
+                              ? "bg-emerald-500 text-white border-emerald-500"
+                              : ratio <= 0.33
+                                ? "bg-lime-500 text-white border-lime-500"
+                                : ratio <= 0.66
+                                  ? "bg-amber-500 text-white border-amber-500"
+                                  : "bg-red-500 text-white border-red-500";
+                          return (
+                            <div key={j} className="flex items-center">
+                              <RadioGroupItem
+                                value={j.toString()}
+                                id={`q-${key}-o${j}`}
+                                className="peer sr-only"
+                              />
+                              <Label
+                                htmlFor={`q-${key}-o${j}`}
+                                aria-pressed={answers[key] === j}
+                                className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                                  answers[key] === j
+                                    ? selectedColor
+                                    : "bg-card text-foreground border-border hover:bg-muted"
+                                }`}
+                              >
+                                {label}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </RadioGroup>
+                    )}
                   </CardContent>
                 </Card>
               );

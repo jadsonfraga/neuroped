@@ -3,9 +3,9 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 203
+- **Total de instrumentos:** 213
 - **Com fonte declarada:** 165
-- **Pendentes de validação/fonte:** 38
+- **Pendentes de validação/fonte:** 48
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
@@ -90,6 +90,16 @@
 | `idafeni` | IDAFENI | 2026-06-26_ESCALA_AUTORAL_IDAFENI_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1vkSSue7AB35 | sim |
 | `integra-kids-360` | INTEGRA-KIDS 360 | 2026-07-04_ESCALA_AUTORAL_INTEGRA-KIDS-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ku | sim |
 | `integra-neuroped-90` | INTEGRA-NEUROPED 90 | 2026-06-28_ESCALA_AUTORAL_INTEGRA_NEUROPED_90_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/ | sim |
+| `ipn-tea-13-17a` | IPN-TEA · 13–17 anos | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-18-30m` | IPN-TEA · 18–30 meses | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-31-47m` | IPN-TEA · 31–47 meses | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-4-5a` | IPN-TEA · 4–5 anos | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-6-8a` | IPN-TEA · 6–8 anos | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-9-12a` | IPN-TEA · 9–12 anos | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-adolescente-60` | IPN-TEA · Adolescente 60 | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-escola-100` | IPN-TEA · Escola 100 | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-familia-100` | IPN-TEA · Família 100 | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-tea-observacao-60` | IPN-TEA · Observação 60 | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
 | `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |
 | `ita-adultos` | ITA-Adultos | Instrumento inspirado no AQ (Autism Spectrum Quotient) | não |
 | `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (NEXUS-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não |

@@ -5,6 +5,7 @@
 // Redação 100% própria; cada infoBox declara o não-substituto.
 // ============================================================
 import type { InteractiveScaleDef } from "./interactiveScaleItems";
+import { ipnTea200Items } from "./interactiveScaleItemsIpnTea200";
 
 const FREQ4 = ["Nunca ou raramente", "Às vezes (1–2x/semana)", "Frequentemente (3–4x/semana)", "Quase sempre (diariamente)"];
 
@@ -205,4 +206,5 @@ export const nexusAplicaveis2026Items: Record<string, InteractiveScaleDef> = {
       ] },
     ],
   },
+  ...ipnTea200Items,
 };
