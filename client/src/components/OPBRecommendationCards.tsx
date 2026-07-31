@@ -1,139 +1,210 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowRight,
+  Award,
+  CheckCircle2,
+  HelpCircle,
+  Medal,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, HelpCircle } from "lucide-react";
-import type { QueixaAgeRecommendations } from "@/data/filterRecommendationsOPB";
+import type {
+  QueixaAgeRecommendations,
+  RecommendationOPB,
+} from "@/data/filterRecommendationsOPB";
 
 interface OPBRecommendationCardsProps {
   recommendations: QueixaAgeRecommendations;
   onSelectScale?: (scaleId: string) => void;
 }
 
-export function OPBRecommendationCards({ recommendations, onSelectScale }: OPBRecommendationCardsProps) {
-  const sealConfig = {
-    ouro: {
-      label: "🏆 OURO - Essencial",
-      bg: "bg-amber-50 dark:bg-amber-950/30",
-      border: "border-amber-300 dark:border-amber-700",
-      badge: "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100",
-    },
-    prata: {
-      label: "🥈 PRATA - Complementar",
-      bg: "bg-slate-50 dark:bg-slate-950/30",
-      border: "border-slate-300 dark:border-slate-700",
-      badge: "bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100",
-    },
-    bronze: {
-      label: "🥉 BRONZE - Adicional",
-      bg: "bg-orange-50 dark:bg-orange-950/30",
-      border: "border-orange-300 dark:border-orange-700",
-      badge: "bg-orange-100 text-orange-900 dark:bg-orange-900 dark:text-orange-100",
-    },
-  };
+type Seal = RecommendationOPB["seal"];
 
-  const renderCard = (seal: "ouro" | "prata" | "bronze") => {
-    const rec = recommendations[seal];
-    const config = sealConfig[seal];
+interface SealVisual {
+  order: number;
+  label: string;
+  guidance: string;
+  Icon: LucideIcon;
+  border: string;
+  wash: string;
+  icon: string;
+  badge: string;
+}
+
+const sealConfig: Record<Seal, SealVisual> = {
+  ouro: {
+    order: 1,
+    label: "OURO · primeira escolha",
+    guidance: "Comece por esta escala.",
+    Icon: Award,
+    border: "border-amber-500/35",
+    wash: "from-amber-500/[0.11] via-card to-card",
+    icon: "bg-amber-500/15 text-amber-800 dark:text-amber-200",
+    badge: "border-amber-500/30 bg-amber-500/12 text-amber-900 dark:text-amber-100",
+  },
+  prata: {
+    order: 2,
+    label: "PRATA · complemento",
+    guidance: "Use para acrescentar outra perspectiva.",
+    Icon: Medal,
+    border: "border-slate-400/40",
+    wash: "from-slate-400/[0.10] via-card to-card",
+    icon: "bg-slate-500/12 text-slate-700 dark:text-slate-200",
+    badge: "border-slate-400/35 bg-slate-500/10 text-slate-800 dark:text-slate-100",
+  },
+  bronze: {
+    order: 3,
+    label: "BRONZE · uso dirigido",
+    guidance: "Reserve para dúvida residual ou objetivo específico.",
+    Icon: Star,
+    border: "border-orange-500/30",
+    wash: "from-orange-500/[0.09] via-card to-card",
+    icon: "bg-orange-500/12 text-orange-800 dark:text-orange-200",
+    badge: "border-orange-500/30 bg-orange-500/10 text-orange-900 dark:text-orange-100",
+  },
+};
+
+export function OPBRecommendationCards({
+  recommendations,
+  onSelectScale,
+}: OPBRecommendationCardsProps) {
+  const renderCard = (seal: Seal) => {
+    const recommendation = recommendations[seal];
+    const visual = sealConfig[seal];
+    const titleId = `opb-${seal}-${recommendation.scaleId}`;
 
     return (
-      <Card key={seal} className={`${config.bg} border-2 ${config.border}`}>
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <CardTitle className="text-base">{rec.scaleName}</CardTitle>
-              <CardDescription className="text-xs mt-1">{rec.time}</CardDescription>
+      <article key={seal} data-tier={seal} className="h-full">
+        <Card
+          className={`relative flex h-full flex-col overflow-hidden rounded-3xl border ${visual.border} bg-gradient-to-br ${visual.wash} shadow-sm`}
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent"
+          />
+          <CardHeader className="space-y-3 p-5 pb-3">
+            <div className="flex items-start justify-between gap-3">
+              <span
+                aria-hidden="true"
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${visual.icon}`}
+              >
+                <visual.Icon className="h-5 w-5" />
+              </span>
+              <Badge
+                variant="outline"
+                className={`max-w-[70%] whitespace-normal text-right text-[10px] font-black uppercase tracking-[0.08em] ${visual.badge}`}
+              >
+                {visual.label}
+              </Badge>
             </div>
-            <Badge className={config.badge} variant="secondary">
-              {seal.toUpperCase()}
-            </Badge>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {/* Pergunta Principal */}
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <HelpCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                O que esta escala quer saber?
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Escolha {visual.order} · {recommendation.time}
+              </p>
+              <CardTitle
+                id={titleId}
+                className="mt-1 text-lg leading-tight text-foreground"
+              >
+                {recommendation.scaleName}
+              </CardTitle>
+              <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                {visual.guidance}
               </p>
             </div>
-            <p className="text-sm font-medium text-foreground">{rec.mainQuestion}</p>
-          </div>
+          </CardHeader>
 
-          {/* Exemplo para Pais */}
-          <div>
-            <p className="text-xs font-semibold text-amber-900 dark:text-amber-200 mb-1">
-              💬 O que será avaliado / respondido:
-            </p>
-            <p className="text-sm text-muted-foreground italic bg-white/50 dark:bg-black/20 p-2 rounded">
-              &quot;{rec.parentExample}&quot;
-            </p>
-          </div>
+          <CardContent className="flex flex-1 flex-col gap-4 p-5 pt-2">
+            <section aria-label="Pergunta clínica principal">
+              <div className="mb-1.5 flex items-center gap-1.5 text-primary">
+                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.1em]">
+                  Pergunta principal
+                </h4>
+              </div>
+              <p className="text-sm font-semibold leading-relaxed text-foreground">
+                {recommendation.mainQuestion}
+              </p>
+            </section>
 
-          {/* Por que é útil */}
-          <div>
-            <p className="text-xs font-semibold text-green-900 dark:text-green-200 mb-1">
-              ✓ Por que ajuda neste caso:
-            </p>
-            <p className="text-sm text-muted-foreground">{rec.whyUseful}</p>
-          </div>
+            <section
+              aria-label="O que será observado"
+              className="rounded-2xl border border-border/60 bg-background/65 p-3"
+            >
+              <h4 className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground">
+                O que será observado
+              </h4>
+              <p className="mt-1 text-xs leading-relaxed text-foreground/85">
+                {recommendation.parentExample}
+              </p>
+            </section>
 
-          {/* Botão de ação */}
-          <Button
-            onClick={() => onSelectScale?.(rec.scaleId)}
-            variant="outline"
-            size="sm"
-            className="w-full gap-2 mt-2"
-          >
-            Usar esta escala
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </CardContent>
-      </Card>
+            <section aria-label="Justificativa clínica" className="flex-1">
+              <div className="mb-1.5 flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.1em]">
+                  Por que ajuda neste perfil
+                </h4>
+              </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {recommendation.whyUseful}
+              </p>
+            </section>
+
+            {onSelectScale && (
+              <Button
+                type="button"
+                onClick={() => onSelectScale(recommendation.scaleId)}
+                variant={seal === "ouro" ? "default" : "outline"}
+                className="mt-auto w-full justify-between gap-3"
+                aria-label={`Usar ${recommendation.scaleName}, recomendação ${seal}`}
+                data-testid={`opb-use-${seal}`}
+              >
+                Usar esta escala
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </article>
     );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho de contexto */}
-      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-          ℹ️ Recomendações Estruturadas para {recommendations.ageRange}
+    <section
+      className="space-y-5"
+      aria-labelledby="opb-recommendations-title"
+      data-testid="opb-recommendation-podium"
+    >
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-card to-chart-2/[0.05] p-4">
+        <p
+          id="opb-recommendations-title"
+          className="text-sm font-black text-foreground"
+        >
+          Pódio clínico para {recommendations.ageRange}
         </p>
-        <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
-          Mostramos exatamente 1 escala de cada tipo. OURO = recomendada em primeiro lugar.
-          PRATA = complementa a OURO. BRONZE = use se precisar de mais informações.
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          A ordem expressa prioridade, não obrigação de aplicar três instrumentos.
+          Comece pela escolha Ouro e acrescente outra escala apenas quando houver
+          pergunta clínica complementar.
         </p>
       </div>
 
-      {/* Cards das 3 recomendações */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
         {renderCard("ouro")}
         {renderCard("prata")}
         {renderCard("bronze")}
       </div>
 
-      {/* Explicação sobre como usar */}
-      <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
-        <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">
-          Como usar essas recomendações:
+      <aside className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
+        <p className="text-xs font-bold text-foreground">Uso racional do pódio</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          Ouro responde à questão central. Prata amplia domínio ou respondente.
+          Bronze é reservado para dúvida residual ou finalidade específica. Evite
+          sobrecarregar criança, família e escola com aplicações redundantes.
         </p>
-        <ul className="text-xs text-green-800 dark:text-green-200 space-y-1">
-          <li>
-            <strong>Comece pela OURO:</strong> Ela responde à pergunta clínica principal para esta faixa etária e queixa.
-          </li>
-          <li>
-            <strong>Adicione PRATA se:</strong> Você quer mais detalhes ou confirmação. Ela complementa a OURO.
-          </li>
-          <li>
-            <strong>Use BRONZE quando:</strong> OURO + PRATA deixarem dúvidas. Ou se quiser visão muito abrangente.
-          </li>
-          <li>
-            <strong>NÃO use todas 3 rotineiramente:</strong> Cansam o paciente/família. Escolha estrategicamente.
-          </li>
-        </ul>
-      </div>
-    </div>
+      </aside>
+    </section>
   );
 }
