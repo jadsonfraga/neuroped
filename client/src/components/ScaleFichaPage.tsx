@@ -79,7 +79,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">(
     "idle",
   );
-  const scale = allScalesComFichas.find((item) => item.id === scaleId);
+  const scale = allScalesComFichas.find((s) => s.id === scaleId);
 
   if (!scale) {
     return (
