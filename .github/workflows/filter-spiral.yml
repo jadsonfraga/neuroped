@@ -43,5 +43,8 @@ jobs:
       - name: Audit symptom lifecycle and last-complaint cleanup
         run: node --import tsx scripts/guards/audit-filter-lifecycle.mjs
 
+      - name: Audit full age-band compatibility
+        run: node --import tsx tests/clinical/test-auxiliary-age-band.mjs
+
       - name: Type-check filter and scale surfaces
         run: npm run check
