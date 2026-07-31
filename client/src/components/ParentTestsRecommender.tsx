@@ -22,10 +22,16 @@ import {
   type FilterRecommendationTone,
 } from "@/components/FilterRecommendationLinkCard";
 import {
-  recommendParentTests,
+  testesPaisRecommendations,
   getParentAssessmentPath,
   type ParentTestRecommendation,
 } from "@/data/testesPaisRecommendations";
+import {
+  formatRecommendationAgeRange,
+  getRecommendationAgeFitLabel,
+  rankRecommendationsForAgeBand,
+  type RecommendationAgeMatch,
+} from "@/data/recommendationAgeFit";
 
 const iconMap: Record<string, LucideIcon> = {
   Activity,
@@ -49,6 +55,7 @@ const sealMeta: Record<
     eyebrow: string;
     badge: string;
     tone: FilterRecommendationTone;
+    order: number;
   }
 > = {
   ouro: {
@@ -56,18 +63,21 @@ const sealMeta: Record<
     eyebrow: "selo ouro · começar aqui",
     badge: "Ouro",
     tone: "primary",
+    order: 0,
   },
   prata: {
     heading: "Escalas complementares",
     eyebrow: "selo prata · complementar",
     badge: "Prata",
     tone: "secondary",
+    order: 1,
   },
   bronze: {
     heading: "Escalas especializadas",
     eyebrow: "selo bronze · uso dirigido",
     badge: "Bronze",
     tone: "optional",
+    order: 2,
   },
 };
 
@@ -87,8 +97,12 @@ export function ParentTestsRecommender({
   const ageRange = faixasEtarias.find((age) => age.id === selectedAge);
   if (!ageRange) return null;
 
-  const ageMonths = Math.round((ageRange.min + ageRange.max) / 2);
-  const recommendations = recommendParentTests(selectedQueixas, ageMonths);
+  const recommendations = rankRecommendationsForAgeBand(
+    testesPaisRecommendations,
+    selectedQueixas,
+    { min: ageRange.min, max: ageRange.max },
+    (recommendation) => sealMeta[recommendation.seal].order,
+  );
   if (!recommendations.length) return null;
 
   const assessmentPath =
@@ -98,7 +112,9 @@ export function ParentTestsRecommender({
   const grouped = (["ouro", "prata", "bronze"] as const)
     .map((seal) => ({
       seal,
-      items: recommendations.filter((item) => item.seal === seal),
+      items: recommendations.filter(
+        (match) => match.recommendation.seal === seal,
+      ),
     }))
     .filter((group) => group.items.length > 0);
 
@@ -118,10 +134,15 @@ export function ParentTestsRecommender({
                 {assessmentPath.description}
               </p>
             </div>
-            <Badge variant="outline" className="w-fit shrink-0 gap-1.5">
-              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-              {assessmentPath.duration}
-            </Badge>
+            <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
+              <Badge variant="outline" className="w-fit gap-1.5">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                {assessmentPath.duration}
+              </Badge>
+              <Badge variant="secondary" className="w-fit">
+                Faixa analisada: {ageRange.label}
+              </Badge>
+            </div>
           </CardHeader>
         </Card>
       )}
@@ -150,10 +171,10 @@ export function ParentTestsRecommender({
               </h3>
             </div>
             <div role="list" className="grid gap-3 xl:grid-cols-2">
-              {items.map((test) => (
-                <div role="listitem" key={test.id}>
+              {items.map((match) => (
+                <div role="listitem" key={match.recommendation.id}>
                   <TestCard
-                    test={test}
+                    match={match}
                     tone={meta.tone}
                     eyebrow={meta.eyebrow}
                     sealLabel={meta.badge}
@@ -169,14 +190,16 @@ export function ParentTestsRecommender({
 }
 
 interface TestCardProps {
-  test: ParentTestRecommendation;
+  match: RecommendationAgeMatch<ParentTestRecommendation>;
   tone: FilterRecommendationTone;
   eyebrow: string;
   sealLabel: string;
 }
 
-function TestCard({ test, tone, eyebrow, sealLabel }: TestCardProps) {
+function TestCard({ match, tone, eyebrow, sealLabel }: TestCardProps) {
+  const test = match.recommendation;
   const Icon = iconMap[test.icon] ?? Activity;
+  const ageFitLabel = getRecommendationAgeFitLabel(match.ageFit);
 
   return (
     <FilterRecommendationLinkCard
@@ -189,9 +212,17 @@ function TestCard({ test, tone, eyebrow, sealLabel }: TestCardProps) {
       badges={[
         { label: sealLabel },
         { label: test.tempo, variant: "outline" },
+        {
+          label: formatRecommendationAgeRange(test.ageMin, test.ageMax),
+          variant: "outline",
+        },
+        {
+          label: ageFitLabel,
+          variant: match.ageFit === "full" ? "secondary" : "outline",
+        },
         { label: `Complementa: ${test.complementa}`, variant: "outline" },
       ]}
-      ariaLabel={`Abrir ${test.name}, ${eyebrow}`}
+      ariaLabel={`Abrir ${test.name}, ${eyebrow}. ${ageFitLabel}`}
       testId={`parent-test-${test.id}`}
     />
   );
