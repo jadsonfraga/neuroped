@@ -1,79 +1,456 @@
-// GUARD: o Filtro de Escalas só pode CITAR escalas que abrem por completo,
-// por extenso, com itens e respostas (aplicação preenchível de verdade).
+// AUDITORIA ESPIRAL DO FILTRO E DAS ESCALAS.
 //
-// Regra (fail-closed): toda escala do catálogo REAL do filtro
-// (opensInApp && isFullApp — o mesmo que filtro.tsx usa) precisa abrir como
-// ferramenta APLICÁVEL por UMA das vias verificadas:
-//   1. itens interativos (interactiveScaleItems / interactiveScales) → GenericScale/Runner;
-//   2. sistema de classificação (classificationScales) → ClassificationScale;
-//   3. rota dedicada cujo destino é uma PÁGINA DE APLICAÇÃO verificada (allowlist).
+// Este guard cobre cinco contratos de release:
+//   1. toda escala citável pelo filtro abre como aplicação real;
+//   2. recomendações auxiliares têm ids, idades, rotas e curadorias íntegras;
+//   3. sinais de queixas removidas não continuam influenciando o ranking;
+//   4. cards navegáveis não contêm controles interativos aninhados;
+//   5. os refinamentos visuais/acessíveis permanecem conectados ao gate oficial.
 //
-// Qualquer escala citável que não caia nessas vias é VIOLAÇÃO: seria uma ficha
-// técnica / página de referência entrando no filtro. O allowlist é explícito de
-// propósito: ao criar uma nova rota dedicada, é obrigatório verificar que ela
-// abre itens+respostas e adicioná-la aqui — nunca por acidente.
-import { pathToFileURL } from "node:url";
+// A auditoria acumula todos os achados antes de falhar, para evitar o ciclo
+// improdutivo de corrigir um único erro por execução.
+import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const imp = (r) => import(pathToFileURL(resolve(root, r)).href);
+const imp = (relativePath) =>
+  import(pathToFileURL(resolve(root, relativePath)).href);
+const read = (relativePath) => readFileSync(resolve(root, relativePath), "utf8");
 
-const { allScales } = await imp("client/src/data/scaleFilter.ts");
-const { mergeFilterableCatalog } = await imp("client/src/data/filterableCatalog.ts");
-const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
-const { getImplementationStatus } = await imp("client/src/data/advancedFilterLogic.ts");
-const { interactiveScaleItems } = await imp("client/src/data/interactiveScaleItems.ts");
-const { interactiveScales } = await imp("client/src/data/interactiveScales.ts");
+const {
+  allScales,
+  queixas,
+} = await imp("client/src/data/scaleFilter.ts");
+const { mergeFilterableCatalog } = await imp(
+  "client/src/data/filterableCatalog.ts"
+);
+const { noCostWorldScales } = await imp(
+  "client/src/data/noCostWorldScales.ts"
+);
+const { getImplementationStatus } = await imp(
+  "client/src/data/advancedFilterLogic.ts"
+);
+const { interactiveScaleItems } = await imp(
+  "client/src/data/interactiveScaleItems.ts"
+);
+const { interactiveScales } = await imp(
+  "client/src/data/interactiveScales.ts"
+);
+const {
+  testesDiretosRecommendations,
+  clinicalPaths,
+  recommendDirectTests,
+} = await imp("client/src/data/testesDiretosRecommendations.ts");
+const {
+  testesPaisRecommendations,
+  parentAssessmentPaths,
+  recommendParentTests,
+} = await imp("client/src/data/testesPaisRecommendations.ts");
+const { getAllSignalsForQueixa } = await imp(
+  "client/src/data/signalsAndSymptoms.ts"
+);
+const { getOrphanFilterSignalIds } = await imp(
+  "client/src/data/filterSignalState.ts"
+);
+
 let classificationScales = {};
-try { ({ classificationScales } = await imp("client/src/data/classificationScales.ts")); } catch { /* opcional */ }
-
-const INTERACTIVE = new Set([...Object.keys(interactiveScaleItems || {}), ...Object.keys(interactiveScales || {})]);
-const CLASSIF = new Set(Object.keys(classificationScales || {}));
-
-// Espelha EXATAMENTE filtro.tsx (opensInApp / isFullApp / opensAsUsableTool).
-const allIds = new Set(allScales.map((s) => s.id));
-const resolveAppRoute = (s) => s.appRoute ? s.appRoute : (allIds.has(s.id) ? `/generic-scale/${s.id}` : (s.id.startsWith("world-") ? "/escalas-neuropsiquiatria" : null));
-const hasDedicatedRoute = (s) => { const r = s.appRoute; return !!r && !r.startsWith("/generic-scale/") && r !== "/escalas-neuropsiquiatria" && r !== "/filtro"; };
-const opensAsUsableTool = (s) => hasDedicatedRoute(s) || INTERACTIVE.has(s.id);
-const opensInApp = (s) => { const r = resolveAppRoute(s); return !!r && r !== "/escalas-neuropsiquiatria"; };
-const isFullApp = (s) => s.applicationMode !== "psicoeducacao" && getImplementationStatus(s) === "complete" && opensAsUsableTool(s);
-
-const uniq = (arr) => { const seen = new Set(); return arr.filter((s) => (seen.has(s.id) ? false : (seen.add(s.id), true))); };
-const catalog = uniq([...mergeFilterableCatalog(allScales), ...noCostWorldScales]).filter((s) => opensInApp(s) && isFullApp(s));
-
-// Allowlist de ROTAS DEDICADAS verificadas como aplicação preenchível (itens+respostas
-// ou tarefa/diário/classificação com registro). Verificadas manualmente.
-const VERIFIED_INTERACTIVE_ROUTES = new Set([
-  "/testes-diretos", "/testes-reconhecimento", "/testes-academicos",
-  "/mchat", "/snap", "/vanderbilt", "/sdq", "/scared", "/phqa", "/cssrs",
-  "/ygtss", "/crafft", "/denver", "/asq3", "/portage", "/cars", "/tea",
-  "/tea-comportamentos", "/conners", "/brief2", "/cbcl", "/abc", "/cdi2",
-  "/epilepsia", "/gmfcs", "/espasticidade", "/cshq", "/cefaleia", "/pedsql",
-  "/ecar-si", "/pant", "/emdi", "/eaf", "/pdae", "/ecsm", "/ips", "/edi",
-  "/eai", "/easi", "/ems", "/etare", "/eaah", "/ballard", "/tde2", "/ahsd-tea",
-  "/eusm10", "/aq10", "/aq50", "/psc17", "/inventarios-auto",
-]);
-const isVerifiedClassificationRoute = (r) => r.startsWith("/classificacao/");
+try {
+  ({ classificationScales } = await imp(
+    "client/src/data/classificationScales.ts"
+  ));
+} catch {
+  // O catálogo de classificação é opcional em builds reduzidos.
+}
 
 const violations = [];
-for (const s of catalog) {
-  const viaItems = INTERACTIVE.has(s.id);
-  const viaClass = CLASSIF.has(s.id) || isVerifiedClassificationRoute(s.appRoute || "");
-  const viaRoute = hasDedicatedRoute(s) && VERIFIED_INTERACTIVE_ROUTES.has(s.appRoute);
-  if (!viaItems && !viaClass && !viaRoute) {
-    violations.push(`${s.id} (rota=${resolveAppRoute(s)}, status=${getImplementationStatus(s)}) — não abre por itens, classificação nem rota dedicada verificada`);
+const fail = (message) => violations.push(message);
+const check = (condition, message) => {
+  if (!condition) fail(message);
+};
+
+const unique = (items) => {
+  const seen = new Set();
+  return items.filter((item) =>
+    seen.has(item.id) ? false : (seen.add(item.id), true)
+  );
+};
+
+// ───────────────────────── 1. Catálogo preenchível ─────────────────────────
+const INTERACTIVE = new Set([
+  ...Object.keys(interactiveScaleItems || {}),
+  ...Object.keys(interactiveScales || {}),
+]);
+const CLASSIFICATION = new Set(Object.keys(classificationScales || {}));
+const allScaleIds = new Set(allScales.map((scale) => scale.id));
+
+const resolveAppRoute = (scale) =>
+  scale.appRoute
+    ? scale.appRoute
+    : allScaleIds.has(scale.id)
+      ? `/generic-scale/${scale.id}`
+      : scale.id.startsWith("world-")
+        ? "/escalas-neuropsiquiatria"
+        : null;
+const hasDedicatedRoute = (scale) => {
+  const route = scale.appRoute;
+  return (
+    Boolean(route) &&
+    !route.startsWith("/generic-scale/") &&
+    route !== "/escalas-neuropsiquiatria" &&
+    route !== "/filtro"
+  );
+};
+const opensAsUsableTool = (scale) =>
+  hasDedicatedRoute(scale) || INTERACTIVE.has(scale.id);
+const opensInApp = (scale) => {
+  const route = resolveAppRoute(scale);
+  return Boolean(route) && route !== "/escalas-neuropsiquiatria";
+};
+const isFullApp = (scale) =>
+  scale.applicationMode !== "psicoeducacao" &&
+  getImplementationStatus(scale) === "complete" &&
+  opensAsUsableTool(scale);
+
+const filterCatalog = unique([
+  ...mergeFilterableCatalog(allScales),
+  ...noCostWorldScales,
+]).filter((scale) => opensInApp(scale) && isFullApp(scale));
+
+const VERIFIED_INTERACTIVE_ROUTES = new Set([
+  "/testes-diretos",
+  "/testes-reconhecimento",
+  "/testes-academicos",
+  "/mchat",
+  "/snap",
+  "/vanderbilt",
+  "/sdq",
+  "/scared",
+  "/phqa",
+  "/cssrs",
+  "/ygtss",
+  "/crafft",
+  "/denver",
+  "/asq3",
+  "/portage",
+  "/cars",
+  "/tea",
+  "/tea-comportamentos",
+  "/conners",
+  "/brief2",
+  "/cbcl",
+  "/abc",
+  "/cdi2",
+  "/epilepsia",
+  "/gmfcs",
+  "/espasticidade",
+  "/cshq",
+  "/cefaleia",
+  "/pedsql",
+  "/ecar-si",
+  "/pant",
+  "/emdi",
+  "/eaf",
+  "/pdae",
+  "/ecsm",
+  "/ips",
+  "/edi",
+  "/eai",
+  "/easi",
+  "/ems",
+  "/etare",
+  "/eaah",
+  "/ballard",
+  "/tde2",
+  "/ahsd-tea",
+  "/eusm10",
+  "/aq10",
+  "/aq50",
+  "/psc17",
+  "/inventarios-auto",
+]);
+const isVerifiedClassificationRoute = (route) =>
+  route.startsWith("/classificacao/");
+
+for (const scale of filterCatalog) {
+  const viaItems = INTERACTIVE.has(scale.id);
+  const viaClassification =
+    CLASSIFICATION.has(scale.id) ||
+    isVerifiedClassificationRoute(scale.appRoute || "");
+  const viaRoute =
+    hasDedicatedRoute(scale) &&
+    VERIFIED_INTERACTIVE_ROUTES.has(scale.appRoute);
+  if (!viaItems && !viaClassification && !viaRoute) {
+    fail(
+      `escala ${scale.id}: citável pelo filtro, mas sem itens, classificação ou rota dedicada verificada (rota=${resolveAppRoute(scale)})`,
+    );
   }
 }
 
-console.log(`[filter-fillable] catálogo do filtro = ${catalog.length} escalas citáveis`);
-console.log(`[filter-fillable]   ${catalog.filter((s) => INTERACTIVE.has(s.id)).length} por itens interativos · ${catalog.filter((s) => hasDedicatedRoute(s)).length} por rota dedicada verificada`);
+// ───────────────────── 2. Recomendações e rotas auxiliares ──────────────────
+const appSource = read("client/src/App.tsx");
+const registeredRoutes = new Set(
+  [...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map(
+    (match) => match[1],
+  ),
+);
+
+function validateRecommendationSet(label, items) {
+  const ids = new Set();
+  for (const item of items) {
+    check(Boolean(item.id?.trim()), `${label}: recomendação sem id`);
+    check(!ids.has(item.id), `${label}: id duplicado ${item.id}`);
+    ids.add(item.id);
+    check(Boolean(item.name?.trim()), `${label}/${item.id}: nome ausente`);
+    check(
+      Number.isInteger(item.ageMin) &&
+        Number.isInteger(item.ageMax) &&
+        item.ageMin >= 0 &&
+        item.ageMax >= item.ageMin,
+      `${label}/${item.id}: faixa etária inválida ${item.ageMin}-${item.ageMax}`,
+    );
+    check(
+      Array.isArray(item.queixas) && item.queixas.length > 0,
+      `${label}/${item.id}: nenhuma queixa associada`,
+    );
+    check(Boolean(item.tempo?.trim()), `${label}/${item.id}: tempo ausente`);
+    check(
+      typeof item.razao === "string" && item.razao.trim().length >= 20,
+      `${label}/${item.id}: justificativa clínica insuficiente`,
+    );
+    check(
+      typeof item.route === "string" && item.route.startsWith("/"),
+      `${label}/${item.id}: rota inválida ${item.route}`,
+    );
+    check(item.route !== "/filtro", `${label}/${item.id}: loop para /filtro`);
+    check(
+      !item.route.includes("?"),
+      `${label}/${item.id}: rota contém estado transitório em query (${item.route})`,
+    );
+    check(
+      registeredRoutes.has(item.route),
+      `${label}/${item.id}: rota não registrada em App.tsx (${item.route})`,
+    );
+  }
+  return ids;
+}
+
+function validateCuratedPaths(label, paths, recommendationIds) {
+  const pathQueixas = new Set();
+  for (const path of paths) {
+    check(Boolean(path.queixa?.trim()), `${label}: caminho sem queixa`);
+    check(
+      !pathQueixas.has(path.queixa),
+      `${label}: queixa duplicada ${path.queixa}`,
+    );
+    pathQueixas.add(path.queixa);
+    check(Boolean(path.label?.trim()), `${label}/${path.queixa}: rótulo ausente`);
+    check(
+      Array.isArray(path.primaryTests) && path.primaryTests.length > 0,
+      `${label}/${path.queixa}: caminho sem testes primários`,
+    );
+    check(
+      new Set(path.primaryTests).size === path.primaryTests.length,
+      `${label}/${path.queixa}: teste primário duplicado`,
+    );
+    for (const id of path.primaryTests) {
+      check(
+        recommendationIds.has(id),
+        `${label}/${path.queixa}: referência inexistente ${id}`,
+      );
+    }
+  }
+}
+
+const directIds = validateRecommendationSet(
+  "testes diretos",
+  testesDiretosRecommendations,
+);
+const parentIds = validateRecommendationSet(
+  "escalas para pais",
+  testesPaisRecommendations,
+);
+validateCuratedPaths("caminhos diretos", clinicalPaths, directIds);
+validateCuratedPaths(
+  "caminhos parentais",
+  parentAssessmentPaths,
+  parentIds,
+);
+
+for (const item of testesDiretosRecommendations) {
+  const midpoint = Math.floor((item.ageMin + item.ageMax) / 2);
+  const selected = recommendDirectTests([item.queixas[0]], midpoint);
+  check(
+    selected.some((candidate) => candidate.id === item.id),
+    `testes diretos/${item.id}: recomendação inalcançável pela própria queixa e idade`,
+  );
+}
+for (const item of testesPaisRecommendations) {
+  const midpoint = Math.floor((item.ageMin + item.ageMax) / 2);
+  const selected = recommendParentTests([item.queixas[0]], midpoint);
+  check(
+    selected.some((candidate) => candidate.id === item.id),
+    `escalas para pais/${item.id}: recomendação inalcançável pela própria queixa e idade`,
+  );
+}
+
+// ───────────────────────── 3. Estado dos sintomas ──────────────────────────
+const signalFixture = queixas
+  .map((queixa) => ({
+    queixaId: queixa.id,
+    signals: getAllSignalsForQueixa(queixa.id),
+  }))
+  .find((fixture) => fixture.signals.length > 0);
+
+check(Boolean(signalFixture), "sinais: nenhuma queixa possui sinal auditável");
+if (signalFixture) {
+  const sampleSignalId = signalFixture.signals[0].id;
+  check(
+    getOrphanFilterSignalIds(
+      [signalFixture.queixaId],
+      [sampleSignalId],
+    ).length === 0,
+    "sinais: um sinal válido foi classificado como órfão",
+  );
+  check(
+    getOrphanFilterSignalIds([], [sampleSignalId]).join(",") === sampleSignalId,
+    "sinais: um sinal oculto permaneceu ativo depois de remover a queixa",
+  );
+}
+
+// ─────────────────────── 4. Semântica e estética estável ────────────────────
+const directSource = read(
+  "client/src/components/DirectTestsRecommender.tsx",
+);
+const parentSource = read(
+  "client/src/components/ParentTestsRecommender.tsx",
+);
+const sharedCardSource = read(
+  "client/src/components/FilterRecommendationLinkCard.tsx",
+);
+const symptomSource = read(
+  "client/src/components/PopularSymptomPicker.tsx",
+);
+const podiumSource = read(
+  "client/src/components/OPBRecommendationCards.tsx",
+);
+const fichaSource = read("client/src/components/ScaleFichaPage.tsx");
+
+for (const [label, source] of [
+  ["testes diretos", directSource],
+  ["escalas para pais", parentSource],
+]) {
+  check(
+    source.includes("FilterRecommendationLinkCard"),
+    `${label}: deixou de usar o card navegável canônico`,
+  );
+  check(!/<a\b/.test(source), `${label}: âncora manual reintroduzida`);
+  check(!/<Button\b/.test(source), `${label}: botão aninhável reintroduzido`);
+  check(
+    source.includes("role=\"list\"") && source.includes("role=\"listitem\""),
+    `${label}: agrupamento semântico de recomendações ausente`,
+  );
+}
+check(
+  directSource.includes("href={test.route}"),
+  "testes diretos: card deixou de abrir a rota real do teste",
+);
+check(
+  !directSource.includes("/testes-diretos?"),
+  "testes diretos: redirecionamento intermediário por idade voltou",
+);
+
+check(
+  (sharedCardSource.match(/<Link\b/g) || []).length === 1,
+  "card canônico: deve existir exatamente um link interativo",
+);
+check(
+  !/<Button\b|<a\b/.test(sharedCardSource),
+  "card canônico: controle interativo aninhado detectado",
+);
+check(
+  sharedCardSource.includes("focus-visible:ring-2"),
+  "card canônico: foco visível removido",
+);
+check(
+  sharedCardSource.includes("<div className=\"min-w-0 flex-1\"") &&
+    !sharedCardSource.includes("<span className=\"min-w-0 flex-1\""),
+  "card canônico: contêiner de bloco inválido voltou a envolver badges",
+);
+
+check(
+  symptomSource.includes("getOrphanFilterSignalIds") &&
+    symptomSource.includes("useEffect"),
+  "sintomas: limpeza automática de sinais órfãos desconectada",
+);
+check(
+  symptomSource.includes("aria-pressed={active}") &&
+    symptomSource.includes("focus-visible:ring-2"),
+  "sintomas: estados acessíveis ou foco visível removidos",
+);
+
+check(
+  podiumSource.includes("data-testid=\"opb-recommendation-podium\"") &&
+    podiumSource.includes("data-tier={seal}"),
+  "pódio: identificadores semânticos removidos",
+);
+check(
+  podiumSource.includes("onSelectScale &&"),
+  "pódio: ação voltou a parecer disponível sem callback",
+);
+check(
+  !podiumSource.includes("h-[calc("),
+  "pódio: altura voltou a depender de calc CSS frágil",
+);
+check(
+  podiumSource.includes("flex h-full flex-col") &&
+    podiumSource.includes("flex flex-1 flex-col"),
+  "pódio: alinhamento responsivo de alturas removido",
+);
+
+check(
+  fichaSource.includes("export function formatScaleAgeRange") &&
+    fichaSource.includes("maxMonths < 24"),
+  "ficha: precisão de idade em meses removida",
+);
+check(
+  !fichaSource.includes("function anos(") &&
+    !/Math\.floor\(min\s*\/\s*12\)/.test(fichaSource),
+  "ficha: arredondamento regressivo para anos inteiros reintroduzido",
+);
+check(
+  fichaSource.includes("Button asChild") &&
+    fichaSource.includes('copyStatus === "error"'),
+  "ficha: ação semântica ou feedback de cópia removido",
+);
+
+// ─────────────────────────── 5. Gate oficial ────────────────────────────────
+const packageJson = JSON.parse(read("package.json"));
+check(
+  packageJson.scripts?.["verify:release"]?.includes(
+    "audit:filter-fillable",
+  ),
+  "release: audit:filter-fillable não está conectado ao verify:release",
+);
+
+console.log(
+  `[filter-spiral] catálogo=${filterCatalog.length} · diretos=${testesDiretosRecommendations.length} · parentais=${testesPaisRecommendations.length}`,
+);
+console.log(
+  `[filter-spiral] itens interativos=${filterCatalog.filter((scale) => INTERACTIVE.has(scale.id)).length} · rotas dedicadas=${filterCatalog.filter(hasDedicatedRoute).length}`,
+);
 
 if (violations.length > 0) {
-  console.error(`\n[filter-fillable] ✗ ${violations.length} escala(s) citável(is) pelo filtro que NÃO abrem por completo (itens+respostas):`);
-  for (const v of violations) console.error("  · " + v);
-  console.error("\nCorrija: dê itens interativos à escala, ou tire-a do filtro (rota /generic-scale ficha), ou — se a rota dedicada É uma aplicação preenchível verificada — adicione a rota ao allowlist VERIFIED_INTERACTIVE_ROUTES.");
+  console.error(
+    `\n[filter-spiral] ✗ ${violations.length} achado(s) de regressão:`,
+  );
+  for (const violation of violations) console.error(`  · ${violation}`);
+  console.error(
+    "\nCorrija todos os achados e execute novamente npm run audit:filter-fillable.",
+  );
   process.exit(1);
 }
-console.log("[filter-fillable] ✓ toda escala citável pelo filtro abre por completo (itens/respostas ou aplicação preenchível verificada).");
+
+console.log(
+  "[filter-spiral] ✓ filtro, recomendações, sinais, fichas e contratos visuais convergiram sem achados automatizados.",
+);
