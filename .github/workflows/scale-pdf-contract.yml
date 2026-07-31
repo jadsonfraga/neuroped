@@ -1,0 +1,72 @@
+name: Scale PDF Contract
+
+on:
+  pull_request:
+    paths:
+      - "client/src/data/escalasIpn*.ts"
+      - "client/src/data/interactiveScaleItemsIpn*.ts"
+      - "client/src/data/generatedScalePdfRegistry.ts"
+      - "tests/clinical/test-ipn-*-filter.mjs"
+      - "tests/clinical/test-generated-scale-pdf-registry.mjs"
+      - "docs/PIPELINE_ESCALAS_PDF_AUTORAIS.md"
+      - ".github/workflows/scale-pdf-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "client/src/data/escalasIpn*.ts"
+      - "client/src/data/interactiveScaleItemsIpn*.ts"
+      - "client/src/data/generatedScalePdfRegistry.ts"
+      - "tests/clinical/test-ipn-*-filter.mjs"
+      - "tests/clinical/test-generated-scale-pdf-registry.mjs"
+      - "docs/PIPELINE_ESCALAS_PDF_AUTORAIS.md"
+      - ".github/workflows/scale-pdf-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-scale-pdfs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Dedicated IPN filter regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tests=(tests/clinical/test-ipn-*-filter.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "Nenhum teste IPN encontrado."
+            exit 1
+          fi
+          for test_file in "${tests[@]}"; do
+            echo "Executando ${test_file}"
+            node --import tsx "${test_file}"
+          done
+
+      - name: Generated PDF registry contract
+        run: node --import tsx tests/clinical/test-generated-scale-pdf-registry.mjs
+
+      - name: Safety metadata
+        run: npm run validate:safety
+
+      - name: Open access anti-regression
+        run: npm run guard:open-access
+
+      - name: Client build
+        run: npm run build:client
