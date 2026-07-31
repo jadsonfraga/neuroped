@@ -85,7 +85,7 @@ export const ipnTdahFe200Items: Record<string, InteractiveScaleDef> = {
     infoBox:
       "Roteiro autoral de anamnese pré-consulta. Os 18 campos organizam desenvolvimento, curso, prejuízo, sono, escola, comorbidades, forças e red flags. Não gera escore e não substitui entrevista médica.",
     labels: IPN_TDAH_FE_TEXT_LABELS,
-    optionPoints: [0],
+    optionPoints: [0, 0],
     scoreDirection: "higher_worse",
     totalLabel: "Roteiro qualitativo — Anamnese TDAH/FE 18",
     bands: [...IPN_TDAH_FE_TEXT_BANDS],
@@ -96,7 +96,7 @@ export const ipnTdahFe200Items: Record<string, InteractiveScaleDef> = {
     infoBox:
       "Roteiro autoral de diagnóstico diferencial. Para cada hipótese, registre achados a favor e contra, curso temporal, coexistência e próximo passo. Diferencial não significa exclusão automática de TDAH.",
     labels: IPN_TDAH_FE_TEXT_LABELS,
-    optionPoints: [0],
+    optionPoints: [0, 0],
     scoreDirection: "higher_worse",
     totalLabel: "Roteiro qualitativo — Diferenciais TDAH/FE 20",
     bands: [...IPN_TDAH_FE_TEXT_BANDS],
@@ -107,7 +107,7 @@ export const ipnTdahFe200Items: Record<string, InteractiveScaleDef> = {
     infoBox:
       "Ferramentas autorais de síntese, exame, documentação, devolutiva e plano de segurança. Os campos apoiam o raciocínio e a comunicação clínica; a decisão final permanece com o médico responsável.",
     labels: IPN_TDAH_FE_TEXT_LABELS,
-    optionPoints: [0],
+    optionPoints: [0, 0],
     scoreDirection: "higher_worse",
     totalLabel: "Roteiro qualitativo — Síntese TDAH/FE 15",
     bands: [...IPN_TDAH_FE_TEXT_BANDS],
