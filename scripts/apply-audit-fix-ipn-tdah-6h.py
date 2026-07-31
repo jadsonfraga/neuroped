@@ -86,8 +86,7 @@ replace_exact(
       : requiredItems.length === 0
         ? 100
         : (requiredAnswered / requiredItems.length) * 100;
-  const allAnswered =
-    total > 0 && requiredAnswered === requiredItems.length;
+  const allAnswered = total > 0 && allItems.every(isCompleteForSubmit);
   const missingCount = Math.max(
     requiredItems.length - requiredAnswered,
     0,
@@ -126,7 +125,11 @@ replace_exact(
     generic,
     "submitAttempted && !itemAnswered\n",
     "submitAttempted && !itemComplete\n",
-    expected=2,
+)
+replace_exact(
+    generic,
+    "submitAttempted && !itemAnswered && (",
+    "submitAttempted && !itemComplete && (",
 )
 replace_exact(generic, ": itemAnswered\n", ": itemHasResponse\n")
 
