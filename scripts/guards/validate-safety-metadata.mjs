@@ -25,21 +25,35 @@
  * verbalRequirement / literacyRequirement) sempre vence o regex, então a correção
  * de um caso mal classificado é DADO revisado, não um ajuste de regex.
  *
+ * Volumes grandes podem manter uma extensão explícita do baseline em
+ * `safety-classification-*.json`; duplicatas entre arquivos são rejeitadas.
+ *
  * Para reconhecer conscientemente a classificação atual (após revisar):
  *   UPDATE_SAFETY_BASELINE=1 npm run validate:safety
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+} from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
 const BASELINE_PATH = resolve(__dirname, "safety-classification-baseline.json");
+const EXTENSION_PATTERN = /^safety-classification-(?!baseline\.json$).+\.json$/;
 
 const { allScales } = await import(
   pathToFileURL(resolve(repoRoot, "client/src/data/scaleFilter.ts")).href
 );
-const { isSuicideInstrument, isPsychosisInstrument, getVerbalRequirement, getLiteracyRequirement } = await import(
+const {
+  isSuicideInstrument,
+  isPsychosisInstrument,
+  getVerbalRequirement,
+  getLiteracyRequirement,
+} = await import(
   pathToFileURL(resolve(repoRoot, "client/src/data/advancedFilterLogic.ts")).href
 );
 
@@ -59,19 +73,57 @@ for (const scale of allScales) {
   current[scale.id] = classify(scale);
 }
 
+/**
+ * Extensões explícitas permitem revisar grandes volumes em arquivo próprio sem
+ * enfraquecer o contrato: os IDs continuam congelados e divergências falham.
+ */
+const extensionFiles = readdirSync(__dirname)
+  .filter((name) => EXTENSION_PATTERN.test(name))
+  .sort();
+/** @type {Record<string,string>} */
+const extensionBaseline = {};
+for (const file of extensionFiles) {
+  const parsed = JSON.parse(readFileSync(resolve(__dirname, file), "utf8"));
+  for (const [id, code] of Object.entries(parsed)) {
+    if (id in extensionBaseline) {
+      console.error(`[safety] ID duplicado entre extensões: ${id}`);
+      process.exit(1);
+    }
+    extensionBaseline[id] = String(code);
+  }
+}
+
 const updating = process.env.UPDATE_SAFETY_BASELINE === "1";
 
 if (!existsSync(BASELINE_PATH) || updating) {
-  const ordered = Object.fromEntries(Object.keys(current).sort().map((k) => [k, current[k]]));
-  writeFileSync(BASELINE_PATH, JSON.stringify(ordered, null, 2) + "\n");
+  // IDs revisados em extensões permanecem nelas; evita duplicação após refresh.
+  const extensionIds = new Set(Object.keys(extensionBaseline));
+  const mainOnly = Object.fromEntries(
+    Object.keys(current)
+      .filter((id) => !extensionIds.has(id))
+      .sort()
+      .map((id) => [id, current[id]]),
+  );
+  writeFileSync(BASELINE_PATH, JSON.stringify(mainOnly, null, 2) + "\n");
   console.log(
-    `[safety] baseline ${existsSync(BASELINE_PATH) && !updating ? "criado" : "regenerado"} com ${Object.keys(current).length} escalas → ${BASELINE_PATH.replace(repoRoot + "/", "")}`
+    `[safety] baseline ${existsSync(BASELINE_PATH) && !updating ? "criado" : "regenerado"} com ${Object.keys(mainOnly).length} escalas + ${Object.keys(extensionBaseline).length} em extensões → ${BASELINE_PATH.replace(repoRoot + "/", "")}`,
   );
   process.exit(0);
 }
 
 /** @type {Record<string,string>} */
-const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+const mainBaseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+/** @type {Record<string,string>} */
+const baseline = { ...mainBaseline };
+for (const [id, code] of Object.entries(extensionBaseline)) {
+  if (id in baseline) {
+    console.error(
+      `[safety] ID ${id} aparece simultaneamente no baseline principal e em extensão. Remova a duplicata.`,
+    );
+    process.exit(1);
+  }
+  baseline[id] = code;
+}
 
 const CODE = { 0: "não", 1: "sim" };
 function human(code) {
@@ -111,11 +163,13 @@ if (removed.length) {
 if (changed.length || added.length) {
   console.error(
     `\n[safety] Revise clinicamente cada caso acima. Se a classificação está CORRETA, congele-a com:\n` +
-    `    UPDATE_SAFETY_BASELINE=1 npm run validate:safety\n` +
-    `Se estiver ERRADA, corrija com metadado EXPLÍCITO na escala (suicideRiskInstrument /\n` +
-    `psychosisRiskInstrument / verbalRequirement / literacyRequirement) — não ajuste o regex.\n`
+      `    UPDATE_SAFETY_BASELINE=1 npm run validate:safety\n` +
+      `Se estiver ERRADA, corrija com metadado EXPLÍCITO na escala (suicideRiskInstrument /\n` +
+      `psychosisRiskInstrument / verbalRequirement / literacyRequirement) — não ajuste o regex.\n`,
   );
   process.exit(1);
 }
 
-console.log(`[safety] ✓ classificação de segurança íntegra em ${Object.keys(current).length} escalas (nenhuma mudança vs baseline).`);
+console.log(
+  `[safety] ✓ classificação de segurança íntegra em ${Object.keys(current).length} escalas (baseline principal + ${extensionFiles.length} extensão(ões)).`,
+);
