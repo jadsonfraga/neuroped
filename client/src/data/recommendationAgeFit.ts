@@ -24,16 +24,32 @@ export interface RecommendationAgeMatch<
   complaintMatches: number;
 }
 
-function isValidMonth(value: number): boolean {
-  return Number.isInteger(value) && value >= 0;
+/**
+ * O catálogo separa bandas contíguas com precisão de centésimos de mês:
+ * 24–47.99 representa exatamente 24 meses e a banda seguinte começa em 48.
+ * Fazer a aritmética em inteiros evita tanto o antigo +1 aplicado a decimais
+ * quanto ruído de ponto flutuante em comparações e razões de cobertura.
+ */
+const AGE_ENDPOINT_SCALE = 100;
+
+function isValidMonthEndpoint(value: number): boolean {
+  return Number.isFinite(value) && value >= 0;
+}
+
+function toAgeUnits(value: number): number {
+  return Math.round(value * AGE_ENDPOINT_SCALE);
+}
+
+function inclusiveIntervalUnits(min: number, max: number): number {
+  return Math.max(0, toAgeUnits(max) - toAgeUnits(min) + 1);
 }
 
 export function isValidRecommendationAgeBand(
   band: RecommendationAgeBand,
 ): boolean {
   return (
-    isValidMonth(band.min) &&
-    isValidMonth(band.max) &&
+    isValidMonthEndpoint(band.min) &&
+    isValidMonthEndpoint(band.max) &&
     band.max >= band.min
   );
 }
@@ -44,35 +60,46 @@ export function classifyRecommendationAgeFit(
   selectedBand: RecommendationAgeBand,
 ): RecommendationAgeFitResult {
   if (
-    !isValidMonth(recommendationMin) ||
-    !isValidMonth(recommendationMax) ||
+    !isValidMonthEndpoint(recommendationMin) ||
+    !isValidMonthEndpoint(recommendationMax) ||
     recommendationMax < recommendationMin ||
     !isValidRecommendationAgeBand(selectedBand)
   ) {
     return "none";
   }
 
+  const recommendationMinUnits = toAgeUnits(recommendationMin);
+  const recommendationMaxUnits = toAgeUnits(recommendationMax);
+  const selectedMinUnits = toAgeUnits(selectedBand.min);
+  const selectedMaxUnits = toAgeUnits(selectedBand.max);
+
   if (
-    recommendationMin <= selectedBand.min &&
-    recommendationMax >= selectedBand.max
+    recommendationMinUnits <= selectedMinUnits &&
+    recommendationMaxUnits >= selectedMaxUnits
   ) {
     return "full";
   }
 
-  return recommendationMax >= selectedBand.min &&
-    recommendationMin <= selectedBand.max
+  return recommendationMaxUnits >= selectedMinUnits &&
+    recommendationMinUnits <= selectedMaxUnits
     ? "partial"
     : "none";
 }
 
-function overlapMonths(
+function overlapAgeUnits(
   recommendationMin: number,
   recommendationMax: number,
   selectedBand: RecommendationAgeBand,
 ): number {
-  const start = Math.max(recommendationMin, selectedBand.min);
-  const end = Math.min(recommendationMax, selectedBand.max);
-  return Math.max(0, end - start + 1);
+  const startUnits = Math.max(
+    toAgeUnits(recommendationMin),
+    toAgeUnits(selectedBand.min),
+  );
+  const endUnits = Math.min(
+    toAgeUnits(recommendationMax),
+    toAgeUnits(selectedBand.max),
+  );
+  return Math.max(0, endUnits - startUnits + 1);
 }
 
 /**
@@ -99,7 +126,7 @@ export function rankRecommendationsForAgeBand<
   }
 
   const selected = new Set(selectedQueixas);
-  const bandSpan = selectedBand.max - selectedBand.min + 1;
+  const bandUnits = inclusiveIntervalUnits(selectedBand.min, selectedBand.max);
 
   return recommendations
     .map((recommendation): RecommendationAgeMatch<T> | null => {
@@ -115,7 +142,7 @@ export function rankRecommendationsForAgeBand<
       );
       if (ageFit === "none") return null;
 
-      const overlap = overlapMonths(
+      const overlapUnits = overlapAgeUnits(
         recommendation.ageMin,
         recommendation.ageMax,
         selectedBand,
@@ -123,8 +150,8 @@ export function rankRecommendationsForAgeBand<
       return {
         recommendation,
         ageFit,
-        overlapMonths: overlap,
-        coverageRatio: overlap / bandSpan,
+        overlapMonths: overlapUnits / AGE_ENDPOINT_SCALE,
+        coverageRatio: overlapUnits / bandUnits,
         complaintMatches,
       };
     })

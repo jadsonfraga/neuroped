@@ -7,8 +7,10 @@ import {
   classifyRecommendationAgeFit,
   formatRecommendationAgeRange,
   getRecommendationAgeFitLabel,
+  isValidRecommendationAgeBand,
   rankRecommendationsForAgeBand,
 } from "../../client/src/data/recommendationAgeFit.ts";
+import { faixasEtarias } from "../../client/src/data/scaleFilter.ts";
 import {
   testesDiretosRecommendations,
 } from "../../client/src/data/testesDiretosRecommendations.ts";
@@ -44,6 +46,100 @@ assert.equal(
   "none",
   "banda invertida deve falhar fechada",
 );
+assert.equal(
+  classifyRecommendationAgeFit(0, 216, { min: 36, max: 47.99 }),
+  "full",
+  "limite fracionário canônico deve ser aceito",
+);
+assert.equal(
+  classifyRecommendationAgeFit(0, 216, { min: Number.NaN, max: 47.99 }),
+  "none",
+  "limite não finito deve falhar fechado",
+);
+
+const fractionalBands = faixasEtarias.filter(
+  (band) => !Number.isInteger(band.min) || !Number.isInteger(band.max),
+);
+assert.ok(
+  fractionalBands.length > 0,
+  "fixture real deve conter limites fracionários para impedir falso verde",
+);
+
+const syntheticUniversalRecommendation = [
+  {
+    id: "fixture-universal",
+    name: "Fixture universal",
+    ageMin: 0,
+    ageMax: 216,
+    queixas: ["fixture"],
+    priority: 0,
+  },
+];
+
+for (const band of faixasEtarias) {
+  assert.equal(
+    isValidRecommendationAgeBand(band),
+    true,
+    `faixa real ${band.id} (${band.min}-${band.max}) foi rejeitada`,
+  );
+  const matches = rankRecommendationsForAgeBand(
+    syntheticUniversalRecommendation,
+    ["fixture"],
+    band,
+    (recommendation) => recommendation.priority,
+  );
+  assert.equal(
+    matches.length,
+    1,
+    `faixa real ${band.id} apagou uma recomendação universal`,
+  );
+  assert.equal(
+    matches[0].ageFit,
+    "full",
+    `faixa real ${band.id} deixou de ser reconhecida integralmente`,
+  );
+  assert.equal(
+    matches[0].coverageRatio,
+    1,
+    `faixa real ${band.id} produziu cobertura diferente de 100%`,
+  );
+}
+
+const canonicalPartialMatches = rankRecommendationsForAgeBand(
+  [
+    {
+      id: "fixture-partial",
+      name: "Fixture parcial",
+      ageMin: 36,
+      ageMax: 144,
+      queixas: ["fixture"],
+      priority: 0,
+    },
+  ],
+  ["fixture"],
+  { min: 24, max: 47.99 },
+  (recommendation) => recommendation.priority,
+);
+assert.equal(
+  canonicalPartialMatches.length,
+  1,
+  "fixture parcial real deve permanecer recomendável",
+);
+assert.equal(
+  canonicalPartialMatches[0].ageFit,
+  "partial",
+  "fixture 36–144 deve ser parcial na faixa 24–47.99",
+);
+assert.equal(
+  canonicalPartialMatches[0].overlapMonths,
+  12,
+  "sobreposição 36–47.99 deve representar exatamente 12 meses",
+);
+assert.equal(
+  canonicalPartialMatches[0].coverageRatio,
+  0.5,
+  "12 meses dentro de uma faixa de 24 meses devem produzir 50%",
+);
 
 const directPriority = { primaria: 0, secundaria: 1, complementar: 2 };
 const directMatches = rankRecommendationsForAgeBand(
@@ -59,7 +155,9 @@ assert.equal(
   "dentro da mesma prioridade, cobertura integral deve preceder cobertura parcial",
 );
 assert.equal(
-  directMatches.find((match) => match.recommendation.id === "atencao-concentracao")?.ageFit,
+  directMatches.find(
+    (match) => match.recommendation.id === "atencao-concentracao",
+  )?.ageFit,
   "partial",
   "atenção 4–12a deve ser rotulada como parcial numa banda que começa aos 3a",
 );
@@ -78,15 +176,23 @@ const parentMatches = rankRecommendationsForAgeBand(
 const parentGold = parentMatches.filter(
   (match) => match.recommendation.seal === "ouro",
 );
-assert.ok(parentGold.length >= 3, "fixture parental deve produzir ouro integral e parcial");
-const firstPartialGold = parentGold.findIndex((match) => match.ageFit === "partial");
-const lastFullGold = parentGold.map((match) => match.ageFit).lastIndexOf("full");
+assert.ok(
+  parentGold.length >= 3,
+  "fixture parental deve produzir ouro integral e parcial",
+);
+const firstPartialGold = parentGold.findIndex(
+  (match) => match.ageFit === "partial",
+);
+const lastFullGold = parentGold
+  .map((match) => match.ageFit)
+  .lastIndexOf("full");
 assert.ok(
   firstPartialGold > lastFullGold,
   "dentro do selo Ouro, compatibilidade integral deve vir antes da parcial",
 );
 assert.equal(
-  parentMatches.find((match) => match.recommendation.id === "asq3")?.ageFit,
+  parentMatches.find((match) => match.recommendation.id === "asq3")
+    ?.ageFit,
   "partial",
   "ASQ-3 deve declarar cobertura parcial quando a banda começa antes de 36 meses",
 );
@@ -110,6 +216,7 @@ assert.equal(
 
 const directSource = read("client/src/components/DirectTestsRecommender.tsx");
 const parentSource = read("client/src/components/ParentTestsRecommender.tsx");
+const ageFitSource = read("client/src/data/recommendationAgeFit.ts");
 const workflowSource = read(".github/workflows/filter-spiral.yml");
 
 for (const [label, source] of [
@@ -138,6 +245,26 @@ for (const [label, source] of [
   );
 }
 
+assert.doesNotMatch(
+  ageFitSource,
+  /Number\.isInteger\(value\)/,
+  "validação inteira reintroduzida e incompatível com as faixas reais",
+);
+assert.match(
+  ageFitSource,
+  /Number\.isFinite\(value\)/,
+  "validação de limites finitos foi removida",
+);
+assert.match(
+  ageFitSource,
+  /AGE_ENDPOINT_SCALE = 100/,
+  "aritmética em centésimos de mês deixou de ser explícita",
+);
+assert.match(
+  ageFitSource,
+  /overlapUnits \/ AGE_ENDPOINT_SCALE/,
+  "sobreposição deixou de ser convertida de unidades inteiras para meses",
+);
 assert.match(
   workflowSource,
   /test-auxiliary-age-band\.mjs/,
@@ -145,8 +272,11 @@ assert.match(
 );
 
 console.log(
+  `[auxiliary-age-band] faixas-reais=${faixasEtarias.length} · fracionárias=${fractionalBands.length}`,
+);
+console.log(
   `[auxiliary-age-band] diretos=${directMatches.length} · parentais=${parentMatches.length}`,
 );
 console.log(
-  "[auxiliary-age-band] ✓ faixa inteira, limites inclusivos, ordenação e avisos parciais aprovados.",
+  "[auxiliary-age-band] ✓ catálogo real, cobertura parcial exata, ordenação e avisos aprovados.",
 );
