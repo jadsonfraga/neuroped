@@ -146,11 +146,16 @@ await check("módulo de PIN não cria nem persiste segredo", () => {
 });
 
 const genericScaleSrc = read("client/src/pages/generic-scale.tsx");
-await check("prompt legado de escala permanece inalcançável", () => {
+await check("escala genérica não contém prompt, senha ou PIN de acesso", () => {
+  assert.doesNotMatch(
+    genericScaleSrc,
+    /type\s*=\s*["']password["']|PIN master|verifyMasterPin|getMasterPinLockSeconds|isMasterPinUnlocked|Desbloquear|Uso interno desbloqueado/i,
+    "a página genérica não pode conservar nem prompt inacessível de credencial",
+  );
   assert.match(
     genericScaleSrc,
-    /useState\(\(\) => isMasterPinUnlocked\(\)\)/,
-    "a escala genérica deve iniciar pelo estado central, que é sempre aberto",
+    /data-testid="clinical-observation-workspace"/,
+    "o registro complementar aberto e semanticamente identificado deve permanecer",
   );
 });
 
@@ -164,7 +169,6 @@ const passwordInputFiles = walk(clientSourceRoot)
 const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/AssinaturaIcpPanel.tsx",
   "client/src/components/PrivateGate.tsx",
-  "client/src/pages/generic-scale.tsx",
 ].sort();
 
 await check("nenhum novo campo de senha foi criado na interface", () => {
@@ -180,7 +184,10 @@ await check("única senha operacional é a do certificado A1 local", () => {
   assert.match(certificatePanelSrc, /Senha do certificado/);
   assert.match(certificatePanelSrc, /accept="\.p12,\.pfx"/);
   assert.match(certificatePanelSrc, /input-p12-senha/);
-  assert.doesNotMatch(certificatePanelSrc, /loginRequest|\/api\/auth\/login|input-login-password/);
+  assert.doesNotMatch(
+    certificatePanelSrc,
+    /loginRequest|\/api\/auth\/login|input-login-password/,
+  );
 });
 
 const pageAndComponentFiles = walk(clientSourceRoot)
