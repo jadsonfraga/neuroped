@@ -1,58 +1,31 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   BookOpen,
-  Clock,
-  Users,
-  Target,
-  Copy,
   Check,
+  Clock,
+  Copy,
   FileText,
-  AlertCircle,
   Layers3,
+  ShieldCheck,
+  Target,
+  Users,
   type LucideIcon,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHero } from "@/components/PageHero";
 import { allScalesComFichas } from "@/data/scaleFilter";
-
-const respondentLabels: Record<string, string> = {
-  pais: "Pais/cuidadores",
-  clinico: "Clínico",
-  professor: "Professor/escola",
-  autoaplicavel: "Autorrelato",
-  crianca: "Criança/adolescente",
-  teste_direto_crianca: "Teste direto com a criança",
-};
-
-const priorityLabels: Record<string, string> = {
-  triagem: "Triagem",
-  diagnostico: "Apoio diagnóstico",
-  monitorizacao: "Monitorização",
-  seguimento: "Seguimento",
-  psicoeducacao: "Psicoeducação",
-};
-
-function formatAgePoint(months: number): string {
-  if (months === 0) return "nascimento";
-  if (months < 24) return `${months} ${months === 1 ? "mês" : "meses"}`;
-  const years = Math.floor(months / 12);
-  const remainingMonths = months % 12;
-  if (remainingMonths === 0) return `${years} ${years === 1 ? "ano" : "anos"}`;
-  return `${years}a ${remainingMonths}m`;
-}
-
-export function formatScaleAgeRange(minMonths: number, maxMonths: number): string {
-  if (minMonths === maxMonths) return formatAgePoint(minMonths);
-  if (maxMonths < 24) return `${minMonths}–${maxMonths} meses`;
-  if (minMonths >= 24 && minMonths % 12 === 0 && maxMonths % 12 === 0) {
-    return `${minMonths / 12}–${maxMonths / 12} anos`;
-  }
-  return `${formatAgePoint(minMonths)} – ${formatAgePoint(maxMonths)}`;
-}
+import {
+  formatScaleAgeRange,
+  scaleLicenseLabel,
+  scalePriorityLabel,
+  scaleRespondentsLabel,
+} from "@/lib/scalePresentation";
 
 function pubmedRef(
   pubmedId?: string | null,
@@ -73,7 +46,8 @@ interface InfoCard {
  * Ficha técnica on-brand de um instrumento.
  *
  * Mostra somente dados reais do catálogo. Faixas da primeira infância mantêm a
- * precisão em meses, sem o antigo arredondamento que podia exibir "0 anos".
+ * precisão em meses; limites decimais do catálogo nunca são arredondados para a
+ * idade seguinte.
  */
 export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">(
@@ -112,15 +86,12 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
     {
       icon: Users,
       label: "Respondente",
-      value:
-        scale.respondente
-          .map((respondent) => respondentLabels[respondent] ?? respondent)
-          .join(" · ") || "Não informado",
+      value: scaleRespondentsLabel(scale.respondente),
     },
     {
       icon: Target,
       label: "Finalidade",
-      value: priorityLabels[scale.prioridade] ?? scale.prioridade,
+      value: scalePriorityLabel(scale.prioridade),
     },
   ];
 
@@ -142,7 +113,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
     <div className="space-y-5 pb-8" data-testid="scale-technical-sheet">
       <Link
         href="/filtro"
-        className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
         Voltar ao Filtro
@@ -150,18 +121,29 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
 
       <PageHero
         icon={BookOpen}
-        eyebrow="ficha técnica"
+        eyebrow="biblioteca clínica · ficha técnica"
         title={scale.name}
         subtitle={scale.fullName !== scale.name ? scale.fullName : undefined}
-        gradient="from-violet-600 to-blue-600"
-      />
+        gradient="from-violet-600 via-indigo-600 to-blue-600"
+      >
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">{scalePriorityLabel(scale.prioridade)}</Badge>
+          <Badge variant="outline">
+            {formatScaleAgeRange(scale.ageMin, scale.ageMax)}
+          </Badge>
+          <Badge variant="outline">{scaleLicenseLabel(scale.licencaUso)}</Badge>
+        </div>
+      </PageHero>
 
       <section
         className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2 lg:grid-cols-4"
         aria-label="Metadados do instrumento"
       >
         {infos.map((info) => (
-          <Card key={info.label} className="h-full rounded-2xl border-border/70">
+          <Card
+            key={info.label}
+            className="h-full rounded-2xl border-border/70 bg-card/80 shadow-sm transition-shadow hover:shadow-md"
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <info.icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -178,15 +160,16 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
       </section>
 
       {description && (
-        <Card className="rounded-2xl border-border/70">
+        <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/90">
+          <div className="h-1 bg-gradient-to-r from-primary via-chart-2 to-chart-3" />
           <CardContent className="p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-black text-foreground">Descrição</h2>
+              <h2 className="text-sm font-black text-foreground">O que avalia</h2>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-8 gap-1.5 text-xs"
+                className="h-9 gap-1.5 text-xs"
                 onClick={() => void copyDescription()}
                 aria-live="polite"
               >
@@ -211,19 +194,40 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
         </Card>
       )}
 
-      {scale.scoringCutoff && (
-        <Card className="rounded-2xl border-primary/20 bg-primary/[0.04]">
+      <div className="grid gap-3 lg:grid-cols-2">
+        {scale.scoringCutoff && (
+          <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/[0.06] to-chart-2/[0.04]">
+            <CardContent className="p-5">
+              <h2 className="mb-2 flex items-center gap-1.5 text-sm font-black text-foreground">
+                <Target className="h-4 w-4 text-primary" aria-hidden="true" />
+                Interpretação documentada
+              </h2>
+              <p className="text-sm leading-relaxed text-foreground/90">
+                {scale.scoringCutoff}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="rounded-2xl border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.06] to-teal-500/[0.04]">
           <CardContent className="p-5">
             <h2 className="mb-2 flex items-center gap-1.5 text-sm font-black text-foreground">
-              <Target className="h-4 w-4 text-primary" aria-hidden="true" />
-              Interpretação do escore
+              <ShieldCheck
+                className="h-4 w-4 text-emerald-600"
+                aria-hidden="true"
+              />
+              Uso e licença
             </h2>
-            <p className="text-sm leading-relaxed text-foreground/90">
-              {scale.scoringCutoff}
+            <p className="text-sm font-semibold text-foreground">
+              {scaleLicenseLabel(scale.licencaUso)}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              A ficha organiza metadados e referência. Itens oficiais, normas e
+              escore devem respeitar a licença e a fonte original.
             </p>
           </CardContent>
         </Card>
-      )}
+      </div>
 
       {(scale.fonte || scale.validacaoBrasil || pm) && (
         <Card className="rounded-2xl border-border/70">
@@ -251,13 +255,31 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
                 href={pm.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-9 items-center gap-1 rounded-lg text-xs font-bold text-primary underline underline-offset-2 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-xs font-bold text-primary underline underline-offset-2 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Estudo no PubMed ({pm.pmid})
               </a>
             )}
           </CardContent>
         </Card>
+      )}
+
+      {(!scale.scoringCutoff || !scale.validacaoBrasil || !scale.fonte) && (
+        <div
+          className="rounded-2xl border border-amber-300/60 bg-amber-50/70 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100"
+          role="note"
+        >
+          <strong>Metadados ainda não documentados nesta base:</strong>{" "}
+          {[
+            !scale.scoringCutoff && "ponto de corte/interpretação",
+            !scale.validacaoBrasil && "validação brasileira",
+            !scale.fonte && "fonte/referência",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          . A ausência do campo não deve ser interpretada como ausência de
+          evidência; confirme na publicação ou manual original.
+        </div>
       )}
 
       <div className="flex flex-wrap gap-2">
