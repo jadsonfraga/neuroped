@@ -125,7 +125,7 @@ export function getImplementationLabel(status: ImplementationStatus): string {
     case "complete":
       return "Aplicação completa disponível no app.";
     case "metadata_only":
-      return "Ficha técnica e registro interno com PIN master disponíveis; itens oficiais podem depender de autorização.";
+      return "Ficha técnica e registro observacional complementar disponíveis; itens oficiais podem depender de autorização.";
     case "external_only":
       return "Instrumento externo/licenciado; não embutir itens ou escore sem permissão.";
     case "not_implemented":
