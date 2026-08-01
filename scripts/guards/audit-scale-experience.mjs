@@ -6,7 +6,6 @@
 // - páginas genéricas não podem conservar UI de PIN, senha ou escore inventado;
 // - fichas e aplicações devem compartilhar apresentação etária e linguagem visual;
 // - a navegação para pendências deve permanecer acessível e verificável.
-import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -36,17 +35,14 @@ const recommendationById = new Map(
 );
 const expectedParentScaleIds = [
   "snap",
+  "vanderbilt",
   "conners",
   "asq3",
-  "peds",
   "cbcl",
   "brief2",
-  "vineland",
   "mchat",
-  "atec",
-  "srs2",
+  "abc",
   "scared",
-  "psc17",
   "sdq",
   "cshq",
 ].sort();
@@ -233,7 +229,10 @@ check(
 check(
   openAccessGuard.includes(
     "escala genérica não contém prompt, senha ou PIN de acesso",
-  ) && !openAccessGuard.includes('"client/src/pages/generic-scale.tsx",\n].sort()'),
+  ) &&
+    !openAccessGuard.includes(
+      '"client/src/pages/generic-scale.tsx",\n].sort()',
+    ),
   "guard de acesso não foi endurecido para a página genérica",
 );
 
