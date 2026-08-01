@@ -21,6 +21,7 @@ import {
 } from "@/components/FilterRecommendationLinkCard";
 import {
   getParentAssessmentPath,
+  requiresReferenceOnlyRoute,
   testesPaisRecommendations,
   type ParentTestRecommendation,
 } from "@/data/testesPaisRecommendations";
@@ -220,6 +221,9 @@ function TestCard({ match, tone, eyebrow, sealLabel }: TestCardProps) {
   const recommendation = match.recommendation;
   const Icon = iconMap[recommendation.icon] ?? Activity;
   const ageFitLabel = getRecommendationAgeFitLabel(match.ageFit);
+  const referenceOnly = requiresReferenceOnlyRoute(
+    recommendation.canonicalScale,
+  );
 
   return (
     <FilterRecommendationLinkCard
@@ -249,11 +253,19 @@ function TestCard({ match, tone, eyebrow, sealLabel }: TestCardProps) {
           ),
           variant: "outline",
         },
+        ...(referenceOnly
+          ? [
+              {
+                label: "Somente ficha · licença protegida",
+                variant: "outline" as const,
+              },
+            ]
+          : []),
       ]}
-      footer={`Respondente: ${scaleRespondentsLabel(
+      footer={`${referenceOnly ? "Ficha de referência · " : ""}Respondente: ${scaleRespondentsLabel(
         recommendation.canonicalScale.respondente,
       )} · Complementa ${recommendation.complementa}`}
-      ariaLabel={`Abrir ${recommendation.name}, ${eyebrow}. ${ageFitLabel}`}
+      ariaLabel={`${referenceOnly ? "Abrir ficha de referência de" : "Abrir"} ${recommendation.name}, ${eyebrow}. ${ageFitLabel}`}
       testId={`parent-test-${recommendation.id}`}
     />
   );
