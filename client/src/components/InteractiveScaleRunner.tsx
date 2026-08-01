@@ -14,7 +14,9 @@ import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PageHero } from "@/components/PageHero";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
@@ -427,44 +429,50 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
                       )}
                     </div>
                   </div>
-                  <div
-                    className="grid grid-cols-1 gap-2 sm:pl-11"
-                    role="radiogroup"
+                  <RadioGroup
+                    value={
+                      answers[index] != null
+                        ? String(answers[index])
+                        : undefined
+                    }
+                    onValueChange={(value) => pick(index, Number(value))}
                     aria-label={item.text}
+                    className="grid grid-cols-1 gap-2 sm:pl-11"
                   >
                     {item.options.map((option, optionIndex) => {
                       const selected = answers[index] === optionIndex;
+                      const optionId = `scale-${def.id}-${index}-${optionIndex}`;
                       return (
-                        <button
+                        <div
                           key={`${option.label}-${optionIndex}`}
-                          type="button"
-                          role="radio"
-                          aria-checked={selected}
-                          onClick={() => pick(index, optionIndex)}
                           data-testid={`item-${index}-opt-${optionIndex}`}
-                          className={`flex min-h-11 items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          className={`flex min-h-11 items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200 focus-within:ring-2 focus-within:ring-ring ${
                             selected
                               ? "border-transparent bg-gradient-to-r from-primary to-chart-2 font-semibold text-white shadow-sm"
                               : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"
                           }`}
                         >
-                          <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          <RadioGroupItem
+                            id={optionId}
+                            value={String(optionIndex)}
+                            className={
                               selected
-                                ? "border-white bg-white/25"
-                                : "border-muted-foreground/40"
+                                ? "shrink-0 border-white/90 text-white data-[state=checked]:border-white data-[state=checked]:text-white"
+                                : "shrink-0"
+                            }
+                          />
+                          <Label
+                            htmlFor={optionId}
+                            className={`flex min-h-8 min-w-0 flex-1 cursor-pointer items-center leading-relaxed ${
+                              selected ? "text-white" : "text-foreground"
                             }`}
-                            aria-hidden="true"
                           >
-                            {selected && (
-                              <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                            )}
-                          </span>
-                          <span className="min-w-0">{option.label}</span>
-                        </button>
+                            {option.label}
+                          </Label>
+                        </div>
                       );
                     })}
-                  </div>
+                  </RadioGroup>
                 </CardContent>
               </Card>
             </motion.div>
