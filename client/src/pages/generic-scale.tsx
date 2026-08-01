@@ -471,6 +471,10 @@ export default function GenericScalePage() {
   }
 
   const implementationStatus = getImplementationStatus(scale);
+  const officialRoute = scaleRoute(scale);
+  const genericRoute = `/generic-scale/${scale.id}`;
+  const hasSeparateOfficialApplication =
+    implementationStatus === "complete" && officialRoute !== genericRoute;
   const applicationMode = getApplicationMode(scale);
   const assessmentUse = getAssessmentUse(scale);
   const pm = pubmedRef(scale.pubmedId);
@@ -560,21 +564,27 @@ export default function GenericScalePage() {
 
       <div
         className={`rounded-2xl border p-4 text-sm leading-relaxed ${
-          implementationStatus === "complete"
+          hasSeparateOfficialApplication
             ? "border-emerald-300/60 bg-emerald-50/70 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-100"
             : "border-amber-300/60 bg-amber-50/70 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100"
         }`}
         role="note"
         data-testid="scale-implementation-status"
       >
-        <strong>
-          {implementationStatus === "complete"
-            ? "Aplicação disponível: "
-            : "Ficha de referência: "}
-        </strong>
-        {getImplementationLabel(implementationStatus)}
-        {implementationStatus !== "complete" &&
-          " Esta tela não reproduz itens oficiais nem calcula escore."}
+        <strong>Ficha de referência: </strong>
+        {hasSeparateOfficialApplication
+          ? "A aplicação completa existe em uma rota própria. Esta página organiza metadados e um registro observacional complementar."
+          : getImplementationLabel(implementationStatus)}
+        {" Esta tela não reproduz itens oficiais nem calcula escore."}
+        {hasSeparateOfficialApplication && (
+          <Link
+            href={officialRoute}
+            className="mt-3 flex min-h-10 w-fit items-center gap-1.5 rounded-xl border border-current/20 bg-background/70 px-3 py-2 text-xs font-bold text-current transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Abrir aplicação oficial
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        )}
       </div>
 
       <section

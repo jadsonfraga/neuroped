@@ -174,6 +174,12 @@ check(
   "página genérica reintroduziu UI de PIN/senha",
 );
 check(
+  genericPage.includes("<strong>Ficha de referência: </strong>") &&
+    !genericPage.includes("Aplicação disponível: ") &&
+    genericPage.includes("hasSeparateOfficialApplication"),
+  "ficha genérica voltou a se apresentar como aplicação preenchível",
+);
+check(
   !/PIN master/i.test(advancedFilter) &&
     advancedFilter.includes("registro observacional complementar"),
   "motor compartilhado reintroduziu cópia de PIN ou perdeu a descrição aberta do registro complementar",
