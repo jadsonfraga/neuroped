@@ -3,6 +3,7 @@ import { ipnTeaCoreItems } from "./interactiveScaleItemsIpnTeaCore";
 import { ipnTeaAgeItemsPart1 } from "./interactiveScaleItemsIpnTeaAgePart1";
 import { ipnTeaAgeItemsPart2 } from "./interactiveScaleItemsIpnTeaAgePart2";
 import { ipnTdahFe200Items } from "./interactiveScaleItemsIpnTdahFe200";
+import { ipnPcFun200Items } from "./interactiveScaleItemsIpnPcFun200";
 
 const ipnTeaOnlyItems: Record<string, InteractiveScaleDef> = {
   ...ipnTeaCoreItems,
@@ -12,12 +13,13 @@ const ipnTeaOnlyItems: Record<string, InteractiveScaleDef> = {
 
 /**
  * Exportação histórica consumida pelo agregador NEXUS.
- * Mantém o nome por compatibilidade e passa a reunir os PDFs IPN autorais
+ * Mantém o nome por compatibilidade e reúne os PDFs IPN autorais
  * operacionalizados no app; o registro genérico valida cada volume e contagem.
  */
 export const ipnTea200Items: Record<string, InteractiveScaleDef> = {
   ...ipnTeaOnlyItems,
   ...ipnTdahFe200Items,
+  ...ipnPcFun200Items,
 };
 
 const EXPECTED_COUNTS: Record<string, number> = {
