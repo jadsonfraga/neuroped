@@ -3,16 +3,14 @@ import {
   BarChart3,
   Baby,
   BookOpen,
-  Accessibility,
-  Puzzle,
-  HeartPulse,
-  ShieldAlert,
-  Moon,
-  ListChecks,
   BrainCog,
-  Users,
-  Award,
   Clock,
+  HeartPulse,
+  ListChecks,
+  Moon,
+  Puzzle,
+  ShieldAlert,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +20,8 @@ import {
   type FilterRecommendationTone,
 } from "@/components/FilterRecommendationLinkCard";
 import {
-  testesPaisRecommendations,
   getParentAssessmentPath,
+  testesPaisRecommendations,
   type ParentTestRecommendation,
 } from "@/data/testesPaisRecommendations";
 import {
@@ -32,13 +30,16 @@ import {
   rankRecommendationsForAgeBand,
   type RecommendationAgeMatch,
 } from "@/data/recommendationAgeFit";
+import {
+  scaleLicenseLabel,
+  scaleRespondentsLabel,
+} from "@/lib/scalePresentation";
 
 const iconMap: Record<string, LucideIcon> = {
   Activity,
   BarChart3,
   Baby,
   BookOpen,
-  Accessibility,
   Puzzle,
   HeartPulse,
   ShieldAlert,
@@ -59,23 +60,23 @@ const sealMeta: Record<
   }
 > = {
   ouro: {
-    heading: "Escalas essenciais",
-    eyebrow: "selo ouro · começar aqui",
-    badge: "Ouro",
+    heading: "Questionários prioritários",
+    eyebrow: "perspectiva dos cuidadores · começar aqui",
+    badge: "Prioritário",
     tone: "primary",
     order: 0,
   },
   prata: {
-    heading: "Escalas complementares",
-    eyebrow: "selo prata · complementar",
-    badge: "Prata",
+    heading: "Complementos de contexto",
+    eyebrow: "perspectiva complementar",
+    badge: "Complementar",
     tone: "secondary",
     order: 1,
   },
   bronze: {
-    heading: "Escalas especializadas",
-    eyebrow: "selo bronze · uso dirigido",
-    badge: "Bronze",
+    heading: "Uso dirigido ou licenciado",
+    eyebrow: "seleção especializada",
+    badge: "Dirigido",
     tone: "optional",
     order: 2,
   },
@@ -119,16 +120,35 @@ export function ParentTestsRecommender({
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="space-y-5" data-testid="parent-tests-recommendations">
+    <section
+      className="space-y-5 rounded-3xl border border-border/60 bg-gradient-to-br from-amber-500/[0.04] via-card/60 to-primary/[0.03] p-4 shadow-sm sm:p-5"
+      data-testid="parent-tests-recommendations"
+      aria-labelledby="parent-tests-title"
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md">
+          <Users className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
+            perspectiva dos cuidadores
+          </p>
+          <h2 id="parent-tests-title" className="mt-1 text-lg font-black text-foreground">
+            Questionários coerentes com idade e informante
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Somente instrumentos cujo catálogo canônico inclui pais ou cuidadores.
+            Nome, rota, tempo e faixa etária vêm da mesma fonte usada pelo filtro.
+          </p>
+        </div>
+      </div>
+
       {assessmentPath && (
         <Card className="overflow-hidden rounded-2xl border-amber-500/25 bg-gradient-to-br from-amber-500/[0.08] via-card to-card shadow-sm">
           <CardHeader className="gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/12 text-amber-700 dark:text-amber-300">
-                  <Award className="h-4.5 w-4.5" aria-hidden="true" />
-                </span>
-                <span>{assessmentPath.label}</span>
+              <CardTitle className="text-base sm:text-lg">
+                {assessmentPath.label}
               </CardTitle>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {assessmentPath.description}
@@ -185,7 +205,7 @@ export function ParentTestsRecommender({
           </section>
         );
       })}
-    </div>
+    </section>
   );
 }
 
@@ -197,33 +217,44 @@ interface TestCardProps {
 }
 
 function TestCard({ match, tone, eyebrow, sealLabel }: TestCardProps) {
-  const test = match.recommendation;
-  const Icon = iconMap[test.icon] ?? Activity;
+  const recommendation = match.recommendation;
+  const Icon = iconMap[recommendation.icon] ?? Activity;
   const ageFitLabel = getRecommendationAgeFitLabel(match.ageFit);
 
   return (
     <FilterRecommendationLinkCard
-      href={test.route}
-      title={test.name}
-      description={test.razao}
+      href={recommendation.route}
+      title={recommendation.name}
+      description={recommendation.razao}
       eyebrow={eyebrow}
       icon={<Icon className="h-5 w-5" />}
       tone={tone}
       badges={[
         { label: sealLabel },
-        { label: test.tempo, variant: "outline" },
+        { label: recommendation.tempo, variant: "outline" },
         {
-          label: formatRecommendationAgeRange(test.ageMin, test.ageMax),
+          label: formatRecommendationAgeRange(
+            recommendation.ageMin,
+            recommendation.ageMax,
+          ),
           variant: "outline",
         },
         {
           label: ageFitLabel,
           variant: match.ageFit === "full" ? "secondary" : "outline",
         },
-        { label: `Complementa: ${test.complementa}`, variant: "outline" },
+        {
+          label: scaleLicenseLabel(
+            recommendation.canonicalScale.licencaUso,
+          ),
+          variant: "outline",
+        },
       ]}
-      ariaLabel={`Abrir ${test.name}, ${eyebrow}. ${ageFitLabel}`}
-      testId={`parent-test-${test.id}`}
+      footer={`Respondente: ${scaleRespondentsLabel(
+        recommendation.canonicalScale.respondente,
+      )} · Complementa ${recommendation.complementa}`}
+      ariaLabel={`Abrir ${recommendation.name}, ${eyebrow}. ${ageFitLabel}`}
+      testId={`parent-test-${recommendation.id}`}
     />
   );
 }
