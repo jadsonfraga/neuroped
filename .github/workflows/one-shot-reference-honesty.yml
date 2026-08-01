@@ -2,16 +2,13 @@ name: One-shot reference honesty
 
 on:
   push:
-    branches:
-      - agent/scales-lovable-quality-deep
-    paths:
-      - .github/workflows/one-shot-reference-honesty.yml
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.ref == 'refs/heads/agent/scales-lovable-quality-deep'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout working branch
