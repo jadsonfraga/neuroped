@@ -1,0 +1,50 @@
+name: One-shot remove legacy PIN copy
+
+on:
+  push:
+    branches:
+      - agent/scales-lovable-quality-deep
+    paths:
+      - .github/workflows/one-shot-remove-pin-copy.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/scales-lovable-quality-deep
+          fetch-depth: 0
+
+      - name: Remove legacy PIN wording exactly once
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("client/src/data/advancedFilterLogic.ts")
+          source = path.read_text(encoding="utf-8")
+          old = 'return "Ficha técnica e registro interno com PIN master disponíveis; itens oficiais podem depender de autorização.";'
+          new = 'return "Ficha técnica e registro observacional complementar disponíveis; itens oficiais podem depender de autorização.";'
+
+          if old in source:
+              source = source.replace(old, new, 1)
+              path.write_text(source, encoding="utf-8")
+          elif new not in source:
+              raise SystemExit("texto de origem e texto migrado não foram encontrados")
+          PY
+
+      - name: Commit migrated copy
+        run: |
+          if git diff --quiet; then
+            echo "Migração já aplicada."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/data/advancedFilterLogic.ts
+          git commit -m "fix(escalas): remover cópia residual de PIN master"
+          git push origin HEAD:agent/scales-lovable-quality-deep
