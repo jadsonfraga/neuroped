@@ -1,0 +1,353 @@
+name: One-shot review fixes
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-shot-review-fixes.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/scales-lovable-quality-deep
+          fetch-depth: 0
+
+      - name: Apply license routing and radio keyboard semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # ── 1. Recomendações licenciadas abrem somente ficha ───────────────
+          parent_path = Path("client/src/data/testesPaisRecommendations.ts")
+          parent = parent_path.read_text(encoding="utf-8")
+          scale_map_line = "const scaleById = new Map(allScales.map((scale) => [scale.id, scale]));\n"
+          helper = "\n".join([
+              "",
+              "const REFERENCE_ONLY_LICENSES = new Set([",
+              "  \"comercial\",",
+              "  \"restrita\",",
+              "  \"contato_autor\",",
+              "]);",
+              "",
+              "export function requiresReferenceOnlyRoute(",
+              "  scale: Pick<ScaleEntry, \"licencaUso\">,",
+              "): boolean {",
+              "  return Boolean(",
+              "    scale.licencaUso && REFERENCE_ONLY_LICENSES.has(scale.licencaUso),",
+              "  );",
+              "}",
+              "",
+          ])
+          if "export function requiresReferenceOnlyRoute" not in parent:
+              if scale_map_line not in parent:
+                  raise SystemExit("mapa canônico das recomendações não encontrado")
+              parent = parent.replace(scale_map_line, scale_map_line + helper, 1)
+
+          old_route = "    route: canonicalScale.appRoute || `/generic-scale/${canonicalScale.id}`,"
+          new_route = "\n".join([
+              "    route: requiresReferenceOnlyRoute(canonicalScale)",
+              "      ? `/generic-scale/${canonicalScale.id}`",
+              "      : canonicalScale.appRoute || `/generic-scale/${canonicalScale.id}`,",
+          ])
+          if old_route in parent:
+              parent = parent.replace(old_route, new_route, 1)
+          elif new_route not in parent:
+              raise SystemExit("derivação de rota parental não encontrada")
+          parent_path.write_text(parent, encoding="utf-8")
+
+          # ── 2. Cards deixam explícito quando são somente ficha ─────────────
+          parent_card_path = Path("client/src/components/ParentTestsRecommender.tsx")
+          parent_card = parent_card_path.read_text(encoding="utf-8")
+          age_line = "  const ageFitLabel = getRecommendationAgeFitLabel(match.ageFit);\n"
+          reference_state = "\n".join([
+              "  const referenceOnly =",
+              "    recommendation.route.startsWith(\"/generic-scale/\") &&",
+              "    recommendation.canonicalScale.appRoute !== recommendation.route;",
+          ]) + "\n"
+          if "  const referenceOnly =\n" not in parent_card:
+              if age_line not in parent_card:
+                  raise SystemExit("estado etário do card parental não encontrado")
+              parent_card = parent_card.replace(
+                  age_line,
+                  age_line + reference_state,
+                  1,
+              )
+
+          license_badge = """        {
+          label: scaleLicenseLabel(
+            recommendation.canonicalScale.licencaUso,
+          ),
+          variant: \"outline\",
+        },"""
+          license_with_reference = license_badge + """
+        ...(referenceOnly
+          ? [
+              {
+                label: \"Somente ficha · licença protegida\",
+                variant: \"outline\" as const,
+              },
+            ]
+          : []),"""
+          if "Somente ficha · licença protegida" not in parent_card:
+              if license_badge not in parent_card:
+                  raise SystemExit("badge de licença parental não encontrado")
+              parent_card = parent_card.replace(
+                  license_badge,
+                  license_with_reference,
+                  1,
+              )
+
+          old_footer = """      footer={`Respondente: ${scaleRespondentsLabel(
+        recommendation.canonicalScale.respondente,
+      )} · Complementa ${recommendation.complementa}`}"""
+          new_footer = """      footer={`${referenceOnly ? \"Ficha de referência · \" : \"\"}Respondente: ${scaleRespondentsLabel(
+        recommendation.canonicalScale.respondente,
+      )} · Complementa ${recommendation.complementa}`}"""
+          if old_footer in parent_card:
+              parent_card = parent_card.replace(old_footer, new_footer, 1)
+          elif new_footer not in parent_card:
+              raise SystemExit("rodapé do card parental não encontrado")
+          parent_card_path.write_text(parent_card, encoding="utf-8")
+
+          # ── 3. Ficha genérica não oferece aplicação licenciada ─────────────
+          generic_path = Path("client/src/pages/generic-scale.tsx")
+          generic = generic_path.read_text(encoding="utf-8")
+          separate_block = "\n".join([
+              "  const hasSeparateOfficialApplication =",
+              "    implementationStatus === \"complete\" && officialRoute !== genericRoute;",
+          ]) + "\n"
+          license_block = "\n".join([
+              "  const licenseRequiresAuthorization = [",
+              "    \"comercial\",",
+              "    \"restrita\",",
+              "    \"contato_autor\",",
+              "  ].includes(scale.licencaUso ?? \"\");",
+              "  const canOfferOfficialApplication =",
+              "    hasSeparateOfficialApplication && !licenseRequiresAuthorization;",
+          ]) + "\n"
+          if "  const canOfferOfficialApplication =\n" not in generic:
+              if separate_block not in generic:
+                  raise SystemExit("estado de aplicação separada não encontrado")
+              generic = generic.replace(
+                  separate_block,
+                  separate_block + license_block,
+                  1,
+              )
+
+          start_marker = "      <div\n        className={`rounded-2xl border p-4 text-sm leading-relaxed ${"
+          next_section_marker = "\n\n      <section\n        className=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-4\""
+          start = generic.find(start_marker)
+          end = generic.find(next_section_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit("banner da ficha genérica não encontrado")
+          honest_banner = "\n".join([
+              "      <div",
+              "        className={`rounded-2xl border p-4 text-sm leading-relaxed ${",
+              "          canOfferOfficialApplication",
+              "            ? \"border-emerald-300/60 bg-emerald-50/70 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-100\"",
+              "            : \"border-amber-300/60 bg-amber-50/70 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100\"",
+              "        }`}",
+              "        role=\"note\"",
+              "        data-testid=\"scale-implementation-status\"",
+              "      >",
+              "        <strong>Ficha de referência: </strong>",
+              "        {canOfferOfficialApplication",
+              "          ? \"A aplicação completa existe em uma rota própria. Esta página organiza metadados e um registro observacional complementar.\"",
+              "          : hasSeparateOfficialApplication && licenseRequiresAuthorization",
+              "            ? \"Existe uma implementação separada, mas esta ficha não oferece acesso porque a licença requer autorização documentada.\"",
+              "            : getImplementationLabel(implementationStatus)}",
+              "        {\" Esta tela não reproduz itens oficiais nem calcula escore.\"}",
+              "        {canOfferOfficialApplication && (",
+              "          <Link",
+              "            href={officialRoute}",
+              "            className=\"mt-3 flex min-h-10 w-fit items-center gap-1.5 rounded-xl border border-current/20 bg-background/70 px-3 py-2 text-xs font-bold text-current transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring\"",
+              "          >",
+              "            Abrir aplicação oficial",
+              "            <ExternalLink className=\"h-3.5 w-3.5\" aria-hidden=\"true\" />",
+              "          </Link>",
+              "        )}",
+              "      </div>",
+          ])
+          generic = generic[:start] + honest_banner + generic[end:]
+          generic_path.write_text(generic, encoding="utf-8")
+
+          # ── 4. RadioGroup real: setas + roving tabindex ───────────────────
+          runner_path = Path("client/src/components/InteractiveScaleRunner.tsx")
+          runner = runner_path.read_text(encoding="utf-8")
+          card_import = 'import { Card, CardContent } from "@/components/ui/card";\n'
+          if 'from "@/components/ui/label"' not in runner:
+              runner = runner.replace(
+                  card_import,
+                  card_import + 'import { Label } from "@/components/ui/label";\n',
+                  1,
+              )
+          progress_import = 'import { Progress } from "@/components/ui/progress";\n'
+          if 'from "@/components/ui/radio-group"' not in runner:
+              runner = runner.replace(
+                  progress_import,
+                  progress_import + 'import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";\n',
+                  1,
+              )
+
+          radio_start_marker = """                  <div
+                    className=\"grid grid-cols-1 gap-2 sm:pl-11\"
+                    role=\"radiogroup\"
+                    aria-label={item.text}
+                  >"""
+          card_content_end = "\n                </CardContent>"
+          radio_start = runner.find(radio_start_marker)
+          radio_end = runner.find(card_content_end, radio_start)
+          if radio_start < 0 or radio_end < 0:
+              raise SystemExit("grupo de opções legado não encontrado")
+          radio_group = """                  <RadioGroup
+                    value={
+                      answers[index] != null
+                        ? String(answers[index])
+                        : undefined
+                    }
+                    onValueChange={(value) => pick(index, Number(value))}
+                    aria-label={item.text}
+                    className=\"grid grid-cols-1 gap-2 sm:pl-11\"
+                  >
+                    {item.options.map((option, optionIndex) => {
+                      const selected = answers[index] === optionIndex;
+                      const optionId = `scale-${def.id}-${index}-${optionIndex}`;
+                      return (
+                        <div
+                          key={`${option.label}-${optionIndex}`}
+                          data-testid={`item-${index}-opt-${optionIndex}`}
+                          className={`flex min-h-11 items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200 focus-within:ring-2 focus-within:ring-ring ${
+                            selected
+                              ? \"border-transparent bg-gradient-to-r from-primary to-chart-2 font-semibold text-white shadow-sm\"
+                              : \"border-border bg-background hover:border-primary/40 hover:bg-muted/60\"
+                          }`}
+                        >
+                          <RadioGroupItem
+                            id={optionId}
+                            value={String(optionIndex)}
+                            className={
+                              selected
+                                ? \"shrink-0 border-white/90 text-white data-[state=checked]:border-white data-[state=checked]:text-white\"
+                                : \"shrink-0\"
+                            }
+                          />
+                          <Label
+                            htmlFor={optionId}
+                            className={`flex min-h-8 min-w-0 flex-1 cursor-pointer items-center leading-relaxed ${
+                              selected ? \"text-white\" : \"text-foreground\"
+                            }`}
+                          >
+                            {option.label}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>"""
+          runner = runner[:radio_start] + radio_group + runner[radio_end:]
+          runner_path.write_text(runner, encoding="utf-8")
+
+          # ── 5. Catracas para as duas regressões ───────────────────────────
+          audit_path = Path("scripts/guards/audit-scale-experience.mjs")
+          audit = audit_path.read_text(encoding="utf-8")
+
+          route_check_old = """  check(
+    recommendation.route ===
+      (canonical.appRoute || `/generic-scale/${canonical.id}`),
+    `${recommendation.id}: rota diverge do catálogo`,
+  );"""
+          route_check_new = """  const referenceOnlyLicense = [
+    \"comercial\",
+    \"restrita\",
+    \"contato_autor\",
+  ].includes(canonical.licencaUso);
+  const expectedRoute = referenceOnlyLicense
+    ? `/generic-scale/${canonical.id}`
+    : canonical.appRoute || `/generic-scale/${canonical.id}`;
+  check(
+    recommendation.route === expectedRoute,
+    `${recommendation.id}: rota diverge da política canônica/licença`,
+  );
+  if (referenceOnlyLicense) {
+    check(
+      recommendation.route === `/generic-scale/${canonical.id}`,
+      `${recommendation.id}: instrumento licenciado deve abrir somente ficha`,
+    );
+  }
+  if (recommendation.id === \"abc-pais\") {
+    check(
+      recommendation.route === \"/generic-scale/abc\",
+      \"ABC comercial voltou a promover aplicação com itens/escore\",
+    );
+  }"""
+          if route_check_old in audit:
+              audit = audit.replace(route_check_old, route_check_new, 1)
+          elif route_check_new not in audit:
+              raise SystemExit("contrato de rota canônica não encontrado")
+
+          old_honesty = """check(
+  genericPage.includes(\"<strong>Ficha de referência: </strong>\") &&
+    !genericPage.includes(\"Aplicação disponível: \") &&
+    genericPage.includes(\"hasSeparateOfficialApplication\"),
+  \"ficha genérica voltou a se apresentar como aplicação preenchível\",
+);"""
+          new_honesty = """check(
+  genericPage.includes(\"<strong>Ficha de referência: </strong>\") &&
+    !genericPage.includes(\"Aplicação disponível: \") &&
+    genericPage.includes(\"hasSeparateOfficialApplication\") &&
+    genericPage.includes(\"licenseRequiresAuthorization\") &&
+    genericPage.includes(\"canOfferOfficialApplication\") &&
+    genericPage.includes(\"{canOfferOfficialApplication && (\"),
+  \"ficha genérica voltou a oferecer aplicação licenciada ou se apresentar como preenchível\",
+);"""
+          if old_honesty in audit:
+              audit = audit.replace(old_honesty, new_honesty, 1)
+          elif new_honesty not in audit:
+              raise SystemExit("contrato de honestidade da ficha não encontrado")
+
+          runner_anchor = """check(
+  runnerPage.includes(\"PageHero\") &&
+    runnerPage.includes(\"firstMissingIndex\") &&
+    runnerPage.includes(\"aria-invalid={pending}\") &&
+    runnerPage.includes(\"button-next-missing\"),
+  \"runner interativo perdeu padrão visual ou navegação para pendência\",
+);"""
+          runner_a11y = runner_anchor + """
+check(
+  runnerPage.includes(\"RadioGroup\") &&
+    runnerPage.includes(\"RadioGroupItem\") &&
+    runnerPage.includes(\"onValueChange\") &&
+    !runnerPage.includes('role=\"radio\"') &&
+    !runnerPage.includes('role=\"radiogroup\"'),
+  \"runner interativo perdeu roving tabindex ou navegação por setas dos rádios\",
+);"""
+          if "runner interativo perdeu roving tabindex" not in audit:
+              if runner_anchor not in audit:
+                  raise SystemExit("âncora de acessibilidade do runner não encontrada")
+              audit = audit.replace(runner_anchor, runner_a11y, 1)
+          audit_path.write_text(audit, encoding="utf-8")
+          PY
+
+      - name: Commit review fixes
+        run: |
+          if git diff --quiet; then
+            echo "Correções já aplicadas."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            client/src/data/testesPaisRecommendations.ts \
+            client/src/components/ParentTestsRecommender.tsx \
+            client/src/pages/generic-scale.tsx \
+            client/src/components/InteractiveScaleRunner.tsx \
+            scripts/guards/audit-scale-experience.mjs
+          git commit -m "fix(escalas): respeitar licença e teclado nos recomendadores"
+          git push origin HEAD:agent/scales-lovable-quality-deep
