@@ -1,8 +1,8 @@
 // Recomendações auxiliares respondidas por pais ou cuidadores.
 //
-// Regra de integridade: nome, rota, idade e tempo vêm SEMPRE de allScales, o
-// catálogo de aplicações realmente disponíveis. A curadoria abaixo só define
-// por que o instrumento entra, para qual queixa e em qual prioridade.
+// Regra de integridade: nome, idade e tempo vêm SEMPRE de allScales, o catálogo
+// de aplicações disponíveis. A rota também respeita a licença: instrumentos
+// comerciais, restritos ou dependentes de autorização abrem somente a ficha.
 import { allScales, type ScaleEntry } from "./scaleFilter";
 
 export interface ParentTestRecommendation {
@@ -145,6 +145,19 @@ const recommendationSpecs: ParentRecommendationSpec[] = [
 ];
 
 const scaleById = new Map(allScales.map((scale) => [scale.id, scale]));
+const REFERENCE_ONLY_LICENSES = new Set([
+  "comercial",
+  "restrita",
+  "contato_autor",
+]);
+
+export function requiresReferenceOnlyRoute(
+  scale: Pick<ScaleEntry, "licencaUso">,
+): boolean {
+  return Boolean(
+    scale.licencaUso && REFERENCE_ONLY_LICENSES.has(scale.licencaUso),
+  );
+}
 
 function hydrateRecommendation(
   spec: ParentRecommendationSpec,
@@ -154,7 +167,9 @@ function hydrateRecommendation(
   return {
     ...spec,
     name: canonicalScale.name,
-    route: canonicalScale.appRoute || `/generic-scale/${canonicalScale.id}`,
+    route: requiresReferenceOnlyRoute(canonicalScale)
+      ? `/generic-scale/${canonicalScale.id}`
+      : canonicalScale.appRoute || `/generic-scale/${canonicalScale.id}`,
     ageMin: canonicalScale.ageMin,
     ageMax: canonicalScale.ageMax,
     tempo: canonicalScale.tempo,
