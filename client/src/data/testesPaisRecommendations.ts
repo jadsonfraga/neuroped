@@ -38,7 +38,7 @@ const recommendationSpecs: ParentRecommendationSpec[] = [
     queixas: ["tdah", "comportamento", "aprendizagem"],
     seal: "ouro",
     razao:
-      "Organiza sintomas de desatenção e hiperatividade/impulsividade observados em casa e pode ser cruzado com a versão escolar; é rastreio dimensional, não confirmação diagnóstica isolada.",
+      "Organiza sintomas de desatenção e hiperatividade/impulsividade observados em casa e pode ser cruzado com a versão escolar; oferece rastreio dimensional para integrar à avaliação clínica.",
     icon: "Activity",
     complementa: "Atenção e funções executivas",
   },
@@ -58,7 +58,7 @@ const recommendationSpecs: ParentRecommendationSpec[] = [
     queixas: ["tdah", "comportamento", "aprendizagem"],
     seal: "bronze",
     razao:
-      "Aprofunda funcionamento cotidiano, oposição, aprendizagem e autorregulação; interpretar conforme a versão licenciada aplicada e nunca como diagnóstico isolado.",
+      "Aprofunda funcionamento cotidiano, oposição, aprendizagem e autorregulação; interpretar conforme a versão licenciada aplicada e sempre junto aos demais dados clínicos.",
     icon: "BarChart3",
     complementa: "Atenção e funções executivas",
   },
@@ -98,7 +98,7 @@ const recommendationSpecs: ParentRecommendationSpec[] = [
     queixas: ["tea", "atraso", "linguagem"],
     seal: "ouro",
     razao:
-      "Rastreio parental específico para risco de TEA na janela etária documentada; resultado positivo orienta seguimento estruturado, não fecha diagnóstico.",
+      "Rastreio parental específico para sinais associados ao risco de TEA na janela etária documentada; um resultado elevado orienta seguimento estruturado e investigação complementar.",
     icon: "Puzzle",
     complementa: "Comunicação social precoce",
   },
@@ -287,18 +287,18 @@ export const parentAssessmentPaths: ParentAssessmentPath[] = [
   {
     queixa: "sono",
     label: "Hábitos de sono e repercussão diurna",
-    primaryTests: ["cshq-pais", "sdq-pais"],
-    duration: "15–25 min",
+    primaryTests: ["cshq-pais"],
+    duration: "10–15 min",
     description:
-      "Registre rotina, despertares e repercussão comportamental antes de atribuir sintomas diurnos apenas ao neurodesenvolvimento.",
+      "Registre rotina, despertares e repercussão diurna antes de atribuir sintomas a outros domínios do neurodesenvolvimento.",
   },
   {
     queixa: "evolucao",
     label: "Acompanhamento percebido pelos cuidadores",
-    primaryTests: ["abc-pais", "sdq-pais"],
-    duration: "15–25 min",
+    primaryTests: ["abc-pais"],
+    duration: "10–15 min",
     description:
-      "Use medidas repetíveis para acompanhar mudança funcional, registrando versão, intervalo e contexto.",
+      "Use uma medida repetível para acompanhar mudança funcional, registrando versão, intervalo e contexto.",
   },
 ];
 
