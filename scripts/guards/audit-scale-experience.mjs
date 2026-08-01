@@ -181,8 +181,13 @@ check(
 );
 check(
   !/PIN master/i.test(advancedFilter) &&
-    advancedFilter.includes("registro observacional complementar"),
-  "motor compartilhado reintroduziu cópia de PIN ou perdeu a descrição aberta do registro complementar",
+    advancedFilter.includes(
+      "Ficha técnica disponível; itens oficiais, aplicação e escore podem depender de autorização.",
+    ) &&
+    !advancedFilter.includes(
+      "Ficha técnica e registro observacional complementar disponíveis",
+    ),
+  "motor compartilhado reintroduziu PIN ou prometeu recurso inexistente em fichas de metadados",
 );
 check(
   !genericPage.includes("bg-slate-950 min-h-screen") &&
