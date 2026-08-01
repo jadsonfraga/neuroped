@@ -1,7 +1,7 @@
 import type { ScaleEntry } from "./scaleFilter";
 
 const FONTE =
-  "IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.0, 01/08/2026. Dr. Jadson Fraga / NeuroPed SDG.";
+  "IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SDG.";
 
 const PENDENCIA =
   "Instrumento clínico autoral de triagem, organização multiperspectiva e planejamento funcional, ainda sem estudos próprios de confiabilidade, validade, normas, sensibilidade, especificidade ou ponto de corte.";
@@ -82,7 +82,7 @@ export const escalasIpnPcFun200: ScaleEntry[] = [
     tempo: "10–20 min",
     appRoute: "/generic-scale/ipn-pc-fun-autopercepcao-20",
     description: "Módulo autoral com 20 itens para autorrelato apoiado da criança/adolescente. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.",
-    scoringCutoff: "Perfil descritivo 0–3/N-O por domínio, sem ponto de corte diagnóstico. N/O não equivale a ausência.",
+    scoringCutoff: "Perfil de acesso e participação 0–3/N-O, sem ponto de corte diagnóstico; maior indica mais acesso percebido.",
     assessmentUse: "diagnostico",
     applicationMode: "autoquestionario_crianca_adolescente",
     verbalRequirement: "nao_verbal_compativel",
@@ -147,7 +147,7 @@ export const escalasIpnPcFun200: ScaleEntry[] = [
     applicationMode: "observacional_clinico",
     verbalRequirement: "indiferente",
     literacyRequirement: "indiferente",
-    signalTags: ["paralisia cerebral", "pc", "função", "funcionalidade", "participação", "mobilidade", "transferências", "postura", "posicionamento", "tônus", "espasticidade", "distonia", "discinesia", "fraqueza", "contratura", "dor", "fadiga", "sono", "mãos", "autocuidado", "autonomia", "comunicação", "CAA", "deglutição", "disfagia", "aspiração", "respiração", "nutrição", "hidratação", "quadril", "escoliose", "saúde óssea", "fraturas", "órteses", "cadeira de rodas", "equipamentos", "pele", "epilepsia", "escola", "PEI", "cuidador", "metas funcionais", "eficiência oral", "segurança da deglutição", "respiração e secreções", "nutrição e gastrointestinal"],
+    signalTags: ["paralisia cerebral", "pc", "função", "funcionalidade", "participação", "mobilidade", "transferências", "postura", "posicionamento", "tônus", "espasticidade", "distonia", "discinesia", "fraqueza", "contratura", "dor", "fadiga", "sono", "mãos", "autocuidado", "autonomia", "comunicação", "CAA", "deglutição", "disfagia", "aspiração", "respiração", "nutrição", "hidratação", "quadril", "escoliose", "saúde óssea", "fraturas", "órteses", "cadeira de rodas", "equipamentos", "pele", "epilepsia", "escola", "PEI", "cuidador", "metas funcionais", "fase oral e eficiência", "sinais faríngeos e segurança", "respiração e secreções", "nutrição, hidratação e trato gastrointestinal"],
   },
   {
     ...COMMON,
@@ -161,13 +161,13 @@ export const escalasIpnPcFun200: ScaleEntry[] = [
     prioridade: "diagnostica",
     tempo: "15–30 min",
     appRoute: "/generic-scale/ipn-pc-fun-anamnese-20",
-    description: "Módulo autoral com 20 campos qualitativos para anamnese e red flags. Organiza curso, dor, crises, respiração, deglutição, quadril, coluna, equipamentos, escola e rede de cuidado; não gera escore.",
+    description: "Módulo autoral com 20 campos qualitativos para roteiro de anamnese e red flags. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.",
     scoringCutoff: "Sem escore e sem ponto de corte; síntese qualitativa.",
     assessmentUse: "diagnostico",
     applicationMode: "entrevista_clinica",
     verbalRequirement: "indiferente",
     literacyRequirement: "indiferente",
-    signalTags: ["paralisia cerebral", "pc", "função", "funcionalidade", "participação", "mobilidade", "transferências", "postura", "posicionamento", "tônus", "espasticidade", "distonia", "discinesia", "fraqueza", "contratura", "dor", "fadiga", "sono", "mãos", "autocuidado", "autonomia", "comunicação", "CAA", "deglutição", "disfagia", "aspiração", "respiração", "nutrição", "hidratação", "quadril", "escoliose", "saúde óssea", "fraturas", "órteses", "cadeira de rodas", "equipamentos", "pele", "epilepsia", "escola", "PEI", "cuidador", "metas funcionais", "história clínica", "regressão", "status distônico", "piora respiratória", "bomba intratecal", "red flags"],
+    signalTags: ["paralisia cerebral", "pc", "função", "funcionalidade", "participação", "mobilidade", "transferências", "postura", "posicionamento", "tônus", "espasticidade", "distonia", "discinesia", "fraqueza", "contratura", "dor", "fadiga", "sono", "mãos", "autocuidado", "autonomia", "comunicação", "CAA", "deglutição", "disfagia", "aspiração", "respiração", "nutrição", "hidratação", "quadril", "escoliose", "saúde óssea", "fraturas", "órteses", "cadeira de rodas", "equipamentos", "pele", "epilepsia", "escola", "PEI", "cuidador", "metas funcionais", "história clínica e red flags"],
   },
   {
     ...COMMON,
@@ -176,17 +176,17 @@ export const escalasIpnPcFun200: ScaleEntry[] = [
     fullName: "IPN-PC/FUN 200 — Síntese Funcional, Metas e Plano (20 campos)",
     ageMin: 0,
     ageMax: 215,
-    queixas: ["pc", "motor", "funcionalidade", "dor", "alimentacao", "evolucao"],
+    queixas: ["pc", "motor", "funcionalidade", "dor", "alimentacao"],
     respondente: ["clinico"],
     prioridade: "monitorizacao",
     tempo: "15–30 min",
     appRoute: "/generic-scale/ipn-pc-fun-sintese-20",
-    description: "Módulo autoral com 20 campos qualitativos para síntese funcional, metas, plano escolar, segurança e reavaliação. Não gera escore nem prescrição automática.",
+    description: "Módulo autoral com 20 campos qualitativos para síntese funcional, metas e plano. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.",
     scoringCutoff: "Sem escore e sem ponto de corte; síntese qualitativa.",
     assessmentUse: "monitorizacao",
     applicationMode: "registro_clinico",
     verbalRequirement: "indiferente",
     literacyRequirement: "indiferente",
-    signalTags: ["paralisia cerebral", "pc", "função", "funcionalidade", "participação", "mobilidade", "transferências", "postura", "posicionamento", "tônus", "espasticidade", "distonia", "discinesia", "fraqueza", "contratura", "dor", "fadiga", "sono", "mãos", "autocuidado", "autonomia", "comunicação", "CAA", "deglutição", "disfagia", "aspiração", "respiração", "nutrição", "hidratação", "quadril", "escoliose", "saúde óssea", "fraturas", "órteses", "cadeira de rodas", "equipamentos", "pele", "epilepsia", "escola", "PEI", "cuidador", "metas funcionais", "síntese", "GAS", "contrarreferência", "plano de segurança", "reavaliação"],
-  },
+    signalTags: ["paralisia cerebral", "pc", "função", "funcionalidade", "participação", "mobilidade", "transferências", "postura", "posicionamento", "tônus", "espasticidade", "distonia", "discinesia", "fraqueza", "contratura", "dor", "fadiga", "sono", "mãos", "autocuidado", "autonomia", "comunicação", "CAA", "deglutição", "disfagia", "aspiração", "respiração", "nutrição", "hidratação", "quadril", "escoliose", "saúde óssea", "fraturas", "órteses", "cadeira de rodas", "equipamentos", "pele", "epilepsia", "escola", "PEI", "cuidador", "metas funcionais", "síntese funcional e metas"],
+  }
 ];
