@@ -1,279 +1,230 @@
-// Sistema de Recomendação Inteligente de Testes para Pais
-// Complementar aos testes diretos com a criança
-// Baseado em queixa clínica + faixa etária
+// Recomendações auxiliares respondidas por pais ou cuidadores.
+//
+// Regra de integridade: nome, rota, idade e tempo vêm SEMPRE de allScales. A
+// curadoria abaixo só define por que o instrumento entra, para qual queixa e em
+// qual prioridade. Assim o bloco auxiliar não cria uma segunda verdade clínica.
+import { allScales, type ScaleEntry } from "./scaleFilter";
 
 export interface ParentTestRecommendation {
   id: string;
+  scaleId: string;
   name: string;
   route: string;
   queixas: string[];
-  ageMin: number; // meses
-  ageMax: number; // meses
+  ageMin: number;
+  ageMax: number;
   tempo: string;
-  seal: "ouro" | "prata" | "bronze"; // gold, silver, bronze
+  seal: "ouro" | "prata" | "bronze";
   razao: string;
   icon: string;
-  complementa: string; // qual teste direto complementa
+  complementa: string;
+  canonicalScale: ScaleEntry;
 }
 
-// Testes para pais — recomendações clínicas
-// OURO = Escalas essenciais/clássicas bem-validadas
-// PRATA = Questionários complementares para aspectos específicos
-// BRONZE = Avaliações opcionais para enriquecer diagnóstico
-export const testesPaisRecommendations: ParentTestRecommendation[] = [
-  // ===== TDAH: Comportamento e Sintomas =====
+interface ParentRecommendationSpec {
+  id: string;
+  scaleId: string;
+  queixas: string[];
+  seal: ParentTestRecommendation["seal"];
+  razao: string;
+  icon: string;
+  complementa: string;
+}
+
+const recommendationSpecs: ParentRecommendationSpec[] = [
   {
     id: "snap-iv",
-    name: "SNAP-IV",
-    route: "/snap",
+    scaleId: "snap",
     queixas: ["tdah", "comportamento", "aprendizagem"],
-    ageMin: 36,
-    ageMax: 168,
-    tempo: "5–8 min",
     seal: "ouro",
-    razao: "TDAH: Escala clássica de sintomas (desatenção/impulsividade/hiperatividade). Essencial para confirmação parental de TDAH. Complementa testes diretos de atenção.",
+    razao:
+      "Organiza sintomas de desatenção e hiperatividade/impulsividade observados em casa e pode ser cruzado com a versão escolar; é rastreio dimensional, não confirmação diagnóstica isolada.",
     icon: "Activity",
-    complementa: "Atenção e Concentração",
+    complementa: "Atenção e funções executivas",
   },
   {
-    id: "conners",
-    name: "Conners",
-    route: "/conners",
+    id: "conners-pais",
+    scaleId: "conners",
     queixas: ["tdah", "comportamento", "aprendizagem"],
-    ageMin: 36,
-    ageMax: 168,
-    tempo: "10–15 min",
     seal: "prata",
-    razao: "TDAH/Comportamento: Avalia atenção, hiperatividade, agressividade. Complementa Funções Executivas em contexto de vida real (casa).",
+    razao:
+      "Acrescenta funcionamento cotidiano, oposição, aprendizagem e autorregulação ao relato de sintomas; interpretar conforme a versão licenciada aplicada.",
     icon: "BarChart3",
-    complementa: "Funções Executivas",
+    complementa: "Atenção e funções executivas",
   },
-
-  // ===== LINGUAGEM: Desenvolvimento e Preocupações =====
   {
-    id: "asq3",
-    name: "ASQ-3",
-    route: "/asq3",
-    queixas: ["linguagem", "atraso", "cognicao"],
-    ageMin: 36,
-    ageMax: 72,
-    tempo: "10–15 min",
+    id: "asq3-pais",
+    scaleId: "asq3",
+    queixas: ["atraso", "linguagem", "motor"],
     seal: "ouro",
-    razao: "Atraso de linguagem/desenvolvim: Rastreio de marco de desenvolvimento global. Essencial em < 6 anos para diferenciar atraso específico de linguagem vs. atraso global. Complementa Linguagem e Fonologia.",
+    razao:
+      "Questionário de desenvolvimento por cuidadores que cobre comunicação, motor, resolução de problemas e pessoal-social em crianças pequenas.",
     icon: "Baby",
-    complementa: "Linguagem e Fonologia",
+    complementa: "Desenvolvimento global",
   },
   {
-    id: "cars2",
-    name: "CARS-2",
-    route: "/cars",
-    queixas: ["linguagem", "atraso", "comportamento"],
-    ageMin: 24,
-    ageMax: 96,
-    tempo: "15–20 min",
+    id: "peds-pais",
+    scaleId: "peds",
+    queixas: ["atraso", "linguagem", "motor"],
     seal: "prata",
-    razao: "Suspeita de autismo: Complementa avaliação de linguagem com atenção para padrões comunicativos autísticos (pragmática, ecolalia, atrasos). Validado para suspeita de TEA.",
-    icon: "Puzzle",
-    complementa: "Linguagem e Fonologia",
-  },
-
-  // ===== APRENDIZAGEM: Dificuldades Acadêmicas =====
-  {
-    id: "cbcl",
-    name: "CBCL",
-    route: "/cbcl",
-    queixas: ["aprendizagem", "comportamento", "emocional"],
-    ageMin: 36,
-    ageMax: 180,
-    tempo: "10–15 min",
-    seal: "ouro",
-    razao: "Dificuldades de aprendizagem/comportamento: Rastreio abrangente de problemas de internalização/externalização que afetam aprendizagem. Complementa Acadêmico Interativo com contexto familiar.",
-    icon: "ListChecks",
-    complementa: "Acadêmico Interativo",
-  },
-  {
-    id: "brief2",
-    name: "BRIEF-2",
-    route: "/brief2",
-    queixas: ["aprendizagem", "tdah", "cognicao"],
-    ageMin: 36,
-    ageMax: 168,
-    tempo: "10–15 min",
-    seal: "prata",
-    razao: "Funções executivas em casa: Avalia planejamento, organização, inibição no contexto de vida real. Complementa Funções Executivas diretas com informações de desempenho prático.",
-    icon: "BrainCog",
-    complementa: "Funções Executivas",
-  },
-
-  // ===== MOTOR: Marcos e Preocupações =====
-  {
-    id: "gmfcs",
-    name: "GMFCS",
-    route: "/gmfcs",
-    queixas: ["motor", "atraso", "cognicao"],
-    ageMin: 24,
-    ageMax: 180,
-    tempo: "5–8 min",
-    seal: "ouro",
-    razao: "Paralisia cerebral/atraso motor: Classificação de capacidade funcional motora grossa. Essencial se suspeita de PC ou atraso motor global. Complementa teste de Motricidade.",
-    icon: "Accessibility",
-    complementa: "Motricidade",
-  },
-  {
-    id: "vineland",
-    name: "Vineland-3",
-    route: "/vineland",
-    queixas: ["motor", "atraso", "cognicao"],
-    ageMin: 24,
-    ageMax: 168,
-    tempo: "20–30 min",
-    seal: "prata",
-    razao: "Atraso global/deficiência intelectual: Avalia comportamento adaptativo (comunicação, vida diária, socialização). Complementa bateria motora com avaliação de autonomia funcional.",
-    icon: "Users",
-    complementa: "Motricidade + Conhecimentos Gerais",
-  },
-
-  // ===== ATRASO: Marcos de Desenvolvimento Global =====
-  {
-    id: "denver2",
-    name: "Denver II",
-    route: "/denver",
-    queixas: ["atraso", "motor", "linguagem"],
-    ageMin: 24,
-    ageMax: 120,
-    tempo: "15–20 min",
-    seal: "ouro",
-    razao: "Atraso do desenvolvimento: Rastreio de marcos em 4 domínios (motor grosso, motor fino, linguagem, socioemocional). Imprescindível em < 5 anos com suspeita de atraso global.",
+    razao:
+      "Estrutura as preocupações dos cuidadores sobre desenvolvimento e comportamento, ajudando a decidir quando ampliar a avaliação formal.",
     icon: "BookOpen",
-    complementa: "Motricidade + Linguagem",
+    complementa: "Marcos do desenvolvimento",
   },
   {
-    id: "cshq",
-    name: "CSHQ",
-    route: "/cshq",
-    queixas: ["atraso", "comportamento", "cognicao"],
-    ageMin: 48,
-    ageMax: 144,
-    tempo: "10–15 min",
-    seal: "prata",
-    razao: "Qualidade do sono: Problemas de sono frequentemente causam atraso comportamental e cognitivo. Complementa avaliação de atraso global investigando causa ambiental.",
-    icon: "Moon",
-    complementa: "Conhecimentos Gerais",
-  },
-
-  // ===== COGNIÇÃO: Funcionamento Intelectual =====
-  {
-    id: "mchat",
-    name: "M-CHAT-R/F",
-    route: "/mchat",
-    queixas: ["cognicao", "atraso", "linguagem"],
-    ageMin: 18,
-    ageMax: 48,
-    tempo: "5–8 min",
+    id: "cbcl-pais",
+    scaleId: "cbcl",
+    queixas: ["comportamento", "ansiedade", "depressao", "aprendizagem"],
     seal: "ouro",
-    razao: "Suspeita de autismo < 3 anos: Rastreio de TEA em primeira infância. Se positivo, diferencia autismo de atraso cognitivo puro. Complementa Conhecimento Visual.",
-    icon: "Baby",
-    complementa: "Conhecimento Visual",
+    razao:
+      "Oferece visão ampla de sintomas internalizantes, externalizantes, atenção e funcionamento social relatados pelos cuidadores.",
+    icon: "ListChecks",
+    complementa: "Comportamento e impacto funcional",
   },
   {
-    id: "aq10",
-    name: "AQ-10",
-    route: "/aq10",
-    queixas: ["cognicao", "comportamento", "aprendizagem"],
-    ageMin: 72,
-    ageMax: 180,
-    tempo: "5–8 min",
+    id: "brief2-pais",
+    scaleId: "brief2",
+    queixas: ["tdah", "cognicao", "aprendizagem"],
     seal: "prata",
-    razao: "TEA em > 6 anos: Rastreio de traços autísticos (padrões restritos, dificuldades sociais). Complementa avaliação cognitiva investigando fenótipo autístico.",
+    razao:
+      "Descreve funções executivas no cotidiano — inibição, flexibilidade, memória de trabalho e organização — a partir do contexto familiar.",
+    icon: "BrainCog",
+    complementa: "Funções executivas",
+  },
+  {
+    id: "vineland-pais",
+    scaleId: "vineland",
+    queixas: ["funcionalidade", "autonomia", "atraso", "motor", "cognicao"],
+    seal: "ouro",
+    razao:
+      "Caracteriza comunicação, vida diária, socialização e autonomia por entrevista ou relato do cuidador; exige versão e normas licenciadas adequadas.",
+    icon: "Users",
+    complementa: "Autonomia e comportamento adaptativo",
+  },
+  {
+    id: "mchat-pais",
+    scaleId: "mchat",
+    queixas: ["tea", "atraso", "linguagem"],
+    seal: "ouro",
+    razao:
+      "Rastreio parental específico para risco de TEA na janela etária documentada; resultado positivo orienta seguimento estruturado, não fecha diagnóstico.",
     icon: "Puzzle",
-    complementa: "Conhecimento Visual",
-  },
-
-  // ===== EMOCIONAL: Ansiedade e Humor =====
-  {
-    id: "scared",
-    name: "SCARED",
-    route: "/scared",
-    queixas: ["emocional", "comportamento", "aprendizagem"],
-    ageMin: 48,
-    ageMax: 180,
-    tempo: "5–8 min",
-    seal: "ouro",
-    razao: "Ansiedade: Rastreio de transtornos de ansiedade em crianças. Frequentemente mascarado como desatenção ou hiperatividade. Essencial se irritabilidade ou evitação presentes.",
-    icon: "ShieldAlert",
-    complementa: "Atenção e Concentração",
+    complementa: "Comunicação social precoce",
   },
   {
-    id: "phqa",
-    name: "PHQ-A",
-    route: "/phqa",
-    queixas: ["emocional", "comportamento", "aprendizagem"],
-    ageMin: 48,
-    ageMax: 180,
-    tempo: "5–8 min",
+    id: "atec-pais",
+    scaleId: "atec",
+    queixas: ["tea", "social", "linguagem", "comportamento", "evolucao"],
     seal: "prata",
-    razao: "Depressão: Rastreio de sintomas depressivos (humor, interesse, energia, culpa). Diferencia depressão de TDAH (ambos causam falta de concentração).",
-    icon: "HeartPulse",
-    complementa: "Atenção e Concentração",
-  },
-
-  // ===== RISCO/PROTEÇÃO: Comportamento e Bem-estar =====
-  {
-    id: "sdq",
-    name: "SDQ",
-    route: "/sdq",
-    queixas: ["comportamento", "emocional", "aprendizagem"],
-    ageMin: 36,
-    ageMax: 180,
-    tempo: "5–8 min",
-    seal: "prata",
-    razao: "Bem-estar geral: Rastreio de problemas emocionais, comportamentais, de hiperatividade, relacionais e prosociais. Útil como triagem ampla antes de especificar diagnóstico.",
-    icon: "BarChart3",
-    complementa: "Funções Executivas",
+    razao:
+      "Ajuda a acompanhar comunicação, sociabilidade, aspectos sensoriais e saúde/comportamento ao longo do tempo, sem substituir avaliação diagnóstica.",
+    icon: "Puzzle",
+    complementa: "Evolução funcional no TEA",
   },
   {
-    id: "cssrs",
-    name: "C-SSRS",
-    route: "/cssrs",
-    queixas: ["emocional", "comportamento"],
-    ageMin: 48,
-    ageMax: 180,
-    tempo: "10–15 min",
+    id: "srs2-pais",
+    scaleId: "srs2",
+    queixas: ["tea", "social", "linguagem"],
     seal: "bronze",
-    razao: "Risco de suicídio: Obrigatório se há ideação, agressividade grave ou automutilação. Complementa avaliação emocional com investigação de risco.",
+    razao:
+      "Quantifica responsividade social em contexto real e pode acrescentar perspectiva familiar ou escolar; uso depende da versão licenciada.",
+    icon: "Users",
+    complementa: "Reciprocidade e participação social",
+  },
+  {
+    id: "scared-pais",
+    scaleId: "scared",
+    queixas: ["ansiedade", "comportamento"],
+    seal: "ouro",
+    razao:
+      "Organiza sinais de ansiedade, evitação, separação, pânico e queixas somáticas na faixa etária validada, com versão apropriada ao informante.",
     icon: "ShieldAlert",
-    complementa: "Funções Executivas",
+    complementa: "Entrevista de ansiedade",
+  },
+  {
+    id: "psc17-pais",
+    scaleId: "psc17",
+    queixas: ["comportamento", "ansiedade", "depressao", "tdah"],
+    seal: "prata",
+    razao:
+      "Triagem breve parental de carga psicossocial, sintomas internalizantes, externalizantes e atenção; útil quando a queixa inicial é inespecífica.",
+    icon: "HeartPulse",
+    complementa: "Triagem psicossocial ampla",
+  },
+  {
+    id: "sdq-pais",
+    scaleId: "sdq",
+    queixas: ["comportamento", "ansiedade", "tdah", "social", "aprendizagem"],
+    seal: "prata",
+    razao:
+      "Acrescenta uma leitura breve de emoções, hiperatividade, conduta, pares e comportamento pró-social a partir do cotidiano.",
+    icon: "BarChart3",
+    complementa: "Comportamento e relações",
+  },
+  {
+    id: "cshq-pais",
+    scaleId: "cshq",
+    queixas: ["sono", "comportamento", "tdah"],
+    seal: "ouro",
+    razao:
+      "Questionário parental de hábitos e dificuldades do sono, importante quando sono insuficiente ou fragmentado pode amplificar sintomas diurnos.",
+    icon: "Moon",
+    complementa: "Rotina, sono e funcionamento diurno",
   },
 ];
 
-// Algoritmo de recomendação inteligente por queixa + idade
+const scaleById = new Map(allScales.map((scale) => [scale.id, scale]));
+
+function hydrateRecommendation(
+  spec: ParentRecommendationSpec,
+): ParentTestRecommendation | null {
+  const canonicalScale = scaleById.get(spec.scaleId);
+  if (!canonicalScale) return null;
+  return {
+    ...spec,
+    name: canonicalScale.name,
+    route: canonicalScale.appRoute || `/generic-scale/${canonicalScale.id}`,
+    ageMin: canonicalScale.ageMin,
+    ageMax: canonicalScale.ageMax,
+    tempo: canonicalScale.tempo,
+    canonicalScale,
+  };
+}
+
+export const testesPaisRecommendations: ParentTestRecommendation[] =
+  recommendationSpecs
+    .map(hydrateRecommendation)
+    .filter(
+      (recommendation): recommendation is ParentTestRecommendation =>
+        Boolean(recommendation),
+    );
+
 export function recommendParentTests(
   selectedQueixas: string[],
-  ageMonths: number | null
+  ageMonths: number | null,
 ): ParentTestRecommendation[] {
   if (!selectedQueixas.length || ageMonths === null) return [];
 
-  const candidates = testesPaisRecommendations.filter((test) => {
-    // Queixa deve corresponder
-    const matchesQueixa = test.queixas.some((q) => selectedQueixas.includes(q));
-    // Idade deve estar no range
-    const matchesAge = ageMonths >= test.ageMin && ageMonths <= test.ageMax;
-    return matchesQueixa && matchesAge;
-  });
-
-  // Ordena por prioridade (ouro > prata > bronze)
+  const selected = new Set(selectedQueixas);
   const sealOrder = { ouro: 0, prata: 1, bronze: 2 };
-  return candidates.sort((a, b) => {
-    const sealDiff = sealOrder[a.seal] - sealOrder[b.seal];
-    if (sealDiff !== 0) return sealDiff;
-    // Dentro do mesmo selo, primeira correspondência de queixa
-    const aQueixaMatch = a.queixas.filter((q) => selectedQueixas.includes(q)).length;
-    const bQueixaMatch = b.queixas.filter((q) => selectedQueixas.includes(q)).length;
-    return bQueixaMatch - aQueixaMatch;
-  });
+  return testesPaisRecommendations
+    .filter(
+      (recommendation) =>
+        recommendation.queixas.some((queixa) => selected.has(queixa)) &&
+        ageMonths >= recommendation.ageMin &&
+        ageMonths <= recommendation.ageMax,
+    )
+    .sort((a, b) => {
+      const sealDifference = sealOrder[a.seal] - sealOrder[b.seal];
+      if (sealDifference !== 0) return sealDifference;
+      const complaintDifference =
+        b.queixas.filter((queixa) => selected.has(queixa)).length -
+        a.queixas.filter((queixa) => selected.has(queixa)).length;
+      return complaintDifference || a.name.localeCompare(b.name, "pt-BR");
+    });
 }
 
-// Recomendações curatoriais por queixa
 export interface ParentAssessmentPath {
   queixa: string;
   label: string;
@@ -285,70 +236,120 @@ export interface ParentAssessmentPath {
 export const parentAssessmentPaths: ParentAssessmentPath[] = [
   {
     queixa: "tdah",
-    label: "Investigação de TDAH (Pais)",
-    primaryTests: ["snap-iv", "conners"],
-    duration: "15–25 min",
+    label: "Contexto familiar para atenção e autorregulação",
+    primaryTests: ["snap-iv", "conners-pais"],
+    duration: "20–30 min",
     description:
-      "Protocolo parental: SNAP-IV (sintomas essenciais) + Conners (comportamento em contexto). Essencial para confirmação de TDAH antes de medicação.",
+      "Combine rastreio de sintomas com funcionamento executivo cotidiano e, quando possível, confronte casa e escola.",
   },
   {
     queixa: "linguagem",
-    label: "Investigação de Linguagem (Pais)",
-    primaryTests: ["asq3", "cars2"],
-    duration: "20–30 min",
+    label: "Desenvolvimento segundo os cuidadores",
+    primaryTests: ["asq3-pais", "peds-pais"],
+    duration: "15–25 min",
     description:
-      "Protocolo parental: ASQ-3 (marco geral) + CARS-2 (padrões autísticos). Se < 6 anos, imprescindível para diferenciar atraso específico vs. global.",
+      "Organize marcos e preocupações familiares antes de integrar observação clínica e avaliação fonoaudiológica.",
   },
   {
     queixa: "aprendizagem",
-    label: "Investigação de Aprendizagem (Pais)",
-    primaryTests: ["cbcl", "brief2"],
-    duration: "20–30 min",
+    label: "Contexto familiar da dificuldade escolar",
+    primaryTests: ["cbcl-pais", "brief2-pais"],
+    duration: "25–35 min",
     description:
-      "Protocolo parental: CBCL (problemas comportamentais/emocionais) + BRIEF-2 (funções executivas em casa). Complementa testes académicos diretos.",
+      "Cruze comportamento, emoções e funções executivas em casa com desempenho acadêmico e informação escolar.",
   },
   {
     queixa: "motor",
-    label: "Investigação de Motricidade (Pais)",
-    primaryTests: ["gmfcs", "vineland"],
-    duration: "25–40 min",
+    label: "Impacto funcional segundo os cuidadores",
+    primaryTests: ["asq3-pais", "vineland-pais"],
+    duration: "20–40 min",
     description:
-      "Protocolo parental: GMFCS (classificação motora) + Vineland-3 (autonomia). Se PC suspeita, essencial para caracterizar impacto funcional.",
+      "Relacione marcos motores, participação e autonomia ao exame neurológico e à avaliação funcional direta.",
   },
   {
     queixa: "atraso",
-    label: "Investigação de Atraso (Pais)",
-    primaryTests: ["denver2", "cshq"],
-    duration: "25–35 min",
+    label: "Triagem parental do desenvolvimento",
+    primaryTests: ["asq3-pais", "peds-pais"],
+    duration: "15–25 min",
     description:
-      "Protocolo parental: Denver II (marcos dos 4 domínios) + CSHQ (sono como fator). Triagem abrangente para atraso global em < 5 anos.",
+      "Comece por marcos e preocupações dos cuidadores e amplie conforme idade, domínio afetado e impacto funcional.",
   },
   {
-    queixa: "cognicao",
-    label: "Investigação de Cognição (Pais)",
-    primaryTests: ["mchat", "aq10"],
-    duration: "10–15 min",
+    queixa: "funcionalidade",
+    label: "Funcionamento adaptativo no cotidiano",
+    primaryTests: ["vineland-pais", "asq3-pais"],
+    duration: "25–45 min",
     description:
-      "Protocolo parental: M-CHAT (< 3 anos) ou AQ-10 (> 6 anos) para rastreio de TEA. Complementa avaliação cognitiva com investigação de fenótipo autístico.",
+      "Documente comunicação, vida diária, socialização, participação e quantidade de ajuda necessária.",
   },
   {
-    queixa: "emocional",
-    label: "Investigação Emocional (Pais)",
-    primaryTests: ["scared", "phqa"],
-    duration: "10–15 min",
+    queixa: "autonomia",
+    label: "Autonomia e atividades de vida diária",
+    primaryTests: ["vineland-pais", "peds-pais"],
+    duration: "25–40 min",
     description:
-      "Protocolo parental: SCARED (ansiedade) + PHQ-A (depressão). Diferencia transtornos emocionais que mascaramse como TDAH.",
+      "Caracterize o que a criança faz sozinha, com supervisão ou com assistência direta em contextos reais.",
+  },
+  {
+    queixa: "tea",
+    label: "Comunicação social segundo os cuidadores",
+    primaryTests: ["mchat-pais", "atec-pais"],
+    duration: "10–25 min",
+    description:
+      "A idade define o instrumento: rastreio precoce na janela do M-CHAT ou acompanhamento funcional por cuidador em faixas posteriores.",
+  },
+  {
+    queixa: "social",
+    label: "Reciprocidade e participação social",
+    primaryTests: ["srs2-pais", "sdq-pais"],
+    duration: "15–30 min",
+    description:
+      "Documente reciprocidade, pares e impacto social, respeitando licença e versão apropriada do instrumento.",
+  },
+  {
+    queixa: "ansiedade",
+    label: "Ansiedade no cotidiano familiar",
+    primaryTests: ["scared-pais", "psc17-pais"],
+    duration: "15–20 min",
+    description:
+      "Combine rastreio específico de ansiedade com uma triagem psicossocial ampla quando a apresentação for mista.",
+  },
+  {
+    queixa: "depressao",
+    label: "Humor e carga psicossocial segundo os cuidadores",
+    primaryTests: ["psc17-pais", "cbcl-pais"],
+    duration: "20–30 min",
+    description:
+      "Use o relato parental como uma das perspectivas e preserve avaliação direta do adolescente e rastreio imediato de segurança quando indicado.",
   },
   {
     queixa: "comportamento",
-    label: "Investigação de Comportamento (Pais)",
-    primaryTests: ["sdq", "conners"],
+    label: "Comportamento em contexto familiar",
+    primaryTests: ["sdq-pais", "conners-pais"],
     duration: "15–25 min",
     description:
-      "Protocolo parental: SDQ (rastreio amplo) + Conners (detalhamento de problemas). Complementa avaliação de funções executivas com contexto de vida real.",
+      "Diferencie sintomas amplos, oposição, autorregulação e prejuízo no cotidiano, cruzando outros ambientes.",
+  },
+  {
+    queixa: "sono",
+    label: "Hábitos de sono e repercussão diurna",
+    primaryTests: ["cshq-pais", "sdq-pais"],
+    duration: "15–25 min",
+    description:
+      "Registre rotina, despertares e repercussão comportamental antes de atribuir sintomas diurnos apenas a transtornos do neurodesenvolvimento.",
+  },
+  {
+    queixa: "evolucao",
+    label: "Acompanhamento percebido pelos cuidadores",
+    primaryTests: ["atec-pais", "sdq-pais"],
+    duration: "15–25 min",
+    description:
+      "Use medidas repetíveis para acompanhar mudança funcional, sempre registrando versão, intervalo e contexto.",
   },
 ];
 
-export function getParentAssessmentPath(queixa: string): ParentAssessmentPath | undefined {
-  return parentAssessmentPaths.find((p) => p.queixa === queixa);
+export function getParentAssessmentPath(
+  queixa: string,
+): ParentAssessmentPath | undefined {
+  return parentAssessmentPaths.find((path) => path.queixa === queixa);
 }
