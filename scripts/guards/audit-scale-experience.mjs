@@ -119,7 +119,7 @@ for (const recommendation of testesPaisRecommendations) {
     `${recommendation.id}: justificativa clínica insuficiente`,
   );
   check(
-    !/confirma(?:ção|r)|obrigat[oó]rio|fecha diagn[oó]stico/i.test(
+    !/(?:confirma|confirmar|confirmação)\s+(?:o\s+)?diagn[oó]stico|diagn[oó]stico\s+(?:confirmado|fechado)|obrigat[oó]rio\b/i.test(
       recommendation.razao,
     ),
     `${recommendation.id}: linguagem excessivamente conclusiva`,
@@ -158,6 +158,7 @@ const sharedCard = read(
   "client/src/components/FilterRecommendationLinkCard.tsx",
 );
 const presentation = read("client/src/lib/scalePresentation.ts");
+const advancedFilter = read("client/src/data/advancedFilterLogic.ts");
 const openAccessGuard = read("scripts/guards/assert-open-access.mjs");
 
 check(
@@ -171,6 +172,11 @@ check(
     genericPage,
   ),
   "página genérica reintroduziu UI de PIN/senha",
+);
+check(
+  !/PIN master/i.test(advancedFilter) &&
+    advancedFilter.includes("registro observacional complementar"),
+  "motor compartilhado reintroduziu cópia de PIN ou perdeu a descrição aberta do registro complementar",
 );
 check(
   !genericPage.includes("bg-slate-950 min-h-screen") &&
