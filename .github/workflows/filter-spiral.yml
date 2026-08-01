@@ -46,5 +46,8 @@ jobs:
       - name: Audit full age-band compatibility
         run: node --import tsx tests/clinical/test-auxiliary-age-band.mjs
 
+      - name: Audit canonical scale experience and caregiver curation
+        run: node --import tsx scripts/guards/audit-scale-experience.mjs
+
       - name: Type-check filter and scale surfaces
         run: npm run check
