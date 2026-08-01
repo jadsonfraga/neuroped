@@ -1,0 +1,69 @@
+name: One-shot activate review fixes
+
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  activate:
+    if: github.ref == 'refs/heads/agent/scales-lovable-quality-deep'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/scales-lovable-quality-deep
+          fetch-depth: 0
+
+      - name: Convert review-fix workflow to branch push
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/one-shot-review-fixes.yml')
+          source = path.read_text(encoding='utf-8')
+          old = '''on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-shot-review-fixes.yml
+'''
+          new = '''on:
+  push:
+'''
+          if old in source:
+              source = source.replace(old, new, 1)
+          elif new not in source:
+              raise SystemExit('gatilho esperado não encontrado')
+
+          old_job = '''jobs:
+  patch:
+    runs-on: ubuntu-latest
+'''
+          new_job = '''jobs:
+  patch:
+    if: github.ref == 'refs/heads/agent/scales-lovable-quality-deep'
+    runs-on: ubuntu-latest
+'''
+          if old_job in source:
+              source = source.replace(old_job, new_job, 1)
+          elif new_job not in source:
+              raise SystemExit('bloco do job não encontrado')
+
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Commit activation
+        run: |
+          if git diff --quiet; then
+            echo "Ativação já aplicada."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/one-shot-review-fixes.yml
+          git commit -m "chore(escalas): ativar correções da revisão"
+          git push origin HEAD:agent/scales-lovable-quality-deep
