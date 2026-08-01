@@ -177,8 +177,8 @@ const parentGold = parentMatches.filter(
   (match) => match.recommendation.seal === "ouro",
 );
 assert.ok(
-  parentGold.length >= 3,
-  "fixture parental deve produzir ouro integral e parcial",
+  parentGold.length >= 2,
+  "catálogo parental deve produzir escolha integral e parcial na mesma prioridade",
 );
 const firstPartialGold = parentGold.findIndex(
   (match) => match.ageFit === "partial",
@@ -191,10 +191,18 @@ assert.ok(
   "dentro do selo Ouro, compatibilidade integral deve vir antes da parcial",
 );
 assert.equal(
-  parentMatches.find((match) => match.recommendation.id === "asq3")
-    ?.ageFit,
+  parentMatches.find(
+    (match) => match.recommendation.id === "asq3-pais",
+  )?.ageFit,
+  "full",
+  "ASQ-3 canônico (1–66 meses) deve cobrir integralmente a banda 24–48",
+);
+assert.equal(
+  parentMatches.find(
+    (match) => match.recommendation.id === "mchat-pais",
+  )?.ageFit,
   "partial",
-  "ASQ-3 deve declarar cobertura parcial quando a banda começa antes de 36 meses",
+  "M-CHAT (16–30 meses) deve ser explicitamente parcial na banda 24–48",
 );
 
 assert.deepEqual(
