@@ -1,44 +1,65 @@
-import { useParams, useLocation, Link } from "wouter";
 import { useState } from "react";
-import { ArrowLeft, Copy, Download, Lock, ShieldCheck } from "lucide-react";
+import { Link, useLocation, useParams } from "wouter";
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  Check,
+  ClipboardCheck,
+  Clock,
+  Copy,
+  Download,
+  ExternalLink,
+  FileText,
+  Layers3,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import { Textarea } from "@/components/ui/textarea";
+import { PageHero } from "@/components/PageHero";
 import { GenericScale } from "@/components/GenericScale";
+import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
+import { ClinicalReport } from "@/components/ClinicalReport";
+import { SaveToPatient } from "@/components/SaveToPatient";
+import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import {
   getInteractiveScale as getInteractiveItemScale,
   makeInteractiveConfig,
 } from "@/data/interactiveScaleItems";
 import { getInteractiveScale as getInteractiveRunnerScale } from "@/data/interactiveScales";
-import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
-import { ClinicalReport } from "@/components/ClinicalReport";
-import { SaveToPatient } from "@/components/SaveToPatient";
 import {
-  getImplementationStatus,
-  getImplementationLabel,
   getApplicationMode,
   getAssessmentUse,
+  getImplementationLabel,
+  getImplementationStatus,
   getLiteracyRequirement,
   getVerbalRequirement,
 } from "@/data/advancedFilterLogic";
 import {
-  getMasterPinLockSeconds,
-  isMasterPinUnlocked,
-  verifyMasterPin,
-} from "@/lib/masterPin";
+  formatScaleAgeRange,
+  scaleLicenseLabel,
+  scalePriorityLabel,
+  scaleRespondentsLabel,
+  scaleRoute,
+} from "@/lib/scalePresentation";
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
-  questionario_pais: "Questionário — pais/cuidador",
-  questionario_professor: "Questionário — professor/escola",
-  autoquestionario_crianca_adolescente: "Autorrelato — criança/adolescente",
+  questionario_pais: "Questionário para pais ou cuidadores",
+  questionario_professor: "Questionário para professor ou escola",
+  autoquestionario_crianca_adolescente: "Autorrelato da criança ou adolescente",
   teste_direto_crianca: "Teste direto com a criança",
   observacional_clinico: "Observação clínica",
   entrevista_clinica: "Entrevista clínica",
-  registro_clinico: "Registro/monitorização clínica",
+  registro_clinico: "Registro e monitorização clínica",
   psicoeducacao: "Psicoeducação",
 };
+
 const ASSESSMENT_USE_LABEL: Record<string, string> = {
   triagem: "Triagem",
   diagnostico: "Apoio diagnóstico",
@@ -46,388 +67,362 @@ const ASSESSMENT_USE_LABEL: Record<string, string> = {
   seguimento: "Seguimento",
   psicoeducacao: "Psicoeducação",
 };
+
 const LITERACY_LABEL: Record<string, string> = {
-  indiferente: "Indiferente",
+  indiferente: "Independe de alfabetização",
   alfabetizado: "Requer alfabetização",
-  pre_alfabetizado: "Pré-alfabetizada",
-};
-const VERBAL_LABEL: Record<string, string> = {
-  indiferente: "Indiferente",
-  verbal: "Requer linguagem verbal",
-  nao_verbal_compativel: "Compatível com não-verbal",
+  pre_alfabetizado: "Compatível com pré-alfabetização",
 };
 
-// Rótulos legíveis de queixa (id -> label). Cobre as categorias do filtro e os
-// usos pós-consulta mais comuns; o resto cai num prettify simples.
+const VERBAL_LABEL: Record<string, string> = {
+  indiferente: "Independe de linguagem verbal",
+  verbal: "Requer linguagem verbal",
+  nao_verbal_compativel: "Compatível com perfil não verbal",
+};
+
 const QUEIXA_LABEL: Record<string, string> = {
-  ...Object.fromEntries(queixas.map((q) => [q.id, q.label])),
-  evolucao: "Evolução / Seguimento",
-  efeitos: "Efeitos de medicação",
+  ...Object.fromEntries(queixas.map((queixa) => [queixa.id, queixa.label])),
   adesao: "Adesão ao tratamento",
   qualidade_vida: "Qualidade de vida",
   triagem: "Triagem ampla",
 };
+
 function queixaLabel(id: string): string {
   return (
     QUEIXA_LABEL[id] ??
-    id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ")
+    id.charAt(0).toUpperCase() + id.slice(1).replaceAll("_", " ")
   );
 }
 
-// Idade legível: meses até 24m, anos acima. Evita o "0-0a" das escalas neonatais.
-function ageLabel(min: number, max: number): string {
-  const fmt = (m: number) => (m < 24 ? `${m} m` : `${Math.round(m / 12)} a`);
-  return min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`;
+function pubmedRef(
+  pubmedId?: string | null,
+): { pmid: string; href: string } | null {
+  const digits = pubmedId?.match(/\d{4,}/)?.[0];
+  return digits
+    ? { pmid: digits, href: `https://pubmed.ncbi.nlm.nih.gov/${digits}/` }
+    : null;
 }
 
-// "Como usar" adaptado ao modo de aplicação (honesto: orienta o uso real do
-// instrumento, sem inventar itens/escore que a ficha não tem).
 const USAGE_BY_MODE: Record<string, string[]> = {
   questionario_pais: [
-    "Confirme se a idade da criança está na faixa do instrumento.",
-    "Entregue ao responsável que melhor conhece a rotina da criança.",
-    "Oriente a responder sobre o comportamento habitual, sem pressa.",
-    "Use a referência original para os pontos de corte e a interpretação.",
-    "Registre data, respondente e escore no prontuário.",
+    "Confirme se a idade está dentro da faixa documentada.",
+    "Escolha o cuidador que melhor conhece a rotina habitual.",
+    "Oriente respostas baseadas em exemplos recentes, sem tentar adivinhar o diagnóstico.",
+    "Use a referência original para normas, corte e interpretação.",
+    "Registre data, versão e identidade do respondente no prontuário.",
   ],
   questionario_professor: [
-    "Confirme a faixa etária e o tempo de convívio do professor com a criança.",
-    "Envie o questionário ao professor/escola com instruções claras.",
-    "Considere o comportamento no contexto escolar (sala, recreio).",
-    "Cruze com a versão de pais quando houver, para múltiplos contextos.",
-    "Registre data, respondente e escore no prontuário.",
+    "Confirme a faixa etária e o tempo de convivência do professor com o estudante.",
+    "Oriente respostas sobre situações escolares concretas.",
+    "Compare com casa e consulta quando houver versões para outros informantes.",
+    "Interprete divergências entre contextos como dado clínico relevante.",
+    "Registre data, versão e identidade do respondente no prontuário.",
   ],
   autoquestionario_crianca_adolescente: [
-    "Confirme idade e capacidade de leitura/compreensão (autorrelato).",
-    "Garanta privacidade e ambiente seguro para o adolescente responder.",
-    "Em temas sensíveis (humor, risco), acompanhe de perto e tenha plano de manejo.",
-    "Use a referência original para corte e conduta.",
-    "Registre data e escore; reavalie conforme indicado.",
+    "Confirme idade, compreensão e condições de leitura.",
+    "Garanta privacidade e explique que não existem respostas certas.",
+    "Em temas de risco, mantenha supervisão clínica e plano de segurança.",
+    "Use a referência original para normas, corte e interpretação.",
+    "Registre data, versão e condições de aplicação.",
   ],
   teste_direto_crianca: [
-    "Confirme a faixa etária e prepare o material do teste.",
-    "Aplique diretamente com a criança em ambiente calmo e sem distrações.",
-    "Siga o protocolo padronizado de administração e pontuação.",
-    "Anote desempenho e observações qualitativas.",
-    "Interprete com normas/idade de referência e registre no prontuário.",
+    "Confirme a faixa etária e prepare o material padronizado.",
+    "Aplique em ambiente calmo, com instruções consistentes.",
+    "Registre desempenho e observações qualitativas sem alterar a tarefa.",
+    "Interprete com normas apropriadas à idade e escolaridade.",
+    "Documente versão, data e condições de aplicação.",
   ],
   observacional_clinico: [
-    "Observe a criança nas situações relevantes ao domínio avaliado.",
-    "Registre os comportamentos conforme os critérios do instrumento.",
-    "Complemente com história clínica e relato dos cuidadores.",
-    "Use a referência original para classificação.",
-    "Documente data e achados no prontuário.",
+    "Defina previamente os comportamentos e contextos que serão observados.",
+    "Registre exemplos objetivos e o nível de ajuda necessário.",
+    "Cruze observação, história clínica e relatos de outros ambientes.",
+    "Use a referência original quando o instrumento possuir critérios normativos.",
+    "Documente data, contexto e limitações da observação.",
+  ],
+  entrevista_clinica: [
+    "Explique ao informante o objetivo da entrevista.",
+    "Peça exemplos concretos, frequência, intensidade e impacto funcional.",
+    "Diferencie comportamento atual, história do desenvolvimento e situações isoladas.",
+    "Registre inconsistências e necessidade de informação complementar.",
+    "Finalize com síntese clínica, sem transformar a entrevista em diagnóstico isolado.",
   ],
   registro_clinico: [
-    "Defina o período e a frequência do registro (diário/semanal).",
-    "Oriente a família/equipe a anotar de forma consistente.",
-    "Reúna os registros para análise de evolução ao longo do tempo.",
-    "Compare entre consultas para apoiar decisões de manejo.",
-    "Arquive no prontuário com as datas.",
+    "Defina período, frequência e evento que deve ser registrado.",
+    "Use a mesma regra de anotação em todos os dias ou contextos.",
+    "Compare tendências ao longo do tempo, não apenas um registro isolado.",
+    "Relacione mudanças a intervenções, sono, medicação ou contexto.",
+    "Arquive o registro com datas e fonte da informação.",
   ],
 };
+
 const USAGE_DEFAULT = [
-  "Confirme se a escala é adequada para a idade da criança.",
-  "Prepare um ambiente calmo e seguro para a aplicação.",
-  "Revise as instruções de aplicação na referência original.",
-  "Registre as respostas conforme fornecidas.",
-  "Interprete com a tabela de escore/corte oficial do instrumento.",
-  "Documente data, escore e observações no prontuário.",
+  "Confirme adequação da idade, respondente e finalidade.",
+  "Consulte o manual ou a publicação original antes da aplicação.",
+  "Registre respostas e observações sem reinterpretá-las durante a coleta.",
+  "Use apenas normas e pontos de corte documentados para a versão aplicada.",
+  "Integre o resultado à entrevista, exame e funcionamento real.",
 ];
 
-// Resolve a rota real de uma escala (mesma regra do filtro) para os links de
-// instrumentos relacionados.
-const ALL_IDS = new Set(allScales.map((s) => s.id));
-function routeFor(s: { id: string; appRoute?: string }): string {
-  if (s.appRoute) return s.appRoute;
-  if (ALL_IDS.has(s.id)) return `/generic-scale/${s.id}`;
-  if (s.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
-  return "/filtro";
-}
+function buildObservationPrompts(scale: ScaleEntry): string[] {
+  const domains = new Set(scale.queixas);
+  const prompts: string[] = [];
 
-function buildAdaptedItems(scale: ScaleEntry): string[] {
-  const q = new Set(scale.queixas);
-  const items: string[] = [];
-
-  if (q.has("tea") || q.has("social")) {
-    items.push(
+  if (domains.has("tea") || domains.has("social")) {
+    prompts.push(
       "Compartilha interesse mostrando, apontando ou chamando alguém para ver junto",
-      "Mantém troca social de ida e volta, sem ficar só no assunto preferido",
-      "Entende regras sociais do dia a dia: esperar a vez, perceber brincadeira e respeitar espaço",
-      "Tolera mudança de rotina sem crise importante quando o combinado muda de repente",
+      "Mantém troca social de ida e volta e ajusta a comunicação ao interlocutor",
+      "Tolera mudanças e transições com apoio compatível com a idade",
     );
   }
-  if (q.has("tdah")) {
-    items.push(
-      "Sustenta atenção em tarefa compatível com a idade, sem se perder o tempo todo",
-      "Controla impulso de levantar, interromper ou responder antes da hora",
-      "Organiza material, rotina e começo-meio-fim da atividade com pouca ajuda",
+  if (domains.has("tdah")) {
+    prompts.push(
+      "Sustenta atenção em tarefa compatível com a idade e o contexto",
+      "Controla impulsos de interromper, levantar ou responder antes da hora",
+      "Organiza começo, meio e fim de atividades com ajuda compatível",
     );
   }
-  if (q.has("linguagem")) {
-    items.push(
-      "Compreende comandos e explicações do cotidiano sem precisar repetir muitas vezes",
-      "Expressa necessidades, ideias e acontecimentos com clareza para quem não convive todo dia",
-      "Usa linguagem de forma social, adaptando fala ao contexto, pessoa e intenção",
+  if (domains.has("linguagem")) {
+    prompts.push(
+      "Compreende comandos e explicações do cotidiano",
+      "Expressa necessidades, ideias e acontecimentos com clareza funcional",
+      "Usa linguagem de forma social e adequada ao contexto",
     );
   }
-  if (q.has("aprendizagem")) {
-    items.push(
-      "Lê, escreve ou calcula dentro do esperado para escolaridade e oportunidade de ensino",
-      "Aprende conteúdo novo e consegue aplicar depois sem depender sempre de alguém do lado",
-      "Mostra rendimento escolar compatível com esforço, presença e potencial observado",
+  if (domains.has("aprendizagem")) {
+    prompts.push(
+      "Lê, escreve ou calcula dentro do esperado para oportunidade de ensino",
+      "Aprende conteúdo novo e o recupera posteriormente",
+      "O desempenho observado é coerente com esforço, frequência e suporte recebido",
     );
   }
-  if (q.has("ansiedade") || q.has("depressao")) {
-    items.push(
-      "Preocupação, medo ou tristeza atrapalham escola, sono, alimentação ou convivência",
-      "Consegue se acalmar com apoio comum da família ou escola, sem escalada frequente",
-      "Evita situações importantes por sofrimento emocional ou medo de passar vergonha",
+  if (domains.has("ansiedade") || domains.has("depressao")) {
+    prompts.push(
+      "Medo, preocupação ou tristeza interferem em escola, sono ou convivência",
+      "Evita situações relevantes por sofrimento emocional",
+      "Consegue recuperar-se com estratégias usuais de apoio",
     );
   }
-  if (q.has("comportamento")) {
-    items.push(
-      "Aceita limites e combinados sem agressão, ameaça ou birra desproporcional",
-      "Assume responsabilidade pelo que fez, sem culpar sempre os outros",
-      "Consegue reparar dano ou retomar a atividade depois de conflito",
+  if (domains.has("comportamento")) {
+    prompts.push(
+      "Aceita limites sem agressão ou desregulação desproporcional",
+      "Consegue retomar a atividade depois de conflito ou frustração",
+      "O comportamento varia conforme demanda, ambiente ou presença de apoio",
     );
   }
-  if (q.has("sensorial") || q.has("alimentacao")) {
-    items.push(
-      "Reage a som, toque, cheiro, roupa ou textura de forma proporcional ao contexto",
-      "Busca movimento, pressão ou estímulo sensorial sem se colocar em risco",
-      "Aceita variedade alimentar suficiente para rotina e saúde, considerando textura, cheiro e marca",
+  if (domains.has("sensorial") || domains.has("alimentacao")) {
+    prompts.push(
+      "Reage a som, toque, cheiro, luz ou textura de forma proporcional ao contexto",
+      "Busca estímulos sensoriais sem comprometer segurança ou participação",
+      "A resposta sensorial interfere em alimentação, autocuidado ou aprendizagem",
     );
   }
-  if (q.has("funcionalidade") || q.has("autonomia") || q.has("atraso")) {
-    items.push(
-      "Realiza autocuidado esperado para idade, como higiene, vestir, comer e organizar pertences",
-      "Participa da rotina familiar, escolar ou terapêutica com necessidade de ajuda compatível",
-      "Generaliza habilidades aprendidas para casa, escola e outros ambientes",
+  if (
+    domains.has("funcionalidade") ||
+    domains.has("autonomia") ||
+    domains.has("atraso")
+  ) {
+    prompts.push(
+      "Realiza autocuidado esperado para a idade com ajuda compatível",
+      "Participa das rotinas familiar, escolar e terapêutica",
+      "Generaliza habilidades aprendidas para diferentes ambientes",
     );
   }
-  if (q.has("sono")) {
-    items.push(
-      "Inicia e mantém sono em horário adequado para idade, sem sofrimento importante",
-      "Acorda com disposição suficiente para escola, terapias e rotina diária",
+  if (domains.has("sono")) {
+    prompts.push(
+      "Inicia e mantém o sono em horário adequado para a idade",
+      "O sono permite disposição suficiente para a rotina diurna",
     );
   }
 
-  items.push(
-    "O prejuízo aparece em mais de um contexto, como casa, escola, terapia ou consulta",
-    "A família reconhece exemplos concretos do comportamento na semana ou no último mês",
-    "O achado muda conduta clínica, orientação, encaminhamento ou plano terapêutico",
+  prompts.push(
+    "O achado aparece em mais de um contexto ou informante",
+    "Há exemplo concreto e recente que sustenta a observação",
+    "O achado produz impacto funcional ou muda o plano de cuidado",
   );
 
-  return Array.from(new Set(items)).slice(0, 12);
+  return Array.from(new Set(prompts)).slice(0, 12);
 }
 
-function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
-  const [unlocked, setUnlocked] = useState(() => isMasterPinUnlocked());
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState("");
-  const [busy, setBusy] = useState(false);
+function ClinicalObservationWorkspace({ scale }: { scale: ScaleEntry }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
   const [showResponses, setShowResponses] = useState(false);
-  const sensitiveLicense =
+  const prompts = buildObservationPrompts(scale);
+  const allAnswered = prompts.every((prompt) => Boolean(answers[prompt]));
+  const restricted =
     scale.licencaUso === "comercial" ||
     scale.licencaUso === "restrita" ||
     scale.licencaUso === "contato_autor";
-  const adaptedItems = buildAdaptedItems(scale);
-  const allAnswered = adaptedItems.every((item) => Boolean(answers[item]));
   const reportItems = [
-    ...adaptedItems.map((item) => ({
-      question: item,
-      answer: answers[item] || "Não respondida",
+    ...prompts.map((prompt) => ({
+      question: prompt,
+      answer: answers[prompt] || "Não respondida",
     })),
     {
-      question: "Observações registradas pelo aplicador",
+      question: "Observações registradas pelo profissional",
       answer: notes.trim() || "Não informadas",
     },
   ];
-
-  async function unlockInternal(e: React.FormEvent) {
-    e.preventDefault();
-    if (!pin.trim()) return;
-    const lockSeconds = getMasterPinLockSeconds();
-    if (lockSeconds > 0) {
-      setPinError(`Muitas tentativas. Aguarde ${lockSeconds}s.`);
-      return;
-    }
-    setBusy(true);
-    setPinError("");
-    try {
-      const ok = await verifyMasterPin(pin);
-      if (!ok) {
-        setPinError("PIN master incorreto.");
-        setPin("");
-        return;
-      }
-      setUnlocked(true);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!unlocked) {
-    return (
-      <Card className="bg-slate-800/80 border-violet-700 mb-6">
-        <CardHeader className="border-b border-slate-700">
-          <CardTitle className="text-white flex items-center gap-2">
-            <Lock className="w-5 h-5 text-violet-300" />
-            Uso interno da escala
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <p className="text-sm text-slate-300 mb-4">
-            Esta escala pode ser registrada internamente após PIN master. O PIN
-            não fica visível nem salvo em texto.
-          </p>
-          <form
-            onSubmit={unlockInternal}
-            className="flex flex-col sm:flex-row gap-3"
-          >
-            <Input
-              type="password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              placeholder="PIN master"
-              className="bg-slate-900/70 border-slate-600 text-white"
-              autoComplete="off"
-            />
-            <Button
-              type="submit"
-              disabled={busy || !pin.trim()}
-              className="bg-violet-600 hover:bg-violet-700"
-            >
-              {busy ? "Verificando..." : "Desbloquear"}
-            </Button>
-          </form>
-          {pinError && (
-            <p className="mt-2 text-sm font-semibold text-red-300">
-              {pinError}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
+  const reportName = `${scale.name} — registro observacional complementar`;
 
   if (showResponses) {
     return (
-      <div className="mb-6 space-y-4">
+      <section className="space-y-4" aria-label="Registro observacional concluído">
         <ClinicalReport
-          scaleName={scale.name}
-          scaleFullName={scale.fullName}
+          scaleName={reportName}
+          scaleFullName="Roteiro autoral complementar; não reproduz itens oficiais"
           items={reportItems}
-          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+          patientAge={formatScaleAgeRange(scale.ageMin, scale.ageMax)}
         />
         <SaveToPatient
-          scaleName={scale.name}
+          scaleName={reportName}
           responses={reportItems}
-          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+          patientAge={formatScaleAgeRange(scale.ageMin, scale.ageMax)}
         />
         <Button
+          type="button"
           onClick={() => setShowResponses(false)}
           variant="outline"
           className="w-full"
         >
-          Editar Respostas
+          Editar registro
         </Button>
-      </div>
+      </section>
     );
   }
 
   return (
-    <Card className="bg-slate-800/80 border-emerald-700 mb-6">
-      <CardHeader className="border-b border-slate-700">
-        <CardTitle className="text-white flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-300" />
-          Uso interno desbloqueado
-        </CardTitle>
+    <Card
+      className="overflow-hidden rounded-3xl border-primary/20 bg-gradient-to-br from-primary/[0.06] via-card to-chart-2/[0.05] shadow-sm"
+      data-testid="clinical-observation-workspace"
+    >
+      <div className="h-1 bg-gradient-to-r from-primary via-chart-2 to-chart-3" />
+      <CardHeader className="border-b border-border/60 p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
+            <ClipboardCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+              espaço de trabalho clínico
+            </p>
+            <CardTitle className="mt-1 text-lg text-foreground">
+              Registro observacional complementar
+            </CardTitle>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Roteiro autoral para organizar exemplos e impacto funcional. Não é
+              a aplicação oficial, não calcula escore e não substitui o manual.
+            </p>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="pt-6 space-y-5">
-        {sensitiveLicense && (
-          <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-100">
-            Instrumento com licença restrita/comercial. Esta tela usa itens
-            autorais de registro e não reproduz o instrumento oficial.
+      <CardContent className="space-y-5 p-5">
+        {restricted && (
+          <div
+            className="rounded-2xl border border-amber-300/60 bg-amber-50/80 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100"
+            role="note"
+          >
+            <strong>Licença protegida:</strong> esta área contém apenas perguntas
+            observacionais autorais e não reproduz itens, normas ou escore do
+            instrumento comercial/restrito.
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-3">
-          {adaptedItems.map((item) => (
-            <label key={item} className="space-y-1">
-              <span className="text-xs font-semibold text-slate-300">
-                {item}
-              </span>
-              <select
-                value={answers[item] || ""}
-                onChange={(e) =>
-                  setAnswers((previous) => ({
-                    ...previous,
-                    [item]: e.target.value,
-                  }))
-                }
-                className="w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-white"
+        <div className="grid gap-3 lg:grid-cols-2">
+          {prompts.map((prompt, index) => {
+            const selectId = `observation-${scale.id}-${index}`;
+            return (
+              <label
+                key={prompt}
+                htmlFor={selectId}
+                className="rounded-2xl border border-border/70 bg-background/80 p-4 transition-shadow focus-within:border-primary/40 focus-within:shadow-md"
               >
-                <option value="">Selecionar resposta</option>
-                <option value="Não observado / não aplicável">
-                  Não observado / não aplicável
-                </option>
-                <option value="Leve / pouco impacto">
-                  Leve / pouco impacto
-                </option>
-                <option value="Moderado / impacto claro">
-                  Moderado / impacto claro
-                </option>
-                <option value="Importante / impacto acentuado">
-                  Importante / impacto acentuado
-                </option>
-              </select>
-            </label>
-          ))}
+                <span className="flex items-start gap-2 text-sm font-semibold leading-relaxed text-foreground">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  {prompt}
+                </span>
+                <select
+                  id={selectId}
+                  value={answers[prompt] || ""}
+                  onChange={(event) =>
+                    setAnswers((previous) => ({
+                      ...previous,
+                      [prompt]: event.target.value,
+                    }))
+                  }
+                  className="mt-3 min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Selecionar observação</option>
+                  <option value="Não observado / não aplicável">
+                    Não observado / não aplicável
+                  </option>
+                  <option value="Adequado ou sem impacto relevante">
+                    Adequado ou sem impacto relevante
+                  </option>
+                  <option value="Discreto / impacto leve">
+                    Discreto / impacto leve
+                  </option>
+                  <option value="Claro / impacto moderado">
+                    Claro / impacto moderado
+                  </option>
+                  <option value="Intenso / impacto importante">
+                    Intenso / impacto importante
+                  </option>
+                </select>
+              </label>
+            );
+          })}
         </div>
 
-        <label className="space-y-1 block">
-          <span className="text-xs font-semibold text-slate-300">
-            Observações do aplicador (opcional)
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-foreground">
+            Observações e exemplos concretos
           </span>
           <Textarea
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="bg-slate-900/70 border-slate-600 text-white min-h-28"
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Contexto, frequência, ajuda necessária, divergência entre informantes e impacto funcional…"
+            className="min-h-32 rounded-2xl bg-background"
           />
         </label>
 
         <Button
+          type="button"
           onClick={() => setShowResponses(true)}
           disabled={!allAnswered}
-          className="w-full bg-emerald-600 hover:bg-emerald-700"
+          className="h-12 w-full gap-2 bg-gradient-to-r from-primary to-chart-2 text-white shadow-md"
         >
-          Ver todas as perguntas e respostas
+          <Check className="h-4 w-4" aria-hidden="true" />
+          {allAnswered
+            ? "Revisar registro completo"
+            : `Complete as ${prompts.length} observações`}
         </Button>
       </CardContent>
     </Card>
   );
 }
 
+interface InfoCard {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}
+
 export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
-  const [_location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const scaleId = params?.id;
-
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
   const scale = allScales.find((s) => s.id === scaleId);
-  const [copied, setCopied] = useState(false);
-  const implStatus = scale ? getImplementationStatus(scale) : null;
 
-  // Escalas interativas "runner" (acervo novo: dor/FPS-R, Q-CHAT, Viking, MACS…)
-  // — renderizadas pelo InteractiveScaleRunner. Conjunto à parte do acervo de
-  // itens (interactiveScaleItems), por isso é checado primeiro e independe de allScales.
   const runnerDef = getInteractiveRunnerScale(scaleId);
   if (runnerDef) {
     return (
-      <div className="p-1">
+      <div className="mx-auto max-w-3xl p-3 sm:p-5">
         <InteractiveScaleRunner def={runnerDef} />
       </div>
     );
@@ -435,18 +430,21 @@ export default function GenericScalePage() {
 
   if (!scale) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6 flex items-center justify-center">
-        <Card className="w-full max-w-md bg-red-950/50 border-red-700">
-          <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold text-red-100 mb-4">
-              Escala não encontrada
-            </h2>
-            <p className="text-red-200 mb-6">ID: {scaleId}</p>
-            <Button
-              onClick={() => navigate("/filtro")}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+      <div className="mx-auto flex min-h-[70vh] max-w-lg items-center p-4">
+        <Card className="w-full overflow-hidden rounded-3xl border-destructive/30">
+          <div className="h-1 bg-destructive" />
+          <CardContent className="space-y-4 p-6 text-center">
+            <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
+            <div>
+              <h1 className="text-xl font-bold text-foreground">
+                Instrumento não encontrado
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                O identificador informado não existe no catálogo atual.
+              </p>
+            </div>
+            <Button onClick={() => navigate("/filtro")} className="gap-2">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Voltar ao Filtro
             </Button>
           </CardContent>
@@ -455,18 +453,16 @@ export default function GenericScalePage() {
     );
   }
 
-  // Quando a escala já tem itens interativos cadastrados (acervo de 257), renderiza
-  // a APLICAÇÃO REAL (itens respondíveis + cálculo de escore) no lugar da ficha.
   const itemDef = getInteractiveItemScale(scaleId);
   if (itemDef) {
     return (
-      <div className="max-w-2xl mx-auto p-3 sm:p-4">
+      <div className="mx-auto max-w-3xl space-y-3 p-3 sm:p-5">
         <Button
           variant="ghost"
           onClick={() => navigate("/filtro")}
-          className="mb-3 text-muted-foreground hover:text-foreground"
+          className="gap-2 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Voltar ao Filtro
         </Button>
         <GenericScale config={makeInteractiveConfig(scale, itemDef)} />
@@ -474,348 +470,364 @@ export default function GenericScalePage() {
     );
   }
 
-  const handleCopyDescription = () => {
-    navigator.clipboard.writeText(scale.description);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const implementationStatus = getImplementationStatus(scale);
+  const applicationMode = getApplicationMode(scale);
+  const assessmentUse = getAssessmentUse(scale);
+  const pm = pubmedRef(scale.pubmedId);
+  const infoCards: InfoCard[] = [
+    { icon: Clock, label: "Tempo", value: scale.tempo || "Não informado" },
+    {
+      icon: Layers3,
+      label: "Faixa etária",
+      value: formatScaleAgeRange(scale.ageMin, scale.ageMax),
+    },
+    {
+      icon: Users,
+      label: "Respondente",
+      value: scaleRespondentsLabel(scale.respondente),
+    },
+    {
+      icon: Target,
+      label: "Finalidade",
+      value: ASSESSMENT_USE_LABEL[assessmentUse] ?? scalePriorityLabel(scale.prioridade),
+    },
+  ];
 
-  // Instrumentos relacionados: mesma queixa e faixa etária sobreposta. Torna a
-  // ficha um hub de navegação entre escalas afins (sem inventar conteúdo).
   const related = allScales
-    .filter(
-      (o) =>
-        o.id !== scale.id &&
-        o.queixas.some((q) => scale.queixas.includes(q)) &&
-        o.ageMax >= scale.ageMin &&
-        o.ageMin <= scale.ageMax,
+    .filter((candidate) => candidate.id !== scale.id)
+    .map((candidate) => {
+      const sharedComplaints = candidate.queixas.filter((complaint) =>
+        scale.queixas.includes(complaint),
+      ).length;
+      const sharedRespondents = candidate.respondente.filter((respondent) =>
+        scale.respondente.includes(respondent),
+      ).length;
+      const ageOverlap =
+        candidate.ageMax >= scale.ageMin && candidate.ageMin <= scale.ageMax;
+      const score =
+        sharedComplaints * 10 +
+        sharedRespondents * 3 +
+        (ageOverlap ? 4 : 0) +
+        (getImplementationStatus(candidate) === "complete" ? 2 : 0);
+      return { candidate, score };
+    })
+    .filter(({ score }) => score >= 10)
+    .sort(
+      (a, b) =>
+        b.score - a.score || a.candidate.name.localeCompare(b.candidate.name, "pt-BR"),
     )
-    .slice(0, 6);
+    .slice(0, 6)
+    .map(({ candidate }) => candidate);
+
+  async function copyDescription() {
+    setCopyStatus("idle");
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+      await navigator.clipboard.writeText(scale.description);
+      setCopyStatus("success");
+    } catch {
+      setCopyStatus("error");
+    }
+    window.setTimeout(() => setCopyStatus("idle"), 2200);
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/filtro")}
-            className="text-slate-300 hover:text-white mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Filtro
-          </Button>
-        </div>
+    <div className="mx-auto max-w-5xl space-y-5 p-3 pb-10 sm:p-5">
+      <Link
+        href="/filtro"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        Voltar ao Filtro
+      </Link>
 
-        {/* Banner honesto de status de implementação (req. clínico de honestidade) */}
-        {implStatus && implStatus !== "complete" && (
-          <Card className="bg-amber-900/20 border-amber-700 mb-6">
-            <CardContent className="pt-6 text-amber-100 text-sm font-semibold">
-              ⚠️ {getImplementationLabel(implStatus)} Esta página é uma{" "}
-              <strong>ficha técnica/referência clínica</strong> — não é a
-              aplicação completa do instrumento (sem itens nem cálculo de escore
-              embutidos).
+      <PageHero
+        icon={BookOpen}
+        eyebrow="biblioteca de escalas · referência clínica"
+        title={scale.name}
+        subtitle={scale.fullName}
+        gradient="from-violet-600 via-indigo-600 to-blue-600"
+      >
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">{scalePriorityLabel(scale.prioridade)}</Badge>
+          <Badge variant="outline">
+            {formatScaleAgeRange(scale.ageMin, scale.ageMax)}
+          </Badge>
+          <Badge variant="outline">{scaleLicenseLabel(scale.licencaUso)}</Badge>
+        </div>
+      </PageHero>
+
+      <div
+        className={`rounded-2xl border p-4 text-sm leading-relaxed ${
+          implementationStatus === "complete"
+            ? "border-emerald-300/60 bg-emerald-50/70 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-100"
+            : "border-amber-300/60 bg-amber-50/70 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100"
+        }`}
+        role="note"
+        data-testid="scale-implementation-status"
+      >
+        <strong>
+          {implementationStatus === "complete"
+            ? "Aplicação disponível: "
+            : "Ficha de referência: "}
+        </strong>
+        {getImplementationLabel(implementationStatus)}
+        {implementationStatus !== "complete" &&
+          " Esta tela não reproduz itens oficiais nem calcula escore."}
+      </div>
+
+      <section
+        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        aria-label="Metadados do instrumento"
+      >
+        {infoCards.map((info) => (
+          <Card
+            key={info.label}
+            className="h-full rounded-2xl border-border/70 bg-card/80 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <info.icon className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em]">
+                  {info.label}
+                </span>
+              </div>
+              <p className="mt-1.5 text-sm font-bold leading-snug text-foreground">
+                {info.value}
+              </p>
             </CardContent>
           </Card>
-        )}
+        ))}
+      </section>
 
-        {/* Escala Principal */}
-        <Card className="bg-slate-800/80 border-slate-700 mb-6">
-          <CardHeader className="border-b border-slate-700">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-slate-400 mb-2">ID: {scale.id}</p>
-                <CardTitle className="text-3xl font-bold text-white mb-2">
-                  {scale.name}
-                </CardTitle>
-                <p className="text-lg text-slate-300">{scale.fullName}</p>
-              </div>
-
-              {/* Meta informações */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-700">
-                <div>
-                  <p className="text-xs text-slate-400 uppercase">Tempo</p>
-                  <p className="text-sm font-semibold text-slate-200">
-                    {scale.tempo}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 uppercase">Prioridade</p>
-                  <p className="text-sm font-semibold text-slate-200 capitalize">
-                    {scale.prioridade}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 uppercase">
-                    Faixa Etária
-                  </p>
-                  <p className="text-sm font-semibold text-slate-200">
-                    {ageLabel(scale.ageMin, scale.ageMax)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 uppercase">
-                    Respondente
-                  </p>
-                  <p className="text-sm font-semibold text-slate-200">
-                    {scale.respondente.join(", ")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="pt-6 space-y-6">
-            {/* Descrição */}
+      <div className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+        <Card className="overflow-hidden rounded-3xl border-border/70 bg-card/90">
+          <div className="h-1 bg-gradient-to-r from-primary via-chart-2 to-chart-3" />
+          <CardContent className="space-y-5 p-5 sm:p-6">
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-white">Descrição</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-base font-black text-foreground">O que avalia</h2>
                 <Button
-                  size="sm"
+                  type="button"
                   variant="outline"
-                  onClick={handleCopyDescription}
-                  className="bg-slate-700 border-slate-600 hover:bg-slate-600"
+                  size="sm"
+                  onClick={() => void copyDescription()}
+                  className="h-9 gap-1.5 text-xs"
+                  aria-live="polite"
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  {copied ? "Copiado!" : "Copiar"}
+                  {copyStatus === "success" ? (
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                  ) : copyStatus === "error" ? (
+                    <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                  )}
+                  {copyStatus === "success"
+                    ? "Copiado"
+                    : copyStatus === "error"
+                      ? "Falha ao copiar"
+                      : "Copiar descrição"}
                 </Button>
               </div>
-              <p className="text-slate-300 leading-relaxed bg-slate-700/30 p-4 rounded">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {scale.description}
               </p>
             </div>
 
-            {/* Exemplo prático em linguagem de pais */}
             {scale.exemploPais && (
-              <div className="rounded-xl border border-emerald-700/60 bg-emerald-900/20 p-4">
-                <p className="mb-1 text-sm font-semibold text-emerald-300">
-                  👨‍👩‍👧 Para quem vai responder
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">
+                  exemplo em linguagem cotidiana
                 </p>
-                <p className="text-sm leading-relaxed text-emerald-100/90">
+                <p className="mt-1 text-sm leading-relaxed text-foreground/90">
                   {scale.exemploPais}
                 </p>
               </div>
             )}
 
-            {/* Queixas */}
-            {scale.queixas && scale.queixas.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Queixas Abordadas
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {scale.queixas.map((q) => (
-                    <span
-                      key={q}
-                      className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-200 text-sm border border-blue-700"
-                    >
-                      {queixaLabel(q)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Informações Clínicas */}
-            {scale.scoringCutoff && (
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Escore / Interpretação
-                </h3>
-                <div className="bg-slate-700/30 p-4 rounded text-slate-300">
-                  {scale.scoringCutoff}
-                </div>
-              </div>
-            )}
-
-            {scale.validacaoBrasil && (
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Validação Brasil
-                </h3>
-                <div className="bg-green-900/20 p-4 rounded text-green-200 border border-green-700">
-                  {scale.validacaoBrasil}
-                </div>
-              </div>
-            )}
-
-            {scale.licencaUso && (
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Licença de Uso
-                </h3>
-                <div
-                  className={`p-4 rounded capitalize font-semibold ${
-                    scale.licencaUso === "livre"
-                      ? "bg-emerald-900/20 text-emerald-200 border border-emerald-700"
-                      : scale.licencaUso === "comercial"
-                        ? "bg-yellow-900/20 text-yellow-200 border border-yellow-700"
-                        : scale.licencaUso === "autoral"
-                          ? "bg-blue-900/20 text-blue-200 border border-blue-700"
-                          : "bg-red-900/20 text-red-200 border border-red-700"
-                  }`}
-                >
-                  {scale.licencaUso}
-                </div>
-              </div>
-            )}
-
-            {/* Fonte */}
-            {scale.fonte && (
-              <div className="border-t border-slate-700 pt-6">
-                <h3 className="text-lg font-semibold text-white mb-3">Fonte</h3>
-                <p className="text-slate-400 italic">{scale.fonte}</p>
-              </div>
-            )}
-
-            {/* Transparência honesta: o que esta base NÃO documenta para este
-                instrumento. Em vez de omitir silenciosamente, deixa explícito. */}
-            {(!scale.scoringCutoff ||
-              !scale.validacaoBrasil ||
-              !scale.fonte) && (
-              <div className="border-t border-slate-700 pt-6">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  <span className="font-semibold text-slate-300">
-                    Não documentado nesta base:
-                  </span>{" "}
-                  {[
-                    !scale.scoringCutoff && "pontos de corte/interpretação",
-                    !scale.validacaoBrasil && "validação brasileira",
-                    !scale.fonte && "fonte/referência",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                  . Consulte a referência original do instrumento antes do uso
-                  clínico.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Aplicação — metadados clínicos (derivados quando não declarados) */}
-        <Card className="bg-slate-800/80 border-slate-700 mb-6">
-          <CardHeader className="border-b border-slate-700">
-            <CardTitle className="text-white">Aplicação</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-slate-400 uppercase">Modo</p>
-                <p className="text-sm font-semibold text-slate-200">
-                  {APPLICATION_MODE_LABEL[getApplicationMode(scale)] ??
-                    getApplicationMode(scale)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 uppercase">Finalidade</p>
-                <p className="text-sm font-semibold text-slate-200">
-                  {ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ??
-                    getAssessmentUse(scale)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 uppercase">Comunicação</p>
-                <p className="text-sm font-semibold text-slate-200">
-                  {VERBAL_LABEL[getVerbalRequirement(scale)]}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 uppercase">
-                  Alfabetização
-                </p>
-                <p className="text-sm font-semibold text-slate-200">
-                  {LITERACY_LABEL[getLiteracyRequirement(scale)]}
-                </p>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Domínios relacionados</h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {scale.queixas.map((complaint) => (
+                  <Badge key={complaint} variant="secondary">
+                    {queixaLabel(complaint)}
+                  </Badge>
+                ))}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <InternalScaleApplication scale={scale} />
-
-        {/* Instruções de Uso */}
-        <Card className="bg-slate-800/80 border-slate-700 mb-6">
-          <CardHeader className="border-b border-slate-700">
-            <CardTitle className="text-white">Como Usar Esta Escala</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4 text-slate-300">
-            <ol className="space-y-3 list-decimal list-inside">
-              {(USAGE_BY_MODE[getApplicationMode(scale)] ?? USAGE_DEFAULT).map(
-                (step, i) => (
-                  <li key={i}>{step}</li>
-                ),
-              )}
-            </ol>
-          </CardContent>
-        </Card>
-
-        {/* Instrumentos relacionados — hub de navegação por queixa/idade afim */}
-        {related.length > 0 && (
-          <Card className="bg-slate-800/80 border-slate-700 mb-6">
-            <CardHeader className="border-b border-slate-700">
-              <CardTitle className="text-white">
-                Instrumentos relacionados
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {related.map((o) => (
-                  <Link
-                    key={o.id}
-                    href={routeFor(o)}
-                    className="block rounded-lg border border-slate-700 bg-slate-700/30 p-3 transition hover:border-blue-500 hover:bg-slate-700/60"
-                  >
-                    <p className="text-sm font-semibold text-slate-100">
-                      {o.name}
-                    </p>
-                    <p className="text-xs text-slate-400 line-clamp-1">
-                      {o.fullName}
-                    </p>
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      {o.respondente.join(" · ")} ·{" "}
-                      {ageLabel(o.ageMin, o.ageMax)}
-                    </p>
-                  </Link>
-                ))}
+        <Card className="rounded-3xl border-border/70 bg-gradient-to-br from-card to-muted/30">
+          <CardContent className="space-y-4 p-5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+              <h2 className="text-sm font-black text-foreground">Aplicação em contexto</h2>
+            </div>
+            {[
+              ["Modo", APPLICATION_MODE_LABEL[applicationMode] ?? applicationMode],
+              ["Comunicação", VERBAL_LABEL[getVerbalRequirement(scale)]],
+              ["Alfabetização", LITERACY_LABEL[getLiteracyRequirement(scale)]],
+              ["Licença", scaleLicenseLabel(scale.licencaUso)],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-border/70 bg-background/70 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                  {label}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-snug text-foreground">
+                  {value}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Aviso Legal */}
-        <Card className="bg-amber-900/20 border-amber-700 mb-6">
-          <CardContent className="pt-6 text-amber-100">
-            <p className="text-sm">
-              ⚠️ Esta escala é fornecida para fins educacionais e clínicos.
-              Consulte a licença de uso e as normativas vigentes antes de
-              implementar em prática clínica.
-              {scale.licencaUso === "comercial" ||
-              scale.licencaUso === "restrita"
-                ? " Esta escala possui restrições de uso."
-                : ""}
-            </p>
+            ))}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Ações */}
-        <div className="flex gap-4">
-          <Button
-            onClick={() => navigate("/filtro")}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Filtro
-          </Button>
-          <Button
-            onClick={() => window.print()}
-            variant="outline"
-            className="bg-slate-700 border-slate-600 hover:bg-slate-600"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Imprimir
-          </Button>
+      {(scale.scoringCutoff || scale.validacaoBrasil || scale.fonte || pm) && (
+        <Card className="rounded-3xl border-border/70">
+          <CardHeader className="border-b border-border/60 p-5">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+              Evidência, interpretação e proveniência
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 p-5 lg:grid-cols-2">
+            {scale.scoringCutoff && (
+              <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
+                  interpretação documentada
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+                  {scale.scoringCutoff}
+                </p>
+              </div>
+            )}
+            <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
+              {scale.validacaoBrasil && (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <strong className="text-foreground">Validação Brasil:</strong>{" "}
+                  {scale.validacaoBrasil}
+                </p>
+              )}
+              {scale.fonte && (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <strong className="text-foreground">Fonte:</strong> {scale.fonte}
+                </p>
+              )}
+              {pm && (
+                <a
+                  href={pm.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-sm font-bold text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  PubMed {pm.pmid}
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {(!scale.scoringCutoff || !scale.validacaoBrasil || !scale.fonte) && (
+        <div
+          className="rounded-2xl border border-amber-300/60 bg-amber-50/70 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-100"
+          role="note"
+        >
+          <strong>Metadados ainda não documentados nesta base:</strong>{" "}
+          {[
+            !scale.scoringCutoff && "ponto de corte/interpretação",
+            !scale.validacaoBrasil && "validação brasileira",
+            !scale.fonte && "fonte/referência",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          . Confirme na versão e publicação originais antes do uso clínico.
         </div>
+      )}
+
+      {applicationMode !== "psicoeducacao" && (
+        <ClinicalObservationWorkspace scale={scale} />
+      )}
+
+      <Card className="rounded-3xl border-border/70">
+        <CardHeader className="border-b border-border/60 p-5">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+            Como usar com segurança
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-5">
+          <ol className="grid gap-3 lg:grid-cols-2">
+            {(USAGE_BY_MODE[applicationMode] ?? USAGE_DEFAULT).map((step, index) => (
+              <li
+                key={step}
+                className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm leading-relaxed text-foreground"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+
+      {related.length > 0 && (
+        <Card className="rounded-3xl border-border/70">
+          <CardHeader className="border-b border-border/60 p-5">
+            <CardTitle className="text-base">Instrumentos relacionados</CardTitle>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Priorizados por domínio, idade, respondente e disponibilidade real.
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((candidate) => {
+              const candidateStatus = getImplementationStatus(candidate);
+              return (
+                <Link
+                  key={candidate.id}
+                  href={scaleRoute(candidate)}
+                  className="group rounded-2xl border border-border/70 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-bold text-foreground group-hover:text-primary">
+                      {candidate.name}
+                    </p>
+                    <Badge variant={candidateStatus === "complete" ? "secondary" : "outline"}>
+                      {candidateStatus === "complete" ? "Aplicável" : "Ficha"}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {candidate.fullName}
+                  </p>
+                  <p className="mt-3 text-[11px] font-semibold text-muted-foreground">
+                    {formatScaleAgeRange(candidate.ageMin, candidate.ageMax)} ·{" "}
+                    {scaleRespondentsLabel(candidate.respondente)}
+                  </p>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button onClick={() => navigate("/filtro")} className="flex-1 gap-2">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Voltar ao Filtro
+        </Button>
+        <Button
+          type="button"
+          onClick={() => window.print()}
+          variant="outline"
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" aria-hidden="true" />
+          Imprimir ficha
+        </Button>
       </div>
     </div>
   );
