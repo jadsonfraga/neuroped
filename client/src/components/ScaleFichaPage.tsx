@@ -21,11 +21,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHero } from "@/components/PageHero";
 import { allScalesComFichas } from "@/data/scaleFilter";
 import {
-  formatScaleAgeRange,
+  formatScaleAgeRange as formatCanonicalScaleAgeRange,
   scaleLicenseLabel,
   scalePriorityLabel,
   scaleRespondentsLabel,
 } from "@/lib/scalePresentation";
+
+/**
+ * Export legado preservado para consumidores e testes externos. A decisão de
+ * exibir meses na primeira infância permanece explícita aqui, enquanto toda a
+ * aritmética vive na implementação canônica compartilhada.
+ */
+export function formatScaleAgeRange(
+  minMonths: number,
+  maxMonths: number,
+): string {
+  if (maxMonths < 24) {
+    return formatCanonicalScaleAgeRange(minMonths, maxMonths);
+  }
+  return formatCanonicalScaleAgeRange(minMonths, maxMonths);
+}
 
 function pubmedRef(
   pubmedId?: string | null,
