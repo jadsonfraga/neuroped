@@ -60,4 +60,22 @@ export const generatedScalePdfRegistry: GeneratedScalePdfManifest[] = [
       { id: "ipn-tdah-fe-sintese-15", expectedItems: 15, ageMin: 48, ageMax: 215, respondent: "clinico" },
     ],
   },
+  {
+    slug: "ipn-pc-fun-200",
+    title: "IPN-PC/FUN 200",
+    sourcePdf: "2026-08-01_IPN_PC_FUN_200_Paralisia_Cerebral_NeuroPed_v1.1.pdf",
+    version: "1.1",
+    generatedAt: "2026-08-01",
+    totalOperationalItems: 200,
+    modules: [
+      { id: "ipn-pc-fun-familia-50", expectedItems: 50, ageMin: 6, ageMax: 215, respondent: "pais" },
+      { id: "ipn-pc-fun-escola-30", expectedItems: 30, ageMin: 24, ageMax: 215, respondent: "professor" },
+      { id: "ipn-pc-fun-autopercepcao-20", expectedItems: 20, ageMin: 96, ageMax: 215, respondent: "autoaplicavel" },
+      { id: "ipn-pc-fun-observacao-20", expectedItems: 20, ageMin: 6, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-pc-fun-tonus-20", expectedItems: 20, ageMin: 6, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-pc-fun-alimentacao-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-pc-fun-anamnese-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-pc-fun-sintese-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+    ],
+  },
 ];

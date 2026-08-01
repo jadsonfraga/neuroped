@@ -1,0 +1,29 @@
+import type { InteractiveDomainDef } from "./interactiveScaleItems";
+
+export const ipnPcFunAnamnesisDomains: InteractiveDomainDef[] = [
+  {
+    name: "História clínica e red flags",
+    items: [
+      { text: "Diagnóstico, subtipo motor e data de início dos sinais.", emoji: "▤", example: "Registre quem estabeleceu o diagnóstico, evidências disponíveis e dúvidas atuais.", responseType: "text", placeholder: "Diagnóstico, subtipo, idade de reconhecimento, documentação disponível…", required: false },
+      { text: "Gestação, parto, prematuridade, intercorrências neonatais e neuroimagem.", emoji: "◉", example: "Inclua idade gestacional, UTI, hipóxia, infecção, icterícia e exames relevantes.", responseType: "text", placeholder: "Resumo gestacional, perinatal e achados de neuroimagem…", required: false },
+      { text: "Trajetória do desenvolvimento e habilidades adquiridas ou perdidas.", emoji: "→", example: "Diferencie atraso estável de regressão ou piora recente.", responseType: "text", placeholder: "Marcos, evolução, platôs e eventuais perdas…", required: false },
+      { text: "Crises epilépticas, eventos paroxísticos e plano de segurança.", emoji: "⚡", example: "Registre tipos, frequência, duração, resgate e última revisão neurológica.", responseType: "text", placeholder: "Descrição dos eventos, medicações e plano de crise…", required: false },
+      { text: "Dor, desconforto e mudanças comportamentais possivelmente relacionadas.", emoji: "♥", example: "Mapeie localização, gatilhos, horários, medidas e impacto.", responseType: "text", placeholder: "Dor suspeita ou confirmada, escala usada e resposta a medidas…", required: false },
+      { text: "Quadris, coluna, amplitude articular, deformidades e fraturas.", emoji: "△", example: "Inclua vigilância de quadril, escoliose, osteopenia e histórico ortopédico.", responseType: "text", placeholder: "Exames, medidas, dor, cirurgias e seguimento ortopédico…", required: false },
+      { text: "Fenótipo motor: espasticidade, distonia, discinesia, fraqueza e controle seletivo.", emoji: "〰", example: "Descreva distribuição, flutuação, gatilhos e interferência.", responseType: "text", placeholder: "Padrão motor observado e impacto funcional…", required: false },
+      { text: "Tratamentos prévios para tônus e resposta funcional.", emoji: "✚", example: "Inclua toxina botulínica, baclofeno, trihexifenidil, clonidina, DBS, ITB ou cirurgias.", responseType: "text", placeholder: "Intervenções, metas, benefício, efeitos adversos e motivo de suspensão…", required: false },
+      { text: "Medicações atuais, horários, efeitos adversos e adesão.", emoji: "⚕", example: "Revisar interação com sono, alerta, constipação, salivação e crises.", responseType: "text", placeholder: "Lista completa, dose, horário, alvo e tolerabilidade…", required: false },
+      { text: "Alimentação, deglutição, nutrição, hidratação e saúde oral.", emoji: "♨", example: "Inclua via, consistências, duração, engasgos, peso e odontologia.", responseType: "text", placeholder: "Rotina alimentar e sinais de segurança/eficiência…", required: false },
+      { text: "Respiração, secreções, infecções, sono e suporte ventilatório.", emoji: "♒", example: "Registre pneumonias, tosse, aspiração, ronco e dispositivos.", responseType: "text", placeholder: "História respiratória e plano vigente…", required: false },
+      { text: "Intestino, bexiga, refluxo e continência.", emoji: "●", example: "Relacionar desconforto visceral com tônus, sono e comportamento.", responseType: "text", placeholder: "Frequência, sintomas, tratamentos e impacto…", required: false },
+      { text: "Pele, pressão, órteses, posicionamento e equipamentos.", emoji: "□", example: "Inclua marcas, tolerância, ajustes, manutenção e tempo de uso.", responseType: "text", placeholder: "Equipamentos, fit, lesões e necessidades de revisão…", required: false },
+      { text: "Mobilidade, transferências e ambiente domiciliar.", emoji: "⇄", example: "Descreva ajuda, dispositivos, barreiras, quedas e segurança do cuidador.", responseType: "text", placeholder: "Perfil funcional em casa e necessidades de acessibilidade…", required: false },
+      { text: "Comunicação, cognição funcional e acesso à CAA.", emoji: "▣", example: "Evite inferir cognição apenas por fala ou limitação motora.", responseType: "text", placeholder: "Formas de resposta, compreensão, recurso e parceiros…", required: false },
+      { text: "Escola, PEI, participação, transporte e apoio.", emoji: "★", example: "Inclua presença, envolvimento real, adaptações e relações sociais.", responseType: "text", placeholder: "Contexto escolar e barreiras/facilitadores…", required: false },
+      { text: "Terapias atuais, frequência, metas e coordenação interdisciplinar.", emoji: "↔", example: "Distinguir volume de terapia de relevância funcional e adesão.", responseType: "text", placeholder: "Equipe, frequência, objetivos, resposta e comunicação…", required: false },
+      { text: "Rotina familiar, rede de apoio e sobrecarga do cuidador.", emoji: "▥", example: "Identifique tarefas críticas, sono, trabalho, finanças e necessidade de descanso.", responseType: "text", placeholder: "Rede, divisão de cuidado, impacto e necessidades prioritárias…", required: false },
+      { text: "Preferências, interesses, forças e prioridades da criança.", emoji: "☆", example: "Registrar o que gera prazer, pertencimento e motivação.", responseType: "text", placeholder: "Interesses, habilidades e metas expressas pela criança…", required: false },
+      { text: "Red flags atuais e nível de urgência.", emoji: "⚠", example: "Inclua regressão, piora respiratória, status distônico, dor intensa, fratura, aspiração ou falha de dispositivo.", responseType: "text", placeholder: "Sinal, início, gravidade, conduta imediata e encaminhamento…", required: false }
+    ],
+  }
+];
