@@ -24,16 +24,22 @@ export interface RecommendationAgeMatch<
   complaintMatches: number;
 }
 
-function isValidMonth(value: number): boolean {
-  return Number.isInteger(value) && value >= 0;
+/**
+ * As faixas canônicas do filtro usam limites fracionários (por exemplo 47.99)
+ * para representar intervalos contíguos sem sobreposição visual. Esses valores
+ * são meses válidos: exigir inteiros aqui apagaria todas as recomendações
+ * auxiliares da interface.
+ */
+function isValidMonthEndpoint(value: number): boolean {
+  return Number.isFinite(value) && value >= 0;
 }
 
 export function isValidRecommendationAgeBand(
   band: RecommendationAgeBand,
 ): boolean {
   return (
-    isValidMonth(band.min) &&
-    isValidMonth(band.max) &&
+    isValidMonthEndpoint(band.min) &&
+    isValidMonthEndpoint(band.max) &&
     band.max >= band.min
   );
 }
@@ -44,8 +50,8 @@ export function classifyRecommendationAgeFit(
   selectedBand: RecommendationAgeBand,
 ): RecommendationAgeFitResult {
   if (
-    !isValidMonth(recommendationMin) ||
-    !isValidMonth(recommendationMax) ||
+    !isValidMonthEndpoint(recommendationMin) ||
+    !isValidMonthEndpoint(recommendationMax) ||
     recommendationMax < recommendationMin ||
     !isValidRecommendationAgeBand(selectedBand)
   ) {
