@@ -19,6 +19,7 @@ interface FilterRecommendationLinkCardProps {
   icon: ReactNode;
   tone?: FilterRecommendationTone;
   badges?: FilterRecommendationBadge[];
+  footer?: string;
   ariaLabel?: string;
   testId?: string;
 }
@@ -62,6 +63,7 @@ export function FilterRecommendationLinkCard({
   icon,
   tone = "optional",
   badges = [],
+  footer,
   ariaLabel,
   testId,
 }: FilterRecommendationLinkCardProps) {
@@ -114,6 +116,11 @@ export function FilterRecommendationLinkCard({
                   </Badge>
                 ))}
               </div>
+            )}
+            {footer && (
+              <span className="mt-3 block border-t border-border/60 pt-2 text-[10px] font-medium leading-relaxed text-muted-foreground">
+                {footer}
+              </span>
             )}
           </div>
 
