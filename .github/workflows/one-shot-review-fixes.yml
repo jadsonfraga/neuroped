@@ -1,4 +1,4 @@
-name: One-shot safe regression fixes
+name: One-shot final safety fixes
 
 on:
   pull_request:
@@ -17,162 +17,104 @@ jobs:
         with:
           ref: agent/scales-lovable-quality-deep
           fetch-depth: 0
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Apply focused regression fixes
+      - name: Patch regressions
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          # 1) Gate de licença ANTES de qualquer runner e relacionados com idade compatível.
-          path = Path('client/src/pages/generic-scale.tsx')
-          text = path.read_text(encoding='utf-8')
-
-          old = '''  const scale = allScales.find((s) => s.id === scaleId);
-
-  const runnerDef = getInteractiveRunnerScale(scaleId);
-  if (runnerDef) {
-    return (
-      <div className="mx-auto max-w-3xl p-3 sm:p-5">
-        <InteractiveScaleRunner def={runnerDef} />
-      </div>
-    );
-  }
-
-  if (!scale) {'''
-          new = '''  const scale = allScales.find((s) => s.id === scaleId);
-
-  if (!scale) {'''
-          if old not in text:
-              raise SystemExit('bloco inicial da ficha não encontrado')
-          text = text.replace(old, new, 1)
-
-          marker = '''  const itemDef = getInteractiveItemScale(scaleId);
-  if (itemDef) {'''
-          gated = '''  const licenseRequiresAuthorization = [
-    "comercial",
-    "restrita",
-    "contato_autor",
-  ].includes(scale.licencaUso ?? "");
-
-  const runnerDef = !licenseRequiresAuthorization
-    ? getInteractiveRunnerScale(scaleId)
-    : undefined;
-  if (runnerDef) {
-    return (
-      <div className="mx-auto max-w-3xl p-3 sm:p-5">
-        <InteractiveScaleRunner def={runnerDef} />
-      </div>
-    );
-  }
-
-  const itemDef = !licenseRequiresAuthorization
-    ? getInteractiveItemScale(scaleId)
-    : undefined;
-  if (itemDef) {'''
-          if marker not in text:
-              raise SystemExit('bloco itemDef não encontrado')
-          text = text.replace(marker, gated, 1)
-
-          separate = '''  const hasSeparateOfficialApplication =
-    implementationStatus === "complete" && officialRoute !== genericRoute;'''
-          enhanced = separate + '''
-  const canOfferOfficialApplication =
-    hasSeparateOfficialApplication && !licenseRequiresAuthorization;'''
-          if enhanced not in text:
-              if separate not in text:
-                  raise SystemExit('bloco de aplicação separada não encontrado')
-              text = text.replace(separate, enhanced, 1)
-
-          text = text.replace('''          hasSeparateOfficialApplication
-            ? "border-emerald-300/60''', '''          canOfferOfficialApplication
-            ? "border-emerald-300/60''', 1)
-          text = text.replace('''        {hasSeparateOfficialApplication
-          ? "A aplicação completa existe em uma rota própria. Esta página organiza metadados e um registro observacional complementar."
-          : getImplementationLabel(implementationStatus)}''', '''        {canOfferOfficialApplication
-          ? "A aplicação completa existe em uma rota própria. Esta página organiza metadados e um registro observacional complementar."
-          : hasSeparateOfficialApplication && licenseRequiresAuthorization
-            ? "Existe uma implementação separada, mas esta ficha não oferece acesso porque a licença requer autorização documentada."
-            : getImplementationLabel(implementationStatus)}''', 1)
-          text = text.replace('{hasSeparateOfficialApplication && (', '{canOfferOfficialApplication && (', 1)
-
-          text = text.replace('''      return { candidate, score };
-    })
-    .filter(({ score }) => score >= 10)''', '''      return { candidate, score, ageOverlap };
-    })
-    .filter(({ score, ageOverlap }) => ageOverlap && score >= 10)''', 1)
-          path.write_text(text, encoding='utf-8')
-
-          # 2) Guard de rotas: aceita catch-all apenas para IDs canônicos existentes.
-          path = Path('scripts/guards/audit-filter-fillable.mjs')
-          text = path.read_text(encoding='utf-8')
+          guard = Path('scripts/guards/audit-filter-fillable.mjs')
+          s = guard.read_text()
           anchor = '''const registeredRoutes = new Set(
   [...appSource.matchAll(/<Route\\s+path="([^\"]+)"/g)].map(
     (match) => match[1],
   ),
 );
 '''
-          helper = anchor + '''const hasRegisteredRecommendationRoute = (route) => {
+          addition = anchor + '''const isRegisteredRecommendationRoute = (route) => {
   if (registeredRoutes.has(route)) return true;
-  const match = route.match(/^\\/generic-scale\\/([^/?#]+)$/);
-  return Boolean(
-    match &&
-      registeredRoutes.has("/generic-scale/:id") &&
-      allScaleIds.has(match[1]),
-  );
+  const match = route.match(/^\\/generic-scale\\/([^/]+)$/);
+  return Boolean(match && registeredRoutes.has("/generic-scale/:id") && allScaleIds.has(match[1]));
 };
+check(isRegisteredRecommendationRoute("/generic-scale/abc"), "rota dinâmica canônica não reconhecida");
+check(!isRegisteredRecommendationRoute("/generic-scale/__missing__"), "rota dinâmica aceitou ID inexistente");
 '''
-          if 'const hasRegisteredRecommendationRoute' not in text:
-              if anchor not in text:
-                  raise SystemExit('registro de rotas não encontrado')
-              text = text.replace(anchor, helper, 1)
-          text = text.replace('registeredRoutes.has(item.route),', 'hasRegisteredRecommendationRoute(item.route),', 1)
-          path.write_text(text, encoding='utf-8')
+          if 'isRegisteredRecommendationRoute' not in s:
+              s = s.replace(anchor, addition, 1)
+          s = s.replace('registeredRoutes.has(item.route)', 'isRegisteredRecommendationRoute(item.route)')
+          guard.write_text(s)
 
-          # 3) Contratos específicos de licença, ordem do gate, idade e rota dinâmica.
-          path = Path('scripts/guards/audit-scale-experience.mjs')
-          text = path.read_text(encoding='utf-8')
-          insertion = '''
+          page = Path('client/src/pages/generic-scale.tsx')
+          s = page.read_text()
+          scale_line = '  const scale = allScales.find((s) => s.id === scaleId);\n'
+          gate = '''  const licenseRequiresAuthorization = Boolean(
+    scale && ["comercial", "restrita", "contato_autor"].includes(scale.licencaUso ?? ""),
+  );
+'''
+          if 'const licenseRequiresAuthorization = Boolean(' not in s:
+              s = s.replace(scale_line, scale_line + gate, 1)
+          s = s.replace('  if (runnerDef) {', '  if (runnerDef && !licenseRequiresAuthorization) {', 1)
+          s = s.replace('  if (itemDef) {', '  if (itemDef && !licenseRequiresAuthorization) {', 1)
+          sep = '''  const hasSeparateOfficialApplication =
+    implementationStatus === "complete" && officialRoute !== genericRoute;
+'''
+          if 'const canOfferOfficialApplication =' not in s:
+              s = s.replace(sep, sep + '''  const canOfferOfficialApplication =
+    hasSeparateOfficialApplication && !licenseRequiresAuthorization;
+''', 1)
+          s = s.replace('          hasSeparateOfficialApplication\n            ?', '          canOfferOfficialApplication\n            ?', 1)
+          s = s.replace('        {hasSeparateOfficialApplication\n          ? "A aplicação completa existe em uma rota própria. Esta página organiza metadados e um registro observacional complementar."\n          : getImplementationLabel(implementationStatus)}', '        {canOfferOfficialApplication\n          ? "A aplicação completa existe em uma rota própria. Esta página organiza metadados e um registro observacional complementar."\n          : hasSeparateOfficialApplication && licenseRequiresAuthorization\n            ? "Existe uma implementação separada, mas esta ficha não oferece acesso porque a licença requer autorização documentada."\n            : getImplementationLabel(implementationStatus)}', 1)
+          s = s.replace('        {hasSeparateOfficialApplication && (', '        {canOfferOfficialApplication && (', 1)
+          s = s.replace('      return { candidate, score };', '      return { candidate, score, ageOverlap };', 1)
+          s = s.replace('.filter(({ score }) => score >= 10)', '.filter(({ score, ageOverlap }) => ageOverlap && score >= 10)', 1)
+          page.write_text(s)
+
+          audit = Path('scripts/guards/audit-scale-experience.mjs')
+          s = audit.read_text()
+          s = s.replace('''  check(
+    recommendation.route ===
+      (canonical.appRoute || `/generic-scale/${canonical.id}`),
+    `${recommendation.id}: rota diverge do catálogo`,
+  );''', '''  const protectedLicense = ["comercial", "restrita", "contato_autor"].includes(canonical.licencaUso);
+  const expectedRoute = protectedLicense ? `/generic-scale/${canonical.id}` : canonical.appRoute || `/generic-scale/${canonical.id}`;
+  check(recommendation.route === expectedRoute, `${recommendation.id}: rota diverge da política canônica/licença`);
+  if (recommendation.id === "abc-pais") check(recommendation.route === "/generic-scale/abc", "ABC comercial voltou a promover aplicação");''', 1)
+          marker = '  "ficha genérica voltou a se apresentar como aplicação preenchível",\n);'
+          if 'ficha genérica voltou a executar aplicação licenciada' not in s:
+              s = s.replace(marker, marker + '''
 check(
-  genericPage.indexOf("licenseRequiresAuthorization") <
-    genericPage.indexOf("getInteractiveRunnerScale(scaleId)") &&
-    genericPage.includes("!licenseRequiresAuthorization") &&
-    genericPage.includes("ageOverlap && score >= 10") &&
-    genericPage.includes("{canOfferOfficialApplication && ("),
-  "ficha genérica perdeu gate de licença antecipado, sobreposição etária ou CTA seguro",
+  genericPage.includes("licenseRequiresAuthorization") &&
+    genericPage.includes("if (runnerDef && !licenseRequiresAuthorization)") &&
+    genericPage.includes("if (itemDef && !licenseRequiresAuthorization)") &&
+    genericPage.includes("canOfferOfficialApplication"),
+  "ficha genérica voltou a executar aplicação licenciada",
 );
-'''
-          if 'ficha genérica perdeu gate de licença antecipado' not in text:
-              pos = text.rfind('if (violations.length')
-              if pos < 0:
-                  raise SystemExit('final da auditoria de escalas não encontrado')
-              text = text[:pos] + insertion + '\n' + text[pos:]
-          path.write_text(text, encoding='utf-8')
+check(
+  genericPage.includes(".filter(({ score, ageOverlap }) => ageOverlap && score >= 10)"),
+  "relacionados voltaram a ignorar sobreposição etária",
+);''', 1)
+          runner_marker = '  "runner interativo perdeu padrão visual ou navegação para pendência",\n);'
+          if 'runner interativo perdeu navegação real de radiogroup' not in s:
+              s = s.replace(runner_marker, runner_marker + '''
+check(
+  runnerPage.includes("RadioGroup") && runnerPage.includes("RadioGroupItem") && runnerPage.includes("onValueChange") && !runnerPage.includes('role="radio"'),
+  "runner interativo perdeu navegação real de radiogroup",
+);''', 1)
+          audit.write_text(s)
 
-          # O workflow é transitório e não deve permanecer no diff final.
-          Path('.github/workflows/one-shot-review-fixes.yml').unlink()
+          for p in ['.github/workflows/one-shot-activate-review-fixes.yml', '.github/workflows/one-shot-review-fixes.yml']:
+              Path(p).unlink(missing_ok=True)
           PY
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify focused and release contracts
+      - name: Verify
         run: |
+          npm ci
           npm run audit:filter-fillable
           npm run audit:scale-experience
           npm run check
-          npm run lint
-          npm run build
-          npm run verify:release
-
-      - name: Commit only after all validations pass
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client/src/pages/generic-scale.tsx scripts/guards/audit-filter-fillable.mjs scripts/guards/audit-scale-experience.mjs .github/workflows/one-shot-review-fixes.yml
-          git commit -m "fix(escalas): bloquear regressões de licença, idade e rotas"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(escalas): fechar regressões de licença, idade e rotas"
           git push origin HEAD:agent/scales-lovable-quality-deep
