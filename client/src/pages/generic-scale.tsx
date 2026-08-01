@@ -520,6 +520,7 @@ export default function GenericScalePage() {
     .map(({ candidate }) => candidate);
 
   async function copyDescription() {
+    if (!scale) return;
     setCopyStatus("idle");
     try {
       if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
