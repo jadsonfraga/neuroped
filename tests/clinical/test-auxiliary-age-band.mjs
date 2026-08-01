@@ -105,6 +105,42 @@ for (const band of faixasEtarias) {
   );
 }
 
+const canonicalPartialMatches = rankRecommendationsForAgeBand(
+  [
+    {
+      id: "fixture-partial",
+      name: "Fixture parcial",
+      ageMin: 36,
+      ageMax: 144,
+      queixas: ["fixture"],
+      priority: 0,
+    },
+  ],
+  ["fixture"],
+  { min: 24, max: 47.99 },
+  (recommendation) => recommendation.priority,
+);
+assert.equal(
+  canonicalPartialMatches.length,
+  1,
+  "fixture parcial real deve permanecer recomendável",
+);
+assert.equal(
+  canonicalPartialMatches[0].ageFit,
+  "partial",
+  "fixture 36–144 deve ser parcial na faixa 24–47.99",
+);
+assert.equal(
+  canonicalPartialMatches[0].overlapMonths,
+  12,
+  "sobreposição 36–47.99 deve representar exatamente 12 meses",
+);
+assert.equal(
+  canonicalPartialMatches[0].coverageRatio,
+  0.5,
+  "12 meses dentro de uma faixa de 24 meses devem produzir 50%",
+);
+
 const directPriority = { primaria: 0, secundaria: 1, complementar: 2 };
 const directMatches = rankRecommendationsForAgeBand(
   testesDiretosRecommendations,
@@ -220,6 +256,16 @@ assert.match(
   "validação de limites finitos foi removida",
 );
 assert.match(
+  ageFitSource,
+  /AGE_ENDPOINT_SCALE = 100/,
+  "aritmética em centésimos de mês deixou de ser explícita",
+);
+assert.match(
+  ageFitSource,
+  /overlapUnits \/ AGE_ENDPOINT_SCALE/,
+  "sobreposição deixou de ser convertida de unidades inteiras para meses",
+);
+assert.match(
   workflowSource,
   /test-auxiliary-age-band\.mjs/,
   "teste de faixa etária auxiliar não está conectado ao workflow espiral",
@@ -232,5 +278,5 @@ console.log(
   `[auxiliary-age-band] diretos=${directMatches.length} · parentais=${parentMatches.length}`,
 );
 console.log(
-  "[auxiliary-age-band] ✓ catálogo real, limites fracionários, ordenação e avisos parciais aprovados.",
+  "[auxiliary-age-band] ✓ catálogo real, cobertura parcial exata, ordenação e avisos aprovados.",
 );
