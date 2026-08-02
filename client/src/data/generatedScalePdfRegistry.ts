@@ -96,4 +96,22 @@ export const generatedScalePdfRegistry: GeneratedScalePdfManifest[] = [
       { id: "ipn-lfc-sintese-15", expectedItems: 15, ageMin: 0, ageMax: 215, respondent: "clinico" },
     ],
   },
+  {
+    slug: "ipn-epi-seg-200",
+    title: "IPN-EPI/SEG 200",
+    sourcePdf: "2026-08-02 — Epilepsia, Eventos Paroxísticos e Segurança — NeuroPed.pdf",
+    version: "1.0",
+    generatedAt: "2026-08-02",
+    totalOperationalItems: 200,
+    modules: [
+      { id: "ipn-epi-seg-familia-60", expectedItems: 60, ageMin: 0, ageMax: 215, respondent: "pais" },
+      { id: "ipn-epi-seg-escola-30", expectedItems: 30, ageMin: 24, ageMax: 215, respondent: "professor" },
+      { id: "ipn-epi-seg-autopercepcao-20", expectedItems: 20, ageMin: 96, ageMax: 215, respondent: "autoaplicavel" },
+      { id: "ipn-epi-seg-observacao-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-epi-seg-caracterizacao-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-epi-seg-tratamento-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-epi-seg-anamnese-15", expectedItems: 15, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-epi-seg-sintese-15", expectedItems: 15, ageMin: 0, ageMax: 215, respondent: "clinico" },
+    ],
+  },
 ];
