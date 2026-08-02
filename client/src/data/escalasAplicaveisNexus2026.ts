@@ -14,6 +14,7 @@ import { type ScaleEntry } from "./scaleFilter";
 import { escalasIpnTea200 } from "./escalasIpnTea200";
 import { escalasIpnTdahFe200 } from "./escalasIpnTdahFe200";
 import { escalasIpnPcFun200 } from "./escalasIpnPcFun200";
+import { escalasIpnLfc200 } from "./escalasIpnLfc200";
 
 const PENDENCIA_VALIDACAO_AUTORAL =
   "Instrumento autoral em desenvolvimento; conteúdo, propriedades psicométricas e uso clínico aguardam validação formal.";
@@ -156,4 +157,5 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
   ...escalasIpnTea200,
   ...escalasIpnTdahFe200,
   ...escalasIpnPcFun200,
+  ...escalasIpnLfc200,
 ];
