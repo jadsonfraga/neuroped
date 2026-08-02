@@ -78,4 +78,22 @@ export const generatedScalePdfRegistry: GeneratedScalePdfManifest[] = [
       { id: "ipn-pc-fun-sintese-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
     ],
   },
+  {
+    slug: "ipn-lfc-200",
+    title: "IPN-LFC 200",
+    sourcePdf: "2026-08-02 — Linguagem, Fala e Comunicação — NeuroPed.pdf",
+    version: "1.0",
+    generatedAt: "2026-08-02",
+    totalOperationalItems: 200,
+    modules: [
+      { id: "ipn-lfc-familia-50", expectedItems: 50, ageMin: 6, ageMax: 215, respondent: "pais" },
+      { id: "ipn-lfc-escola-30", expectedItems: 30, ageMin: 24, ageMax: 215, respondent: "professor" },
+      { id: "ipn-lfc-autopercepcao-20", expectedItems: 20, ageMin: 96, ageMax: 215, respondent: "autoaplicavel" },
+      { id: "ipn-lfc-observacao-30", expectedItems: 30, ageMin: 6, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-lfc-fala-motora-20", expectedItems: 20, ageMin: 12, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-lfc-anamnese-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-lfc-diferenciais-15", expectedItems: 15, ageMin: 6, ageMax: 215, respondent: "clinico" },
+      { id: "ipn-lfc-sintese-15", expectedItems: 15, ageMin: 0, ageMax: 215, respondent: "clinico" },
+    ],
+  },
 ];
