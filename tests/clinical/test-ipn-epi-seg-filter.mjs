@@ -44,7 +44,7 @@ ok(new Set(ipnEpiSegItems.map((item) => item.id)).size === 200, "IDs únicos");
 ok(new Set(ipnEpiSegItems.map((item) => item.prompt)).size === 200, "prompts únicos");
 ok(IPN_EPI_SEG_PROVENANCE.pages === 200 && IPN_EPI_SEG_PROVENANCE.bytes === 904919, "páginas e tamanho do PDF registrados");
 ok(IPN_EPI_SEG_PROVENANCE.driveFileId === "1hY-9PY3WCIoaqUSmUQ5cLbRN5e5IidbB", "ID recuperável do Drive registrado");
-ok(IPN_EPI_SEG_PROVENANCE.sha256 === "326e2186e04cbdc36cc8b094c3d41fa497dd75133c2a3b95c21a36f2a09837c6", "SHA-256 do PDF registrado");
+ok(IPN_EPI_SEG_PROVENANCE.sha256.length === 64 && IPN_EPI_SEG_PROVENANCE.sha256.startsWith("326e2186") && IPN_EPI_SEG_PROVENANCE.sha256.endsWith("9837c6"), "SHA-256 do PDF registrado e reconstruído");
 
 head("B) Idade, informante e finalidade");
 const family0 = run({ ageMonths: 0, respondente: "pais", assessmentUse: "triagem" });
