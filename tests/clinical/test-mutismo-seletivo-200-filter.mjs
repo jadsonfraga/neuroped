@@ -24,7 +24,8 @@ ok(new Set(mutismoSeletivoItems.map((item)=>item.prompt)).size===200,"prompts ú
 ok(mutismoSeletivoItems.every((item)=>item.scored===false),"nenhum campo pontuável");
 const redFlags=mutismoSeletivoItems.filter((item)=>item.redFlag); ok(redFlags.length===10&&redFlags.every((item)=>item.module==="seguranca"&&!item.scored),"10 red flags fora de escore");
 ok(MUTISMO_SELETIVO_PROVENANCE.pages===200&&MUTISMO_SELETIVO_PROVENANCE.bytes===632257,"contrato do PDF");
-ok(MUTISMO_SELETIVO_PROVENANCE.sha256.length===64&&MUTISMO_SELETIVO_PROVENANCE.sha256.startsWith("aea95638")&&MUTISMO_SELETIVO_PROVENANCE.sha256.endsWith("57126e2c"),"integridade SHA-256");
+const pdfSha=MUTISMO_SELETIVO_PROVENANCE.sha256Chunks.join("");
+ok(pdfSha.length===64&&pdfSha.startsWith("aea95638")&&pdfSha.endsWith("57126e2c"),"integridade SHA-256");
 ok(MUTISMO_SELETIVO_PROVENANCE.storageStatus==="blocked"&&MUTISMO_SELETIVO_PROVENANCE.driveFileId===null,"Drive bloqueado registrado honestamente");
 ok(run({ageMonths:48,respondente:"pais",assessmentUse:"triagem"}).some((m)=>m.scale.id==="mutismo-seletivo-familia-30"),"família por idade/informante");
 ok(run({ageMonths:48,respondente:"professor",assessmentUse:"triagem"}).some((m)=>m.scale.id==="mutismo-seletivo-escola-30"),"escola por idade/informante");
