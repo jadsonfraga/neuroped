@@ -1,5 +1,6 @@
 import type { ScaleEntry } from "./scaleFilter";
 import { ipnEpiSegModules, ipnEpiSegItems, IPN_EPI_SEG_PROVENANCE } from "./ipnEpiSeg200Contract";
+import { escalasMutismoSeletivo200 } from "./escalasMutismoSeletivo200";
 
 const PENDENCIA = "Instrumento clínico autoral; propriedades psicométricas, normas, confiabilidade, validade, sensibilidade, especificidade e pontos de corte ainda não foram estabelecidos.";
 const DESCRIPTION = "Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.";
@@ -91,4 +92,5 @@ export const escalasIpnEpiSeg200: ScaleEntry[] = [
     assessmentUse: "monitorizacao", applicationMode: "registro_clinico",
     verbalRequirement: "indiferente", literacyRequirement: "indiferente",
   }, "sintese"),
+  ...escalasMutismoSeletivo200,
 ];
