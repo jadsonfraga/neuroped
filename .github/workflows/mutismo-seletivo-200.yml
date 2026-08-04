@@ -1,0 +1,29 @@
+name: Mutismo seletivo 200
+on:
+  pull_request:
+    paths:
+      - 'client/src/data/mutismoSeletivo200Contract.ts'
+      - 'client/src/data/escalasMutismoSeletivo200.ts'
+      - 'client/src/data/interactiveScaleItemsMutismoSeletivo200.ts'
+      - 'client/src/data/interactiveScaleItemsIpnTea200.ts'
+      - 'client/src/data/escalasIpnEpiSeg200.ts'
+      - 'tests/clinical/test-mutismo-seletivo-200-filter.mjs'
+      - '.github/workflows/mutismo-seletivo-200.yml'
+  workflow_dispatch:
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Contrato clínico qualitativo
+        run: node --import tsx tests/clinical/test-mutismo-seletivo-200-filter.mjs
+      - name: TypeScript
+        run: npm run check
+      - name: Build cliente
+        run: npm run build:client
