@@ -6,6 +6,7 @@ import { ipnTdahFe200Items } from "./interactiveScaleItemsIpnTdahFe200";
 import { ipnPcFun200Items } from "./interactiveScaleItemsIpnPcFun200";
 import { ipnLfc200Items } from "./interactiveScaleItemsIpnLfc200";
 import { ipnEpiSeg200Items } from "./interactiveScaleItemsIpnEpiSeg200";
+import { mutismoSeletivo200Items } from "./interactiveScaleItemsMutismoSeletivo200";
 
 const ipnTeaOnlyItems: Record<string, InteractiveScaleDef> = {
   ...ipnTeaCoreItems,
@@ -24,6 +25,7 @@ export const ipnTea200Items: Record<string, InteractiveScaleDef> = {
   ...ipnPcFun200Items,
   ...ipnLfc200Items,
   ...ipnEpiSeg200Items,
+  ...mutismoSeletivo200Items,
 };
 
 const EXPECTED_COUNTS: Record<string, number> = {
