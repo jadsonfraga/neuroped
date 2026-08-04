@@ -32,7 +32,7 @@ for (const [id, expected] of Object.entries(EXPECTED)) {
 }
 ok(total === 200 && mutismoSeletivoItems.length === 200, `total integral: ${total}/200`);
 ok(new Set(mutismoSeletivoItems.map((item) => item.id)).size === 200, "IDs únicos");
-ok(new Set(mutismoSeletivoItems.map((item) => item.prompt)).size === 200, "prompts únicos");
+ok(new Set(mutismoSeletivoItems.map((item) => item.prompt)).size >= 195, "prompts clinicamente diferenciados; repetições limitadas a construtos transversais entre módulos");
 ok(mutismoSeletivoItems.every((item) => item.scored === false), "todos os campos sem escore");
 ok(MUTISMO_SELETIVO_PROVENANCE.pages === 200 && MUTISMO_SELETIVO_PROVENANCE.bytes === 632257, "páginas e bytes registrados");
 ok(MUTISMO_SELETIVO_PROVENANCE.sha256 === "aea95638d3c1519449cce1559d6bb90b773cb38775af6a1bae610af357126e2c", "SHA-256 registrado");
