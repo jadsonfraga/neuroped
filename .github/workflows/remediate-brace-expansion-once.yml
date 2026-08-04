@@ -1,0 +1,38 @@
+name: Remediate brace-expansion once
+on:
+  push:
+    branches:
+      - feat/mutismo-seletivo-200-2026-08-04
+    paths:
+      - '.github/workflows/remediate-brace-expansion-once.yml'
+permissions:
+  contents: write
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/mutismo-seletivo-200-2026-08-04
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Atualizar somente o lockfile de segurança
+        run: npm audit fix --package-lock-only
+      - name: Confirmar vulnerabilidades altas
+        run: npm audit --audit-level=high
+      - name: Persistir correção no branch
+        run: |
+          if git diff --quiet -- package-lock.json package.json; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json package.json
+          git commit -m "fix(security): atualizar brace-expansion para versão corrigida"
+          git push origin HEAD:feat/mutismo-seletivo-200-2026-08-04
