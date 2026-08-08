@@ -1,0 +1,114 @@
+name: Inventário autoral diário NeuroPed
+
+on:
+  schedule:
+    - cron: "40 22 * * *" # 19h40 em America/Recife (UTC-3)
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Data de geração em AAAA-MM-DD; vazio usa a data de Recife"
+        required: false
+        type: string
+      topic_id:
+        description: "ID de tema para execução manual; vazio usa a rotação clínica"
+        required: false
+        type: string
+      reasoning_effort:
+        description: "Esforço de raciocínio"
+        required: false
+        default: high
+        type: choice
+        options:
+          - high
+          - max
+      force:
+        description: "Substituir bloqueios de data/tema em execução manual"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: neuroped-daily-authorial-inventory
+  cancel-in-progress: false
+
+jobs:
+  generate-and-publish:
+    name: Gerar, auditar e incorporar rascunho
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Confirmar credenciais de automação
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -n "$OPENAI_KEY" ] || { echo "::error::Secret OPENAI_API_KEY ausente"; exit 1; }
+          [ -n "$AUTOMATION_TOKEN" ] || { echo "::error::Secret NEUROPED_AUTOMATION_TOKEN ausente"; exit 1; }
+
+      - name: Checkout da branch principal
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          token: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Normalizar parâmetros da execução
+        env:
+          DATE_INPUT: ${{ inputs.date }}
+          TOPIC_INPUT: ${{ inputs.topic_id }}
+          EFFORT_INPUT: ${{ inputs.reasoning_effort }}
+          FORCE_INPUT: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DATE_INPUT:-}" ]; then
+            GENERATION_DATE="$DATE_INPUT"
+          else
+            GENERATION_DATE="$(TZ=America/Recife date +%F)"
+          fi
+          echo "NEUROPED_GENERATION_DATE=$GENERATION_DATE" >> "$GITHUB_ENV"
+          echo "NEUROPED_DAILY_TOPIC_ID=${TOPIC_INPUT:-}" >> "$GITHUB_ENV"
+          echo "NEUROPED_DAILY_REASONING_EFFORT=${EFFORT_INPUT:-high}" >> "$GITHUB_ENV"
+          echo "NEUROPED_DAILY_FORCE=${FORCE_INPUT:-false}" >> "$GITHUB_ENV"
+
+      - name: Gerar instrumento com GPT-5.6 Pro
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEUROPED_DAILY_INVENTORY_MODEL: gpt-5.6
+        run: node --import tsx scripts/generate-daily-authorial-inventory.mts
+
+      - name: Auditar catálogo autoral
+        run: node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
+
+      - name: Validar TypeScript e build do aplicativo
+        run: |
+          npm run check
+          npm run build:client
+
+      - name: Incorporar o novo rascunho na branch principal
+        run: |
+          set -euo pipefail
+          git add client/src/data/daily-authorial
+          if git diff --cached --quiet; then
+            echo "Nenhum arquivo novo para incorporar."
+            exit 0
+          fi
+          git config user.name "NeuroPed Daily Bot"
+          git config user.email "neuroped-daily-bot@users.noreply.github.com"
+          git commit -m "feat(escalas): inventário autoral diário ${NEUROPED_GENERATION_DATE}"
+          git push origin HEAD:main
