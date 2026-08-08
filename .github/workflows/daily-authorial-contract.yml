@@ -52,19 +52,19 @@ jobs:
 
       - name: Exercitar contingência em data isolada
         env:
-          NEUROPED_GENERATION_DATE: 2099-01-01
+          NEUROPED_GENERATION_DATE: 2099-01-02
         run: |
           set -euo pipefail
-          test_file="client/src/data/daily-authorial/2099-01-01-contingencia-apr.json"
+          test_file="client/src/data/daily-authorial/2099-01-02-contingencia-apr.json"
           trap 'rm -f "$test_file"' EXIT
           node --import tsx scripts/generate-daily-authorial-fallback.mts
           test -f "$test_file"
           node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
           node <<'NODE'
           const fs = require("node:fs");
-          const file = "client/src/data/daily-authorial/2099-01-01-contingencia-apr.json";
+          const file = "client/src/data/daily-authorial/2099-01-02-contingencia-apr.json";
           const record = JSON.parse(fs.readFileSync(file, "utf8"));
-          if (record.generatedOn !== "2099-01-01") throw new Error("data de contingência inválida");
+          if (record.generatedOn !== "2099-01-02") throw new Error("data de contingência inválida");
           if (record.contingency !== true || record.needsUpgrade !== true) {
             throw new Error("marcadores de contingência ausentes");
           }
@@ -82,7 +82,7 @@ jobs:
           NODE
 
       - name: Confirmar que o teste não deixou arquivo residual
-        run: test ! -e client/src/data/daily-authorial/2099-01-01-contingencia-apr.json
+        run: test ! -e client/src/data/daily-authorial/2099-01-02-contingencia-apr.json
 
       - name: Verificar TypeScript
         run: npm run check
