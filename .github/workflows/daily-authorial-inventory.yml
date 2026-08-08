@@ -2,7 +2,8 @@ name: Inventário autoral diário NeuroPed
 
 on:
   schedule:
-    - cron: "40 22 * * *" # 19h40 em America/Recife (UTC-3)
+    - cron: "40 22 * * *" # 19h40 em America/Recife (UTC-3) — execução primária
+    - cron: "20 23 * * *" # 20h20 em America/Recife (UTC-3) — redundância idempotente
   workflow_dispatch:
     inputs:
       date:
@@ -41,20 +42,18 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - name: Confirmar credenciais de automação
+      - name: Confirmar credencial da OpenAI
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
-          AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
         run: |
           set -euo pipefail
           [ -n "$OPENAI_KEY" ] || { echo "::error::Secret OPENAI_API_KEY ausente"; exit 1; }
-          [ -n "$AUTOMATION_TOKEN" ] || { echo "::error::Secret NEUROPED_AUTOMATION_TOKEN ausente"; exit 1; }
 
       - name: Checkout da branch principal
         uses: actions/checkout@v7
         with:
           ref: main
-          token: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+          token: ${{ secrets.NEUROPED_AUTOMATION_TOKEN || github.token }}
           fetch-depth: 0
 
       - name: Configurar Node.js
@@ -86,11 +85,23 @@ jobs:
           echo "NEUROPED_DAILY_REASONING_EFFORT=${EFFORT_INPUT:-high}" >> "$GITHUB_ENV"
           echo "NEUROPED_DAILY_FORCE=${FORCE_INPUT:-false}" >> "$GITHUB_ENV"
 
-      - name: Gerar instrumento com GPT-5.6 Pro
+      - name: Gerar instrumento com GPT-5.6 Pro com retentativas
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NEUROPED_DAILY_INVENTORY_MODEL: gpt-5.6
-        run: node --import tsx scripts/generate-daily-authorial-inventory.mts
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Tentativa ${attempt}/3 de geração do inventário ${NEUROPED_GENERATION_DATE}."
+            if node --import tsx scripts/generate-daily-authorial-inventory.mts; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Falha após três tentativas de geração."
+              exit 1
+            fi
+            sleep $((attempt * 45))
+          done
 
       - name: Auditar catálogo autoral
         run: node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
@@ -105,7 +116,7 @@ jobs:
           set -euo pipefail
           git add client/src/data/daily-authorial
           if git diff --cached --quiet; then
-            echo "Nenhum arquivo novo para incorporar."
+            echo "Inventário do dia já existe; redundância concluída sem alteração."
             exit 0
           fi
           git config user.name "NeuroPed Daily Bot"
