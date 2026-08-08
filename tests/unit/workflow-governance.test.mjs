@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (path) =>
-  readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+  readFileSync(new URL(`../../${path}`, import.meta.url), "utf8").replace(
+    /\r\n?/g,
+    "\n",
+  );
 const cloudflareDeploy = read(".github/workflows/deploy-cloudflare.yml");
 const dailyContract = read(".github/workflows/daily-authorial-contract.yml");
 const dailyInventory = read(".github/workflows/daily-authorial-inventory.yml");

@@ -58,6 +58,7 @@ export function SplashScreen({
           exit={{ opacity: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.4, ease: easing.smooth }}
           className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden"
+          data-testid="splash-screen"
           style={{
             background:
               "var(--splash-bg)",
