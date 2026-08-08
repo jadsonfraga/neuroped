@@ -70,10 +70,11 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
         <CardContent className="space-y-6">
           {/* Age Slider */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label htmlFor="assistant-idade" className="block text-sm font-medium mb-2">
               Idade: <span className="text-lg font-bold text-blue-600">{phrasedAge}</span>
             </label>
             <input
+              id="assistant-idade"
               type="range"
               min="0"
               max="216"
@@ -123,6 +124,7 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
                 >
                   <input
                     type="checkbox"
+                    aria-label={r.label}
                     checked={respondents.includes(r.id as any)}
                     onChange={() => toggleRespondent(r.id as any)}
                     className="rounded"
@@ -135,12 +137,13 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
 
           {/* Time Available */}
           <div>
-            <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+            <label htmlFor="assistant-tempo-disponivel" className="block text-sm font-medium mb-2 flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Tempo Disponível na Consulta
             </label>
             <div className="flex items-center gap-4">
               <input
+                id="assistant-tempo-disponivel"
                 type="range"
                 min="5"
                 max="120"
@@ -168,6 +171,7 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
                 >
                   <input
                     type="checkbox"
+                    aria-label={c.label}
                     checked={childCapabilities[c.key as keyof typeof childCapabilities]}
                     onChange={(e) =>
                       setChildCapabilities((prev) => ({

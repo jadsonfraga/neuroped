@@ -481,6 +481,7 @@ export default function PacientesPage() {
             ref={fileInputRef}
             type="file"
             accept=".json"
+            aria-label="Importar pacientes de um backup NeuroPed (.json)"
             className="hidden"
             onChange={handleImport}
           />

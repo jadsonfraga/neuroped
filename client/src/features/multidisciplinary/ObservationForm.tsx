@@ -140,8 +140,9 @@ export function ObservationForm({
 
         {/* Professional Name */}
         <div>
-          <label className="block text-sm font-medium mb-2">Nome Completo do Profissional</label>
+          <label htmlFor="observation-professional-name" className="block text-sm font-medium mb-2">Nome Completo do Profissional</label>
           <input
+            id="observation-professional-name"
             type="text"
             value={professionalName}
             onChange={(e) => setProfessionalName(e.target.value)}
@@ -152,8 +153,9 @@ export function ObservationForm({
 
         {/* Observation Text */}
         <div>
-          <label className="block text-sm font-medium mb-2">Observação Clínica</label>
+          <label htmlFor="observation-text" className="block text-sm font-medium mb-2">Observação Clínica</label>
           <textarea
+            id="observation-text"
             value={observationText}
             onChange={(e) => setObservationText(e.target.value)}
             placeholder="Descreva suas observações clínicas, achados importantes, mudanças de comportamento, etc..."
@@ -167,9 +169,10 @@ export function ObservationForm({
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium mb-2">Tags (Categorização)</label>
+          <label htmlFor="observation-tag-input" className="block text-sm font-medium mb-2">Tags (Categorização)</label>
           <div className="flex gap-2 mb-2">
             <input
+              id="observation-tag-input"
               type="text"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}

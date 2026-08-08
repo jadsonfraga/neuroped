@@ -271,3 +271,48 @@
 :focus:not(:focus-visible) {
   outline: none;
 }
+
+/** ── Gate local (PrivateGate) — paleta do overlay de acesso ─────────────── */
+:root {
+  --gate-bg: linear-gradient(135deg, #0f4c3a 0%, #1a2559 50%, #3d1428 100%);
+  --gate-card-bg: rgba(15, 18, 40, 0.65);
+  --gate-bubble-bg: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.15));
+  --gate-bubble-border: 1px solid rgba(139, 92, 246, 0.35);
+  --gate-primary-btn: linear-gradient(135deg, #7c3aed, #6366f1);
+  --gate-card-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --gate-top-glow: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+  --gate-bubble-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+  --gate-input-bg: rgba(255, 255, 255, 0.06);
+  --gate-input-border: rgba(255, 255, 255, 0.12);
+  --gate-input-border-error: rgba(248, 113, 113, 0.6);
+  --gate-input-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  --gate-error-text: rgb(252, 165, 165);
+  --gate-btn-idle-bg: rgba(255, 255, 255, 0.08);
+  --gate-btn-active-shadow: 0 4px 20px rgba(124, 58, 237, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/** ── SplashScreen — paleta institucional da abertura ────────────────────── */
+:root {
+  --splash-bg: linear-gradient(135deg, #0f4c3a 0%, #1a2559 50%, #3d1428 100%);
+  --splash-mesh-stroke: #ffffff;
+  --splash-glow: radial-gradient(circle, rgba(15, 76, 58, 0.5) 0%, rgba(61, 20, 40, 0.3) 100%);
+  --splash-shield-border: rgba(212, 175, 55, 0.55);
+  --splash-shield-shadow: 0 25px 80px rgba(15, 76, 58, 0.4), 0 12px 40px rgba(61, 20, 40, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15);
+  --splash-title: #ffffff;
+  --splash-title-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(15, 76, 58, 0.1);
+  --splash-subtitle: rgba(255, 255, 255, 0.85);
+  --splash-divider: linear-gradient(90deg, transparent, rgba(15, 244, 200, 0.6), transparent);
+  --splash-credits: rgba(255, 255, 255, 0.75);
+  --splash-dot: rgba(15, 244, 200, 0.8);
+  --splash-dot-glow: 0 0 8px rgba(15, 244, 200, 0.5);
+}
+
+/** ── AmbientEffects — orbes decorativos de fundo ────────────────────────── */
+:root {
+  --ambient-orb-1: rgba(167, 139, 250, 0.5);
+  --ambient-orb-2: rgba(56, 189, 248, 0.4);
+  --ambient-orb-3: rgba(34, 211, 238, 0.35);
+  --ambient-orb-4: rgba(124, 92, 255, 0.45);
+  --ambient-orb-5: rgba(139, 92, 246, 0.4);
+}

@@ -1,5 +1,5 @@
 {
-  "_comment": "Catraca de CI (Bloco A2). Valores de referência que NÃO podem regredir. Em 2026-07-16 as métricas do catálogo foram separadas conscientemente: 45 contratos com menos itens que a extensão declarada foram bloqueados da aplicação, sem apagar suas fichas. Há 203 instrumentos executáveis, 165 com fonte e sem validação clínica pendente, e 701 fichas documentadas (546 com fonte). Isso impede restaurar aplicações parciais só para satisfazer um contador. bundleMaxGzipKb e axeSeriousCriticalViolations são tetos; Lighthouse fica null sem navegador. designRawValues=387 cobre templates de impressão/PDF, identidade visual e paletas já inventariados.",
+  "_comment": "Catraca de CI (Bloco A2). Valores de referência que NÃO podem regredir. Em 2026-07-16 as métricas do catálogo foram separadas conscientemente: 45 contratos com menos itens que a extensão declarada foram bloqueados da aplicação, sem apagar suas fichas. Há 203 instrumentos executáveis, 165 com fonte e sem validação clínica pendente, e 701 fichas documentadas (546 com fonte). Isso impede restaurar aplicações parciais só para satisfazer um contador. bundleMaxGzipKb e axeSeriousCriticalViolations são tetos; Lighthouse fica null sem navegador. designRawValues=256 (2026-08: gate/splash/ambient tokenizados em styles/tokens.css, RadarChart morto removido, template de respostas com vars proprias) cobre os templates de impressão/PDF restantes.",
   "typescriptErrors": 0,
   "clinicalCasesMin": 150,
   "catalogRunnableInstruments": 203,
@@ -9,8 +9,8 @@
   "lighthousePerformance": null,
   "lighthouseAccessibility": null,
   "axeSeriousCriticalViolations": 0,
-  "bundleMaxGzipKb": 250,
-  "initialJsMaxGzipKb": 300,
+  "bundleMaxGzipKb": 232,
+  "initialJsMaxGzipKb": 288,
   "initialJsForbiddenChunks": ["scaleFilter"],
-  "designRawValues": 387
+  "designRawValues": 256
 }

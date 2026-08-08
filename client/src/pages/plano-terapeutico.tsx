@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   Target, Users, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
   Printer, Mail, RotateCcw, Info, Stethoscope, Star, ClipboardList
@@ -183,10 +183,12 @@ function SectionHeader({ icon: Icon, title, color }: { icon: any; title: string;
 function SelectField({ label, value, onChange, options, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder?: string;
 }) {
+  const selectId = useId();
   return (
     <div className="space-y-1">
-      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
+      <label htmlFor={selectId} className="text-xs font-semibold text-muted-foreground">{label}</label>
       <select
+        id={selectId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -201,10 +203,12 @@ function SelectField({ label, value, onChange, options, placeholder }: {
 function TextareaField({ label, value, onChange, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string;
 }) {
+  const textareaId = useId();
   return (
     <div className="space-y-1">
-      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
+      <label htmlFor={textareaId} className="text-xs font-semibold text-muted-foreground">{label}</label>
       <textarea
+        id={textareaId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

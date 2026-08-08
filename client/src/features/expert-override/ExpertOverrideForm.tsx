@@ -189,10 +189,11 @@ export function ExpertOverrideForm({
 
         {/* Clinical Evidence / Reasoning */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-gray-900">
+          <label htmlFor="override-evidence" className="block text-sm font-semibold mb-2 text-gray-900">
             Evidência Clínica & Raciocínio
           </label>
           <textarea
+            id="override-evidence"
             value={evidence}
             onChange={(e) => setEvidence(e.target.value)}
             placeholder="Descreva em detalhes:
@@ -236,10 +237,11 @@ export function ExpertOverrideForm({
 
         {/* Additional Notes */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-gray-900">
+          <label htmlFor="override-additional-notes" className="block text-sm font-semibold mb-2 text-gray-900">
             Observações Adicionais (Opcional)
           </label>
           <textarea
+            id="override-additional-notes"
             value={additionalNotes}
             onChange={(e) => setAdditionalNotes(e.target.value)}
             placeholder="Notas adicionais, contexto, ou informações relevantes..."
@@ -254,6 +256,7 @@ export function ExpertOverrideForm({
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
+                aria-label="Reconheço as implicações do override"
                 checked={acknowledged}
                 onChange={(e) => setAcknowledged(e.target.checked)}
                 className="rounded mt-1"

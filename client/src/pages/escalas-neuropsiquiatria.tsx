@@ -160,9 +160,10 @@ export default function EscalasNeuropsiquiatriaPage() {
 
       <section className="rounded-[1.5rem] border border-border/70 bg-card/90 p-4 shadow-sm">
         <div className="grid gap-3 lg:grid-cols-4">
-          <label className="space-y-1 lg:col-span-2">
+          <label htmlFor="escalas-busca" className="space-y-1 lg:col-span-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Busca</span>
             <input
+              id="escalas-busca"
               value={busca}
               onChange={(event) => setBusca(event.target.value)}
               placeholder="Ex.: autismo, TDAH, ansiedade, trauma, PROMIS..."
@@ -170,16 +171,16 @@ export default function EscalasNeuropsiquiatriaPage() {
             />
           </label>
 
-          <label className="space-y-1">
+          <label htmlFor="escalas-categoria" className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Categoria</span>
-            <select value={categoria} onChange={(event) => setCategoria(event.target.value)} className="h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm">
+            <select id="escalas-categoria" value={categoria} onChange={(event) => setCategoria(event.target.value)} className="h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm">
               {categorias.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
 
-          <label className="space-y-1">
+          <label htmlFor="escalas-selo" className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Selo</span>
-            <select value={selo} onChange={(event) => setSelo(event.target.value as "Todos" | Selo)} className="h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm">
+            <select id="escalas-selo" value={selo} onChange={(event) => setSelo(event.target.value as "Todos" | Selo)} className="h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm">
               <option>Todos</option>
               <option>Ouro</option>
               <option>Prata</option>

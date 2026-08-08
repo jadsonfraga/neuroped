@@ -55,7 +55,9 @@ const {
   estimatedQuestionCount,
 } = await imp("client/src/data/filterPodium.ts");
 
-const IDEAL_RATE_MIN = 99;
+// Catraca elevada a 100 apos o resgate por sinal pos-teto e o R2 consciente de
+// orcamento: toda escolha do podio agora e a ideal. Nao regredir.
+const IDEAL_RATE_MIN = 100;
 const CASES_PER_QUEIXA = 24;
 
 const allIds = new Set(allScales.map((s) => s.id));
@@ -189,9 +191,35 @@ for (const ctx of cases) {
   )
     issues.push("R1-idade-exata");
 
-  // R2 — cobertura total de queixas com candidata disponivel
+  // R2 — cobertura total de queixas com candidata disponivel.
+  // Mesma isenção matemática do R4: uma candidata que não cabe num trio dentro
+  // do teto de 100 itens (ela + as duas menores companheiras na idade) não pode
+  // ser exigida — sem isso, R2 e R7 seriam incompatíveis quando a única
+  // cobertura da queixa é um instrumento de 100 itens.
+  const coverageFitsBudget = (candidate) => {
+    const candidateCount = estimatedQuestionCount(candidate.scale);
+    const companionCounts = matches
+      .filter((other) => other.scale.id !== candidate.scale.id)
+      .filter(
+        (other) =>
+          other.scale.ageMin <= ctx.ageMonths &&
+          other.scale.ageMax >= ctx.ageMonths,
+      )
+      .map((other) => estimatedQuestionCount(other.scale))
+      .filter((count) => Number.isFinite(count) && count > 0)
+      .sort((a, b) => a - b);
+    return (
+      Number.isFinite(candidateCount) &&
+      candidateCount > 0 &&
+      (companionCounts.length < 2 ||
+        candidateCount + companionCounts[0] + companionCounts[1] <=
+          PODIUM_QUESTION_CAP)
+    );
+  };
   for (const q of ctx.queixas) {
-    const hasCand = matches.some((m) => m.scale.queixas.includes(q));
+    const hasCand = matches.some(
+      (m) => m.scale.queixas.includes(q) && coverageFitsBudget(m),
+    );
     const covered = slots.some((s) => s.scale.queixas.includes(q));
     if (hasCand && !covered) {
       issues.push("R2-queixa-descoberta");

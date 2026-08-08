@@ -91,7 +91,7 @@ function escapeHtml(value: unknown): string {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("'", "&apos;");
 }
 
 export function buildScaleResponsePrintHtml(
@@ -114,22 +114,23 @@ export function buildScaleResponsePrintHtml(
   <title>Respostas — ${escapeHtml(report.scaleName)}</title>
   <style>
     @page { margin: 1.7cm; size: A4; }
+    :root { --doc-ink: #172033; --doc-accent: #243a62; --doc-muted: #526079; --doc-inverse: #fff; --doc-rule: #dce2ec; --doc-zebra: #f6f8fb; --doc-number: #667085; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 1.45; color: #172033; }
-    .header { display: flex; justify-content: space-between; gap: 20px; border-bottom: 3px solid #243a62; padding-bottom: 12px; margin-bottom: 18px; }
-    .brand { font-size: 15pt; font-weight: 700; color: #243a62; }
-    .meta { margin-top: 3px; color: #526079; font-size: 8.5pt; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 1.45; color: var(--doc-ink); }
+    .header { display: flex; justify-content: space-between; gap: 20px; border-bottom: 3px solid var(--doc-accent); padding-bottom: 12px; margin-bottom: 18px; }
+    .brand { font-size: 15pt; font-weight: 700; color: var(--doc-accent); }
+    .meta { margin-top: 3px; color: var(--doc-muted); font-size: 8.5pt; }
     .scale { max-width: 48%; text-align: right; font-weight: 700; }
-    h1 { margin: 0 0 4px; color: #243a62; font-size: 13pt; text-transform: uppercase; letter-spacing: .4px; }
-    .summary { margin: 0 0 16px; color: #526079; font-size: 9pt; }
+    h1 { margin: 0 0 4px; color: var(--doc-accent); font-size: 13pt; text-transform: uppercase; letter-spacing: .4px; }
+    .summary { margin: 0 0 16px; color: var(--doc-muted); font-size: 9pt; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th { padding: 7px 8px; background: #243a62; color: #fff; text-align: left; font-size: 8.5pt; }
-    td { padding: 8px; border-bottom: 1px solid #dce2ec; vertical-align: top; overflow-wrap: anywhere; }
-    tr:nth-child(even) td { background: #f6f8fb; }
-    .number { width: 7%; text-align: center; color: #667085; }
+    th { padding: 7px 8px; background: var(--doc-accent); color: var(--doc-inverse); text-align: left; font-size: 8.5pt; }
+    td { padding: 8px; border-bottom: 1px solid var(--doc-rule); vertical-align: top; overflow-wrap: anywhere; }
+    tr:nth-child(even) td { background: var(--doc-zebra); }
+    .number { width: 7%; text-align: center; color: var(--doc-number); }
     .question { width: 58%; }
-    .answer { width: 35%; font-weight: 700; color: #243a62; }
-    .footer { margin-top: 24px; border-top: 2px solid #243a62; padding-top: 10px; display: flex; justify-content: space-between; gap: 16px; color: #526079; font-size: 8pt; }
+    .answer { width: 35%; font-weight: 700; color: var(--doc-accent); }
+    .footer { margin-top: 24px; border-top: 2px solid var(--doc-accent); padding-top: 10px; display: flex; justify-content: space-between; gap: 16px; color: var(--doc-muted); font-size: 8pt; }
     tr { break-inside: avoid; }
   </style>
 </head>
