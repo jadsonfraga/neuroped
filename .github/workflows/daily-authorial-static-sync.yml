@@ -233,12 +233,12 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
         run: |
           set -euo pipefail
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
+          export VERCEL_PROJECT_ID="prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
           rm -rf .vercel
           vercel pull --yes --environment=production --token="$token"
           VITE_AUTH_MODE=remote \
