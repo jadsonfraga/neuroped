@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "NEUROPED-DIARIO-20260808-001",
+  "slug": "eventos-paroxisticos-semiologia-seguranca",
+  "version": "1.0.0",
+  "generatedOn": "2026-08-08",
+  "generatedAt": "2026-08-08T19:40:00-03:00",
+  "author": "NeuroPed SDG — Dr. Jadson Fraga",
+  "sourceType": "autoral_diario",
+  "validationStatus": "nao_validado_psicometricamente",
+  "status": "rascunho_revisao",
+  "title": "Inventário Clínico de Caracterização de Eventos Paroxísticos Pediátricos",
+  "shortTitle": "ICEPP-NeuroPed",
+  "topicId": "neurologia_eventos_paroxisticos",
+  "topic": "Semiologia e segurança em eventos paroxísticos pediátricos",
+  "category": "Neurologia infantil",
+  "subcategory": "Epilepsia e eventos paroxísticos",
+  "rationale": "A descrição organizada do início, responsividade, fenômenos motores, recuperação e contexto aumenta a qualidade da anamnese e ajuda a selecionar registros em vídeo, eletroencefalograma e avaliações complementares pertinentes.",
+  "purpose": "Registrar características observáveis de episódios súbitos para apoiar a história clínica e o diagnóstico diferencial, sem classificar isoladamente o evento como epiléptico ou não epiléptico.",
+  "ageMinMonths": 0,
+  "ageMaxMonths": 215,
+  "respondent": "multiplo",
+  "contexts": ["casa", "escola", "clinica", "multicontexto"],
+  "assessmentUse": "registro_clinico",
+  "riskClass": "alto",
+  "timeframe": "Considerar os episódios ocorridos nos últimos 30 dias e descrever separadamente padrões distintos.",
+  "durationMinutes": 15,
+  "instructions": "Preencher com base no que foi diretamente observado. Quando possível, usar cronômetro e vídeo seguro do início ao fim. Marcar não observado quando não houver informação. O instrumento não substitui avaliação médica, exame neurológico, eletroencefalograma ou investigação etiológica.",
+  "responseOptions": [
+    { "code": "N", "label": "Não observado", "value": 0 },
+    { "code": "A", "label": "Às vezes", "value": 1 },
+    { "code": "F", "label": "Frequente na maioria dos episódios", "value": 2 },
+    { "code": "D", "label": "Desconhecido / não foi possível observar", "value": null }
+  ],
+  "domains": [
+    { "id": "inicio_contexto", "label": "Início e contexto", "description": "Situação, gatilhos e padrão temporal no começo do episódio." },
+    { "id": "consciencia", "label": "Responsividade e consciência", "description": "Contato, resposta a comandos e memória do evento." },
+    { "id": "motor_autonomico", "label": "Fenômenos motores e autonômicos", "description": "Movimentos, tônus, cor, respiração e sinais vegetativos." },
+    { "id": "duracao_recuperacao", "label": "Duração e recuperação", "description": "Tempo, término e comportamento após o episódio." },
+    { "id": "seguranca", "label": "Segurança e gravidade", "description": "Sinais que exigem resposta clínica imediata ou atendimento de urgência." }
+  ],
+  "items": [
+    { "id": "EP01", "domainId": "inicio_contexto", "text": "O episódio começa de forma súbita, sem transição gradual perceptível.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Registrar atividade imediatamente anterior e horário." },
+    { "id": "EP02", "domainId": "inicio_contexto", "text": "Há relação repetida com despertar, adormecer, febre, dor, susto, esforço, jejum ou emoção intensa.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Distinguir associação temporal de causalidade presumida." },
+    { "id": "EP03", "domainId": "inicio_contexto", "text": "Os episódios mantêm sequência e duração semelhantes entre si.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Descrever separadamente mais de um padrão." },
+    { "id": "EP04", "domainId": "inicio_contexto", "text": "Existe aviso prévio relatado, como sensação estranha, medo súbito, alteração visual, cheiro incomum, dor ou náusea.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Registrar as palavras exatas da criança quando possível." },
+    { "id": "EP05", "domainId": "consciencia", "text": "Durante o episódio, a criança deixa de responder à voz ou a comandos simples.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Não utilizar estímulos dolorosos." },
+    { "id": "EP06", "domainId": "consciencia", "text": "Há olhar fixo, desvio sustentado dos olhos ou interrupção abrupta da atividade.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Anotar direção do olhar e presença de piscamento." },
+    { "id": "EP07", "domainId": "consciencia", "text": "A criança executa movimentos automáticos, como mastigar, manipular objetos ou caminhar sem objetivo aparente.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Descrever o comportamento sem interpretar intenção." },
+    { "id": "EP08", "domainId": "consciencia", "text": "Após o episódio, a criança não se recorda integralmente do ocorrido.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Considerar idade e capacidade de relato." },
+    { "id": "EP09", "domainId": "motor_autonomico", "text": "Ocorrem contrações rítmicas, enrijecimento, queda súbita ou abalos breves de um ou mais segmentos.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Registrar lado, sequência e simetria." },
+    { "id": "EP10", "domainId": "motor_autonomico", "text": "Os movimentos começam ou permanecem predominantemente em um lado do corpo.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Não inverter lateralidade ao rever vídeos espelhados." },
+    { "id": "EP11", "domainId": "motor_autonomico", "text": "Há palidez, arroxeamento, salivação intensa, vômito, sudorese ou perda urinária associados.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Especificar o sinal e o momento em que aparece." },
+    { "id": "EP12", "domainId": "motor_autonomico", "text": "A respiração fica ausente, muito irregular ou claramente dificultada durante o episódio.", "responseMode": "frequencia_0_3", "redFlag": true, "clinicalNote": "Sinal crítico independente de qualquer pontuação." },
+    { "id": "EP13", "domainId": "duracao_recuperacao", "text": "A duração foi medida com relógio ou cronômetro, e não apenas estimada.", "responseMode": "sim_nao", "redFlag": false, "clinicalNote": "Registrar minutos e segundos." },
+    { "id": "EP14", "domainId": "duracao_recuperacao", "text": "Depois do episódio, há sonolência, confusão, dor de cabeça, fraqueza focal ou mudança comportamental.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "Anotar tempo até retorno ao estado habitual." },
+    { "id": "EP15", "domainId": "duracao_recuperacao", "text": "O episódio termina quando a criança é chamada, tocada de modo leve ou distraída.", "responseMode": "frequencia_0_3", "redFlag": false, "clinicalNote": "A interrupção por interação não define isoladamente a natureza do evento." },
+    { "id": "EP16", "domainId": "duracao_recuperacao", "text": "Há vários episódios próximos, sem recuperação completa entre eles.", "responseMode": "frequencia_0_3", "redFlag": true, "clinicalNote": "Considerar emergência conforme duração, respiração e plano individual." },
+    { "id": "EP17", "domainId": "seguranca", "text": "Um episódio convulsivo contínuo dura cinco minutos ou mais.", "responseMode": "presente_ausente", "redFlag": true, "clinicalNote": "Acionar o plano de emergência e o SAMU 192." },
+    { "id": "EP18", "domainId": "seguranca", "text": "O episódio ocorre dentro da água, provoca trauma importante ou acontece em local de risco.", "responseMode": "presente_ausente", "redFlag": true, "clinicalNote": "Priorizar retirada segura do perigo e avaliação de trauma." },
+    { "id": "EP19", "domainId": "seguranca", "text": "Após o episódio, a criança não recupera respiração, cor ou responsividade habituais.", "responseMode": "presente_ausente", "redFlag": true, "clinicalNote": "Situação de emergência médica." },
+    { "id": "EP20", "domainId": "seguranca", "text": "É o primeiro evento convulsivo reconhecido ou houve mudança marcante no padrão habitual.", "responseMode": "presente_ausente", "redFlag": false, "clinicalNote": "Indicar avaliação médica oportuna conforme o estado clínico." }
+  ],
+  "scoring": {
+    "mode": "perfil_qualitativo_sem_total",
+    "totalScoreEnabled": false,
+    "instructions": "Não somar os itens para produzir escore global. Organizar as respostas por domínio e descrever os padrões observados.",
+    "domainInterpretation": "A interpretação deve integrar semiologia, idade, desenvolvimento, história clínica, exame neurológico, vídeos e exames indicados.",
+    "redFlagRule": "Qualquer red flag é analisada separadamente e pode exigir ação imediata, independentemente das demais respostas."
+  },
+  "redFlags": [
+    { "itemId": "EP12", "action": "Se houver dificuldade respiratória, cianose persistente ou ausência de respiração, acionar o SAMU 192 e iniciar suporte conforme treinamento disponível." },
+    { "itemId": "EP16", "action": "Episódios repetidos sem recuperação completa exigem aplicação do plano individual de crise e avaliação urgente." },
+    { "itemId": "EP17", "action": "Crise convulsiva com cinco minutos ou mais: seguir o plano de resgate prescrito e acionar o SAMU 192." },
+    { "itemId": "EP18", "action": "Em água ou após trauma importante, retirar do perigo sem se expor, avaliar respiração e acionar emergência." },
+    { "itemId": "EP19", "action": "Ausência de recuperação respiratória ou de responsividade habitual é emergência; acionar o SAMU 192." }
+  ],
+  "differentialConsiderations": [
+    "Crises epilépticas focais ou generalizadas.",
+    "Síncope e eventos anóxicos reflexos.",
+    "Estereotipias, tiques, tremores e outros movimentos não epilépticos.",
+    "Parassonias e fenômenos relacionados ao sono.",
+    "Eventos funcionais, comportamentais, migranosos, metabólicos ou cardiológicos."
+  ],
+  "clinicalIntegration": [
+    "Comparar relatos de família, escola e profissionais, procurando consistência do padrão.",
+    "Rever vídeos completos e seguros, preservando privacidade e registrando horário e duração.",
+    "Relacionar os achados ao desenvolvimento, medicações, sono, febre, alimentação e exame neurológico.",
+    "Definir necessidade de eletroencefalograma, vídeo-eletroencefalograma, avaliação cardiológica ou investigação adicional apenas após revisão clínica."
+  ],
+  "limitations": [
+    "Instrumento autoral em revisão, sem validação psicométrica ou pontos de corte.",
+    "Relatos retrospectivos podem superestimar duração e omitir o início do episódio.",
+    "Nenhum item isolado confirma ou exclui epilepsia.",
+    "O formulário não substitui consulta, exame físico, plano individual de crise ou atendimento de emergência."
+  ],
+  "safetyNote": "Durante uma crise, proteger a cabeça, afastar objetos, marcar o tempo e colocar de lado quando isso puder ser feito com segurança. Não conter à força e não colocar nada na boca. Acionar o SAMU 192 diante de red flags ou conforme o plano individual.",
+  "tags": ["epilepsia", "eventos paroxísticos", "semiologia", "segurança", "vídeo", "neurologia infantil"],
+  "duplicateCooldownDays": 30,
+  "generation": {
+    "model": "gpt-5.6",
+    "reasoningMode": "pro",
+    "reasoningEffort": "high",
+    "pipelineVersion": "1.0.0"
+  }
+}
