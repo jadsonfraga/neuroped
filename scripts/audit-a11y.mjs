@@ -155,6 +155,23 @@ function runStatic() {
     for (const m of c.matchAll(/tabIndex\s*=\s*\{?\s*([1-9][0-9]*)\s*\}?/g)) {
       violations.push({ id: "tabindex-positive", where: `${rel} (tabIndex=${m[1]})` });
     }
+    // id literal duplicado no mesmo arquivo (axe: duplicate-id) — leitores de
+    // tela e label htmlFor quebram silenciosamente com ids repetidos.
+    const idCounts = new Map();
+    for (const m of c.matchAll(/\bid\s*=\s*"([^"{}]+)"/g)) {
+      idCounts.set(m[1], (idCounts.get(m[1]) ?? 0) + 1);
+    }
+    for (const [idValue, count] of idCounts) {
+      if (count > 1) violations.push({ id: "duplicate-id", where: `${rel} (id="${idValue}" ×${count})` });
+    }
+    // controle interativo escondido de leitores mas focável pelo teclado
+    for (const m of c.matchAll(/<(button|a|input|select|textarea)\b(?:=>|[^>])*?aria-hidden\s*=\s*(?:"true"|\{true\})/g)) {
+      violations.push({ id: "aria-hidden-focus", where: `${rel} (<${m[1]}>)` });
+    }
+    // alt que é apenas nome de arquivo não descreve a imagem
+    for (const m of c.matchAll(/alt\s*=\s*["'][^"']*\.(?:png|jpe?g|svg|gif|webp)["']/gi)) {
+      violations.push({ id: "image-alt-filename", where: rel });
+    }
   }
   reportAndExit(violations, "static-lint");
 }

@@ -22,9 +22,11 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
 
 import NotFound from "@/pages/not-found";
-import LoginPage from "@/pages/login";
-import SessionExpiredPage from "@/pages/session-expired";
-import LgpdConsentPage from "@/pages/lgpd-consent";
+// Fluxos de exceção (login/sessão/LGPD) saem da carga inicial: raramente são a
+// primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
+const LoginPage = lazy(() => import("@/pages/login"));
+const SessionExpiredPage = lazy(() => import("@/pages/session-expired"));
+const LgpdConsentPage = lazy(() => import("@/pages/lgpd-consent"));
 
 const HomePage = lazy(() => import("@/pages/home"));
 const MchatPage = lazy(() => import("@/pages/mchat"));

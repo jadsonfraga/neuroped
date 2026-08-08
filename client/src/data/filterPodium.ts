@@ -617,6 +617,55 @@ export function selectPodium(
     }
   }
 
+  // Aproveitamento de curadoria PÓS-TETO: quando o teto de 100 estreitou o
+  // pódio e nenhuma medalha é curada, mas uma escala curada disponível CABE no
+  // orçamento ao lado das demais, ela assume prata/bronze — a curadoria clínica
+  // por faixa etária vale mais que uma heurística de relevância marginalmente
+  // maior. Guards: preserva cobertura única, respondente compatível, acerto de
+  // sinal e nunca degrada relevância além de 15 pontos.
+  const curatedIdSet = new Set(
+    [curatedTiers?.ouro, curatedTiers?.prata, curatedTiers?.bronze].filter(
+      (id): id is string => Boolean(id),
+    ),
+  );
+  if (curatedIdSet.size > 0 && ![ouro, prata, bronze].some((s) => s && curatedIdSet.has(s.scale.id))) {
+    const tryUptake = (cand: RefinedScaleMatch): boolean => {
+      const candCount = estimatedQuestionCount(cand.scale);
+      if (!Number.isFinite(candCount) || candCount <= 0) return false;
+      const attempt = (slotName: "prata" | "bronze"): boolean => {
+        const current = slotName === "prata" ? prata : bronze;
+        const others = slotName === "prata" ? [ouro, bronze] : [ouro, prata];
+        const keptTotal = others
+          .filter((slot): slot is RefinedScaleMatch => Boolean(slot))
+          .reduce((sum, slot) => sum + estimatedQuestionCount(slot.scale), 0);
+        if (keptTotal + candCount > PODIUM_QUESTION_CAP) return false;
+        if (current) {
+          if (cand.relevanceScore < current.relevanceScore - 15) return false;
+          if (!uniqueQueixasOf(current, others).every((q) => cand.scale.queixas.includes(q))) return false;
+          if (!current.scale.respondente.some((r) => cand.scale.respondente.includes(r))) return false;
+          if (selectedSignals.length > 0 && signalHit(current) && !signalHit(cand)) return false;
+          used.delete(current.scale.id);
+        }
+        used.add(cand.scale.id);
+        usedModes.add(cand.applicationMode ?? "");
+        if (slotName === "prata") prata = cand;
+        else bronze = cand;
+        return true;
+      };
+      // Slot vazio primeiro (ganha uma medalha), depois troca de menor custo.
+      if (!bronze && attempt("bronze")) return true;
+      if (!prata && attempt("prata")) return true;
+      return attempt("bronze") || attempt("prata");
+    };
+    for (const source of ["ouro", "prata", "bronze"] as const) {
+      const id = curatedTiers?.[source];
+      if (!id || used.has(id)) continue;
+      const cand = sorted.find((m) => m.scale.id === id);
+      if (!cand || !containsAge(cand) || !isApplicable(cand) || cand.relevanceScore < 45) continue;
+      if (tryUptake(cand)) break;
+    }
+  }
+
   // Direct and school also join the used set to prevent deduplication with medals.
   const direct = (() => {
     const candidates = sorted.filter((m) => !used.has(m.scale.id) && getApplicationMode(m.scale) === "teste_direto_crianca");
