@@ -183,7 +183,7 @@ jobs:
 
           if curl -fsSL "https://superneuroped.vercel.app/deploy-check.json?watchdog=${GITHUB_RUN_ID}" \
               -o /tmp/vercel-watchdog.json \
-            && jq -e --arg sha "$sha" '.provider == "vercel" and .commit == $sha' \
+            && jq -e --arg sha "$sha" '.provider == "vercel" and (.commit == $sha or .commit == ($sha[0:12]))' \
               /tmp/vercel-watchdog.json >/dev/null; then
             vercel=true
           fi
@@ -221,7 +221,7 @@ jobs:
             fi
             if curl -fsSL "https://superneuroped.vercel.app/deploy-check.json?run=${GITHUB_RUN_ID}&attempt=$attempt" \
                 -o /tmp/vercel-watchdog.json \
-              && jq -e --arg sha "$sha" '.provider == "vercel" and .commit == $sha' \
+              && jq -e --arg sha "$sha" '.provider == "vercel" and (.commit == $sha or .commit == ($sha[0:12]))' \
                 /tmp/vercel-watchdog.json >/dev/null; then
               vercel=true
             fi
