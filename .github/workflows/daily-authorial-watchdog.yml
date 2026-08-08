@@ -1,0 +1,279 @@
+name: Watchdog do inventário autoral diário
+
+on:
+  workflow_run:
+    workflows:
+      - Inventário autoral diário NeuroPed
+    types:
+      - completed
+  schedule:
+    - cron: "35 0 * * *" # 21h35 em America/Recife — verificação noturna
+    - cron: "30 11 * * *" # 08h30 em America/Recife — catch-up da manhã
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: neuroped-daily-authorial-watchdog
+  cancel-in-progress: false
+
+jobs:
+  inspect-and-recover:
+    name: Verificar, recuperar e confirmar produção
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout do main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Definir data clínica de Recife
+        run: echo "NEUROPED_GENERATION_DATE=$(TZ=America/Recife date +%F)" >> "$GITHUB_ENV"
+
+      - name: Criar verificador local do catálogo
+        run: |
+          cat > /tmp/check-daily-inventory.mjs <<'NODE'
+          import fs from "node:fs";
+          import path from "node:path";
+
+          const date = process.env.NEUROPED_GENERATION_DATE;
+          const dir = "client/src/data/daily-authorial";
+          const matches = fs.existsSync(dir)
+            ? fs.readdirSync(dir)
+                .filter((file) => file.endsWith(".json"))
+                .map((file) => ({
+                  file: path.join(dir, file),
+                  record: JSON.parse(fs.readFileSync(path.join(dir, file), "utf8")),
+                }))
+                .filter(({ record }) => record.generatedOn === date)
+            : [];
+
+          const current = matches[0];
+          const contingency = Boolean(
+            current &&
+              (current.record.contingency === true ||
+                String(current.record.generation?.model ?? "").startsWith("fallback-")),
+          );
+          const structurallyValid = Boolean(
+            current &&
+              current.record.schemaVersion === "1.0.0" &&
+              current.record.sourceType === "autoral_diario" &&
+              current.record.validationStatus === "nao_validado_psicometricamente" &&
+              current.record.scoring?.totalScoreEnabled === false &&
+              Array.isArray(current.record.domains) &&
+              current.record.domains.length >= 3 &&
+              Array.isArray(current.record.items) &&
+              current.record.items.length >= 12,
+          );
+
+          console.log(
+            JSON.stringify({
+              date,
+              count: matches.length,
+              exists: matches.length === 1,
+              structurallyValid,
+              contingency,
+              file: current?.file ?? null,
+              model: current?.record.generation?.model ?? null,
+              title: current?.record.title ?? null,
+            }),
+          );
+          NODE
+
+      - name: Ler estado inicial
+        id: initial
+        run: |
+          node /tmp/check-daily-inventory.mjs | tee /tmp/inventory-state.json
+          echo "exists=$(jq -r '.exists' /tmp/inventory-state.json)" >> "$GITHUB_OUTPUT"
+          echo "valid=$(jq -r '.structurallyValid' /tmp/inventory-state.json)" >> "$GITHUB_OUTPUT"
+          echo "contingency=$(jq -r '.contingency' /tmp/inventory-state.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Disparar recuperação quando o inventário estiver ausente ou inválido
+        if: steps.initial.outputs.exists != 'true' || steps.initial.outputs.valid != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "Inventário ausente ou inválido; disparando geração em esforço máximo."
+          gh workflow run daily-authorial-inventory.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f date="$NEUROPED_GENERATION_DATE" \
+            -f reasoning_effort=max \
+            -f force=false
+
+      - name: Tentar promoção quando houver apenas contingência
+        if: steps.initial.outputs.exists == 'true' && steps.initial.outputs.valid == 'true' && steps.initial.outputs.contingency == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "Contingência válida detectada; solicitando promoção para GPT-5.6."
+          gh workflow run daily-authorial-inventory.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f date="$NEUROPED_GENERATION_DATE" \
+            -f reasoning_effort=max \
+            -f force=false
+
+      - name: Aguardar eventual recuperação do catálogo
+        if: steps.initial.outputs.exists != 'true' || steps.initial.outputs.valid != 'true' || steps.initial.outputs.contingency == 'true'
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            sleep 20
+            git fetch origin main
+            git reset --hard origin/main
+            node /tmp/check-daily-inventory.mjs > /tmp/inventory-state.json
+            cat /tmp/inventory-state.json
+            exists="$(jq -r '.exists' /tmp/inventory-state.json)"
+            valid="$(jq -r '.structurallyValid' /tmp/inventory-state.json)"
+            contingency="$(jq -r '.contingency' /tmp/inventory-state.json)"
+            if [ "$exists" = "true" ] && [ "$valid" = "true" ] && [ "$contingency" = "false" ]; then
+              echo "Inventário principal recuperado."
+              exit 0
+            fi
+            if [ "$exists" = "true" ] && [ "$valid" = "true" ] && [ "$attempt" -ge 12 ]; then
+              echo "Inventário de contingência preserva a continuidade; promoção poderá ocorrer na próxima janela."
+              exit 0
+            fi
+          done
+          echo "::warning::A recuperação do catálogo não foi confirmada dentro da janela de observação."
+
+      - name: Confirmar presença final do inventário
+        id: catalog
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          node /tmp/check-daily-inventory.mjs | tee /tmp/inventory-final.json
+          exists="$(jq -r '.exists' /tmp/inventory-final.json)"
+          valid="$(jq -r '.structurallyValid' /tmp/inventory-final.json)"
+          contingency="$(jq -r '.contingency' /tmp/inventory-final.json)"
+          model="$(jq -r '.model // "desconhecido"' /tmp/inventory-final.json)"
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+          echo "valid=$valid" >> "$GITHUB_OUTPUT"
+          echo "contingency=$contingency" >> "$GITHUB_OUTPUT"
+          echo "model=$model" >> "$GITHUB_OUTPUT"
+          if [ "$exists" != "true" ] || [ "$valid" != "true" ]; then
+            echo "::error::Inventário diário permanece ausente ou inválido."
+            exit 1
+          fi
+
+      - name: Verificar revisão publicada em Cloudflare e Vercel
+        id: production
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          cloudflare=false
+          vercel=false
+
+          if curl -fsSL "https://neuroped.pages.dev/deploy-check.json?watchdog=${GITHUB_RUN_ID}" \
+              -o /tmp/cloudflare-watchdog.json \
+            && jq -e --arg sha "$sha" '.provider == "cloudflare-pages" and .commit == $sha' \
+              /tmp/cloudflare-watchdog.json >/dev/null; then
+            cloudflare=true
+          fi
+
+          if curl -fsSL "https://superneuroped.vercel.app/deploy-check.json?watchdog=${GITHUB_RUN_ID}" \
+              -o /tmp/vercel-watchdog.json \
+            && jq -e --arg sha "$sha" '.provider == "vercel" and .commit == $sha' \
+              /tmp/vercel-watchdog.json >/dev/null; then
+            vercel=true
+          fi
+
+          echo "cloudflare=$cloudflare" >> "$GITHUB_OUTPUT"
+          echo "vercel=$vercel" >> "$GITHUB_OUTPUT"
+          echo "Cloudflare=$cloudflare · Vercel=$vercel · main=$sha"
+
+      - name: Disparar sincronização independente quando a produção estiver atrasada
+        if: steps.production.outputs.cloudflare != 'true' || steps.production.outputs.vercel != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run daily-authorial-static-sync.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f expected_commit="${{ steps.production.outputs.sha }}"
+          echo "Sincronização estática independente disparada."
+
+      - name: Aguardar confirmação da produção
+        if: steps.production.outputs.cloudflare != 'true' || steps.production.outputs.vercel != 'true'
+        run: |
+          set -euo pipefail
+          sha="${{ steps.production.outputs.sha }}"
+          for attempt in $(seq 1 45); do
+            sleep 20
+            cloudflare=false
+            vercel=false
+            if curl -fsSL "https://neuroped.pages.dev/deploy-check.json?run=${GITHUB_RUN_ID}&attempt=$attempt" \
+                -o /tmp/cloudflare-watchdog.json \
+              && jq -e --arg sha "$sha" '.provider == "cloudflare-pages" and .commit == $sha' \
+                /tmp/cloudflare-watchdog.json >/dev/null; then
+              cloudflare=true
+            fi
+            if curl -fsSL "https://superneuroped.vercel.app/deploy-check.json?run=${GITHUB_RUN_ID}&attempt=$attempt" \
+                -o /tmp/vercel-watchdog.json \
+              && jq -e --arg sha "$sha" '.provider == "vercel" and .commit == $sha' \
+                /tmp/vercel-watchdog.json >/dev/null; then
+              vercel=true
+            fi
+            echo "Tentativa $attempt/45: Cloudflare=$cloudflare · Vercel=$vercel"
+            if [ "$cloudflare" = "true" ] && [ "$vercel" = "true" ]; then
+              exit 0
+            fi
+          done
+          echo "::error::Produção não confirmou o commit atual após a autorrecuperação."
+          exit 1
+
+      - name: Resumo do watchdog
+        if: always()
+        run: |
+          {
+            echo "## Watchdog NeuroPed"
+            echo ""
+            echo "- **Data:** ${NEUROPED_GENERATION_DATE}"
+            echo "- **Inventário presente:** ${{ steps.catalog.outputs.exists || 'não confirmado' }}"
+            echo "- **Estrutura válida:** ${{ steps.catalog.outputs.valid || 'não confirmado' }}"
+            echo "- **Modelo:** ${{ steps.catalog.outputs.model || 'não confirmado' }}"
+            echo "- **Contingência:** ${{ steps.catalog.outputs.contingency || 'não confirmado' }}"
+            echo "- **Commit main:** ${{ steps.production.outputs.sha || github.sha }}"
+            echo "- **Cloudflare inicial:** ${{ steps.production.outputs.cloudflare || 'não confirmado' }}"
+            echo "- **Vercel inicial:** ${{ steps.production.outputs.vercel || 'não confirmado' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fechar incidente anterior em caso de recuperação
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          title="[automação] Watchdog diário NeuroPed — recuperação incompleta"
+          issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" \
+              --body "Catálogo e produção foram confirmados na execução ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Incidente encerrado automaticamente."
+            gh issue close "$issue" --repo "$GITHUB_REPOSITORY" --reason completed
+          fi
+
+      - name: Registrar recuperação incompleta
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          title="[automação] Watchdog diário NeuroPed — recuperação incompleta"
+          body="O watchdog tentou gerar/promover o inventário e sincronizar Cloudflare/Vercel, mas uma etapa permaneceu sem confirmação. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+          issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
