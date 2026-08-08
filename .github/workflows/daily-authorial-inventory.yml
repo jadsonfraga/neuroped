@@ -87,14 +87,27 @@ jobs:
           else
             GENERATION_DATE="$(TZ=America/Recife date +%F)"
           fi
-          case "$GENERATION_DATE" in
-            ????-??-??) ;;
-            *) echo "::error::Data inválida: $GENERATION_DATE"; exit 1 ;;
+          GENERATION_DATE="$GENERATION_DATE" node <<'NODE'
+          const date = process.env.GENERATION_DATE ?? "";
+          const parsed = new Date(`${date}T00:00:00Z`);
+          if (
+            !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+            Number.isNaN(parsed.getTime()) ||
+            parsed.toISOString().slice(0, 10) !== date
+          ) {
+            console.error(`Data inexistente ou fora do formato AAAA-MM-DD: ${date}`);
+            process.exit(1);
+          }
+          NODE
+          FORCE_VALUE="${FORCE_INPUT:-false}"
+          case "$FORCE_VALUE" in
+            true|false) ;;
+            *) echo "::error::Valor force inválido: $FORCE_VALUE"; exit 1 ;;
           esac
           echo "NEUROPED_GENERATION_DATE=$GENERATION_DATE" >> "$GITHUB_ENV"
           echo "NEUROPED_DAILY_TOPIC_ID=${TOPIC_INPUT:-}" >> "$GITHUB_ENV"
           echo "NEUROPED_DAILY_REASONING_EFFORT=${EFFORT_INPUT:-high}" >> "$GITHUB_ENV"
-          echo "NEUROPED_DAILY_FORCE=${FORCE_INPUT:-false}" >> "$GITHUB_ENV"
+          echo "NEUROPED_DAILY_FORCE=$FORCE_VALUE" >> "$GITHUB_ENV"
 
       - name: Detectar disponibilidade da OpenAI
         id: openai
@@ -132,8 +145,15 @@ jobs:
           }
           const output = process.env.GITHUB_OUTPUT;
           const current = matches[0];
+          const force = process.env.NEUROPED_DAILY_FORCE === "true";
+          const locked = Boolean(
+            current &&
+              ["revisado_clinicamente", "arquivado"].includes(current.record.status),
+          );
           fs.appendFileSync(output, `exists=${current ? "true" : "false"}\n`);
           fs.appendFileSync(output, `file=${current?.file ?? ""}\n`);
+          fs.appendFileSync(output, `force=${force ? "true" : "false"}\n`);
+          fs.appendFileSync(output, `locked=${locked ? "true" : "false"}\n`);
           const contingency = Boolean(
             current &&
               (current.record.contingency === true ||
@@ -151,16 +171,15 @@ jobs:
           );
           NODE
 
-      - name: Preparar promoção de registro de contingência
-        if: steps.current.outputs.contingency == 'true' && steps.openai.outputs.available == 'true'
+      - name: Bloquear substituição de registro revisado ou arquivado
+        if: steps.current.outputs.force == 'true' && steps.current.outputs.locked == 'true'
         run: |
-          set -euo pipefail
-          echo "Removendo localmente a contingência para tentar substituição por GPT-5.6."
-          rm -f "${{ steps.current.outputs.file }}"
+          echo "::error::Force não pode substituir inventário revisado clinicamente ou arquivado."
+          exit 1
 
       - name: Gerar instrumento com GPT-5.6 Pro
         id: gpt
-        if: steps.openai.outputs.available == 'true' && (steps.current.outputs.exists != 'true' || steps.current.outputs.contingency == 'true')
+        if: steps.current.outputs.locked != 'true' && steps.openai.outputs.available == 'true' && (steps.current.outputs.exists != 'true' || steps.current.outputs.contingency == 'true' || steps.current.outputs.force == 'true')
         continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -180,8 +199,14 @@ jobs:
           exit 1
 
       - name: Gerar continuidade determinística de contingência
-        if: always() && (steps.current.outputs.exists != 'true' || steps.current.outputs.contingency == 'true') && steps.gpt.outcome != 'success'
+        if: always() && steps.current.outputs.locked != 'true' && (steps.current.outputs.exists != 'true' || steps.current.outputs.contingency == 'true' || steps.current.outputs.force == 'true') && steps.gpt.outcome != 'success'
         run: node --import tsx scripts/generate-daily-authorial-fallback.mts
+
+      - name: Bloquear force não concretizado
+        if: steps.current.outputs.force == 'true' && steps.current.outputs.exists == 'true' && steps.gpt.outcome != 'success'
+        run: |
+          echo "::error::A substituição forçada falhou; o inventário anterior foi preservado."
+          exit 1
 
       - name: Auditar catálogo autoral completo
         run: node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
@@ -227,10 +252,8 @@ jobs:
           }
           NODE
 
-      - name: Validar TypeScript e build do aplicativo
-        run: |
-          npm run check
-          npm run build:client
+      - name: Executar catraca técnica completa antes de alterar a main
+        run: npm run verify
 
       - name: Preservar artefato auditável da execução
         uses: actions/upload-artifact@v4

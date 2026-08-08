@@ -7,7 +7,10 @@ on:
       - "scripts/generate-daily-authorial-*.mts"
       - "client/src/data/daily-authorial/**"
       - "client/src/data/dailyAuthorialCatalog.ts"
+      - "client/src/lib/instrument-library-filters.ts"
       - "client/src/pages/biblioteca-instrumentos.tsx"
+      - "tests/unit/daily-inventory-regressions.test.ts"
+      - "package.json"
   push:
     branches:
       - main
@@ -16,7 +19,10 @@ on:
       - "scripts/generate-daily-authorial-*.mts"
       - "client/src/data/daily-authorial/**"
       - "client/src/data/dailyAuthorialCatalog.ts"
+      - "client/src/lib/instrument-library-filters.ts"
       - "client/src/pages/biblioteca-instrumentos.tsx"
+      - "tests/unit/daily-inventory-regressions.test.ts"
+      - "package.json"
   workflow_dispatch:
 
 permissions:
@@ -49,6 +55,9 @@ jobs:
 
       - name: Auditar catálogo real
         run: node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
+
+      - name: Executar regressões do inventário diário
+        run: npm run test:daily-inventory
 
       - name: Exercitar contingência em data isolada
         env:

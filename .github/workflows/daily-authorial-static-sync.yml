@@ -21,6 +21,9 @@ jobs:
     name: Publicar frontend e funções no Cloudflare
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    concurrency:
+      group: cloudflare-pages
+      cancel-in-progress: false
 
     steps:
       - name: Checkout do main atual
@@ -61,10 +64,11 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      - name: Validar catálogo diário e TypeScript
-        run: |
-          node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
-          npm run check
+      - name: Auditar grafo completo de dependências
+        run: npm audit --audit-level=high
+
+      - name: Executar catraca técnica completa de release
+        run: npm run verify
 
       - name: Criar sentinela do Cloudflare
         env:
@@ -140,6 +144,9 @@ jobs:
     needs: cloudflare
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    concurrency:
+      group: vercel-production
+      cancel-in-progress: false
 
     steps:
       - name: Checkout do main atual
@@ -171,6 +178,12 @@ jobs:
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Auditar grafo completo de dependências
+        run: npm audit --audit-level=high
+
+      - name: Executar catraca técnica completa de release
+        run: npm run verify
 
       - name: Confirmar Cloudflare no mesmo commit
         env:
