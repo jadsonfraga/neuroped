@@ -43,14 +43,21 @@ function collectExplicitAges(text: string): number[] {
   const ages: number[] = [];
   const occupied = new Set<number>();
 
+  const occupy = (start: number, length: number) => {
+    for (let index = start; index < start + length; index++)
+      occupied.add(index);
+  };
+
+  for (const match of text.matchAll(
+    /(\d+(?:\.\d+)?)\s*anos?\s*e\s*(\d+(?:\.\d+)?)\s*mes(?:es)?\b/g,
+  )) {
+    ages.push(Number(match[1]) * 12 + Number(match[2]));
+    occupy(match.index!, match[0].length);
+  }
+
   for (const match of text.matchAll(/(\d+)\s*a\s*(\d+)\s*m\b/g)) {
     ages.push(Number(match[1]) * 12 + Number(match[2]));
-    for (
-      let index = match.index!;
-      index < match.index! + match[0].length;
-      index++
-    )
-      occupied.add(index);
+    occupy(match.index!, match[0].length);
   }
 
   const units: Array<[RegExp, "years" | "months" | "weeks" | "days"]> = [
@@ -74,16 +81,19 @@ function collectExplicitAges(text: string): number[] {
 function collectInheritedRangeStarts(text: string): number[] {
   const ages: number[] = [];
   const patterns: Array<[RegExp, "years" | "months" | "weeks" | "days"]> = [
-    [/(\d+(?:\.\d+)?)\s*-\s*\d+\s*a\s*\d+\s*m\b/g, "years"],
-    [/(\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?\s*\+?\s*(?:anos?|a\b)/g, "years"],
+    [/(\d+(?:\.\d+)?)(?:\s*-\s*|\s+a\s+)\d+\s*a\s*\d+\s*m\b/g, "years"],
     [
-      /(\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?\s*\+?\s*(?:mes(?:es)?|m\b)/g,
+      /(\d+(?:\.\d+)?)(?:\s*-\s*|\s+a\s+)\d+(?:\.\d+)?\s*\+?\s*(?:anos?|a\b)/g,
+      "years",
+    ],
+    [
+      /(\d+(?:\.\d+)?)(?:\s*-\s*|\s+a\s+)\d+(?:\.\d+)?\s*\+?\s*(?:mes(?:es)?|m\b)/g,
       "months",
     ],
-    [/(\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?\s*semanas?\b/g, "weeks"],
-    [/(\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?\s*dias?\b/g, "days"],
+    [/(\d+(?:\.\d+)?)(?:\s*-\s*|\s+a\s+)\d+(?:\.\d+)?\s*semanas?\b/g, "weeks"],
+    [/(\d+(?:\.\d+)?)(?:\s*-\s*|\s+a\s+)\d+(?:\.\d+)?\s*dias?\b/g, "days"],
     [
-      /(\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\s*anos?\b/g,
+      /(\d+(?:\.\d+)?)(?:\s*-\s*|\s+a\s+)\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\s*anos?\b/g,
       "years",
     ],
   ];
@@ -105,8 +115,16 @@ function collectInheritedRangeStarts(text: string): number[] {
   return ages;
 }
 
-function textualAgeBounds(text: string): number[] {
+function textualAgeBounds(text: string, hasNumericBounds: boolean): number[] {
   const ages: number[] = [];
+  if (hasNumericBounds) {
+    if (/nascimento|periodo fetal/.test(text)) ages.push(0);
+    if (/recem-nascido|neonatal/.test(text)) ages.push(0, 1);
+    if (/tambem[^.;]*pre-escolar|pre-escolar[^.;]*tambem/.test(text))
+      ages.push(36);
+    return ages;
+  }
+
   if (/nascimento|periodo fetal/.test(text)) ages.push(0);
   if (/recem-nascido|neonatal/.test(text)) ages.push(0, 1);
   if (/lactente/.test(text)) ages.push(0, 24);
@@ -136,10 +154,24 @@ export function parseReferenceAgeRange(
   const text = normalizeAgeText(ageRange);
   if (!text || /variavel por idade/.test(text)) return null;
 
-  const ages = [
+  if (/semanas? gestacionais/.test(text)) return [0, 1];
+  if (/semanas? pos-concepcional/.test(text)) {
+    const postTermMonths = [
+      ...text.matchAll(/(\d+(?:\.\d+)?)\s*mes(?:es)?\s*pos-termo\b/g),
+    ].map((match) => Number(match[1]));
+    return [
+      0,
+      clampAge(postTermMonths.length ? Math.max(...postTermMonths) : 1),
+    ];
+  }
+
+  const numericAges = [
     ...collectExplicitAges(text),
     ...collectInheritedRangeStarts(text),
-    ...textualAgeBounds(text),
+  ];
+  const ages = [
+    ...numericAges,
+    ...textualAgeBounds(text, numericAges.length > 0),
   ];
 
   if (!ages.length) return null;
@@ -151,7 +183,7 @@ export function parseReferenceAgeRange(
     /adulto|todas? as idades|sem limite/.test(text);
   if (openEnded) max = MAX_FILTER_AGE_MONTHS;
 
-  if (/semanas? pos-concepcional|periodo fetal/.test(text)) min = 0;
+  if (/^ate\b|periodo fetal/.test(text)) min = 0;
 
   return [clampAge(min), clampAge(Math.max(min, max))];
 }
@@ -163,4 +195,27 @@ export function dailyInventorySearchText(
     .map((domain) => `${domain.label} ${domain.description}`)
     .join(" ");
   return `${record.title} ${record.shortTitle} ${record.topic} ${record.category} ${record.subcategory} ${record.purpose} ${record.tags.join(" ")} ${domainText} ${record.items.map((item) => item.text).join(" ")}`;
+}
+
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function dailyInventoryMatchesQuery(
+  record: DailyInventorySearchRecord,
+  query: string,
+): boolean {
+  const normalizedQuery = normalizeSearchText(query);
+  return (
+    normalizedQuery.length === 0 ||
+    normalizeSearchText(dailyInventorySearchText(record)).includes(
+      normalizedQuery,
+    )
+  );
 }

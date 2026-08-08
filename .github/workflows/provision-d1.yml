@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: provision-d1
+  group: cloudflare-pages
   cancel-in-progress: false
 
 permissions:
@@ -38,8 +38,17 @@ jobs:
   provision:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Confirmar branch principal
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Provisionamento e deploy permitidos somente a partir de main."
+            exit 1
+          fi
+
+      - name: Checkout da main
         uses: actions/checkout@v7
+        with:
+          ref: main
 
       - name: Validar secrets obrigatórios antes de provisionar
         run: |
@@ -67,6 +76,12 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
+
+      - name: Auditar grafo completo de dependências
+        run: npm audit --audit-level=high
+
+      - name: Executar catraca técnica completa antes de qualquer mutação
+        run: npm run verify
 
       # ── 1. D1: cria se não existir e resolve o database_id ────────────────
       - name: Criar banco D1 (idempotente)

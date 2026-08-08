@@ -1,10 +1,10 @@
-import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rename, unlink, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { mkdir, readFile, readdir, rename, rmdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUTPUT_DIR = path.join(ROOT, "client/src/data/daily-authorial");
+const OUTPUT_DIR = process.env.NEUROPED_DAILY_OUTPUT_DIR ? path.resolve(process.env.NEUROPED_DAILY_OUTPUT_DIR) : path.join(ROOT, "client/src/data/daily-authorial");
 const MODEL = process.env.NEUROPED_DAILY_INVENTORY_MODEL || "gpt-5.6";
 const EFFORT = process.env.NEUROPED_DAILY_REASONING_EFFORT === "max" ? "max" : "high";
 const FORCE = process.env.NEUROPED_DAILY_FORCE === "true";
@@ -156,6 +156,7 @@ async function validateOnly() {
   const records = await catalog(); const ids = new Set<string>(); const dates = new Set<string>(); const errors: string[] = [];
   for (const v of records) {
     errors.push(...validate(v).map((x) => `${v.slug ?? "sem-slug"}: ${x}`));
+    if (!isValidCalendarDate(String(v.generatedOn ?? ""))) errors.push(`${v.slug ?? "sem-slug"}: data de geração inválida`);
     if (ids.has(v.id)) errors.push(`id duplicado: ${v.id}`); else ids.add(v.id);
     if (dates.has(v.generatedOn)) errors.push(`mais de um registro em ${v.generatedOn}`); else dates.add(v.generatedOn);
   }
@@ -173,46 +174,84 @@ async function recordFilenamesForDate(date: string, outputDir: string): Promise<
   return matches.sort();
 }
 
+const DATE_LOCK_TIMEOUT_MS = 30_000;
+
+async function acquireDateLock(date: string, outputDir: string): Promise<string> {
+  const lockDirectory = path.join(outputDir, `.replace-${date}.lock`);
+  const deadline = Date.now() + DATE_LOCK_TIMEOUT_MS;
+  while (true) {
+    try {
+      await mkdir(lockDirectory);
+      return lockDirectory;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      if (Date.now() >= deadline) throw new Error(`Tempo esgotado aguardando bloqueio de substituição para ${date}.`);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+}
+
 export async function replaceDatedRecord(
   date: string,
   filename: string,
   content: string,
   outputDir = OUTPUT_DIR,
 ): Promise<void> {
+  if (!isValidCalendarDate(date)) throw new Error("Data deve usar AAAA-MM-DD e existir no calendário.");
   await mkdir(outputDir, { recursive: true });
+  const lockDirectory = await acquireDateLock(date, outputDir);
   const destination = path.join(outputDir, filename);
-  const temporary = path.join(outputDir, `.${filename}.${process.pid}.tmp`);
+  const temporary = path.join(outputDir, `.${filename}.${process.pid}.${randomUUID()}.tmp`);
   try {
     await writeFile(temporary, content, "utf8");
     await rename(temporary, destination);
+
+    const staleFiles = (await recordFilenamesForDate(date, outputDir)).filter(
+      (existing) => existing !== filename,
+    );
+    await Promise.all(staleFiles.map((existing) => unlink(path.join(outputDir, existing))));
   } catch (error) {
     await unlink(temporary).catch(() => undefined);
     throw error;
+  } finally {
+    await unlink(temporary).catch(() => undefined);
+    await rmdir(lockDirectory);
   }
-
-  const staleFiles = (await recordFilenamesForDate(date, outputDir)).filter(
-    (existing) => existing !== filename,
-  );
-  await Promise.all(staleFiles.map((existing) => unlink(path.join(outputDir, existing))));
 }
 
 function serialFromRecord(record: any): string | null {
-  const match = String(record?.id ?? "").match(/-(\d{3})$/);
+  const match = String(record?.id ?? "").match(/-(\d+)$/);
   return match?.[1] ?? null;
 }
 
-function nextSerial(records: any[]): string {
+export function selectInventorySerial(date: string, records: any[]): string {
+  const preserved = records
+    .filter((record) => record.generatedOn === date)
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)))
+    .map(serialFromRecord)
+    .find((serial): serial is string => serial !== null);
+  if (preserved) return preserved;
+
   const greatest = records.reduce((current, record) => {
     const serial = Number(serialFromRecord(record));
-    return Number.isInteger(serial) ? Math.max(current, serial) : current;
+    return Number.isSafeInteger(serial) ? Math.max(current, serial) : current;
   }, 0);
   return String(greatest + 1).padStart(3, "0");
 }
 
 async function generate() {
   const date = dateNow(); if (!isValidCalendarDate(date)) throw new Error("Data deve usar AAAA-MM-DD e existir no calendário.");
+  const records = await catalog();
+  const datedRecords = records.filter((record) => record.generatedOn === date);
+  if (datedRecords.length > 1) throw new Error(`Mais de um inventário encontrado para ${date}.`);
+  const promotableContingency = datedRecords.some((record) => record.status === "rascunho_revisao" && (record.contingency === true || String(record.generation?.model ?? "").startsWith("fallback-")));
+  if (datedRecords.length && !FORCE && !promotableContingency) return console.log(`Já existe inventário para ${date}.`);
+  if (FORCE) {
+    const protectedRecord = datedRecords.find((record) => ["revisado_clinicamente", "arquivado"].includes(record.status));
+    if (protectedRecord) throw new Error(`Substituição bloqueada: o inventário ${protectedRecord.id ?? date} possui status ${protectedRecord.status}.`);
+  }
+  const existingFilenames = datedRecords.length ? await recordFilenamesForDate(date, OUTPUT_DIR) : [];
   const apiKey = process.env.OPENAI_API_KEY; if (!apiKey) throw new Error("OPENAI_API_KEY não configurada.");
-  const records = await catalog(); if (records.some((v) => v.generatedOn === date) && !FORCE) return console.log(`Já existe inventário para ${date}.`);
   const topic = selectTopic(date, records);
   const prompt = `Tema: ${topic.title}. Categoria: ${topic.category}/${topic.subcategory}. Faixa: ${topic.ageMinMonths}-${topic.ageMaxMonths} meses. Respondente: ${topic.respondent}. Contextos: ${topic.contexts.join(", ")}. Uso: ${topic.assessmentUse}. Risco: ${topic.riskClass}. Priorize ${topic.focus}. Exclua ${topic.exclusions}. Gere 12-24 itens em 3-6 domínios, com linguagem observável, diferenciais, integração e limitações. Declare que não substitui avaliação clínica. Temas de alto risco exigem red flags com ações claras e sem detalhar métodos.`;
   const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` }, body: JSON.stringify({
@@ -222,13 +261,13 @@ async function generate() {
   }) });
   if (!response.ok) throw new Error(`OpenAI API ${response.status}: ${await response.text()}`);
   const draft = JSON.parse(outputText(await response.json())); const slug = slugify(draft.shortTitle || topic.title);
-  const datedRecords = records.filter((record) => record.generatedOn === date).sort((a, b) => String(a.id).localeCompare(String(b.id)));
-  const preservedId = datedRecords.find((record) => serialFromRecord(record))?.id;
-  const serial = preservedId ? serialFromRecord({ id: preservedId })! : nextSerial(records);
+  const serial = selectInventorySerial(date, records);
   const record = { schemaVersion: "1.0.0", id: `NEUROPED-DIARIO-${date.replaceAll("-", "")}-${serial}`, slug, version: "1.0.0", generatedOn: date, generatedAt: new Date().toISOString(), author: "NeuroPed SDG — Dr. Jadson Fraga", sourceType: "autoral_diario", validationStatus: "nao_validado_psicometricamente", status: "rascunho_revisao", topicId: topic.id, topic: topic.title, category: topic.category, subcategory: topic.subcategory, ageMinMonths: topic.ageMinMonths, ageMaxMonths: topic.ageMaxMonths, respondent: topic.respondent, contexts: topic.contexts, assessmentUse: topic.assessmentUse, riskClass: topic.riskClass, ...draft, duplicateCooldownDays: 30, generation: { model: MODEL, reasoningMode: "pro", reasoningEffort: EFFORT, pipelineVersion: "1.0.0" } };
   const errors = validate(record); if (errors.length) throw new Error(`Geração bloqueada:\n- ${errors.join("\n- ")}`);
-  const filename = `${date}-${slug}.json`; const content = `${JSON.stringify(record, null, 2)}\n`;
-  if (FORCE) await replaceDatedRecord(date, filename, content); else await writeFile(path.join(OUTPUT_DIR, filename), content, "utf8");
+  const generatedFilename = `${date}-${slug}.json`;
+  const filename = FORCE && existingFilenames.length ? existingFilenames[0] : generatedFilename;
+  const content = `${JSON.stringify(record, null, 2)}\n`;
+  if (FORCE || promotableContingency) await replaceDatedRecord(date, filename, content); else await writeFile(path.join(OUTPUT_DIR, filename), content, "utf8");
   console.log(`Inventário criado: ${filename}`);
 }
 

@@ -1,9 +1,12 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isValidCalendarDate, selectInventorySerial } from "./generate-daily-authorial-inventory.mts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUTPUT_DIR = path.join(ROOT, "client/src/data/daily-authorial");
+const OUTPUT_DIR = process.env.NEUROPED_DAILY_OUTPUT_DIR
+  ? path.resolve(process.env.NEUROPED_DAILY_OUTPUT_DIR)
+  : path.join(ROOT, "client/src/data/daily-authorial");
 
 type Risk = "baixo" | "moderado" | "alto";
 type Respondent =
@@ -284,8 +287,8 @@ function buildItems(topic: FallbackTopic) {
 
 async function main() {
   const date = dateNow();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new Error("Data deve usar AAAA-MM-DD.");
+  if (!isValidCalendarDate(date)) {
+    throw new Error("Data deve usar AAAA-MM-DD e existir no calendário.");
   }
 
   const records = await catalog();
@@ -295,7 +298,7 @@ async function main() {
   }
 
   const topic = TOPICS[weekday(date)];
-  const serial = String(records.length + 1).padStart(3, "0");
+  const serial = selectInventorySerial(date, records);
   const items = buildItems(topic);
   const record = {
     schemaVersion: "1.0.0",

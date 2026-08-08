@@ -4,7 +4,14 @@ import { readFileSync } from "node:fs";
 const read = (path) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 const cloudflareDeploy = read(".github/workflows/deploy-cloudflare.yml");
+const dailyContract = read(".github/workflows/daily-authorial-contract.yml");
+const dailyInventory = read(".github/workflows/daily-authorial-inventory.yml");
+const dailyStaticSync = read(
+  ".github/workflows/daily-authorial-static-sync.yml",
+);
 const githubPagesDeploy = read(".github/workflows/deploy.yml");
+const packageJson = JSON.parse(read("package.json"));
+const provisionD1 = read(".github/workflows/provision-d1.yml");
 const securityAudit = read(".github/workflows/security-audit.yml");
 const testAndBuild = read(".github/workflows/test-and-build.yml");
 const vercelDeploy = read(".github/workflows/deploy-vercel.yml");
@@ -48,6 +55,79 @@ assert.match(prCheck, /<!-- neuroped-pr-check -->/);
 assert.match(prCheck, /github\.paginate\(github\.rest\.issues\.listComments/);
 assert.match(prCheck, /github\.rest\.issues\.updateComment/);
 
+assert.equal(
+  packageJson.scripts?.["test:daily-inventory"],
+  "node --import tsx tests/unit/daily-inventory-regressions.test.ts",
+  "o teste de regressão diário deve permanecer nomeado e executável",
+);
+assert.match(
+  packageJson.scripts?.["verify:release"] ?? "",
+  /npm run test:daily-inventory/,
+  "o gate de release não pode desconectar as regressões do inventário diário",
+);
+for (const guardedPath of [
+  "client/src/lib/instrument-library-filters.ts",
+  "tests/unit/daily-inventory-regressions.test.ts",
+  "package.json",
+]) {
+  assert.match(
+    dailyContract,
+    new RegExp(guardedPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+    `o contrato diário deve observar ${guardedPath}`,
+  );
+}
+assert.match(
+  dailyContract,
+  /run: npm run test:daily-inventory/,
+  "o contrato especializado deve executar a regressão diretamente",
+);
+assert.match(
+  dailyInventory,
+  /npm run verify/,
+  "a automação diária deve passar pelo gate completo antes de gravar na main",
+);
+assert.match(
+  dailyInventory,
+  /Data inválida[^\n]*calendário|isValidCalendarDate|toISOString\(\)\.slice\(0, 10\)/,
+  "a entrada manual deve rejeitar datas inexistentes antes da geração e do fallback",
+);
+assert.doesNotMatch(
+  dailyInventory,
+  /rm -f "\$\{\{ steps\.current\.outputs\.file \}\}"/,
+  "falhas de promoção ou force devem preservar o inventário anterior",
+);
+assert.match(
+  dailyInventory,
+  /Bloquear force não concretizado[\s\S]{0,300}steps\.gpt\.outcome != 'success'[\s\S]{0,180}exit 1/,
+  "force que não substituiu o registro deve falhar de modo explícito",
+);
+assert.ok(
+  (dailyStaticSync.match(/npm run verify/g) ?? []).length >= 2,
+  "cada rota auxiliar de sincronização deve validar a revisão antes de publicar",
+);
+assert.match(
+  dailyStaticSync,
+  /cloudflare:[\s\S]{0,500}concurrency:\s*\n\s*group: cloudflare-pages/,
+  "a sincronização Cloudflare deve compartilhar o lock do deploy canônico",
+);
+assert.match(
+  dailyStaticSync,
+  /vercel:[\s\S]{0,500}concurrency:\s*\n\s*group: vercel-production/,
+  "a sincronização Vercel deve compartilhar o lock do deploy canônico",
+);
+assert.match(provisionD1, /group: cloudflare-pages/);
+assert.match(provisionD1, /ref: main/);
+assert.match(
+  provisionD1,
+  /GITHUB_REF[^\n]*refs\/heads\/main[\s\S]{0,180}exit 1/,
+  "o provisionamento não pode executar a partir de uma ref escolhida manualmente",
+);
+assert.match(
+  provisionD1,
+  /npm run verify/,
+  "o provisionamento não pode publicar frontend sem o gate completo",
+);
+
 for (const [name, workflow] of [
   ["Deploy Cloudflare", cloudflareDeploy],
   ["Deploy GitHub Pages", githubPagesDeploy],
@@ -81,7 +161,9 @@ assert.match(
 for (const dependency of ["quality", "build", "production-readiness"]) {
   assert.match(
     testAndBuild,
-    new RegExp(`needs\\.${dependency.replace("-", "\\-")}\\.result \\}\\}" != "success"`),
+    new RegExp(
+      `needs\\.${dependency.replace("-", "\\-")}\\.result \\}\\}" != "success"`,
+    ),
     `o agregador deve falhar se ${dependency} for skipped/cancelled`,
   );
 }
@@ -96,7 +178,11 @@ for (const [name, workflow, firstJob] of [
     /workflow_dispatch:/,
     `${name} não deve executar YAML ou secrets a partir de uma ref escolhida manualmente`,
   );
-  assert.match(workflow, /assert-main:/, `${name} deve validar a origem do deploy`);
+  assert.match(
+    workflow,
+    /assert-main:/,
+    `${name} deve validar a origem do deploy`,
+  );
   assert.match(
     workflow,
     /if \[ "\$GITHUB_REF" != "refs\/heads\/main" \]; then[\s\S]{0,180}exit 1/,

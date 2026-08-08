@@ -22,7 +22,7 @@ import {
   type DailyAuthorialInventory,
 } from "@/data/dailyAuthorialCatalog";
 import {
-  dailyInventorySearchText,
+  dailyInventoryMatchesQuery,
   parseReferenceAgeRange,
 } from "@/lib/instrument-library-filters";
 
@@ -443,7 +443,6 @@ export default function BibliotecaInstrumentosPage() {
   }, [ageYears, category, context, query, respondent, source, status]);
 
   const dailyResults = useMemo(() => {
-    const q = normalize(query.trim());
     const ageMonths = ageYears === "" ? null : Number(ageYears) * 12;
     return dailyAuthorialCatalog.filter((record) => {
       if (source === "referencias") return false;
@@ -469,8 +468,7 @@ export default function BibliotecaInstrumentosPage() {
         !record.contexts.includes("multicontexto")
       )
         return false;
-      if (!q) return true;
-      return normalize(dailyInventorySearchText(record)).includes(q);
+      return dailyInventoryMatchesQuery(record, query);
     });
   }, [ageYears, category, context, query, respondent, source, status]);
 
