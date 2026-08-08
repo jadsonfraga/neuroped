@@ -360,7 +360,7 @@ export default function AssinaturaDigitalPage() {
               <Button variant="outline" className="w-full justify-start" onClick={() => fileRef.current?.click()}>
                 <FileUp className="w-4 h-4 mr-2" /> {fileName || "Escolher arquivo…"}
               </Button>
-              <input ref={fileRef} type="file" className="hidden" onChange={verificarArquivo} />
+              <input ref={fileRef} type="file" aria-label="Escolher arquivo para conferir o SHA-256" className="hidden" onChange={verificarArquivo} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="expectedHash" className="text-xs">Hash esperado (opcional)</Label>

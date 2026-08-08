@@ -3,9 +3,9 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 213
+- **Total de instrumentos:** 253
 - **Com fonte declarada:** 165
-- **Pendentes de validação/fonte:** 48
+- **Pendentes de validação/fonte:** 88
 
 | Instrumento | Nome | Fonte / Pendência | Pendente validação |
 | --- | --- | --- | --- |
@@ -90,6 +90,38 @@
 | `idafeni` | IDAFENI | 2026-06-26_ESCALA_AUTORAL_IDAFENI_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1vkSSue7AB35 | sim |
 | `integra-kids-360` | INTEGRA-KIDS 360 | 2026-07-04_ESCALA_AUTORAL_INTEGRA-KIDS-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ku | sim |
 | `integra-neuroped-90` | INTEGRA-NEUROPED 90 | 2026-06-28_ESCALA_AUTORAL_INTEGRA_NEUROPED_90_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/ | sim |
+| `ipn-epi-seg-anamnese-20` | IPN-EPI/SEG · Anamnese 20 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-autopercepcao-20` | IPN-EPI/SEG · Autopercepção 20 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-diferenciais-20` | IPN-EPI/SEG · Diferenciais 20 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-escola-30` | IPN-EPI/SEG · Escola 30 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-familia-50` | IPN-EPI/SEG · Família 50 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-observacao-20` | IPN-EPI/SEG · Observação 20 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-seguranca-20` | IPN-EPI/SEG · Segurança 20 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-epi-seg-sintese-20` | IPN-EPI/SEG · Síntese 20 | IPN-EPI/SEG 200 — Epilepsia, Eventos Paroxísticos e Segurança, v1.0, 2026-08-02. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-anamnese-20` | IPN-LFC · Anamnese e Red Flags 20 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-autopercepcao-20` | IPN-LFC · Autopercepção Apoiada 20 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-diferenciais-15` | IPN-LFC · Diferenciais 15 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-escola-30` | IPN-LFC · Escola/Terapia 30 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-fala-motora-20` | IPN-LFC · Fala Motora/Fluência/Voz 20 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-familia-50` | IPN-LFC · Família 50 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-observacao-30` | IPN-LFC · Observação Clínica 30 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-lfc-sintese-15` | IPN-LFC · Síntese e Metas 15 | IPN-LFC 200 — Linguagem, Fala, Comunicação e Impacto Funcional, versão 1.0, 02/08/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `ipn-pc-fun-alimentacao-20` | IPN-PC/FUN · Alimentação/Respiração 20 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-anamnese-20` | IPN-PC/FUN · Anamnese e Red Flags 20 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-autopercepcao-20` | IPN-PC/FUN · Autopercepção Apoiada 20 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-escola-30` | IPN-PC/FUN · Escola/Terapia 30 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-familia-50` | IPN-PC/FUN · Família 50 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-observacao-20` | IPN-PC/FUN · Observação Clínica 20 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-sintese-20` | IPN-PC/FUN · Síntese e Metas 20 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-pc-fun-tonus-20` | IPN-PC/FUN · Tônus e Movimento 20 | IPN-PC/FUN 200 — Inventário Profissional NeuroPed de Paralisia Cerebral, Função, Conforto e Participação, versão 1.1, 01/08/2026. Dr. Jadson Fraga / NeuroPed SD | sim |
+| `ipn-tdah-fe-adolescente-20` | IPN-TDAH/FE · Adolescente 20 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-anamnese-18` | IPN-TDAH/FE · Anamnese 18 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-diferenciais-20` | IPN-TDAH/FE · Diferenciais 20 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-escola-32` | IPN-TDAH/FE · Escola 32 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-executivo-10` | IPN-TDAH/FE · Executivo 10 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-familia-48` | IPN-TDAH/FE · Família 48 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-observacao-10` | IPN-TDAH/FE · Observação 10 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
+| `ipn-tdah-fe-sintese-15` | IPN-TDAH/FE · Síntese 15 | IPN-TDAH/FE 200 — Inventário Profissional NeuroPed para triagem pré-consulta de TDAH e funções executivas, volume 02, versão 1.0, 31/07/2026. Dr. Jadson Fraga / | sim |
 | `ipn-tea-13-17a` | IPN-TEA · 13–17 anos | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
 | `ipn-tea-18-30m` | IPN-TEA · 18–30 meses | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
 | `ipn-tea-31-47m` | IPN-TEA · 31–47 meses | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | sim |
@@ -164,6 +196,14 @@
 | `mini-macs` | Mini-MACS | — | sim |
 | `mnp-psi-100` | MATRIX-NEUROPED PSI 100 | 2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.co | não |
 | `mosaico-np-72` | MOSAICO-NP 72 | 2026-07-12_ESCALA_AUTORAL_MOSAICO_NP_72_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1e-1NNgQl2MjbowMNo7Tv6taRVIv7flQDEO9ikYRc | sim |
+| `mutismo-seletivo-anamnese-20` | Mutismo seletivo · Anamnese 20 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-autopercepcao-20` | Mutismo seletivo · Autopercepção 20 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-diferenciais-20` | Mutismo seletivo · Diferenciais 20 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-escola-30` | Mutismo seletivo · Escola 30 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-familia-30` | Mutismo seletivo · Família 30 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-observacao-20` | Mutismo seletivo · Observação 20 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-seguranca-10` | Mutismo seletivo · Segurança 10 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
+| `mutismo-seletivo-sintese-50` | Mutismo seletivo · Síntese 50 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | sim |
 | `navi-ped-84` | NAVI-PED 84 | 2026-06-23_ESCALA_AUTORAL_NAVI-PED_84 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/165Y_M33XQ7 | sim |
 | `nddie` | NDDI-E | Gilliam FG et al., 2006 (NDDI-E) | não |
 | `ndi-360` | Escala Integrada Neurodesenvolvimental e Neuropsiquiátrica… | ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://do | não |

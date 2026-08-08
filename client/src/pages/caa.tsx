@@ -494,7 +494,7 @@ export default function CaaPage() {
               <Button size="sm" variant="outline" className="flex-1" onClick={() => importRef.current?.click()}>
                 <Upload className="w-3.5 h-3.5 mr-1" /> Importar
               </Button>
-              <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={importBoard} />
+              <input ref={importRef} type="file" accept=".json,application/json" aria-label="Importar prancha de um arquivo JSON" className="hidden" onChange={importBoard} />
             </div>
           </CardContent>
         </Card>

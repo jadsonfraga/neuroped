@@ -13,11 +13,11 @@ import { OPEN_ACCESS } from "@/security/accessPolicy";
 
 // Estilos compartilhados entre o PIN, o bloqueio de configuração e o aviso da
 // zona pública. Mantê-los centralizados evita estados visualmente divergentes.
-const GATE_BG = "linear-gradient(135deg, #0f4c3a 0%, #1a2559 50%, #3d1428 100%)";
-const CARD_BG = "rgba(15,18,40,0.65)";
-const BUBBLE_BG = "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(99,102,241,0.15))";
-const BUBBLE_BORDER = "1px solid rgba(139,92,246,0.35)";
-const PRIMARY_BTN_BG = "linear-gradient(135deg, #7c3aed, #6366f1)";
+const GATE_BG = "var(--gate-bg)";
+const CARD_BG = "var(--gate-card-bg)";
+const BUBBLE_BG = "var(--gate-bubble-bg)";
+const BUBBLE_BORDER = "var(--gate-bubble-border)";
+const PRIMARY_BTN_BG = "var(--gate-primary-btn)";
 
 function LockIcon() {
   return (
@@ -220,12 +220,12 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           background: CARD_BG,
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+          boxShadow: "var(--gate-card-shadow)",
         }}
       >
         <div
           className="pointer-events-none absolute -top-px left-1/2 h-px w-40 -translate-x-1/2"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent)" }}
+          style={{ background: "var(--gate-top-glow)" }}
         />
         <div className="mb-6 text-center">
           <div
@@ -233,7 +233,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
             style={{
               background: BUBBLE_BG,
               border: BUBBLE_BORDER,
-              boxShadow: "0 8px 24px rgba(139,92,246,0.2)",
+              boxShadow: "var(--gate-bubble-shadow)",
             }}
           >
             <LockIcon />
@@ -248,24 +248,25 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
         <input
           type="password"
           inputMode="text"
+          aria-label="PIN de acesso"
           autoFocus
           value={pin}
           onChange={(e) => setPin(e.target.value)}
           placeholder="PIN de acesso"
           className="w-full rounded-xl border px-4 py-3 text-center text-lg tracking-widest text-white placeholder:text-white/30 outline-none transition-all"
           style={{
-            background: "rgba(255,255,255,0.06)",
+            background: "var(--gate-input-bg)",
             borderColor: erro
-              ? "rgba(248,113,113,0.6)"
-              : "rgba(255,255,255,0.12)",
-            boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2)",
+              ? "var(--gate-input-border-error)"
+              : "var(--gate-input-border)",
+            boxShadow: "var(--gate-input-shadow)",
           }}
           data-testid="input-private-pin"
         />
         {erro && (
           <p
             className="mt-2 text-center text-sm font-semibold"
-            style={{ color: "rgb(252,165,165)" }}
+            style={{ color: "var(--gate-error-text)" }}
           >
             {erro}
           </p>
@@ -273,6 +274,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
         <label className="mt-3 flex cursor-pointer select-none items-center justify-center gap-2 text-xs text-white/50">
           <input
             type="checkbox"
+            aria-label="Manter este dispositivo desbloqueado por 14 dias"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
             className="h-3.5 w-3.5 accent-violet-400"
@@ -285,10 +287,10 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           className="mt-5 w-full rounded-xl px-4 py-3 text-sm font-bold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40"
           style={{
             background:
-              pin.trim() && !busy ? PRIMARY_BTN_BG : "rgba(255,255,255,0.08)",
+              pin.trim() && !busy ? PRIMARY_BTN_BG : "var(--gate-btn-idle-bg)",
             boxShadow:
               pin.trim() && !busy
-                ? "0 4px 20px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.15)"
+                ? "var(--gate-btn-active-shadow)"
                 : "none",
           }}
           data-testid="button-private-unlock"

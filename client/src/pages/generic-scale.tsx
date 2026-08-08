@@ -362,6 +362,7 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
                 {item}
               </span>
               <select
+                aria-label={item}
                 value={answers[item] || ""}
                 onChange={(e) =>
                   setAnswers((previous) => ({

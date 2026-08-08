@@ -98,20 +98,20 @@ export default function EpilepsyDiaryPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Data</Label>
-                <input type="date" value={current.date} onChange={(e) => setCurrent({ ...current, date: e.target.value })}
+                <Label htmlFor="seizure-date" className="text-xs">Data</Label>
+                <input id="seizure-date" type="date" value={current.date} onChange={(e) => setCurrent({ ...current, date: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Hora</Label>
-                <input type="time" value={current.time} onChange={(e) => setCurrent({ ...current, time: e.target.value })}
+                <Label htmlFor="seizure-time" className="text-xs">Hora</Label>
+                <input id="seizure-time" type="time" value={current.time} onChange={(e) => setCurrent({ ...current, time: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground" />
               </div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Tipo de Crise</Label>
-              <select value={current.type} onChange={(e) => setCurrent({ ...current, type: e.target.value })}
+              <Label htmlFor="seizure-type" className="text-xs">Tipo de Crise</Label>
+              <select id="seizure-type" value={current.type} onChange={(e) => setCurrent({ ...current, type: e.target.value })}
                 className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                 <option value="">Selecione...</option>
                 {epilepsyTypes.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -120,8 +120,8 @@ export default function EpilepsyDiaryPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Duração</Label>
-                <select value={current.duration} onChange={(e) => setCurrent({ ...current, duration: e.target.value })}
+                <Label htmlFor="seizure-duration" className="text-xs">Duração</Label>
+                <select id="seizure-duration" value={current.duration} onChange={(e) => setCurrent({ ...current, duration: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Selecione...</option>
                   <option value="< 30 segundos">&lt; 30 segundos</option>
@@ -133,8 +133,8 @@ export default function EpilepsyDiaryPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Consciência</Label>
-                <select value={current.consciousness} onChange={(e) => setCurrent({ ...current, consciousness: e.target.value })}
+                <Label htmlFor="seizure-consciousness" className="text-xs">Consciência</Label>
+                <select id="seizure-consciousness" value={current.consciousness} onChange={(e) => setCurrent({ ...current, consciousness: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Selecione...</option>
                   <option value="Preservada">Preservada</option>
@@ -166,8 +166,8 @@ export default function EpilepsyDiaryPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Descrição da crise (movimentos, comportamento)</Label>
-              <textarea value={current.description} onChange={(e) => setCurrent({ ...current, description: e.target.value })}
+              <Label htmlFor="seizure-description" className="text-xs">Descrição da crise (movimentos, comportamento)</Label>
+              <textarea id="seizure-description" value={current.description} onChange={(e) => setCurrent({ ...current, description: e.target.value })}
                 className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground min-h-[60px]"
                 placeholder="Descreva o que observou durante a crise..." />
             </div>
@@ -193,15 +193,15 @@ export default function EpilepsyDiaryPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Medicação em uso (e se tomou na hora correta)</Label>
-              <input type="text" value={current.medication} onChange={(e) => setCurrent({ ...current, medication: e.target.value })}
+              <Label htmlFor="seizure-medication" className="text-xs">Medicação em uso (e se tomou na hora correta)</Label>
+              <input id="seizure-medication" type="text" value={current.medication} onChange={(e) => setCurrent({ ...current, medication: e.target.value })}
                 className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground"
                 placeholder="Ex: Valproato 500mg 2x/dia — tomou corretamente" />
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Observações</Label>
-              <textarea value={current.notes} onChange={(e) => setCurrent({ ...current, notes: e.target.value })}
+              <Label htmlFor="seizure-notes" className="text-xs">Observações</Label>
+              <textarea id="seizure-notes" value={current.notes} onChange={(e) => setCurrent({ ...current, notes: e.target.value })}
                 className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground min-h-[40px]"
                 placeholder="Notas adicionais..." />
             </div>

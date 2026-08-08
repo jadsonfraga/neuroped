@@ -123,6 +123,7 @@ export default function BibliotecaInstrumentosPage() {
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
+            aria-label="Buscar instrumento, finalidade ou categoria"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar instrumento, finalidade ou categoria…"

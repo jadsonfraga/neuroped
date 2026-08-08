@@ -105,13 +105,13 @@ export default function HeadacheCalendarPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Data</Label>
-                <input type="date" value={current.date} onChange={(e) => setCurrent({ ...current, date: e.target.value })}
+                <Label htmlFor="headache-date" className="text-xs">Data</Label>
+                <input id="headache-date" type="date" value={current.date} onChange={(e) => setCurrent({ ...current, date: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Duração</Label>
-                <select value={current.duration} onChange={(e) => setCurrent({ ...current, duration: e.target.value })}
+                <Label htmlFor="headache-duration" className="text-xs">Duração</Label>
+                <select id="headache-duration" value={current.duration} onChange={(e) => setCurrent({ ...current, duration: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Selecione...</option>
                   <option value="< 30 minutos">&lt; 30 minutos</option>
@@ -139,16 +139,16 @@ export default function HeadacheCalendarPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Tipo de Cefaleia</Label>
-                <select value={current.type} onChange={(e) => setCurrent({ ...current, type: e.target.value })}
+                <Label htmlFor="headache-type" className="text-xs">Tipo de Cefaleia</Label>
+                <select id="headache-type" value={current.type} onChange={(e) => setCurrent({ ...current, type: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Selecione...</option>
                   {headacheTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Localização</Label>
-                <select value={current.location} onChange={(e) => setCurrent({ ...current, location: e.target.value })}
+                <Label htmlFor="headache-location" className="text-xs">Localização</Label>
+                <select id="headache-location" value={current.location} onChange={(e) => setCurrent({ ...current, location: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Selecione...</option>
                   {headacheLocations.map((l) => <option key={l} value={l}>{l}</option>)}
@@ -162,7 +162,7 @@ export default function HeadacheCalendarPage() {
                 <Label className="text-xs">Presença de Aura</Label>
               </div>
               {current.aura && (
-                <select value={current.auraType} onChange={(e) => setCurrent({ ...current, auraType: e.target.value })}
+                <select aria-label="Tipo de aura" value={current.auraType} onChange={(e) => setCurrent({ ...current, auraType: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Tipo de aura...</option>
                   {headacheAuraTypes.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -208,14 +208,14 @@ export default function HeadacheCalendarPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Medicação utilizada</Label>
-                <input type="text" value={current.medication} onChange={(e) => setCurrent({ ...current, medication: e.target.value })}
+                <Label htmlFor="headache-medication" className="text-xs">Medicação utilizada</Label>
+                <input id="headache-medication" type="text" value={current.medication} onChange={(e) => setCurrent({ ...current, medication: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground"
                   placeholder="Ex: Ibuprofeno 400mg" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Alívio com medicação</Label>
-                <select value={current.relief} onChange={(e) => setCurrent({ ...current, relief: e.target.value })}
+                <Label htmlFor="headache-relief" className="text-xs">Alívio com medicação</Label>
+                <select id="headache-relief" value={current.relief} onChange={(e) => setCurrent({ ...current, relief: e.target.value })}
                   className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground">
                   <option value="">Selecione...</option>
                   <option value="Alívio total">Alívio total</option>
@@ -227,8 +227,8 @@ export default function HeadacheCalendarPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Observações</Label>
-              <textarea value={current.notes} onChange={(e) => setCurrent({ ...current, notes: e.target.value })}
+              <Label htmlFor="headache-notes" className="text-xs">Observações</Label>
+              <textarea id="headache-notes" value={current.notes} onChange={(e) => setCurrent({ ...current, notes: e.target.value })}
                 className="w-full text-sm rounded-lg border border-border bg-card px-3 py-2 text-foreground min-h-[40px]"
                 placeholder="Notas adicionais..." />
             </div>

@@ -230,8 +230,9 @@ export default function DiarioEpilepsiaPage() {
             {/* Date + Time */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Data</label>
+                <label htmlFor="crise-data" className="text-xs font-medium text-foreground">Data</label>
                 <input
+                  id="crise-data"
                   type="date"
                   value={form.data}
                   onChange={(e) => setForm({ ...form, data: e.target.value })}
@@ -240,8 +241,9 @@ export default function DiarioEpilepsiaPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Hora</label>
+                <label htmlFor="crise-hora" className="text-xs font-medium text-foreground">Hora</label>
                 <input
+                  id="crise-hora"
                   type="time"
                   value={form.hora}
                   onChange={(e) => setForm({ ...form, hora: e.target.value })}
@@ -253,8 +255,9 @@ export default function DiarioEpilepsiaPage() {
 
             {/* Tipo de crise */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Tipo de Crise</label>
+              <label htmlFor="crise-tipo" className="text-xs font-medium text-foreground">Tipo de Crise</label>
               <select
+                id="crise-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
@@ -347,8 +350,9 @@ export default function DiarioEpilepsiaPage() {
 
             {/* Fase pós-ictal */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Fase Pós-ictal</label>
+              <label htmlFor="crise-fase-postictal" className="text-xs font-medium text-foreground">Fase Pós-ictal</label>
               <select
+                id="crise-fase-postictal"
                 value={form.fasePostIctal}
                 onChange={(e) => setForm({ ...form, fasePostIctal: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
@@ -362,11 +366,12 @@ export default function DiarioEpilepsiaPage() {
 
             {/* Medicações */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+              <label htmlFor="crise-medicacoes" className="text-xs font-medium text-foreground flex items-center gap-1.5">
                 <Pill className="w-3.5 h-3.5" />
                 Medicações em Uso
               </label>
               <input
+                id="crise-medicacoes"
                 type="text"
                 value={form.medicacoes}
                 onChange={(e) => setForm({ ...form, medicacoes: e.target.value })}
@@ -378,8 +383,9 @@ export default function DiarioEpilepsiaPage() {
 
             {/* Observações */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Observações</label>
+              <label htmlFor="crise-observacoes" className="text-xs font-medium text-foreground">Observações</label>
               <textarea
+                id="crise-observacoes"
                 value={form.observacoes}
                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
                 rows={3}

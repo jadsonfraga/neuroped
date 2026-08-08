@@ -60,7 +60,7 @@ export function SplashScreen({
           className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden"
           style={{
             background:
-              "linear-gradient(135deg, #0f4c3a 0%, #1a2559 50%, #3d1428 100%)",
+              "var(--splash-bg)",
           }}
           aria-hidden="true"
         >
@@ -73,11 +73,11 @@ export function SplashScreen({
             <defs>
               <pattern id="neural-mesh" x="40" y="40" width="80" height="80" patternUnits="userSpaceOnUse">
                 <circle cx="40" cy="40" r="1" fill="url(#grad1)" />
-                <path d="M 20 40 Q 40 20, 60 40 T 100 40" stroke="#ffffff" strokeWidth="0.5" fill="none" />
+                <path d="M 20 40 Q 40 20, 60 40 T 100 40" stroke="var(--splash-mesh-stroke)" strokeWidth="0.5" fill="none" />
               </pattern>
               <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="100%" stopColor="#ffffff" />
+                <stop offset="0%" stopColor="var(--splash-mesh-stroke)" />
+                <stop offset="100%" stopColor="var(--splash-mesh-stroke)" />
               </linearGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#neural-mesh)" />
@@ -97,7 +97,7 @@ export function SplashScreen({
                 className="absolute inset-0 rounded-full blur-3xl -z-10"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(15, 76, 58, 0.5) 0%, rgba(61, 20, 40, 0.3) 100%)",
+                    "var(--splash-glow)",
                   width: "140px",
                   height: "140px",
                   left: "-20px",
@@ -109,9 +109,9 @@ export function SplashScreen({
               <div
                 className="relative w-32 h-32 rounded-[1.9rem] overflow-hidden flex items-center justify-center shadow-2xl border-2"
                 style={{
-                  borderColor: "rgba(212, 175, 55, 0.55)",
+                  borderColor: "var(--splash-shield-border)",
                   boxShadow:
-                    "0 25px 80px rgba(15, 76, 58, 0.4), 0 12px 40px rgba(61, 20, 40, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.15)",
+                    "var(--splash-shield-shadow)",
                 }}
               >
                 {/* Master Shield Logo */}
@@ -136,16 +136,16 @@ export function SplashScreen({
                   fontFamily: "Cormorant Garamond, Georgia, serif",
                   fontWeight: 700,
                   letterSpacing: "-0.02em",
-                  color: "#ffffff",
+                  color: "var(--splash-title)",
                   textShadow:
-                    "0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(15, 76, 58, 0.1)",
+                    "var(--splash-title-shadow)",
                 }}
               >
                 NeuroPed <span className="opacity-70">EDJ</span>
               </h1>
               <p
                 className="text-sm uppercase tracking-[0.18em] font-medium"
-                style={{ color: "rgba(255, 255, 255, 0.85)" }}
+                style={{ color: "var(--splash-subtitle)" }}
               >
                 Plataforma Clínica Pediátrica
               </p>
@@ -159,7 +159,7 @@ export function SplashScreen({
               className="h-0.5 w-32"
               style={{
                 background:
-                  "linear-gradient(90deg, transparent, rgba(15, 244, 200, 0.6), transparent)",
+                  "var(--splash-divider)",
               }}
             />
 
@@ -172,14 +172,14 @@ export function SplashScreen({
             >
               <div
                 className="flex items-center justify-center gap-2 text-sm font-semibold"
-                style={{ color: "#ffffff" }}
+                style={{ color: "var(--splash-title)" }}
               >
                 <Shield className="w-4 h-4" strokeWidth={2} />
                 <span>Dr. Jadson Fraga Araújo Júnior</span>
               </div>
               <p
                 className="text-xs tracking-wide font-medium"
-                style={{ color: "rgba(255, 255, 255, 0.75)" }}
+                style={{ color: "var(--splash-credits)" }}
               >
                 Especialista em Neuropediatria · CRM-PE 25227 · RQE 17756
               </p>
@@ -211,8 +211,8 @@ export function SplashScreen({
                   style={{
                     width: "6px",
                     height: "6px",
-                    background: "rgba(15, 244, 200, 0.8)",
-                    boxShadow: "0 0 8px rgba(15, 244, 200, 0.5)",
+                    background: "var(--splash-dot)",
+                    boxShadow: "var(--splash-dot-glow)",
                   }}
                 />
               ))}

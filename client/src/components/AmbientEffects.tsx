@@ -20,11 +20,11 @@ const NOISE_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(
 )}`;
 
 const PALETTE = [
-  "rgba(167,139,250,.5)",
-  "rgba(56,189,248,.4)",
-  "rgba(34,211,238,.35)",
-  "rgba(124,92,255,.45)",
-  "rgba(139,92,246,.4)",
+  "var(--ambient-orb-1)",
+  "var(--ambient-orb-2)",
+  "var(--ambient-orb-3)",
+  "var(--ambient-orb-4)",
+  "var(--ambient-orb-5)",
 ];
 
 interface Particle {

@@ -10,8 +10,11 @@
  *   2. Caso contrário (Windows/CI sem Chromium — caso atual), executa um
  *      LINT ESTÁTICO determinístico de fonte React que cobre as violações
  *      serious/critical de maior incidência: <img> sem alt (image-alt),
- *      <html> sem lang (html-has-lang) e controles icon-only sem nome
- *      acessível (button-name / link-name).
+ *      <html> sem lang (html-has-lang), controles icon-only sem nome
+ *      acessível (button-name / link-name), campos de formulário sem nome
+ *      (input/select/textarea-name), <iframe> sem title, <area> sem alt,
+ *      viewport que bloqueia zoom (meta-viewport, critical no axe) e
+ *      tabindex positivo (quebra a ordem natural de foco).
  *
  * Gate: scripts/guards/baseline.json -> axeSeriousCriticalViolations (0).
  */
@@ -96,14 +99,27 @@ function runStatic() {
     return out;
   }
   const violations = [];
-  // html-has-lang
+  // html-has-lang + meta-viewport (zoom bloqueado é CRITICAL no axe)
   const indexHtml = resolve(repoRoot, "client/index.html");
   if (existsSync(indexHtml)) {
     const h = readFileSync(indexHtml, "utf8");
     if (!/<html\b[^>]*\blang\s*=/.test(h)) violations.push({ id: "html-has-lang", where: "client/index.html" });
+    if (/user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1(\.0*)?\b/.test(h))
+      violations.push({ id: "meta-viewport", where: "client/index.html" });
   }
+  const hasName = (attrs) => /aria-label|aria-labelledby|title=/.test(attrs);
+  // Nome acessível de campo: rótulo programático (aria/label htmlFor via id)
+  // ou, na heurística estática, placeholder — melhor que falso positivo em
+  // massa; o axe real cobre o resto quando o Chromium está disponível.
+  // Elementos que recebem atributos via spread ({...props}) são primitivos de
+  // UI cujo nome chega pelo chamador — fora do alcance do lint estático.
+  const hasFieldName = (attrs) =>
+    hasName(attrs) || /\bid\s*=|placeholder\s*=|\{\s*\.\.\./.test(attrs);
   for (const f of walk(src)) {
-    const c = readFileSync(f, "utf8");
+    // Comentários (// e /* */) podem citar tags de exemplo — não são JSX real.
+    const c = readFileSync(f, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|\s)\/\/[^\n]*/g, "$1");
     const rel = f.replace(repoRoot + "\\", "").replace(repoRoot + "/", "");
     // image-alt
     for (const m of c.matchAll(/<img\b[^>]*>/g)) {
@@ -111,11 +127,33 @@ function runStatic() {
     }
     // button-name (icon-only sem nome acessível)
     for (const m of c.matchAll(/<button\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/button>/g)) {
-      if (!/aria-label|aria-labelledby|title=/.test(m[1])) violations.push({ id: "button-name", where: rel });
+      if (!hasName(m[1])) violations.push({ id: "button-name", where: rel });
     }
     // link-name (anchor icon-only sem nome acessível)
     for (const m of c.matchAll(/<a\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/a>/g)) {
-      if (!/aria-label|aria-labelledby|title=/.test(m[1])) violations.push({ id: "link-name", where: rel });
+      if (!hasName(m[1])) violations.push({ id: "link-name", where: rel });
+    }
+    // input-name / select-name / textarea-name (campos sem nenhum rótulo possível)
+    for (const m of c.matchAll(/<input\b((?:=>|[^>])*?)\/?>/g)) {
+      if (/type\s*=\s*["']hidden["']/.test(m[1])) continue;
+      if (!hasFieldName(m[1])) violations.push({ id: "input-name", where: rel });
+    }
+    for (const m of c.matchAll(/<select\b((?:=>|[^>])*?)>/g)) {
+      if (!hasFieldName(m[1])) violations.push({ id: "select-name", where: rel });
+    }
+    for (const m of c.matchAll(/<textarea\b((?:=>|[^>])*?)\/?>/g)) {
+      if (!hasFieldName(m[1])) violations.push({ id: "textarea-name", where: rel });
+    }
+    // iframe-title / area-alt
+    for (const m of c.matchAll(/<iframe\b((?:=>|[^>])*?)\/?>/g)) {
+      if (!/\btitle\s*=/.test(m[1])) violations.push({ id: "iframe-title", where: rel });
+    }
+    for (const m of c.matchAll(/<area\b((?:=>|[^>])*?)\/?>/g)) {
+      if (!/\balt\s*=/.test(m[1])) violations.push({ id: "area-alt", where: rel });
+    }
+    // tabindex positivo quebra a ordem natural de foco
+    for (const m of c.matchAll(/tabIndex\s*=\s*\{?\s*([1-9][0-9]*)\s*\}?/g)) {
+      violations.push({ id: "tabindex-positive", where: `${rel} (tabIndex=${m[1]})` });
     }
   }
   reportAndExit(violations, "static-lint");

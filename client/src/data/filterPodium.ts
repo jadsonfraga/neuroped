@@ -509,21 +509,32 @@ export function selectPodium(
   // existe candidata segura que fala — o BRONZE cede o lugar (Ouro e Prata
   // preservam curadoria e cobertura), sem perder cobertura única de queixa.
   if (selectedSignals.length > 0 && ![ouro, prata, bronze].some((s) => s && signalHit(s))) {
-    const rescueCandidate = (requireApplicable: boolean) =>
-      sorted.find(
-        (m) =>
-          !used.has(m.scale.id) &&
-          signalHit(m) &&
-          containsAge(m) &&
-          (!requireApplicable || isApplicable(m)) &&
-          m.relevanceScore >= 45 &&
-          (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))),
-      );
     // Alvo do resgate: o selo NÃO-aplicável (prata ou bronze) sai primeiro; se
     // todos aplicáveis, o bronze é o candidato natural. Ouro nunca sai aqui.
     const targetSlot: "prata" | "bronze" =
       bronze && !isApplicable(bronze) ? "bronze" : prata && !isApplicable(prata) ? "prata" : "bronze";
     const target = targetSlot === "prata" ? prata : bronze;
+    // Orçamento do trio pós-troca: a candidata precisa caber no teto de 100 ao
+    // lado das medalhas que ficam; sem isso o hard cap desfaz o resgate logo em
+    // seguida e o sinal volta a ser ignorado. Só se NENHUMA candidata couber é
+    // que aceitamos uma acima do teto (o cap decide o resíduo).
+    const keptTotal = (targetSlot === "prata" ? [ouro, bronze] : [ouro, prata])
+      .filter((slot): slot is RefinedScaleMatch => Boolean(slot))
+      .reduce((sum, slot) => sum + estimatedQuestionCount(slot.scale), 0);
+    const fitsCap = (m: RefinedScaleMatch) => {
+      const count = estimatedQuestionCount(m.scale);
+      return Number.isFinite(count) && count > 0 && keptTotal + count <= PODIUM_QUESTION_CAP;
+    };
+    const rescueCandidate = (requireApplicable: boolean) => {
+      const eligible = (m: RefinedScaleMatch) =>
+        !used.has(m.scale.id) &&
+        signalHit(m) &&
+        containsAge(m) &&
+        (!requireApplicable || isApplicable(m)) &&
+        m.relevanceScore >= 45 &&
+        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q)));
+      return sorted.find((m) => eligible(m) && fitsCap(m)) ?? sorted.find(eligible);
+    };
     // Regra de ouro: resgate por sinal prefere candidata aplicável; só cai para
     // ficha se o selo substituído também não for aplicável.
     const rescue =
@@ -562,6 +573,48 @@ export function selectPodium(
     if (!medal) continue;
     used.add(medal.scale.id);
     usedModes.add(medal.applicationMode ?? "");
+  }
+
+  // Resgate por sinal PÓS-TETO: o hard cap é cego a sinais e pode remover o
+  // único selo que falava neles (ou desfazer o resgate pré-teto). Repetimos a
+  // troca sobre o pódio final, aceitando apenas candidata que CABE no teto ao
+  // lado das medalhas que ficam — assim o resultado é estável.
+  if (selectedSignals.length > 0 && ![ouro, prata, bronze].some((s) => s && signalHit(s))) {
+    const targetSlot: "prata" | "bronze" =
+      bronze && !isApplicable(bronze) ? "bronze" : prata && !isApplicable(prata) ? "prata" : "bronze";
+    const target = targetSlot === "prata" ? prata : bronze;
+    const kept = (targetSlot === "prata" ? [ouro, bronze] : [ouro, prata]).filter(
+      (slot): slot is RefinedScaleMatch => Boolean(slot),
+    );
+    const keptTotal = kept.reduce((sum, slot) => sum + estimatedQuestionCount(slot.scale), 0);
+    const eligible = (requireApplicable: boolean) => (m: RefinedScaleMatch) => {
+      const count = estimatedQuestionCount(m.scale);
+      return (
+        !used.has(m.scale.id) &&
+        signalHit(m) &&
+        containsAge(m) &&
+        (!requireApplicable || isApplicable(m)) &&
+        m.relevanceScore >= 45 &&
+        (selectedQueixaSet.size === 0 || m.scale.queixas.some((q) => selectedQueixaSet.has(q))) &&
+        Number.isFinite(count) &&
+        count > 0 &&
+        keptTotal + count <= PODIUM_QUESTION_CAP
+      );
+    };
+    const rescue =
+      sorted.find(eligible(true)) ??
+      (target && isApplicable(target) ? undefined : sorted.find(eligible(false)));
+    if (rescue) {
+      const others = targetSlot === "prata" ? [ouro, bronze] : [ouro, prata];
+      const targetUnique = uniqueQueixasOf(target, others);
+      if (!target || targetUnique.every((q) => rescue.scale.queixas.includes(q))) {
+        if (target) used.delete(target.scale.id);
+        used.add(rescue.scale.id);
+        usedModes.add(rescue.applicationMode ?? "");
+        if (targetSlot === "prata") prata = rescue;
+        else bronze = rescue;
+      }
+    }
   }
 
   // Direct and school also join the used set to prevent deduplication with medals.

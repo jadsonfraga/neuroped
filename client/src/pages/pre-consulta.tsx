@@ -183,23 +183,23 @@ export default function PreConsultaPage() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1">
+              <label htmlFor="pre-consulta-respondente" className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Respondente</span>
-                <select value={respondente} onChange={(event) => setRespondente(event.target.value as PreConsultaRespondente)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
+                <select id="pre-consulta-respondente" value={respondente} onChange={(event) => setRespondente(event.target.value as PreConsultaRespondente)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
                   {respondentes.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
                 </select>
               </label>
-              <label className="space-y-1">
+              <label htmlFor="pre-consulta-contexto" className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Contexto</span>
-                <select value={contexto} onChange={(event) => setContexto(event.target.value as PreConsultaContexto)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
+                <select id="pre-consulta-contexto" value={contexto} onChange={(event) => setContexto(event.target.value as PreConsultaContexto)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
                   {contextos.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
                 </select>
               </label>
             </div>
 
-            <label className="block space-y-1">
+            <label htmlFor="pre-consulta-observacoes" className="block space-y-1">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações da recepção/família</span>
-              <textarea value={observacoes} onChange={(event) => setObservacoes(event.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato curto, dúvida principal ou informação prática." />
+              <textarea id="pre-consulta-observacoes" value={observacoes} onChange={(event) => setObservacoes(event.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato curto, dúvida principal ou informação prática." />
             </label>
 
             <div className="flex flex-wrap gap-2">

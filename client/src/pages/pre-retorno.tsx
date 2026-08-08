@@ -120,7 +120,7 @@ function FieldSelect({ label, value, onChange, options }: { label: string; value
   return (
     <label className="space-y-1">
       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
+      <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
         {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
@@ -265,10 +265,10 @@ export default function PreRetornoPage() {
             <FieldSelect label="Medicação" value={medicacao} onChange={setMedicacao} options={opcoesMedicacao} />
           </div>
 
-          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sintomas ou efeitos percebidos pela família</span><textarea value={sintomasTratamento} onChange={(e) => setSintomasTratamento(e.target.value)} className="min-h-20 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato livre. Não altera conduta automaticamente; será revisado pelo médico." /></label>
+          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sintomas ou efeitos percebidos pela família</span><textarea aria-label="Sintomas ou efeitos percebidos pela família" value={sintomasTratamento} onChange={(e) => setSintomasTratamento(e.target.value)} className="min-h-20 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato livre. Não altera conduta automaticamente; será revisado pelo médico." /></label>
           <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dúvida principal da família</span><Input value={duvida} onChange={(e) => setDuvida(e.target.value)} /></label>
           <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Prioridade de hoje</span><Input value={prioridade} onChange={(e) => setPrioridade(e.target.value)} /></label>
-          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
+          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea aria-label="Observações livres" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
 
           <div className="flex flex-wrap gap-2">
             <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
