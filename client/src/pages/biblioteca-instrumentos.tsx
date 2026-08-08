@@ -21,6 +21,10 @@ import {
   dailyAuthorialCatalogErrors,
   type DailyAuthorialInventory,
 } from "@/data/dailyAuthorialCatalog";
+import {
+  dailyInventorySearchText,
+  parseReferenceAgeRange,
+} from "@/lib/instrument-library-filters";
 
 const LOGIC_LABEL: Record<ScoreLogic, string> = {
   manual_dependent: "Depende do manual",
@@ -73,19 +77,6 @@ function formatAge(months: number): string {
   return rest
     ? `${years}a ${rest}m`
     : `${years} ${years === 1 ? "ano" : "anos"}`;
-}
-
-function parseReferenceAgeRange(ageRange: string): [number, number] | null {
-  const text = normalize(ageRange).replace(/,/g, ".");
-  const values = [...text.matchAll(/\d+(?:\.\d+)?/g)].map((match) =>
-    Number(match[0]),
-  );
-  if (!values.length) return null;
-  const multiplier = text.includes("mes") && !text.includes("ano") ? 1 : 12;
-  const min = Math.max(0, Math.round(values[0] * multiplier));
-  let max = Math.round((values[1] ?? values[0]) * multiplier);
-  if (/adult|toda idade|sem limite/.test(text)) max = 251;
-  return [Math.min(min, max), Math.max(min, max)];
 }
 
 function referenceRespondents(record: ScaleMessageRecord): string[] {
@@ -479,9 +470,7 @@ export default function BibliotecaInstrumentosPage() {
       )
         return false;
       if (!q) return true;
-      return normalize(
-        `${record.title} ${record.shortTitle} ${record.topic} ${record.category} ${record.subcategory} ${record.purpose} ${record.tags.join(" ")} ${record.items.map((item) => item.text).join(" ")}`,
-      ).includes(q);
+      return normalize(dailyInventorySearchText(record)).includes(q);
     });
   }, [ageYears, category, context, query, respondent, source, status]);
 

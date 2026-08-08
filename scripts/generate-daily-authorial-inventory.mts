@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT_DIR = path.join(ROOT, "client/src/data/daily-authorial");
@@ -82,13 +82,24 @@ const slugify = (v: string) => normalize(v).replace(/ /g, "-").slice(0, 80);
 const dateNow = () => process.env.NEUROPED_GENERATION_DATE || new Intl.DateTimeFormat("en-CA", { timeZone: "America/Recife", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 
+export function isValidCalendarDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+}
+
+export function positiveModulo(value: number, divisor: number): number {
+  if (!Number.isInteger(divisor) || divisor <= 0) throw new Error("Divisor deve ser inteiro positivo.");
+  return ((value % divisor) + divisor) % divisor;
+}
+
 async function catalog(): Promise<any[]> {
   await mkdir(OUTPUT_DIR, { recursive: true });
   const files = (await readdir(OUTPUT_DIR)).filter((v) => v.endsWith(".json"));
   return Promise.all(files.map(async (v) => JSON.parse(await readFile(path.join(OUTPUT_DIR, v), "utf8"))));
 }
 
-function selectTopic(date: string, records: any[]): Topic {
+export function selectTopic(date: string, records: any[]): Topic {
   const requested = process.env.NEUROPED_DAILY_TOPIC_ID;
   const all = Object.values(TOPICS).flat();
   if (requested) {
@@ -99,7 +110,7 @@ function selectTopic(date: string, records: any[]): Topic {
   const pool = TOPICS[weekday(date)];
   const weeks = Math.floor((Date.parse(`${date}T12:00:00Z`) - Date.parse("2026-08-02T12:00:00Z")) / 604800000);
   for (let offset = 0; offset < pool.length; offset++) {
-    const candidate = pool[(weeks + offset) % pool.length];
+    const candidate = pool[positiveModulo(weeks + offset, pool.length)];
     const recent = records.some((v) => v.topicId === candidate.id && Math.abs(Date.parse(`${date}T12:00:00Z`) - Date.parse(`${v.generatedOn}T12:00:00Z`)) < 30 * 86400000);
     if (!recent || FORCE) return candidate;
   }
@@ -152,9 +163,55 @@ async function validateOnly() {
   console.log(`Catálogo autoral diário válido: ${records.length} registro(s).`);
 }
 
+async function recordFilenamesForDate(date: string, outputDir: string): Promise<string[]> {
+  const files = (await readdir(outputDir)).filter((value) => value.endsWith(".json"));
+  const matches: string[] = [];
+  for (const filename of files) {
+    const record = JSON.parse(await readFile(path.join(outputDir, filename), "utf8"));
+    if (record.generatedOn === date) matches.push(filename);
+  }
+  return matches.sort();
+}
+
+export async function replaceDatedRecord(
+  date: string,
+  filename: string,
+  content: string,
+  outputDir = OUTPUT_DIR,
+): Promise<void> {
+  await mkdir(outputDir, { recursive: true });
+  const destination = path.join(outputDir, filename);
+  const temporary = path.join(outputDir, `.${filename}.${process.pid}.tmp`);
+  try {
+    await writeFile(temporary, content, "utf8");
+    await rename(temporary, destination);
+  } catch (error) {
+    await unlink(temporary).catch(() => undefined);
+    throw error;
+  }
+
+  const staleFiles = (await recordFilenamesForDate(date, outputDir)).filter(
+    (existing) => existing !== filename,
+  );
+  await Promise.all(staleFiles.map((existing) => unlink(path.join(outputDir, existing))));
+}
+
+function serialFromRecord(record: any): string | null {
+  const match = String(record?.id ?? "").match(/-(\d{3})$/);
+  return match?.[1] ?? null;
+}
+
+function nextSerial(records: any[]): string {
+  const greatest = records.reduce((current, record) => {
+    const serial = Number(serialFromRecord(record));
+    return Number.isInteger(serial) ? Math.max(current, serial) : current;
+  }, 0);
+  return String(greatest + 1).padStart(3, "0");
+}
+
 async function generate() {
+  const date = dateNow(); if (!isValidCalendarDate(date)) throw new Error("Data deve usar AAAA-MM-DD e existir no calendário.");
   const apiKey = process.env.OPENAI_API_KEY; if (!apiKey) throw new Error("OPENAI_API_KEY não configurada.");
-  const date = dateNow(); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Data deve usar AAAA-MM-DD.");
   const records = await catalog(); if (records.some((v) => v.generatedOn === date) && !FORCE) return console.log(`Já existe inventário para ${date}.`);
   const topic = selectTopic(date, records);
   const prompt = `Tema: ${topic.title}. Categoria: ${topic.category}/${topic.subcategory}. Faixa: ${topic.ageMinMonths}-${topic.ageMaxMonths} meses. Respondente: ${topic.respondent}. Contextos: ${topic.contexts.join(", ")}. Uso: ${topic.assessmentUse}. Risco: ${topic.riskClass}. Priorize ${topic.focus}. Exclua ${topic.exclusions}. Gere 12-24 itens em 3-6 domínios, com linguagem observável, diferenciais, integração e limitações. Declare que não substitui avaliação clínica. Temas de alto risco exigem red flags com ações claras e sem detalhar métodos.`;
@@ -164,10 +221,17 @@ async function generate() {
     text: { format: { type: "json_schema", name: "neuroped_daily_inventory", strict: true, schema: SCHEMA } }
   }) });
   if (!response.ok) throw new Error(`OpenAI API ${response.status}: ${await response.text()}`);
-  const draft = JSON.parse(outputText(await response.json())); const slug = slugify(draft.shortTitle || topic.title); const serial = String(records.length + 1).padStart(3, "0");
+  const draft = JSON.parse(outputText(await response.json())); const slug = slugify(draft.shortTitle || topic.title);
+  const datedRecords = records.filter((record) => record.generatedOn === date).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  const preservedId = datedRecords.find((record) => serialFromRecord(record))?.id;
+  const serial = preservedId ? serialFromRecord({ id: preservedId })! : nextSerial(records);
   const record = { schemaVersion: "1.0.0", id: `NEUROPED-DIARIO-${date.replaceAll("-", "")}-${serial}`, slug, version: "1.0.0", generatedOn: date, generatedAt: new Date().toISOString(), author: "NeuroPed SDG — Dr. Jadson Fraga", sourceType: "autoral_diario", validationStatus: "nao_validado_psicometricamente", status: "rascunho_revisao", topicId: topic.id, topic: topic.title, category: topic.category, subcategory: topic.subcategory, ageMinMonths: topic.ageMinMonths, ageMaxMonths: topic.ageMaxMonths, respondent: topic.respondent, contexts: topic.contexts, assessmentUse: topic.assessmentUse, riskClass: topic.riskClass, ...draft, duplicateCooldownDays: 30, generation: { model: MODEL, reasoningMode: "pro", reasoningEffort: EFFORT, pipelineVersion: "1.0.0" } };
   const errors = validate(record); if (errors.length) throw new Error(`Geração bloqueada:\n- ${errors.join("\n- ")}`);
-  const filename = `${date}-${slug}.json`; await writeFile(path.join(OUTPUT_DIR, filename), `${JSON.stringify(record, null, 2)}\n`, "utf8"); console.log(`Inventário criado: ${filename}`);
+  const filename = `${date}-${slug}.json`; const content = `${JSON.stringify(record, null, 2)}\n`;
+  if (FORCE) await replaceDatedRecord(date, filename, content); else await writeFile(path.join(OUTPUT_DIR, filename), content, "utf8");
+  console.log(`Inventário criado: ${filename}`);
 }
 
-if (process.argv.includes("--validate-only")) await validateOnly(); else await generate();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  if (process.argv.includes("--validate-only")) await validateOnly(); else await generate();
+}
