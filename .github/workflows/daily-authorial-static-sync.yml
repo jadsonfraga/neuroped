@@ -274,7 +274,7 @@ jobs:
           for attempt in $(seq 1 18); do
             if curl -fsSL "$url?run=${GITHUB_RUN_ID}&attempt=$attempt" -o /tmp/vercel-daily-check.json \
               && jq -e --arg sha "$DEPLOY_SHA" \
-                '.provider == "vercel" and .status == "deployed" and .commit == $sha' \
+                '.provider == "vercel" and .status == "deployed" and (.commit == $sha or .commit == ($sha[0:12]))' \
                 /tmp/vercel-daily-check.json >/dev/null; then
               echo "Vercel confirma $DEPLOY_SHA."
               exit 0
