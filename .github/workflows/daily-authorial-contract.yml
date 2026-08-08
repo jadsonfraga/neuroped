@@ -1,0 +1,88 @@
+name: Contrato dos inventários autorais diários
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/daily-authorial-*.yml"
+      - "scripts/generate-daily-authorial-*.mts"
+      - "client/src/data/daily-authorial/**"
+      - "client/src/data/dailyAuthorialCatalog.ts"
+      - "client/src/pages/biblioteca-instrumentos.tsx"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/daily-authorial-*.yml"
+      - "scripts/generate-daily-authorial-*.mts"
+      - "client/src/data/daily-authorial/**"
+      - "client/src/data/dailyAuthorialCatalog.ts"
+      - "client/src/pages/biblioteca-instrumentos.tsx"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-authorial-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validar catálogo, fallback e compilação
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Auditar catálogo real
+        run: node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
+
+      - name: Exercitar contingência em data isolada
+        env:
+          NEUROPED_GENERATION_DATE: 2099-01-01
+        run: |
+          set -euo pipefail
+          test_file="client/src/data/daily-authorial/2099-01-01-contingencia-apr.json"
+          trap 'rm -f "$test_file"' EXIT
+          node --import tsx scripts/generate-daily-authorial-fallback.mts
+          test -f "$test_file"
+          node --import tsx scripts/generate-daily-authorial-inventory.mts --validate-only
+          node <<'NODE'
+          const fs = require("node:fs");
+          const file = "client/src/data/daily-authorial/2099-01-01-contingencia-apr.json";
+          const record = JSON.parse(fs.readFileSync(file, "utf8"));
+          if (record.generatedOn !== "2099-01-01") throw new Error("data de contingência inválida");
+          if (record.contingency !== true || record.needsUpgrade !== true) {
+            throw new Error("marcadores de contingência ausentes");
+          }
+          if (!String(record.generation?.model ?? "").startsWith("fallback-")) {
+            throw new Error("modelo de contingência não rastreável");
+          }
+          if (record.scoring?.totalScoreEnabled !== false) {
+            throw new Error("contingência habilitou escore total");
+          }
+          const critical = new Set(record.items.filter((item) => item.redFlag).map((item) => item.id));
+          const mapped = new Set(record.redFlags.map((item) => item.itemId));
+          for (const id of critical) {
+            if (!mapped.has(id)) throw new Error(`red flag sem ação: ${id}`);
+          }
+          NODE
+
+      - name: Confirmar que o teste não deixou arquivo residual
+        run: test ! -e client/src/data/daily-authorial/2099-01-01-contingencia-apr.json
+
+      - name: Verificar TypeScript
+        run: npm run check
