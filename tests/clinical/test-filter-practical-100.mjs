@@ -231,8 +231,11 @@ const SAFETY_ISSUES = new Set([
   "alguma escala do podio nao abre internamente",
   "alguma escala viola bloqueio clinico duro",
 ]);
-const QUALITY_AVG_MIN = 9.5;
-const QUALITY_CASE_FLOOR = 8.0;
+// Catraca elevada em 2026-08 após o aproveitamento de curadoria pós-teto:
+// os 100 casos pontuam 10.0. Média mínima 9.9 e piso 9.5 impedem regressão
+// silenciosa mantendo folga apenas para deriva legítima de catálogo.
+const QUALITY_AVG_MIN = 9.9;
+const QUALITY_CASE_FLOOR = 9.5;
 
 const unsafe = results.filter((result) => result.issues.some((issue) => SAFETY_ISSUES.has(issue)));
 const belowFloor = results.filter((result) => result.score < QUALITY_CASE_FLOOR);

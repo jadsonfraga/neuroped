@@ -260,18 +260,19 @@ export default function PlanoTerapeuticoPage() {
       <head>
         <title>Plano Terapêutico Individualizado — ${escapeHtml(patient.name || "Paciente")}</title>
         <style>
-          body { font-family: Arial, sans-serif; font-size: 11pt; margin: 2cm; color: #1a1a1a; }
-          h1 { font-size: 14pt; text-align: center; margin-bottom: 4px; color: #064e3b; }
-          .subtitle { text-align: center; font-size: 10pt; color: #555; margin-bottom: 16px; }
+          :root { --doc-ink: #1a1a1a; --doc-accent: #064e3b; --doc-muted: #555; --doc-tint: #f0fdf4; --doc-row-line: #d1fae5; --doc-rule: #ccc; }
+          body { font-family: Arial, sans-serif; font-size: 11pt; margin: 2cm; color: var(--doc-ink); }
+          h1 { font-size: 14pt; text-align: center; margin-bottom: 4px; color: var(--doc-accent); }
+          .subtitle { text-align: center; font-size: 10pt; color: var(--doc-muted); margin-bottom: 16px; }
           .section { margin-bottom: 16px; }
-          .section-title { font-size: 12pt; font-weight: bold; border-bottom: 2px solid #064e3b; padding-bottom: 4px; margin-bottom: 8px; color: #064e3b; }
-          .patient-info { background: #f0fdf4; padding: 10px; border-radius: 6px; margin-bottom: 16px; }
+          .section-title { font-size: 12pt; font-weight: bold; border-bottom: 2px solid var(--doc-accent); padding-bottom: 4px; margin-bottom: 8px; color: var(--doc-accent); }
+          .patient-info { background: var(--doc-tint); padding: 10px; border-radius: 6px; margin-bottom: 16px; }
           .patient-info p { margin: 3px 0; font-size: 10pt; }
           table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 8px; }
-          th { background: #064e3b; color: white; padding: 6px 8px; text-align: left; }
-          td { padding: 6px 8px; border-bottom: 1px solid #d1fae5; vertical-align: top; }
-          tr:nth-child(even) { background: #f0fdf4; }
-          .footer { margin-top: 32px; text-align: center; font-size: 9pt; color: #555; border-top: 1px solid #ccc; padding-top: 8px; }
+          th { background: var(--doc-accent); color: white; padding: 6px 8px; text-align: left; }
+          td { padding: 6px 8px; border-bottom: 1px solid var(--doc-row-line); vertical-align: top; }
+          tr:nth-child(even) { background: var(--doc-tint); }
+          .footer { margin-top: 32px; text-align: center; font-size: 9pt; color: var(--doc-muted); border-top: 1px solid var(--doc-rule); padding-top: 8px; }
         </style>
       </head>
       <body>

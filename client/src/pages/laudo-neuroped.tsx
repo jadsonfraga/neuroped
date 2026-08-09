@@ -47,7 +47,7 @@ function escapeHtml(value: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/'/g, "&apos;");
 }
 
 function dateStamp(): string {
@@ -71,31 +71,33 @@ function buildPrintHtml(texto: string): string {
 @page{size:A4;margin:14mm 16mm 18mm 16mm}
 :root{--navy:#1E2A4A;--navyd:#0B1024;--bordo:#7A1F2B;--gold:#C9A961;--goldd:#A88844;--teal:#2E7163;
   --ivory:#FBF8F0;--ink:#5B5B6B;--graf:#2C2C3E;--line:#D9D2C2;
-  --logo-gold-soft:#F6E7B5;--logo-navy:#101A2D}
+  --logo-gold-soft:#F6E7B5;--logo-navy:#101A2D;
+  --white:#fff;--gold-deep:#B98A24;--gold-hi:#F4D36C;--note:#888;
+  --gold-veil:rgba(201,169,97,.55);--shadow-soft:rgba(0,0,0,.3)}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:#fff;font-family:'Carlito',Arial,sans-serif;font-size:10.5pt;color:var(--graf)}
-.head{padding:4.5mm 6mm 4mm;background:linear-gradient(135deg,#101A2D 0%,#1E2A4A 44%,#7A1F2B 100%);
+html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-size:10.5pt;color:var(--graf)}
+.head{padding:4.5mm 6mm 4mm;background:linear-gradient(135deg,var(--logo-navy) 0%,var(--navy) 44%,var(--bordo) 100%);
   color:var(--ivory);display:flex;align-items:center;gap:4mm;
   border-radius:2mm;margin-bottom:0;
-  box-shadow:inset 0 -1mm 0 rgba(201,169,97,.55)}
+  box-shadow:inset 0 -1mm 0 var(--gold-veil)}
 .head .bk{flex:1 1 auto}
 .head .wm{font-family:'Cormorant Garamond',Georgia,serif;font-size:16pt;font-weight:700;
-  letter-spacing:.05em;color:#fff;line-height:1;text-shadow:0 1px 0 rgba(0,0,0,.3)}
+  letter-spacing:.05em;color:var(--white);line-height:1;text-shadow:0 1px 0 var(--shadow-soft)}
 .head .tg{font-size:6pt;letter-spacing:.25em;text-transform:uppercase;
   color:var(--logo-gold-soft);margin-top:1mm}
 .head .rt{text-align:right}
 .head .doc-title{font-family:'Cormorant Garamond',Georgia,serif;font-size:11pt;font-weight:700;
-  letter-spacing:.08em;color:#fff;white-space:nowrap}
+  letter-spacing:.08em;color:var(--white);white-space:nowrap}
 .head .emit{font-size:7pt;color:var(--logo-gold-soft);margin-top:1.5mm;line-height:1.5}
 .ribbon{height:1.9mm;display:flex;margin-bottom:8mm}
 .ribbon i{display:block;height:100%}
-.ribbon .g{width:34%;background:linear-gradient(90deg,#B98A24,#F4D36C,#B98A24)}
+.ribbon .g{width:34%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-hi),var(--gold-deep))}
 .ribbon .t{width:22%;background:var(--teal)}
 .ribbon .b{width:22%;background:var(--bordo)}
 .ribbon .n{width:22%;background:var(--navyd)}
 .doc-text{font-size:10.5pt;line-height:1.75;white-space:pre-wrap;color:var(--graf)}
-.sig-area{margin-top:24pt;border-top:.75pt solid #101A2D;padding-top:8pt;text-align:center}
-.sig-nm{font-family:'Cormorant Garamond',Georgia,serif;font-size:11pt;font-weight:600;color:#101A2D}
+.sig-area{margin-top:24pt;border-top:.75pt solid var(--logo-navy);padding-top:8pt;text-align:center}
+.sig-nm{font-family:'Cormorant Garamond',Georgia,serif;font-size:11pt;font-weight:600;color:var(--logo-navy)}
 .sig-rg{font-size:7pt;color:var(--ink);margin-top:2pt}
 .footer{margin-top:18pt;border-top:.4pt solid var(--line);padding-top:6pt;
   font-size:7pt;color:var(--ink);display:flex;justify-content:space-between}
@@ -120,7 +122,7 @@ html,body{background:#fff;font-family:'Carlito',Arial,sans-serif;font-size:10.5p
   <div class="sig-area">
     <div class="sig-nm">Dr. Jadson Fraga Araújo Júnior</div>
     <div class="sig-rg">CRM-PE 25.227 · RQE 17.756 — Neurologista Infantil / Neuropediatra</div>
-    <div class="sig-rg" style="margin-top:6pt;font-size:6pt;color:#888">
+    <div class="sig-rg" style="margin-top:6pt;font-size:6pt;color:var(--note)">
       Assinatura digital ICP-Brasil — conferir em validador oficial (iti.br/repositorio)
     </div>
   </div>

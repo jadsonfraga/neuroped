@@ -96,8 +96,14 @@ function runStatic() {
     if (/user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1(\.0*)?\b/.test(html)) violations.push({ id: "meta-viewport", where: "client/index.html" });
   }
   const hasName = (attributes) => /aria-label|aria-labelledby|title=/.test(attributes);
+  // Nome acessível de campo: rótulo programático (aria/label htmlFor via id)
+  // ou, na heurística estática, placeholder — melhor que falso positivo em
+  // massa; o axe real cobre o resto quando o Chromium está disponível.
+  // Elementos que recebem atributos via spread ({...props}) são primitivos de
+  // UI cujo nome chega pelo chamador — fora do alcance do lint estático.
   const hasFieldName = (attributes) => hasName(attributes) || /\bid\s*=|placeholder\s*=|\{\s*\.\.\./.test(attributes);
   for (const file of walk(src)) {
+    // Comentários (// e /* */) podem citar tags de exemplo — não são JSX real.
     const source = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/[^\n]*/g, "$1");
     const relative = file.slice(repoRoot.length + 1).replaceAll("\\", "/");
     for (const match of source.matchAll(/<img\b[^>]*>/g)) if (!/\balt\s*=/.test(match[0])) violations.push({ id: "image-alt", where: relative });
@@ -107,7 +113,17 @@ function runStatic() {
     for (const match of source.matchAll(/<select\b((?:=>|[^>])*?)>/g)) if (!hasFieldName(match[1])) violations.push({ id: "select-name", where: relative });
     for (const match of source.matchAll(/<textarea\b((?:=>|[^>])*?)\/?>/g)) if (!hasFieldName(match[1])) violations.push({ id: "textarea-name", where: relative });
     for (const match of source.matchAll(/<iframe\b((?:=>|[^>])*?)\/?>/g)) if (!/\btitle\s*=/.test(match[1])) violations.push({ id: "iframe-title", where: relative });
+    for (const match of source.matchAll(/<area\b((?:=>|[^>])*?)\/?>/g)) if (!/\balt\s*=/.test(match[1])) violations.push({ id: "area-alt", where: relative });
     for (const match of source.matchAll(/tabIndex\s*=\s*\{?\s*([1-9][0-9]*)\s*\}?/g)) violations.push({ id: "tabindex-positive", where: `${relative} (tabIndex=${match[1]})` });
+    // id literal duplicado no mesmo arquivo (axe: duplicate-id) — leitores de
+    // tela e label htmlFor quebram silenciosamente com ids repetidos.
+    const idCounts = new Map();
+    for (const match of source.matchAll(/\bid\s*=\s*"([^"{}]+)"/g)) idCounts.set(match[1], (idCounts.get(match[1]) ?? 0) + 1);
+    for (const [idValue, count] of idCounts) if (count > 1) violations.push({ id: "duplicate-id", where: `${relative} (id="${idValue}" ×${count})` });
+    // controle interativo escondido de leitores mas focável pelo teclado
+    for (const match of source.matchAll(/<(button|a|input|select|textarea)\b(?:=>|[^>])*?aria-hidden\s*=\s*(?:"true"|\{true\})/g)) violations.push({ id: "aria-hidden-focus", where: `${relative} (<${match[1]}>)` });
+    // alt que é apenas nome de arquivo não descreve a imagem
+    for (const match of source.matchAll(/alt\s*=\s*["'][^"']*\.(?:png|jpe?g|svg|gif|webp)["']/gi)) violations.push({ id: "image-alt-filename", where: relative });
   }
   reportAndExit(violations, "static-lint", { reason: "Chromium não instalado no ambiente" });
 }

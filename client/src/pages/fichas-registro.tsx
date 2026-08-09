@@ -255,7 +255,7 @@ function buildHtml(
       const row = scores[d.domain] ?? { bruto: "—", padronizado: "—" };
       return `<tr>
         <td>${escapeHtml(d.domain)}</td>
-        <td style="color:#555">${escapeHtml(d.description)}</td>
+        <td style="color:var(--doc-muted)">${escapeHtml(d.description)}</td>
         <td style="text-align:center">${escapeHtml(row.bruto || "—")}</td>
         <td style="text-align:center">${escapeHtml(row.padronizado || "—")}</td>
       </tr>`;
@@ -269,23 +269,24 @@ function buildHtml(
   <title>Ficha ${escapeHtml(scale.label)} — ${escapeHtml(patient.nome || "Paciente")}</title>
   <style>
     @page { margin: 2cm; size: A4; }
+    :root { --doc-ink: #1a1a1a; --doc-accent: #6d28d9; --doc-muted: #555; --doc-label: #888; --doc-field-bg: #f8f7ff; --doc-field-border: #e5e7eb; --doc-row-line: #eee; --doc-zebra: #faf9ff; --doc-norm-bg: #f3f0ff; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
-    .header { border-bottom: 3px solid #6d28d9; padding-bottom: 12px; margin-bottom: 16px; }
-    .header h1 { font-size: 15pt; color: #6d28d9; }
-    .header .sub { font-size: 10pt; color: #555; margin-top: 4px; }
+    body { font-family: Arial, sans-serif; font-size: 11pt; color: var(--doc-ink); }
+    .header { border-bottom: 3px solid var(--doc-accent); padding-bottom: 12px; margin-bottom: 16px; }
+    .header h1 { font-size: 15pt; color: var(--doc-accent); }
+    .header .sub { font-size: 10pt; color: var(--doc-muted); margin-top: 4px; }
     .patient-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 16px; font-size: 10pt; }
-    .patient-grid .field { background: #f8f7ff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 10px; }
-    .patient-grid .field .lbl { font-size: 8pt; color: #888; }
+    .patient-grid .field { background: var(--doc-field-bg); border: 1px solid var(--doc-field-border); border-radius: 4px; padding: 6px 10px; }
+    .patient-grid .field .lbl { font-size: 8pt; color: var(--doc-label); }
     .patient-grid .field .val { font-weight: bold; }
     table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 10px; }
-    th { background: #6d28d9; color: white; padding: 6px 10px; text-align: left; }
-    td { padding: 5px 10px; border-bottom: 1px solid #eee; }
-    tr:nth-child(even) { background: #faf9ff; }
-    .norm { background: #f3f0ff; border-left: 4px solid #6d28d9; padding: 8px 12px; margin: 12px 0; font-size: 9pt; }
-    .note { font-size: 9pt; color: #555; margin-top: 8px; font-style: italic; }
-    .footer { margin-top: 24px; border-top: 2px solid #6d28d9; padding-top: 10px; font-size: 9pt; color: #555; text-align: center; }
-    .footer .doc { font-size: 10pt; font-weight: bold; color: #1a1a1a; }
+    th { background: var(--doc-accent); color: white; padding: 6px 10px; text-align: left; }
+    td { padding: 5px 10px; border-bottom: 1px solid var(--doc-row-line); }
+    tr:nth-child(even) { background: var(--doc-zebra); }
+    .norm { background: var(--doc-norm-bg); border-left: 4px solid var(--doc-accent); padding: 8px 12px; margin: 12px 0; font-size: 9pt; }
+    .note { font-size: 9pt; color: var(--doc-muted); margin-top: 8px; font-style: italic; }
+    .footer { margin-top: 24px; border-top: 2px solid var(--doc-accent); padding-top: 10px; font-size: 9pt; color: var(--doc-muted); text-align: center; }
+    .footer .doc { font-size: 10pt; font-weight: bold; color: var(--doc-ink); }
     @media print { body { padding: 0; } }
   </style>
 </head>
