@@ -254,7 +254,6 @@ export default function SdqPage() {
                       />
                       <Label
                         htmlFor={`sdq-q${qIdx}-o${j}`}
-                        aria-pressed={answers[qIdx] === j}
                         className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                           answers[qIdx] === j
                             ? "bg-primary text-primary-foreground border-primary"

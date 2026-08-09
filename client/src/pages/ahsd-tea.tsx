@@ -548,7 +548,7 @@ export default function AhsdTeaPage() {
       {/* Patient info */}
       <Card className="border-card-border">
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold text-foreground">Identificação</h3>
+          <h2 className="text-sm font-bold text-foreground">Identificação</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">

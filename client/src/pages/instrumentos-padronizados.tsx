@@ -76,9 +76,9 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
         {/* Cabeçalho */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="font-display text-[1.05rem] font-bold leading-tight tracking-tight text-foreground">
+            <h2 className="font-display text-[1.05rem] font-bold leading-tight tracking-tight text-foreground">
               {inst.name}
-            </h3>
+            </h2>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{inst.fullName}</p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -124,7 +124,7 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
             ["Restrição profissional", inst.professionalRestriction],
           ] as const).map(([term, desc]) => (
             <div key={term}>
-              <dt className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80">{term}</dt>
+              <dt className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{term}</dt>
               <dd className="mt-0.5 leading-relaxed text-foreground/80">{desc}</dd>
             </div>
           ))}
@@ -134,7 +134,7 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
         <div
           className={`rounded-xl border px-3 py-2 text-[11px] font-semibold leading-snug ${USE_STYLE[inst.neuropediatricUse]}`}
         >
-          <span className="opacity-60">Uso pelo neuropediatra · </span>
+          <span>Uso pelo neuropediatra · </span>
           {NEUROPED_USE_LABEL[inst.neuropediatricUse]}
         </div>
 

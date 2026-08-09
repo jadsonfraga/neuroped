@@ -901,9 +901,9 @@ export default function TestesAcademicosPage() {
         {/* Child info */}
         <Card className="border-card-border">
           <CardContent className="p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">
+            <h2 className="text-sm font-semibold text-foreground">
               Dados da Criança
-            </h3>
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label
@@ -944,9 +944,9 @@ export default function TestesAcademicosPage() {
 
         {/* Age group selection */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">
+          <h2 className="text-sm font-semibold text-foreground">
             Selecione a Faixa Etária
-          </h3>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {(Object.entries(AGE_GROUPS) as [AgeGroup, AgeGroupInfo][]).map(
               ([key, info]) => (

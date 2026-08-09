@@ -254,7 +254,6 @@ export default function ScaredPage() {
                       />
                       <Label
                         htmlFor={`scared-q${i}-o${j}`}
-                        aria-pressed={answers[i] === j}
                         className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                           answers[i] === j
                             ? "bg-primary text-primary-foreground border-primary"

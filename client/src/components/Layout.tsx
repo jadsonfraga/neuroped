@@ -424,7 +424,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         aria-hidden={!isDesktop && !mobileOpen ? true : undefined}
         role={!isDesktop ? "dialog" : undefined}
         aria-modal={!isDesktop && mobileOpen ? true : undefined}
-        aria-label={!isDesktop ? "Menu de navegação" : undefined}
+        aria-label="Menu de navegação"
         className={[
           "print:hidden",
           "fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
@@ -490,7 +490,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }}
             onMouseEnter={() => softHover()}
             data-testid="button-command-palette"
-            aria-label="Buscar escala, teste ou módulo"
+            aria-label={collapsed ? "Buscar escala, teste ou módulo" : undefined}
             className={`flex items-center gap-2 w-full min-h-[40px] rounded-lg border border-sidebar-border bg-sidebar-accent/40 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors ${
               collapsed ? "md:justify-center md:px-0 px-3" : "px-3"
             }`}

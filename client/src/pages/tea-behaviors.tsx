@@ -35,9 +35,9 @@ function ConceptualBase() {
         >
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <h3 className="text-sm font-bold text-blue-800 dark:text-blue-300">
+            <h2 className="text-sm font-bold text-blue-800 dark:text-blue-300">
               Base Conceitual — DSM-5 Critério B
-            </h3>
+            </h2>
           </div>
           {expanded ? (
             <ChevronUp className="w-4 h-4 text-blue-600" />

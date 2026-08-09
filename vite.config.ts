@@ -10,7 +10,12 @@ function serviceWorkerPrecacheManifest() {
   return {
     name: "neuroped-service-worker-precache-manifest",
     apply: "build" as const,
-    async closeBundle() {
+    // `writeBundle` só roda depois que todos os artefatos foram gravados.
+    // Em Vite/Rolldown, `closeBundle` também é chamado ao encerrar uma tentativa
+    // abortada e pode anteceder a criação de `.vite/manifest.json`, tornando o
+    // build intermitente. O precache depende do manifesto e deve falhar apenas
+    // quando um build efetivamente gravado estiver inconsistente.
+    async writeBundle() {
       const manifestPath = path.join(publicOutDir, ".vite", "manifest.json");
       const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Record<
         string,

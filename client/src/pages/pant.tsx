@@ -245,7 +245,7 @@ export default function PantPage() {
             <span className="font-bold">
               {i}: {label}
             </span>
-            <span className="block opacity-80 mt-0.5 leading-snug">
+            <span className="block mt-0.5 leading-snug">
               {pantLevelExamples[i]}
             </span>
           </div>

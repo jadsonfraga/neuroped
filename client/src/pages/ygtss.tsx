@@ -361,6 +361,7 @@ export default function YgtssPage() {
           <div className="flex items-center gap-4">
             <span className="text-xs text-muted-foreground">0</span>
             <Slider
+              aria-label="Comprometimento global por tiques"
               value={[impairment]}
               onValueChange={([v]) =>
                 setDraft((current) => ({ ...current, impairment: v }))

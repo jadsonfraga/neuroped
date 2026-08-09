@@ -17,7 +17,7 @@ const repoRoot = resolve(__dirname, "..");
 const reportPath = resolve(__dirname, "guards/a11y-report.json");
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "guards/baseline.json"), "utf8"));
 const MAX = typeof baseline.axeSeriousCriticalViolations === "number" ? baseline.axeSeriousCriticalViolations : 0;
-const ROUTES = ["/", "/#/filtro", "/#/mchat", "/#/caa", "/#/prontuario"];
+const ROUTES = ["/", "/#/filtro", "/#/mchat", "/#/cars", "/#/espasticidade", "/#/caa", "/#/prontuario"];
 
 function reportAndExit(violations, mode, details = {}) {
   writeFileSync(reportPath, JSON.stringify({ mode, total: violations.length, violations, ...details }, null, 2));
@@ -108,6 +108,7 @@ function runStatic() {
     const relative = file.slice(repoRoot.length + 1).replaceAll("\\", "/");
     for (const match of source.matchAll(/<img\b[^>]*>/g)) if (!/\balt\s*=/.test(match[0])) violations.push({ id: "image-alt", where: relative });
     for (const match of source.matchAll(/<button\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/button>/g)) if (!hasName(match[1])) violations.push({ id: "button-name", where: relative });
+    for (const match of source.matchAll(/<Label\b[^>]*\baria-pressed\s*=/g)) violations.push({ id: "aria-allowed-attr", where: `${relative} (<Label aria-pressed>)` });
     for (const match of source.matchAll(/<a\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/a>/g)) if (!hasName(match[1])) violations.push({ id: "link-name", where: relative });
     for (const match of source.matchAll(/<input\b((?:=>|[^>])*?)\/?>/g)) if (!/type\s*=\s*["']hidden["']/.test(match[1]) && !hasFieldName(match[1])) violations.push({ id: "input-name", where: relative });
     for (const match of source.matchAll(/<select\b((?:=>|[^>])*?)>/g)) if (!hasFieldName(match[1])) violations.push({ id: "select-name", where: relative });
