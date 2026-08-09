@@ -67,7 +67,7 @@ export function InstallPrompt() {
               <Download className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-foreground">Instalar NeuroPed</h3>
+              <h2 className="text-sm font-bold text-foreground">Instalar NeuroPed</h2>
               <p className="text-xs text-muted-foreground">Use como app no seu computador</p>
             </div>
           </div>

@@ -1,85 +1,105 @@
 // @ts-check
-/**
- * audit-lighthouse.mjs — Gate de performance (Bloco 2.2, Consolidação 9.0).
- *
- * Estratégia em camadas:
- *   1. Se `lighthouse` + `chrome-launcher` estiverem instalados E houver Chrome
- *      headless disponível, roda Lighthouse em ROUTES e falha se algum score
- *      < THRESHOLDS. Salva scripts/guards/lighthouse-report.json.
- *   2. Caso contrário (ambiente Windows/CI sem headless — o caso atual),
- *      delega para o FALLBACK sancionado pela spec: scripts/audit-bundle.mjs
- *      (carga inicial gzip <= 250 KB). Nunca trava por indisponibilidade de
- *      browser; trava apenas por regressão real.
- */
-import { execSync } from "node:child_process";
+/** Gate Lighthouse real. Só usa bundle-size como fallback quando Chromium não está instalado. */
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import lighthouse from "lighthouse";
+import desktopConfig from "lighthouse/core/config/desktop-config.js";
+import { launch } from "chrome-launcher";
+import { chromium } from "playwright";
+import {
+  ACCEPTED_FIRST_VISIT_STORAGE,
+  ensureClientBuild,
+  isMissingBrowserError,
+  startStaticServer,
+} from "./lib/browser-audit-runtime.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-let lighthouse = null;
-let chromeLauncher = null;
-try {
-  lighthouse = (await import("lighthouse")).default;
-  chromeLauncher = await import("chrome-launcher");
-} catch {
-  // dependências não instaladas — segue para fallback
-}
-
-function fallback(reason) {
-  console.log(`[lighthouse] ${reason} → usando fallback de bundle size.`);
-  execSync(`node "${resolve(__dirname, "audit-bundle.mjs")}"`, { stdio: "inherit" });
-}
-
-if (!lighthouse || !chromeLauncher) {
-  fallback("Lighthouse/chrome-launcher indisponíveis no ambiente");
-  process.exit(0);
-}
-
-// --- Caminho Lighthouse real (quando disponível) ---
-const THRESHOLDS = { performance: 85, accessibility: 85, "best-practices": 85, seo: 85 };
-const PORT = 4173;
+const repoRoot = resolve(__dirname, "..");
+const baseline = JSON.parse(readFileSync(resolve(__dirname, "guards/baseline.json"), "utf8"));
+const THRESHOLDS = {
+  performance: baseline.lighthousePerformance ?? 90,
+  accessibility: baseline.lighthouseAccessibility ?? 95,
+  "best-practices": baseline.lighthouseBestPractices ?? 95,
+  seo: baseline.lighthouseSeo ?? 95,
+};
 const ROUTES = ["/", "/#/filtro", "/#/mchat"];
 
-let chrome;
-let preview;
-try {
-  preview = execSync; // marcador; preview real abaixo
-  // Sobe `vite preview` em background
-  const { spawn } = await import("node:child_process");
-  const repoRoot = resolve(__dirname, "..");
-  const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], {
-    cwd: repoRoot,
-    stdio: "ignore",
-    shell: true,
-  });
-  await new Promise((r) => setTimeout(r, 4000));
+function fallback(reason) {
+  console.log(`[lighthouse] ${reason} - usando fallback de bundle size.`);
+  execFileSync(process.execPath, [resolve(__dirname, "audit-bundle.mjs")], { stdio: "inherit" });
+}
 
-  chrome = await chromeLauncher.launch({ chromeFlags: ["--headless=new", "--no-sandbox"] });
-  const { writeFileSync } = await import("node:fs");
-  const failures = [];
-  const report = {};
-  for (const route of ROUTES) {
-    const url = `http://localhost:${PORT}/${route.replace(/^\//, "")}`;
-    const res = await lighthouse(url, { port: chrome.port, output: "json", logLevel: "error" });
-    const cats = res.lhr.categories;
-    report[route] = {};
-    for (const key of Object.keys(THRESHOLDS)) {
-      const score = Math.round((cats[key]?.score ?? 0) * 100);
-      report[route][key] = score;
-      if (score < THRESHOLDS[key]) failures.push(`${route} ${key}=${score} < ${THRESHOLDS[key]}`);
+const server = await startStaticServer(ensureClientBuild(repoRoot));
+let chrome;
+try {
+  try {
+    chrome = await launch({
+      chromePath: chromium.executablePath(),
+      chromeFlags: ["--headless=new", "--no-sandbox", "--disable-gpu"],
+    });
+  } catch (error) {
+    if (isMissingBrowserError(error)) {
+      fallback("Chromium indisponível no ambiente");
+      process.exitCode = 0;
+    } else {
+      throw error;
     }
   }
-  writeFileSync(resolve(__dirname, "guards/lighthouse-report.json"), JSON.stringify(report, null, 2));
-  await chrome.kill();
-  server.kill();
-  console.log("[lighthouse] scores:", JSON.stringify(report));
-  if (failures.length) {
-    console.error("[lighthouse] ✗ abaixo do limite:\n  " + failures.join("\n  "));
-    process.exit(1);
+
+  if (chrome) {
+    const cdpBrowser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
+    const seedPage = await cdpBrowser.contexts()[0].newPage();
+    await seedPage.goto(server.origin, { waitUntil: "domcontentloaded" });
+    await seedPage.evaluate((values) => {
+      for (const [key, value] of Object.entries(values)) localStorage.setItem(key, value);
+    }, ACCEPTED_FIRST_VISIT_STORAGE);
+    await seedPage.close();
+    const failures = [];
+    const report = {};
+    for (const route of ROUTES) {
+      const result = await lighthouse(`${server.origin}${route}`, {
+        port: chrome.port,
+        output: "json",
+        logLevel: "error",
+        onlyCategories: Object.keys(THRESHOLDS),
+        disableStorageReset: true,
+      }, desktopConfig);
+      if (!result) throw new Error(`Lighthouse não retornou resultado para ${route}.`);
+      report[route] = {};
+      for (const [category, threshold] of Object.entries(THRESHOLDS)) {
+        const score = Math.round((result.lhr.categories[category]?.score ?? 0) * 100);
+        report[route][category] = score;
+        if (score < threshold) failures.push(`${route} ${category}=${score} < ${threshold}`);
+      }
+      report[route].metrics = {
+        fcpMs: Math.round(result.lhr.audits["first-contentful-paint"]?.numericValue ?? 0),
+        lcpMs: Math.round(result.lhr.audits["largest-contentful-paint"]?.numericValue ?? 0),
+        speedIndexMs: Math.round(result.lhr.audits["speed-index"]?.numericValue ?? 0),
+        tbtMs: Math.round(result.lhr.audits["total-blocking-time"]?.numericValue ?? 0),
+        cls: Number((result.lhr.audits["cumulative-layout-shift"]?.numericValue ?? 0).toFixed(3)),
+      };
+      report[route].layoutShifts = result.lhr.audits["layout-shifts"]?.details?.items ?? [];
+      report[route].failedAudits = Object.values(result.lhr.audits)
+        .filter((audit) => audit.score !== null && audit.score < 1 && audit.scoreDisplayMode !== "notApplicable")
+        .map((audit) => ({ id: audit.id, score: audit.score, title: audit.title }))
+        .slice(0, 30);
+    }
+    writeFileSync(resolve(__dirname, "guards/lighthouse-report.json"), JSON.stringify(report, null, 2));
+    console.log("[lighthouse] scores:", JSON.stringify(report));
+    if (failures.length) {
+      console.error(`[lighthouse] ✗ abaixo do limite:\n  ${failures.join("\n  ")}`);
+      process.exitCode = 1;
+    } else {
+      console.log("[lighthouse] ✓ todas as rotas >= 85.");
+    }
   }
-  console.log("[lighthouse] ✓ todas as rotas >= 85.");
-} catch (e) {
-  if (chrome) try { await chrome.kill(); } catch {}
-  fallback(`Lighthouse falhou (${e?.message ?? e})`);
+} finally {
+  if (chrome) {
+    try { await chrome.kill(); } catch (error) {
+      console.warn(`[lighthouse] aviso ao limpar perfil temporário: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  await server.close();
 }

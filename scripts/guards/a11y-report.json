@@ -1,5 +1,40 @@
 {
-  "modo": "static-lint",
+  "mode": "axe-playwright",
   "total": 0,
-  "violations": []
+  "violations": [],
+  "routes": {
+    "/": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/filtro": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/mchat": {
+      "total": 1,
+      "seriousCritical": 0,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "targets": [
+            "h3"
+          ]
+        }
+      ]
+    },
+    "/#/caa": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/prontuario": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    }
+  }
 }

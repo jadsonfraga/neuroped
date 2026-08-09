@@ -478,6 +478,7 @@ export default function CaaPage() {
               <Button
                 size="sm"
                 variant="outline"
+                aria-label="Ver status de salvamento da prancha"
                 onClick={() => toast({
                   title: storageStatus === "saved" ? "Prancha salva na sessão" : storageStatus === "saving" ? "Salvamento em andamento" : "Prancha não salva",
                   description: storageStatus === "error" ? "Exporte o JSON antes de sair desta tela." : undefined,
@@ -516,25 +517,30 @@ export default function CaaPage() {
               {visibleItems.map(({ item }, i) => {
                 const isFav = favs.includes(symKey(item));
                 return (
-                  <button
+                  <div
                     key={item[1] + i}
-                    onClick={() => tap(item)}
-                    aria-label={"Falar " + item[1]}
-                    className="relative flex min-h-[132px] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-amber-400/30 bg-gradient-to-b from-card to-muted/40 p-3 text-center shadow-sm transition-transform hover:border-primary/50 active:scale-95 sm:min-h-[150px]"
+                    className="relative min-h-[132px] rounded-2xl border-2 border-amber-400/30 bg-gradient-to-b from-card to-muted/40 shadow-sm transition-transform hover:border-primary/50 sm:min-h-[150px]"
                   >
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.stopPropagation(); toggleFav(item); }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleFav(item); } }}
-                      className={`absolute top-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-sm ${isFav ? "text-amber-500" : "text-muted-foreground/60"}`}
+                    <button
+                      type="button"
+                      onClick={() => tap(item)}
+                      aria-label={"Falar " + item[1]}
+                      className="flex min-h-[128px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl p-3 text-center active:scale-95 sm:min-h-[146px]"
                     >
-                      {isFav ? "★" : "☆"}
-                    </span>
-                    <span className="text-5xl leading-none" aria-hidden>{item[0]}</span>
-                    <strong className="text-sm leading-tight text-foreground">{item[1]}</strong>
-                    <small className="text-[10px] text-muted-foreground">toque para ouvir</small>
-                  </button>
+                      <span className="text-5xl leading-none" aria-hidden>{item[0]}</span>
+                      <strong className="text-sm leading-tight text-foreground">{item[1]}</strong>
+                      <small className="text-[10px] text-muted-foreground">toque para ouvir</small>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleFav(item)}
+                      aria-label={`${isFav ? "Remover" : "Adicionar"} ${item[1]} ${isFav ? "dos" : "aos"} favoritos`}
+                      aria-pressed={isFav}
+                      className={`absolute right-1.5 top-1.5 min-h-8 min-w-8 rounded-full px-1.5 py-0.5 text-sm ${isFav ? "text-amber-600" : "text-muted-foreground"}`}
+                    >
+                      <span aria-hidden="true">{isFav ? "★" : "☆"}</span>
+                    </button>
+                  </div>
                 );
               })}
             </div>

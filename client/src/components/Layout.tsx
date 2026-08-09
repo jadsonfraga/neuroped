@@ -457,7 +457,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 NeuroPed
               </h1>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/40 leading-tight mt-0.5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary leading-tight mt-0.5">
                 Neuropediatria
               </p>
             </div>
@@ -625,7 +625,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
             onClick={handleSessionAction}
             data-testid={accessMode === "remote" ? "button-session-exit" : "button-clear-local-data"}
-            aria-label={accessMode === "remote" ? "Encerrar sessão" : "Apagar dados clínicos locais deste navegador"}
+            aria-label={accessMode === "remote" ? "Sair — encerrar sessão" : "Apagar dados locais — dados clínicos deste navegador"}
           >
             {accessMode === "remote" ? <KeyRound className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
             {!collapsed && <span className="ml-2 text-sm">{accessMode === "remote" ? "Sair" : "Apagar dados locais"}</span>}
@@ -644,7 +644,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            {!collapsed && <span className="ml-2 text-xs text-muted-foreground/60">Recolher</span>}
+            {!collapsed && <span className="ml-2 text-xs text-muted-foreground">Recolher</span>}
             {collapsed && <span className="ml-2 text-sm md:hidden">Expandir</span>}
           </Button>
         </div>
@@ -674,10 +674,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
-          {children}
+          <div className="min-h-[calc(100vh-4rem)]">{children}</div>
           {/* Aviso EDUCATIVO global — presente em todas as páginas do app. */}
-          <footer
-            role="contentinfo"
+          <aside
+            role="note"
             aria-label="Aviso de finalidade educativa"
             className="mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3.5 py-3 text-[11px] leading-relaxed text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
           >
@@ -691,7 +691,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.{" "}
               <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
             </span>
-          </footer>
+          </aside>
           {/* Aviso de propriedade / anticópia. */}
           <p className="mt-3 text-center text-[10px] leading-snug text-muted-foreground">
             © 2026 NeuroPed · Dr. Jadson Fraga. Conteúdo proprietário e educativo — cópia, redistribuição ou

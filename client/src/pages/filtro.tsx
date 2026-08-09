@@ -35,8 +35,7 @@ import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { allScales, scales, faixasEtarias, queixas, QUEIXA_COOCORRENCIA, type ScaleEntry } from "@/data/scaleFilter";
-import { interactiveScaleItems } from "@/data/interactiveScaleItems";
-import { interactiveScales } from "@/data/interactiveScales";
+import { INTERACTIVE_SCALE_IDS } from "@/data/interactiveScaleIds.generated";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { buildUploadedReferenceCatalogForApp } from "@/data/uploadedInstrumentFilterBridge";
@@ -91,11 +90,8 @@ function resolveAppRoute(scale: ScaleEntry): string | null {
 
 // ids que renderizam APLICAÇÃO INTERATIVA real em /generic-scale/:id
 // (itens respondíveis + cálculo de escore) — ver generic-scale.tsx. Inclui os
-// dois acervos: itens (interactiveScaleItems) e runner (interactiveScales).
-const INTERACTIVE_SCALE_IDS = new Set([
-  ...Object.keys(interactiveScaleItems),
-  ...Object.keys(interactiveScales),
-]);
+// Manifesto leve gerado dos dois acervos interativos. Importar os objetos
+// completos aqui adicionava quase 2 MB de JavaScript à abertura do filtro.
 
 // Rota dedicada = página implementada de verdade (ex.: /mchat, /asq3), NÃO o
 // catch-all /generic-scale/:id (que pode ser só ficha técnica) nem o catálogo
@@ -1279,7 +1275,7 @@ export default function FiltroPage() {
               className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "complete" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
             >
               <span aria-hidden="true">✅</span> Completas
-              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">preenchíveis</span>
+              <span className="mt-0.5 block text-[10px] font-semibold">preenchíveis</span>
             </button>
             <button
               type="button"
@@ -1289,7 +1285,7 @@ export default function FiltroPage() {
               className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
             >
               <span aria-hidden="true">📚</span> Todas
-              <span className="mt-0.5 block text-[10px] font-semibold opacity-75">inclui fichas</span>
+              <span className="mt-0.5 block text-[10px] font-semibold">inclui fichas</span>
             </button>
           </div>
           <p className="text-[10px] leading-relaxed text-muted-foreground">

@@ -1,0 +1,254 @@
+{
+  "/": {
+    "performance": 96,
+    "accessibility": 100,
+    "best-practices": 96,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 809,
+      "lcpMs": 1300,
+      "speedIndexMs": 848,
+      "tbtMs": 29,
+      "cls": 0.005
+    },
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-2-ASIDE",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
+          "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
+          "boundingRect": {
+            "top": 1362,
+            "bottom": 1442,
+            "left": 276,
+            "right": 1324,
+            "width": 1048,
+            "height": 80
+          },
+          "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
+          "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
+        },
+        "score": 0.003214675477072478
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-3-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1280,
+            "right": 1324,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button aria-label=\"Rever o tour guiado do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
+          "nodeLabel": "Rever o tour guiado do app"
+        },
+        "score": 0.0013051823538590968
+      }
+    ],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.95,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.87,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "errors-in-console",
+        "score": 0,
+        "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "score": 0,
+        "title": "Elements with visible text labels do not have matching accessible names."
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/filtro": {
+    "performance": 99,
+    "accessibility": 100,
+    "best-practices": 96,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 480,
+      "lcpMs": 896,
+      "speedIndexMs": 718,
+      "tbtMs": 60,
+      "cls": 0
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.96,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.87,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "errors-in-console",
+        "score": 0,
+        "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "unsized-images",
+        "score": 0.5,
+        "title": "Image elements do not have explicit `width` and `height`"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "score": 0,
+        "title": "Elements with visible text labels do not have matching accessible names."
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/mchat": {
+    "performance": 100,
+    "accessibility": 98,
+    "best-practices": 96,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 487,
+      "lcpMs": 596,
+      "speedIndexMs": 649,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.99,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.98,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "errors-in-console",
+        "score": 0,
+        "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "heading-order",
+        "score": 0,
+        "title": "Heading elements are not in a sequentially-descending order"
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "score": 0,
+        "title": "Elements with visible text labels do not have matching accessible names."
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  }
+}
