@@ -21,6 +21,11 @@ const THRESHOLDS = {
   "best-practices": baseline.lighthouseBestPractices ?? 95,
   seo: baseline.lighthouseSeo ?? 95,
 };
+const ROUTE_MINIMUMS = baseline.lighthouseRouteMinimums ?? {};
+const METRIC_MAXIMUMS = baseline.lighthouseMetricMaximums ?? {};
+const REQUIRED_PASS_AUDITS = Array.isArray(baseline.lighthouseRequiredPassAudits)
+  ? baseline.lighthouseRequiredPassAudits
+  : [];
 // Cobertura por ARQUÉTIPO de página, não por contagem: medir 3 rotas parecidas
 // esconde o custo das telas de impressão e dos fluxogramas, que são as mais
 // pesadas do app. Cada entrada abaixo representa uma família de telas.
@@ -99,7 +104,10 @@ try {
       for (const [category, threshold] of Object.entries(THRESHOLDS)) {
         const score = Math.round((result.lhr.categories[category]?.score ?? 0) * 100);
         report[route][category] = score;
-        if (score < threshold) failures.push(`${route} ${category}=${score} < ${threshold}`);
+        const routeThreshold = category === "performance"
+          ? Math.max(threshold, Number(ROUTE_MINIMUMS[route] ?? 0))
+          : threshold;
+        if (score < routeThreshold) failures.push(`${route} ${category}=${score} < ${routeThreshold}`);
       }
       report[route].metrics = {
         fcpMs: Math.round(result.lhr.audits["first-contentful-paint"]?.numericValue ?? 0),
@@ -108,6 +116,19 @@ try {
         tbtMs: Math.round(result.lhr.audits["total-blocking-time"]?.numericValue ?? 0),
         cls: Number((result.lhr.audits["cumulative-layout-shift"]?.numericValue ?? 0).toFixed(3)),
       };
+      for (const [metric, maximum] of Object.entries(METRIC_MAXIMUMS)) {
+        const value = report[route].metrics[metric];
+        if (typeof maximum === "number" && typeof value === "number" && value > maximum) {
+          failures.push(`${route} ${metric}=${value} > ${maximum}`);
+        }
+      }
+      report[route].requiredAudits = {};
+      for (const auditId of REQUIRED_PASS_AUDITS) {
+        const audit = result.lhr.audits[auditId];
+        const passed = audit?.score === 1 || audit?.scoreDisplayMode === "notApplicable";
+        report[route].requiredAudits[auditId] = passed;
+        if (!passed) failures.push(`${route} audit obrigatório ${auditId} não passou (score=${audit?.score ?? "ausente"})`);
+      }
       report[route].layoutShifts = result.lhr.audits["layout-shifts"]?.details?.items ?? [];
       report[route].failedAudits = Object.values(result.lhr.audits)
         .filter((audit) => audit.score !== null && audit.score < 1 && audit.scoreDisplayMode !== "notApplicable")

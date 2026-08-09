@@ -20,6 +20,7 @@ jobs:
   filter-spiral:
     name: Filter, scales, aesthetics and lifecycle contracts
     runs-on: ubuntu-latest
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -36,6 +37,15 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
+
+      - name: Install Chromium for real browser gates
+        run: npx playwright install --with-deps chromium
+
+      - name: Audit every navigable route with axe
+        run: npm run audit:a11y:full
+
+      - name: Enforce Lighthouse route and critical-audit contracts
+        run: npm run audit:lighthouse
 
       - name: Audit fillability, routes and visual contracts
         run: npm run audit:filter-fillable

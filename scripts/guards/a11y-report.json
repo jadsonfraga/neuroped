@@ -38,5 +38,6 @@
       "seriousCritical": 0,
       "violations": []
     }
-  }
+  },
+  "allSeverityViolations": []
 }

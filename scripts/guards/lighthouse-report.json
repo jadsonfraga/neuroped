@@ -1,15 +1,20 @@
 {
   "/": {
-    "performance": 98,
+    "performance": 97,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 713,
-      "lcpMs": 1022,
-      "speedIndexMs": 713,
-      "tbtMs": 3,
+      "fcpMs": 755,
+      "lcpMs": 1130,
+      "speedIndexMs": 803,
+      "tbtMs": 24,
       "cls": 0.005
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
     },
     "layoutShifts": [
       {
@@ -19,8 +24,8 @@
           "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
           "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
           "boundingRect": {
-            "top": 1444,
-            "bottom": 1523,
+            "top": 1483,
+            "bottom": 1563,
             "left": 276,
             "right": 1324,
             "width": 1048,
@@ -29,7 +34,7 @@
           "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
           "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
         },
-        "score": 0.003818078095599942
+        "score": 0.00411040548616388
       },
       {
         "node": {
@@ -40,27 +45,32 @@
           "boundingRect": {
             "top": 868,
             "bottom": 916,
-            "left": 1165,
+            "left": 1179,
             "right": 1324,
-            "width": 159,
+            "width": 145,
             "height": 48
           },
           "snippet": "<button aria-label=\"Tour do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
           "nodeLabel": "Tour do app"
         },
-        "score": 0.001586607811896922
+        "score": 0.0013051823538590968
       }
     ],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.97,
+        "score": 0.96,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.94,
+        "score": 0.91,
         "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
       },
       {
         "id": "valid-source-maps",
@@ -105,43 +115,53 @@
     ]
   },
   "/#/filtro": {
-    "performance": 97,
+    "performance": 94,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 797,
-      "lcpMs": 1207,
-      "speedIndexMs": 869,
-      "tbtMs": 19,
+      "fcpMs": 867,
+      "lcpMs": 1411,
+      "speedIndexMs": 921,
+      "tbtMs": 82,
       "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
     },
     "layoutShifts": [],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.95,
+        "score": 0.92,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.89,
+        "score": 0.83,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "speed-index",
-        "score": 0.99,
+        "score": 0.98,
         "title": "Speed Index"
       },
       {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
+        "id": "total-blocking-time",
+        "score": 0.98,
+        "title": "Total Blocking Time"
       },
       {
-        "id": "mainthread-work-breakdown",
-        "score": 0.5,
-        "title": "Minimize main-thread work"
+        "id": "max-potential-fid",
+        "score": 0.98,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "interactive",
+        "score": 0.99,
+        "title": "Time to Interactive"
       },
       {
         "id": "valid-source-maps",
@@ -150,7 +170,7 @@
       },
       {
         "id": "unused-css-rules",
-        "score": 0,
+        "score": 0.5,
         "title": "Reduce unused CSS"
       },
       {
@@ -186,401 +206,42 @@
     ]
   },
   "/#/mchat": {
-    "performance": 100,
+    "performance": 96,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 371,
-      "lcpMs": 457,
-      "speedIndexMs": 462,
-      "tbtMs": 0,
+      "fcpMs": 832,
+      "lcpMs": 1269,
+      "speedIndexMs": 832,
+      "tbtMs": 37,
       "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
     },
     "layoutShifts": [],
     "failedAudits": [
       {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
+        "id": "first-contentful-paint",
+        "score": 0.94,
+        "title": "First Contentful Paint"
       },
       {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
+        "id": "largest-contentful-paint",
+        "score": 0.88,
+        "title": "Largest Contentful Paint"
       },
       {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
       },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/cars": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 309,
-      "lcpMs": 351,
-      "speedIndexMs": 368,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/vineland": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 306,
-      "lcpMs": 337,
-      "speedIndexMs": 336,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/cbcl": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 335,
-      "lcpMs": 397,
-      "speedIndexMs": 381,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/caa": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 310,
-      "lcpMs": 346,
-      "speedIndexMs": 369,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/espasticidade": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 306,
-      "lcpMs": 351,
-      "speedIndexMs": 360,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/prontuario": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 266,
-      "lcpMs": 339,
-      "speedIndexMs": 320,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/fluxograma": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 313,
-      "lcpMs": 360,
-      "speedIndexMs": 381,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/laudo-neuroped": {
-    "performance": 100,
-    "accessibility": 95,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 328,
-      "lcpMs": 364,
-      "speedIndexMs": 370,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label",
-        "score": 0,
-        "title": "Form elements do not have associated labels"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0.5,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/receita-c1": {
-    "performance": 100,
-    "accessibility": 95,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 360,
-      "lcpMs": 424,
-      "speedIndexMs": 596,
-      "tbtMs": 7,
-      "cls": 0
-    },
-    "layoutShifts": [],
-    "failedAudits": [
       {
         "id": "max-potential-fid",
-        "score": 0.98,
+        "score": 0.99,
         "title": "Max Potential First Input Delay"
       },
       {
@@ -589,9 +250,14 @@
         "title": "Missing source maps for large first-party JavaScript"
       },
       {
-        "id": "label",
+        "id": "unused-css-rules",
         "score": 0,
-        "title": "Form elements do not have associated labels"
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
       },
       {
         "id": "bf-cache",
@@ -610,7 +276,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
