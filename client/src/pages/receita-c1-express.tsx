@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Pill,
   FileSignature,
@@ -270,9 +270,26 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawLine({ start: { x: m + 40, y: tableY - 39 }, end: { x: A5.w - m - 6, y: tableY - 39 }, thickness: 0.3, color: line, dashArray: [2, 2] });
     drawFitted(page, `Quantidade: ${f.quantidade || "-"}${f.quantidadeExtenso ? ` (${f.quantidadeExtenso})` : ""}`, m + 40, tableY - 52, contentW - 52, 6.8, helv);
     let iy = tableY - 67;
-    for (const ln of wrap(`Instrucoes: ${f.instrucoes || "-"}`, contentW - 52, 6.4, helv).slice(0, 10)) {
+    // O corte era `.slice(0, 10)` fixo — bem abaixo da capacidade real do
+    // quadro Rx (~30 linhas) e SEM qualquer aviso, ao contrário de drawFitted()
+    // (ver comentário acima: "nunca corte silencioso do medicamento/quantidade").
+    // Numa receita de controle especial, omitir parte da posologia sem marca
+    // visível pode levar a erro de dose. Agora o limite reflete o espaço real
+    // do quadro e, se ainda assim faltar espaço, a última linha é substituída
+    // por um aviso visível — nunca um corte mudo.
+    const iyMinPosologia = rxY + 6;
+    const linhasPosologia = wrap(`Instrucoes: ${f.instrucoes || "-"}`, contentW - 52, 6.4, helv);
+    const maxLinhasPosologia = Math.max(1, Math.floor((iy - iyMinPosologia) / 9) + 1);
+    const posologiaTruncada = linhasPosologia.length > maxLinhasPosologia;
+    const linhasPosologiaVisiveis = posologiaTruncada
+      ? linhasPosologia.slice(0, Math.max(0, maxLinhasPosologia - 1))
+      : linhasPosologia;
+    for (const ln of linhasPosologiaVisiveis) {
       page.drawText(ln || " ", { x: m + 40, y: iy, size: 6.4, font: helv, color: ink });
       iy -= 9;
+    }
+    if (posologiaTruncada) {
+      page.drawText("[posologia truncada - revise o registro completo antes de dispensar]", { x: m + 40, y: iy, size: 5.6, font: bold, color: bordo });
     }
 
     page.drawLine({ start: { x: m, y: 120 }, end: { x: A5.w - m, y: 120 }, thickness: 0.4, color: line });
@@ -465,6 +482,10 @@ export default function ReceitaC1ExpressPage() {
   const [certInfo, setCertInfo] = useState<{ commonName: string; notAfter: Date } | null>(null);
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  // Trava contra corrida: trocar o arquivo antes do arrayBuffer() anterior
+  // resolver deixa duas leituras assíncronas em paralelo; sem isso, o
+  // certificado que acaba assinando pode não ser o último selecionado.
+  const p12LoadIdRef = useRef(0);
 
   const [busy, setBusy] = useState<"" | "sign" | "plain" | "verify">("");
   const [error, setError] = useState("");
@@ -496,7 +517,9 @@ export default function ReceitaC1ExpressPage() {
   async function onUploadP12(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    const loadId = ++p12LoadIdRef.current;
     const ab = await f.arrayBuffer();
+    if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
     setP12(ab);
     setCertStatus("ready");
     setShowUpload(false);

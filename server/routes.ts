@@ -315,20 +315,12 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/results", requireAuth, (_req, res) => {
-    const rows = storage.getResults();
-    const accessible = isAdmin(_req.user!)
-      ? rows
-      : rows.filter((result) => {
-          const patient = result.patientId
-            ? db
-                .select()
-                .from(patients)
-                .where(eq(patients.id, result.patientId))
-                .get()
-            : null;
-          return canAccessScaleResult(_req.user!, result, patient);
-        });
+  app.get("/api/results", requireAuth, (req, res) => {
+    // Antes: getResults() trazia a tabela INTEIRA para memória e, por linha,
+    // disparava uma query síncrona extra para checar dono do paciente (N+1) —
+    // sem LIMIT, degradava linearmente com o crescimento da tabela. Agora o
+    // filtro de ownership e o LIMIT vivem na própria query (getResultsAccessibleBy).
+    const accessible = storage.getResultsAccessibleBy(req.user!);
     return res.json(accessible.map(presentScaleResponseRecord));
   });
 
@@ -524,10 +516,27 @@ export async function registerRoutes(
           html: parsed.isHtml ? parsed.body : undefined,
           replyTo: req.user!.email,
         });
+        // Este endpoint deixa qualquer profissional (não só admin) mandar HTML
+        // livre para QUALQUER e-mail externo usando o SMTP da clínica — uso
+        // indevido pareceria relay de spam/phishing. `redactSensitive` apaga a
+        // chave "recipient" de todo log de auditoria (política de minimização
+        // de PII), então investigar abuso era impossível mesmo para um admin.
+        // Gravamos aqui um traço que não é a chave redigida, mascarado o
+        // bastante para não ser o e-mail em si, mas suficiente para apoiar
+        // investigação (dominio + iniciais) e correlacionar envios repetidos.
+        const [localPart, domainPart] = recipient.split("@");
+        const recipientMasked = domainPart
+          ? `${localPart.slice(0, 2)}***@${domainPart}`
+          : "***";
         await logAudit({
           eventType: "lgpd.access",
           context: ctx,
-          metadata: { action: "send_report", recipient },
+          metadata: {
+            action: "send_report",
+            recipientMasked,
+            recipientDomain: domainPart ?? "",
+            isCustomRecipient: Boolean(parsed.to),
+          },
         });
         return res.json({ ok: true, messageId: result.messageId });
       } catch (e: any) {

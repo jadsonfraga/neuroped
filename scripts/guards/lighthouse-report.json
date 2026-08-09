@@ -8,7 +8,7 @@
       "fcpMs": 719,
       "lcpMs": 1030,
       "speedIndexMs": 719,
-      "tbtMs": 4,
+      "tbtMs": 3,
       "cls": 0.005
     },
     "requiredAudits": {
@@ -115,10 +115,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 799,
-      "lcpMs": 1231,
-      "speedIndexMs": 799,
-      "tbtMs": 20,
+      "fcpMs": 793,
+      "lcpMs": 1205,
+      "speedIndexMs": 793,
+      "tbtMs": 24,
       "cls": 0
     },
     "requiredAudits": {
@@ -191,9 +191,80 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 759,
-      "lcpMs": 1141,
-      "speedIndexMs": 759,
+      "fcpMs": 755,
+      "lcpMs": 1161,
+      "speedIndexMs": 755,
+      "tbtMs": 19,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.96,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.91,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/cars": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 772,
+      "lcpMs": 1131,
+      "speedIndexMs": 772,
       "tbtMs": 11,
       "cls": 0
     },
@@ -256,87 +327,16 @@
       }
     ]
   },
-  "/#/cars": {
-    "performance": 98,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 770,
-      "lcpMs": 1124,
-      "speedIndexMs": 770,
-      "tbtMs": 7,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "first-contentful-paint",
-        "score": 0.96,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.92,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
-      },
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "unused-css-rules",
-        "score": 0,
-        "title": "Reduce unused CSS"
-      },
-      {
-        "id": "unused-javascript",
-        "score": 0,
-        "title": "Reduce unused JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
   "/#/vineland": {
     "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 693,
-      "lcpMs": 1005,
-      "speedIndexMs": 693,
-      "tbtMs": 5,
+      "fcpMs": 722,
+      "lcpMs": 1020,
+      "speedIndexMs": 722,
+      "tbtMs": 10,
       "cls": 0
     },
     "requiredAudits": {
@@ -348,7 +348,7 @@
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.98,
+        "score": 0.97,
         "title": "First Contentful Paint"
       },
       {
@@ -388,7 +388,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
@@ -399,10 +399,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 799,
-      "lcpMs": 1223,
-      "speedIndexMs": 799,
-      "tbtMs": 14,
+      "fcpMs": 802,
+      "lcpMs": 1184,
+      "speedIndexMs": 802,
+      "tbtMs": 10,
       "cls": 0
     },
     "requiredAudits": {
@@ -419,7 +419,7 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.89,
+        "score": 0.9,
         "title": "Largest Contentful Paint"
       },
       {
@@ -470,10 +470,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 707,
-      "lcpMs": 998,
-      "speedIndexMs": 707,
-      "tbtMs": 4,
+      "fcpMs": 726,
+      "lcpMs": 1030,
+      "speedIndexMs": 726,
+      "tbtMs": 12,
       "cls": 0
     },
     "requiredAudits": {
@@ -536,10 +536,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 756,
-      "lcpMs": 1092,
-      "speedIndexMs": 756,
-      "tbtMs": 7,
+      "fcpMs": 758,
+      "lcpMs": 1096,
+      "speedIndexMs": 758,
+      "tbtMs": 8,
       "cls": 0
     },
     "requiredAudits": {
@@ -602,15 +602,15 @@
     ]
   },
   "/#/prontuario": {
-    "performance": 98,
+    "performance": 97,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 747,
-      "lcpMs": 1038,
-      "speedIndexMs": 747,
-      "tbtMs": 2,
+      "fcpMs": 777,
+      "lcpMs": 1136,
+      "speedIndexMs": 777,
+      "tbtMs": 6,
       "cls": 0
     },
     "requiredAudits": {
@@ -627,7 +627,7 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.94,
+        "score": 0.91,
         "title": "Largest Contentful Paint"
       },
       {
@@ -678,10 +678,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 722,
-      "lcpMs": 954,
-      "speedIndexMs": 722,
-      "tbtMs": 5,
+      "fcpMs": 698,
+      "lcpMs": 970,
+      "speedIndexMs": 698,
+      "tbtMs": 3,
       "cls": 0
     },
     "requiredAudits": {
@@ -733,7 +733,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
@@ -744,10 +744,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 724,
-      "lcpMs": 1021,
-      "speedIndexMs": 724,
-      "tbtMs": 5,
+      "fcpMs": 717,
+      "lcpMs": 1012,
+      "speedIndexMs": 717,
+      "tbtMs": 6,
       "cls": 0
     },
     "requiredAudits": {
@@ -810,10 +810,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 790,
-      "lcpMs": 1151,
-      "speedIndexMs": 790,
-      "tbtMs": 5,
+      "fcpMs": 796,
+      "lcpMs": 1161,
+      "speedIndexMs": 796,
+      "tbtMs": 6,
       "cls": 0
     },
     "requiredAudits": {

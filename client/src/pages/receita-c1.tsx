@@ -202,9 +202,26 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
     page.drawLine({ start: { x: m + 40, y: tableY - 39 }, end: { x: A5.w - m - 6, y: tableY - 39 }, thickness: 0.3, color: line, dashArray: [2, 2] });
     drawFitted(page, `Quantidade: ${f.qtd || "-"}${f.qtde ? ` (${f.qtde})` : ""}`, m + 40, tableY - 52, contentW - 52, 6.8, helv);
     let iy = tableY - 67;
-    for (const ln of wrap(`Instrucoes: ${f.poso || "-"}`, contentW - 52, 6.4, helv).slice(0, 10)) {
+    // O corte era `.slice(0, 10)` fixo — bem abaixo da capacidade real do
+    // quadro Rx (~30 linhas) e SEM qualquer aviso, ao contrário de drawFitted()
+    // (ver comentário acima: "nunca corte silencioso do medicamento/quantidade").
+    // Numa receita de controle especial, omitir parte da posologia sem marca
+    // visível pode levar a erro de dose. Agora o limite reflete o espaço real
+    // do quadro e, se ainda assim faltar espaço, a última linha é substituída
+    // por um aviso visível — nunca um corte mudo.
+    const iyMinPosologia = rxY + 6;
+    const linhasPosologia = wrap(`Instrucoes: ${f.poso || "-"}`, contentW - 52, 6.4, helv);
+    const maxLinhasPosologia = Math.max(1, Math.floor((iy - iyMinPosologia) / 9) + 1);
+    const posologiaTruncada = linhasPosologia.length > maxLinhasPosologia;
+    const linhasPosologiaVisiveis = posologiaTruncada
+      ? linhasPosologia.slice(0, Math.max(0, maxLinhasPosologia - 1))
+      : linhasPosologia;
+    for (const ln of linhasPosologiaVisiveis) {
       page.drawText(ln || " ", { x: m + 40, y: iy, size: 6.4, font: helv, color: ink });
       iy -= 9;
+    }
+    if (posologiaTruncada) {
+      page.drawText("[posologia truncada - revise o registro completo antes de dispensar]", { x: m + 40, y: iy, size: 5.6, font: bold, color: bordo });
     }
 
     page.drawLine({ start: { x: m, y: 120 }, end: { x: A5.w - m, y: 120 }, thickness: 0.4, color: line });

@@ -149,15 +149,27 @@ class SignatureService {
    * Alternativa quando bibliotecas node não estão disponíveis
    */
   async assinarComOpenSSL(documentPath, outputPath) {
-    const { exec } = require('child_process');
+    const { execFile } = require('child_process');
     const util = require('util');
-    const execPromise = util.promisify(exec);
+    const execFilePromise = util.promisify(execFile);
 
     try {
-      // Comando OpenSSL para assinar
-      const comando = `openssl smime -sign -in "${documentPath}" -out "${outputPath}" -signer "${this.certPath}" -inkey "${this.certPath}" -password pass:"${this.senha}" -binary -outform DER`;
-
-      await execPromise(comando);
+      // Antes montava o comando como uma STRING interpolada e rodava via
+      // `exec` (invoca um shell) — documentPath/outputPath/certPath/senha
+      // vindo direto pra dentro de aspas duplas sem escapar. Qualquer um
+      // desses contendo `"`, `` ` ``, `$(...)` etc. é injeção de comando
+      // classica. `execFile` com array de argumentos não invoca shell algum:
+      // cada elemento chega ao processo `openssl` como argv literal, nunca
+      // interpretado por um interpretador de comandos.
+      await execFilePromise('openssl', [
+        'smime', '-sign',
+        '-in', documentPath,
+        '-out', outputPath,
+        '-signer', this.certPath,
+        '-inkey', this.certPath,
+        '-password', `pass:${this.senha}`,
+        '-binary', '-outform', 'DER',
+      ]);
       return { sucesso: true, arquivo: outputPath };
     } catch (error) {
       throw new Error(`Erro na assinatura OpenSSL: ${error.message}`);

@@ -338,7 +338,13 @@ export const scales: ScaleEntry[] = [
   { id: "ygtss", name: "YGTSS", fullName: "Yale Global Tic Severity Scale", ageMin: 36, ageMax: 216, queixas: ["tiques"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "15–20 min", signalTags: ["tiques motores", "tiques vocais", "frequência", "intensidade", "interferência"], appRoute: "/ygtss", description: "Tiques motores e vocais: número, frequência, intensidade, complexidade e interferência." },
 
   // ===== EFEITOS COLATERAIS =====
-  { id: "aims-efeitos", name: "AIMS", fullName: "Abnormal Involuntary Movement Scale", ageMin: 0, ageMax: 216, queixas: ["efeitos"], respondente: ["clinico"], prioridade: "monitorizacao", tempo: "10 min", description: "12 itens avaliando movimentos involuntários — discinesia tardia.", appRoute: "/generic-scale/aims-efeitos"},
+  // name era "AIMS", igual ao id "aims" (Alberta Infant Motor Scale) linha ~205.
+  // dedupeCatalog funde por nome normalizado além de por id — as duas escalas,
+  // apesar de id diferente, colidiam e esta (Abnormal Involuntary Movement
+  // Scale, rastreio de discinesia tardia) era descartada silenciosamente,
+  // sumindo por completo da categoria "Efeitos Colaterais". "AIMS-DT" mantém a
+  // sigla reconhecível e desambigua da escala motora de lactentes.
+  { id: "aims-efeitos", name: "AIMS-DT", fullName: "Abnormal Involuntary Movement Scale (AIMS)", ageMin: 0, ageMax: 216, queixas: ["efeitos"], respondente: ["clinico"], prioridade: "monitorizacao", tempo: "10 min", description: "12 itens avaliando movimentos involuntários — discinesia tardia.", fonte: "Guy W, 1976 (ECDEU Assessment Manual, NIMH — manual não indexado no PubMed); convenções de aplicação: Munetz MR, Benjamin S, 1988 — Hosp Community Psychiatry 39(11):1172-7. PMID 2906320 · doi:10.1176/ps.39.11.1172", appRoute: "/generic-scale/aims-efeitos"},
   { id: "bars", name: "BARS", fullName: "Barnes Akathisia Rating Scale", ageMin: 0, ageMax: 216, queixas: ["efeitos"], respondente: ["clinico"], prioridade: "monitorizacao", tempo: "5 min", description: "4 itens de avaliação global e objetiva de acatisia.", signalTags: ["acatisia", "inquietação", "movimento", "efeito colateral"], appRoute: "/generic-scale/bars"},
   { id: "uku", name: "UKU", fullName: "UKU Side Effect Rating Scale", ageMin: 0, ageMax: 216, queixas: ["efeitos"], respondente: ["clinico"], prioridade: "monitorizacao", tempo: "15 min", description: "48 itens de efeitos colaterais psiquiátricos, neurológicos, autonômicos e outros.", signalTags: ["efeitos colaterais", "sintomas psíquicos", "sintomas neurológicos", "autonômicos"], appRoute: "/generic-scale/uku"},
 
@@ -352,7 +358,13 @@ export const scales: ScaleEntry[] = [
   { id: "pdae", name: "PDAE", fullName: "Protocolo de Desempenho Acadêmico e Escolar", ageMin: 72, ageMax: 216, queixas: ["aprendizagem"], respondente: ["professor", "pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/pdae", description: "Desempenho acadêmico e escolar — Bateria Dr. Jadson.", implementationStatus: "complete" },
   { id: "ecsm", name: "ECSM", fullName: "Escala de Cognição Social e Mentalização", ageMin: 48, ageMax: 216, queixas: ["tea", "cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/ecsm", description: "Cognição social e metacognição — Bateria Dr. Jadson." },
   { id: "ips", name: "IPS", fullName: "Inventário de Processamento Sensorial", ageMin: 24, ageMax: 144, queixas: ["tea", "atraso"], respondente: ["pais"], prioridade: "triagem", tempo: "10 min", appRoute: "/ips", description: "Processamento sensorial — Bateria Dr. Jadson." },
-  { id: "edi", name: "EDI-NEXUS", fullName: "Escala de Depressão Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["depressao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", signalTags: ["restrição alimentar", "imagem corporal", "compulsão", "perfeccionismo", "controle de peso"], appRoute: "/edi", description: "24 itens de depressão infantil — Bateria de Regulação Emocional." },
+  // signalTags removidos: eram de transtorno alimentar (restrição, imagem
+  // corporal, compulsão, controle de peso — conteúdo do SCOFF/Eating Disorder
+  // Inventory, não desta escala), provavelmente por confusão com a sigla "EDI"
+  // de outro instrumento. Nenhuma escala irmã desta bateria (eai/easi/ems/
+  // etare/eaah) tem signalTags; essas tags faziam o motor de sintomas
+  // recomendar uma escala de DEPRESSÃO infantil para queixas de alimentação.
+  { id: "edi", name: "EDI-NEXUS", fullName: "Escala de Depressão Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["depressao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/edi", description: "24 itens de depressão infantil — Bateria de Regulação Emocional." },
   { id: "eai", name: "EAI-NEXUS", fullName: "Escala de Ansiedade Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["ansiedade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/eai", description: "20 itens de ansiedade infantil — Bateria de Regulação Emocional." },
   { id: "easi", name: "EASI-NEXUS", fullName: "Escala de Ansiedade Social Infantil — Bateria Dr. Jadson", ageMin: 48, ageMax: 216, queixas: ["ansiedade"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/easi", description: "15 itens de ansiedade social infantil — Bateria de Regulação Emocional." },
   { id: "ems", name: "EMS-NEXUS", fullName: "Escala de Mutismo Seletivo — Bateria Dr. Jadson", ageMin: 24, ageMax: 144, queixas: ["ansiedade", "linguagem"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "10 min", appRoute: "/ems", description: "15 itens de mutismo seletivo — Bateria de Regulação Emocional." },

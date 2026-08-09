@@ -84,7 +84,18 @@ function certMatchesPrivateKey(cert: forge.pki.Certificate, privateKey: forge.pk
 
 function orderCertChain(privateKey: forge.pki.rsa.PrivateKey, certs: forge.pki.Certificate[]): forge.pki.Certificate[] {
   const signingCertIndex = certs.findIndex((cert) => certMatchesPrivateKey(cert, privateKey));
-  if (signingCertIndex <= 0) return certs;
+  // findIndex retorna -1 quando NENHUM certificado do .p12 corresponde à chave
+  // privada — `<= 0` tratava esse caso igual a "já está na posição 0" (nada a
+  // reordenar). Nesses dois casos bem diferentes, `certs[0]` seguia em frente
+  // como se fosse o certificado do titular: readP12Info/getCertDisplayInfo
+  // exibiam nome/validade de um certificado ARBITRÁRIO (ex.: uma AC
+  // intermediária) ao clínico, enquanto o assinador real (@signpdf) pode
+  // escolher outro certificado internamente — o titular mostrado na tela podia
+  // não ser o que efetivamente assinou o documento.
+  if (signingCertIndex === -1) {
+    throw new Error("Nenhum certificado do arquivo .p12/.pfx corresponde à chave privada encontrada. Verifique se o arquivo não está corrompido.");
+  }
+  if (signingCertIndex === 0) return certs;
   const signingCert = certs[signingCertIndex];
   return [signingCert, ...certs.slice(0, signingCertIndex), ...certs.slice(signingCertIndex + 1)];
 }

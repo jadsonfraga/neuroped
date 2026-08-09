@@ -22,11 +22,21 @@ function clean(value: unknown, fallback: string): string {
  * Remove apenas a codificação usada para cálculo quando ela vem anexada a uma
  * resposta descritiva ("Nunca (0)", "2 — Sempre"). Números que fazem parte da
  * resposta — frequência, medida, idade ou texto livre — permanecem intactos.
+ *
+ * O separador do prefixo é restrito a travessão (— / –), NUNCA hífen simples.
+ * Todo rótulo Likert real do catálogo usa travessão ("0 — Ausente...",
+ * "2 — Sempre" — ver cdi2Labels, interactiveScaleItemsDrive2026Base.ts etc.);
+ * nenhum usa hífen. Um hífen depois de número quase sempre é conteúdo real da
+ * resposta ("2 - vezes por semana", "3 - meses de idade"), não um código de
+ * Likert. Antes o traço aceitava as duas formas — [—–-] — e cortava também
+ * essas respostas descritivas legítimas, corrompendo silenciosamente o
+ * "REGISTRO INTEGRAL DE RESPOSTAS", que existe justamente para ser fiel ao
+ * que foi respondido.
  */
 export function formatScaleResponseAnswer(value: unknown): string {
   const answer = clean(value, "Não respondida");
   const withoutLeadingCode = answer.replace(
-    /^[-+−]?\d+(?:[.,]\d+)?\s*[—–-]\s*(?=\p{L})/u,
+    /^[-+−]?\d+(?:[.,]\d+)?\s*[—–]\s*(?=\p{L})/u,
     "",
   );
   return withoutLeadingCode.replace(

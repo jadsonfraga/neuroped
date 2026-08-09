@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ShieldCheck,
   FileSignature,
@@ -39,6 +39,12 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   const uid = useId();
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [p12Name, setP12Name] = useState("");
+  // Se o usuário trocar o arquivo .p12 antes do arrayBuffer() anterior resolver,
+  // as duas leituras assíncronas correm em paralelo; sem esta trava, a que
+  // resolve por último "vence" o setP12 independente de qual foi selecionada
+  // por último — a UI podia mostrar o nome do certificado B enquanto os bytes
+  // carregados (usados para assinar) eram do certificado A.
+  const p12LoadIdRef = useRef(0);
   const [senha, setSenha] = useState("");
   const [cert, setCert] = useState<{ commonName: string; notAfter: Date; issuer: string } | null>(null);
   const [busy, setBusy] = useState<"" | "verify" | "sign" | "plain" | "save">("");
@@ -68,8 +74,11 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     setErro(""); setOkMsg(""); setCert(null);
     const f = e.target.files?.[0];
     if (!f) return;
+    const loadId = ++p12LoadIdRef.current;
     setP12Name(f.name);
-    setP12(await f.arrayBuffer());
+    const bytes = await f.arrayBuffer();
+    if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
+    setP12(bytes);
   }
 
   async function verificar() {

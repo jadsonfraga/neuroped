@@ -95,8 +95,16 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
   let page: PDFPage = pdf.addPage([A4.w, A4.h]);
   let y = A4.h - M;
 
+  // O piso de M+130 era fixo, calibrado para um rodapé de até ~4 linhas (o
+  // rodapé cresce para CIMA a partir de uma base fixa: topo em
+  // M+104+linhas*9). Um rodapé mais longo — ex.: o DISCLAIMER de
+  // filterExport.ts, ~400 caracteres a 7.5pt/495pt, pode quebrar em 5+ linhas
+  // — ultrapassava esse piso e sobrepunha a última linha do corpo na página
+  // final. O piso agora reflete a altura REAL do rodapé desta chamada.
+  const footerLineCount = spec.footer ? wrap(spec.footer, font, 7.5, maxW).length : 0;
+  const bottomReserve = Math.max(130, 104 + footerLineCount * 9 + 13);
   const ensure = (need: number) => {
-    if (y - need < M + 130) {
+    if (y - need < M + bottomReserve) {
       page = pdf.addPage([A4.w, A4.h]);
       y = A4.h - M;
     }
@@ -105,11 +113,17 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
     page.drawText(s, { x: M, y, size, font: f, color });
   };
 
-  // Cabeçalho
-  text(spec.title, bold, 16);
-  y -= 20;
-  if (spec.subtitle) { text(spec.subtitle, font, 10, rgb(0.35, 0.35, 0.4)); y -= 14; }
-  for (const c of spec.credentials) { text(c, font, 9, rgb(0.3, 0.3, 0.35)); y -= 11; }
+  // Cabeçalho — antes desenhado com drawText direto, sem wrap(): um nome de
+  // profissional com credenciais compostas (múltiplos CRMs/RQEs) ou um título
+  // longo podia ultrapassar a largura útil (maxW) e sair cortado na borda
+  // física da página ao imprimir, sem erro nem indicação.
+  for (const ln of wrap(spec.title, bold, 16, maxW)) { text(ln, bold, 16); y -= 20; }
+  if (spec.subtitle) {
+    for (const ln of wrap(spec.subtitle, font, 10, maxW)) { text(ln, font, 10, rgb(0.35, 0.35, 0.4)); y -= 14; }
+  }
+  for (const c of spec.credentials) {
+    for (const ln of wrap(c, font, 9, maxW)) { text(ln, font, 9, rgb(0.3, 0.3, 0.35)); y -= 11; }
+  }
   y -= 4;
   page.drawLine({ start: { x: M, y }, end: { x: A4.w - M, y }, thickness: 1, color: rgb(0.8, 0.6, 0.2) });
   y -= 18;

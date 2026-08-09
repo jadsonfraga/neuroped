@@ -57,7 +57,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
-      "Pontuação total possível: 0 a 300 pontos (100 itens de 0 a 3); opção adicional NA = não aplicável ou sem informação suficiente. As faixas (bands) referem-se à MÉDIA GLOBAL dos itens respondidos (soma dos pontos / número de itens válidos), não ao escore bruto total. Interpretação por domínio: média ≥ 1,0 = área clinicamente relevante; ≥ 1,5 = prioridade clínica; ≥ 2,0 = alto impacto funcional. Itens críticos com pontuação 3 exigem atenção prioritária: item 6 (perda de habilidades), 56 (agressão física/destruição), 73 (suspeita de apneia do sono), 81–86 (eventos paroxísticos/regressão/possível…",
+      "Pontuação total possível: 0 a 300 pontos (100 itens de 0 a 3; a aplicação interativa deste app não tem opção separada de \"não aplicável\" — usar \"Ausente\" e registrar a ressalva em comentário clínico). As faixas (bands) referem-se à MÉDIA GLOBAL dos itens respondidos (soma dos pontos / número de itens válidos), não ao escore bruto total. Interpretação por domínio: média ≥ 1,0 = área clinicamente relevante; ≥ 1,5 = prioridade clínica; ≥ 2,0 = alto impacto funcional. Itens críticos com pontuação 3 exigem atenção prioritária: item 6 (perda de habilidades), 56 (agressão física/destruição), 73 (suspeita de apneia do sono), 81–86 (eventos paroxísticos/regressão/possível…",
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     implementationStatus: "complete",
@@ -277,7 +277,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
     licencaUso: "autoral",
     validacaoBrasil: "Autoral — experimental, sem validação psicométrica publicada",
     scoringCutoff:
-      "Cada item pontua 0–3; há opção N/A quando a criança ainda não teve oportunidade real de aprender a habilidade. Subtotais máximos: A 36, B 30, C 30, D 30, E 30, F 24, G bruto 30. Regra do impacto: o Domínio G tem peso dobrado (subtotal bruto × 2 = até 60 pontos) por medir prejuízo real na vida escolar, emocional, familiar e social. TOTAL GERAL máximo = 240 pontos. As faixas de classificação (bands) referem-se ao ESCORE PERCENTUAL, não ao escore bruto: escore percentual = pontuação obtida / pontuação máxima aplicável × 100 (usar essa fórmula quando houver itens N/A); minScore/maxScore das bands…",
+      "Cada item pontua 0–3; o documento original prevê N/A quando a criança ainda não teve oportunidade real de aprender a habilidade, mas a aplicação interativa deste app não tem essa opção separada — usar a primeira opção e registrar a ressalva em comentário clínico. Subtotais máximos: A 36, B 30, C 30, D 30, E 30, F 24, G bruto 30. Regra do impacto: o Domínio G tem peso dobrado (subtotal bruto × 2 = até 60 pontos) por medir prejuízo real na vida escolar, emocional, familiar e social. TOTAL GERAL máximo = 240 pontos. As faixas de classificação (bands) referem-se ao ESCORE PERCENTUAL, não ao escore bruto: escore percentual = pontuação obtida / pontuação máxima aplicável × 100 (fórmula do documento original para itens N/A; no app, o escore assume todos os itens respondidos); minScore/maxScore das bands…",
     assessmentUse: "triagem",
     applicationMode: "questionario_pais",
     implementationStatus: "complete",
