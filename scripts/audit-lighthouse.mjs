@@ -1,12 +1,9 @@
 // @ts-check
 /** Gate Lighthouse real. Só usa bundle-size como fallback quando Chromium não está instalado. */
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import lighthouse from "lighthouse";
-import desktopConfig from "lighthouse/core/config/desktop-config.js";
-import { launch } from "chrome-launcher";
 import { chromium } from "playwright";
 import {
   ACCEPTED_FIRST_VISIT_STORAGE,
@@ -34,11 +31,22 @@ function fallback(reason) {
 const server = await startStaticServer(ensureClientBuild(repoRoot));
 let chrome;
 try {
+  const browserPath = chromium.executablePath();
+  if (!existsSync(browserPath)) {
+    fallback("Chromium indisponível no ambiente");
+    process.exitCode = 0;
+  }
+
   try {
-    chrome = await launch({
-      chromePath: chromium.executablePath(),
-      chromeFlags: ["--headless=new", "--no-sandbox", "--disable-gpu"],
-    });
+    if (existsSync(browserPath)) {
+      // Imports pesados e com requisito de Node moderno só acontecem no caminho
+      // real. CI sem binário do Chromium mantém o fallback compatível com Node 20.
+      const { launch } = await import("chrome-launcher");
+      chrome = await launch({
+        chromePath: browserPath,
+        chromeFlags: ["--headless=new", "--no-sandbox", "--disable-gpu"],
+      });
+    }
   } catch (error) {
     if (isMissingBrowserError(error)) {
       fallback("Chromium indisponível no ambiente");
@@ -49,6 +57,10 @@ try {
   }
 
   if (chrome) {
+    const [{ default: lighthouse }, { default: desktopConfig }] = await Promise.all([
+      import("lighthouse"),
+      import("lighthouse/core/config/desktop-config.js"),
+    ]);
     const cdpBrowser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
     const seedPage = await cdpBrowser.contexts()[0].newPage();
     await seedPage.goto(server.origin, { waitUntil: "domcontentloaded" });
@@ -92,7 +104,7 @@ try {
       console.error(`[lighthouse] ✗ abaixo do limite:\n  ${failures.join("\n  ")}`);
       process.exitCode = 1;
     } else {
-      console.log("[lighthouse] ✓ todas as rotas >= 85.");
+      console.log(`[lighthouse] ✓ todas as rotas cumprem ${JSON.stringify(THRESHOLDS)}.`);
     }
   }
 } finally {

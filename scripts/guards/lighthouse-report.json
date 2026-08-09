@@ -1,14 +1,14 @@
 {
   "/": {
-    "performance": 96,
+    "performance": 95,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 809,
-      "lcpMs": 1300,
-      "speedIndexMs": 848,
-      "tbtMs": 29,
+      "fcpMs": 833,
+      "lcpMs": 1385,
+      "speedIndexMs": 883,
+      "tbtMs": 40,
       "cls": 0.005
     },
     "layoutShifts": [
@@ -54,23 +54,33 @@
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.95,
+        "score": 0.94,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.87,
+        "score": 0.84,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "speed-index",
-        "score": 0.99,
+        "score": 0.98,
         "title": "Speed Index"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "errors-in-console",
         "score": 0,
         "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "interactive",
+        "score": 0.99,
+        "title": "Time to Interactive"
       },
       {
         "id": "valid-source-maps",
@@ -114,39 +124,69 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/filtro": {
-    "performance": 99,
+    "performance": 90,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 480,
-      "lcpMs": 896,
-      "speedIndexMs": 718,
-      "tbtMs": 60,
+      "fcpMs": 1079,
+      "lcpMs": 1663,
+      "speedIndexMs": 1115,
+      "tbtMs": 106,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
       {
+        "id": "first-contentful-paint",
+        "score": 0.82,
+        "title": "First Contentful Paint"
+      },
+      {
         "id": "largest-contentful-paint",
-        "score": 0.96,
+        "score": 0.75,
         "title": "Largest Contentful Paint"
       },
       {
+        "id": "speed-index",
+        "score": 0.95,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.96,
+        "title": "Total Blocking Time"
+      },
+      {
         "id": "max-potential-fid",
-        "score": 0.87,
+        "score": 0.93,
         "title": "Max Potential First Input Delay"
       },
       {
         "id": "errors-in-console",
         "score": 0,
         "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "interactive",
+        "score": 0.98,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "score": 0,
+        "title": "Minimize main-thread work"
+      },
+      {
+        "id": "bootup-time",
+        "score": 0,
+        "title": "Reduce JavaScript execution time"
       },
       {
         "id": "unsized-images",
@@ -164,6 +204,16 @@
         "title": "Elements with visible text labels do not have matching accessible names."
       },
       {
+        "id": "unused-css-rules",
+        "score": 0.5,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
         "id": "bf-cache",
         "score": 0,
         "title": "Page prevented back/forward cache restoration"
@@ -174,39 +224,49 @@
         "title": "Forced reflow"
       },
       {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
         "id": "network-dependency-tree-insight",
         "score": 0,
         "title": "Network dependency tree"
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/mchat": {
-    "performance": 100,
-    "accessibility": 98,
+    "performance": 99,
+    "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 487,
-      "lcpMs": 596,
-      "speedIndexMs": 649,
+      "fcpMs": 583,
+      "lcpMs": 736,
+      "speedIndexMs": 695,
       "tbtMs": 0,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
       {
-        "id": "largest-contentful-paint",
+        "id": "first-contentful-paint",
         "score": 0.99,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.98,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "max-potential-fid",
-        "score": 0.98,
+        "score": 0.99,
         "title": "Max Potential First Input Delay"
       },
       {
@@ -218,11 +278,6 @@
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "heading-order",
-        "score": 0,
-        "title": "Heading elements are not in a sequentially-descending order"
       },
       {
         "id": "label-content-name-mismatch",
@@ -246,7 +301,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
