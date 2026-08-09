@@ -10,10 +10,9 @@ import { escalasCompendio2026 } from "./escalasCompendio2026";
 import { escalasAplicaveisNexus2026 } from "./escalasAplicaveisNexus2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 import { exemplosPais2026 } from "./exemplosPais2026";
-// Registries interativos (só importam tipos de volta — sem ciclo em runtime):
-// necessários para a regra "aplicável de fato" do corte do catálogo.
-import { interactiveScaleItems } from "./interactiveScaleItems";
-import { interactiveScales } from "./interactiveScales";
+// Manifesto gerado: ids e contagens sem carregar centenas de itens clínicos
+// apenas para testar existência/completude no catálogo.
+import { INTERACTIVE_SCALE_IDS, INTERACTIVE_SCALE_ITEM_COUNTS } from "./interactiveScaleIds.generated";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 // "crianca" e "teste_direto_crianca" são tratados como aplicação direta com a criança.
@@ -902,11 +901,7 @@ export const EXPECTED_INTERACTIVE_ITEM_COUNTS: Readonly<Record<string, number>> 
 };
 
 export function getDeliveredInteractiveItemCount(scaleId: string): number {
-  const domainRunner = interactiveScaleItems[scaleId];
-  if (domainRunner) {
-    return domainRunner.domains.reduce((total, domain) => total + domain.items.length, 0);
-  }
-  return interactiveScales[scaleId]?.items.length ?? 0;
+  return INTERACTIVE_SCALE_ITEM_COUNTS[scaleId] ?? 0;
 }
 
 // Aplicar descrições melhoradas (com exemplos de perguntas para pais/professores)
@@ -1002,7 +997,7 @@ const aplicavelDeFato = (s: ScaleEntry): boolean => {
   const rotaDedicada =
     !!route && !route.startsWith("/generic-scale/") && route !== "/escalas-neuropsiquiatria" && route !== "/filtro";
   if (rotaDedicada) return true;
-  if ((interactiveScaleItems[s.id] || interactiveScales[s.id]) && !licencaRestritiva(s)) return true;
+  if (INTERACTIVE_SCALE_IDS.has(s.id) && !licencaRestritiva(s)) return true;
   return false;
 };
 

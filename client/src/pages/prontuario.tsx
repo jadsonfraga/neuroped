@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { cloneElement, isValidElement, useState, useCallback, type ReactElement, type ReactNode } from "react";
 import {
   User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
   Activity, MessageSquare, Pill, Dumbbell, FlaskConical,
@@ -213,11 +213,16 @@ function SectionHeader({ icon: Icon, title, gradient, count }: {
 
 // ─── field row ────────────────────────────────────────────────────────────────
 
-function Field({ label, children, span2 }: { label: string; children: React.ReactNode; span2?: boolean }) {
+function Field({ label, children, span2 }: { label: string; children: ReactNode; span2?: boolean }) {
+  const labelledControl = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ "aria-label"?: string }>, {
+        "aria-label": (children as ReactElement<{ "aria-label"?: string }>).props["aria-label"] ?? label,
+      })
+    : children;
   return (
     <div className={span2 ? "col-span-2" : ""}>
-      <Label className="text-xs font-semibold text-muted-foreground mb-1 block">{label}</Label>
-      {children}
+      <Label className="text-xs font-semibold text-muted-foreground mb-1 block" aria-hidden="true">{label}</Label>
+      {labelledControl}
     </div>
   );
 }
@@ -732,7 +737,7 @@ export default function ProntuarioPage() {
                   </Field>
                   <Field label="Sexo">
                     <Select value={identificacao.sexo} onValueChange={v => updId("sexo", v)}>
-                      <SelectTrigger className="border-violet-200 dark:border-violet-800 focus:ring-violet-500">
+                      <SelectTrigger aria-label="Sexo" className="border-violet-200 dark:border-violet-800 focus:ring-violet-500">
                         <SelectValue placeholder="Selecionar..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -759,7 +764,7 @@ export default function ProntuarioPage() {
                   </Field>
                   <Field label="Parentesco">
                     <Select value={identificacao.parentesco} onValueChange={v => updId("parentesco", v)}>
-                      <SelectTrigger className="border-violet-200 dark:border-violet-800">
+                      <SelectTrigger aria-label="Parentesco" className="border-violet-200 dark:border-violet-800">
                         <SelectValue placeholder="Selecionar..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -1476,7 +1481,7 @@ export default function ProntuarioPage() {
               </div>
 
               {/* preview */}
-              <div className="rounded-xl bg-background/80 border border-violet-200 dark:border-violet-800 p-4 max-h-48 overflow-y-auto mb-4">
+              <div className="rounded-xl bg-background/80 border border-violet-200 dark:border-violet-800 p-4 max-h-48 overflow-y-auto mb-4" tabIndex={0} role="region" aria-label="Prévia do relatório completo">
                 <pre className="text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed">
                   {reportText}
                 </pre>

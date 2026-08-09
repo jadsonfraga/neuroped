@@ -9,7 +9,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { SplashScreen } from "@/components/SplashScreen";
 import { PreferencesPanel } from "@/components/PreferencesPanel";
 import { AvisoLegalGate } from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
@@ -29,6 +28,7 @@ const SessionExpiredPage = lazy(() => import("@/pages/session-expired"));
 const LgpdConsentPage = lazy(() => import("@/pages/lgpd-consent"));
 
 const HomePage = lazy(() => import("@/pages/home"));
+const SplashScreen = lazy(() => import("@/components/SplashScreen").then(({ SplashScreen }) => ({ default: SplashScreen })));
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -498,9 +498,19 @@ function getCurrentHashPath(): string {
   return window.location.hash.replace(/^#/, "") || "/";
 }
 
+function canSkipSplash(): boolean {
+  if (typeof window === "undefined") return false;
+  if (getCurrentHashPath() !== "/") return true;
+  try {
+    return localStorage.getItem("neuroped:onboarding-seen") === "1";
+  } catch {
+    return false;
+  }
+}
+
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [splashComplete, setSplashComplete] = useState(false);
+  const [splashComplete, setSplashComplete] = useState(canSkipSplash);
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
@@ -538,10 +548,14 @@ function App() {
             <ToastProvider>
               <AmbientEffects />
               <Toaster />
-              <SplashScreen
-                awaiting={!appReady}
-                onComplete={() => setSplashComplete(true)}
-              />
+              {!splashComplete && (
+                <Suspense fallback={null}>
+                  <SplashScreen
+                    awaiting={!appReady}
+                    onComplete={() => setSplashComplete(true)}
+                  />
+                </Suspense>
+              )}
               {splashComplete && showOnboarding && (
                 <Suspense fallback={null}>
                   <Onboarding onComplete={dismissOnboarding} />

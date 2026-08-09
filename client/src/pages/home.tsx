@@ -132,7 +132,7 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
         </div>
         <div className="flex flex-1 flex-col">
-          <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
+          <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             {flow.useCase}
           </p>
           <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">

@@ -9,7 +9,7 @@ export function ScaleReference({ scaleId }: { scaleId: string }) {
     <div className="mt-8 rounded-xl bg-muted/40 border border-border p-4 space-y-2">
       <div className="flex items-center gap-2">
         <BookOpen className="w-4 h-4 text-primary flex-shrink-0" />
-        <h3 className="text-sm font-semibold text-foreground">Referência Bibliográfica</h3>
+        <h2 className="text-sm font-semibold text-foreground">Referência Bibliográfica</h2>
       </div>
       <p className="text-xs text-muted-foreground leading-relaxed">
         {ref.authors} ({ref.year}). <em>{ref.title}</em>.{" "}

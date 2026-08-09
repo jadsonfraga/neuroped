@@ -13,6 +13,9 @@ export function ServiceWorkerManager() {
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
+    let cancelled = false;
+    let idleId: number | undefined;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
     const rememberVersion = (version: string) => {
       let previous: string | null = null;
@@ -40,15 +43,38 @@ export function ServiceWorkerManager() {
     navigator.serviceWorker.addEventListener("message", handleMessage);
     navigator.serviceWorker.addEventListener("controllerchange", askCurrentVersion);
 
-    navigator.serviceWorker
-      .register("./sw.js")
-      .then(async (registration) => {
-        askCurrentVersion();
-        await registration.update().catch(() => undefined);
-      })
-      .catch(() => undefined);
+    const register = () => {
+      if (cancelled) return;
+      navigator.serviceWorker
+        .register("./sw.js")
+        .then(async (registration) => {
+          askCurrentVersion();
+          await registration.update().catch(() => undefined);
+        })
+        .catch(() => undefined);
+    };
+
+    const scheduleRegistration = () => {
+      // O precache offline inclui os atalhos clínicos e compete com os chunks da
+      // tela ativa. Damos prioridade absoluta à primeira interação; depois do
+      // intervalo, o navegador escolhe uma janela ociosa para instalar o PWA.
+      fallbackTimer = globalThis.setTimeout(() => {
+        if ("requestIdleCallback" in window) {
+          idleId = window.requestIdleCallback(register, { timeout: 8_000 });
+        } else {
+          register();
+        }
+      }, 10_000);
+    };
+
+    if (document.readyState === "complete") scheduleRegistration();
+    else window.addEventListener("load", scheduleRegistration, { once: true });
 
     return () => {
+      cancelled = true;
+      window.removeEventListener("load", scheduleRegistration);
+      if (idleId !== undefined && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (fallbackTimer !== undefined) globalThis.clearTimeout(fallbackTimer);
       navigator.serviceWorker.removeEventListener("message", handleMessage);
       navigator.serviceWorker.removeEventListener("controllerchange", askCurrentVersion);
     };

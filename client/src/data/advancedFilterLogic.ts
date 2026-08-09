@@ -13,8 +13,7 @@ import {
   type AssessmentUse,
   type ImplementationStatus,
 } from "./scaleFilter";
-import { interactiveScaleItems } from "./interactiveScaleItems";
-import { interactiveScales } from "./interactiveScales";
+import { INTERACTIVE_SCALE_IDS } from "./interactiveScaleIds.generated";
 import { getAllSignalsForQueixa } from "./signalsAndSymptoms";
 import { popularSymptomById } from "./popularSymptoms";
 
@@ -113,7 +112,7 @@ export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus
   if (hasDedicatedPage) return "complete";
   // Aplicação interativa em qualquer dos dois acervos: itens (GenericScale)
   // ou runner (InteractiveScaleRunner) — ambos abrem em /generic-scale/:id.
-  if ((interactiveScaleItems[scale.id] || interactiveScales[scale.id]) && !isLicenseRestricted(scale)) return "complete";
+  if (INTERACTIVE_SCALE_IDS.has(scale.id) && !isLicenseRestricted(scale)) return "complete";
   if (!route) return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
   if (isLicenseRestricted(scale)) return "external_only";
   if (route.startsWith("/generic-scale/")) return "metadata_only";
