@@ -1,26 +1,26 @@
 {
   "/": {
-    "performance": 95,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 833,
-      "lcpMs": 1385,
-      "speedIndexMs": 883,
-      "tbtMs": 40,
+      "fcpMs": 714,
+      "lcpMs": 1027,
+      "speedIndexMs": 714,
+      "tbtMs": 6,
       "cls": 0.005
     },
     "layoutShifts": [
       {
         "node": {
           "type": "node",
-          "lhId": "page-2-ASIDE",
+          "lhId": "page-1-ASIDE",
           "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
           "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
           "boundingRect": {
-            "top": 1362,
-            "bottom": 1442,
+            "top": 1444,
+            "bottom": 1523,
             "left": 276,
             "right": 1324,
             "width": 1048,
@@ -29,58 +29,43 @@
           "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
           "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
         },
-        "score": 0.003214675477072478
+        "score": 0.003818078095599942
       },
       {
         "node": {
           "type": "node",
-          "lhId": "page-3-BUTTON",
+          "lhId": "page-2-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
           "boundingRect": {
-            "top": 872,
+            "top": 868,
             "bottom": 916,
-            "left": 1280,
+            "left": 1165,
             "right": 1324,
-            "width": 44,
-            "height": 44
+            "width": 159,
+            "height": 48
           },
           "snippet": "<button aria-label=\"Rever o tour guiado do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
-          "nodeLabel": "Rever o tour guiado do app"
+          "nodeLabel": "Tour do app"
         },
-        "score": 0.0013051823538590968
+        "score": 0.001586607811896922
       }
     ],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.94,
+        "score": 0.97,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.84,
+        "score": 0.94,
         "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.98,
-        "title": "Speed Index"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
       },
       {
         "id": "errors-in-console",
         "score": 0,
         "title": "Browser errors were logged to the console"
-      },
-      {
-        "id": "interactive",
-        "score": 0.99,
-        "title": "Time to Interactive"
       },
       {
         "id": "valid-source-maps",
@@ -114,7 +99,7 @@
       },
       {
         "id": "image-delivery-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Improve image delivery"
       },
       {
@@ -130,63 +115,38 @@
     ]
   },
   "/#/filtro": {
-    "performance": 90,
+    "performance": 96,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 1079,
-      "lcpMs": 1663,
-      "speedIndexMs": 1115,
-      "tbtMs": 106,
+      "fcpMs": 831,
+      "lcpMs": 1281,
+      "speedIndexMs": 902,
+      "tbtMs": 19,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.82,
+        "score": 0.94,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.75,
+        "score": 0.87,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "speed-index",
-        "score": 0.95,
+        "score": 0.98,
         "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.96,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.93,
-        "title": "Max Potential First Input Delay"
       },
       {
         "id": "errors-in-console",
         "score": 0,
         "title": "Browser errors were logged to the console"
-      },
-      {
-        "id": "interactive",
-        "score": 0.98,
-        "title": "Time to Interactive"
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "score": 0,
-        "title": "Minimize main-thread work"
-      },
-      {
-        "id": "bootup-time",
-        "score": 0,
-        "title": "Reduce JavaScript execution time"
       },
       {
         "id": "unsized-images",
@@ -205,7 +165,7 @@
       },
       {
         "id": "unused-css-rules",
-        "score": 0.5,
+        "score": 0,
         "title": "Reduce unused CSS"
       },
       {
@@ -241,34 +201,19 @@
     ]
   },
   "/#/mchat": {
-    "performance": 99,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 583,
-      "lcpMs": 736,
-      "speedIndexMs": 695,
+      "fcpMs": 375,
+      "lcpMs": 455,
+      "speedIndexMs": 450,
       "tbtMs": 0,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
-      {
-        "id": "first-contentful-paint",
-        "score": 0.99,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.98,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
       {
         "id": "errors-in-console",
         "score": 0,
