@@ -32,9 +32,16 @@ const current = {
     const hasFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
     return hasFonte && s.pendente_validacao_clinica !== true;
   }).length,
+  catalogRunnablePendingProvenance: allScales.filter((s) => {
+    const hasFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
+    return !hasFonte || s.pendente_validacao_clinica === true;
+  }).length,
   catalogDocumentedInstruments: allScalesComFichas.length,
   catalogDocumentedWithFonte: allScalesComFichas.filter(
     (s) => typeof s.fonte === "string" && s.fonte.trim().length > 0,
+  ).length,
+  catalogDocumentedPendingProvenance: allScalesComFichas.filter(
+    (s) => typeof s.fonte !== "string" || s.fonte.trim().length === 0,
   ).length,
 };
 
@@ -47,16 +54,27 @@ function noLessThan(key) {
   }
 }
 
+function noMoreThan(currentKey, baselineKey) {
+  if (typeof baseline[baselineKey] !== "number") return;
+  if (current[currentKey] > baseline[baselineKey]) {
+    regressions.push(`${currentKey}: atual ${current[currentKey]} > teto ${baseline[baselineKey]}`);
+  }
+}
+
 noLessThan("catalogRunnableInstruments");
 noLessThan("catalogRunnableReviewedWithFonte");
 noLessThan("catalogDocumentedInstruments");
 noLessThan("catalogDocumentedWithFonte");
+noMoreThan("catalogRunnablePendingProvenance", "catalogRunnablePendingProvenanceMax");
+noMoreThan("catalogDocumentedPendingProvenance", "catalogDocumentedPendingProvenanceMax");
 
 console.log(
   `[baseline] executáveis=${current.catalogRunnableInstruments} (min ${baseline.catalogRunnableInstruments})` +
   ` | executáveis revisados+fonte=${current.catalogRunnableReviewedWithFonte} (min ${baseline.catalogRunnableReviewedWithFonte})` +
   ` | fichas=${current.catalogDocumentedInstruments} (min ${baseline.catalogDocumentedInstruments})` +
-  ` | fichas+fonte=${current.catalogDocumentedWithFonte} (min ${baseline.catalogDocumentedWithFonte})`,
+  ` | fichas+fonte=${current.catalogDocumentedWithFonte} (min ${baseline.catalogDocumentedWithFonte})` +
+  ` | pendências executáveis=${current.catalogRunnablePendingProvenance} (máx ${baseline.catalogRunnablePendingProvenanceMax})` +
+  ` | pendências documentais=${current.catalogDocumentedPendingProvenance} (máx ${baseline.catalogDocumentedPendingProvenanceMax})`,
 );
 
 if (regressions.length > 0) {

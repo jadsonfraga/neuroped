@@ -1,18 +1,39 @@
 {
-  "_comment": "Catraca de CI (Bloco A2). Valores de referência que NÃO podem regredir. Em 2026-07-16 as métricas do catálogo foram separadas conscientemente: 45 contratos com menos itens que a extensão declarada foram bloqueados da aplicação, sem apagar suas fichas. Há 203 instrumentos executáveis, 165 com fonte e sem validação clínica pendente, e 701 fichas documentadas (546 com fonte). Isso impede restaurar aplicações parciais só para satisfazer um contador. bundleMaxGzipKb e axeSeriousCriticalViolations são tetos; Lighthouse fica null sem navegador. designRawValues=222 (2026-08 r2: todos os templates de impressao com vars proprias no piso teorico; os 12 de documentPdf.ts sao rgb() numerico do pdf-lib, nao CSS). Apos o merge com main, o entrypoint medido ficou em 222,20 KB gzip e o JS inicial em 278,55 KB: os tetos apertam para 224/280 (antes 227/283), mantendo ~2 KB de folga para variacao de hashing. Em seguida main trouxe code-splitting agressivo (SplashScreen/AmbientEffects/ServiceWorkerManager lazy) que baixou o medido para ~108/164 KB gzip, e os tetos de bundle foram substituidos por 120/180 nesse commit. Em 2026-08-09 (r3) receita-c1.tsx e receita-c1-express.tsx — os dois maiores concentradores de literais — passaram a declarar cada cor distinta uma unica vez em seus proprios blocos :root (43 e 18 cores respectivamente) e referencia-las via var(); designRawValues cai 222->198. O residuo restante em ambos os arquivos e piso teorico: as declaracoes :root em si mais os 19 rgb() do pdf-lib por arquivo (argumento numerico de API, nao CSS). Os '#ccc'/'#fff' repetidos em chart.tsx tambem NAO sao consolidaveis: sao seletores Tailwind casando o atributo stroke que o proprio Recharts grava no SVG, nao uma cor escolhida por nos.",
+  "_comment": "Catraca de CI: mínimos de cobertura e tetos de regressão medidos em 2026-08-09. O catálogo separa instrumentos executáveis/revisados dos itens pendentes de proveniência; aumentar volume sem preservar qualidade falha o build. Acessibilidade exige zero violações em todas as severidades, Lighthouse exige 100 em acessibilidade/boas práticas/SEO e desempenho mínimo por rota, e os limites de Web Vitals, chunks, bundle e valores visuais impedem degradação silenciosa. designRawValues=198 é o piso consolidado após centralizar as cores dos maiores templates; os rgb() numéricos restantes pertencem à API do pdf-lib, não ao CSS. Alterar estes números exige justificativa técnica e revisão explícita.",
   "typescriptErrors": 0,
-  "clinicalCasesMin": 150,
-  "catalogRunnableInstruments": 203,
+  "clinicalCasesMin": 356,
+  "catalogRunnableInstruments": 253,
   "catalogRunnableReviewedWithFonte": 165,
-  "catalogDocumentedInstruments": 701,
-  "catalogDocumentedWithFonte": 546,
-  "lighthousePerformance": 90,
-  "lighthouseAccessibility": 95,
-  "lighthouseBestPractices": 95,
-  "lighthouseSeo": 95,
+  "catalogRunnablePendingProvenanceMax": 88,
+  "catalogDocumentedInstruments": 751,
+  "catalogDocumentedWithFonte": 596,
+  "catalogDocumentedPendingProvenanceMax": 155,
+  "lighthousePerformance": 92,
+  "lighthouseAccessibility": 100,
+  "lighthouseBestPractices": 100,
+  "lighthouseSeo": 100,
+  "lighthouseRouteMinimums": {
+    "/": 95,
+    "/#/filtro": 92,
+    "/#/mchat": 95
+  },
+  "lighthouseMetricMaximums": {
+    "fcpMs": 1200,
+    "lcpMs": 1900,
+    "tbtMs": 160,
+    "cls": 0.02
+  },
+  "lighthouseRequiredPassAudits": [
+    "errors-in-console",
+    "label-content-name-mismatch",
+    "unsized-images"
+  ],
   "axeSeriousCriticalViolations": 0,
-  "bundleMaxGzipKb": 120,
-  "initialJsMaxGzipKb": 180,
+  "axeTotalViolations": 0,
+  "bundleMaxGzipKb": 112,
+  "initialJsMaxGzipKb": 170,
+  "largestJsChunkMaxKb": 1240,
+  "largestJsChunkMaxGzipKb": 320,
   "initialJsForbiddenChunks": ["scaleFilter"],
   "designRawValues": 198
 }
