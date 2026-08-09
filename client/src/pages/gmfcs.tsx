@@ -74,9 +74,9 @@ export default function GmfcsPage() {
                 >
                   {level.level}
                 </Badge>
-                <h3 className="text-sm font-bold text-foreground">
+                <h2 className="text-sm font-bold text-foreground">
                   {level.title}
-                </h3>
+                </h2>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {level.description}

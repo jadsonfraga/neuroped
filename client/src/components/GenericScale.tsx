@@ -901,7 +901,6 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                               />
                               <Label
                                 htmlFor={`q-${key}-o${j}`}
-                                aria-pressed={answers[key] === j}
                                 className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
                                   answers[key] === j
                                     ? selectedColor

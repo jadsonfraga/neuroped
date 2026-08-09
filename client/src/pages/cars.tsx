@@ -229,9 +229,9 @@ export default function CarsPage() {
                   <Badge variant="outline" className="text-xs font-mono">
                     {i + 1}
                   </Badge>
-                  <h3 className="text-sm font-semibold text-foreground">
+                  <h2 className="text-sm font-semibold text-foreground">
                     {cat.name}
-                  </h3>
+                  </h2>
                 </div>
                 {pending && (
                   <p
@@ -256,7 +256,6 @@ export default function CarsPage() {
                       />
                       <Label
                         htmlFor={`q${i}-o${j}`}
-                        aria-pressed={answers[i] === j}
                         className="text-sm text-foreground leading-relaxed cursor-pointer font-normal peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background"
                       >
                         <span className="font-medium text-muted-foreground mr-1">

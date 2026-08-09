@@ -37,6 +37,11 @@ export async function startStaticServer(root, preferredPort = 4173) {
         response.end(JSON.stringify({ status: "ok", authentication: { required: false, configured: false } }));
         return;
       }
+      if (pathname === "/api/auth/me") {
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        response.end(JSON.stringify({ id: "browser-audit", email: "audit@localhost", name: "Auditoria local", role: "admin" }));
+        return;
+      }
       const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
       const target = resolve(root, relative);
       if (!target.startsWith(rootPrefix) || !existsSync(target)) {

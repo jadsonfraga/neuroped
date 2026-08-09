@@ -2,13 +2,13 @@
   "/": {
     "performance": 98,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 714,
-      "lcpMs": 1027,
-      "speedIndexMs": 714,
-      "tbtMs": 6,
+      "fcpMs": 756,
+      "lcpMs": 1111,
+      "speedIndexMs": 787,
+      "tbtMs": 24,
       "cls": 0.005
     },
     "layoutShifts": [
@@ -19,8 +19,8 @@
           "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
           "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
           "boundingRect": {
-            "top": 1444,
-            "bottom": 1523,
+            "top": 1483,
+            "bottom": 1563,
             "left": 276,
             "right": 1324,
             "width": 1048,
@@ -29,7 +29,7 @@
           "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
           "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
         },
-        "score": 0.003818078095599942
+        "score": 0.00411040548616388
       },
       {
         "node": {
@@ -38,44 +38,44 @@
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
           "boundingRect": {
-            "top": 868,
+            "top": 872,
             "bottom": 916,
-            "left": 1165,
+            "left": 1280,
             "right": 1324,
-            "width": 159,
-            "height": 48
+            "width": 44,
+            "height": 44
           },
           "snippet": "<button aria-label=\"Rever o tour guiado do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
-          "nodeLabel": "Tour do app"
+          "nodeLabel": "Rever o tour guiado do app"
         },
-        "score": 0.001586607811896922
+        "score": 0.0013051823538590968
       }
     ],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.97,
+        "score": 0.96,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.94,
+        "score": 0.92,
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
       },
       {
         "id": "unused-css-rules",
@@ -115,27 +115,27 @@
     ]
   },
   "/#/filtro": {
-    "performance": 96,
+    "performance": 94,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 831,
-      "lcpMs": 1281,
-      "speedIndexMs": 902,
-      "tbtMs": 19,
+      "fcpMs": 878,
+      "lcpMs": 1431,
+      "speedIndexMs": 936,
+      "tbtMs": 70,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.94,
+        "score": 0.92,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.87,
+        "score": 0.83,
         "title": "Largest Contentful Paint"
       },
       {
@@ -144,24 +144,24 @@
         "title": "Speed Index"
       },
       {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
+        "id": "total-blocking-time",
+        "score": 0.99,
+        "title": "Total Blocking Time"
       },
       {
-        "id": "unsized-images",
-        "score": 0.5,
-        "title": "Image elements do not have explicit `width` and `height`"
+        "id": "max-potential-fid",
+        "score": 0.98,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "interactive",
+        "score": 0.99,
+        "title": "Time to Interactive"
       },
       {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
       },
       {
         "id": "unused-css-rules",
@@ -201,23 +201,38 @@
     ]
   },
   "/#/mchat": {
-    "performance": 100,
+    "performance": 96,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 375,
-      "lcpMs": 455,
-      "speedIndexMs": 450,
-      "tbtMs": 0,
+      "fcpMs": 835,
+      "lcpMs": 1273,
+      "speedIndexMs": 842,
+      "tbtMs": 36,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
       {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
+        "id": "first-contentful-paint",
+        "score": 0.94,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.87,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "valid-source-maps",
@@ -225,9 +240,14 @@
         "title": "Missing source maps for large first-party JavaScript"
       },
       {
-        "id": "label-content-name-mismatch",
+        "id": "unused-css-rules",
+        "score": 0.5,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
         "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
+        "title": "Reduce unused JavaScript"
       },
       {
         "id": "bf-cache",
@@ -246,7 +266,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]

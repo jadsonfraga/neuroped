@@ -188,7 +188,7 @@ export function WelcomeTour() {
     <>
       <button
         onClick={start}
-        aria-label="Rever o tour guiado do app"
+        aria-label={introHighlight ? "Tour do app" : "Rever o tour guiado do app"}
         title="Rever tour"
         className={[
           "fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 rounded-full",

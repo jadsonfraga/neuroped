@@ -382,7 +382,7 @@ function DisorderCard({ disorder }: { disorder: Disorder }) {
               <span>{disorder.emoji}</span>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-foreground">{disorder.title}</h3>
+              <h2 className="text-sm font-bold text-foreground">{disorder.title}</h2>
               <p className="text-xs text-muted-foreground">{disorder.doList.length} orientações • {disorder.alertSigns.length} alertas</p>
             </div>
           </div>
@@ -395,9 +395,9 @@ function DisorderCard({ disorder }: { disorder: Disorder }) {
           <CardContent className="p-4 space-y-5">
             {/* O Que Fazer */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wide flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wide flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" /> O Que Fazer
-              </h4>
+              </h3>
               <ul className="space-y-2">
                 {disorder.doList.map((item, i) => (
                   <li key={i} className="flex gap-2 text-xs text-foreground">
@@ -410,9 +410,9 @@ function DisorderCard({ disorder }: { disorder: Disorder }) {
 
             {/* O Que NÃO Fazer */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wide flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wide flex items-center gap-1.5">
                 <XCircle className="w-3.5 h-3.5" /> O Que NÃO Fazer
-              </h4>
+              </h3>
               <ul className="space-y-2">
                 {disorder.dontList.map((item, i) => (
                   <li key={i} className="flex gap-2 text-xs text-foreground">
@@ -425,9 +425,9 @@ function DisorderCard({ disorder }: { disorder: Disorder }) {
 
             {/* Sinais de Alerta */}
             <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3 space-y-2">
-              <h4 className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5" /> Sinais de Alerta
-              </h4>
+              </h3>
               <ul className="space-y-1.5">
                 {disorder.alertSigns.map((item, i) => (
                   <li key={i} className="flex gap-2 text-xs text-amber-800 dark:text-amber-300">
@@ -440,9 +440,9 @@ function DisorderCard({ disorder }: { disorder: Disorder }) {
 
             {/* Quando Procurar Ajuda */}
             <div className="rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/20 p-3 space-y-2">
-              <h4 className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide flex items-center gap-1.5">
                 <PhoneCall className="w-3.5 h-3.5" /> Quando Procurar Ajuda
-              </h4>
+              </h3>
               <ul className="space-y-1.5">
                 {disorder.whenToSeekHelp.map((item, i) => (
                   <li key={i} className="flex gap-2 text-xs text-blue-800 dark:text-blue-300">
