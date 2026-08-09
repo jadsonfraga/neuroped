@@ -306,6 +306,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   for (const [k, v] of Object.entries({ ...corsHeaders, ...SECURITY_HEADERS })) {
     newHeaders.set(k, v);
   }
+  // /api/health é sondado em TODO carregamento (getAuthCapability) e não carrega
+  // nenhum dado sensível — só informa se o backend exige login. O `no-store`
+  // global (correto para os demais endpoints clínicos) fazia qualquer página que
+  // sondasse health ficar inelegível ao back/forward cache do navegador
+  // (JsNetworkRequestReceivedCacheControlNoStoreResource). `no-cache` mantém a
+  // revalidação obrigatória (nunca serve estado obsoleto) sem bloquear o bfcache.
+  // Nenhum outro endpoint muda: os sensíveis seguem `no-store`.
+  const requestPath = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  if (requestPath === "/api/health") {
+    newHeaders.set("Cache-Control", "no-cache");
+  }
   newHeaders.set("X-RateLimit-Remaining", String(rl.remaining));
 
   return new Response(response.body, {

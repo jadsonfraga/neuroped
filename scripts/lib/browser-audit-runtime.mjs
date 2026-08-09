@@ -57,17 +57,35 @@ export function ensureClientBuild(repoRoot) {
   return dist;
 }
 
+// Espelha client/public/_headers (produção Cloudflare) + o middleware das
+// Functions. Antes o servidor de auditoria mandava `no-store` em TUDO, inclusive
+// no documento HTML e nos bundles JS — o que fazia o Lighthouse reprovar bf-cache
+// (MainResourceHasCacheControlNoStore / JsNetworkRequestReceivedCacheControlNoStore)
+// medindo uma política de cache que NÃO é a de produção. Em produção o documento
+// é `no-cache` e os assets com hash são `immutable`, e nenhum bloqueia bf-cache.
+function cacheControlFor(pathname) {
+  if (pathname === "/sw.js" || pathname === "/sw-build.js") return "no-cache, no-store, must-revalidate";
+  if (pathname.startsWith("/assets/")) return "public, max-age=31536000, immutable";
+  // documento, manifest e demais estáticos: revalida, mas pode ser guardado —
+  // compatível com bf-cache, fiel ao _headers.
+  return "no-cache";
+}
+
 export async function startStaticServer(root, preferredPort = 4173) {
   const rootPrefix = `${resolve(root)}${sep}`;
   const server = createServer((request, response) => {
     try {
       const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://audit.local").pathname);
       if (pathname === "/api/health") {
-        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        // Capacidade não-sensível, buscada em todo carregamento: `no-cache`
+        // (não `no-store`) para não bloquear bf-cache — igual ao middleware real.
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache" });
         response.end(JSON.stringify({ status: "ok", authentication: { required: false, configured: false } }));
         return;
       }
       if (pathname === "/api/auth/me") {
+        // Endpoint sensível (dados do usuário): mantém `no-store`, fiel à
+        // política de produção. Não é buscado no load quando auth não é exigido.
         response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
         response.end(JSON.stringify({ id: "browser-audit", email: "audit@localhost", name: "Auditoria local", role: "admin" }));
         return;
@@ -84,7 +102,7 @@ export async function startStaticServer(root, preferredPort = 4173) {
       const payload = acceptsGzip && compressible ? gzipSync(body, { level: 6 }) : body;
       response.writeHead(200, {
         "Content-Type": MIME[extname(target)] ?? "application/octet-stream",
-        "Cache-Control": "no-store",
+        "Cache-Control": cacheControlFor(pathname),
         "Vary": "Accept-Encoding",
         ...(payload !== body ? { "Content-Encoding": "gzip" } : {}),
       });
