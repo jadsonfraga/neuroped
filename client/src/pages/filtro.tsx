@@ -64,7 +64,16 @@ type AvailabilityMode = "complete" | "all";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
-const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
+// Servido pela PRÓPRIA origem (client/public/data/ entra no build). Antes isto
+// apontava para raw.githubusercontent.com: um app clínico offline-first buscando
+// catálogo num host de terceiro a cada carga do filtro — falha sem rede, vaza o
+// IP do usuário para o GitHub, e o navegador registra erro de console quando a
+// requisição falha (reprovava a auditoria errors-in-console e derrubava
+// best-practices para 96). A cópia local tem as mesmas 100 linhas e a mesma
+// version; só troca travessão por hífen na faixa etária, e ageMonths aceita [–-].
+// NOTA: client/public/data/ e data/ na raiz são cópias independentes, sem script
+// que as sincronize — quem editar uma precisa editar a outra.
+const REGISTRY_URL = `${import.meta.env.BASE_URL}data/neuroped_escalas_neuropsiquiatria_infantil_100.json`;
 // EUSM-10 agora vive no catálogo canônico (filterableCatalog, id "eusm10") — sem
 // duplicata. CORE_FILTERABLE_CATALOG já o inclui.
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);

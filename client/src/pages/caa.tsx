@@ -529,7 +529,13 @@ export default function CaaPage() {
                     >
                       <span className="text-5xl leading-none" aria-hidden>{item[0]}</span>
                       <strong className="text-sm leading-tight text-foreground">{item[1]}</strong>
-                      <small className="text-[10px] text-muted-foreground">toque para ouvir</small>
+                      {/* Dica de affordance repetida em todos os cartões: fica fora da
+                          árvore de acessibilidade. Sem isso o texto visível do botão é
+                          "<palavra> toque para ouvir" enquanto o nome acessível é
+                          "Falar <palavra>", e o nome deixa de conter o rótulo visível
+                          (WCAG 2.5.3 Label in Name) — quebra comando por voz. Ocultá-la
+                          também evita repetir a mesma dica a cada cartão no leitor. */}
+                      <small className="text-[10px] text-muted-foreground" aria-hidden>toque para ouvir</small>
                     </button>
                     <button
                       type="button"
