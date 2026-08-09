@@ -1,15 +1,15 @@
 {
   "/": {
-    "performance": 97,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 739,
-      "lcpMs": 1136,
-      "speedIndexMs": 803,
-      "tbtMs": 35,
-      "cls": 0.004
+      "fcpMs": 714,
+      "lcpMs": 1027,
+      "speedIndexMs": 714,
+      "tbtMs": 6,
+      "cls": 0.005
     },
     "layoutShifts": [
       {
@@ -19,8 +19,8 @@
           "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
           "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
           "boundingRect": {
-            "top": 1483,
-            "bottom": 1563,
+            "top": 1444,
+            "bottom": 1523,
             "left": 276,
             "right": 1324,
             "width": 1048,
@@ -29,7 +29,26 @@
           "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
           "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
         },
-        "score": 0.00411040548616388
+        "score": 0.003818078095599942
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-2-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 868,
+            "bottom": 916,
+            "left": 1165,
+            "right": 1324,
+            "width": 159,
+            "height": 48
+          },
+          "snippet": "<button aria-label=\"Rever o tour guiado do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
+          "nodeLabel": "Tour do app"
+        },
+        "score": 0.001586607811896922
       }
     ],
     "failedAudits": [
@@ -40,13 +59,8 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.91,
+        "score": 0.94,
         "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
       },
       {
         "id": "errors-in-console",
@@ -101,53 +115,38 @@
     ]
   },
   "/#/filtro": {
-    "performance": 93,
+    "performance": 96,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 911,
-      "lcpMs": 1540,
-      "speedIndexMs": 998,
-      "tbtMs": 84,
+      "fcpMs": 831,
+      "lcpMs": 1281,
+      "speedIndexMs": 902,
+      "tbtMs": 19,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.91,
+        "score": 0.94,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.79,
+        "score": 0.87,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "speed-index",
-        "score": 0.97,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
         "score": 0.98,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.97,
-        "title": "Max Potential First Input Delay"
+        "title": "Speed Index"
       },
       {
         "id": "errors-in-console",
         "score": 0,
         "title": "Browser errors were logged to the console"
-      },
-      {
-        "id": "interactive",
-        "score": 0.99,
-        "title": "Time to Interactive"
       },
       {
         "id": "unsized-images",
@@ -202,39 +201,19 @@
     ]
   },
   "/#/mchat": {
-    "performance": 96,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 96,
     "seo": 100,
     "metrics": {
-      "fcpMs": 865,
-      "lcpMs": 1320,
-      "speedIndexMs": 874,
-      "tbtMs": 42,
+      "fcpMs": 375,
+      "lcpMs": 455,
+      "speedIndexMs": 450,
+      "tbtMs": 0,
       "cls": 0
     },
     "layoutShifts": [],
     "failedAudits": [
-      {
-        "id": "first-contentful-paint",
-        "score": 0.92,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.86,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
       {
         "id": "errors-in-console",
         "score": 0,
@@ -249,16 +228,6 @@
         "id": "label-content-name-mismatch",
         "score": 0,
         "title": "Elements with visible text labels do not have matching accessible names."
-      },
-      {
-        "id": "unused-css-rules",
-        "score": 0,
-        "title": "Reduce unused CSS"
-      },
-      {
-        "id": "unused-javascript",
-        "score": 0,
-        "title": "Reduce unused JavaScript"
       },
       {
         "id": "bf-cache",
@@ -277,7 +246,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]

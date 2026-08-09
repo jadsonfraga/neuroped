@@ -16,7 +16,10 @@ export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): numbe
   if (interactive > 0) return interactive;
   const txt = `${scale.description ?? ""} ${scale.scoringCutoff ?? ""}`;
   const m = txt.match(/(\d{1,3})\s*(perguntas|itens|quest|quesitos|afirma|sim\/n)/i);
-  if (m) return Math.min(Number(m[1]), 120);
+  if (m) {
+    const count = Number(m[1]);
+    if (!isNaN(count)) return Math.min(count, 120);
+  }
   return 20;
 }
 
@@ -55,7 +58,7 @@ export function selectCuratedTiers(
       if (!match) return sum;
       const respondentFit =
         !selectedRespondente ||
-        match.scale.respondente.includes(selectedRespondente) ||
+        (Array.isArray(match.scale.respondente) && match.scale.respondente.includes(selectedRespondente)) ||
         (selectedRespondente === "teste_direto_crianca" && match.applicationMode === "teste_direto_crianca");
       return sum + 100 - slotIdx * 8 + match.relevanceScore + (respondentFit ? 20 : 0);
     }, idx === 0 ? 4 : 0);
@@ -207,7 +210,8 @@ export function selectPodium(
       coverageFirst?: boolean;
     } = {},
   ) => {
-    const preferred = [...preferredIds, ...curatedIds].filter((id, index, arr) => arr.indexOf(id) === index);
+    const preferredSet = new Set([...preferredIds, ...curatedIds]);
+    const preferred = Array.from(preferredSet);
     const coveredQueixas = options.coveredQueixas ?? new Set<string>();
     const coverageWeight = options.coverageWeight ?? 0;
     // Preferência curada NÃO atropela a idade: se existe candidato elegível que
@@ -642,7 +646,9 @@ export function selectPodium(
         if (current) {
           if (cand.relevanceScore < current.relevanceScore - 15) return false;
           if (!uniqueQueixasOf(current, others).every((q) => cand.scale.queixas.includes(q))) return false;
-          if (!current.scale.respondente.some((r) => cand.scale.respondente.includes(r))) return false;
+          const currentRespondents = current.scale.respondente ?? [];
+          const candRespondents = cand.scale.respondente ?? [];
+          if (currentRespondents.length > 0 && candRespondents.length > 0 && !currentRespondents.some((r) => candRespondents.includes(r))) return false;
           if (selectedSignals.length > 0 && signalHit(current) && !signalHit(cand)) return false;
           used.delete(current.scale.id);
         }
