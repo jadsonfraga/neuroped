@@ -34,7 +34,7 @@ const { allScales } = await import(
 
 /** @type {string[]} */
 const errors = [];
-/** @type {{id:string,name:string,fonte:string,pendente:boolean}[]} */
+/** @type {{id:string,name:string,fonte:string,semFonte:boolean,aguardaValidacao:boolean}[]} */
 const provRows = [];
 const seen = new Map();
 
@@ -58,19 +58,29 @@ for (const s of allScales) {
     errors.push(`Faixa etária invertida em "${s.id}": ageMin(${s.ageMin}) > ageMax(${s.ageMax}).`);
   }
   // Proveniência (pendência rastreada)
+  // Dois eixos INDEPENDENTES, que antes eram somados num "pendente" só:
+  //   semFonte        → não sabemos de onde o instrumento veio (lacuna de proveniência)
+  //   aguardaValidacao→ sabemos a origem (quase sempre autoral), mas não há
+  //                     validação psicométrica publicada
+  // Um instrumento autoral do NeuroPed com fonte declarada caía no mesmo balde
+  // de um instrumento de literatura sem referência nenhuma, e o resumo dizia
+  // "Com fonte declarada: 165" quando 242 tinham fonte. Agora cada eixo é
+  // contado e exibido por si.
   const temFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
-  const pendente = !temFonte || s.pendente_validacao_clinica === true;
+  const aguardaValidacao = s.pendente_validacao_clinica === true;
   provRows.push({
     id: s.id ?? "?",
     name: s.name ?? "?",
     fonte: temFonte ? s.fonte : (s.pendencia ?? "—"),
-    pendente,
+    semFonte: !temFonte,
+    aguardaValidacao,
   });
 }
 
 const total = allScales.length;
-const comFonte = provRows.filter((r) => !r.pendente).length;
-const pendentes = total - comFonte;
+const semFonte = provRows.filter((r) => r.semFonte).length;
+const comFonte = total - semFonte;
+const aguardandoValidacao = provRows.filter((r) => r.aguardaValidacao).length;
 
 // ---- Gera docs/PROVENIENCIA_CLINICA.md (E3) ----
 const docLines = [];
@@ -80,22 +90,29 @@ docLines.push("> Documento gerado automaticamente por `scripts/guards/validate-c
 docLines.push("> Não edite à mão — rode `npm run verify` para regenerar.");
 docLines.push("");
 docLines.push(`- **Total de instrumentos:** ${total}`);
-docLines.push(`- **Com fonte declarada:** ${comFonte}`);
-docLines.push(`- **Pendentes de validação/fonte:** ${pendentes}`);
+docLines.push(`- **Com fonte declarada:** ${comFonte} (${((comFonte / total) * 100).toFixed(1)}%)`);
+docLines.push(`- **Sem fonte declarada:** ${semFonte}`);
+docLines.push(`- **Aguardando validação psicométrica publicada:** ${aguardandoValidacao} — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.`);
 docLines.push("");
-docLines.push("| Instrumento | Nome | Fonte / Pendência | Pendente validação |");
-docLines.push("| --- | --- | --- | --- |");
+docLines.push("> As duas últimas linhas medem coisas diferentes e não se somam: um");
+docLines.push("> instrumento pode ter fonte e ainda assim aguardar validação.");
+docLines.push("");
+docLines.push("| Instrumento | Nome | Fonte | Sem fonte | Aguarda validação |");
+docLines.push("| --- | --- | --- | --- | --- |");
 for (const r of provRows.sort((a, b) => a.id.localeCompare(b.id))) {
-  const fonte = String(r.fonte).replace(/\|/g, "\\|").slice(0, 160);
+  // 160 cortava as RESSALVAS de faixa etária no meio (ssq, nrs-pain, vas-pain)
+  // — justamente a parte clinicamente relevante da fonte. A maior fonte do
+  // catálogo tem 275 caracteres; 320 preserva todas com folga.
+  const fonte = String(r.fonte).replace(/\|/g, "\\|").slice(0, 320);
   const nome = String(r.name).replace(/\|/g, "\\|");
-  docLines.push(`| \`${r.id}\` | ${nome} | ${fonte} | ${r.pendente ? "sim" : "não"} |`);
+  docLines.push(`| \`${r.id}\` | ${nome} | ${fonte} | ${r.semFonte ? "sim" : "não"} | ${r.aguardaValidacao ? "sim" : "não"} |`);
 }
 docLines.push("");
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/PROVENIENCIA_CLINICA.md"), docLines.join("\n"), "utf8");
 
-console.log(`[validate-catalog] ${total} instrumentos | ${comFonte} com fonte | ${pendentes} pendentes`);
+console.log(`[validate-catalog] ${total} instrumentos | ${comFonte} com fonte | ${semFonte} sem fonte | ${aguardandoValidacao} aguardando validação`);
 console.log(`[validate-catalog] docs/PROVENIENCIA_CLINICA.md regenerado.`);
 
 if (errors.length > 0) {

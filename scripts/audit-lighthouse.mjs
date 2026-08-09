@@ -21,7 +21,23 @@ const THRESHOLDS = {
   "best-practices": baseline.lighthouseBestPractices ?? 95,
   seo: baseline.lighthouseSeo ?? 95,
 };
-const ROUTES = ["/", "/#/filtro", "/#/mchat"];
+// Cobertura por ARQUÉTIPO de página, não por contagem: medir 3 rotas parecidas
+// esconde o custo das telas de impressão e dos fluxogramas, que são as mais
+// pesadas do app. Cada entrada abaixo representa uma família de telas.
+const ROUTES = [
+  "/",                      // shell + home
+  "/#/filtro",              // filtro inteligente (maior carga de lógica)
+  "/#/mchat",               // escala interativa curta
+  "/#/cars",                // escala interativa com observação clínica
+  "/#/vineland",            // escala longa (muitos itens em tela)
+  "/#/cbcl",                // escala longa com múltiplos domínios
+  "/#/caa",                 // comunicação alternativa (grade de imagens)
+  "/#/espasticidade",       // escala motora com mídia
+  "/#/prontuario",          // prontuário (formulário extenso)
+  "/#/fluxograma",          // fluxograma (render de grafo)
+  "/#/laudo-neuroped",      // laudo (documento longo)
+  "/#/receita-c1",          // impressão/PDF (maior concentrador de estilo)
+];
 
 function fallback(reason) {
   console.log(`[lighthouse] ${reason} - usando fallback de bundle size.`);

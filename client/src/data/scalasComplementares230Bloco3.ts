@@ -413,6 +413,7 @@ export const humorAnsiedadeToc: ScaleEntry[] = [
   },
   {
     id: "smfq",
+    fonte: "Angold A, Costello EJ, Messer SC, et al., 1995 (SMFQ) — Int J Methods Psychiatr Res 5:237-249 (original não indexado no PubMed); validação psicométrica: Turner N, Joinson C, Peters TJ, Wiles N, Lewis G, 2014 — Psychol Assess 26(3):752-62. PMID 24749755 · doi:10.1037/a0036572",
     name: "SMFQ",
     fullName: "Short Mood and Feelings Questionnaire — 13 itens",
     ageMin: 60,
@@ -480,6 +481,7 @@ export const humorAnsiedadeToc: ScaleEntry[] = [
   },
   {
     id: "ari",
+    fonte: "Stringaris A, Goodman R, Ferdinando S, Razdan V, Muhrer E, Leibenluft E, Brotman MA, 2012 (Affective Reactivity Index) — J Child Psychol Psychiatry 53(11):1109-17. PMID 22574736 · doi:10.1111/j.1469-7610.2012.02561.x",
     name: "ARI",
     fullName: "Affective Reactivity Index — Irritabilidade",
     ageMin: 72,
@@ -665,6 +667,13 @@ export const comportamentoDisruptivo: ScaleEntry[] = [
     duplicataStatus: "nova",
   },
   {
+    // COLISÃO DE ID conhecida: este id "ssq" é o mesmo do Seizure Severity
+    // Questionnaire (scalasComplementares230Bloco2.ts). O dedupeCatalog funde os
+    // dois e o de epilepsia vence — este School Situations Questionnaire NÃO
+    // chega ao catálogo. Sem fonte de propósito: não faz sentido citar um
+    // instrumento que a fusão descarta, e a referência do outro SSQ (Cramer,
+    // epilepsia) não é dele. Resolver exige decidir o id definitivo do
+    // instrumento escolar (ex.: "ssq-escola") — decisão de conteúdo clínico.
     id: "ssq",
     name: "SSQ-Behavior",
     fullName: "School Situations Questionnaire — Situações problemáticas em escola",

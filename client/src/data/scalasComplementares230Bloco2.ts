@@ -52,6 +52,7 @@ export const teaCognicaoSocial: ScaleEntry[] = [
   },
   {
     id: "q-chat-10",
+    fonte: "Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003",
     name: "Q-CHAT-10",
     fullName: "Quantitative Checklist for Autism in Toddlers – 10 Item — Triagem TEA toddlers",
     ageMin: 18,
@@ -484,6 +485,7 @@ export const epilepsia: ScaleEntry[] = [
   },
   {
     id: "ssq",
+    fonte: "Cramer JA, Baker GA, Jacoby A, 2002 (Seizure Severity Questionnaire) — Epilepsy Res 48(3):187-97. PMID 11904237 · doi:10.1016/s0920-1211(02)00003-7 · RESSALVA: desenvolvido e validado em adultos; uso pediátrico é extrapolação sem validação publicada.",
     name: "SSQ",
     fullName: "Seizure Severity Questionnaire",
     ageMin: 36,
@@ -610,6 +612,7 @@ export const epilepsia: ScaleEntry[] = [
 export const dor: ScaleEntry[] = [
   {
     id: "fps-r",
+    fonte: "Hicks CL, von Baeyer CL, Spafford PA, van Korlaar I, Goodenough B, 2001 (Faces Pain Scale-Revised) — Pain 93(2):173-183. PMID 11427329 · doi:10.1016/S0304-3959(01)00314-1",
     name: "FPS-R",
     fullName: "Faces Pain Scale – Revised — 6 faces, 3–18 anos",
     ageMin: 36,
@@ -625,6 +628,7 @@ export const dor: ScaleEntry[] = [
   },
   {
     id: "nrs-pain",
+    fonte: "von Baeyer CL, Spagrud LJ, McCormick JC, Choo E, Neville K, Connelly MA, 2009 (NRS-11) — Pain 143(3):223-227. PMID 19359097 · doi:10.1016/j.pain.2009.03.002 · RESSALVA: os autores apoiam o uso a partir de 8 anos; abaixo disso a evidência é insuficiente.",
     name: "NRS Pain",
     fullName: "Numeric Rating Scale for Pain — 0–10",
     ageMin: 72,
@@ -640,6 +644,7 @@ export const dor: ScaleEntry[] = [
   },
   {
     id: "vas-pain",
+    fonte: "Scott J, Huskisson EC, 1976 (Visual Analogue Scale) — Pain 2(2):175-84. PMID 1026900 · RESSALVA: descrição original em adultos; em pediatria costuma ser ancorada por equivalência à FPS-R/NRS (von Baeyer 2009, PMID 19359097).",
     name: "VAS Pain",
     fullName: "Visual Analog Scale for Pain — 100 mm",
     ageMin: 72,
@@ -766,6 +771,7 @@ export const dor: ScaleEntry[] = [
 export const sono: ScaleEntry[] = [
   {
     id: "bisq-r",
+    fonte: "Mindell JA, Gould RA, Tikotzy L, Leichman ES, Walters RM, 2019 (BISQ-R, escore normativo) — Sleep Med 63:106-114. PMID 31610383 · doi:10.1016/j.sleep.2019.05.010",
     name: "BISQ-R",
     fullName: "Brief Infant Sleep Questionnaire – Revised — Sono de lactentes/pequenas crianças",
     ageMin: 0,
