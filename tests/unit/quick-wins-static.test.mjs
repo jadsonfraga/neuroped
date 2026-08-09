@@ -197,6 +197,29 @@ assert.doesNotMatch(worker, /neuroped-v7/);
 const vite = read("vite.config.ts");
 assert.match(vite, /serviceWorkerPrecacheManifest/);
 assert.match(vite, /sw-assets\.js/);
+assert.match(vite, /async writeBundle\(\)/, "precache só pode rodar após os artefatos serem gravados");
+assert.doesNotMatch(vite, /async closeBundle\(\)/, "closeBundle reintroduz a corrida do manifesto");
+
+const a11yAudit = read("scripts/audit-a11y.mjs");
+assert.match(a11yAudit, /process\.env\.A11Y_FULL === "1"/);
+assert.match(a11yAudit, /client\/src\/data\/navigation\.ts/);
+assert.match(a11yAudit, /allSeverityViolations/);
+const lighthouseAudit = read("scripts/audit-lighthouse.mjs");
+assert.match(lighthouseAudit, /REQUIRED_PASS_AUDITS/);
+assert.match(lighthouseAudit, /METRIC_MAXIMUMS/);
+const bundleAudit = read("scripts/audit-bundle.mjs");
+assert.match(bundleAudit, /largestJsChunkMaxKb/);
+assert.match(bundleAudit, /largestJsChunkMaxGzipKb/);
+const qualityBaseline = JSON.parse(read("scripts/guards/baseline.json"));
+assert.equal(qualityBaseline.axeTotalViolations, 0);
+assert.equal(qualityBaseline.lighthouseAccessibility, 100);
+assert.equal(qualityBaseline.lighthouseBestPractices, 100);
+assert.equal(qualityBaseline.lighthouseSeo, 100);
+assert.ok(qualityBaseline.lighthouseRouteMinimums["/#/filtro"] >= 92);
+const spiralWorkflow = read(".github/workflows/filter-spiral.yml");
+assert.match(spiralWorkflow, /playwright install --with-deps chromium/);
+assert.match(spiralWorkflow, /npm run audit:a11y:full/);
+assert.match(spiralWorkflow, /npm run audit:lighthouse/);
 
 const genericScale = read("client/src/components/GenericScale.tsx");
 const interactiveScale = read(

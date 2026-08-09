@@ -23,6 +23,13 @@ const runnableReviewedWithFonte = allScales.filter(
 const documentedWithFonte = allScalesComFichas.filter(
   (scale) => typeof scale.fonte === "string" && scale.fonte.trim().length > 0,
 ).length;
+const runnablePendingProvenance = allScales.filter(
+  (scale) =>
+    typeof scale.fonte !== "string" ||
+    scale.fonte.trim().length === 0 ||
+    scale.pendente_validacao_clinica === true,
+).length;
+const documentedPendingProvenance = allScalesComFichas.length - documentedWithFonte;
 
 const metrics = [
   {
@@ -38,6 +45,12 @@ const metrics = [
     ok: runnableReviewedWithFonte >= baseline.catalogRunnableReviewedWithFonte,
   },
   {
+    eixo: "Pendências de proveniência executável",
+    atual: runnablePendingProvenance,
+    meta: `máx. ${baseline.catalogRunnablePendingProvenanceMax}`,
+    ok: runnablePendingProvenance <= baseline.catalogRunnablePendingProvenanceMax,
+  },
+  {
     eixo: "Fichas documentadas",
     atual: allScalesComFichas.length,
     meta: baseline.catalogDocumentedInstruments,
@@ -48,6 +61,12 @@ const metrics = [
     atual: documentedWithFonte,
     meta: baseline.catalogDocumentedWithFonte,
     ok: documentedWithFonte >= baseline.catalogDocumentedWithFonte,
+  },
+  {
+    eixo: "Pendências de proveniência documental",
+    atual: documentedPendingProvenance,
+    meta: `máx. ${baseline.catalogDocumentedPendingProvenanceMax}`,
+    ok: documentedPendingProvenance <= baseline.catalogDocumentedPendingProvenanceMax,
   },
   {
     eixo: "TypeScript",

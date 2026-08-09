@@ -1,15 +1,20 @@
 {
   "/": {
-    "performance": 98,
+    "performance": 97,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 756,
-      "lcpMs": 1111,
-      "speedIndexMs": 787,
+      "fcpMs": 755,
+      "lcpMs": 1130,
+      "speedIndexMs": 803,
       "tbtMs": 24,
       "cls": 0.005
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
     },
     "layoutShifts": [
       {
@@ -38,15 +43,15 @@
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
           "boundingRect": {
-            "top": 872,
+            "top": 868,
             "bottom": 916,
-            "left": 1280,
+            "left": 1179,
             "right": 1324,
-            "width": 44,
-            "height": 44
+            "width": 145,
+            "height": 48
           },
-          "snippet": "<button aria-label=\"Rever o tour guiado do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
-          "nodeLabel": "Rever o tour guiado do app"
+          "snippet": "<button aria-label=\"Tour do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
+          "nodeLabel": "Tour do app"
         },
         "score": 0.0013051823538590968
       }
@@ -59,18 +64,13 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.92,
+        "score": 0.91,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "speed-index",
         "score": 0.99,
         "title": "Speed Index"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
       },
       {
         "id": "valid-source-maps",
@@ -120,11 +120,16 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 878,
-      "lcpMs": 1431,
-      "speedIndexMs": 936,
-      "tbtMs": 70,
+      "fcpMs": 867,
+      "lcpMs": 1411,
+      "speedIndexMs": 921,
+      "tbtMs": 82,
       "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
     },
     "layoutShifts": [],
     "failedAudits": [
@@ -145,7 +150,7 @@
       },
       {
         "id": "total-blocking-time",
-        "score": 0.99,
+        "score": 0.98,
         "title": "Total Blocking Time"
       },
       {
@@ -165,7 +170,7 @@
       },
       {
         "id": "unused-css-rules",
-        "score": 0,
+        "score": 0.5,
         "title": "Reduce unused CSS"
       },
       {
@@ -206,11 +211,16 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 835,
-      "lcpMs": 1273,
-      "speedIndexMs": 842,
-      "tbtMs": 36,
+      "fcpMs": 832,
+      "lcpMs": 1269,
+      "speedIndexMs": 832,
+      "tbtMs": 37,
       "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
     },
     "layoutShifts": [],
     "failedAudits": [
@@ -221,7 +231,7 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.87,
+        "score": 0.88,
         "title": "Largest Contentful Paint"
       },
       {
@@ -241,7 +251,7 @@
       },
       {
         "id": "unused-css-rules",
-        "score": 0.5,
+        "score": 0,
         "title": "Reduce unused CSS"
       },
       {
