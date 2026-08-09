@@ -144,6 +144,9 @@ function ageMonths(range: string) {
 
 
 function rowToScale(row: Row): ScaleEntry {
+  if (!Array.isArray(row) || row.length < 8) {
+    throw new Error(`Invalid row structure: expected 8+ fields, got ${Array.isArray(row) ? row.length : 'non-array'}`);
+  }
   const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
   const a = ageMonths(idade);
   return {
@@ -186,6 +189,7 @@ const SEARCH_SYNONYMS: Record<string, string[]> = {
 };
 
 function expandSearchText(query: string): string {
+  if (typeof query !== "string" || query.length === 0) return "";
   const normalized = norm(query);
   const extra: string[] = [];
   for (const [queixa, words] of Object.entries(SEARCH_SYNONYMS)) {
@@ -221,7 +225,7 @@ function inferAgeMonthsFromSearch(query: string): number | null {
 function searchBoost(scale: ScaleEntry, query: string) {
   const tokens = norm(expandSearchText(query)).split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return 0;
-  const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte || ""}`);
+  const text = norm(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte ?? ""}`);
   let value = 0;
   for (const token of tokens) if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
   return value;

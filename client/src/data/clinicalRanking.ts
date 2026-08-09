@@ -322,8 +322,8 @@ export function getClinicalTiers(
         ageMin: 0,
         ageMax: 216,
         ouro: ids.ouro[0] ?? ids.prata[0] ?? ids.bronze[0],
-        prata: ids.prata[0] ?? ids.ouro[1],
-        bronze: ids.bronze[0] ?? ids.prata[1] ?? ids.ouro[2],
+        prata: ids.prata[0] ?? (ids.ouro.length > 1 ? ids.ouro[1] : undefined),
+        bronze: ids.bronze[0] ?? (ids.prata.length > 1 ? ids.prata[1] : (ids.ouro.length > 2 ? ids.ouro[2] : undefined)),
         reason: `Fluxograma ${flow.label} — curadoria por faixa etária.`,
       };
     }

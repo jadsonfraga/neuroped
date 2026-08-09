@@ -236,16 +236,21 @@ export function isPsychosisInstrument(scale: ScaleEntry): boolean {
 export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string | null {
   const age = ctx.ageMonths;
 
+  // Valida que a escala tem campos obrigatórios de idade
+  if (!Number.isFinite(scale.ageMin) || !Number.isFinite(scale.ageMax)) {
+    return "Escala sem faixa etária definida";
+  }
+
   // Para bloqueios de segurança do tipo "requer idade >= X", uma faixa selecionada
   // (ageBand) precisa ser avaliada pelo seu extremo MAIS NOVO — senão a criança
   // mais nova da faixa escaparia do bloqueio (ex.: faixa 6–12 anos usando o ponto
   // médio de 9 anos deixaria passar instrumentos de suicídio para uma criança de 6).
-  const youngestAge = ctx.ageBand ? ctx.ageBand.min : age;
+  const youngestAge = ctx.ageBand && typeof ctx.ageBand.min === 'number' ? ctx.ageBand.min : age;
 
   // Idade fora do range do instrumento. Com faixa (ageBand) usa SOBREPOSIÇÃO
   // (a escala cobre algum ponto da faixa selecionada) — restaura a semântica
   // correta e evita excluir escalas estreitas/neonatais que tangenciam a faixa.
-  if (ctx.ageBand) {
+  if (ctx.ageBand && typeof ctx.ageBand.min === 'number' && typeof ctx.ageBand.max === 'number') {
     const overlaps = scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
     if (!overlaps) return "Fora da faixa etária do instrumento";
   } else if (age !== null && (age < scale.ageMin || age > scale.ageMax)) {
@@ -272,7 +277,7 @@ export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string
   // Alfabetização obrigatória (metadado derivado quando não declarado).
   if (getLiteracyRequirement(scale) === "alfabetizado") {
     if (ctx.isLiterate === false) return "Requer criança alfabetizada";
-    if (ctx.isLiterate == null && youngestAge !== null && youngestAge < 72) return "Requer alfabetização";
+    if (ctx.isLiterate === null && youngestAge !== null && youngestAge < 72) return "Requer alfabetização";
   }
 
   // Linguagem verbal obrigatória (metadado derivado quando não declarado).
@@ -343,10 +348,11 @@ function normalizeClinicalText(value: string): string {
 }
 
 function tokensFromText(value: string): Set<string> {
+  const shortValidTokens = new Set(["tea", "toc", "tic", "tdah", "tda", "pc", "oab", "gad", "phq", "dbt", "tcc", "imao", "isrs", "irsn", "atcc"]);
   return new Set(
     normalizeClinicalText(value)
       .split(/\s+/)
-      .filter((token) => token.length >= 4)
+      .filter((token) => token.length >= 4 || shortValidTokens.has(token))
   );
 }
 
