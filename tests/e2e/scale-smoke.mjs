@@ -47,7 +47,7 @@ function startStaticServer() {
 
 // Escalas que renderizam pelo contrato GenericScale (radiogroups + button-submit
 // + ClinicalReport + SaveToPatient). Cobre todas as páginas com rota dedicada.
-const ROUTES = [
+const ALL_ROUTES = [
   { path: "/#/gad7", name: "GAD-7" },
   { path: "/#/vanderbilt", name: "Vanderbilt" },
   { path: "/#/psc17", name: "PSC-17" },
@@ -70,6 +70,18 @@ const ROUTES = [
   { path: "/#/pdae", name: "PDAE" },
   { path: "/#/pedsql", name: "PedsQL" },
 ];
+const requestedRoute = process.env.E2E_ROUTE?.trim().toLowerCase();
+const ROUTES = requestedRoute
+  ? ALL_ROUTES.filter(
+      ({ path, name }) =>
+        path.toLowerCase().includes(requestedRoute) ||
+        name.toLowerCase().includes(requestedRoute),
+    )
+  : ALL_ROUTES;
+
+if (requestedRoute && ROUTES.length === 0) {
+  throw new Error(`E2E_ROUTE sem correspondência: ${process.env.E2E_ROUTE}`);
+}
 const OPTION_INDEX = 1; // segunda opção de cada item (clinicamente neutra p/ smoke)
 
 async function answerAll(page, optionIndex) {
@@ -97,6 +109,15 @@ async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
+  // O smoke valida as escalas, não o fluxo de primeira visita. Prepara somente
+  // os aceites locais para que splash/onboarding/aviso não cubram os controles.
+  await page.addInitScript(() => {
+    localStorage.setItem("neuroped:aviso-educativo-aceito-v1", "e2e");
+    localStorage.setItem("neuroped:onboarding-seen", "1");
+    localStorage.setItem("np_tour_intro_v2", "done");
+    localStorage.setItem("np_tour_v2_done", "1");
+  });
+
   // Sem rede real: SaveToPatient/listas respondem vazio/ok.
   await page.route("**/api/patients**", (route) =>
     route.fulfill({
@@ -114,7 +135,9 @@ async function main() {
   try {
     for (const scale of ROUTES) {
       try {
+        console.log(`  … ${scale.name}`);
         await page.goto(`${base}${scale.path}`, { waitUntil: "domcontentloaded" });
+        await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 10000 });
         // Espera a escala montar (primeiro grupo de opções), sem depender do título.
         await page.locator('[role="radiogroup"]').first().waitFor({ timeout: 15000 });
 
@@ -133,13 +156,14 @@ async function main() {
 
         await page.getByText(/Resultado/i).first().waitFor({ timeout: 10000 });
         await page.getByTestId("button-print-report").waitFor({ timeout: 10000 });
-        await page.getByText(/Vincular a Paciente/i).first().waitFor({ timeout: 10000 });
+        await page.locator("[data-scale-response-action]").waitFor({ timeout: 10000 });
 
         ok += 1;
         console.log(`  ✓ ${scale.name}`);
       } catch (e) {
         failures.push(scale.name);
-        console.log(`  ✗ ${scale.name}: ${String(e.message).split("\n")[0]}`);
+        const details = String(e?.message ?? e).split("\n").slice(0, 30).join("\n    ");
+        console.log(`  ✗ ${scale.name}: ${details}`);
       }
     }
     console.log(`\n[scale-smoke] ${ok}/${ROUTES.length} verdes${failures.length ? ` — falhas: ${failures.join(", ")}` : ""}.`);

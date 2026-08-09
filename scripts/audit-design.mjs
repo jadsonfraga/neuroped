@@ -12,7 +12,7 @@
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve, join, extname } from "node:path";
+import { dirname, resolve, join, extname, relative, sep } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
@@ -37,7 +37,7 @@ function walk(d) {
 const perFile = {};
 let total = 0;
 for (const f of walk(resolve(repoRoot, "client/src"))) {
-  const relativeFile = f.replace(repoRoot + "\\", "").replace(repoRoot + "/", "");
+  const relativeFile = relative(repoRoot, f).split(sep).join("/");
   if (DESIGN_SYSTEM_SOURCES.has(relativeFile)) continue;
 
   const c = readFileSync(f, "utf8");
