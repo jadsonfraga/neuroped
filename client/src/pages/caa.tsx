@@ -524,18 +524,20 @@ export default function CaaPage() {
                     <button
                       type="button"
                       onClick={() => tap(item)}
-                      aria-label={"Falar " + item[1]}
+                      // Sem aria-label de proposito: o nome acessivel vem do
+                      // conteudo ("<palavra> toque para ouvir"), que CONTEM o
+                      // texto visivel. Um aria-label "Falar <palavra>" quebrava
+                      // WCAG 2.5.3 (Label in Name) — o nome nao continha o
+                      // rotulo visivel, e comando por voz falhava.
                       className="flex min-h-[128px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl p-3 text-center active:scale-95 sm:min-h-[146px]"
                     >
                       <span className="text-5xl leading-none" aria-hidden>{item[0]}</span>
                       <strong className="text-sm leading-tight text-foreground">{item[1]}</strong>
-                      {/* Dica de affordance repetida em todos os cartões: fica fora da
-                          árvore de acessibilidade. Sem isso o texto visível do botão é
-                          "<palavra> toque para ouvir" enquanto o nome acessível é
-                          "Falar <palavra>", e o nome deixa de conter o rótulo visível
-                          (WCAG 2.5.3 Label in Name) — quebra comando por voz. Ocultá-la
-                          também evita repetir a mesma dica a cada cartão no leitor. */}
-                      <small className="text-[10px] text-muted-foreground" aria-hidden>toque para ouvir</small>
+                      {/* Continua na árvore de acessibilidade: como o texto está
+                          visível na tela, precisa fazer parte do nome acessível para
+                          o nome conter o rótulo visível. Marcá-lo aria-hidden não
+                          resolveria — a regra compara com o que o usuário VÊ. */}
+                      <small className="text-[10px] text-muted-foreground">toque para ouvir</small>
                     </button>
                     <button
                       type="button"

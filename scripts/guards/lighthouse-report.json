@@ -1,14 +1,14 @@
 {
   "/": {
-    "performance": 97,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 755,
-      "lcpMs": 1130,
-      "speedIndexMs": 803,
-      "tbtMs": 24,
+      "fcpMs": 728,
+      "lcpMs": 1042,
+      "speedIndexMs": 728,
+      "tbtMs": 6,
       "cls": 0.005
     },
     "requiredAudits": {
@@ -24,8 +24,8 @@
           "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
           "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
           "boundingRect": {
-            "top": 1483,
-            "bottom": 1563,
+            "top": 1444,
+            "bottom": 1523,
             "left": 276,
             "right": 1324,
             "width": 1048,
@@ -34,7 +34,7 @@
           "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
           "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
         },
-        "score": 0.00411040548616388
+        "score": 0.003818078095599942
       },
       {
         "node": {
@@ -45,17 +45,164 @@
           "boundingRect": {
             "top": 868,
             "bottom": 916,
-            "left": 1179,
+            "left": 1165,
             "right": 1324,
-            "width": 145,
+            "width": 159,
             "height": 48
           },
           "snippet": "<button aria-label=\"Tour do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
           "nodeLabel": "Tour do app"
         },
-        "score": 0.0013051823538590968
+        "score": 0.001586607811896922
       }
     ],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.97,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.94,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0.5,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/filtro": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 787,
+      "lcpMs": 1199,
+      "speedIndexMs": 794,
+      "tbtMs": 26,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.95,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.9,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/mchat": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 755,
+      "lcpMs": 1135,
+      "speedIndexMs": 755,
+      "tbtMs": 9,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
     "failedAudits": [
       {
         "id": "first-contentful-paint",
@@ -98,11 +245,6 @@
         "title": "Forced reflow"
       },
       {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
-      },
-      {
         "id": "network-dependency-tree-insight",
         "score": 0,
         "title": "Network dependency tree"
@@ -114,16 +256,16 @@
       }
     ]
   },
-  "/#/filtro": {
-    "performance": 94,
+  "/#/cars": {
+    "performance": 97,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 867,
-      "lcpMs": 1411,
-      "speedIndexMs": 921,
-      "tbtMs": 82,
+      "fcpMs": 774,
+      "lcpMs": 1130,
+      "speedIndexMs": 774,
+      "tbtMs": 7,
       "cls": 0
     },
     "requiredAudits": {
@@ -135,33 +277,18 @@
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.92,
+        "score": 0.96,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.83,
+        "score": 0.91,
         "title": "Largest Contentful Paint"
       },
       {
         "id": "speed-index",
-        "score": 0.98,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.98,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.98,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "interactive",
         "score": 0.99,
-        "title": "Time to Interactive"
+        "title": "Speed Index"
       },
       {
         "id": "valid-source-maps",
@@ -170,7 +297,7 @@
       },
       {
         "id": "unused-css-rules",
-        "score": 0.5,
+        "score": 0,
         "title": "Reduce unused CSS"
       },
       {
@@ -189,9 +316,212 @@
         "title": "Forced reflow"
       },
       {
-        "id": "image-delivery-insight",
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/vineland": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 693,
+      "lcpMs": 1005,
+      "speedIndexMs": 693,
+      "tbtMs": 5,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.98,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.94,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
         "score": 0.5,
-        "title": "Improve image delivery"
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/cbcl": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 805,
+      "lcpMs": 1192,
+      "speedIndexMs": 805,
+      "tbtMs": 13,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.95,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.9,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/caa": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 724,
+      "lcpMs": 1022,
+      "speedIndexMs": 724,
+      "tbtMs": 10,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": false,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.97,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.94,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "score": 0,
+        "title": "Elements with visible text labels do not have matching accessible names."
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -205,16 +535,16 @@
       }
     ]
   },
-  "/#/mchat": {
-    "performance": 96,
+  "/#/espasticidade": {
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 832,
-      "lcpMs": 1269,
-      "speedIndexMs": 832,
-      "tbtMs": 37,
+      "fcpMs": 755,
+      "lcpMs": 1091,
+      "speedIndexMs": 755,
+      "tbtMs": 13,
       "cls": 0
     },
     "requiredAudits": {
@@ -226,12 +556,12 @@
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.94,
+        "score": 0.96,
         "title": "First Contentful Paint"
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.88,
+        "score": 0.92,
         "title": "Largest Contentful Paint"
       },
       {
@@ -240,9 +570,278 @@
         "title": "Speed Index"
       },
       {
-        "id": "max-potential-fid",
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/prontuario": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 746,
+      "lcpMs": 1038,
+      "speedIndexMs": 746,
+      "tbtMs": 5,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.96,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.94,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
         "score": 0.99,
-        "title": "Max Potential First Input Delay"
+        "title": "Speed Index"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/fluxograma": {
+    "performance": 99,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 689,
+      "lcpMs": 958,
+      "speedIndexMs": 689,
+      "tbtMs": 2,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.98,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.95,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/laudo-neuroped": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 715,
+      "lcpMs": 1009,
+      "speedIndexMs": 715,
+      "tbtMs": 4,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.97,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.94,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "unused-css-rules",
+        "score": 0,
+        "title": "Reduce unused CSS"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/receita-c1": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 777,
+      "lcpMs": 1133,
+      "speedIndexMs": 777,
+      "tbtMs": 5,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.96,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.91,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
       },
       {
         "id": "valid-source-maps",
