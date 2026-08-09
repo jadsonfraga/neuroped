@@ -5,10 +5,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 728,
-      "lcpMs": 1042,
-      "speedIndexMs": 728,
-      "tbtMs": 6,
+      "fcpMs": 719,
+      "lcpMs": 1030,
+      "speedIndexMs": 719,
+      "tbtMs": 4,
       "cls": 0.005
     },
     "requiredAudits": {
@@ -74,7 +74,7 @@
       },
       {
         "id": "unused-css-rules",
-        "score": 0.5,
+        "score": 0,
         "title": "Reduce unused CSS"
       },
       {
@@ -115,10 +115,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 787,
-      "lcpMs": 1199,
-      "speedIndexMs": 794,
-      "tbtMs": 26,
+      "fcpMs": 799,
+      "lcpMs": 1231,
+      "speedIndexMs": 799,
+      "tbtMs": 20,
       "cls": 0
     },
     "requiredAudits": {
@@ -135,7 +135,7 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.9,
+        "score": 0.89,
         "title": "Largest Contentful Paint"
       },
       {
@@ -191,10 +191,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 755,
-      "lcpMs": 1135,
-      "speedIndexMs": 755,
-      "tbtMs": 9,
+      "fcpMs": 759,
+      "lcpMs": 1141,
+      "speedIndexMs": 759,
+      "tbtMs": 11,
       "cls": 0
     },
     "requiredAudits": {
@@ -257,14 +257,14 @@
     ]
   },
   "/#/cars": {
-    "performance": 97,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 774,
-      "lcpMs": 1130,
-      "speedIndexMs": 774,
+      "fcpMs": 770,
+      "lcpMs": 1124,
+      "speedIndexMs": 770,
       "tbtMs": 7,
       "cls": 0
     },
@@ -282,7 +282,7 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.91,
+        "score": 0.92,
         "title": "Largest Contentful Paint"
       },
       {
@@ -388,7 +388,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
@@ -399,10 +399,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 805,
-      "lcpMs": 1192,
-      "speedIndexMs": 805,
-      "tbtMs": 13,
+      "fcpMs": 799,
+      "lcpMs": 1223,
+      "speedIndexMs": 799,
+      "tbtMs": 14,
       "cls": 0
     },
     "requiredAudits": {
@@ -419,7 +419,7 @@
       },
       {
         "id": "largest-contentful-paint",
-        "score": 0.9,
+        "score": 0.89,
         "title": "Largest Contentful Paint"
       },
       {
@@ -459,7 +459,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
@@ -470,15 +470,15 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 724,
-      "lcpMs": 1022,
-      "speedIndexMs": 724,
-      "tbtMs": 10,
+      "fcpMs": 707,
+      "lcpMs": 998,
+      "speedIndexMs": 707,
+      "tbtMs": 4,
       "cls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
-      "label-content-name-mismatch": false,
+      "label-content-name-mismatch": true,
       "unsized-images": true
     },
     "layoutShifts": [],
@@ -497,11 +497,6 @@
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
       },
       {
         "id": "unused-css-rules",
@@ -541,10 +536,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 755,
-      "lcpMs": 1091,
-      "speedIndexMs": 755,
-      "tbtMs": 13,
+      "fcpMs": 756,
+      "lcpMs": 1092,
+      "speedIndexMs": 756,
+      "tbtMs": 7,
       "cls": 0
     },
     "requiredAudits": {
@@ -612,10 +607,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 746,
+      "fcpMs": 747,
       "lcpMs": 1038,
-      "speedIndexMs": 746,
-      "tbtMs": 5,
+      "speedIndexMs": 747,
+      "tbtMs": 2,
       "cls": 0
     },
     "requiredAudits": {
@@ -678,15 +673,15 @@
     ]
   },
   "/#/fluxograma": {
-    "performance": 99,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 689,
-      "lcpMs": 958,
-      "speedIndexMs": 689,
-      "tbtMs": 2,
+      "fcpMs": 722,
+      "lcpMs": 954,
+      "speedIndexMs": 722,
+      "tbtMs": 5,
       "cls": 0
     },
     "requiredAudits": {
@@ -698,7 +693,7 @@
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.98,
+        "score": 0.97,
         "title": "First Contentful Paint"
       },
       {
@@ -749,10 +744,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 715,
-      "lcpMs": 1009,
-      "speedIndexMs": 715,
-      "tbtMs": 4,
+      "fcpMs": 724,
+      "lcpMs": 1021,
+      "speedIndexMs": 724,
+      "tbtMs": 5,
       "cls": 0
     },
     "requiredAudits": {
@@ -804,7 +799,7 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
@@ -815,9 +810,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 777,
-      "lcpMs": 1133,
-      "speedIndexMs": 777,
+      "fcpMs": 790,
+      "lcpMs": 1151,
+      "speedIndexMs": 790,
       "tbtMs": 5,
       "cls": 0
     },
@@ -830,7 +825,7 @@
     "failedAudits": [
       {
         "id": "first-contentful-paint",
-        "score": 0.96,
+        "score": 0.95,
         "title": "First Contentful Paint"
       },
       {
