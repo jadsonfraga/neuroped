@@ -329,6 +329,48 @@
 }
 
 @layer components {
+  .np-home-hero {
+    background:
+      radial-gradient(circle at 82% 28%, hsl(var(--chart-2) / .13), transparent 32%),
+      linear-gradient(135deg, hsl(var(--primary) / .105), hsl(var(--background) / .78) 48%, hsl(var(--chart-3) / .08));
+  }
+  .np-home-orb {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    filter: blur(1px);
+  }
+  .np-home-orb-one {
+    width: 20rem;
+    height: 20rem;
+    right: -5rem;
+    top: -9rem;
+    background: radial-gradient(circle, hsl(var(--primary) / .17), transparent 68%);
+  }
+  .np-home-orb-two {
+    width: 15rem;
+    height: 15rem;
+    left: 38%;
+    bottom: -10rem;
+    background: radial-gradient(circle, hsl(var(--chart-2) / .13), transparent 70%);
+  }
+  .np-title-gradient {
+    color: hsl(var(--primary));
+    background: linear-gradient(105deg, hsl(var(--primary)), hsl(var(--chart-2)) 105%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .np-primary-cta {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / .84));
+    box-shadow: 0 13px 28px -13px hsl(var(--primary) / .7), inset 0 1px 0 rgba(255,255,255,.24);
+    transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease;
+  }
+  .np-primary-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 35px -14px hsl(var(--primary) / .8), inset 0 1px 0 rgba(255,255,255,.24);
+  }
+
   /* Skip-link de acessibilidade (SkipNav.tsx). Sua regra canônica vive em
      styles/tokens.css, mas esse @import está após os @tailwind e é descartado
      pelo bundler — sem a regra, o link vira um bloco estático visível (~222px)

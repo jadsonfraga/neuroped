@@ -14,17 +14,9 @@
       "violations": []
     },
     "/#/mchat": {
-      "total": 1,
+      "total": 0,
       "seriousCritical": 0,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "targets": [
-            "h3"
-          ]
-        }
-      ]
+      "violations": []
     },
     "/#/caa": {
       "total": 0,
