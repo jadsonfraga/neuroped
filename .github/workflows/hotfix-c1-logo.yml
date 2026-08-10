@@ -1,0 +1,74 @@
+name: Hotfix C1 Express logo
+
+on:
+  push:
+    branches:
+      - hotfix/c1-express-logo
+
+permissions:
+  contents: write
+
+jobs:
+  patch-c1-express:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout hotfix branch
+        uses: actions/checkout@v7
+        with:
+          ref: hotfix/c1-express-logo
+
+      - name: Embed master shield in the two-page C1 PDF
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('client/src/pages/receita-c1-express.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          old_import = 'import signatureImageUrl from "@/assets/images/jadson-signature.jpg";'
+          new_import = old_import + '\nimport { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";'
+          if 'drJadsonMasterShieldLogo' not in text:
+              assert old_import in text, 'anchor de import não encontrado'
+              text = text.replace(old_import, new_import, 1)
+
+          old_embed = '  const signatureImage = await pdf.embedJpg(signatureImageBytes);'
+          new_embed = old_embed + '\n  const logoImage = await pdf.embedJpg(drJadsonMasterShieldLogo.split(",")[1] ?? "");'
+          if 'const logoImage = await pdf.embedJpg' not in text:
+              assert old_embed in text, 'anchor de embed não encontrado'
+              text = text.replace(old_embed, new_embed, 1)
+
+          old_header = '''    page.drawText(CLINIC_NAME, { x: m + 8, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 8, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });'''
+          new_header = '''    const logoDims = logoImage.scaleToFit(24, 24);
+    page.drawImage(logoImage, {
+      x: m + 6,
+      y: top - 51 + (24 - logoDims.height) / 2,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
+    page.drawText(CLINIC_NAME, { x: m + 36, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 36, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });'''
+          if 'const logoDims = logoImage.scaleToFit' not in text:
+              assert old_header in text, 'anchor do cabeçalho não encontrado'
+              text = text.replace(old_header, new_header, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify patch anchors
+        run: |
+          grep -F 'drJadsonMasterShieldLogo' client/src/pages/receita-c1-express.tsx
+          grep -F 'logoImage.scaleToFit' client/src/pages/receita-c1-express.tsx
+          grep -F 'page.drawImage(logoImage' client/src/pages/receita-c1-express.tsx
+
+      - name: Commit patched source
+        run: |
+          if git diff --quiet -- client/src/pages/receita-c1-express.tsx; then
+            echo 'Hotfix já aplicado.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/pages/receita-c1-express.tsx
+          git commit -m 'fix(pdf): inclui escudo mestre no C1 Express de duas vias'
+          git push origin HEAD:hotfix/c1-express-logo
