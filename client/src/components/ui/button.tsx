@@ -5,31 +5,26 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
-  " hover-elevate active-elevate-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[0.9rem] text-[13px] font-semibold tracking-[-0.01em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 transition-[background-color,border-color,color,box-shadow,transform,filter] duration-200 ease-out",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground border border-primary-border",
+          "border border-primary/70 bg-primary text-primary-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.06),0_10px_24px_-18px_hsl(var(--primary)/0.9)] hover:brightness-[1.03] hover:shadow-[0_1px_2px_hsl(var(--foreground)/0.06),0_14px_30px_-20px_hsl(var(--primary)/0.92)] active:scale-[0.992]",
         destructive:
-          "bg-destructive text-destructive-foreground border border-destructive-border",
+          "border border-destructive/70 bg-destructive text-destructive-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.06),0_10px_24px_-18px_hsl(var(--destructive)/0.65)] hover:brightness-[1.03] active:scale-[0.992]",
         outline:
-          // Shows the background color of whatever card / sidebar / accent background it is inside of.
-          // Inherits the current text color.
-          " border [border-color:var(--button-outline)]  shadow-xs active:shadow-none ",
-        secondary: "border bg-secondary text-secondary-foreground border border-secondary-border ",
-        // Add a transparent border so that when someone toggles a border on later, it doesn't shift layout/size.
-        ghost: "border border-transparent",
+          "border border-border/90 bg-card/70 text-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.035),inset_0_1px_0_hsl(var(--card-foreground)/0.025)] hover:border-primary/25 hover:bg-muted/55 hover:shadow-[0_8px_20px_-16px_hsl(var(--foreground)/0.34)] active:scale-[0.992]",
+        secondary:
+          "border border-border/70 bg-secondary text-secondary-foreground shadow-[inset_0_1px_0_hsl(var(--card)/0.55)] hover:bg-secondary/80 active:scale-[0.992]",
+        ghost:
+          "border border-transparent bg-transparent text-foreground/78 hover:bg-muted/62 hover:text-foreground active:scale-[0.992]",
       },
-      // Heights are set as "min" heights, because sometimes Ai will place large amount of content
-      // inside buttons. With a min-height they will look appropriate with small amounts of content,
-      // but will expand to fit large amounts of content.
       size: {
-        default: "min-h-9 px-4 py-2",
-        sm: "min-h-8 rounded-lg px-3 text-xs",
-        lg: "min-h-10 rounded-xl px-8",
-        icon: "h-9 w-9",
+        default: "min-h-10 px-4 py-2.5",
+        sm: "min-h-9 rounded-[0.78rem] px-3 text-xs",
+        lg: "min-h-11 rounded-[1rem] px-6 text-sm",
+        icon: "h-10 w-10 rounded-[0.85rem]",
       },
     },
     defaultVariants: {
