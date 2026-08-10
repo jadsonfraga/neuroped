@@ -75,11 +75,13 @@ const scaleResponse = await post(createScaleResult as never, {
   responses: extensiveResponses,
   applied_at: "2026-07-16T09:30:00-03:00",
 });
-assert.equal(scaleResponse.status, 201);
-const scaleBody = await scaleResponse.json() as { id: string; responses: unknown[] };
-assert.match(scaleBody.id, uuidPattern);
-assert.equal(scaleBody.responses.length, 150);
-assert.notEqual(scaleBody.id, resultBody.id, "IDs clínicos são UUIDs independentes");
+assert.equal(
+  scaleResponse.status,
+  503,
+  "payload extenso válido passa pela validação e falha fechado sem D1",
+);
+const scaleBody = await scaleResponse.json() as { code?: string };
+assert.equal(scaleBody.code, "DB_REQUIRED");
 
 const tooManyResponses = Array.from(
   { length: CLINICAL_INPUT_LIMITS.responseItems + 1 },
@@ -120,8 +122,8 @@ const documentResponse = await post(createDocument as never, {
   title: "Documento clínico",
   content: "Conteúdo integral",
 });
-assert.equal(documentResponse.status, 201);
-assert.match((await documentResponse.json() as { id: string }).id, uuidPattern);
+assert.equal(documentResponse.status, 503);
+assert.equal((await documentResponse.json() as { code?: string }).code, "DB_REQUIRED");
 assert.equal(
   (await post(createDocument as never, {
     patient_id: "demo-001",
@@ -146,8 +148,8 @@ const consultationResponse = await post(createConsultation as never, {
   date: "2026-07-16",
   subjective: "Relato integral",
 });
-assert.equal(consultationResponse.status, 201);
-assert.match((await consultationResponse.json() as { id: string }).id, uuidPattern);
+assert.equal(consultationResponse.status, 503);
+assert.equal((await consultationResponse.json() as { code?: string }).code, "DB_REQUIRED");
 assert.equal(
   (await post(createConsultation as never, {
     patient_id: "demo-001",
