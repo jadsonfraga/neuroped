@@ -3,6 +3,13 @@ import {
   persistentSecureGet,
   persistentSecureSet,
 } from "@/lib/persistentSecureStorage";
+import { getAccessToken } from "@/lib/authClient";
+import {
+  AgendaRevisionConflictError,
+  fromCloudWorkspace,
+  loadAgendaCloud,
+  saveAgendaCloud,
+} from "@/lib/agendaCloud";
 
 export type AgendaStatus =
   | "agendado"
@@ -71,8 +78,49 @@ export interface AgendaConflict {
   label: string;
 }
 
+export type AgendaRuntimeMode = "local" | "remote-live" | "demo-cloud" | "remote-offline";
+
+export interface AgendaRuntimeState {
+  mode: AgendaRuntimeMode;
+  revision: number | null;
+  offline: boolean;
+  updatedAt: string | null;
+  lastError: string | null;
+}
+
 export const AGENDA_STORAGE_KEY = "agenda:workspace:v1";
 export const AGENDA_TIMEZONE = "America/Recife";
+
+let agendaRuntimeState: AgendaRuntimeState = {
+  mode: "local",
+  revision: null,
+  offline: false,
+  updatedAt: null,
+  lastError: null,
+};
+
+function publishAgendaRuntimeState(next: AgendaRuntimeState): void {
+  agendaRuntimeState = next;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("agenda:runtime", { detail: next }));
+  }
+}
+
+export function getAgendaRuntimeState(): AgendaRuntimeState {
+  return { ...agendaRuntimeState };
+}
+
+export function subscribeAgendaRuntimeState(
+  listener: (state: AgendaRuntimeState) => void,
+): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  const handler = (event: Event) => {
+    const detail = (event as CustomEvent<AgendaRuntimeState>).detail;
+    if (detail) listener(detail);
+  };
+  window.addEventListener("agenda:runtime", handler);
+  return () => window.removeEventListener("agenda:runtime", handler);
+}
 
 export const agendaStatusLabels: Record<AgendaStatus, string> = {
   agendado: "Agendado",
@@ -276,16 +324,105 @@ export function normalizeAgendaWorkspace(value: unknown): AgendaWorkspace {
   return { version: 1, appointments, blocks, waitlist };
 }
 
-export async function loadAgendaWorkspace(): Promise<AgendaWorkspace> {
+export async function loadLocalAgendaWorkspace(): Promise<AgendaWorkspace> {
   const stored = await persistentSecureGet<AgendaWorkspace>(AGENDA_STORAGE_KEY);
   return normalizeAgendaWorkspace(stored);
 }
 
+export async function loadAgendaWorkspace(): Promise<AgendaWorkspace> {
+  if (!getAccessToken()) {
+    const local = await loadLocalAgendaWorkspace();
+    publishAgendaRuntimeState({
+      mode: "local",
+      revision: null,
+      offline: false,
+      updatedAt: null,
+      lastError: null,
+    });
+    return local;
+  }
+
+  try {
+    const result = await loadAgendaCloud();
+    publishAgendaRuntimeState({
+      mode: result.offline ? "remote-offline" : result.snapshot.mode,
+      revision: result.snapshot.revision,
+      offline: result.offline,
+      updatedAt: result.snapshot.updatedAt,
+      lastError: result.offline
+        ? "Sem conexão com a agenda remota. Exibindo cache cifrado somente para leitura."
+        : null,
+    });
+    return normalizeAgendaWorkspace(fromCloudWorkspace(result.snapshot.workspace));
+  } catch (cause) {
+    publishAgendaRuntimeState({
+      mode: "remote-offline",
+      revision: null,
+      offline: true,
+      updatedAt: null,
+      lastError: cause instanceof Error ? cause.message : "Agenda remota indisponível.",
+    });
+    // Em sessão remota nunca cair para a agenda local: isso criaria duas fontes
+    // concorrentes de verdade e risco de edição do paciente errado.
+    return emptyAgendaWorkspace();
+  }
+}
+
 export async function saveAgendaWorkspace(workspace: AgendaWorkspace): Promise<boolean> {
-  return persistentSecureSet(AGENDA_STORAGE_KEY, normalizeAgendaWorkspace(workspace));
+  const normalized = normalizeAgendaWorkspace(workspace);
+  if (!getAccessToken()) {
+    const stored = await persistentSecureSet(AGENDA_STORAGE_KEY, normalized);
+    publishAgendaRuntimeState({
+      mode: "local",
+      revision: null,
+      offline: false,
+      updatedAt: stored ? new Date().toISOString() : agendaRuntimeState.updatedAt,
+      lastError: stored ? null : "Não foi possível salvar a agenda cifrada neste dispositivo.",
+    });
+    return stored;
+  }
+
+  if (agendaRuntimeState.offline || agendaRuntimeState.revision == null) {
+    publishAgendaRuntimeState({
+      ...agendaRuntimeState,
+      lastError: "Agenda remota sem conexão ou revisão válida. Alteração não foi salva.",
+    });
+    return false;
+  }
+
+  try {
+    const snapshot = await saveAgendaCloud(normalized, agendaRuntimeState.revision);
+    publishAgendaRuntimeState({
+      mode: snapshot.mode,
+      revision: snapshot.revision,
+      offline: false,
+      updatedAt: snapshot.updatedAt,
+      lastError: null,
+    });
+    return true;
+  } catch (cause) {
+    if (cause instanceof AgendaRevisionConflictError) {
+      publishAgendaRuntimeState({
+        mode: cause.latest?.mode ?? agendaRuntimeState.mode,
+        revision: cause.latest?.revision ?? agendaRuntimeState.revision,
+        offline: false,
+        updatedAt: cause.latest?.updatedAt ?? agendaRuntimeState.updatedAt,
+        lastError:
+          "A agenda mudou em outro dispositivo. Recarregue a tela para receber a versão mais recente antes de editar.",
+      });
+      return false;
+    }
+    publishAgendaRuntimeState({
+      ...agendaRuntimeState,
+      lastError: cause instanceof Error ? cause.message : "Não foi possível sincronizar a agenda.",
+    });
+    return false;
+  }
 }
 
 export async function clearAgendaWorkspace(): Promise<void> {
+  // Limpeza explícita só apaga o cofre local. A agenda cloud exige uma operação
+  // autenticada e auditável; nunca é destruída silenciosamente pelo cliente.
   await persistentSecureClear(AGENDA_STORAGE_KEY);
 }
 
