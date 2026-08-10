@@ -10,6 +10,8 @@ import {
 } from "../../shared/tenant";
 import {
   clinicalBlindIndex,
+  clinicalCryptoReady,
+  currentClinicalEncryptionVersion,
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../../functions/api/tenant/_crypto";
@@ -27,9 +29,18 @@ assert.equal(canAccessClinicFinance("financial"), true);
 assert.equal(canAccessClinicFinance("professional"), false);
 assert.equal(normalizeClinicSlug("Clínica Neuro Desenvolvimento"), "clinica-neuro-desenvolvimento");
 
+const dataKeyV1 = "phase1-data-key-v1-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const dataKeyV2 = "phase1-data-key-v2-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const indexKey = "phase1-index-key-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const env = {
-  CLINICAL_DATA_KEY: "phase1-test-key-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  CLINICAL_DATA_KEY: dataKeyV2,
+  CLINICAL_DATA_KEY_ID: "k2",
+  CLINICAL_INDEX_KEY: indexKey,
 };
+assert.equal(clinicalCryptoReady(env), true);
+assert.equal(clinicalCryptoReady({ CLINICAL_DATA_KEY: dataKeyV2 }), false, "index key é obrigatória");
+assert.equal(currentClinicalEncryptionVersion(env), "clinical-v1:k2");
+
 const clinicA = "clinic-a";
 const clinicB = "clinic-b";
 const purpose = "patient-profile:patient-1";
@@ -40,7 +51,7 @@ const original = {
 };
 
 const encrypted = await encryptClinicalJson(env, clinicA, purpose, original);
-assert.ok(encrypted.startsWith("v1."));
+assert.ok(encrypted.startsWith("v1.k2."));
 assert.equal(encrypted.includes(original.name), false, "PII não aparece no ciphertext");
 assert.deepEqual(await decryptClinicalJson(env, clinicA, purpose, encrypted), original);
 
@@ -55,10 +66,36 @@ await assert.rejects(
   "ciphertext fica vinculado também ao registro/purpose por AAD",
 );
 
+const oldEnv = {
+  CLINICAL_DATA_KEY: dataKeyV1,
+  CLINICAL_DATA_KEY_ID: "k1",
+  CLINICAL_INDEX_KEY: indexKey,
+};
+const oldCiphertext = await encryptClinicalJson(oldEnv, clinicA, purpose, original);
+const rotatedEnv = {
+  CLINICAL_DATA_KEY: dataKeyV2,
+  CLINICAL_DATA_KEY_ID: "k2",
+  CLINICAL_DATA_KEY_PREVIOUS: dataKeyV1,
+  CLINICAL_DATA_KEY_PREVIOUS_ID: "k1",
+  CLINICAL_INDEX_KEY: indexKey,
+};
+assert.deepEqual(
+  await decryptClinicalJson(rotatedEnv, clinicA, purpose, oldCiphertext),
+  original,
+  "keyring mantém leitura de registros cifrados pela chave anterior",
+);
+await assert.rejects(
+  () => decryptClinicalJson(env, clinicA, purpose, oldCiphertext),
+  /CLINICAL_KEY_VERSION_UNAVAILABLE/,
+  "chave antiga removida do keyring não pode ser simulada silenciosamente",
+);
+
 const indexA = await clinicalBlindIndex(env, clinicA, "patient-identity", "Paciente|2020-01-02");
 const indexARepeat = await clinicalBlindIndex(env, clinicA, "patient-identity", "  PACIENTE|2020-01-02  ");
+const indexAOldKey = await clinicalBlindIndex(oldEnv, clinicA, "patient-identity", "Paciente|2020-01-02");
 const indexB = await clinicalBlindIndex(env, clinicB, "patient-identity", "Paciente|2020-01-02");
 assert.equal(indexA, indexARepeat, "blind index é determinístico após normalização");
+assert.equal(indexA, indexAOldKey, "rotação da data key não invalida blind indexes");
 assert.notEqual(indexA, indexB, "blind index é segregado logicamente por tenant");
 
 const migration = readFileSync(
@@ -97,6 +134,15 @@ assert.doesNotMatch(
   "não pode reaparecer bypass global de tenant",
 );
 
+const tenantCrypto = readFileSync(
+  new URL("../../functions/api/tenant/_crypto.ts", import.meta.url),
+  "utf8",
+);
+assert.match(tenantCrypto, /CLINICAL_INDEX_KEY/);
+assert.match(tenantCrypto, /CLINICAL_DATA_KEY_PREVIOUS/);
+assert.match(tenantCrypto, /HKDF/);
+assert.doesNotMatch(tenantCrypto, /NEUROPED_JWT_SECRET/);
+
 const livePatientsApi = readFileSync(
   new URL("../../functions/api/live/patients/index.ts", import.meta.url),
   "utf8",
@@ -119,5 +165,13 @@ assert.match(liveEventsApi, /supersedesEventId/);
 assert.match(liveEventsApi, /duplicate: true/);
 assert.doesNotMatch(liveEventsApi, /clinical_events_demo/);
 assert.doesNotMatch(liveEventsApi, /patients_demo/);
+
+const membersApi = readFileSync(
+  new URL("../../functions/api/tenants/[id]/members.ts", import.meta.url),
+  "utf8",
+);
+assert.match(membersApi, /LAST_OWNER_PROTECTED/);
+assert.match(membersApi, /membershipCanManage/);
+assert.match(membersApi, /Somente owner pode conceder papel owner/);
 
 console.log("saas phase1 foundation tests ok");
