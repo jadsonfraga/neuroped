@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR" data-np-polish="1">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b5963">
+  <meta name="robots" content="noindex">
+  <title>Insights | NeuroPed Conecta</title>
+  <meta name="description" content="Tendências transparentes baseadas somente nos registros disponíveis no NeuroPed Conecta.">
+  <link rel="icon" type="image/jpeg" href="/brand-logo.jpeg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/np-enhance.css?v=20260810">
+  <style>body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style>
+</head>
+<body class="np-insights-page">
+  <main class="np-insights-shell">
+    <header class="np-insights-topbar">
+      <img src="/brand-logo.jpeg" alt="NeuroPed SDG" width="44" height="44">
+      <div class="name"><strong>NeuroPed Conecta</strong><span>Jornada neurofuncional</span></div>
+      <a class="np-back-link" href="/app">← Voltar ao acompanhamento</a>
+    </header>
+
+    <section class="np-insights-hero">
+      <div class="np-insights-hero-main">
+        <span id="mode-banner" class="np-mode-banner">Carregando</span>
+        <h1>Insights que mostram o caminho, não um diagnóstico.</h1>
+        <p>O NeuroPed Conecta procura padrões apenas nos registros disponíveis. Cada resultado explica período, quantidade de dados, fonte e limitações.</p>
+      </div>
+      <aside class="np-insights-safety" aria-label="Limites dos insights">
+        <span class="np-eyebrow">LEITURA RESPONSÁVEL</span>
+        <strong>Insight ≠ decisão clínica</strong>
+        <p>Insight informativo baseado nos registros disponíveis. Não constitui diagnóstico, prescrição ou ajuste de tratamento.</p>
+      </aside>
+    </section>
+
+    <nav class="np-period-tabs" aria-label="Período analisado">
+      <button type="button" data-period="7">7 dias</button>
+      <button type="button" data-period="30" aria-pressed="true">30 dias</button>
+      <button type="button" data-period="90">90 dias</button>
+      <button type="button" data-period="180">180 dias</button>
+    </nav>
+
+    <section class="np-kpis" aria-label="Resumo dos dados analisados">
+      <article class="np-kpi"><span>Registros analisados</span><strong id="kpi-records">—</strong></article>
+      <article class="np-kpi"><span>Fontes disponíveis</span><strong id="kpi-sources">—</strong></article>
+      <article class="np-kpi"><span>Última atualização</span><strong id="kpi-updated">—</strong></article>
+    </section>
+
+    <div class="np-insights-heading">
+      <h2>O que os registros mostram</h2>
+      <p id="period-label">Últimos 30 dias</p>
+    </div>
+    <section id="insight-grid" class="np-insight-grid" aria-live="polite">
+      <div class="np-insight-empty"><strong>Analisando os registros…</strong><span>Nenhuma conclusão é gerada antes de confirmar dados suficientes.</span></div>
+    </section>
+
+    <section class="np-source-note">
+      <strong>Como o NeuroPed Conecta lê estes dados?</strong><br>
+      Tendências são descritivas: frequência, horário, mudança entre períodos e consistência dos registros. O sistema não presume causalidade, não interpreta ausência de dado como normalidade e não recomenda mudança de medicamento.
+    </section>
+  </main>
+  <script src="/insights.js?v=20260810"></script>
+</body>
+</html>
