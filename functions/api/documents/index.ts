@@ -161,7 +161,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const payload = { id, patient_id, type, title, content, is_family_visible, is_demo: true, created_at: now };
 
   if (!env.DB) {
-    return jsonResponse({ ...payload, mode: "demo", note: "Registro simulado — banco não configurado." }, 201);
+    return errorResponse(
+      "Persistência indisponível. Nenhum documento foi criado.",
+      "DB_REQUIRED",
+      503,
+    );
   }
 
   try {
