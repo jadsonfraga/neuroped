@@ -52,3 +52,5 @@ jobs:
           git add -A
           git commit -m "fix(ops): endurecer concorrência, tokens e remarcação"
           git push origin HEAD:feat/operational-suite-v1
+
+# retry: gate alinhado à remoção de operador sem vínculo
