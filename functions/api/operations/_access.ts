@@ -127,6 +127,25 @@ export async function listOperationsStaff(
   }));
 }
 
+interface ExistingStaffOwner {
+  provider_user_id: string;
+}
+
+async function getExistingStaffOwner(
+  db: D1Database,
+  staffUserId: string,
+): Promise<ExistingStaffOwner | null> {
+  return db
+    .prepare(
+      `SELECT provider_user_id
+         FROM booking_staff_links
+        WHERE staff_user_id = ?
+        LIMIT 1`,
+    )
+    .bind(staffUserId)
+    .first<ExistingStaffOwner>();
+}
+
 export async function linkOperationsOperator(
   db: D1Database,
   principal: OperationsPrincipal,
@@ -144,20 +163,44 @@ export async function linkOperationsOperator(
   }
   if (staff.id === principal.providerUserId) return { ok: false, code: "SELF_LINK_INVALID" };
 
+  const existing = await getExistingStaffOwner(db, staff.id);
+  if (existing && existing.provider_user_id !== principal.providerUserId) {
+    return { ok: false, code: "STAFF_ALREADY_LINKED" };
+  }
+
   const now = new Date().toISOString();
-  await db
-    .prepare(
-      `INSERT INTO booking_staff_links
-        (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
-       VALUES (?, ?, 1, ?, ?, ?)
-       ON CONFLICT(staff_user_id) DO UPDATE SET
-         provider_user_id = excluded.provider_user_id,
-         active = 1,
-         created_by_user_id = excluded.created_by_user_id,
-         updated_at = excluded.updated_at`,
-    )
-    .bind(principal.providerUserId, staff.id, principal.actorUserId, now, now)
-    .run();
+  if (existing) {
+    await db
+      .prepare(
+        `UPDATE booking_staff_links
+            SET active = 1, created_by_user_id = ?, updated_at = ?
+          WHERE provider_user_id = ? AND staff_user_id = ?`,
+      )
+      .bind(principal.actorUserId, now, principal.providerUserId, staff.id)
+      .run();
+    return { ok: true, staffUserId: staff.id };
+  }
+
+  try {
+    await db
+      .prepare(
+        `INSERT INTO booking_staff_links
+          (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
+         VALUES (?, ?, 1, ?, ?, ?)`,
+      )
+      .bind(principal.providerUserId, staff.id, principal.actorUserId, now, now)
+      .run();
+  } catch (cause) {
+    // Corrida entre dois profissionais tentando vincular a mesma conta:
+    // o UNIQUE(staff_user_id) é a última barreira. Reconsulta o dono real e
+    // converte a corrida em conflito de autorização, nunca em reatribuição.
+    const winner = await getExistingStaffOwner(db, staff.id);
+    if (winner && winner.provider_user_id !== principal.providerUserId) {
+      return { ok: false, code: "STAFF_ALREADY_LINKED" };
+    }
+    throw cause;
+  }
+
   return { ok: true, staffUserId: staff.id };
 }
 
