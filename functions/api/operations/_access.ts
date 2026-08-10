@@ -43,6 +43,54 @@ const HARDENING_SCHEMA = [
      ON operations_audit_log(provider_user_id, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_operations_audit_actor_time
      ON operations_audit_log(actor_user_id, created_at DESC)`,
+  `CREATE TRIGGER IF NOT EXISTS trg_appointments_respect_blocks_insert
+   BEFORE INSERT ON appointments
+   WHEN NEW.status IN ('requested','confirmed','checked_in','in_care')
+    AND EXISTS (
+      SELECT 1 FROM booking_blocks b
+       WHERE b.provider_user_id = NEW.provider_user_id
+         AND b.starts_at_local < NEW.ends_at_local
+         AND b.ends_at_local > NEW.starts_at_local
+    )
+   BEGIN
+     SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+   END`,
+  `CREATE TRIGGER IF NOT EXISTS trg_appointments_respect_blocks_update
+   BEFORE UPDATE OF provider_user_id, starts_at_local, ends_at_local, status ON appointments
+   WHEN NEW.status IN ('requested','confirmed','checked_in','in_care')
+    AND EXISTS (
+      SELECT 1 FROM booking_blocks b
+       WHERE b.provider_user_id = NEW.provider_user_id
+         AND b.starts_at_local < NEW.ends_at_local
+         AND b.ends_at_local > NEW.starts_at_local
+    )
+   BEGIN
+     SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+   END`,
+  `CREATE TRIGGER IF NOT EXISTS trg_blocks_respect_appointments_insert
+   BEFORE INSERT ON booking_blocks
+   WHEN EXISTS (
+      SELECT 1 FROM appointments a
+       WHERE a.provider_user_id = NEW.provider_user_id
+         AND a.status IN ('requested','confirmed','checked_in','in_care')
+         AND a.starts_at_local < NEW.ends_at_local
+         AND a.ends_at_local > NEW.starts_at_local
+    )
+   BEGIN
+     SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+   END`,
+  `CREATE TRIGGER IF NOT EXISTS trg_blocks_respect_appointments_update
+   BEFORE UPDATE OF provider_user_id, starts_at_local, ends_at_local ON booking_blocks
+   WHEN EXISTS (
+      SELECT 1 FROM appointments a
+       WHERE a.provider_user_id = NEW.provider_user_id
+         AND a.status IN ('requested','confirmed','checked_in','in_care')
+         AND a.starts_at_local < NEW.ends_at_local
+         AND a.ends_at_local > NEW.starts_at_local
+    )
+   BEGIN
+     SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+   END`,
 ] as const;
 
 export async function ensureOperationsHardeningSchema(db: D1Database): Promise<void> {
@@ -191,9 +239,6 @@ export async function linkOperationsOperator(
       .bind(principal.providerUserId, staff.id, principal.actorUserId, now, now)
       .run();
   } catch (cause) {
-    // Corrida entre dois profissionais tentando vincular a mesma conta:
-    // o UNIQUE(staff_user_id) é a última barreira. Reconsulta o dono real e
-    // converte a corrida em conflito de autorização, nunca em reatribuição.
     const winner = await getExistingStaffOwner(db, staff.id);
     if (winner && winner.provider_user_id !== principal.providerUserId) {
       return { ok: false, code: "STAFF_ALREADY_LINKED" };
