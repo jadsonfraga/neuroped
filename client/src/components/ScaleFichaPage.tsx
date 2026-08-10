@@ -74,6 +74,8 @@ interface InfoCard {
  *
  * Mostra somente dados reais do catálogo. Faixas da primeira infância mantêm a
  * precisão em meses, sem o antigo arredondamento que podia exibir "0 anos".
+ * Ausência de fonte e pendências de validação/curadoria são sempre exibidas —
+ * nunca convertidas silenciosamente em aparência de evidência consolidada.
  */
 export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">(
@@ -102,6 +104,9 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
 
   const pm = pubmedRef(scale.pubmedId);
   const description = scale.description;
+  const missingFonte =
+    typeof scale.fonte !== "string" || scale.fonte.trim().length === 0;
+  const pendingClinicalValidation = scale.pendente_validacao_clinica === true;
   const infos: InfoCard[] = [
     { icon: Clock, label: "Tempo", value: scale.tempo || "Não informado" },
     {
@@ -225,40 +230,90 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
         </Card>
       )}
 
-      {(scale.fonte || scale.validacaoBrasil || pm) && (
-        <Card className="rounded-2xl border-border/70">
-          <CardContent className="space-y-3 p-5">
-            <h2 className="flex items-center gap-1.5 text-sm font-black text-foreground">
-              <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
-              Evidência e proveniência
-            </h2>
-            {scale.validacaoBrasil && (
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                <span className="font-semibold text-foreground">
-                  Validação Brasil:
-                </span>{" "}
-                {scale.validacaoBrasil}
-              </p>
-            )}
-            {scale.fonte && (
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                <span className="font-semibold text-foreground">Fonte:</span>{" "}
-                {scale.fonte}
-              </p>
-            )}
-            {pm && (
-              <a
-                href={pm.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-9 items-center gap-1 rounded-lg text-xs font-bold text-primary underline underline-offset-2 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                Estudo no PubMed ({pm.pmid})
-              </a>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Card className="rounded-2xl border-border/70">
+        <CardContent className="space-y-3 p-5">
+          <h2 className="flex items-center gap-1.5 text-sm font-black text-foreground">
+            <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+            Evidência e proveniência
+          </h2>
+
+          {missingFonte && (
+            <div
+              className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3"
+              data-testid="scale-missing-provenance"
+            >
+              <AlertCircle
+                className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400"
+                aria-hidden="true"
+              />
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-foreground">
+                  Fonte ainda não documentada
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  A origem bibliográfica não está registrada nesta ficha. Essa
+                  ausência não deve ser interpretada como evidência de validação.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {pendingClinicalValidation && (
+            <div
+              className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3"
+              data-testid="scale-pending-clinical-validation"
+            >
+              <AlertCircle
+                className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400"
+                aria-hidden="true"
+              />
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-foreground">
+                  Validação/curadoria clínica pendente
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Há aspecto(s) da validação psicométrica ou dos metadados
+                  clínicos ainda não confirmados. Use como apoio exploratório e
+                  confirme a evidência antes de tratar o instrumento como validado.
+                </p>
+                {scale.pendencia && (
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-semibold text-foreground">
+                      Pendência registrada:
+                    </span>{" "}
+                    {scale.pendencia}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {scale.validacaoBrasil && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                Validação Brasil:
+              </span>{" "}
+              {scale.validacaoBrasil}
+            </p>
+          )}
+          {scale.fonte && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              <span className="font-semibold text-foreground">Fonte:</span>{" "}
+              {scale.fonte}
+            </p>
+          )}
+          {pm && (
+            <a
+              href={pm.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-9 items-center gap-1 rounded-lg text-xs font-bold text-primary underline underline-offset-2 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Estudo no PubMed ({pm.pmid})
+            </a>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         <Button asChild className="gap-2">
