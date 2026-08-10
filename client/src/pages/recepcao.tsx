@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, Users } from "lucide-react";
 import { AgendaBoard } from "@/components/agenda/AgendaBoard";
+import { AgendaCloudControls } from "@/components/agenda/AgendaCloudControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -106,6 +107,7 @@ export default function RecepcaoPage() {
         className="min-h-44"
       />
 
+      <AgendaCloudControls />
       <AgendaBoard />
 
       <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
