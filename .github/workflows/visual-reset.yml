@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "client/src/styles/visual-reset.css"
+      - "client/src/styles/premium-polish-10.css"
       - "client/src/main.tsx"
       - "client/src/components/Layout.tsx"
       - "client/src/components/PageHero.tsx"
@@ -13,6 +14,7 @@ on:
       - "client/src/components/clinical/PatientCockpit.tsx"
       - "client/src/components/ui/**"
       - "tests/unit/visual-reset-static.test.mjs"
+      - "tests/unit/premium-polish-10-static.test.mjs"
       - ".github/workflows/visual-reset.yml"
 
 permissions:
@@ -33,6 +35,8 @@ jobs:
         run: npm ci
       - name: Visual reset contract
         run: node tests/unit/visual-reset-static.test.mjs
+      - name: Premium Polish 10 contract
+        run: node tests/unit/premium-polish-10-static.test.mjs
       - name: TypeScript
         run: npm run check
       - name: Lint
