@@ -1,0 +1,191 @@
+name: Temporary wire operational suite
+
+on:
+  push:
+    branches:
+      - feat/operational-suite-v1
+    paths:
+      - ".github/workflows/tmp-wire-operational-suite.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  wire-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/operational-suite-v1
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Conectar rotas, segurança e gates
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'anchor não encontrado em {path}: {old[:80]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          # App routes
+          replace_once(
+              'client/src/App.tsx',
+              'const ConectaPage = lazy(() => import("@/pages/conecta"));\n',
+              'const ConectaPage = lazy(() => import("@/pages/conecta"));\nconst AgendaPage = lazy(() => import("@/pages/agenda"));\nconst AgendarPage = lazy(() => import("@/pages/agendar"));\n',
+          )
+          replace_once(
+              'client/src/App.tsx',
+              '''            <Route path="/conecta">\n              <RouteGuard roles={["admin", "professional"]}>\n                <ConectaPage />\n              </RouteGuard>\n            </Route>\n\n            <Route path="/familia" component={FamiliaPage} />''',
+              '''            <Route path="/conecta">\n              <RouteGuard roles={["admin", "professional"]}>\n                <ConectaPage />\n              </RouteGuard>\n            </Route>\n            <Route path="/agenda">\n              <RouteGuard roles={["admin", "professional", "operator"]}>\n                <AgendaPage />\n              </RouteGuard>\n            </Route>\n            <Route path="/agendar" component={AgendarPage} />\n\n            <Route path="/familia" component={FamiliaPage} />''',
+          )
+
+          # Navigation
+          replace_once(
+              'client/src/data/navigation.ts',
+              '''    items: [\n      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },\n    ],''',
+              '''    items: [\n      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },\n      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },\n    ],''',
+          )
+
+          # Public route contract
+          replace_once(
+              'client/src/lib/publicRoutes.ts',
+              '  "/familia", // Capa pública (home das famílias)\n',
+              '  "/familia", // Capa pública (home das famílias)\n  "/agendar", // Perfil e autoagendamento público com dados mínimos cifrados\n',
+          )
+          replace_once(
+              'scripts/guards/validate-public-split.mjs',
+              '  "/login", "/sessao-expirada", "/familia", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",\n',
+              '  "/login", "/sessao-expirada", "/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",\n',
+          )
+          replace_once(
+              'scripts/guards/validate-public-split.mjs',
+              '  "/", "/pacientes", "/prontuario", "/recepcao",\n',
+              '  "/", "/pacientes", "/prontuario", "/recepcao", "/agenda",\n',
+          )
+
+          # Cloudflare API middleware: public booking + operator only inside self-checked operations endpoint
+          replace_once(
+              'functions/api/_middleware.ts',
+              '  "/api/auth/logout",\n  "/api/cert",\n]);',
+              '  "/api/auth/logout",\n  "/api/public-booking",\n  "/api/cert",\n]);',
+          )
+          replace_once(
+              'functions/api/_middleware.ts',
+              '''  const isOwnConsentWrite = path === "/api/consents" && method === "POST";\n  if (\n    ["POST", "PATCH", "PUT", "DELETE"].includes(method) &&\n    !isOwnConsentWrite &&\n    !canWriteClinicalData(user)\n  ) {''',
+              '''  const isOwnConsentWrite = path === "/api/consents" && method === "POST";\n  // Operadores podem executar somente ações operacionais; a rota /api/operations\n  // faz autorização por ação e nunca concede escrita clínica por essa exceção.\n  const isOperationalOperatorWrite =\n    path === "/api/operations" && method === "POST" && user.role === "operator";\n  if (\n    ["POST", "PATCH", "PUT", "DELETE"].includes(method) &&\n    !isOwnConsentWrite &&\n    !isOperationalOperatorWrite &&\n    !canWriteClinicalData(user)\n  ) {''',
+          )
+
+          # Fix client render/state typing
+          replace_once(
+              'client/src/pages/agenda.tsx',
+              'import { useMemo, useState } from "react";',
+              'import { useEffect, useMemo, useState, type ReactNode } from "react";',
+          )
+          replace_once(
+              'client/src/pages/agenda.tsx',
+              '''  const [profileSeeded, setProfileSeeded] = useState(false);\n  if (data?.profile && !profileSeeded) {\n    setProfile({\n      displayName: data.profile.displayName,\n      specialty: data.profile.specialty,\n      locationLabel: data.profile.locationLabel ?? "",\n      slug: data.profile.slug,\n      timezone: data.profile.timezone,\n    });\n    setProfileSeeded(true);\n  }\n''',
+              '''  useEffect(() => {\n    if (!data?.profile) return;\n    setProfile({\n      displayName: data.profile.displayName,\n      specialty: data.profile.specialty,\n      locationLabel: data.profile.locationLabel ?? "",\n      slug: data.profile.slug,\n      timezone: data.profile.timezone,\n    });\n  }, [data?.profile]);\n''',
+          )
+          replace_once(
+              'client/src/pages/agenda.tsx',
+              'function Field({ label, children }: { label: string; children: React.ReactNode }) {',
+              'function Field({ label, children }: { label: string; children: ReactNode }) {',
+          )
+          replace_once(
+              'client/src/pages/agendar.tsx',
+              'import { useEffect, useMemo, useState } from "react";',
+              'import { useEffect, useMemo, useState, type ReactNode } from "react";',
+          )
+          replace_once(
+              'client/src/pages/agendar.tsx',
+              'function Field({ label, children }: { label: string; children: React.ReactNode }) {',
+              'function Field({ label, children }: { label: string; children: ReactNode }) {',
+          )
+
+          # Stronger public contact validation
+          replace_once(
+              'functions/api/public-booking.ts',
+              '''      if (guardianName.length < 2 || patientName.length < 1 || (!phoneValid(guardianPhone) && !emailValid(guardianEmail)) || (!guardianPhone && !guardianEmail)) {\n        return errorResponse("Dados de contato incompletos ou inválidos.", "VALIDATION_ERROR", 400);\n      }\n      if (!emailValid(guardianEmail)) return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);''',
+              '''      if (guardianName.length < 2 || patientName.length < 1 || (!guardianPhone && !guardianEmail)) {\n        return errorResponse("Dados de contato incompletos.", "VALIDATION_ERROR", 400);\n      }\n      if (guardianPhone && !phoneValid(guardianPhone)) return errorResponse("Telefone inválido.", "VALIDATION_ERROR", 400);\n      if (guardianEmail && !emailValid(guardianEmail)) return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);''',
+          )
+          replace_once(
+              'functions/api/public-booking.ts',
+              '''      if (guardianName.length < 2 || patientName.length < 1 || (!guardianPhone && !guardianEmail) || !emailValid(guardianEmail)) {\n        return errorResponse("Dados de contato inválidos.", "VALIDATION_ERROR", 400);\n      }''',
+              '''      if (guardianName.length < 2 || patientName.length < 1 || (!guardianPhone && !guardianEmail)) {\n        return errorResponse("Dados de contato incompletos.", "VALIDATION_ERROR", 400);\n      }\n      if (guardianPhone && !phoneValid(guardianPhone)) return errorResponse("Telefone inválido.", "VALIDATION_ERROR", 400);\n      if (guardianEmail && !emailValid(guardianEmail)) return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);''',
+          )
+
+          # package scripts: central release gate owns operational regression tests
+          pkg_path = Path('package.json')
+          pkg = json.loads(pkg_path.read_text())
+          pkg['scripts']['test:operations'] = 'node --import tsx tests/unit/operations-contract.test.ts && node tests/unit/operations-integration-static.test.mjs'
+          release = pkg['scripts']['verify:release']
+          if 'npm run test:operations' not in release:
+              release = release.replace('npm run test:ownership &&', 'npm run test:ownership && npm run test:operations &&')
+          pkg['scripts']['verify:release'] = release
+          pkg_path.write_text(json.dumps(pkg, ensure_ascii=False, indent=2) + '\n')
+
+          # PR check blocks merge when Operational Suite breaks
+          pr = Path('.github/workflows/pr-check.yml')
+          text = pr.read_text()
+          anchor = '''      - name: Comentar resultado no PR\n'''
+          step = '''      - name: Validar Operational Suite\n        id: operations\n        run: |\n          node --import tsx tests/unit/operations-contract.test.ts\n          node tests/unit/operations-integration-static.test.mjs\n          node scripts/guards/audit-navigation-routes.mjs\n        continue-on-error: true\n\n'''
+          if anchor not in text:
+              raise SystemExit('anchor pr-check step ausente')
+          text = text.replace(anchor, step + anchor, 1)
+          text = text.replace(
+              "            const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';\n            const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus && clinicalCoreStatus;",
+              "            const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';\n            const operationsStatus = '${{ steps.operations.outcome }}' === 'success';\n            const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus;",
+              1,
+          )
+          text = text.replace(
+              '            | ${icon(clinicalCoreStatus)} Clinical Core + Cockpit | ${label(clinicalCoreStatus)} |\n',
+              '            | ${icon(clinicalCoreStatus)} Clinical Core + Cockpit | ${label(clinicalCoreStatus)} |\n            | ${icon(operationsStatus)} Agenda + Booking | ${label(operationsStatus)} |\n',
+              1,
+          )
+          text = text.replace(
+              ': "> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, acesso, Conecta e Clinical Core antes de solicitar revisão."}',
+              ': "> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão."}',
+              1,
+          )
+          text = text.replace(
+              '             [ "${{ steps.clinical_core.outcome }}" != "success" ] || \\\n             [ "${{ steps.access.outcome }}" != "success" ]; then',
+              '             [ "${{ steps.clinical_core.outcome }}" != "success" ] || \\\n             [ "${{ steps.operations.outcome }}" != "success" ] || \\\n             [ "${{ steps.access.outcome }}" != "success" ]; then',
+              1,
+          )
+          pr.write_text(text)
+          PY
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Gates específicos e compilação
+        run: |
+          set -euo pipefail
+          npm run test:operations
+          npm run validate:public
+          npm run audit:navigation
+          npm run check
+          npm run lint
+          npm run build:client
+
+      - name: Commitar wiring aprovado
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-wire-operational-suite.yml
+          git config user.name "NeuroPed CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add client/src/App.tsx client/src/data/navigation.ts client/src/lib/publicRoutes.ts scripts/guards/validate-public-split.mjs functions/api/_middleware.ts client/src/pages/agenda.tsx client/src/pages/agendar.tsx functions/api/public-booking.ts package.json .github/workflows/pr-check.yml .github/workflows/tmp-wire-operational-suite.yml
+          git commit -m "feat(ops): conectar agenda, booking e gates de release"
+          git push origin HEAD:feat/operational-suite-v1
