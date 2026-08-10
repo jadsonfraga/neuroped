@@ -18,7 +18,7 @@ import {
   parseStatus,
   profileToApi,
   randomAccessToken,
-  releaseSlotLocksStatement,
+  releaseSlotLocksAfterSuccessfulMutationStatement,
   serviceToApi,
   sha256,
   slotLockStatements,
@@ -509,11 +509,31 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const completedAt = status === "completed" ? now : current.completed_at;
       const cancelledAt = status === "cancelled" ? now : current.cancelled_at;
       const updateStatus = env.DB.prepare(
-        `UPDATE appointments SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
-          WHERE id = ? AND provider_user_id = ?`,
-      ).bind(status, checkedInAt, completedAt, cancelledAt, now, id, user.id);
+        `UPDATE appointments
+            SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ? AND status = ?
+            AND starts_at_local = ? AND ends_at_local = ?`,
+      ).bind(
+        status,
+        checkedInAt,
+        completedAt,
+        cancelledAt,
+        now,
+        id,
+        user.id,
+        current.status,
+        current.starts_at_local,
+        current.ends_at_local,
+      );
       const releasesSchedule = ["cancelled", "no_show", "completed"].includes(status);
-      await env.DB.batch(releasesSchedule ? [updateStatus, releaseSlotLocksStatement(env.DB, id)] : [updateStatus]);
+      const transitionResults = await env.DB.batch(
+        releasesSchedule
+          ? [updateStatus, releaseSlotLocksAfterSuccessfulMutationStatement(env.DB, id)]
+          : [updateStatus],
+      );
+      if ((transitionResults[0]?.meta?.changes ?? 0) !== 1) {
+        return errorResponse("A consulta mudou durante a atualização. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
+      }
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,

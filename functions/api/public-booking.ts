@@ -15,10 +15,11 @@ import {
   listAvailableSlots,
   profileToApi,
   randomAccessToken,
-  releaseSlotLocksStatement,
+  releaseSlotLocksAfterSuccessfulMutationStatement,
   serviceToApi,
   sha256,
   slotLockStatements,
+  slotLockStatementsForAppointmentState,
   type OperationsEnv,
   type ServiceRow,
 } from "./operations/_core";
@@ -258,12 +259,25 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         return errorResponse("Esta reserva não pode mais ser cancelada por autoatendimento.", "INVALID_TRANSITION", 409);
       }
       const reason = cleanOptionalText(body.reason, 160);
-      await env.DB.batch([
+      const cancelResults = await env.DB.batch([
         env.DB.prepare(
-          `UPDATE appointments SET status = 'cancelled', cancelled_at = ?, cancel_reason = ?, updated_at = ? WHERE id = ?`,
-        ).bind(now, reason, now, appointment.id),
-        releaseSlotLocksStatement(env.DB, appointment.id),
+          `UPDATE appointments
+              SET status = 'cancelled', cancelled_at = ?, cancel_reason = ?, updated_at = ?
+            WHERE id = ? AND status = ? AND starts_at_local = ? AND ends_at_local = ?`,
+        ).bind(
+          now,
+          reason,
+          now,
+          appointment.id,
+          appointment.status,
+          appointment.starts_at_local,
+          appointment.ends_at_local,
+        ),
+        releaseSlotLocksAfterSuccessfulMutationStatement(env.DB, appointment.id),
       ]);
+      if ((cancelResults[0]?.meta?.changes ?? 0) !== 1) {
+        return errorResponse("A reserva mudou enquanto era cancelada. Atualize e tente novamente.", "STALE_APPOINTMENT", 409);
+      }
       await enqueueNotification(env.DB, env, {
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
@@ -293,13 +307,33 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       }
       try {
         const updateAppointment = env.DB.prepare(
-          `UPDATE appointments SET starts_at_local = ?, ends_at_local = ?, status = 'requested', updated_at = ? WHERE id = ?`,
-        ).bind(chosen.startsAtLocal, chosen.endsAtLocal, now, appointment.id);
-        await env.DB.batch([
-          releaseSlotLocksStatement(env.DB, appointment.id),
+          `UPDATE appointments
+              SET starts_at_local = ?, ends_at_local = ?, status = 'requested', updated_at = ?
+            WHERE id = ? AND status = ? AND starts_at_local = ? AND ends_at_local = ?`,
+        ).bind(
+          chosen.startsAtLocal,
+          chosen.endsAtLocal,
+          now,
+          appointment.id,
+          appointment.status,
+          appointment.starts_at_local,
+          appointment.ends_at_local,
+        );
+        const rescheduleResults = await env.DB.batch([
           updateAppointment,
-          ...slotLockStatements(env.DB, appointment.provider_user_id, appointment.id, chosen.startsAtLocal, chosen.endsAtLocal),
+          releaseSlotLocksAfterSuccessfulMutationStatement(env.DB, appointment.id),
+          ...slotLockStatementsForAppointmentState(
+            env.DB,
+            appointment.provider_user_id,
+            appointment.id,
+            chosen.startsAtLocal,
+            chosen.endsAtLocal,
+            "requested",
+          ),
         ]);
+        if ((rescheduleResults[0]?.meta?.changes ?? 0) !== 1) {
+          return errorResponse("A reserva mudou enquanto era remarcada. Atualize e tente novamente.", "STALE_APPOINTMENT", 409);
+        }
       } catch (error) {
         const text = String(error);
         if (text.includes("SCHEDULE_CONFLICT")) {
