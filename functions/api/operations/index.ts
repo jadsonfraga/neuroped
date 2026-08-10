@@ -146,6 +146,10 @@ async function getDashboard(
     .bind(provider.id)
     .all<any>();
 
+  const fullServices = (servicesResult.results ?? []).map(serviceToApi);
+  const services = principal.canConfigure
+    ? fullServices
+    : fullServices.map((item) => ({ ...item, priceCents: null }));
   const fullAppointments = await Promise.all(
     (appointmentsResult.results ?? []).map((row) => appointmentToApi(env, row)),
   );
@@ -223,7 +227,7 @@ async function getDashboard(
 
   return {
     profile: profileToApi(profile),
-    services: (servicesResult.results ?? []).map(serviceToApi),
+    services,
     rules: (rulesResult.results ?? []).map((row) => ({
       id: row.id,
       providerUserId: row.provider_user_id,
@@ -342,6 +346,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
           STAFF_NOT_FOUND: "Usuário da recepção não encontrado.",
           STAFF_ROLE_INVALID: "O usuário precisa ter perfil operator ativo.",
           SELF_LINK_INVALID: "O profissional não pode vincular a si próprio como recepção.",
+          STAFF_ALREADY_LINKED: "Este usuário da recepção já está vinculado a outro profissional.",
           FORBIDDEN: "Ação não autorizada.",
         };
         return errorResponse(messages[result.code] ?? "Não foi possível vincular a recepção.", result.code, result.code === "STAFF_NOT_FOUND" ? 404 : 409);
@@ -459,6 +464,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       ends.setUTCMinutes(ends.getUTCMinutes() + service.duration_minutes);
       const endsAtLocal = ends.toISOString().slice(0, 16);
       const appointmentId = `apt-${crypto.randomUUID()}`;
+      const patientId = principal.delegated ? null : cleanOptionalText(body.patientId, 100);
       const insertAppointment = env.DB.prepare(
         `INSERT INTO appointments
           (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
@@ -466,7 +472,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
            guardian_phone_encrypted, patient_name_encrypted, amount_cents, payment_status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       ).bind(
-        appointmentId, user.id, service.id, cleanOptionalText(body.patientId, 100), starts, endsAtLocal,
+        appointmentId, user.id, service.id, patientId, starts, endsAtLocal,
         profile.timezone, await sha256(token), await encryptText(env, cleanOptionalText(body.guardianName, 120)),
         await encryptText(env, cleanOptionalText(body.guardianEmail, 180)), await encryptText(env, cleanOptionalText(body.guardianPhone, 40)),
         await encryptText(env, cleanOptionalText(body.patientName, 120)), service.price_cents, now, now,
