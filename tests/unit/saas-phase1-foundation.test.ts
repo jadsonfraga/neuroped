@@ -80,6 +80,12 @@ const livePatientBlock = migration.match(
 assert.doesNotMatch(livePatientBlock, /\n\s*name\s+TEXT/i, "live_patients não armazena nome em plaintext");
 assert.doesNotMatch(livePatientBlock, /guardian_/i, "live_patients não armazena responsável em plaintext");
 
+const liveEventsBlock = migration.match(
+  /CREATE TABLE IF NOT EXISTS live_clinical_events \([\s\S]*?\n\);/,
+)?.[0] ?? "";
+assert.match(liveEventsBlock, /payload_encrypted TEXT NOT NULL/);
+assert.doesNotMatch(liveEventsBlock, /\n\s*(subjective|objective|assessment|plan|notes)\s+TEXT/i);
+
 const tenantCore = readFileSync(
   new URL("../../functions/api/tenant/_core.ts", import.meta.url),
   "utf8",
@@ -100,5 +106,18 @@ assert.match(livePatientsApi, /CLINICAL_CRYPTO_NOT_CONFIGURED/);
 assert.match(livePatientsApi, /getClinicMembership/);
 assert.match(livePatientsApi, /profile_encrypted/);
 assert.doesNotMatch(livePatientsApi, /INSERT INTO patients_demo/);
+
+const liveEventsApi = readFileSync(
+  new URL("../../functions/api/live/events/index.ts", import.meta.url),
+  "utf8",
+);
+assert.match(liveEventsApi, /CLINICAL_LIVE_DISABLED/);
+assert.match(liveEventsApi, /patientBelongsToClinic/);
+assert.match(liveEventsApi, /payload_encrypted/);
+assert.match(liveEventsApi, /provenanceSource/);
+assert.match(liveEventsApi, /supersedesEventId/);
+assert.match(liveEventsApi, /duplicate: true/);
+assert.doesNotMatch(liveEventsApi, /clinical_events_demo/);
+assert.doesNotMatch(liveEventsApi, /patients_demo/);
 
 console.log("saas phase1 foundation tests ok");
