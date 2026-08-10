@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: neuroped-conecta-vercel-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -22,6 +22,7 @@ jobs:
     timeout-minutes: 20
     env:
       SOURCE_URL: https://neuroped-conecta.lovable.app
+      PUBLIC_URL: https://neuroped-conecta.vercel.app
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
 
@@ -64,32 +65,42 @@ jobs:
         run: |
           set -euo pipefail
           token="$VERCEL_TOKEN"
-          # A CLI exige ORG_ID + PROJECT_ID em conjunto. O projeto será resolvido
-          # pelo link local; portanto removemos os dois overrides antes do link.
           unset VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID
 
           cd vercel-conecta
           rm -rf .vercel
-
           vercel link --yes --project neuroped-conecta --token="$token"
           test -f .vercel/project.json
-          cat .vercel/project.json | sed -E 's/(orgId|projectId)"?:"[^"]+"/\1":"[redacted]"/g' || true
 
           deployment_url="$(vercel deploy --prod --yes --token="$token")"
           echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
-          echo "Deployment Vercel: $deployment_url"
+          echo "Deployment imutável: $deployment_url"
+          echo "Alias público: $PUBLIC_URL"
 
-          for i in $(seq 1 18); do
-            if curl -fsSL --max-time 20 "$deployment_url/" -o /tmp/vercel.html \
-              && grep -qi "NeuroPed Conecta" /tmp/vercel.html; then
-              echo "Vercel confirmado: $deployment_url"
+      - name: Validar app no alias público
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 24); do
+            root_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-root.html -w "%{http_code}" "$PUBLIC_URL/" || true)
+            app_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-app.html -w "%{http_code}" "$PUBLIC_URL/app" || true)
+
+            if [ "$root_code" = "200" ] \
+              && [ "$app_code" = "200" ] \
+              && grep -qi "NeuroPed Conecta" /tmp/vercel-root.html; then
+              echo "Vercel confirmado: $PUBLIC_URL"
+              echo "Root HTTP $root_code · /app HTTP $app_code"
               exit 0
             fi
-            echo "Aguardando Vercel ($i/18)..."
-            sleep 10
+
+            echo "Aguardando alias público ($i/24): root=$root_code app=$app_code"
+            if [ "$i" -eq 1 ] || [ "$i" -eq 12 ] || [ "$i" -eq 24 ]; then
+              head -c 300 /tmp/vercel-root.html 2>/dev/null | tr '\n' ' ' || true
+              echo
+            fi
+            sleep 5
           done
 
-          echo "::error::Deployment criado, mas a verificação HTTP não confirmou o app."
+          echo "::error::O alias público não confirmou o NeuroPed Conecta."
           exit 1
 
       - name: Resumo
@@ -97,6 +108,7 @@ jobs:
         run: |
           echo "## NeuroPed Conecta — Vercel" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Alias público: $PUBLIC_URL" >> "$GITHUB_STEP_SUMMARY"
           echo "- Origem: $SOURCE_URL" >> "$GITHUB_STEP_SUMMARY"
           echo "- Deployment: ${{ steps.deploy.outputs.deployment_url }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Branch: $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
