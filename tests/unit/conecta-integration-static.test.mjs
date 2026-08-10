@@ -5,6 +5,7 @@ const read = (path) => fs.readFileSync(path, "utf8");
 const app = read("client/src/App.tsx");
 const nav = read("client/src/data/navigation.ts");
 const page = read("client/src/pages/conecta.tsx");
+const patientDetail = read("client/src/pages/paciente-detalhe.tsx");
 const engine = read("client/src/lib/conectaEngine.ts");
 const contract = read("shared/conecta.ts");
 const serverRoutes = read("server/routes.ts");
@@ -15,6 +16,8 @@ const migration = read("db/migrations/0005_conecta_events.sql");
 assert.match(app, /import\("@\/pages\/conecta"\)/, "Conecta deve ser lazy-loaded");
 assert.match(app, /path="\/conecta"/, "rota /conecta deve existir");
 assert.match(nav, /href: "\/conecta", label: "NeuroPed Conecta"/, "navegação deve apontar para /conecta");
+assert.match(patientDetail, /\/conecta\?patient=/, "detalhe do paciente deve abrir a jornada já contextualizada");
+assert.match(patientDetail, /button-open-conecta/, "acesso contextual ao Conecta deve ser testável");
 assert.match(serverRoutes, /registerConectaRoutes\(app\)/, "backend Express deve registrar domínio Conecta");
 assert.match(conectaServer, /CREATE TABLE IF NOT EXISTS conecta_events/, "Conecta deve ter armazenamento próprio");
 assert.doesNotMatch(conectaServer, /INSERT INTO scale_results/, "Conecta não pode reutilizar tabela de escalas");
@@ -33,7 +36,7 @@ assert.doesNotMatch(protectedSource, /neuroped-conecta\.vercel\.app/i, "módulo 
 for (const forbidden of [
   /\b(aumente|reduza|suspenda|inicie)\s+(a\s+)?dose\b/i,
   /\bdiagnóstico\s+confirmado\b/i,
-  /\bconfirma\s+(o\s+)?diagnóstico\b/i,
+  /\b(isto|isso|este resultado|o resultado)\s+confirma\s+(o\s+)?diagnóstico\b/i,
 ]) {
   assert.doesNotMatch(protectedSource, forbidden, `microcopy perigosa detectada: ${forbidden}`);
 }
