@@ -26,21 +26,31 @@ interface PersistentEnvelope {
 }
 
 function idbAvailable(): boolean {
-  return typeof indexedDB !== "undefined" && typeof crypto?.subtle !== "undefined";
+  return (
+    typeof indexedDB !== "undefined" &&
+    typeof globalThis.crypto?.subtle !== "undefined"
+  );
+}
+
+function isCryptoKey(value: unknown): value is CryptoKey {
+  return typeof CryptoKey !== "undefined" && value instanceof CryptoKey;
 }
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
+    request.onerror = () =>
+      reject(request.error ?? new Error("IndexedDB request failed"));
   });
 }
 
 function transactionDone(transaction: IDBTransaction): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => resolve();
-    transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
-    transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+    transaction.onabort = () =>
+      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
+    transaction.onerror = () =>
+      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
   });
 }
 
@@ -59,22 +69,45 @@ async function openDatabase(): Promise<IDBDatabase | null> {
   }
 }
 
+/**
+ * Seleciona/cria a chave dentro de UMA transação readwrite serializada pelo IDB.
+ * O candidato é gerado antes da transação; assim nenhum `await` externo deixa a
+ * transação inativa, e duas abas que inicializem juntas convergem para a mesma
+ * chave em vez de sobrescreverem uma à outra.
+ */
 async function getOrCreateMasterKey(db: IDBDatabase): Promise<CryptoKey> {
-  const readTx = db.transaction(KEY_STORE, "readonly");
-  const existing = await requestResult(readTx.objectStore(KEY_STORE).get(MASTER_KEY_ID));
-  await transactionDone(readTx);
-  if (existing instanceof CryptoKey) return existing;
-
-  const generated = await crypto.subtle.generateKey(
+  const candidate = await crypto.subtle.generateKey(
     { name: "AES-GCM", length: 256 },
     false,
     ["encrypt", "decrypt"],
   );
 
-  const writeTx = db.transaction(KEY_STORE, "readwrite");
-  writeTx.objectStore(KEY_STORE).put(generated, MASTER_KEY_ID);
-  await transactionDone(writeTx);
-  return generated;
+  return new Promise<CryptoKey>((resolve, reject) => {
+    const tx = db.transaction(KEY_STORE, "readwrite");
+    const store = tx.objectStore(KEY_STORE);
+    const request = store.get(MASTER_KEY_ID);
+    let selected: CryptoKey = candidate;
+
+    request.onsuccess = () => {
+      if (isCryptoKey(request.result)) {
+        selected = request.result;
+      } else {
+        store.put(candidate, MASTER_KEY_ID);
+      }
+    };
+    request.onerror = () => {
+      try {
+        tx.abort();
+      } catch {
+        // A rejeição abaixo é suficiente.
+      }
+    };
+    tx.oncomplete = () => resolve(selected);
+    tx.onabort = () =>
+      reject(tx.error ?? request.error ?? new Error("Persistent key transaction aborted"));
+    tx.onerror = () =>
+      reject(tx.error ?? request.error ?? new Error("Persistent key transaction failed"));
+  });
 }
 
 function isEnvelope(value: unknown): value is PersistentEnvelope {
@@ -93,7 +126,10 @@ function isEnvelope(value: unknown): value is PersistentEnvelope {
  * Persiste um valor cifrado. Retorna false se IndexedDB/WebCrypto não estiverem
  * disponíveis ou se a gravação falhar; nunca faz fallback para texto puro.
  */
-export async function persistentSecureSet<T>(key: string, value: T): Promise<boolean> {
+export async function persistentSecureSet<T>(
+  key: string,
+  value: T,
+): Promise<boolean> {
   const db = await openDatabase();
   if (!db) return false;
 
