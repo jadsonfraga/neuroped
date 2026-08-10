@@ -5,12 +5,16 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "
 
 const app = read("client/src/App.tsx");
 const nav = read("client/src/data/navigation.ts");
+const routeGuard = read("client/src/components/RouteGuard.tsx");
 const middleware = read("functions/api/_middleware.ts");
 const professional = read("functions/api/operations/index.ts");
+const access = read("functions/api/operations/_access.ts");
 const publicBooking = read("functions/api/public-booking.ts");
 const core = read("functions/api/operations/_core.ts");
 const migration = read("db/migrations/0007_operational_suite.sql");
+const hardeningMigration = read("db/migrations/0008_operational_hardening.sql");
 const agenda = read("client/src/pages/agenda.tsx");
+const recepcao = read("client/src/pages/recepcao.tsx");
 const booking = read("client/src/pages/agendar.tsx");
 const workflow = read(".github/workflows/operations-d1-migration.yml");
 
@@ -21,18 +25,38 @@ assert.match(app, /path="\/agendar"/);
 assert.match(nav, /href: "\/agenda", label: "Agenda & Gestão"/);
 
 assert.match(middleware, /"\/api\/public-booking"/);
+assert.match(
+  middleware,
+  /user\.role === "operator" && path === "\/api\/operations" && method === "POST"/,
+  "operator deve ter exceção somente no endpoint operacional raiz",
+);
 assert.doesNotMatch(
   middleware,
-  /isOperationalOperatorWrite/,
-  "operador não pode ganhar escrita operacional sem vínculo explícito staff→provider",
+  /user\.role === "operator"[\s\S]{0,180}path\.startsWith/,
+  "operator não pode ganhar wildcard de escrita",
 );
-assert.match(professional, /canOperate/);
+assert.match(professional, /role === "operator"/);
+assert.match(professional, /STAFF_LINK_REQUIRED/);
+assert.match(professional, /resolveOperationsPrincipal/);
+assert.match(professional, /principal\.canConfigure/);
 assert.match(professional, /appointment_status/);
 assert.match(professional, /INVALID_TRANSITION/);
 assert.match(professional, /appointment_payment/);
 assert.match(professional, /waitlist_status/);
 assert.match(professional, /review_moderate/);
 assert.match(professional, /notification_status/);
+assert.match(professional, /logOperationsAudit/);
+assert.match(professional, /localNow\(profile\.timezone\)/, "métricas devem respeitar fuso da agenda");
+assert.match(professional, /amountCents: null/, "financeiro deve ser redigido para recepção");
+assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
+
+assert.match(access, /booking_staff_links/);
+assert.match(access, /staff_user_id TEXT NOT NULL UNIQUE/);
+assert.match(access, /user\.role !== "operator"/);
+assert.match(access, /provider_user_id = \? AND l\.active = 1/);
+assert.match(access, /role !== "operator"/);
+assert.match(access, /safeAuditMetadata/);
+assert.doesNotMatch(access, /guardianName|patientName|phone|email.*metadata/i, "auditoria não deve copiar PII operacional");
 
 for (const table of [
   "booking_provider_profiles",
@@ -47,6 +71,12 @@ for (const table of [
 ]) {
   assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
 }
+assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS booking_staff_links/);
+assert.match(hardeningMigration, /staff_user_id TEXT NOT NULL UNIQUE/);
+assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS operations_audit_log/);
+assert.match(hardeningMigration, /idx_operations_audit_provider_time/);
+assert.match(hardeningMigration, /idx_operations_audit_actor_time/);
+
 assert.match(migration, /ux_appointments_occupied_slot/);
 assert.match(migration, /PRIMARY KEY \(provider_user_id, slot_key\)/);
 assert.match(core, /slotLockStatements/);
@@ -55,8 +85,6 @@ assert.match(core, /Promise<boolean>/);
 assert.match(core, /operations\.notification-outbox/);
 assert.match(professional, /env\.DB\.batch/);
 assert.match(publicBooking, /env\.DB\.batch/);
-assert.doesNotMatch(professional, /role === "operator"/);
-assert.doesNotMatch(app, /roles=\{\["admin", "professional", "operator"\]\}[\s\S]{0,120}<AgendaPage/);
 assert.doesNotMatch(publicBooking, /searchParams\.get\("token"\)/, "capability token não pode trafegar em query string");
 assert.match(publicBooking, /action === "manage"/);
 assert.match(booking, /apiRequest\("POST", "\/api\/public-booking", \{ action: "manage"/);
@@ -76,10 +104,23 @@ assert.match(publicBooking, /findAppointmentByToken/);
 assert.match(publicBooking, /status !== "completed"/);
 assert.doesNotMatch(publicBooking, /diagn[oó]stico|medica[cç][aã]o.*body/i, "booking público não deve pedir dado clínico livre");
 
+assert.match(routeGuard, /path !== "\/agenda"/);
+assert.match(routeGuard, /roles\.includes\("operator"\)/);
+assert.match(routeGuard, /\.\.\.roles, "operator"/);
+assert.match(agenda, /data\.access\.canConfigure/);
+assert.match(agenda, /Recepção vinculada/);
+assert.match(agenda, /action: "staff_link"/);
+assert.match(agenda, /Trilha operacional/);
 assert.match(agenda, /WhatsApp, SMS e e-mail externos não são simulados/);
 assert.match(agenda, /pending_provider/);
-assert.match(booking, /Não informe diagnóstico, medicação ou detalhes clínicos/);
 assert.doesNotMatch(agenda, /pagamento aprovado|pix gerado|teleconsulta ativa/i);
+
+assert.doesNotMatch(recepcao, /<AgendaBoard\s*\/>/, "Recepção não pode manter segunda agenda editável");
+assert.doesNotMatch(recepcao, /import \{ AgendaBoard \}/, "agenda local antiga não deve ser renderizada na Recepção");
+assert.match(recepcao, /Agenda oficial: Agenda & Gestão/);
+assert.match(recepcao, /href="\/agenda"/);
+
+assert.match(booking, /Não informe diagnóstico, medicação ou detalhes clínicos/);
 assert.doesNotMatch(booking, /pagamento aprovado|pix gerado|teleconsulta ativa/i);
 
 assert.match(workflow, /0007_operational_suite\.sql/);
@@ -87,4 +128,4 @@ assert.match(workflow, /booking_provider_profiles/);
 assert.match(workflow, /ux_appointments_occupied_slot/);
 assert.doesNotMatch(workflow, /workflow_dispatch:/);
 
-console.log("✓ Operational Suite: agenda, booking, criptografia, antifake e deploy versionado aprovados");
+console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, auditoria, fuso, PII e locks aprovados");
