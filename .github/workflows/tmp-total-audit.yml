@@ -1,0 +1,103 @@
+name: Temporary total NeuroPed audit
+
+on:
+  push:
+    branches:
+      - audit/total-loose-ends-20260810
+    paths:
+      - ".github/workflows/tmp-total-audit.yml"
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: audit/total-loose-ends-20260810
+          fetch-depth: 0
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Install Chromium for browser audits
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate static loose-ends inventory
+        run: python3 scripts/tmp_full_app_audit_v2.py
+
+      - name: Run deep gates and collect evidence
+        id: gates
+        shell: bash
+        run: |
+          set +e
+          mkdir -p /tmp/np-audit
+          REPORT="docs/AUDITORIA_TOTAL_2026-08-10_AUTO.md"
+
+          run_gate() {
+            name="$1"; shift
+            echo "### $name" >> "$REPORT"
+            echo "" >> "$REPORT"
+            "$@" > "/tmp/np-audit/${name}.log" 2>&1
+            code=$?
+            if [ "$code" -eq 0 ]; then
+              echo "- Status: **PASS**" >> "$REPORT"
+            else
+              echo "- Status: **FAIL ($code)**" >> "$REPORT"
+              echo "" >> "$REPORT"
+              echo '```text' >> "$REPORT"
+              tail -n 140 "/tmp/np-audit/${name}.log" >> "$REPORT"
+              echo '```' >> "$REPORT"
+            fi
+            echo "" >> "$REPORT"
+            echo "${name}=${code}" >> /tmp/np-audit/statuses.txt
+          }
+
+          echo "## Gates de execução" >> "$REPORT"
+          echo "" >> "$REPORT"
+          run_gate verify_release npm run verify:release
+          run_gate a11y_full npm run audit:a11y:full
+          run_gate e2e_scales npm run test:e2e:scales
+          run_gate audit_screens npm run audit:screens
+          run_gate build_full npm run build
+
+          echo "## Issues abertas observadas" >> "$REPORT"
+          echo "" >> "$REPORT"
+          GH_TOKEN="${{ github.token }}" gh issue list --state open --limit 100 --json number,title,url --jq '.[] | "- #\(.number) — \(.title) — \(.url)"' >> "$REPORT" || true
+          echo "" >> "$REPORT"
+
+          any_fail=0
+          while IFS='=' read -r name code; do
+            if [ "$code" != "0" ]; then any_fail=1; fi
+          done < /tmp/np-audit/statuses.txt
+          echo "any_fail=$any_fail" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Commit audit report
+        run: |
+          set -euo pipefail
+          git config user.name "NeuroPed Audit Bot"
+          git config user.email "neuroped-audit@users.noreply.github.com"
+          git add docs/AUDITORIA_TOTAL_2026-08-10_AUTO.md
+          git commit -m "docs(audit): registrar auditoria total automatizada" || exit 0
+          git push origin HEAD:audit/total-loose-ends-20260810
+
+      - name: Fail workflow if a critical gate failed
+        if: steps.gates.outputs.any_fail == '1'
+        run: |
+          echo "::error::Auditoria encontrou gate crítico falhando. Consulte docs/AUDITORIA_TOTAL_2026-08-10_AUTO.md"
+          exit 1
