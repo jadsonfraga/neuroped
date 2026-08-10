@@ -32,6 +32,7 @@ import {
 import { useSpeech } from "@/hooks/useSpeech";
 import { useToast } from "@/hooks/use-toast";
 import { secureGet, secureSet } from "@/lib/secureStorage";
+import { mergeCaaBoardWithCurrentDefaults } from "@/lib/caaWorkspaceMerge";
 
 const LS_BOARD = "neuroped:caa:board:v1";
 const LS_FAVS = "neuroped:caa:favs:v1";
@@ -125,14 +126,11 @@ function sanitizeBoardOnly(value: unknown): Board {
 }
 
 function mergeWithCurrentDefaults(value: unknown): Board {
-  const merged = clone(CAA_FULL_CATEGORIES);
-  const restored = sanitizeBoardOnly(value);
-  for (const [name, category] of Object.entries(restored)) {
-    // Preserva personalizações antigas e acrescenta automaticamente as novas
-    // categorias do catálogo premium quando ainda não existirem no dispositivo.
-    merged[name] = category;
-  }
-  return merged;
+  return mergeCaaBoardWithCurrentDefaults(
+    CAA_FULL_CATEGORIES,
+    sanitizeBoardOnly(value),
+    MAX_CAA_ITEMS_PER_CATEGORY,
+  );
 }
 
 function sanitizeKeys(value: unknown, limit: number): string[] {
@@ -429,7 +427,10 @@ export default function CaaPage() {
         setHist(sanitizeKeys(parsed.hist, 50));
         setMessageHist(sanitizeMessages(parsed.messages));
         setCat(Object.keys(nextBoard)[0] || Object.keys(CAA_FULL_CATEGORIES)[0]);
-        toast({ title: "Prancha importada", description: "Novas categorias NeuroPed foram preservadas." });
+        toast({
+          title: "Prancha importada",
+          description: "Novas categorias e cartões-base NeuroPed foram preservados.",
+        });
       } catch {
         toast({ title: "Arquivo inválido", variant: "destructive" });
       }

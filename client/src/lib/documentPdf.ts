@@ -7,12 +7,12 @@ import {
   PDFDocument,
   StandardFonts,
   rgb,
-  type PDFFont,
   type PDFImage,
   type PDFPage,
 } from "pdf-lib";
 import QRCode from "qrcode";
 import { buildAppHashUrl } from "@/lib/appUrl";
+import { wrapPdfText } from "@/lib/pdfTextWrap";
 import drJadsonLogoFile from "@assets/dr-jadson-logo.jpeg";
 
 export interface DocSection {
@@ -67,26 +67,8 @@ export function pdfSafe(input: string): string {
     .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, "");
 }
 
-function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const out: string[] = [];
-  for (const rawLine of (text ?? "").split("\n")) {
-    if (rawLine.trim() === "") {
-      out.push("");
-      continue;
-    }
-    let line = "";
-    for (const word of rawLine.split(/\s+/)) {
-      const test = line ? `${line} ${word}` : word;
-      if (font.widthOfTextAtSize(test, size) > maxWidth && line) {
-        out.push(line);
-        line = word;
-      } else {
-        line = test;
-      }
-    }
-    if (line) out.push(line);
-  }
-  return out;
+function wrap(text: string, font: Parameters<typeof wrapPdfText>[1], size: number, maxWidth: number): string[] {
+  return wrapPdfText(text, font, size, maxWidth);
 }
 
 function defaultValidationUrl(): string {

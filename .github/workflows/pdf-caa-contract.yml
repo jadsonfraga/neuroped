@@ -5,6 +5,10 @@ on:
     paths:
       - "client/src/lib/icpSign.ts"
       - "client/src/lib/documentPdf.ts"
+      - "client/src/lib/pdfTextWrap.ts"
+      - "client/src/lib/secureStorage.ts"
+      - "client/src/lib/persistentSecureStorage.ts"
+      - "client/src/lib/caaWorkspaceMerge.ts"
       - "client/src/pages/receita-c1.tsx"
       - "client/src/pages/receita-c1-express.tsx"
       - "client/src/pages/laudo-neuroped.tsx"
@@ -12,7 +16,10 @@ on:
       - "client/src/data/caaBoard.ts"
       - "client/src/data/caaExpandedBoard.ts"
       - "tests/unit/pdf-p12-signing.test.ts"
+      - "tests/unit/document-pdf-wrap.test.ts"
       - "tests/unit/caa-premium-catalog.test.ts"
+      - "tests/unit/caa-persistence-static.test.mjs"
+      - "tests/unit/caa-workspace-merge.test.ts"
       - ".github/workflows/pdf-caa-contract.yml"
 
 permissions:
@@ -39,8 +46,20 @@ jobs:
       - name: Sign a real PDF with an ephemeral PFX/P12
         run: node --import tsx tests/unit/pdf-p12-signing.test.ts
 
+      - name: Keep long PDF tokens inside the printable width
+        run: node --import tsx tests/unit/document-pdf-wrap.test.ts
+
       - name: Enforce doubled CAA vocabulary and voice messages
         run: node --import tsx tests/unit/caa-premium-catalog.test.ts
+
+      - name: Enforce encrypted persistent CAA storage without plaintext fallback
+        run: node tests/unit/caa-persistence-static.test.mjs
+
+      - name: Preserve current base cards while restoring old CAA workspaces
+        run: node --import tsx tests/unit/caa-workspace-merge.test.ts
+
+      - name: Preserve ephemeral clinical secure-storage contracts
+        run: node --import tsx tests/unit/secure-storage.test.ts
 
       - name: Type-check affected application surfaces
         run: npm run check
