@@ -1,0 +1,103 @@
+name: Deploy NeuroPed Conecta Vercel
+
+on:
+  push:
+    branches:
+      - deploy/neuroped-conecta-vercel
+    paths:
+      - "vercel-conecta/**"
+      - ".github/workflows/deploy-neuroped-conecta-vercel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neuroped-conecta-vercel-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_URL: https://neuroped-conecta.lovable.app
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validar configuração
+        run: |
+          set -euo pipefail
+          [ -n "$VERCEL_TOKEN" ] || { echo "::error::VERCEL_TOKEN ausente"; exit 1; }
+          [ -n "$VERCEL_ORG_ID" ] || { echo "::error::VERCEL_ORG_ID ausente"; exit 1; }
+          test -f vercel-conecta/vercel.json
+
+      - name: Aguardar origem estável do NeuroPed Conecta
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 36); do
+            if curl -fsSL --max-time 20 "$SOURCE_URL/" -o /tmp/source.html \
+              && grep -qi "NeuroPed Conecta" /tmp/source.html; then
+              echo "Origem Lovable pronta."
+              exit 0
+            fi
+            echo "Aguardando publicação Lovable ($i/36)..."
+            sleep 10
+          done
+          echo "::error::A origem $SOURCE_URL não ficou pronta a tempo."
+          exit 1
+
+      - name: Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Instalar Vercel CLI
+        run: npm install --global vercel@56.4.1
+
+      - name: Criar/vincular projeto Vercel e publicar
+        id: deploy
+        run: |
+          set -euo pipefail
+          token="$VERCEL_TOKEN"
+          unset VERCEL_TOKEN
+          export VERCEL_ORG_ID
+
+          cd vercel-conecta
+          rm -rf .vercel
+
+          # `vercel link --yes` cria o projeto caso ele ainda não exista.
+          vercel link --yes --project neuroped-conecta --token="$token"
+          deployment_url="$(vercel deploy --prod --yes --token="$token")"
+
+          echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
+          echo "Deployment Vercel: $deployment_url"
+
+          for i in $(seq 1 18); do
+            if curl -fsSL --max-time 20 "$deployment_url/" -o /tmp/vercel.html \
+              && grep -qi "NeuroPed Conecta" /tmp/vercel.html; then
+              echo "Vercel confirmado: $deployment_url"
+              exit 0
+            fi
+            echo "Aguardando Vercel ($i/18)..."
+            sleep 10
+          done
+
+          echo "::error::Deployment criado, mas a verificação HTTP não confirmou o app."
+          exit 1
+
+      - name: Resumo
+        if: always()
+        run: |
+          echo "## NeuroPed Conecta — Vercel" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Origem: $SOURCE_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deployment: ${{ steps.deploy.outputs.deployment_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> Publicação técnica para demonstração/staging; não liberar dados clínicos reais antes da auditoria final de segurança/LGPD." >> "$GITHUB_STEP_SUMMARY"
