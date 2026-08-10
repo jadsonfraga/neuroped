@@ -26,6 +26,11 @@ assert.match(conectaServer, /CREATE TABLE IF NOT EXISTS conecta_events/, "Conect
 assert.doesNotMatch(conectaServer, /INSERT INTO scale_results/, "Conecta não pode reutilizar tabela de escalas");
 assert.match(conectaServer, /payload_encrypted/, "payload clínico livre deve ser cifrado no backend real");
 assert.match(page, /persistentSecure(Get|Set)/, "modo local deve usar armazenamento persistente cifrado");
+assert.match(
+  page,
+  /setEvents\(\[\]\);[\s\S]{0,220}setSavedEvent\(null\);[\s\S]{0,180}setSelectedInsight\(null\);[\s\S]{0,180}setRegisterOpen\(false\);[\s\S]{0,220}\[patientId, remoteSession\]/,
+  "troca de paciente ou sessão deve limpar eventos e todo estado transitório antes da nova jornada",
+);
 assert.match(page, /Nenhum dado demonstrativo foi usado como substituto/, "falha real não pode cair para fixture demo");
 assert.match(d1, /conecta_events_demo/, "D1 de demonstração deve usar tabela explicitamente demo");
 assert.match(d1, /is_demo = 1/, "D1 deve restringir leitura/escrita ao domínio demo");
@@ -62,4 +67,4 @@ assert.match(page, /Ausência de registro não é interpretada como normalidade/
 assert.match(page, /não coloque nada na boca/i);
 assert.match(page, /SAMU 192/i);
 
-console.log("✓ Conecta integration: rota, storage, isolamento, D1, deploy versionado e microcopy aprovados");
+console.log("✓ Conecta integration: rota, storage, isolamento por paciente, D1, deploy versionado e microcopy aprovados");
