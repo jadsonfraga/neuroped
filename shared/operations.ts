@@ -147,6 +147,34 @@ export interface OperationsMetrics {
   noShow30d: number;
 }
 
+export interface OperationsAccessContext {
+  actorUserId: string;
+  actorRole: string;
+  providerUserId: string;
+  providerName: string;
+  delegated: boolean;
+  canConfigure: boolean;
+}
+
+export interface OperationsStaffLink {
+  staffUserId: string;
+  staffName: string;
+  staffEmail: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface OperationsAuditEntry {
+  id: string;
+  actorUserId: string;
+  actorName: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export interface OperationsDashboard {
   profile: ProviderProfile;
   services: BookingService[];
@@ -157,6 +185,9 @@ export interface OperationsDashboard {
   reviews: AppointmentReview[];
   notifications: NotificationOutboxItem[];
   metrics: OperationsMetrics;
+  access: OperationsAccessContext;
+  staff: OperationsStaffLink[];
+  audit: OperationsAuditEntry[];
 }
 
 export interface PublicProviderProfile {
