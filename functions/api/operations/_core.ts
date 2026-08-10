@@ -237,7 +237,7 @@ export function slugify(value: string): string {
 }
 
 export function validSlug(value: string): boolean {
-  return /^[a-z0-9](?:[a-z0-9-]{1,48}[a-z0-9])?$/.test(value);
+  return /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(value);
 }
 
 export async function ensureProviderProfile(
@@ -499,7 +499,7 @@ export async function listAvailableSlots(
       if (!occupied) slots.push({ startsAtLocal, endsAtLocal });
     }
   }
-  return slots.slice(0, 96);
+  return slots;
 }
 
 export async function getProviderBySlug(db: D1Database, slug: string): Promise<ProviderRow | null> {

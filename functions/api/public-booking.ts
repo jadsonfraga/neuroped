@@ -23,6 +23,7 @@ import {
   type ServiceRow,
 } from "./operations/_core";
 import { ensureOperationsHardeningSchema } from "./operations/_access";
+import { isValidLocalDate, selectFutureSlots } from "../../shared/operations";
 
 function emailValid(value: string): boolean {
   return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -116,12 +117,14 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
       const serviceId = cleanText(url.searchParams.get("service"), 80);
       const date = cleanText(url.searchParams.get("date"), 10);
       const service = await getService(env.DB, provider.user_id, serviceId, true);
-      if (!service || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      if (!service || !isValidLocalDate(date)) {
         return errorResponse("Serviço ou data inválidos.", "VALIDATION_ERROR", 400);
       }
       const currentLocal = nowInTimezone(provider.timezone);
-      const slots = (await listAvailableSlots(env.DB, provider.user_id, service, date)).filter(
-        (slot) => slot.startsAtLocal > currentLocal,
+      const slots = selectFutureSlots(
+        await listAvailableSlots(env.DB, provider.user_id, service, date),
+        currentLocal,
+        96,
       );
       return jsonResponse({ slots, bookingEnabled: true, timezone: provider.timezone });
     }
@@ -340,6 +343,10 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if (guardianEmail && !emailValid(guardianEmail)) {
         return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);
       }
+      const preferredDate = cleanOptionalText(body.preferredDate, 10);
+      if (preferredDate && !isValidLocalDate(preferredDate)) {
+        return errorResponse("Data preferencial inválida.", "VALIDATION_ERROR", 400);
+      }
       const token = randomAccessToken();
       const id = `wait-${crypto.randomUUID()}`;
       await env.DB.prepare(
@@ -351,7 +358,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         id,
         provider.user_id,
         service.id,
-        cleanOptionalText(body.preferredDate, 10),
+        preferredDate,
         await sha256(token),
         await encryptText(env, guardianName),
         await encryptText(env, guardianEmail || null),

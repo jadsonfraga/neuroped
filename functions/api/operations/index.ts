@@ -38,7 +38,7 @@ import {
   setOperationsStaffActive,
   type OperationsPrincipal,
 } from "./_access";
-import type { AppointmentStatus } from "../../../shared/operations";
+import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
 
 function canConfigure(role: string): boolean {
   return role === "admin" || role === "professional";
@@ -65,6 +65,7 @@ function moneyCents(value: unknown): number | null {
 }
 
 function integerBetween(value: unknown, min: number, max: number): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) return null;
   return parsed;
@@ -370,6 +371,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const locationLabel = cleanOptionalText(body.locationLabel, 180);
       const timezone = cleanText(body.timezone, 80) || "America/Recife";
       const requestedSlug = cleanText(body.slug, 50) || slugify(displayName || user.name);
+      if (!isValidTimeZone(timezone)) return errorResponse("Fuso horário inválido.", "VALIDATION_ERROR", 400);
       if (!displayName || !specialty || !validSlug(requestedSlug)) return errorResponse("Perfil público inválido.", "VALIDATION_ERROR", 400);
       const bookingEnabled = body.bookingEnabled === true ? 1 : 0;
       try {
@@ -433,7 +435,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetId = id;
     } else if (action === "delete_rule") {
       const id = cleanText(body.id, 80);
-      await env.DB.prepare(`DELETE FROM booking_availability_rules WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if (!id) return errorResponse("Regra inválida.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(`DELETE FROM booking_availability_rules WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Regra não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "availability_rule";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
@@ -450,7 +454,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetId = id;
     } else if (action === "delete_block") {
       const id = cleanText(body.id, 80);
-      await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if (!id) return errorResponse("Bloqueio inválido.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Bloqueio não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "availability_block";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
@@ -519,10 +525,11 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = parsePaymentStatus(body.paymentStatus);
       if (!id || !status) return errorResponse("Pagamento inválido.", "VALIDATION_ERROR", 400);
-      await env.DB.prepare(
+      const result = await env.DB.prepare(
         `UPDATE appointments SET amount_cents = COALESCE(?, amount_cents), payment_status = ?, payment_method = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ?`,
       ).bind(moneyCents(body.amountCents), status, cleanOptionalText(body.paymentMethod, 60), now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "appointment_payment";
       auditTargetId = id;
       auditMetadata = { paymentStatus: status };
@@ -530,22 +537,26 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 20);
       if (!id || !["waiting", "offered", "booked", "closed"].includes(status)) return errorResponse("Status da lista de espera inválido.", "VALIDATION_ERROR", 400);
-      await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Entrada da lista de espera não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "waitlist";
       auditTargetId = id;
       auditMetadata = { status };
     } else if (action === "review_moderate") {
       const id = cleanText(body.id, 80);
+      if (!id) return errorResponse("Avaliação inválida.", "VALIDATION_ERROR", 400);
       const approved = body.approved === true ? 1 : 0;
-      await env.DB.prepare(`UPDATE appointment_reviews SET approved = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(approved, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE appointment_reviews SET approved = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(approved, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Avaliação não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "review";
       auditTargetId = id;
       auditMetadata = { status: approved ? "approved" : "hidden" };
     } else if (action === "notification_status") {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 30);
-      if (!["manual_sent", "failed"].includes(status)) return errorResponse("Status de notificação inválido.", "VALIDATION_ERROR", 400);
-      await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      if (!id || !["manual_sent", "failed"].includes(status)) return errorResponse("Status de notificação inválido.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Notificação não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "notification";
       auditTargetId = id;
       auditMetadata = { status };
