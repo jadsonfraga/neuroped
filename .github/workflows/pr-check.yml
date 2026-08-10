@@ -59,6 +59,14 @@ jobs:
           node scripts/guards/audit-navigation-routes.mjs
         continue-on-error: true
 
+      - name: Validar Clinical Core longitudinal
+        id: clinical_core
+        run: |
+          node --import tsx tests/unit/clinical-core-contract.test.ts
+          node tests/unit/clinical-core-integration-static.test.mjs
+          node tests/unit/patient-cockpit-static.test.mjs
+        continue-on-error: true
+
       - name: Comentar resultado no PR
         uses: actions/github-script@v7
         with:
@@ -68,7 +76,8 @@ jobs:
             const lintStatus = '${{ steps.lint.outcome }}' === 'success';
             const accessStatus = '${{ steps.access.outcome }}' === 'success';
             const conectaStatus = '${{ steps.conecta.outcome }}' === 'success';
-            const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus;
+            const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
+            const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus && clinicalCoreStatus;
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -84,10 +93,11 @@ jobs:
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
             | ${icon(accessStatus)} Acesso fail-closed | ${label(accessStatus)} |
             | ${icon(conectaStatus)} NeuroPed Conecta | ${label(conectaStatus)} |
+            | ${icon(clinicalCoreStatus)} Clinical Core + Cockpit | ${label(clinicalCoreStatus)} |
 
             ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, acesso e contrato do Conecta antes de solicitar revisão.'}
+              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, acesso, Conecta e Clinical Core antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
@@ -123,6 +133,7 @@ jobs:
              [ "${{ steps.build.outcome }}" != "success" ] || \
              [ "${{ steps.lint.outcome }}" != "success" ] || \
              [ "${{ steps.conecta.outcome }}" != "success" ] || \
+             [ "${{ steps.clinical_core.outcome }}" != "success" ] || \
              [ "${{ steps.access.outcome }}" != "success" ]; then
             echo "Uma ou mais verificações críticas falharam."
             exit 1

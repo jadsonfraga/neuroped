@@ -1,0 +1,107 @@
+name: NeuroPed Clinical Core D1 migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0006_clinical_core.sql"
+      - "functions/api/clinical-core/**"
+      - "shared/clinical-core.ts"
+      - ".github/workflows/clinical-core-d1-migration.yml"
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-clinical-core-d1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Migração D1 do Clinical Core permitida somente a partir de main."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+      - name: Validar contrato do Clinical Core antes da migração
+        run: |
+          node --import tsx tests/unit/clinical-core-contract.test.ts
+          node tests/unit/clinical-core-integration-static.test.mjs
+          node tests/unit/patient-cockpit-static.test.mjs
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar migração 0006 do Clinical Core
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0006_clinical_core.sql
+
+      - name: Verificar schema D1 do Clinical Core
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='clinical_events_demo';" \
+            > /tmp/clinical-core-table.txt 2>&1
+          cat /tmp/clinical-core-table.txt
+          grep -q "clinical_events_demo" /tmp/clinical-core-table.txt || {
+            echo "::error::Tabela clinical_events_demo ausente após migração"
+            exit 1
+          }
+          grep -Eq "CHECK[[:space:]]*\([[:space:]]*is_demo[[:space:]]*=[[:space:]]*1[[:space:]]*\)" /tmp/clinical-core-table.txt || {
+            echo "::error::Trava física is_demo = 1 ausente em clinical_events_demo"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('idx_clinical_events_demo_patient_time','idx_clinical_events_demo_type','idx_clinical_events_demo_encounter','idx_clinical_events_demo_supersedes') ORDER BY name;" \
+            > /tmp/clinical-core-indexes.txt 2>&1
+          cat /tmp/clinical-core-indexes.txt
+          for idx in \
+            idx_clinical_events_demo_patient_time \
+            idx_clinical_events_demo_type \
+            idx_clinical_events_demo_encounter \
+            idx_clinical_events_demo_supersedes; do
+            grep -q "$idx" /tmp/clinical-core-indexes.txt || {
+              echo "::error::Índice D1 ausente: $idx"
+              exit 1
+            }
+          done
+          echo "✅ Clinical Core D1: migração 0006 e invariantes confirmados."

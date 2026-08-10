@@ -30,6 +30,7 @@ import { registerAuthRoutes } from "./auth/routes.js";
 import { registerFileRoutes } from "./routes/files.js";
 import { registerConsentRoutes } from "./routes/consents.js";
 import { registerConectaRoutes } from "./routes/conecta.js";
+import { registerClinicalCoreRoutes } from "./routes/clinical-core.js";
 import {
   canAccessPatient,
   canAccessScaleResult,
@@ -92,6 +93,9 @@ export async function registerRoutes(
 
   // ----- NeuroPed Conecta: jornada longitudinal nativa com ownership do paciente -----
   registerConectaRoutes(app);
+
+  // ----- Clinical Core: ledger longitudinal canônico e rastreável -----
+  registerClinicalCoreRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {
