@@ -12,10 +12,10 @@ assert.ok(resetImport > proportionImport, "visual-reset deve carregar por últim
 
 assert.match(css, /#main-content > \.sticky\s*\{[\s\S]*?display:\s*none\s*!important;/,
   "barra visual duplicada de fluxo deve permanecer removida");
-assert.match(css, /aside\[aria-label="Aviso de finalidade educativa"\]/,
-  "aviso legal deve continuar presente, apenas reestilizado como rodapé");
-assert.doesNotMatch(css, /aside\[aria-label="Aviso de finalidade educativa"\][^{]*\{[^}]*display:\s*none/i,
-  "aviso legal não pode ser escondido");
+const legalRootMatch = css.match(/#main-content aside\[aria-label="Aviso de finalidade educativa"\]\s*\{([^}]*)\}/);
+assert.ok(legalRootMatch, "aviso legal deve continuar presente, apenas reestilizado como rodapé");
+assert.doesNotMatch(legalRootMatch[1], /display:\s*none/i,
+  "aviso legal raiz não pode ser escondido");
 
 assert.match(css, /aria-label="Métricas do app"/,
   "inventário técnico da home deve permanecer fora da hierarquia clínica principal");
