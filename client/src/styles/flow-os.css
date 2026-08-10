@@ -1,0 +1,23 @@
+/* Flow OS — continuidade de navegação mobile.
+ * A camada não oculta conteúdo: apenas reserva espaço para o dock fixo e
+ * reposiciona superfícies flutuantes conhecidas acima dele. */
+
+@media (max-width: 767px) {
+  body.np-mobile-dock-active #main-content {
+    padding-bottom: calc(6.35rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.np-mobile-dock-active [data-testid="button-tour"] {
+    bottom: calc(6.6rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.np-mobile-dock-active [data-radix-toast-viewport] {
+    bottom: calc(6.6rem + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media print {
+  body.np-mobile-dock-active #main-content {
+    padding-bottom: 0 !important;
+  }
+}
