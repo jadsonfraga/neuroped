@@ -1,8 +1,8 @@
 -- BoaConsulta Bridge — staging seguro e idempotente para importações externas.
 --
 -- Regras:
--- 1. Nenhum dado clínico bruto é salvo em texto claro nestas tabelas.
--- 2. O arquivo original fica criptografado em R2; D1 guarda apenas a chave do objeto e o IV.
+-- 1. Nenhum dado clínico bruto ou nome de arquivo é salvo em texto claro nestas tabelas.
+-- 2. O arquivo original fica criptografado em R2; D1 guarda apenas uma chave opaca e o IV.
 -- 3. Registros estruturados ficam cifrados individualmente com AES-GCM.
 -- 4. A mesma exportação não pode ser importada duas vezes pelo mesmo proprietário.
 -- 5. A promoção para o prontuário/Clinical Core é deliberadamente separada do staging.
@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS external_import_batches (
   id TEXT PRIMARY KEY,
   owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   source_system TEXT NOT NULL CHECK (source_system IN ('boaconsulta')),
-  source_filename TEXT NOT NULL,
+  source_filename_ciphertext TEXT NOT NULL,
+  source_filename_iv TEXT NOT NULL,
+  source_extension TEXT,
   source_mime_type TEXT NOT NULL,
   source_size_bytes INTEGER NOT NULL CHECK (source_size_bytes >= 0),
   source_sha256 TEXT NOT NULL,
