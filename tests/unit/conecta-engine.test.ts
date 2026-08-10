@@ -57,6 +57,10 @@ const environment = buildConectaInsights(environmentEvents, 30, now);
 const comparison = environment.find((item) => item.id === "environment-attention");
 assert.ok(comparison);
 assert.match(comparison!.body, /não estabelece a causa/i);
+assert.ok(
+  comparison!.evidence.limitations.some((item) => /não confirma diagnóstico/i.test(item)),
+  "a limitação deve explicitar que a comparação não confirma diagnóstico",
+);
 
 // Associação sono-irritabilidade deve declarar explicitamente que não prova causa.
 const associationEvents: ConectaEvent[] = [];
@@ -91,7 +95,7 @@ const allInsightText = [
   .join(" ");
 for (const forbidden of [
   /diagnóstico confirmado/i,
-  /confirma (o )?diagnóstico/i,
+  /\b(isto|isso|este resultado|o resultado)\s+confirma\s+(o\s+)?diagnóstico\b/i,
   /aumente (a )?dose/i,
   /reduza (a )?dose/i,
   /suspenda (a )?medicação/i,
