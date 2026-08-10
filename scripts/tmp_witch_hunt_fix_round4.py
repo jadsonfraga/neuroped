@@ -23,11 +23,17 @@ replace_once(
     '''onClick={async () => {\n                    const saved = await mutate({ action: "staff_link", email: staffEmail }, "Recepção vinculada à agenda.");\n                    if (saved) setStaffEmail("");\n                  }}''',
 )
 
+replace_once(
+    'client/src/pages/agenda.tsx',
+    '''mutate: (payload: Record<string, unknown>, success: string) => Promise<void>''',
+    '''mutate: (payload: Record<string, unknown>, success: string) => Promise<boolean>''',
+)
+
 # Trava permanente para não voltar a confundir commit remoto com refresh local.
 test = ROOT / 'tests/unit/witch-hunt-regressions.test.mjs'
 s = test.read_text('utf-8')
 anchor = 'assert.match(auditLog, /created_at < \\?/, "data final deve usar próximo dia exclusivo");\n'
-addition = anchor + '''\nconst agendaPage = read("client/src/pages/agenda.tsx");\nassert.match(agendaPage, /async function mutate[\\s\\S]{0,800}apiRequest[\\s\\S]{0,800}return false/, "falha da mutação deve retornar false antes do refresh");\nassert.match(agendaPage, /A alteração foi salva, mas a tela não conseguiu atualizar/, "falha de refetch não pode fingir rollback da mutação");\nassert.match(agendaPage, /const saved = await mutate[\\s\\S]{0,300}if \\(saved\\) setStaffEmail/, "formulário de equipe só limpa após mutação aceita");\n'''
+addition = anchor + '''\nconst agendaPage = read("client/src/pages/agenda.tsx");\nassert.match(agendaPage, /async function mutate[\\s\\S]{0,800}apiRequest[\\s\\S]{0,800}return false/, "falha da mutação deve retornar false antes do refresh");\nassert.match(agendaPage, /A alteração foi salva, mas a tela não conseguiu atualizar/, "falha de refetch não pode fingir rollback da mutação");\nassert.match(agendaPage, /const saved = await mutate[\\s\\S]{0,300}if \\(saved\\) setStaffEmail/, "formulário de equipe só limpa após mutação aceita");\nassert.match(agendaPage, /Promise<boolean>/, "componentes filhos devem preservar o resultado da mutação");\n'''
 if anchor not in s:
     raise SystemExit('witch-hunt test anchor not found')
 test.write_text(s.replace(anchor, addition, 1), 'utf-8')
