@@ -1,0 +1,42 @@
+name: Temporary witch hunt loop
+
+on:
+  push:
+    branches:
+      - fix/witch-hunt-loop-20260810
+    paths:
+      - ".github/workflows/tmp-witch-hunt-loop.yml"
+      - "scripts/tmp_witch_hunt_scan.py"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: fix/witch-hunt-loop-20260810
+          fetch-depth: 0
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Static witch-hunt scan
+        run: python3 scripts/tmp_witch_hunt_scan.py
+      - name: TypeScript
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Unit/release contracts
+        run: npm run verify:release
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
