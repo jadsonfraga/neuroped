@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   addMinutesLocal,
+  appointmentSlotKeys,
   appointmentStatuses,
   bookingModalities,
   formatMoneyBRL,
@@ -26,6 +27,16 @@ assert.equal(overlapsLocal("2026-08-10T08:00", "2026-08-10T09:00", "2026-08-10T0
 assert.equal(overlapsLocal("2026-08-10T08:00", "2026-08-10T09:00", "2026-08-10T09:00", "2026-08-10T10:00"), false);
 assert.equal(occupiesSchedule("requested"), true);
 assert.equal(occupiesSchedule("completed"), false);
+assert.deepEqual(appointmentSlotKeys("2026-08-10T08:00", "2026-08-10T08:20"), [
+  "2026-08-10T08:00",
+  "2026-08-10T08:05",
+  "2026-08-10T08:10",
+  "2026-08-10T08:15",
+]);
+assert.deepEqual(appointmentSlotKeys("2026-08-10T08:01", "2026-08-10T08:06"), [
+  "2026-08-10T08:00",
+  "2026-08-10T08:05",
+]);
 assert.match(formatMoneyBRL(50000), /500/);
 
 console.log("✓ Operational contract: horários, sobreposição, status e dinheiro aprovados");

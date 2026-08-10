@@ -132,13 +132,33 @@ export default function AgendarPage() {
     if (!token.trim()) return;
     setBusy(true);
     try {
-      const response = await apiRequest("GET", `/api/public-booking?action=manage&token=${encodeURIComponent(token.trim())}`);
+      const response = await apiRequest("POST", "/api/public-booking", { action: "manage", token: token.trim() });
       const data = await response.json() as { appointment: Appointment };
       setManaged(data.appointment);
+      setServiceId(data.appointment.serviceId);
       setManageToken(token.trim());
     } catch (err) {
       setManaged(null);
       toast({ title: "Reserva não encontrada.", description: String(err), variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function rescheduleBooking() {
+    if (!manageToken || !managed || !slot) return;
+    setBusy(true);
+    try {
+      await apiRequest("POST", "/api/public-booking", {
+        action: "reschedule",
+        token: manageToken,
+        startsAtLocal: slot.startsAtLocal,
+      });
+      toast({ title: "Remarcação solicitada ✓", description: "A clínica precisa reconfirmar o novo horário." });
+      setSlot(null);
+      await manageBooking(manageToken);
+    } catch (err) {
+      toast({ title: "Não foi possível remarcar.", description: String(err), variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -211,7 +231,7 @@ export default function AgendarPage() {
 
       {bookingToken && <Card className="border-emerald-500/25 bg-emerald-500/5"><CardContent className="p-5"><div className="flex gap-3"><CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600" /><div className="min-w-0"><p className="font-bold">Código da reserva</p><p className="mt-1 break-all font-mono text-xs">{bookingToken}</p><p className="mt-2 text-xs text-muted-foreground">Guarde este código. Ele é a chave para consultar ou cancelar a reserva; não compartilhe em público.</p></div></div></CardContent></Card>}
 
-      <Card><CardContent className="space-y-4 p-5 sm:p-6"><div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /><h2 className="font-bold">Consultar minha reserva</h2></div><div className="flex flex-col gap-2 sm:flex-row"><Input value={manageToken} onChange={(e) => setManageToken(e.target.value)} placeholder="Cole o código da reserva" className="font-mono text-xs" /><Button onClick={() => manageBooking()} disabled={busy || !manageToken.trim()}>Consultar</Button></div>{managed && <div className="rounded-2xl border p-4"><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{managed.status}</Badge><strong>{managed.serviceName}</strong></div><p className="mt-2 text-sm">{displayLocal(managed.startsAtLocal)}</p><p className="mt-1 text-xs text-muted-foreground">{managed.patientName} · responsável: {managed.guardianName}</p>{["requested", "confirmed"].includes(managed.status) && <Button className="mt-4" variant="outline" onClick={cancelBooking} disabled={busy}>Cancelar reserva</Button>}{managed.status === "completed" && <div className="mt-5 space-y-3 border-t pt-4"><h3 className="font-semibold">Avaliar atendimento</h3><div className="flex gap-2">{[1,2,3,4,5].map((n) => <button key={n} type="button" onClick={() => setReview((p) => ({ ...p, rating: String(n) }))} aria-label={`${n} estrelas`} className={review.rating === String(n) ? "text-amber-500" : "text-muted-foreground"}><Star className="h-6 w-6 fill-current" /></button>)}</div><Textarea value={review.comment} onChange={(e) => setReview((p) => ({ ...p, comment: e.target.value.slice(0, 600) }))} placeholder="Comentário opcional; evite dados clínicos sensíveis." /><Button onClick={sendReview} disabled={busy}>Enviar avaliação</Button></div>}</div>}</CardContent></Card>
+      <Card><CardContent className="space-y-4 p-5 sm:p-6"><div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /><h2 className="font-bold">Consultar minha reserva</h2></div><div className="flex flex-col gap-2 sm:flex-row"><Input value={manageToken} onChange={(e) => setManageToken(e.target.value)} placeholder="Cole o código da reserva" className="font-mono text-xs" /><Button onClick={() => manageBooking()} disabled={busy || !manageToken.trim()}>Consultar</Button></div>{managed && <div className="rounded-2xl border p-4"><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{managed.status}</Badge><strong>{managed.serviceName}</strong></div><p className="mt-2 text-sm">{displayLocal(managed.startsAtLocal)}</p><p className="mt-1 text-xs text-muted-foreground">{managed.patientName} · responsável: {managed.guardianName}</p>{["requested", "confirmed"].includes(managed.status) && <div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" onClick={cancelBooking} disabled={busy}>Cancelar reserva</Button>{slot && slot.startsAtLocal !== managed.startsAtLocal && <Button onClick={rescheduleBooking} disabled={busy}>Remarcar para {slot.startsAtLocal.slice(11)}</Button>}</div>}{managed.status === "completed" && <div className="mt-5 space-y-3 border-t pt-4"><h3 className="font-semibold">Avaliar atendimento</h3><div className="flex gap-2">{[1,2,3,4,5].map((n) => <button key={n} type="button" onClick={() => setReview((p) => ({ ...p, rating: String(n) }))} aria-label={`${n} estrelas`} className={review.rating === String(n) ? "text-amber-500" : "text-muted-foreground"}><Star className="h-6 w-6 fill-current" /></button>)}</div><Textarea value={review.comment} onChange={(e) => setReview((p) => ({ ...p, comment: e.target.value.slice(0, 600) }))} placeholder="Comentário opcional; evite dados clínicos sensíveis." /><Button onClick={sendReview} disabled={busy}>Enviar avaliação</Button></div>}</div>}</CardContent></Card>
 
       {profile.reviews.length > 0 && <section className="space-y-3"><h2 className="text-lg font-bold">Avaliações após consultas concluídas</h2><div className="grid gap-3 md:grid-cols-2">{profile.reviews.slice(0, 6).map((item, index) => <Card key={`${item.createdAt}-${index}`}><CardContent className="p-4"><div className="flex items-center gap-1 text-amber-500">{Array.from({ length: item.rating }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}</div>{item.comment && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.comment}</p>}</CardContent></Card>)}</div></section>}
     </div>

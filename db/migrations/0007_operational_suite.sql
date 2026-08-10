@@ -91,6 +91,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_appointments_occupied_slot
   ON appointments(provider_user_id, starts_at_local)
   WHERE status IN ('requested','confirmed','checked_in','in_care');
 
+CREATE TABLE IF NOT EXISTS appointment_slot_locks (
+  provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  slot_key TEXT NOT NULL,
+  appointment_id TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+  PRIMARY KEY (provider_user_id, slot_key)
+);
+CREATE INDEX IF NOT EXISTS idx_appointment_slot_locks_appointment
+  ON appointment_slot_locks(appointment_id);
+
 CREATE TABLE IF NOT EXISTS waitlist_entries (
   id TEXT PRIMARY KEY,
   provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

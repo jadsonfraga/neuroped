@@ -199,6 +199,42 @@ export function addMinutesLocal(localDateTime: string, minutes: number): string 
   return `${utc.getUTCFullYear()}-${String(utc.getUTCMonth() + 1).padStart(2, "0")}-${String(utc.getUTCDate()).padStart(2, "0")}T${String(utc.getUTCHours()).padStart(2, "0")}:${String(utc.getUTCMinutes()).padStart(2, "0")}`;
 }
 
+function localMinuteEpoch(value: string): number {
+  const [datePart, timePart] = value.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+  return Math.floor(Date.UTC(year, month - 1, day, hour, minute) / 60000);
+}
+
+function epochMinuteToLocal(value: number): string {
+  const date = new Date(value * 60000);
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}T${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
+}
+
+export function appointmentSlotKeys(
+  startsAtLocal: string,
+  endsAtLocal: string,
+  stepMinutes = 5,
+): string[] {
+  if (!isValidLocalDateTime(startsAtLocal) || !isValidLocalDateTime(endsAtLocal)) {
+    throw new Error("INVALID_APPOINTMENT_INTERVAL");
+  }
+  if (!Number.isInteger(stepMinutes) || stepMinutes < 1 || stepMinutes > 60) {
+    throw new Error("INVALID_SLOT_LOCK_STEP");
+  }
+  const start = localMinuteEpoch(startsAtLocal);
+  const end = localMinuteEpoch(endsAtLocal);
+  if (end <= start || end - start > 1440) throw new Error("INVALID_APPOINTMENT_INTERVAL");
+  const firstBucket = Math.floor(start / stepMinutes) * stepMinutes;
+  const keys: string[] = [];
+  for (let bucket = firstBucket, guard = 0; bucket < end && guard < 1441; bucket += stepMinutes, guard += 1) {
+    if (bucket + stepMinutes <= start) continue;
+    keys.push(epochMinuteToLocal(bucket));
+  }
+  if (!keys.length) throw new Error("INVALID_APPOINTMENT_INTERVAL");
+  return keys;
+}
+
 export function overlapsLocal(
   aStart: string,
   aEnd: string,

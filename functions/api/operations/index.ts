@@ -18,8 +18,10 @@ import {
   parseStatus,
   profileToApi,
   randomAccessToken,
+  releaseSlotLocksStatement,
   serviceToApi,
   sha256,
+  slotLockStatements,
   slugify,
   validSlug,
   type AppointmentRow,
@@ -33,7 +35,7 @@ function canConfigure(role: string): boolean {
 }
 
 function canOperate(role: string): boolean {
-  return canConfigure(role) || role === "operator";
+  return canConfigure(role);
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown> | null> {
@@ -312,18 +314,23 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const ends = new Date(`${starts}:00Z`);
       ends.setUTCMinutes(ends.getUTCMinutes() + service.duration_minutes);
       const endsAtLocal = ends.toISOString().slice(0, 16);
-      await env.DB.prepare(
+      const appointmentId = `apt-${crypto.randomUUID()}`;
+      const insertAppointment = env.DB.prepare(
         `INSERT INTO appointments
           (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
            status, source, booking_token_hash, guardian_name_encrypted, guardian_email_encrypted,
            guardian_phone_encrypted, patient_name_encrypted, amount_cents, payment_status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       ).bind(
-        `apt-${crypto.randomUUID()}`, user.id, service.id, cleanOptionalText(body.patientId, 100), starts, endsAtLocal,
+        appointmentId, user.id, service.id, cleanOptionalText(body.patientId, 100), starts, endsAtLocal,
         profile.timezone, await sha256(token), await encryptText(env, cleanOptionalText(body.guardianName, 120)),
         await encryptText(env, cleanOptionalText(body.guardianEmail, 180)), await encryptText(env, cleanOptionalText(body.guardianPhone, 40)),
         await encryptText(env, cleanOptionalText(body.patientName, 120)), service.price_cents, now, now,
-      ).run();
+      );
+      await env.DB.batch([
+        insertAppointment,
+        ...slotLockStatements(env.DB, user.id, appointmentId, starts, endsAtLocal),
+      ]);
     } else if (action === "appointment_status") {
       const id = cleanText(body.id, 80);
       const status = parseStatus(body.status);
@@ -347,10 +354,16 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const checkedInAt = status === "checked_in" ? now : current.checked_in_at;
       const completedAt = status === "completed" ? now : current.completed_at;
       const cancelledAt = status === "cancelled" ? now : current.cancelled_at;
-      await env.DB.prepare(
+      const updateStatus = env.DB.prepare(
         `UPDATE appointments SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ?`,
-      ).bind(status, checkedInAt, completedAt, cancelledAt, now, id, user.id).run();
+      ).bind(status, checkedInAt, completedAt, cancelledAt, now, id, user.id);
+      const releasesSchedule = ["cancelled", "no_show", "completed"].includes(status);
+      await env.DB.batch(
+        releasesSchedule
+          ? [updateStatus, releaseSlotLocksStatement(env.DB, id)]
+          : [updateStatus],
+      );
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,

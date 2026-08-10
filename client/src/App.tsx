@@ -476,7 +476,7 @@ function AppRouter() {
               </RouteGuard>
             </Route>
             <Route path="/agenda">
-              <RouteGuard roles={["admin", "professional", "operator"]}>
+              <RouteGuard roles={["admin", "professional"]}>
                 <AgendaPage />
               </RouteGuard>
             </Route>

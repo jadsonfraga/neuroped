@@ -1,5 +1,6 @@
 import {
   addMinutesLocal,
+  appointmentSlotKeys,
   appointmentStatuses,
   bookingModalities,
   isValidLocalDate,
@@ -152,6 +153,13 @@ const SCHEMA_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_appointments_provider_time ON appointments(provider_user_id, starts_at_local)`,
   `CREATE INDEX IF NOT EXISTS idx_appointments_provider_status ON appointments(provider_user_id, status, starts_at_local)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS ux_appointments_occupied_slot ON appointments(provider_user_id, starts_at_local) WHERE status IN ('requested','confirmed','checked_in','in_care')`,
+  `CREATE TABLE IF NOT EXISTS appointment_slot_locks (
+    provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slot_key TEXT NOT NULL,
+    appointment_id TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+    PRIMARY KEY (provider_user_id, slot_key)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_appointment_slot_locks_appointment ON appointment_slot_locks(appointment_id)`,
   `CREATE TABLE IF NOT EXISTS waitlist_entries (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -382,6 +390,28 @@ export async function appointmentToApi(env: OperationsEnv, row: AppointmentRow) 
   };
 }
 
+export function slotLockStatements(
+  db: D1Database,
+  providerUserId: string,
+  appointmentId: string,
+  startsAtLocal: string,
+  endsAtLocal: string,
+): D1PreparedStatement[] {
+  return appointmentSlotKeys(startsAtLocal, endsAtLocal).map((slotKey) =>
+    db.prepare(
+      `INSERT INTO appointment_slot_locks (provider_user_id, slot_key, appointment_id)
+       VALUES (?, ?, ?)`,
+    ).bind(providerUserId, slotKey, appointmentId),
+  );
+}
+
+export function releaseSlotLocksStatement(
+  db: D1Database,
+  appointmentId: string,
+): D1PreparedStatement {
+  return db.prepare(`DELETE FROM appointment_slot_locks WHERE appointment_id = ?`).bind(appointmentId);
+}
+
 export function parseStatus(value: unknown): AppointmentStatus | null {
   return typeof value === "string" && appointmentStatuses.includes(value as AppointmentStatus)
     ? (value as AppointmentStatus)
@@ -527,26 +557,32 @@ export async function enqueueNotification(
     recipient?: string | null;
     message: string;
   },
-): Promise<void> {
+): Promise<boolean> {
   const now = new Date().toISOString();
-  await db
-    .prepare(
-      `INSERT INTO notification_outbox
-        (id, appointment_id, provider_user_id, channel, template,
-         recipient_encrypted, payload_encrypted, status, created_at, updated_at)
-       VALUES (?, ?, ?, 'manual', ?, ?, ?, 'pending_provider', ?, ?)`,
-    )
-    .bind(
-      `ntf-${crypto.randomUUID()}`,
-      options.appointmentId ?? null,
-      options.providerUserId,
-      options.template,
-      await encryptText(env, options.recipient ?? null),
-      await encryptText(env, options.message),
-      now,
-      now,
-    )
-    .run();
+  try {
+    await db
+      .prepare(
+        `INSERT INTO notification_outbox
+          (id, appointment_id, provider_user_id, channel, template,
+           recipient_encrypted, payload_encrypted, status, created_at, updated_at)
+         VALUES (?, ?, ?, 'manual', ?, ?, ?, 'pending_provider', ?, ?)`,
+      )
+      .bind(
+        `ntf-${crypto.randomUUID()}`,
+        options.appointmentId ?? null,
+        options.providerUserId,
+        options.template,
+        await encryptText(env, options.recipient ?? null),
+        await encryptText(env, options.message),
+        now,
+        now,
+      )
+      .run();
+    return true;
+  } catch (error) {
+    console.error("[operations.notification-outbox]", error);
+    return false;
+  }
 }
 
 export function assertLocalDateTime(value: unknown): string | null {

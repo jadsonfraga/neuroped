@@ -40,6 +40,7 @@ for (const table of [
   "booking_availability_rules",
   "booking_blocks",
   "appointments",
+  "appointment_slot_locks",
   "waitlist_entries",
   "appointment_reviews",
   "notification_outbox",
@@ -47,6 +48,19 @@ for (const table of [
   assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
 }
 assert.match(migration, /ux_appointments_occupied_slot/);
+assert.match(migration, /PRIMARY KEY \(provider_user_id, slot_key\)/);
+assert.match(core, /slotLockStatements/);
+assert.match(core, /releaseSlotLocksStatement/);
+assert.match(core, /Promise<boolean>/);
+assert.match(core, /operations\.notification-outbox/);
+assert.match(professional, /env\.DB\.batch/);
+assert.match(publicBooking, /env\.DB\.batch/);
+assert.doesNotMatch(professional, /role === "operator"/);
+assert.doesNotMatch(app, /roles=\{\["admin", "professional", "operator"\]\}[\s\S]{0,120}<AgendaPage/);
+assert.doesNotMatch(publicBooking, /searchParams\.get\("token"\)/, "capability token não pode trafegar em query string");
+assert.match(publicBooking, /action === "manage"/);
+assert.match(booking, /apiRequest\("POST", "\/api\/public-booking", \{ action: "manage"/);
+assert.match(booking, /rescheduleBooking/);
 assert.match(migration, /booking_token_hash TEXT NOT NULL UNIQUE/);
 assert.match(core, /AES-GCM/);
 assert.match(core, /neuroped-operational-v1/);

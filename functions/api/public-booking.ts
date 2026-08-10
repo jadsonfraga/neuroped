@@ -15,8 +15,10 @@ import {
   listAvailableSlots,
   profileToApi,
   randomAccessToken,
+  releaseSlotLocksStatement,
   serviceToApi,
   sha256,
+  slotLockStatements,
   type OperationsEnv,
   type ServiceRow,
 } from "./operations/_core";
@@ -101,13 +103,6 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
   try {
     await ensureOperationsSchema(env.DB);
 
-    if (action === "manage") {
-      const token = cleanText(url.searchParams.get("token"), 200);
-      const appointment = token ? await findAppointmentByToken(env.DB, token) : null;
-      if (!appointment) return errorResponse("Reserva não encontrada.", "NOT_FOUND", 404);
-      return jsonResponse({ appointment: await appointmentToApi(env, appointment) });
-    }
-
     if (!slug) return errorResponse("Profissional não informado.", "VALIDATION_ERROR", 400);
     const provider = await getProviderBySlug(env.DB, slug);
     if (!provider) return errorResponse("Perfil não encontrado.", "NOT_FOUND", 404);
@@ -146,6 +141,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
     await ensureOperationsSchema(env.DB);
     const now = new Date().toISOString();
 
+    if (action === "manage") {
+      const token = cleanText(body.token, 200);
+      const appointment = token ? await findAppointmentByToken(env.DB, token) : null;
+      if (!appointment) return errorResponse("Reserva não encontrada.", "NOT_FOUND", 404);
+      return jsonResponse({ appointment: await appointmentToApi(env, appointment) });
+    }
+
     if (action === "book") {
       if (body.privacyAccepted !== true) {
         return errorResponse("É necessário aceitar o aviso de privacidade do agendamento.", "CONSENT_REQUIRED", 400);
@@ -182,7 +184,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       const token = randomAccessToken();
       const appointmentId = `apt-${crypto.randomUUID()}`;
       try {
-        await env.DB.prepare(
+        const insertAppointment = env.DB.prepare(
           `INSERT INTO appointments
             (id, provider_user_id, service_id, starts_at_local, ends_at_local, timezone,
              status, source, booking_token_hash, guardian_name_encrypted, guardian_email_encrypted,
@@ -203,7 +205,11 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
           service.price_cents,
           now,
           now,
-        ).run();
+        );
+        await env.DB.batch([
+          insertAppointment,
+          ...slotLockStatements(env.DB, provider.user_id, appointmentId, chosen.startsAtLocal, chosen.endsAtLocal),
+        ]);
       } catch (error) {
         if (String(error).toLowerCase().includes("unique")) {
           return errorResponse("Este horário acabou de ser reservado.", "SLOT_CONFLICT", 409);
@@ -242,9 +248,12 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         return errorResponse("Esta reserva não pode mais ser cancelada por autoatendimento.", "INVALID_TRANSITION", 409);
       }
       const reason = cleanOptionalText(body.reason, 160);
-      await env.DB.prepare(
-        `UPDATE appointments SET status = 'cancelled', cancelled_at = ?, cancel_reason = ?, updated_at = ? WHERE id = ?`,
-      ).bind(now, reason, now, appointment.id).run();
+      await env.DB.batch([
+        env.DB.prepare(
+          `UPDATE appointments SET status = 'cancelled', cancelled_at = ?, cancel_reason = ?, updated_at = ? WHERE id = ?`,
+        ).bind(now, reason, now, appointment.id),
+        releaseSlotLocksStatement(env.DB, appointment.id),
+      ]);
       await enqueueNotification(env.DB, env, {
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
@@ -273,9 +282,14 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         return errorResponse("Novo horário indisponível.", "SLOT_UNAVAILABLE", 409);
       }
       try {
-        await env.DB.prepare(
+        const updateAppointment = env.DB.prepare(
           `UPDATE appointments SET starts_at_local = ?, ends_at_local = ?, status = 'requested', updated_at = ? WHERE id = ?`,
-        ).bind(chosen.startsAtLocal, chosen.endsAtLocal, now, appointment.id).run();
+        ).bind(chosen.startsAtLocal, chosen.endsAtLocal, now, appointment.id);
+        await env.DB.batch([
+          releaseSlotLocksStatement(env.DB, appointment.id),
+          updateAppointment,
+          ...slotLockStatements(env.DB, appointment.provider_user_id, appointment.id, chosen.startsAtLocal, chosen.endsAtLocal),
+        ]);
       } catch (error) {
         if (String(error).toLowerCase().includes("unique")) {
           return errorResponse("Novo horário acabou de ser ocupado.", "SLOT_CONFLICT", 409);
