@@ -14,6 +14,7 @@ const d1 = read("functions/api/conecta/index.ts");
 const d1Delete = read("functions/api/conecta/[id].ts");
 const d1Schema = read("functions/api/conecta/_schema.ts");
 const migration = read("db/migrations/0005_conecta_events.sql");
+const migrationWorkflow = read(".github/workflows/conecta-d1-migration.yml");
 
 assert.match(app, /import\("@\/pages\/conecta"\)/, "Conecta deve ser lazy-loaded");
 assert.match(app, /path="\/conecta"/, "rota /conecta deve existir");
@@ -34,6 +35,15 @@ assert.match(d1Schema, /CREATE TABLE IF NOT EXISTS conecta_events_demo/, "D1 dev
 assert.match(d1Schema, /CHECK \(is_demo = 1\)/, "auto-provisionamento deve preservar a trava DEMO");
 assert.match(migration, /CHECK \(is_demo = 1\)/, "schema demo versionado deve possuir trava física");
 
+assert.match(migrationWorkflow, /branches:\s*\n\s*- main/, "migração D1 só deve promover a partir de main");
+assert.match(migrationWorkflow, /group: cloudflare-pages/, "migração D1 deve compartilhar o lock do deploy Cloudflare");
+assert.doesNotMatch(migrationWorkflow, /workflow_dispatch:/, "migração não pode executar YAML/secrets a partir de ref manual");
+assert.match(migrationWorkflow, /--file=\.\/db\/migrations\/0005_conecta_events\.sql/, "produção deve aplicar a migração versionada 0005");
+assert.match(migrationWorkflow, /conecta_events_demo/, "workflow deve verificar a tabela do Conecta após migrar");
+assert.match(migrationWorkflow, /idx_conecta_events_demo_patient_time/, "workflow deve verificar índice temporal");
+assert.match(migrationWorkflow, /idx_conecta_events_demo_category/, "workflow deve verificar índice por categoria");
+assert.match(migrationWorkflow, /is_demo/, "workflow deve verificar a trava física DEMO");
+
 const protectedSource = [page, engine, contract, conectaServer, d1, d1Delete, d1Schema].join("\n");
 assert.doesNotMatch(protectedSource, /Lucas Demo/i, "módulo nativo não pode carregar paciente fictício fixo");
 assert.doesNotMatch(protectedSource, /neuroped-conecta\.lovable\.app/i, "módulo nativo não pode depender da versão Lovable");
@@ -52,4 +62,4 @@ assert.match(page, /Ausência de registro não é interpretada como normalidade/
 assert.match(page, /não coloque nada na boca/i);
 assert.match(page, /SAMU 192/i);
 
-console.log("✓ Conecta integration: rota, storage, isolamento, D1 e microcopy aprovados");
+console.log("✓ Conecta integration: rota, storage, isolamento, D1, deploy versionado e microcopy aprovados");
