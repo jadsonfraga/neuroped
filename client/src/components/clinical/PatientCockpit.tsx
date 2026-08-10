@@ -117,7 +117,8 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
     enabled: Boolean(patientId),
   });
 
-  const events = coreQuery.data?.data ?? [];
+  const coreEvents = coreQuery.data?.data;
+  const events = useMemo(() => coreEvents ?? [], [coreEvents]);
   const latestProblems = useMemo(
     () =>
       latestBy(
