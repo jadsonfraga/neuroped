@@ -7,6 +7,7 @@ import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
 import "./index.css";
 import "./styles/proportion-guards.css";
 import "./styles/visual-reset.css";
+import "./styles/premium-polish-10.css";
 
 installChunkRecovery();
 void purgeLegacyCertificateCache();
