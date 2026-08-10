@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -337,7 +338,9 @@ export default function PacienteDetalhePage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      <PatientCockpit patientId={patientId} scaleCount={results.length} />
+
+      {/* Legacy modules remain available while the Clinical OS becomes the primary patient view. */}
       <Tabs defaultValue="avaliacoes">
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="avaliacoes">Respostas</TabsTrigger>

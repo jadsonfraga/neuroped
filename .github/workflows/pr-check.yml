@@ -6,6 +6,7 @@ on:
       - main
       - feat/auditoria-total-ui-backend-memoria
       - feat/neuroped-conecta-native
+      - agent/clinical-core-product-system
 
 permissions:
   contents: read
@@ -65,6 +66,7 @@ jobs:
         run: |
           node --import tsx tests/unit/clinical-core-contract.test.ts
           node tests/unit/clinical-core-integration-static.test.mjs
+          node tests/unit/patient-cockpit-static.test.mjs
         continue-on-error: true
 
       - name: Comentar resultado no PR
@@ -93,7 +95,7 @@ jobs:
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
             | ${icon(accessStatus)} Acesso fail-closed | ${label(accessStatus)} |
             | ${icon(conectaStatus)} NeuroPed Conecta | ${label(conectaStatus)} |
-            | ${icon(clinicalCoreStatus)} Clinical Core | ${label(clinicalCoreStatus)} |
+            | ${icon(clinicalCoreStatus)} Clinical Core + Cockpit | ${label(clinicalCoreStatus)} |
 
             ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
