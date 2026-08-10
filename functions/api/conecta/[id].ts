@@ -3,6 +3,7 @@ import {
   getContextUser,
   getPatientAccess,
 } from "../auth/_authorization";
+import { ensureConectaDemoSchema } from "./_schema";
 
 interface Env {
   DB?: D1Database;
@@ -30,16 +31,22 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (context) => {
   const id = context.params.id?.trim() ?? "";
   if (!id || id.length > 160) return error("Identificador inválido.", "VALIDATION_ERROR", 400);
 
-  const row = await env.DB
-    .prepare("SELECT patient_id FROM conecta_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
-    .bind(id)
-    .first<{ patient_id: string }>();
-  if (!row) return error("Registro não encontrado.", "NOT_FOUND", 404);
+  try {
+    await ensureConectaDemoSchema(env.DB);
+    const row = await env.DB
+      .prepare("SELECT patient_id FROM conecta_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
+      .bind(id)
+      .first<{ patient_id: string }>();
+    if (!row) return error("Registro não encontrado.", "NOT_FOUND", 404);
 
-  const access = await getPatientAccess(env.DB, row.patient_id, user);
-  if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-  if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
+    const access = await getPatientAccess(env.DB, row.patient_id, user);
+    if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
+    if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
 
-  await env.DB.prepare("DELETE FROM conecta_events_demo WHERE id = ?").bind(id).run();
-  return json({ ok: true });
+    await env.DB.prepare("DELETE FROM conecta_events_demo WHERE id = ?").bind(id).run();
+    return json({ ok: true });
+  } catch (cause) {
+    console.error("[conecta.DELETE]", cause);
+    return error("Não foi possível remover o registro agora.", "DB_ERROR", 500);
+  }
 };
