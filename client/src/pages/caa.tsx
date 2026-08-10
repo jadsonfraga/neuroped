@@ -361,7 +361,7 @@ export default function CaaPage() {
     setLastRemoved(null);
   }
 
-  function useQuick(emoji: string, phraseText: string) {
+  function playQuick(emoji: string, phraseText: string) {
     const message = clean(phraseText, 280);
     const token = { icon: emoji, label: message, text: message };
     setPhrase([token]);
@@ -945,7 +945,7 @@ export default function CaaPage() {
                 <button
                   key={`${phraseText}-${index}`}
                   type="button"
-                  onClick={() => useQuick(emoji, phraseText)}
+                  onClick={() => playQuick(emoji, phraseText)}
                   className="rounded-2xl border border-primary/15 bg-gradient-to-br from-card to-muted/35 px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                 >
                   <strong className="block text-sm text-foreground">{emoji} {phraseText}</strong>
