@@ -9,6 +9,11 @@ const proportionImport = main.indexOf('import "./styles/proportion-guards.css"')
 const resetImport = main.indexOf('import "./styles/visual-reset.css"');
 assert.ok(proportionImport >= 0, "proportion guards devem continuar carregados");
 assert.ok(resetImport > proportionImport, "visual-reset deve carregar por último para ser uma camada reversível");
+assert.match(main, /prefers-color-scheme:\s*dark/, "primeiro paint deve respeitar tema do sistema quando não houver preferência salva");
+assert.match(main, /savedTheme === "dark"/, "preferência escura salva deve continuar autoritativa");
+assert.match(main, /savedTheme !== "light" && prefersDark/, "ausência de preferência não pode mais forçar dark mode");
+assert.doesNotMatch(main, /if \(savedTheme !== "light"\)\s*\{\s*document\.documentElement\.classList\.add\("dark"\)/,
+  "primeiro paint não pode forçar escuro independentemente do sistema");
 
 assert.match(css, /#main-content > \.sticky\s*\{[\s\S]*?display:\s*none\s*!important;/,
   "barra visual duplicada de fluxo deve permanecer removida");
