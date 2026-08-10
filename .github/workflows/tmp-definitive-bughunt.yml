@@ -1,0 +1,36 @@
+name: Temporary definitive bug hunt
+
+on:
+  push:
+    branches:
+      - fix/final-definitive-bughunt-20260810
+    paths:
+      - ".github/workflows/tmp-definitive-bughunt.yml"
+      - "scripts/tmp_definitive_bughunt.py"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: fix/final-definitive-bughunt-20260810
+          fetch-depth: 0
+      - name: Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Scanner
+        run: python3 scripts/tmp_definitive_bughunt.py | tee /tmp/bughunt.txt
+      - name: Release gate
+        run: npm run verify:release
