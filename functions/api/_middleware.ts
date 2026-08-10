@@ -214,11 +214,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const requestPathBeforeAuth = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
   const isProductionBeforeAuth = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
-  const demoWritesEnabledBeforeAuth = env.DEMO_API_WRITES_ENABLED === "true";
   if (
     isProductionBeforeAuth &&
     !env.DB &&
-    !demoWritesEnabledBeforeAuth &&
     !PUBLIC_API_PATHS.has(requestPathBeforeAuth)
   ) {
     return new Response(JSON.stringify({
@@ -245,7 +243,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
   const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
   const isAuthRoute = new URL(request.url).pathname.startsWith("/api/auth/");
-  if (isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+  if (!isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
     return new Response(JSON.stringify({
       error: "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",
       code: "DEMO_API_READ_ONLY",

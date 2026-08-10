@@ -89,7 +89,9 @@ export async function getUserById(db: D1Database, id: string): Promise<UserRow |
 export function isLocked(u: UserRow): boolean {
   if (!u.locked_until) return false;
   const until = Date.parse(u.locked_until);
-  return Number.isFinite(until) && until > Date.now();
+  // Campo presente porém malformado é estado inseguro: não reinterpretar como
+  // conta desbloqueada. O operador precisa corrigir o dado antes do login.
+  return !Number.isFinite(until) || until > Date.now();
 }
 
 export async function registerFailedAttempt(db: D1Database, u: UserRow): Promise<void> {
@@ -117,7 +119,7 @@ export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promi
       `UPDATE users SET failed_login_attempts = 0, locked_until = NULL,
               last_login_at = ?
         WHERE id = ? AND is_active = 1
-          AND (locked_until IS NULL OR locked_until <= ?)`,
+          AND (locked_until IS NULL OR julianday(locked_until) <= julianday(?))`,
     )
     .bind(now, u.id, now)
     .run();

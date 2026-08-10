@@ -57,6 +57,14 @@ assert.equal(
   503,
   "produção sem D1 falha fechada também em leitura protegida",
 );
+assert.equal(
+  (await call("/api/patients", {
+    ENVIRONMENT: "production",
+    DEMO_API_WRITES_ENABLED: "true",
+  })).status,
+  503,
+  "flag demo jamais pode reabrir rota protegida em produção sem D1",
+);
 assert.equal((await call("/api/patients", { DB: {} })).status, 503, "D1 sem segredo falha fechado");
 assert.equal((await call("/api/patients", { DB: {}, NEUROPED_JWT_SECRET: secret })).status, 401);
 assert.equal((await call("/api/health", { DB: {} })).status, 200, "health é público");

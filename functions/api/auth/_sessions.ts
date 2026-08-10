@@ -111,7 +111,7 @@ export async function createSessionTokens(
        SELECT ?, id, ?, ?, NULL, NULL, ?, NULL, NULL, ?, NULL
          FROM users
         WHERE id = ? AND is_active = 1
-          AND (locked_until IS NULL OR locked_until <= ?)`,
+          AND (locked_until IS NULL OR julianday(locked_until) <= julianday(?))`,
     )
     .bind(
       refreshId,
@@ -201,7 +201,8 @@ export async function rotateRefreshSession(
     await revokeSessionFamily(db, current.family_id, user.id, "reuse_detected");
     return { ok: false, code: "REFRESH_REUSE_DETECTED" };
   }
-  if (Date.parse(current.expires_at) <= Date.now()) {
+  const currentExpiry = Date.parse(current.expires_at);
+  if (!Number.isFinite(currentExpiry) || currentExpiry <= Date.now()) {
     await revokeSessionFamily(db, current.family_id, user.id, "expired");
     return { ok: false, code: "INVALID_REFRESH" };
   }
@@ -230,7 +231,11 @@ export async function rotateRefreshSession(
            FROM auth_refresh_sessions
           WHERE id = ? AND user_id = ? AND family_id = ? AND token_hash = ?
             AND revoked_at IS NULL AND replaced_by_session_id IS NULL
-            AND expires_at > ?`,
+            AND julianday(expires_at) > julianday(?)
+            AND EXISTS (
+              SELECT 1 FROM users u
+               WHERE u.id = auth_refresh_sessions.user_id AND u.is_active = 1
+            )`,
       )
       .bind(
         nextId,
@@ -298,7 +303,7 @@ export async function isSessionFamilyActive(
       `SELECT 1 AS active
          FROM auth_refresh_sessions
         WHERE family_id = ? AND user_id = ? AND revoked_at IS NULL
-          AND expires_at > ?
+          AND julianday(expires_at) > julianday(?)
         LIMIT 1`,
     )
     .bind(familyId, userId, new Date().toISOString())

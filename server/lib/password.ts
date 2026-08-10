@@ -41,7 +41,13 @@ export function calculateLockoutUntil(): string {
 
 export function isAccountLocked(lockedUntil: string | null | undefined): boolean {
   if (!lockedUntil) return false;
-  return new Date(lockedUntil).getTime() > Date.now();
+  const until = Date.parse(lockedUntil);
+  return !Number.isFinite(until) || until > Date.now();
+}
+
+export function isExpiredOrInvalidTimestamp(value: string): boolean {
+  const timestamp = Date.parse(value);
+  return !Number.isFinite(timestamp) || timestamp <= Date.now();
 }
 
 export const PASSWORD_POLICY = {

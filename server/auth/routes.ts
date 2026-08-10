@@ -9,7 +9,7 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { eq, and, isNull, lte, or, sql } from "drizzle-orm";
+import { eq, and, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   users,
@@ -18,7 +18,7 @@ import {
   createUserApiSchema,
 } from "@shared/schema";
 import { db } from "../storage.js";
-import { DUMMY_BCRYPT_HASH, PASSWORD_POLICY, hashPassword, verifyPassword, calculateLockoutUntil, isAccountLocked } from "../lib/password.js";
+import { DUMMY_BCRYPT_HASH, PASSWORD_POLICY, hashPassword, verifyPassword, calculateLockoutUntil, isAccountLocked, isExpiredOrInvalidTimestamp } from "../lib/password.js";
 import { signAccessToken, issueRefreshToken, hashRefreshToken } from "../lib/jwt.js";
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { loginRateLimit } from "../middleware/security.js";
@@ -98,7 +98,7 @@ export function registerAuthRoutes(app: Express): void {
             .where(and(
               eq(users.id, user.id),
               eq(users.isActive, true),
-              or(isNull(users.lockedUntil), lte(users.lockedUntil, now)),
+              or(isNull(users.lockedUntil), sql`julianday(${users.lockedUntil}) <= julianday(${now})`),
             ))
             .returning({
               failedLoginAttempts: users.failedLoginAttempts,
@@ -154,7 +154,7 @@ export function registerAuthRoutes(app: Express): void {
           .where(and(
             eq(users.id, user.id),
             eq(users.isActive, true),
-            or(isNull(users.lockedUntil), lte(users.lockedUntil, now)),
+            or(isNull(users.lockedUntil), sql`julianday(${users.lockedUntil}) <= julianday(${now})`),
           ))
           .returning({ id: users.id })
           .get();
@@ -245,8 +245,8 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
       }
 
-      if (new Date(stored.expiresAt).getTime() < Date.now()) {
-        return res.status(401).json({ error: "Refresh token expirado", code: "REFRESH_EXPIRED" });
+      if (isExpiredOrInvalidTimestamp(stored.expiresAt)) {
+        return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
       }
 
       const newRefresh = issueRefreshToken();
@@ -256,7 +256,7 @@ export function registerAuthRoutes(app: Express): void {
           const current = tx.select().from(refreshTokens)
             .where(and(eq(refreshTokens.id, stored.id), isNull(refreshTokens.revokedAt)))
             .get();
-          if (!current || current.tokenHash !== tokenHash || new Date(current.expiresAt).getTime() < Date.now()) {
+          if (!current || current.tokenHash !== tokenHash || isExpiredOrInvalidTimestamp(current.expiresAt)) {
             throw new Error("REFRESH_RACE");
           }
           const liveUser = tx.select().from(users).where(and(eq(users.id, current.userId), eq(users.isActive, true))).get();
