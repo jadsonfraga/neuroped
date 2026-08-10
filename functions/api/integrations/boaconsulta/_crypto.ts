@@ -5,6 +5,10 @@ export class ImportCryptoConfigurationError extends Error {
   }
 }
 
+const encoder = new TextEncoder();
+const HKDF_SALT = encoder.encode("NeuroPed/BoaConsulta/import/v1");
+let keyedStringHashKey: CryptoKey | null = null;
+
 function base64UrlToBytes(value: string): Uint8Array {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
@@ -23,7 +27,11 @@ function bytesToBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-export async function importCryptoKey(secret: string | undefined): Promise<CryptoKey> {
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function importRootKey(secret: string | undefined): Promise<CryptoKey> {
   if (!secret) throw new ImportCryptoConfigurationError();
   const raw = base64UrlToBytes(secret.trim());
   if (raw.byteLength !== 32) {
@@ -31,7 +39,41 @@ export async function importCryptoKey(secret: string | undefined): Promise<Crypt
       "NEUROPED_IMPORT_ENCRYPTION_KEY deve conter exatamente 32 bytes em Base64/Base64URL.",
     );
   }
-  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.importKey("raw", raw, "HKDF", false, ["deriveKey"]);
+}
+
+export async function importCryptoKey(secret: string | undefined): Promise<CryptoKey> {
+  const root = await importRootKey(secret);
+  const encryptionKey = await crypto.subtle.deriveKey(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: HKDF_SALT,
+      info: encoder.encode("aes-gcm-content"),
+    },
+    root,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+
+  // Mantemos uma subchave HMAC separada no isolate para os hashes de strings
+  // executados após a chave de importação ser validada. Isso impede ataques de
+  // correlação offline contra CPF/nome/data e contra linhas clínicas conhecidas.
+  keyedStringHashKey = await crypto.subtle.deriveKey(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: HKDF_SALT,
+      info: encoder.encode("hmac-identifiers"),
+    },
+    root,
+    { name: "HMAC", hash: "SHA-256", length: 256 },
+    false,
+    ["sign", "verify"],
+  );
+
+  return encryptionKey;
 }
 
 export async function encryptImportBytes(
@@ -47,16 +89,28 @@ export async function encryptImportText(
   key: CryptoKey,
   input: string,
 ): Promise<{ ciphertext: string; iv: string }> {
-  const encoded = new TextEncoder().encode(input);
-  const encrypted = await encryptImportBytes(key, encoded.buffer);
+  const encoded = encoder.encode(input);
+  const buffer = encoded.buffer.slice(
+    encoded.byteOffset,
+    encoded.byteOffset + encoded.byteLength,
+  ) as ArrayBuffer;
+  const encrypted = await encryptImportBytes(key, buffer);
   return {
     ciphertext: bytesToBase64Url(new Uint8Array(encrypted.ciphertext)),
     iv: encrypted.iv,
   };
 }
 
+/**
+ * SHA-256 para bytes/arquivos; HMAC-SHA-256 para strings sensíveis depois que
+ * importCryptoKey() inicializou a subchave do request/isolate.
+ */
 export async function sha256Hex(input: ArrayBuffer | string): Promise<string> {
-  const bytes = typeof input === "string" ? new TextEncoder().encode(input) : new Uint8Array(input);
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-  return Array.from(digest, (value) => value.toString(16).padStart(2, "0")).join("");
+  const bytes = typeof input === "string" ? encoder.encode(input) : new Uint8Array(input);
+  if (typeof input === "string" && keyedStringHashKey) {
+    const signature = await crypto.subtle.sign("HMAC", keyedStringHashKey, bytes);
+    return bytesToHex(new Uint8Array(signature));
+  }
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return bytesToHex(new Uint8Array(digest));
 }
