@@ -62,7 +62,7 @@ assert(vercel.includes('api/proxy.mjs') && vercel.includes('/insights'), 'Vercel
 
 const dangerous = [
   /\b(aumente|reduza|suspenda|inicie)\s+(a\s+)?dose\b/i,
-  /\bconfirma\s+(o\s+)?diagnóstico\b/i,
+  /\b(isto|isso|este resultado|o resultado)\s+confirma\s+(o\s+)?diagnóstico\b/i,
   /\bdiagnóstico\s+confirmado\b/i,
 ];
 const productText = `${enhance}\n${insightsHtml}\n${insights}`;
