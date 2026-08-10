@@ -1,0 +1,103 @@
+name: NeuroPed Conecta D1 migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0005_conecta_events.sql"
+      - "functions/api/conecta/**"
+      - "shared/conecta.ts"
+      - ".github/workflows/conecta-d1-migration.yml"
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-conecta-d1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Migração D1 do Conecta permitida somente a partir de main."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+      - name: Validar contrato do Conecta antes da migração
+        run: |
+          node --import tsx tests/unit/conecta-engine.test.ts
+          node tests/unit/conecta-integration-static.test.mjs
+          node scripts/guards/audit-navigation-routes.mjs
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar migração 0005 do NeuroPed Conecta
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0005_conecta_events.sql
+
+      - name: Verificar schema D1 do Conecta
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='conecta_events_demo';" \
+            > /tmp/conecta-table.txt 2>&1
+          cat /tmp/conecta-table.txt
+          grep -q "conecta_events_demo" /tmp/conecta-table.txt || {
+            echo "::error::Tabela conecta_events_demo ausente após migração"
+            exit 1
+          }
+          grep -Eq "CHECK[[:space:]]*\([[:space:]]*is_demo[[:space:]]*=[[:space:]]*1[[:space:]]*\)" /tmp/conecta-table.txt || {
+            echo "::error::Trava física is_demo = 1 ausente em conecta_events_demo"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('idx_conecta_events_demo_patient_time','idx_conecta_events_demo_category') ORDER BY name;" \
+            > /tmp/conecta-indexes.txt 2>&1
+          cat /tmp/conecta-indexes.txt
+          for idx in idx_conecta_events_demo_patient_time idx_conecta_events_demo_category; do
+            grep -q "$idx" /tmp/conecta-indexes.txt || {
+              echo "::error::Índice D1 ausente: $idx"
+              exit 1
+            }
+          done
+          echo "✅ NeuroPed Conecta D1: migração 0005 e invariantes confirmados."
