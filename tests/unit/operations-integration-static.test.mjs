@@ -21,7 +21,11 @@ assert.match(app, /path="\/agendar"/);
 assert.match(nav, /href: "\/agenda", label: "Agenda & Gestão"/);
 
 assert.match(middleware, /"\/api\/public-booking"/);
-assert.match(middleware, /isOperationalOperatorWrite/);
+assert.doesNotMatch(
+  middleware,
+  /isOperationalOperatorWrite/,
+  "operador não pode ganhar escrita operacional sem vínculo explícito staff→provider",
+);
 assert.match(professional, /canOperate/);
 assert.match(professional, /appointment_status/);
 assert.match(professional, /INVALID_TRANSITION/);
