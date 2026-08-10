@@ -197,6 +197,17 @@ export default function ConectaPage() {
   }, [remoteSession]);
 
   useEffect(() => {
+    // Estado transitório e contagens pertencem exclusivamente ao paciente/modo ativo.
+    // Isso impede que confirmação, insight ou contagem do paciente anterior apareçam na troca.
+    setEvents([]);
+    setSavedEvent(null);
+    setSelectedInsight(null);
+    setRegisterOpen(false);
+    setTimelineFilter("all");
+    setStorageError(null);
+  }, [patientId, remoteSession]);
+
+  useEffect(() => {
     let cancelled = false;
     async function load() {
       if (!patientId) {
