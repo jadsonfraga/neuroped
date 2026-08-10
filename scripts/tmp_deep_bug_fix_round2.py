@@ -14,22 +14,13 @@ def replace_once(path: str, old: str, new: str) -> None:
     file.write_text(text.replace(old, new, 1), "utf-8")
 
 
-# 9) PATCH/DELETE de paciente ainda simulavam sucesso sem D1, contrariando a
-# regra fail-closed já aplicada aos POSTs clínicos.
-replace_once(
-    "functions/api/patients/[id].ts",
-    '''  const user = env.DB ? getContextUser(context) : null;\n  if (env.DB && !user) {''',
-    '''  if (!env.DB) {\n    return errorResponse(\n      "Persistência indisponível. Nenhum paciente foi atualizado.",\n      "DB_REQUIRED",\n      503,\n    );\n  }\n\n  const user = getContextUser(context);\n  if (!user) {''',
-)
-replace_once(
-    "functions/api/patients/[id].ts",
-    '''  if (env.DB && user) {\n    try {''',
-    '''  if (user) {\n    try {''',
-)
+# 9) PATCH/DELETE de paciente ainda simulavam sucesso sem D1. A validação do
+# payload continua acontecendo primeiro (400 para JSON inválido); somente uma
+# escrita semanticamente válida chega ao 503 DB_REQUIRED.
 replace_once(
     "functions/api/patients/[id].ts",
     '''  const now = new Date().toISOString();\n  if (!env.DB) {\n    const partial = toPatientApi({\n      id,\n      ...normalized.values,\n      is_demo: 1,\n      updated_at: now,\n    });\n    return jsonResponse({ ...partial, updated: true, mode: "demo" });\n  }\n\n  try {''',
-    '''  const now = new Date().toISOString();\n\n  try {''',
+    '''  const now = new Date().toISOString();\n  if (!env.DB) {\n    return errorResponse(\n      "Persistência indisponível. Nenhum paciente foi atualizado.",\n      "DB_REQUIRED",\n      503,\n    );\n  }\n\n  try {''',
 )
 replace_once(
     "functions/api/patients/[id].ts",
@@ -84,7 +75,7 @@ replace_once(
 doc = ROOT / "docs/AUDITORIA_BUGS_PROFUNDA_2026-08-10.md"
 text = doc.read_text("utf-8")
 anchor = '''8. **Data preferencial inválida na lista de espera** — campo era truncado mas não validado. Agora usa a mesma validação calendárica da agenda.\n'''
-addition = '''8. **Data preferencial inválida na lista de espera** — campo era truncado mas não validado. Agora usa a mesma validação calendárica da agenda.\n9. **PATCH de paciente simulava atualização sem D1** — podia devolver `updated: true` sem persistir. Agora falha com `503 DB_REQUIRED`.\n10. **DELETE clínico podia parecer sucesso sem D1** — paciente retornava HTTP 200/deleted:false e resultado de escala também; a UI interpreta 2xx como sucesso. Agora ambos falham fechado com `503 DB_REQUIRED`.\n11. **Data impossível em consulta de slots parecia agenda vazia** — a rota pública usava regex; agora rejeita a data calendárica com 400.\n12. **Campos inteiros vazios viravam zero** — `Number("")`/`Number(null)` podiam converter ausência em domingo ou 00:00. Agora ausência é inválida.\n'''
+addition = '''8. **Data preferencial inválida na lista de espera** — campo era truncado mas não validado. Agora usa a mesma validação calendárica da agenda.\n9. **PATCH de paciente simulava atualização sem D1** — podia devolver `updated: true` sem persistir. Agora payload inválido continua 400 e escrita válida sem banco falha com `503 DB_REQUIRED`.\n10. **DELETE clínico podia parecer sucesso sem D1** — paciente retornava HTTP 200/deleted:false e resultado de escala também; a UI interpreta 2xx como sucesso. Agora ambos falham fechado com `503 DB_REQUIRED`.\n11. **Data impossível em consulta de slots parecia agenda vazia** — a rota pública usava regex; agora rejeita a data calendárica com 400.\n12. **Campos inteiros vazios viravam zero** — `Number("")`/`Number(null)` podiam converter ausência em domingo ou 00:00. Agora ausência é inválida.\n'''
 if anchor not in text:
     raise SystemExit("âncora da auditoria não encontrada")
 doc.write_text(text.replace(anchor, addition, 1), "utf-8")
