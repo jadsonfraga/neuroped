@@ -64,16 +64,18 @@ jobs:
         run: |
           set -euo pipefail
           token="$VERCEL_TOKEN"
-          unset VERCEL_TOKEN
-          export VERCEL_ORG_ID
+          # A CLI exige ORG_ID + PROJECT_ID em conjunto. O projeto será resolvido
+          # pelo link local; portanto removemos os dois overrides antes do link.
+          unset VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID
 
           cd vercel-conecta
           rm -rf .vercel
 
-          # `vercel link --yes` cria o projeto caso ele ainda não exista.
           vercel link --yes --project neuroped-conecta --token="$token"
-          deployment_url="$(vercel deploy --prod --yes --token="$token")"
+          test -f .vercel/project.json
+          cat .vercel/project.json | sed -E 's/(orgId|projectId)"?:"[^"]+"/\1":"[redacted]"/g' || true
 
+          deployment_url="$(vercel deploy --prod --yes --token="$token")"
           echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
           echo "Deployment Vercel: $deployment_url"
 
