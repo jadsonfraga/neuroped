@@ -9,7 +9,6 @@ import {
   Calendar,
   ChevronRight,
   ClipboardList,
-  Clock3,
   HeartPulse,
   Info,
   MessageCircle,
@@ -182,11 +181,11 @@ export default function ConectaPage() {
     queryKey: ["/api/patients"],
     enabled: accessMode !== "checking",
   });
-  const patients: PatientSummary[] = Array.isArray(patientsQuery.data)
-    ? patientsQuery.data
-    : Array.isArray(patientsQuery.data?.data)
-      ? patientsQuery.data.data
-      : [];
+  const patients = useMemo<PatientSummary[]>(() => {
+    if (Array.isArray(patientsQuery.data)) return patientsQuery.data;
+    if (Array.isArray(patientsQuery.data?.data)) return patientsQuery.data.data;
+    return [];
+  }, [patientsQuery.data]);
   const selectedPatient = patients.find((patient) => patient.id === patientId) ?? null;
 
   useEffect(() => {
