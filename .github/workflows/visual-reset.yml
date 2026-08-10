@@ -7,14 +7,18 @@ on:
     paths:
       - "client/src/styles/visual-reset.css"
       - "client/src/styles/premium-polish-10.css"
+      - "client/src/styles/flow-os.css"
       - "client/src/main.tsx"
       - "client/src/components/Layout.tsx"
+      - "client/src/components/MobilePrimaryDock.tsx"
+      - "client/src/components/CommandPalette.tsx"
       - "client/src/components/PageHero.tsx"
       - "client/src/pages/home.tsx"
       - "client/src/components/clinical/PatientCockpit.tsx"
       - "client/src/components/ui/**"
       - "tests/unit/visual-reset-static.test.mjs"
       - "tests/unit/premium-polish-10-static.test.mjs"
+      - "tests/unit/flow-os-navigation-static.test.mjs"
       - ".github/workflows/visual-reset.yml"
 
 permissions:
@@ -37,6 +41,8 @@ jobs:
         run: node tests/unit/visual-reset-static.test.mjs
       - name: Premium Polish 10 contract
         run: node tests/unit/premium-polish-10-static.test.mjs
+      - name: Flow OS navigation contract
+        run: node tests/unit/flow-os-navigation-static.test.mjs
       - name: TypeScript
         run: npm run check
       - name: Lint
