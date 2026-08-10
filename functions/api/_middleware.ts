@@ -72,6 +72,7 @@ function getCorsHeaders(
 const PUBLIC_API_PATHS = new Set([
   "/api/health",
   "/api/version",
+  "/api/cert",
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
@@ -89,6 +90,11 @@ function apiError(message: string, code: string, status: number): Response {
  * Um banco D1 ativo pode conter dados clínicos, ainda que as tabelas históricas
  * tenham o sufixo `_demo`. Nesse cenário toda rota não pública exige access JWT.
  * Sem D1, o catálogo fictício continua disponível para demonstração/offline.
+ *
+ * `/api/cert` é uma exceção deliberada: o endpoint está aposentado e sempre
+ * responde HTTP 410 sem expor certificado, senha ou metadado sensível. Mantê-lo
+ * público permite provar remotamente que o antigo mecanismo de distribuição não
+ * reapareceu, enquanto todas as rotas clínicas continuam autenticadas.
  */
 interface AuthorizationResult {
   failure: Response | null;
