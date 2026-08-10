@@ -33,6 +33,7 @@ jobs:
           python3 scripts/tmp_total_fix.py
           python3 scripts/tmp_total_fix_adjust.py
           python3 scripts/tmp_total_fix_adjust_v2.py
+          python3 scripts/tmp_total_fix_adjust_v3.py
 
       - name: Install dependencies
         run: npm ci
@@ -73,6 +74,7 @@ jobs:
             functions/api/results.ts \
             tests/unit/no-fake-clinical-write.test.ts \
             tests/unit/loose-ends-regression.test.mjs \
+            tests/unit/cloudflare-input-limits.test.ts \
             package.json \
             WHATS_LEFT.md
           git commit -m "fix(audit): eliminar falsos sucessos e travar pontas soltas"
