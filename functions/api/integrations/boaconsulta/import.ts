@@ -12,7 +12,7 @@ import {
 } from "../../auth/_authorization";
 import {
   ImportCryptoConfigurationError,
-  encryptImportBytes,
+  encryptImportBytesToText,
   encryptImportText,
   importCryptoKey,
   sha256Hex,
@@ -20,12 +20,13 @@ import {
 
 interface Env {
   DB?: D1Database;
-  BOACONSULTA_IMPORTS_BUCKET?: R2Bucket;
   NEUROPED_IMPORT_ENCRYPTION_KEY?: string;
 }
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_RECORDS = 5_000;
+const FILE_CHUNK_BYTES = 64 * 1024;
+const D1_BATCH_SIZE = 40;
 const ALLOWED_EXTENSIONS = new Set(["csv", "json", "txt", "pdf"]);
 const ALLOWED_MIME_TYPES = new Set([
   "text/csv",
@@ -45,6 +46,8 @@ type StoredBatchRow = {
   source_mime_type: string;
   source_size_bytes: number;
   source_sha256: string;
+  source_storage: string;
+  source_chunk_count: number;
   mapping_version: string;
   status: string;
   record_count: number;
@@ -127,7 +130,11 @@ function sourceFormatForPdf(): BoaConsultaParseResult {
   };
 }
 
-async function parseFile(file: File, mimeType: string, extension: string): Promise<BoaConsultaParseResult> {
+async function parseFile(
+  file: File,
+  mimeType: string,
+  extension: string,
+): Promise<BoaConsultaParseResult> {
   if (extension === "pdf" || mimeType === "application/pdf") return sourceFormatForPdf();
   const text = await file.text();
   return parseBoaConsultaExport(text, mimeType, file.name);
@@ -168,6 +175,8 @@ function presentBatch(row: StoredBatchRow) {
     mimeType: row.source_mime_type,
     sizeBytes: row.source_size_bytes,
     sourceFingerprint: row.source_sha256.slice(0, 12),
+    storage: row.source_storage,
+    chunkCount: row.source_chunk_count,
     mappingVersion: row.mapping_version,
     status: row.status,
     recordCount: row.record_count,
@@ -178,9 +187,35 @@ function presentBatch(row: StoredBatchRow) {
   };
 }
 
+function batchSelectSql(): string {
+  return `SELECT id, source_extension, source_mime_type, source_size_bytes, source_sha256,
+                 source_storage, source_chunk_count, mapping_version, status, record_count,
+                 duplicate_count, warning_count, created_at, completed_at
+            FROM external_import_batches`;
+}
+
+async function executeInBatches(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+): Promise<void> {
+  for (let index = 0; index < statements.length; index += D1_BATCH_SIZE) {
+    await db.batch(statements.slice(index, index + D1_BATCH_SIZE));
+  }
+}
+
+async function cleanupBatch(db: D1Database, batchId: string, ownerUserId: string): Promise<void> {
+  await db.batch([
+    db.prepare("DELETE FROM external_import_records WHERE batch_id = ?").bind(batchId),
+    db.prepare("DELETE FROM external_import_file_chunks WHERE batch_id = ?").bind(batchId),
+    db.prepare("DELETE FROM external_import_batches WHERE id = ? AND owner_user_id = ?")
+      .bind(batchId, ownerUserId),
+  ]);
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
   if (!env.DB) return error("Banco clínico indisponível.", "STORAGE_UNAVAILABLE", 503);
+
   const user = getContextUser(context);
   if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);
   if (!canWriteClinicalData(user)) {
@@ -189,10 +224,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   try {
     const result = await env.DB.prepare(
-      `SELECT id, source_extension, source_mime_type, source_size_bytes, source_sha256,
-              mapping_version, status, record_count, duplicate_count, warning_count,
-              created_at, completed_at
-         FROM external_import_batches
+      `${batchSelectSql()}
         WHERE owner_user_id = ? AND source_system = 'boaconsulta'
         ORDER BY created_at DESC
         LIMIT 50`,
@@ -240,7 +272,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const extension = extensionOf(candidate.name);
   const mimeType = resolveMimeType(candidate, extension);
-  if (!ALLOWED_EXTENSIONS.has(extension) || !ALLOWED_MIME_TYPES.has(candidate.type.toLocaleLowerCase("pt-BR"))) {
+  if (
+    !ALLOWED_EXTENSIONS.has(extension) ||
+    !ALLOWED_MIME_TYPES.has(candidate.type.toLocaleLowerCase("pt-BR"))
+  ) {
     return error("Formato não suportado. Use CSV, JSON, TXT ou PDF.", "UNSUPPORTED_FILE_TYPE", 415);
   }
 
@@ -251,6 +286,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     console.error("[boaconsulta-import.parse]", cause);
     return error("Não foi possível interpretar a exportação.", "PARSE_ERROR", 400);
   }
+
   if (parsed.records.length > MAX_RECORDS) {
     return error(
       `Exportação contém mais de ${MAX_RECORDS} registros; divida em lotes menores.`,
@@ -264,23 +300,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const preview = previewPayload(parsed);
 
   if (mode === "preview") {
-    await audit(env, request, user.id, "external_import.boaconsulta.preview", sourceHash.slice(0, 24), {
-      sizeBytes: candidate.size,
-      extension,
-      format: parsed.format,
-      recordCount: parsed.records.length,
-      warningCount: preview.warningCount,
-      mappingVersion: parsed.mappingVersion,
-    });
-    return json({ mode: "preview", sourceFingerprint: sourceHash.slice(0, 12), ...preview });
-  }
-
-  if (!env.BOACONSULTA_IMPORTS_BUCKET) {
-    return error(
-      "Cofre R2 do BoaConsulta não configurado. O arquivo não foi gravado.",
-      "IMPORT_VAULT_UNAVAILABLE",
-      503,
+    await audit(
+      env,
+      request,
+      user.id,
+      "external_import.boaconsulta.preview",
+      sourceHash.slice(0, 24),
+      {
+        sizeBytes: candidate.size,
+        extension,
+        format: parsed.format,
+        recordCount: parsed.records.length,
+        warningCount: preview.warningCount,
+        mappingVersion: parsed.mappingVersion,
+      },
     );
+    return json({ mode: "preview", sourceFingerprint: sourceHash.slice(0, 12), ...preview });
   }
 
   let key: CryptoKey;
@@ -295,15 +330,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   try {
     const existing = await env.DB.prepare(
-      `SELECT id, source_extension, source_mime_type, source_size_bytes, source_sha256,
-              mapping_version, status, record_count, duplicate_count, warning_count,
-              created_at, completed_at
-         FROM external_import_batches
+      `${batchSelectSql()}
         WHERE owner_user_id = ? AND source_system = 'boaconsulta' AND source_sha256 = ?
         LIMIT 1`,
     )
       .bind(user.id, sourceHash)
       .first<StoredBatchRow>();
+
     if (existing) {
       await audit(env, request, user.id, "external_import.boaconsulta.duplicate", existing.id, {
         sourceFingerprint: sourceHash.slice(0, 12),
@@ -320,80 +353,93 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const batchId = `bc-${crypto.randomUUID()}`;
-  const objectKey = `boaconsulta/${batchId}.enc`;
   const filenameEncrypted = await encryptImportText(key, candidate.name);
-  const sourceEncrypted = await encryptImportBytes(key, bytes);
+  const chunkStatements: D1PreparedStatement[] = [];
 
-  let objectStored = false;
-  let batchStored = false;
-  try {
-    await env.BOACONSULTA_IMPORTS_BUCKET.put(objectKey, sourceEncrypted.ciphertext, {
-      httpMetadata: { contentType: "application/octet-stream" },
-      customMetadata: {
-        encrypted: "aes-gcm-v1",
-        source: "boaconsulta",
-        source_sha256: sourceHash,
-      },
-    });
-    objectStored = true;
+  for (
+    let offset = 0, chunkIndex = 0;
+    offset < bytes.byteLength;
+    offset += FILE_CHUNK_BYTES, chunkIndex += 1
+  ) {
+    const end = Math.min(offset + FILE_CHUNK_BYTES, bytes.byteLength);
+    const plaintextChunk = bytes.slice(offset, end);
+    const encryptedChunk = await encryptImportBytesToText(key, plaintextChunk);
+    chunkStatements.push(
+      env.DB.prepare(
+        `INSERT INTO external_import_file_chunks
+          (id, batch_id, chunk_index, plaintext_bytes, ciphertext, iv, cipher_version, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)`,
+      ).bind(
+        `bc-chunk-${crypto.randomUUID()}`,
+        batchId,
+        chunkIndex,
+        end - offset,
+        encryptedChunk.ciphertext,
+        encryptedChunk.iv,
+      ),
+    );
+  }
 
-    const seenHashes = new Set<string>();
-    const recordStatements: D1PreparedStatement[] = [];
-    let duplicateCount = 0;
-    let perRecordWarnings = 0;
+  const seenHashes = new Set<string>();
+  const recordStatements: D1PreparedStatement[] = [];
+  let duplicateCount = 0;
+  let perRecordWarnings = 0;
 
-    for (const record of parsed.records) {
-      perRecordWarnings += record.warnings.length;
-      const rawJson = JSON.stringify(record.raw);
-      const normalizedJson = JSON.stringify(record.normalized);
-      const recordHash = await sha256Hex(rawJson);
-      if (seenHashes.has(recordHash)) {
-        duplicateCount += 1;
-        continue;
-      }
-      seenHashes.add(recordHash);
+  for (const record of parsed.records) {
+    perRecordWarnings += record.warnings.length;
+    const rawJson = JSON.stringify(record.raw);
+    const normalizedJson = JSON.stringify(record.normalized);
+    const recordHash = await sha256Hex(rawJson);
 
-      const fingerprint = boaConsultaPatientFingerprint(record.normalized);
-      const patientKeyHash = fingerprint.replace(/\|/g, "")
-        ? await sha256Hex(fingerprint)
-        : null;
-      const rawEncrypted = await encryptImportText(key, rawJson);
-      const normalizedEncrypted = await encryptImportText(key, normalizedJson);
-      const recordStatus = record.warnings.length ? "needs_review" : "staged";
-
-      recordStatements.push(
-        env.DB.prepare(
-          `INSERT INTO external_import_records
-            (id, batch_id, ordinal, record_type, source_record_hash, external_patient_key_hash,
-             raw_ciphertext, raw_iv, normalized_ciphertext, normalized_iv, cipher_version,
-             status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP)`,
-        ).bind(
-          `bc-record-${crypto.randomUUID()}`,
-          batchId,
-          record.ordinal,
-          record.recordType,
-          recordHash,
-          patientKeyHash,
-          rawEncrypted.ciphertext,
-          rawEncrypted.iv,
-          normalizedEncrypted.ciphertext,
-          normalizedEncrypted.iv,
-          recordStatus,
-        ),
-      );
+    if (seenHashes.has(recordHash)) {
+      duplicateCount += 1;
+      continue;
     }
+    seenHashes.add(recordHash);
 
-    const totalWarnings = parsed.warnings.length + perRecordWarnings;
-    const status = totalWarnings > 0 || parsed.format === "pdf" ? "needs_review" : "staged";
+    const fingerprint = boaConsultaPatientFingerprint(record.normalized);
+    const patientKeyHash = fingerprint.replace(/\|/g, "")
+      ? await sha256Hex(fingerprint)
+      : null;
+    const rawEncrypted = await encryptImportText(key, rawJson);
+    const normalizedEncrypted = await encryptImportText(key, normalizedJson);
+    const recordStatus = record.warnings.length ? "needs_review" : "staged";
 
+    recordStatements.push(
+      env.DB.prepare(
+        `INSERT INTO external_import_records
+          (id, batch_id, ordinal, record_type, source_record_hash, external_patient_key_hash,
+           raw_ciphertext, raw_iv, normalized_ciphertext, normalized_iv, cipher_version,
+           status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP)`,
+      ).bind(
+        `bc-record-${crypto.randomUUID()}`,
+        batchId,
+        record.ordinal,
+        record.recordType,
+        recordHash,
+        patientKeyHash,
+        rawEncrypted.ciphertext,
+        rawEncrypted.iv,
+        normalizedEncrypted.ciphertext,
+        normalizedEncrypted.iv,
+        recordStatus,
+      ),
+    );
+  }
+
+  const totalWarnings = parsed.warnings.length + perRecordWarnings;
+  const status = totalWarnings > 0 || parsed.format === "pdf" ? "needs_review" : "staged";
+  let batchStored = false;
+
+  try {
     await env.DB.prepare(
       `INSERT INTO external_import_batches
         (id, owner_user_id, source_system, source_filename_ciphertext, source_filename_iv,
          source_extension, source_mime_type, source_size_bytes, source_sha256,
-         source_object_key, source_object_iv, mapping_version, status, record_count,
+         source_storage, source_chunk_count, mapping_version, status, record_count,
          duplicate_count, warning_count, created_at)
-       VALUES (?, ?, 'boaconsulta', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+       VALUES (?, ?, 'boaconsulta', ?, ?, ?, ?, ?, ?, 'd1_chunks', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
     )
       .bind(
         batchId,
@@ -404,8 +450,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         mimeType,
         candidate.size,
         sourceHash,
-        objectKey,
-        sourceEncrypted.iv,
+        chunkStatements.length,
         parsed.mappingVersion,
         status,
         recordStatements.length,
@@ -415,15 +460,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .run();
     batchStored = true;
 
-    for (let index = 0; index < recordStatements.length; index += 50) {
-      await env.DB.batch(recordStatements.slice(index, index + 50));
-    }
+    await executeInBatches(env.DB, chunkStatements);
+    await executeInBatches(env.DB, recordStatements);
 
     const stored = await env.DB.prepare(
-      `SELECT id, source_extension, source_mime_type, source_size_bytes, source_sha256,
-              mapping_version, status, record_count, duplicate_count, warning_count,
-              created_at, completed_at
-         FROM external_import_batches
+      `${batchSelectSql()}
         WHERE id = ? AND owner_user_id = ?
         LIMIT 1`,
     )
@@ -432,6 +473,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     await audit(env, request, user.id, "external_import.boaconsulta.stage", batchId, {
       sourceFingerprint: sourceHash.slice(0, 12),
+      storage: "d1_chunks",
+      chunkCount: chunkStatements.length,
       extension,
       format: parsed.format,
       recordCount: recordStatements.length,
@@ -453,20 +496,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     console.error("[boaconsulta-import.POST]", cause);
     if (batchStored) {
       try {
-        await env.DB.prepare("DELETE FROM external_import_batches WHERE id = ? AND owner_user_id = ?")
-          .bind(batchId, user.id)
-          .run();
+        await cleanupBatch(env.DB, batchId, user.id);
       } catch (cleanupCause) {
         console.error("[boaconsulta-import.cleanup-db]", cleanupCause);
       }
     }
-    if (objectStored) {
-      try {
-        await env.BOACONSULTA_IMPORTS_BUCKET.delete(objectKey);
-      } catch (cleanupCause) {
-        console.error("[boaconsulta-import.cleanup-r2]", cleanupCause);
-      }
-    }
-    return error("Falha ao armazenar a importação; nenhuma promoção clínica foi realizada.", "IMPORT_STORE_FAILED", 500);
+    return error(
+      "Falha ao armazenar a importação; nenhuma promoção clínica foi realizada.",
+      "IMPORT_STORE_FAILED",
+      500,
+    );
   }
 };
