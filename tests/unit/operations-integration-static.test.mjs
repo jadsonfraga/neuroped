@@ -58,6 +58,18 @@ assert.match(
   /l\.staff_user_id = \? AND l\.active = 1/,
   "contexto do operador deve ser resolvido pelo vínculo ativo do próprio staff_user_id",
 );
+assert.match(access, /getExistingStaffOwner/);
+assert.match(access, /STAFF_ALREADY_LINKED/);
+assert.match(
+  access,
+  /existing && existing\.provider_user_id !== principal\.providerUserId/,
+  "profissional não pode reassumir operador já pertencente a outro contexto",
+);
+assert.doesNotMatch(
+  access,
+  /ON CONFLICT\(staff_user_id\) DO UPDATE SET[\s\S]{0,240}provider_user_id = excluded\.provider_user_id/,
+  "vínculo de recepção não pode reatribuir provider em UPSERT",
+);
 assert.match(access, /role !== "operator"/);
 assert.match(access, /safeAuditMetadata/);
 assert.doesNotMatch(access, /guardianName|patientName|phone|email.*metadata/i, "auditoria não deve copiar PII operacional");
@@ -132,4 +144,4 @@ assert.match(workflow, /booking_provider_profiles/);
 assert.match(workflow, /ux_appointments_occupied_slot/);
 assert.doesNotMatch(workflow, /workflow_dispatch:/);
 
-console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, auditoria, fuso, PII e locks aprovados");
+console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, auditoria, fuso, PII e locks aprovados");
