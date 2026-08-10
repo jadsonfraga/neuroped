@@ -6,15 +6,15 @@ on:
       - fix/final-definitive-bughunt-20260810
     paths:
       - ".github/workflows/tmp-definitive-bughunt.yml"
-      - "scripts/tmp_definitive_fix_round3.py"
+      - "scripts/tmp_definitive_final_scan.py"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  audit:
+  saturation:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 85
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -30,34 +30,19 @@ jobs:
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      - name: Apply round 3 fixes
-        run: python3 scripts/tmp_definitive_fix_round3.py
-      - name: Targeted regressions
-        run: |
-          node --import tsx tests/unit/auth-time-failclosed.test.ts
-          node --import tsx tests/unit/cloudflare-auth-middleware.test.ts
-          node --import tsx tests/unit/refresh-sessions.test.ts
-          node --import tsx tests/unit/auth-hardening-regressions.test.ts
-          node tests/unit/express-auth-race-regression.test.mjs
-      - name: Release gate
+      - name: Independent saturation scanner
+        run: python3 scripts/tmp_definitive_final_scan.py
+      - name: Permanent release gate
         run: npm run verify:release
-      - name: Commit validated fixes
-        run: |
-          git config user.name "jadsonfraga"
-          git config user.email "jadsonfraga@hotmail.com"
-          git add \
-            functions/api/_middleware.ts \
-            functions/api/auth/_shared.ts \
-            functions/api/auth/_sessions.ts \
-            server/lib/password.ts \
-            server/auth/routes.ts \
-            tests/unit/cloudflare-auth-middleware.test.ts \
-            tests/unit/auth-time-failclosed.test.ts \
-            package.json
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo "Nenhuma correção nova para commitar."
-            exit 0
-          fi
-          git commit -m "fix(auth): fechar bypass demo e timestamps malformados"
-          git push origin HEAD:fix/final-definitive-bughunt-20260810
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Full accessibility browser audit
+        run: npm run audit:a11y:full
+      - name: Real scales E2E
+        run: npm run test:e2e:scales
+      - name: Screen audit
+        run: npm run audit:screens
+      - name: Integral build
+        run: npm run build
