@@ -1,8 +1,8 @@
 -- BoaConsulta Bridge — staging seguro e idempotente para importações externas.
 --
 -- Regras:
--- 1. Nenhum dado clínico bruto ou nome de arquivo é salvo em texto claro nestas tabelas.
--- 2. O arquivo original fica criptografado em R2; D1 guarda apenas uma chave opaca e o IV.
+-- 1. Nenhum dado clínico bruto ou nome de arquivo é salvo em texto claro.
+-- 2. O arquivo original é dividido em chunks e cifrado com AES-GCM antes de persistir no D1.
 -- 3. Registros estruturados ficam cifrados individualmente com AES-GCM.
 -- 4. A mesma exportação não pode ser importada duas vezes pelo mesmo proprietário.
 -- 5. A promoção para o prontuário/Clinical Core é deliberadamente separada do staging.
@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS external_import_batches (
   source_mime_type TEXT NOT NULL,
   source_size_bytes INTEGER NOT NULL CHECK (source_size_bytes >= 0),
   source_sha256 TEXT NOT NULL,
-  source_object_key TEXT NOT NULL,
-  source_object_iv TEXT NOT NULL,
+  source_storage TEXT NOT NULL DEFAULT 'd1_chunks' CHECK (source_storage IN ('d1_chunks')),
+  source_chunk_count INTEGER NOT NULL DEFAULT 0 CHECK (source_chunk_count >= 0),
   mapping_version TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'staged' CHECK (
     status IN ('staged', 'needs_review', 'ready', 'imported', 'failed')
@@ -35,6 +35,21 @@ CREATE INDEX IF NOT EXISTS idx_external_import_batches_owner_created
   ON external_import_batches(owner_user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_external_import_batches_status
   ON external_import_batches(owner_user_id, status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS external_import_file_chunks (
+  id TEXT PRIMARY KEY,
+  batch_id TEXT NOT NULL REFERENCES external_import_batches(id) ON DELETE CASCADE,
+  chunk_index INTEGER NOT NULL CHECK (chunk_index >= 0),
+  plaintext_bytes INTEGER NOT NULL CHECK (plaintext_bytes > 0),
+  ciphertext TEXT NOT NULL,
+  iv TEXT NOT NULL,
+  cipher_version INTEGER NOT NULL DEFAULT 1 CHECK (cipher_version = 1),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (batch_id, chunk_index)
+);
+
+CREATE INDEX IF NOT EXISTS idx_external_import_file_chunks_batch
+  ON external_import_file_chunks(batch_id, chunk_index);
 
 CREATE TABLE IF NOT EXISTS external_import_records (
   id TEXT PRIMARY KEY,
