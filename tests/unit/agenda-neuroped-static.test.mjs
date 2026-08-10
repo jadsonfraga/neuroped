@@ -6,23 +6,29 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "
 const core = read("client/src/lib/agendaCore.ts");
 const board = read("client/src/components/agenda/AgendaBoard.tsx");
 const reception = read("client/src/pages/recepcao.tsx");
+const operational = read("client/src/pages/agenda.tsx");
 
-assert.match(core, /persistentSecureGet/, "agenda deve ler de armazenamento persistente cifrado");
-assert.match(core, /persistentSecureSet/, "agenda deve gravar em armazenamento persistente cifrado");
-assert.doesNotMatch(core, /localStorage|sessionStorage/, "agenda não deve persistir diretamente em storage em texto/plain envelope próprio");
-assert.match(core, /findAppointmentConflicts/, "agenda deve ter detecção explícita de conflitos");
-assert.match(core, /findBlockConflicts/, "bloqueios devem participar da detecção de conflitos");
-assert.match(core, /SUMMARY:Consulta NeuroPed/, "arquivo ICS deve usar título neutro");
-assert.doesNotMatch(core, /SUMMARY:.*patientLabel|DESCRIPTION:.*patientLabel/, "ICS não deve incorporar identificação do paciente");
+// O legado local é mantido para leitura/migração segura e não é apagado em massa.
+assert.match(core, /persistentSecureGet/, "agenda local legada deve continuar legível no cofre cifrado");
+assert.match(core, /persistentSecureSet/, "módulo legado preserva compatibilidade de escrita fora da Recepção");
+assert.doesNotMatch(core, /localStorage|sessionStorage/, "legado não deve persistir diretamente em storage em texto/plain envelope próprio");
+assert.match(core, /findAppointmentConflicts/, "motor legado mantém detecção explícita de conflitos");
+assert.match(core, /findBlockConflicts/, "bloqueios continuam testados no motor legado");
+assert.match(core, /SUMMARY:Consulta NeuroPed/, "arquivo ICS legado deve usar título neutro");
+assert.doesNotMatch(core, /SUMMARY:.*patientLabel|DESCRIPTION:.*patientLabel/, "ICS legado não deve incorporar identificação do paciente");
 
-assert.match(board, /Agenda NeuroPed/, "painel operacional de agenda deve estar explícito");
-assert.match(board, /Lista de espera \/ encaixes/, "lista de espera deve existir");
-assert.match(board, /Bloqueios de agenda/, "bloqueios de agenda devem existir");
-assert.match(board, /Copiar lembrete/, "lembrete deve ser ação manual verificável");
-assert.match(board, /Exportar \.ics/, "exportação de calendário deve existir");
-assert.match(board, /Não há envio automático de WhatsApp\/SMS/, "UI deve negar automações de mensagem não implementadas");
-assert.match(board, /sem sincronização automática com servidor/, "UI deve declarar limitação de persistência local");
-assert.match(board, /Não registre diagnóstico, medicação, laudo ou informação clínica sensível/, "UI deve separar agenda operacional do prontuário clínico");
-assert.match(reception, /<AgendaBoard \/>/, "agenda deve integrar a Recepção existente em vez de criar prontuário paralelo");
+// A UI antiga permanece no código somente como compatibilidade, mas não pode
+// competir com a Operational Suite como fonte editável na Recepção.
+assert.match(board, /Agenda NeuroPed/, "componente legado deve continuar identificável para migração controlada");
+assert.doesNotMatch(reception, /<AgendaBoard\s*\/>/, "Recepção não pode renderizar uma segunda agenda editável");
+assert.doesNotMatch(reception, /import \{ AgendaBoard \}/, "Recepção não deve importar a agenda local legada");
+assert.match(reception, /Agenda oficial: Agenda & Gestão/, "Recepção deve apontar para a fonte cloud oficial");
+assert.match(reception, /href="\/agenda"/, "Recepção deve abrir a Operational Suite");
 
-console.log("✓ Agenda NeuroPed static contract: escopo operacional, privacidade e honestidade aprovados");
+assert.match(operational, /Agenda & Gestão/, "Operational Suite deve ser a agenda visível oficial");
+assert.match(operational, /Lista de espera/, "lista de espera cloud deve existir");
+assert.match(operational, /pending_provider/, "comunicação sem provedor externo deve permanecer honesta");
+assert.match(operational, /WhatsApp, SMS e e-mail externos não são simulados/, "UI deve negar automações externas não implementadas");
+assert.match(operational, /data\.access\.canConfigure/, "agenda oficial deve adaptar ações ao papel do usuário");
+
+console.log("✓ Agenda NeuroPed: legado cifrado preservado e Operational Suite como fonte única aprovados");
