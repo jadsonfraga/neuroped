@@ -19,6 +19,7 @@ import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
+import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
 import { buildAppHashUrl } from "@/lib/appUrl";
 
@@ -190,6 +191,7 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
   const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
   const signatureImage = await pdf.embedJpg(signatureImageBytes);
+  const logoImage = await pdf.embedJpg(drJadsonMasterShieldLogo.split(",")[1] ?? "");
 
   const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
     let text = pdfSafe(value || "");
@@ -233,8 +235,15 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
 
     page.drawRectangle({ x: m, y: top - 55, width: contentW, height: 31, color: navy });
     page.drawRectangle({ x: A5.w - 155, y: top - 55, width: 141, height: 31, color: bordo });
-    page.drawText(CLINIC_NAME, { x: m + 8, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
-    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 8, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
+    const logoDims = logoImage.scaleToFit(24, 24);
+    page.drawImage(logoImage, {
+      x: m + 6,
+      y: top - 51 + (24 - logoDims.height) / 2,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
+    page.drawText(CLINIC_NAME, { x: m + 36, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 36, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
     page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
     page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
     page.drawLine({ start: { x: m, y: top - 57 }, end: { x: A5.w - m, y: top - 57 }, thickness: 1.5, color: gold });
