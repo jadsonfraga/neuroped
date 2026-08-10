@@ -10,8 +10,9 @@ import {
   type TenantEnv,
 } from "../../tenant/_core";
 import {
-  CLINICAL_ENCRYPTION_VERSION,
   clinicalBlindIndex,
+  clinicalCryptoReady,
+  currentClinicalEncryptionVersion,
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../../tenant/_crypto";
@@ -68,8 +69,8 @@ function requireLiveConfiguration(env: TenantEnv): Response | null {
   if (!clinicalLiveEnabled(env)) {
     return tenantError("Clinical Core LIVE permanece bloqueado.", "CLINICAL_LIVE_DISABLED", 503);
   }
-  if (!env.CLINICAL_DATA_KEY?.trim() || env.CLINICAL_DATA_KEY.trim().length < 32) {
-    return tenantError("Chave clínica dedicada não configurada.", "CLINICAL_CRYPTO_NOT_CONFIGURED", 503);
+  if (!clinicalCryptoReady(env)) {
+    return tenantError("Keyring clínico dedicado não configurado.", "CLINICAL_CRYPTO_NOT_CONFIGURED", 503);
   }
   return null;
 }
@@ -250,6 +251,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     `clinical-event:${eventId}`,
     payload,
   );
+  const encryptionVersion = currentClinicalEncryptionVersion(context.env);
   const now = new Date().toISOString();
 
   try {
@@ -272,7 +274,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         provenanceKind,
         provenanceSource,
         payloadEncrypted,
-        CLINICAL_ENCRYPTION_VERSION,
+        encryptionVersion,
         sourceRecordHash,
         supersedesEventId,
         now,
@@ -285,7 +287,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       action: "live_clinical_event_create",
       targetType: "clinical_event",
       targetId: eventId,
-      metadata: { eventType, provenanceKind, imported: provenanceKind === "imported" },
+      metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
     });
   } catch (error) {
     console.error("[live.events.POST] DB error", error);
@@ -304,7 +306,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       provenanceKind,
       provenanceSource,
       payload,
-      encryptionVersion: CLINICAL_ENCRYPTION_VERSION,
+      encryptionVersion,
       supersedesEventId,
       status: "active",
       createdAt: now,
