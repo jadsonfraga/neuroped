@@ -75,6 +75,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
+  "/api/cert",
 ]);
 
 function apiError(message: string, code: string, status: number): Response {
