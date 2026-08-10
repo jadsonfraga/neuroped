@@ -375,11 +375,14 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!displayName || !specialty || !validSlug(requestedSlug)) return errorResponse("Perfil público inválido.", "VALIDATION_ERROR", 400);
       const bookingEnabled = body.bookingEnabled === true ? 1 : 0;
       try {
-        await env.DB.prepare(
+        const update = await env.DB.prepare(
           `UPDATE booking_provider_profiles
               SET slug = ?, display_name = ?, specialty = ?, location_label = ?, timezone = ?, booking_enabled = ?, updated_at = ?
             WHERE user_id = ?`,
         ).bind(requestedSlug, displayName, specialty, locationLabel, timezone, bookingEnabled, now, user.id).run();
+        if ((update.meta?.changes ?? 0) !== 1) {
+          return errorResponse("Perfil público não encontrado.", "NOT_FOUND", 404);
+        }
       } catch (error) {
         if (String(error).toLowerCase().includes("unique")) return errorResponse("Este endereço público já está em uso.", "SLUG_CONFLICT", 409);
         throw error;
@@ -411,11 +414,12 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const priceCents = body.priceCents === undefined ? existing.price_cents : moneyCents(body.priceCents);
       const active = body.active === undefined ? existing.active : body.active === true ? 1 : 0;
       const publicVisible = body.publicVisible === undefined ? existing.public_visible : body.publicVisible === true ? 1 : 0;
-      await env.DB.prepare(
+      const update = await env.DB.prepare(
         `UPDATE booking_services
             SET name = ?, duration_minutes = ?, price_cents = ?, modality = ?, active = ?, public_visible = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ?`,
       ).bind(name, duration, priceCents, modality, active, publicVisible, now, id, user.id).run();
+      if ((update.meta?.changes ?? 0) !== 1) return errorResponse("Serviço não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "service";
       auditTargetId = id;
       auditMetadata = { modality, status: active ? "active" : "inactive" };

@@ -43,7 +43,10 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (context) => {
     if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
     if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
 
-    await env.DB.prepare("DELETE FROM conecta_events_demo WHERE id = ?").bind(id).run();
+    const deletion = await env.DB.prepare("DELETE FROM conecta_events_demo WHERE id = ?").bind(id).run();
+    if ((deletion.meta?.changes ?? 0) !== 1) {
+      return error("Registro não encontrado.", "NOT_FOUND", 404);
+    }
     return json({ ok: true });
   } catch (cause) {
     console.error("[conecta.DELETE]", cause);
