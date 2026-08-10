@@ -27,3 +27,61 @@ CREATE INDEX IF NOT EXISTS idx_operations_audit_provider_time
 
 CREATE INDEX IF NOT EXISTS idx_operations_audit_actor_time
   ON operations_audit_log(actor_user_id, created_at DESC);
+
+-- Bloqueios/férias e consultas ocupantes são mutuamente exclusivos.
+-- Triggers cobrem inclusive corrida entre requisições que passe por validações de UI/API.
+CREATE TRIGGER IF NOT EXISTS trg_appointments_respect_blocks_insert
+BEFORE INSERT ON appointments
+WHEN NEW.status IN ('requested','confirmed','checked_in','in_care')
+ AND EXISTS (
+   SELECT 1
+     FROM booking_blocks b
+    WHERE b.provider_user_id = NEW.provider_user_id
+      AND b.starts_at_local < NEW.ends_at_local
+      AND b.ends_at_local > NEW.starts_at_local
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_appointments_respect_blocks_update
+BEFORE UPDATE OF provider_user_id, starts_at_local, ends_at_local, status ON appointments
+WHEN NEW.status IN ('requested','confirmed','checked_in','in_care')
+ AND EXISTS (
+   SELECT 1
+     FROM booking_blocks b
+    WHERE b.provider_user_id = NEW.provider_user_id
+      AND b.starts_at_local < NEW.ends_at_local
+      AND b.ends_at_local > NEW.starts_at_local
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_blocks_respect_appointments_insert
+BEFORE INSERT ON booking_blocks
+WHEN EXISTS (
+   SELECT 1
+     FROM appointments a
+    WHERE a.provider_user_id = NEW.provider_user_id
+      AND a.status IN ('requested','confirmed','checked_in','in_care')
+      AND a.starts_at_local < NEW.ends_at_local
+      AND a.ends_at_local > NEW.starts_at_local
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_blocks_respect_appointments_update
+BEFORE UPDATE OF provider_user_id, starts_at_local, ends_at_local ON booking_blocks
+WHEN EXISTS (
+   SELECT 1
+     FROM appointments a
+    WHERE a.provider_user_id = NEW.provider_user_id
+      AND a.status IN ('requested','confirmed','checked_in','in_care')
+      AND a.starts_at_local < NEW.ends_at_local
+      AND a.ends_at_local > NEW.starts_at_local
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'SCHEDULE_CONFLICT');
+END;
