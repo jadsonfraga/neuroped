@@ -174,6 +174,7 @@ export async function persistentSecureGet<T>(key: string): Promise<T | null> {
     await transactionDone(readTx);
     if (raw === undefined) return null;
     if (!isEnvelope(raw)) {
+      // Estrutura incompatível é verificavelmente inválida e pode ser removida.
       await deleteValue(db, key);
       return null;
     }
@@ -187,13 +188,8 @@ export async function persistentSecureGet<T>(key: string): Promise<T | null> {
     );
     return JSON.parse(new TextDecoder().decode(plaintext)) as T;
   } catch {
-    // Uma chave incompatível ou envelope corrompido não deve produzir dado
-    // parcialmente interpretável. Remove só o valor, preservando a chave-mestra.
-    try {
-      await deleteValue(db, key);
-    } catch {
-      // Nada seguro adicional a fazer.
-    }
+    // Falha de IndexedDB/WebCrypto pode ser transitória. Não destruir a única
+    // cópia cifrada: uma leitura futura pode se recuperar sem perda da prancha.
     return null;
   } finally {
     db.close();
