@@ -20,6 +20,11 @@
       "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
     },
     {
+      "src": "/np-mobile-fix.css",
+      "dest": "/np-mobile-fix.css",
+      "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
+    },
+    {
       "src": "/np-preload.js",
       "dest": "/np-preload.js",
       "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
