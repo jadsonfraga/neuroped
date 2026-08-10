@@ -1,12 +1,21 @@
 (() => {
   'use strict';
 
-  const VERSION = '2026.08.10-premium-1';
+  const VERSION = '2026.08.10-premium-2';
   const root = document.documentElement;
   root.dataset.npPolish = '1';
   root.dataset.npVersion = VERSION;
 
   window.__NP_CONECTA_POLISH__ = Object.freeze({ version: VERSION, product: 'NeuroPed Conecta' });
+
+  // Contenção estrutural entra o mais cedo possível, antes da hidratação do app.
+  if (!document.querySelector('link[data-np-mobile-fix]')) {
+    const mobileFix = document.createElement('link');
+    mobileFix.rel = 'stylesheet';
+    mobileFix.href = `/np-mobile-fix.css?v=${VERSION}`;
+    mobileFix.dataset.npMobileFix = '1';
+    document.head.appendChild(mobileFix);
+  }
 
   const rememberSupabase = (input, init) => {
     try {
