@@ -1,0 +1,77 @@
+name: Temporary deep bug audit fix
+
+on:
+  push:
+    branches:
+      - fix/deep-bug-audit-20260810
+    paths:
+      - ".github/workflows/tmp-deep-bug-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: fix/deep-bug-audit-20260810
+          fetch-depth: 0
+
+      - name: Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Aplicar correções auditadas
+        run: python3 scripts/tmp_deep_bug_fix.py
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Regressões direcionadas
+        run: |
+          set -euo pipefail
+          node --import tsx tests/unit/cloudflare-auth-middleware.test.ts
+          npm run test:operations
+          node --import tsx tests/unit/boaconsulta-import-contract.test.ts
+
+      - name: Catraca completa de release
+        run: npm run verify:release
+
+      - name: Gates reais de browser e build integral
+        run: |
+          set -euo pipefail
+          npm run audit:a11y:full
+          npm run test:e2e:scales
+          npm run audit:screens
+          npm run build
+
+      - name: Commit somente das correções aprovadas
+        run: |
+          set -euo pipefail
+          git config user.name "NeuroPed Audit Bot"
+          git config user.email "neuroped-audit@users.noreply.github.com"
+          git add \
+            functions/api/_middleware.ts \
+            shared/operations.ts \
+            functions/api/operations/_core.ts \
+            functions/api/public-booking.ts \
+            functions/api/operations/index.ts \
+            tests/unit/cloudflare-auth-middleware.test.ts \
+            tests/unit/operations-contract.test.ts \
+            tests/unit/operations-integration-static.test.mjs \
+            docs/AUDITORIA_BUGS_PROFUNDA_2026-08-10.md
+          git diff --cached --check
+          git commit -m "fix(audit): corrigir bugs de transporte, agenda e consistência"
+          git push origin HEAD:fix/deep-bug-audit-20260810
