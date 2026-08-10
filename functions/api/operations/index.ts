@@ -24,7 +24,6 @@ import {
   validSlug,
   type AppointmentRow,
   type OperationsEnv,
-  type ProviderRow,
   type ServiceRow,
 } from "./_core";
 import type { AppointmentStatus } from "../../../shared/operations";

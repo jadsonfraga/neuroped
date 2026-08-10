@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -80,8 +80,8 @@ export default function AgendaPage() {
     slug: "",
     timezone: "America/Recife",
   });
-  const [profileSeeded, setProfileSeeded] = useState(false);
-  if (data?.profile && !profileSeeded) {
+  useEffect(() => {
+    if (!data?.profile) return;
     setProfile({
       displayName: data.profile.displayName,
       specialty: data.profile.specialty,
@@ -89,8 +89,7 @@ export default function AgendaPage() {
       slug: data.profile.slug,
       timezone: data.profile.timezone,
     });
-    setProfileSeeded(true);
-  }
+  }, [data?.profile]);
 
   const [service, setService] = useState({ name: "", duration: "60", price: "", modality: "in_person" });
   const [rule, setRule] = useState({ weekday: "1", start: "08:00", end: "12:00", slot: "30" });
@@ -272,7 +271,7 @@ function Metric({ icon: Icon, label, value, detail }: { icon: typeof CalendarClo
   return <Card><CardContent className="flex items-start gap-3 p-4"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span><div className="min-w-0"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-black">{value}</p>{detail && <p className="mt-1 text-[11px] text-muted-foreground">{detail}</p>}</div></CardContent></Card>;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1.5"><Label>{label}</Label>{children}</div>;
 }
 

@@ -25,7 +25,7 @@ const registeredRoutes = new Set(
 
 // Rotas que DEVEM ficar SEMPRE atrás do PIN (nunca públicas).
 const MUST_BE_GATED = [
-  "/", "/pacientes", "/prontuario", "/recepcao",
+  "/", "/pacientes", "/prontuario", "/recepcao", "/agenda",
   "/receita-c1", "/receita-c1-express", "/laudo-neuroped", "/documentos",
   "/medicamentos", "/farmacologia", "/calculadora-dose", "/valores-referencia",
   "/pant", "/fichas-registro", "/prescricao",
@@ -36,7 +36,7 @@ const MUST_BE_GATED = [
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  "/login", "/sessao-expirada", "/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",

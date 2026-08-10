@@ -76,6 +76,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
+  "/api/public-booking",
   "/api/cert",
 ]);
 
@@ -109,9 +110,14 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
     return apiError("Acesso restrito ao administrador.", "FORBIDDEN", 403);
   }
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
+  // Operadores podem executar somente ações operacionais; /api/operations
+  // revalida a permissão ação a ação e não concede escrita clínica.
+  const isOperationalOperatorWrite =
+    path === "/api/operations" && method === "POST" && user.role === "operator";
   if (
     ["POST", "PATCH", "PUT", "DELETE"].includes(method) &&
     !isOwnConsentWrite &&
+    !isOperationalOperatorWrite &&
     !canWriteClinicalData(user)
   ) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
