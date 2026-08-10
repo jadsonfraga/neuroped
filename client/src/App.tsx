@@ -174,6 +174,7 @@ const InstrumentosPadronizadosPage = lazy(
 const QualidadePage = lazy(() => import("@/pages/qualidade"));
 const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
+const ConectaPage = lazy(() => import("@/pages/conecta"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
@@ -465,6 +466,11 @@ function AppRouter() {
             <Route path="/inventarios-escola">
               <RouteGuard roles={["admin", "professional"]}>
                 <InventariosEscolaPage />
+              </RouteGuard>
+            </Route>
+            <Route path="/conecta">
+              <RouteGuard roles={["admin", "professional"]}>
+                <ConectaPage />
               </RouteGuard>
             </Route>
 
