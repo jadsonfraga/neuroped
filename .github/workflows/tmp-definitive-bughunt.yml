@@ -6,7 +6,7 @@ on:
       - fix/final-definitive-bughunt-20260810
     paths:
       - ".github/workflows/tmp-definitive-bughunt.yml"
-      - "scripts/tmp_definitive_fix_round2.py"
+      - "scripts/tmp_definitive_fix_round3.py"
 
 permissions:
   contents: write
@@ -30,16 +30,15 @@ jobs:
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      - name: Apply round 2 fixes
-        run: python3 scripts/tmp_definitive_fix_round2.py
+      - name: Apply round 3 fixes
+        run: python3 scripts/tmp_definitive_fix_round3.py
       - name: Targeted regressions
         run: |
-          node --import tsx tests/unit/runtime-config.test.ts
-          node tests/unit/file-storage-race-regression.test.mjs
-          node tests/unit/express-auth-race-regression.test.mjs
-          node --import tsx tests/unit/auth-hardening-regressions.test.ts
-          node tests/unit/clinical-core-supersession-regression.test.mjs
+          node --import tsx tests/unit/auth-time-failclosed.test.ts
           node --import tsx tests/unit/cloudflare-auth-middleware.test.ts
+          node --import tsx tests/unit/refresh-sessions.test.ts
+          node --import tsx tests/unit/auth-hardening-regressions.test.ts
+          node tests/unit/express-auth-race-regression.test.mjs
       - name: Release gate
         run: npm run verify:release
       - name: Commit validated fixes
@@ -47,22 +46,18 @@ jobs:
           git config user.name "jadsonfraga"
           git config user.email "jadsonfraga@hotmail.com"
           git add \
-            server/lib/runtimeConfig.ts \
-            server/index.ts \
-            server/lib/db.ts \
-            server/lib/db-enhanced.ts \
-            server/lib/email.ts \
-            server/lib/cloudStorage.ts \
-            server/routes/files.ts \
+            functions/api/_middleware.ts \
+            functions/api/auth/_shared.ts \
+            functions/api/auth/_sessions.ts \
+            server/lib/password.ts \
             server/auth/routes.ts \
-            tests/unit/runtime-config.test.ts \
-            tests/unit/file-storage-race-regression.test.mjs \
-            tests/unit/express-auth-race-regression.test.mjs \
+            tests/unit/cloudflare-auth-middleware.test.ts \
+            tests/unit/auth-time-failclosed.test.ts \
             package.json
           git diff --cached --check
           if git diff --cached --quiet; then
             echo "Nenhuma correção nova para commitar."
             exit 0
           fi
-          git commit -m "fix(reliability): eliminar TOCTOU de arquivos e config inválida"
+          git commit -m "fix(auth): fechar bypass demo e timestamps malformados"
           git push origin HEAD:fix/final-definitive-bughunt-20260810
