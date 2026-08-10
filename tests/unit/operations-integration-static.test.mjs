@@ -53,7 +53,11 @@ assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[
 assert.match(access, /booking_staff_links/);
 assert.match(access, /staff_user_id TEXT NOT NULL UNIQUE/);
 assert.match(access, /user\.role !== "operator"/);
-assert.match(access, /provider_user_id = \? AND l\.active = 1/);
+assert.match(
+  access,
+  /l\.staff_user_id = \? AND l\.active = 1/,
+  "contexto do operador deve ser resolvido pelo vínculo ativo do próprio staff_user_id",
+);
 assert.match(access, /role !== "operator"/);
 assert.match(access, /safeAuditMetadata/);
 assert.doesNotMatch(access, /guardianName|patientName|phone|email.*metadata/i, "auditoria não deve copiar PII operacional");
