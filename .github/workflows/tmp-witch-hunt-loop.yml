@@ -6,15 +6,15 @@ on:
       - fix/witch-hunt-loop-20260810
     paths:
       - ".github/workflows/tmp-witch-hunt-loop.yml"
-      - "scripts/tmp_witch_hunt_fix_round1.py"
+      - "scripts/tmp_witch_hunt_fix_round2.py"
 
 permissions:
   contents: write
 
 jobs:
-  round1:
+  round2:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -26,10 +26,8 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-      - name: Apply proven bug fixes
-        run: |
-          python3 scripts/tmp_witch_hunt_fix_round1.py
-          sed -i 's/seguir para/seguimos para/' tests/unit/witch-hunt-regressions.test.mjs
+      - name: Apply concurrency fixes
+        run: python3 scripts/tmp_witch_hunt_fix_round2.py
       - name: Install dependencies
         run: npm ci
         env:
@@ -37,10 +35,11 @@ jobs:
       - name: Targeted regressions
         run: |
           set -euo pipefail
-          node --import tsx tests/unit/audit-log-contract.test.ts
           node tests/unit/witch-hunt-regressions.test.mjs
           npm run test:operations
           npm run test:no-fake-clinical-write
+      - name: Repeat static witch-hunt scan
+        run: python3 scripts/tmp_witch_hunt_scan.py
       - name: Full permanent release gate
         run: npm run verify:release
       - name: Dependency audit
@@ -51,14 +50,10 @@ jobs:
           git config user.name "NeuroPed Audit Bot"
           git config user.email "neuroped-audit@users.noreply.github.com"
           git add \
-            functions/api/audit-log.ts \
-            functions/api/conecta/[id].ts \
-            server/routes/conecta.ts \
-            functions/api/operations/_access.ts \
+            functions/api/operations/_core.ts \
+            functions/api/public-booking.ts \
             functions/api/operations/index.ts \
-            tests/unit/audit-log-contract.test.ts \
-            tests/unit/witch-hunt-regressions.test.mjs \
-            package.json
+            tests/unit/witch-hunt-regressions.test.mjs
           git diff --cached --check
-          git commit -m "fix(audit): fechar fail-open e corridas remanescentes"
+          git commit -m "fix(agenda): impedir transições concorrentes obsoletas"
           git push origin HEAD:fix/witch-hunt-loop-20260810
