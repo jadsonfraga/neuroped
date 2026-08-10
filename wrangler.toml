@@ -22,3 +22,10 @@ APP_NAME = "NeuroPed"
 binding = "DB"
 database_name = "neuroped-db"
 database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"
+
+# ── Cofre privado para exportações externas ──────────────────────────────
+# Arquivos originais do BoaConsulta são cifrados pela aplicação antes do PUT.
+# O bucket não é público e não deve receber domínio r2.dev/custom domain.
+[[r2_buckets]]
+binding = "BOACONSULTA_IMPORTS_BUCKET"
+bucket_name = "neuroped-boaconsulta-imports"
