@@ -12,9 +12,9 @@ interface PageHeroProps {
 }
 
 /**
- * Cabeçalho de página estilo Lovable — hero em gradiente suave, bolha de ícone,
+ * Cabeçalho de página editorial — superfície discreta, bolha de ícone,
  * eyebrow opcional, título e subtítulo. Reutilizável para dar às páginas de
- * referência/formulário a mesma cara polida dos módulos principais.
+ * referência/formulário uma hierarquia consistente sem competir com o conteúdo.
  */
 export function PageHero({
   icon: Icon,
@@ -34,7 +34,7 @@ export function PageHero({
         </div>
         <div className="min-w-0 flex-1">
           {eyebrow && (
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">{eyebrow}</p>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">{eyebrow}</p>
           )}
           <h1
             className="text-[1.6rem] leading-tight tracking-tight text-foreground"
