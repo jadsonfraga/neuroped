@@ -4,6 +4,7 @@ import {
   getContextUser,
   getPatientAccess,
 } from "../auth/_authorization";
+import { ensureConectaDemoSchema } from "./_schema";
 
 interface Env {
   DB?: D1Database;
@@ -79,6 +80,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   try {
+    await ensureConectaDemoSchema(env.DB);
     const result = await env.DB
       .prepare(
         `SELECT id, patient_id, author_user_id, category, occurred_at, context,
@@ -134,6 +136,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     : null;
 
   try {
+    await ensureConectaDemoSchema(env.DB);
     await env.DB
       .prepare(
         `INSERT INTO conecta_events_demo
