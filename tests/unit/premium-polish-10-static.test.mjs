@@ -24,7 +24,15 @@ assert.doesNotMatch(css, /(?:input|textarea|select|button)[^{]*\{[^}]*display:\s
   "polish não pode esconder controles interativos");
 assert.doesNotMatch(css, /\[role="alert"\][^{]*\{[^}]*display:\s*none/is,
   "polish não pode esconder alertas semânticos");
-assert.doesNotMatch(css, /#main-content[^\n]*\{[^}]*display:\s*none/is,
-  "polish não pode esconder conteúdo principal");
+
+const mainRootBlocks = [
+  css.match(/#main-content\s*\{([^}]*)\}/)?.[1],
+  css.match(/#main-content\s*>\s*div:last-child\s*\{([^}]*)\}/)?.[1],
+].filter(Boolean);
+assert.ok(mainRootBlocks.length >= 1, "polish deve declarar geometria do conteúdo principal");
+for (const block of mainRootBlocks) {
+  assert.doesNotMatch(block, /display:\s*none/i, "raízes do conteúdo principal não podem ser ocultadas");
+  assert.doesNotMatch(block, /visibility:\s*hidden/i, "raízes do conteúdo principal não podem ser invisibilizadas");
+}
 
 console.log("✓ Premium Polish 10: mobile-first, touch-safe e sem esconder conteúdo clínico");
