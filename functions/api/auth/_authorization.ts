@@ -34,6 +34,19 @@ export function canWriteClinicalData(user: PublicUser): boolean {
   return user.role === "admin" || user.role === "professional";
 }
 
+/** Agenda é domínio operacional: recepção pode operar sem ganhar escrita clínica. */
+export function canAccessOperationalAgenda(user: PublicUser): boolean {
+  return user.role === "admin" || user.role === "professional" || user.role === "operator";
+}
+
+export function canWriteOperationalAgenda(user: PublicUser): boolean {
+  return canAccessOperationalAgenda(user);
+}
+
+export function canAccessOperationalAgendaAudit(user: PublicUser): boolean {
+  return user.role === "admin" || user.role === "professional";
+}
+
 export function canReadAuditLog(user: PublicUser): boolean {
   return user.role === "admin";
 }
