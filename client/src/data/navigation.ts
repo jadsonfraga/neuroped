@@ -60,6 +60,7 @@ export const navSections: NavSection[] = [
   {
     title: "ACOMPANHAMENTO",
     items: [
+      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },
       { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },
     ],
   },

@@ -76,6 +76,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
+  "/api/public-booking",
   "/api/cert",
 ]);
 
