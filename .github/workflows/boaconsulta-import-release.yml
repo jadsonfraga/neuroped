@@ -1,0 +1,140 @@
+name: NeuroPed BoaConsulta Bridge release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0008_boaconsulta_import_bridge.sql"
+      - "functions/api/integrations/boaconsulta/**"
+      - "shared/boaconsulta-import.ts"
+      - "client/public/integracoes/boaconsulta/**"
+      - "tests/unit/boaconsulta-import-contract.test.ts"
+      - "wrangler.toml"
+      - ".github/workflows/boaconsulta-import-release.yml"
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  provision-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          [ "$GITHUB_REF" = "refs/heads/main" ] || {
+            echo "::error::BoaConsulta Bridge só pode provisionar produção a partir de main."
+            exit 1
+          }
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+      - name: Testar contrato de importação
+        run: node --import tsx tests/unit/boaconsulta-import-contract.test.ts
+
+      - name: Executar catraca geral antes de mexer em produção
+        run: npm run verify
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar cofre e staging D1 do bridge
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0008_boaconsulta_import_bridge.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('external_import_batches','external_import_file_chunks','external_import_records') ORDER BY name;" \
+            > /tmp/bridge-schema.txt 2>&1
+          cat /tmp/bridge-schema.txt
+          grep -q "external_import_batches" /tmp/bridge-schema.txt
+          grep -q "external_import_file_chunks" /tmp/bridge-schema.txt
+          grep -q "external_import_records" /tmp/bridge-schema.txt
+
+      - name: Garantir chave dedicada de criptografia sem expor o valor
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets.txt
+          if grep -Fq "NEUROPED_IMPORT_ENCRYPTION_KEY" /tmp/pages-secrets.txt; then
+            echo "Chave dedicada já existe; preservando-a sem rotação."
+          else
+            key="$(openssl rand -base64 32 | tr -d '\n')"
+            printf '%s' "$key" | npx wrangler@4 pages secret put \
+              NEUROPED_IMPORT_ENCRYPTION_KEY --project-name neuroped >/dev/null
+            unset key
+            npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets-after.txt
+            grep -Fq "NEUROPED_IMPORT_ENCRYPTION_KEY" /tmp/pages-secrets-after.txt || {
+              echo "::error::Chave de importação não foi criada."
+              exit 1
+            }
+            echo "Chave dedicada criada no Cloudflare; valor nunca foi registrado em log."
+          fi
+
+      - name: Compilar frontend
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
+
+      - name: Confirmar console BoaConsulta no artefato
+        run: |
+          test -f dist/public/integracoes/boaconsulta/index.html
+          grep -Fq "Bridge BoaConsulta" dist/public/integracoes/boaconsulta/index.html
+
+      - name: Publicar Pages com cofre D1 e secret já provisionados
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@4 pages deploy dist/public --project-name neuroped --branch main
+
+      - name: Verificar console publicado
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 12); do
+            if curl -fsSL "https://neuroped.pages.dev/integracoes/boaconsulta/?run=${GITHUB_RUN_ID}&try=$i" \
+                 -o /tmp/boaconsulta-console.html 2>/dev/null \
+               && grep -Fq "Bridge BoaConsulta" /tmp/boaconsulta-console.html; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || { echo "::error::Console BoaConsulta não apareceu no deploy."; exit 1; }
+          echo "✅ BoaConsulta Bridge publicado com cofre D1 cifrado, staging e chave dedicada."

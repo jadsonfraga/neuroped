@@ -1,0 +1,112 @@
+name: BoaConsulta Bridge PR validation
+
+on:
+  pull_request:
+    paths:
+      - "db/migrations/0008_boaconsulta_import_bridge.sql"
+      - "functions/api/integrations/boaconsulta/**"
+      - "shared/boaconsulta-import.ts"
+      - "client/public/integracoes/boaconsulta/**"
+      - "tests/unit/boaconsulta-import-contract.test.ts"
+      - "wrangler.toml"
+      - ".github/workflows/boaconsulta-import-pr.yml"
+      - ".github/workflows/boaconsulta-import-release.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Testar parser e contrato de reconciliação
+        run: node --import tsx tests/unit/boaconsulta-import-contract.test.ts
+
+      - name: Type-check das Functions e do código compartilhado
+        run: npm run check
+
+      - name: Buildar console de importação
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
+
+      - name: Confirmar console no artefato
+        run: |
+          test -f dist/public/integracoes/boaconsulta/index.html
+          grep -Fq "Bridge BoaConsulta" dist/public/integracoes/boaconsulta/index.html
+          grep -Fq "normalizedUploadFile" dist/public/integracoes/boaconsulta/index.html
+
+  bootstrap-encrypted-d1-vault:
+    needs: validate-bridge
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Garantir chave dedicada sem exibir o valor
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets.txt
+          if grep -Fq "NEUROPED_IMPORT_ENCRYPTION_KEY" /tmp/pages-secrets.txt; then
+            echo "Chave dedicada já existe e será preservada."
+          else
+            key="$(openssl rand -base64 32 | tr -d '\n')"
+            printf '%s' "$key" | npx wrangler@4 pages secret put \
+              NEUROPED_IMPORT_ENCRYPTION_KEY --project-name neuroped >/dev/null
+            unset key
+            npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets-after.txt
+            grep -Fq "NEUROPED_IMPORT_ENCRYPTION_KEY" /tmp/pages-secrets-after.txt || {
+              echo "::error::Chave dedicada não confirmada."
+              exit 1
+            }
+            echo "Chave dedicada criada sem exposição em log."
+          fi
+
+      - name: Aplicar cofre e staging D1 idempotentes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0008_boaconsulta_import_bridge.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('external_import_batches','external_import_file_chunks','external_import_records') ORDER BY name;" \
+            > /tmp/bridge-schema.txt 2>&1
+          cat /tmp/bridge-schema.txt
+          grep -q "external_import_batches" /tmp/bridge-schema.txt
+          grep -q "external_import_file_chunks" /tmp/bridge-schema.txt
+          grep -q "external_import_records" /tmp/bridge-schema.txt
+          echo "✅ Cofre D1 cifrado e staging do BoaConsulta prontos para o merge."
