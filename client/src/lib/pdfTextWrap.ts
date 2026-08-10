@@ -48,10 +48,7 @@ export function wrapPdfText(
       const wasSplit = pieces.length > 1;
 
       if (wasSplit) {
-        if (line) {
-          out.push(line);
-          line = "";
-        }
+        if (line) out.push(line);
         for (let index = 0; index < pieces.length - 1; index += 1) {
           out.push(pieces[index]);
         }
