@@ -22,6 +22,7 @@ import {
   type OperationsEnv,
   type ServiceRow,
 } from "./operations/_core";
+import { ensureOperationsHardeningSchema } from "./operations/_access";
 
 function emailValid(value: string): boolean {
   return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -102,6 +103,7 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
 
   try {
     await ensureOperationsSchema(env.DB);
+    await ensureOperationsHardeningSchema(env.DB);
 
     if (!slug) return errorResponse("Profissional não informado.", "VALIDATION_ERROR", 400);
     const provider = await getProviderBySlug(env.DB, slug);
@@ -139,6 +141,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
 
   try {
     await ensureOperationsSchema(env.DB);
+    await ensureOperationsHardeningSchema(env.DB);
     const now = new Date().toISOString();
 
     if (action === "manage") {
@@ -211,7 +214,11 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
           ...slotLockStatements(env.DB, provider.user_id, appointmentId, chosen.startsAtLocal, chosen.endsAtLocal),
         ]);
       } catch (error) {
-        if (String(error).toLowerCase().includes("unique")) {
+        const text = String(error);
+        if (text.includes("SCHEDULE_CONFLICT")) {
+          return errorResponse("Este horário acabou de ficar indisponível.", "SLOT_CONFLICT", 409);
+        }
+        if (text.toLowerCase().includes("unique")) {
           return errorResponse("Este horário acabou de ser reservado.", "SLOT_CONFLICT", 409);
         }
         throw error;
@@ -291,7 +298,11 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
           ...slotLockStatements(env.DB, appointment.provider_user_id, appointment.id, chosen.startsAtLocal, chosen.endsAtLocal),
         ]);
       } catch (error) {
-        if (String(error).toLowerCase().includes("unique")) {
+        const text = String(error);
+        if (text.includes("SCHEDULE_CONFLICT")) {
+          return errorResponse("Novo horário ficou indisponível.", "SLOT_CONFLICT", 409);
+        }
+        if (text.toLowerCase().includes("unique")) {
           return errorResponse("Novo horário acabou de ser ocupado.", "SLOT_CONFLICT", 409);
         }
         throw error;
@@ -390,6 +401,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
     return errorResponse("Ação desconhecida.", "UNKNOWN_ACTION", 400);
   } catch (error) {
     console.error(`[public-booking.POST:${action}]`, error);
+    if (String(error).includes("SCHEDULE_CONFLICT")) {
+      return errorResponse("O horário ficou indisponível.", "SLOT_CONFLICT", 409);
+    }
     if (String(error).includes("OPERATIONAL_CRYPTO_NOT_CONFIGURED")) {
       return errorResponse("Agendamento temporariamente indisponível.", "CRYPTO_NOT_CONFIGURED", 503);
     }
