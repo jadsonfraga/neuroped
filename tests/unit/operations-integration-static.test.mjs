@@ -47,7 +47,18 @@ assert.match(professional, /review_moderate/);
 assert.match(professional, /notification_status/);
 assert.match(professional, /logOperationsAudit/);
 assert.match(professional, /localNow\(profile\.timezone\)/, "métricas devem respeitar fuso da agenda");
-assert.match(professional, /amountCents: null/, "financeiro deve ser redigido para recepção");
+assert.match(professional, /amountCents: null/, "financeiro de consulta deve ser redigido para recepção");
+assert.match(
+  professional,
+  /fullServices\.map\(\(item\) => \(\{ \.\.\.item, priceCents: null \}\)\)/,
+  "preço dos serviços deve ser redigido para recepção",
+);
+assert.match(
+  professional,
+  /const patientId = principal\.delegated \? null : cleanOptionalText\(body\.patientId, 100\)/,
+  "recepção não pode associar agendamento diretamente a identificador clínico",
+);
+assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
@@ -144,4 +155,4 @@ assert.match(workflow, /booking_provider_profiles/);
 assert.match(workflow, /ux_appointments_occupied_slot/);
 assert.doesNotMatch(workflow, /workflow_dispatch:/);
 
-console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, auditoria, fuso, PII e locks aprovados");
+console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, finanças/clinical boundary, auditoria, fuso, PII e locks aprovados");
