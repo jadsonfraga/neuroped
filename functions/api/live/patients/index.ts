@@ -10,8 +10,9 @@ import {
   type TenantEnv,
 } from "../../tenant/_core";
 import {
-  CLINICAL_ENCRYPTION_VERSION,
   clinicalBlindIndex,
+  clinicalCryptoReady,
+  currentClinicalEncryptionVersion,
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../../tenant/_crypto";
@@ -47,7 +48,17 @@ function cleanOptional(value: unknown, max: number): string | null {
 
 function validIsoDate(value: string | null): boolean {
   if (!value) return true;
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 function requireLiveConfiguration(env: TenantEnv): Response | null {
@@ -58,9 +69,9 @@ function requireLiveConfiguration(env: TenantEnv): Response | null {
       503,
     );
   }
-  if (!env.CLINICAL_DATA_KEY?.trim() || env.CLINICAL_DATA_KEY.trim().length < 32) {
+  if (!clinicalCryptoReady(env)) {
     return tenantError(
-      "Chave clínica dedicada não configurada.",
+      "Keyring clínico dedicado não configurado.",
       "CLINICAL_CRYPTO_NOT_CONFIGURED",
       503,
     );
@@ -158,7 +169,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     notes: cleanOptional(body.notes, 12_000),
   };
   if (profile.name.length < 2) return tenantError("Nome do paciente é obrigatório.", "VALIDATION_ERROR", 400);
-  if (!validIsoDate(profile.birthDate)) return tenantError("birthDate deve usar AAAA-MM-DD.", "VALIDATION_ERROR", 400);
+  if (!validIsoDate(profile.birthDate)) return tenantError("birthDate deve usar uma data real AAAA-MM-DD.", "VALIDATION_ERROR", 400);
 
   const patientId = crypto.randomUUID();
   const externalReference = cleanOptional(body.externalReference, 240);
@@ -168,6 +179,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     `patient-profile:${patientId}`,
     profile,
   );
+  const encryptionVersion = currentClinicalEncryptionVersion(context.env);
   const patientIdentityHash = profile.birthDate
     ? await clinicalBlindIndex(
         context.env,
@@ -198,7 +210,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         externalReferenceHash,
         patientIdentityHash,
         profileEncrypted,
-        CLINICAL_ENCRYPTION_VERSION,
+        encryptionVersion,
         now,
         now,
       )
@@ -210,7 +222,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       action: "live_patient_create",
       targetType: "patient",
       targetId: patientId,
-      metadata: { encryptionVersion: CLINICAL_ENCRYPTION_VERSION },
+      metadata: { encryptionVersion },
     });
   } catch (error) {
     console.error("[live.patients.POST] DB error", error);
@@ -223,7 +235,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       clinicId,
       primaryProfessionalUserId: user.id,
       profile,
-      encryptionVersion: CLINICAL_ENCRYPTION_VERSION,
+      encryptionVersion,
       status: "active",
       createdAt: now,
       updatedAt: now,
