@@ -154,9 +154,12 @@ async function main() {
         );
         await submit.click();
 
-        await page.getByText(/Resultado/i).first().waitFor({ timeout: 10000 });
-        await page.getByTestId("button-print-report").waitFor({ timeout: 10000 });
-        await page.locator("[data-scale-response-action]").waitFor({ timeout: 10000 });
+        // "Resultado" também existe em elementos de navegação visual que podem
+        // permanecer ocultos. O relatório clínico possui um marcador estrutural
+        // próprio; esperar por ele valida o estado real pós-submit sem falso timeout.
+        await page.locator("[data-scale-response-report]").waitFor({ state: "visible", timeout: 10000 });
+        await page.getByTestId("button-print-report").waitFor({ state: "visible", timeout: 10000 });
+        await page.locator("[data-scale-response-action]").waitFor({ state: "visible", timeout: 10000 });
 
         ok += 1;
         console.log(`  ✓ ${scale.name}`);

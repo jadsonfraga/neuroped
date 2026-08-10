@@ -412,6 +412,50 @@ export function releaseSlotLocksStatement(
   return db.prepare(`DELETE FROM appointment_slot_locks WHERE appointment_id = ?`).bind(appointmentId);
 }
 
+/**
+ * Use somente imediatamente após um UPDATE/DELETE condicional no mesmo D1.batch.
+ * `changes()` é 1 apenas quando a mutação anterior venceu o controle otimista;
+ * assim uma requisição obsoleta não libera os locks de uma transição concorrente.
+ */
+export function releaseSlotLocksAfterSuccessfulMutationStatement(
+  db: D1Database,
+  appointmentId: string,
+): D1PreparedStatement {
+  return db
+    .prepare(`DELETE FROM appointment_slot_locks WHERE appointment_id = ? AND changes() = 1`)
+    .bind(appointmentId);
+}
+
+export function slotLockStatementsForAppointmentState(
+  db: D1Database,
+  providerUserId: string,
+  appointmentId: string,
+  startsAtLocal: string,
+  endsAtLocal: string,
+  status: AppointmentStatus,
+): D1PreparedStatement[] {
+  return appointmentSlotKeys(startsAtLocal, endsAtLocal).map((slotKey) =>
+    db.prepare(
+      `INSERT INTO appointment_slot_locks (provider_user_id, slot_key, appointment_id)
+       SELECT ?, ?, ?
+        WHERE EXISTS (
+          SELECT 1 FROM appointments
+           WHERE id = ? AND provider_user_id = ? AND status = ?
+             AND starts_at_local = ? AND ends_at_local = ?
+        )`,
+    ).bind(
+      providerUserId,
+      slotKey,
+      appointmentId,
+      appointmentId,
+      providerUserId,
+      status,
+      startsAtLocal,
+      endsAtLocal,
+    ),
+  );
+}
+
 export function parseStatus(value: unknown): AppointmentStatus | null {
   return typeof value === "string" && appointmentStatuses.includes(value as AppointmentStatus)
     ? (value as AppointmentStatus)

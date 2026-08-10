@@ -18,7 +18,7 @@ import {
   parseStatus,
   profileToApi,
   randomAccessToken,
-  releaseSlotLocksStatement,
+  releaseSlotLocksAfterSuccessfulMutationStatement,
   serviceToApi,
   sha256,
   slotLockStatements,
@@ -104,6 +104,11 @@ async function getDashboard(
   principal: OperationsPrincipal,
 ) {
   const profile = await ensureProviderProfile(db, provider);
+  const nowMinute = localNow(profile.timezone);
+  const today = nowMinute.slice(0, 10);
+  const next30 = addDaysLocalMinute(nowMinute, 30);
+  const prior30 = addDaysLocalMinute(nowMinute, -30);
+
   const servicesResult = await db
     .prepare(`SELECT * FROM booking_services WHERE provider_user_id = ? ORDER BY active DESC, name`)
     .bind(provider.id)
@@ -122,10 +127,21 @@ async function getDashboard(
          FROM appointments a
          JOIN booking_services s ON s.id = a.service_id
         WHERE a.provider_user_id = ?
-        ORDER BY a.starts_at_local DESC
+        ORDER BY
+          CASE
+            WHEN a.starts_at_local >= ?
+             AND a.status IN ('requested','confirmed','checked_in','in_care')
+            THEN 0 ELSE 1
+          END ASC,
+          CASE
+            WHEN a.starts_at_local >= ?
+             AND a.status IN ('requested','confirmed','checked_in','in_care')
+            THEN a.starts_at_local
+          END ASC,
+          a.starts_at_local DESC
         LIMIT 250`,
     )
-    .bind(provider.id)
+    .bind(provider.id, nowMinute, nowMinute)
     .all<AppointmentRow>();
   const waitlistResult = await db
     .prepare(
@@ -204,26 +220,42 @@ async function getDashboard(
     })),
   );
 
-  const nowMinute = localNow(profile.timezone);
-  const today = nowMinute.slice(0, 10);
-  const next30 = addDaysLocalMinute(nowMinute, 30);
-  const prior30 = addDaysLocalMinute(nowMinute, -30);
+  const [appointmentMetrics, waitlistMetrics, reviewMetrics, notificationMetrics] = await Promise.all([
+    db.prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN substr(starts_at_local, 1, 10) = ? AND status NOT IN ('cancelled','no_show') THEN 1 ELSE 0 END), 0) AS today_count,
+         COALESCE(SUM(CASE WHEN starts_at_local >= ? AND status IN ('requested','confirmed','checked_in','in_care') THEN 1 ELSE 0 END), 0) AS upcoming_count,
+         COALESCE(SUM(CASE WHEN status = 'requested' THEN 1 ELSE 0 END), 0) AS requested_count,
+         COALESCE(SUM(CASE WHEN status = 'no_show' AND starts_at_local >= ? AND starts_at_local <= ? THEN 1 ELSE 0 END), 0) AS no_show_30d,
+         COALESCE(SUM(CASE WHEN starts_at_local >= ? AND starts_at_local <= ? AND status NOT IN ('cancelled','no_show') THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS expected_cents,
+         COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS paid_cents
+       FROM appointments
+      WHERE provider_user_id = ?`,
+    ).bind(today, nowMinute, prior30, nowMinute, nowMinute, next30, provider.id).first<{
+      today_count: number; upcoming_count: number; requested_count: number; no_show_30d: number;
+      expected_cents: number; paid_cents: number;
+    }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM waitlist_entries WHERE provider_user_id = ? AND status = 'waiting'`,
+    ).bind(provider.id).first<{ count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM appointment_reviews WHERE provider_user_id = ? AND approved = 0`,
+    ).bind(provider.id).first<{ count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM notification_outbox WHERE provider_user_id = ? AND status = 'pending_provider'`,
+    ).bind(provider.id).first<{ count: number }>(),
+  ]);
+
   const metrics = {
-    today: fullAppointments.filter((item) => item.startsAtLocal.startsWith(today) && !["cancelled", "no_show"].includes(item.status)).length,
-    upcoming: fullAppointments.filter((item) => item.startsAtLocal >= nowMinute && !["cancelled", "completed", "no_show"].includes(item.status)).length,
-    requested: fullAppointments.filter((item) => item.status === "requested").length,
-    waitlist: waitlist.filter((item) => item.status === "waiting").length,
-    pendingReviews: principal.canConfigure ? fullReviews.filter((item) => !item.approved).length : 0,
-    pendingNotifications: notifications.filter((item) => item.status === "pending_provider").length,
-    expectedCents: principal.canConfigure
-      ? fullAppointments
-          .filter((item) => item.startsAtLocal >= nowMinute && item.startsAtLocal <= next30 && !["cancelled", "no_show"].includes(item.status))
-          .reduce((sum, item) => sum + (item.amountCents ?? 0), 0)
-      : 0,
-    paidCents: principal.canConfigure
-      ? fullAppointments.filter((item) => item.paymentStatus === "paid").reduce((sum, item) => sum + (item.amountCents ?? 0), 0)
-      : 0,
-    noShow30d: fullAppointments.filter((item) => item.status === "no_show" && item.startsAtLocal >= prior30 && item.startsAtLocal <= nowMinute).length,
+    today: appointmentMetrics?.today_count ?? 0,
+    upcoming: appointmentMetrics?.upcoming_count ?? 0,
+    requested: appointmentMetrics?.requested_count ?? 0,
+    waitlist: waitlistMetrics?.count ?? 0,
+    pendingReviews: principal.canConfigure ? (reviewMetrics?.count ?? 0) : 0,
+    pendingNotifications: notificationMetrics?.count ?? 0,
+    expectedCents: principal.canConfigure ? (appointmentMetrics?.expected_cents ?? 0) : 0,
+    paidCents: principal.canConfigure ? (appointmentMetrics?.paid_cents ?? 0) : 0,
+    noShow30d: appointmentMetrics?.no_show_30d ?? 0,
   };
 
   return {
@@ -375,11 +407,14 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!displayName || !specialty || !validSlug(requestedSlug)) return errorResponse("Perfil público inválido.", "VALIDATION_ERROR", 400);
       const bookingEnabled = body.bookingEnabled === true ? 1 : 0;
       try {
-        await env.DB.prepare(
+        const update = await env.DB.prepare(
           `UPDATE booking_provider_profiles
               SET slug = ?, display_name = ?, specialty = ?, location_label = ?, timezone = ?, booking_enabled = ?, updated_at = ?
             WHERE user_id = ?`,
         ).bind(requestedSlug, displayName, specialty, locationLabel, timezone, bookingEnabled, now, user.id).run();
+        if ((update.meta?.changes ?? 0) !== 1) {
+          return errorResponse("Perfil público não encontrado.", "NOT_FOUND", 404);
+        }
       } catch (error) {
         if (String(error).toLowerCase().includes("unique")) return errorResponse("Este endereço público já está em uso.", "SLUG_CONFLICT", 409);
         throw error;
@@ -411,11 +446,12 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const priceCents = body.priceCents === undefined ? existing.price_cents : moneyCents(body.priceCents);
       const active = body.active === undefined ? existing.active : body.active === true ? 1 : 0;
       const publicVisible = body.publicVisible === undefined ? existing.public_visible : body.publicVisible === true ? 1 : 0;
-      await env.DB.prepare(
+      const update = await env.DB.prepare(
         `UPDATE booking_services
             SET name = ?, duration_minutes = ?, price_cents = ?, modality = ?, active = ?, public_visible = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ?`,
       ).bind(name, duration, priceCents, modality, active, publicVisible, now, id, user.id).run();
+      if ((update.meta?.changes ?? 0) !== 1) return errorResponse("Serviço não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "service";
       auditTargetId = id;
       auditMetadata = { modality, status: active ? "active" : "inactive" };
@@ -505,11 +541,31 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const completedAt = status === "completed" ? now : current.completed_at;
       const cancelledAt = status === "cancelled" ? now : current.cancelled_at;
       const updateStatus = env.DB.prepare(
-        `UPDATE appointments SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
-          WHERE id = ? AND provider_user_id = ?`,
-      ).bind(status, checkedInAt, completedAt, cancelledAt, now, id, user.id);
+        `UPDATE appointments
+            SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ? AND status = ?
+            AND starts_at_local = ? AND ends_at_local = ?`,
+      ).bind(
+        status,
+        checkedInAt,
+        completedAt,
+        cancelledAt,
+        now,
+        id,
+        user.id,
+        current.status,
+        current.starts_at_local,
+        current.ends_at_local,
+      );
       const releasesSchedule = ["cancelled", "no_show", "completed"].includes(status);
-      await env.DB.batch(releasesSchedule ? [updateStatus, releaseSlotLocksStatement(env.DB, id)] : [updateStatus]);
+      const transitionResults = await env.DB.batch(
+        releasesSchedule
+          ? [updateStatus, releaseSlotLocksAfterSuccessfulMutationStatement(env.DB, id)]
+          : [updateStatus],
+      );
+      if ((transitionResults[0]?.meta?.changes ?? 0) !== 1) {
+        return errorResponse("A consulta mudou durante a atualização. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
+      }
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,

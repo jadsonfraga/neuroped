@@ -212,7 +212,10 @@ export function registerConectaRoutes(app: Express): void {
           code: access.status === 404 ? "NOT_FOUND" : "FORBIDDEN",
         });
       }
-      sqlite.prepare("DELETE FROM conecta_events WHERE id = ?").run(id);
+      const deletion = sqlite.prepare("DELETE FROM conecta_events WHERE id = ?").run(id);
+      if (deletion.changes !== 1) {
+        return res.status(404).json({ error: "Registro não encontrado", code: "NOT_FOUND" });
+      }
       await logAudit({
         eventType: "result.delete",
         context: getAuditContextFromRequest(req),

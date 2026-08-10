@@ -32,31 +32,66 @@ function errorResponse(message: string, code: string, status: number): Response 
   return jsonResponse({ error: message, code }, status);
 }
 
-const DEMO_LOGS = [
-  { id: "log-001", action: "auth.login.success", resource: "auth", resource_id: null, user_id: "demo-user", ip: "127.0.0.1", details: null, created_at: new Date("2025-05-08T09:00:00").toISOString() },
-  { id: "log-002", action: "patients.list", resource: "patients", resource_id: null, user_id: "demo-user", ip: "127.0.0.1", details: null, created_at: new Date("2025-05-08T09:01:00").toISOString() },
-  { id: "log-003", action: "scale.result.create", resource: "scale_results", resource_id: "scale-demo-001", user_id: "demo-user", ip: "127.0.0.1", details: '{"scale_id":"mchat"}', created_at: new Date("2025-05-08T09:05:00").toISOString() },
-];
+function positiveInteger(value: string | null, fallback: number, maximum: number): number {
+  if (value === null || !/^\d+$/.test(value)) return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, maximum);
+}
+
+function isRealIsoDay(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+export function nextAuditIsoDay(value: string): string | null {
+  if (!isRealIsoDay(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+export function parseAuditLogQuery(url: URL):
+  | { ok: true; page: number; limit: number; resource?: string; action?: string; from?: string; to?: string }
+  | { ok: false; message: string } {
+  const page = positiveInteger(url.searchParams.get("page"), 1, 1_000_000);
+  const limit = positiveInteger(url.searchParams.get("limit"), 50, 100);
+  const resource = url.searchParams.get("resource")?.trim() || undefined;
+  const action = url.searchParams.get("action")?.trim() || undefined;
+  const from = url.searchParams.get("from")?.trim() || undefined;
+  const to = url.searchParams.get("to")?.trim() || undefined;
+
+  if ((resource?.length ?? 0) > 120 || (action?.length ?? 0) > 160) {
+    return { ok: false, message: "Filtro textual excede o limite permitido." };
+  }
+  if (from && !isRealIsoDay(from)) return { ok: false, message: "Data inicial inválida." };
+  if (to && !isRealIsoDay(to)) return { ok: false, message: "Data final inválida." };
+  if (from && to && from > to) return { ok: false, message: "Intervalo de datas inválido." };
+
+  return { ok: true, page, limit, resource, action, from, to };
+}
+
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
   const url = new URL(request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") ?? "50", 10)));
-  const resource = url.searchParams.get("resource")?.trim();
-  const action = url.searchParams.get("action")?.trim();
-  const from = url.searchParams.get("from")?.trim();
-  const to = url.searchParams.get("to")?.trim();
+  const query = parseAuditLogQuery(url);
+  if (!query.ok) return errorResponse(query.message, "VALIDATION_ERROR", 400);
+  const { page, limit, resource, action, from, to } = query;
 
+  // Log de auditoria nunca deve degradar para dados fictícios. Sem o banco que
+  // sustenta autenticação e trilha real, a superfície administrativa falha fechada.
   if (!env.DB) {
-    return jsonResponse({
-      data: DEMO_LOGS,
-      total: DEMO_LOGS.length,
-      page,
-      limit,
-      mode: "demo",
-      note: "Log de auditoria simulado. Configure D1 para log real.",
-    });
+    return errorResponse("Log de auditoria indisponível sem banco persistente.", "DB_REQUIRED", 503);
   }
 
   try {
@@ -72,7 +107,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (resource) { sql += " AND resource = ?"; binds.push(resource); }
     if (action) { sql += " AND action LIKE ?"; binds.push(`%${action}%`); }
     if (from) { sql += " AND created_at >= ?"; binds.push(from); }
-    if (to) { sql += " AND created_at <= ?"; binds.push(to + "T23:59:59Z"); }
+    if (to) {
+      const toExclusive = nextAuditIsoDay(to);
+      if (!toExclusive) return errorResponse("Data final inválida.", "VALIDATION_ERROR", 400);
+      sql += " AND created_at < ?";
+      binds.push(toExclusive);
+    }
 
     // Count
     const countResult = await env.DB
