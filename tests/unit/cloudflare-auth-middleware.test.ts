@@ -226,10 +226,26 @@ assert.equal(
 );
 assert.equal((await callWithMethod("/api/results/x", "DELETE", "reader", readerToken)).status, 403);
 assert.equal(
-  (await call("/api/cert", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret }, readerToken)).status,
+  (await call("/api/cert", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret })).status,
   200,
-  "middleware autentica a rota aposentada; o handler sempre responde 410",
+  "middleware deixa a rota aposentada pública para o handler responder 410",
 );
+
+const retiredCertificateThroughMiddleware = await onRequest({
+  request: new Request("https://neuroped.test/api/cert"),
+  env: { DB: authDb(), NEUROPED_JWT_SECRET: secret },
+  next: async () => certificateHandler({} as never),
+  data: {},
+} as never);
+assert.equal(
+  retiredCertificateThroughMiddleware.status,
+  410,
+  "contrato completo /api/cert deve responder 410 mesmo com D1/auth ativos",
+);
+const retiredCertificateBody = await retiredCertificateThroughMiddleware.json() as Record<string, unknown>;
+assert.equal(retiredCertificateBody.code, "CERT_ENDPOINT_RETIRED");
+assert.equal("cert" in retiredCertificateBody, false);
+assert.equal("password" in retiredCertificateBody, false);
 assert.equal((await call("/api/audit-log", { DB: authDb(), NEUROPED_JWT_SECRET: secret }, token)).status, 403);
 assert.equal(
   (await call("/api/patients", { DB: authDb("professional", 0), NEUROPED_JWT_SECRET: secret }, token)).status,
