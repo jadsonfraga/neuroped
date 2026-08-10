@@ -17,6 +17,7 @@ import { createServer } from "http";
 import "dotenv/config";
 
 import { registerRoutes } from "./routes.js";
+import { registerAgendaRoutes } from "./routes/agenda.js";
 import { serveStatic } from "./static.js";
 import { applySecurity } from "./middleware/security.js";
 import { bootstrapAdmin } from "./storage.js";
@@ -82,6 +83,8 @@ app.use((req, res, next) => {
   }
 
   await registerRoutes(httpServer, app);
+  // Agenda operacional compartilhada: separada do núcleo clínico e com RBAC próprio.
+  registerAgendaRoutes(app);
 
   // ----- Error handler global -----
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
