@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/tmp-witch-hunt-loop.yml"
       - "scripts/tmp_witch_hunt_final_scan.py"
+      - "tests/e2e/scale-smoke.mjs"
+      - "tests/unit/witch-hunt-regressions.test.mjs"
 
 permissions:
   contents: read
