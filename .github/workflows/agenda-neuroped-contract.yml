@@ -5,12 +5,23 @@ on:
     branches:
       - main
     paths:
+      - "shared/agenda-cloud.ts"
+      - "server/routes/agenda.ts"
+      - "server/index.ts"
+      - "functions/api/agenda/**"
+      - "functions/api/auth/_authorization.ts"
+      - "functions/api/_middleware.ts"
+      - "db/migrations/0007_agenda_cloud.sql"
       - "client/src/lib/agendaCore.ts"
+      - "client/src/lib/agendaCloud.ts"
       - "client/src/components/agenda/**"
       - "client/src/pages/recepcao.tsx"
       - "tests/unit/agenda-neuroped.test.ts"
       - "tests/unit/agenda-neuroped-static.test.mjs"
+      - "tests/unit/agenda-cloud-contract.test.ts"
+      - "tests/unit/agenda-cloud-integration-static.test.mjs"
       - ".github/workflows/agenda-neuroped-contract.yml"
+      - ".github/workflows/agenda-cloud-d1-migration.yml"
 
 permissions:
   contents: read
@@ -18,7 +29,7 @@ permissions:
 jobs:
   agenda-contract:
     runs-on: ubuntu-latest
-    name: Agenda safety, typecheck and build
+    name: Agenda safety, cloud sync, typecheck and build
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -38,11 +49,17 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
-      - name: Test agenda behavior
+      - name: Test local agenda behavior
         run: node --import tsx tests/unit/agenda-neuroped.test.ts
 
-      - name: Test agenda product contract
+      - name: Test local agenda product contract
         run: node tests/unit/agenda-neuroped-static.test.mjs
+
+      - name: Test Agenda Cloud contract
+        run: node --import tsx tests/unit/agenda-cloud-contract.test.ts
+
+      - name: Test Agenda Cloud integration contract
+        run: node tests/unit/agenda-cloud-integration-static.test.mjs
 
       - name: TypeScript
         run: npm run check
