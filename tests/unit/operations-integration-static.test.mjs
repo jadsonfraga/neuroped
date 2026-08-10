@@ -136,6 +136,12 @@ assert.match(publicBooking, /ensureOperationsHardeningSchema/);
 assert.match(publicBooking, /SCHEDULE_CONFLICT/);
 assert.match(publicBooking, /selectFutureSlots/);
 assert.match(publicBooking, /isValidLocalDate\(preferredDate\)/);
+assert.match(publicBooking, /!isValidLocalDate\(date\)/, "consulta de slots deve rejeitar data calendárica impossível");
+assert.match(
+  professional,
+  /value === null \|\| value === undefined \|\| value === ""/,
+  "campos inteiros não podem converter ausência em zero silenciosamente",
+);
 assert.doesNotMatch(core, /return slots\.slice\(0, 96\)/, "cap de slots não pode ocorrer antes do filtro de horários passados");
 assert.match(sharedOperations, /date\.getUTCFullYear\(\) === year/);
 assert.match(sharedOperations, /hour >= 0 && hour <= 23/);

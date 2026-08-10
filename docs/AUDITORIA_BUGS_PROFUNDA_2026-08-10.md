@@ -14,6 +14,10 @@ Revisão dirigida da `main` após a integração da Operational Suite, NeuroPed 
 6. **Timezone inválido persistível** — perfil aceitava qualquer string de timezone. Correção: validação IANA via `Intl.DateTimeFormat`.
 7. **Slug de 2 caracteres rejeitado por regex** — um caso de borda incoerente (1 caractere e 3+ eram aceitos). Correção do quantificador.
 8. **Data preferencial inválida na lista de espera** — campo era truncado mas não validado. Agora usa a mesma validação calendárica da agenda.
+9. **PATCH de paciente simulava atualização sem D1** — podia devolver `updated: true` sem persistir. Agora payload inválido continua 400 e escrita válida sem banco falha com `503 DB_REQUIRED`.
+10. **DELETE clínico podia parecer sucesso sem D1** — paciente retornava HTTP 200/deleted:false e resultado de escala também; a UI interpreta 2xx como sucesso. Agora ambos falham fechado com `503 DB_REQUIRED`.
+11. **Data impossível em consulta de slots parecia agenda vazia** — a rota pública usava regex; agora rejeita a data calendárica com 400.
+12. **Campos inteiros vazios viravam zero** — `Number("")`/`Number(null)` podiam converter ausência em domingo ou 00:00. Agora ausência é inválida.
 
 ## Travas adicionadas
 

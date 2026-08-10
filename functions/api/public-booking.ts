@@ -117,7 +117,7 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
       const serviceId = cleanText(url.searchParams.get("service"), 80);
       const date = cleanText(url.searchParams.get("date"), 10);
       const service = await getService(env.DB, provider.user_id, serviceId, true);
-      if (!service || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      if (!service || !isValidLocalDate(date)) {
         return errorResponse("Serviço ou data inválidos.", "VALIDATION_ERROR", 400);
       }
       const currentLocal = nowInTimezone(provider.timezone);

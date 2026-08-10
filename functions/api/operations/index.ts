@@ -65,6 +65,7 @@ function moneyCents(value: unknown): number | null {
 }
 
 function integerBetween(value: unknown, min: number, max: number): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) return null;
   return parsed;
