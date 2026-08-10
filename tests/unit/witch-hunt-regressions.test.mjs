@@ -37,4 +37,8 @@ assert.match(agendaPage, /A alteração foi salva, mas a tela não conseguiu atu
 assert.match(agendaPage, /const saved = await mutate[\s\S]{0,300}if \(saved\) setStaffEmail/, "formulário de equipe só limpa após mutação aceita");
 assert.match(agendaPage, /Promise<boolean>/, "componentes filhos devem preservar o resultado da mutação");
 
-console.log("✓ caça a bugs: corridas e fail-open administrativos protegidos");
+const scaleSmoke = read("tests/e2e/scale-smoke.mjs");
+assert.match(scaleSmoke, /\[data-scale-response-report\]/, "E2E das escalas deve esperar o relatório estrutural real");
+assert.doesNotMatch(scaleSmoke, /getByText\(\/Resultado\/i\)\.first\(\)/, "E2E não pode usar texto genérico que resolve para badge oculto");
+
+console.log("✓ caça a bugs: corridas, fail-open e gates E2E protegidos");
