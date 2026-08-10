@@ -1,0 +1,46 @@
+name: PDF signing and CAA contract
+
+on:
+  pull_request:
+    paths:
+      - "client/src/lib/icpSign.ts"
+      - "client/src/lib/documentPdf.ts"
+      - "client/src/pages/receita-c1.tsx"
+      - "client/src/pages/receita-c1-express.tsx"
+      - "client/src/pages/laudo-neuroped.tsx"
+      - "client/src/pages/caa.tsx"
+      - "client/src/data/caaBoard.ts"
+      - "client/src/data/caaExpandedBoard.ts"
+      - "tests/unit/pdf-p12-signing.test.ts"
+      - "tests/unit/caa-premium-catalog.test.ts"
+      - ".github/workflows/pdf-caa-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: Real PFX/PDF and CAA contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sign a real PDF with an ephemeral PFX/P12
+        run: node --import tsx tests/unit/pdf-p12-signing.test.ts
+
+      - name: Enforce doubled CAA vocabulary and voice messages
+        run: node --import tsx tests/unit/caa-premium-catalog.test.ts
+
+      - name: Type-check affected application surfaces
+        run: npm run check
