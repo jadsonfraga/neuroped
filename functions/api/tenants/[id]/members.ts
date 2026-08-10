@@ -21,10 +21,16 @@ function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
-async function managerContext(context: EventContext<TenantEnv, string, Record<string, unknown>>) {
+type ManagerContextInput = {
+  env: TenantEnv;
+  data?: unknown;
+  params: Record<string, string | string[]>;
+};
+
+async function managerContext(context: ManagerContextInput) {
   const db = context.env.DB;
   const user = getContextUser(context);
-  const clinicId = clinicIdFrom(context.params as Record<string, string | string[]>);
+  const clinicId = clinicIdFrom(context.params);
   if (!db) return { error: tenantError("Banco SaaS não configurado.", "SAAS_DB_NOT_CONFIGURED", 503) } as const;
   if (!user) return { error: tenantError("Não autenticado.", "UNAUTHENTICATED", 401) } as const;
   if (!clinicId) return { error: tenantError("Clínica inválida.", "VALIDATION_ERROR", 400) } as const;
@@ -35,8 +41,16 @@ async function managerContext(context: EventContext<TenantEnv, string, Record<st
   return { db, user, clinicId, membership } as const;
 }
 
+function contextForManager(context: Parameters<PagesFunction<TenantEnv>>[0]): ManagerContextInput {
+  return {
+    env: context.env,
+    data: context.data,
+    params: context.params as Record<string, string | string[]>,
+  };
+}
+
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
-  const auth = await managerContext(context as never);
+  const auth = await managerContext(contextForManager(context));
   if ("error" in auth) return auth.error;
 
   const rows = await auth.db
@@ -75,7 +89,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 };
 
 export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
-  const auth = await managerContext(context as never);
+  const auth = await managerContext(contextForManager(context));
   if ("error" in auth) return auth.error;
 
   let body: Record<string, unknown>;
@@ -148,7 +162,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 };
 
 export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
-  const auth = await managerContext(context as never);
+  const auth = await managerContext(contextForManager(context));
   if ("error" in auth) return auth.error;
 
   const url = new URL(context.request.url);
