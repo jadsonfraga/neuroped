@@ -79,7 +79,6 @@ body {
   }
 }
 
-/* Remove the app-wide CGI feel while keeping semantic motion. */
 .card-hover:hover,
 .card-premium:hover {
   transform: none !important;
@@ -110,7 +109,6 @@ aside[aria-label="Menu de navegação"] > div:first-of-type {
   padding-bottom: 1rem !important;
 }
 
-/* Featured shortcuts remain available, but stop looking like banners. */
 [data-testid="featured-filtro"],
 [data-testid="featured-avaliacao-cognitiva"] {
   border-color: transparent !important;
@@ -148,8 +146,7 @@ aside[aria-label="Menu de navegação"] > div:first-of-type {
   }
 }
 
-/* The seven-chip sticky flow duplicated information already present in each page.
-   Removing only the visual chrome preserves every route and clinical workflow. */
+/* The seven-chip sticky flow duplicated information already present in each page. */
 #main-content > .sticky {
   display: none !important;
 }
@@ -231,7 +228,6 @@ aside[aria-label="Menu de navegação"] > div:first-of-type {
   box-shadow: 0 10px 24px -16px hsl(var(--primary) / 0.9) !important;
 }
 
-/* App inventory counts are system metadata, not primary clinical content. */
 .np-home-hero [aria-label="Métricas do app"] {
   display: none !important;
 }
@@ -286,22 +282,16 @@ select:focus-visible {
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.10) !important;
 }
 
-/* Keep the operational dashboard readable when many modules are enabled. */
+/* Large decorative page headers become quiet surfaces without touching warnings. */
+#main-content header[class*="bg-gradient-to-br"] {
+  background-image: none !important;
+  background-color: hsl(var(--card) / 0.92) !important;
+  border-color: hsl(var(--border) / 0.85) !important;
+  box-shadow: none !important;
+}
+
 #main-content [class*="rounded-[2rem]"] {
   border-radius: 1.25rem !important;
-}
-
-#main-content [class*="bg-gradient-to-br"] {
-  background-image: none;
-}
-
-/* Preserve semantic warnings/errors: only decorative generic gradients are reset. */
-.border-destructive,
-.bg-destructive,
-.text-destructive,
-[class*="border-red-"],
-[class*="bg-red-"] {
-  /* no-op marker: intentionally left untouched */
 }
 
 @media (max-width: 767px) {
