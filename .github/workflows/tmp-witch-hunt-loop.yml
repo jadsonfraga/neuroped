@@ -6,15 +6,15 @@ on:
       - fix/witch-hunt-loop-20260810
     paths:
       - ".github/workflows/tmp-witch-hunt-loop.yml"
-      - "scripts/tmp_witch_hunt_fix_round4.py"
+      - "scripts/tmp_witch_hunt_final_scan.py"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  round4:
+  final-pass:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -26,29 +26,23 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-      - name: Apply UI truth fixes
-        run: python3 scripts/tmp_witch_hunt_fix_round4.py
       - name: Install dependencies
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      - name: Targeted regressions
-        run: |
-          set -euo pipefail
-          node tests/unit/witch-hunt-regressions.test.mjs
-          npm run test:operations
-      - name: Repeat static witch-hunt scan
-        run: python3 scripts/tmp_witch_hunt_scan.py
-      - name: Full permanent release gate
+      - name: Independent high-confidence scanner
+        run: python3 scripts/tmp_witch_hunt_final_scan.py
+      - name: Permanent release gate
         run: npm run verify:release
       - name: Dependency audit
         run: npm audit --omit=dev --audit-level=high
-      - name: Commit only approved permanent changes
-        run: |
-          set -euo pipefail
-          git config user.name "NeuroPed Audit Bot"
-          git config user.email "neuroped-audit@users.noreply.github.com"
-          git add client/src/pages/agenda.tsx tests/unit/witch-hunt-regressions.test.mjs
-          git diff --cached --check
-          git commit -m "fix(agenda): separar persistência de falha de atualização visual"
-          git push origin HEAD:fix/witch-hunt-loop-20260810
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Full accessibility browser audit
+        run: npm run audit:a11y:full
+      - name: Real scales E2E
+        run: npm run test:e2e:scales
+      - name: Screen audit
+        run: npm run audit:screens
+      - name: Integral build
+        run: npm run build
