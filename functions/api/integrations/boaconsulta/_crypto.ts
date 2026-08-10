@@ -57,9 +57,8 @@ export async function importCryptoKey(secret: string | undefined): Promise<Crypt
     ["encrypt", "decrypt"],
   );
 
-  // Mantemos uma subchave HMAC separada no isolate para os hashes de strings
-  // executados após a chave de importação ser validada. Isso impede ataques de
-  // correlação offline contra CPF/nome/data e contra linhas clínicas conhecidas.
+  // Subchave independente para fingerprints sensíveis. Mesmo que o banco seja
+  // exfiltrado, CPF/nome/data não ficam sujeitos a correlação por SHA simples.
   keyedStringHashKey = await crypto.subtle.deriveKey(
     {
       name: "HKDF",
@@ -85,6 +84,17 @@ export async function encryptImportBytes(
   return { ciphertext, iv: bytesToBase64Url(ivBytes) };
 }
 
+export async function encryptImportBytesToText(
+  key: CryptoKey,
+  input: ArrayBuffer,
+): Promise<{ ciphertext: string; iv: string }> {
+  const encrypted = await encryptImportBytes(key, input);
+  return {
+    ciphertext: bytesToBase64Url(new Uint8Array(encrypted.ciphertext)),
+    iv: encrypted.iv,
+  };
+}
+
 export async function encryptImportText(
   key: CryptoKey,
   input: string,
@@ -94,11 +104,7 @@ export async function encryptImportText(
     encoded.byteOffset,
     encoded.byteOffset + encoded.byteLength,
   ) as ArrayBuffer;
-  const encrypted = await encryptImportBytes(key, buffer);
-  return {
-    ciphertext: bytesToBase64Url(new Uint8Array(encrypted.ciphertext)),
-    iv: encrypted.iv,
-  };
+  return encryptImportBytesToText(key, buffer);
 }
 
 /**
