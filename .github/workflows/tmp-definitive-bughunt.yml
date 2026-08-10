@@ -31,7 +31,9 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - name: Apply round 1 fixes
-        run: python3 scripts/tmp_definitive_fix_round1.py
+        run: |
+          python3 scripts/tmp_definitive_fix_round1.py
+          python3 scripts/tmp_fix_refresh_fake.py
       - name: Targeted regressions
         run: |
           node --import tsx tests/unit/auth-hardening-regressions.test.ts
@@ -58,6 +60,7 @@ jobs:
             tests/unit/auth-hardening-regressions.test.ts \
             tests/unit/clinical-core-supersession-regression.test.mjs \
             tests/unit/cloudflare-auth-middleware.test.ts \
+            tests/unit/refresh-sessions.test.ts \
             package.json
           git diff --cached --check
           if git diff --cached --quiet; then
