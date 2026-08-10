@@ -562,6 +562,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
     return jsonResponse(await getDashboard(env.DB, env, provider, principal));
   } catch (error) {
     console.error(`[operations.POST:${action}]`, error);
+    if (String(error).includes("SCHEDULE_CONFLICT")) {
+      return errorResponse("O horário conflita com consulta ou bloqueio existente.", "SCHEDULE_CONFLICT", 409);
+    }
     if (String(error).toLowerCase().includes("unique")) return errorResponse("Este horário acabou de ser ocupado. Atualize a agenda.", "SLOT_CONFLICT", 409);
     if (String(error).includes("OPERATIONAL_CRYPTO_NOT_CONFIGURED")) return errorResponse("Criptografia operacional não configurada.", "CRYPTO_NOT_CONFIGURED", 503);
     return errorResponse("Não foi possível concluir a operação.", "OPERATIONS_WRITE_FAILED", 500);
