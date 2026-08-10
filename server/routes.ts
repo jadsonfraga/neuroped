@@ -29,6 +29,7 @@ import { sendEmail } from "./lib/email.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerFileRoutes } from "./routes/files.js";
 import { registerConsentRoutes } from "./routes/consents.js";
+import { registerConectaRoutes } from "./routes/conecta.js";
 import {
   canAccessPatient,
   canAccessScaleResult,
@@ -88,6 +89,9 @@ export async function registerRoutes(
 
   // ----- Consentimentos: lote autenticado, atômico, idempotente e auditado -----
   registerConsentRoutes(app);
+
+  // ----- NeuroPed Conecta: jornada longitudinal nativa com ownership do paciente -----
+  registerConectaRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {

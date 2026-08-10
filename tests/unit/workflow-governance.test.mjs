@@ -47,7 +47,8 @@ assert.match(prCheck, /- name: Lint\s+id: lint\s+run: npm run lint/);
 assert.doesNotMatch(prCheck, /npm run lint --if-present/);
 assert.match(
   prCheck,
-  /const ready = buildStatus && typecheckStatus && lintStatus && accessStatus/,
+  /const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus/,
+  "o PR Check deve exigir também o contrato do NeuroPed Conecta",
 );
 assert.match(
   prCheck,
@@ -156,10 +157,24 @@ assert.match(
   /- name: Check CI Status[\s\S]{0,700}exit 1/,
   "o agregador deve reprovar explicitamente qualquer resultado não-success",
 );
+const prCriticalFailureStep =
+  prCheck.match(
+    /- name: Falhar se qualquer verificação crítica quebrou[\s\S]*?(?=\n\s{6}- name:|\s*$)/,
+  )?.[0] ?? "";
 assert.match(
-  prCheck,
-  /- name: Falhar se qualquer verificação crítica quebrou[\s\S]{0,650}steps\.access\.outcome[\s\S]{0,160}exit 1/,
+  prCriticalFailureStep,
+  /steps\.access\.outcome/,
   "o PR Check deve falhar quando o gate de acesso falhar",
+);
+assert.match(
+  prCriticalFailureStep,
+  /steps\.conecta\.outcome/,
+  "o PR Check deve falhar quando o gate do Conecta falhar",
+);
+assert.match(
+  prCriticalFailureStep,
+  /exit 1/,
+  "o PR Check deve reprovar explicitamente qualquer gate crítico não-success",
 );
 for (const dependency of ["quality", "build", "production-readiness"]) {
   assert.match(
