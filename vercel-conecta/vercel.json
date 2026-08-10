@@ -1,25 +1,58 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
+  "functions": {
+    "api/proxy.mjs": {
+      "maxDuration": 15
+    }
+  },
+  "routes": [
     {
-      "source": "/",
-      "destination": "https://neuroped-conecta.lovable.app/"
+      "src": "/brand-logo.jpeg",
+      "dest": "/brand-logo.jpeg",
+      "headers": {
+        "Cache-Control": "public, max-age=86400, immutable",
+        "X-Content-Type-Options": "nosniff"
+      }
     },
     {
-      "source": "/:path*",
-      "destination": "https://neuroped-conecta.lovable.app/:path*"
-    }
-  ],
-  "headers": [
+      "src": "/np-enhance.css",
+      "dest": "/np-enhance.css",
+      "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
+    },
     {
-      "source": "/:path*",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
-        { "key": "Cache-Control", "value": "private, no-store" },
-        { "key": "Vercel-CDN-Cache-Control", "value": "no-store" }
-      ]
-    }
+      "src": "/np-preload.js",
+      "dest": "/np-preload.js",
+      "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
+    },
+    {
+      "src": "/np-enhance.js",
+      "dest": "/np-enhance.js",
+      "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
+    },
+    {
+      "src": "/insights.js",
+      "dest": "/insights.js",
+      "headers": { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" }
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "dest": "/manifest.webmanifest",
+      "headers": {
+        "Cache-Control": "public, max-age=300",
+        "Content-Type": "application/manifest+json; charset=utf-8"
+      }
+    },
+    {
+      "src": "/insights/?",
+      "dest": "/insights.html",
+      "headers": {
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      }
+    },
+    { "src": "/api/proxy", "dest": "/api/proxy.mjs" },
+    { "src": "/(.*)", "dest": "/api/proxy.mjs?path=$1" }
   ]
 }
