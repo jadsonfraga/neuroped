@@ -207,11 +207,65 @@ export interface PublicSlot {
 }
 
 export function isValidLocalDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const date = new Date(0);
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCFullYear(year, month - 1, day);
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 export function isValidLocalDateTime(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value);
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match || !isValidLocalDate(match[1])) return false;
+  const hour = Number(match[2]);
+  const minute = Number(match[3]);
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+}
+
+export function isValidTimeZone(value: string): boolean {
+  if (!value.trim() || value.length > 80) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format(new Date(0));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function selectFutureSlots(
+  slots: PublicSlot[],
+  currentLocal: string,
+  limit = 96,
+): PublicSlot[] {
+  if (!isValidLocalDateTime(currentLocal)) return [];
+  const safeLimit = Number.isInteger(limit) ? Math.max(1, Math.min(288, limit)) : 96;
+  const seen = new Set<string>();
+  const selected: PublicSlot[] = [];
+  for (const slot of slots) {
+    if (
+      !isValidLocalDateTime(slot.startsAtLocal) ||
+      !isValidLocalDateTime(slot.endsAtLocal) ||
+      slot.endsAtLocal <= slot.startsAtLocal ||
+      slot.startsAtLocal <= currentLocal
+    ) {
+      continue;
+    }
+    const key = `${slot.startsAtLocal}|${slot.endsAtLocal}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    selected.push(slot);
+    if (selected.length >= safeLimit) break;
+  }
+  return selected;
 }
 
 export function minutesToClock(total: number): string {

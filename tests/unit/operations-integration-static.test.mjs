@@ -11,6 +11,7 @@ const professional = read("functions/api/operations/index.ts");
 const access = read("functions/api/operations/_access.ts");
 const publicBooking = read("functions/api/public-booking.ts");
 const core = read("functions/api/operations/_core.ts");
+const sharedOperations = read("shared/operations.ts");
 const migration = read("db/migrations/0007_operational_suite.sql");
 const hardeningMigration = read("db/migrations/0008_operational_hardening.sql");
 const agenda = read("client/src/pages/agenda.tsx");
@@ -47,6 +48,11 @@ assert.match(professional, /review_moderate/);
 assert.match(professional, /notification_status/);
 assert.match(professional, /logOperationsAudit/);
 assert.match(professional, /localNow\(profile\.timezone\)/, "métricas devem respeitar fuso da agenda");
+assert.match(professional, /isValidTimeZone\(timezone\)/, "perfil não pode persistir timezone IANA inválido");
+assert.ok(
+  (professional.match(/meta\?\.changes/g) ?? []).length >= 6,
+  "mutações por ID devem confirmar linha afetada antes de retornar sucesso/auditar",
+);
 assert.match(professional, /amountCents: null/, "financeiro de consulta deve ser redigido para recepção");
 assert.match(
   professional,
@@ -128,6 +134,11 @@ assert.match(professional, /env\.DB\.batch/);
 assert.match(publicBooking, /env\.DB\.batch/);
 assert.match(publicBooking, /ensureOperationsHardeningSchema/);
 assert.match(publicBooking, /SCHEDULE_CONFLICT/);
+assert.match(publicBooking, /selectFutureSlots/);
+assert.match(publicBooking, /isValidLocalDate\(preferredDate\)/);
+assert.doesNotMatch(core, /return slots\.slice\(0, 96\)/, "cap de slots não pode ocorrer antes do filtro de horários passados");
+assert.match(sharedOperations, /date\.getUTCFullYear\(\) === year/);
+assert.match(sharedOperations, /hour >= 0 && hour <= 23/);
 assert.doesNotMatch(publicBooking, /searchParams\.get\("token"\)/, "capability token não pode trafegar em query string");
 assert.match(publicBooking, /action === "manage"/);
 assert.match(booking, /apiRequest\("POST", "\/api\/public-booking", \{ action: "manage"/);

@@ -87,6 +87,39 @@ const authorized = await call(
 assert.equal(authorized.status, 200);
 assert.equal(authorized.headers.get("Access-Control-Allow-Origin"), null, "CORS não abre por padrão");
 
+const importMultipart = new FormData();
+importMultipart.set("mode", "preview");
+importMultipart.set("file", new File(["Paciente;Data\nTeste;10/08/2018"], "export.csv", { type: "text/csv" }));
+const importMultipartResponse = await onRequest({
+  request: new Request("https://neuroped.test/api/integrations/boaconsulta/import", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: importMultipart,
+  }),
+  env: { DB: authDb(), NEUROPED_JWT_SECRET: secret },
+  next,
+  data: {},
+} as never);
+assert.equal(
+  importMultipartResponse.status,
+  200,
+  "bridge BoaConsulta deve atravessar o middleware com multipart/form-data",
+);
+
+const forbiddenMultipart = new FormData();
+forbiddenMultipart.set("file", new File(["x"], "x.txt", { type: "text/plain" }));
+const genericMultipartResponse = await onRequest({
+  request: new Request("https://neuroped.test/api/patients", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: forbiddenMultipart,
+  }),
+  env: { DB: authDb(), NEUROPED_JWT_SECRET: secret },
+  next,
+  data: {},
+} as never);
+assert.equal(genericMultipartResponse.status, 415, "multipart continua proibido nas rotas clínicas JSON");
+
 for (const origin of [
   "https://superneuroped.vercel.app",
 ]) {
