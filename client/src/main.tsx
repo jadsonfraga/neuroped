@@ -13,11 +13,14 @@ void purgeLegacyCertificateCache();
 
 try {
   const savedTheme = window.localStorage.getItem("neuroped:theme");
-  if (savedTheme !== "light") {
-    document.documentElement.classList.add("dark");
-  }
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const useDark = savedTheme === "dark" || (savedTheme !== "light" && prefersDark);
+  document.documentElement.classList.toggle("dark", useDark);
 } catch {
-  document.documentElement.classList.add("dark");
+  document.documentElement.classList.toggle(
+    "dark",
+    window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
 }
 
 if (!window.location.hash) {
