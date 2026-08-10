@@ -31,4 +31,10 @@ assert.match(operations, /COUNT\(\*\) AS count FROM notification_outbox/, "notif
 assert.doesNotMatch(auditLog, /T23:59:59Z/, "filtro final não pode perder eventos com milissegundos no último segundo");
 assert.match(auditLog, /created_at < \?/, "data final deve usar próximo dia exclusivo");
 
+const agendaPage = read("client/src/pages/agenda.tsx");
+assert.match(agendaPage, /async function mutate[\s\S]{0,800}apiRequest[\s\S]{0,800}return false/, "falha da mutação deve retornar false antes do refresh");
+assert.match(agendaPage, /A alteração foi salva, mas a tela não conseguiu atualizar/, "falha de refetch não pode fingir rollback da mutação");
+assert.match(agendaPage, /const saved = await mutate[\s\S]{0,300}if \(saved\) setStaffEmail/, "formulário de equipe só limpa após mutação aceita");
+assert.match(agendaPage, /Promise<boolean>/, "componentes filhos devem preservar o resultado da mutação");
+
 console.log("✓ caça a bugs: corridas e fail-open administrativos protegidos");

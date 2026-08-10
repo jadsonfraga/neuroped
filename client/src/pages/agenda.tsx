@@ -131,18 +131,32 @@ export default function AgendaPage() {
   const [block, setBlock] = useState({ start: "", end: "", reason: "" });
   const [manual, setManual] = useState({ serviceId: "", startsAtLocal: "", guardianName: "", patientName: "", phone: "", email: "" });
 
-  async function mutate(payload: Record<string, unknown>, success: string) {
+  async function mutate(payload: Record<string, unknown>, success: string): Promise<boolean> {
     setBusy(true);
     try {
       await apiRequest("POST", "/api/operations", payload);
-      await queryClient.invalidateQueries({ queryKey: [DASHBOARD_KEY] });
-      await dashboard.refetch();
-      toast({ title: success });
     } catch (error) {
       toast({ title: "Não foi possível concluir.", description: String(error), variant: "destructive" });
+      setBusy(false);
+      return false;
+    }
+
+    try {
+      await queryClient.invalidateQueries({ queryKey: [DASHBOARD_KEY] });
+      const refreshed = await dashboard.refetch();
+      if (refreshed.isError) throw refreshed.error ?? new Error("Falha ao atualizar a agenda.");
+      toast({ title: success });
+    } catch (error) {
+      // A mutação já foi persistida. Não rotular uma falha de atualização da UI
+      // como falha transacional, pois isso pode induzir o usuário a repetir a ação.
+      toast({
+        title: success,
+        description: `A alteração foi salva, mas a tela não conseguiu atualizar agora. Use “Tentar novamente” se necessário. (${String(error)})`,
+      });
     } finally {
       setBusy(false);
     }
+    return true;
   }
 
   const upcoming = useMemo(
@@ -336,7 +350,10 @@ export default function AgendaPage() {
                 <p className="text-xs leading-relaxed text-muted-foreground">Vincule uma conta existente cujo perfil seja <code>operator</code>. O vínculo concede acesso somente à agenda operacional; não concede prontuário, prescrição, Clinical Core, configuração de serviços ou financeiro.</p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input type="email" value={staffEmail} onChange={(event) => setStaffEmail(event.target.value)} placeholder="email.da.recepcao@exemplo.com" />
-                  <Button className="gap-2" disabled={busy || !staffEmail.includes("@") } onClick={async () => { await mutate({ action: "staff_link", email: staffEmail }, "Recepção vinculada à agenda."); setStaffEmail(""); }}><UserPlus className="h-4 w-4" />Vincular</Button>
+                  <Button className="gap-2" disabled={busy || !staffEmail.includes("@") } onClick={async () => {
+                    const saved = await mutate({ action: "staff_link", email: staffEmail }, "Recepção vinculada à agenda.");
+                    if (saved) setStaffEmail("");
+                  }}><UserPlus className="h-4 w-4" />Vincular</Button>
                 </div>
                 {data.staff.length === 0 ? <Empty text="Nenhuma conta de recepção vinculada." /> : data.staff.map((staff) => (
                   <div key={staff.staffUserId} className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -378,7 +395,7 @@ function Empty({ text }: { text: string }) {
   return <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">{text}</div>;
 }
 
-function PaymentRow({ appointment, busy, mutate }: { appointment: Appointment; busy: boolean; mutate: (payload: Record<string, unknown>, success: string) => Promise<void> }) {
+function PaymentRow({ appointment, busy, mutate }: { appointment: Appointment; busy: boolean; mutate: (payload: Record<string, unknown>, success: string) => Promise<boolean> }) {
   const [amount, setAmount] = useState(appointment.amountCents !== null ? String(appointment.amountCents / 100) : "");
   return <div className="grid gap-3 rounded-2xl border p-4 md:grid-cols-[minmax(0,1fr)_140px_150px_auto] md:items-end"><div><p className="font-semibold">{appointment.patientName || "Paciente"}</p><p className="text-xs text-muted-foreground">{dateTimeLabel(appointment.startsAtLocal)} · {appointment.serviceName}</p></div><Field label="Valor R$"><Input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" /></Field><Field label="Situação"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" defaultValue={appointment.paymentStatus} id={`payment-${appointment.id}`}><option value="pending">Pendente</option><option value="paid">Pago</option><option value="waived">Cortesia</option><option value="refunded">Estornado</option></select></Field><Button disabled={busy} onClick={() => { const select = document.getElementById(`payment-${appointment.id}`) as HTMLSelectElement | null; return mutate({ action: "appointment_payment", id: appointment.id, amountCents: amount ? Math.round(Number(amount.replace(",", ".")) * 100) : null, paymentStatus: select?.value || appointment.paymentStatus, paymentMethod: "manual" }, "Financeiro atualizado."); }}>Salvar</Button></div>;
 }
