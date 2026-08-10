@@ -53,6 +53,13 @@ function isRealIsoDay(value: string): boolean {
   );
 }
 
+export function nextAuditIsoDay(value: string): string | null {
+  if (!isRealIsoDay(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
 export function parseAuditLogQuery(url: URL):
   | { ok: true; page: number; limit: number; resource?: string; action?: string; from?: string; to?: string }
   | { ok: false; message: string } {
@@ -100,7 +107,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (resource) { sql += " AND resource = ?"; binds.push(resource); }
     if (action) { sql += " AND action LIKE ?"; binds.push(`%${action}%`); }
     if (from) { sql += " AND created_at >= ?"; binds.push(from); }
-    if (to) { sql += " AND created_at <= ?"; binds.push(to + "T23:59:59Z"); }
+    if (to) {
+      const toExclusive = nextAuditIsoDay(to);
+      if (!toExclusive) return errorResponse("Data final inválida.", "VALIDATION_ERROR", 400);
+      sql += " AND created_at < ?";
+      binds.push(toExclusive);
+    }
 
     // Count
     const countResult = await env.DB

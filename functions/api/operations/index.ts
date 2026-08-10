@@ -104,6 +104,11 @@ async function getDashboard(
   principal: OperationsPrincipal,
 ) {
   const profile = await ensureProviderProfile(db, provider);
+  const nowMinute = localNow(profile.timezone);
+  const today = nowMinute.slice(0, 10);
+  const next30 = addDaysLocalMinute(nowMinute, 30);
+  const prior30 = addDaysLocalMinute(nowMinute, -30);
+
   const servicesResult = await db
     .prepare(`SELECT * FROM booking_services WHERE provider_user_id = ? ORDER BY active DESC, name`)
     .bind(provider.id)
@@ -122,10 +127,21 @@ async function getDashboard(
          FROM appointments a
          JOIN booking_services s ON s.id = a.service_id
         WHERE a.provider_user_id = ?
-        ORDER BY a.starts_at_local DESC
+        ORDER BY
+          CASE
+            WHEN a.starts_at_local >= ?
+             AND a.status IN ('requested','confirmed','checked_in','in_care')
+            THEN 0 ELSE 1
+          END ASC,
+          CASE
+            WHEN a.starts_at_local >= ?
+             AND a.status IN ('requested','confirmed','checked_in','in_care')
+            THEN a.starts_at_local
+          END ASC,
+          a.starts_at_local DESC
         LIMIT 250`,
     )
-    .bind(provider.id)
+    .bind(provider.id, nowMinute, nowMinute)
     .all<AppointmentRow>();
   const waitlistResult = await db
     .prepare(
@@ -204,26 +220,42 @@ async function getDashboard(
     })),
   );
 
-  const nowMinute = localNow(profile.timezone);
-  const today = nowMinute.slice(0, 10);
-  const next30 = addDaysLocalMinute(nowMinute, 30);
-  const prior30 = addDaysLocalMinute(nowMinute, -30);
+  const [appointmentMetrics, waitlistMetrics, reviewMetrics, notificationMetrics] = await Promise.all([
+    db.prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN substr(starts_at_local, 1, 10) = ? AND status NOT IN ('cancelled','no_show') THEN 1 ELSE 0 END), 0) AS today_count,
+         COALESCE(SUM(CASE WHEN starts_at_local >= ? AND status IN ('requested','confirmed','checked_in','in_care') THEN 1 ELSE 0 END), 0) AS upcoming_count,
+         COALESCE(SUM(CASE WHEN status = 'requested' THEN 1 ELSE 0 END), 0) AS requested_count,
+         COALESCE(SUM(CASE WHEN status = 'no_show' AND starts_at_local >= ? AND starts_at_local <= ? THEN 1 ELSE 0 END), 0) AS no_show_30d,
+         COALESCE(SUM(CASE WHEN starts_at_local >= ? AND starts_at_local <= ? AND status NOT IN ('cancelled','no_show') THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS expected_cents,
+         COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS paid_cents
+       FROM appointments
+      WHERE provider_user_id = ?`,
+    ).bind(today, nowMinute, prior30, nowMinute, nowMinute, next30, provider.id).first<{
+      today_count: number; upcoming_count: number; requested_count: number; no_show_30d: number;
+      expected_cents: number; paid_cents: number;
+    }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM waitlist_entries WHERE provider_user_id = ? AND status = 'waiting'`,
+    ).bind(provider.id).first<{ count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM appointment_reviews WHERE provider_user_id = ? AND approved = 0`,
+    ).bind(provider.id).first<{ count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM notification_outbox WHERE provider_user_id = ? AND status = 'pending_provider'`,
+    ).bind(provider.id).first<{ count: number }>(),
+  ]);
+
   const metrics = {
-    today: fullAppointments.filter((item) => item.startsAtLocal.startsWith(today) && !["cancelled", "no_show"].includes(item.status)).length,
-    upcoming: fullAppointments.filter((item) => item.startsAtLocal >= nowMinute && !["cancelled", "completed", "no_show"].includes(item.status)).length,
-    requested: fullAppointments.filter((item) => item.status === "requested").length,
-    waitlist: waitlist.filter((item) => item.status === "waiting").length,
-    pendingReviews: principal.canConfigure ? fullReviews.filter((item) => !item.approved).length : 0,
-    pendingNotifications: notifications.filter((item) => item.status === "pending_provider").length,
-    expectedCents: principal.canConfigure
-      ? fullAppointments
-          .filter((item) => item.startsAtLocal >= nowMinute && item.startsAtLocal <= next30 && !["cancelled", "no_show"].includes(item.status))
-          .reduce((sum, item) => sum + (item.amountCents ?? 0), 0)
-      : 0,
-    paidCents: principal.canConfigure
-      ? fullAppointments.filter((item) => item.paymentStatus === "paid").reduce((sum, item) => sum + (item.amountCents ?? 0), 0)
-      : 0,
-    noShow30d: fullAppointments.filter((item) => item.status === "no_show" && item.startsAtLocal >= prior30 && item.startsAtLocal <= nowMinute).length,
+    today: appointmentMetrics?.today_count ?? 0,
+    upcoming: appointmentMetrics?.upcoming_count ?? 0,
+    requested: appointmentMetrics?.requested_count ?? 0,
+    waitlist: waitlistMetrics?.count ?? 0,
+    pendingReviews: principal.canConfigure ? (reviewMetrics?.count ?? 0) : 0,
+    pendingNotifications: notificationMetrics?.count ?? 0,
+    expectedCents: principal.canConfigure ? (appointmentMetrics?.expected_cents ?? 0) : 0,
+    paidCents: principal.canConfigure ? (appointmentMetrics?.paid_cents ?? 0) : 0,
+    noShow30d: appointmentMetrics?.no_show_30d ?? 0,
   };
 
   return {

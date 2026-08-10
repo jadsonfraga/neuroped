@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { onRequestGet, parseAuditLogQuery } from "../../functions/api/audit-log";
+import { nextAuditIsoDay, onRequestGet, parseAuditLogQuery } from "../../functions/api/audit-log";
 
 const sane = parseAuditLogQuery(new URL("https://neuroped.invalid/api/audit-log?page=abc&limit=-5"));
 assert.equal(sane.ok, true);
@@ -36,5 +36,8 @@ assert.equal(noDb.status, 503, "log administrativo sem D1 deve falhar fechado");
 const payload = await noDb.json() as { code?: string; data?: unknown };
 assert.equal(payload.code, "DB_REQUIRED");
 assert.equal("data" in payload, false, "falha sem DB não pode expor logs fictícios");
+assert.equal(nextAuditIsoDay("2026-02-28"), "2026-03-01");
+assert.equal(nextAuditIsoDay("2024-02-28"), "2024-02-29");
+assert.equal(nextAuditIsoDay("2026-12-31"), "2027-01-01");
 
 console.log("✓ audit-log falha fechado e normaliza paginação/filtros sem NaN ou datas impossíveis");

@@ -23,5 +23,12 @@ assert.match(publicBooking, /rescheduleResults\[0\][\s\S]{0,300}STALE_APPOINTMEN
 assert.match(publicBooking, /WHERE id = \? AND status = \? AND starts_at_local = \? AND ends_at_local = \?/, "mutações públicas devem comparar o estado lido");
 assert.match(publicBooking, /slotLockStatementsForAppointmentState/, "remarcação deve readquirir locks somente para o estado efetivamente gravado");
 assert.match(operations, /transitionResults\[0\][\s\S]{0,300}STALE_APPOINTMENT/, "transição profissional deve rejeitar leitura obsoleta");
+assert.match(operations, /CASE[\s\S]{0,500}starts_at_local >= \?[\s\S]{0,500}LIMIT 250/, "lista limitada deve priorizar consultas futuras ativas");
+assert.match(operations, /SELECT[\s\S]{0,1200}today_count[\s\S]{0,1200}FROM appointments/, "métricas devem ser agregadas no banco completo");
+assert.match(operations, /COUNT\(\*\) AS count FROM waitlist_entries/, "contagem de espera não pode depender do LIMIT visual");
+assert.match(operations, /COUNT\(\*\) AS count FROM appointment_reviews/, "reviews pendentes não podem depender do LIMIT visual");
+assert.match(operations, /COUNT\(\*\) AS count FROM notification_outbox/, "notificações pendentes não podem depender do LIMIT visual");
+assert.doesNotMatch(auditLog, /T23:59:59Z/, "filtro final não pode perder eventos com milissegundos no último segundo");
+assert.match(auditLog, /created_at < \?/, "data final deve usar próximo dia exclusivo");
 
 console.log("✓ caça a bugs: corridas e fail-open administrativos protegidos");
