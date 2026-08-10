@@ -9,7 +9,7 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   users,
@@ -18,7 +18,7 @@ import {
   createUserApiSchema,
 } from "@shared/schema";
 import { db } from "../storage.js";
-import { DUMMY_BCRYPT_HASH, hashPassword, verifyPassword, shouldLockoutAccount, calculateLockoutUntil, isAccountLocked } from "../lib/password.js";
+import { DUMMY_BCRYPT_HASH, PASSWORD_POLICY, hashPassword, verifyPassword, calculateLockoutUntil, isAccountLocked } from "../lib/password.js";
 import { signAccessToken, issueRefreshToken, hashRefreshToken } from "../lib/jwt.js";
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { loginRateLimit } from "../middleware/security.js";
@@ -84,20 +84,41 @@ export function registerAuthRoutes(app: Express): void {
 
       if (!user || !user.isActive || locked || !valid) {
         if (user && user.isActive && !locked && !valid) {
-          const newAttempts = user.failedLoginAttempts + 1;
-          const updates: any = { failedLoginAttempts: newAttempts };
-          if (shouldLockoutAccount(newAttempts)) {
-            updates.lockedUntil = calculateLockoutUntil();
+          const now = new Date().toISOString();
+          const lockUntil = calculateLockoutUntil();
+          const updated = db.update(users)
+            .set({
+              failedLoginAttempts: sql`COALESCE(${users.failedLoginAttempts}, 0) + 1`,
+              lockedUntil: sql`CASE
+                WHEN COALESCE(${users.failedLoginAttempts}, 0) + 1 >= ${PASSWORD_POLICY.maxFailedAttempts}
+                THEN ${lockUntil}
+                ELSE ${users.lockedUntil}
+              END`,
+            })
+            .where(and(
+              eq(users.id, user.id),
+              eq(users.isActive, true),
+              or(isNull(users.lockedUntil), lte(users.lockedUntil, now)),
+            ))
+            .returning({
+              failedLoginAttempts: users.failedLoginAttempts,
+              lockedUntil: users.lockedUntil,
+            })
+            .get();
+          if (
+            updated &&
+            updated.failedLoginAttempts >= PASSWORD_POLICY.maxFailedAttempts &&
+            updated.lockedUntil
+          ) {
             await logAudit({
               eventType: "auth.account.locked",
               context: ctx,
               targetType: "user",
               targetId: user.id,
-              metadata: { attempts: newAttempts },
+              metadata: { attempts: updated.failedLoginAttempts },
               success: false,
             });
           }
-          db.update(users).set(updates).where(eq(users.id, user.id)).run();
         }
 
         await logAudit({
@@ -119,15 +140,39 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ error: "Credenciais invalidas", code: "AUTH_INVALID" });
       }
 
-      // Sucesso: zera tentativas, atualiza lastLogin, emite tokens
-      db.update(users)
-        .set({
-          failedLoginAttempts: 0,
-          lockedUntil: null,
-          lastLoginAt: new Date().toISOString(),
-        })
-        .where(eq(users.id, user.id))
-        .run();
+      // Sucesso só é aceito se a conta continuar ativa/desbloqueada depois do
+      // bcrypt. Atualização de estado + criação do refresh acontecem na mesma tx.
+      const now = new Date().toISOString();
+      const refresh = issueRefreshToken();
+      const accepted = db.transaction((tx) => {
+        const live = tx.update(users)
+          .set({
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+            lastLoginAt: now,
+          })
+          .where(and(
+            eq(users.id, user.id),
+            eq(users.isActive, true),
+            or(isNull(users.lockedUntil), lte(users.lockedUntil, now)),
+          ))
+          .returning({ id: users.id })
+          .get();
+        if (!live) return false;
+        tx.insert(refreshTokens)
+          .values({
+            userId: user.id,
+            tokenHash: refresh.tokenHash,
+            expiresAt: refresh.expiresAt,
+            ipAddress: ctx.ipAddress,
+            userAgent: ctx.userAgent,
+          })
+          .run();
+        return true;
+      });
+      if (!accepted) {
+        return res.status(401).json({ error: "Credenciais invalidas", code: "AUTH_INVALID" });
+      }
 
       const accessToken = signAccessToken({
         userId: user.id,
@@ -135,17 +180,6 @@ export function registerAuthRoutes(app: Express): void {
         role: user.role,
         name: user.name,
       });
-
-      const refresh = issueRefreshToken();
-      db.insert(refreshTokens)
-        .values({
-          userId: user.id,
-          tokenHash: refresh.tokenHash,
-          expiresAt: refresh.expiresAt,
-          ipAddress: ctx.ipAddress,
-          userAgent: ctx.userAgent,
-        })
-        .run();
 
       await logAudit({
         eventType: "auth.login.success",
@@ -215,29 +249,64 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ error: "Refresh token expirado", code: "REFRESH_EXPIRED" });
       }
 
-      const user = db.select().from(users).where(eq(users.id, stored.userId)).get();
-      if (!user || !user.isActive) {
-        return res.status(401).json({ error: "Usuario inativo", code: "USER_INACTIVE" });
-      }
-
-      // Rotacao: emite novo refresh, revoga antigo
       const newRefresh = issueRefreshToken();
-      const newRefreshRow = db
-        .insert(refreshTokens)
-        .values({
-          userId: user.id,
-          tokenHash: newRefresh.tokenHash,
-          expiresAt: newRefresh.expiresAt,
-          ipAddress: ctx.ipAddress,
-          userAgent: ctx.userAgent,
-        })
-        .returning()
-        .get();
+      let rotation: { user: typeof users.$inferSelect } | null = null;
+      try {
+        rotation = db.transaction((tx) => {
+          const current = tx.select().from(refreshTokens)
+            .where(and(eq(refreshTokens.id, stored.id), isNull(refreshTokens.revokedAt)))
+            .get();
+          if (!current || current.tokenHash !== tokenHash || new Date(current.expiresAt).getTime() < Date.now()) {
+            throw new Error("REFRESH_RACE");
+          }
+          const liveUser = tx.select().from(users).where(and(eq(users.id, current.userId), eq(users.isActive, true))).get();
+          if (!liveUser) throw new Error("REFRESH_USER_INACTIVE");
 
-      db.update(refreshTokens)
-        .set({ revokedAt: new Date().toISOString(), rotatedToTokenId: newRefreshRow.id })
-        .where(eq(refreshTokens.id, stored.id))
-        .run();
+          const newRefreshRow = tx
+            .insert(refreshTokens)
+            .values({
+              userId: liveUser.id,
+              tokenHash: newRefresh.tokenHash,
+              expiresAt: newRefresh.expiresAt,
+              ipAddress: ctx.ipAddress,
+              userAgent: ctx.userAgent,
+            })
+            .returning()
+            .get();
+
+          const revoked = tx.update(refreshTokens)
+            .set({ revokedAt: new Date().toISOString(), rotatedToTokenId: newRefreshRow.id })
+            .where(and(eq(refreshTokens.id, current.id), isNull(refreshTokens.revokedAt)))
+            .run();
+          if (revoked.changes !== 1) throw new Error("REFRESH_RACE");
+          return { user: liveUser };
+        });
+      } catch (error) {
+        const code = error instanceof Error ? error.message : "";
+        if (code === "REFRESH_USER_INACTIVE") {
+          return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
+        }
+        if (code === "REFRESH_RACE") {
+          db.update(refreshTokens)
+            .set({ revokedAt: new Date().toISOString() })
+            .where(and(eq(refreshTokens.userId, stored.userId), isNull(refreshTokens.revokedAt)))
+            .run();
+          await logAudit({
+            eventType: "auth.token.refresh",
+            context: { ...ctx, userId: stored.userId },
+            targetType: "user",
+            targetId: stored.userId,
+            metadata: { reason: "refresh_race_or_reuse_detected" },
+            success: false,
+          });
+          return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
+        }
+        throw error;
+      }
+      if (!rotation) {
+        return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
+      }
+      const user = rotation.user;
 
       const accessToken = signAccessToken({
         userId: user.id,
