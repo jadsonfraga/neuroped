@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { wrapPdfText } from "../../client/src/lib/documentPdf.ts";
+import { wrapPdfText } from "../../client/src/lib/pdfTextWrap.ts";
 
 const pdf = await PDFDocument.create();
 const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -25,9 +25,8 @@ for (const line of wrappedHash) {
   assert.ok(font.widthOfTextAtSize(line, size) <= 120 + 0.001);
 }
 
-const sentence = "Paciente em acompanhamento neuropediátrico com retorno programado.";
-const safeSentence = sentence.replace("á", "a");
-const normal = wrapPdfText(safeSentence, font, size, maxWidth);
-assert.equal(normal.join(" "), safeSentence, "texto normal não deve ser corrompido");
+const sentence = "Paciente em acompanhamento neuropediatrico com retorno programado.";
+const normal = wrapPdfText(sentence, font, size, maxWidth);
+assert.equal(normal.join(" "), sentence, "texto normal não deve ser corrompido");
 
 console.log("[document-pdf-wrap] ✓ URLs, hashes e texto normal respeitam a largura sem truncamento.");
