@@ -1,0 +1,328 @@
+/*
+ * NeuroPed — Quiet Clinical visual reset
+ *
+ * Goal: reduce visual noise without removing clinical functionality.
+ * This file is intentionally loaded last so it can soften accumulated styles
+ * from individual modules while keeping accessibility and semantic states.
+ */
+
+:root {
+  --background: 36 30% 98.2%;
+  --foreground: 260 22% 14%;
+  --border: 260 10% 89%;
+  --card: 36 20% 99.6%;
+  --card-foreground: 260 22% 14%;
+  --card-border: 260 10% 90.5%;
+  --sidebar: 36 24% 97.8%;
+  --sidebar-foreground: 260 22% 14%;
+  --sidebar-border: 260 10% 90%;
+  --sidebar-accent: 260 16% 94%;
+  --muted: 36 14% 94.5%;
+  --muted-foreground: 260 8% 40%;
+  --popover: 36 24% 99%;
+  --popover-border: 260 10% 90%;
+  --input: 260 10% 82%;
+}
+
+.dark {
+  --background: 260 18% 7.5%;
+  --foreground: 36 18% 95%;
+  --border: 260 11% 18%;
+  --card: 260 16% 10%;
+  --card-foreground: 36 18% 95%;
+  --card-border: 260 11% 16%;
+  --sidebar: 260 17% 8.7%;
+  --sidebar-foreground: 36 18% 95%;
+  --sidebar-border: 260 11% 16%;
+  --sidebar-accent: 260 13% 15%;
+  --muted: 260 11% 17%;
+  --muted-foreground: 36 8% 64%;
+  --popover: 260 16% 11%;
+  --popover-border: 260 11% 18%;
+  --input: 260 10% 27%;
+}
+
+html {
+  background: hsl(var(--background));
+}
+
+body {
+  background:
+    radial-gradient(900px 540px at 88% -12%, hsl(var(--primary) / 0.045), transparent 64%),
+    hsl(var(--background));
+}
+
+/* ── Quiet surfaces ───────────────────────────────────────────── */
+.shadcn-card {
+  border-radius: 1rem !important;
+  border-color: hsl(var(--card-border)) !important;
+  background: hsl(var(--card) / 0.96) !important;
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.025) !important;
+  backdrop-filter: none !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shadcn-card,
+  .shadcn-card:hover {
+    transform: none !important;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease !important;
+  }
+
+  .shadcn-card:hover {
+    border-color: hsl(var(--primary) / 0.18) !important;
+    box-shadow: 0 8px 26px -22px hsl(var(--foreground) / 0.35) !important;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: none !important;
+  }
+}
+
+/* Remove the app-wide CGI feel while keeping semantic motion. */
+.card-hover:hover,
+.card-premium:hover {
+  transform: none !important;
+  box-shadow: 0 8px 26px -22px hsl(var(--foreground) / 0.35) !important;
+}
+
+.np-ambient-aurora {
+  opacity: 0.34;
+  animation: none !important;
+  background:
+    radial-gradient(60% 50% at 12% 4%, hsl(var(--primary) / 0.06), transparent 72%),
+    radial-gradient(48% 44% at 92% 18%, hsl(var(--chart-3) / 0.035), transparent 74%);
+}
+
+.np-ambient-noise {
+  opacity: 0.01 !important;
+}
+
+/* ── App chrome ───────────────────────────────────────────────── */
+aside[aria-label="Menu de navegação"] {
+  background: hsl(var(--sidebar) / 0.965) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(18px);
+}
+
+aside[aria-label="Menu de navegação"] > div:first-of-type {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+/* Featured shortcuts remain available, but stop looking like banners. */
+[data-testid="featured-filtro"],
+[data-testid="featured-avaliacao-cognitiva"] {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0.75rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+[data-testid="featured-filtro"]:hover,
+[data-testid="featured-avaliacao-cognitiva"]:hover {
+  background: hsl(var(--sidebar-accent) / 0.72) !important;
+  transform: none !important;
+}
+
+[data-testid="featured-filtro"] > span:first-of-type,
+[data-testid="featured-avaliacao-cognitiva"] > span:first-of-type {
+  background: hsl(var(--primary) / 0.10) !important;
+  color: hsl(var(--primary)) !important;
+  box-shadow: none !important;
+  border: 1px solid hsl(var(--primary) / 0.10);
+}
+
+#sidebar-nav [data-testid^="nav-"] {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+@media (min-width: 768px) {
+  #sidebar-nav [data-testid^="nav-"] {
+    min-height: 40px !important;
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+}
+
+/* The seven-chip sticky flow duplicated information already present in each page.
+   Removing only the visual chrome preserves every route and clinical workflow. */
+#main-content > .sticky {
+  display: none !important;
+}
+
+#main-content > div:last-child {
+  max-width: 1440px !important;
+  padding-left: clamp(0.875rem, 2.1vw, 2rem) !important;
+  padding-right: clamp(0.875rem, 2.1vw, 2rem) !important;
+}
+
+/* Global legal copy stays visible but behaves like a footer, not another alert. */
+#main-content aside[aria-label="Aviso de finalidade educativa"] {
+  max-width: 74rem;
+  margin: 2.25rem auto 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 10px !important;
+  line-height: 1.55 !important;
+  box-shadow: none !important;
+}
+
+#main-content aside[aria-label="Aviso de finalidade educativa"] > span[aria-hidden="true"] {
+  display: none !important;
+}
+
+/* ── Home: editorial, calm and useful ─────────────────────────── */
+.np-home-hero {
+  min-height: 0 !important;
+  padding: clamp(1.5rem, 3.2vw, 3rem) !important;
+  border-radius: 1.35rem !important;
+  border-color: hsl(var(--border) / 0.9) !important;
+  background:
+    linear-gradient(145deg, hsl(var(--card) / 0.98), hsl(var(--background) / 0.88)),
+    hsl(var(--card)) !important;
+  box-shadow: 0 16px 52px -44px hsl(var(--foreground) / 0.42) !important;
+}
+
+.np-home-orb {
+  opacity: 0.35 !important;
+  filter: blur(32px) !important;
+}
+
+.np-home-orb-one {
+  width: 13rem !important;
+  height: 13rem !important;
+  right: -4rem !important;
+  top: -6rem !important;
+}
+
+.np-home-orb-two {
+  width: 10rem !important;
+  height: 10rem !important;
+  bottom: -7rem !important;
+}
+
+.np-home-hero h1 {
+  max-width: 15ch !important;
+  font-size: clamp(2.5rem, 6.2vw, 4.55rem) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.048em !important;
+}
+
+.np-title-gradient {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: hsl(var(--primary)) !important;
+}
+
+.np-primary-cta {
+  background: hsl(var(--primary)) !important;
+  box-shadow: 0 8px 20px -14px hsl(var(--primary) / 0.8) !important;
+}
+
+.np-primary-cta:hover {
+  transform: none !important;
+  box-shadow: 0 10px 24px -16px hsl(var(--primary) / 0.9) !important;
+}
+
+/* App inventory counts are system metadata, not primary clinical content. */
+.np-home-hero [aria-label="Métricas do app"] {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .np-home-hero > .relative {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .np-home-hero > .relative > div:last-child {
+    display: none !important;
+  }
+}
+
+[data-testid^="home-flow-"] {
+  border-radius: 1rem !important;
+  border-color: hsl(var(--border) / 0.82) !important;
+  background: hsl(var(--card) / 0.88) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding: 1rem !important;
+  gap: 0.9rem !important;
+}
+
+[data-testid^="home-flow-"]:hover {
+  transform: none !important;
+  border-color: hsl(var(--primary) / 0.20) !important;
+  box-shadow: 0 8px 24px -22px hsl(var(--foreground) / 0.38) !important;
+}
+
+/* ── Controls ─────────────────────────────────────────────────── */
+[role="tablist"] {
+  border: 1px solid hsl(var(--border) / 0.72);
+  background: hsl(var(--muted) / 0.46) !important;
+  box-shadow: none !important;
+}
+
+[role="tab"] {
+  border-radius: 0.65rem !important;
+  box-shadow: none !important;
+}
+
+input,
+textarea,
+select {
+  box-shadow: none !important;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.10) !important;
+}
+
+/* Keep the operational dashboard readable when many modules are enabled. */
+#main-content [class*="rounded-[2rem]"] {
+  border-radius: 1.25rem !important;
+}
+
+#main-content [class*="bg-gradient-to-br"] {
+  background-image: none;
+}
+
+/* Preserve semantic warnings/errors: only decorative generic gradients are reset. */
+.border-destructive,
+.bg-destructive,
+.text-destructive,
+[class*="border-red-"],
+[class*="bg-red-"] {
+  /* no-op marker: intentionally left untouched */
+}
+
+@media (max-width: 767px) {
+  .np-home-hero {
+    padding: 1.25rem !important;
+    border-radius: 1.1rem !important;
+  }
+
+  .np-home-hero h1 {
+    font-size: clamp(2.15rem, 12vw, 3.15rem) !important;
+  }
+
+  #main-content > div:last-child {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+@media print {
+  .np-ambient-layer,
+  #main-content > .sticky {
+    display: none !important;
+  }
+}
