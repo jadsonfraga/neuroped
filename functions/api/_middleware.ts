@@ -28,12 +28,10 @@ import {
   type AuthContextData,
 } from "./auth/_authorization";
 
-// Rate limit em memória (fallback quando KV não disponível)
-// Cloudflare Workers reusam instâncias no mesmo pop — suficiente para burst básico
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
 
-const RATE_LIMIT_WINDOW_MS = 60_000;   // 1 minuto
-const RATE_LIMIT_MAX = 60;             // 60 req/min por IP
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 60;
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
@@ -87,16 +85,6 @@ function apiError(message: string, code: string, status: number): Response {
   });
 }
 
-/**
- * Um banco D1 ativo pode conter dados clínicos, ainda que as tabelas históricas
- * tenham o sufixo `_demo`. Nesse cenário toda rota não pública exige access JWT.
- * Sem D1, o catálogo fictício continua disponível para demonstração/offline.
- *
- * `/api/cert` é uma exceção deliberada: o endpoint está aposentado e sempre
- * responde HTTP 410 sem expor certificado, senha ou metadado sensível. Mantê-lo
- * público permite provar remotamente que o antigo mecanismo de distribuição não
- * reapareceu, enquanto todas as rotas clínicas continuam autenticadas.
- */
 interface AuthorizationResult {
   failure: Response | null;
   user: PublicUser | null;
@@ -112,10 +100,10 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
 
   const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
+  // A exceção do operador é deliberadamente estreita: somente o snapshot raiz
+  // da agenda. Rotas filhas (ex.: /api/agenda/audit) nunca herdam escrita.
   const isAgendaWrite =
-    isWrite &&
-    (path === "/api/agenda" || path.startsWith("/api/agenda/")) &&
-    canWriteOperationalAgenda(user);
+    isWrite && path === "/api/agenda" && canWriteOperationalAgenda(user);
 
   if (isWrite && !isOwnConsentWrite && !isAgendaWrite && !canWriteClinicalData(user)) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
@@ -181,7 +169,6 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
 }
 
 function getRateLimitKey(request: Request): string {
-  // Usa CF-Connecting-IP (Cloudflare) ou X-Forwarded-For como fallback
   const ip =
     request.headers.get("CF-Connecting-IP") ??
     request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ??
@@ -201,7 +188,6 @@ function checkRateLimit(key: string): { allowed: boolean; remaining: number; res
   entry.count += 1;
   const remaining = Math.max(0, RATE_LIMIT_MAX - entry.count);
 
-  // Limpar entradas expiradas periodicamente (evitar memory leak)
   if (inMemoryRateMap.size > 10_000) {
     for (const [k, v] of inMemoryRateMap.entries()) {
       if (now > v.resetAt) inMemoryRateMap.delete(k);
@@ -220,7 +206,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const origin = request.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin, new URL(request.url).origin);
 
-  // Preflight CORS
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -228,7 +213,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   }
 
-  // Rate limiting por IP
   const rlKey = getRateLimitKey(request);
   const rl = checkRateLimit(rlKey);
   if (!rl.allowed) {
@@ -251,7 +235,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // Validar Content-Type em POST/PATCH/PUT
   if (["POST", "PATCH", "PUT"].includes(request.method)) {
     const ct = request.headers.get("Content-Type") ?? "";
     if (!ct.includes("application/json")) {
@@ -287,11 +270,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     mutableContext.data.authUser = authorization.user;
   }
 
-  // Executa a função real
   const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
   const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
-  // Auth (login/refresh/logout) é backend real, não escrita clínica demo — sempre
-  // liberado, senão o login (POST) cairia no bloqueio read-only.
   const isAuthRoute = new URL(request.url).pathname.startsWith("/api/auth/");
   if (isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
     return new Response(
@@ -312,18 +292,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const response = await next();
 
-  // Clona e adiciona headers de segurança e CORS
   const newHeaders = new Headers(response.headers);
   for (const [k, v] of Object.entries({ ...corsHeaders, ...SECURITY_HEADERS })) {
     newHeaders.set(k, v);
   }
-  // /api/health é sondado em TODO carregamento (getAuthCapability) e não carrega
-  // nenhum dado sensível — só informa se o backend exige login. O `no-store`
-  // global (correto para os demais endpoints clínicos) fazia qualquer página que
-  // sondasse health ficar inelegível ao back/forward cache do navegador
-  // (JsNetworkRequestReceivedCacheControlNoStoreResource). `no-cache` mantém a
-  // revalidação obrigatória (nunca serve estado obsoleto) sem bloquear o bfcache.
-  // Nenhum outro endpoint muda: os sensíveis seguem `no-store`.
   const requestPath = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
   if (requestPath === "/api/health") {
     newHeaders.set("Cache-Control", "no-cache");
