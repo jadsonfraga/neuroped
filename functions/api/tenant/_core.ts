@@ -11,6 +11,10 @@ import {
 export interface TenantEnv {
   DB?: D1Database;
   CLINICAL_DATA_KEY?: string;
+  CLINICAL_DATA_KEY_ID?: string;
+  CLINICAL_DATA_KEY_PREVIOUS?: string;
+  CLINICAL_DATA_KEY_PREVIOUS_ID?: string;
+  CLINICAL_INDEX_KEY?: string;
   CLINICAL_LIVE_ENABLED?: string;
 }
 
