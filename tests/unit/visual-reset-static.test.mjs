@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 const main = read("client/src/main.tsx");
 const css = read("client/src/styles/visual-reset.css");
+const pageHero = read("client/src/components/PageHero.tsx");
 
 const proportionImport = main.indexOf('import "./styles/proportion-guards.css"');
 const resetImport = main.indexOf('import "./styles/visual-reset.css"');
@@ -28,6 +29,10 @@ assert.match(css, /header\[class\*="bg-gradient-to-br"\]/,
   "reset de gradiente deve permanecer restrito a headers decorativos");
 assert.doesNotMatch(css, /#main-content\s+\[class\*="bg-gradient-to-br"\]/,
   "não pode existir reset global de gradientes que apague estados semânticos");
+assert.match(pageHero, /tracking-\[0\.16em\] text-primary/,
+  "eyebrow de PageHero deve usar primary pleno sobre a superfície clara");
+assert.doesNotMatch(pageHero, /tracking-\[0\.16em\] text-primary\/70/,
+  "PageHero não pode reintroduzir contraste insuficiente no eyebrow");
 
 assert.doesNotMatch(css, /\.shadcn-card\s*\{[^}]*display:\s*none/is,
   "cards funcionais não podem ser ocultados");
