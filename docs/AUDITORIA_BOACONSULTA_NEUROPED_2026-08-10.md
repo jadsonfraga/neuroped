@@ -12,8 +12,8 @@ Fluxo:
 
 1. profissional autenticado seleciona uma exportação do BoaConsulta;
 2. o NeuroPed calcula SHA-256 do arquivo e gera prévia sem persistir conteúdo clínico;
-3. ao confirmar, o arquivo original é cifrado com AES-256-GCM e salvo em R2 privado;
-4. CSV/JSON/TXT são normalizados por um adaptador versionado e cada registro fica cifrado individualmente no D1;
+3. ao confirmar, o arquivo original é dividido em chunks de 64 KiB, cada chunk é cifrado com AES-256-GCM e persistido no D1;
+4. CSV/JSON/TXT são normalizados por um adaptador versionado e cada registro fica cifrado individualmente;
 5. o mesmo arquivo não é importado duas vezes para o mesmo proprietário;
 6. identificadores de reconciliação e hashes de registros usam HMAC-SHA-256 com subchave dedicada derivada por HKDF;
 7. registros com identidade insuficiente entram em `needs_review`;
@@ -68,38 +68,31 @@ A interface do NeuroPed está configurada com `OPEN_ACCESS = true` para navegaç
 
 ## Arquitetura implementada
 
-### 1. Staging D1
+### 1. Cofre e staging D1
 
 Migração: `db/migrations/0008_boaconsulta_import_bridge.sql`
 
 Tabelas:
 
 - `external_import_batches`
+- `external_import_file_chunks`
 - `external_import_records`
 
 Características:
 
 - ownership obrigatório;
-- fingerprint SHA-256 do arquivo;
+- fingerprint SHA-256 do arquivo completo;
 - unicidade por `(owner, source_system, source_sha256)`;
 - nome original do arquivo cifrado;
-- conteúdo bruto cifrado;
-- conteúdo normalizado cifrado;
+- arquivo original integral preservado em chunks AES-GCM;
+- conteúdo bruto e normalizado de registros cifrado individualmente;
 - fingerprint de paciente em HMAC não reversível;
 - estados `staged`, `needs_review`, `ready`, `imported`, `failed`;
 - referência futura para paciente/eventos alvo sem criar vínculo prematuro.
 
-### 2. Cofre R2
+A escolha por D1 elimina uma permissão R2 que o token Cloudflare atual do repositório não possui. A primeira tentativa de bootstrap detectou esse limite antes do merge, e a arquitetura foi simplificada para usar apenas a infraestrutura que o NeuroPed já controla. Nenhum prontuário real foi envolvido nessa tentativa.
 
-Binding: `BOACONSULTA_IMPORTS_BUCKET`
-
-Bucket: `neuroped-boaconsulta-imports`
-
-O arquivo original é criptografado **antes** do `put` no R2. O objeto recebe chave opaca baseada em UUID, não o nome do paciente/arquivo.
-
-Não deve ser habilitado `r2.dev`, domínio público ou exposição direta do bucket.
-
-### 3. Criptografia e separação de chaves
+### 2. Criptografia e separação de chaves
 
 Secret Cloudflare: `NEUROPED_IMPORT_ENCRYPTION_KEY`
 
@@ -107,12 +100,12 @@ Secret Cloudflare: `NEUROPED_IMPORT_ENCRYPTION_KEY`
 - HKDF-SHA-256 para derivar subchaves independentes;
 - subchave AES-256-GCM para conteúdo;
 - subchave HMAC-SHA-256 para fingerprints de paciente e de registros;
-- IV aleatório de 12 bytes por payload AES-GCM;
+- IV aleatório de 12 bytes por payload/chunk AES-GCM;
 - não reutiliza JWT;
 - workflow cria o segredo apenas se ele ainda não existir e nunca registra o valor em log;
 - reexecuções preservam a mesma chave para não tornar acervo antigo ilegível.
 
-### 4. Parser adaptativo
+### 3. Parser adaptativo
 
 Arquivo: `shared/boaconsulta-import.ts`
 
@@ -128,13 +121,13 @@ Suporta:
 - datas brasileiras `dd/mm/aaaa` e ISO sem converter formato de data estrangeiro/ambíguo;
 - aliases comuns para nome, nascimento, CPF, responsável, telefone, CID, data, evolução, profissional e identificador externo.
 
-### 5. PDF
+### 4. PDF
 
 PDF é aceito para arquivamento criptografado do original.
 
 **Não há OCR nem extração heurística de prontuário PDF nesta versão.** Transformar PDF em registro clínico sem validar o template real seria inseguro. Um adaptador de PDF deve ser criado somente após inspecionar uma exportação BoaConsulta deidentificada.
 
-### 6. Console de uso
+### 5. Console de uso
 
 URL estática no mesmo origin:
 
@@ -176,13 +169,13 @@ A chave é convertida em HMAC-SHA-256 antes de persistir. **Nome sozinho nunca a
 |---|---|---|---|
 | Prontuário longitudinal | Sim | Parcial/Clinical Core | Preserva export + prepara reconciliação |
 | Evolução clínica | Sim | Sim | Detecta como `encounter` quando estruturado |
-| Anexos | Sim | Infra local existente | Arquivo original cifrado no R2 |
+| Anexos | Sim | Infra local existente | Export original integral em chunks cifrados |
 | Prescrição/documentos | Sim | Sim | Preserva no arquivo; mapeamento específico depende do export real |
 | Agenda/teleconsulta | Sim | Módulos próprios | Fora do escopo desta importação |
 | Deduplicação de importação | Não documentada publicamente | Ausente para fonte externa | SHA-256 de arquivo + HMAC de registro |
 | Proveniência da fonte | Origem implícita | Clinical Core suporta | `source_system=boaconsulta` + mapping version |
 | Auditoria | Produto descreve segurança | `audit_logs` existente | preview/store/duplicate auditados sem PHI nos detalhes |
-| Criptografia de staging | Não é possível auditar implementação interna | Gap no D1 demo | AES-256-GCM antes de R2/D1 |
+| Criptografia de staging | Não é possível auditar implementação interna | Gap no D1 demo | AES-256-GCM antes de persistir arquivo/registros |
 | API pública clínica | Não localizada | API própria | Bridge por exportação, sem scraping |
 
 ## O que deliberadamente ainda não foi automatizado
@@ -230,13 +223,13 @@ PR gate dedicado:
 - parser/contrato de reconciliação;
 - type-check das Pages Functions e código compartilhado;
 - build do console;
-- presença do console no artefato.
+- presença do console no artefato;
+- bootstrap idempotente das três tabelas D1 e da chave dedicada.
 
 Release gate em `main`:
 
 - auditoria de dependências;
 - `npm run verify`;
-- criação/verificação do R2 privado;
 - migração D1 idempotente;
 - criação não destrutiva da chave dedicada se ausente;
 - build e redeploy do Cloudflare Pages;
@@ -252,7 +245,7 @@ Release gate em `main`:
 - `tests/unit/boaconsulta-import-contract.test.ts`
 - `.github/workflows/boaconsulta-import-pr.yml`
 - `.github/workflows/boaconsulta-import-release.yml`
-- `wrangler.toml` (binding R2)
+- `wrangler.toml`
 
 ## Princípio de segurança
 
