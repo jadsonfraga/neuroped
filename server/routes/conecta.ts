@@ -6,7 +6,7 @@ import { patients } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth, requireProfessional } from "../middleware/auth.js";
 import { writeRateLimit } from "../middleware/security.js";
-import { canAccessPatient } from "../lib/ownership.js";
+import { canAccessPatient, type AuthzUser } from "../lib/ownership.js";
 import { encrypt, decrypt } from "../lib/crypto.js";
 import { getAuditContextFromRequest, logAudit } from "../lib/audit.js";
 import { oneParam } from "../lib/http.js";
@@ -79,7 +79,7 @@ function present(row: StoredRow): ConectaEvent {
   };
 }
 
-function patientFor(user: NonNullable<Express.Request["user"]>, patientId: string) {
+function patientFor(user: AuthzUser, patientId: string) {
   const patient = db.select().from(patients).where(eq(patients.id, patientId)).get();
   if (!patient) return { status: 404 as const, patient: null };
   if (!canAccessPatient(user, patient)) return { status: 403 as const, patient: null };
