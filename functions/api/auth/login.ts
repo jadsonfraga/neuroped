@@ -14,7 +14,7 @@ import {
   registerSuccessfulLogin,
   bootstrapAdmin,
 } from "./_shared";
-import { verifyPassword } from "./_crypto";
+import { DUMMY_PASSWORD_HASH, verifyPassword } from "./_crypto";
 import { createSessionTokens } from "./_sessions";
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
@@ -70,25 +70,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const user = await getUserByEmail(env.DB, email);
-  if (!user) return json(INVALID, 401);
-
-  if (!user.is_active) {
-    return json({ error: "Conta desativada.", code: "ACCOUNT_DISABLED" }, 403);
-  }
-  if (isLocked(user)) {
-    return json(
-      { error: "Conta temporariamente bloqueada por tentativas. Aguarde alguns minutos.", code: "ACCOUNT_LOCKED" },
-      423,
-    );
-  }
-
-  const ok = await verifyPassword(password, user.password_hash);
-  if (!ok) {
-    await registerFailedAttempt(env.DB, user);
+  const locked = user ? isLocked(user) : false;
+  // Mesmo quando o e-mail não existe, executa PBKDF2 sobre um hash sentinela.
+  // Estado inexistente/inativo/bloqueado e senha incorreta compartilham a mesma
+  // resposta externa para não funcionar como oráculo de cadastro.
+  const ok = await verifyPassword(password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
+  if (!user || !user.is_active || locked || !ok) {
+    if (user && user.is_active && !locked && !ok) {
+      await registerFailedAttempt(env.DB, user);
+    }
     return json(INVALID, 401);
   }
 
-  await registerSuccessfulLogin(env.DB, user);
+  if (!(await registerSuccessfulLogin(env.DB, user))) {
+    return json(INVALID, 401);
+  }
   try {
     const tokens = await createSessionTokens(env.DB, user, secret);
     return json({ ...tokens, user: publicUser(user) }, 200);

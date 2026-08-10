@@ -9,6 +9,11 @@ const BCRYPT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
+// Hash bcrypt válido de custo 12 que não corresponde a credencial do sistema.
+// Evita que e-mail inexistente pule completamente o trabalho criptográfico.
+export const DUMMY_BCRYPT_HASH =
+  "$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
 export async function hashPassword(plaintext: string): Promise<string> {
   if (!plaintext || plaintext.length < 12) {
     throw new Error("Senha deve ter no minimo 12 caracteres");

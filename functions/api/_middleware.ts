@@ -132,8 +132,23 @@ function getRateLimitKey(request: Request): string {
   return `rl:${ip}`;
 }
 
-function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetAt: number } {
+async function checkRateLimit(
+  key: string,
+  kv?: KVNamespace,
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
   const now = Date.now();
+  const blockKey = `rate-limit:block:${key}`;
+  if (kv) {
+    try {
+      const distributedReset = Number(await kv.get(blockKey));
+      if (Number.isFinite(distributedReset) && distributedReset > now) {
+        return { allowed: false, remaining: 0, resetAt: distributedReset };
+      }
+    } catch {
+      // KV é reforço distribuído; falha dele não derruba a API nem elimina o teto local.
+    }
+  }
+
   let entry = inMemoryRateMap.get(key);
   if (!entry || now > entry.resetAt) {
     entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
@@ -141,10 +156,18 @@ function checkRateLimit(key: string): { allowed: boolean; remaining: number; res
   }
   entry.count += 1;
   const remaining = Math.max(0, RATE_LIMIT_MAX - entry.count);
+  const allowed = entry.count <= RATE_LIMIT_MAX;
+  if (!allowed && kv) {
+    try {
+      await kv.put(blockKey, String(entry.resetAt), { expirationTtl: 60 });
+    } catch {
+      // Mantém o bloqueio local mesmo se a propagação distribuída falhar.
+    }
+  }
   if (inMemoryRateMap.size > 10_000) {
     for (const [k, v] of inMemoryRateMap.entries()) if (now > v.resetAt) inMemoryRateMap.delete(k);
   }
-  return { allowed: entry.count <= RATE_LIMIT_MAX, remaining, resetAt: entry.resetAt };
+  return { allowed, remaining, resetAt: entry.resetAt };
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -156,7 +179,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return new Response(null, { status: 204, headers: { ...corsHeaders, ...SECURITY_HEADERS } });
   }
 
-  const rl = checkRateLimit(getRateLimitKey(request));
+  const rl = await checkRateLimit(getRateLimitKey(request), env.RATE_LIMIT_KV);
   if (!rl.allowed) {
     return new Response(JSON.stringify({
       error: "Muitas requisições. Aguarde antes de tentar novamente.",
@@ -187,6 +210,24 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         headers: { "Content-Type": "application/json", ...corsHeaders, ...SECURITY_HEADERS },
       });
     }
+  }
+
+  const requestPathBeforeAuth = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const isProductionBeforeAuth = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
+  const demoWritesEnabledBeforeAuth = env.DEMO_API_WRITES_ENABLED === "true";
+  if (
+    isProductionBeforeAuth &&
+    !env.DB &&
+    !demoWritesEnabledBeforeAuth &&
+    !PUBLIC_API_PATHS.has(requestPathBeforeAuth)
+  ) {
+    return new Response(JSON.stringify({
+      error: "Backend persistente indisponível. A rota protegida falhou fechada.",
+      code: "DB_REQUIRED",
+    }), {
+      status: 503,
+      headers: { "Content-Type": "application/json", ...corsHeaders, ...SECURITY_HEADERS },
+    });
   }
 
   const authorization = await authorizeClinicalApi(request, env);

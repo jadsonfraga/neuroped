@@ -102,23 +102,30 @@ export async function createSessionTokens(
     expiresAt,
   );
 
-  await db
+  const inserted = await db
     .prepare(
       `INSERT INTO auth_refresh_sessions
          (id, user_id, family_id, token_hash, parent_session_id,
           replaced_by_session_id, expires_at, revoked_at, revoke_reason,
           created_at, last_used_at)
-       VALUES (?, ?, ?, ?, NULL, NULL, ?, NULL, NULL, ?, NULL)`,
+       SELECT ?, id, ?, ?, NULL, NULL, ?, NULL, NULL, ?, NULL
+         FROM users
+        WHERE id = ? AND is_active = 1
+          AND (locked_until IS NULL OR locked_until <= ?)`,
     )
     .bind(
       refreshId,
-      user.id,
       familyId,
       tokens.refreshHash,
       expiresAt,
       now.toISOString(),
+      user.id,
+      now.toISOString(),
     )
     .run();
+  if ((inserted.meta?.changes ?? 0) !== 1) {
+    throw new Error("AUTH_USER_STATE_CHANGED");
+  }
 
   const { refreshHash: _refreshHash, ...publicTokens } = tokens;
   return publicTokens;
