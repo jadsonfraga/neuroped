@@ -42,15 +42,19 @@ jobs:
           npm run lint
           npm run build:client
 
-      - name: Commitar somente com gates verdes
+      - name: Publicar somente código e testes aprovados
         run: |
           set -euo pipefail
-          rm -f .github/workflows/tmp-ops-hardening.yml .github/workflows/tmp-ops-hardening-v2.yml
+          # O GITHUB_TOKEN deste runner não possui workflows:write. Mantemos os
+          # workflows idênticos ao HEAD remoto e publicamos somente código/testes.
+          git checkout -- .github/workflows/operations-d1-migration.yml
+          git checkout -- .github/workflows/tmp-ops-hardening.yml || true
+          git checkout -- .github/workflows/tmp-ops-hardening-v2.yml
           rm -f scripts/tmp_ops_hardening.py scripts/tmp_ops_hardening_v2.py
           git config user.name "NeuroPed CI"
           git config user.email "actions@users.noreply.github.com"
-          git add -A
+          git add shared/operations.ts db/migrations/0007_operational_suite.sql functions/api/operations/_core.ts functions/api/operations/index.ts functions/api/public-booking.ts client/src/App.tsx client/src/pages/agendar.tsx functions/api/_middleware.ts tests/unit/operations-contract.test.ts tests/unit/operations-integration-static.test.mjs scripts/tmp_ops_hardening.py scripts/tmp_ops_hardening_v2.py
           git commit -m "fix(ops): endurecer concorrência, tokens e remarcação"
           git push origin HEAD:feat/operational-suite-v1
 
-# retry: gate alinhado à remoção de operador sem vínculo
+# retry: publica sem alterar workflows pelo token do runner
