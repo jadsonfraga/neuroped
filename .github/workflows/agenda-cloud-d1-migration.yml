@@ -1,0 +1,96 @@
+name: NeuroPed Agenda Cloud D1 migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0007_agenda_cloud.sql"
+      - "functions/api/agenda/**"
+      - "shared/agenda-cloud.ts"
+      - ".github/workflows/agenda-cloud-d1-migration.yml"
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-agenda-cloud-d1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Migração D1 da Agenda permitida somente a partir de main."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+      - name: Validar contrato da Agenda Cloud
+        run: |
+          node --import tsx tests/unit/agenda-cloud-contract.test.ts
+          node tests/unit/agenda-cloud-integration-static.test.mjs
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar migração 0007 da Agenda Cloud
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0007_agenda_cloud.sql
+
+      - name: Verificar schema D1 da Agenda Cloud
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name IN ('agenda_workspace_demo','agenda_audit_demo') ORDER BY name;" \
+            > /tmp/agenda-cloud-tables.txt 2>&1
+          cat /tmp/agenda-cloud-tables.txt
+          grep -q "agenda_workspace_demo" /tmp/agenda-cloud-tables.txt || { echo "::error::agenda_workspace_demo ausente"; exit 1; }
+          grep -q "agenda_audit_demo" /tmp/agenda-cloud-tables.txt || { echo "::error::agenda_audit_demo ausente"; exit 1; }
+          test "$(grep -Eoc "CHECK[[:space:]]*\([[:space:]]*is_demo[[:space:]]*=[[:space:]]*1[[:space:]]*\)" /tmp/agenda-cloud-tables.txt)" -ge 2 || {
+            echo "::error::Trava física is_demo = 1 ausente nas tabelas da agenda"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('idx_agenda_workspace_demo_updated_at','idx_agenda_audit_demo_workspace_time') ORDER BY name;" \
+            > /tmp/agenda-cloud-indexes.txt 2>&1
+          cat /tmp/agenda-cloud-indexes.txt
+          grep -q "idx_agenda_workspace_demo_updated_at" /tmp/agenda-cloud-indexes.txt || { echo "::error::Índice workspace ausente"; exit 1; }
+          grep -q "idx_agenda_audit_demo_workspace_time" /tmp/agenda-cloud-indexes.txt || { echo "::error::Índice auditoria ausente"; exit 1; }
+          echo "✅ Agenda Cloud D1: migração 0007 e invariantes confirmados."
