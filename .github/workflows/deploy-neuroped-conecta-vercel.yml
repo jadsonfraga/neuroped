@@ -6,6 +6,8 @@ on:
       - deploy/neuroped-conecta-vercel
     paths:
       - "vercel-conecta/**"
+      - "scripts/guards/audit-neuroped-conecta-standalone.mjs"
+      - "tests/e2e/neuroped-conecta-vercel-smoke.cjs"
       - ".github/workflows/deploy-neuroped-conecta-vercel.yml"
   workflow_dispatch:
 
@@ -19,7 +21,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       SOURCE_URL: https://neuroped-conecta.lovable.app
       PUBLIC_URL: https://neuroped-conecta.vercel.app
@@ -30,12 +32,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Validar configuração
+      - name: Validar configuração e contratos locais
         run: |
           set -euo pipefail
           [ -n "$VERCEL_TOKEN" ] || { echo "::error::VERCEL_TOKEN ausente"; exit 1; }
           [ -n "$VERCEL_ORG_ID" ] || { echo "::error::VERCEL_ORG_ID ausente"; exit 1; }
-          test -f vercel-conecta/vercel.json
+          node --check vercel-conecta/api/proxy.mjs
+          node --check vercel-conecta/np-preload.js
+          node --check vercel-conecta/np-enhance.js
+          node --check vercel-conecta/insights.js
+          node scripts/guards/audit-neuroped-conecta-standalone.mjs
 
       - name: Aguardar origem estável do NeuroPed Conecta
         run: |
@@ -77,31 +83,51 @@ jobs:
           echo "Deployment imutável: $deployment_url"
           echo "Alias público: $PUBLIC_URL"
 
-      - name: Validar app no alias público
+      - name: Validar superfícies públicas
         run: |
           set -euo pipefail
           for i in $(seq 1 24); do
             root_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-root.html -w "%{http_code}" "$PUBLIC_URL/" || true)
             app_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-app.html -w "%{http_code}" "$PUBLIC_URL/app" || true)
+            insight_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-insights.html -w "%{http_code}" "$PUBLIC_URL/insights" || true)
+            css_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-css -w "%{http_code}" "$PUBLIC_URL/np-enhance.css" || true)
+            logo_code=$(curl -sS -L --max-time 20 -o /tmp/vercel-logo -w "%{http_code}" "$PUBLIC_URL/brand-logo.jpeg" || true)
 
             if [ "$root_code" = "200" ] \
               && [ "$app_code" = "200" ] \
-              && grep -qi "NeuroPed Conecta" /tmp/vercel-root.html; then
+              && [ "$insight_code" = "200" ] \
+              && [ "$css_code" = "200" ] \
+              && [ "$logo_code" = "200" ] \
+              && grep -qi "NeuroPed Conecta" /tmp/vercel-root.html \
+              && grep -qi "Insights que mostram o caminho" /tmp/vercel-insights.html \
+              && grep -q "np-insight-card" /tmp/vercel-css \
+              && [ "$(wc -c < /tmp/vercel-logo)" -gt 10000 ]; then
               echo "Vercel confirmado: $PUBLIC_URL"
-              echo "Root HTTP $root_code · /app HTTP $app_code"
+              echo "root=$root_code app=$app_code insights=$insight_code css=$css_code logo=$logo_code"
               exit 0
             fi
 
-            echo "Aguardando alias público ($i/24): root=$root_code app=$app_code"
-            if [ "$i" -eq 1 ] || [ "$i" -eq 12 ] || [ "$i" -eq 24 ]; then
-              head -c 300 /tmp/vercel-root.html 2>/dev/null | tr '\n' ' ' || true
-              echo
-            fi
+            echo "Aguardando alias público ($i/24): root=$root_code app=$app_code insights=$insight_code css=$css_code logo=$logo_code"
             sleep 5
           done
 
-          echo "::error::O alias público não confirmou o NeuroPed Conecta."
+          echo "::error::O alias público não confirmou todas as superfícies do NeuroPed Conecta."
           exit 1
+
+      - name: Instalar navegador de QA
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/neuroped-conecta-qa
+          cd /tmp/neuroped-conecta-qa
+          npm init -y >/dev/null 2>&1
+          npm install --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+
+      - name: Smoke browser anti-regressão
+        env:
+          NODE_PATH: /tmp/neuroped-conecta-qa/node_modules
+          NEUROPED_CONECTA_URL: https://neuroped-conecta.vercel.app
+        run: node tests/e2e/neuroped-conecta-vercel-smoke.cjs
 
       - name: Resumo
         if: always()
@@ -109,9 +135,9 @@ jobs:
           echo "## NeuroPed Conecta — Vercel" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Alias público: $PUBLIC_URL" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Origem: $SOURCE_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Origem funcional preservada: $SOURCE_URL" >> "$GITHUB_STEP_SUMMARY"
           echo "- Deployment: ${{ steps.deploy.outputs.deployment_url }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Branch: $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch standalone: $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "> Publicação técnica para demonstração/staging; não liberar dados clínicos reais antes da auditoria final de segurança/LGPD." >> "$GITHUB_STEP_SUMMARY"
+          echo "> Camada premium + Insights + proteção DEMO/LIVE promovidos somente após contratos locais, smoke HTTP e browser QA." >> "$GITHUB_STEP_SUMMARY"
