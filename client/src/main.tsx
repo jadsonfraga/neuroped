@@ -6,6 +6,7 @@ import { purgeLegacyCertificateCache } from "./lib/certificateSession";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
 import "./index.css";
 import "./styles/proportion-guards.css";
+import "./styles/visual-reset.css";
 
 installChunkRecovery();
 void purgeLegacyCertificateCache();
