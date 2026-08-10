@@ -11,12 +11,13 @@ A solução implementada nesta branch cria uma fronteira de interoperabilidade i
 Fluxo:
 
 1. profissional autenticado seleciona uma exportação do BoaConsulta;
-2. o NeuroPed calcula SHA-256 do arquivo e gera prévia sem persistir conteúdo;
+2. o NeuroPed calcula SHA-256 do arquivo e gera prévia sem persistir conteúdo clínico;
 3. ao confirmar, o arquivo original é cifrado com AES-256-GCM e salvo em R2 privado;
 4. CSV/JSON/TXT são normalizados por um adaptador versionado e cada registro fica cifrado individualmente no D1;
 5. o mesmo arquivo não é importado duas vezes para o mesmo proprietário;
-6. registros com identidade insuficiente entram em `needs_review`;
-7. nenhuma promoção para prontuário ativo ocorre enquanto o formato real de exportação não tiver sido validado e o caminho canônico de dados reais não estiver protegido em repouso.
+6. identificadores de reconciliação e hashes de registros usam HMAC-SHA-256 com subchave dedicada derivada por HKDF;
+7. registros com identidade insuficiente entram em `needs_review`;
+8. nenhuma promoção para prontuário ativo ocorre enquanto o formato real de exportação não tiver sido validado e o caminho canônico de dados reais não estiver protegido em repouso.
 
 O objetivo desta separação é permitir que **todo o conteúdo exportado seja preservado automaticamente**, sem converter uma incerteza de mapeamento em dado clínico incorreto.
 
@@ -26,23 +27,23 @@ Fontes públicas oficiais consultadas em 10/08/2026:
 
 - https://profissionais.boaconsulta.com/prontuario-eletronico/
 - https://profissionais.boaconsulta.com/
-- https://profissionais.boaconsulta.com/clinicas/
+- https://profissionais.boaconsulta.com/prontuario-eletronico-saude/
 
 O produto descreve:
 
-- prontuário eletrônico customizável;
+- prontuário eletrônico customizável por especialidade;
 - histórico clínico/evoluções;
-- anexos e exames;
-- prescrições e documentos/atestados;
-- integração com agenda e teleconsulta;
-- recursos financeiros/administrativos em planos de clínica;
+- anexos, exames, imagens e vídeos;
+- prescrições, cartas, atestados e pedidos de exame;
+- integração com agenda, teleconsulta, financeiro e Guias TISS;
+- conexão com ferramentas externas conforme o plano contratado;
 - proteção de dados e backups descritos comercialmente.
 
 ### Limite da pesquisa pública
 
 Não foi localizada, nas páginas públicas oficiais consultadas, documentação de uma API clínica pública nem um contrato público de exportação de prontuários com schema estável (CSV/JSON/FHIR etc.). Portanto esta implementação **não usa endpoint interno, scraping de sessão, automação de navegador ou engenharia reversa de API privada**.
 
-Essa decisão evita dependência frágil e reduz risco jurídico, operacional e de segurança.
+Se a conta contratada disponibilizar uma API/exportação oficial estruturada, ela pode ser adicionada como novo adaptador sobre a mesma camada de staging, sem alterar o modelo de segurança.
 
 ## Auditoria do NeuroPed
 
@@ -84,7 +85,7 @@ Características:
 - nome original do arquivo cifrado;
 - conteúdo bruto cifrado;
 - conteúdo normalizado cifrado;
-- fingerprint de paciente em hash;
+- fingerprint de paciente em HMAC não reversível;
 - estados `staged`, `needs_review`, `ready`, `imported`, `failed`;
 - referência futura para paciente/eventos alvo sem criar vínculo prematuro.
 
@@ -98,15 +99,17 @@ O arquivo original é criptografado **antes** do `put` no R2. O objeto recebe ch
 
 Não deve ser habilitado `r2.dev`, domínio público ou exposição direta do bucket.
 
-### 3. Chave dedicada
+### 3. Criptografia e separação de chaves
 
 Secret Cloudflare: `NEUROPED_IMPORT_ENCRYPTION_KEY`
 
-- 32 bytes aleatórios;
-- AES-GCM;
-- IV aleatório de 12 bytes por payload;
+- segredo aleatório de 32 bytes;
+- HKDF-SHA-256 para derivar subchaves independentes;
+- subchave AES-256-GCM para conteúdo;
+- subchave HMAC-SHA-256 para fingerprints de paciente e de registros;
+- IV aleatório de 12 bytes por payload AES-GCM;
 - não reutiliza JWT;
-- workflow cria a chave apenas se ela ainda não existir e nunca registra o valor em log;
+- workflow cria o segredo apenas se ele ainda não existir e nunca registra o valor em log;
 - reexecuções preservam a mesma chave para não tornar acervo antigo ilegível.
 
 ### 4. Parser adaptativo
@@ -119,9 +122,10 @@ Suporta:
 
 - CSV com `;`, `,` ou tab;
 - CSV com campos entre aspas;
+- normalização de MIME no console para CSV rotulado pelo sistema operacional como arquivo de Excel;
 - JSON como array ou envelopes comuns (`data`, `records`, `pacientes`, `prontuarios`, `atendimentos`, `items`);
 - TXT como conteúdo preservado sem vínculo automático;
-- datas brasileiras `dd/mm/aaaa` e ISO sem converter formato inválido/ambíguo;
+- datas brasileiras `dd/mm/aaaa` e ISO sem converter formato de data estrangeiro/ambíguo;
 - aliases comuns para nome, nascimento, CPF, responsável, telefone, CID, data, evolução, profissional e identificador externo.
 
 ### 5. PDF
@@ -154,7 +158,7 @@ SHA-256 do arquivo completo. Se o mesmo arquivo já existir para o mesmo proprie
 
 ### Linha/registros
 
-Cada registro estruturado recebe SHA-256 do JSON bruto. Linhas idênticas repetidas no mesmo arquivo são ignoradas e contabilizadas.
+Cada registro estruturado recebe HMAC-SHA-256 do JSON bruto com subchave dedicada. Linhas idênticas repetidas no mesmo arquivo são ignoradas e contabilizadas sem deixar um hash clínico vulnerável a correlação offline simples.
 
 ### Paciente
 
@@ -164,7 +168,7 @@ O staging cria uma chave de reconciliação a partir de:
 2. nome normalizado;
 3. data de nascimento.
 
-Essa chave é armazenada apenas como hash. **Nome sozinho nunca autoriza vínculo automático.**
+A chave é convertida em HMAC-SHA-256 antes de persistir. **Nome sozinho nunca autoriza vínculo automático.**
 
 ## Comparação funcional
 
@@ -175,9 +179,9 @@ Essa chave é armazenada apenas como hash. **Nome sozinho nunca autoriza víncul
 | Anexos | Sim | Infra local existente | Arquivo original cifrado no R2 |
 | Prescrição/documentos | Sim | Sim | Preserva no arquivo; mapeamento específico depende do export real |
 | Agenda/teleconsulta | Sim | Módulos próprios | Fora do escopo desta importação |
-| Deduplicação de importação | Não documentada publicamente | Ausente para fonte externa | SHA-256 de arquivo + registro |
+| Deduplicação de importação | Não documentada publicamente | Ausente para fonte externa | SHA-256 de arquivo + HMAC de registro |
 | Proveniência da fonte | Origem implícita | Clinical Core suporta | `source_system=boaconsulta` + mapping version |
-| Auditoria | Produto descreve segurança | `audit_logs` existente | preview/store/duplicate auditados sem PHI nos logs |
+| Auditoria | Produto descreve segurança | `audit_logs` existente | preview/store/duplicate auditados sem PHI nos detalhes |
 | Criptografia de staging | Não é possível auditar implementação interna | Gap no D1 demo | AES-256-GCM antes de R2/D1 |
 | API pública clínica | Não localizada | API própria | Bridge por exportação, sem scraping |
 
@@ -187,7 +191,7 @@ Essa chave é armazenada apenas como hash. **Nome sozinho nunca autoriza víncul
 
 Não foi implementada nesta primeira camada por dois motivos objetivos:
 
-1. o schema exato do export BoaConsulta não foi disponibilizado;
+1. o schema exato do export BoaConsulta não foi disponibilizado publicamente nem fornecido como amostra;
 2. o caminho Cloudflare de pacientes/Clinical Core ainda usa estruturas demo/plaintext.
 
 A promoção automática deve ser liberada somente após:
@@ -217,7 +221,26 @@ Uma exportação de exemplo deidentificada deve permitir responder, campo a camp
 - autoria profissional;
 - retificações/edições históricas.
 
-Quando esses itens estiverem validados, cria-se um mapper `boaconsulta-<formato>-v2` e o estágio pode promover eventos para o Clinical Core mantendo referência reversível ao lote e ao hash de origem.
+Quando esses itens estiverem validados, cria-se um mapper `boaconsulta-<formato>-v2` e o estágio pode promover eventos para o Clinical Core mantendo referência reversível ao lote e ao identificador de origem.
+
+## Validação automatizada
+
+PR gate dedicado:
+
+- parser/contrato de reconciliação;
+- type-check das Pages Functions e código compartilhado;
+- build do console;
+- presença do console no artefato.
+
+Release gate em `main`:
+
+- auditoria de dependências;
+- `npm run verify`;
+- criação/verificação do R2 privado;
+- migração D1 idempotente;
+- criação não destrutiva da chave dedicada se ausente;
+- build e redeploy do Cloudflare Pages;
+- verificação do console publicado.
 
 ## Arquivos da implementação
 
@@ -227,6 +250,7 @@ Quando esses itens estiverem validados, cria-se um mapper `boaconsulta-<formato>
 - `functions/api/integrations/boaconsulta/import.ts`
 - `client/public/integracoes/boaconsulta/index.html`
 - `tests/unit/boaconsulta-import-contract.test.ts`
+- `.github/workflows/boaconsulta-import-pr.yml`
 - `.github/workflows/boaconsulta-import-release.yml`
 - `wrangler.toml` (binding R2)
 
