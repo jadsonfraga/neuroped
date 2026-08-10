@@ -88,6 +88,7 @@ async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
         comment: await decryptText(env, row.comment_encrypted),
         createdAt: row.created_at,
       })),
+    ),
   };
 }
 
@@ -168,10 +169,15 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       const guardianEmail = cleanText(body.guardianEmail, 180).toLocaleLowerCase("pt-BR");
       const guardianPhone = cleanText(body.guardianPhone, 40);
       const patientName = cleanText(body.patientName, 120);
-      if (guardianName.length < 2 || patientName.length < 1 || (!phoneValid(guardianPhone) && !emailValid(guardianEmail)) || (!guardianPhone && !guardianEmail)) {
-        return errorResponse("Dados de contato incompletos ou inválidos.", "VALIDATION_ERROR", 400);
+      if (guardianName.length < 2 || patientName.length < 1 || (!guardianPhone && !guardianEmail)) {
+        return errorResponse("Dados de contato incompletos.", "VALIDATION_ERROR", 400);
       }
-      if (!emailValid(guardianEmail)) return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);
+      if (guardianPhone && !phoneValid(guardianPhone)) {
+        return errorResponse("Telefone inválido.", "VALIDATION_ERROR", 400);
+      }
+      if (guardianEmail && !emailValid(guardianEmail)) {
+        return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);
+      }
 
       const token = randomAccessToken();
       const appointmentId = `apt-${crypto.randomUUID()}`;
@@ -263,7 +269,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if (!service || !provider) return errorResponse("Configuração do agendamento indisponível.", "NOT_FOUND", 404);
       const slots = await listAvailableSlots(env.DB, appointment.provider_user_id, service, startsAtLocal.slice(0, 10));
       const chosen = slots.find((slot) => slot.startsAtLocal === startsAtLocal);
-      if (!chosen) return errorResponse("Novo horário indisponível.", "SLOT_UNAVAILABLE", 409);
+      if (!chosen || startsAtLocal <= nowInTimezone(provider.timezone)) {
+        return errorResponse("Novo horário indisponível.", "SLOT_UNAVAILABLE", 409);
+      }
       try {
         await env.DB.prepare(
           `UPDATE appointments SET starts_at_local = ?, ends_at_local = ?, status = 'requested', updated_at = ? WHERE id = ?`,
@@ -285,17 +293,27 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
     }
 
     if (action === "waitlist") {
-      if (body.privacyAccepted !== true) return errorResponse("Consentimento de privacidade obrigatório.", "CONSENT_REQUIRED", 400);
+      if (body.privacyAccepted !== true) {
+        return errorResponse("Consentimento de privacidade obrigatório.", "CONSENT_REQUIRED", 400);
+      }
       const provider = await getProviderBySlug(env.DB, cleanText(body.provider, 60));
-      if (!provider || !provider.booking_enabled) return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
+      if (!provider || !provider.booking_enabled) {
+        return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
+      }
       const service = await getService(env.DB, provider.user_id, cleanText(body.serviceId, 80), true);
       if (!service) return errorResponse("Serviço inválido.", "VALIDATION_ERROR", 400);
       const guardianName = cleanText(body.guardianName, 120);
       const guardianEmail = cleanText(body.guardianEmail, 180).toLocaleLowerCase("pt-BR");
       const guardianPhone = cleanText(body.guardianPhone, 40);
       const patientName = cleanText(body.patientName, 120);
-      if (guardianName.length < 2 || patientName.length < 1 || (!guardianPhone && !guardianEmail) || !emailValid(guardianEmail)) {
-        return errorResponse("Dados de contato inválidos.", "VALIDATION_ERROR", 400);
+      if (guardianName.length < 2 || patientName.length < 1 || (!guardianPhone && !guardianEmail)) {
+        return errorResponse("Dados de contato incompletos.", "VALIDATION_ERROR", 400);
+      }
+      if (guardianPhone && !phoneValid(guardianPhone)) {
+        return errorResponse("Telefone inválido.", "VALIDATION_ERROR", 400);
+      }
+      if (guardianEmail && !emailValid(guardianEmail)) {
+        return errorResponse("E-mail inválido.", "VALIDATION_ERROR", 400);
       }
       const token = randomAccessToken();
       const id = `wait-${crypto.randomUUID()}`;
@@ -324,16 +342,28 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       const token = cleanText(body.token, 200);
       const appointment = await findAppointmentByToken(env.DB, token);
       if (!appointment) return errorResponse("Reserva não encontrada.", "NOT_FOUND", 404);
-      if (appointment.status !== "completed") return errorResponse("Avaliação disponível somente após consulta concluída.", "NOT_COMPLETED", 409);
+      if (appointment.status !== "completed") {
+        return errorResponse("Avaliação disponível somente após consulta concluída.", "NOT_COMPLETED", 409);
+      }
       const rating = Number(body.rating);
-      if (!Number.isInteger(rating) || rating < 1 || rating > 5) return errorResponse("Nota inválida.", "VALIDATION_ERROR", 400);
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        return errorResponse("Nota inválida.", "VALIDATION_ERROR", 400);
+      }
       const comment = cleanOptionalText(body.comment, 600);
       try {
         await env.DB.prepare(
           `INSERT INTO appointment_reviews
             (id, appointment_id, provider_user_id, rating, comment_encrypted, approved, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
-        ).bind(`rev-${crypto.randomUUID()}`, appointment.id, appointment.provider_user_id, rating, await encryptText(env, comment), now, now).run();
+        ).bind(
+          `rev-${crypto.randomUUID()}`,
+          appointment.id,
+          appointment.provider_user_id,
+          rating,
+          await encryptText(env, comment),
+          now,
+          now,
+        ).run();
       } catch (error) {
         if (String(error).toLowerCase().includes("unique")) {
           return errorResponse("Esta consulta já recebeu uma avaliação.", "ALREADY_REVIEWED", 409);
