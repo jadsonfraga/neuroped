@@ -1,0 +1,56 @@
+name: BoaConsulta Bridge PR validation
+
+on:
+  pull_request:
+    paths:
+      - "db/migrations/0008_boaconsulta_import_bridge.sql"
+      - "functions/api/integrations/boaconsulta/**"
+      - "shared/boaconsulta-import.ts"
+      - "client/public/integracoes/boaconsulta/**"
+      - "tests/unit/boaconsulta-import-contract.test.ts"
+      - "wrangler.toml"
+      - ".github/workflows/boaconsulta-import-pr.yml"
+      - ".github/workflows/boaconsulta-import-release.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Testar parser e contrato de reconciliação
+        run: node --import tsx tests/unit/boaconsulta-import-contract.test.ts
+
+      - name: Type-check das Functions e do código compartilhado
+        run: npm run check
+
+      - name: Buildar console de importação
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
+
+      - name: Confirmar console no artefato
+        run: |
+          test -f dist/public/integracoes/boaconsulta/index.html
+          grep -Fq "Bridge BoaConsulta" dist/public/integracoes/boaconsulta/index.html
+          grep -Fq "normalizedUploadFile" dist/public/integracoes/boaconsulta/index.html
