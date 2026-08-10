@@ -1,0 +1,24 @@
+{
+  "name": "NeuroPed Conecta",
+  "short_name": "NeuroPed",
+  "description": "Acompanhamento longitudinal em neuropediatria infantojuvenil para famílias e equipes de cuidado.",
+  "lang": "pt-BR",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f4",
+  "theme_color": "#0b5963",
+  "icons": [
+    {
+      "src": "/brand-logo.jpeg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Hoje", "short_name": "Hoje", "url": "/app" },
+    { "name": "Registrar", "short_name": "Registrar", "url": "/app/registrar" },
+    { "name": "Insights", "short_name": "Insights", "url": "/insights" }
+  ]
+}
