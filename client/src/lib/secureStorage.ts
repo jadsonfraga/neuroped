@@ -15,6 +15,11 @@
  *  - O ciphertext fica no sessionStorage, isolado por aba; a chave não é persistida
  *  - Recarregar/fechar a aba invalida os rascunhos, por desenho de segurança
  *
+ * EXCEÇÃO DELIBERADA:
+ *  - A workspace da CAA é uma preferência funcional de longo prazo e precisa
+ *    sobreviver a reload. Só essa chave é delegada ao IndexedDB cifrado com
+ *    CryptoKey não exportável; os rascunhos clínicos continuam efêmeros.
+ *
  * LGPD / LIMITAÇÕES:
  *  - sessionStorage cifrado NÃO substitui armazenamento server-side para dados de pacientes
  *  - Deve ser usado apenas para rascunhos/contexto de sessão clínica
@@ -25,7 +30,15 @@
  * mas não protege contra código malicioso executando na mesma origem (XSS).
  */
 
+import {
+  persistentSecureClear,
+  persistentSecureClearAll,
+  persistentSecureGet,
+  persistentSecureSet,
+} from "@/lib/persistentSecureStorage";
+
 const NAMESPACE = "neuroped:secure:";
+const PERSISTENT_SECURE_KEYS = new Set(["caa:workspace:v3"]);
 // Mantido apenas para migrar envelopes da versão anterior, cuja chave era
 // derivável do próprio salt. Novas gravações nunca persistem material de chave.
 const SESSION_SALT_KEY = "neuroped:secure-salt";
@@ -61,6 +74,10 @@ interface StoredEnvelope {
 
 // ---------- Chave de sessão em memória ----------
 let _sessionKey: CryptoKey | null = null;
+
+function isPersistentSecureKey(key: string): boolean {
+  return PERSISTENT_SECURE_KEYS.has(key);
+}
 
 /**
  * Retorna ou cria uma chave AES-GCM efêmera. Não persistir a chave é a única
@@ -215,14 +232,18 @@ async function decryptEnvelope<T>(
 // ---------- API pública ----------
 
 /**
- * Armazena valor cifrado no sessionStorage da aba. A chave efêmera impede que
- * outra aba ou uma leitura posterior do storage decifre o conteúdo.
+ * Armazena valor cifrado. Rascunhos clínicos ficam no sessionStorage da aba;
+ * a workspace CAA usa IndexedDB cifrado porque precisa sobreviver a reload.
  */
 export async function secureSet<T>(
   key: string,
   value: T,
   ttlMs = SESSION_TTL_MS,
 ): Promise<boolean> {
+  if (isPersistentSecureKey(key)) {
+    return persistentSecureSet(key, value);
+  }
+
   try {
     const aesKey = await getSessionKey();
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -265,12 +286,14 @@ export async function secureSet<T>(
 }
 
 /**
- * Recupera e decifra o valor da aba. Como compatibilidade, tenta uma entrada do
- * antigo localStorage: só a migra/remove depois de decriptá-la com sucesso. Uma
- * falha de chave pode significar que o ciphertext pertence a outra aba antiga e
- * jamais deve apagá-lo.
+ * Recupera e decifra o valor. A CAA consulta primeiro o cofre persistente;
+ * demais chaves mantêm exatamente a semântica efêmera histórica.
  */
 export async function secureGet<T>(key: string): Promise<T | null> {
+  if (isPersistentSecureKey(key)) {
+    return persistentSecureGet<T>(key);
+  }
+
   const storageKey = NAMESPACE + key;
   const scopedStorage = getSessionStorage();
   const scopedRaw = readStorage(scopedStorage, storageKey);
@@ -332,6 +355,10 @@ export async function secureGet<T>(key: string): Promise<T | null> {
  * Remove entrada cifrada específica.
  */
 export async function secureClear(key: string): Promise<void> {
+  if (isPersistentSecureKey(key)) {
+    await persistentSecureClear(key);
+  }
+
   const storageKey = NAMESPACE + key;
   removeStorage(getSessionStorage(), storageKey);
 
@@ -401,6 +428,11 @@ export async function secureClearAll(): Promise<void> {
   } catch {
     // A chave em memória ainda será invalidada abaixo.
   }
+
+  // A CAA pode conter histórico/frases sensíveis. Logout/troca de conta também
+  // destrói o cofre persistente e sua chave não exportável.
+  await persistentSecureClearAll();
+
   // Invalida chave de sessão em memória
   _sessionKey = null;
   removeStorage(scoped, SESSION_SALT_KEY);
