@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           npx wrangler@4 d1 execute neuroped-db --remote \
-            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('booking_provider_profiles','booking_services','booking_availability_rules','booking_blocks','appointments','waitlist_entries','appointment_reviews','notification_outbox') ORDER BY name;" \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('booking_provider_profiles','booking_services','booking_availability_rules','booking_blocks','appointments','appointment_slot_locks','waitlist_entries','appointment_reviews','notification_outbox') ORDER BY name;" \
             > /tmp/operations-tables.txt 2>&1
           cat /tmp/operations-tables.txt
           for table in \
@@ -87,6 +87,7 @@ jobs:
             booking_availability_rules \
             booking_blocks \
             appointments \
+            appointment_slot_locks \
             waitlist_entries \
             appointment_reviews \
             notification_outbox; do
@@ -97,12 +98,13 @@ jobs:
           done
 
           npx wrangler@4 d1 execute neuroped-db --remote \
-            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('ux_appointments_occupied_slot','idx_appointments_provider_time','idx_waitlist_provider_status','idx_notification_outbox_provider_status') ORDER BY name;" \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('ux_appointments_occupied_slot','idx_appointments_provider_time','idx_appointment_slot_locks_appointment','idx_waitlist_provider_status','idx_notification_outbox_provider_status') ORDER BY name;" \
             > /tmp/operations-indexes.txt 2>&1
           cat /tmp/operations-indexes.txt
           for idx in \
             ux_appointments_occupied_slot \
             idx_appointments_provider_time \
+            idx_appointment_slot_locks_appointment \
             idx_waitlist_provider_status \
             idx_notification_outbox_provider_status; do
             grep -q "$idx" /tmp/operations-indexes.txt || {
@@ -117,4 +119,13 @@ jobs:
           cat /tmp/appointments-schema.txt
           grep -q "guardian_name_encrypted" /tmp/appointments-schema.txt
           grep -q "booking_token_hash" /tmp/appointments-schema.txt
-          echo "✅ Operational Suite D1: migração 0007 e invariantes confirmados."
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='appointment_slot_locks';" \
+            > /tmp/slot-locks-schema.txt 2>&1
+          cat /tmp/slot-locks-schema.txt
+          grep -Eq "PRIMARY KEY[[:space:]]*\([[:space:]]*provider_user_id[[:space:]]*,[[:space:]]*slot_key[[:space:]]*\)" /tmp/slot-locks-schema.txt || {
+            echo "::error::Trava física de sobreposição ausente em appointment_slot_locks"
+            exit 1
+          }
+          echo "✅ Operational Suite D1: migração 0007, criptografia e locks temporais confirmados."
