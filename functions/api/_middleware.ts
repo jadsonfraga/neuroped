@@ -24,6 +24,7 @@ import { isSessionFamilyActive } from "./auth/_sessions";
 import {
   canReadAuditLog,
   canWriteClinicalData,
+  canWriteOperationalAgenda,
   type AuthContextData,
 } from "./auth/_authorization";
 
@@ -108,12 +109,15 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
   if (path === "/api/audit-log" && !canReadAuditLog(user)) {
     return apiError("Acesso restrito ao administrador.", "FORBIDDEN", 403);
   }
+
+  const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
-  if (
-    ["POST", "PATCH", "PUT", "DELETE"].includes(method) &&
-    !isOwnConsentWrite &&
-    !canWriteClinicalData(user)
-  ) {
+  const isAgendaWrite =
+    isWrite &&
+    (path === "/api/agenda" || path.startsWith("/api/agenda/")) &&
+    canWriteOperationalAgenda(user);
+
+  if (isWrite && !isOwnConsentWrite && !isAgendaWrite && !canWriteClinicalData(user)) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
   }
   return null;
