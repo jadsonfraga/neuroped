@@ -59,6 +59,7 @@ assert.match(
   "recepção não pode associar agendamento diretamente a identificador clínico",
 );
 assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
+assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
@@ -81,6 +82,9 @@ assert.doesNotMatch(
   /ON CONFLICT\(staff_user_id\) DO UPDATE SET[\s\S]{0,240}provider_user_id = excluded\.provider_user_id/,
   "vínculo de recepção não pode reatribuir provider em UPSERT",
 );
+assert.match(access, /trg_appointments_respect_blocks_insert/);
+assert.match(access, /trg_blocks_respect_appointments_insert/);
+assert.match(access, /RAISE\(ABORT, 'SCHEDULE_CONFLICT'\)/);
 assert.match(access, /role !== "operator"/);
 assert.match(access, /safeAuditMetadata/);
 assert.doesNotMatch(access, /guardianName|patientName|phone|email.*metadata/i, "auditoria não deve copiar PII operacional");
@@ -103,6 +107,16 @@ assert.match(hardeningMigration, /staff_user_id TEXT NOT NULL UNIQUE/);
 assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS operations_audit_log/);
 assert.match(hardeningMigration, /idx_operations_audit_provider_time/);
 assert.match(hardeningMigration, /idx_operations_audit_actor_time/);
+for (const trigger of [
+  "trg_appointments_respect_blocks_insert",
+  "trg_appointments_respect_blocks_update",
+  "trg_blocks_respect_appointments_insert",
+  "trg_blocks_respect_appointments_update",
+]) {
+  assert.match(hardeningMigration, new RegExp(`CREATE TRIGGER IF NOT EXISTS ${trigger}`));
+  assert.match(workflow, new RegExp(trigger));
+}
+assert.match(hardeningMigration, /RAISE\(ABORT, 'SCHEDULE_CONFLICT'\)/);
 
 assert.match(migration, /ux_appointments_occupied_slot/);
 assert.match(migration, /PRIMARY KEY \(provider_user_id, slot_key\)/);
@@ -112,6 +126,8 @@ assert.match(core, /Promise<boolean>/);
 assert.match(core, /operations\.notification-outbox/);
 assert.match(professional, /env\.DB\.batch/);
 assert.match(publicBooking, /env\.DB\.batch/);
+assert.match(publicBooking, /ensureOperationsHardeningSchema/);
+assert.match(publicBooking, /SCHEDULE_CONFLICT/);
 assert.doesNotMatch(publicBooking, /searchParams\.get\("token"\)/, "capability token não pode trafegar em query string");
 assert.match(publicBooking, /action === "manage"/);
 assert.match(booking, /apiRequest\("POST", "\/api\/public-booking", \{ action: "manage"/);
@@ -151,8 +167,9 @@ assert.match(booking, /Não informe diagnóstico, medicação ou detalhes clíni
 assert.doesNotMatch(booking, /pagamento aprovado|pix gerado|teleconsulta ativa/i);
 
 assert.match(workflow, /0007_operational_suite\.sql/);
+assert.match(workflow, /0008_operational_hardening\.sql/);
 assert.match(workflow, /booking_provider_profiles/);
 assert.match(workflow, /ux_appointments_occupied_slot/);
 assert.doesNotMatch(workflow, /workflow_dispatch:/);
 
-console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, finanças/clinical boundary, auditoria, fuso, PII e locks aprovados");
+console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, finanças/clinical boundary, conflitos físicos, auditoria, fuso, PII e locks aprovados");
