@@ -20,35 +20,28 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Restore manifest exactly from main and add only P0 tests
+      - name: Restore validation ordering in patient PATCH
         run: |
-          set -euo pipefail
-          git fetch origin main
-          git show origin/main:package.json > package.json
-          git show origin/main:package-lock.json > package-lock.json
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const path = 'package.json';
-          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const prefix = [
-            'node --import tsx tests/unit/clinical-encryption-contract.test.ts',
-            'node tests/unit/clinical-encryption-static.test.mjs',
-            'node tests/unit/clinical-encryption-release-static.test.mjs',
-          ].join(' && ') + ' && ';
-          if (!pkg.scripts['test:quick-wins'].startsWith(prefix)) {
-            pkg.scripts['test:quick-wins'] = prefix + pkg.scripts['test:quick-wins'];
-          }
-          fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-          NODE
-      - name: Commit minimal manifest correction when needed
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('functions/api/patients/[id].ts')
+          s = p.read_text()
+          old = '''  if (!env.DB) return errorResponse("Persistência indisponível. Nenhum paciente foi atualizado.", "DB_REQUIRED", 503);\n  const user = getContextUser(context); if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);\n  if (!canWriteClinicalData(user)) return authorizationError("Perfil sem permissão para atualizar pacientes.", "FORBIDDEN", 403);\n\n  let parsed: unknown; try { parsed = await request.json(); } catch { return errorResponse("Corpo da requisição inválido ou não é JSON.", "INVALID_JSON", 400); }\n  if (!isPlainObject(parsed)) return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);\n  const normalized = normalizePatientWrite(parsed, { requireName: false });\n  if (!normalized.ok) return errorResponse(normalized.message, "VALIDATION_ERROR", 400);\n  const entries = Object.entries(normalized.values) as Array<[PatientWriteField, string | null]>;\n  if (!entries.length) return errorResponse("Nenhum campo válido para atualizar.", "NO_UPDATES", 400);\n\n  try {'''
+          new = '''  let parsed: unknown; try { parsed = await request.json(); } catch { return errorResponse("Corpo da requisição inválido ou não é JSON.", "INVALID_JSON", 400); }\n  if (!isPlainObject(parsed)) return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);\n  const normalized = normalizePatientWrite(parsed, { requireName: false });\n  if (!normalized.ok) return errorResponse(normalized.message, "VALIDATION_ERROR", 400);\n  const entries = Object.entries(normalized.values) as Array<[PatientWriteField, string | null]>;\n  if (!entries.length) return errorResponse("Nenhum campo válido para atualizar.", "NO_UPDATES", 400);\n  if (!env.DB) return errorResponse("Persistência indisponível. Nenhum paciente foi atualizado.", "DB_REQUIRED", 503);\n  const user = getContextUser(context); if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);\n  if (!canWriteClinicalData(user)) return authorizationError("Perfil sem permissão para atualizar pacientes.", "FORBIDDEN", 403);\n\n  try {'''
+          if old in s:
+              p.write_text(s.replace(old, new, 1))
+          elif new not in s:
+              raise SystemExit('patient PATCH validation anchor missing')
+          PY
+      - name: Commit validation fix when needed
         run: |
-          if git diff --quiet -- package.json package-lock.json; then
-            echo "Manifest already minimal."
+          if git diff --quiet -- 'functions/api/patients/[id].ts'; then
+            echo "Validation ordering already fixed."
           else
             git config user.name "neuroped-security-bot"
             git config user.email "actions@users.noreply.github.com"
-            git add package.json package-lock.json
-            git commit -m "fix(security): restaurar manifesto e conectar apenas gates P0"
+            git add 'functions/api/patients/[id].ts'
+            git commit -m "fix(api): validar PATCH clínico antes de exigir storage"
             git push origin HEAD:fix/close-p0-security-20260811
           fi
       - name: Install
@@ -69,6 +62,7 @@ jobs:
           npm run test:quick-wins
           npm run test:operations
       - name: Inspect Cloudflare encryption state without exposing values
+        if: always()
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -93,6 +87,7 @@ jobs:
           fi
           npx wrangler@4 pages secret delete --help | head -20
       - name: Inspect retired GitHub secret presence without exposing values
+        if: always()
         env:
           OLD_CERT_B64: ${{ secrets.CERT_P12_B64 }}
           OLD_CERT_PW: ${{ secrets.CERT_P12_PASSWORD }}
