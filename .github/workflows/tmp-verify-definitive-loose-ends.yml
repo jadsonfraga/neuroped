@@ -1,0 +1,54 @@
+name: Temporary verify definitive loose ends
+
+on:
+  push:
+    branches:
+      - fix/definitive-loose-ends-20260811
+    paths:
+      - "scripts/tmp_verify_definitive_loose_ends.py"
+      - ".github/workflows/tmp-verify-definitive-loose-ends.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  final-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: fix/definitive-loose-ends-20260811
+          fetch-depth: 0
+
+      - name: Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Independent scanner
+        run: python3 scripts/tmp_verify_definitive_loose_ends.py
+
+      - name: Release gate again
+        run: npm run verify:release
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Full browser accessibility
+        run: npm run audit:a11y:full
+
+      - name: Real scale E2E
+        run: npm run test:e2e:scales
+
+      - name: Screen audit
+        run: npm run audit:screens
+
+      - name: Full build
+        run: npm run build
