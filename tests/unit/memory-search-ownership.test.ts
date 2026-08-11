@@ -54,27 +54,26 @@ assert.equal(
   (await invoke(professional.db, authUser("professional", "owner-a"))).status,
   200,
 );
-assert.equal(professional.queries.length, 2, "FTS vazio cai no LIKE");
-for (const query of professional.queries) {
-  assert.match(query.sql, /n\.patient_id IN/);
-  assert.match(query.sql, /p\.owner_user_id = \?/);
-  assert.ok(query.binds.includes("owner-a"));
-}
-assert.match(
-  professional.queries[0].sql,
-  /n\.patient_id IN[\s\S]*patients_demo/,
-  "FTS exclui paciente alheio e patient_id NULL",
+assert.equal(
+  professional.queries.length,
+  1,
+  "sem chaves e antes do modo estrito, somente o fallback legado owner-scoped é permitido",
 );
-assert.match(
-  professional.queries[1].sql,
-  /n\.patient_id IN[\s\S]*patients_demo/,
-  "fallback LIKE aplica a mesma fronteira de owner",
+const professionalQuery = professional.queries[0];
+assert.match(professionalQuery.sql, /FROM memory_notes/);
+assert.match(professionalQuery.sql, /patient_id IN[\s\S]*patients_demo/);
+assert.match(professionalQuery.sql, /owner_user_id\s*=\s*\?/);
+assert.ok(professionalQuery.binds.includes("owner-a"));
+assert.doesNotMatch(
+  professionalQuery.sql,
+  /memory_notes_fts/i,
+  "FTS clínico em plaintext não pode reaparecer durante a transição",
 );
 
 const admin = captureDb();
 assert.equal((await invoke(admin.db, authUser("admin", "admin-1"))).status, 200);
-for (const query of admin.queries) {
-  assert.doesNotMatch(query.sql, /owner_user_id/);
-}
+assert.equal(admin.queries.length, 1);
+assert.doesNotMatch(admin.queries[0].sql, /owner_user_id/);
+assert.doesNotMatch(admin.queries[0].sql, /memory_notes_fts/i);
 
-console.log("✓ memory search isola owner em FTS/LIKE e reserva notas globais ao admin");
+console.log("✓ memory search preserva ownership sem reintroduzir FTS clínico plaintext");
