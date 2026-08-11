@@ -2,6 +2,7 @@ import { json, type Env } from "./_shared";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILURES_PER_WINDOW = 30;
+const RETENTION_MS = 24 * 60 * 60 * 1000;
 
 interface RateLimitRow {
   failed_attempts: number;
@@ -28,8 +29,8 @@ async function bucketHash(secret: string, request: Request): Promise<string | nu
 }
 
 async function ensureRateLimitSchema(db: D1Database): Promise<void> {
-  await db
-    .prepare(
+  await db.batch([
+    db.prepare(
       `CREATE TABLE IF NOT EXISTS auth_login_rate_limits (
         bucket_hash TEXT PRIMARY KEY,
         window_started_at TEXT NOT NULL,
@@ -37,8 +38,12 @@ async function ensureRateLimitSchema(db: D1Database): Promise<void> {
         blocked_until TEXT,
         updated_at TEXT NOT NULL
       )`,
-    )
-    .run();
+    ),
+    db.prepare(
+      `CREATE INDEX IF NOT EXISTS idx_auth_login_rate_limits_updated
+         ON auth_login_rate_limits(updated_at)`,
+    ),
+  ]);
 }
 
 /**
@@ -82,6 +87,7 @@ export async function enforceLoginAbuseLimit(
 /**
  * Registra somente falhas. O contador é atualizado atomicamente pelo SQLite,
  * evitando read-modify-write em memória. O bucket é HMAC do IP, nunca IP bruto.
+ * Buckets inativos são removidos após 24 h para impedir crescimento ilimitado.
  */
 export async function registerLoginAbuseFailure(
   env: Env,
@@ -96,40 +102,45 @@ export async function registerLoginAbuseFailure(
   const now = new Date();
   const nowIso = now.toISOString();
   const cutoffIso = new Date(now.getTime() - WINDOW_MS).toISOString();
+  const retentionCutoffIso = new Date(now.getTime() - RETENTION_MS).toISOString();
   const blockedUntil = new Date(now.getTime() + WINDOW_MS).toISOString();
 
-  await env.DB
-    .prepare(
-      `INSERT INTO auth_login_rate_limits
-        (bucket_hash, window_started_at, failed_attempts, blocked_until, updated_at)
-       VALUES (?, ?, 1, NULL, ?)
-       ON CONFLICT(bucket_hash) DO UPDATE SET
-         failed_attempts = CASE
-           WHEN auth_login_rate_limits.window_started_at < ? THEN 1
-           ELSE auth_login_rate_limits.failed_attempts + 1
-         END,
-         window_started_at = CASE
-           WHEN auth_login_rate_limits.window_started_at < ? THEN ?
-           ELSE auth_login_rate_limits.window_started_at
-         END,
-         blocked_until = CASE
-           WHEN auth_login_rate_limits.window_started_at < ? THEN NULL
-           WHEN auth_login_rate_limits.failed_attempts + 1 >= ? THEN ?
-           ELSE auth_login_rate_limits.blocked_until
-         END,
-         updated_at = ?`,
-    )
-    .bind(
-      bucket,
-      nowIso,
-      nowIso,
-      cutoffIso,
-      cutoffIso,
-      nowIso,
-      cutoffIso,
-      MAX_FAILURES_PER_WINDOW,
-      blockedUntil,
-      nowIso,
-    )
-    .run();
+  await env.DB.batch([
+    env.DB
+      .prepare(
+        `INSERT INTO auth_login_rate_limits
+          (bucket_hash, window_started_at, failed_attempts, blocked_until, updated_at)
+         VALUES (?, ?, 1, NULL, ?)
+         ON CONFLICT(bucket_hash) DO UPDATE SET
+           failed_attempts = CASE
+             WHEN auth_login_rate_limits.window_started_at < ? THEN 1
+             ELSE auth_login_rate_limits.failed_attempts + 1
+           END,
+           window_started_at = CASE
+             WHEN auth_login_rate_limits.window_started_at < ? THEN ?
+             ELSE auth_login_rate_limits.window_started_at
+           END,
+           blocked_until = CASE
+             WHEN auth_login_rate_limits.window_started_at < ? THEN NULL
+             WHEN auth_login_rate_limits.failed_attempts + 1 >= ? THEN ?
+             ELSE auth_login_rate_limits.blocked_until
+           END,
+           updated_at = ?`,
+      )
+      .bind(
+        bucket,
+        nowIso,
+        nowIso,
+        cutoffIso,
+        cutoffIso,
+        nowIso,
+        cutoffIso,
+        MAX_FAILURES_PER_WINDOW,
+        blockedUntil,
+        nowIso,
+      ),
+    env.DB
+      .prepare(`DELETE FROM auth_login_rate_limits WHERE updated_at < ?`)
+      .bind(retentionCutoffIso),
+  ]);
 }
