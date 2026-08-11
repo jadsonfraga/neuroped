@@ -25,10 +25,25 @@ jobs:
       - run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      - name: Apply patch
+      - name: Apply patch and pre-existing lint fixes
         run: |
           python3 scripts/tmp_p0_patch_phase1.py
           sed -i '/const INDEX_VERSION = "i1";/d' functions/api/_clinicalCrypto.ts
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/components/ui/VisualStates.tsx')
+          s = p.read_text()
+          s = s.replace('  }, [durationMs]);', '  }, [durationMs, onDismiss]);', 1)
+          p.write_text(s)
+
+          p = Path('client/src/contexts/AuthContext.tsx')
+          s = p.read_text()
+          s = s.replace('createContext, useContext, useEffect, useMemo, useState, type ReactNode', 'createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode', 1)
+          s = s.replace('  async function login(email: string, password: string): Promise<void> {\n    const data = await loginRequest(email, password);\n    await clearSessionScopedClientState();\n    setUser(data.user);\n  }', '  const login = useCallback(async (email: string, password: string): Promise<void> => {\n    const data = await loginRequest(email, password);\n    await clearSessionScopedClientState();\n    setUser(data.user);\n  }, []);', 1)
+          s = s.replace('  async function logout(): Promise<void> {\n    setUser(null);\n    await logoutRequest();\n    await clearSessionScopedClientState();\n  }', '  const logout = useCallback(async (): Promise<void> => {\n    setUser(null);\n    await logoutRequest();\n    await clearSessionScopedClientState();\n  }, []);', 1)
+          s = s.replace('  async function refreshUser(): Promise<void> {\n    try {\n      const response = await authFetch("/api/auth/me");\n      if (response.ok) setUser(await response.json());\n    } catch {\n      // Sessão não validada (offline/sem backend): mantém o estado atual.\n    }\n  }', '  const refreshUser = useCallback(async (): Promise<void> => {\n    try {\n      const response = await authFetch("/api/auth/me");\n      if (response.ok) setUser(await response.json());\n    } catch {\n      // Sessão não validada (offline/sem backend): mantém o estado atual.\n    }\n  }, []);', 1)
+          p.write_text(s)
+          PY
       - name: TypeScript and lint
         run: npm run check && npm run lint
       - name: Commit verified patch
@@ -36,6 +51,6 @@ jobs:
           set -euo pipefail
           git config user.name "jadsonfraga"
           git config user.email "jadsonfraga@hotmail.com"
-          git add functions/api/_clinicalCrypto.ts functions/api/operations/_core.ts functions/api/health.ts db/seed.d1.sql .github/workflows/provision-d1.yml
-          git commit -m "fix(security): separar chaves clínicas e operacionais"
+          git add functions/api/_clinicalCrypto.ts functions/api/operations/_core.ts functions/api/health.ts db/seed.d1.sql .github/workflows/provision-d1.yml client/src/components/ui/VisualStates.tsx client/src/contexts/AuthContext.tsx
+          git commit -m "fix(security): separar chaves e estabilizar hooks de sessão"
           git push origin HEAD:fix/p0-clinical-crypto-20260811
