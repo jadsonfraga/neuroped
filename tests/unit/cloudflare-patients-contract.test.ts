@@ -13,6 +13,7 @@ import {
   onRequestPatch as updatePatient,
 } from "../../functions/api/patients/[id]";
 import { onRequestGet as listPatientResults } from "../../functions/api/patients/[id]/results";
+import { CLINICAL_LEGACY_SENTINEL } from "../../shared/clinical-crypto";
 
 interface FakeStatementResult {
   results?: Array<Record<string, unknown>>;
@@ -100,6 +101,7 @@ const professional = {
   role: "professional",
   mustChangePassword: false,
 };
+const TEST_CLINICAL_KEY = "patients-contract-key-0123456789-abcdefghijklmnopqrstuvwxyz";
 
 function context(
   database: FakeDatabase | undefined,
@@ -108,7 +110,13 @@ function context(
   user: typeof professional | null = professional,
 ) {
   return {
-    env: database ? { DB: database } : {},
+    env: database
+      ? {
+          DB: database,
+          CLINICAL_DATA_KEY: TEST_CLINICAL_KEY,
+          CLINICAL_ENCRYPTION_STRICT: "false",
+        }
+      : {},
     request,
     params,
     data: user ? { authUser: user } : {},
@@ -154,11 +162,7 @@ const mapped = toPatientApi({
 });
 assert.equal(mapped.birthDate, "2018-03-15");
 assert.equal(mapped.guardianName, "Responsável");
-assert.equal(
-  "birth_date" in mapped,
-  false,
-  "a resposta pública deve ser camelCase",
-);
+assert.equal("birth_date" in mapped, false, "a resposta pública deve ser camelCase");
 
 const createDb = new FakeDatabase();
 const createResponse = await createPatient(
@@ -183,17 +187,18 @@ const insert = createDb.statements.find((statement) =>
   statement.sql.includes("INSERT INTO patients_demo"),
 );
 assert.ok(insert, "a criação deve persistir no D1");
-assert.equal(
-  insert.bindings[2],
-  "2020-05-20",
-  "birthDate deve chegar a birth_date",
-);
-assert.equal(
-  insert.bindings[7],
-  professional.id,
-  "novo paciente deve receber owner",
-);
+assert.match(insert.sql, /secure_payload_encrypted/);
+assert.match(insert.sql, /birth_date[^\n]*NULL/);
+assert.equal(insert.bindings[1], CLINICAL_LEGACY_SENTINEL);
+assert.match(String(insert.bindings[2]), /^c1\./, "PII clínica deve chegar cifrada ao D1");
+assert.equal(insert.bindings[3], professional.id, "novo paciente deve receber owner");
+assert.equal(insert.bindings.includes("2020-05-20"), false, "birthDate não pode persistir em claro");
+assert.equal(insert.bindings.includes("Paciente Novo"), false, "nome não pode persistir em claro");
 assert.match(insert.sql, /owner_user_id/);
+assert.ok(
+  createDb.batchStatements.some((statement) => statement.sql.includes("clinical_search_tokens")),
+  "criação deve manter blind index para busca sem plaintext",
+);
 
 const listDb = new FakeDatabase({
   first: (statement) =>
@@ -202,12 +207,14 @@ const listDb = new FakeDatabase({
     results: [
       {
         id: "patient-1",
+        owner_user_id: professional.id,
         name: "Paciente",
         birth_date: "2018-03-15",
         guardian_name: "Responsável",
         guardian_phone: "81999990000",
         diagnosis_code: "F84.0",
         notes: "Notas completas",
+        secure_payload_encrypted: null,
         is_demo: 1,
         created_at: "2026-01-01T00:00:00.000Z",
         updated_at: "2026-01-02T00:00:00.000Z",
@@ -218,7 +225,7 @@ const listDb = new FakeDatabase({
 const listResponse = await listPatients(
   context(
     listDb,
-    new Request("https://neuroped.test/api/patients?q=100%25&page=x&limit=999"),
+    new Request("https://neuroped.test/api/patients?q=Paciente&page=x&limit=999"),
   ),
 );
 assert.equal(listResponse.status, 200);
@@ -231,9 +238,16 @@ assert.equal(listed.page, 1, "paginação inválida deve usar fallback seguro");
 assert.equal(listed.limit, 50, "limite deve ser limitado a 50");
 assert.equal(listed.data[0].birthDate, "2018-03-15");
 assert.equal(listed.data[0].notes, "Notas completas");
-for (const statement of listDb.statements) {
+assert.ok(
+  listDb.statements.some((statement) => statement.sql.includes("clinical_search_tokens")),
+  "busca deve usar blind index",
+);
+for (const statement of listDb.statements.filter((statement) =>
+  statement.sql.includes("FROM patients_demo p"),
+)) {
   assert.match(statement.sql, /owner_user_id = \?/);
   assert.equal(statement.bindings[0], professional.id);
+  assert.doesNotMatch(statement.sql, /\bLIKE\b/i);
 }
 
 const updateDb = new FakeDatabase({
@@ -241,13 +255,20 @@ const updateDb = new FakeDatabase({
     if (statement.sql.includes("SELECT owner_user_id")) {
       return { owner_user_id: professional.id };
     }
-    if (statement.sql.includes("SELECT id, name")) {
+    if (statement.sql.includes("secure_payload_encrypted") && statement.sql.includes("FROM patients_demo")) {
       return {
         id: "patient-1",
+        owner_user_id: professional.id,
         name: "Paciente",
         birth_date: "2017-04-10",
+        guardian_name: null,
+        guardian_phone: null,
+        diagnosis_code: null,
         notes: null,
+        secure_payload_encrypted: null,
         is_demo: 1,
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-02T00:00:00.000Z",
       };
     }
     return null;
@@ -271,10 +292,12 @@ const update = updateDb.statements.find((statement) =>
   statement.sql.includes("UPDATE patients_demo"),
 );
 assert.ok(update);
-assert.match(update.sql, /birth_date = \?/);
-assert.doesNotMatch(update.sql, /birthDate/);
+assert.match(update.sql, /birth_date = NULL/);
+assert.match(update.sql, /secure_payload_encrypted = \?/);
 assert.match(update.sql, /owner_user_id = \?/);
-assert.equal(update.bindings[0], "2017-04-10");
+assert.equal(update.bindings[0], CLINICAL_LEGACY_SENTINEL);
+assert.match(String(update.bindings[1]), /^c1\./);
+assert.equal(update.bindings.includes("2017-04-10"), false, "PATCH não pode persistir birthDate em claro");
 assert.equal(update.bindings.at(-1), professional.id);
 
 const forbiddenDeleteDb = new FakeDatabase({
@@ -283,9 +306,7 @@ const forbiddenDeleteDb = new FakeDatabase({
 const forbiddenDelete = await deletePatient(
   context(
     forbiddenDeleteDb,
-    new Request("https://neuroped.test/api/patients/patient-1", {
-      method: "DELETE",
-    }),
+    new Request("https://neuroped.test/api/patients/patient-1", { method: "DELETE" }),
     { id: "patient-1" },
   ),
 );
@@ -295,26 +316,20 @@ assert.equal(forbiddenDeleteDb.batchStatements.length, 0);
 const deleteDb = new FakeDatabase({
   first: () => ({ owner_user_id: professional.id }),
   batch: (statements) =>
-    statements.map((_, index) => ({ meta: { changes: index === 4 ? 1 : 0 } })),
+    statements.map((_, index) => ({ meta: { changes: index === 5 ? 1 : 0 } })),
 });
 const deleteResponse = await deletePatient(
   context(
     deleteDb,
-    new Request("https://neuroped.test/api/patients/patient-1", {
-      method: "DELETE",
-    }),
+    new Request("https://neuroped.test/api/patients/patient-1", { method: "DELETE" }),
     { id: "patient-1" },
   ),
 );
 assert.equal(deleteResponse.status, 200);
-assert.deepEqual(await deleteResponse.json(), {
-  id: "patient-1",
-  deleted: true,
-});
-const deleteSql = deleteDb.batchStatements
-  .map((statement) => statement.sql)
-  .join("\n");
+assert.deepEqual(await deleteResponse.json(), { id: "patient-1", deleted: true });
+const deleteSql = deleteDb.batchStatements.map((statement) => statement.sql).join("\n");
 for (const table of [
+  "clinical_search_tokens",
   "consultations_demo",
   "scale_results_demo",
   "documents_demo",
@@ -323,7 +338,8 @@ for (const table of [
 ]) {
   assert.match(deleteSql, new RegExp(`DELETE FROM ${table}`));
 }
-assert.match(deleteSql, /INSERT INTO audit_logs/);
+const auditInsert = deleteDb.statements.find((statement) => statement.sql.includes("INSERT INTO audit_logs"));
+assert.ok(auditInsert, "remoção deve continuar auditada");
 const patientDelete = deleteDb.batchStatements.find((statement) =>
   statement.sql.includes("DELETE FROM patients_demo"),
 );
@@ -333,9 +349,7 @@ assert.deepEqual(patientDelete.bindings, ["patient-1", professional.id]);
 
 const failingResultsDb = new FakeDatabase({
   first: () => ({ owner_user_id: professional.id }),
-  all: () => {
-    throw new Error("D1 unavailable");
-  },
+  all: () => { throw new Error("D1 unavailable"); },
 });
 const originalConsoleError = console.error;
 console.error = () => undefined;
@@ -351,20 +365,10 @@ try {
 } finally {
   console.error = originalConsoleError;
 }
-assert.equal(
-  failingResults.status,
-  500,
-  "falha do banco não pode se disfarçar de histórico vazio",
-);
+assert.equal(failingResults.status, 500, "falha do banco não pode se disfarçar de histórico vazio");
 
-const appSource = await readFile(
-  new URL("../../client/src/App.tsx", import.meta.url),
-  "utf8",
-);
+const appSource = await readFile(new URL("../../client/src/App.tsx", import.meta.url), "utf8");
 assert.match(appSource, /path="\/pacientes" component=\{PacientesPage\}/);
-assert.match(
-  appSource,
-  /path="\/paciente\/:id" component=\{PacienteDetalhePage\}/,
-);
+assert.match(appSource, /path="\/paciente\/:id" component=\{PacienteDetalhePage\}/);
 
-console.log("✓ contrato Cloudflare de pacientes, ownership e rotas validado");
+console.log("✓ pacientes D1: ownership, envelope c1, blind index e ausência de PII plaintext validados");
