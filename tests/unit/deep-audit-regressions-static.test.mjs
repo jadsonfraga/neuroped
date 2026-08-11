@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 const dock = read("client/src/components/MobilePrimaryDock.tsx");
+const palette = read("client/src/components/CommandPalette.tsx");
 const booking = read("client/src/pages/agendar.tsx");
 const dailySync = read(".github/workflows/daily-authorial-static-sync.yml");
 
@@ -12,6 +13,13 @@ for (const path of ["/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/e
 }
 assert.match(dock, /\bz-40\b/, "dock deve permanecer abaixo de dialogs/paleta");
 assert.doesNotMatch(dock, /z-\[99970\]/, "dock não pode dominar a pilha global de overlays");
+
+assert.match(palette, /currentHashPath/, "paleta deve acompanhar a rota atual");
+assert.match(palette, /const onPublicRoute = isPublicRoute\(path\)/, "paleta deve reconhecer rota pública no host full");
+assert.match(palette, /const privateToolsAllowed = !IS_PUBLIC_ZONE && !onPublicRoute/, "recursos privados devem exigir rota privada");
+assert.match(palette, /enabled: patientSearchReady/, "consulta de pacientes deve respeitar o gate privado");
+assert.match(palette, /IS_PUBLIC_ZONE \|\| onPublicRoute/, "páginas privadas devem ser filtradas em qualquer superfície pública");
+assert.match(palette, /privateToolsAllowed && \(/, "ações e escalas privadas devem depender do gate de rota");
 
 assert.match(booking, /function dateInTimeZone\(/, "agendamento deve conhecer o fuso do profissional");
 assert.match(booking, /setDate\(dateInTimeZone\(data\.timezone\)\)/, "data inicial deve usar o fuso retornado pelo perfil");
@@ -25,4 +33,4 @@ assert.match(dailySync, /ref: \$\{\{ needs\.cloudflare\.outputs\.deploy_sha \}\}
 assert.match(dailySync, /TARGET_COMMIT: \$\{\{ needs\.cloudflare\.outputs\.deploy_sha \}\}/, "Vercel deve verificar o SHA recebido do backend canônico");
 assert.doesNotMatch(dailySync, /será publicada a revisão mais recente/, "sincronização diária não pode promover main diferente por conveniência");
 
-console.log("[deep-audit] ✓ fronteira pública, stacking, fuso da agenda e promoção exata de SHA aprovados.");
+console.log("[deep-audit] ✓ fronteiras públicas, stacking, busca privada, fuso da agenda e promoção exata de SHA aprovados.");
