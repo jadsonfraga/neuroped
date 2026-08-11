@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   test:
@@ -48,3 +49,36 @@ jobs:
         run: |
           npm run test:quick-wins
           npm run test:operations
+      - name: Inspect Cloudflare encryption state without exposing values
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]
+          npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets.txt
+          echo "Cloudflare Pages secret presence:"
+          for name in CLINICAL_DATA_KEY CLINICAL_ENCRYPTION_STRICT OPERATIONAL_DATA_KEY OPERATIONAL_DATA_KEY_PREVIOUS CERT_P12_B64 CERT_P12_PASSWORD; do
+            if grep -q "\b${name}\b" /tmp/pages-secrets.txt; then
+              echo "  ${name}=present"
+            else
+              echo "  ${name}=absent"
+            fi
+          done
+          echo "D1 encryption state:"
+          if npx wrangler@4 d1 execute neuroped-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name='clinical_encryption_state';" > /tmp/state-table.txt 2>&1 \
+            && grep -q "clinical_encryption_state" /tmp/state-table.txt; then
+            npx wrangler@4 d1 execute neuroped-db --remote --command "SELECT envelope_version, key_id, phase, backup_sha256 IS NOT NULL AS has_backup, rollback_verified_at IS NOT NULL AS rollback_verified FROM clinical_encryption_state WHERE id=1;"
+          else
+            echo "  clinical_encryption_state=absent"
+          fi
+          echo "Wrangler Pages secret-delete command is available:"
+          npx wrangler@4 pages secret delete --help | head -20
+      - name: Inspect retired GitHub secret presence without exposing values
+        env:
+          OLD_CERT_B64: ${{ secrets.CERT_P12_B64 }}
+          OLD_CERT_PW: ${{ secrets.CERT_P12_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [ -n "$OLD_CERT_B64" ] && echo "CERT_P12_B64=present" || echo "CERT_P12_B64=absent"
+          [ -n "$OLD_CERT_PW" ] && echo "CERT_P12_PASSWORD=present" || echo "CERT_P12_PASSWORD=absent"
