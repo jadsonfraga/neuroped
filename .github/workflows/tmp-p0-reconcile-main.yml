@@ -1,0 +1,59 @@
+name: Temporary P0 reconcile main
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-reconcile-main.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/p0-clinical-crypto-20260811
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Merge latest main and prefer its lifecycle/session fixes
+        run: |
+          set -euo pipefail
+          git config user.name "jadsonfraga"
+          git config user.email "jadsonfraga@hotmail.com"
+          git fetch origin main
+          set +e
+          git merge --no-commit --no-ff origin/main
+          merge_rc=$?
+          set -e
+          if [ "$merge_rc" -ne 0 ]; then
+            git checkout --theirs client/src/components/ui/VisualStates.tsx 2>/dev/null || true
+            git checkout --theirs client/src/contexts/AuthContext.tsx 2>/dev/null || true
+            git add client/src/components/ui/VisualStates.tsx client/src/contexts/AuthContext.tsx
+            unresolved="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$unresolved" ]; then
+              echo "::error::Conflitos não resolvidos: $unresolved"
+              exit 1
+            fi
+          fi
+          # Este arquivo foi acidentalmente truncado em uma etapa intermediária;
+          # a versão atual da main contém a matriz completa de regressões.
+          git checkout origin/main -- tests/unit/quick-wins-static.test.mjs
+          git add -A
+      - name: Validate reconciled tree
+        run: |
+          npm ci
+          npm run check
+          npm run lint
+          npm run test:quick-wins
+      - name: Commit merge
+        run: |
+          set -euo pipefail
+          git commit -m "merge: reconciliar criptografia P0 com hardening atual da main"
+          git push origin HEAD:fix/p0-clinical-crypto-20260811
