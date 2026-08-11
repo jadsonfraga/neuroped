@@ -1,0 +1,31 @@
+name: Temporary P0 security test
+
+on:
+  push:
+    branches:
+      - fix/close-p0-security-20260811
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: TypeScript
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Existing release security contracts
+        run: |
+          npm run test:quick-wins
+          npm run test:operations
