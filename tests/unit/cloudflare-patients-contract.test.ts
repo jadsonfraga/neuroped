@@ -197,7 +197,11 @@ const insert = createDb.statements.find((statement) =>
 );
 assert.ok(insert, "a criação deve persistir no D1");
 assert.match(insert.sql, /'\[encrypted\]'/);
-assert.match(insert.sql, /birth_date[^)]*NULL/);
+assert.match(
+  insert.sql,
+  /VALUES \(\?, '\[encrypted\]', NULL, NULL, NULL, NULL, \?, \?, 1, \?, \?\)/,
+  "PII estrutural deve ser substituída por NULL/placeholder e ficar apenas no envelope",
+);
 assert.match(String(insert.bindings[1]), /^c1\.k1\./);
 assert.equal(insert.bindings[2], professional.id, "novo paciente deve receber owner");
 assert.match(insert.sql, /owner_user_id/);
