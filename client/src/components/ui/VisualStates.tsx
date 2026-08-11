@@ -1,182 +1,103 @@
-/**
- * VisualStates.tsx
- * Componentes padronizados de estado visual para o NeuroPed.
- *
- * Estados disponíveis:
- *  <LoadingState />      — skeleton loader ou spinner discreto
- *  <EmptyState />        — mensagem útil + ação sugerida
- *  <ErrorState />        — mensagem clara + retry
- *  <SuccessToast />      — banner discreto (auto-dismiss 3s)
- *  <SavingIndicator />   — "Salvando..." em botão
- *  <OfflineBanner />     — aviso de modo offline (navigator.onLine)
- *
- * USO:
- *   import { LoadingState, EmptyState, ErrorState } from "@/components/ui/VisualStates";
- */
-
-import { useEffect, useState, type ReactNode } from "react";
-import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2, Inbox } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+  SearchX,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ====================================================
-// LOADING STATE
+// LOADING STATES
 // ====================================================
 
-interface LoadingStateProps {
-  /** Número de linhas de skeleton a exibir */
-  rows?: number;
-  /** Usar spinner compacto em vez de skeleton */
-  compact?: boolean;
-  /** Mensagem acessível para leitores de tela */
-  label?: string;
+export function PageLoadingState({ label = "Carregando…" }: { label?: string }) {
+  return (
+    <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-center" role="status" aria-live="polite">
+      <Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" />
+      <p className="text-sm text-muted-foreground">{label}</p>
+    </div>
+  );
 }
 
-export function LoadingState({ rows = 3, compact = false, label = "Carregando..." }: LoadingStateProps) {
-  if (compact) {
-    return (
-      <div
-        className="flex items-center justify-center py-10"
-        role="status"
-        aria-label={label}
-        aria-live="polite"
-      >
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" aria-hidden="true" />
-        <span className="sr-only">{label}</span>
-      </div>
-    );
-  }
-
+export function InlineLoadingState({ label = "Carregando…" }: { label?: string }) {
   return (
-    <div
-      className="space-y-3 p-4"
-      role="status"
-      aria-label={label}
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <span className="sr-only">{label}</span>
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="space-y-2">
-          <div
-            className="h-4 bg-muted rounded animate-pulse"
-            style={{ width: `${75 + (i % 3) * 8}%` }}
-            aria-hidden="true"
-          />
-          {i === 0 && (
-            <div className="h-3 bg-muted rounded animate-pulse w-1/2" aria-hidden="true" />
-          )}
-        </div>
+    <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+export function TableLoadingRows({ rows = 4 }: { rows?: number }) {
+  return (
+    <div className="space-y-2" role="status" aria-live="polite" aria-label="Carregando dados">
+      {Array.from({ length: rows }, (_, index) => (
+        <div key={index} className="h-14 animate-pulse rounded-xl border bg-muted/45" />
       ))}
     </div>
   );
 }
 
-/** Skeleton específico para cards de paciente */
-export function PatientCardSkeleton() {
+// ====================================================
+// EMPTY STATES
+// ====================================================
+
+interface EmptyStateProps {
+  title: string;
+  description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <div
-      className="border border-border rounded-xl p-4 space-y-3 animate-pulse"
-      role="status"
-      aria-label="Carregando dados do paciente"
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-muted" aria-hidden="true" />
-        <div className="space-y-1.5 flex-1">
-          <div className="h-4 bg-muted rounded w-2/3" aria-hidden="true" />
-          <div className="h-3 bg-muted rounded w-1/3" aria-hidden="true" />
-        </div>
+    <div className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center">
+      <SearchX className="mb-3 h-7 w-7 text-muted-foreground" aria-hidden="true" />
+      <div className="max-w-sm space-y-1.5">
+        <p className="font-semibold">{title}</p>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      <div className="h-3 bg-muted rounded" aria-hidden="true" />
-      <div className="h-3 bg-muted rounded w-4/5" aria-hidden="true" />
-      <span className="sr-only">Carregando dados do paciente</span>
+      {actionLabel && onAction ? (
+        <Button className="mt-4" variant="outline" size="sm" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      ) : null}
     </div>
   );
 }
 
 // ====================================================
-// EMPTY STATE
+// ERROR STATES
 // ====================================================
 
-interface EmptyStateProps {
-  icon?: ReactNode;
-  title: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+interface ErrorStateProps {
+  message?: string;
+  onRetry?: () => void;
 }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function ErrorState({ message = "Não foi possível carregar os dados.", onRetry }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-4">
-      <div
-        className="w-14 h-14 rounded-full bg-muted flex items-center justify-center"
-        aria-hidden="true"
-      >
-        {icon ?? <Inbox className="w-7 h-7 text-muted-foreground" />}
+    <div className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-destructive/25 bg-destructive/5 p-6 text-center">
+      <AlertCircle className="mb-3 h-7 w-7 text-destructive" aria-hidden="true" />
+      <div className="max-w-sm space-y-1.5">
+        <p className="font-semibold">Algo deu errado</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
-      <div className="space-y-1.5 max-w-sm">
-        <p className="font-semibold text-foreground">{title}</p>
-        {description && (
-          <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
-        )}
-      </div>
-      {action && (
-        <Button variant="outline" size="sm" onClick={action.onClick} className="mt-2">
-          {action.label}
+      {onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry} className="mt-4 gap-2">
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          Tentar novamente
         </Button>
       )}
     </div>
   );
 }
 
-// ====================================================
-// ERROR STATE
-// ====================================================
-
-interface ErrorStateProps {
-  message?: string;
-  onRetry?: () => void;
-  compact?: boolean;
-}
-
-export function ErrorState({
-  message = "Não foi possível carregar os dados.",
-  onRetry,
-  compact = false,
-}: ErrorStateProps) {
-  if (compact) {
-    return (
-      <div
-        className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive"
-        role="alert"
-        aria-live="assertive"
-      >
-        <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-        <span className="flex-1">{message}</span>
-        {onRetry && (
-          <button
-            onClick={onRetry}
-            className="shrink-0 text-xs underline hover:no-underline"
-            aria-label="Tentar novamente"
-          >
-            Tentar novamente
-          </button>
-        )}
-      </div>
-    );
-  }
-
+export function InlineErrorState({ message = "Não foi possível concluir.", onRetry }: ErrorStateProps) {
   return (
-    <div
-      className="flex flex-col items-center justify-center py-12 px-4 text-center space-y-4"
-      role="alert"
-      aria-live="assertive"
-    >
-      <div className="w-14 h-14 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center" aria-hidden="true">
-        <AlertCircle className="w-7 h-7 text-destructive" />
-      </div>
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-destructive/25 bg-destructive/5 p-3" role="alert">
       <div className="space-y-1.5 max-w-sm">
         <p className="font-semibold">Algo deu errado</p>
         <p className="text-sm text-muted-foreground">{message}</p>
@@ -210,7 +131,7 @@ export function SuccessToast({ message, durationMs = 3000, onDismiss }: SuccessT
       onDismiss?.();
     }, durationMs);
     return () => clearTimeout(t);
-  }, [durationMs]);
+  }, [durationMs, onDismiss]);
 
   if (!visible) return null;
 
@@ -228,116 +149,20 @@ export function SuccessToast({ message, durationMs = 3000, onDismiss }: SuccessT
 }
 
 // ====================================================
-// SAVING INDICATOR (botão desabilitado durante save)
+// SAVING INDICATOR
 // ====================================================
 
 interface SavingIndicatorProps {
   saving: boolean;
   label?: string;
-  savingLabel?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
 }
 
-export function SavingButton({
-  saving,
-  label = "Salvar",
-  savingLabel = "Salvando...",
-  onClick,
-  disabled = false,
-  className = "",
-  variant = "default",
-}: SavingIndicatorProps) {
+export function SavingIndicator({ saving, label = "Salvando…" }: SavingIndicatorProps) {
+  if (!saving) return null;
   return (
-    <Button
-      onClick={onClick}
-      disabled={saving || disabled}
-      aria-busy={saving}
-      aria-label={saving ? savingLabel : label}
-      variant={variant}
-      className={`gap-2 ${className}`}
-    >
-      {saving && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
-      {saving ? savingLabel : label}
-    </Button>
+    <span className="inline-flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+      {label}
+    </span>
   );
-}
-
-// ====================================================
-// OFFLINE BANNER
-// ====================================================
-
-export function OfflineBanner() {
-  const [offline, setOffline] = useState(!navigator.onLine);
-
-  useEffect(() => {
-    function onOnline() { setOffline(false); }
-    function onOffline() { setOffline(true); }
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-    return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
-    };
-  }, []);
-
-  if (!offline) return null;
-
-  return (
-    <div
-      className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium"
-      role="alert"
-      aria-live="assertive"
-    >
-      <WifiOff className="w-4 h-4 shrink-0" aria-hidden="true" />
-      <span>Modo offline — algumas funcionalidades podem estar indisponíveis</span>
-    </div>
-  );
-}
-
-// ====================================================
-// PAGE WRAPPER com estados unificados
-// ====================================================
-
-interface PageStateWrapperProps {
-  loading?: boolean;
-  error?: string | null;
-  empty?: boolean;
-  emptyTitle?: string;
-  emptyDescription?: string;
-  emptyAction?: { label: string; onClick: () => void };
-  onRetry?: () => void;
-  loadingRows?: number;
-  children: ReactNode;
-}
-
-/**
- * Wrapper conveniente que gerencia os três estados mais comuns
- * (loading, error, empty) antes de renderizar o conteúdo.
- */
-export function PageStateWrapper({
-  loading,
-  error,
-  empty,
-  emptyTitle = "Nenhum item encontrado",
-  emptyDescription,
-  emptyAction,
-  onRetry,
-  loadingRows,
-  children,
-}: PageStateWrapperProps) {
-  if (loading) return <LoadingState rows={loadingRows} />;
-  if (error) return <ErrorState message={error} onRetry={onRetry} />;
-  if (empty) {
-    return (
-      <EmptyState
-        title={emptyTitle}
-        description={emptyDescription}
-        action={emptyAction}
-      />
-    );
-  }
-  return <>{children}</>;
 }
