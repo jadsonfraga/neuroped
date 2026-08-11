@@ -18,6 +18,7 @@ import { verifyPassword } from "./_crypto";
 import { createSessionTokens } from "./_sessions";
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
+import { enforceLoginAbuseLimit, registerLoginAbuseFailure } from "./_rateLimit";
 
 const INVALID = { error: "Credenciais inválidas.", code: "INVALID_CREDENTIALS" };
 
@@ -62,6 +63,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Informe e-mail e senha.", code: "MISSING_FIELDS" }, 400);
   }
 
+  // Credential stuffing contra muitos e-mails precisa de limite distribuído,
+  // além do lockout por conta e do limiter em memória do middleware.
+  try {
+    const abuseLimit = await enforceLoginAbuseLimit(env, request, secret);
+    if (abuseLimit) return abuseLimit;
+  } catch {
+    // O lockout por conta continua disponível; uma falha do limitador auxiliar
+    // não deve indisponibilizar autenticação legítima.
+  }
+
   // Provisiona o admin inicial (idempotente) antes de buscar o usuário.
   try {
     await bootstrapAdmin(env.DB, env);
@@ -70,7 +81,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const user = await getUserByEmail(env.DB, email);
-  if (!user) return json(INVALID, 401);
+  if (!user) {
+    try {
+      await registerLoginAbuseFailure(env, request, secret);
+    } catch {
+      // Falha de telemetria/limite não altera a resposta de credencial inválida.
+    }
+    return json(INVALID, 401);
+  }
 
   if (!user.is_active) {
     return json({ error: "Conta desativada.", code: "ACCOUNT_DISABLED" }, 403);
@@ -85,6 +103,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const ok = await verifyPassword(password, user.password_hash);
   if (!ok) {
     await registerFailedAttempt(env.DB, user);
+    try {
+      await registerLoginAbuseFailure(env, request, secret);
+    } catch {
+      // O lockout atômico por conta já foi registrado; mantém resposta genérica.
+    }
     return json(INVALID, 401);
   }
 

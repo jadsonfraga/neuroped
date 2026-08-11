@@ -27,7 +27,7 @@ import type { CognitiveSession, CognitiveTaskConfig, TrialRecord, TrialSpec } fr
 type Phase = "intro" | "tutorial" | "practice" | "interblock" | "test" | "results";
 type TrialState = "fixation" | "stimulus" | "blank" | "feedback";
 
-function beep(freq: number, durationMs = 120, onScheduleTimer?: (delayMs: number, fn: () => void) => void) {
+function beep(freq: number, durationMs = 120) {
   try {
     const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new Ctx();
@@ -37,12 +37,18 @@ function beep(freq: number, durationMs = 120, onScheduleTimer?: (delayMs: number
     gain.gain.value = 0.05;
     osc.connect(gain).connect(ctx.destination);
     osc.start();
-    const stopFn = () => { osc.stop(); void ctx.close(); };
-    if (onScheduleTimer) {
-      onScheduleTimer(durationMs, stopFn);
-    } else {
-      window.setTimeout(stopFn, durationMs);
-    }
+
+    // O lifecycle do AudioContext não pode compartilhar os timers de ensaio:
+    // clearTimers() é chamado a cada trial/restart. Se o timer de encerramento
+    // entrar nessa lista, ele pode ser cancelado antes de osc.stop()/ctx.close().
+    window.setTimeout(() => {
+      try {
+        osc.stop();
+      } catch {
+        // Oscilador já encerrado; ainda tentamos fechar o contexto.
+      }
+      void ctx.close();
+    }, durationMs);
   } catch {
     /* áudio indisponível — segue silencioso */
   }
@@ -167,7 +173,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
     if (p === "test") setDoneCount(r.records.filter((x) => x.phase === "test").length);
     if (p === "practice") {
       setLastFeedback(correct ? "acerto" : "erro");
-      if (r.soundOn) beep(correct ? 880 : 220, 120, after);
+      if (r.soundOn) beep(correct ? 880 : 220);
       setTrialState("feedback");
       after(700, advance);
       return;

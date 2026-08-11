@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import {
   type AuthUser,
   getStoredUser,
@@ -98,8 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout(): Promise<void> {
     setUser(null);
-    await logoutRequest();
-    await clearSessionScopedClientState();
+    try {
+      await logoutRequest();
+    } finally {
+      await clearSessionScopedClientState();
+    }
   }
 
   async function refreshUser(): Promise<void> {
@@ -111,22 +114,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const contextValue = useMemo(
-    () => ({
-      user,
-      isAuthenticated: !!user,
-      isLoading,
-      accessMode,
-      remoteConfigured,
-      login,
-      logout,
-      refreshUser,
-    }),
-    [user, isLoading, accessMode, remoteConfigured, login, logout, refreshUser],
-  );
-
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        accessMode,
+        remoteConfigured,
+        login,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
