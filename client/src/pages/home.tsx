@@ -207,7 +207,7 @@ export default function HomePage() {
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala, paciente ou página…"
+                placeholder="Buscar escala ou página…"
                 className="h-14 rounded-[1.15rem] border-white/80 bg-white/80 pl-13 pr-10 text-[15px] shadow-[0_14px_35px_-22px_rgba(45,25,58,0.4)] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-primary/30 focus-visible:shadow-[0_18px_42px_-22px_rgba(91,42,116,0.4)] dark:border-white/10 dark:bg-slate-950/50"
                 data-testid="input-search"
               />
@@ -269,38 +269,34 @@ export default function HomePage() {
                     <h3 className="truncate text-[14px] font-medium text-foreground">{item.title}</h3>
                     <p className="truncate text-[12px] text-muted-foreground">{item.detail}</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                 </div>
               </Link>
             )) : (
-              <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
-                Nenhum atalho direto. Use o <Link href="/filtro" className="font-medium text-primary underline-offset-2 hover:underline">Filtro Clínico</Link> para aproximar por idade e queixa.
+              <div className="col-span-full rounded-2xl border border-dashed border-border/70 bg-card/50 p-6 text-center text-[13px] text-muted-foreground">
+                Nenhum resultado para “{searchQuery}”. Tente outro termo ou use o filtro clínico.
               </div>
             )}
           </div>
         </section>
       ) : (
         <>
-          <section className="space-y-4" aria-labelledby="fluxos-principais">
-            <div className="flex items-end justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Sua jornada</p>
-                <h2 id="fluxos-principais" className="text-2xl font-semibold tracking-[-0.03em] text-foreground">O cuidado começa por aqui</h2>
+          <section className="space-y-5" aria-labelledby="clinical-flows-heading">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-primary">Fluxos principais</p>
+                <h2 id="clinical-flows-heading" className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-foreground">
+                  O que você precisa fazer agora?
+                </h2>
               </div>
+              <p className="text-[12px] text-muted-foreground">Acesso direto · sem menus intermediários</p>
             </div>
-            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-              {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
+            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+              {clinicalFlows.slice(0, 4).map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
             </div>
           </section>
 
-          <section className="grid gap-3.5 lg:grid-cols-[1fr_0.8fr]">
-            <div className="rounded-2xl border border-amber-200/50 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/15">
-              <p className="text-[12.5px] leading-relaxed text-amber-900/90 dark:text-amber-100/90">
-                <strong className="font-semibold">Uso responsável.</strong> As escalas orientam rastreio, documentação e monitorização — não substituem julgamento clínico, anamnese, exame neurológico e integração com família e escola.
-              </p>
-            </div>
-            <FavoritesRecents />
-          </section>
+          <FavoritesRecents />
         </>
       )}
     </div>
