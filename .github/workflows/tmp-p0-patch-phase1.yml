@@ -1,0 +1,39 @@
+name: Temporary P0 crypto patch phase1
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-patch-phase1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/p0-clinical-crypto-20260811
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Apply patch
+        run: python3 scripts/tmp_p0_patch_phase1.py
+      - name: TypeScript and lint
+        run: npm run check && npm run lint
+      - name: Commit verified patch
+        run: |
+          set -euo pipefail
+          git config user.name "jadsonfraga"
+          git config user.email "jadsonfraga@hotmail.com"
+          git add functions/api/operations/_core.ts functions/api/health.ts db/seed.d1.sql .github/workflows/provision-d1.yml
+          git commit -m "fix(security): separar chaves clínicas e operacionais"
+          git push origin HEAD:fix/p0-clinical-crypto-20260811
