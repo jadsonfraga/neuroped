@@ -96,9 +96,18 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
 }
 
 async function authorizeClinicalApi(request: Request, env: Env): Promise<AuthorizationResult> {
-  if (!env.DB) return { failure: null, user: null };
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
   if (PUBLIC_API_PATHS.has(path)) return { failure: null, user: null };
+  if (!env.DB) {
+    return {
+      failure: apiError(
+        "Backend clínico indisponível sem banco persistente.",
+        "DB_REQUIRED",
+        503,
+      ),
+      user: null,
+    };
+  }
 
   const secret = env.NEUROPED_JWT_SECRET;
   if (!secret?.trim() || secret.trim().length < 32) {
@@ -128,11 +137,14 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
 }
 
 function getRateLimitKey(request: Request): string {
-  const ip = request.headers.get("CF-Connecting-IP") ?? request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ?? "unknown";
+  const rawIp = request.headers.get("CF-Connecting-IP")
+    ?? request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim()
+    ?? "unknown";
+  const ip = rawIp.slice(0, 128);
   return `rl:${ip}`;
 }
 
-function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetAt: number } {
+function checkLocalRateLimit(key: string): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
   let entry = inMemoryRateMap.get(key);
   if (!entry || now > entry.resetAt) {
@@ -147,6 +159,38 @@ function checkRateLimit(key: string): { allowed: boolean; remaining: number; res
   return { allowed: entry.count <= RATE_LIMIT_MAX, remaining, resetAt: entry.resetAt };
 }
 
+async function checkRateLimit(
+  request: Request,
+  env: Env,
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const key = getRateLimitKey(request);
+  const local = checkLocalRateLimit(key);
+  if (!local.allowed || !env.RATE_LIMIT_KV) return local;
+
+  // KV adiciona coordenação entre isolates/PoPs; o Map local continua sendo a
+  // trava dura caso o KV esteja temporariamente indisponível. A combinação evita
+  // que a ausência/latência do backend de rate limit transforme proteção em fail-open.
+  const now = Date.now();
+  const bucket = Math.floor(now / RATE_LIMIT_WINDOW_MS);
+  const sharedKey = `${key}:w${bucket}`;
+  const sharedResetAt = (bucket + 1) * RATE_LIMIT_WINDOW_MS;
+  try {
+    const raw = await env.RATE_LIMIT_KV.get(sharedKey);
+    const parsed = Number.parseInt(raw ?? "0", 10);
+    const count = Number.isSafeInteger(parsed) && parsed >= 0 ? parsed + 1 : 1;
+    await env.RATE_LIMIT_KV.put(sharedKey, String(count), {
+      expirationTtl: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000) + 60,
+    });
+    return {
+      allowed: count <= RATE_LIMIT_MAX,
+      remaining: Math.min(local.remaining, Math.max(0, RATE_LIMIT_MAX - count)),
+      resetAt: Math.max(local.resetAt, sharedResetAt),
+    };
+  } catch {
+    return local;
+  }
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const origin = request.headers.get("Origin");
@@ -156,7 +200,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return new Response(null, { status: 204, headers: { ...corsHeaders, ...SECURITY_HEADERS } });
   }
 
-  const rl = checkRateLimit(getRateLimitKey(request));
+  const rl = await checkRateLimit(request, env);
   if (!rl.allowed) {
     return new Response(JSON.stringify({
       error: "Muitas requisições. Aguarde antes de tentar novamente.",

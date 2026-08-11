@@ -15,6 +15,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { createRepositories } from "./repositories/factory";
 import type { IRepositories } from "./repositories";
+import { readBoundedIntEnv } from "./env.js";
 
 const DATABASE_URL = process.env.DATABASE_URL || "";
 const isPostgres = /^postgres(ql)?:\/\//i.test(DATABASE_URL);
@@ -58,7 +59,7 @@ export async function initDb(): Promise<void> {
 
   // Pool configuration otimizado para produção
   _client = postgres(DATABASE_URL, {
-    max: parseInt(process.env.DATABASE_POOL_MAX || "20", 10), // Aumentado para 20 (default Postgres)
+    max: readBoundedIntEnv("DATABASE_POOL_MAX", 20, 1, 100),
     idle_timeout: 30, // 30 segundos
     connect_timeout: 10,
     connection: { statement_timeout: 30000 }, // 30s timeout nas queries (parâmetro de conexão)
@@ -71,7 +72,7 @@ export async function initDb(): Promise<void> {
   _db = drizzlePg(_client);
   _repositories = createRepositories(_db);
   console.log(`[db] ✅ Conectado ao Postgres: ${redactUrl(DATABASE_URL)}`);
-  console.log(`[db] 📊 Pool config: max=${process.env.DATABASE_POOL_MAX || 20}, min=${process.env.DATABASE_POOL_MIN || 2}`);
+  console.log(`[db] 📊 Pool config: max=${readBoundedIntEnv("DATABASE_POOL_MAX", 20, 1, 100)}`);
 }
 
 /**

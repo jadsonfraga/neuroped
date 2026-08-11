@@ -24,6 +24,10 @@ import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { loginRateLimit } from "../middleware/security.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
+// Calculado uma única vez por processo. Evita resposta significativamente mais
+// rápida para e-mails inexistentes sem introduzir um segredo ou usuário fictício.
+const DUMMY_PASSWORD_HASH = hashPassword("NeuroPed timing dummy credential 2026");
+
 export function registerAuthRoutes(app: Express): void {
   // ----- Register -----
   app.post("/api/auth/register", requireAuth, requireAdmin, async (req: Request, res: Response) => {
@@ -79,55 +83,42 @@ export function registerAuthRoutes(app: Express): void {
     try {
       const parsed = loginSchema.parse(req.body);
       const user = db.select().from(users).where(eq(users.email, parsed.email)).get();
+      const locked = Boolean(user && isAccountLocked(user.lockedUntil));
+      const valid = await verifyPassword(
+        parsed.password,
+        user?.passwordHash ?? await DUMMY_PASSWORD_HASH,
+      );
 
-      if (!user || !user.isActive) {
-        await logAudit({
-          eventType: "auth.login.failure",
-          context: ctx,
-          metadata: { email: parsed.email, reason: "user_not_found_or_inactive" },
-          success: false,
-        });
-        return res.status(401).json({ error: "Credenciais invalidas", code: "AUTH_INVALID" });
-      }
-
-      if (isAccountLocked(user.lockedUntil)) {
-        await logAudit({
-          eventType: "auth.login.failure",
-          context: ctx,
-          targetType: "user",
-          targetId: user.id,
-          metadata: { reason: "account_locked", lockedUntil: user.lockedUntil },
-          success: false,
-        });
-        return res.status(423).json({
-          error: "Conta temporariamente bloqueada por excesso de tentativas",
-          code: "AUTH_LOCKED",
-        });
-      }
-
-      const valid = await verifyPassword(parsed.password, user.passwordHash);
-      if (!valid) {
-        const newAttempts = user.failedLoginAttempts + 1;
-        const updates: any = { failedLoginAttempts: newAttempts };
-        if (shouldLockoutAccount(newAttempts)) {
-          updates.lockedUntil = calculateLockoutUntil();
-          await logAudit({
-            eventType: "auth.account.locked",
-            context: ctx,
-            targetType: "user",
-            targetId: user.id,
-            metadata: { attempts: newAttempts },
-            success: false,
-          });
+      if (!user || !user.isActive || locked || !valid) {
+        if (user && user.isActive && !locked && !valid) {
+          const newAttempts = user.failedLoginAttempts + 1;
+          const updates: any = { failedLoginAttempts: newAttempts };
+          if (shouldLockoutAccount(newAttempts)) {
+            updates.lockedUntil = calculateLockoutUntil();
+            await logAudit({
+              eventType: "auth.account.locked",
+              context: ctx,
+              targetType: "user",
+              targetId: user.id,
+              metadata: { attempts: newAttempts },
+              success: false,
+            });
+          }
+          db.update(users).set(updates).where(eq(users.id, user.id)).run();
         }
-        db.update(users).set(updates).where(eq(users.id, user.id)).run();
 
+        const reason = !user
+          ? "user_not_found"
+          : !user.isActive
+            ? "account_inactive"
+            : locked
+              ? "account_locked"
+              : "wrong_password";
         await logAudit({
           eventType: "auth.login.failure",
           context: ctx,
-          targetType: "user",
-          targetId: user.id,
-          metadata: { reason: "wrong_password", attempts: newAttempts },
+          ...(user ? { targetType: "user", targetId: user.id } : {}),
+          metadata: { reason },
           success: false,
         });
         return res.status(401).json({ error: "Credenciais invalidas", code: "AUTH_INVALID" });

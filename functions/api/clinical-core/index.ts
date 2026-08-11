@@ -168,11 +168,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     await ensureClinicalCoreDemoSchema(env.DB);
     if (input.supersedesEventId) {
       const previous = await env.DB
-        .prepare("SELECT id, patient_id FROM clinical_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
+        .prepare("SELECT id, patient_id, status FROM clinical_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
         .bind(input.supersedesEventId)
-        .first<{ id: string; patient_id: string }>();
+        .first<{ id: string; patient_id: string; status: ClinicalEventStatus }>();
       if (!previous || previous.patient_id !== input.patientId) {
         return error("Evento supersedido inválido para este paciente.", "INVALID_SUPERSESSION", 400);
+      }
+      if (previous.status !== "active") {
+        return error(
+          "O evento já foi corrigido ou invalidado por outra operação.",
+          "STALE_SUPERSESSION",
+          409,
+        );
       }
     }
 
@@ -211,11 +218,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (input.supersedesEventId) {
       statements.push(
         env.DB
-          .prepare("UPDATE clinical_events_demo SET status = 'corrected' WHERE id = ? AND patient_id = ? AND is_demo = 1")
+          .prepare("UPDATE clinical_events_demo SET status = 'corrected' WHERE id = ? AND patient_id = ? AND is_demo = 1 AND status = 'active'")
           .bind(input.supersedesEventId, input.patientId),
       );
     }
-    await env.DB.batch(statements);
+    const batchResults = await env.DB.batch(statements);
+    if (input.supersedesEventId && (batchResults[1]?.meta?.changes ?? 0) !== 1) {
+      return error(
+        "O evento já foi corrigido ou invalidado por outra operação.",
+        "STALE_SUPERSESSION",
+        409,
+      );
+    }
 
     const created: ClinicalEvent = {
       id,
@@ -227,6 +241,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     };
     return json(created, 201);
   } catch (cause) {
+    if (String(cause).includes("STALE_SUPERSESSION")) {
+      return error(
+        "O evento já foi corrigido ou invalidado por outra operação.",
+        "STALE_SUPERSESSION",
+        409,
+      );
+    }
     console.error("[clinical-core.POST]", cause);
     return error("Não foi possível salvar o evento clínico.", "DB_ERROR", 500);
   }

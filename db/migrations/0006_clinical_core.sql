@@ -30,3 +30,16 @@ CREATE INDEX IF NOT EXISTS idx_clinical_events_demo_encounter
   ON clinical_events_demo(encounter_id);
 CREATE INDEX IF NOT EXISTS idx_clinical_events_demo_supersedes
   ON clinical_events_demo(supersedes_event_id);
+
+CREATE TRIGGER IF NOT EXISTS trg_clinical_events_demo_active_supersession
+BEFORE INSERT ON clinical_events_demo
+WHEN NEW.supersedes_event_id IS NOT NULL
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1 FROM clinical_events_demo
+     WHERE id = NEW.supersedes_event_id
+       AND patient_id = NEW.patient_id
+       AND is_demo = 1
+       AND status = 'active'
+  ) THEN RAISE(ABORT, 'STALE_SUPERSESSION') END;
+END;

@@ -20,6 +20,7 @@ import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { readBoundedIntEnv } from "./env.js";
 
 const DATABASE_URL = process.env.DATABASE_URL || "";
 const isPostgres = /^postgres(ql)?:\/\//i.test(DATABASE_URL);
@@ -55,7 +56,7 @@ export async function initDb(): Promise<void> {
   const { drizzle: drizzlePg } = await import("drizzle-orm/postgres-js");
 
   _client = postgres(DATABASE_URL, {
-    max: parseInt(process.env.DATABASE_POOL_MAX || "10", 10),
+    max: readBoundedIntEnv("DATABASE_POOL_MAX", 10, 1, 100),
     idle_timeout: 20,
     connect_timeout: 10,
     ssl: process.env.NODE_ENV === "production" ? "require" : (process.env.DATABASE_SSL === "true" as any),

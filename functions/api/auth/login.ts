@@ -20,6 +20,10 @@ import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
 
 const INVALID = { error: "Credenciais inválidas.", code: "INVALID_CREDENTIALS" };
+// Hash válido e não secreto, usado somente para manter custo de verificação
+// semelhante quando o e-mail não existe. Nunca corresponde a uma conta real.
+const DUMMY_PASSWORD_HASH =
+  "pbkdf2$sha256$100000$bmV1cm9wZWQtYXV0aC1kdW1teQ==$O+SnV7JfIDxMFlQU1aFE6bBIXxdMwA/beS9qUXgBxs8=";
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
@@ -70,21 +74,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const user = await getUserByEmail(env.DB, email);
-  if (!user) return json(INVALID, 401);
+  const locked = Boolean(user && isLocked(user));
+  const ok = await verifyPassword(password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
 
-  if (!user.is_active) {
-    return json({ error: "Conta desativada.", code: "ACCOUNT_DISABLED" }, 403);
-  }
-  if (isLocked(user)) {
-    return json(
-      { error: "Conta temporariamente bloqueada por tentativas. Aguarde alguns minutos.", code: "ACCOUNT_LOCKED" },
-      423,
-    );
-  }
-
-  const ok = await verifyPassword(password, user.password_hash);
-  if (!ok) {
-    await registerFailedAttempt(env.DB, user);
+  // Não diferenciar conta inexistente, inativa, bloqueada ou senha incorreta na
+  // resposta pública. O estado real permanece apenas no banco/auditoria.
+  if (!user || !user.is_active || locked || !ok) {
+    if (user && user.is_active && !locked && !ok) {
+      await registerFailedAttempt(env.DB, user);
+    }
     return json(INVALID, 401);
   }
 

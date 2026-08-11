@@ -33,12 +33,13 @@ import {
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { oneParam } from "../lib/http.js";
 import { patientReferenceDecision } from "../lib/ownership.js";
+import { readBoundedIntEnv } from "../lib/env.js";
 
 import { files as sqliteFiles, patients } from "@shared/schema";
 
 const filesTable = sqliteFiles;
 
-const MAX_FILE_SIZE_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB || "50", 10) * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = readBoundedIntEnv("MAX_FILE_SIZE_MB", 50, 1, 1024) * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",

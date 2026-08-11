@@ -51,7 +51,7 @@ function authDb(role = "professional", active = 1, sessionActive = 1) {
   };
 }
 
-assert.equal((await call("/api/patients", {})).status, 200, "demo sem D1 permanece disponível");
+assert.equal((await call("/api/patients", {})).status, 503, "rota clínica privada sem D1 falha fechado");
 assert.equal((await call("/api/patients", { DB: {} })).status, 503, "D1 sem segredo falha fechado");
 assert.equal((await call("/api/patients", { DB: {}, NEUROPED_JWT_SECRET: secret })).status, 401);
 assert.equal((await call("/api/health", { DB: {} })).status, 200, "health é público");

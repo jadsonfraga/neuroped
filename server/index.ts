@@ -20,6 +20,7 @@ import { registerRoutes } from "./routes.js";
 import { serveStatic } from "./static.js";
 import { applySecurity } from "./middleware/security.js";
 import { bootstrapAdmin } from "./storage.js";
+import { readBoundedIntEnv } from "./lib/env.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -105,7 +106,7 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = readBoundedIntEnv("PORT", 5000, 1, 65_535);
   const host = process.env.HOST || "0.0.0.0";
   // reusePort não é suportado no Windows (EINVAL) — desliga fora de plataformas POSIX.
   httpServer.listen({ port, host, reusePort: process.platform !== "win32" }, () => {
