@@ -18,9 +18,7 @@ const decoder = new TextDecoder();
 
 function assertSecret(secret: string, label = "CLINICAL_DATA_KEY"): string {
   const normalized = secret.trim();
-  if (normalized.length < 32) {
-    throw new Error(`${label}_NOT_CONFIGURED`);
-  }
+  if (normalized.length < 32) throw new Error(`${label}_NOT_CONFIGURED`);
   return normalized;
 }
 
@@ -40,33 +38,21 @@ function base64UrlToBytes(value: string): Uint8Array {
 }
 
 function scopeAad(scope: ClinicalFieldScope): Uint8Array {
-  return encoder.encode(
-    `${CLINICAL_ENVELOPE_VERSION}|${scope.table}|${scope.rowId}|${scope.field}`,
-  );
+  return encoder.encode(`${CLINICAL_ENVELOPE_VERSION}|${scope.table}|${scope.rowId}|${scope.field}`);
 }
 
 async function sha256Bytes(value: string): Promise<Uint8Array> {
-  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
-  return new Uint8Array(digest);
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(value)));
 }
 
 async function aesKey(secret: string): Promise<CryptoKey> {
   const material = await sha256Bytes(`neuroped:clinical:data:v1:${assertSecret(secret)}`);
-  return crypto.subtle.importKey("raw", material, { name: "AES-GCM" }, false, [
-    "encrypt",
-    "decrypt",
-  ]);
+  return crypto.subtle.importKey("raw", material, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
 async function blindKey(secret: string): Promise<CryptoKey> {
   const material = await sha256Bytes(`neuroped:clinical:blind:v1:${assertSecret(secret)}`);
-  return crypto.subtle.importKey(
-    "raw",
-    material,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+  return crypto.subtle.importKey("raw", material, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
 }
 
 export async function clinicalKeyId(secret: string): Promise<string> {
@@ -78,11 +64,7 @@ export function isClinicalEnvelope(value: unknown): value is string {
   return typeof value === "string" && value.startsWith(`${CLINICAL_ENVELOPE_VERSION}.`);
 }
 
-export async function encryptClinicalText(
-  secret: string,
-  scope: ClinicalFieldScope,
-  plaintext: string,
-): Promise<string> {
+export async function encryptClinicalText(secret: string, scope: ClinicalFieldScope, plaintext: string): Promise<string> {
   const normalized = assertSecret(secret);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
@@ -98,23 +80,14 @@ export async function encryptClinicalText(
   ].join(".");
 }
 
-async function decryptWithSecret(
-  secret: string,
-  scope: ClinicalFieldScope,
-  envelope: string,
-): Promise<string | null> {
+async function decryptWithSecret(secret: string, scope: ClinicalFieldScope, envelope: string): Promise<string | null> {
   const parts = envelope.split(".");
   if (parts.length !== 4 || parts[0] !== CLINICAL_ENVELOPE_VERSION) return null;
-  const [_, keyId, ivRaw, cipherRaw] = parts;
+  const [, keyId, ivRaw, cipherRaw] = parts;
   if (keyId !== (await clinicalKeyId(secret))) return null;
   try {
     const plaintext = await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: base64UrlToBytes(ivRaw),
-        additionalData: scopeAad(scope),
-        tagLength: 128,
-      },
+      { name: "AES-GCM", iv: base64UrlToBytes(ivRaw), additionalData: scopeAad(scope), tagLength: 128 },
       await aesKey(secret),
       base64UrlToBytes(cipherRaw),
     );
@@ -135,7 +108,11 @@ export async function decryptClinicalText(
     const current = await decryptWithSecret(active, scope, stored);
     if (current !== null) return current;
     if (keyring.previous?.trim()) {
-      const previous = await decryptWithSecret(assertSecret(keyring.previous, "CLINICAL_DATA_KEY_PREVIOUS"), scope, stored);
+      const previous = await decryptWithSecret(
+        assertSecret(keyring.previous, "CLINICAL_DATA_KEY_PREVIOUS"),
+        scope,
+        stored,
+      );
       if (previous !== null) return previous;
     }
     throw new Error("CLINICAL_CIPHERTEXT_INVALID");
@@ -147,11 +124,7 @@ export async function decryptClinicalText(
   return null;
 }
 
-export async function encryptClinicalJson(
-  secret: string,
-  scope: ClinicalFieldScope,
-  value: unknown,
-): Promise<string> {
+export async function encryptClinicalJson(secret: string, scope: ClinicalFieldScope, value: unknown): Promise<string> {
   return encryptClinicalText(secret, scope, JSON.stringify(value));
 }
 
@@ -190,11 +163,7 @@ export function clinicalSearchIndexTerms(value: string): string[] {
   return [...terms];
 }
 
-export async function clinicalBlindToken(
-  secret: string,
-  resourceType: string,
-  term: string,
-): Promise<string> {
+export async function clinicalBlindToken(secret: string, resourceType: string, term: string): Promise<string> {
   const signature = await crypto.subtle.sign(
     "HMAC",
     await blindKey(secret),
@@ -203,14 +172,31 @@ export async function clinicalBlindToken(
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export async function clinicalBlindTokensForValue(
-  secret: string,
+export async function clinicalBlindTokensForValue(secret: string, resourceType: string, value: string): Promise<string[]> {
+  return Promise.all(clinicalSearchIndexTerms(value).map((term) => clinicalBlindToken(secret, resourceType, term)));
+}
+
+/**
+ * Um grupo por termo pesquisado. Cada grupo contém o hash da chave ativa e,
+ * durante rotação, o hash equivalente da chave anterior. O SQL pode exigir
+ * pelo menos um hash de cada grupo sem perder resultados durante key rotation.
+ */
+export async function clinicalBlindTokenGroupsForQuery(
+  keyring: ClinicalKeyring,
   resourceType: string,
-  value: string,
-): Promise<string[]> {
-  return Promise.all(
-    clinicalSearchIndexTerms(value).map((term) => clinicalBlindToken(secret, resourceType, term)),
-  );
+  query: string,
+): Promise<string[][]> {
+  const activeSecret = assertSecret(keyring.active);
+  const previousSecret = keyring.previous?.trim()
+    ? assertSecret(keyring.previous, "CLINICAL_DATA_KEY_PREVIOUS")
+    : null;
+  const groups: string[][] = [];
+  for (const term of normalizeClinicalSearch(query)) {
+    const group = [await clinicalBlindToken(activeSecret, resourceType, term)];
+    if (previousSecret) group.push(await clinicalBlindToken(previousSecret, resourceType, term));
+    groups.push([...new Set(group)]);
+  }
+  return groups;
 }
 
 export async function clinicalBlindTokensForQuery(
@@ -218,11 +204,5 @@ export async function clinicalBlindTokensForQuery(
   resourceType: string,
   query: string,
 ): Promise<string[]> {
-  const terms = normalizeClinicalSearch(query);
-  const active = await Promise.all(terms.map((term) => clinicalBlindToken(keyring.active, resourceType, term)));
-  if (!keyring.previous?.trim()) return active;
-  const previous = await Promise.all(
-    terms.map((term) => clinicalBlindToken(keyring.previous!, resourceType, term)),
-  );
-  return [...new Set([...active, ...previous])];
+  return [...new Set((await clinicalBlindTokenGroupsForQuery(keyring, resourceType, query)).flat())];
 }
