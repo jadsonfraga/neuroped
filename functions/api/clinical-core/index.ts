@@ -12,9 +12,16 @@ import {
   getContextUser,
   getPatientAccess,
 } from "../auth/_authorization";
+import {
+  clinicalCryptoErrorResponse,
+  decryptClinicalPayload,
+  encryptedLegacySentinel,
+  encryptClinicalPayload,
+  type ClinicalCryptoEnv,
+} from "../_clinicalCrypto";
 import { ensureClinicalCoreDemoSchema } from "./_schema";
 
-interface Env {
+interface Env extends ClinicalCryptoEnv {
   DB?: D1Database;
 }
 
@@ -28,6 +35,7 @@ interface D1ClinicalEventRow {
   provenance_kind: ClinicalProvenanceKind;
   provenance_source: ClinicalSource;
   payload_json: string;
+  secure_payload_encrypted: string | null;
   supersedes_event_id: string | null;
   status: ClinicalEventStatus;
   created_at: string;
@@ -51,36 +59,39 @@ function error(message: string, code: string, status: number): Response {
   return json({ error: message, code }, status);
 }
 
-function present(row: D1ClinicalEventRow): ClinicalEvent | null {
-  try {
-    const payload = JSON.parse(row.payload_json) as DemoPayload;
-    const parsed = clinicalEventInputSchema.safeParse({
-      patientId: row.patient_id,
-      eventType: row.event_type,
-      occurredAt: row.occurred_at,
-      ...(row.encounter_id ? { encounterId: row.encounter_id } : {}),
-      provenance: {
-        kind: row.provenance_kind,
-        source: row.provenance_source,
-        ...(payload.sourceLabel ? { sourceLabel: payload.sourceLabel } : {}),
-        ...(payload.capturedAt ? { capturedAt: payload.capturedAt } : {}),
-      },
-      ...(payload.note ? { note: payload.note } : {}),
-      ...(row.supersedes_event_id ? { supersedesEventId: row.supersedes_event_id } : {}),
-      data: payload.data,
-    });
-    if (!parsed.success) return null;
-    return {
-      id: row.id,
-      ...parsed.data,
-      authorUserId: row.author_user_id,
-      status: row.status,
-      createdAt: row.created_at,
-      storageMode: "demo-db",
-    };
-  } catch {
-    return null;
-  }
+async function present(env: Env, row: D1ClinicalEventRow): Promise<ClinicalEvent | null> {
+  const payload = await decryptClinicalPayload<DemoPayload>(
+    env,
+    "clinical_events_demo",
+    row.id,
+    row.secure_payload_encrypted,
+    row.payload_json,
+  );
+  if (!payload) return null;
+  const parsed = clinicalEventInputSchema.safeParse({
+    patientId: row.patient_id,
+    eventType: row.event_type,
+    occurredAt: row.occurred_at,
+    ...(row.encounter_id ? { encounterId: row.encounter_id } : {}),
+    provenance: {
+      kind: row.provenance_kind,
+      source: row.provenance_source,
+      ...(payload.sourceLabel ? { sourceLabel: payload.sourceLabel } : {}),
+      ...(payload.capturedAt ? { capturedAt: payload.capturedAt } : {}),
+    },
+    ...(payload.note ? { note: payload.note } : {}),
+    ...(row.supersedes_event_id ? { supersedesEventId: row.supersedes_event_id } : {}),
+    data: payload.data,
+  });
+  if (!parsed.success) return null;
+  return {
+    id: row.id,
+    ...parsed.data,
+    authorUserId: row.author_user_id,
+    status: row.status,
+    createdAt: row.created_at,
+    storageMode: "demo-db",
+  };
 }
 
 function parseTypes(raw: string | null): ClinicalEventType[] | null {
@@ -121,8 +132,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const result = await env.DB
       .prepare(
         `SELECT id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
-                provenance_kind, provenance_source, payload_json, supersedes_event_id,
-                status, created_at
+                provenance_kind, provenance_source, payload_json, secure_payload_encrypted,
+                supersedes_event_id, status, created_at
            FROM clinical_events_demo
           WHERE patient_id = ? AND is_demo = 1 AND occurred_at >= ?${typeClause}
           ORDER BY occurred_at DESC
@@ -130,9 +141,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       )
       .bind(patientId, cutoff, ...eventTypes)
       .all<D1ClinicalEventRow>();
-    const data = (result.results ?? []).map(present).filter((item): item is ClinicalEvent => item != null);
+    const decoded = await Promise.all((result.results ?? []).map((row) => present(env, row)));
+    const data = decoded.filter((item): item is ClinicalEvent => item != null);
     return json({ data, total: data.length, mode: "demo-db" });
   } catch (cause) {
+    const cryptoResponse = clinicalCryptoErrorResponse(cause);
+    if (cryptoResponse) return cryptoResponse;
     console.error("[clinical-core.GET]", cause);
     return error("Não foi possível carregar a linha clínica.", "DB_ERROR", 500);
   }
@@ -168,11 +182,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     await ensureClinicalCoreDemoSchema(env.DB);
     if (input.supersedesEventId) {
       const previous = await env.DB
-        .prepare("SELECT id, patient_id FROM clinical_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
+        .prepare("SELECT id, patient_id, status FROM clinical_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
         .bind(input.supersedesEventId)
-        .first<{ id: string; patient_id: string }>();
-      if (!previous || previous.patient_id !== input.patientId) {
-        return error("Evento supersedido inválido para este paciente.", "INVALID_SUPERSESSION", 400);
+        .first<{ id: string; patient_id: string; status: string }>();
+      if (!previous || previous.patient_id !== input.patientId || previous.status !== "active") {
+        return error("Evento supersedido inválido ou já corrigido.", "INVALID_SUPERSESSION", 409);
       }
     }
 
@@ -184,15 +198,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       ...(input.provenance.sourceLabel ? { sourceLabel: input.provenance.sourceLabel } : {}),
       ...(input.provenance.capturedAt ? { capturedAt: input.provenance.capturedAt } : {}),
     };
+    const encryptedPayload = await encryptClinicalPayload(env, "clinical_events_demo", id, payload);
 
-    const statements = [
+    const statements: D1PreparedStatement[] = [];
+    if (input.supersedesEventId) {
+      statements.push(
+        env.DB
+          .prepare("UPDATE clinical_events_demo SET status = 'corrected' WHERE id = ? AND patient_id = ? AND is_demo = 1 AND status = 'active'")
+          .bind(input.supersedesEventId, input.patientId),
+      );
+    }
+    statements.push(
       env.DB
         .prepare(
           `INSERT INTO clinical_events_demo
             (id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
-             provenance_kind, provenance_source, payload_json, supersedes_event_id,
-             status, is_demo, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?)`,
+             provenance_kind, provenance_source, payload_json, secure_payload_encrypted,
+             supersedes_event_id, status, is_demo, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?)`,
         )
         .bind(
           id,
@@ -203,19 +226,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           input.encounterId ?? null,
           input.provenance.kind,
           input.provenance.source,
-          JSON.stringify(payload),
+          encryptedLegacySentinel(),
+          encryptedPayload,
           input.supersedesEventId ?? null,
           createdAt,
         ),
-    ];
-    if (input.supersedesEventId) {
-      statements.push(
-        env.DB
-          .prepare("UPDATE clinical_events_demo SET status = 'corrected' WHERE id = ? AND patient_id = ? AND is_demo = 1")
-          .bind(input.supersedesEventId, input.patientId),
-      );
+    );
+    const results = await env.DB.batch(statements);
+    if (input.supersedesEventId && (results[0]?.meta.changes ?? 0) !== 1) {
+      return error("O evento original mudou durante a correção. Recarregue e tente novamente.", "STALE_CLINICAL_EVENT", 409);
     }
-    await env.DB.batch(statements);
 
     const created: ClinicalEvent = {
       id,
@@ -227,6 +247,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     };
     return json(created, 201);
   } catch (cause) {
+    const cryptoResponse = clinicalCryptoErrorResponse(cause);
+    if (cryptoResponse) return cryptoResponse;
     console.error("[clinical-core.POST]", cause);
     return error("Não foi possível salvar o evento clínico.", "DB_ERROR", 500);
   }
