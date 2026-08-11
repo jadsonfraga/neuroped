@@ -1,6 +1,6 @@
 name: Temporary P0 remaining clinical crypto
 
-# retry: encrypted patient contract aligned
+# retry: encrypted patient SQL assertion aligned
 on:
   push:
     branches:
