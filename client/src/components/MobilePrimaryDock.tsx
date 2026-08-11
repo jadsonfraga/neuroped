@@ -20,10 +20,19 @@ interface DockItem {
   action?: "search";
 }
 
+// O dock é navegação do workspace clínico. Mesmo no host "full", fluxos
+// explicitamente familiares/públicos não devem receber atalhos para Pacientes,
+// Agenda ou busca clínica. A lista é propositalmente mais estreita que
+// PUBLIC_ROUTES porque /filtro é também o destino profissional "Clínica".
 const hiddenRoutePrefixes = [
   "/login",
   "/sessao-expirada",
   "/consentimento-lgpd",
+  "/familia",
+  "/agendar",
+  "/pre-consulta",
+  "/pre-retorno",
+  "/efeitos-colaterais",
   "/portal-familia",
   "/verificar",
   "/cognitive-task",
@@ -95,7 +104,7 @@ export function MobilePrimaryDock() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[99970] px-2.5 md:hidden print:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 md:hidden print:hidden"
       style={{ paddingBottom: "max(0.45rem, env(safe-area-inset-bottom))" }}
       data-testid="mobile-primary-dock"
     >
