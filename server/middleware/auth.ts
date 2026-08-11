@@ -1,14 +1,16 @@
 /**
  * Middleware de autenticacao e autorizacao.
  *
- *  requireAuth         — valida access token e popula req.user.
- *  optionalAuth        — popula req.user se token presente, mas nao bloqueia.
- *  requireRole(roles)  — checa se req.user.role pertence ao conjunto permitido.
+ *  requireAuth         — valida access token, confirma conta ativa no banco e popula req.user.
+ *  optionalAuth        — popula req.user somente quando token e conta atual são válidos.
+ *  requireRole(roles)  — checa o PAPEL ATUAL do banco, nunca o papel congelado no JWT.
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../lib/jwt.js";
-import type { UserRole } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { users, type UserRole } from "@shared/schema";
+import { verifyAccessToken, type AccessTokenClaims } from "../lib/jwt.js";
+import { db } from "../storage.js";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -33,6 +35,28 @@ function extractBearerToken(req: Request): string | null {
   return null;
 }
 
+function currentUserForClaims(claims: AccessTokenClaims): Request["user"] | null {
+  const current = db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
+      isActive: users.isActive,
+    })
+    .from(users)
+    .where(eq(users.id, claims.sub))
+    .get();
+
+  if (!current?.isActive) return null;
+  return {
+    id: current.id,
+    email: current.email,
+    role: current.role,
+    name: current.name,
+  };
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const token = extractBearerToken(req);
   if (!token) {
@@ -40,21 +64,32 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     return;
   }
 
+  let claims: AccessTokenClaims;
   try {
-    const claims = verifyAccessToken(token);
-    req.user = {
-      id: claims.sub,
-      email: claims.email,
-      role: claims.role,
-      name: claims.name,
-    };
-    next();
+    claims = verifyAccessToken(token);
   } catch (e: any) {
     res.status(401).json({
       error: "Invalid or expired token",
       code: "AUTH_INVALID",
       detail: process.env.NODE_ENV === "development" ? e.message : undefined,
     });
+    return;
+  }
+
+  try {
+    // Revogação e RBAC precisam refletir o estado atual, não os claims de até
+    // 15 minutos atrás. Isso invalida imediatamente conta desativada e impede
+    // que redução de papel preserve privilégios via JWT antigo.
+    const current = currentUserForClaims(claims);
+    if (!current) {
+      res.status(401).json({ error: "Invalid or inactive session", code: "AUTH_INVALID" });
+      return;
+    }
+    req.user = current;
+    next();
+  } catch (error) {
+    console.error("[auth] current-user lookup failed:", error);
+    res.status(503).json({ error: "Authentication temporarily unavailable", code: "AUTH_UNAVAILABLE" });
   }
 }
 
@@ -66,14 +101,10 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   }
   try {
     const claims = verifyAccessToken(token);
-    req.user = {
-      id: claims.sub,
-      email: claims.email,
-      role: claims.role,
-      name: claims.name,
-    };
+    const current = currentUserForClaims(claims);
+    if (current) req.user = current;
   } catch {
-    // Ignora token invalido em rotas opcionais
+    // Rota opcional permanece anônima quando token, conta ou banco não validam.
   }
   next();
 }
