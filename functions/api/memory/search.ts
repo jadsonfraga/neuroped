@@ -1,28 +1,42 @@
 /**
  * GET /api/memory/search?q=termo
- * Cloudflare Pages Function — Busca em notas de memória clínica
  *
- * Estratégias de busca (em ordem de prioridade):
- *  1. FTS5 (Full-Text Search nativo do SQLite/D1) — mais rápida quando disponível
- *  2. Busca textual com scoring TF-IDF simplificado — fallback confiável
- *  3. Modo demo sem banco — retorna notas fictícias filtradas
- *
- * Busca semântica real (Vectorize + Workers AI) ainda não implementada.
- * Quando disponível, substituir a estratégia 2 por embeddings.
- *
- * LGPD: notas vinculadas a paciente obedecem ao mesmo owner do prontuário.
- * Notas globais/legadas com patient_id NULL ficam restritas ao administrador.
+ * Em modo estrito, conteúdo clínico nunca é consultado por LIKE/FTS em claro:
+ * o D1 seleciona candidatos por blind index HMAC e o ranking TF-IDF ocorre
+ * somente após autorização e decriptação do envelope AES-GCM.
  */
 
+import { getContextUser, isAdmin } from "../auth/_authorization";
 import {
-  getContextUser,
-  isAdmin,
-} from "../auth/_authorization";
+  blindTokenGroupsForQuery,
+  clinicalCryptoErrorResponse,
+  decryptClinicalPayload,
+  type ClinicalCryptoEnv,
+} from "../_clinicalCrypto";
 
-interface Env {
+interface Env extends ClinicalCryptoEnv {
   DB?: D1Database;
-  AI?: Ai;               // Cloudflare Workers AI (futuro)
-  VECTORIZE?: Vectorize; // Cloudflare Vectorize (futuro)
+  AI?: Ai;
+  VECTORIZE?: Vectorize;
+}
+
+interface MemoryNoteRow {
+  id: string;
+  title: string | null;
+  content: string;
+  category: string | null;
+  source: string | null;
+  patient_id: string | null;
+  tags: string | null;
+  secure_payload_encrypted: string | null;
+  created_at: string;
+}
+
+interface SecureMemoryPayload {
+  title: string | null;
+  content: string;
+  source: string | null;
+  tags: string | null;
 }
 
 interface MemoryNote {
@@ -36,19 +50,11 @@ interface MemoryNote {
   score?: number;
 }
 
-const MEMORY_SEARCH_LIMITS = {
-  query: 300,
-  category: 80,
-  results: 20,
-} as const;
+const MEMORY_SEARCH_LIMITS = { query: 300, category: 80, results: 20, candidates: 160 } as const;
 
 function validationError(message: string): Response {
-  return Response.json(
-    { error: message, code: "VALIDATION_ERROR" },
-    { status: 400, headers: { "Cache-Control": "no-store" } },
-  );
+  return Response.json({ error: message, code: "VALIDATION_ERROR" }, { status: 400, headers: { "Cache-Control": "no-store" } });
 }
-
 function parseResultLimit(value: string | null): number | null {
   if (value === null) return 10;
   if (!/^\d+$/.test(value)) return null;
@@ -56,7 +62,6 @@ function parseResultLimit(value: string | null): number | null {
   if (!Number.isSafeInteger(parsed)) return null;
   return Math.min(MEMORY_SEARCH_LIMITS.results, Math.max(1, parsed));
 }
-
 function parseMinimumScore(value: string | null): number | null {
   if (value === null) return 0.05;
   if (value.trim() === "") return null;
@@ -65,308 +70,116 @@ function parseMinimumScore(value: string | null): number | null {
   return parsed;
 }
 
-// Notas demo para fallback sem banco
 const DEMO_NOTES: MemoryNote[] = [
-  {
-    id: "mem-demo-001",
-    title: "M-CHAT-R/F — Pontos de corte",
-    content: "M-CHAT-R/F: Score 0-2 = baixo risco; 3-7 = risco moderado (realizar entrevista follow-up); 8-20 = risco elevado (encaminhamento imediato). Sensibilidade 91%, especificidade 95%.",
-    category: "escala",
-    source: "manual_mchat",
-    tags: '["mchat","tea","triagem","autismo"]',
-    created_at: new Date("2025-01-01").toISOString(),
-  },
-  {
-    id: "mem-demo-002",
-    title: "SNAP-IV — Interpretação clínica",
-    content: "SNAP-IV: Limiar clínico = média dos itens ≥ 2.0 por subescala. Desatenção: 9 itens. Hiperatividade/Impulsividade: 9 itens. Usar percentis por idade e sexo.",
-    category: "escala",
-    source: "manual_snap",
-    tags: '["snap","tdah","hiperatividade","atencao"]',
-    created_at: new Date("2025-01-01").toISOString(),
-  },
-  {
-    id: "mem-demo-003",
-    title: "Metilfenidato — Posologia pediátrica",
-    content: "Metilfenidato: dose inicial 5mg 1-2x/dia. Titulação semanal de 5mg. Dose máxima: 60mg/dia. Avaliar: apetite, sono, crescimento, FC e PA a cada consulta. DADO FICTÍCIO.",
-    category: "farmacologia",
-    source: "prontuario_demo",
-    tags: '["metilfenidato","tdah","posologia","pediatria"]',
-    created_at: new Date("2025-02-01").toISOString(),
-  },
+  { id: "mem-demo-001", title: "M-CHAT-R/F — Pontos de corte", content: "M-CHAT-R/F: conteúdo demonstrativo para teste da busca. DADO FICTÍCIO.", category: "escala", source: "manual_mchat", tags: '["mchat","tea","triagem","autismo"]', created_at: new Date("2025-01-01").toISOString() },
+  { id: "mem-demo-002", title: "SNAP-IV — Interpretação clínica", content: "SNAP-IV: conteúdo demonstrativo para teste da busca. DADO FICTÍCIO.", category: "escala", source: "manual_snap", tags: '["snap","tdah","hiperatividade","atencao"]', created_at: new Date("2025-01-01").toISOString() },
 ];
 
-// ============================================================
-// TF-IDF simplificado para scoring de relevância textual
-// ============================================================
-
 function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")     // remove acentos
-    .replace(/[^a-z0-9\s]/g, " ")        // remove pontuação
-    .split(/\s+/)
-    .filter((t) => t.length > 2);         // remove stopwords curtas
+  return text.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((token) => token.length > 2);
 }
-
-/** Calcula TF (term frequency) para um termo em um documento */
-function tf(term: string, tokens: string[]): number {
-  const count = tokens.filter((t) => t === term).length;
-  return count / (tokens.length || 1);
-}
-
-/** Boost por matches exatos de multi-palavra na query */
-function phraseBoost(query: string, text: string): number {
-  const q = query.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  const t = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  return t.includes(q) ? 0.5 : 0;
-}
-
-/**
- * Pontua uma nota com base na query.
- * Retorna score 0-1 (0 = irrelevante, 1 = muito relevante).
- */
+function tf(term: string, tokens: string[]): number { return tokens.filter((token) => token === term).length / (tokens.length || 1); }
+function normalizedText(value: string): string { return value.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+function phraseBoost(query: string, text: string): number { return normalizedText(text).includes(normalizedText(query)) ? 0.5 : 0; }
 function scoreNote(query: string, note: MemoryNote): number {
-  const queryTokens = tokenize(query);
-  if (queryTokens.length === 0) return 0;
-
+  const queryTokens = tokenize(query); if (!queryTokens.length) return 0;
   let tagText = "";
   if (note.tags) {
-    try {
-      const parsedTags: unknown = JSON.parse(note.tags);
-      if (Array.isArray(parsedTags)) {
-        tagText = parsedTags.filter((tag): tag is string => typeof tag === "string").join(" ");
-      }
-    } catch {
-      // Uma nota legada com tags malformadas não deve derrubar toda a busca.
-    }
+    try { const parsed: unknown = JSON.parse(note.tags); if (Array.isArray(parsed)) tagText = parsed.filter((tag): tag is string => typeof tag === "string").join(" "); } catch { /* legado malformado não derruba a busca */ }
   }
-
-  const fieldWeights = [
-    { text: note.title ?? "", weight: 3.0 },
-    { text: note.content, weight: 1.0 },
-    { text: note.category ?? "", weight: 2.0 },
-    { text: tagText, weight: 1.5 },
+  const fields = [
+    { text: note.title ?? "", weight: 3 }, { text: note.content, weight: 1 },
+    { text: note.category ?? "", weight: 2 }, { text: tagText, weight: 1.5 },
   ];
-
-  let totalScore = 0;
-
-  for (const { text, weight } of fieldWeights) {
+  let total = 0;
+  for (const { text, weight } of fields) {
     const tokens = tokenize(text);
-    for (const qToken of queryTokens) {
-      const termTf = tf(qToken, tokens);
-      if (termTf > 0) {
-        totalScore += termTf * weight;
-      }
-    }
-    // Boost por frase exata
-    totalScore += phraseBoost(query, text) * weight;
+    for (const queryToken of queryTokens) total += tf(queryToken, tokens) * weight;
+    total += phraseBoost(query, text) * weight;
   }
-
-  // Normaliza para [0, 1]
-  const maxPossible = queryTokens.length * (3.0 + 1.0 + 2.0 + 1.5) + 0.5 * (3.0 + 1.0 + 2.0 + 1.5);
-  return Math.min(1, totalScore / maxPossible);
+  const max = queryTokens.length * 7.5 + 3.75;
+  return Math.min(1, total / max);
 }
 
-// ============================================================
-// Handler principal
-// ============================================================
+async function decryptNote(env: Env, row: MemoryNoteRow): Promise<MemoryNote> {
+  const legacy = row.content && row.content !== "__NEUROPED_ENCRYPTED_C1__"
+    ? JSON.stringify({ title: row.title, content: row.content, source: row.source, tags: row.tags })
+    : null;
+  const payload = await decryptClinicalPayload<SecureMemoryPayload>(env, "memory_notes", row.id, row.secure_payload_encrypted, legacy);
+  if (!payload?.content) throw new Error("CLINICAL_CIPHERTEXT_INVALID");
+  return { id: row.id, title: payload.title ?? null, content: payload.content, category: row.category, source: payload.source ?? null, tags: payload.tags ?? null, created_at: row.created_at };
+}
+
+function blindCandidateClause(groups: string[][]): { sql: string; binds: string[] } {
+  const binds: string[] = [];
+  const clauses = groups.map((group) => {
+    binds.push(...group);
+    return `EXISTS (
+      SELECT 1 FROM clinical_search_tokens cst
+       WHERE cst.resource_type = 'memory_note'
+         AND cst.resource_id = n.id
+         AND cst.token_hash IN (${group.map(() => "?").join(",")})
+    )`;
+  });
+  return { sql: clauses.length ? `AND ${clauses.join(" AND ")}` : "", binds };
+}
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
-  const url = new URL(request.url);
+  const { request, env } = context; const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim() ?? "";
   const limit = parseResultLimit(url.searchParams.get("limit"));
   const category = url.searchParams.get("category")?.trim();
   const minScore = parseMinimumScore(url.searchParams.get("min_score"));
+  if (!query) return Response.json({ results: [], total: 0, searchType: "none", error: "Parâmetro 'q' é obrigatório." }, { status: 400 });
+  if (query.length > MEMORY_SEARCH_LIMITS.query) return validationError(`'q' deve ter no máximo ${MEMORY_SEARCH_LIMITS.query} caracteres.`);
+  if (category && category.length > MEMORY_SEARCH_LIMITS.category) return validationError(`'category' deve ter no máximo ${MEMORY_SEARCH_LIMITS.category} caracteres.`);
+  if (limit === null) return validationError("'limit' deve ser um número inteiro válido.");
+  if (minScore === null) return validationError("'min_score' deve ser um número entre 0 e 1.");
 
-  if (!query) {
-    return Response.json({
-      results: [],
-      total: 0,
-      searchType: "none",
-      semanticSearchStatus: "idle",
-      error: "Parâmetro 'q' é obrigatório.",
-    }, { status: 400 });
-  }
-  if (query.length > MEMORY_SEARCH_LIMITS.query) {
-    return validationError(
-      `'q' deve ter no máximo ${MEMORY_SEARCH_LIMITS.query} caracteres.`,
-    );
-  }
-  if (category && category.length > MEMORY_SEARCH_LIMITS.category) {
-    return validationError(
-      `'category' deve ter no máximo ${MEMORY_SEARCH_LIMITS.category} caracteres.`,
-    );
-  }
-  if (limit === null) {
-    return validationError("'limit' deve ser um número inteiro válido.");
-  }
-  if (minScore === null) {
-    return validationError("'min_score' deve ser um número entre 0 e 1.");
-  }
-
-  const hasVectorize = !!env.VECTORIZE;
-  const hasAI = !!env.AI;
-
-  // ============================================================
-  // MODO DEMO (sem banco configurado)
-  // ============================================================
   if (!env.DB) {
-    const scored = DEMO_NOTES
-      .filter((n) => !category || n.category === category)
-      .map((n) => ({ ...n, score: scoreNote(query, n) }))
-      .filter((n) => n.score >= minScore)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
-
-    return Response.json({
-      results: scored,
-      total: scored.length,
-      query,
-      category: category ?? null,
-      searchType: "text_tfidf",
-      semanticSearchStatus: "not_configured",
-      searchStatusNote: "Banco D1 não configurado. Busca textual (TF-IDF) em notas de demonstração.",
-    }, { headers: { "Cache-Control": "no-store" } });
+    const scored = DEMO_NOTES.filter((note) => !category || note.category === category).map((note) => ({ ...note, score: scoreNote(query, note) })).filter((note) => note.score >= minScore).sort((a, b) => b.score - a.score).slice(0, limit);
+    return Response.json({ results: scored, total: scored.length, query, category: category ?? null, searchType: "demo_tfidf", semanticSearchStatus: "not_configured" }, { headers: { "Cache-Control": "no-store" } });
   }
 
   const user = getContextUser(context);
-  if (!user) {
-    return Response.json(
-      { error: "Não autenticado.", code: "UNAUTHENTICATED" },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-  // IN exclui patient_id NULL de forma deliberada: conteúdo global/legado só
-  // pode ser pesquisado pelo administrador, evitando vazamento entre contas.
-  const ownershipClause = isAdmin(user)
-    ? ""
-    : `AND n.patient_id IN (
-         SELECT p.id FROM patients_demo p
-          WHERE p.owner_user_id = ? AND p.is_demo = 1
-       )`;
-  const ownershipBinds = isAdmin(user) ? [] : [user.id];
+  if (!user) return Response.json({ error: "Não autenticado.", code: "UNAUTHENTICATED" }, { status: 401, headers: { "Cache-Control": "no-store" } });
 
-  // ============================================================
-  // BUSCA SEMÂNTICA (futuro — Vectorize + Workers AI)
-  // ============================================================
-  if (hasVectorize && hasAI) {
-    // Placeholder honesto — implementar quando Vectorize estiver provisionado
-    // Passos futuros:
-    //   1. const embedding = await env.AI.run('@cf/baai/bge-base-en-v1.5', { text: query });
-    //   2. const matches = await env.VECTORIZE.query(embedding.data[0], { topK: limit });
-    //   3. Mapear IDs para memory_notes via D1
-    // Por ora, cai no fallback textual e documenta honestamente:
-    console.info("[memory/search] Vectorize disponível mas busca semântica não implementada. Usando FTS5.");
-  }
-
-  // ============================================================
-  // BUSCA FTS5 (D1 nativo — mais rápida quando disponível)
-  // ============================================================
   try {
-    const categoryClause = category ? "AND n.category = ?" : "";
-    const ftsBinds: unknown[] = [query];
-    if (category) ftsBinds.push(category);
-    ftsBinds.push(...ownershipBinds);
-    ftsBinds.push(limit);
+    const strict = env.CLINICAL_ENCRYPTION_STRICT === "true";
+    const groups = await blindTokenGroupsForQuery(env, "memory_note", query);
+    if (strict && !groups.length) return Response.json({ results: [], total: 0, query, searchType: "blind_index_tfidf" }, { headers: { "Cache-Control": "no-store" } });
+    const blind = strict ? blindCandidateClause(groups) : { sql: "", binds: [] as string[] };
+    const ownership = isAdmin(user)
+      ? ""
+      : `AND n.patient_id IN (SELECT p.id FROM patients_demo p WHERE p.owner_user_id = ? AND p.is_demo = 1)`;
+    const binds: unknown[] = [];
+    if (category) binds.push(category);
+    if (!isAdmin(user)) binds.push(user.id);
+    binds.push(...blind.binds, MEMORY_SEARCH_LIMITS.candidates);
 
-    const ftsRows = await env.DB
-      .prepare(
-        `SELECT n.id, n.title, n.content, n.category, n.source, n.tags, n.created_at,
-                bm25(memory_notes_fts) * -1 AS score
-         FROM memory_notes_fts
-         JOIN memory_notes n ON memory_notes_fts.rowid = n.rowid
-         WHERE memory_notes_fts MATCH ?
-           AND n.is_demo = 1 ${categoryClause}
-           ${ownershipClause}
-         ORDER BY score DESC
-         LIMIT ?`
-      )
-      .bind(...ftsBinds)
-      .all();
-
-    if (ftsRows.results && ftsRows.results.length > 0) {
-      const numericScores = (ftsRows.results as any[]).map((row) => {
-        const score = Number(row.score);
-        return Number.isFinite(score) ? Math.max(0, score) : 0;
-      });
-      const maxFtsScore = Math.max(...numericScores, 0);
-      const results = (ftsRows.results as any[])
-        .map((row, index) => ({
-          ...row,
-          score: maxFtsScore > 0
-            ? Math.min(1, numericScores[index] / maxFtsScore)
-            : 0,
-        }))
-        .filter((row) => row.score >= minScore)
-        .slice(0, limit);
-
-      return Response.json({
-        results,
-        total: results.length,
-        query,
-        category: category ?? null,
-        searchType: "fts5",
-        semanticSearchStatus: hasVectorize && hasAI ? "configured_pending_implementation" : "not_configured",
-        searchStatusNote: "Busca FTS5 nativa do SQLite (ranking BM25).",
-      }, { headers: { "Cache-Control": "no-store" } });
-    }
-  } catch (ftsErr) {
-    // FTS5 pode não estar disponível ou virtual table pode não ter sido criada
-    console.warn("[memory/search] FTS5 indisponível, usando TF-IDF:", ftsErr);
-  }
-
-  // ============================================================
-  // FALLBACK — Busca LIKE + scoring TF-IDF
-  // ============================================================
-  try {
-    const queryTokens = tokenize(query);
-    if (queryTokens.length === 0) {
-      return Response.json({ results: [], total: 0, query, searchType: "text_tfidf", semanticSearchStatus: "not_configured" });
-    }
-
-    // Usa LIKE com o primeiro token para reduzir o conjunto antes do scoring
-    const primaryToken = queryTokens[0];
-    const catBinds: unknown[] = [`%${primaryToken}%`, `%${primaryToken}%`];
-    if (category) catBinds.push(category);
-    catBinds.push(...ownershipBinds);
-
-    const likeRows = await env.DB
-      .prepare(
-        `SELECT n.id, n.title, n.content, n.category, n.source, n.tags, n.created_at
+    const rows = await env.DB.prepare(
+      `SELECT n.id, n.title, n.content, n.category, n.source, n.patient_id, n.tags,
+              n.secure_payload_encrypted, n.created_at
          FROM memory_notes n
-         WHERE (n.content LIKE ? OR n.title LIKE ?)
-           AND n.is_demo = 1
-           ${category ? "AND n.category = ?" : ""}
-           ${ownershipClause}
-         LIMIT 100`
-      )
-      .bind(...catBinds)
-      .all();
+        WHERE n.is_demo = 1
+          ${category ? "AND n.category = ?" : ""}
+          ${ownership}
+          ${blind.sql}
+        ORDER BY n.created_at DESC
+        LIMIT ?`,
+    ).bind(...binds).all<MemoryNoteRow>();
 
-    const notes = (likeRows.results ?? []) as MemoryNote[];
-    const scored = notes
-      .map((n) => ({ ...n, score: scoreNote(query, n) }))
-      .filter((n) => n.score >= minScore)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
-
+    const notes = await Promise.all((rows.results ?? []).map((row) => decryptNote(env, row)));
+    const scored = notes.map((note) => ({ ...note, score: scoreNote(query, note) })).filter((note) => note.score >= minScore).sort((a, b) => b.score - a.score).slice(0, limit);
     return Response.json({
-      results: scored,
-      total: scored.length,
-      query,
-      category: category ?? null,
-      searchType: "text_tfidf",
-      semanticSearchStatus: "not_configured",
-      searchStatusNote: "Busca semântica não configurada. Usando busca textual com scoring TF-IDF. Para habilitar busca semântica, configure Cloudflare Vectorize e Workers AI.",
+      results: scored, total: scored.length, query, category: category ?? null,
+      searchType: strict ? "blind_index_tfidf" : "dual_read_tfidf",
+      semanticSearchStatus: env.VECTORIZE && env.AI ? "configured_pending_implementation" : "not_configured",
+      searchStatusNote: strict ? "Candidatos por blind index; ranking somente após decriptação autorizada." : "Janela de migração dual-read; plaintext será recusado quando strict=true.",
     }, { headers: { "Cache-Control": "no-store" } });
-  } catch (err) {
-    console.error("[memory/search] Erro na busca:", err);
-    return Response.json(
-      { results: [], total: 0, query, searchType: "text_tfidf", semanticSearchStatus: "error", error: "Erro na busca. Tente novamente." },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
-    );
+  } catch (error) {
+    const cryptoResponse = clinicalCryptoErrorResponse(error); if (cryptoResponse) return cryptoResponse;
+    console.error("[memory/search] erro:", error);
+    return Response.json({ error: "Erro na busca de memória.", code: "SEARCH_ERROR" }, { status: 500, headers: { "Cache-Control": "no-store" } });
   }
 };
