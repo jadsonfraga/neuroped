@@ -25,7 +25,9 @@ jobs:
       - run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      - run: python3 scripts/tmp_p0_patch_remaining.py
+      - run: |
+          python3 scripts/tmp_p0_patch_remaining.py
+          python3 scripts/tmp_p0_patch_remaining_fix.py
       - name: Validate
         run: npm run check && npm run lint && npm run test:quick-wins && npm run test:clinical-core && npm run test:conecta
       - name: Commit verified remaining endpoints
