@@ -92,7 +92,7 @@ export class PatientRepository implements BaseRepository<Patient, Omit<Patient, 
       .returning()
       .execute();
 
-    return result[0];
+    return result[0] ?? null;
   }
 
   async update(id: string, input: Partial<Patient>): Promise<Patient | null> {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   type AuthUser,
   getStoredUser,
@@ -111,19 +111,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const contextValue = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      accessMode,
+      remoteConfigured,
+      login,
+      logout,
+      refreshUser,
+    }),
+    [user, isLoading, accessMode, remoteConfigured, login, logout, refreshUser],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        accessMode,
-        remoteConfigured,
-        login,
-        logout,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

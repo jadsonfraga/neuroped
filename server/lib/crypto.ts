@@ -49,7 +49,7 @@ function getMasterKey(): Buffer {
       "NEUROPED_MASTER_KEY muito curta. Minimo 32 caracteres aleatorios.",
     );
   }
-  return Buffer.from(raw, "utf8");
+  return Buffer.from(raw, "base64");
 }
 
 function deriveKey(salt: Buffer): Buffer {

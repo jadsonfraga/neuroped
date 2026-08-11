@@ -27,7 +27,7 @@ import type { CognitiveSession, CognitiveTaskConfig, TrialRecord, TrialSpec } fr
 type Phase = "intro" | "tutorial" | "practice" | "interblock" | "test" | "results";
 type TrialState = "fixation" | "stimulus" | "blank" | "feedback";
 
-function beep(freq: number, durationMs = 120) {
+function beep(freq: number, durationMs = 120, onScheduleTimer?: (delayMs: number, fn: () => void) => void) {
   try {
     const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new Ctx();
@@ -37,7 +37,12 @@ function beep(freq: number, durationMs = 120) {
     gain.gain.value = 0.05;
     osc.connect(gain).connect(ctx.destination);
     osc.start();
-    window.setTimeout(() => { osc.stop(); void ctx.close(); }, durationMs);
+    const stopFn = () => { osc.stop(); void ctx.close(); };
+    if (onScheduleTimer) {
+      onScheduleTimer(durationMs, stopFn);
+    } else {
+      window.setTimeout(stopFn, durationMs);
+    }
   } catch {
     /* áudio indisponível — segue silencioso */
   }
@@ -162,7 +167,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
     if (p === "test") setDoneCount(r.records.filter((x) => x.phase === "test").length);
     if (p === "practice") {
       setLastFeedback(correct ? "acerto" : "erro");
-      if (r.soundOn) beep(correct ? 880 : 220);
+      if (r.soundOn) beep(correct ? 880 : 220, 120, after);
       setTrialState("feedback");
       after(700, advance);
       return;
